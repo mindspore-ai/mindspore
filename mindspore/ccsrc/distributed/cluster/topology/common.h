@@ -42,6 +42,9 @@ constexpr char kEnvNodeId[] = "MS_NODE_ID";
 // For port number conversion.
 static const int kDecimal = 10;
 
+// The timeout(second) for heartbeat from compute graph node to meta server.
+static const uint64_t kDefaultNodeTimeout = 30;
+
 // The timeout for initializing the cluster topology.
 static const std::chrono::milliseconds kTopoInitTimeout = std::chrono::milliseconds(1000 * 60 * 10);
 

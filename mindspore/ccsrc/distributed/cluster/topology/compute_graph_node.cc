@@ -37,12 +37,20 @@ bool ComputeGraphNode::Initialize() {
 
   // Register itself to meta server node.
   EXECUTE_WITH_RETRY(Register, kExecuteRetryNum, kExecuteInterval, "Failed to register");
+
+  // Enable the heartbeat to meta server node.
+  enable_hb_ = true;
+  heartbeat_ = std::thread(&ComputeGraphNode::Heartbeat, this);
   return true;
 }
 
 bool ComputeGraphNode::Initialized() { return authenticated_; }
 
 bool ComputeGraphNode::Finalize(bool force) {
+  // Stop the heartbeat thread.
+  enable_hb_ = false;
+  heartbeat_.join();
+
   // Exit the compute graph node from the cluster topology.
   EXECUTE_WITH_RETRY(Unregister, kExecuteRetryNum, kExecuteInterval, "Failed to unregister");
 
@@ -118,15 +126,33 @@ bool ComputeGraphNode::Unregister() {
 bool ComputeGraphNode::Heartbeat() {
   MS_EXCEPTION_IF_NULL(tcp_client_);
 
-  HeartbeatMessage hb_msg;
-  hb_msg.set_node_id(node_id_);
+  MS_LOG(INFO) << "The heartbeat thread is started.";
+  size_t interval = 3;
 
-  const auto &server_url = meta_server_addr_.GetUrl();
-  std::string content = hb_msg.SerializeAsString();
-  auto message = CreateMessage(server_url, MessageName::kHeartbeat, content);
-  MS_EXCEPTION_IF_NULL(message);
+  while (enable_hb_) {
+    HeartbeatMessage hb_msg;
+    hb_msg.set_node_id(node_id_);
 
-  tcp_client_->SendSync(std::move(message));
+    const auto &server_url = meta_server_addr_.GetUrl();
+    std::string content = hb_msg.SerializeAsString();
+    auto message = CreateMessage(server_url, MessageName::kHeartbeat, content);
+    MS_EXCEPTION_IF_NULL(message);
+
+    // Reconnect to the meta server node if no any connection exists.
+    size_t total_retry = 3;
+    const size_t connect_retry = 3;
+    while (!tcp_client_->IsConnected(server_url) && total_retry-- > 0) {
+      tcp_client_->Connect(server_url, connect_retry);
+    }
+
+    // Send the heartbeat message.
+    if (tcp_client_->IsConnected(server_url)) {
+      tcp_client_->SendSync(std::move(message));
+    }
+    sleep(interval);
+  }
+
+  MS_LOG(INFO) << "The heartbeat thread is finished.";
   return true;
 }
 

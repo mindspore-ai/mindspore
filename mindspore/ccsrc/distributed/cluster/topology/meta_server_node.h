@@ -33,16 +33,6 @@ namespace mindspore {
 namespace distributed {
 namespace cluster {
 namespace topology {
-// Record the state of the compute graph node.
-struct ComputeGraphNodeState {
-  explicit ComputeGraphNodeState(std::string id) { node_id = id; }
-  std::string node_id;
-
-  // The timestamp of last heartbeat.
-  // This timestamp is considered the health state of the node.
-  time_t last_update;
-};
-
 // Indicates the state of the cluster physical topology.
 enum class TopoState {
   // All the nodes of this cluster are in the process of starting up.
@@ -58,16 +48,46 @@ enum class TopoState {
   kFinished
 };
 
+// Indicates the state of compute graph node.
+enum class NodeState {
+  // This node is newly created and unauthenticated.
+  kNew = 0,
+
+  // This node has finished registration from meta server.
+  kRegistered,
+
+  // This node has finished unregistration from meta server.
+  kUnregistered,
+
+  // This node has timed out because there's no heartbeat message after `kNodeTimeout`.
+  kTimeout
+};
+
+// Record the state of the compute graph node.
+struct NodeInfo {
+  explicit NodeInfo(std::string id) { node_id = id; }
+  std::string node_id;
+
+  // The timestamp of last heartbeat.
+  // This timestamp is considered the health state of the node.
+  time_t last_update;
+
+  // Maintain the state of the node.
+  NodeState state{NodeState::kNew};
+};
+
 // The MetaServerNode is a separate process representing the meta server node which stores all the metadata and status
 // of computation graph nodes.
 class MetaServerNode : public NodeBase {
  public:
-  explicit MetaServerNode(const std::string &node_id, const size_t &node_num)
+  explicit MetaServerNode(const std::string &node_id, const size_t &node_num,
+                          uint64_t node_timeout = kDefaultNodeTimeout)
       : NodeBase(node_id),
         total_node_num_(node_num),
         topo_state_(TopoState::kInitializing),
         enable_monitor_(true),
-        next_rank_id_(-1) {}
+        next_rank_id_(-1),
+        node_timeout_(node_timeout) {}
   ~MetaServerNode() override = default;
 
   bool Initialize() override;
@@ -132,7 +152,7 @@ class MetaServerNode : public NodeBase {
   std::map<std::string, std::shared_ptr<std::function<std::string(const std::string &)>>> message_handlers_;
 
   // Stores the registered compute graph nodes.
-  std::map<std::string, std::shared_ptr<ComputeGraphNodeState>> nodes_;
+  std::map<std::string, std::shared_ptr<NodeInfo>> nodes_;
 
   mutable std::shared_mutex nodes_mutex_;
 
@@ -158,6 +178,8 @@ class MetaServerNode : public NodeBase {
   std::map<std::string, std::string> metadata_;
 
   mutable std::shared_mutex meta_mutex_;
+
+  uint64_t node_timeout_;
 
   // A key-value pairs metadata config used for failover recovery if enabled.
   std::unique_ptr<recovery::Configuration> configuration_;
