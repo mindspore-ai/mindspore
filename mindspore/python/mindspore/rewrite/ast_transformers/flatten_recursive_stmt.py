@@ -47,17 +47,21 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             elif isinstance(func, ast.Attribute):
                 target_name = func.attr
             else:
-                logger.warning("unhandled type of func of ast.Call while generating new target name: %s ", type(func))
+                logger.info("unhandled type of func of ast.Call while generating new target name: %s ", type(func))
                 target_name = "function"
         elif isinstance(node, ast.Return):
             target_name = "return_value"
         elif isinstance(node, (ast.BinOp, ast.boolop, ast.UnaryOp)):
-            target_name = type(node.op).__name__
+            target_name = type(node.op).__name__.lower() + "_var"
         elif isinstance(node, ast.Tuple):
-            target_name = type(node).__name__
+            target_name = type(node).__name__.lower() + "_var"
+        elif isinstance(node, ast.Name):
+            target_name = node.id
+        elif isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+            target_name = f"{node.value.id}_{node.attr}"
         else:
-            logger.warning("unhandled type of node while generating new target name: %s ", type(node))
-            target_name = type(node).__name__
+            logger.info("unhandled type of node while generating new target name: %s ", type(node))
+            target_name = type(node).__name__.lower() + "_var"
         suffix = 0
         result = target_name
         while result in target_names:

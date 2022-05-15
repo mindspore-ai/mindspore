@@ -50,7 +50,7 @@ class Namer:
             A string represents real-name.
         """
         if name == '_':
-            raise RuntimeError("Invalid name '_' in code")
+            return name
         pos = name.rfind("_")
         if pos == -1:
             return name
@@ -73,6 +73,8 @@ class Namer:
         Returns:
             A string represents unique-name.
         """
+        if origin_name == '_':
+            return origin_name
         origin_name = Namer._real_name(origin_name)
         number = self._names.get(origin_name)
         if number is None:

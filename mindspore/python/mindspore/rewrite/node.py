@@ -377,7 +377,7 @@ class Node:
             if not isinstance(arg, ScopedValue):
                 raise TypeError("arg should be ScopedValue, got: ", type(arg))
             if arg.type == ValueType.CustomObjValue:
-                logger.warning("custom-object exist in args, should be replace before compile")
+                logger.info("custom-object exist in args, should be replace before compile")
                 result.append(ScopedValue.create_naming_value("custom-object", "self"))
             else:
                 result.append(arg)
@@ -728,10 +728,10 @@ class Node:
             arg (Union[ScopedValue, str]): New argument to been set.
 
         Raises:
-            RuntimeError: If 'index' is out of range.
+            ValueError: If 'index' is out of range.
         """
         if index < 0 or index >= self._args_num:
-            raise RuntimeError("index error", index)
+            raise ValueError("Index out of range while setting arg, index:", index, ", range:[0, ", self._args_num, ")")
         if isinstance(arg, str):
             arg = ScopedValue.create_naming_value(arg)
         old_arg = self._normalized_args.get(self._normalized_args_keys[index])
@@ -1026,6 +1026,41 @@ class Node:
             AstModifier.update_arg_value(self._normalized_args.get(key),
                                          keywords_ast[keyword_map_index.get(key)].value)
 
+    def _sync_call_pass_through_method_args_to_ast(self, assign_value):
+        """
+        Sync args of PASS_THROUGH_METHOD type ast.Cell of ast.Assign from self._normalized_args when NodeType is
+        CallMethod.
+        """
+        if isinstance(assign_value, ast.Name):
+            if len(self._normalized_args_keys) != 1:
+                raise RuntimeError("self._normalized_args_keys should have 1 elements")
+            arg = self._normalized_args.get(self._normalized_args_keys[0])
+            if arg.type != ValueType.NamingValue:
+                raise RuntimeError("arg.type should equal to ValueType.NamingValue")
+            if arg.scope != "":
+                raise RuntimeError("arg.scope should be empty")
+            assign_value.id = arg.value
+        elif isinstance(assign_value, ast.Attribute):
+            if len(self._normalized_args_keys) != 1:
+                raise RuntimeError("self._normalized_args_keys should have 1 elements")
+            arg = self._normalized_args.get(self._normalized_args_keys[0])
+            if arg.type != ValueType.NamingValue:
+                raise RuntimeError("arg.type should equal to ValueType.NamingValue")
+            assign_value.attr = arg.value
+            assign_value_value = assign_value.value
+            if not isinstance(assign_value_value, ast.Name):
+                raise RuntimeError("Only support ast.Name as value of attribute ", type(assign_value_value))
+            assign_value_value.id = arg.scope
+        else:
+            if len(self._normalized_args_keys) != 1:
+                raise RuntimeError("self._normalized_args_keys should have 1 elements")
+            arg = self._normalized_args.get(self._normalized_args_keys[0])
+            if arg.type not in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
+                raise RuntimeError("arg should be an IntValue, FloatValue or StringValue")
+            if arg.scope != "":
+                raise RuntimeError("arg.scope should be empty")
+            assign_value.value = arg.value
+
     def _sync_call_method_args_to_ast(self):
         """Sync args of ast.Cell of ast.Assign from self._normalized_args when NodeType is CallMethod."""
         if self._ast_node is None:
@@ -1035,37 +1070,22 @@ class Node:
             raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
         assign_value = assign_ast.value
         if self._func == PASS_THROUGH_METHOD:
-            if isinstance(assign_value, ast.Name):
-                if len(self._normalized_args_keys) != 1:
-                    raise RuntimeError("self._normalized_args_keys should have 1 elements")
-                arg = self._normalized_args.get(self._normalized_args_keys[0])
-                if arg.type != ValueType.NamingValue:
-                    raise RuntimeError("arg.type should equal to ValueType.NamingValue")
-                if arg.scope != "":
-                    raise RuntimeError("arg.scope should be empty")
-                assign_value.id = arg.value
-            elif isinstance(assign_value, ast.Attribute):
-                if len(self._normalized_args_keys) != 1:
-                    raise RuntimeError("self._normalized_args_keys should have 1 elements")
-                arg = self._normalized_args.get(self._normalized_args_keys[0])
-                if arg.type != ValueType.NamingValue:
-                    raise RuntimeError("arg.type should equal to ValueType.NamingValue")
-                assign_value.attr = arg.value
-                assign_value_value = assign_value.value
-                if not isinstance(assign_value_value, ast.Name):
-                    raise RuntimeError("Only support ast.Name as value of attribute ", type(assign_value_value))
-                assign_value_value.id = arg.scope
-            else:
-                if len(self._normalized_args_keys) != 1:
-                    raise RuntimeError("self._normalized_args_keys should have 1 elements")
-                arg = self._normalized_args.get(self._normalized_args_keys[0])
-                if arg.type not in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
-                    raise RuntimeError("arg should be an IntValue, FloatValue or StringValue")
-                if arg.scope != "":
-                    raise RuntimeError("arg.scope should be empty")
-                assign_value.value = arg.value
+            self._sync_call_pass_through_method_args_to_ast(assign_value)
+        elif self._func.value == "tuple":
+            tuple_ast: ast.Tuple = assign_value
+            if len(self._normalized_args_keys) != len(tuple_ast.elts):
+                raise RuntimeError("size of self._normalized_args_keys should be equal to size of elements of tuple")
+            for index, elt in enumerate(tuple_ast.elts):
+                scoped_value: ScopedValue = self._normalized_args.get(self._normalized_args_keys[index])
+                if isinstance(elt, (ast.Constant, ast.Str, ast.Num, ast.Bytes, ast.Name)):
+                    elt.value = scoped_value.value
+                elif isinstance(elt, ast.Attribute) and isinstance(elt.value, ast.Name):
+                    elt.value.id = scoped_value.scope
+                    elt.value = scoped_value.value
+                else:
+                    raise RuntimeError("Only support constant or symbol in tuple now")
         else:
-            raise RuntimeError("Only support pass_through method as call_method now, ", self._func.value)
+            raise RuntimeError("Only support pass_through or tuple method as call_method now, ", self._func.value)
 
     def _sync_return_node_to_ast(self):
         """Sync return value of ast.Return from self._normalized_args when NodeType is Output."""
