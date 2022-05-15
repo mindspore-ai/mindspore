@@ -820,6 +820,58 @@ class AvgPoolGrad(_PoolGrad):
         return x1_dtype
 
 
+class AvgPoolGradV1(Primitive):
+    """Gradients of the AvgPoolV1 operation."""
+
+    @prim_attr_register
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
+        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
+        validator.check_value_type('strides', strides, [int, tuple], self.name)
+        self.pad_mode = validator.check_string(
+            pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode)
+        self.format = validator.check_string(
+            data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        self.add_prim_attr('data_format', self.format)
+
+        def _avgpoolgrad_check_int_or_tuple(argname, argval):
+            validator.check_value_type(argname, argval, (int, tuple), self.name)
+            errormsg = ValueError(f"For '{self.name}' the '{argname}' should be an positive int number "
+                                  f"or a tuple of two or four positive int numbers, but got {argval}")
+            if isinstance(argval, int):
+                ret = (1, 1, argval, argval)
+            elif len(argval) == 2:
+                ret = (1, 1, argval[0], argval[1])
+            elif len(argval) == 4:
+                ret = argval
+            else:
+                raise errormsg
+            # whether all elements of tuple are positive integers?
+            for it in ret:
+                if not isinstance(it, int) or it <= 0:
+                    raise errormsg
+            return ret
+
+        self.kernel_size = _avgpoolgrad_check_int_or_tuple(
+            "kernel_size", kernel_size)
+        self.strides = _avgpoolgrad_check_int_or_tuple("strides", strides)
+
+        self.kernel_size_adapt = self.kernel_size if self.format == "NCHW" else (
+            self.kernel_size[0], self.kernel_size[2], self.kernel_size[3], self.kernel_size[1])
+        self.strides_adapt = self.strides if self.format == "NCHW" else (
+            self.strides[0], self.strides[2], self.strides[3], self.strides[1])
+
+        # If length of some attrs is 4 we regard it as legal, either by using the op directly,
+        # or passed from an instance of forward op AvgPoolV1.
+        if len(self.kernel_size) == 4:
+            self.kernel_size_adapt = self.kernel_size
+        if len(self.strides) == 4:
+            self.strides_adapt = self.strides
+
+        self.add_prim_attr("kernel_size", self.kernel_size_adapt)
+        self.add_prim_attr("strides", self.strides_adapt)
+
+
 class AdaptiveAvgPool2DGrad(PrimitiveWithInfer):
     """Gradients of the adaptive avg pool 2D operation."""
 

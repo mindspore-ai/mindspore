@@ -127,6 +127,8 @@ static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrC
   {"AvgPoolGradVm", FormatAndPadUpperAttrMap},
   {"AvgPoolGradGpu", FormatAndPadUpperAttrMap},
   {"AvgPoolGradCpu", FormatAndPadUpperAttrMap},
+  {"AvgPoolV1", FormatAndPadUpperAttrMap},
+  {"AvgPoolGradV1", FormatAndPadUpperAttrMap},
   {"MaxPoolGrad", FormatAndPadUpperAttrMap},
   {"MaxPoolGradV1", FormatAndPadUpperAttrMap},
   {"MaxPoolGradGrad", FormatAndPadUpperAttrMap},

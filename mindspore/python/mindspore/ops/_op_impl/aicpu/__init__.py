@@ -178,6 +178,8 @@ from .trace import _trace_aicpu
 from .tracegrad import _tracegrad_aicpu
 from .zeta import _zeta_aicpu
 from .adjust_hue import _adjust_hue_aicpu
+from .avgpool_v1 import _avgpool_v1_aicpu
+from .avgpool_grad_v1 import _avgpool_grad_v1_aicpu
 from .maxpool_v1 import _maxpool_v1_aicpu
 from .maxpool_grad_v1 import _maxpool_grad_v1_aicpu
 from .dense_to_csr_sparse_matrix import _dense_to_csr_sparse_matrix_aicpu

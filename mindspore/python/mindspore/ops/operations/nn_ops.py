@@ -2049,6 +2049,101 @@ class AvgPool(_Pool):
         super(AvgPool, self).__init__(kernel_size, strides, pad_mode, data_format)
 
 
+class AvgPoolV1(Primitive):
+    r"""
+    Average-pooling operation.
+
+    Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D planes.
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPoolV1 outputs
+    regional average in the :math:`(H_{in}, W_{in})`-dimension. Given window size
+    :math:`ks = (h_{ker}, w_{ker})` and strides :math:`s = (s_0, s_1)`, the operation is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
+
+    .. warning::
+        - Only single input and single output are supported.
+        - Global average pooling is supported.
+        - The height of "kernel_size" and the weight of "kernel_size" are positive integers within the range [1, 255].
+          ksize_h * ksize_w < 256.
+        - Due to instruction restrictions, the values of "strides_h" and "strides_w" are
+          positive integers within the range [1, 64).
+
+    Args:
+        kernel_size (Union[int, tuple[int]]): The size of the kernel used to take the average value,
+            is an integer that represents height and width of the kernel, or a tuple
+            of two integers that represent height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an integer that represents
+            the height and width of movement are both strides, or a tuple of two integers that
+            represent height and width of movement, respectively. Default: 1.
+        pad_mode (str): The optional value for pad mode, should be one of "same" or "valid".
+            Default: "valid".
+
+            - same: Adopts the way of completion. The height and width of output will be the same as
+              the input. The total number of padding will be calculated horizontally and vertically,
+              and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from bottom and right.
+
+            - valid: Adopts the way of discarding. The largest possible height and width of output
+              will be returned without padding. Extra pixels will be discarded.
+        data_format (str): The format of input and output data. Should be 'NHWC' or 'NCHW'.
+            Default: 'NCHW'.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If length of shape of `x` is not equal to 4.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> x = Tensor(np.arange(1 * 2 * 4 * 4).reshape((1, 2, 4, 4)), mindspore.float64)
+        >>> avgpoolv1_op = ops.AvgPoolV1(pad_mode="VALID", kernel_size=3, strides=1)
+        >>> _output = avgpoolv1_op(x)
+        >>> print(_output)
+        [[[[ 5.  6.]
+           [ 9. 10.]]
+          [[21. 22.]
+           [25. 26.]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+        """Initialize AvgPoolV1."""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
+        validator.check_value_type('strides', strides, [int, tuple], self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
+        self.pad_mode = validator.check_string(
+            pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode)
+        self.format = validator.check_string(
+            data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        self.add_prim_attr('data_format', self.format)
+        self.kernel_size = _check_positive_int_or_tuple(
+            "kernel_size", kernel_size, self.name, allow_four=False, ret_four=True)
+        self.strides = _check_positive_int_or_tuple(
+            "strides", strides, self.name, allow_four=False, ret_four=True)
+
+        # adapt data_format
+        self.kernel_size_adapted = self.kernel_size if self.format == "NCHW" else (
+            self.kernel_size[0], self.kernel_size[2], self.kernel_size[3], self.kernel_size[1])
+        self.add_prim_attr("kernel_size", self.kernel_size_adapted)
+        self.strides_adapted = self.strides if self.format == "NCHW" else (
+            self.strides[0], self.strides[2], self.strides[3], self.strides[1])
+        self.add_prim_attr("strides", self.strides_adapted)
+
+
 class Conv2DBackpropInput(Primitive):
     r"""
     The Conv2DBackpropInput interface is deprecated, please refer to :class:`mindspore.ops.Conv2DTranspose` if you
