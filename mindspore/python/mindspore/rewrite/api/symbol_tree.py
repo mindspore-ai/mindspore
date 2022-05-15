@@ -16,9 +16,10 @@
 from typing import Optional
 
 from mindspore.nn import Cell
+from ..._checkparam import Validator
 from .node import Node
 from ..symbol_tree_builder import SymbolTreeBuilder
-from ..symbol_tree import SymbolTree as SymbolTreeImpl
+from ..symbol_tree import Position, SymbolTree as SymbolTreeImpl
 
 
 class SymbolTree:
@@ -34,12 +35,24 @@ class SymbolTree:
     """
 
     def __init__(self, handler: SymbolTreeImpl):
+        Validator.check_value_type("handler", handler, [SymbolTreeImpl], "SymbolTree")
         self._symbol_tree: SymbolTreeImpl = handler
 
     @classmethod
     def create(cls, network):
-        if not isinstance(network, Cell):
-            raise RuntimeError("Only support Cell-type-network now, ", network)
+        """
+        Create a new `SymbolTree` of the input `network`.
+
+        Args:
+            network (Cell): `network` used to create `SymbolTree`.
+
+        Returns:
+            Symboltree: A `Symboltree` created based on `network`.
+
+        Raises:
+            TypeError: If `network` is not a `Cell` instance.
+        """
+        Validator.check_value_type("network", network, [Cell], "SymbolTree")
         return cls(SymbolTreeBuilder(network).build())
 
     def get_handler(self) -> SymbolTreeImpl:
@@ -53,7 +66,7 @@ class SymbolTree:
 
     def nodes(self):
         """
-        Get all nodes of corresponding network.
+        Get a generator for node of corresponding network.
 
         Returns:
             A generator for node of current `SymbolTree`.
@@ -70,7 +83,11 @@ class SymbolTree:
 
         Returns:
             An instance of node if find else None.
+
+        Raises:
+            TypeError: If `node_name` is not `str`.
         """
+        Validator.check_value_type("node_name", node_name, [str], "SymbolTree")
         node_impl = self._symbol_tree.get_node(node_name)
         if node_impl is None:
             return None
@@ -78,10 +95,10 @@ class SymbolTree:
 
     def get_inputs(self) -> [Node]:
         """
-        Get 'input' nodes of current `SymbolTree`.
+        Get input nodes of current `SymbolTree`.
 
         Returns:
-            [Node]: The node list of the current 'Symboltree'.
+            [Node]: The node list of the current `Symboltree`.
         """
         return [Node(node_impl) for node_impl in self._symbol_tree.get_inputs()]
 
@@ -100,8 +117,9 @@ class SymbolTree:
             A `Position` to indicate where to insert node.
 
         Raises:
-            RuntimeError: if `node` is not a Node or a string.
+            TypeError: if `node` is not a `Node`.
         """
+        Validator.check_value_type("node", node, [Node], "SymbolTree")
         return self._symbol_tree.before(node.get_handler())
 
     def after(self, node: Node):
@@ -119,8 +137,9 @@ class SymbolTree:
             A `Position` to indicate where to insert node.
 
         Raises:
-            RuntimeError: If `node` is not a Node.
+            TypeError: If `node` is not a `Node`.
         """
+        Validator.check_value_type("node", node, [Node], "SymbolTree")
         return self._symbol_tree.after(node.get_handler())
 
     def insert(self, position, node: Node) -> Node:
@@ -139,7 +158,11 @@ class SymbolTree:
 
         Raises:
             RuntimeError: If `position` is not belong to current `SymbolTree`.
+            TypeError: If `position` is not a `Position`.
+            TypeError: If `node` is not a `Node`.
         """
+        Validator.check_value_type("position", position, [Position], "SymbolTree")
+        Validator.check_value_type("node", node, [Node], "SymbolTree")
         return Node(self._symbol_tree.insert_node(position, node.get_handler()))
 
     def erase_node(self, node: Node) -> Optional[Node]:
@@ -153,8 +176,9 @@ class SymbolTree:
             An instance of `Node` being erased if node is in `SymbolTree` else None.
 
         Raises:
-            RuntimeError: If `node` is not a `Node`.
+            TypeError: If `node` is not a `Node`.
         """
+        Validator.check_value_type("node", node, [Node], "SymbolTree")
         return Node(self._symbol_tree.erase_node(node.get_handler()))
 
     def replace(self, old_node: Node, new_nodes: [Node]) -> Node:
@@ -183,7 +207,11 @@ class SymbolTree:
 
         Raises:
             RuntimeError: Old node is isolated.
+            TypeError: If `old_node` is not a `Node`.
+            TypeError: If `new_nodes` is not a `list` or node in `new_nodes` is not a `Node`.
         """
+        Validator.check_value_type("old_node", old_node, [Node], "SymbolTree")
+        Validator.check_element_type_of_iterable("new_nodes", new_nodes, [Node], "SymbolTree")
         nodes_impl = [node.get_handler() for node in new_nodes]
         return Node(self._symbol_tree.replace(old_node.get_handler(), nodes_impl))
 
@@ -200,7 +228,11 @@ class SymbolTree:
 
         Raises:
             RuntimeError: If `index` is out of range.
+            TypeError: If `index` is not a `int` number.
+            TypeError: If `return_value` is not a `str`.
         """
+        Validator.check_value_type("index", index, [int], "SymbolTree")
+        Validator.check_value_type("return_value", return_value, [str], "SymbolTree")
         return Node(self._symbol_tree.set_output(return_value, index))
 
     def dump(self):

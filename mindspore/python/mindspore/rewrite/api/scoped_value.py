@@ -15,6 +15,7 @@
 """Rewrite module api: ValueType and ScopedValue."""
 from enum import Enum
 from typing import Optional
+from ..._checkparam import Validator
 
 
 class ValueType(Enum):
@@ -54,6 +55,8 @@ class ScopedValue:
     """
 
     def __init__(self, arg_type: ValueType, scope: str = "", value=None):
+        Validator.check_value_type("arg_type", arg_type, [ValueType], "ScopedValue")
+        Validator.check_value_type("scope", scope, [str], "ScopedValue")
         self.type = arg_type
         self.scope = scope
         self.value = value
@@ -101,7 +104,13 @@ class ScopedValue:
 
         Returns:
             An instance of `ScopedValue`.
+
+        Raises:
+            TypeError: If `name` is not `str`.
+            TypeError: If `scope` is not `str`.
         """
+        Validator.check_value_type("name", name, [str], "ScopedValue")
+        Validator.check_value_type("scope", scope, [str], "ScopedValue")
         return cls(ValueType.NamingValue, scope, name)
 
     @staticmethod
@@ -118,8 +127,12 @@ class ScopedValue:
 
         Raise:
             RuntimeError: If the length of names is not equal to the length of scopes when scopes are not None.
+            TypeError: If `names` is not `list` and name in `names` is not `str`.
+            TypeError: If `scopes` is not `list` and scope in `scopes` is not `str`.
         """
+        Validator.check_element_type_of_iterable("names", names, [str], "ScopedValue")
         if scopes is not None:
+            Validator.check_element_type_of_iterable("scopes", scopes, [str], "ScopedValue")
             if len(names) != len(scopes):
                 raise RuntimeError("Length of names should be equal to length of scopes")
         result = []
