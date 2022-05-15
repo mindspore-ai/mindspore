@@ -43,6 +43,7 @@ constexpr auto kSharedName = "shared_name";
 constexpr auto kShapes = "shapes";
 constexpr auto kTypes = "types";
 constexpr auto kQueueName = "queue_name";
+constexpr auto kNameRangeV2 = "RangeV2";
 constexpr auto kSeed = "seed";
 constexpr auto kSeed0 = "Seed0";
 constexpr auto kSeed1 = "Seed1";
@@ -103,9 +104,13 @@ const std::set<std::string> kDynamicInputOps{
   kPrint,           kPack,           kMeshgrid,      kStackInitOpName,          kStackDestroyOpName,
   kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample};
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
-  {kMaxPoolV1, "MaxPool"}, {kMaxPoolGradV1, "MaxPoolGrad"},
-  {kStack, "Pack"},        {kUnstack, "Unpack"},
-  {kGather, "GatherV2"},   {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"}};
+  {kMaxPoolV1, "MaxPool"},
+  {kMaxPoolGradV1, "MaxPoolGrad"},
+  {kNameRangeV2, "Range"},
+  {kStack, "Pack"},
+  {kUnstack, "Unpack"},
+  {kGather, "GatherV2"},
+  {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number
