@@ -108,7 +108,11 @@ def test_if_after_if_in_for_numpy():
     assert res == 9
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_if_after_if_in_for_numpy_2():
     """
     Feature: JIT Fallback
@@ -131,7 +135,11 @@ def test_if_after_if_in_for_numpy_2():
     assert (res.asnumpy() == [17, 16, 15, 14]).all()
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_if_after_if_in_for_list():
     """
     Feature: JIT Fallback
@@ -145,7 +153,7 @@ def test_if_after_if_in_for_list():
         for i in range(4):
             if x[i] > y[i]:
                 y = x * 2
-        if x < y:
+        if len(x) < len(y):
             return Tensor(x + y)
         return Tensor(y)
     res = control_flow_if_after_if_in_for()

@@ -25,25 +25,32 @@ context.set_context(mode=context.GRAPH_MODE)
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_while_after_for_tensor():
+def test_while_after_if_in_while_tensor():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
     @ms_function
-    def control_flow_while_after_for():
+    def control_flow_while_after_if_in_while():
         x = Tensor([1])
         y = Tensor([2])
-        for _ in range(5):
+        z = Tensor([0])
+        index = Tensor([3])
+        while index < Tensor(10):
             y = y * x - Tensor([3])
-        z = y + x
+            z = x + y
+            index += Tensor(2)
+            if x * y < z:
+                x = y + z
+            else:
+                x = y - z
         while y > x and x < z:
             y -= x
             z = z + y
         return z
-    res = control_flow_while_after_for()
-    assert res == -12
+    res = control_flow_while_after_if_in_while()
+    assert res == 33
 
 
 @pytest.mark.level0
@@ -51,71 +58,80 @@ def test_while_after_for_tensor():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_while_after_for_tensor_2():
+def test_while_after_if_in_while_tensor_2():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
     @ms_function
-    def control_flow_while_after_for():
+    def control_flow_while_after_if_in_while():
         x = Tensor([1])
         y = Tensor([2])
-        for _ in range(3):
-            y = y * x
-        z = Tensor([4])
-        while x + z < y:
+        z = x + y
+        while x >= y:
+            if x * y < z:
+                x = y + z
+            elif x < y:
+                x = y - 1
+            else:
+                x = y - z
+        while y > x:
             y -= x
-        z = Tensor(7) - y
-        return z
-    res = control_flow_while_after_for()
-    assert res == 5
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_while_after_for_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_while_after_for():
-        x = [1, 2, 3, 4, 5]
-        y = Tensor([3])
-        for i in range(4):
-            x[i] += i
-        while y >= 0:
-            y -= Tensor(x[0])
-        return Tensor(x), y
-    res_x, res_y = control_flow_while_after_for()
-    assert (res_x.asnumpy() == [1, 3, 5, 7, 5]).all()
-    assert res_y == -1
+            z = z + y
+        return x, y, z
+    res_x, res_y, res_z = control_flow_while_after_if_in_while()
+    assert res_x == 1
+    assert res_y == 1
+    assert res_z == 4
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_while_after_for_numpy_2():
+def test_while_after_if_in_while_numpy():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
     @ms_function
-    def control_flow_while_after_for():
-        x = np.array([3, 2])
-        y = [1, 2, 3, 4]
-        for i in x:
-            y.append(i)
-        z = Tensor([0])
-        while Tensor(sum(x)) < Tensor(15):
-            z += Tensor(15) - Tensor(sum(x))
-            x = np.array([1, 2, 3, 4, 5, 6])
-        return Tensor(x), Tensor(y), z
-    res_x, res_y, res_z = control_flow_while_after_for()
-    assert (res_x.asnumpy() == [1, 2, 3, 4, 5, 6]).all()
-    assert (res_y.asnumpy() == [1, 2, 3, 4, 3, 2]).all()
-    assert res_z == [10]
+    def control_flow_while_after_if_in_while():
+        x = np.array([1])
+        y = np.array([10])
+        while Tensor(x) < Tensor(y):
+            z = Tensor([-2])
+            if Tensor(x) < z:
+                y = 0
+            else:
+                x = y + x
+        while Tensor(y[0]) < Tensor(x[0]):
+            y += x
+        return Tensor(y)
+    res = control_flow_while_after_if_in_while()
+    assert res == 21
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_while_after_if_in_while_numpy_2():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while_after_if_in_while():
+        x = np.array([1])
+        y = np.array([10])
+        while x >= y:
+            z = Tensor([2])
+            if Tensor(x) < z:
+                x = y - x
+            elif Tensor(x) < Tensor(y):
+                x += y
+            else:
+                y = x + y
+        while y[0] > x[0]:
+            y[0] -= x[0]
+        return Tensor(x), Tensor(y)
+    res_x, res_y = control_flow_while_after_if_in_while()
+    assert res_x == 1
+    assert res_y == 1
