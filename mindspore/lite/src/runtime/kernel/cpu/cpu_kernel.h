@@ -33,7 +33,8 @@ class CPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
 
-  int Registry(const KernelKey &key);
+ public:
+  int InitKernel(const KernelKey &key);
 
  private:
   void UpdateTensorC();
@@ -45,6 +46,10 @@ class CPUKernel : public LiteKernel {
   size_t in_size_ = 0;
   size_t out_size_ = 0;
 };
+
+CPUKernel *CPUKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                             const KernelKey &key);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_EXP_H_

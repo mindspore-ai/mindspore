@@ -51,34 +51,6 @@ void CPUKernel::UpdateTensorC() {
   return;
 }
 
-int CPUKernel::Registry(const KernelKey &key) {
-  in_size_ = in_tensors_.size();
-  if (in_size_ == 0 || in_size_ > MAX_MALLOC_SIZE) {
-    return RET_ERROR;
-  }
-  in_ = reinterpret_cast<TensorC *>(malloc(in_size_ * sizeof(TensorC)));
-  if (in_ == nullptr) {
-    return RET_ERROR;
-  }
-
-  out_size_ = out_tensors_.size();
-  if (out_size_ == 0 || out_size_ > MAX_MALLOC_SIZE) {
-    return RET_ERROR;
-  }
-  out_ = reinterpret_cast<TensorC *>(malloc(out_size_ * sizeof(TensorC)));
-  if (out_ == nullptr) {
-    return RET_ERROR;
-  }
-
-  UpdateTensorC();
-
-  kernel_ = CreateKernel(op_parameter_, &in_, in_size_, &out_, out_size_, key.data_type, (FormatC)key.format);
-  if (kernel_ == nullptr) {
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
 int CPUKernel::Prepare() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
@@ -123,5 +95,54 @@ int CPUKernel::Run() {
   }
 
   return kernel_->compute(kernel_);
+}
+
+int CPUKernel::InitKernel(const KernelKey &key) {
+  in_size_ = in_tensors_.size();
+  if (in_size_ == 0 || in_size_ > MAX_MALLOC_SIZE) {
+    return RET_ERROR;
+  }
+  in_ = reinterpret_cast<TensorC *>(malloc(in_size_ * sizeof(TensorC)));
+  if (in_ == nullptr) {
+    return RET_ERROR;
+  }
+
+  out_size_ = out_tensors_.size();
+  if (out_size_ == 0 || out_size_ > MAX_MALLOC_SIZE) {
+    return RET_ERROR;
+  }
+  out_ = reinterpret_cast<TensorC *>(malloc(out_size_ * sizeof(TensorC)));
+  if (out_ == nullptr) {
+    return RET_ERROR;
+  }
+
+  UpdateTensorC();
+
+  kernel_ = CreateKernel(op_parameter_, &in_, in_size_, &out_, out_size_, key.data_type, (FormatC)key.format);
+  if (kernel_ == nullptr) {
+    return RET_ERROR;
+  }
+
+  return RET_OK;
+}
+
+CPUKernel *CPUKernelRegistry(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                             const KernelKey &key) {
+  auto *lite_kernel = new (std::nothrow) kernel::CPUKernel(parameter, inputs, outputs, ctx);
+  if (lite_kernel == nullptr) {
+    MS_LOG(ERROR) << "Create cpu kernel failed:  " << parameter->name_;
+    return nullptr;
+  }
+
+  auto ret = lite_kernel->InitKernel(key);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init cpu kernel failed:  " << parameter->name_;
+    delete lite_kernel;
+    lite_kernel = nullptr;
+    return nullptr;
+  }
+
+  return lite_kernel;
 }
 }  // namespace mindspore::kernel

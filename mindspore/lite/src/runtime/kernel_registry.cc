@@ -214,16 +214,12 @@ kernel::LiteKernel *KernelRegistry::GetLiteKernel(const std::vector<Tensor *> &i
     return nullptr;
   }
 
-  auto *lite_kernel = new (std::nothrow) kernel::CPUKernel(parameter, in_tensors, out_tensors, ctx);
+  auto *lite_kernel = CPUKernelRegistry(parameter, in_tensors, out_tensors, ctx, key);
   if (lite_kernel == nullptr) {
-    MS_LOG(ERROR) << "new common cpu kernel failed:  " << parameter->name_;
+    MS_LOG(ERROR) << "Registry cpu kernel failed:  " << parameter->name_;
     return nullptr;
   }
   lite_kernel->set_registry_data_type(key.data_type);
-  auto ret = lite_kernel->Registry(key);
-  if (ret != RET_OK) {
-    return nullptr;
-  }
   return lite_kernel;
 }
 
