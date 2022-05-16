@@ -61,7 +61,8 @@ class LossMonitor(Callback):
         Print training loss at the end of step.
 
         Args:
-            run_context (RunContext): Include some information of the model.
+            run_context (RunContext): Include some information of the model.  For more details,
+                    please refer to :class:`mindspore.RunContext`.
         """
         cb_params = run_context.original_args()
         loss = cb_params.net_outputs

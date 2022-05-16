@@ -55,7 +55,8 @@ class TimeMonitor(Callback):
         Record time at the beginning of epoch.
 
         Args:
-            run_context (RunContext): Context of the process running.
+            run_context (RunContext): Context of the process running.  For more details,
+                    please refer to :class:`mindspore.RunContext`.
         """
         self.epoch_time = time.time()
 
@@ -64,7 +65,8 @@ class TimeMonitor(Callback):
         Print process cost time at the end of epoch.
 
         Args:
-           run_context (RunContext): Context of the process running.
+           run_context (RunContext): Context of the process running.  For more details,
+                   please refer to :class:`mindspore.RunContext`.
         """
         epoch_seconds = (time.time() - self.epoch_time) * 1000
         step_size = self.data_size

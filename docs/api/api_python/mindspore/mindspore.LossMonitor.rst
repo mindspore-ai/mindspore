@@ -24,4 +24,4 @@ mindspore.LossMonitor
 
         **参数：**
 
-        - **run_context** (RunContext) - 包含模型的相关信息。
+        - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.RunContext`。
