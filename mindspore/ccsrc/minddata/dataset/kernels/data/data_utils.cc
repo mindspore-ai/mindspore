@@ -300,58 +300,77 @@ void CastFrom(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       Cast<T, double>(input, output);
       break;
     case DataType::DE_UNKNOWN:
-      MS_LOG(ERROR) << "TypeCast: unknown datatype of input data, supported datatype is: [bool, int8, uint8, int16, "
-                       "uint16, int32, uint32, int64, uint64, float16, float32, float64].";
+    default:
+      MS_LOG(ERROR) << "TypeCast: Casting to type " + (*output)->type().ToString() + " is valid, supported datatype: " +
+                         "[bool, int8, uint8, int16, uint16, int32, uint32, int64, uint64, float16, float32, float64].";
       break;
   }
 }
 
 // Type cast operator
 Status TypeCast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type) {
-  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
-
   switch (input->type().value()) {
     case DataType::DE_BOOL:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<bool>(input, output);
       break;
     case DataType::DE_INT8:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<int8_t>(input, output);
       break;
     case DataType::DE_UINT8:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<uint8_t>(input, output);
       break;
     case DataType::DE_INT16:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<int16_t>(input, output);
       break;
     case DataType::DE_UINT16:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<uint16_t>(input, output);
       break;
     case DataType::DE_INT32:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<int32_t>(input, output);
       break;
     case DataType::DE_UINT32:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<uint32_t>(input, output);
       break;
     case DataType::DE_INT64:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<int64_t>(input, output);
       break;
     case DataType::DE_UINT64:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<uint64_t>(input, output);
       break;
     case DataType::DE_FLOAT16:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<float16>(input, output);
       break;
     case DataType::DE_FLOAT32:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<float>(input, output);
       break;
     case DataType::DE_FLOAT64:
+      RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), data_type, output));
       CastFrom<double>(input, output);
       break;
+    case DataType::DE_STRING:
+      if (data_type == DataType::DE_STRING) {
+        *output = input;
+        break;
+      } else {
+        RETURN_STATUS_UNEXPECTED("TypeCast: TypeCast does not support cast from string to " + data_type.ToString());
+      }
     case DataType::DE_UNKNOWN:
+    default:
       // sanity check, unreachable code.
       RETURN_STATUS_UNEXPECTED(
-        "TypeCast: TypeCast does not support input of this type, supported is: [bool, int8, int16, int32, int64, uint8,"
-        " uint16, uint32, uint64, float16, float32, float64]");
+        "TypeCast: Typecast does not support Input with type " + input->type().ToString() + ", supported datatype: " +
+        "[bool, int8, uint8, int16, uint16, int32, uint32, int64, uint64, float16, float32, float64].");
   }
   return Status::OK();
 }
@@ -608,6 +627,7 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
       RETURN_IF_NOT_OK(MaskHelper<std::string_view>(input, *output, casted_value, op));
       break;
     case DataType::DE_UNKNOWN:
+    default:
       RETURN_STATUS_UNEXPECTED(
         "Mask: unsupported input datatype, support datatype is:[bool, int8, uint8, int16, uint16, int32, uint32, "
         "int64, uint64, float16, float32, float64, string].");
