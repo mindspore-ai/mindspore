@@ -142,7 +142,7 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t ba
             std::string error_message =
               "Invalid data, requested to pad to bucket boundary failed, bucket index should be less than " +
               std::to_string(bucket_boundaries_.size()) + ", but got " + std::to_string(bucket_index);
-            return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, error_message);
+            RETURN_STATUS_UNEXPECTED(error_message);
           }
 
           pad_shape[i] = bucket_boundaries_[bucket_index + 1] - 1;

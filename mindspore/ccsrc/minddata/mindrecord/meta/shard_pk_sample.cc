@@ -39,7 +39,7 @@ ShardPkSample::ShardPkSample(const std::string &category_field, int64_t num_elem
 
 Status ShardPkSample::SufExecute(ShardTaskList &tasks) {
   if (shuffle_ == true) {
-    RETURN_IF_NOT_OK((*shuffle_op_)(tasks));
+    RETURN_IF_NOT_OK_MR((*shuffle_op_)(tasks));
   }
   return Status::OK();
 }

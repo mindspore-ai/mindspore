@@ -69,7 +69,7 @@ Status ShardShuffle::ShuffleFiles(ShardTaskList &tasks) {
   if (no_of_samples_ == 0) {
     no_of_samples_ = tasks.Size();
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(
     no_of_samples_ > 0, "Invalid input, 'num_samples' should be positive but got: " + std::to_string(no_of_samples_));
   auto shard_sample_cout = GetShardSampleCount();
 
@@ -123,7 +123,7 @@ Status ShardShuffle::ShuffleInfile(ShardTaskList &tasks) {
   if (no_of_samples_ == 0) {
     no_of_samples_ = tasks.Size();
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(
     no_of_samples_ > 0, "Invalid input, 'num_samples' should be positive but got: " + std::to_string(no_of_samples_));
   // reconstruct the permutation in file
   // -- before --
@@ -158,9 +158,9 @@ Status ShardShuffle::Execute(ShardTaskList &tasks) {
   if (reshuffle_each_epoch_) {
     shuffle_seed_++;
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(tasks.categories >= 1,
-                               "[Internal ERROR] task categories should be greater than or equal to 1 but got: " +
-                                 std::to_string(tasks.categories));
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(tasks.categories >= 1,
+                                  "[Internal ERROR] task categories should be greater than or equal to 1 but got: " +
+                                    std::to_string(tasks.categories));
   if (shuffle_type_ == kShuffleSample) {  // shuffle each sample
     if (tasks.permutation_.empty() == true) {
       tasks.MakePerm();
@@ -171,8 +171,9 @@ Status ShardShuffle::Execute(ShardTaskList &tasks) {
         if (no_of_samples_ == 0) {
           no_of_samples_ = tasks.sample_ids_.size();
         }
-        CHECK_FAIL_RETURN_UNEXPECTED(no_of_samples_ > 0, "Invalid input, 'num_samples' should be positive but got: " +
-                                                           std::to_string(no_of_samples_));
+        CHECK_FAIL_RETURN_UNEXPECTED_MR(
+          no_of_samples_ > 0,
+          "Invalid input, 'num_samples' should be positive but got: " + std::to_string(no_of_samples_));
         for (uint32_t i = 0; i < no_of_samples_; ++i) {
           new_tasks.AssignTask(tasks, tasks.GetRandomTaskID());
         }
@@ -190,9 +191,9 @@ Status ShardShuffle::Execute(ShardTaskList &tasks) {
         ShardTaskList::TaskListSwap(tasks, new_tasks);
       }
     } else if (GetShuffleMode() == dataset::ShuffleMode::kInfile) {
-      RETURN_IF_NOT_OK(ShuffleInfile(tasks));
+      RETURN_IF_NOT_OK_MR(ShuffleInfile(tasks));
     } else if (GetShuffleMode() == dataset::ShuffleMode::kFiles) {
-      RETURN_IF_NOT_OK(ShuffleFiles(tasks));
+      RETURN_IF_NOT_OK_MR(ShuffleFiles(tasks));
     }
   } else {  // shuffle unit like: (a1, b1, c1),(a2, b2, c2),..., (an, bn, cn)
     return this->CategoryShuffle(tasks);

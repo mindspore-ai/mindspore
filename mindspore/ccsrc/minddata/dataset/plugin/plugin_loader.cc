@@ -21,7 +21,6 @@
 #include <set>
 #include <vector>
 
-#include "mindspore/core/utils/log_adapter.h"
 #include "minddata/dataset/plugin/shared_lib_util.h"
 
 namespace mindspore {

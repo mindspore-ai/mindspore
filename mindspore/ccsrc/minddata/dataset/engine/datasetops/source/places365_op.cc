@@ -245,7 +245,7 @@ Status Places365Op::GetPlaces365DataTensor(uint32_t index, std::shared_ptr<Tenso
       *image_tensor = nullptr;
       std::string err_msg =
         "Invalid image, failed to decode " + file_path + ": the image is damaged or permission denied.";
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
+      RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
 

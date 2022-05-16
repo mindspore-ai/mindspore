@@ -98,7 +98,7 @@ Status SerializeTensorRowHeader(const TensorRow &row, std::shared_ptr<flatbuffer
     (*out_fbb) = std::move(fbb);
     return Status::OK();
   } catch (const std::bad_alloc &e) {
-    return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
+    RETURN_STATUS_OOM("Out of memory.");
   }
 }
 

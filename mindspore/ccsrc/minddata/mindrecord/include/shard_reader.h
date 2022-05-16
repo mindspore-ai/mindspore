@@ -42,6 +42,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "minddata/mindrecord/include/common/log_adapter.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "minddata/mindrecord/include/shard_category.h"
 #include "minddata/mindrecord/include/shard_column.h"
@@ -53,7 +54,6 @@
 #include "minddata/mindrecord/include/shard_reader.h"
 #include "minddata/mindrecord/include/shard_sample.h"
 #include "minddata/mindrecord/include/shard_shuffle.h"
-#include "utils/log_adapter.h"
 
 #define API_PUBLIC __attribute__((visibility("default")))
 

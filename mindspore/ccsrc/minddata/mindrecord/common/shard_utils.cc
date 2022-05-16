@@ -59,14 +59,14 @@ bool ValidateFieldName(const std::string &str) {
 }
 
 Status GetFileName(const std::string &path, std::shared_ptr<std::string> *fn_ptr) {
-  RETURN_UNEXPECTED_IF_NULL(fn_ptr);
+  RETURN_UNEXPECTED_IF_NULL_MR(fn_ptr);
 
   std::optional<std::string> prefix_path;
   std::optional<std::string> file_name;
   FileUtils::SplitDirAndFileName(path, &prefix_path, &file_name);
   if (!file_name.has_value()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, failed to get the filename of mindrecord file. Please check file path: " +
-                             path);
+    RETURN_STATUS_UNEXPECTED_MR(
+      "Invalid file, failed to get the filename of mindrecord file. Please check file path: " + path);
   }
   *fn_ptr = std::make_shared<std::string>(file_name.value());
 
@@ -74,7 +74,7 @@ Status GetFileName(const std::string &path, std::shared_ptr<std::string> *fn_ptr
 }
 
 Status GetParentDir(const std::string &path, std::shared_ptr<std::string> *pd_ptr) {
-  RETURN_UNEXPECTED_IF_NULL(pd_ptr);
+  RETURN_UNEXPECTED_IF_NULL_MR(pd_ptr);
 
   std::optional<std::string> prefix_path;
   std::optional<std::string> file_name;
@@ -84,7 +84,7 @@ Status GetParentDir(const std::string &path, std::shared_ptr<std::string> *pd_pt
   }
 
   auto realpath = FileUtils::GetRealPath(prefix_path.value().c_str());
-  CHECK_FAIL_RETURN_UNEXPECTED(
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(
     realpath.has_value(), "Invalid file, failed to get the parent dir of mindrecord file. Please check file: " + path);
 
   *pd_ptr = std::make_shared<std::string>(realpath.value() + kPathSeparator);
@@ -126,17 +126,17 @@ Status CheckFile(const std::string &path) {
   if (stat(common::SafeCStr(path), &s) == 0) {
 #endif
     if (S_ISDIR(s.st_mode)) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, " + path + " is not a mindrecord file, but got directory.");
+      RETURN_STATUS_UNEXPECTED_MR("Invalid file, " + path + " is not a mindrecord file, but got directory.");
     }
     return Status::OK();
   }
-  RETURN_STATUS_UNEXPECTED(
+  RETURN_STATUS_UNEXPECTED_MR(
     "Invalid file, mindrecord file: " + path +
     " can not be found. Please check whether the mindrecord file exists and do not rename the mindrecord file.");
 }
 
 Status GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type, std::shared_ptr<uint64_t> *size_ptr) {
-  RETURN_UNEXPECTED_IF_NULL(size_ptr);
+  RETURN_UNEXPECTED_IF_NULL_MR(size_ptr);
 #if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
   *size_ptr = std::make_shared<uint64_t>(100);
   return Status::OK();
@@ -144,7 +144,7 @@ Status GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type, st
   uint64_t ll_count = 0;
   struct statfs disk_info;
   if (statfs(common::SafeCStr(str_dir), &disk_info) == -1) {
-    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to get free disk size.");
+    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to get free disk size.");
   }
 
   switch (disk_type) {
@@ -175,14 +175,36 @@ uint32_t GetMaxThreadNum() {
 }
 
 Status GetDatasetFiles(const std::string &path, const json &addresses, std::shared_ptr<std::vector<std::string>> *ds) {
-  RETURN_UNEXPECTED_IF_NULL(ds);
+  RETURN_UNEXPECTED_IF_NULL_MR(ds);
   std::shared_ptr<std::string> parent_dir;
-  RETURN_IF_NOT_OK(GetParentDir(path, &parent_dir));
+  RETURN_IF_NOT_OK_MR(GetParentDir(path, &parent_dir));
   for (const auto &p : addresses) {
     std::string abs_path = *parent_dir + std::string(p);
     (*ds)->emplace_back(abs_path);
   }
   return Status::OK();
+}
+
+std::mt19937 GetRandomDevice() {
+#if defined(_WIN32) || defined(_WIN64)
+  unsigned int number;
+  rand_s(&number);
+  std::mt19937 random_device{static_cast<uint32_t>(number)};
+#else
+  int i = 0;
+  while (i < 5) {
+    try {
+      std::mt19937 random_device{std::random_device("/dev/urandom")()};
+      return random_device;
+    } catch (const std::exception &e) {
+      MS_LOG(WARNING) << "Get std::random_device failed, retry: " << i << ", error: " << e.what();
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      i++;
+    }
+  }
+  std::mt19937 random_device{std::random_device("/dev/urandom")()};
+#endif
+  return random_device;
 }
 }  // namespace mindrecord
 }  // namespace mindspore

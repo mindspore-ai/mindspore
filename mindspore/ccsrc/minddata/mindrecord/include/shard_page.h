@@ -23,9 +23,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "minddata/mindrecord/include/common/log_adapter.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "pybind11/pybind11.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace mindrecord {

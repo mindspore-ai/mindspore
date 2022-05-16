@@ -31,7 +31,7 @@ Status TaskManager::CreateAsyncTask(const std::string &my_name, const std::funct
   SharedLock stateLck(&state_lock_);
   // Now double check the state
   if (ServiceState() == STATE::kStopInProg || ServiceState() == STATE::kStopped) {
-    return Status(StatusCode::kMDInterrupted, __LINE__, __FILE__, "TaskManager is shutting down");
+    RETURN_STATUS_ERROR(StatusCode::kMDInterrupted, "TaskManager is shutting down");
   }
   RETURN_IF_NOT_OK(GetFreeTask(my_name, f, task, operator_id));
   if (vg == nullptr) {
@@ -285,7 +285,7 @@ Status TaskGroup::CreateAsyncTask(const std::string &my_name, const std::functio
   SharedLock state_lck(&state_lock_);
   // Now double check the state
   if (ServiceState() != STATE::kRunning) {
-    return Status(StatusCode::kMDInterrupted, __LINE__, __FILE__, "Taskgroup is shutting down");
+    RETURN_STATUS_ERROR(StatusCode::kMDInterrupted, "Taskgroup is shutting down");
   }
   TaskManager &dm = TaskManager::GetInstance();
   Task *pTask = nullptr;

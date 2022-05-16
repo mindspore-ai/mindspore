@@ -22,8 +22,8 @@
 #include <utility>
 #include <random>
 #include "lite_cv/lite_mat.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

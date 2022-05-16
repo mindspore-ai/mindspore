@@ -49,10 +49,10 @@ Status WeightedRandomSamplerRT::InitSampler() {
                                  std::to_string(samples_per_tensor_) + ".\n");
 
   if (weights_.size() > static_cast<size_t>(num_rows_)) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid parameter, size of sample weights must be less than or equal to num of data, "
-                  "otherwise might cause generated id out of bound or other errors, but got weight size: " +
-                    std::to_string(weights_.size()) + ", num of data: " + std::to_string(num_rows_));
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid parameter, size of sample weights must be less than or equal to num of data, "
+      "otherwise might cause generated id out of bound or other errors, but got weight size: " +
+      std::to_string(weights_.size()) + ", num of data: " + std::to_string(num_rows_));
   }
   if (!replacement_ && (weights_.size() < static_cast<size_t>(num_samples_))) {
     RETURN_STATUS_UNEXPECTED(
@@ -114,10 +114,10 @@ Status WeightedRandomSamplerRT::ResetSampler() {
 Status WeightedRandomSamplerRT::GetNextSample(TensorRow *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   if (weights_.size() > static_cast<size_t>(num_rows_)) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid parameter, size of sample weights must be less than or equal to num of data, "
-                  "otherwise might cause generated id out of bound or other errors, but got weight size: " +
-                    std::to_string(weights_.size()) + ", num of data: " + std::to_string(num_rows_));
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid parameter, size of sample weights must be less than or equal to num of data, "
+      "otherwise might cause generated id out of bound or other errors, but got weight size: " +
+      std::to_string(weights_.size()) + ", num of data: " + std::to_string(num_rows_));
   }
 
   if (!replacement_ && (weights_.size() < static_cast<size_t>(num_samples_))) {

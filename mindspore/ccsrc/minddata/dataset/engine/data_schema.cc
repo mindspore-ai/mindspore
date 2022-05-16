@@ -139,8 +139,7 @@ Status ColDescriptor::MaterializeTensorShape(int32_t num_elements, TensorShape *
     // If we already had an unknown dimension, then we cannot have a second unknown dimension.
     // We only support the compute of a single unknown dim.
     if (requested_shape[i] == TensorShape::kDimUnknown && unknown_dim_position != TensorShape::kDimUnknown) {
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                    "Requested shape has more than one unknown dimension!");
+      RETURN_STATUS_UNEXPECTED("Requested shape has more than one unknown dimension!");
     }
 
     // If the current dimension in the requested shape is a known value, then compute the number of
@@ -315,13 +314,13 @@ Status DataSchema::ColumnLoad(nlohmann::json column_child_tree, const std::strin
   }
   // data type is mandatory field
   if (type_str.empty())
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid data, \"type\" field is missing for column " + col_name + " in JSON schema file.");
+    RETURN_STATUS_UNEXPECTED("Invalid data, \"type\" field is missing for column " + col_name +
+                             " in JSON schema file.");
 
   // rank number is mandatory field
   if (rank_value <= -1)
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid data, \"rank\" field of column " + col_name + " must have value >= 0 in JSON schema file.");
+    RETURN_STATUS_UNEXPECTED("Invalid data, \"rank\" field of column " + col_name +
+                             " must have value >= 0 in JSON schema file.");
 
   // Create the column descriptor for this column from the data we pulled from the json file
   TensorShape col_shape = TensorShape(tmp_shape);
@@ -446,8 +445,7 @@ Status DataSchema::AddColumn(const ColDescriptor &cd) {
 Status DataSchema::PreLoadExceptionCheck(const nlohmann::json &js) {
   // Check if columns node exists.  It is required for building schema from file.
   if (js.find("columns") == js.end())
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid data, \"columns\" field is missing in the JSON schema file.");
+    RETURN_STATUS_UNEXPECTED("Invalid data, \"columns\" field is missing in the JSON schema file.");
   return Status::OK();
 }
 
@@ -455,13 +453,12 @@ Status DataSchema::PreLoadExceptionCheck(const nlohmann::json &js) {
 // name to column index number.
 Status DataSchema::GetColumnNameMap(std::unordered_map<std::string, int32_t> *out_column_name_map) {
   if (out_column_name_map == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "unexpected null output column name map.");
+    RETURN_STATUS_UNEXPECTED("unexpected null output column name map.");
   }
 
   for (size_t i = 0; i < col_descs_.size(); ++i) {
     if (col_descs_[i].Name().empty()) {
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                    "Constructing column name map from schema, but found empty column name.");
+      RETURN_STATUS_UNEXPECTED("Constructing column name map from schema, but found empty column name.");
     }
     (*out_column_name_map)[col_descs_[i].Name()] = i;
   }

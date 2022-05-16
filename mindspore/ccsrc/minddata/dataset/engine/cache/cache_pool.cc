@@ -94,7 +94,7 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
   if (soft_mem_limit_ - temp_mem_usage_ - static_cast<uint64_t>(sz) < min_avail_mem_) {
     MS_LOG(WARNING) << "Memory usage will exceed the upper bound limit of: " << min_avail_mem_
                     << ". The cache server will not cache any more data.";
-    rc = Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
+    rc = STATUS_ERROR(StatusCode::kMDOutOfMemory, "Out of memory.");
   } else {
     rc = mp_->Allocate(sz, reinterpret_cast<void **>(&bl.ptr));
     // Adjust the soft limit and usage counting when every 100M memory are used.
@@ -137,7 +137,7 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
     } else {
       // If asked to spill to disk instead but there is no storage set up, simply return no memory
       // instead.
-      return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, "No enough storage for cache server to cache data");
+      RETURN_STATUS_OOM("No enough storage for cache server to cache data");
     }
   } else {
     return rc;
@@ -146,7 +146,7 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
   try {
     rc = tree_->DoInsert(key, bl);
   } catch (const std::bad_alloc &e) {
-    rc = Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
+    rc = STATUS_ERROR(StatusCode::kMDOutOfMemory, "Out of memory.");
   }
   // Duplicate key is treated as error and we will also free the memory.
   if (rc.IsError() && bl.ptr != nullptr) {

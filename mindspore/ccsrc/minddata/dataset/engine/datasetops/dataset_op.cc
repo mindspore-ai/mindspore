@@ -27,11 +27,9 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 
 #include "minddata/dataset/engine/operator_connector.h"
+#include "minddata/dataset/util/log_adapter.h"
 #ifndef ENABLE_ANDROID
 #include "utils/system/crc32c.h"
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
 #endif
 
 namespace mindspore {

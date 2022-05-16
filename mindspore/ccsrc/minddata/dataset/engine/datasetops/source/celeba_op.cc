@@ -68,8 +68,8 @@ Status CelebAOp::ParseAttrFile() {
   std::ifstream attr_file(realpath.value());
   if (!attr_file.is_open()) {
     std::string attr_file_name = (folder_path / "list_attr_celeba.txt").ToString();
-    return Status(StatusCode::kMDFileNotExist, __LINE__, __FILE__,
-                  "Invalid attr file, failed to open: " + attr_file_name + ", permission denied.");
+    RETURN_STATUS_ERROR(StatusCode::kMDFileNotExist,
+                        "Invalid attr file, failed to open: " + attr_file_name + ", permission denied.");
   }
 
   attr_file_ = (folder_path / "list_attr_celeba.txt").ToString();
@@ -244,7 +244,7 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
       image = nullptr;
       std::string err_msg =
         "Invalid image, " + image_path.ToString() + " decode failed, the image is broken or permission denied.";
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
+      RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
 

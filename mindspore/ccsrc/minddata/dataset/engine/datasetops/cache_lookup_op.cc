@@ -18,18 +18,13 @@
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
+#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
 Status CacheLookupOp::operator()() {
   if (!sampler_) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid sampler, Cache requires a sampler before it can be executed, but got nullptr.");
+    RETURN_STATUS_UNEXPECTED("Invalid sampler, Cache requires a sampler before it can be executed, but got nullptr.");
   }
   RETURN_IF_NOT_OK(RegisterResources());
 

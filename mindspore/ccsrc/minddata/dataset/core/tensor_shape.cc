@@ -20,11 +20,7 @@
 #include <limits>
 
 #include "utils/ms_utils.h"
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/include/dataset/constants.h"
 
 namespace mindspore {
@@ -231,7 +227,7 @@ Status TensorShape::ToFlatIndex(const std::vector<dsize_t> &index, dsize_t *flat
   if (index.size() != raw_shape_.size()) {
     std::stringstream ss;
     ss << "Index size (" << index.size() << ") does not match the shape size (" << raw_shape_.size() << ").";
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, ss.str());
+    RETURN_STATUS_UNEXPECTED(ss.str());
   }
   *flat_index = 0;
   for (size_t k = 0; k < index.size(); k++) {

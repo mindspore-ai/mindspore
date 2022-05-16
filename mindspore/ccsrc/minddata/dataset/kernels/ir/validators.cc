@@ -102,7 +102,7 @@ Status ValidateVectorOdd(const std::string &op_name, const std::string &vec_name
       std::string err_msg = op_name + ":" + vec_name + " must be odd value, got: " + vec_name + "[" +
                             std::to_string(i) + "]=" + std::to_string(value[i]);
       MS_LOG(ERROR) << err_msg;
-      return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+      RETURN_SYNTAX_ERROR(err_msg);
     }
   }
   return Status::OK();

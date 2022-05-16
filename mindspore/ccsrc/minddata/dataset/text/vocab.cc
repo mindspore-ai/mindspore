@@ -23,11 +23,7 @@
 #include "minddata/dataset/include/dataset/text.h"
 #include "minddata/dataset/util/status.h"
 #include "utils/file_utils.h"
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
+#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

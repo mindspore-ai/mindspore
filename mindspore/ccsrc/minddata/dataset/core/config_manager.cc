@@ -23,11 +23,7 @@
 #include <thread>
 #include <utility>
 
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/system_pool.h"
 #include "utils/ms_utils.h"

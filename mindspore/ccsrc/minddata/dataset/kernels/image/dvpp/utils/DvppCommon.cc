@@ -15,7 +15,7 @@
 
 #include <memory>
 
-#include "mindspore/core/utils/log_adapter.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "DvppCommon.h"
 #include "CommonDataType.h"
 

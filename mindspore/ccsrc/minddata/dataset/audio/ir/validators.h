@@ -47,7 +47,7 @@ Status ValidateScalarValue(const std::string &op_name, const std::string &scalar
     std::string err_msg =
       op_name + ": " + scalar_name + " must be one of [" + mode + "], but got: " + std::to_string(scalar);
     MS_LOG(ERROR) << err_msg;
-    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+    RETURN_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -59,7 +59,7 @@ Status ValidateScalarNotZero(const std::string &op_name, const std::string &scal
     std::string err_msg =
       op_name + ": " + scalar_name + " can not be equal to zero, but got: " + std::to_string(scalar);
     MS_LOG(ERROR) << err_msg;
-    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+    RETURN_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -70,7 +70,7 @@ Status ValidateVectorNotEmpty(const std::string &op_name, const std::string &vec
   if (vec.empty()) {
     std::string err_msg = op_name + ": " + vec_name + " can not be an empty vector.";
     MS_LOG(ERROR) << err_msg;
-    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+    RETURN_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -84,7 +84,7 @@ Status ValidateVectorSameSize(const std::string &op_name, const std::string &vec
                           other_vec_name + "', but got: '" + vec_name + "' size " + std::to_string(vec.size()) +
                           " and '" + other_vec_name + "' size " + std::to_string(other_vec.size()) + ".";
     MS_LOG(ERROR) << err_msg;
-    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+    RETURN_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

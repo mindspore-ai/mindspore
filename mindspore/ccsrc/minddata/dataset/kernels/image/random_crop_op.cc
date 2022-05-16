@@ -101,13 +101,14 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
   }
 
   if (crop_height_ == 0 || crop_width_ == 0) {
-    return Status(StatusCode::kMDShapeMisMatch, __LINE__, __FILE__,
-                  "RandomCrop: invalid crop size, crop width or crop height is not allowed to be zero.");
+    RETURN_STATUS_ERROR(StatusCode::kMDShapeMisMatch,
+                        "RandomCrop: invalid crop size, crop width or crop height is not allowed to be zero.");
   }
   if (*padded_image_h < crop_height_ || *padded_image_w < crop_width_ || crop_height_ == 0 || crop_width_ == 0) {
-    return Status(StatusCode::kMDShapeMisMatch, __LINE__, __FILE__,
-                  "RandomCrop: invalid crop size, crop size is bigger than the image dimensions, got crop height: " +
-                    std::to_string(crop_height_) + ", crop width: " + std::to_string(crop_width_));
+    RETURN_STATUS_ERROR(StatusCode::kMDShapeMisMatch,
+                        "RandomCrop: invalid crop size, crop size is bigger than the image dimensions, "
+                        "got crop height: " +
+                          std::to_string(crop_height_) + ", crop width: " + std::to_string(crop_width_));
   }
   return Status::OK();
 }
@@ -176,9 +177,8 @@ Status RandomCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
   if (!outputs.empty()) {
     return Status::OK();
   }
-  return Status(StatusCode::kMDUnexpectedError,
-                "RandomCrop: invalid input shape, expected 2D or 3D input, but got input dimension is:" +
-                  std::to_string(inputs[0].Rank()));
+  RETURN_STATUS_UNEXPECTED("RandomCrop: invalid input shape, expected 2D or 3D input, but got input dimension is:" +
+                           std::to_string(inputs[0].Rank()));
 }
 }  // namespace dataset
 }  // namespace mindspore

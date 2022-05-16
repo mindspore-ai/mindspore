@@ -75,14 +75,14 @@ void ShardColumn::Init(const json &schema_json, bool compress_integer) {
 Status ShardColumn::GetColumnTypeByName(const std::string &column_name, ColumnDataType *column_data_type,
                                         uint64_t *column_data_type_size, std::vector<int64_t> *column_shape,
                                         ColumnCategory *column_category) {
-  RETURN_UNEXPECTED_IF_NULL(column_data_type);
-  RETURN_UNEXPECTED_IF_NULL(column_data_type_size);
-  RETURN_UNEXPECTED_IF_NULL(column_shape);
-  RETURN_UNEXPECTED_IF_NULL(column_category);
+  RETURN_UNEXPECTED_IF_NULL_MR(column_data_type);
+  RETURN_UNEXPECTED_IF_NULL_MR(column_data_type_size);
+  RETURN_UNEXPECTED_IF_NULL_MR(column_shape);
+  RETURN_UNEXPECTED_IF_NULL_MR(column_category);
   // Skip if column not found
   *column_category = CheckColumnName(column_name);
-  CHECK_FAIL_RETURN_UNEXPECTED(*column_category != ColumnNotFound,
-                               "[Internal ERROR] the type of column: " + column_name + " can not found.");
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(*column_category != ColumnNotFound,
+                                  "[Internal ERROR] the type of column: " + column_name + " can not found.");
 
   // Get data type and size
   auto column_id = column_name_id_[column_name];
@@ -97,13 +97,13 @@ Status ShardColumn::GetColumnValueByName(const std::string &column_name, const s
                                          std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *const n_bytes,
                                          ColumnDataType *column_data_type, uint64_t *column_data_type_size,
                                          std::vector<int64_t> *column_shape) {
-  RETURN_UNEXPECTED_IF_NULL(column_data_type);
-  RETURN_UNEXPECTED_IF_NULL(column_data_type_size);
-  RETURN_UNEXPECTED_IF_NULL(column_shape);
+  RETURN_UNEXPECTED_IF_NULL_MR(column_data_type);
+  RETURN_UNEXPECTED_IF_NULL_MR(column_data_type_size);
+  RETURN_UNEXPECTED_IF_NULL_MR(column_shape);
   // Skip if column not found
   auto column_category = CheckColumnName(column_name);
-  CHECK_FAIL_RETURN_UNEXPECTED(column_category != ColumnNotFound,
-                               "[Internal ERROR] the type of column: " + column_name + " can not found.");
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(column_category != ColumnNotFound,
+                                  "[Internal ERROR] the type of column: " + column_name + " can not found.");
   // Get data type and size
   auto column_id = column_name_id_[column_name];
   *column_data_type = column_data_type_[column_id];
@@ -112,13 +112,13 @@ Status ShardColumn::GetColumnValueByName(const std::string &column_name, const s
 
   // Retrieve value from json
   if (column_category == ColumnInRaw) {
-    RETURN_IF_NOT_OK(GetColumnFromJson(column_name, columns_json, data_ptr, n_bytes));
+    RETURN_IF_NOT_OK_MR(GetColumnFromJson(column_name, columns_json, data_ptr, n_bytes));
     *data = reinterpret_cast<const unsigned char *>(data_ptr->get());
     return Status::OK();
   }
 
   // Retrieve value from blob
-  RETURN_IF_NOT_OK(GetColumnFromBlob(column_name, columns_blob, data, data_ptr, n_bytes));
+  RETURN_IF_NOT_OK_MR(GetColumnFromBlob(column_name, columns_blob, data, data_ptr, n_bytes));
   if (*data == nullptr) {
     *data = reinterpret_cast<const unsigned char *>(data_ptr->get());
   }
@@ -127,17 +127,17 @@ Status ShardColumn::GetColumnValueByName(const std::string &column_name, const s
 
 Status ShardColumn::GetColumnFromJson(const std::string &column_name, const json &columns_json,
                                       std::unique_ptr<unsigned char[]> *data_ptr, uint64_t *n_bytes) {
-  RETURN_UNEXPECTED_IF_NULL(n_bytes);
-  RETURN_UNEXPECTED_IF_NULL(data_ptr);
+  RETURN_UNEXPECTED_IF_NULL_MR(n_bytes);
+  RETURN_UNEXPECTED_IF_NULL_MR(data_ptr);
   auto column_id = column_name_id_[column_name];
   auto column_data_type = column_data_type_[column_id];
 
   // Initialize num bytes
   *n_bytes = ColumnDataTypeSize[column_data_type];
   auto json_column_value = columns_json[column_name];
-  CHECK_FAIL_RETURN_UNEXPECTED(json_column_value.is_string() || json_column_value.is_number(),
-                               "[Internal ERROR] the value of column: " + column_name +
-                                 " should be string or number but got: " + json_column_value.dump());
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(json_column_value.is_string() || json_column_value.is_number(),
+                                  "[Internal ERROR] the value of column: " + column_name +
+                                    " should be string or number but got: " + json_column_value.dump());
   switch (column_data_type) {
     case ColumnFloat32: {
       return GetFloat<float>(data_ptr, json_column_value, false);
@@ -174,7 +174,7 @@ Status ShardColumn::GetColumnFromJson(const std::string &column_name, const json
 template <typename T>
 Status ShardColumn::GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value,
                              bool use_double) {
-  RETURN_UNEXPECTED_IF_NULL(data_ptr);
+  RETURN_UNEXPECTED_IF_NULL_MR(data_ptr);
   std::unique_ptr<T[]> array_data = std::make_unique<T[]>(1);
   if (json_column_value.is_number()) {
     array_data[0] = json_column_value;
@@ -187,8 +187,8 @@ Status ShardColumn::GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const j
         array_data[0] = json_column_value.get<float>();
       }
     } catch (json::exception &e) {
-      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to convert column value:" + json_column_value.dump() +
-                               " to type float, " + std::string(e.what()));
+      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to convert column value:" + json_column_value.dump() +
+                                  " to type float, " + std::string(e.what()));
     }
   }
 
@@ -202,7 +202,7 @@ Status ShardColumn::GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const j
 
 template <typename T>
 Status ShardColumn::GetInt(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value) {
-  RETURN_UNEXPECTED_IF_NULL(data_ptr);
+  RETURN_UNEXPECTED_IF_NULL_MR(data_ptr);
   std::unique_ptr<T[]> array_data = std::make_unique<T[]>(1);
   int64_t temp_value;
   bool less_than_zero = false;
@@ -223,20 +223,20 @@ Status ShardColumn::GetInt(std::unique_ptr<unsigned char[]> *data_ptr, const jso
         temp_value = static_cast<int64_t>(std::stoull(string_value));
       }
     } catch (std::invalid_argument &e) {
-      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to convert column value:" + string_value + " to type int, " +
-                               std::string(e.what()));
+      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to convert column value:" + string_value + " to type int, " +
+                                  std::string(e.what()));
     } catch (std::out_of_range &e) {
-      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to convert column value:" + string_value + " to type int, " +
-                               std::string(e.what()));
+      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] Failed to convert column value:" + string_value + " to type int, " +
+                                  std::string(e.what()));
     }
   } else {
-    RETURN_STATUS_UNEXPECTED("[Internal ERROR] column value should be type string or number but got: " +
-                             json_column_value.dump());
+    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] column value should be type string or number but got: " +
+                                json_column_value.dump());
   }
 
   if ((less_than_zero && temp_value < static_cast<int64_t>(std::numeric_limits<T>::min())) ||
       (!less_than_zero && static_cast<uint64_t>(temp_value) > static_cast<uint64_t>(std::numeric_limits<T>::max()))) {
-    RETURN_STATUS_UNEXPECTED("[Internal ERROR] column value: " + std::to_string(temp_value) + " is out of range.");
+    RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] column value: " + std::to_string(temp_value) + " is out of range.");
   }
   array_data[0] = static_cast<T>(temp_value);
 
@@ -251,15 +251,15 @@ Status ShardColumn::GetInt(std::unique_ptr<unsigned char[]> *data_ptr, const jso
 Status ShardColumn::GetColumnFromBlob(const std::string &column_name, const std::vector<uint8_t> &columns_blob,
                                       const unsigned char **data, std::unique_ptr<unsigned char[]> *data_ptr,
                                       uint64_t *const n_bytes) {
-  RETURN_UNEXPECTED_IF_NULL(data);
+  RETURN_UNEXPECTED_IF_NULL_MR(data);
   uint64_t offset_address = 0;
   auto column_id = column_name_id_[column_name];
-  RETURN_IF_NOT_OK(GetColumnAddressInBlock(column_id, columns_blob, n_bytes, &offset_address));
+  RETURN_IF_NOT_OK_MR(GetColumnAddressInBlock(column_id, columns_blob, n_bytes, &offset_address));
   auto column_data_type = column_data_type_[column_id];
   if (has_compress_blob_ && column_data_type == ColumnInt32) {
-    RETURN_IF_NOT_OK(UncompressInt<int32_t>(column_id, data_ptr, columns_blob, n_bytes, offset_address));
+    RETURN_IF_NOT_OK_MR(UncompressInt<int32_t>(column_id, data_ptr, columns_blob, n_bytes, offset_address));
   } else if (has_compress_blob_ && column_data_type == ColumnInt64) {
-    RETURN_IF_NOT_OK(UncompressInt<int64_t>(column_id, data_ptr, columns_blob, n_bytes, offset_address));
+    RETURN_IF_NOT_OK_MR(UncompressInt<int64_t>(column_id, data_ptr, columns_blob, n_bytes, offset_address));
   } else {
     *data = reinterpret_cast<const unsigned char *>(&(columns_blob[offset_address]));
   }
@@ -367,8 +367,8 @@ vector<uint8_t> ShardColumn::CompressInt(const vector<uint8_t> &src_bytes, const
 
 Status ShardColumn::GetColumnAddressInBlock(const uint64_t &column_id, const std::vector<uint8_t> &columns_blob,
                                             uint64_t *num_bytes, uint64_t *shift_idx) {
-  RETURN_UNEXPECTED_IF_NULL(num_bytes);
-  RETURN_UNEXPECTED_IF_NULL(shift_idx);
+  RETURN_UNEXPECTED_IF_NULL_MR(num_bytes);
+  RETURN_UNEXPECTED_IF_NULL_MR(shift_idx);
   if (num_blob_column_ == 1) {
     *num_bytes = columns_blob.size();
     *shift_idx = 0;
@@ -389,8 +389,8 @@ Status ShardColumn::GetColumnAddressInBlock(const uint64_t &column_id, const std
 template <typename T>
 Status ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<unsigned char[]> *const data_ptr,
                                   const std::vector<uint8_t> &columns_blob, uint64_t *num_bytes, uint64_t shift_idx) {
-  RETURN_UNEXPECTED_IF_NULL(data_ptr);
-  RETURN_UNEXPECTED_IF_NULL(num_bytes);
+  RETURN_UNEXPECTED_IF_NULL_MR(data_ptr);
+  RETURN_UNEXPECTED_IF_NULL_MR(num_bytes);
   auto num_elements = BytesBigToUInt64(columns_blob, shift_idx, kInt32Type);
   *num_bytes = sizeof(T) * num_elements;
 
@@ -413,8 +413,8 @@ Status ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<uns
     return Status::OK();
   }
   *data_ptr = std::make_unique<unsigned char[]>(*num_bytes);
-  CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes) == 0,
-                               "[Internal ERROR] Failed to call securec func [memcpy_s]");
+  CHECK_FAIL_RETURN_UNEXPECTED_MR(memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes) == 0,
+                                  "[Internal ERROR] Failed to call securec func [memcpy_s]");
   return Status::OK();
 }
 

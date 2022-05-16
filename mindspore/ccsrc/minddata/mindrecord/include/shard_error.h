@@ -20,47 +20,55 @@
 #include <map>
 #include <string>
 #include "include/api/status.h"
+#include "minddata/mindrecord/include/common/log_adapter.h"
 
 namespace mindspore {
 namespace mindrecord {
-#define RETURN_IF_NOT_OK(_s) \
-  do {                       \
-    Status __rc = (_s);      \
-    if (__rc.IsError()) {    \
-      return __rc;           \
-    }                        \
+#define RETURN_IF_NOT_OK_MR(_s) \
+  do {                          \
+    Status __rc = (_s);         \
+    if (__rc.IsError()) {       \
+      return __rc;              \
+    }                           \
   } while (false)
 
-#define RELEASE_AND_RETURN_IF_NOT_OK(_s, _db, _in) \
-  do {                                             \
-    Status __rc = (_s);                            \
-    if (__rc.IsError()) {                          \
-      if ((_db) != nullptr) {                      \
-        sqlite3_close(_db);                        \
-      }                                            \
-      (_in).close();                               \
-      return __rc;                                 \
-    }                                              \
+#define RELEASE_AND_RETURN_IF_NOT_OK_MR(_s, _db, _in) \
+  do {                                                \
+    Status __rc = (_s);                               \
+    if (__rc.IsError()) {                             \
+      if ((_db) != nullptr) {                         \
+        sqlite3_close(_db);                           \
+      }                                               \
+      (_in).close();                                  \
+      return __rc;                                    \
+    }                                                 \
   } while (false)
 
-#define CHECK_FAIL_RETURN_UNEXPECTED(_condition, _e)                         \
-  do {                                                                       \
-    if (!(_condition)) {                                                     \
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, _e); \
-    }                                                                        \
+#define CHECK_FAIL_RETURN_UNEXPECTED_MR(_condition, _e)                                      \
+  do {                                                                                       \
+    if (!(_condition)) {                                                                     \
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, MINDRECORD_SRC_FILE_NAME, _e); \
+    }                                                                                        \
   } while (false)
 
-#define RETURN_UNEXPECTED_IF_NULL(_ptr)                                         \
+#define RETURN_UNEXPECTED_IF_NULL_MR(_ptr)                                      \
   do {                                                                          \
     if ((_ptr) == nullptr) {                                                    \
       std::string err_msg = "The pointer[" + std::string(#_ptr) + "] is null."; \
-      RETURN_STATUS_UNEXPECTED(err_msg);                                        \
+      RETURN_STATUS_UNEXPECTED_MR(err_msg);                                     \
     }                                                                           \
   } while (false)
 
-#define RETURN_STATUS_UNEXPECTED(_e)                                       \
-  do {                                                                     \
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, _e); \
+#define RETURN_STATUS_UNEXPECTED_MR(_e)                                                    \
+  do {                                                                                     \
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, MINDRECORD_SRC_FILE_NAME, _e); \
+  } while (false)
+
+#define CHECK_FAIL_RETURN_SYNTAX_ERROR_MR(_condition, _e)                                \
+  do {                                                                                   \
+    if (!(_condition)) {                                                                 \
+      return Status(StatusCode::kMDSyntaxError, __LINE__, MINDRECORD_SRC_FILE_NAME, _e); \
+    }                                                                                    \
   } while (false)
 
 enum MSRStatus {

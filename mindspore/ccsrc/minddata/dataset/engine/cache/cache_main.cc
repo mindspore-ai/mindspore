@@ -15,15 +15,18 @@
 */
 
 #include "minddata/dataset/engine/cache/cache_server.h"
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <cstdlib>
 #include <thread>
 #include <chrono>
+
 #include "minddata/dataset/engine/cache/cache_common.h"
 #include "minddata/dataset/engine/cache/cache_ipc.h"
 #include "minddata/dataset/include/dataset/constants.h"
-#include "mindspore/core/utils/log_adapter.h"
+#include "minddata/dataset/util/log_adapter.h"
+
 namespace ms = mindspore;
 namespace ds = mindspore::dataset;
 
@@ -42,10 +45,10 @@ enum ArgIndex : uint8_t {
 
 ms::Status BuildServer(ds::CacheServer::Builder *builder, ds::SharedMessage *msg, int32_t port, bool daemonize) {
   if (msg == nullptr) {
-    return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "msg pointer is nullptr.");
+    RETURN_STATUS_UNEXPECTED("msg pointer is nullptr.");
   }
   if (builder == nullptr) {
-    return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "builder pointer is nullptr.");
+    RETURN_STATUS_UNEXPECTED("builder pointer is nullptr.");
   }
   // Create the instance with some sanity checks built in
   ms::Status rc = builder->Build();
@@ -71,7 +74,7 @@ ms::Status BuildServer(ds::CacheServer::Builder *builder, ds::SharedMessage *msg
 
 ms::Status Fork(ds::CacheServer::Builder *builder, ds::SharedMessage *msg, int32_t port) {
   if (msg == nullptr) {
-    return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "msg pointer is nullptr.");
+    RETURN_STATUS_UNEXPECTED("msg pointer is nullptr.");
   }
   pid_t pid = fork();
   if (pid > 0) {
@@ -108,7 +111,7 @@ ms::Status Fork(ds::CacheServer::Builder *builder, ds::SharedMessage *msg, int32
     sid = setsid();
     if (sid < 0) {
       std::string errMsg = "Failed to setsid(). Errno = " + std::to_string(errno);
-      return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
+      RETURN_STATUS_UNEXPECTED(errMsg);
     }
     (void)close(STDIN_FILENO);
     (void)close(STDOUT_FILENO);
@@ -117,7 +120,7 @@ ms::Status Fork(ds::CacheServer::Builder *builder, ds::SharedMessage *msg, int32
   }
   // failed to fork
   std::string errMsg = "Failed to fork process for cache server. Errno = " + std::to_string(errno);
-  return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
+  RETURN_STATUS_UNEXPECTED(errMsg);
 }
 }  // namespace
 
@@ -147,7 +150,7 @@ ms::Status StartServer(int argc, char **argv) {
   // is called. This is a standard procedure for daemonize a process on unix.
   if (chdir("/") == -1) {
     std::string errMsg = "Unable to change directory to /. Errno = " + std::to_string(errno);
-    return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
+    RETURN_STATUS_UNEXPECTED(errMsg);
   }
 
   // A message queue for communication between parent and child (if we fork).

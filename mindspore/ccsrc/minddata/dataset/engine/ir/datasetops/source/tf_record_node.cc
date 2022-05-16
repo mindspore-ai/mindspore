@@ -73,7 +73,10 @@ Status TFRecordNode::ValidateParams() {
       [](const std::string &accumulated, const std::string &next) { return accumulated + "    " + next + "\n"; });
     err_msg += accumulated_filenames;
   }
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+  if (err_msg.empty()) {
+    return Status::OK();
+  }
+  RETURN_SYNTAX_ERROR(err_msg);
 }
 
 // Function to build TFRecordNode

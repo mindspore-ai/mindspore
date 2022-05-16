@@ -29,7 +29,7 @@ Status DeemphBiquadOperation::ValidateParams() {
     std::string err_msg =
       "DeemphBiquad: sample_rate can only be 44100 or 48000, but got: " + std::to_string(sample_rate_);
     MS_LOG(ERROR) << err_msg;
-    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+    RETURN_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

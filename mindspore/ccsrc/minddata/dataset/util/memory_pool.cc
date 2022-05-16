@@ -24,7 +24,7 @@ Status DeMalloc(std::size_t s, void **p, bool init_to_zero = false) {
   }
   void *q = ::malloc(s);
   if (q == nullptr) {
-    return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
+    RETURN_STATUS_OOM("Out of memory.");
   } else {
     *p = q;
     if (init_to_zero) {
