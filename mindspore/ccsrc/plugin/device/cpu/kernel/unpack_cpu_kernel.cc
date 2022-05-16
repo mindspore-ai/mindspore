@@ -113,10 +113,16 @@ std::vector<std::tuple<KernelAttr, UnpackCpuKernelMod::UnstackFunc, UnpackCpuKer
      &UnpackCpuKernelMod::LaunchKernel<uint32_t>, &UnpackCpuKernelMod::InitIOSize<uint32_t>},
     {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
      &UnpackCpuKernelMod::LaunchKernel<uint64_t>, &UnpackCpuKernelMod::InitIOSize<uint64_t>},
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &UnpackCpuKernelMod::LaunchKernel<complex64>, &UnpackCpuKernelMod::InitIOSize<complex64>},
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &UnpackCpuKernelMod::LaunchKernel<complex128>, &UnpackCpuKernelMod::InitIOSize<complex128>},
     {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      &UnpackCpuKernelMod::LaunchKernel<float16>, &UnpackCpuKernelMod::InitIOSize<float16>},
     {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &UnpackCpuKernelMod::LaunchKernel<float>, &UnpackCpuKernelMod::InitIOSize<float>}};
+     &UnpackCpuKernelMod::LaunchKernel<float>, &UnpackCpuKernelMod::InitIOSize<float>},
+    {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &UnpackCpuKernelMod::LaunchKernel<double>, &UnpackCpuKernelMod::InitIOSize<double>}};
 
 std::vector<KernelAttr> UnpackCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

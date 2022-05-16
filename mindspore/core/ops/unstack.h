@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ class MIND_API Unstack : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Unstack);
   /// \brief Constructor.
-  Unstack() : BaseOperator(kNameUnstack) {}
+  Unstack() : BaseOperator(kNameUnstack) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Unstack for the inputs.
   void Init(const int64_t axis = 0);
   /// \brief Set axis.

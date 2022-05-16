@@ -19,11 +19,16 @@
 
 #include <vector>
 #include <memory>
+#include <complex>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+
 class PackFwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   PackFwdCpuKernelMod() = default;
@@ -32,11 +37,23 @@ class PackFwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return func_obj_->RunFunc(inputs, workspace, outputs);
+    return kernel_func_(this, inputs, outputs);
   }
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
-  std::shared_ptr<CpuKernelFunc> func_obj_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using PackFunc = std::function<bool(PackFwdCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                      const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, PackFunc>> func_list_;
+  PackFunc kernel_func_;
+  int axis_{0};
+  size_t input_num_{1};
+  size_t output_size_{0};
+  size_t dims_behind_axis_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore
