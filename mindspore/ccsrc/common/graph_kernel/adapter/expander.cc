@@ -17,6 +17,7 @@
 #include "common/graph_kernel/adapter/expander.h"
 
 #include <map>
+#include <set>
 #include <string>
 #include <memory>
 #include "include/common/utils/python_adapter.h"
@@ -27,6 +28,7 @@
 #include "common/graph_kernel/adapter/callback_impl.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore::graphkernel {
 ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
@@ -76,6 +78,68 @@ FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(con
     }
   }
   return expand_fg;
+}
+
+PrimitivePtr GetOpsPrim(const std::string &name) {
+  auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+  auto iter = op_primc_fns.find(name);
+  if (iter == op_primc_fns.end()) return nullptr;
+  return iter->second();
+}
+
+void ConvertAttrToInput(const FuncGraphPtr &graph) {
+  auto todos = TopoSort(graph->get_return());
+  for (const auto &node : todos) {
+    if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
+      continue;
+    }
+    auto primitive = GetCNodePrimitive(node);
+    if (!primitive) {
+      continue;
+    }
+    primitive = primitive->Clone();
+    std::set<std::string> attr2input_map = {prim::kPrimCast->name(), prim::kPrimReshape->name(),
+                                            prim::kPrimReduceMax->name(), prim::kPrimReduceSum->name(),
+                                            prim::kPrimTranspose->name()};
+    if (attr2input_map.count(primitive->name())) {
+      auto op = GetOpsPrim(primitive->name());
+      MS_EXCEPTION_IF_NULL(op);
+      auto input_names = op->GetAttr(kAttrInputNames);
+      primitive->AddAttr(kAttrInputNames, input_names);
+      primitive->AddAttr(kAttrOutputNames, op->GetAttr(kAttrOutputNames));
+      auto cnode = dyn_cast<CNode>(node);
+      AnfNodePtrList inputs = cnode->inputs();
+      AnfNodePtrList new_inputs{inputs[0]};
+      auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
+      size_t j = 1;
+      for (size_t i = 0; i < input_names_vec.size(); ++i) {
+        if (primitive->HasAttr(input_names_vec[i])) {
+          auto value = primitive->GetAttr(input_names_vec[i]);
+          auto value_node = std::make_shared<ValueNode>(value);
+          value_node->set_abstract(value->ToAbstract());
+          new_inputs.push_back(value_node);
+        } else {
+          if (j >= inputs.size()) {
+            MS_LOG(EXCEPTION) << "Index " << j << " is larger than input size [" << inputs.size() << "]";
+          }
+          new_inputs.push_back(inputs[j]);
+          j++;
+        }
+      }
+      new_inputs[0] = NewValueNode(primitive);
+      cnode->set_inputs(new_inputs);
+    }
+  }
+}
+
+AnfNodePtr AttrToInputDeco::Run(const AnfNodePtr &node) {
+  auto new_node = decorated_->Run(node);
+  if (new_node == nullptr) return nullptr;
+  auto new_cnode = dyn_cast<CNode>(new_node);
+  auto expand_fg = GetCNodeFuncGraph(new_cnode);
+  ConvertAttrToInput(expand_fg);
+  new_cnode->set_input(0, NewValueNode(expand_fg));
+  return new_cnode;
 }
 
 bool PyExpander::CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
@@ -129,7 +193,7 @@ FuncGraphPtr PyExpander::ExpandToGraphByCallPyFn(const CNodePtr &node) {
 FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
   auto op_name = AnfUtils::GetCNodeName(node);
   // use cpp OpDesc in priority
-  auto use_py = common::GetEnv("PYEXPANDER");
+  auto use_py = common::GetEnv("MS_DEV_PYEXPANDER");
   if (use_py.empty()) {
     if (expanders::OpDescFactory::Instance().HasOp(op_name)) {
       return DefaultExpander::ExpandToGraph(node);
