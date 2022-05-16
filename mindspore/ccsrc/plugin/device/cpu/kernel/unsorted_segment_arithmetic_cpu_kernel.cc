@@ -35,7 +35,7 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
     {prim::kPrimUnsortedSegmentMin->name(), std::numeric_limits<T>::max()}};
 
   if (UnsortedSegmentArithmeticInitValueMap.find(kernel_name_) == UnsortedSegmentArithmeticInitValueMap.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
     return false;
   }
   T init_value = UnsortedSegmentArithmeticInitValueMap.at(kernel_name_);
@@ -43,9 +43,13 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
   T *input_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   S *indices_addr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
   T *output_addr = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  for (size_t i = 0; i < out_size_; i++) {
-    output_addr[i] = init_value;
-  }
+
+  auto task = [output_addr, init_value](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      output_addr[i] = init_value;
+    }
+  };
+  ParallelLaunchAutoSearch(task, out_size_, this, &parallel_search_info_);
 
   if (kernel_name_ == prim::kPrimUnsortedSegmentMax->name()) {
     for (size_t loop = 0; loop < loop_size_; loop++) {

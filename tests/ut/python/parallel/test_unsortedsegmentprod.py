@@ -14,8 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import pytest
-
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -130,8 +128,7 @@ def test_unsortedsegmentprod_model_parallel_index_slice_3d():
     num_segments = 16
     strategy1 = (2, 2, 1)
     strategy2 = (2, 2)
-    with pytest.raises(ValueError):
-        compile_graph(x, y, num_segments, strategy1, strategy2)
+    compile_graph(x, y, num_segments, strategy1, strategy2)
 
 
 def test_unsortedsegmentprod_model_parallel_vector_slice_2d():
@@ -191,5 +188,4 @@ def test_unsortedsegmentprod_model_parallel_index_vector_slice_3d():
     num_segments = 16
     strategy1 = (2, 1, 2)
     strategy2 = (2, 1)
-    with pytest.raises(ValueError):
-        compile_graph(x, y, num_segments, strategy1, strategy2)
+    compile_graph(x, y, num_segments, strategy1, strategy2)

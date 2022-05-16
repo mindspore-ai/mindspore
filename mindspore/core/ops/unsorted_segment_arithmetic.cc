@@ -44,9 +44,8 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
     primitive->AddAttr(kNumSegments, MakeValue(num_segments_value));
   }
 
-  std::vector<int64_t> invalid_out_shape = {-1};
   if (x_shape_ptr->IsDynamic() || segment_ids_shape_ptr->IsDynamic() || num_segments_shape_ptr->IsDynamic()) {
-    return std::make_shared<abstract::Shape>(invalid_out_shape);
+    return x_shape_ptr->cast<abstract::ShapePtr>();
   }
 
   if (num_segments == nullptr || num_segments->BuildValue() == kAnyValue) {
@@ -54,20 +53,22 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
     if (value_ptr != nullptr) {
       num_segments_value = GetValue<int64_t>(value_ptr);
     } else {
-      return std::make_shared<abstract::Shape>(invalid_out_shape);
+      return x_shape_ptr->cast<abstract::ShapePtr>();
     }
   }
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   if (x_shape.size() < ids_shape.size()) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", invalid input_args and segment_ids shape size";
+    MS_LOG(ERROR) << "For " << prim_name << ", invalid input_args and segment_ids shape size";
+    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
   }
 
   for (size_t i = 0; i < ids_shape.size(); i++) {
     if (x_shape[i] != ids_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", invalid input_args and segment_ids shape[" << i
-                               << "]: " << x_shape[i] << ", " << ids_shape[i];
+      MS_LOG(ERROR) << "For " << prim_name << ", invalid input_args and segment_ids shape[" << i << "]: " << x_shape[i]
+                    << ", " << ids_shape[i];
+      return x_shape_ptr->cast<abstract::ShapePtr>();
     }
   }
 
@@ -102,10 +103,13 @@ AbstractBasePtr UnsortedSegmentArithmeticInfer(const abstract::AnalysisEnginePtr
 
 MIND_API_OPERATOR_IMPL(UnsortedSegmentMax, BaseOperator);
 MIND_API_OPERATOR_IMPL(UnsortedSegmentMin, BaseOperator);
+MIND_API_OPERATOR_IMPL(UnsortedSegmentProd, BaseOperator);
 
 REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentMax, prim::kPrimUnsortedSegmentMax, UnsortedSegmentArithmeticInfer, nullptr,
                              true);
 REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentMin, prim::kPrimUnsortedSegmentMin, UnsortedSegmentArithmeticInfer, nullptr,
                              true);
+REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentProd, prim::kPrimUnsortedSegmentProd, UnsortedSegmentArithmeticInfer,
+                             nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
