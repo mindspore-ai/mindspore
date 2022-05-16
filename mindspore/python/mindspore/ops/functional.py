@@ -33,6 +33,7 @@ from mindspore.ops.primitive import constexpr, Primitive
 from . import operations as P
 from .operations import _grad_ops
 from .operations import _csr_ops
+from .operations import linalg_ops
 from .composite import _Grad, Shard, _Vmap, _TaylorOperation
 from .._c_expression import security
 
@@ -901,6 +902,7 @@ tensor_operator_registry.register('zeros_like', P.ZerosLike)
 tensor_operator_registry.register('space_to_batch_nd', P.SpaceToBatchND)
 tensor_operator_registry.register('nonzero', nonzero)
 tensor_operator_registry.register('hardshrink', P.HShrink)
+tensor_operator_registry.register('svd', linalg_ops.Svd)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)
