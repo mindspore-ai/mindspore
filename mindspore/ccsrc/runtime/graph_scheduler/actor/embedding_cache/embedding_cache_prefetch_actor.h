@@ -21,12 +21,28 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/actor/rpc/send_actor.h"
 #include "runtime/graph_scheduler/actor/rpc/recv_actor.h"
 #include "ir/anf.h"
 #include "backend/common/session/kernel_graph.h"
+
+// Note: After the code in ps/ps_cache are removed into runtime/addons/embedding_cache/,
+// the follow include file and using declaration of ps will be removed.
+#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "ps/ps_cache/embedding_hash_map.h"
+#include "ps/ps_cache/ps_cache_manager.h"
+#include "ps/ps_context.h"
+using mindspore::ps::EmbeddingDeviceCache;
+using mindspore::ps::EmbeddingHostCache;
+using mindspore::ps::HashTableInfo;
+using mindspore::ps::INVALID_INDEX_VALUE;
+using mindspore::ps::INVALID_STEP_VALUE;
+using mindspore::ps::PsCacheStatisticsInfo;
+using mindspore::ps::PSContext;
+using mindspore::ps::PsDataPrefetch;
 
 namespace mindspore {
 namespace runtime {
@@ -54,6 +70,33 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   void Finalize();
 
  private:
+  // Lookup embedding from Remote and get embeddings via RPC.
+  bool PullEembeddingsFromRemote(const int *ids, size_t ids_num, std::vector<float> *outputs);
+  // Push the local embedding cache that requires evict to the remote.
+  bool PushEmbeddingsToRemote(const int *ids, size_t ids_num, const float *embeddings, size_t embeddings_len);
+
+  // Get the id range of each server's embedding table slice.
+  void GetRemoteEmbeddingSliceBound();
+
+  // In a multi-server scenario, the embeddings need to be segmented, and each server saves the embeddings of
+  // different feature id ranges. Therefore, when the local side performs the push or pull embeddings operation, the
+  // embeddings and ids need to be divided, and then communicate with the corresponding remote: Partition ids by
+  // remote embedding slice bound and get unique ids.
+  void PartitionIds(const int *ids, size_t ids_num, std::vector<std::vector<int>> *slice_ids_list);
+  // Partition ids end embeddings by remote embedding slice bound.
+  void PartitionIdsAndEmbeddings(const int *ids, size_t ids_num, const float *embeddings, size_t embeddings_len,
+                                 std::vector<std::vector<int>> *slice_ids_list,
+                                 std::vector<std::vector<float>> *slice_embeddings_list);
+
+  // Send content to remote, such as ids or embeddings.
+  bool SendToRemote(size_t server_rank_id, const void *keys, size_t keys_len, const void *values = nullptr,
+                    size_t values_len = 0);
+  // Wait response of remote and get return result.
+  bool WaitRespFromRemote(size_t server_rank_id, std::vector<float> *outputs);
+  // Retrieve embeddings by input ids order.
+  bool RetrieveEmbeddings(const int *ids, size_t ids_num, const std::vector<std::vector<int>> &slice_ids_list,
+                          const std::vector<std::vector<float>> &slice_embeddings_list, std::vector<float> *outputs);
+
   // The cache prefetch phase may involve RPC communication with the server, implemented through Send Actor and
   // Recv Actor.
   // Build rpc actors.
@@ -98,6 +141,25 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   CNodePtr embedding_cache_lookup_node_;
   // The embedding cache update kernel node(operator name: 'ScatterUpdate').
   CNodePtr embedding_cache_update_node_;
+
+  // Full Embedding table row num, not less than the total number of feature ids.
+  size_t vocab_size_{0};
+
+  // Model parallelism is used between multiple workers, and local_embedding_slice_bounds_ records the feature range
+  // corresponding to the embedding table slice of the process.
+  std::pair<int, int> local_embedding_slice_bounds_;
+
+  // Model parallelism is used between multiple workers, and local_device_cache_bounds_ records the local device cache
+  // range corresponding to the embedding table slice of the process.
+  std::pair<int, int> local_device_cache_bounds_;
+
+  // In a multi-server scenario, the embeddings need to be segmented, and each server saves the embeddings of
+  // different feature id ranges, remote_embedding_slice_bounds_ records the feature range of the embedding table
+  // slice on each server.
+  std::vector<std::pair<size_t, size_t>> remote_embedding_slice_bounds_;
+
+  // Total server number of cluster.
+  size_t server_num_;
 };
 
 using EmbeddingCachePrefetchActorPtr = std::shared_ptr<EmbeddingCachePrefetchActor>;
