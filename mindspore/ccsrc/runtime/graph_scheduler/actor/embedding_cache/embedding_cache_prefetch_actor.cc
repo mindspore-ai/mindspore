@@ -28,6 +28,11 @@ using mindspore::session::KernelGraph;
 const ShapeVector kOneDimensionalShape = {1};
 const ShapeVector kTwoDimensionalShape = {1, 1};
 
+// Maximum number of threads for concurrent accelerated cache processing.
+constexpr size_t kMaxThreadNum = 16;
+// Maximum number of feature ids processed per thread.
+constexpr size_t kMaxIdsPerThread = 10000;
+
 namespace {
 ParameterPtr NewParameter(const KernelGraphPtr &graph, TypePtr type, const ShapeVector &shape) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -123,8 +128,8 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheUpdateKernel() {
   device_context_->CreateKernel({embedding_cache_update_node_});
 }
 
-bool EmbeddingCachePrefetchActor::LookupDeviceEmbeddingCache(void *indices, void *embedding_cache, size_t indices_num,
-                                                             size_t cache_size, size_t embedding_size, void *outputs) {
+bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embedding_cache, size_t indices_num,
+                                                    size_t cache_size, size_t embedding_size, void *outputs) {
   MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(embedding_cache);
   MS_EXCEPTION_IF_NULL(outputs);
@@ -164,9 +169,8 @@ bool EmbeddingCachePrefetchActor::LookupDeviceEmbeddingCache(void *indices, void
   return true;
 }
 
-bool EmbeddingCachePrefetchActor::UpdateDeviceEmbeddingCache(void *indices, void *update_value, size_t indices_num,
-                                                             size_t cache_size, size_t embedding_size,
-                                                             void *embedding_cache) {
+bool EmbeddingCachePrefetchActor::UpdateDeviceCache(void *indices, void *update_value, size_t indices_num,
+                                                    size_t cache_size, size_t embedding_size, void *embedding_cache) {
   MS_EXCEPTION_IF_NULL(indices);
   MS_EXCEPTION_IF_NULL(update_value);
   MS_EXCEPTION_IF_NULL(embedding_cache);
@@ -212,6 +216,253 @@ bool EmbeddingCachePrefetchActor::UpdateDeviceEmbeddingCache(void *indices, void
     return false;
   }
   return true;
+}
+
+bool EmbeddingCachePrefetchActor::UpdateCache() {
+  for (const auto &item : hash_tables_) {
+    auto hash_info = item.second;
+    RETURN_IF_FALSE_WITH_LOG(PushCacheFromLocalHostToRemote(hash_info), "Push cache from local host to remote failed.");
+    RETURN_IF_FALSE_WITH_LOG(PushCacheFromDeviceToLocalHost(hash_info), "Push cache from device to local host failed.");
+    RETURN_IF_FALSE_WITH_LOG(PullCacheFromRemoteToLocalHost(hash_info), "Pull cache from remote to local host failed.");
+    RETURN_IF_FALSE_WITH_LOG(PullCacheFromLocalHostToDevice(hash_info), "Pull cache from local host to device failed.");
+  }
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::PushCacheFromLocalHostToRemote(const HashTableInfo &hash_info) {
+  auto swap_indices_size = statistics_info_.host_to_server_size_;
+  if (swap_indices_size == 0) {
+    return true;
+  }
+
+  MS_ERROR_IF_NULL(embedding_host_cache_);
+  auto host_to_server_ids = embedding_host_cache_->host_to_server_ids.get();
+  MS_ERROR_IF_NULL(host_to_server_ids);
+  auto host_to_server_index = embedding_host_cache_->host_to_server_index.get();
+  MS_ERROR_IF_NULL(host_to_server_index);
+
+  std::vector<float> swap_out_data;
+  auto embedding_size = hash_info.embedding_size;
+  swap_out_data.resize(swap_indices_size * embedding_size);
+  auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
+
+  RETURN_IF_FALSE_WITH_LOG(LookupLocalHostCache(embedding_size, swap_indices_size, host_hash_table_addr,
+                                                host_to_server_index, swap_out_data.data()),
+                           "Lookup local host cache failed.");
+  RETURN_IF_FALSE_WITH_LOG(PushEmbeddingsToRemote(host_to_server_ids, swap_indices_size, swap_out_data.data(),
+                                                  swap_out_data.size() * sizeof(float)),
+                           "Push embeddings to remote failed.");
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info) {
+  auto swap_indices_size = statistics_info_.device_to_host_size_;
+  if (swap_indices_size == 0) {
+    return true;
+  }
+
+  MS_ERROR_IF_NULL(embedding_device_cache_);
+  MS_ERROR_IF_NULL(embedding_device_cache_->cache_);
+  MS_ERROR_IF_NULL(embedding_host_cache_);
+
+  auto device_cache_device_to_host_index = embedding_device_cache_->device_to_host_index.get();
+  auto host_cache_device_to_host_index = embedding_host_cache_->device_to_host_index.get();
+  MS_ERROR_IF_NULL(device_cache_device_to_host_index);
+  MS_ERROR_IF_NULL(host_cache_device_to_host_index);
+  auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
+  auto cache_vocab_size = hash_info.cache_vocab_size;
+  auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
+  auto embedding_size = hash_info.embedding_size;
+  auto swap_out_data = std::make_unique<float[]>(swap_indices_size * embedding_size);
+
+  RETURN_IF_FALSE_WITH_LOG(
+    LookupDeviceCache(embedding_device_cache_->hash_swap_index_addr_, hash_table_addr, swap_indices_size,
+                      cache_vocab_size, embedding_size, embedding_device_cache_->hash_swap_value_addr_),
+    "Lookup device cache failed.");
+  MS_EXCEPTION_IF_NULL(device_context_);
+  RETURN_IF_FALSE_WITH_LOG(device_context_->SyncStream(stream_id_), "Synchronize stream failed.");
+  RETURN_IF_FALSE_WITH_LOG(
+    InsertLocalHostCache(embedding_size, IntToSize(swap_indices_size), host_cache_device_to_host_index,
+                         swap_out_data.get(), host_hash_table_addr),
+    "Insert local host cache failed.");
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::PullCacheFromRemoteToLocalHost(const HashTableInfo &hash_info) {
+  auto swap_indices_size = statistics_info_.server_to_host_size_;
+  if (swap_indices_size == 0) {
+    return true;
+  }
+
+  MS_ERROR_IF_NULL(embedding_host_cache_);
+  auto server_to_host_ids = embedding_host_cache_->server_to_host_ids.get();
+  MS_ERROR_IF_NULL(server_to_host_ids);
+  auto server_to_host_index = embedding_host_cache_->server_to_host_index.get();
+  MS_ERROR_IF_NULL(server_to_host_index);
+
+  auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
+  MS_ERROR_IF_NULL(host_hash_table_addr);
+  auto embedding_size = hash_info.embedding_size;
+  std::vector<float> lookup_result(swap_indices_size * embedding_size, 0);
+
+  RETURN_IF_FALSE_WITH_LOG(PullEembeddingsFromRemote(server_to_host_ids, swap_indices_size, &lookup_result),
+                           "Pull embedding from remote failed.");
+  RETURN_IF_FALSE_WITH_LOG(InsertLocalHostCache(embedding_size, IntToSize(swap_indices_size), server_to_host_index,
+                                                lookup_result.data(), host_hash_table_addr),
+                           "Insert local host cache failed.");
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info) {
+  auto swap_indices_size = statistics_info_.host_to_device_size_;
+  if (swap_indices_size == 0) {
+    return true;
+  }
+
+  MS_ERROR_IF_NULL(embedding_device_cache_);
+  MS_ERROR_IF_NULL(embedding_device_cache_->cache_);
+  MS_ERROR_IF_NULL(embedding_host_cache_);
+
+  auto host_cache_host_to_device_index = embedding_host_cache_->host_to_device_index.get();
+  auto device_cache_host_to_device_index = embedding_device_cache_->host_to_device_index.get();
+  MS_ERROR_IF_NULL(host_cache_host_to_device_index);
+  MS_ERROR_IF_NULL(device_cache_host_to_device_index);
+
+  auto embedding_size = hash_info.embedding_size;
+  MS_ERROR_IF_NULL(hash_info.device_address.addr);
+  auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
+  auto cache_vocab_size = hash_info.cache_vocab_size;
+  MS_ERROR_IF_NULL(hash_info.host_address);
+  auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
+  auto swap_out_data = std::make_unique<float[]>(swap_indices_size * embedding_size);
+  RETURN_IF_FALSE_WITH_LOG(LookupLocalHostCache(embedding_size, swap_indices_size, host_hash_table_addr,
+                                                host_cache_host_to_device_index, swap_out_data.get()),
+                           "Lookup local host cache failed.");
+
+  RETURN_IF_FALSE_WITH_LOG(
+    UpdateDeviceCache(embedding_device_cache_->hash_swap_index_addr_, embedding_device_cache_->hash_swap_value_addr_,
+                      swap_indices_size, cache_vocab_size, embedding_size, hash_table_addr),
+    "Update device embedding cache failed.");
+  MS_EXCEPTION_IF_NULL(device_context_);
+  RETURN_IF_FALSE_WITH_LOG(device_context_->SyncStream(stream_id_), "Synchronize stream failed.");
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::InsertLocalHostCache(size_t embedding_size, size_t insert_indices_size,
+                                                       const int *insert_indices, const float *insert_data,
+                                                       float *hash_table_addr) {
+  MS_ERROR_IF_NULL(insert_indices);
+  MS_ERROR_IF_NULL(insert_data);
+  MS_ERROR_IF_NULL(hash_table_addr);
+
+  size_t first_dim_size = local_host_cache_size_;
+  size_t thread_num = insert_indices_size / kMaxIdsPerThread + 1;
+  thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
+  std::thread threads[kMaxThreadNum];
+  size_t proc_len = (insert_indices_size + thread_num - 1) / thread_num;
+  size_t i = 0;
+  size_t offset = 0;
+
+  auto insert_cache_func = [this](size_t insert_indices_size, size_t embedding_size, size_t first_dim_size,
+                                  const int *insert_indices, const float *insert_data, float *hash_table_addr) {
+    auto type_size = sizeof(float);
+    size_t copy_len = embedding_size * type_size;
+    size_t dest_len = copy_len;
+    for (size_t i = 0; i < insert_indices_size; ++i) {
+      int index = insert_indices[i];
+      if (index >= 0 && index < SizeToInt(first_dim_size)) {
+        auto ret =
+          memcpy_s(hash_table_addr + index * embedding_size, dest_len, insert_data + i * embedding_size, copy_len);
+        if (ret != EOK) {
+          MS_LOG(ERROR) << "Memcpy failed, errno[" << ret << "]";
+          running_ = false;
+          return;
+        }
+      }
+    }
+  };
+
+  for (; i < thread_num; i++) {
+    if (offset >= insert_indices_size) {
+      break;
+    }
+    threads[i] = std::thread(insert_cache_func, proc_len, embedding_size, first_dim_size, insert_indices + offset,
+                             insert_data + offset * embedding_size, hash_table_addr);
+    offset += proc_len;
+    if (offset + proc_len > insert_indices_size) {
+      proc_len = insert_indices_size - offset;
+    }
+  }
+
+  for (size_t j = 0; j < i; j++) {
+    threads[j].join();
+  }
+  return running_;
+}
+
+void EmbeddingCachePrefetchActor::LookupEmbeddingTable(size_t indices_num, size_t embedding_size, size_t first_dim_size,
+                                                       const float *input_addr, const int *indices_addr,
+                                                       float *output_addr) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(input_addr);
+  MS_ERROR_IF_NULL_WO_RET_VAL(indices_addr);
+  MS_ERROR_IF_NULL_WO_RET_VAL(output_addr);
+
+  auto type_size = sizeof(float);
+  size_t lens = embedding_size * type_size;
+  for (size_t i = 0; i < indices_num; ++i) {
+    int index = indices_addr[i];
+    if (index >= 0 && index < SizeToInt(first_dim_size)) {
+      size_t pos = index * embedding_size;
+      auto ret = memcpy_s(output_addr, (indices_num - i) * lens, input_addr + pos, lens);
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "Memcpy failed, errno[" << ret << "]";
+        running_ = false;
+        return;
+      }
+    } else {
+      auto ret = memset_s(output_addr, (indices_num - i) * lens, 0, lens);
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "Memset failed, errno[" << ret << "]";
+        running_ = false;
+        return;
+      }
+    }
+    output_addr += embedding_size;
+  }
+}
+
+bool EmbeddingCachePrefetchActor::LookupLocalHostCache(size_t embedding_size, size_t indices_num,
+                                                       const float *hash_table_addr, const int *indices_addr,
+                                                       float *output_addr) {
+  MS_ERROR_IF_NULL(hash_table_addr);
+  MS_ERROR_IF_NULL(indices_addr);
+  MS_ERROR_IF_NULL(output_addr);
+
+  size_t first_dim_size = local_host_cache_size_;
+  size_t thread_num = indices_num / kMaxIdsPerThread + 1;
+  thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
+  std::thread threads[kMaxThreadNum];
+  size_t proc_len = (indices_num + thread_num - 1) / thread_num;
+  size_t i = 0;
+  size_t offset = 0;
+
+  for (; i < thread_num; i++) {
+    if (offset >= indices_num) {
+      break;
+    }
+    threads[i] =
+      std::thread(&EmbeddingCachePrefetchActor::LookupEmbeddingTable, this, proc_len, embedding_size, first_dim_size,
+                  hash_table_addr, indices_addr + offset, output_addr + offset * embedding_size);
+    offset += proc_len;
+    if (offset + proc_len > indices_num) {
+      proc_len = indices_num - offset;
+    }
+  }
+
+  for (size_t j = 0; j < i; j++) {
+    threads[j].join();
+  }
+  return running_;
 }
 
 bool EmbeddingCachePrefetchActor::PullEembeddingsFromRemote(const int *ids, size_t ids_num,
@@ -420,7 +671,7 @@ bool EmbeddingCachePrefetchActor::RetrieveEmbeddings(const int *ids, size_t ids_
 
     auto ret = memcpy_s(outputs_data + offset, dst_size, iter->second, src_size);
     if (ret != 0) {
-      MS_LOG(ERROR) << "Memcpy failed, errorno[" << ret << "]";
+      MS_LOG(ERROR) << "Memcpy failed, errno[" << ret << "]";
       return false;
     }
     offset += embedding_dim;

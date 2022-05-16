@@ -70,6 +70,30 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   void Finalize();
 
  private:
+  // When the device cache does not reach 100% hit, the cache needs to be updated, which involves cache insertion and
+  // deletion. That is, push the non-hotspot embeddings on the local side to the remote, and pull the missing embeddings
+  // on the local side from the remote.
+  bool UpdateCache();
+
+  // Push non-hotspot embeddings on local host cache to remote.
+  bool PushCacheFromLocalHostToRemote(const HashTableInfo &hash_info);
+  // Push non-hotspot embeddings on device cache to local host cache.
+  bool PushCacheFromDeviceToLocalHost(const HashTableInfo &hash_info);
+  // Pull missing embeddings on local cache from remote.
+  bool PullCacheFromRemoteToLocalHost(const HashTableInfo &hash_info);
+  // Pull missing embeddings on device cache from local host.
+  bool PullCacheFromLocalHostToDevice(const HashTableInfo &hash_info);
+
+  // Insert weights into the local host embedding cache.
+  bool InsertLocalHostCache(size_t embedding_size, size_t insert_indices_size, const int *insert_indices,
+                            const float *insert_data, float *hash_table_addr);
+  // Lookup embeddings from local host embedding cache.
+  bool LookupLocalHostCache(size_t embedding_size, size_t indices_num, const float *hash_table_addr,
+                            const int *indices_addr, float *output_addr);
+  // Do lookup embedding table operation.
+  void LookupEmbeddingTable(size_t indices_num, size_t outer_dim_size, size_t first_dim_size, const float *input_addr,
+                            const int *indices_addr, float *output_addr);
+
   // Lookup embedding from Remote and get embeddings via RPC.
   bool PullEembeddingsFromRemote(const int *ids, size_t ids_num, std::vector<float> *outputs);
   // Push the local embedding cache that requires evict to the remote.
@@ -115,15 +139,15 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // 1. Update the shape of parameter node.
   // 2. Infer shape for embedding cache look up kernel(operator name: 'Gather').
   // 3. Launch embedding cache look up kernel.
-  bool LookupDeviceEmbeddingCache(void *indices, void *embedding_cache, size_t indices_num, size_t cache_size,
-                                  size_t embedding_size, void *outputs);
+  bool LookupDeviceCache(void *indices, void *embedding_cache, size_t indices_num, size_t cache_size,
+                         size_t embedding_size, void *outputs);
 
   // Update feature weights on Device Embedding Cache:
   // 1. Update the shape of parameter node.
   // 2. Infer shape for embedding cache update kernel(operator name: 'ScatterUpdate').
   // 3. Launch embedding cache update kernel.
-  bool UpdateDeviceEmbeddingCache(void *indices, void *update_value, size_t indices_num, size_t cache_size,
-                                  size_t embedding_size, void *embedding_cache);
+  bool UpdateDeviceCache(void *indices, void *update_value, size_t indices_num, size_t cache_size,
+                         size_t embedding_size, void *embedding_cache);
 
   // Record Send Actor and Recv Actor.
   // Key: Inter process edge(Parameter name), Value: Send Actor.
@@ -145,6 +169,22 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Full Embedding table row num, not less than the total number of feature ids.
   size_t vocab_size_{0};
 
+  // Embedding cache size(row number of embedding cache) of local host cache.
+  size_t local_host_cache_size_{0};
+
+  // Record the hash table meta info for all embedding tables.
+  std::map<std::string, HashTableInfo> hash_tables_;
+
+  // Record the public information of all device embedding cache tables, such as the mapping relationship of id to
+  // index, the information that needs to be updated (swap in and swap out), etc.
+  std::shared_ptr<EmbeddingDeviceCache> embedding_device_cache_;
+  // Record the public information of all local host embedding cache tables, such as the mapping relationship of id to
+  // index, the information that needs to be updated (swap in and swap out), etc.
+  std::shared_ptr<EmbeddingHostCache> embedding_host_cache_;
+
+  // Statistics on the cache hit rate of the host and device and the information used to update cache.
+  PsCacheStatisticsInfo statistics_info_;
+
   // Model parallelism is used between multiple workers, and local_embedding_slice_bounds_ records the feature range
   // corresponding to the embedding table slice of the process.
   std::pair<int, int> local_embedding_slice_bounds_;
@@ -160,6 +200,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // Total server number of cluster.
   size_t server_num_;
+
+  // The flag which indicates whether this actor is running to prefetch cache.
+  std::atomic_bool running_{false};
 };
 
 using EmbeddingCachePrefetchActorPtr = std::shared_ptr<EmbeddingCachePrefetchActor>;
