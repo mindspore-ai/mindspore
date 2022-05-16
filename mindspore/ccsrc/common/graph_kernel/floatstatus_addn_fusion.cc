@@ -67,8 +67,20 @@ CNodePtr InsertLoad(const FuncGraphPtr &main_graph, const CNodePtr &broadcast_to
 
 void FloatStatusAddNFusion::ProcessFloatStatusAddN(const FuncGraphPtr &main_graph, const CNodePtr &addn,
                                                    const FuncGraphManagerPtr &mng) {
+  mindspore::HashSet<AnfNodePtr> visited_nodes;
+  std::unordered_set<size_t> input_not_convert;
+
+  for (size_t i = 1; i < addn->inputs().size(); i++) {
+    if (visited_nodes.find(addn->input(i)) != visited_nodes.end()) {
+      (void)input_not_convert.insert(i);
+      continue;
+    }
+    (void)visited_nodes.insert(addn->input(i));
+  }
+
   // Expand floatstatus to subgraph
   for (size_t i = 1; i < addn->inputs().size(); i++) {
+    if (input_not_convert.count(i) > 0) continue;
     auto floatstatus = addn->input(i)->cast<CNodePtr>();
     auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(floatstatus, false)->Run(floatstatus));
     MS_EXCEPTION_IF_NULL(expand_fg);
@@ -86,6 +98,7 @@ void FloatStatusAddNFusion::ProcessFloatStatusAddN(const FuncGraphPtr &main_grap
 
   // Insert extra input(broadcast node output) to composite node, and make elemany inplace-assign to it.
   for (size_t i = 1; i < addn->inputs().size(); i++) {
+    if (input_not_convert.count(i) > 0) continue;
     op_info = SubGraphSignleOutput(addn->input(i));
     ProcessOriginCNode(addn->input(i), {{op_info, broadcast_to_node}});
   }
