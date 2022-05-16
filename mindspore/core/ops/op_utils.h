@@ -29,6 +29,9 @@ namespace mindspore::ops {
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,  kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64};
 
+const std::set<TypePtr> common_valid_types_with_bool = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
+                                                        kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool};
+
 const std::set<TypePtr> common_valid_types_with_complex = {kInt8,    kInt16,     kInt32,     kInt64,   kUInt8,
                                                            kUInt16,  kUInt32,    kUInt64,    kFloat16, kFloat32,
                                                            kFloat64, kComplex64, kComplex128};
