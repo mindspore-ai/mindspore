@@ -198,6 +198,8 @@ FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
     if (expanders::OpDescFactory::Instance().HasOp(op_name)) {
       return DefaultExpander::ExpandToGraph(node);
     }
+    // expander fallback do not use python
+    if (std::dynamic_pointer_cast<CallbackImplWithInferShape>(cb_) != nullptr) return nullptr;
   }
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
