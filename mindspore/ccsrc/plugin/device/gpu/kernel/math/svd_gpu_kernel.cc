@@ -81,8 +81,8 @@ int SvdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
     }
   }
   init_size_lists_func_(this);
-  constexpr auto kBatchMax = 32;
-  if (m_ <= kBatchMax && n_ <= kBatchMax && batch_size_ > 1 && (full_matrices_ || m_ == n_)) {
+  constexpr auto kBatchedMaxRowCol = 32;
+  if (m_ <= kBatchedMaxRowCol && n_ <= kBatchedMaxRowCol && batch_size_ > 1 && (full_matrices_ || m_ == n_)) {
     batched_ = true;
   }
   return 0;
@@ -129,7 +129,6 @@ template <typename T>
 void SvdGpuKernelMod::RunSvd(const size_t m, const size_t n, const size_t batch, T *d_a, int *dev_info, T *output_s,
                              T *d_output_u, T *d_output_v) {
   int lwork = 0;
-  T *d_work = nullptr;
 
   if constexpr (std::is_same_v<T, float>) {
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnSgesvd_bufferSize(handle_, m, n, &lwork),
@@ -139,8 +138,10 @@ void SvdGpuKernelMod::RunSvd(const size_t m, const size_t n, const size_t batch,
                                            "cusolver query svd work size fail");
   }
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMalloc(reinterpret_cast<void **>(&d_work), sizeof(T) * lwork),
-                                     "malloc d_work failed.");
+  void *d_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(sizeof(T) * lwork);
+  if (d_work == nullptr) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the memory of d_work alloc failed.";
+  }
   T *d_s1 = output_s + batch * p_;
   T *d_u1 = nullptr;
   T *d_v1 = nullptr;
@@ -155,14 +156,16 @@ void SvdGpuKernelMod::RunSvd(const size_t m, const size_t n, const size_t batch,
   }
 
   if constexpr (std::is_same_v<T, float>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnSgesvd(handle_, job_, job_, m, n, d_a, m, d_s1, d_u1, m, d_v1, n, d_work, lwork, nullptr, dev_info),
-      "cusolver svd fail");
+    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnSgesvd(handle_, job_, job_, m, n, d_a, m, d_s1, d_u1, m, d_v1, n,
+                                                            static_cast<T *>(d_work), lwork, nullptr, dev_info),
+                                           "cusolver svd fail");
   } else if constexpr (std::is_same_v<T, double>) {
-    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnDgesvd(handle_, job_, job_, m, n, d_a, m, d_s1, d_u1, m, d_v1, n, d_work, lwork, nullptr, dev_info),
-      "cusolver svd fail");
+    CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnDgesvd(handle_, job_, job_, m, n, d_a, m, d_s1, d_u1, m, d_v1, n,
+                                                            static_cast<T *>(d_work), lwork, nullptr, dev_info),
+                                           "cusolver svd fail");
   }
+
+  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(d_work);
 }
 
 template <typename T>
@@ -170,7 +173,6 @@ void SvdGpuKernelMod::RunSvdBatched(const size_t m, const size_t n, T *d_input, 
                                     int *dev_info) {
   cusolverEigMode_t jobz = compute_uv_ ? CUSOLVER_EIG_MODE_VECTOR : CUSOLVER_EIG_MODE_NOVECTOR;
   int lwork = 0;
-  T *work = nullptr;
   gesvdjInfo_t info;
   CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnCreateGesvdjInfo(&info), "cusolver svd fail");
   if constexpr (std::is_same_v<T, float>) {
@@ -185,22 +187,24 @@ void SvdGpuKernelMod::RunSvdBatched(const size_t m, const size_t n, T *d_input, 
       "cusolver query svd work size fail");
   }
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMalloc(reinterpret_cast<void **>(&work), sizeof(T) * lwork),
-                                     "malloc d_work failed.");
+  void *work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(sizeof(T) * lwork);
+  if (work == nullptr) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the memory of work alloc failed.";
+  }
 
   if constexpr (std::is_same_v<T, float>) {
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnSgesvdjBatched(handle_, jobz, m, n, d_input, m, output_s, output_u, m, output_v, n, work, lwork,
-                               dev_info, info, batch_size_),
+      cusolverDnSgesvdjBatched(handle_, jobz, m, n, d_input, m, output_s, output_u, m, output_v, n,
+                               static_cast<T *>(work), lwork, dev_info, info, batch_size_),
       "cusolver svd fail");
   } else if constexpr (std::is_same_v<T, double>) {
     CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
-      cusolverDnDgesvdjBatched(handle_, jobz, m, n, d_input, m, output_s, output_u, m, output_v, n, work, lwork,
-                               dev_info, info, batch_size_),
+      cusolverDnDgesvdjBatched(handle_, jobz, m, n, d_input, m, output_s, output_u, m, output_v, n,
+                               static_cast<T *>(work), lwork, dev_info, info, batch_size_),
       "cusolver svd fail");
   }
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaFree(work), "free work failed.");
+  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(work);
 }
 
 template <typename T>
