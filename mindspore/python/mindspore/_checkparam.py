@@ -158,7 +158,7 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
     prim_info = f'{prim_name}' + f'{arg_name}'
     if isinstance(arg_value, arg_type):
         if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
-            raise ValueError(f"'{prim_info}' must be a legal value, but got '{arg_value}'.")
+            raise ValueError(f"{prim_info} must be a legal value, but got '{arg_value}'.")
     else:
         raise TypeError(f"{prim_info} must be {arg_type.__name__}, but got '{type(arg_value).__name__}'")
 
