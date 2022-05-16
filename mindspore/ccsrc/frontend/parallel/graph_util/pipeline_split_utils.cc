@@ -758,10 +758,14 @@ void Reorder(const FuncGraphPtr &root) {
                 &allreduce_params, root);
   int64_t micro_max = 0;
   if (root->has_flag(kTraining)) {
-    auto forward_end_cnode = forward_end.back()->cast<CNodePtr>();
-    auto micro_size = forward_end_cnode->GetPrimalAttr(MICRO);
-    MS_EXCEPTION_IF_NULL(micro_size);
-    micro_max = GetValue<int64_t>(micro_size);
+    if (forward_end.empty()) {
+      MS_LOG(EXCEPTION) << "can not find the end node of pipeline, you are advised to use 'PipelineCell' to fix it.";
+    } else {
+      auto forward_end_cnode = forward_end.back()->cast<CNodePtr>();
+      auto micro_size = forward_end_cnode->GetPrimalAttr(MICRO);
+      MS_EXCEPTION_IF_NULL(micro_size);
+      micro_max = GetValue<int64_t>(micro_size);
+    }
   }
   auto backward_start_pair = Deduplicate(backward_start, root, micro_max);
   auto backward_end_pair = Deduplicate(backward_end, root, micro_max);
