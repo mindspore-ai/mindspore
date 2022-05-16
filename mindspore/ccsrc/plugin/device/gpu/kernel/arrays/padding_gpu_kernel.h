@@ -14,42 +14,43 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PADDING_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PADDING_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_PADDING_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_PADDING_GPU_KERNEL_H_
+
 #include <vector>
-#include <complex>
 #include <utility>
 #include <map>
-#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class PaddingCpuKernelMod : public NativeCpuKernelMod {
+class PaddingGpuKernelMod : public NativeGpuKernelMod {
  public:
-  PaddingCpuKernelMod() = default;
-  ~PaddingCpuKernelMod() override = default;
+  PaddingGpuKernelMod() = default;
+  ~PaddingGpuKernelMod() override = default;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
+    if (is_null_input_) {
+      return true;
+    }
+    cuda_stream_ = cuda_stream;
+    return kernel_func_(this, inputs, outputs);
+  }
+
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs) override {
-    if (is_null_input_) {
-      return true;
-    }
-    return kernel_func_(this, inputs, outputs);
-  }
-
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using PaddingFunc = std::function<bool(PaddingCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  using PaddingFunc = std::function<bool(PaddingGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, PaddingFunc>> func_list_;
   PaddingFunc kernel_func_;
@@ -60,7 +61,8 @@ class PaddingCpuKernelMod : public NativeCpuKernelMod {
   size_t x_last_dim_{1};
   size_t pad_dim_size_{8};
   bool is_null_input_{false};
+  void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PADDING_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_PADDING_GPU_KERNEL_H_

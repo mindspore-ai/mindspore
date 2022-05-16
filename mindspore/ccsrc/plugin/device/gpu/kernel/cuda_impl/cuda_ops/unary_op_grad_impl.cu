@@ -63,7 +63,7 @@ __global__ void AsinGradKernel(const half *input, const half *dout, half *output
 template <typename T>
 __global__ void ACosGradKernel(const T *input, const T *dout, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    T neg_one = -1;
+    T neg_one = static_cast<T>(-1);
     T one = 1;
     T sqt = sqrtf(one - input[i] * input[i]);
     output[i] = neg_one * dout[i] / sqt;
