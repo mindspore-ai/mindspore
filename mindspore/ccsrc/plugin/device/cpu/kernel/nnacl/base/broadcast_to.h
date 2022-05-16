@@ -22,9 +22,13 @@
 extern "C" {
 #endif
 #define BROADCAST_TO(type, input, shape_info, output) broadcast_to_##type(input, shape_info, output)
+int broadcast_to_bool(const bool *input, BroadcastShapeInfo *shape_info, bool *output);
+int broadcast_to_int8_t(const int8_t *input, BroadcastShapeInfo *shape_info, int8_t *output);
+int broadcast_to_int16_t(const int16_t *input, BroadcastShapeInfo *shape_info, int16_t *output);
+int broadcast_to_int32_t(const int32_t *input, BroadcastShapeInfo *shape_info, int32_t *output);
+int broadcast_to_int64_t(const int64_t *input, BroadcastShapeInfo *shape_info, int64_t *output);
 int broadcast_to_int(const int *input, BroadcastShapeInfo *shape_info, int *output);
 int broadcast_to_float(const float *input, BroadcastShapeInfo *shape_info, float *output);
-int broadcast_to_bool(const bool *input, BroadcastShapeInfo *shape_info, bool *output);
 #ifdef ENABLE_FP16
 int broadcast_to_float16_t(const float16_t *input, BroadcastShapeInfo *shape_info, float16_t *output);
 #endif
