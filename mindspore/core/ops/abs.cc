@@ -58,15 +58,6 @@ TypePtr AbsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   return x_type;
 }
 
-AbstractBasePtr AbsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                         const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-
-  return abstract::MakeAbstract(AbsInferShape(primitive, input_args), AbsInferType(primitive, input_args));
-}
-
 ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   if (input_args.empty()) {
     return nullptr;
@@ -144,6 +135,14 @@ ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Abs, BaseOperator);
+AbstractBasePtr AbsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                         const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+
+  return abstract::MakeAbstract(AbsInferShape(primitive, input_args), AbsInferType(primitive, input_args));
+}
 REGISTER_PRIMITIVE_EVAL_IMPL(Abs, prim::kPrimAbs, AbsInfer, AbsInferValue, true);
 }  // namespace ops
 }  // namespace mindspore

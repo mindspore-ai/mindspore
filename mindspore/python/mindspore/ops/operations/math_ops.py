@@ -1960,7 +1960,7 @@ class Rsqrt(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class Sqrt(PrimitiveWithCheck):
+class Sqrt(Primitive):
     r"""
     Returns square root of a tensor element-wise.
 
@@ -1997,18 +1997,6 @@ class Sqrt(PrimitiveWithCheck):
     def __init__(self):
         """Initialize Sqrt"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def check_dtype(self, x_type):
-        validator.check_tensor_dtype_valid("x", x_type, mstype.number_type, self.name)
-
-    def infer_value(self, x):
-        """Infer the value of input for Sqrt."""
-        if x is not None:
-            x = x.asnumpy()
-            out = np.sqrt(x)
-            out = np.array(out, x.dtype)
-            return Tensor(out)
-        return None
 
 
 class Reciprocal(PrimitiveWithInfer):

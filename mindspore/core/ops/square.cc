@@ -52,16 +52,6 @@ TypePtr SquareInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   return x_dtype;
 }
 
-AbstractBasePtr SquareInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto types = SquareInferType(primitive, input_args);
-  auto shapes = SquareInferShape(primitive, input_args);
-  return abstract::MakeAbstract(shapes, types);
-}
-
 ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   if (input_args.empty()) {
@@ -146,6 +136,15 @@ ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Square, BaseOperator);
+AbstractBasePtr SquareInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto types = SquareInferType(primitive, input_args);
+  auto shapes = SquareInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shapes, types);
+}
 REGISTER_PRIMITIVE_EVAL_IMPL(Square, prim::kPrimSquare, SquareInfer, SquareInferValue, true);
 }  // namespace ops
 }  // namespace mindspore
