@@ -156,6 +156,7 @@ void UniformRealInfo::ResetInputsShape() {
   ValueTuplePtr shape_value = input_value_[0]->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
   inputs_shape_.push_back(GetValue<Shape>(shape_value));
+  is_parameter_.push_back(false);
 }
 }  // namespace parallel
 }  // namespace mindspore
