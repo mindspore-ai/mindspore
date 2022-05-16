@@ -22,6 +22,7 @@
 
 namespace mindspore {
 constexpr int kActorParallelThreshold = 5;
+std::mutex ParallelThreadPool::create_thread_pool_muntex_;
 
 void ParallelWorker::CreateThread() { thread_ = std::thread(&ParallelWorker::Run, this); }
 
@@ -239,6 +240,7 @@ int ParallelThreadPool::CreateParallelThreads(size_t actor_thread_num, size_t al
 
 ParallelThreadPool *ParallelThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
                                                          const std::vector<int> &core_list, BindMode bind_mode) {
+  std::lock_guard<std::mutex> lock(create_thread_pool_muntex_);
   ParallelThreadPool *pool = new (std::nothrow) ParallelThreadPool();
   if (pool == nullptr) {
     return nullptr;
