@@ -51,6 +51,30 @@ class ArithmeticLogicCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::shared_ptr<CpuKernelFunc> func_obj_;
   std::string kernel_type_{"Unknown"};
 };
+class ArithmeticComplexLogicCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+ public:
+  ArithmeticComplexLogicCpuKernelMod() = default;
+  explicit ArithmeticComplexLogicCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  ~ArithmeticComplexLogicCpuKernelMod() override = default;
+
+  void InitKernel(const CNodePtr &kernel_node) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    const size_t kInputsNum = 2;
+    const size_t kOutputsNum = 1;
+    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+    return func_obj_->RunFunc(inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
+ private:
+  std::shared_ptr<CpuKernelFunc> func_obj_;
+  std::string kernel_type_{"Unknown"};
+};
 }  // namespace kernel
 }  // namespace mindspore
 

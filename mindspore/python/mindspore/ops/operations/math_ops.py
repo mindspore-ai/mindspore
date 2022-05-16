@@ -3301,7 +3301,7 @@ class _LogicBinaryOp(_BinaryOp):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, prim_name=self.name)
 
 
-class Equal(_LogicBinaryOp):
+class Equal(Primitive):
     r"""
     Computes the equivalence between two tensors element-wise.
 
@@ -3326,17 +3326,12 @@ class Equal(_LogicBinaryOp):
         [ True  True False]
     """
 
-    def infer_dtype(self, x_dtype, y_dtype):
-        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type + (mstype.bool_,), self.name)
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
 
-    def infer_value(self, x, y):
-        if x is None or y is None:
-            return None
-        if isinstance(x, Tensor) and x.has_init:
-            x = x.init_data()
-        if isinstance(y, Tensor) and y.has_init:
-            y = y.init_data()
-        return Tensor(x.asnumpy() == y.asnumpy())
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Equal"""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
 
 class ApproximateEqual(_LogicBinaryOp):

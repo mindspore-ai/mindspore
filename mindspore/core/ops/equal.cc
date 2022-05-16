@@ -20,6 +20,7 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <complex>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -27,28 +28,131 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(Equal, BaseOperator);
-AbstractBasePtr EqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                           const std::vector<AbstractBasePtr> &input_args) {
+namespace {
+template <typename T>
+void EqualImpl(void *x1, void *x2, void *result, size_t size) {
+  MS_EXCEPTION_IF_NULL(x1);
+  MS_EXCEPTION_IF_NULL(x2);
+  MS_EXCEPTION_IF_NULL(result);
+  T *x1_data = static_cast<T *>(x1);
+  T *x2_data = static_cast<T *>(x2);
+  auto result_data = static_cast<bool *>(result);
+  MS_EXCEPTION_IF_NULL(x1_data);
+  MS_EXCEPTION_IF_NULL(x2_data);
+  MS_EXCEPTION_IF_NULL(result_data);
+  for (size_t i = 0; i < size; ++i) {
+    result_data[i] = x1_data[i] == x2_data[i];
+  }
+}
+
+abstract::ShapePtr EqualInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, input_num,
-                                           op_name);
+  return BroadCastInferShape(op_name, input_args);
+}
+
+TypePtr EqualInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
-    MS_LOG(EXCEPTION) << "For '" << op_name
-                      << "', the input args userd for infer shape and type, can not be a nullptr.";
-  }
-  std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
-  (void)types.emplace("y", input_args[1]->BuildType());
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, op_name);
-  auto out_shape = BroadCastInferShape(op_name, input_args);
-  return abstract::MakeAbstract(out_shape, kBool);
+  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 0);
+  auto y = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim->name(), input_args, 1);
+  (void)abstract::CheckDtypeSame(prim->name(), x, y);
+  const std::set<TypePtr> valid_types = {kInt8,    kInt16, kInt32, kInt64,     kFloat,      kFloat16, kUInt16,
+                                         kFloat64, kUInt8, kBool,  kComplex64, kComplex128, kUInt32};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("y", input_args[1]->BuildType(), valid_types, prim->name());
+  return std::make_shared<TensorType>(kBool);
 }
-REGISTER_PRIMITIVE_C(kNameEqual, Equal);
+
+ValuePtr EqualInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  constexpr auto kX1Index = 0;
+  constexpr auto kX2Index = 1;
+  auto result_type = EqualInferType(prim, input_args);
+  auto result_shape = EqualInferShape(prim, input_args)->cast<abstract::ShapePtr>();
+  auto x1 = input_args[kX1Index]->BuildValue();
+  auto x2 = input_args[kX2Index]->BuildValue();
+  if (x1 == nullptr || x2 == nullptr) {
+    return nullptr;
+  }
+  auto x1_tensor = x1->cast<tensor::TensorPtr>();
+  auto x2_tensor = x2->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(x1_tensor);
+  MS_EXCEPTION_IF_NULL(x2_tensor);
+  auto type_id = x1_tensor->data_type();
+  auto data_size = x1_tensor->DataSize();
+  auto result_tensor = std::make_shared<tensor::Tensor>(kNumberTypeBool, result_shape->shape());
+  switch (type_id) {
+    case kNumberTypeBool: {
+      EqualImpl<bool>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeInt: {
+      EqualImpl<int>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeInt8: {
+      EqualImpl<int8_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeInt16: {
+      EqualImpl<int16_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeInt32: {
+      EqualImpl<int32_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeInt64: {
+      EqualImpl<int64_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeUInt8: {
+      EqualImpl<uint8_t>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeFloat: {
+      EqualImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeFloat16: {
+      EqualImpl<float16>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeFloat32: {
+      EqualImpl<float>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeFloat64: {
+      EqualImpl<double>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeComplex64: {
+      EqualImpl<std::complex<float>>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeComplex128: {
+      EqualImpl<std::complex<double>>(x1_tensor->data_c(), x2_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    default: {
+      MS_EXCEPTION(TypeError) << "For '" << prim->name()
+                              << "', the supported type is in the list: ['bool', 'int8', 'int16', 'int32', 'int64', "
+                                 "'complex64', 'complex128', 'uint8', 'float16', 'float32', 'float64'], but got "
+                              << result_type->ToString();
+    }
+  }
+  return result_tensor;
+}
+}  // namespace
+
+MIND_API_OPERATOR_IMPL(Equal, BaseOperator);
+AbstractBasePtr EqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                           const std::vector<AbstractBasePtr> &input_args) {
+  auto shape = EqualInferShape(primitive, input_args);
+  auto type = EqualInferType(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(Equal, prim::kPrimEqual, EqualInfer, EqualInferValue, true);
 }  // namespace ops
 }  // namespace mindspore
