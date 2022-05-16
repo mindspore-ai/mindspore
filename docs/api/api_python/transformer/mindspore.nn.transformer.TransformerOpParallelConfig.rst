@@ -15,7 +15,7 @@
     - **micro_batch_num** (int) - 表示用于pipeline训练的batch的微型大小。默认值：1。
     - **optimizer_shard** (bool) - 表示是否使能优化器切分。默认值：False。
     - **gradient_aggregation_group** (int) - 表示优化器切分的融合组大小。默认值：4。
-    - **recompute** (bool) - 表示是否启用transformer每层的的重计算。默认值：False。
+    - **recompute** (bool) - 表示是否启用transformer每层的的重计算。默认值：一个按默认参数初始化的 `TransformerRecomputeConfig` 实例。
     - **vocab_emb_dp** (bool) - 表示Embedding表是否为数据并行，否则将在查找表中的第0维度根据模型并行度进行切分。默认值：True。
 
     .. py:method:: dp_mp_config()

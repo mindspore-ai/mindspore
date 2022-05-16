@@ -18,9 +18,9 @@
     - **num_heads** (int) - 表示注意力机制中头的数量。
     - **hidden_dropout_rate** (float) - 表示最后dense输出的丢弃率。默认值：0.1
     - **attention_dropout_rate** (float) - 表示注意力score的丢弃率。默认值：0.1
-    - **compute_dtype** (dtype.Number) - 表示dense中矩阵乘法的计算类型。默认值：dtype.float16。其值应为dtype.float32或dtype.float16。
-    - **param_init_type** (dtype.Number) - 表示模块的参数初始化类型。默认值：dtype.float32。其值应为dtype.float32或dtype.float16。
-    - **softmax_compute_type** (dtype.Number) - 表示softmax计算模块的类型。默认值：dtype.float32。  其值应为dtype.float32或dtype.float16。
+    - **compute_dtype** (dtype.Number) - 表示dense中矩阵乘法的计算类型。默认值：mstype.float16。其值应为mstype.float32或mstype.float16。
+    - **param_init_type** (dtype.Number) - 表示模块的参数初始化类型。默认值：mstype.float32。其值应为mstype.float32或mstype.float16。
+    - **softmax_compute_type** (dtype.Number) - 表示softmax计算模块的类型。默认值：mstype.float32。  其值应为mstype.float32或mstype.float16。
     - **use_past** (bool) - 使用过去状态进行计算，用于增量预测。例如，如果我们有两个单词，想生成十个或以上单词。我们只需要计算一次这两个单词的状态，然后逐个生成下一个单词。当use_past为True时，有两个步骤可以执行预测。
       第一步是通过 `model.add_flags_recursive(is_first_iteration=True)` 将is_first_iteration设为True，并传递完整的输入。然后，通过 `model.add_flags_recursive(is_first_iteration=False)` 将is_first_iteration设为False。此时，传递step的输入tensor，并对其进行循环。默认值：False
     - **parallel_config** (OpParallelConfig) - 表示并行配置。默认值为 `default_dpmp_config` ，表示一个带有参数的 `OpParallelConfig` 实例。
