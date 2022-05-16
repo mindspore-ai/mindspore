@@ -3266,8 +3266,12 @@ class Rint(Primitive):
 
 class Select(Primitive):
     r"""
-    The conditional tensor determines whether the corresponding element in the output must be
-    selected from :math:`x` (if True) or :math:`y` (if False) based on the value of each
+
+    Returns the selected elements, either from input :math:`x` or input :math:`y`, depending on the `condition`.
+
+    The conditional tensor acts as an optional compensation (mask), which
+    determines whether the corresponding element in the output must be
+    selected from :math:`x` (if true) or :math:`y` (if false) based on the value of each
     element.
 
     It can be defined as:
@@ -3278,18 +3282,23 @@ class Select(Primitive):
         y_i, & \text{otherwise}
         \end{cases}
 
+    The condition has the same shape as :math:`x` and :math:`y`, you can choose to copy these elements from :math:`x`
+    and :math:`y`.
+
     Inputs:
-        - **condition** (Tensor[bool]) - The condition tensor, decides which element is chosen.
-          The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-        - **x** (Tensor) - The first tensor to be selected and the shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-        - **y** (Tensor) - The second tensor to be selected and the shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+        - **input_cond** (Tensor[bool]) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          The condition tensor, decides which element is chosen.
+        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          The first input tensor.
+        - **input_y** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          The second input tensor.
 
     Outputs:
-        Tensor, has the same shape as `x`.
+        Tensor, has the same shape as `input_x`. The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
 
     Raises:
-        TypeError: If `x` or `y` is not a Tensor.
-        ValueError: If shape of `x` is not equal to shape of `y` or shape of `condition`.
+        TypeError: If `input_x` or `input_y` is not a Tensor.
+        ValueError: If shape of `input_x` is not equal to shape of `input_y` or shape of `input_cond`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6458,7 +6467,7 @@ class Range(PrimitiveWithCheck):
     Creates a sequence of numbers that begins at `start` and extends by increments of
     `delta` up to but not including `limit`.
 
-    Refer to :func:`mindspore.ops.range` for more detailed.
+    Refer to :func"`mindspore.ops.range` for more detailed.
 
     Supported Platforms:
         ``GPU`` ``CPU``
