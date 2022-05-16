@@ -155,24 +155,22 @@ EVP_CIPHER_CTX *GetEvpCipherCtx(const std::string &work_mode, const Byte *key, i
     (int (*)(EVP_CIPHER_CTX *, const EVP_CIPHER *, ENGINE *, const unsigned char *,
              const unsigned char *))loader.GetFunc("EVP_DecryptInit_ex");
   ret = EVP_DecryptInit_ex(ctx, funcPtr(), NULL, NULL, NULL);
-  int (*EVP_CIPHER_CTX_ctrl)(EVP_CIPHER_CTX *, int, int, void *) =
-    (int (*)(EVP_CIPHER_CTX * ctx, int type, int arg, void *ptr)) loader.GetFunc("EVP_CIPHER_CTX_ctrl");
+  void (*EVP_CIPHER_CTX_free)(EVP_CIPHER_CTX *) = (void (*)(EVP_CIPHER_CTX *))loader.GetFunc("EVP_CIPHER_CTX_free");
   if (ret != 1) {
     MS_LOG(ERROR) << "EVP_DecryptInit_ex failed";
-    void (*EVP_CIPHER_CTX_free)(EVP_CIPHER_CTX *) = (void (*)(EVP_CIPHER_CTX *))loader.GetFunc("EVP_CIPHER_CTX_free");
     EVP_CIPHER_CTX_free(ctx);
     return nullptr;
   }
+  int (*EVP_CIPHER_CTX_ctrl)(EVP_CIPHER_CTX *, int, int, void *) =
+    (int (*)(EVP_CIPHER_CTX * ctx, int type, int arg, void *ptr)) loader.GetFunc("EVP_CIPHER_CTX_ctrl");
   if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL) != 1) {
     MS_LOG(ERROR) << "EVP_DecryptInit_ex failed";
-    void (*EVP_CIPHER_CTX_free)(EVP_CIPHER_CTX *) = (void (*)(EVP_CIPHER_CTX *))loader.GetFunc("EVP_CIPHER_CTX_free");
     EVP_CIPHER_CTX_free(ctx);
     return nullptr;
   }
   ret = EVP_DecryptInit_ex(ctx, funcPtr(), NULL, key, iv);
   if (ret != 1) {
     MS_LOG(ERROR) << "EVP_DecryptInit_ex failed";
-    void (*EVP_CIPHER_CTX_free)(EVP_CIPHER_CTX *) = (void (*)(EVP_CIPHER_CTX *))loader.GetFunc("EVP_CIPHER_CTX_free");
     EVP_CIPHER_CTX_free(ctx);
     return nullptr;
   }
@@ -202,6 +200,7 @@ bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data
   }
   int (*EVP_DecryptUpdate)(EVP_CIPHER_CTX *, unsigned char *, int *, const unsigned char *, int) =
     (int (*)(EVP_CIPHER_CTX *, unsigned char *, int *, const unsigned char *, int))loader.GetFunc("EVP_DecryptUpdate");
+  void (*EVP_CIPHER_CTX_free)(EVP_CIPHER_CTX *) = (void (*)(EVP_CIPHER_CTX *))loader.GetFunc("EVP_CIPHER_CTX_free");
   auto ret =
     EVP_DecryptUpdate(ctx, plain_data, plain_len, cipher_data.data(), static_cast<int32_t>(cipher_data.size()));
   if (ret != 1) {
@@ -229,7 +228,6 @@ bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data
   }
   *plain_len += mlen;
 
-  void (*EVP_CIPHER_CTX_free)(EVP_CIPHER_CTX *) = (void (*)(EVP_CIPHER_CTX *))loader.GetFunc("EVP_CIPHER_CTX_free");
   EVP_CIPHER_CTX_free(ctx);
   iv.assign(iv.size(), 0);
   return true;
