@@ -499,9 +499,9 @@ Status AutoTune::IsDSaBottleneck(bool *isBottleneck) {
                << ", Empty Freq: " << (empty_freq * TO_PERCENT) << "% ";
   // Decision
   if (usage_avg_last < DEVICE_CONNECTOR_UTIL_THRESHOLD) {
-    MS_LOG(WARNING) << "Utilization: " << (usage_avg_last * TO_PERCENT) << "% < "
-                    << (DEVICE_CONNECTOR_UTIL_THRESHOLD * TO_PERCENT)
-                    << "% threshold, dataset pipeline performance may benefit from tuning.";
+    MS_LOG(INFO) << "Utilization: " << (usage_avg_last * TO_PERCENT) << "% < "
+                 << (DEVICE_CONNECTOR_UTIL_THRESHOLD * TO_PERCENT)
+                 << "% threshold, dataset pipeline performance may benefit from tuning.";
     *isBottleneck = true;
   } else {
     MS_LOG(INFO) << "Utilization: " << (usage_avg_last * TO_PERCENT) << "% > "
@@ -518,11 +518,11 @@ Status AutoTune::RequestNumWorkerChange(int32_t op_id, int32_t old_workers, int3
   new_workers = std::max(new_workers, MIN_NUM_WORKERS);
   RETURN_IF_NOT_OK(tree_modifier_->AddChangeRequest(op_id, std::make_shared<ChangeNumWorkersRequest>(new_workers)));
   if (old_workers == -1) {
-    MS_LOG(WARNING) << "Added request to change \"num_parallel_workers\" of Operator: " << ops_[op_id]->NameWithID()
-                    << "to value: [" << new_workers << "].";
+    MS_LOG(INFO) << "Added request to change \"num_parallel_workers\" of Operator: " << ops_[op_id]->NameWithID()
+                 << "to value: [" << new_workers << "].";
   } else {
-    MS_LOG(WARNING) << "Added request to change \"num_parallel_workers\" of Operator: " << ops_[op_id]->NameWithID()
-                    << "From old value: [" << old_workers << "] to new value: [" << new_workers << "].";
+    MS_LOG(INFO) << "Added request to change \"num_parallel_workers\" of Operator: " << ops_[op_id]->NameWithID()
+                 << "From old value: [" << old_workers << "] to new value: [" << new_workers << "].";
   }
   *num_workers_requested = new_workers;
   return Status::OK();
@@ -534,11 +534,11 @@ Status AutoTune::RequestConnectorCapacityChange(int32_t op_id, int32_t old_size,
   new_size = std::max(new_size, MIN_QUEUE_SIZE);
   RETURN_IF_NOT_OK(tree_modifier_->AddChangeRequest(op_id, std::make_shared<ResizeConnectorRequest>(new_size)));
   if (old_size == -1) {
-    MS_LOG(WARNING) << "Added request to change \"prefetch_size\" of Operator: " << ops_[op_id]->NameWithID()
-                    << "to value: [" << new_size << "].";
+    MS_LOG(INFO) << "Added request to change \"prefetch_size\" of Operator: " << ops_[op_id]->NameWithID()
+                 << "to value: [" << new_size << "].";
   } else {
-    MS_LOG(WARNING) << "Added request to change \"prefetch_size\" of Operator: " << ops_[op_id]->NameWithID()
-                    << "From old value: [" << old_size << "] to new value: [" << new_size << "].";
+    MS_LOG(INFO) << "Added request to change \"prefetch_size\" of Operator: " << ops_[op_id]->NameWithID()
+                 << "From old value: [" << old_size << "] to new value: [" << new_size << "].";
   }
   return Status::OK();
 }
@@ -587,22 +587,22 @@ Status AutoTune::AnalyseTime() {
                   << ", in=" << input_queue_util << "out=" << output_queue_util;
     // map decisions - queue
     if (queue_diff > INPUT_OUTPUT_QUEUE_DIFF_THRESHOLD) {
-      MS_LOG(WARNING) << "Op (" << ops_[op_id]->NameWithID()
-                      << ") is slow, input connector utilization=" << input_queue_util
-                      << ", output connector utilization=" << output_queue_util << ", diff= " << queue_diff << " > "
-                      << INPUT_OUTPUT_QUEUE_DIFF_THRESHOLD << " threshold.";
+      MS_LOG(INFO) << "Op (" << ops_[op_id]->NameWithID()
+                   << ") is slow, input connector utilization=" << input_queue_util
+                   << ", output connector utilization=" << output_queue_util << ", diff= " << queue_diff << " > "
+                   << INPUT_OUTPUT_QUEUE_DIFF_THRESHOLD << " threshold.";
       requested_workers = num_workers + INCREMENT_WORKER;
       RETURN_IF_NOT_OK(RequestNumWorkerChange(op_id, num_workers, &requested_workers));
     } else if ((cpu_util / num_workers) > MAP_OP_WORKER_HIGH_THRESHOLD) {
-      MS_LOG(WARNING) << "Op (" << ops_[op_id]->NameWithID() << ") getting high average worker cpu utilization "
-                      << (cpu_util / num_workers) << "% > " << MAP_OP_WORKER_HIGH_THRESHOLD << "% threshold.";
+      MS_LOG(INFO) << "Op (" << ops_[op_id]->NameWithID() << ") getting high average worker cpu utilization "
+                   << (cpu_util / num_workers) << "% > " << MAP_OP_WORKER_HIGH_THRESHOLD << "% threshold.";
       requested_workers = num_workers + INCREMENT_WORKER;
       RETURN_IF_NOT_OK(RequestNumWorkerChange(op_id, num_workers, &requested_workers));
     }
     if ((cpu_util / num_workers) < MAP_OP_WORKER_LOW_THRESHOLD &&
         ((input_queue_util < INPUT_QUEUE_LOW) || (-1 * queue_diff > INPUT_OUTPUT_QUEUE_DIFF_THRESHOLD))) {
-      MS_LOG(WARNING) << "Op (" << ops_[op_id]->NameWithID() << ") getting low average worker cpu utilization "
-                      << (cpu_util / num_workers) << "% < " << MAP_OP_WORKER_LOW_THRESHOLD << "% threshold.";
+      MS_LOG(INFO) << "Op (" << ops_[op_id]->NameWithID() << ") getting low average worker cpu utilization "
+                   << (cpu_util / num_workers) << "% < " << MAP_OP_WORKER_LOW_THRESHOLD << "% threshold.";
       new_queue_capacity = queue_capacity + INCREMENT_QUEUE_SIZE;
       if (requested_workers == 0) {
         requested_workers = num_workers;
