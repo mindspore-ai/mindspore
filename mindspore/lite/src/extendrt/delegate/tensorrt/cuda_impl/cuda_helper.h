@@ -23,7 +23,9 @@
 class CudaHelper {
  public:
   int GetThreadNum() const;
+  int GetThreadNum(const int block_size) const;
   int GetBlocksNum(const int total_threads) const;
+  int GetBlocksNum(const int total_threads, const int block_size) const;
   static CudaHelper &GetInstance();
 
  private:
@@ -35,8 +37,12 @@ class CudaHelper {
   int max_blocks_;
   int threads_per_block_;
 };
+
 #define GET_BLOCKS(total_threads) CudaHelper::GetInstance().GetBlocksNum(total_threads)
+#define GET_BLOCKS_CAL(total_threads, block_size) CudaHelper::GetInstance().GetBlocksNum(total_threads, block_size)
+
 #define GET_THREADS CudaHelper::GetInstance().GetThreadNum()
+#define GET_THREADS_CAL(block_size) CudaHelper::GetInstance().GetThreadNum(block_size)
 
 #define CUDA_CHECK(ret)              \
   do {                               \

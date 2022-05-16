@@ -15,6 +15,8 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/op/normalize_tensorrt.h"
+#include <memory>
+#include "src/extendrt/delegate/tensorrt/op/normalize_opt_plugin.h"
 
 namespace mindspore::lite {
 int NormalizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -42,10 +44,11 @@ int NormalizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::
                   << op_name_;
     return RET_ERROR;
   }
-  axis_ = 1u << begin_params_axis;
+  axis_ = begin_params_axis;
   epsilon_ = norm_op->epsilon();
   return RET_OK;
 }
+
 int NormalizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   CHECK_NULL_RETURN(network);
   int ret = PreprocessInputs(network);
@@ -53,12 +56,50 @@ int NormalizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "preprocess input failed for " << op_name_;
     return ret;
   }
+  return RunOptPlugin() ? RunAsOptPlugin(network) : RunAsTrtOps(network);
+}
+
+int NormalizeTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *network) {
+  int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &norm_input_);
+  if (ret != RET_OK || norm_input_.trt_tensor_ == nullptr) {
+    MS_LOG(ERROR) << "PreprocessInputs2SameDim norm_input failed for " << op_name_;
+    return RET_ERROR;
+  }
+  if (in_tensors_.size() == BETA_INDEX + 1) {
+    size_t expand_shape_size = in_tensors_[0].Shape().size();
+    gamma_ = ConvertTensorWithExpandDims(network, in_tensors_[1], expand_shape_size, in_tensors_[1].Name());
+    CHECK_NULL_RETURN(gamma_);
+    beta_ =
+      ConvertTensorWithExpandDims(network, in_tensors_[BETA_INDEX], expand_shape_size, in_tensors_[BETA_INDEX].Name());
+    CHECK_NULL_RETURN(beta_);
+  }
+  return RET_OK;
+}
+
+int NormalizeTensorRT::RunAsOptPlugin(nvinfer1::INetworkDefinition *network) {
+  auto plugin = std::make_shared<NormalizeOptPlugin>(op_name_, axis_, epsilon_);
+  if (plugin == nullptr) {
+    MS_LOG(ERROR) << "create NormalizeOptPlugin failed for " << op_name_;
+    return RET_ERROR;
+  }
+  nvinfer1::ITensor *inputTensors[] = {norm_input_.trt_tensor_, gamma_, beta_};
+  nvinfer1::IPluginV2Layer *norm_layer = network->addPluginV2(inputTensors, INPUT_SIZE3, *plugin);
+  if (norm_layer == nullptr) {
+    MS_LOG(ERROR) << "add norm opt plugin layer failed for " << op_name_;
+    return RET_ERROR;
+  }
+  layer_ = norm_layer;
+  AddInnerOutTensors(ITensorHelper{norm_layer->getOutput(0), norm_input_.format_, norm_input_.same_format_});
+  return RET_OK;
+}
+
+int NormalizeTensorRT::RunAsTrtOps(nvinfer1::INetworkDefinition *network) {
+  size_t axis = 1u << axis_;
   // first output, add later
   AddInnerOutTensors(ITensorHelper{nullptr, norm_input_.format_, norm_input_.same_format_});
 
   // mean
-  auto mean =
-    network->addReduce(*(norm_input_.trt_tensor_), nvinfer1::ReduceOperation::kAVG, axis_, true)->getOutput(0);
+  auto mean = network->addReduce(*(norm_input_.trt_tensor_), nvinfer1::ReduceOperation::kAVG, axis, true)->getOutput(0);
   CHECK_NULL_RETURN(mean);
   if (out_tensors_.size() == INPUT_SIZE3) {
     AddInnerOutTensors(ITensorHelper{mean, norm_input_.format_, norm_input_.same_format_});
@@ -74,7 +115,7 @@ int NormalizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   auto pow = network->addElementWise(*sub_mean, *const_two, nvinfer1::ElementWiseOperation::kPOW)->getOutput(0);
   CHECK_NULL_RETURN(pow);
   // mean of (x - mean)^2
-  auto var = network->addReduce(*pow, nvinfer1::ReduceOperation::kAVG, axis_, true)->getOutput(0);
+  auto var = network->addReduce(*pow, nvinfer1::ReduceOperation::kAVG, axis, true)->getOutput(0);
   CHECK_NULL_RETURN(var);
   if (out_tensors_.size() == INPUT_SIZE3) {
     AddInnerOutTensors(ITensorHelper{var, norm_input_.format_, norm_input_.same_format_});
@@ -111,21 +152,13 @@ int NormalizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-int NormalizeTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *network) {
-  int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &norm_input_);
-  if (ret != RET_OK || norm_input_.trt_tensor_ == nullptr) {
-    MS_LOG(ERROR) << "PreprocessInputs2SameDim norm_input failed for " << op_name_;
-    return RET_ERROR;
+bool NormalizeTensorRT::RunOptPlugin() {
+  if (out_tensors_.size() == 1 && in_tensors_.size() == INPUT_SIZE3 && axis_ == in_tensors_[0].Shape().size() - 1 &&
+      in_tensors_[0].Shape()[axis_] < GET_THREADS) {
+    MS_LOG(INFO) << op_name_ << " use opt plugin";
+    return true;
   }
-  if (in_tensors_.size() == BETA_INDEX + 1) {
-    size_t expand_shape_size = in_tensors_[0].Shape().size();
-    gamma_ = ConvertTensorWithExpandDims(network, in_tensors_[1], expand_shape_size, in_tensors_[1].Name());
-    CHECK_NULL_RETURN(gamma_);
-    beta_ =
-      ConvertTensorWithExpandDims(network, in_tensors_[BETA_INDEX], expand_shape_size, in_tensors_[BETA_INDEX].Name());
-    CHECK_NULL_RETURN(beta_);
-  }
-  return RET_OK;
+  return false;
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LayerNormFusion, NormalizeTensorRT)
 }  // namespace mindspore::lite

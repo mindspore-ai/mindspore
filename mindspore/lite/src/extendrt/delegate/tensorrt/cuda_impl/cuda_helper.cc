@@ -15,6 +15,7 @@
  */
 
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cuda_helper.h"
+#include <cmath>
 #include "src/common/log_util.h"
 
 CudaHelper &CudaHelper::GetInstance() {
@@ -22,8 +23,19 @@ CudaHelper &CudaHelper::GetInstance() {
   return instance;
 }
 int CudaHelper::GetThreadNum() const { return threads_per_block_; }
+int CudaHelper::GetThreadNum(const int block_size) const {
+  return std::min(threads_per_block_, ((block_size - 1) / 32 + 1) * 32);
+}
 int CudaHelper::GetBlocksNum(const int total_threads) const {
   return std::min(((total_threads - 1) / threads_per_block_) + 1, max_blocks_);
+}
+int CudaHelper::GetBlocksNum(const int total_threads, const int block_size) const {
+  int valid_block_size = std::min(block_size, threads_per_block_);
+  if (valid_block_size == 0) {
+    MS_LOG(ERROR) << "invalid input of block_size: " << block_size;
+    return 0;
+  }
+  return std::min(((total_threads - 1) / valid_block_size) + 1, max_blocks_);
 }
 
 CudaHelper::CudaHelper() {
