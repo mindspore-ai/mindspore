@@ -241,6 +241,16 @@ inline bool CheckNullInput(const std::vector<T> &input_shape) {
 }
 #define CHECK_NULL_INPUT(input_shape) mindspore::device::gpu::CheckNullInput(input_shape)
 
+inline bool CheckShapePositive(const std::vector<int64_t> &input_shape) {
+  if (input_shape.size() != 0) {
+    if (std::all_of(input_shape.begin(), input_shape.end(), [](int64_t i) { return i > 0; })) {
+      return true;
+    }
+  }
+  return false;
+}
+#define CHECK_SHAPE_POSITIVE(input_shape) mindspore::device::gpu::CheckShapePositive(input_shape)
+
 template <typename T>
 inline std::string ConvertVectorToString(const std::vector<T> &value) {
   std::stringstream ss;

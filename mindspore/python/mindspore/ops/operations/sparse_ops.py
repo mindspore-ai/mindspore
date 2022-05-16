@@ -224,6 +224,7 @@ class CSRSparseMatrixToSparseTensor(Primitive):
         ValueError: If shape of `x_col_indices` is not corresponding to shape of `x_values`.
 
     Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> x_dense_shape = Tensor(np.array([2, 2, 4]).astype(np.int64))
