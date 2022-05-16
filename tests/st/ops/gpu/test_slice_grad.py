@@ -28,12 +28,11 @@ context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 class SliceGrad(nn.Cell):
     def __init__(self):
         super(SliceGrad, self).__init__()
-
-        self.slicegrad = G.SliceGrad()
+        self.slice_grad = G.SliceGrad()
 
     @ms_function
     def construct(self, dy, x):
-        return self.slicegrad(dy, x, (0, 1, 0), (2, 1, 3))
+        return self.slice_grad(dy, x, (0, 1, 0), (2, 1, 3))
 
 
 @pytest.mark.level0
@@ -42,8 +41,8 @@ class SliceGrad(nn.Cell):
 def test_slice():
     x = Tensor(np.array([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6]]]).astype(np.float32))
     dy = Tensor(np.array([[[3., 1., 2.]], [[4., 1., 4.]]]).astype(np.float32))
-    slicegrad = SliceGrad()
-    output = slicegrad(dy, x)
+    slice_grad = SliceGrad()
+    output = slice_grad(dy, x)
     expect = [[[0., 0., 0.],
                [3., 1., 2.]],
               [[0., 0., 0.],
@@ -59,8 +58,8 @@ def test_slice():
 def test_slice_float64():
     x = Tensor(np.array([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6]]]).astype(np.float64))
     dy = Tensor(np.array([[[3., 1., 2.]], [[4., 1., 4.]]]).astype(np.float64))
-    slicegrad = SliceGrad()
-    output = slicegrad(dy, x)
+    slice_grad = SliceGrad()
+    output = slice_grad(dy, x)
     expect = np.array([[[0., 0., 0.],
                         [3., 1., 2.]],
                        [[0., 0., 0.],
@@ -68,3 +67,38 @@ def test_slice_float64():
                        [[0., 0., 0.],
                         [0., 0., 0.]]]).astype(np.float64)
     assert (output.asnumpy() == expect).all()
+
+
+class SliceGrad7D(nn.Cell):
+    def __init__(self):
+        super(SliceGrad7D, self).__init__()
+        self.slice_grad = G.SliceGrad()
+
+    @ms_function
+    def construct(self, dy, x):
+        return self.slice_grad(dy, x, (1, 0, 2, 0, 0, 0, 0), (1, 2, 1, 1, 1, 1, 2))
+
+
+def test_slice_grad_7d():
+    """
+    Feature: SliceGrad
+    Description: test SliceGrad with 7D input
+    Expectation: the output is as expected
+    """
+    x = Tensor(np.array([[[[[[[3, 4]]]], [[[[8, 9]]]], [[[[3, 2]]]]],
+                          [[[[[4, 4]]]], [[[[8, 6]]]], [[[[1, 7]]]]]],
+                         [[[[[[7, 2]]]], [[[[3, 7]]]], [[[[5, 8]]]]],
+                          [[[[[3, 2]]]], [[[[6, 0]]]], [[[[7, 6]]]]]]]).astype(np.int32))
+    dy = Tensor(np.arange(1 * 2 * 1 * 1 * 1 * 1 * 2).reshape(1, 2, 1, 1, 1, 1, 2).astype(np.int32))
+    slice_grad = SliceGrad7D()
+    output = slice_grad(dy, x)
+    expect = np.zeros((2, 2, 3, 1, 1, 1, 2))
+    expect[1:2, 0:2, 2:3, 0:1, 0:1, 0:1, 0:2] = dy
+    print("output:\n", output)
+    assert (output.asnumpy() == expect).all()
+
+
+if __name__ == '__main__':
+    test_slice()
+    test_slice_float64()
+    test_slice_grad_7d()

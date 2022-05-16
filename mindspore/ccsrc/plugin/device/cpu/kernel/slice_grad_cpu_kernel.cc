@@ -27,7 +27,8 @@ namespace {
 constexpr size_t kSliceGradDynamicInputsNum = 4;
 constexpr size_t kStridedSliceGradDynamicInputsNum = 5;
 constexpr size_t kOutputsNum = 1;
-constexpr size_t kSliceGradMaxInputShapeSize = 4;
+constexpr size_t kSliceGradDefaultInputShapeSize = 4;
+constexpr size_t kSliceGradMaxInputShapeSize = 8;
 }  // namespace
 
 void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -37,13 +38,13 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   ClearVectors();
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() > kSliceGradMaxInputShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be 4D or lower, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be 8D or lower, but got "
                       << input_shape.size() << "D.";
   }
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num == kSliceGradDynamicInputsNum || input_num == kStridedSliceGradDynamicInputsNum) {
+  if (input_num == kSliceGradDynamicInputsNum || input_num == kStridedSliceGradDynamicInputsNum) {  // Dynamic Shape
     return;
   }
   // in the case that begin, end, size, stride are const value.
@@ -53,7 +54,7 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   auto strides = prim->GetAttr(STRIDES);
-  if (strides != nullptr) {
+  if (strides != nullptr) {  // StridedSliceGrad
     std::vector<int64_t> strides_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
     std::vector<int64_t> end_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
     (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
@@ -67,7 +68,7 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                         << ", and the dimension of output: " << output_shape_.size();
     }
     FormatArgs(true);
-  } else {
+  } else {  // SliceGrad
     std::vector<int64_t> size_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
     (void)std::transform(size_me.begin(), size_me.end(), std::back_inserter(size_),
                          [](const int64_t &value) { return LongToInt(value); });
@@ -78,8 +79,12 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     }
     FormatArgs(false);
   }
+  if (input_shape.size() <= kSliceGradDefaultInputShapeSize) {
+    ExpandAllMemberDims(kSliceGradDefaultInputShapeSize);
+  } else {
+    ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
+  }
 
-  ExpandAllMemberDims();
   CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
 }
@@ -95,9 +100,8 @@ void SliceGradCpuKernelMod::ClearVectors() {
   output_shape_.clear();
 }
 
-void SliceGradCpuKernelMod::ExpandAllMemberDims() {
+void SliceGradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
   auto output_len = output_shape_.size();
-  constexpr size_t expand_dims = 4;
   if (output_len < expand_dims) {
     for (size_t i = 0; i < expand_dims - output_len; ++i) {
       (void)output_shape_.insert(output_shape_.begin(), 1);
@@ -117,6 +121,7 @@ void SliceGradCpuKernelMod::ExpandAllMemberDims() {
   }
 }
 
+// init for dynamic shape
 void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &inputs) {
   auto cnode = cnode_ptr_.lock();
   ClearVectors();
@@ -127,7 +132,7 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
   std::vector<int32_t> begin{begin_ptr, begin_ptr + begin_shape[0]};
   (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_),
                        [](const int32_t &value) { return value; });
-  if (kernel_name == prim::kPrimStridedSliceGrad->name()) {
+  if (kernel_name == prim::kPrimStridedSliceGrad->name()) {  // StridedSliceGrad
     auto end_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     auto stride_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 4);
     if (begin_shape.size() != 1 || end_shape.size() != 1 || stride_shape.size() != 1) {
@@ -153,7 +158,7 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
                         << ", and the dimension of output: " << output_shape_.size();
     }
     FormatArgs(true);
-  } else {
+  } else {  // SliceGrad
     auto size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     if (begin_shape.size() != 1 || size_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -171,7 +176,11 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
     }
     FormatArgs(false);
   }
-  ExpandAllMemberDims();
+  if (output_shape_.size() <= kSliceGradDefaultInputShapeSize) {
+    ExpandAllMemberDims(kSliceGradDefaultInputShapeSize);
+  } else {
+    ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
+  }
   CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
 }
@@ -216,6 +225,16 @@ bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', output buff memset failed. Error no: " << ret;
     return false;
   }
+  if (output_shape_.size() <= kSliceGradDefaultInputShapeSize) {
+    return SliceGrad4D<T>(inputs, outputs, input_addr, output_addr);
+  } else {
+    return SliceGrad8D<T>(inputs, outputs, input_addr, output_addr);
+  }
+}
+
+template <typename T>
+bool SliceGradCpuKernelMod::SliceGrad4D(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &outputs, T *input_addr, T *output_addr) {
   bool can_copy_memory[3] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2)};
   int stride_signs[4] = {SignOfStride(0), SignOfStride(1), SignOfStride(2), SignOfStride(3)};
   size_t out_start_offset[3] = {IntToSize(begin_[0]) * output_element_num_[0],
@@ -260,8 +279,110 @@ bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   return true;
 }
 
-bool SliceGradCpuKernelMod::CanCopyMemoryOnAxis(size_t dim) const {
-  for (size_t i = dim + 1; i < 4; ++i) {
+template <typename T>
+bool SliceGradCpuKernelMod::SliceGrad8D(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &outputs, T *input_addr, T *output_addr) {
+  bool can_copy_memory[7] = {CanCopyMemoryOnAxis(0, 8), CanCopyMemoryOnAxis(1, 8), CanCopyMemoryOnAxis(2, 8),
+                             CanCopyMemoryOnAxis(3, 8), CanCopyMemoryOnAxis(4, 8), CanCopyMemoryOnAxis(5, 8),
+                             CanCopyMemoryOnAxis(6, 8)};
+  int stride_signs[8] = {SignOfStride(0), SignOfStride(1), SignOfStride(2), SignOfStride(3),
+                         SignOfStride(4), SignOfStride(5), SignOfStride(6), SignOfStride(7)};
+  size_t out_start_offset[7] = {
+    IntToSize(begin_[0]) * output_element_num_[0], IntToSize(begin_[1]) * output_element_num_[1],
+    IntToSize(begin_[2]) * output_element_num_[2], IntToSize(begin_[3]) * output_element_num_[3],
+    IntToSize(begin_[4]) * output_element_num_[4], IntToSize(begin_[5]) * output_element_num_[5],
+    IntToSize(begin_[6]) * output_element_num_[6]};
+  size_t out_step_size[7] = {
+    IntToSize(strides_[0]) * output_element_num_[0], IntToSize(strides_[1]) * output_element_num_[1],
+    IntToSize(strides_[2]) * output_element_num_[2], IntToSize(strides_[3]) * output_element_num_[3],
+    IntToSize(strides_[4]) * output_element_num_[4], IntToSize(strides_[5]) * output_element_num_[5],
+    IntToSize(strides_[6]) * output_element_num_[6]};
+  size_t in_n_offset = 0, input_index = 0;
+  size_t out_n_offset = out_start_offset[0];
+  for (int i = begin_[0]; stride_signs[0] * i < stride_signs[0] * end_[0];
+       i += strides_[0], in_n_offset += input_element_num_[0], out_n_offset += out_step_size[0]) {
+    if (can_copy_memory[0]) {
+      CopyDataToOutput<T>(inputs, in_n_offset, outputs, out_n_offset, input_element_num_[0], 0);
+      continue;
+    }
+    size_t in_c_offset = 0;
+    size_t out_c_offset = out_start_offset[1];
+    for (int j = begin_[1]; stride_signs[1] * j < stride_signs[1] * end_[1];
+         j += strides_[1], in_c_offset += input_element_num_[1], out_c_offset += out_step_size[1]) {
+      if (can_copy_memory[1]) {
+        CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset, outputs, out_n_offset + out_c_offset,
+                            input_element_num_[1], 1);
+        continue;
+      }
+      size_t in_h_offset = 0;
+      size_t out_h_offset = out_start_offset[2];
+      for (int k = begin_[2]; stride_signs[2] * k < stride_signs[2] * end_[2];
+           k += strides_[2], in_h_offset += input_element_num_[2], out_h_offset += out_step_size[2]) {
+        if (can_copy_memory[2]) {
+          CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset + in_h_offset, outputs,
+                              out_n_offset + out_c_offset + out_h_offset, input_element_num_[2], 2);
+          continue;
+        }
+        size_t in_w_offset = 0;
+        size_t out_w_offset = out_start_offset[3];
+        for (int l = begin_[3]; stride_signs[3] * l < stride_signs[3] * end_[3];
+             l += strides_[3], in_w_offset += input_element_num_[3], out_w_offset += out_step_size[3]) {
+          if (can_copy_memory[3]) {
+            CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset + in_h_offset + in_w_offset, outputs,
+                                out_n_offset + out_c_offset + out_h_offset + out_w_offset, input_element_num_[3], 3);
+            continue;
+          }
+          size_t in_4_offset = 0;
+          size_t out_4_offset = out_start_offset[4];
+          for (int m = begin_[4]; stride_signs[4] * m < stride_signs[4] * end_[4];
+               m += strides_[4], in_4_offset += input_element_num_[4], out_4_offset += out_step_size[4]) {
+            if (can_copy_memory[4]) {
+              CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset + in_h_offset + in_w_offset + in_4_offset, outputs,
+                                  out_n_offset + out_c_offset + out_h_offset + out_w_offset + out_4_offset,
+                                  input_element_num_[4], 4);
+              continue;
+            }
+            size_t in_5_offset = 0;
+            size_t out_5_offset = out_start_offset[5];
+            for (int n = begin_[5]; stride_signs[5] * n < stride_signs[5] * end_[5];
+                 n += strides_[5], in_5_offset += input_element_num_[5], out_5_offset += out_step_size[5]) {
+              if (can_copy_memory[5]) {
+                CopyDataToOutput<T>(
+                  inputs, in_n_offset + in_c_offset + in_h_offset + in_w_offset + in_4_offset + in_5_offset, outputs,
+                  out_n_offset + out_c_offset + out_h_offset + out_w_offset + out_4_offset + out_5_offset,
+                  input_element_num_[5], 5);
+                continue;
+              }
+              size_t in_6_offset = 0;
+              size_t out_6_offset = out_start_offset[6];
+              for (int o = begin_[6]; stride_signs[6] * o < stride_signs[6] * end_[6];
+                   o += strides_[6], in_6_offset += input_element_num_[6], out_6_offset += out_step_size[6]) {
+                if (can_copy_memory[6]) {
+                  CopyDataToOutput<T>(
+                    inputs,
+                    in_n_offset + in_c_offset + in_h_offset + in_w_offset + in_4_offset + in_5_offset + in_6_offset,
+                    outputs,
+                    out_n_offset + out_c_offset + out_h_offset + out_w_offset + out_4_offset + out_5_offset +
+                      out_6_offset,
+                    input_element_num_[6], 6);
+                  continue;
+                }
+                for (int p = begin_[7]; stride_signs[7] * p < stride_signs[7] * end_[7]; p += strides_[7]) {
+                  output_addr[out_n_offset + out_c_offset + out_h_offset + out_w_offset + out_4_offset + out_5_offset +
+                              out_6_offset + IntToSize(p)] = input_addr[input_index++];
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
+bool SliceGradCpuKernelMod::CanCopyMemoryOnAxis(size_t dim, size_t max_dim) const {
+  for (size_t i = dim + 1; i < max_dim; ++i) {
     if (begin_[i] != 0 || end_[i] != SizeToInt(output_shape_[i]) || strides_[i] != 1) {
       return false;
     }

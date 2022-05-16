@@ -17,9 +17,10 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_GRAD_CPU_KERNEL_H_
 
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
+
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -28,10 +29,13 @@ namespace kernel {
 constexpr auto kSliceGrad = "SliceGrad";
 constexpr auto kStridedSliceGrad = "StridedSliceGrad";
 constexpr auto kUnknown = "Unknown";
+
 class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SliceGradCpuKernelMod() = default;
+
   explicit SliceGradCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+
   ~SliceGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -45,16 +49,32 @@ class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
   template <typename T>
   void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
                         const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num,
                         int id) const;
+
   void InitParams(const std::vector<kernel::AddressPtr> &inputs);
+
   void ClearVectors();
-  void ExpandAllMemberDims();
-  bool CanCopyMemoryOnAxis(size_t dim) const;
+
+  void ExpandAllMemberDims(size_t expand_dims = 4);
+
+  bool CanCopyMemoryOnAxis(size_t dim, size_t max_dim = 4) const;
+
   int SignOfStride(size_t axis) const;
+
   void FormatArgs(bool stride);
+
+  template <typename T>
+  bool SliceGrad4D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
+                   T *input_addr, T *output_addr);
+
+  template <typename T>
+  bool SliceGrad8D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
+                   T *input_addr, T *output_addr);
+
   std::vector<int> begin_;
   std::vector<int> end_;
   std::vector<int> strides_;
@@ -68,5 +88,4 @@ class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SLICE_GRAD_CPU_KERNEL_H_
