@@ -75,7 +75,7 @@ class Worker {
   // create thread and start running at the same time
   virtual void CreateThread();
   // assign task and then activate thread
-  void Active(Task *task, int task_id);
+  void Active(Task *task, int task_id_start, int task_id_end);
   // activate thread
   virtual void Active();
   // whether or not it is idle and marked as held
@@ -127,7 +127,8 @@ class Worker {
   std::condition_variable cond_var_;
 
   std::atomic<Task *> task_{nullptr};
-  std::atomic_int task_id_{0};
+  std::atomic_int task_id_start_{0};
+  std::atomic_int task_id_end_{0};
   float lhs_scale_{0.};
   float rhs_scale_{kMaxScale};
   int frequency_{kDefaultFrequency};
