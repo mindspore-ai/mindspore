@@ -38,6 +38,15 @@ def test_runner_config_02():
 
 
 def test_runner_config_03():
+    with pytest.raises(ValueError) as raise_info:
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
+        context.append_device_info(cpu_device_info)
+        runner_config = mslite.RunnerConfig(context=context, workers_num=-4)
+    assert "workers_num must be positive" in str(raise_info.value)
+
+
+def test_runner_config_04():
     cpu_device_info = mslite.CPUDeviceInfo()
     context = mslite.Context()
     context.append_device_info(cpu_device_info)
@@ -79,7 +88,7 @@ def test_model_parallel_runner_init_03():
         runner_config = mslite.RunnerConfig(context, 4)
         model_parallel_runner = mslite.ModelParallelRunner()
         model_parallel_runner.init(model_path="test.ms", runner_config=runner_config)
-    assert "init failed" in str(raise_info.value)
+    assert "model_path is not exist" in str(raise_info.value)
 
 
 def test_model_parallel_runner_init_04():
