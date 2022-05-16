@@ -31,9 +31,11 @@ constexpr char kEnvSchedulerPort[] = "MS_SCHED_PORT";
 
 constexpr char kEnvRole[] = "MS_ROLE";
 constexpr char kEnvRoleOfServer[] = "MS_SERVER";
+constexpr char kEnvRoleOfPServer[] = "MS_PSERVER";
 constexpr char kEnvRoleOfWorker[] = "MS_WORKER";
 constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
-const std::set<std::string> kValidRoleName = {kEnvRoleOfServer, kEnvRoleOfWorker, kEnvRoleOfScheduler};
+const std::set<std::string> kValidRoleName = {kEnvRoleOfServer, kEnvRoleOfPServer, kEnvRoleOfWorker,
+                                              kEnvRoleOfScheduler};
 
 // The distributed execution mode enum.
 enum class DistExecutionMode { kPSMode = 0, kInvalidMode };

@@ -36,7 +36,7 @@ bool Initialize() {
     MS_EXCEPTION_IF_NULL(node);
     const auto &cluster_ctx = cluster::ClusterContext::instance();
     MS_EXCEPTION_IF_NULL(cluster_ctx);
-    if (cluster_ctx->node_role() != kEnvRoleOfScheduler && cluster_ctx->node_role() != kEnvRoleOfServer) {
+    if (cluster_ctx->node_role() != kEnvRoleOfScheduler) {
       // Global rank id and size should be manually set if cluster is initialized by MindSpore communication framework.
       auto abstract_node = std::dynamic_pointer_cast<ps::core::AbstractNode>(cluster_ctx->node());
       MS_EXCEPTION_IF_NULL(abstract_node);

@@ -14,11 +14,11 @@
 # ============================================================================
 """Communication management API"""
 from mindspore import context
-from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
-    MCCL_WORLD_COMM_GROUP, _get_local_rank_helper, _get_local_size_helper, GlobalComm
+    MCCL_WORLD_COMM_GROUP, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
+    _not_require_collective_comm_lib, _check_mpi_envs
 from .._c_expression import init_hccl, finalize_hccl, init_gpu_collective, init_cluster
 
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
@@ -50,20 +50,6 @@ def _get_group(group):
     if group == DEFAULT_WORLD_COMM_GROUP:
         return GlobalComm.WORLD_COMM_GROUP
     return group
-
-
-def _check_mpi_envs():
-    """
-    Check whether mpi environment variables have been exported or not.
-
-    return True if mpi environment variables have been exported, False otherwise.
-    """
-    import os
-    ompi_command_env = os.getenv("OMPI_COMMAND")
-    pmix_rank_env = os.getenv("PMIX_RANK")
-    if ompi_command_env and pmix_rank_env:
-        return True
-    return False
 
 
 def _check_parallel_envs():
@@ -120,7 +106,7 @@ def init(backend_name=None):
         >>> from mindspore.communication import init
         >>> init()
     """
-    if _is_role_pserver() or _is_role_sched():
+    if _not_require_collective_comm_lib():
         return
     mpi_init = _check_mpi_envs()
     device_target = context.get_context("device_target")

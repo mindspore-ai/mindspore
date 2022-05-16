@@ -22,7 +22,8 @@ from mindspore.dataset.engine import offload
 from .. import context, nn
 from ._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes, _get_pipeline_stages
-from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode
+from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, \
+                                   _enable_distributed_mindrt
 from ..ops import operations as P
 
 
@@ -175,7 +176,7 @@ def connect_network_with_dataset(network, dataset_helper):
     if isinstance(dataset_iter, _DatasetIterNormal):
         raise RuntimeError("The API 'connect_network_with_dataset' should be called in dataset sink mode.")
 
-    if _is_role_sched() or _is_role_pserver():
+    if _is_role_sched() or (_is_role_pserver() and not _enable_distributed_mindrt()):
         return network
 
     if not hasattr(aux, '__network__'):
@@ -268,7 +269,7 @@ class DatasetHelper:
                 iterclass = _DatasetIterGE
             else:
                 if context.get_context("mode") == context.GRAPH_MODE:
-                    if _is_role_sched() or _is_role_pserver():
+                    if _is_role_sched() or (_is_role_pserver() and not _enable_distributed_mindrt()):
                         iterclass = _DatasetIterPSServer
                     elif _is_role_worker() and _is_ps_mode():
                         iterclass = _DatasetIterPSWork

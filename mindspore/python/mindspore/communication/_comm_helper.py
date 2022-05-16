@@ -14,6 +14,7 @@
 # ============================================================================
 """comm_helper"""
 
+from mindspore import context
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from mindspore import log as logger
 from ._hccl_management import load_lib as hccl_load_lib
@@ -147,6 +148,33 @@ def is_nccl_available():
     return _NCCL_AVAILABLE
 
 
+def _check_mpi_envs():
+    """
+    Check whether mpi environment variables have been exported or not.
+
+    return True if mpi environment variables have been exported, False otherwise.
+    """
+    import os
+    ompi_command_env = os.getenv("OMPI_COMMAND")
+    pmix_rank_env = os.getenv("PMIX_RANK")
+    if ompi_command_env and pmix_rank_env:
+        return True
+    return False
+
+
+def _not_require_collective_comm_lib():
+    '''
+    Whether collective communication library is required in this training mode.
+    For example, scheduler and server do not require actual collective communication in parameter server mode.
+    '''
+    device_target = context.get_context("device_target")
+    if device_target == "Ascend":
+        return _is_role_sched() or _is_role_pserver()
+    if device_target == "CPU":
+        return _check_mpi_envs() and (_is_role_sched() or _is_role_pserver())
+    return False
+
+
 def check_parameter_available(func):
     """
     Check parameter is available. If not available, raise Error.
@@ -161,7 +189,7 @@ def check_parameter_available(func):
         Wrapper. If not available, raise Error.
     """
     def wrapper(*args, **kargs):
-        if _is_role_pserver() or _is_role_sched():
+        if _not_require_collective_comm_lib():
             return func(*args, **kargs)
         if not GlobalComm.INITED:
             raise RuntimeError("Distributed Communication has not been inited")
@@ -205,7 +233,7 @@ def _get_rank_helper(group, backend):
     Returns:
         Integer. The local rank id of the calling process.
     """
-    if _is_role_pserver() or _is_role_sched():
+    if _not_require_collective_comm_lib():
         rank_id = 0
         return rank_id
     if backend == Backend.HCCL_MPI:
@@ -273,7 +301,7 @@ def _get_size_helper(group, backend):
         Integer. The rank size of specified group.
     """
     size = None
-    if _is_role_pserver() or _is_role_sched():
+    if _not_require_collective_comm_lib():
         size = 1
         return size
     if backend == Backend.HCCL_MPI:

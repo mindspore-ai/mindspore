@@ -48,7 +48,7 @@ void PSContext::SetPSEnable(bool enabled) {
 
     if (ms_role == kEnvRoleOfWorker) {
       is_worker_ = true;
-    } else if (ms_role == kEnvRoleOfPServer) {
+    } else if (ms_role == kEnvRoleOfPServer || ms_role == kEnvRoleOfServer) {
       is_pserver_ = true;
     } else if (ms_role == kEnvRoleOfScheduler) {
       is_sched_ = true;
@@ -133,7 +133,7 @@ bool PSContext::is_server() const {
     return role_ == kEnvRoleOfServer;
   }
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
-    return role_ == kEnvRoleOfServer;
+    return role_ == kEnvRoleOfServer || role_ == kEnvRoleOfPServer;
   }
   return is_pserver_;
 }
@@ -329,7 +329,8 @@ void PSContext::set_sign_dim_out(int sign_dim_out) {
 int PSContext::sign_dim_out() const { return sign_dim_out_; }
 
 void PSContext::set_ms_role(const std::string &role) {
-  if (role != kEnvRoleOfWorker && role != kEnvRoleOfServer && role != kEnvRoleOfScheduler) {
+  if (role != kEnvRoleOfWorker && role != kEnvRoleOfPServer && role != kEnvRoleOfServer &&
+      role != kEnvRoleOfScheduler) {
     MS_LOG(EXCEPTION) << "ms_role " << role << " is invalid.";
     return;
   }
@@ -585,7 +586,12 @@ void PSContext::set_continuous_failure_times(uint32_t continuous_failure_times) 
 uint32_t PSContext::continuous_failure_times() { return continuous_failure_times_; }
 
 bool PSContext::enable_distributed_mindrt() const {
-  return distributed::cluster::ClusterContext::instance()->initialized();
+  bool ms_cluster_enabled = distributed::cluster::ClusterContext::instance()->initialized();
+  bool cache_enabled = cache_enable();
+  // If config file is set, the recovery will be enabled.
+  bool pserver_recovery_enabled = !config_file_path_.empty();
+
+  return ms_cluster_enabled && !pserver_recovery_enabled && !cache_enabled;
 }
 }  // namespace ps
 }  // namespace mindspore

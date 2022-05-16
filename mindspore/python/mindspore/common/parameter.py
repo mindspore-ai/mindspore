@@ -29,7 +29,8 @@ from .._checkparam import Validator
 from .._c_expression import Tensor as Tensor_
 from ..parallel._tensor import _get_slice_index
 from ..parallel._auto_parallel_context import auto_parallel_context
-from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table, _is_fl_mode
+from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table,\
+                                   _is_fl_mode, _enable_distributed_mindrt
 from ..parallel._ps_context import _reinsert_hash_table_size
 from ..parallel._ps_context import _insert_weight_init_info, _insert_accumu_init_info
 from .seed import _get_global_and_op_seed
@@ -228,6 +229,13 @@ class Parameter(Tensor_):
         return new_type
 
     @staticmethod
+    def _not_init_data():
+        is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
+        if not _is_fl_mode() and (is_worker_or_server or _is_role_sched() or _is_in_parallel_mode()):
+            return true
+        return false
+
+    @staticmethod
     def _get_parameter_new_args(data):
         """Set `set_data` of current `Parameter`."""
         if isinstance(data, bool):
@@ -236,10 +244,12 @@ class Parameter(Tensor_):
             if not data.has_init:
                 # make a copy of Tensor to init the parameter.
                 return (Tensor, data.asnumpy())
-            if not _is_fl_mode():
-                if _is_in_parallel_mode() or _is_role_worker() or _is_role_sched() or _is_role_pserver():
-                    # do not init data while in auto parallel.
-                    return (Tensor, None, data.dtype, data.shape, data.init)
+
+            is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
+            not_init_data = not _is_fl_mode() and (is_worker_or_server or _is_role_sched() or _is_in_parallel_mode())
+            if not_init_data:
+                # do not init data while in auto parallel.
+                return (Tensor, None, data.dtype, data.shape, data.init)
             return (Tensor, data.init_data())
         if isinstance(data, int):
             return (Tensor, data, mstype.int32)
@@ -651,7 +661,7 @@ class Parameter(Tensor_):
 
         init_data_args = self._get_init_data_args(layout)
 
-        if _is_role_pserver():
+        if _is_role_pserver() and not _enable_distributed_mindrt():
             return self
 
         if self.init_in_server and self.is_param_ps and isinstance(self.init_mode, Tensor) and \

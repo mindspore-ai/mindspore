@@ -602,8 +602,8 @@ void SetMindRTEnable() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
-  if (ps::PSContext::instance()->is_ps_mode()) {
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined __APPLE__))
+  if (ps::PSContext::instance()->is_ps_mode() && !ps::PSContext::instance()->enable_distributed_mindrt()) {
     context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
     return;
   }
