@@ -232,18 +232,10 @@ bool IsCustomPrim(const PrimitivePtr &prim) {
     return false;
   }
 
-  ValuePtr flag = prim->GetAttr("_custom_op_flag");
-  if (flag == nullptr) {
-    return false;
+  if (prim->name() == "Custom") {
+    return true;
   }
-
-  bool is_custom_op = GetValue<bool>(flag);
-  if (!is_custom_op && prim->GetAttr("_custom_op_impl_config_path") != nullptr) {
-    MS_LOG(EXCEPTION) << "The custom op flag is false, but the op information config path is not null, non-custom op "
-                         "can not assign the op information config path.";
-  }
-
-  return is_custom_op;
+  return false;
 }
 
 bool IsCustomCNode(const AnfNodePtr &anf) {
