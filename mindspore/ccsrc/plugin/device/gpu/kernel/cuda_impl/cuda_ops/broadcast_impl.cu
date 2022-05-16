@@ -57,7 +57,9 @@ struct GreaterEqualFunc {
 template <>
 struct GreaterEqualFunc<half> {
   __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
-    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9 ? true : (__half2float(lhs) > __half2float(rhs));
+    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9
+             ? true
+             : (__half2float(lhs) > __half2float(rhs));
   }
 };
 
@@ -76,13 +78,17 @@ struct LessEqualFunc {
 template <>
 struct LessEqualFunc<half> {
   __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
-    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9 ? true : (__half2float(lhs) < __half2float(rhs));
+    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9
+             ? true
+             : (__half2float(lhs) < __half2float(rhs));
   }
 };
 
 template <>
 struct LessEqualFunc<float> {
-  __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) { return lhs <= rhs; }
+  __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
+    return lhs <= rhs;
+  }
 };
 
 template <typename T>
@@ -559,30 +565,30 @@ void ElewiseCmp(const int &nums, enum BroadcastOpType op, const T *x0, const T *
   }
 }
 
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const double *x0, const double *x1,
-                                         bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const float *x0, const float *x1,
-                                         bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const half *x0, const half *x1,
-                                         bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int *x0, const int *x1,
-                                         bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int8_t *x0, const int8_t *x1,
-                                         bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint8_t *x0, const uint8_t *x1,
-                                         bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int64_t *x0, const int64_t *x1,
-                                         bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int16_t *x0, const int16_t *x1,
-                                         bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint16_t *x0,
-                                         const uint16_t *x1, bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint32_t *x0,
-                                         const uint32_t *x1, bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint64_t *x0,
-                                         const uint64_t *x1, bool *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op, const bool *x0, const bool *x1,
-                                         bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const double *x0, const double *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const float *x0, const float *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const half *x0, const half *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const int *x0, const int *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const int8_t *x0, const int8_t *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const uint8_t *x0, const uint8_t *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const int64_t *x0, const int64_t *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const int16_t *x0, const int16_t *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const uint16_t *x0, const uint16_t *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const uint32_t *x0, const uint32_t *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const uint64_t *x0, const uint64_t *x1, bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseCmp(const int &nums, enum BroadcastOpType op,
+                                         const bool *x0, const bool *x1, bool *y, cudaStream_t stream);
 // Element-wise ArithMetic
 template <typename T, typename Func>
 __global__ void ElewiseArithKernel(const int nums, const T *x0, const T *x1, T *y) {
@@ -668,7 +674,8 @@ template <typename T>
 void ElewiseArithComplexKernel(const int &nums, enum BroadcastOpType op, const T *x0, const T *x1, Complex<T> *y,
                                cudaStream_t stream) {
   if (op == BROADCAST_TYPE_COMPLEX) {
-    return ElewiseArithComplexKernel<T, T, T, ComplexFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    return ElewiseArithComplexKernel<T, T, T, ComplexFunc<T>>
+      <<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
   }
 }
 
@@ -695,30 +702,30 @@ void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const T1 *x0,
   return ElewiseArithComplexKernel(nums, op, x0, x1, y, stream);
 }
 
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const double *x0, const double *x1,
-                                           double *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const float *x0, const float *x1,
-                                           float *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const half *x0, const half *x1,
-                                           half *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const int *x0, const int *x1,
-                                           int *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const int8_t *x0, const int8_t *x1,
-                                           int8_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint8_t *x0,
-                                           const uint8_t *x1, uint8_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const int64_t *x0,
-                                           const int64_t *x1, int64_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const int16_t *x0,
-                                           const int16_t *x1, int16_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint16_t *x0,
-                                           const uint16_t *x1, uint16_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint32_t *x0,
-                                           const uint32_t *x1, uint32_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint64_t *x0,
-                                           const uint64_t *x1, uint64_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op, const bool *x0, const bool *x1,
-                                           bool *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const double *x0, const double *x1, double *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const float *x0, const float *x1, float *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const half *x0, const half *x1, half *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const int *x0, const int *x1, int *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const int8_t *x0, const int8_t *x1, int8_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const uint8_t *x0, const uint8_t *x1, uint8_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const int64_t *x0, const int64_t *x1, int64_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const int16_t *x0, const int16_t *x1, int16_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const uint16_t *x0, const uint16_t *x1, uint16_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const uint32_t *x0, const uint32_t *x1, uint32_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const uint64_t *x0, const uint64_t *x1, uint64_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseArith(const int &nums, enum BroadcastOpType op,
+                                           const bool *x0, const bool *x1, bool *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const Complex<float> *x0,
                                                   const Complex<float> *x1, Complex<float> *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType op, const Complex<float> *x0,
@@ -1075,8 +1082,8 @@ void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector
 
 template <typename T>
 void BroadcastComplexArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1,
-                           Complex<T> *y, cudaStream_t stream) {
+                         const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1,
+                         Complex<T> *y, cudaStream_t stream) {
   size_t size = 1;
   for (auto d : y_dims) {
     size *= d;
@@ -1099,11 +1106,17 @@ template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims,
                                              const std::vector<size_t> &y_dims, enum BroadcastOpType op, const half *x0,
                                              const half *x1, half *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const int *x0,
+                                             const int *x1, int *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                                              const std::vector<size_t> &y_dims, enum BroadcastOpType op,
                                              const int8_t *x0, const int8_t *x1, int8_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                                              const std::vector<size_t> &y_dims, enum BroadcastOpType op,
                                              const uint8_t *x0, const uint8_t *x1, uint8_t *y, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
+                                             const int64_t *x0, const int64_t *x1, int64_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                                              const std::vector<size_t> &y_dims, enum BroadcastOpType op,
                                              const int16_t *x0, const int16_t *x1, int16_t *y, cudaStream_t stream);
@@ -1112,13 +1125,7 @@ template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims,
                                              const uint16_t *x0, const uint16_t *x1, uint16_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                                              const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                             const int32_t *x0, const int32_t *x1, int32_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
                                              const uint32_t *x0, const uint32_t *x1, uint32_t *y, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                             const std::vector<size_t> &y_dims, enum BroadcastOpType op,
-                                             const int64_t *x0, const int64_t *x1, int64_t *y, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                                              const std::vector<size_t> &y_dims, enum BroadcastOpType op,
                                              const uint64_t *x0, const uint64_t *x1, uint64_t *y, cudaStream_t stream);

@@ -52,9 +52,6 @@ void pad_input_shape(int *input_shape, int input_shape_len, int output_shape_len
     const int dim_max = shape_info->output_shape_size_ - 1;                                            \
     const size_t data_length = sizeof(type);                                                           \
     const size_t temp_length = accumulate(output_shape, 0, dim_max);                                   \
-    if (temp_length * data_length == 0) {                                                              \
-      return NNACL_ERR;                                                                                \
-    }                                                                                                  \
     type *data_temp = (type *)malloc(temp_length * data_length);                                       \
     if (data_temp == NULL) {                                                                           \
       return NNACL_ERR;                                                                                \
@@ -99,13 +96,9 @@ void pad_input_shape(int *input_shape, int input_shape_len, int output_shape_len
     return NNACL_OK;                                                                                   \
   }
 
-BROADCAST_TO_IMPL(bool)
 BROADCAST_TO_IMPL(int)
-BROADCAST_TO_IMPL(int8_t)
-BROADCAST_TO_IMPL(int16_t)
-BROADCAST_TO_IMPL(int32_t)
-BROADCAST_TO_IMPL(int64_t)
 BROADCAST_TO_IMPL(float)
+BROADCAST_TO_IMPL(bool)
 #ifdef ENABLE_FP16
 BROADCAST_TO_IMPL(float16_t)
 #endif

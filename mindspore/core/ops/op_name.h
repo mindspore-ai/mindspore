@@ -272,7 +272,6 @@ constexpr auto kDstFormat = "dst_format";
 constexpr auto kLambd = "lambd";
 constexpr auto kAffine = "affine";
 constexpr auto kNumGroups = "num_groups";
-constexpr auto kIndexing = "indexing";
 
 enum Index : size_t {
   kInputIndex0 = 0,

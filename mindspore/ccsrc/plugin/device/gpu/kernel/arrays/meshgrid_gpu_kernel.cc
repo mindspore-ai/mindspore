@@ -17,10 +17,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(Meshgrid,
-                      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-                      MeshgridGpuKernelMod, bool)
-
 MS_REG_GPU_KERNEL_ONE(
   Meshgrid, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   MeshgridGpuKernelMod, half)
