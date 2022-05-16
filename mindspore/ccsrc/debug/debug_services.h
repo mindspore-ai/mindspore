@@ -347,7 +347,7 @@ class DebugServices {
   void AddToTensorData(const std::string &backend_name, const std::string &time_stamp, const std::size_t slot,
                        const unsigned int iteration, const unsigned int device_id, const unsigned int root_graph_id,
                        const bool is_output, const std::size_t data_size, const std::string &type_name,
-                       const std::vector<int64_t> &shape, std::vector<char> *buffer,
+                       const std::vector<int64_t> &shape, char *buffer,
                        std::vector<std::shared_ptr<TensorData>> *const result_list);
 
   void SetPrefixToCheck(std::string *const prefix_dump_file_name, std::string *const slot_string_to_check,
@@ -391,8 +391,8 @@ class DebugServices {
                             uint64_t *prev_num_elements, bool *history_not_found);
 
   void ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name, std::string *const tensor_type,
-                         std::size_t *const size, std::vector<int64_t> *const shape,
-                         std::vector<char> **const data_buffer, bool *no_mem_to_read, bool is_base_request = false);
+                         std::size_t *const size, std::vector<int64_t> *const shape, char **const data_buffer,
+                         bool *no_mem_to_read, bool is_base_request = false);
 
   AsyncPreProcessResult PreProcessDumpDirAsync(const std::string &specific_dump_dir);
 

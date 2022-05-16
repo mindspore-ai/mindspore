@@ -181,7 +181,7 @@ class TensorData {
     this->data_ptr_ = nullptr;
 #else
     if (this->data_ptr_ != nullptr) {
-      delete this->data_ptr_;
+      delete[] this->data_ptr_;
       this->data_ptr_ = nullptr;
       this->size_ = 0;
     }
