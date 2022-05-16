@@ -4205,7 +4205,7 @@ class Round(Primitive):
     r"""
     Returns half to even of a tensor element-wise.
 
-    Refer to :func:`mindspore.ops.round` for more detailed.
+    Refer to :func"`mindspore.ops.round` for more detailed.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

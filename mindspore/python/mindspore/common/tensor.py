@@ -1003,11 +1003,11 @@ class Tensor(Tensor_):
 
             out_{i} = x_{i} ^{ y_{i}}
 
-        Note:
+        .. note::
             - The current Tensor and `power` comply with the implicit type conversion rules to make the data
-              types consistent.
+             types consistent.
             - Dtypes of the current Tensor and power cannot be bool at the same time, and the shapes of them
-              can be broadcast.
+             can be broadcast.
 
         Args:
             power (Union[Tensor, number.Number, bool]): The power value, should be a number.Number or bool value,
@@ -1077,8 +1077,12 @@ class Tensor(Tensor_):
 
     def select(self, condition, y):
         r"""
-        The conditional tensor determines whether the corresponding element in the output must be
-        selected from the current Tensor (if true) or :math:`y` (if false) based on the value of each element.
+        Returns the selected elements, either from Tensor or input :math:`y`, depending on the condition `condition`.
+
+        The conditional tensor acts as an optional compensation (mask), which
+        determines whether the corresponding element in the output must be
+        selected from  the Tensor (if true) or :math:`y` (if false) based on the value of each
+        element.
 
         It can be defined as:
 
@@ -1089,14 +1093,14 @@ class Tensor(Tensor_):
             \end{cases}
 
         Args:
-            condition (Tensor[bool]): The condition tensor, decides which element is chosen.
+            cond (Tensor[bool]): The condition tensor, decides which element is chosen.
               The shape is the same as the current Tensor.
             y (Union[Tensor, int, float]): If y is Tensor, the shape is the same as the current Tensor.
               If y is an int or a float, it will be cast to the type of int32 or float32, and broadcast to the same
               shape as the Tensor.
 
         Returns:
-            Tensor, has the same shape as the current Tensor.
+            Tensor, has the same shape as the Tensor.
 
         Raises:
             TypeError: If `y` is not a Tensor, an int or a float.
