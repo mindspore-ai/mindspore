@@ -29,7 +29,8 @@ class GroupLossScaleManager(Cell):
     dynamic updating of loss scales.
 
     Args:
-        loss_scale (Number): The initialized loss scale value.
+        init_loss_scale (Number): The initialized loss scale value.
+        loss_scale_groups (List): The loss scale groups, which are divided from the param list.
 
     Inputs:
         - **x** (Tensor) - The output of last operator.
@@ -124,9 +125,9 @@ class GroupLossScaleManager(Cell):
         """
         Update dynamic loss scale.
 
-        Inputs:
-            - **layer** (Int) - Current layer.
-            - **update_ratio** (Float) - The ratio of loss scale update.
+        Args:
+            layer (int): Current layer.
+            update_ratio (float): The ratio of loss scale update.
 
         Outputs:
             float, new loss scale.
