@@ -82,7 +82,7 @@ int FastGeLUGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
                                      const std::vector<KernelTensorPtr> &outputs,
                                      const std::map<uint32_t, tensor::TensorPtr> &) {
   int ret = KRET_OK;
-  if ((ret = NativeGpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
     MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }
@@ -104,7 +104,6 @@ int FastGeLUGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
                                        inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
     input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
     is_null_input_ = (input_elements_ == 0);
-    InitSizeLists();
   }
   return KRET_OK;
 }

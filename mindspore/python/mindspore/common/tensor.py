@@ -791,7 +791,7 @@ class Tensor(Tensor_):
 
     def ger(self, x):
         """
-        Ger product of `self` and `x`. Calculate the outer product of two one-dimensional arrays. If `self` is a 1D
+        Ger product of `self` and `x`. Calculate the outer product of two arrays. If `self` is a 1D
         Tensor of shape :math:`(m,)` and `x` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a Tensor of
         shape :math:`(m * n)`. If `self` is a Tensor of shape :math:`(*B, m)` and `x` is a Tensor of shape
         :math:`(*B, n)`, then `output` must be a Tensor of shape :math:`(*B, m, n)`.

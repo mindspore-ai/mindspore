@@ -13,16 +13,27 @@
 # limitations under the License.
 # ============================================================================
 
+import time
 import numpy as np
 import pytest
 
 import mindspore.context as context
+from mindspore.ops.functional import vmap
+from mindspore.common.api import ms_function
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops import composite as C
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+
+def fast_gelu_grad_compute(x, dy):
+    """FastGeluGradCompute."""
+    div_up = np.exp(-1.702 * x) + 1.702 * x * np.exp(-1.702 * x) + np.exp(1.702 * (x - np.abs(x)))
+    div_down = (np.exp(-1.702 * x) + 1) ** 2
+    return dy * div_up / div_down
 
 
 class FastGeluNet(nn.Cell):
@@ -38,66 +49,93 @@ class FastGeluNet(nn.Cell):
         return self.fast_gelu(x)
 
 
-class FastGeLUGrad(nn.Cell):
+class FastGeLUGradCPU(nn.Cell):
     """FastGeLUGrad."""
 
-    def __init__(self, network):
+    def __init__(self, network_cpu):
         """Init."""
-        super(FastGeLUGrad, self).__init__()
+        super(FastGeLUGradCPU, self).__init__()
         self.fast_gelu_grad = C.GradOperation(get_all=True, sens_param=True)
-        self.network = network
+        self.network_cpu = network_cpu
 
     def construct(self, input_data, sens):
         """Construct."""
-        gout = self.fast_gelu_grad(self.network)(input_data, sens)
+        gout = self.fast_gelu_grad(self.network_cpu)(input_data, sens)
         return gout
 
 
-def np_all_close_with_loss(out, expect):
+def np_all_close_with_loss(out_cpu, expect_cpu):
     """np_all_close_with_loss"""
-    return np.allclose(out, expect, 0.005, 0.005, equal_nan=True)
+    return np.allclose(out_cpu, expect_cpu, 0.005, 0.005, equal_nan=True)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_fast_gelu_grad_float32():
+@pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
+@pytest.mark.parametrize('dtype', [np.float32, np.float16])
+def test_fast_gelu_grad_float32(shape, dtype):
     """
     Feature: FastGeLUGrad cpu kernel
-    Description: test the rightness of FastGeLUGrad cpu kernel, type of input data is float32.
+    Description: test the rightness of FastGeLUGrad cpu kernel.
     Expectation: Success.
     """
-    x_ms = Tensor(np.array([0.58401114, 0.68800163, 0.9760397, 0.14702141, 0.46563736, 0.9607501,
-                            0.14567593, 0.12261796, 0.37054458, 0.46421242]).astype(np.float32))
-    dy_ms = Tensor(np.array([0.5559598, 0.96994054, 0.24770357, 0.34646875, 0.2984393, 0.03287048,
-                             0.55681044, 0.966908, 0.06015943, 0.6099489]).astype(np.float32))
+    prop_cpu = 1 if np.random.random() > 0.5 else -1
+    dy_np = (np.random.randn(*shape) * prop_cpu).astype(dtype)
+    x_np = (np.random.randn(*shape) * prop_cpu).astype(dtype)
+    expect_cpu = fast_gelu_grad_compute(dy_np, x_np)
 
-    net = FastGeluNet()
-    grad = FastGeLUGrad(net)
-
-    output = grad(x_ms, dy_ms)
-    expect = [0.51520324, 0.9445478, 0.26364434, 0.21633989, 0.2560539, 0.03488608,
-              0.34668517, 0.5836204, 0.04784583, 0.52357304]
-    assert np_all_close_with_loss(output[0].asnumpy(), expect)
+    dy_ms = Tensor(dy_np)
+    x_ms = Tensor(x_np)
+    net_cpu = FastGeluNet()
+    grad = FastGeLUGradCPU(net_cpu)
+    output = grad(dy_ms, x_ms)
+    assert np_all_close_with_loss(output[0].asnumpy(), expect_cpu)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_fast_gelu_grad_float16():
+@pytest.mark.parametrize('dtype', [np.float32, np.float16])
+def test_fast_gelu_grad_vmap_cpu(dtype, shape=(100, 2)):
     """
     Feature: FastGeLUGrad cpu kernel
-    Description: test the rightness of FastGeLUGrad cpu kernel, type of input data is float16.
+    Description: test the rightness of FastGeLUGrad cpu kernel vmap feature.
     Expectation: Success.
     """
-    x_ms = Tensor(np.array([0.58401114, 0.68800163, 0.9760397, 0.14702141, 0.46563736, 0.9607501,
-                            0.14567593, 0.12261796, 0.37054458, 0.46421242]).astype(np.float16))
-    dy_ms = Tensor(np.array([0.5559598, 0.96994054, 0.24770357, 0.34646875, 0.2984393, 0.03287048,
-                             0.55681044, 0.966908, 0.06015943, 0.6099489]).astype(np.float16))
 
-    net = FastGeluNet()
-    grad = FastGeLUGrad(net)
+    net_cpu = FastGeluNet()
+    grad = FastGeLUGradCPU(net_cpu)
 
-    output = grad(x_ms, dy_ms)
-    expect = [0.5156, 0.9443, 0.2637, 0.2157, 0.2559, 0.03488, 0.3464, 0.5835, 0.04785, 0.5234]
-    assert np_all_close_with_loss(output[0].asnumpy(), expect)
+    def fast_gelu_grad_func(dy, x):
+        """fast_gelu_grad_func"""
+        output_cpu = grad(dy, x)
+        return output_cpu[0]
+
+    prop_cpu = 1 if np.random.random() > 0.5 else -1
+    dy_np = (np.random.randn(*shape) * prop_cpu).astype(dtype)
+    x_np = (np.random.randn(*shape) * prop_cpu).astype(dtype)
+    dy_cpu = Tensor(dy_np)
+    x_cpu = Tensor(x_np)
+    dy_cpu = F.sub(dy_cpu, 0)
+    x_cpu = F.sub(x_cpu, 0)
+
+    start_time_cpu = time.perf_counter()
+    output_vmap_cpu = vmap(fast_gelu_grad_func, in_axes=(0, 0))(dy_cpu, x_cpu)
+    vmap_time = time.perf_counter() - start_time_cpu
+
+    start_time_manually = time.perf_counter()
+
+    @ms_function
+    def manually_batched_cpu(dys_cpu, xs_cpu):
+        """manually_batched_cpu"""
+        output = []
+        for i in range(dys_cpu.shape[0]):
+            output.append(fast_gelu_grad_func(dys_cpu[i], xs_cpu[i]))
+        return F.stack(output)
+
+    output_manually = manually_batched_cpu(dy_cpu, x_cpu)
+    manually_time = time.perf_counter() - start_time_manually
+
+    assert np_all_close_with_loss(output_vmap_cpu.asnumpy(), output_manually.asnumpy())
+    assert vmap_time < manually_time

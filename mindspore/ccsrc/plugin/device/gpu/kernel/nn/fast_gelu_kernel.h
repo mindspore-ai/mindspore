@@ -53,16 +53,6 @@ class FastGeLUGpuKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-
-    size_t input_size = input_elements_ * unit_size_;
-    input_size_list_.push_back(input_size);
-    output_size_list_.push_back(input_size);
-  }
-
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

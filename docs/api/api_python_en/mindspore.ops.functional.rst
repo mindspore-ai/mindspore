@@ -44,6 +44,7 @@ Activation Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.fast_gelu
     mindspore.ops.tanh
 
 Mathematical Operators
@@ -212,6 +213,7 @@ Linear Algebraic Operators
     :template: classtemplate.rst
 
     mindspore.ops.matmul
+    mindspore.ops.ger
 
 Tensor Operation Operators
 --------------------------
