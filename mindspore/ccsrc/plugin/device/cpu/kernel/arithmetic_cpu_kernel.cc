@@ -147,8 +147,10 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   void AssignAdd(T *input1, const T *input2, T *out);
   void Atan2(const T *input1, const T *input2, T *out);
   void SquaredDifference(const T *input1, const T *input2, T *out);
+  void Xdivy(const T *input1, const T *input2, T *out);
   void SquaredDifferenceComplex(const T *input1, const T *input2, T *out);
   void DivComplex(const T *input1, const T *input2, T *out);
+  void XdivyComplex(const T *input1, const T *input2, T *out);
 
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                const std::vector<AddressPtr> &outputs) override {
@@ -186,14 +188,16 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
                                {prim::kPrimFloorDiv->name(), &ArithmeticCpuTypeFunc<T>::FloorDiv},
                                {prim::kPrimAtan2->name(), &ArithmeticCpuTypeFunc<T>::Atan2},
                                {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDiv},
-                               {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifference}};
+                               {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifference},
+                               {prim::kPrimXdivy->name(), &ArithmeticCpuTypeFunc<T>::Xdivy}};
     } else {
       dtype_desc = "complex data";
       arithmeticMathFuncMap = {
         {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex},
         {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub},
         {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::DivComplex},
-        {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDivComplex}};
+        {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDivComplex},
+        {prim::kPrimXdivy->name(), &ArithmeticCpuTypeFunc<T>::XdivyComplex}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticMathFuncMap)
@@ -623,6 +627,59 @@ void ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex(const T *input1, const T
 }
 
 template <typename T>
+void ArithmeticCpuTypeFunc<T>::Xdivy(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
+    for (size_t i = start; i < end; i++) {
+      auto dividend = input1[iter.GetInputPosA()];
+      auto divisor = input2[iter.GetInputPosB()];
+      iter.GenNextPos();
+      auto zero = (T)0;
+      if (divisor == zero) {
+        if (dividend == zero) {
+          out[i] = std::numeric_limits<T>::quiet_NaN();
+          continue;
+        }
+        if (std::numeric_limits<T>::has_infinity) {
+          out[i] = dividend > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+        } else {
+          out[i] = dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+        }
+        continue;
+      }
+      out[i] = dividend / divisor;
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+}
+
+template <typename T>
+void ArithmeticCpuTypeFunc<T>::XdivyComplex(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
+    for (size_t i = start; i < end; i++) {
+      auto dividend = input1[iter.GetInputPosA()];
+      auto divisor = input2[iter.GetInputPosB()];
+      iter.GenNextPos();
+      auto zero = (T)0;
+      if (divisor == zero) {
+        if (dividend == zero) {
+          out[i] = std::numeric_limits<T>::quiet_NaN();
+          continue;
+        }
+        continue;
+      }
+      out[i] = dividend / divisor;
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+}
+
+template <typename T>
 void ArithmeticCpuTypeFunc<T>::Atan2(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
@@ -815,6 +872,23 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      SpecializeArithFunc<complex128>}}},
+  {prim::kPrimXdivy->name(),
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeArithFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeArithFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeArithFunc<float16>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     SpecializeArithFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     SpecializeArithFunc<complex128>}}},
   {prim::kPrimAtan2->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeArithFunc<float>},
@@ -873,6 +947,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AssignAdd,
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, SquaredDifference, []() {
   return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimSquaredDifference->name());
 });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Xdivy,
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimXdivy->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atan2,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimAtan2->name()); });
 }  // namespace kernel
