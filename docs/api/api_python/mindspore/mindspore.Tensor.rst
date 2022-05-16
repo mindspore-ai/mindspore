@@ -540,7 +540,7 @@ mindspore.Tensor
 
     .. py:method:: pow(power)
 
-       计算Tensor中每个元素的 `power` 次幂。
+        计算Tensor中每个元素的 `power` 次幂。
 
         .. note::
             - Tensor和 `power` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html>`_ ，使数据类型保持一致。
