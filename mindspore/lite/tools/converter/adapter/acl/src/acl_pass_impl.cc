@@ -570,36 +570,52 @@ STATUS AclPassImpl::ReplaceInputsByAippInputs(const FuncGraphPtr &func_graph) {
   return lite::RET_OK;
 }
 
+CNodePtr AclPassImpl::CreateMakeTupleGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &custom_node) {
+  std::vector<CNodePtr> node_list;
+  for (size_t j = 0; j < graph_outputs_.size(); ++j) {
+    auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
+    if (tuple_get_item_prim_ptr == nullptr) {
+      MS_LOG(ERROR) << "New TupleGetItem failed for output " << j;
+      return nullptr;
+    }
+    auto tuple_get_item_prim_ptr_c = tuple_get_item_prim_ptr->GetPrim();
+    auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr_c);
+    MS_CHECK_TRUE_MSG(tuple_get_item_prim != nullptr, nullptr, "item_prim is nullptr.");
+    auto get_item_value = NewValueNode(MakeValue<int>(j));
+    MS_CHECK_TRUE_MSG(get_item_value != nullptr, nullptr, "item_value is nullptr.");
+    AnfNodePtrList inputs{tuple_get_item_prim, custom_node, get_item_value};
+    CNodePtr get_item_cnode = func_graph->NewCNode(inputs);
+    if (get_item_cnode == nullptr) {
+      MS_LOG(ERROR) << "New get item cnode failed for output " << j;
+      return nullptr;
+    }
+    get_item_cnode->set_fullname_with_scope(custom_node->fullname_with_scope() + "_getitem_" + std::to_string(j));
+    node_list.emplace_back(get_item_cnode);
+  }
+  auto make_tuple_val_node = NewValueNode(prim::kPrimMakeTuple);
+  MS_CHECK_TRUE_MSG(make_tuple_val_node != nullptr, nullptr, "New make tuple val node failed.");
+  AnfNodePtrList new_inputs = {make_tuple_val_node};
+  new_inputs.insert(new_inputs.end(), node_list.begin(), node_list.end());
+  auto make_tuple_cnode = func_graph->NewCNode(new_inputs);
+  MS_CHECK_TRUE_MSG(make_tuple_cnode != nullptr, nullptr, "New make tuple cnode failed.");
+  return make_tuple_cnode;
+}
+
 STATUS AclPassImpl::ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
                                             const CNodePtr &custom_node) {
+  AnfNodePtr return_input = func_graph->output();
+  MS_CHECK_TRUE_MSG(return_input != nullptr, lite::RET_ERROR, "return input is nullptr.");
   if (graph_outputs_.size() == 1) {
-    if (!manager->Replace(graph_outputs_[0], custom_node)) {
+    if (!manager->Replace(return_input, custom_node)) {
       MS_LOG(ERROR) << "Replace node failed.";
       return lite::RET_ERROR;
     }
   } else {
-    for (size_t j = 0; j < graph_outputs_.size(); ++j) {
-      auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
-      if (tuple_get_item_prim_ptr == nullptr) {
-        MS_LOG(ERROR) << "New TupleGetItem failed for output " << j;
-        return lite::RET_ERROR;
-      }
-      auto tuple_get_item_prim_ptr_c = tuple_get_item_prim_ptr->GetPrim();
-      auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr_c);
-      MS_CHECK_TRUE_MSG(tuple_get_item_prim != nullptr, lite::RET_ERROR, "item_prim is nullptr.");
-      auto get_item_value = NewValueNode(MakeValue<int>(j));
-      MS_CHECK_TRUE_MSG(get_item_value != nullptr, lite::RET_ERROR, "item_value is nullptr.");
-      AnfNodePtrList inputs{tuple_get_item_prim, custom_node, get_item_value};
-      CNodePtr get_item_cnode = func_graph->NewCNode(inputs);
-      if (get_item_cnode == nullptr) {
-        MS_LOG(ERROR) << "New get item cnode failed for output " << j;
-        return lite::RET_ERROR;
-      }
-      get_item_cnode->set_fullname_with_scope(custom_node->fullname_with_scope() + "_getitem_" + std::to_string(j));
-      if (!manager->Replace(graph_outputs_[j], get_item_cnode)) {
-        MS_LOG(ERROR) << "Replace node failed for output " << j;
-        return lite::RET_ERROR;
-      }
+    auto make_tuple_node = CreateMakeTupleGraphOutput(func_graph, custom_node);
+    MS_CHECK_TRUE_MSG(make_tuple_node != nullptr, lite::RET_ERROR, "Create make tuple cnode failed.");
+    if (!manager->Replace(return_input, make_tuple_node)) {
+      MS_LOG(ERROR) << "Replace node failed for outputs of graph.";
+      return lite::RET_ERROR;
     }
   }
   if (!graph_aipp_inputs_.empty()) {
