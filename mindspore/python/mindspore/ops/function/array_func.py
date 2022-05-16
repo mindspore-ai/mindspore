@@ -628,14 +628,10 @@ def _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is
                         f"then the input[x] must be a Tensor.")
 
 
-def select(cond, x, y):
+def select(condition, x, y):
     r"""
-    Returns the selected elements, either from input :math:`x` or input :math:`y`, depending on the condition `cond`.
-
-    The conditional tensor acts as an optional compensation (mask), which
-    determines whether the corresponding element / row in the output must be
-    selected from :math:`x` (if true) or :math:`y` (if false) based on the value of each
-    element.
+    The conditional tensor determines whether the corresponding element in the output must be
+    selected from :math:`x` (if true) or :math:`y` (if false) based on the value of each element.
 
     It can be defined as:
 
@@ -645,21 +641,20 @@ def select(cond, x, y):
         y_i, & \text{otherwise}
         \end{cases}
 
-    The condition has the same shape as :math:`x` and :math:`y`, you can choose to copy these elements from :math:`x`
-    and :math:`y`.
-
     Args:
-        cond (Tensor[bool]): The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-          The condition tensor, decides which element is chosen.
-        x (Union[Tensor, int, float]): The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-          The first input tensor. If x is an int or a float, it will be cast to the type of int32 or float32,
-          and broadcast to the same shape as y. One of x and y must be a Tensor.
-        y (Union[Tensor, int, float]): The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
-          The second input tensor. If y is an int or a float, it will be cast to the type of int32 or float32,
-          and broadcast to the same shape as x. One of x and y must be a Tensor.
+        condition (Tensor[bool]): The condition tensor, decides which element is chosen.
+          The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+        x (Union[Tensor, int, float]): The first Tensor or number to be selected.
+          If x is a Tensor, the shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`. If x is an int or a float,
+          it will be cast to the type of int32 or float32, and broadcast to the same shape as y.
+          One of x and y must be a Tensor.
+        y (Union[Tensor, int, float]): The second Tensor or number to be selected.
+          If y is a Tensor, The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`. If y is an int or a float,
+          it will be cast to the type of int32 or float32, and broadcast to the same shape as x.
+          One of x and y must be a Tensor.
 
     Returns:
-        Tensor, has the same shape as `cond`. The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+        Tensor, has the same shape as `condition`.
 
     Raises:
         TypeError: If `x` or `y` is not a Tensor, int or float.
