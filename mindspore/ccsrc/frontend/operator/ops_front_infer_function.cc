@@ -230,11 +230,21 @@ bool CheckPythonIsInstance(const py::object &x, const AbstractBasePtr &cmp, cons
   if (std::find(kSparsePrimStr.begin(), kSparsePrimStr.end(), cmp->ToString()) != kSparsePrimStr.end()) {
     return false;
   }
-  auto cmp_value = cmp->BuildValue();
-  if (cmp_value == kAnyValue) {
-    return false;
+
+  py::object cmp_type;
+  if (cmp->isa<abstract::PartialAbstractClosure>()) {
+    const auto &cmp_closure_args = cmp->cast<abstract::PartialAbstractClosurePtr>()->args();
+    // CheckCmpValid ensures size of cmp_closure_args to be 1.
+    auto cmp_closure_first_input = cmp_closure_args[0];
+    cmp_type = ValueToPyData(cmp_closure_first_input->BuildValue());
+  } else {
+    auto cmp_value = cmp->BuildValue();
+    if (cmp_value == kAnyValue) {
+      return false;
+    }
+    cmp_type = ValueToPyData(cmp_value);
   }
-  py::object cmp_type = ValueToPyData(cmp_value);
+
   py::object result = is_const ? python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_PYTHON_ISINSTANCE, x, cmp_type)
                                : python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_MS_ISINSTANCE, x, cmp_type);
   return result.cast<bool>();
