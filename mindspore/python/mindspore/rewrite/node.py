@@ -1170,8 +1170,8 @@ class TreeNode(Node):
             instance: Object in network corresponding to this node.
         """
 
-        if not isinstance(tree, Cell):
-            raise ValueError("Argument tree should be a Cell: ", type(tree))
+        if not isinstance(instance, Cell):
+            raise ValueError("Argument instance should be a Cell: ", type(instance))
         non_custom_args = Node._handle_custom_obj_in_args(args)
         non_custom_kwargs = Node._handle_custom_obj_in_kwargs(kwargs)
         if ast_node is None:

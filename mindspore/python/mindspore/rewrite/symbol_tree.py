@@ -22,7 +22,7 @@ import astunparse
 
 from mindspore.nn import Cell
 from mindspore import log as logger
-from .node import Node, TreeNode
+from .node import Node, TreeNode, PASS_THROUGH_METHOD
 from .api.node_type import NodeType
 from .ast_helpers import AstModifier, AstReplacer, StrChecker
 from .api.scoped_value import ScopedValue, ValueType
@@ -802,6 +802,8 @@ class SymbolTree(Observer, Observable):
             A str represents source code of modified network.
         """
         self._remove_unused_import()
+        if self._init_func_ast:
+            self._remove_unused_field()
         ast.fix_missing_locations(self._module_ast)
         # Find all ast.ClassDef which can be export to code
         # Replace duplicated ast.ClassDef reference in main-ClassDef
@@ -851,6 +853,38 @@ class SymbolTree(Observer, Observable):
                         i += 1
                     else:
                         body.names.remove(alias)
+
+    def _remove_unused_field(self):
+        """remove unused field in __init__ function"""
+        to_delete_field = {}
+        multi_targets = []
+        for index, body in enumerate(self._init_func_ast.body):
+            if not isinstance(body, ast.Assign):
+                continue
+            targets = body.targets
+            for target in targets:
+                if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name) \
+                        and target.value.id == "self":
+                    to_delete_field[target.attr] = index
+                    if len(targets) > 1:
+                        multi_targets.append(index)
+        if to_delete_field.get("_handler"):
+            to_delete_field.pop("_handler")
+        for node in self._nodes.values():
+            if node.get_node_type() in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree):
+                func: ScopedValue = node.get_func()
+                if func.scope == "self" and to_delete_field.get(func.value):
+                    to_delete_field.pop(func.value)
+            if node.get_node_type() == NodeType.CallMethod and node.get_func() == PASS_THROUGH_METHOD:
+                var_name = node.get_args()[0].value
+                if to_delete_field.get(var_name):
+                    to_delete_field.pop(var_name)
+        for i in range(len(self._init_func_ast.body) - 1, -1, -1):
+            if i in to_delete_field.values():
+                if i in multi_targets:
+                    raise RuntimeError("Can not erase field ast node in __init__ function because of multi-targets")
+                AstModifier.erase_ast_from_function(self._init_func_ast, self._init_func_ast.body[i])
+        ast.fix_missing_locations(self._init_func_ast)
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, Node):
