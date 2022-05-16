@@ -36,7 +36,11 @@ bool ComputeGraphNode::Initialize() {
   RETURN_IF_FALSE_WITH_LOG(tcp_client_->Initialize(), "Failed to create the TCP client.");
 
   // Register itself to meta server node.
-  EXECUTE_WITH_RETRY(Register, kExecuteRetryNum, kExecuteInterval, "Failed to register");
+  bool success = ReconnectIfNeeded(std::bind(&ComputeGraphNode::Register, this),
+                                   "Failed to register and try to reconnect to the meta server.");
+  if (!success) {
+    return false;
+  }
 
   // Enable the heartbeat to meta server node.
   enable_hb_ = true;
@@ -52,7 +56,13 @@ bool ComputeGraphNode::Finalize(bool force) {
   heartbeat_.join();
 
   // Exit the compute graph node from the cluster topology.
-  EXECUTE_WITH_RETRY(Unregister, kExecuteRetryNum, kExecuteInterval, "Failed to unregister");
+  if (!force) {
+    bool success = ReconnectIfNeeded(std::bind(&ComputeGraphNode::Unregister, this),
+                                     "Failed to unregister and try to reconnect to the meta server.");
+    if (!success && !force) {
+      return false;
+    }
+  }
 
   // Release the TCP client.
   if (tcp_client_ != nullptr) {
@@ -108,7 +118,8 @@ bool ComputeGraphNode::Unregister() {
   auto message = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kUnregistration, content);
   MS_EXCEPTION_IF_NULL(message);
 
-  MessageBase *response = tcp_client_->ReceiveSync(std::move(message));
+  const size_t timeout = 6;
+  MessageBase *response = tcp_client_->ReceiveSync(std::move(message), timeout);
   if (response == nullptr) {
     return false;
   }
@@ -154,6 +165,39 @@ bool ComputeGraphNode::Heartbeat() {
 
   MS_LOG(INFO) << "The heartbeat thread is finished.";
   return true;
+}
+
+bool ComputeGraphNode::ReconnectIfNeeded(std::function<bool(void)> func, const std::string &error) {
+  bool success = false;
+  size_t retry = kExecuteRetryNum;
+
+  while (!success && retry-- > 0) {
+    success = func();
+    if (!success) {
+      // Retry to reconnect to the meta server.
+      MS_LOG(ERROR) << error;
+      while (!Reconnect()) {
+        continue;
+      }
+    }
+  }
+  return success;
+}
+
+bool ComputeGraphNode::Reconnect() {
+  const auto &server_url = meta_server_addr_.GetUrl();
+  // Disconnect from meta server node firstly.
+  while (tcp_client_->IsConnected(server_url)) {
+    tcp_client_->Disconnect(server_url);
+  }
+
+  // Reconnect to the meta server node.
+  size_t total_retry = 3;
+  const size_t connect_retry = 3;
+  while (!tcp_client_->IsConnected(server_url) && total_retry-- > 0) {
+    tcp_client_->Connect(server_url, connect_retry);
+  }
+  return tcp_client_->IsConnected(server_url);
 }
 
 bool ComputeGraphNode::SendMessageToMSN(const std::string msg_name, const std::string &msg_body) {

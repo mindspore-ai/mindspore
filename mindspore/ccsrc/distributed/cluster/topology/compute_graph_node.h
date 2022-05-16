@@ -60,6 +60,12 @@ class ComputeGraphNode : public NodeBase {
   // Send the heartbeat message to the meta server node.
   bool Heartbeat();
 
+  // Call the `Reconnect` function if the input func execution failed.
+  bool ReconnectIfNeeded(std::function<bool(void)> func, const std::string &error);
+
+  // Reconnect to the meta server node.
+  bool Reconnect();
+
   // The meta server address used to synchronize metadata with other compute graph nodes.
   MetaServerAddress meta_server_addr_;
 
