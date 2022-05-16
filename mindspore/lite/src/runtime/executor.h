@@ -20,7 +20,6 @@
 #include <vector>
 #include "src/runtime/inner_allocator.h"
 #include "src/runtime/kernel_exec.h"
-#include "include/lite_session.h"
 
 namespace mindspore::lite {
 class Executor {

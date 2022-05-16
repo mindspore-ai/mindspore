@@ -21,7 +21,6 @@
 #include <string>
 #include <NvInfer.h>
 #include "include/api/types.h"
-#include "include/ms_tensor.h"
 
 namespace mindspore::lite {
 struct CudaTensorParam {

@@ -97,6 +97,7 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
     MS_LOG(INFO) << "create quant session";
     int weight_quant_size;
     auto weight_quant_model = std::make_shared<mindspore::Model>();
+    CHECK_NULL_RETURN(weight_quant_model);
     auto build_status = BuildModelByFuncGraph(weight_quant_model, func_graph_bak, *flags, &weight_quant_size);
     if (build_status != kSuccess) {
       MS_LOG(WARNING) << "build model failed!";

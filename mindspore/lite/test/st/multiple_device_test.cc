@@ -19,9 +19,6 @@
 #include "src/runtime/lite_session.h"
 #include "src/runtime/sub_graph_kernel.h"
 #include "ir/dtype/type_id.h"
-
-#include "include/version.h"
-#include "include/model.h"
 #include "include/api/model.h"
 #include "src/runtime/cxx_api/converters.h"
 #include "src/runtime/cxx_api/model/model_impl.h"
@@ -39,7 +36,7 @@ class MultipleDeviceTest : public mindspore::CommonTest {
 
 void CreateMultyModel1(mindspore::schema::MetaGraphT *meta_graph) {
   meta_graph->name = "graph";
-  meta_graph->version = mindspore::lite::Version();
+  meta_graph->version = mindspore::Version();
 
   /* CPU GPU NPU support*/
   auto cos = std::make_unique<mindspore::schema::CNodeT>();
@@ -294,56 +291,6 @@ void CheckResult(std::vector<mindspore::kernel::KernelExec *> kernels, int mode)
     ASSERT_EQ(4, subgraph1->nodes().size());
     ASSERT_EQ(mindspore::kernel::KERNEL_ARCH::kGPU, subgraph1->desc().arch);
   }
-}
-
-TEST_F(MultipleDeviceTest, OldApi1) {
-  auto meta_graph = std::make_shared<mindspore::schema::MetaGraphT>();
-  CreateMultyModel1(meta_graph.get());
-
-  flatbuffers::FlatBufferBuilder builder(1024);
-  auto offset = mindspore::schema::MetaGraph::Pack(builder, meta_graph.get());
-  builder.Finish(offset);
-  mindspore::schema::FinishMetaGraphBuffer(builder, offset);
-  size_t size = builder.GetSize();
-  const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
-  mindspore::lite::Model *model = mindspore::lite::Model::Import(content, size);
-
-  auto context = new InnerContext();
-  mindspore::lite::DeviceContext cpu_device_ctx = {mindspore::lite::DT_CPU, {false, mindspore::lite::NO_BIND}};
-  mindspore::lite::DeviceContext gpu_device_ctx = {mindspore::lite::DT_GPU, {false, mindspore::lite::NO_BIND}};
-  context->device_list_.clear();
-  context->device_list_.emplace_back(gpu_device_ctx);
-  context->device_list_.emplace_back(cpu_device_ctx);
-  auto lite_session = new LiteSession();
-
-  auto ret = lite_session->Init(context);
-  ASSERT_EQ(mindspore::lite::RET_OK, ret);
-
-  ret = lite_session->CompileGraph(model);
-  ASSERT_EQ(mindspore::lite::RET_OK, ret);
-
-  CheckResult(lite_session->get_kernels(), MultyDeviceMode1::GPU_CPU);
-}
-
-TEST_F(MultipleDeviceTest, OldApi2) {
-  auto meta_graph = std::make_shared<mindspore::schema::MetaGraphT>();
-  CreateMultyModel1(meta_graph.get());
-
-  flatbuffers::FlatBufferBuilder builder(1024);
-  auto offset = mindspore::schema::MetaGraph::Pack(builder, meta_graph.get());
-  builder.Finish(offset);
-  mindspore::schema::FinishMetaGraphBuffer(builder, offset);
-  size_t size = builder.GetSize();
-  const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
-
-  auto context = std::make_shared<mindspore::lite::Context>();
-  context->device_list_.push_back({mindspore::lite::DT_NPU, {false}});
-  mindspore::session::LiteSession *session =
-    mindspore::session::LiteSession::CreateSession(content, size, context.get());
-  ASSERT_NE(session, nullptr);
-
-  /* NPU > CPU */
-  CheckResult(reinterpret_cast<mindspore::lite::LiteSession *>(session)->get_kernels(), MultyDeviceMode1::NPU_CPU);
 }
 
 TEST_F(MultipleDeviceTest, NewApi1) {

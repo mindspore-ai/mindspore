@@ -26,7 +26,6 @@
 #include "src/runtime/kernel_exec.h"
 #include "src/runtime/lite_mindrt.h"
 #include "src/runtime/executor.h"
-#include "include/lite_session.h"
 
 namespace mindspore::lite {
 class MindrtExecutor : public Executor {
@@ -47,7 +46,7 @@ class MindrtExecutor : public Executor {
              const std::vector<std::vector<int>> &dims) override;
 
  private:
-  void TransferGraphOutput();
+  int TransferGraphOutput();
   void FreeOutputTensor();
   std::unordered_map<void *, std::set<std::pair<AID, size_t>>> BuildReceiverMap();
 

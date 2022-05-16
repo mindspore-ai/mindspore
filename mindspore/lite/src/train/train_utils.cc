@@ -17,7 +17,6 @@
 #include "src/train/train_utils.h"
 #include <vector>
 #include "include/errorcode.h"
-#include "include/ms_tensor.h"
 #include "src/common/utils.h"
 #include "src/runtime/kernel_exec.h"
 #ifdef ENABLE_FP16

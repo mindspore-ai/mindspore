@@ -18,7 +18,6 @@
 #include <sys/stat.h>
 #include <vector>
 #include "src/common/log_adapter.h"
-#include "include/lite_session.h"
 #include "src/common/utils.h"
 #include "src/train/train_utils.h"
 

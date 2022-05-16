@@ -26,7 +26,6 @@
 #endif
 #include "tools/common/option.h"
 #include "include/errorcode.h"
-#include "include/ms_tensor.h"
 #include "include/version.h"
 
 namespace mindspore {

@@ -27,7 +27,6 @@
 #include "include/api/model.h"
 #include "include/api/context.h"
 #include "include/api/cell.h"
-#include "include/lite_session.h"
 #include "src/runtime/cxx_api/graph/graph_data.h"
 #include "src/runtime/inner_context.h"
 #include "src/runtime/lite_session.h"

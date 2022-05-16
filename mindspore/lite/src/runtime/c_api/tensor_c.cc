@@ -15,7 +15,7 @@
  */
 #include "include/c_api/tensor_c.h"
 #include "include/api/status.h"
-#include "include/ms_tensor.h"
+#include "src/tensor.h"
 #include "src/runtime/cxx_api/tensor/tensor_impl.h"
 #include "src/runtime/inner_allocator.h"
 

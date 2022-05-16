@@ -19,9 +19,7 @@
 #include "schema/inner/model_generated.h"
 #include "src/runtime/sub_graph_kernel.h"
 #include "ir/dtype/type_id.h"
-#include "include/version.h"
 #include "include/model.h"
-#include "include/lite_session.h"
 #include "src/runtime/lite_session.h"
 
 namespace mindspore {
@@ -39,7 +37,7 @@ class OptAllocator : public mindspore::CommonTest {
 
 void CreateModel1(mindspore::schema::MetaGraphT *meta_graph) {
   meta_graph->name = "graph";
-  meta_graph->version = mindspore::lite::Version();
+  meta_graph->version = mindspore::Version();
 
   /*      cos
    *     /   \
