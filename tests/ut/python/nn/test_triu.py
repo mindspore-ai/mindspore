@@ -15,7 +15,6 @@
 """
 test nn.Triu()
 """
-import os
 import numpy as np
 
 import mindspore.nn as nn
@@ -41,20 +40,6 @@ def test_triu():
     """
     net = TriuNet()
     out = net()
-    assert np.sum(out.asnumpy()) == 26
-
-def test_triu_ge():
-    """
-    Feature: unify ge and vm backend
-    Description: test TriuNet with ge backend
-    Expectation: None
-    """
-    os.environ['MS_ENABLE_GE'] = "1"
-    os.environ['MS_GE_TRAIN'] = "0"
-    net = TriuNet()
-    out = net()
-    del os.environ['MS_GE_TRAIN']
-    del os.environ['MS_ENABLE_GE']
     assert np.sum(out.asnumpy()) == 26
 
 def test_triu_1():
