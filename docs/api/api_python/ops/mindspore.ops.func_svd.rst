@@ -5,22 +5,22 @@ mindspore.ops.svd
 
     计算单个或多个矩阵的奇异值分解。
 
-    设矩阵:math:`A`，svd返回奇异值:math:`S`、左奇异向量:math:`U`和右奇异向量:math:`V`。满足以下公式:
+    设矩阵 :math:`A` ，svd返回奇异值 :math:`S` 、左奇异向量 :math:`U` 和右奇异向量 :math:`V` 。满足以下公式:
 
     .. math::
         A=U*diag(S)*V^{T}
 
     **参数：**
 
-    - **a** (Tensor) - 待分解的矩阵。shape为:math:`(*, M, N)`。
-    - **full_matrices** (bool, optional) - 如果这个参数为True，则计算完整的:math:`U`和:math:`V`。否则:math:`U`和:math:`V`的shape和P有关，P是M和N的较小值, M和N是输入矩阵的行和列。默认值：False。
-    - **compute_uv** (bool, optional) - 如果这个参数为True，则计算:math:`U`和:math:`V`, 否则只计算:math:`S`。默认值：True。
+    - **a** (Tensor) - 待分解的矩阵。shape为 :math:`(*, M, N)` 。
+    - **full_matrices** (bool, optional) - 如果这个参数为True，则计算完整的 :math:`U` 和 :math:`V` 。否则 :math:`U` 和 :math:`V` 的shape和P有关，P是M和N的较小值, M和N是输入矩阵的行和列。默认值：False。
+    - **compute_uv** (bool, optional) - 如果这个参数为True，则计算 :math:`U` 和 :math:`V` , 否则只计算 :math:`S` 。默认值：True。
 
     **返回：**
 
-    - **s** (Tensor) - 奇异值。shape为:math:`(*, P)`。
-    - **u** (Tensor) - 左奇异向量。如果compute_uv为False，该值为空Tensor。shape为:math:`(*, M, P)`。如果full_matrices为true，则shape为:math:`(*, M, M)`。
-    - **v** (Tensor) - 右奇异向量。如果compute_uv为False，该值为空Tensor。shape为:math:`(*, P, N)`。如果full_matrices为true，则shape为:math:`(*, N, N)`。
+    - **s** (Tensor) - 奇异值。shape为 :math:`(*, P)` 。
+    - **u** (Tensor) - 左奇异向量。如果compute_uv为False，该值为空Tensor。shape为 :math:`(*, M, P)` 。如果full_matrices为true，则shape为 :math:`(*, M, M)` 。
+    - **v** (Tensor) - 右奇异向量。如果compute_uv为False，该值为空Tensor。shape为 :math:`(*, P, N)` 。如果full_matrices为true，则shape为 :math:`(*, N, N)` 。
 
     **异常：**
 
