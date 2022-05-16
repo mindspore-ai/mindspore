@@ -306,26 +306,26 @@ def get_reducer_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@constexpr
-def _get_index_add_batch_axis(axis, x_dim, x_ndim):
-    """get batch_axis for IndexAdd."""
-    # case1: batch not exists
-    if x_dim is None:
-        return axis
-    # case2: batch exists
-    if axis < -x_ndim or x_dim >= x_ndim:
-        raise ValueError("'axis' of 'IndexAdd' should be in range [{}, {}), but got {}".format(-x_ndim, x_ndim, axis))
-    if axis < 0:
-        axis = axis + x_ndim
-    if x_dim > axis:
-        return axis
-    return axis + 1
-
-
 @vmap_rules_getters.register(P.IndexAdd)
 def get_index_add_vmap_rule(prim, axis_size):
     """VmapRule for IndexAdd."""
     axis = prim.axis
+
+    @constexpr
+    def _get_index_add_batch_axis(axis, x_dim, x_ndim):
+        """get batch_axis for IndexAdd."""
+        # case1: batch not exists
+        if x_dim is None:
+            return axis
+        # case2: batch exists
+        if axis < -x_ndim or x_dim >= x_ndim:
+            raise ValueError("'axis' of 'IndexAdd' should be in range [{}, {}), but got {}"\
+                .format(-x_ndim, x_ndim, axis))
+        if axis < 0:
+            axis = axis + x_ndim
+        if x_dim > axis:
+            return axis
+        return axis + 1
 
     def vmap_rule(x_bdim, indices_bdim, y_bdim, u_monad):
         x, x_dim = x_bdim

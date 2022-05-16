@@ -20,6 +20,7 @@ from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.common import dtype as mstype
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -101,7 +102,203 @@ def test_gatherv2_axisN1():
     assert np.all(diff < error)
     assert np.all(-diff < error)
 
+
+def cal_vmap_gather(x, indices, axis):
+    return P.Gather()(x, indices, axis)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gather_vmap_basic():
+    """
+    Feature: gather vmap test on cpu.
+    Description: test the rightness of vmap gather basic.
+    Expectation: use vmap rule's result equal to manually batched.
+    """
+
+    x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32))
+    indices = Tensor(np.array([[0, 1], [1, 2]]).astype(np.int32))
+    axis = 0
+
+    outputs = vmap(cal_vmap_gather, in_axes=(0, 0, None), out_axes=0)(x, indices, axis)
+    print("output:\n", outputs)
+
+    expect = np.array([[1, 2],
+                       [5, 6]]).astype(np.float32)
+    assert np.allclose(outputs.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gather_vmap_negative_axis():
+    """
+    Feature: gather vmap test on cpu.
+    Description: test the rightness of vmap gather when axis is negative.
+    Expectation: use vmap rule's result equal to manually batched.
+    """
+
+    x = Tensor(np.array([[[1, 2, 3],
+                          [4, 5, 6]],
+                         [[7, 8, 9],
+                          [10, 11, 12]]]).astype(np.float32))
+    indices = Tensor(np.array([[0, 1], [1, 0]]).astype(np.int32))
+    axis = -2
+
+    outputs = vmap(cal_vmap_gather, in_axes=(0, 0, None), out_axes=0)(x, indices, axis)
+    print("output:\n", outputs)
+
+    expect = np.array([[[1, 2, 3],
+                        [4, 5, 6]],
+                       [[10, 11, 12],
+                        [7, 8, 9]]]).astype(np.float32)
+    assert np.allclose(outputs.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gather_vmap_with_inaxes():
+    """
+    Feature: gather vmap test on cpu.
+    Description: test the rightness of vmap gather when in_axes is not zero.
+    Expectation: use vmap rule's result equal to manually batched.
+    """
+
+    x = Tensor(np.array([[[1, 2, 3],
+                          [4, 5, 6]],
+                         [[7, 8, 9],
+                          [10, 11, 12]]]).astype(np.float32))
+
+    x = np.moveaxis(x, 0, 2)
+    indices = Tensor(np.array([[0, 1], [1, 0]]).astype(np.int32))
+    indices = np.moveaxis(indices, 0, 1)
+    axis = 0
+
+    outputs = vmap(cal_vmap_gather, in_axes=(2, 1, None), out_axes=0)(x, indices, axis)
+    print("output:\n", outputs)
+
+    expect = np.array([[[1, 2, 3],
+                        [4, 5, 6]],
+                       [[10, 11, 12],
+                        [7, 8, 9]]]).astype(np.float32)
+    assert np.allclose(outputs.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gather_vmap_indices_outofbound():
+    """
+    Feature: gather vmap test on cpu.
+    Description: test the rightness of vmap gather when indices out of bound.
+    Expectation: use vmap rule's result equal to manually batched.
+    """
+
+    x = Tensor(np.array([[[1, 2, 3],
+                          [4, 5, 6]],
+                         [[7, 8, 9],
+                          [10, 11, 12]]]).astype(np.float32))
+
+    indices = Tensor(np.array([[0, 2], [2, 0]]).astype(np.int32))
+    axis = 0
+
+    outputs = vmap(cal_vmap_gather, in_axes=(0, 0, None), out_axes=0)(x, indices, axis)
+    print("output:\n", outputs)
+
+    expect = np.array([[[1, 2, 3],
+                        [0, 0, 0]],
+                       [[0, 0, 0],
+                        [7, 8, 9]]]).astype(np.float32)
+    assert np.allclose(outputs.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gather_vmap_xdim_is_none():
+    """
+    Feature: gather vmap test on cpu.
+    Description: test the rightness of vmap gather when no xdim.
+    Expectation: use vmap rule's result equal to manually batched.
+    """
+
+    x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+
+    indices = Tensor(np.array([[0, 1], [2, 0]]).astype(np.int32))
+    axis = 0
+
+    outputs = vmap(cal_vmap_gather, in_axes=(None, 0, None), out_axes=0)(x, indices, axis)
+    print("output:\n", outputs)
+
+    expect = np.array([[1, 2],
+                       [3, 1]]).astype(np.float32)
+    assert np.allclose(outputs.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gather_vmap_idim_is_none():
+    """
+    Feature: gather vmap test on cpu.
+    Description: test the rightness of nested vmap gather.
+    Expectation: use vmap rule's result equal to manually batched.
+    """
+
+    x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32))
+
+    indices = Tensor(np.array([0, 1]).astype(np.int32))
+    axis = 0
+
+    outputs = vmap(cal_vmap_gather, in_axes=(0, None, None), out_axes=0)(x, indices, axis)
+    print("output:\n", outputs)
+
+    expect = np.array([[1, 2],
+                       [4, 5]]).astype(np.float32)
+    assert np.allclose(outputs.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gather_vmap_nested():
+    """
+    Feature: gather vmap test on cpu.
+    Description: test the rightness of nested vmap gather.
+    Expectation: use vmap rule's result equal to manually batched.
+    """
+
+    x = Tensor(np.array([[[1, 2, 3],
+                          [4, 5, 6]],
+                         [[7, 8, 9],
+                          [10, 11, 12]]]).astype(np.float32))
+
+    indices = Tensor(np.array([[[0, 1],
+                                [1, 0]],
+                               [[0, 1],
+                                [1, 0]]]).astype(np.int32))
+    axis = 0
+
+    outputs = vmap(vmap(cal_vmap_gather, in_axes=(0, 0, None), out_axes=0),
+                   in_axes=(0, 0, None), out_axes=0)(x, indices, axis)
+    print("output:\n", outputs)
+
+    expect = np.array([[[1, 2],
+                        [5, 4]],
+                       [[7, 8],
+                        [11, 10]]]).astype(np.float32)
+    assert np.allclose(outputs.asnumpy(), expect)
+
 if __name__ == '__main__':
     test_gatherv2_axis0()
     test_gatherv2_axis1()
     test_gatherv2_axisN1()
+    test_gather_vmap_basic()
+    test_gather_vmap_negative_axis()
+    test_gather_vmap_with_inaxes()
+    test_gather_vmap_indices_outofbound()
+    test_gather_vmap_xdim_is_none()
+    test_gather_vmap_idim_is_none()
+    test_gather_vmap_nested()

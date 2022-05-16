@@ -270,7 +270,7 @@ def jet(fn, primals, series):
 
         - **out_primals** (Union[Tensor, list[Tensor]]) - The output of `fn(primals)`.
         - **out_series** (Union[Tensor, list[Tensor]]) - The `1` to `i+1`-th order of derivative of output with respect
-            to the inputs.
+          to the inputs.
 
     Raises:
         TypeError: If `primals` is not a tensor or tuple of tensors.
@@ -304,10 +304,8 @@ def jet(fn, primals, series):
         [[2.319777  2.4825778]
          [1.1515628 0.4691642]] [[[ 1.2533808  -1.0331168 ]
           [-1.1400385  -0.3066662 ]]
-
          [[-1.2748207  -1.8274734 ]
           [ 0.966121    0.55551505]]
-
          [[-4.0515366   3.6724353 ]
           [ 0.5053504  -0.52061415]]]
     """
@@ -369,7 +367,7 @@ def derivative(fn, primals, order):
 
         - **out_primals** (Union[Tensor, list[Tensor]]) - The output of `fn(primals)`.
         - **out_series** (Union[Tensor, list[Tensor]]) - The `order`-th order of derivative of output with respect
-            to the inputs.
+          to the inputs.
 
     Raises:
         TypeError: If `primals` is not a tensor or tuple of tensors.
