@@ -33,7 +33,7 @@ __global__ void NormalizeKernel(const T *input, const T *gamma, const T *beta, T
   float sum = 0.0f;
   float variance = 0.0f;
 
-  for (int block = 0; block < block_loop; block += 1) {
+  for (int block = 0; block < block_loop; block++) {
     float local_sum = 0.0f;
     int mean_index = bid + block * gridDim.x;
     int num_index = bid * n + block * gridDim.x * blockDim.x;
@@ -41,7 +41,7 @@ __global__ void NormalizeKernel(const T *input, const T *gamma, const T *beta, T
       if (num_index + i >= element_cnt) {
         break;
       }
-      local_sum += static_cast<float>(__ldg(&input[num_index + i]));
+      local_sum += static_cast<float>(input[num_index + i]);
     }
     sum = blockReduceSum(local_sum);
     if (tid == 0) {
@@ -50,7 +50,7 @@ __global__ void NormalizeKernel(const T *input, const T *gamma, const T *beta, T
   }
   __syncthreads();
 
-  for (int block = 0; block < block_loop; block += 1) {
+  for (int block = 0; block < block_loop; block++) {
     float local_var_sum = 0.0f;
     int var_index = bid + block * gridDim.x;
     int num_index = bid * n + block * gridDim.x * blockDim.x;
@@ -58,7 +58,7 @@ __global__ void NormalizeKernel(const T *input, const T *gamma, const T *beta, T
       if (num_index + i >= element_cnt) {
         break;
       }
-      float diff = static_cast<float>(__ldg(&input[num_index + i])) - s_mean[var_index];
+      float diff = static_cast<float>(input[num_index + i]) - s_mean[var_index];
       local_var_sum += diff * diff;
     }
     variance = blockReduceSum(local_var_sum);
@@ -67,17 +67,17 @@ __global__ void NormalizeKernel(const T *input, const T *gamma, const T *beta, T
     }
   }
   __syncthreads();
-  for (int block = 0; block < block_loop; block += 1) {
+  for (int block = 0; block < block_loop; block++) {
     int var_index = bid + block * gridDim.x;
     int num_index = bid * n + block * gridDim.x * blockDim.x;
     for (int i = tid; i < n; i += blockDim.x) {
       if (num_index + i >= element_cnt) {
         break;
       }
-      float beta_val = (beta == nullptr) ? 0.0f : static_cast<float>(__ldg(&beta[i]));
+      float beta_val = (beta == nullptr) ? 0.0f : static_cast<float>(beta[i]);
       output[num_index + i] =
         static_cast<T>(((static_cast<float>(input[num_index + i]) - s_mean[var_index]) * s_variance[var_index]) *
-                         static_cast<float>(__ldg(&gamma[i])) +
+                         static_cast<float>(gamma[i]) +
                        beta_val);
     }
   }
