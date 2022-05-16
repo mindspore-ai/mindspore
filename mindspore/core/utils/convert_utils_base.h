@@ -73,6 +73,16 @@ inline std::vector<size_t> LongVecToSizeVec(const std::vector<int64_t> &vec) {
   return result;
 }
 
+inline uint32_t LongToUint(int64_t u) {
+  if (u < 0) {
+    MS_LOG(EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
+  }
+  if (u > static_cast<int64_t>((std::numeric_limits<uint32_t>::max)())) {
+    MS_LOG(EXCEPTION) << "The int64_t value(" << u << ") exceeds the maximum value of uint32_t.";
+  }
+  return static_cast<uint32_t>(u);
+}
+
 inline size_t FloatToSize(float u) {
   if (u < 0) {
     MS_LOG(EXCEPTION) << "The float value(" << u << ") is less than 0.";
