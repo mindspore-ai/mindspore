@@ -122,6 +122,38 @@ def get_tile_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Concat)
+def get_concat_vmap_rule(prim, axis_size):
+    """VmapRule for `Concat` operation."""
+    if isinstance(prim, str):
+        prim = P.Concat(0)
+        new_axis = 0
+    else:
+        new_axis = prim.axis
+    if new_axis >= 0:
+        new_axis += 1
+
+    def vmap_rule(*inputs_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, *inputs_bdim)
+        if is_all_none:
+            return result
+
+        if not isinstance(inputs_bdim, (tuple, list)):
+            _raise_value_error("The 'x' of P.Concat is neither tuple nor list.")
+
+        args = inputs_bdim[0]
+        vals = ()
+        for each_arg in args:
+            x, bdim = each_arg
+            x = _bdim_at_front(x, bdim, axis_size)
+            vals = vals + (x,)
+
+        out = P.Concat(new_axis)(vals)
+        return (out, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.Reshape)
 def get_reshape_vmap_rule(prim, axis_size):
     """VmapRule for `Reshape` operation."""

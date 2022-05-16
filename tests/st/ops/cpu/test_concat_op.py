@@ -20,8 +20,10 @@ from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.ops as ops
 import mindspore.context as context
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
 
 class ConcatV10(nn.Cell):
     def __init__(self, nptype):
@@ -52,18 +54,35 @@ def axis10(nptype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis10_float32():
+    """
+    Feature: concat with one input
+    Description: Concat with one input of float32 dtype
+    Expectation: success
+    """
     axis10(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis10_int32():
+    """
+    Feature: concat with one input
+    Description: Concat with one input of int32 dtype
+    Expectation: success
+    """
     axis10(np.int32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis10_bool():
+    """
+    Feature: concat with one input
+    Description: Concat with one input of bool dtype
+    Expectation: success
+    """
     axis10(np.bool)
 
 
@@ -89,22 +108,40 @@ def axis32(nptype):
     print(output)
     assert (output.asnumpy() == expect).all()
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis32_float32():
+    """
+    Feature: concat in axis-2
+    Description: Concat in axis 2 and float32 dtype inputs
+    Expectation: success
+    """
     axis32(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis32_int32():
+    """
+    Feature: concat in axis-2
+    Description: Concat in axis 2 and int32 dtype inputs
+    Expectation: success
+    """
     axis32(np.int32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis32_bool():
+    """
+    Feature: concat in axis-2
+    Description: Concat in axis 2 and bool dtype inputs
+    Expectation: success
+    """
     axis32(np.bool)
 
 
@@ -138,10 +175,16 @@ class GradConcat(nn.Cell):
         gout = self.grad(self.network)(x, y)
         return gout
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_list_grad():
+    """
+    Feature: concat grad
+    Description: ConcatGrad with list input
+    Expectation: success
+    """
     x1 = Tensor(np.arange(2 * 2 * 1).reshape(2, 2, 1).astype(np.float32))
     x2 = Tensor(np.arange(2 * 2 * 2).reshape(2, 2, 2).astype(np.float32))
     concat = ConcatWithList()
@@ -158,6 +201,11 @@ def test_concat_list_grad():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_tuple_grad():
+    """
+    Feature: concat grad
+    Description: ConcatGrad with tuple input
+    Expectation: success
+    """
     x1 = Tensor(np.arange(2 * 2 * 1).reshape(2, 2, 1).astype(np.float32))
     x2 = Tensor(np.arange(2 * 2 * 2).reshape(2, 2, 2).astype(np.float32))
     concat = ConcatWithTuple()
@@ -201,18 +249,35 @@ def axis43(nptype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis43_float32():
+    """
+    Feature: concat in axis-3
+    Description: Concat in axis 3 and float32 dtype inputs
+    Expectation: success
+    """
     axis43(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis43_int32():
+    """
+    Feature: concat in axis-3
+    Description: Concat in axis 3 and int32 dtype inputs
+    Expectation: success
+    """
     axis43(np.int32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis43_bool():
+    """
+    Feature: concat in axis-3
+    Description: Concat in axis 3 and bool dtype inputs
+    Expectation: success
+    """
     axis43(np.bool)
 
 
@@ -241,18 +306,35 @@ def axis21(nptype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis21_float32():
+    """
+    Feature: concat with 2 inputs
+    Description: Concat with 2 inputs of float32 dtype, asix = 1
+    Expectation: success
+    """
     axis21(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis21_int32():
+    """
+    Feature: concat with 2 inputs
+    Description: Concat with 2 inputs of int32 dtype, asix = 1
+    Expectation: success
+    """
     axis21(np.int32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_axis21_bool():
+    """
+    Feature: concat with 2 inputs
+    Description: Concat with 2 inputs of bool dtype, asix = 1
+    Expectation: success
+    """
     axis21(np.bool)
 
 
@@ -282,22 +364,40 @@ def concat_3i(nptype):
     diff = output_ms.asnumpy() - output_np
     assert np.all(diff < error)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_3i_float32():
+    """
+    Feature: concat with 3 inputs
+    Description: Concat with 3 inputs of float32 dtype
+    Expectation: success
+    """
     concat_3i(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_3i_int32():
+    """
+    Feature: concat with 3 inputs
+    Description: Concat with 3 inputs of int32 dtype
+    Expectation: success
+    """
     concat_3i(np.int32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_3i_bool():
+    """
+    Feature: concat with 3 inputs
+    Description: Concat with 3 inputs of bool dtype
+    Expectation: success
+    """
     cat = Concat3INet()
 
     x1_np = np.random.choice([True, False], (32, 4, 224, 224)).astype(np.bool)
@@ -341,34 +441,64 @@ def concat_4i(nptype):
     diff = output_ms.asnumpy() - output_np
     assert np.all(diff < error)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_4i_float32():
+    """
+    Feature: concat with 4 inputs
+    Description: Concat with 4 inputs of float32 dtype
+    Expectation: success
+    """
     concat_4i(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_4i_int32():
+    """
+    Feature: concat with 4 inputs
+    Description: Concat with 4 inputs of int32 dtype
+    Expectation: success
+    """
     concat_4i(np.int32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_4i_int8():
+    """
+    Feature: concat with 4 inputs
+    Description: Concat with 4 inputs of int8 dtype
+    Expectation: success
+    """
     concat_4i(np.int8)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_4i_uint64():
+    """
+    Feature: concat with 4 inputs
+    Description: Concat with 4 inputs of uint64 dtype
+    Expectation: success
+    """
     concat_4i(np.uint64)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_concat_4i_bool():
+    """
+    Feature: concat with 4 inputs
+    Description: Concat with 4 inputs of bool dtype
+    Expectation: success
+    """
     cat = Concat4INet()
 
     x1_np = np.random.choice([True, False], (32, 4, 224, 224)).astype(np.bool)
@@ -384,3 +514,38 @@ def test_concat_4i_bool():
     output_ms = cat(x1_ms, x2_ms, x3_ms, x4_ms)
 
     assert (output_ms.asnumpy() == output_np).all()
+
+
+def vmap_basic():
+    def cal(a, b, axis):
+        return P.Concat(axis)((a, b))
+
+    def vmap_cal(a, b, axis):
+        result = vmap(cal, in_axes=(0, 0, None))(a, b, axis)
+        return result
+
+    def naive_cal(a, b, axis):
+        result = []
+        for i in range(a.shape[0]):
+            result.append(np.concatenate((a[i], b[i]), axis=axis))
+        return np.stack(result)
+
+    input1 = np.arange(2*3*4).reshape(2, 3, 4).astype(np.float32)
+    input2 = np.arange(2*3*4).reshape(2, 3, 4).astype(np.float32)
+    axis = 0
+    output = vmap_cal(Tensor(input1), Tensor(input2), axis).asnumpy()
+    expect = naive_cal(input1, input2, axis)
+    assert np.allclose(output, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_vmap():
+    """
+    Feature: vmap for concat
+    Description: vmap rule for Concat
+    Expectation: success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    vmap_basic()

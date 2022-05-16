@@ -20,7 +20,8 @@ from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE)
+
 
 class Net(nn.Cell):
     def __init__(self, axis=0):
@@ -36,11 +37,18 @@ class Net(nn.Cell):
         out2_shape = self.reshape(out2_unique, (1, -1, 2))
         return self.concat((out1_shape, out2_shape))
 
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_concat():
+    """
+    Feature: dynamic shape for concat
+    Description: This case tests the dynamic shape for op concat on ascend and gpu
+    Expectation: success
+    """
     x1 = Tensor(np.array([1, 2, 3, 1, 4, 2]), mstype.int32)
     x2 = Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.int32)
     net = Net(axis=1)
