@@ -1239,7 +1239,6 @@ class MatrixDiagV3(Primitive):
     @prim_attr_register
     def __init__(self, align="RIGHT_LEFT"):
         """"Initialize MatrixDiagV3"""
-        self.add_prim_attr("max_length", 200000000)
         validator.check_value_type("align", align, [str], self.name)
         validator.check_string(align, ['LEFT_RIGHT', 'RIGHT_LEFT', 'LEFT_LEFT', 'RIGHT_RIGHT'], 'align', self.name)
         self.init_prim_io_names(inputs=['x', 'k', 'num_rows', 'num_cols', 'padding_value'], outputs=['y'])
