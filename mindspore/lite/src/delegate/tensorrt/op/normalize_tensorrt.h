@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SLICE_TENSORRT_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SLICE_TENSORRT_H_
+#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_NORMALIZE_TENSORRT_H_
+#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_NORMALIZE_TENSORRT_H_
 #include <string>
 #include <vector>
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
 
 namespace mindspore::lite {
-constexpr int BEGINS_INDEX = 1;
-constexpr int ENDS_INDEX = 2;
-constexpr int HAS_AXIS = 5;
-constexpr int AXIS_INDEX = 3;
-class SliceTensorRT : public TensorRTOp {
+constexpr int BETA_INDEX = 2;
+
+class NormalizeTensorRT : public TensorRTOp {
  public:
-  SliceTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                const schema::QuantType &quant_type)
+  NormalizeTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                    const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
+                    const schema::QuantType &quant_type)
       : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
 
-  ~SliceTensorRT() override = default;
+  ~NormalizeTensorRT() override = default;
 
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 
@@ -39,13 +37,20 @@ class SliceTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int ConvertParamsDims();
-  nvinfer1::Dims start_dims_;
-  nvinfer1::Dims size_dims_;
-  nvinfer1::Dims stride_dims_;
-  int strides_index_{0};
-  int axis_index_{0};
-  int shrink_axis_{0};  // pos start from 1
+  int PreprocessInputs(nvinfer1::INetworkDefinition *network);
+
+  int RunAsOptPlugin(nvinfer1::INetworkDefinition *network);
+
+  int RunAsTrtOps(nvinfer1::INetworkDefinition *network);
+
+  bool RunOptPlugin();
+
+  ITensorHelper norm_input_;
+  nvinfer1::ITensor *gamma_{nullptr};
+  nvinfer1::ITensor *beta_{nullptr};
+  size_t axis_{0};
+  const float two_{2.0f};
+  float epsilon_{0.0f};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SLICE_TENSORRT_H_
+#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_NORMALIZE_TENSORRT_H_

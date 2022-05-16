@@ -65,4 +65,5 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   this->layer_ = shape_layer;
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Shape, ShapeTensorRT)
 }  // namespace mindspore::lite

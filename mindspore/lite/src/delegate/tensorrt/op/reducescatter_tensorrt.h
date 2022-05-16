@@ -46,8 +46,19 @@ class ReduceScatterPlugin : public TensorRTPlugin {
   ReduceScatterPlugin(const std::string name, schema::ReduceMode red_mode, int rank)
       : TensorRTPlugin(name, std::string(REDUCESCATTER_PLUGIN_NAME)), red_mode_(red_mode), rank_(rank) {}
 
-  // It doesn't make sense to make GeluPluginDynamic without arguments, so we delete
-  // default constructor.
+  ReduceScatterPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
+      : TensorRTPlugin(std::string(name), std::string(REDUCESCATTER_PLUGIN_NAME)) {
+    const nvinfer1::PluginField *fields = fc->fields;
+    red_mode_ = static_cast<const schema::ReduceMode *>(fields[0].data)[0];
+    rank_ = static_cast<const int *>(fields[1].data)[0];
+  }
+
+  ReduceScatterPlugin(const char *name, const void *serialData, size_t serialLength)
+      : TensorRTPlugin(std::string(name), std::string(REDUCESCATTER_PLUGIN_NAME)) {
+    DeserializeValue(&serialData, &serialLength, &red_mode_, sizeof(schema::ReduceMode));
+    DeserializeValue(&serialData, &serialLength, &rank_, sizeof(int));
+  }
+
   ReduceScatterPlugin() = delete;
 
   // IPluginV2DynamicExt Methods
@@ -64,13 +75,9 @@ class ReduceScatterPlugin : public TensorRTPlugin {
   int rank_{0};
   schema::ReduceMode red_mode_;
 };
-class ReduceScatterPluginCreater : public TensorRTPluginCreater {
+class ReduceScatterPluginCreater : public TensorRTPluginCreater<ReduceScatterPlugin> {
  public:
   ReduceScatterPluginCreater() : TensorRTPluginCreater(std::string(REDUCESCATTER_PLUGIN_NAME)) {}
-  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept override;
-
-  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *serialData,
-                                         size_t serialLength) noexcept override;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_REDUCESCATTER_TENSORRT_H_

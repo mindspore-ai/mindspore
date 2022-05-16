@@ -42,23 +42,21 @@ class EqualPlugin : public TensorRTPlugin {
  public:
   explicit EqualPlugin(const std::string name) : TensorRTPlugin(name, std::string(EQUAL_PLUGIN_NAME)) {}
 
-  // It doesn't make sense to make GeluPluginDynamic without arguments, so we delete
-  // default constructor.
+  EqualPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
+      : TensorRTPlugin(std::string(name), std::string(EQUAL_PLUGIN_NAME)) {}
+
+  EqualPlugin(const char *name, const void *serialData, size_t serialLength)
+      : TensorRTPlugin(std::string(name), std::string(EQUAL_PLUGIN_NAME)) {}
+
   EqualPlugin() = delete;
 
   nvinfer1::IPluginV2DynamicExt *clone() const noexcept override;
   int enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
               const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) noexcept override;
 };
-
-class EqualPluginCreater : public TensorRTPluginCreater {
+class EqualPluginCreater : public TensorRTPluginCreater<EqualPlugin> {
  public:
   EqualPluginCreater() : TensorRTPluginCreater(std::string(EQUAL_PLUGIN_NAME)) {}
-
-  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept override;
-
-  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *serialData,
-                                         size_t serialLength) noexcept override;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_EQUAL_TENSORRT_H_

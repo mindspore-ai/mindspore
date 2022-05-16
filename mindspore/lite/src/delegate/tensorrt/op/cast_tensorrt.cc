@@ -23,6 +23,11 @@
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(CastPluginCreater);
+template class TensorRTPluginCreater<CastPlugin>;
+template <class T>
+nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
+template <class T>
+std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
 int CastTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -122,23 +127,5 @@ void CastPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &origin_datatype_, sizeof(nvinfer1::DataType));
   SerializeValue(&buffer, &dest_datatype_, sizeof(nvinfer1::DataType));
 }
-
-nvinfer1::IPluginV2 *CastPluginCreater::createPlugin(const char *name,
-                                                     const nvinfer1::PluginFieldCollection *fc) noexcept {
-  const nvinfer1::PluginField *fields = fc->fields;
-  nvinfer1::DataType origin_datatype = static_cast<const nvinfer1::DataType *>(fields[0].data)[0];
-  nvinfer1::DataType dest_datatype = static_cast<const nvinfer1::DataType *>(fields[1].data)[0];
-  return new (std::nothrow) CastPlugin(name, origin_datatype, dest_datatype);
-}
-
-nvinfer1::IPluginV2 *CastPluginCreater::deserializePlugin(const char *name, const void *serialData,
-                                                          size_t serialLength) noexcept {
-  nvinfer1::DataType origin_datatype;
-  DeserializeValue(&serialData, &serialLength, &origin_datatype, sizeof(nvinfer1::DataType));
-  nvinfer1::DataType dest_datatype;
-  DeserializeValue(&serialData, &serialLength, &dest_datatype, sizeof(nvinfer1::DataType));
-  MS_LOG(DEBUG) << name << " is deserialize as origin_datatype: " << static_cast<int32_t>(origin_datatype)
-                << ", dest_datatype: " << static_cast<int32_t>(dest_datatype);
-  return new (std::nothrow) CastPlugin(name, origin_datatype, dest_datatype);
-}
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Cast, CastTensorRT)
 }  // namespace mindspore::lite

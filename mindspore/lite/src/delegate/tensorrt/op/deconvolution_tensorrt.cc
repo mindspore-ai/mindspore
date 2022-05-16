@@ -195,4 +195,5 @@ DeconvolutionTensorRT::~DeconvolutionTensorRT() {
     pack_weight_ = nullptr;
   }
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Conv2dTransposeFusion, DeconvolutionTensorRT)
 }  // namespace mindspore::lite

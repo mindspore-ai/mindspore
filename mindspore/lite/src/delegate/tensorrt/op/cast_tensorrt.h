@@ -48,8 +48,19 @@ class CastPlugin : public TensorRTPlugin {
         origin_datatype_(origin_datatype),
         dest_datatype_(dest_datatype) {}
 
-  // It doesn't make sense to make GeluPluginDynamic without arguments, so we delete
-  // default constructor.
+  CastPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
+      : TensorRTPlugin(std::string(name), std::string(CAST_PLUGIN_NAME)) {
+    const nvinfer1::PluginField *fields = fc->fields;
+    origin_datatype_ = static_cast<const nvinfer1::DataType *>(fields[0].data)[0];
+    dest_datatype_ = static_cast<const nvinfer1::DataType *>(fields[1].data)[0];
+  }
+
+  CastPlugin(const char *name, const void *serialData, size_t serialLength)
+      : TensorRTPlugin(std::string(name), std::string(CAST_PLUGIN_NAME)) {
+    DeserializeValue(&serialData, &serialLength, &origin_datatype_, sizeof(nvinfer1::DataType));
+    DeserializeValue(&serialData, &serialLength, &dest_datatype_, sizeof(nvinfer1::DataType));
+  }
+
   CastPlugin() = delete;
 
   nvinfer1::IPluginV2DynamicExt *clone() const noexcept override;
@@ -67,15 +78,9 @@ class CastPlugin : public TensorRTPlugin {
   nvinfer1::DataType origin_datatype_;
   nvinfer1::DataType dest_datatype_;
 };
-
-class CastPluginCreater : public TensorRTPluginCreater {
+class CastPluginCreater : public TensorRTPluginCreater<CastPlugin> {
  public:
   CastPluginCreater() : TensorRTPluginCreater(std::string(CAST_PLUGIN_NAME)) {}
-
-  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept override;
-
-  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *serialData,
-                                         size_t serialLength) noexcept override;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_CAST_TENSORRT_H_

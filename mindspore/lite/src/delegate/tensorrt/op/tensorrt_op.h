@@ -24,6 +24,7 @@
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
+#include "src/delegate/auto_registration_factory.h"
 #include "src/common/log_util.h"
 
 namespace mindspore::lite {
@@ -166,5 +167,12 @@ TensorRTOp *GetTensorRTOp(const schema::Primitive *primitive, const std::vector<
   }
   return op;
 }
+typedef TensorRTOp *(*TensorRTGetOp)(const schema::Primitive *primitive,
+                                     const std::vector<mindspore::MSTensor> &in_tensors,
+                                     const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
+                                     const schema::QuantType &quant_type);
+
+#define REGISTER_TENSORRT_CREATOR(KEY, TENSORRT_OP) \
+  REGISTER_CLASS_CREATOR(schema::PrimitiveType, KEY, TensorRTGetOp, GetTensorRTOp<TENSORRT_OP>);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_

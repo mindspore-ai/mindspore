@@ -58,4 +58,12 @@ int UnaryTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     ITensorHelper{op_out_tensor, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Sqrt, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Abs, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Neg, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Log, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Sin, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Cos, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Ceil, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Floor, UnaryTensorRT)
 }  // namespace mindspore::lite

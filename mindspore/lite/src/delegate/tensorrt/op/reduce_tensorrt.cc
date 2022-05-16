@@ -119,4 +119,5 @@ uint32_t ReduceTensorRT::GetAxis() {
   }
   return reduceAxis;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ReduceFusion, ReduceTensorRT)
 }  // namespace mindspore::lite

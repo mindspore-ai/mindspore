@@ -16,6 +16,7 @@
 
 #include "src/delegate/tensorrt/op/elementwise_tensorrt.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
+#include "src/delegate/tensorrt/op/activation_tensorrt.h"
 
 namespace mindspore::lite {
 int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
@@ -29,6 +30,7 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     {schema::PrimitiveType_AddFusion, nvinfer1::ElementWiseOperation::kSUM},
     {schema::PrimitiveType_PowFusion, nvinfer1::ElementWiseOperation::kPOW},
     {schema::PrimitiveType_DivFusion, nvinfer1::ElementWiseOperation::kDIV},
+    {schema::PrimitiveType_RealDiv, nvinfer1::ElementWiseOperation::kDIV},
     {schema::PrimitiveType_SubFusion, nvinfer1::ElementWiseOperation::kSUB},
     {schema::PrimitiveType_MulFusion, nvinfer1::ElementWiseOperation::kPROD},
     {schema::PrimitiveType_Minimum, nvinfer1::ElementWiseOperation::kMIN},
@@ -218,7 +220,13 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
   }
   nvinfer1::ITensor *activation_out_tensor = nullptr;
   if (activation != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    MS_LOG(WARNING) << "op: " << op_name_ << " has activation";
+    auto activation_layer = ActivationTensorRT::AddActivation(network, activation, 0, 0, 0, in_tensor);
+    if (activation_layer == nullptr) {
+      MS_LOG(ERROR) << "addActivation for element wise failed";
+      return nullptr;
+    }
+    activation_layer->setName((op_name_ + "_activation").c_str());
+    activation_out_tensor = activation_layer->getOutput(0);
   }
   return activation_out_tensor;
 }
@@ -243,8 +251,7 @@ int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
       return RET_ERROR;
     }
     this->AddInnerInTensors(ITensorHelper{constant_input, Format::NHWC, true});
-  } else if (this->in_tensors_[const_tensor_index].Shape().size() == 1 &&
-             this->in_tensors_[const_tensor_index].ElementNum() >= 1) {
+  } else if (this->in_tensors_[const_tensor_index].ElementNum() >= 1) {
     constant_input = ConvertTensorWithExpandDims(network, in_tensors_[const_tensor_index],
                                                  in_tensors_[1 - const_tensor_index].Shape().size(), op_name_);
     if (constant_input == nullptr) {
@@ -278,4 +285,14 @@ bool ElementWiseTensorRT::SameTensor(nvinfer1::ITensor *trt_tensor, mindspore::M
   }
   return false;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_SubFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_DivFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_RealDiv, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_PowFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_AddFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_MulFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Eltwise, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Minimum, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Maximum, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_BiasAdd, ElementWiseTensorRT)
 }  // namespace mindspore::lite

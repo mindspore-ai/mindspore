@@ -240,13 +240,14 @@ int ShuffleTensorRT::AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 }
 
 int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
+  if (in_tensors_[0].Shape().size() != in_tensors_[1].ElementNum()) {
+    MS_LOG(WARNING) << "transpose perm is invalid for input, ignore " << op_name_;
+    shuffler_output_ = shuffler_input_;
+    return RET_OK;
+  }
   auto transpose_op = this->op_primitive_->value_as_Transpose();
   if (transpose_op == nullptr) {
     MS_LOG(ERROR) << "AddTransposeOp convert failed";
-    return RET_ERROR;
-  }
-  if (in_tensors_.size() != INPUT_SIZE2) {
-    MS_LOG(ERROR) << "AddTransposeOp size of in tensort needs check: " << in_tensors_.size();
     return RET_ERROR;
   }
   // perm
@@ -269,7 +270,7 @@ int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     } else if (perm.order[kNHWC_H] == kNCHW_H && perm.order[kNHWC_W] == kNCHW_W && perm.order[kNHWC_C] == kNCHW_C) {
       out_format_ = Format::NHWC;
     } else {
-      MS_LOG(WARNING) << "input format and perm order is not NHWC or NCHW: " << op_name_;
+      MS_LOG(INFO) << "input format and perm order is not NHWC or NCHW: " << op_name_;
     }
   }
   shuffler_output_ = shuffle_layer->getOutput(0);
@@ -401,4 +402,10 @@ nvinfer1::Dims ShuffleTensorRT::InferReshapeDims(const nvinfer1::Dims &input_dim
   }
   return reshape_dims;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Unsqueeze, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Squeeze, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Reshape, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Transpose, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Flatten, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ExpandDims, ShuffleTensorRT)
 }  // namespace mindspore::lite

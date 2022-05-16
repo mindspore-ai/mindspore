@@ -20,6 +20,11 @@
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(AllGatherPluginCreater);
+template class TensorRTPluginCreater<AllGatherPlugin>;
+template <class T>
+nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
+template <class T>
+std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
 int AllGatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                  const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -104,19 +109,5 @@ nvinfer1::DimsExprs AllGatherPlugin::getOutputDimensions(int outputIndex, const 
   }
   return out_dims;
 }
-
-nvinfer1::IPluginV2 *AllGatherPluginCreater::createPlugin(const char *name,
-                                                          const nvinfer1::PluginFieldCollection *fc) noexcept {
-  const nvinfer1::PluginField *fields = fc->fields;
-  int rank = static_cast<const int *>(fields[0].data)[0];
-  MS_LOG(DEBUG) << "createPlugin: " << name << " of rank: " << rank;
-  return new (std::nothrow) AllGatherPlugin(name, rank);
-}
-
-nvinfer1::IPluginV2 *AllGatherPluginCreater::deserializePlugin(const char *name, const void *serialData,
-                                                               size_t serialLength) noexcept {
-  int rank = GetGPUGroupSize();
-  MS_LOG(DEBUG) << name << " is deserialize as rank: " << rank;
-  return new (std::nothrow) AllGatherPlugin(name, rank);
-}
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_AllGather, AllGatherTensorRT)
 }  // namespace mindspore::lite

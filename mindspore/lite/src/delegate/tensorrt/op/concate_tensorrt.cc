@@ -131,4 +131,5 @@ int ConcateTensorRT::PreProcessInputs(nvinfer1::INetworkDefinition *network, nvi
   }
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Concat, ConcateTensorRT)
 }  // namespace mindspore::lite
