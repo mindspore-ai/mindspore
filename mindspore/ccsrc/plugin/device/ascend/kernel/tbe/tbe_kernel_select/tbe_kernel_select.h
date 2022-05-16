@@ -27,6 +27,8 @@
 namespace mindspore {
 namespace kernel {
 void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list);
+bool TbeCheckIsSupported(const CNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info);
+bool TbeCheckIsKernelInfoEmpty(const CNodePtr &kernel_node);
 
 class TbeKernelSelect {
   using OpInfoPtr = std::shared_ptr<OpInfo>;
@@ -36,6 +38,8 @@ class TbeKernelSelect {
   TbeKernelSelect(CNodePtr kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list);
   ~TbeKernelSelect() { kernel_info_list_ = nullptr; }
   void TbeMetadataInfoEx();
+  bool FindKernelInfo(const KernelBuildInfoPtr &select_kernel_build_info);
+  bool CheckIsKernelInfoEmpty();
 
  private:
   void GetCommonPatternKernelInfo(const OpInfo &op_info);
@@ -64,6 +68,8 @@ class TbeKernelSelect {
                                 const std::vector<std::string> &support_format, OpIOInfo *op_io_info_new);
   static std::vector<std::string> SplitStrToVec(const std::string &op_select_json_item);
   std::string OpSelectFormat();
+  std::string GetKernelHashName();
+  bool CheckCNode();
 
   static void PrintSupportedFormat(const SupportFormat &support_format);
 
@@ -71,6 +77,7 @@ class TbeKernelSelect {
   std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list_;
   std::string node_name_;
   std::string full_name_;
+  static mindspore::HashMap<std::string, std::vector<std::shared_ptr<KernelBuildInfo>>> select_cache_;
 };
 }  // namespace kernel
 }  // namespace mindspore

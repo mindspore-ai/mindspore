@@ -170,15 +170,9 @@ bool IsSupportedByAICPU(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr 
 bool IsSupportedByAICore(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(select_kernel_build_info);
-  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   auto cnode = kernel_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  TbeMetadataInfo(cnode, &kernel_info_list);
-  return std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
-                     [&select_kernel_build_info](const kernel::KernelBuildInfoPtr item) {
-                       MS_EXCEPTION_IF_NULL(item);
-                       return *item == *select_kernel_build_info;
-                     });
+  return TbeCheckIsSupported(cnode, select_kernel_build_info);
 }
 }  // namespace kernel
 }  // namespace mindspore

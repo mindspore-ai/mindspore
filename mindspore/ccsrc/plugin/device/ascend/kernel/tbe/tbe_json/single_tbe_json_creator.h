@@ -25,6 +25,7 @@ class SingleTbeJsonCreator : public TbeJsonCreator {
   SingleTbeJsonCreator() = default;
   virtual ~SingleTbeJsonCreator() = default;
   bool GenJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) override;
+  bool GenNodeHash(const AnfNodePtr &anf_node, nlohmann::json *kernel_json);
 
  protected:
   bool GenOpListJson(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json);

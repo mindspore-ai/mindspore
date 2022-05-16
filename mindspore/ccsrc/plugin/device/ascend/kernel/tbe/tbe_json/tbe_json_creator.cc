@@ -515,7 +515,7 @@ void TbeJsonCreator::GenInputConstValue(const AnfNodePtr &anf_node, size_t real_
   }
   MS_EXCEPTION_IF_NULL(input_node);
   if (input_node->isa<ValueNode>()) {
-    MS_LOG(INFO) << "Const Input value node info : " << GetValueNode(input_node)->ToString();
+    MS_LOG(DEBUG) << "Const Input value node info : " << GetValueNode(input_node)->ToString();
     auto value_node = input_node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     auto value = value_node->value();

@@ -79,9 +79,8 @@ class TbeKernelQuery {
  public:
   TbeKernelQuery() = default;
   virtual ~TbeKernelQuery() = default;
-  virtual void GetTbeKernelMetaInfo(const CNodePtr &kernel_node,
-                                    std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
-    kernel::TbeMetadataInfo(kernel_node, kernel_info_list);
+  virtual bool TbeCheckIsKernelInfoEmpty(const CNodePtr &kernel_node) {
+    return kernel::TbeCheckIsKernelInfoEmpty(kernel_node);
   }
 };
 using TbeKernelQueryPtr = std::shared_ptr<TbeKernelQuery>;
