@@ -169,6 +169,7 @@ py::bool_ VerifyInputSignature(const py::list &input_signature, const py::tuple 
 bool InitDistribute(const std::map<std::string, std::string> &options);
 
 void ResetOpId();
+void ResetOpIdWithOffset();
 void InitHccl();
 void FinalizeHccl();
 uint32_t GetHcclRankId();

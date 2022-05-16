@@ -14,6 +14,7 @@
 # ============================================================================
 """comm_helper"""
 
+import os
 from mindspore import context
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from mindspore import log as logger
@@ -154,7 +155,6 @@ def _check_mpi_envs():
 
     return True if mpi environment variables have been exported, False otherwise.
     """
-    import os
     ompi_command_env = os.getenv("OMPI_COMMAND")
     pmix_rank_env = os.getenv("PMIX_RANK")
     if ompi_command_env and pmix_rank_env:
@@ -170,8 +170,10 @@ def _not_require_collective_comm_lib():
     device_target = context.get_context("device_target")
     if device_target == "Ascend":
         return _is_role_sched() or _is_role_pserver()
-    if device_target == "CPU":
-        return _check_mpi_envs() and (_is_role_sched() or _is_role_pserver())
+    if device_target == "GPU":
+        # Environment variable PARALLEL_EXCUTE is set by test case and
+        # will be removed after Parameter Server training switches to MindRT.
+        return os.getenv("PARALLEL_EXCUTE") != "ms_ps" and (_is_role_sched() or _is_role_pserver())
     return False
 
 

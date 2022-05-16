@@ -16,7 +16,7 @@
 import numpy as np
 from mindspore import context, log as logger
 from mindspore.context import ParallelMode
-from mindspore._c_expression import reset_op_id
+from mindspore._c_expression import reset_op_id, reset_op_id_with_offset
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import dtype_to_nptype
 from mindspore.common import dtype as mstype
@@ -271,6 +271,11 @@ def _get_python_op(op_name, op_path, instance_name, arglist):
 def _reset_op_id():
     """Reset op id."""
     reset_op_id()
+
+
+def _reset_op_id_with_offset():
+    """Reset op id with offset."""
+    reset_op_id_with_offset()
 
 
 def _parallel_predict_check():

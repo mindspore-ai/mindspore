@@ -152,6 +152,7 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)m.def("real_run_op", &mindspore::pynative::RealRunOp, "Run op pynatively.");
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");
+  (void)m.def("reset_op_id_with_offset", &mindspore::pipeline::ResetOpIdWithOffset, "Reset Operator Id With Offset");
   (void)m.def("init_hccl", &mindspore::pipeline::InitHccl, "Init Hccl");
   (void)m.def("finalize_hccl", &mindspore::pipeline::FinalizeHccl, "Finalize Hccl");
   (void)m.def("get_hccl_rank_id", &mindspore::pipeline::GetHcclRankId, "Get Hccl Rank Id");

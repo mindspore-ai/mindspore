@@ -374,6 +374,7 @@ SeenNum NewSeenGeneration() {
 
 namespace id_generator {
 static mindspore::HashMap<std::string, int> node_ids;
+static int offset = 0;
 std::string get_id(const AnfNodePtr &node) {
   auto type_name = node->type_name();
   if (node_ids.find(type_name) == node_ids.end()) {
@@ -381,10 +382,21 @@ std::string get_id(const AnfNodePtr &node) {
   } else {
     node_ids[type_name]++;
   }
-  return std::to_string(node_ids[type_name]);
+  std::string base_id = std::to_string(node_ids[type_name]);
+  // The id with offset means the user called reset_id_with_offset() and expect the operated id generated from 0 with an
+  // identified offset.
+  if (offset != 0) {
+    return std::to_string(offset) + "_" + base_id;
+  }
+  return base_id;
 }
 
 void reset_id() { node_ids.clear(); }
+
+void reset_id_with_offset() {
+  node_ids.clear();
+  offset++;
+}
 }  // namespace id_generator
 auto constexpr kTargetUnDefined = "kTargetUnDefined";
 auto constexpr kPrimitiveTarget = "primitive_target";

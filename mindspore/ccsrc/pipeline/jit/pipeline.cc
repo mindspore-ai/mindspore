@@ -1444,6 +1444,7 @@ std::string GetJitLevel() {
 }
 
 void ResetOpId() { mindspore::id_generator::reset_id(); }
+void ResetOpIdWithOffset() { mindspore::id_generator::reset_id_with_offset(); }
 
 void InitHccl() {
   auto ms_context = MsContext::GetInstance();
@@ -1605,7 +1606,7 @@ void ClearResAtexit() {
   RecordExitStatus();
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
-    (void)distributed::cluster::ClusterContext::instance()->Finalize();
+    (void)distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
   } else if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       ps::ps_cache_instance.Finalize();
