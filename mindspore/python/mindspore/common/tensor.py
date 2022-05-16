@@ -2957,10 +2957,11 @@ class RowTensor(RowTensor_):
         This is an experimental feature and is subjected to change.
 
     Args:
-        indices (Tensor): A 1-D integer Tensor of shape [D0].
-        values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn].
+        indices (Tensor): A 1-D integer Tensor of shape [D0]. Default: None.
+        values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn]. Default: None.
         dense_shape (tuple(int)): An integer tuple which contains the shape
-            of the corresponding dense tensor.
+            of the corresponding dense tensor. Default: None.
+        row_tensor (RowTensor): A RowTensor object. Default: None.
 
     Returns:
         RowTensor, composed of `indices`, `values`, and `dense_shape`.
