@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_BATCHNORM_TRANSFORM_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_BATCHNORM_TRANSFORM_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_GE_BATCHNORM_TRANSFORM_H_
+#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_GE_BATCHNORM_TRANSFORM_H_
 
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
@@ -23,8 +23,10 @@
 
 namespace mindspore {
 namespace opt {
+namespace irpass {
 // Transform batchnorm in ge pipeline
 void BatchNormTransform(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manager);
+}  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_BATCHNORM_TRANSFORM_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_GE_BATCHNORM_TRANSFORM_H_

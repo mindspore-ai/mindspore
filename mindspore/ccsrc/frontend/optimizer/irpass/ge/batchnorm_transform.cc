@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/batchnorm_transform.h"
+#include "frontend/optimizer/irpass/ge/batchnorm_transform.h"
 
 #include <vector>
 #include <memory>
 
-#include "mindspore/ccsrc/include/common/utils/anfalgo.h"
 #include "pybind_api/pybind_patch.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "pipeline/pynative/base.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "include/common/utils/python_adapter.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
 
@@ -32,6 +32,7 @@ using std::vector;
 
 namespace mindspore {
 namespace opt {
+namespace irpass {
 namespace {
 // 1 primitive input, 5 data input, 1 monad input
 constexpr int64_t kBNDefaultInputNum = 7;
@@ -42,7 +43,7 @@ constexpr size_t kBNOutputNum = 3;
 constexpr size_t kTupleSize = 2;
 constexpr size_t kSubInputTensorNum = 2;
 constexpr size_t kMulInputTensorNum = 2;
-constexpr char kOpsFunctionModelName[] = "mindspore.ops.functional";
+constexpr char kOpsFunctionModelName[] = "mindspore.ops.function.math_func";
 constexpr char kMomentum[] = "momentum";
 }  // namespace
 
@@ -74,7 +75,7 @@ AnfNodePtr CreateSubNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &input
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kSubInputTensorNum, "Check Sub input size fail!");
   auto mean = inputs[0];
   auto tuple_getitems = inputs[1];
-  static py::object sub_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "sub");
+  static py::object sub_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "tensor_sub");
   const auto &sub_adapter = py::cast<PrimitivePyAdapterPtr>(sub_prim);
   MS_EXCEPTION_IF_NULL(sub_adapter);
   auto prim_sub = sub_adapter->attached_primitive();
@@ -106,7 +107,7 @@ AnfNodePtr CreateMulNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &input
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kMulInputTensorNum, "Check Sub input size fail!");
   auto data_node = inputs[0];
   auto sub_node = inputs[1];
-  static py::object mul_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "mul");
+  static py::object mul_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "tensor_mul");
   const auto &mul_adapter = py::cast<PrimitivePyAdapterPtr>(mul_prim);
   MS_EXCEPTION_IF_NULL(mul_adapter);
   auto prim_mul = mul_adapter->attached_primitive();
@@ -283,5 +284,6 @@ void BatchNormTransform(const FuncGraphPtr &fg, const FuncGraphManagerPtr &manag
     }
   }
 }
+}  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
