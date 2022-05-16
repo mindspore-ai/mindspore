@@ -139,8 +139,10 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   const auto &node_id = registration.node_id();
   std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) == nodes_.end()) {
-    std::shared_ptr<ComputeGraphNodeState> node_state = std::make_shared<ComputeGraphNodeState>(node_id);
-    nodes_[node_id] = node_state;
+    std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
+    node_info->state = NodeState::kRegistered;
+    time(&(node_info->last_update));
+    nodes_[node_id] = node_info;
     MS_LOG(INFO) << "The new node: " << node_id << " is registered successfully.";
     TransitionToInitialized();
 
@@ -253,6 +255,9 @@ MessageBase *const MetaServerNode::ProcessReadMetadata(MessageBase *const messag
 
 void MetaServerNode::UpdateTopoState() {
   while (enable_monitor_) {
+    nodes_mutex_.lock();
+
+    // Update the state of topology.
     if (topo_state_ == TopoState::kInitializing) {
       // Set the state of topo to `kFailed` if the topology is still in process of initializtion but timed out.
       if (ElapsedTime(start_time_) > kTopoInitTimeout) {
@@ -262,18 +267,31 @@ void MetaServerNode::UpdateTopoState() {
         continue;
       }
 
-      std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
       if (TransitionToInitialized()) {
         continue;
       }
       MS_LOG(INFO) << "The cluster topology is in the process of constructing, current alive node num: ("
                    << nodes_.size() << "/" << total_node_num_ << ")";
     } else if (topo_state_ == TopoState::kInitialized) {
-      std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
       if (nodes_.size() == 0) {
         topo_state_ = TopoState::kFinished;
       }
+
+      // Update the state of compute graph nodes.
+      for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
+        auto node_id = iter->first;
+        auto node_info = iter->second;
+        MS_EXCEPTION_IF_NULL(node_info);
+        time_t now = time(&now);
+        auto elapsed = difftime(now, node_info->last_update);
+        if (elapsed > node_timeout_) {
+          MS_LOG(ERROR) << "The node: " << node_id << " is timed out.";
+          node_info->state = NodeState::kTimeout;
+        }
+      }
     }
+    nodes_mutex_.unlock();
+
     static const size_t interval = 3;
     sleep(interval);
   }
@@ -295,6 +313,7 @@ bool MetaServerNode::TransitionToInitialized() {
 }
 
 bool MetaServerNode::Recovery() {
+  std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
   std::string recovery_path = recovery::RecoveryPath();
   configuration_ = std::make_unique<recovery::FileConfiguration>(recovery_path + "/" + kRecoveryFileName);
 
@@ -321,12 +340,12 @@ bool MetaServerNode::Recovery() {
     // Restore the nodes state.
     for (auto iter = node_states.begin(); iter != node_states.end(); ++iter) {
       const auto &node_id = iter.key();
-      std::shared_ptr<ComputeGraphNodeState> node_state = std::make_shared<ComputeGraphNodeState>(node_id);
-      time(&(node_state->last_update));
-      nodes_[node_id] = node_state;
+      std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
+      time(&(node_info->last_update));
+      node_info->state = NodeState::kRegistered;
+      nodes_[node_id] = node_info;
     }
 
-    std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
     if (nodes_.size() == total_node_num_) {
       topo_state_ = TopoState::kInitialized;
     }
@@ -342,10 +361,10 @@ bool MetaServerNode::Persist() {
     return false;
   }
 
+  // The thread safety of nodes_ visiting has been guarded by the caller.
   nlohmann::json node_states;
   for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
     const auto &node_id = iter->first;
-
     nlohmann::json node_state;
     node_state[kNodeId] = node_id;
     node_states[node_id] = node_state.dump();
@@ -360,7 +379,17 @@ TopoState MetaServerNode::TopologyState() { return topo_state_; }
 
 size_t MetaServerNode::GetAliveNodeNum() {
   std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
-  return nodes_.size();
+  size_t count = 0;
+  for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
+    auto node_info = iter->second;
+    MS_EXCEPTION_IF_NULL(node_info);
+
+    // Only the node which has been authenticated is alive.
+    if (node_info->state == NodeState::kRegistered) {
+      ++count;
+    }
+  }
+  return count;
 }
 
 bool MetaServerNode::RegisterMessageHandler(const std::string &name,

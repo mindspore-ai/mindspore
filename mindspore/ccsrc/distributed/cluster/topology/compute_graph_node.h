@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <thread>
 #include "distributed/cluster/topology/common.h"
 #include "distributed/rpc/tcp/tcp_client.h"
 #include "distributed/cluster/topology/node_base.h"
@@ -30,7 +31,7 @@ namespace topology {
 // The ComputeGraphNode is a separate process representing a sub-graph of the distributed computation graph.
 class ComputeGraphNode : public NodeBase {
  public:
-  explicit ComputeGraphNode(const std::string &node_id) : NodeBase(node_id), authenticated_(false) {}
+  explicit ComputeGraphNode(const std::string &node_id) : NodeBase(node_id), authenticated_(false), enable_hb_(false) {}
   ~ComputeGraphNode() override = default;
 
   bool Initialize() override;
@@ -67,6 +68,12 @@ class ComputeGraphNode : public NodeBase {
 
   // Incidate whether this node is authenticated by meta server node.
   std::atomic<bool> authenticated_;
+
+  // The heartbeat thread from compute graph node to meta server node.
+  std::thread heartbeat_;
+
+  // Indicate whether the heartbeat thread is running.
+  bool enable_hb_;
 };
 }  // namespace topology
 }  // namespace cluster

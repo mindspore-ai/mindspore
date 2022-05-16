@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <vector>
 #include <gtest/gtest.h>
 #include "distributed/cluster/topology/compute_graph_node.h"
 #include "distributed/cluster/topology/meta_server_node.h"
@@ -258,6 +259,67 @@ TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
 
   restored_msn.Finalize(true);
   remove(full_file_path.c_str());
+}
+
+/// Feature: test heartbeat from compute graph node to meta server node is timed out.
+/// Description: start a cluster with one meta server node and three compute graph nodes, and then kill one of the
+/// compute graph node.
+/// Expectation: the number of alive compute graph node is equal to two.
+TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
+  // Start the meta server node in the parent process.
+  std::string server_host = "127.0.0.1";
+  std::string server_port = "8090";
+  common::SetEnv(kEnvMetaServerHost, server_host.c_str());
+  common::SetEnv(kEnvMetaServerPort, server_port.c_str());
+  constexpr char kEnvMSRole[] = "MS_ROLE";
+  common::SetEnv(kEnvMSRole, "MS_SCHED");
+
+  size_t total_node_num = 4;
+  uint64_t timeout = 4;
+  MetaServerNode msn("meta_server_node", total_node_num, timeout);
+  ASSERT_TRUE(msn.Initialize());
+
+  // Start compute graph nodes in separate sub processes.
+  std::vector<pid_t> cgns;
+  for (size_t i = 0; i < total_node_num; ++i) {
+    pid_t pid = fork();
+    EXPECT_LE(0, pid);
+    if (pid == 0) {
+      // Start the compute graph node in the sub process.
+      common::SetEnv(kEnvMSRole, "MS_WORKER");
+      common::SetEnv(kEnvMetaServerHost, server_host.c_str());
+      common::SetEnv(kEnvMetaServerPort, server_port.c_str());
+
+      auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1));
+      ASSERT_TRUE(cgn->Initialize());
+      size_t time = 3600;
+      sleep(time);
+    } else {
+      cgns.push_back(pid);
+    }
+  }
+
+  size_t interval = 1;
+  size_t retry = 30;
+  while (((msn.GetAliveNodeNum() != total_node_num) || (msn.TopologyState() != TopoState::kInitialized)) &&
+         (retry-- > 0)) {
+    sleep(interval);
+  }
+
+  ASSERT_EQ(total_node_num, msn.GetAliveNodeNum());
+  ASSERT_EQ(TopoState::kInitialized, msn.TopologyState());
+
+  for (size_t i = 0; i < (total_node_num / 2); ++i) {
+    kill(cgns[i], 9);
+  }
+  sleep(timeout + 1);
+  ASSERT_EQ(total_node_num - (total_node_num / 2), msn.GetAliveNodeNum());
+
+  // Kill all the processes of compute graph nodes.
+  for (size_t i = total_node_num / 2; i < total_node_num; ++i) {
+    kill(cgns[i], 9);
+  }
+  msn.Finalize(true);
 }
 }  // namespace topology
 }  // namespace cluster
