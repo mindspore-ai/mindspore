@@ -3800,6 +3800,29 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('diag')()(self)
 
+    def intopk(self, x, k):
+        r"""
+        Determines whether the targets are in the top `k` predictions.
+
+        Refer to :func:`mindspore.ops.intopk` for more detail.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x1 = Tensor(np.array([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]]), mindspore.float32)
+            >>> x2 = Tensor(np.array([1, 3]), mindspore.int32)
+            >>> output = x1.intopk(x2, 3)
+            >>> print(output)
+            [ True  False]
+        """
+        if not isinstance(x, Tensor):
+            raise TypeError("For 'Tensor.intopk', the type of the argument 'x' must be Tensor, but "
+                            "got {}.".format(type(x)))
+        validator.check_type_name('x', x.dtype, [mstype.float16, mstype.float32], "Tensor")
+        validator.check_value_type("k", k, [int], "Tensor")
+        return tensor_operator_registry.get('intopk')(self, x, k)
+
 
 class RowTensor(RowTensor_):
     """

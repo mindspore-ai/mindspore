@@ -1642,6 +1642,14 @@ def masked_fill(x, mask, value):
     return C.array_ops.masked_fill(x, mask, value)
 
 
+def intopk(x1, x2, k):
+    """
+    Determines whether the targets are in the top `k` predictions.
+    """
+    check_is_int(k, 'k')
+    return F.intopk(x1, x2, k)
+
+
 def narrow(x, axis, start, length):
     """
     Returns a narrowed tensor from input tensor.

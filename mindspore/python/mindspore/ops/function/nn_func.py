@@ -461,10 +461,45 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
     return loss
 
 
+def intopk(x1, x2, k):
+    r"""
+    Determines whether the targets are in the top `k` predictions.
+
+    Args:
+        x1 (Tensor): A 2D Tensor defines the predictions of a batch of samples with float16 or float32
+          data type.
+        x2 (Tensor): A 1D Tensor defines the labels of a batch of samples with int32 data type. The size of `x2`
+          must be equal to the first dimension of `x1`. The values of `x2` can not be negative and
+          must be equal to or less than index of x1's second dimension.
+        k (int): Specifies the number of top elements to be used for computing precision along the last dimension.
+
+    Returns:
+        Tensor has 1 dimension of type bool and the same shape with `x2`. For labeling sample `i` in `x2`,
+        if the label in the first `k` predictions for sample `i` is in `x1`, then the value is True, otherwise False.
+
+    Raises:
+        TypeError: If `k` is not an int.
+        TypeError: If `x1` or `x2` is not a Tensor.
+        TypeError: If dtype of `x1` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]]), mindspore.float32)
+        >>> x2 = Tensor(np.array([1, 3]), mindspore.int32)
+        >>> output = ops.intopk(x1, x2, 3)
+        >>> print(output)
+        [ True  False]
+    """
+    return P.InTopK(k)(x1, x2)
+
+
 __all__ = [
     'deformable_conv2d',
     'fast_gelu',
     'hardshrink',
+    'intopk',
     'softsign',
     'pdist',
     'cross_entropy',

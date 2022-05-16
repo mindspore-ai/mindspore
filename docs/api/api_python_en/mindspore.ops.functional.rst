@@ -214,6 +214,7 @@ Comparison operators
     mindspore.ops.equal
     mindspore.ops.ge
     mindspore.ops.gt
+    mindspore.ops.intopk
     mindspore.ops.isfinite
     mindspore.ops.isnan
     mindspore.ops.le
@@ -302,6 +303,7 @@ Array Operation
     mindspore.ops.gather
     mindspore.ops.gather_d
     mindspore.ops.gather_nd
+    mindspore.ops.intopk
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
     mindspore.ops.matrix_diag

@@ -123,6 +123,30 @@ def get_dropout_nd_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.InTopK)
+def get_in_top_k_vmap_rule(prim, axis_size):
+    """VmapRule for `InTopK`."""
+
+    def vmap_rule(x1_bdim, x2_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x1_bdim, x2_bdim)
+        if is_all_none:
+            return result
+
+        x1, x1_dim = x1_bdim
+        x2, x2_dim = x2_bdim
+        x1 = _bdim_at_front(x1, x1_dim, axis_size)
+        x2 = _bdim_at_front(x2, x2_dim, axis_size)
+        x1_shape = F.shape(x1)
+        x2_shape = F.shape(x2)
+        x1 = F.reshape(x1, (-1, x1_shape[-1]))
+        x2 = F.reshape(x2, (-1,))
+        output = prim(x1, x2)
+        output = F.reshape(output, x2_shape)
+        return (output, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(G.FastGeLUGrad)
 @vmap_rules_getters.register(G.HShrinkGrad)
 def get_fast_gelu_grad_vmap_rule(prim, axis_size):
