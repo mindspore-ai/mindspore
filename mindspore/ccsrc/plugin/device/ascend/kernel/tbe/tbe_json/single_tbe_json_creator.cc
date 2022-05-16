@@ -56,6 +56,22 @@ bool SingleTbeJsonCreator::GenJson(const AnfNodePtr &anf_node, nlohmann::json *k
   return true;
 }
 
+bool SingleTbeJsonCreator::GenNodeHash(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) {
+  // use in tbe kernel select
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(kernel_json);
+  auto op_name = common::AnfAlgo::GetCNodeName(anf_node);
+  MS_LOG(DEBUG) << "Start, gen node hash [ " << op_name << " ].";
+  std::vector<nlohmann::json> op_list;
+  if (!GenOpListJson(anf_node, &op_list)) {
+    MS_LOG(ERROR) << "Gen Node Hash [" << op_name << "] generate op_list json failed";
+    return false;
+  }
+  (*kernel_json)[kJOpList] = op_list;
+  GenFusionOpName(kernel_json);
+  return true;
+}
+
 bool SingleTbeJsonCreator::GenOpListJson(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_list_json);

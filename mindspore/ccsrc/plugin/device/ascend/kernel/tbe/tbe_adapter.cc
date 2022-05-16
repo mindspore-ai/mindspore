@@ -212,7 +212,14 @@ void TbeAdapter::CastAttrJsonPrePass(const AnfNodePtr &anf_node, std::vector<OpA
     return;
   }
   auto attr_name = (*op_info_attrs)[0]->name();
-  auto type_ptr = std::make_shared<TensorType>(TypeIdToType(AnfAlgo::GetOutputDeviceDataType(anf_node, 0)));
+  TensorTypePtr type_ptr;
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(anf_node);
+  if (build_info) {
+    type_ptr = std::make_shared<TensorType>(TypeIdToType(AnfAlgo::GetOutputDeviceDataType(anf_node, 0)));
+  } else {
+    // use infer shape during select kernel
+    type_ptr = std::make_shared<TensorType>(TypeIdToType(common::AnfAlgo::GetOutputInferDataType(anf_node, 0)));
+  }
   MS_EXCEPTION_IF_NULL(type_ptr);
   auto type_element = type_ptr->element();
   MS_EXCEPTION_IF_NULL(type_element);

@@ -92,9 +92,7 @@ const AnfNodePtr TransposedUpdateFusion::Process(const FuncGraphPtr &func_graph,
   transpose->set_scope(transposed->scope());
   transpose->set_abstract(transposed->abstract());
 
-  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
-  tbe_kernel_query_->GetTbeKernelMetaInfo(transpose, &kernel_info_list);
-  if (kernel_info_list.empty()) {
+  if (tbe_kernel_query_->TbeCheckIsKernelInfoEmpty(transpose)) {
     return nullptr;
   }
 
