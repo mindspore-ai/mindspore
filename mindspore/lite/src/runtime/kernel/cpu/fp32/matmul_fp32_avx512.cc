@@ -125,7 +125,8 @@ bool MatmulFp32BaseCPUKernel::CheckThreadCuttingByRow() {
   } else if (col_step_ < C64NUM) {
     row_min_unit_ = C8NUM;
   }
-  return true;
+  return MSMIN(row_num_ / row_min_unit_, op_parameter_->thread_num_) >
+         MSMIN(col_step_ / col_min_unit_, op_parameter_->thread_num_);
 }
 }  // namespace mindspore::kernel
 #endif
