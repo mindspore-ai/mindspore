@@ -158,8 +158,12 @@ std::string GetId(const py::handle &obj) {
   } else if (py::isinstance<mindspore::Type>(obj)) {
     auto type_ptr = py::cast<mindspore::TypePtr>(obj);
     return "type" + type_ptr->ToString();
-  } else if (py::isinstance<py::str>(obj) || py::isinstance<py::int_>(obj) || py::isinstance<py::float_>(obj)) {
-    return std::string(py::str(obj));
+  } else if (py::isinstance<py::str>(obj)) {
+    return "S" + obj.cast<std::string>();
+  } else if (py::isinstance<py::int_>(obj)) {
+    return "I" + py::str(obj).cast<std::string>();
+  } else if (py::isinstance<py::float_>(obj)) {
+    return "F" + py::str(obj).cast<std::string>();
   } else if (py::isinstance<py::none>(obj)) {
     return "none";
   } else if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
@@ -3246,11 +3250,8 @@ std::vector<size_t> GradExecutor::GetGradPositionArgs(const py::object &grad_pos
   std::vector<size_t> pos_args;
   if (py::isinstance<py::tuple>(grad_position)) {
     const auto &tuple = grad_position.cast<py::tuple>();
-    for (size_t it = 0; it < tuple.size(); ++it) {
-      auto param = tuple[it];
-      auto param_id = GetId(param);
-      pos_args.push_back(std::stoi(param_id));
-    }
+    (void)std::transform(tuple.begin(), tuple.end(), std::back_inserter(pos_args),
+                         [](const py::handle &elem) { return py::cast<int64_t>(elem); });
     return pos_args;
   }
   MS_LOG(EXCEPTION) << "Grad position only support tuple.";
