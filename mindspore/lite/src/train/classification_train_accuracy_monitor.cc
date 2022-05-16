@@ -30,11 +30,11 @@ ClassificationTrainAccuracyMonitor::ClassificationTrainAccuracyMonitor(int print
   print_every_n_ = print_every_n;
 }
 
-void ClassificationTrainAccuracyMonitor::Begin(const session::TrainLoopCallBackData &cb_data) {
+void ClassificationTrainAccuracyMonitor::Begin(const TrainLoopCallBackData &cb_data) {
   if (cb_data.epoch_ == 0) accuracies_.clear();
 }
 
-void ClassificationTrainAccuracyMonitor::EpochBegin(const session::TrainLoopCallBackData &cb_data) {
+void ClassificationTrainAccuracyMonitor::EpochBegin(const TrainLoopCallBackData &cb_data) {
   if (accuracies_.size() != cb_data.epoch_) {
     MS_LOG(WARNING) << "Accuracies array does not match epoch number";
   } else {
@@ -42,16 +42,16 @@ void ClassificationTrainAccuracyMonitor::EpochBegin(const session::TrainLoopCall
   }
 }
 
-int ClassificationTrainAccuracyMonitor::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
+int ClassificationTrainAccuracyMonitor::EpochEnd(const TrainLoopCallBackData &cb_data) {
   if (cb_data.step_ > 0) accuracies_.at(cb_data.epoch_).second /= static_cast<float>(cb_data.step_ + 1);
   if ((static_cast<int>(cb_data.epoch_) + 1) % print_every_n_ == 0) {
     std::cout << "Epoch (" << (cb_data.epoch_ + 1) << "):\tTraining Accuracy is "
               << accuracies_.at(cb_data.epoch_).second << std::endl;
   }
-  return mindspore::session::RET_CONTINUE;
+  return RET_CONTINUE;
 }
 
-void ClassificationTrainAccuracyMonitor::StepEnd(const session::TrainLoopCallBackData &cb_data) {
+void ClassificationTrainAccuracyMonitor::StepEnd(const TrainLoopCallBackData &cb_data) {
   auto inputs = cb_data.session_->GetInputs();
   auto outputs = cb_data.session_->GetPredictions();
 

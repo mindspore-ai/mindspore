@@ -32,9 +32,9 @@ namespace lite {
 
 class TrainLoop : virtual public session::TrainLoop {
  public:
-  explicit TrainLoop(session::LiteSession *session) : train_session_(session) {}
+  explicit TrainLoop(lite::LiteSession *session) : train_session_(session) {}
 
-  const session::LiteSession *train_session() override { return train_session_; }
+  const lite::LiteSession *train_session() override { return train_session_; }
 
   int Reset() override {
     epoch_ = 0;
@@ -54,9 +54,9 @@ class TrainLoop : virtual public session::TrainLoop {
     return RET_OK;
   }
 
-  int Train(int epochs, dataset::Dataset *dataset, std::vector<session::TrainLoopCallBack *> cbs,
+  int Train(int epochs, dataset::Dataset *dataset, std::vector<lite::TrainLoopCallBack *> cbs,
             LoadDataFunc load_func = nullptr) override;
-  int Eval(dataset::Dataset *dataset, std::vector<session::TrainLoopCallBack *> cbs, LoadDataFunc load_func = nullptr,
+  int Eval(dataset::Dataset *dataset, std::vector<lite::TrainLoopCallBack *> cbs, LoadDataFunc load_func = nullptr,
            int max_steps = 0) override;
 
   std::vector<mindspore::session::Metrics *> GetMetrics() override { return metrics_; }
@@ -64,7 +64,7 @@ class TrainLoop : virtual public session::TrainLoop {
  protected:
   static int LoadData(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *dataset_vec);
 
-  session::LiteSession *train_session_ = nullptr;
+  lite::LiteSession *train_session_ = nullptr;
   unsigned int epoch_ = 0;
   KernelCallBack before_cb_ = nullptr;
   KernelCallBack after_cb_ = nullptr;

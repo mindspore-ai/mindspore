@@ -23,8 +23,7 @@
 #include "include/api/callback/callback.h"
 
 namespace mindspore {
-namespace session {
-
+namespace lite {
 class LiteSession;
 class TrainLoop;
 
@@ -83,6 +82,6 @@ class TrainLoopCallBack {
   virtual void StepEnd(const TrainLoopCallBackData &cb_data) {}
 };
 
-}  // namespace session
+}  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_TRAIN_TRAIN_LOOP_CALLBACK_H_

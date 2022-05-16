@@ -42,11 +42,11 @@ struct StepLRLambda {
   float gamma;    // LR decay factor
 };
 
-class LRScheduler : public session::TrainLoopCallBack {
+class LRScheduler : public TrainLoopCallBack {
  public:
   explicit LRScheduler(LR_Lambda lambda_func, void *lr_cb_data = nullptr, int step_ = 1);
   virtual ~LRScheduler() = default;
-  int EpochEnd(const session::TrainLoopCallBackData &cb_data) override;
+  int EpochEnd(const TrainLoopCallBackData &cb_data) override;
 
  private:
   LR_Lambda lambda_func_;

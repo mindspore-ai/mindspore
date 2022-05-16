@@ -79,7 +79,7 @@ set(JNI_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/version.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ms_config.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ms_tensor.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_session.cpp
+        # ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_session.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/common/jni_utils.cpp
         ${NEW_NATIVE_DIR}/graph.cpp
         ${NEW_NATIVE_DIR}/model.cpp
@@ -110,7 +110,7 @@ endif()
 if(SUPPORT_TRAIN)
     set(LITE_TRAIN_SO_NAME mindspore-lite-train)
     set(JNI_TRAIN_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp
+        # ${CMAKE_CURRENT_SOURCE_DIR}/runtime/train_session.cpp
         ${NEW_NATIVE_DIR}/train_config.cpp
     )
     add_library(mindspore-lite-train-jni SHARED ${JNI_TRAIN_SRC})

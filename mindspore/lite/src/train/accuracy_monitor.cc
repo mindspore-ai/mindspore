@@ -23,17 +23,17 @@
 #include <fstream>
 #include <memory>
 #include "include/errorcode.h"
-#include "include/train/train_loop.h"
+#include "src/train/train_loop.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
 
 namespace mindspore {
 namespace lite {
-void AccuracyMonitor::Begin(const session::TrainLoopCallBackData &cb_data) {
+void AccuracyMonitor::Begin(const lite::TrainLoopCallBackData &cb_data) {
   if (cb_data.epoch_ == 0) accuracies_.clear();
 }
 
-int AccuracyMonitor::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
+int AccuracyMonitor::EpochEnd(const lite::TrainLoopCallBackData &cb_data) {
   if ((static_cast<int>(cb_data.epoch_) + 1) % check_every_n_ == 0) {
     auto ret = cb_data.loop_->Eval(ds_, {}, nullptr, max_steps_);
     if (ret != RET_OK) {
@@ -42,7 +42,7 @@ int AccuracyMonitor::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
     }
   }
   accuracies_.push_back(std::make_pair(cb_data.epoch_, 0.0));
-  return mindspore::session::RET_CONTINUE;
+  return RET_CONTINUE;
 }
 }  // namespace lite
 }  // namespace mindspore

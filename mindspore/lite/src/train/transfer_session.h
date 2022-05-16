@@ -65,7 +65,7 @@ class TransferSession : public lite::TrainSession {
              std::vector<std::string> out_put_tensor_name = {}) override;
 
  protected:
-  lite::LiteSession *backbone_session_ = nullptr;
+  LiteSession *backbone_session_ = nullptr;
   char *lite_model_ = nullptr;
   std::vector<mindspore::tensor::MSTensor *> combined_inputs_;
   std::vector<std::pair<mindspore::tensor::MSTensor *, mindspore::tensor::MSTensor *>> backbone_head_map_;

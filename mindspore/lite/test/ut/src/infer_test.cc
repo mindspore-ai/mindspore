@@ -102,7 +102,7 @@ TEST_F(InferTest, TestConvNode) {
   device_list.push_back(device_ctx);
   context->thread_num_ = 4;
   ASSERT_EQ(lite::RET_OK, context->Init());
-  auto session = session::LiteSession::CreateSession(context);
+  auto session = lite::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
   auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
@@ -198,7 +198,7 @@ TEST_F(InferTest, TestAddNode) {
   device_list.push_back(device_ctx);
   context->thread_num_ = 4;
   ASSERT_EQ(lite::RET_OK, context->Init());
-  auto session = session::LiteSession::CreateSession(context);
+  auto session = lite::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
   auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
@@ -234,7 +234,7 @@ TEST_F(InferTest, TestModel) {
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 4;
   ASSERT_EQ(lite::RET_OK, context->Init());
-  auto session = session::LiteSession::CreateSession(context);
+  auto session = lite::LiteSession::CreateSession(context);
   ASSERT_NE(nullptr, session);
   auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);

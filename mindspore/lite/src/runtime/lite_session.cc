@@ -1510,7 +1510,7 @@ int LiteSession::InitGPURuntime() {
 }
 }  // namespace lite
 
-session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {
+lite::LiteSession *lite::LiteSession::CreateSession(const lite::Context *context) {
   if (context == nullptr) {
     return nullptr;
   }
@@ -1536,9 +1536,8 @@ session::LiteSession *session::LiteSession::CreateSession(const lite::Context *c
   return session;
 }
 
-session::LiteSession *session::LiteSession::CreateSession(const char *model_buf, size_t size,
-                                                          const lite::Context *context) {
-  auto *session = LiteSession::CreateSession(context);
+lite::LiteSession *lite::LiteSession::CreateSession(const char *model_buf, size_t size, const lite::Context *context) {
+  auto *session = lite::LiteSession::CreateSession(context);
   if (session == nullptr) {
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;
@@ -1553,8 +1552,8 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
   return session;
 }
 
-session::LiteSession *lite::LiteSession::CreateSession(const std::string &model_path, const lite::Context *context) {
-  auto *session = session::LiteSession::CreateSession(context);
+lite::LiteSession *lite::LiteSession::CreateSession(const std::string &model_path, const lite::Context *context) {
+  auto *session = lite::LiteSession::CreateSession(context);
   if (session == nullptr) {
     MS_LOG(ERROR) << "Create session failed";
     return nullptr;

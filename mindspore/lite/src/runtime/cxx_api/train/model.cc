@@ -21,7 +21,7 @@
 #include "src/runtime/cxx_api/model/model_impl.h"
 #include "src/runtime/cxx_api/callback/callback_impl.h"
 #include "src/common/log_adapter.h"
-#include "include/train/train_loop.h"
+#include "src/train/train_loop.h"
 #include "include/train/train_loop_callback.h"
 
 namespace mindspore {
@@ -30,7 +30,7 @@ Status Model::Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vecto
     MS_LOG(ERROR) << "Model implement or dataset is null.";
     return kLiteUninitializedObj;
   }
-  auto loop = std::unique_ptr<session::TrainLoop>(session::TrainLoop::CreateTrainLoop((impl_->session_).get()));
+  auto loop = std::unique_ptr<lite::TrainLoop>(lite::TrainLoop::CreateTrainLoop((impl_->session_).get()));
   if (loop == nullptr) {
     MS_LOG(ERROR) << "Error during allocation of train loop";
     return kLiteNullptr;
@@ -47,8 +47,8 @@ Status Model::Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vecto
   (void)loop->Init(metrics);
 
   // Convert Callbacks to be used by loop
-  std::vector<session::TrainLoopCallBack *> cbs;
-  std::vector<session::TrainLoopCallBack *> adapter_cbs;
+  std::vector<lite::TrainLoopCallBack *> cbs;
+  std::vector<lite::TrainLoopCallBack *> adapter_cbs;
   status = impl_->ConvertCallbacks(this, &i_cbs, &cbs, &adapter_cbs);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "Error during preparation of callbacks";
@@ -70,7 +70,7 @@ Status Model::Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCa
     return kLiteUninitializedObj;
   }
 
-  auto loop = std::unique_ptr<session::TrainLoop>(session::TrainLoop::CreateTrainLoop((impl_->session_).get()));
+  auto loop = std::unique_ptr<lite::TrainLoop>(lite::TrainLoop::CreateTrainLoop((impl_->session_).get()));
   if (loop == nullptr) {
     MS_LOG(ERROR) << "Error during allocation of train loop";
     return kLiteNullptr;
@@ -87,8 +87,8 @@ Status Model::Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCa
   (void)loop->Init(metrics);
 
   // Convert Callbacks to be used by loop
-  std::vector<session::TrainLoopCallBack *> cbs;
-  std::vector<session::TrainLoopCallBack *> adapter_cbs;
+  std::vector<lite::TrainLoopCallBack *> cbs;
+  std::vector<lite::TrainLoopCallBack *> adapter_cbs;
   status = impl_->ConvertCallbacks(this, &i_cbs, &cbs, &adapter_cbs);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "Error during preparation of callbacks";

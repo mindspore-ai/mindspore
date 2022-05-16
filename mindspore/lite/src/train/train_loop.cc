@@ -29,13 +29,10 @@ namespace lite {
 using dataset::Dataset;
 using dataset::Iterator;
 using dataset::MSTensorVec;
-using session::RET_CONTINUE;
-using session::RET_EXIT;
-using session::RET_STOP_TRAINING;
 
 TrainLoop::~TrainLoop() {}
 
-int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCallBack *> cbs, LoadDataFunc load_func) {
+int TrainLoop::Train(int epochs, Dataset *ds, std::vector<TrainLoopCallBack *> cbs, LoadDataFunc load_func) {
   MS_CHECK_TRUE_MSG(train_session_ != nullptr && ds != nullptr, RET_ERROR, "graph data cannot be nullptr");
   MS_CHECK_GE(epochs, 0, RET_ERROR);
   auto ret = train_session_->Train();
@@ -43,7 +40,7 @@ int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCall
     MS_LOG(ERROR) << "TrainLoop train failed";
     return RET_ERROR;
   }
-  session::TrainLoopCallBackData cb_data(true, epoch_, train_session_, this);
+  TrainLoopCallBackData cb_data(true, epoch_, train_session_, this);
 
   if (load_func == nullptr) load_func = TrainLoop::LoadData;
 
@@ -106,14 +103,14 @@ int TrainLoop::Train(int epochs, Dataset *ds, std::vector<session::TrainLoopCall
   return RET_OK;
 }
 
-int TrainLoop::Eval(Dataset *ds, std::vector<session::TrainLoopCallBack *> cbs, LoadDataFunc load_func, int max_steps) {
+int TrainLoop::Eval(Dataset *ds, std::vector<TrainLoopCallBack *> cbs, LoadDataFunc load_func, int max_steps) {
   MS_CHECK_TRUE_MSG(train_session_ != nullptr && ds != nullptr, RET_ERROR, "graph data cannot be nullptr");
   auto ret = train_session_->Eval();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "TrainLoop train failed";
     return RET_ERROR;
   }
-  session::TrainLoopCallBackData cb_data(false, epoch_, train_session_, this);
+  TrainLoopCallBackData cb_data(false, epoch_, train_session_, this);
 
   if (load_func == nullptr) load_func = TrainLoop::LoadData;
 
@@ -184,7 +181,7 @@ int TrainLoop::LoadData(std::vector<tensor::MSTensor *> inputs, dataset::MSTenso
 }
 }  // namespace lite
 
-session::TrainLoop *session::TrainLoop::CreateTrainLoop(session::LiteSession *train_session) {
+lite::TrainLoop *session::TrainLoop::CreateTrainLoop(lite::LiteSession *train_session) {
   auto loop = new (std::nothrow) lite::TrainLoop(train_session);
   return loop;
 }

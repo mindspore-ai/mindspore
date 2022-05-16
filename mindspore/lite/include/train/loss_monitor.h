@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace lite {
 
-class LossMonitor : public session::TrainLoopCallBack {
+class LossMonitor : public TrainLoopCallBack {
  public:
   /// \brief constructor
   ///
@@ -38,10 +38,10 @@ class LossMonitor : public session::TrainLoopCallBack {
   /// \return 0 on success or -1 in case of error
   explicit LossMonitor(int print_every_n_steps = INT_MAX) : print_every_n_(print_every_n_steps) {}
   virtual ~LossMonitor() = default;
-  void Begin(const session::TrainLoopCallBackData &cb_data) override;
-  void EpochBegin(const session::TrainLoopCallBackData &cb_data) override;
-  int EpochEnd(const session::TrainLoopCallBackData &cb_data) override;
-  void StepEnd(const session::TrainLoopCallBackData &cb_data) override;
+  void Begin(const TrainLoopCallBackData &cb_data) override;
+  void EpochBegin(const TrainLoopCallBackData &cb_data) override;
+  int EpochEnd(const TrainLoopCallBackData &cb_data) override;
+  void StepEnd(const TrainLoopCallBackData &cb_data) override;
   const std::vector<GraphPoint> &GetLossPoints() const { return losses_; }
 
  private:

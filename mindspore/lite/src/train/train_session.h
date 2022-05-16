@@ -22,16 +22,11 @@
 #include <memory>
 #include <map>
 #include "include/train/train_cfg.h"
-#include "include/train/train_session.h"
 #include "src/runtime/lite_session.h"
 
 /*
        Inheritance Diagram
 
-  +-------------------------------+
-  |     session::LiteSession      |
-  +--------------↑----------------+
-                 |
   +--------------+----------------+
   |        lite::LiteSession      |
   +--------------↑----------------+
@@ -49,6 +44,11 @@ class TrainSession : virtual public lite::LiteSession {
   TrainSession();
   ~TrainSession();
 
+  static LiteSession *CreateTransferSession(const std::string &filename_backbone, const std::string &filename_head,
+                                            const lite::Context *context, bool train_mode = false,
+                                            const lite::TrainCfg *cfg = nullptr);
+  static LiteSession *CreateTrainSession(const std::string &filename, const lite::Context *context,
+                                         bool train_mode = false, const lite::TrainCfg *cfg = nullptr);
   int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
   int CompileGraph(lite::Model *model) override;

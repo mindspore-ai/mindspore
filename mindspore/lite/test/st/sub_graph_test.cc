@@ -326,7 +326,7 @@ TEST_F(SubGraphTest, RecursiveSubGraphTest) {
   auto &cpu_device_ctx = context.device_list_[0];
   cpu_device_ctx.device_info_.cpu_device_info_.cpu_bind_mode_ = lite::MID_CPU;
   context.thread_num_ = 2;
-  auto session = std::shared_ptr<session::LiteSession>(session::LiteSession::CreateSession(&context));
+  auto session = std::shared_ptr<lite::LiteSession>(lite::LiteSession::CreateSession(&context));
   ASSERT_NE(session, nullptr);
   auto ret = session->CompileGraph(model.get());
   ASSERT_EQ(ret, lite::RET_OK);

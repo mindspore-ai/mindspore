@@ -46,7 +46,7 @@ TEST_F(GraphTest, UserSetGraphOutput1) {
   auto context = std::make_shared<lite::Context>();
   ASSERT_NE(context, nullptr);
 
-  session::LiteSession *session = session::LiteSession::CreateSession(context.get());
+  lite::LiteSession *session = lite::LiteSession::CreateSession(context.get());
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());

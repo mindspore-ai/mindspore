@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include "include/train/train_loop_callback.h"
 #include "include/train/metrics.h"
-#include "include/lite_session.h"
+#include "src/runtime/lite_session.h"
 
 namespace mindspore {
 class MSTensor;
@@ -42,7 +42,7 @@ class TrainLoop {
   /// \param[in] train_session Train session object as return from CreateSession\CreateTransferSession API
   ///
   /// \return Pointer of MindSpore Lite TrainLoop
-  static TrainLoop *CreateTrainLoop(session::LiteSession *train_session);
+  static lite::TrainLoop *CreateTrainLoop(lite::LiteSession *train_session);
 
   /// \brief Class destructor
   virtual ~TrainLoop() = default;
@@ -55,7 +55,7 @@ class TrainLoop {
   /// \brief Accessor to the LiteSession
   ///
   /// \return pointer of the train_session
-  const virtual session::LiteSession *train_session() = 0;
+  const virtual lite::LiteSession *train_session() = 0;
 
   /// \brief Initialize object with metrics
   ///
@@ -85,7 +85,7 @@ class TrainLoop {
   /// \param[in] load_func a function that load (and can manipulate) data from Minddata Dataset array into model
   ///
   /// \return 0 on success or -1 in case of error
-  virtual int Train(int epochs, mindspore::dataset::Dataset *dataset, std::vector<TrainLoopCallBack *> cbs,
+  virtual int Train(int epochs, mindspore::dataset::Dataset *dataset, std::vector<lite::TrainLoopCallBack *> cbs,
                     LoadDataFunc load_func) = 0;
 
   /// \brief Performs loop over all data in Eval Mode
@@ -96,8 +96,8 @@ class TrainLoop {
   /// \param[in] max_steps (with default = INT_MAX the method iterates all dataset)
   ///
   /// \return 0 on success or -1 in case of error
-  virtual int Eval(mindspore::dataset::Dataset *dataset, std::vector<TrainLoopCallBack *> cbs, LoadDataFunc load_func,
-                   int max_steps) = 0;
+  virtual int Eval(mindspore::dataset::Dataset *dataset, std::vector<lite::TrainLoopCallBack *> cbs,
+                   LoadDataFunc load_func, int max_steps) = 0;
 };
 }  // namespace session
 }  // namespace mindspore
