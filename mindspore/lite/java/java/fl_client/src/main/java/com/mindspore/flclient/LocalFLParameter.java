@@ -17,10 +17,7 @@
 package com.mindspore.flclient;
 
 import com.mindspore.flclient.common.FLLoggerGenerater;
-import com.mindspore.lite.config.MSConfig;
-
 import org.bouncycastle.math.ec.rfc7748.X25519;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -55,16 +52,6 @@ public class LocalFLParameter {
     public static final int KEY_LEN = X25519.SCALAR_SIZE;
 
     /**
-     * The model name supported by federated learning tasks: "lenet".
-     */
-    public static final String LENET = "lenet";
-
-    /**
-     * The model name supported by federated learning tasks: "albert".
-     */
-    public static final String ALBERT = "albert";
-
-    /**
      * The deployment environment supported by federated learning tasks: "android".
      */
     public static final String ANDROID = "android";
@@ -74,15 +61,11 @@ public class LocalFLParameter {
      */
     public static final String X86 = "x86";
     private static volatile LocalFLParameter localFLParameter;
-
-    private List<String> classifierWeightName = new ArrayList<>();
-    private List<String> albertWeightName = new ArrayList<>();
     private String flID;
     private String encryptLevel = EncryptLevel.NOT_ENCRYPT.toString();
     private String earlyStopMod = EarlyStopMod.NOT_EARLY_STOP.toString();
     private String serverMod = ServerMod.HYBRID_TRAINING.toString();
     private boolean stopJobFlag = false;
-    private MSConfig msConfig = new MSConfig();
     private boolean useSSL = true;
     private float lr = 0.1f;
     private Map<String, float[]> oldFeatureMap;
@@ -90,11 +73,17 @@ public class LocalFLParameter {
     private int seed = 0;
     private float uploadSparseRatio = 0.08f;
 
+    // default DeviceType:DT_CPU -> 0
+    private int deviceType = 0;
+    // default ThreadNum -> 2
+    private int threadNum = 2;
+    // default cpuBindMode:NO_BIND ->  0
+    private int cpuBindMode = 0;
+    // default enable_fp16 -> false
+    private boolean enableFp16 = false;
+
 
     private LocalFLParameter() {
-        // set classifierWeightName albertWeightName
-        Common.setClassifierWeightName(classifierWeightName);
-        Common.setAlbertWeightName(albertWeightName);
     }
 
     /**
@@ -113,32 +102,6 @@ public class LocalFLParameter {
             }
         }
         return localRef;
-    }
-
-    public List<String> getClassifierWeightName() {
-        if (classifierWeightName.isEmpty()) {
-            LOGGER.severe("[localFLParameter] the parameter of <classifierWeightName> is null, please " +
-                    "set it before use");
-            throw new IllegalArgumentException();
-        }
-        return classifierWeightName;
-    }
-
-    public void setClassifierWeightName(List<String> classifierWeightName) {
-        this.classifierWeightName = classifierWeightName;
-    }
-
-    public List<String> getAlbertWeightName() {
-        if (albertWeightName.isEmpty()) {
-            LOGGER.severe("[localFLParameter] the parameter of <classifierWeightName> is null, please " +
-                    "set it before use");
-            throw new IllegalArgumentException();
-        }
-        return albertWeightName;
-    }
-
-    public void setAlbertWeightName(List<String> albertWeightName) {
-        this.albertWeightName = albertWeightName;
     }
 
     public String getFlID() {
@@ -229,16 +192,28 @@ public class LocalFLParameter {
         this.stopJobFlag = stopJobFlag;
     }
 
-    public MSConfig getMsConfig() {
-        return msConfig;
+
+    public int getDeviceType() {
+        return deviceType;
     }
 
-    public void setMsConfig(int DeviceType, int threadNum, int cpuBindMode, boolean enable_fp16) {
-        // arg 0: DeviceType:DT_CPU -> 0
-        // arg 1: ThreadNum -> 2
-        // arg 2: cpuBindMode:NO_BIND ->  0
-        // arg 3: enable_fp16 -> false
-        msConfig.init(DeviceType, threadNum, cpuBindMode, enable_fp16);
+    public int getThreadNum() {
+        return threadNum;
+    }
+
+    public int getCpuBindMode() {
+        return cpuBindMode;
+    }
+
+    public boolean isEnableFp16() {
+        return enableFp16;
+    }
+
+    public void setMsConfig(int deviceType, int threadNum, int cpuBindMode, boolean enableFp16) {
+        this.deviceType = deviceType;
+        this.threadNum = threadNum;
+        this.cpuBindMode = cpuBindMode;
+        this.enableFp16 = enableFp16;
     }
 
     public boolean isUseSSL() {

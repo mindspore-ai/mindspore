@@ -16,11 +16,12 @@
 
 package com.mindspore.flclient.model;
 
+import com.mindspore.Model;
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.common.FLLoggerGenerater;
-import com.mindspore.lite.LiteSession;
-import com.mindspore.lite.MSTensor;
+import com.mindspore.MSTensor;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -33,7 +34,7 @@ import java.util.logging.Logger;
 public abstract class Callback {
     private static final Logger logger = FLLoggerGenerater.getModelLogger(LossCallback.class.toString());
 
-    protected LiteSession session;
+    protected Model model;
 
     public int steps = 0;
 
@@ -42,17 +43,17 @@ public abstract class Callback {
     /**
      * Defining a constructor of  Callback.
      */
-    public Callback(LiteSession session) {
-        this.session = session;
+    public Callback(Model model) {
+        this.model = model;
     }
 
     protected Optional<MSTensor> searchOutputsForSize(int size) {
-        if (session == null) {
+        if (model == null) {
             logger.severe("trainSession cannot be null");
             return Optional.empty();
         }
-        Map<String, MSTensor> outputs = session.getOutputMapByTensor();
-        for (MSTensor tensor : outputs.values()) {
+        List<MSTensor> outputs = model.getOutputs();
+        for (MSTensor tensor : outputs) {
             if (tensor == null) {
                 logger.severe("tensor cannot be null");
                 return Optional.empty();

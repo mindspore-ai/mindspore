@@ -25,6 +25,6 @@
     },
     "server_recovery": {
         "storage_type": 1,
-        "storage_file_path": "../server_recovery.json"
+        "storage_file_path": "server_recovery.json"
     }
 }

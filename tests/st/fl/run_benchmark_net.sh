@@ -62,21 +62,27 @@ if [ "X${FL_JDK_PATH}" == "X" ] && [ "X${JAVA_HOME}" != "X" ]; then
   FL_JDK_PATH=${JAVA_HOME}/bin
 fi
 
-if [ "X${FL_RESOURCE_PATH}"  == "X" ]; then
-  FL_RESOURCE_PATH=${base_path}/fl_resources
-fi
-
 if [ "X${FL_RESOURCE_PATH}" == "X" ] || [ "X${X86_PKG_PATH}" == "X" ] ||  \
-  [ "X${FL_JDK_PATH}" == "X" ] || [ "X${FL_MODELS_PATH}" == "X" ]; then
+  [ "X${FL_JDK_PATH}" == "X" ]; then
   echo "FL_RESOURCE_PATH, X86_PKG_PATH, FL_JDK_PATH must be set."
   usage
   exit 1
 fi
 
-cd $base_path/mobile/ci_script
 
-echo "lenet_train_and_infer.sh ${FL_RESOURCE_PATH} ${X86_PKG_PATH} ${FL_JDK_PATH} ${FL_MODELS_PATH} start..."
-bash lenet_train_and_infer.sh ${FL_RESOURCE_PATH} ${X86_PKG_PATH} ${FL_JDK_PATH} ${FL_MODELS_PATH}
+# get resources for v1.8.0
+mkdir -p ${base_path}/fl_resources
+if [ ! -f ${FL_RESOURCE_PATH}/v1.8.0.tar ]; then
+   echo "${FL_RESOURCE_PATH}/v1.8.0.tar not exist."
+   exit 1
+fi
+tar -xf ${FL_RESOURCE_PATH}/v1.8.0.tar -C ${base_path}/fl_resources
+
+export FL_RESOURCE_PATH=${base_path}/fl_resources
+export X86_PKG_PATH=${X86_PKG_PATH}
+export FL_JDK_PATH=${FL_JDK_PATH}
+export FL_MODELS_PATH=${FL_MODELS_PATH}
+
+pytest -s -v -m fl_cluster st_script
 ret=$?
-echo "lenet_train_and_infer.sh ${FL_RESOURCE_PATH} ${X86_PKG_PATH} ${FL_JDK_PATH} ${FL_MODELS_PATH}  success."
 exit $ret

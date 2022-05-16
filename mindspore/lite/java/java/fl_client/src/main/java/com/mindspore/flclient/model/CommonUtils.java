@@ -18,7 +18,7 @@ package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.common.FLLoggerGenerater;
-import com.mindspore.lite.MSTensor;
+import com.mindspore.MSTensor;
 
 import java.util.HashMap;
 import java.util.List;

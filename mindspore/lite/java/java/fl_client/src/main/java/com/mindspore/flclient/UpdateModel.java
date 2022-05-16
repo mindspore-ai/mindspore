@@ -19,14 +19,11 @@ package com.mindspore.flclient;
 import com.google.flatbuffers.FlatBufferBuilder;
 
 import com.mindspore.flclient.common.FLLoggerGenerater;
-import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
 import com.mindspore.flclient.model.ClientManager;
 import com.mindspore.flclient.model.CommonUtils;
-import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.Status;
-import com.mindspore.flclient.model.TrainLenet;
-import com.mindspore.lite.MSTensor;
+import com.mindspore.MSTensor;
 import com.mindspore.flclient.compression.EncodeExecutor;
 import com.mindspore.flclient.compression.CompressWeight;
 
@@ -44,9 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.security.SecureRandom;
-
-import static com.mindspore.flclient.LocalFLParameter.ALBERT;
-import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 /**
  * Define the serialization method, handle the response message returned from server for updateModel request.
@@ -171,44 +165,6 @@ public class UpdateModel {
         return trainedMap;
     }
 
-    private Map<String, float[]> deprecatedGetFeatureMap() {
-        status = Common.initSession(flParameter.getTrainModelPath());
-        if (status == FLClientStatus.FAILED) {
-            retCode = ResponseCode.RequestError;
-            throw new IllegalArgumentException();
-        }
-        Map<String, float[]> map = new HashMap<String, float[]>();
-        if (flParameter.getFlName().equals(ALBERT)) {
-            LOGGER.info("[updateModel] serialize feature map for " +
-                    flParameter.getFlName());
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
-            if (map.isEmpty()) {
-                LOGGER.severe("[updateModel] the return map is empty in <SessionUtil" +
-                        ".convertTensorToFeatures>");
-                status = FLClientStatus.FAILED;
-                throw new IllegalArgumentException();
-            }
-        } else if (flParameter.getFlName().equals(LENET)) {
-            LOGGER.info("[updateModel] serialize feature map for " +
-                    flParameter.getFlName());
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
-            if (map.isEmpty()) {
-                LOGGER.severe("[updateModel] the return map is empty in <SessionUtil" +
-                        ".convertTensorToFeatures>");
-                status = FLClientStatus.FAILED;
-                throw new IllegalArgumentException();
-            }
-        } else {
-            LOGGER.severe("[updateModel] the flName is not valid");
-            status = FLClientStatus.FAILED;
-            throw new IllegalArgumentException();
-        }
-        Common.freeSession();
-        return map;
-    }
-
     class RequestUpdateModelBuilder {
         private RequestUpdateModel requestUM;
         private FlatBufferBuilder builder;
@@ -298,11 +254,7 @@ public class UpdateModel {
         private RequestUpdateModelBuilder featuresMap(SecureProtocol secureProtocol, int trainDataSize) {
             ArrayList<String> updateFeatureName = secureProtocol.getUpdateFeatureName();
             Map<String, float[]> trainedMap = new HashMap<String, float[]>();
-            if (Common.checkFLName(flParameter.getFlName())) {
-                trainedMap = deprecatedGetFeatureMap();
-            } else {
-                trainedMap = getFeatureMap();
-            }
+            trainedMap = getFeatureMap();
             Map<String, List<Float>> featureMaps = new HashMap<>();
             long startTime;
             long endTime;

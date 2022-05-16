@@ -1,6 +1,5 @@
 import os
 import argparse
-import subprocess
 
 parser = argparse.ArgumentParser(description="Run TestClient.java case")
 parser.add_argument("--jarPath", type=str, default="mindspore-lite-java-flclient.jar")  # must be absolute path
@@ -97,7 +96,7 @@ def get_client_data_path(user_path):
 
 
 for i in range(client_num):
-    flId = "f" + str(i)
+    fl_id = "f" + str(i)
     train_path, eval_path, infer_path = "", "", ""
     if "AlbertClient" in flName:
         print("AlBertClient")
@@ -125,7 +124,7 @@ for i in range(client_num):
     else:
         print("the flname is error")
     print("===========================")
-    print("fl id: ", flId)
+    print("fl id: ", fl_id)
     print("train path: ", train_path)
     print("eval path: ", eval_path)
     print("infer path: ", infer_path)
@@ -167,4 +166,4 @@ for i in range(client_num):
     cmd_client += input_shape + " "
     cmd_client += " > client-" + task + ".log 2>&1 &"
     print(cmd_client)
-    subprocess.call(['bash', '-c', cmd_client])
+    os.system(cmd_client)

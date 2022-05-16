@@ -16,24 +16,20 @@
 
 package com.mindspore.flclient.model;
 
+import com.mindspore.Graph;
+import com.mindspore.config.DeviceType;
+import com.mindspore.config.MSContext;
+import com.mindspore.config.TrainCfg;
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.LocalFLParameter;
 import com.mindspore.flclient.common.FLLoggerGenerater;
-import com.mindspore.lite.LiteSession;
-import com.mindspore.lite.MSTensor;
-import com.mindspore.lite.Model;
-import com.mindspore.lite.TrainSession;
-import com.mindspore.lite.config.MSConfig;
+import com.mindspore.MSTensor;
+import com.mindspore.Model;
 import mindspore.schema.FeatureMap;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
@@ -46,9 +42,9 @@ public abstract class Client {
     private static final Logger logger = FLLoggerGenerater.getModelLogger(Client.class.toString());
 
     /**
-     * lite session object.
+     * Mindspore model object.
      */
-    public LiteSession trainSession;
+    public Model model;
 
     /**
      * dataset map.
@@ -98,27 +94,26 @@ public abstract class Client {
      * @param config session run config.
      * @return execute status.
      */
-    public Status initSessionAndInputs(String modelPath, MSConfig config, int[][] inputShapes) {
+    public Status initSessionAndInputs(String modelPath, int[][] inputShapes) {
         if (modelPath == null) {
             logger.severe("session init failed");
             return Status.FAILED;
         }
-        Optional<LiteSession> optTrainSession = initSession(modelPath, config, inputShapes != null);
-        if (!optTrainSession.isPresent()) {
-            logger.severe("session init failed");
+        if (!initSession(modelPath)) {
+            free();
             return Status.FAILED;
         }
-        trainSession = optTrainSession.get();
         inputsBuffer.clear();
         if (inputShapes == null) {
-            List<MSTensor> inputs = trainSession.getInputs();
+            List<MSTensor> inputs = model.getInputs();
+
             for (MSTensor input : inputs) {
                 ByteBuffer inputBuffer = ByteBuffer.allocateDirect((int) input.size());
                 inputBuffer.order(ByteOrder.nativeOrder());
                 inputsBuffer.add(inputBuffer);
             }
         } else {
-            boolean isSuccess = trainSession.resize(trainSession.getInputs(), inputShapes);
+            boolean isSuccess = model.resize(model.getInputs(), inputShapes);
             if (!isSuccess) {
                 logger.severe("session resize failed");
                 return Status.FAILED;
@@ -135,7 +130,7 @@ public abstract class Client {
 
     private void fillModelInput(DataSet dataSet, int batchIdx) {
         dataSet.fillInputBuffer(inputsBuffer, batchIdx);
-        List<MSTensor> inputs = trainSession.getInputs();
+        List<MSTensor> inputs = model.getInputs();
         for (int i = 0; i < inputs.size(); i++) {
             inputs.get(i).setData(inputsBuffer.get(i));
         }
@@ -148,16 +143,11 @@ public abstract class Client {
      * @return execute status.
      */
     public Status trainModel(int epochs) {
-        boolean isSuccess = trainSession.train();
-        if (!isSuccess) {
-            logger.severe("train session switch eval mode failed");
-            return Status.FAILED;
-        }
         if (epochs <= 0) {
             logger.severe("epochs cannot smaller than 0");
             return Status.INVALID;
         }
-
+        model.setTrainMode(true);
         DataSet trainDataSet = dataSets.getOrDefault(RunType.TRAINMODE, null);
         if (trainDataSet == null) {
             logger.severe("not find train dataset");
@@ -179,11 +169,7 @@ public abstract class Client {
      * @return eval accuracy.
      */
     public float evalModel() {
-        boolean isSuccess = trainSession.eval();
-        if (!isSuccess) {
-            logger.severe("train session switch eval mode failed");
-            return Float.NaN;
-        }
+        model.setTrainMode(false);
         DataSet evalDataSet = dataSets.getOrDefault(RunType.EVALMODE, null);
         evalDataSet.padding();
         List<Callback> evalCallbacks = initCallbacks(RunType.EVALMODE, evalDataSet);
@@ -201,11 +187,7 @@ public abstract class Client {
      * @return infer status.
      */
     public List<Object> inferModel() {
-        boolean isSuccess = trainSession.eval();
-        if (!isSuccess) {
-            logger.severe("train session switch eval mode failed");
-            return null;
-        }
+        model.setTrainMode(false);
         DataSet inferDataSet = dataSets.getOrDefault(RunType.INFERMODE, null);
         inferDataSet.padding();
         List<Callback> inferCallbacks = initCallbacks(RunType.INFERMODE, inferDataSet);
@@ -227,7 +209,7 @@ public abstract class Client {
                     return Status.FAILED;
                 }
                 fillModelInput(dataSet, j);
-                boolean isSuccess = trainSession.runGraph();
+                boolean isSuccess = model.runStep();
                 if (!isSuccess) {
                     logger.severe("run graph failed");
                     return Status.FAILED;
@@ -260,7 +242,7 @@ public abstract class Client {
             logger.severe("model path cannot be empty");
             return Status.NULLPTR;
         }
-        boolean isSuccess = trainSession.export(modelPath, 0, 1);
+        boolean isSuccess = model.export(modelPath, 1, false, null);
         if (!isSuccess) {
             logger.severe("save model failed");
             return Status.FAILED;
@@ -268,46 +250,54 @@ public abstract class Client {
         return Status.SUCCESS;
     }
 
-    private Optional<LiteSession> initSession(String modelPath, MSConfig msConfig, boolean isDynamicInferModel) {
+    private boolean initSession(String modelPath) {
         if (modelPath == null) {
             logger.severe("modelPath cannot be empty");
-            return Optional.empty();
+            return false;
         }
-        // only lite session support dynamic shape
-        if (isDynamicInferModel) {
-            Model model = new Model();
-            boolean isSuccess = model.loadModel(modelPath);
-            if (!isSuccess) {
-                logger.severe("load model failed:" + modelPath+" ,please check model is valid or disk" +
-                "space is enough,please check lite log for detail.");
-                return Optional.empty();
-            }
-            trainSession = LiteSession.createSession(msConfig);
-            if (trainSession == null) {
-                logger.severe("init session failed.please check lite log for detail.");
-                msConfig.free();
-                model.free();
-                return Optional.empty();
-            }
-            msConfig.free();
-            isSuccess = trainSession.compileGraph(model);
-            if (!isSuccess) {
-                logger.severe("compile graph failed,please check lite log for detail.");
-                model.free();
-                trainSession.free();
-                return Optional.empty();
-            }
-            model.free();
-            return Optional.of(trainSession);
-        } else {
-            trainSession = TrainSession.createTrainSession(modelPath, msConfig, false);
-            if (trainSession == null) {
-                logger.severe("init session failed,please check model :" + modelPath + " is valid or " +
-                        "disk space is enough.please check lite log for detail.");
-                return Optional.empty();
-            }
-            return Optional.of(trainSession);
+        int deviceType = LocalFLParameter.getInstance().getDeviceType();
+        int threadNum = LocalFLParameter.getInstance().getThreadNum();
+        int cpuBindMode = LocalFLParameter.getInstance().getCpuBindMode();
+        boolean enableFp16 = LocalFLParameter.getInstance().isEnableFp16();
+        MSContext msContext = new MSContext();
+        // use default param init context
+        if(!msContext.init(threadNum, cpuBindMode)){
+            logger.severe("Call msContext.init failed, threadNum " + threadNum + ", cpuBindMode " + cpuBindMode);
+            msContext.free();
+            return false;
         }
+
+        if (!msContext.addDeviceInfo(deviceType, enableFp16, 0)) {
+            logger.severe("Call msContext.addDeviceInfo failed, deviceType " + deviceType + ", enableFp16 " + enableFp16);
+            msContext.free();
+            return false;
+        }
+
+        TrainCfg trainCfg = new TrainCfg();
+        if(!trainCfg.init()){
+            logger.severe("Call trainCfg.init failed ...");
+            msContext.free();
+            trainCfg.free();
+            return false;
+        }
+        Graph graph = new Graph();
+        if(!graph.load(modelPath)){
+            logger.severe("Call graph.load failed, modelPath: " + modelPath);
+            graph.free();
+            trainCfg.free();
+            msContext.free();
+            return false;
+        }
+        model = new Model();
+        if (!model.build(graph, msContext, trainCfg)) {
+            // The Jni implement will change msContext & graph to shared_ptr, no need free here
+            logger.severe("Call model.build failed ... ");
+            graph.free();
+            return false;
+        }
+        graph.free();
+//        model.setupVirtualBatch(32, 0.01f, 1.00f);
+        return true;
     }
 
     /**
@@ -316,10 +306,10 @@ public abstract class Client {
      * @return model weights.
      */
     public List<MSTensor> getFeatures() {
-        if (trainSession == null) {
+        if (model == null) {
             return new ArrayList<>();
         }
-        return trainSession.getFeaturesMap();
+        return model.getFeatureMaps();
     }
 
     /**
@@ -330,23 +320,40 @@ public abstract class Client {
      * @return update status.
      */
     public Status updateFeatures(String modelName, List<FeatureMap> featureMaps) {
-        if (trainSession == null || featureMaps == null || modelName == null || modelName.isEmpty()) {
+        if (model == null || featureMaps == null || modelName == null || modelName.isEmpty()) {
             logger.severe("trainSession,featureMaps modelName cannot be null");
             return Status.NULLPTR;
         }
+
+        List<MSTensor> modelFeatures = model.getFeatureMaps();
+        HashMap<String, MSTensor> modelFeatureMaps = new HashMap<String, MSTensor>();
+        for (MSTensor item : modelFeatures) {
+            modelFeatureMaps.put(item.tensorName(), item);
+        }
+
         List<MSTensor> tensors = new ArrayList<>(featureMaps.size());
         for (FeatureMap newFeature : featureMaps) {
             if (newFeature == null) {
                 logger.severe("newFeature cannot be null");
                 return Status.NULLPTR;
             }
+
+            if (newFeature.weightFullname().isEmpty() || !modelFeatureMaps.containsKey(newFeature.weightFullname())) {
+                logger.severe("Can't get feature for name:" + newFeature.weightFullname());
+                return Status.NULLPTR;
+            }
+            MSTensor origin = modelFeatureMaps.get(newFeature.weightFullname());
+            int dataType = origin.getDataType();
+            int[] dataShape = origin.getShape();
+
             ByteBuffer by = newFeature.dataAsByteBuffer();
             ByteBuffer newData = ByteBuffer.allocateDirect(by.remaining());
             newData.order(ByteOrder.nativeOrder());
             newData.put(by);
-            tensors.add(new MSTensor(newFeature.weightFullname(), newData));
+            MSTensor tensor = MSTensor.createTensor(newFeature.weightFullname(), dataType, dataShape, newData);
+            tensors.add(tensor);
         }
-        boolean isSuccess = trainSession.updateFeatures(tensors);
+        boolean isSuccess = model.updateFeatureMaps(tensors);
         for (MSTensor tensor : tensors) {
             if (tensor == null) {
                 logger.severe("tensor cannot be null");
@@ -356,7 +363,7 @@ public abstract class Client {
         }
 
         if (isSuccess) {
-            trainSession.export(modelName, 0, 0);
+            model.export(modelName, 0, false, null);
             return Status.SUCCESS;
         }
         return Status.FAILED;
@@ -366,11 +373,10 @@ public abstract class Client {
      * Free client.
      */
     public void free() {
-        if (trainSession == null) {
-            return;
+        if (model != null) {
+            model.free();
+            model = null;
         }
-        trainSession.free();
-        trainSession = null;
     }
 
     /**
@@ -380,7 +386,7 @@ public abstract class Client {
      * @return execute status.
      */
     public Status setLearningRate(float lr) {
-        if (trainSession.setLearningRate(lr)) {
+        if (model.setLearningRate(lr)) {
             return Status.SUCCESS;
         }
         logger.severe("set learning rate failed");

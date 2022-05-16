@@ -20,14 +20,10 @@ import com.google.flatbuffers.FlatBufferBuilder;
 
 import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.flclient.compression.DecodeExecutor;
-import com.mindspore.flclient.model.AlInferBert;
-import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
 import com.mindspore.flclient.model.ClientManager;
 import com.mindspore.flclient.model.RunType;
-import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.Status;
-import com.mindspore.flclient.model.TrainLenet;
 import com.mindspore.flclient.pki.PkiBean;
 import com.mindspore.flclient.pki.PkiUtil;
 
@@ -43,9 +39,6 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-
-import static com.mindspore.flclient.LocalFLParameter.ALBERT;
-import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 /**
  * StartFLJob
@@ -141,139 +134,6 @@ public class StartFLJob {
 
     public ArrayList<String> getUpdateFeatureName() {
         return updateFeatureName;
-    }
-
-    private FLClientStatus deprecatedParseResponseAlbert(ResponseFLJob flJob) {
-        FLClientStatus status;
-        int fmCount = flJob.featureMapLength();
-        updateFeatureName.clear();
-        if (fmCount <= 0) {
-            LOGGER.severe("[startFLJob] the feature size get from server is zero");
-            return FLClientStatus.FAILED;
-        }
-
-        if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
-            LOGGER.info("[startFLJob] parseResponseAlbert by " + localFLParameter.getServerMod());
-            ArrayList<FeatureMap> albertFeatureMaps = new ArrayList<FeatureMap>();
-            ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
-            featureSize = 0;
-            List<FeatureMap> featureMapList = parseFeatureMapList(flJob);
-            for (int i = 0; i < featureMapList.size(); i++) {
-                FeatureMap feature = featureMapList.get(i);
-                if (feature == null) {
-                    LOGGER.severe("[startFLJob] the feature returned from server is null");
-                    return FLClientStatus.FAILED;
-                }
-                String featureName = feature.weightFullname();
-                if (localFLParameter.getAlbertWeightName().contains(featureName)) {
-                    albertFeatureMaps.add(feature);
-                    inferFeatureMaps.add(feature);
-                    featureSize += feature.dataLength();
-                    updateFeatureName.add(feature.weightFullname());
-                } else if (localFLParameter.getClassifierWeightName().contains(featureName)) {
-                    inferFeatureMaps.add(feature);
-                } else {
-                    continue;
-                }
-                LOGGER.fine("[startFLJob] weightFullname: " + feature.weightFullname() + ", " +
-                        "weightLength: " + feature.dataLength());
-            }
-            status = Common.initSession(flParameter.getTrainModelPath());
-            if (status == FLClientStatus.FAILED) {
-                retCode = ResponseCode.RequestError;
-                return status;
-            }
-            int tag = 0;
-            LOGGER.info("[startFLJob] ----------------loading weight into inference " +
-                    "model-----------------");
-            AlInferBert alInferBert = AlInferBert.getInstance();
-            tag = SessionUtil.updateFeatures(alInferBert.getTrainSession(), flParameter.getInferModelPath(),
-                    inferFeatureMaps);
-            if (tag == -1) {
-                LOGGER.severe("[startFLJob] unsolved error code in <SessionUtil.updateFeatures>");
-                return FLClientStatus.FAILED;
-            }
-            LOGGER.info("[startFLJob] ----------------loading weight into train model-----------------");
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            tag = SessionUtil.updateFeatures(alTrainBert.getTrainSession(), flParameter.getTrainModelPath(),
-                    albertFeatureMaps);
-            if (tag == -1) {
-                LOGGER.severe("[startFLJob] unsolved error code in <SessionUtil.updateFeatures>");
-                return FLClientStatus.FAILED;
-            }
-            Common.freeSession();
-        } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
-            LOGGER.info("[startFLJob] parseResponseAlbert by " + localFLParameter.getServerMod());
-            ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
-            featureSize = 0;
-            for (int i = 0; i < fmCount; i++) {
-                FeatureMap feature = flJob.featureMap(i);
-                if (feature == null) {
-                    LOGGER.severe("[startFLJob] the feature returned from server is null");
-                    return FLClientStatus.FAILED;
-                }
-                String featureName = feature.weightFullname();
-                featureMaps.add(feature);
-                featureSize += feature.dataLength();
-                updateFeatureName.add(featureName);
-                LOGGER.fine("[startFLJob] weightFullname: " + feature.weightFullname() + ", " +
-                        "weightLength: " + feature.dataLength());
-            }
-            status = Common.initSession(flParameter.getTrainModelPath());
-            if (status == FLClientStatus.FAILED) {
-                retCode = ResponseCode.RequestError;
-                return status;
-            }
-            int tag = 0;
-            LOGGER.info("[startFLJob] ----------------loading weight into model-----------------");
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            tag = SessionUtil.updateFeatures(alTrainBert.getTrainSession(), flParameter.getTrainModelPath(),
-                    featureMaps);
-            if (tag == -1) {
-                LOGGER.severe("[startFLJob] unsolved error code in <SessionUtil.updateFeatures>");
-                return FLClientStatus.FAILED;
-            }
-            Common.freeSession();
-        }
-        return FLClientStatus.SUCCESS;
-    }
-
-    private FLClientStatus deprecatedParseResponseLenet(ResponseFLJob flJob) {
-        FLClientStatus status;
-        updateFeatureName.clear();
-        featureSize = 0;
-        List<FeatureMap> featureMapList = parseFeatureMapList(flJob);
-
-        ArrayList<FeatureMap> featureMaps = new ArrayList<>();
-
-        for (int i = 0; i < featureMapList.size(); i++) {
-            FeatureMap feature = featureMapList.get(i);
-            if (feature == null) {
-                LOGGER.severe("[startFLJob] the feature returned from server is null");
-                return FLClientStatus.FAILED;
-            }
-            String featureName = feature.weightFullname();
-            featureMaps.add(feature);
-            featureSize += feature.dataLength();
-            updateFeatureName.add(featureName);
-            LOGGER.fine("[startFLJob] weightFullname: " +
-                    feature.weightFullname() + ", weightLength: " + feature.dataLength());
-        }
-        status = Common.initSession(flParameter.getTrainModelPath());
-        if (status == FLClientStatus.FAILED) {
-            retCode = ResponseCode.RequestError;
-            return status;
-        }
-        int tag = 0;
-        LOGGER.info("[startFLJob] ----------------loading weight into model-----------------");
-        TrainLenet trainLenet = TrainLenet.getInstance();
-        tag = SessionUtil.updateFeatures(trainLenet.getTrainSession(), flParameter.getTrainModelPath(), featureMaps);
-        if (tag == -1) {
-            LOGGER.severe("[startFLJob] unsolved error code in <SessionUtil.updateFeatures>");
-            return FLClientStatus.FAILED;
-        }
-        Common.freeSession();
-        return FLClientStatus.SUCCESS;
     }
 
     private List<FeatureMap> parseFeatureMapList(ResponseFLJob flJob) {
@@ -447,20 +307,6 @@ public class StartFLJob {
         return FLClientStatus.SUCCESS;
     }
 
-    private FLClientStatus deprecatedParseFeatures(ResponseFLJob flJob) {
-        FLClientStatus status = FLClientStatus.SUCCESS;
-        if (ALBERT.equals(flParameter.getFlName())) {
-            LOGGER.info("[startFLJob] into <parseResponseAlbert>");
-            status = deprecatedParseResponseAlbert(flJob);
-        }
-        if (LENET.equals(flParameter.getFlName())) {
-            LOGGER.info("[startFLJob] into <parseResponseLenet>");
-            status = deprecatedParseResponseLenet(flJob);
-        }
-        return status;
-    }
-
-
     /**
      * response res
      *
@@ -509,12 +355,8 @@ public class StartFLJob {
                 }
                 localFLParameter.setLr(lr);
                 batchSize = flPlanConfig.miniBatch();
-                if (Common.checkFLName(flParameter.getFlName())) {
-                    status = deprecatedParseFeatures(flJob);
-                } else {
-                    LOGGER.info("[startFLJob] into <parseResponseFeatures>");
-                    status = parseResponseFeatures(flJob);
-                }
+                LOGGER.info("[startFLJob] into <parseResponseFeatures>");
+                status = parseResponseFeatures(flJob);
                 return status;
             case (ResponseCode.OutOfTime):
                 return FLClientStatus.RESTART;
