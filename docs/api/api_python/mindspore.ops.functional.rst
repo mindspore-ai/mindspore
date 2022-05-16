@@ -90,6 +90,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.floor_div
     mindspore.ops.floor_mod
     mindspore.ops.invert
+    mindspore.ops.lerp
     mindspore.ops.log
     mindspore.ops.logical_and
     mindspore.ops.logical_not

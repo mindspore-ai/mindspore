@@ -90,6 +90,7 @@ Element-by-Element Operations
     mindspore.ops.floor_div
     mindspore.ops.floor_mod
     mindspore.ops.invert
+    mindspore.ops.lerp
     mindspore.ops.log
     mindspore.ops.logical_and
     mindspore.ops.logical_not
