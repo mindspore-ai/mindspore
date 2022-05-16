@@ -408,7 +408,8 @@ GraphCompilerInfo::~GraphCompilerInfo() {
 }
 
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
-                                    const DeviceContext *device_context, bool run_in_pynative) {
+                                    const DeviceContext *device_context, device::RunMode run_mode,
+                                    bool run_in_pynative) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(segment);
   MS_LOG(INFO) << "Status record: start compile graph.";
@@ -435,10 +436,17 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   session_->SetInputNodeUsage(graph, manager);
   graph->SetOptimizerFlag();
 
+  if (run_mode == device::RunMode::kUnknown) {
+    auto run_mode = device_context->GetRunMode(graph);
+    if (run_mode == device::RunMode::kGraphMode) {
+      graph->set_is_executing_sink(true);
+    }
+  }
+
   GraphId graph_id;
   if (run_in_pynative) {
     MS_EXCEPTION_IF_NULL(session_);
-    // Graphkernel does not support pynative mode now, print a warning here.
+    // Graph kernel does not support pynative mode now, print a warning here.
     graphkernel::GraphKernelFlags::GetInstance().CheckSupport();
     session_->InitAllBucket(graph, device_context);
     graph_id = graph->graph_id();
@@ -464,7 +472,8 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   return graph_id;
 }
 
-GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const DeviceContext *device_context) {
+GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func_graph,
+                                                        const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(session_);
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "Status record: start compile graph.";
@@ -477,6 +486,10 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
     MS_EXCEPTION_IF_NULL(graph);
     graph->set_root_graph_id(root_graph->graph_id());
   }
+
+  // set executing sink true in graph mode
+  root_graph->set_is_executing_sink(true);
+  root_graph->set_is_loop_count_sink(true);
 
   // Unify the MindIR, must be before of the graph optimization.
   device_context->UnifyMindIR(root_graph);
@@ -516,12 +529,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
 #endif
-
-  // Set the graph sink flag.
-  auto is_executing_sink = device_context->IsExecutingSink(graph);
-  auto is_loop_count_sink = device_context->IsLoopCountSink(graph);
-  graph->set_is_executing_sink(is_executing_sink);
-  graph->set_is_loop_count_sink(is_loop_count_sink);
 
   // Execute optimization pass.
   device_context->OptimizeGraph(graph);

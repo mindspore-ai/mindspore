@@ -131,11 +131,10 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
  private:
   // The parameter func_graph is a graph, it can be either a root graph or a sub graph,
   // The result of graph compiler is stored in graph_id_to_device_context_ and control_nodes_.
-  // The return value indicates whether the subgraph needs to be compiled recursively.
-  bool CompileGraph(const FuncGraphPtr &func_graph);
+  void CompileGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode);
 
   // Compile the kernel graph by the segment which is from the function graph partition.
-  void CompileGraph(const GraphSegmentPtr &segment);
+  void CompileGraph(const GraphSegmentPtr &segment, device::RunMode run_mode);
 
   // CreateKernel, Transform and Schedule have not been finished when LazyBuild is enabled in PyNative mode.
   void CompileSingleOpGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
@@ -210,6 +209,9 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   uint32_t device_id_;
   int ms_execution_mode_{kGraphMode};
   int real_execution_mode_{kGraphMode};
+  void CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode = device::RunMode::kUnknown);
+  void ProcessNotSupportCnode(const FuncGraphPtr &func_graph, const device::DeviceType &old_target,
+                              const device::DeviceType &new_target);
 };
 using MindRTBackendPtr = std::shared_ptr<compile::MindRTBackend>;
 }  // namespace compile

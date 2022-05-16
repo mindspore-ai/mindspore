@@ -474,6 +474,7 @@ constexpr auto kAttrOutputNum = "output_num";
 constexpr auto kAttrSizeSplits = "size_splits";
 constexpr auto kAttrOutputDefault = "output_default";
 constexpr auto kAttrPrimitiveTarget = "primitive_target";
+constexpr auto kAttrNotSupportOpForDevice = "not_support_op_for_device";
 constexpr auto kAttrUseLocking = "use_locking";
 constexpr auto kAttrReduceScatterFlag = "reduce_scatter_flag";
 constexpr auto kAttrOffset = "offset";
