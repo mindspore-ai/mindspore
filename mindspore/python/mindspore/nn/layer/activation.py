@@ -505,12 +505,22 @@ class Hardtanh(Cell):
         self.min_val = min_val
         self.max_val = max_val
         self.dtype = P.DType()
+        self.expand = P.ExpandDims()
+        self.squeeze = P.Squeeze(0)
 
     def construct(self, x):
         _dtype_check(self.dtype(x), self.cls_name)
-
-        x = self.max(x, self.min_val)
-        x = self.min(x, self.max_val)
+        # min_val and max_val are scalars, if x is 0d, x is also a scalar.
+        # However, ops.Maximum does not support input two scalar.
+        # To solve this problem, expand x from scalar to tensor, apply Maximum, then squeeze the output back to scalar.
+        if not x.shape:
+            x = self.expand(x, 0)
+            x = self.max(x, self.min_val)
+            x = self.min(x, self.max_val)
+            x = self.squeeze(x)
+        else:
+            x = self.max(x, self.min_val)
+            x = self.min(x, self.max_val)
         return x
 
 
