@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,10 @@ from mindspore.ops import functional as F
 from mindspore._checkparam import Rel, Validator as validator
 from mindspore.ops.primitive import constexpr
 import mindspore.context as context
+from mindspore.common import dtype as mstype
 from ..cell import Cell
 
-__all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d']
+__all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'AdaptiveAvgPool1d']
 
 
 class _PoolNd(Cell):
@@ -398,4 +399,101 @@ class AvgPool1d(_PoolNd):
             x = self.expand(x, 2)
             x = self.avg_pool(x)
             x = self.squeeze(x)
+        return x
+
+
+@constexpr
+def _adaptive_shape_check(in_shape, output_size, prim_name):
+    """Check shape."""
+    msg_prefix = "For {}, the".format(prim_name)
+    if len(in_shape) != 3:
+        raise ValueError("{} input must has 3 dim, but got {}.".format(msg_prefix, len(in_shape)))
+    if in_shape[2] < output_size:
+        raise ValueError("{} input's last dimension must be greater or equal to "
+                         "output size {}, but got {}.".format(msg_prefix, output_size, in_shape[2]))
+    if in_shape[2] % output_size != 0:
+        raise ValueError("{} input's last dimension must be divisible by "
+                         "output size {}, but got {}.".format(msg_prefix, output_size, in_shape[2]))
+
+
+@constexpr
+def _adaptive_dtype_check(x_dtype, prim_name):
+    """Check dtype."""
+    if x_dtype not in [mstype.float16, mstype.float32, mstype.float64]:
+        raise TypeError("For {}, the x_dtype must be float16, float32 or float64, "
+                        "but got {}.".format(prim_name, x_dtype))
+
+
+class AdaptiveAvgPool1d(Cell):
+    r"""
+    1D adaptive average pooling for temporal data.
+
+    Applies a 1D adaptive average pooling over an input Tensor which can be regarded as
+    a composition of 1D input planes.
+
+    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`,
+    AdaptiveAvgPool1d outputs regional average in the :math:`(L_{in})`-dimension.
+    The output is of shape :math:`(N_{in}, C_{in}, L_{out})`,
+    where :math:`L_{out})` is defined by `output_size`
+
+    Note:
+        :math:`(L_{in})` must be divisible by `output_size`.
+
+    Args:
+        output_size (int): the target output size :math:`L_{out}`.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16, float32 or float64 data type.
+
+    Outputs:
+        Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `x`.
+
+    Raises:
+        TypeError: If `output_size` is not an int.
+        TypeError: If `x` is neither float16 nor float32 nor float64.
+        ValueError: If `output_size` is less than 1.
+        ValueError: If length of shape of `x` is not equal to 3.
+        ValueError: If the last dimension of `x` is smaller than `output_size`.
+        ValueError: If the last dimension of `x` is not divisible by `output_size`.
+
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> pool = nn.AdaptiveAvgPool1d(output_size=2)
+        >>> x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
+        >>> output = pool(x)
+        >>> result = output.shape
+        >>> print(result)
+        (1, 3, 2)
+    """
+
+    def __init__(self, output_size):
+        """Initialize AdaptiveAvgPool1d."""
+        super(AdaptiveAvgPool1d, self).__init__()
+        validator.check_value_type('output_size', output_size, [int], self.cls_name)
+        validator.check_int(output_size, 1, Rel.GE, "output_size", self.cls_name)
+        self.shape = F.shape
+        self.expand = P.ExpandDims()
+        self.squeeze = P.Squeeze(2)
+        self.output_size = output_size
+        self.dtype = P.DType()
+
+    def construct(self, x):
+        _adaptive_shape_check(self.shape(x), self.output_size, self.cls_name)
+        _adaptive_dtype_check(self.dtype(x), self.cls_name)
+
+        _, _, width = self.shape(x)
+        stride = width // self.output_size
+        kernel_size = width - (self.output_size - 1) * stride
+
+        stride = (1, width // self.output_size)
+        kernel_size = (1, kernel_size)
+
+        x = self.expand(x, 2)
+        avg_pool = P.AvgPool(kernel_size=kernel_size, strides=stride)
+        x = avg_pool(x)
+        x = self.squeeze(x)
+
         return x

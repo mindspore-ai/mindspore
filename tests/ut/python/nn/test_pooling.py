@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,5 +74,27 @@ class Avg1dNet(nn.Cell):
 
 def test_avg1d():
     net = Avg1dNet(6, 1)
+    input_ = Tensor(np.random.randint(0, 255, [1, 3, 6]).astype(np.float32))
+    _cell_graph_executor.compile(net, input_)
+
+
+class AdaptiveAvgPool1dNet(nn.Cell):
+    """AdaptiveAvgPool1d."""
+
+    def __init__(self, output_size):
+        super(AdaptiveAvgPool1dNet, self).__init__()
+        self.adaptive_avg_pool_1d = nn.AdaptiveAvgPool1d(output_size)
+
+    def construct(self, x):
+        return self.adaptive_avg_pool_1d(x)
+
+
+def test_adaptive_avg_pool_1d():
+    """
+    Feature: Test AdaptiveAvgPool1d.
+    Description: Test AdaptiveAvgPool1d functional.
+    Expectation: Success.
+    """
+    net = AdaptiveAvgPool1dNet(2)
     input_ = Tensor(np.random.randint(0, 255, [1, 3, 6]).astype(np.float32))
     _cell_graph_executor.compile(net, input_)
