@@ -147,6 +147,15 @@ def test_mel_scale_eager():
     allclose_nparray(out_ms, out_expect, 0.001, 0.001)
     assert out_ms.shape == (3, 2, 3)
 
+    spectrogram = np.array([[-0.7010437250137329, 1.1184569597244263, -1.4936821460723877],
+                            [0.4603022038936615, -0.556514322757721, 0.8629537224769592]])
+    spectrogram = spectrogram.astype(np.float32)
+    out_ms = c_audio.MelScale(n_mels=2, sample_rate=10, f_min=-50, f_max=100, n_stft=2)(spectrogram)
+    out_expect = np.array([[-0.27036190032958984, 0.579207181930542, -0.6739760637283325],
+                           [0.029620330780744553, -0.017264455556869507, 0.043247632682323456]]).astype(np.float32)
+    allclose_nparray(out_ms, out_expect, 0.001, 0.001)
+    assert out_ms.shape == (2, 3)
+
 
 if __name__ == "__main__":
     test_mel_scale_pipeline()
