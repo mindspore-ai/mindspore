@@ -24,17 +24,18 @@
 #include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-class LerpCpuKernelMod : public NativeCpuKernelMod {
+class LerpCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<LerpCpuKernelMod> {
  public:
   LerpCpuKernelMod() = default;
   ~LerpCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -45,21 +46,20 @@ class LerpCpuKernelMod : public NativeCpuKernelMod {
 
   void ResetResource() noexcept;
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using LerpFunc = std::function<bool(LerpCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
   size_t output_size_{1};
-  LerpFunc kernel_func_;
   std::vector<size_t> start_shape_;
   std::vector<size_t> end_shape_;
   std::vector<size_t> weight_shape_;
   std::vector<size_t> output_shape_;
-  static std::vector<std::pair<KernelAttr, LerpFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
