@@ -23,7 +23,6 @@
 #include <fstream>
 #include "common/common_test.h"
 #include "src/common/log_adapter.h"
-#include "mindspore/lite/include/lite_session.h"
 #include "mindspore/lite/src/runtime/executor.h"
 #include "mindspore/lite/schema/inner/anf_ir_generated.h"
 

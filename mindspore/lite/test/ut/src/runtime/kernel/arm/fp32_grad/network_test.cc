@@ -24,7 +24,6 @@
 
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
-#include "include/lite_session.h"
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "include/train/train_cfg.h"

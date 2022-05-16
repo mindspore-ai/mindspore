@@ -20,7 +20,6 @@
 #include "include/api/types.h"
 #include "include/api/context.h"
 #include "include/api/dual_abi_helper.h"
-#include "include/lite_session.h"
 #include "include/context.h"
 #include "include/api/callback/callback.h"
 #include "include/api/metrics/metrics.h"

@@ -15,7 +15,6 @@
  */
 
 #include "securec/include/securec.h"
-#include "include/ms_tensor.h"
 #include "src/tensor.h"
 
 namespace mindspore {

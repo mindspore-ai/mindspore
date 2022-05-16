@@ -17,7 +17,6 @@
 #include "src/tensorlist.h"
 #include <utility>
 #include <algorithm>
-#include "include/ms_tensor.h"
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
 #include "nnacl/op_base.h"

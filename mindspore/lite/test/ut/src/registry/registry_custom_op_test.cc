@@ -20,7 +20,6 @@
 #include "common/common_test.h"
 #include "include/api/context.h"
 #include "include/api/model.h"
-#include "include/lite_session.h"
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"

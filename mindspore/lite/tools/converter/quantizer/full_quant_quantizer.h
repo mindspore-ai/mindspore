@@ -28,7 +28,6 @@
 #include "ops/primitive_c.h"
 #include "schema/inner/model_generated.h"
 #include "tools/converter/quantizer/quantizer.h"
-#include "include/ms_tensor.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/preprocess/preprocess_param.h"

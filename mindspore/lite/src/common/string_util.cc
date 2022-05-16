@@ -21,7 +21,6 @@
 #include <cstring>
 #include <fstream>
 #include <climits>
-#include "include/ms_tensor.h"
 
 namespace mindspore {
 namespace lite {

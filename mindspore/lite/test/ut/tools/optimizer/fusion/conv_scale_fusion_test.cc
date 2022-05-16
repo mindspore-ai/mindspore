@@ -17,9 +17,7 @@
 #define USE_DEPRECATED_API
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "include/model.h"
 #include "common/common_test.h"
-#include "include/lite_session.h"
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"

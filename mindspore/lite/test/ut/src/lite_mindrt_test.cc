@@ -23,7 +23,6 @@
 #include "thread/actor_threadpool.h"
 #include "common/common_test.h"
 #include "schema/model_generated.h"
-#include "include/model.h"
 
 namespace mindspore {
 class LiteMindRtTest : public mindspore::CommonTest {

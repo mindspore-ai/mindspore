@@ -34,7 +34,6 @@
 #include <nlohmann/json.hpp>
 #endif
 #include "tools/benchmark/benchmark_base.h"
-#include "include/model.h"
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"

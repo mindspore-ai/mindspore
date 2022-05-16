@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <vector>
-#include "include/ms_tensor.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "schema/model_generated.h"

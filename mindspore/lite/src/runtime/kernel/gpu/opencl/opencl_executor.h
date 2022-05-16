@@ -22,7 +22,6 @@
 #include "src/runtime/inner_allocator.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/runtime/executor.h"
-#include "include/lite_session.h"
 
 namespace mindspore::lite::opencl {
 class OpenCLExecutor : public Executor {

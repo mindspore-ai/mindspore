@@ -17,11 +17,8 @@
 #include <cmath>
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "mindspore/lite/include/model.h"
 #include "common/common_test.h"
-#include "include/lite_session.h"
 #include "include/context.h"
-#include "include/model.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"

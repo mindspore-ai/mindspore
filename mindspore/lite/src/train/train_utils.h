@@ -18,7 +18,6 @@
 
 #include <vector>
 #include <string>
-#include "include/ms_tensor.h"
 #include "src/tensor.h"
 #include "src/runtime/kernel_exec.h"
 

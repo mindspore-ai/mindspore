@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 #include <iostream>
-#include "include/lite_session.h"
+#include "src/runtime/lite_session.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
 

@@ -23,7 +23,6 @@
 #include <vector>
 #include "include/api/types.h"
 #include "include/api/context.h"
-#include "include/lite_session.h"
 #include "include/context.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/runtime/cxx_api/converters.h"

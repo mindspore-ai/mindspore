@@ -199,7 +199,7 @@ int MindrtExecutor::Prepare(const std::vector<kernel::KernelExec *> &kernels, co
   return RET_OK;
 }
 
-void MindrtExecutor::TransferGraphOutput() {
+int MindrtExecutor::TransferGraphOutput() {
   for (auto tensor_map : *isolate_output_map_) {
     auto dst_tensor = tensor_map.second;
     auto src_tensor = tensor_map.first;
@@ -210,7 +210,11 @@ void MindrtExecutor::TransferGraphOutput() {
     /* dst tensor free in FreeOutputTensor */
 #ifdef ENABLE_FP16
     if (src_tensor->data_type() == kNumberTypeFloat16) {
-      dst_tensor->MallocData();
+      auto ret = dst_tensor->MallocData();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "MallocData failed";
+        return ret;
+      }
       Fp16ToFloat32(reinterpret_cast<float16_t *>(src_tensor->MutableData()),
                     reinterpret_cast<float *>(dst_tensor->data()), dst_tensor->ElementsNum());
     } else {
@@ -231,7 +235,7 @@ void MindrtExecutor::TransferGraphOutput() {
 #endif
     src_tensor->DecRefCount();
   }
-  return;
+  return RET_OK;
 }
 
 void MindrtExecutor::FreeOutputTensor() {
@@ -273,7 +277,11 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
     return ret;
   }
 
-  TransferGraphOutput();
+  ret = TransferGraphOutput();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "TransferGraphOutput failed";
+    return ret;
+  }
 
   thread_pool->SetSpinCountMinValue();
   return RET_OK;
