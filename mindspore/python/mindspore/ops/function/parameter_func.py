@@ -169,7 +169,6 @@ def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
     Raises:
         TypeError: If `x` is not a Parameter.
         TypeError: If neither `indices` nor `y` is a Tensor.
-        ValueError: If shape of `indices` is not one dimension.
         ValueError: If axis is out of `x` rank's range.
         ValueError: If `x` rank is not the same as `y` rank.
         ValueError: If shape of `indices` is not 1D or size of `indices` is not equal to dimension of y[axis].
