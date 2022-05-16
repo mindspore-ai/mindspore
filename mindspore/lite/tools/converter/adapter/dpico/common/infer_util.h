@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@
 #include <vector>
 #include "include/api/types.h"
 #include "schema/model_generated.h"
+#include "src/graph_split_info.h"
 
 namespace mindspore {
 namespace dpico {
 int CheckCustomInputOutput(const std::vector<mindspore::MSTensor> *inputs,
                            const std::vector<mindspore::MSTensor> *outputs, const schema::Primitive *primitive);
 int CheckCustomParam(const schema::Custom *param, const std::string &param_name);
+int GetOmNetType(const schema::Primitive *primitive, OmNetType *om_net_type);
 }  // namespace dpico
 }  // namespace mindspore
 
