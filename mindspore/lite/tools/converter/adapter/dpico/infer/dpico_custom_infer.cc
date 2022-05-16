@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,6 +196,13 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
                   << "!=" << (*inputs)[0].Shape().size();
     return kLiteError;
   }
+
+  dpico::OmNetType om_net_type;
+  if (dpico::GetOmNetType(primitive, &om_net_type) != RET_OK) {
+    MS_LOG(ERROR) << "get om net type failed.";
+    return kLiteError;
+  }
+
   bool resize_flag = false;
   int resize_num = 1;
   for (size_t i = 0; i < inputs_shape[0].size(); i++) {
@@ -212,6 +219,10 @@ Status CustomInterface::Infer(std::vector<mindspore::MSTensor> *inputs, std::vec
   if (resize_flag) {
     for (auto &output_shape : outputs_shape) {
       output_shape[0] = resize_num;
+      if (om_net_type == dpico::OmNetType::kRecurrent) {
+        MS_LOG(INFO) << "only output_0 has the information about time steps.";
+        break;
+      }
     }
   }
 

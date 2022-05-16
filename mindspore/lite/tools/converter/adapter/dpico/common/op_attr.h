@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,7 @@ constexpr auto kLstmWeightOrderIofcFlag = "lstm_weight_order_iofc_flag";
 constexpr auto kMultiples = "multiples";
 constexpr auto kNearest = "nearest";
 constexpr auto kNegativeSlope = "negative_slope";
+constexpr auto kNetType = "net_type";
 constexpr auto kNormalizeVariance = "normalize_variance";
 constexpr auto kNumAnchors = "num_anchors";
 constexpr auto kNumAxes = "num_axes";

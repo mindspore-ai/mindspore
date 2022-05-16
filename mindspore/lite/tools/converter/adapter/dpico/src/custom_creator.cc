@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,7 +242,7 @@ STATUS CustomOpCreator::SetCustomAttrs(const Subgraph &subgraph, const api::Func
   // add om net type attr
   auto om_net_type_str = std::to_string(subgraph.om_net_type);
   std::vector<uint8_t> om_net_type_value(om_net_type_str.begin(), om_net_type_str.end());
-  custom_attrs.insert(std::make_pair("net_type", om_net_type_value));
+  custom_attrs.insert(std::make_pair(kNetType, om_net_type_value));
 
   // add max_roi_fram_cnt attr
   if (subgraph.om_net_type == OmNetType::kRoi) {
