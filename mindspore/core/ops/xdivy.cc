@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ TypePtr XdivyInferType(const PrimitivePtr &primitive, const std::vector<Abstract
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << input_type->ToString()
                             << ".";
   }
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
+  const std::set<TypePtr> valid_types = {kFloat32, kFloat16, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("y", input_type, valid_types, prim_name);
   return input_type;

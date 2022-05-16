@@ -114,6 +114,7 @@ from .fused_sparse_ftrl import _fused_sparse_ftrl_aicpu
 from .fused_sparse_proximal_adagrad import _fused_sparse_proximal_adagrad_aicpu
 from .meshgrid import _meshgrid_aicpu
 from .div import _div_aicpu
+from .xdivy import _xdivy_aicpu
 from .trans_data import _trans_data_aicpu
 from .stack_push_pop import _stack_init_aicpu
 from .stack_push_pop import _stack_push_aicpu

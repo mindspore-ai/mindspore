@@ -3083,9 +3083,10 @@ class Xdivy(Primitive):
 
     Inputs:
         - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
-          or a tensor whose data type is float16, float32 or bool.
+          or a tensor whose data type is float16, float32, float64, complex64, complex128 or bool.
         - **y** (Union[Tensor, Number, bool]) - The second input is a number,
-          or a bool when the first input is a tensor, or a tensor whose data type is float16, float32 or bool.
+          or a bool when the first input is a tensor, or a tensor whose data type is float16,
+          float32, float64, complex64, complex128 or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -3093,9 +3094,13 @@ class Xdivy(Primitive):
 
     Raises:
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+        TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64, complex64, complex128, bool].
+        ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
+        RuntimeError: If the data type of `x`, `y` conversion of Parameter is given
+                      but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.float32)
