@@ -71,6 +71,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(kScatterNdOpName, {2});
   Register(kStridedSliceAssignOpName, {1, 2, 3});
   Register(kStridedSliceOpName, {1, 2, 3});
+  Register(kEyeOpName, {0, 1, 2});
   Register(kStridedSliceGradOpName, {1, 2, 3, 4});
   Register(kTensorCopySlicesOpName, {2, 3, 4});
   Register(kFlattenGradOpName, {1});
