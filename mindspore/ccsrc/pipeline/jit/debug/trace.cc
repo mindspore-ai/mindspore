@@ -319,6 +319,11 @@ bool AnalyzeFailExporter::ExportFuncGraph(const std::string &filename, const Tra
     MS_LOG(ERROR) << "Open file '" << real_filepath.value() << "' failed!" << ErrnoToString(errno);
     return false;
   }
+  ofs << "#===============================================================================\n";
+  ofs << "#1.This file shows the parsed IR info when graph evaluating failed to help find the problem.\n";
+  ofs << "#2.You can search the last `------------------------>` to the node which is inferred failed.\n";
+  ofs << "#3.Refer to https://www.mindspore.cn/search?inputValue=analyze_fail.dat to get more instructions.\n";
+  ofs << "#===============================================================================\n\n";
 
   if (engine_ == nullptr) {
     engine_ = node_config_stack.front()->engine();
@@ -392,7 +397,9 @@ void GetEvalStackInfo(std::ostringstream &oss) {
   std::string file_name = GetEvalFailDatPath();
   auto ret = OutputAnalyzedGraphWithType(file_name);
   if (ret) {
-    oss << " (See file '" << file_name << "' for more details)";
+    oss << " (See file '" << file_name
+        << "' for more details. Get instructions about `analyze_fail.dat` at "
+           "https://www.mindspore.cn/search?inputValue=analyze_fail.dat)";
   }
 #endif
   oss << ":\n";
