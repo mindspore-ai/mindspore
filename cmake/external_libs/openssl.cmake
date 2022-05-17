@@ -31,6 +31,7 @@ if(BUILD_LITE)
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-0778.patch
                 )
     elseif(PLATFORM_ARM32 AND ANDROID_NDK_TOOLCHAIN_INCLUDED)
+        set(openssl_USE_STATIC_LIBS OFF)
         set(ANDROID_NDK_ROOT $ENV{ANDROID_NDK})
         set(PATH
             ${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin:
@@ -47,12 +48,13 @@ if(BUILD_LITE)
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-0778.patch
                 )
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE)
+        set(openssl_CFLAGS -fvisibility=hidden)
         mindspore_add_pkg(openssl
                 VER 1.1.1k
                 LIBS ssl crypto
                 URL ${REQ_URL}
                 MD5 ${MD5}
-                CONFIGURE_COMMAND ./config no-zlib
+                CONFIGURE_COMMAND ./config no-zlib no-shared
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-0778.patch
