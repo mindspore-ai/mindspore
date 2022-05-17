@@ -231,6 +231,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"cdist", std::string("cdist")},                                    // P.cdist
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
        {"one_hot", std::string("one_hot")},                                // P.OneHot
+       {"gather_nd", std::string("gather_nd")},                            // P.GatherNd()
      }},
     {kObjectTypeRowTensorType,
      {

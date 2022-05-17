@@ -59,6 +59,24 @@ def _get_transpose_batch_perm(dim, perm, x_rank):
     return batch_perm
 
 
+@constexpr
+def _get_prefix_expand_shape(indices_shape):
+    """Generate prefix and expand shape by indices shape."""
+    indices_end = len(indices_shape) - 1
+    prefix_shape = ()
+    expand_shape = ()
+    for i, element in enumerate(indices_shape):
+        if i == indices_end:
+            prefix_shape = prefix_shape + (1,)
+        else:
+            prefix_shape = prefix_shape + (element,)
+        if i == 0:
+            expand_shape = expand_shape + (element,)
+        else:
+            expand_shape = expand_shape + (1,)
+    return prefix_shape, expand_shape
+
+
 @vmap_rules_getters.register(P.Transpose)
 def get_transpose_vmap_rule(prim, axis_size):
     """VmapRule for `Transpose` operation."""
@@ -203,18 +221,7 @@ def get_scatter_add_vmap_rule(prim, axis_size):
                 indices = F.expand_dims(indices, -1)
 
             indices_shape = F.shape(indices)
-            indices_end = len(indices_shape) - 1
-            prefix_shape = ()
-            expand_shape = ()
-            for i, element in enumerate(indices_shape):
-                if i == indices_end:
-                    prefix_shape = prefix_shape + (1,)
-                else:
-                    prefix_shape = prefix_shape + (element,)
-                if i == 0:
-                    expand_shape = expand_shape + (element,)
-                else:
-                    expand_shape = expand_shape + (1,)
+            prefix_shape, expand_shape = _get_prefix_expand_shape(indices_shape)
             prefix = P.BroadcastTo(prefix_shape)(F.reshape(mnp.arange(axis_size), expand_shape))
             indices = concat((prefix, indices))
             out = scatter_nd_add(ref, indices, updates, u_monad)
@@ -376,4 +383,30 @@ def get_space_to_batch_nd_vmap_rule(prim, axis_size):
         out = prim(x_trans)
         return (out, 1)
 
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.GatherNd)
+def get_gather_nd_vmap_rule(prim, axis_size):
+    """VmapRule for GatherND operations."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+    concat = P.Concat(-1)
+    gather_nd = P.GatherNd()
+
+    def vmap_rule(x_bdim, indices_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, indices_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        indices, indices_dim = indices_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        indices = _bdim_at_front(indices, indices_dim, axis_size)
+        indices_shape = F.shape(indices)
+        prefix_shape, expand_shape = _get_prefix_expand_shape(indices_shape)
+        prefix = P.BroadcastTo(prefix_shape)(F.reshape(mnp.arange(axis_size), expand_shape))
+        indices = concat((prefix, indices))
+        out = gather_nd(x, indices)
+        out = prim(x, indices)
+        return (out, 0)
     return vmap_rule
