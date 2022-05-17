@@ -59,6 +59,12 @@ class GPUDeviceAddress : public DeviceAddress {
                      uint32_t root_graph_id, bool force_update, bool trans_flag) const override;
 #endif
 
+  // Asynchronously copy host memory to device side.
+  bool AsyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr, void *stream) const override;
+
+  // Asynchronously copy device memory to host side.
+  bool AsyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr, void *stream) const override;
+
  private:
   DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};
 };

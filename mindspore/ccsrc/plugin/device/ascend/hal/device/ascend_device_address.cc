@@ -525,6 +525,34 @@ bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector &shape, size_t s
   return sync_ok;
 }
 
+bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr,
+                                            void *stream) const {
+  MS_ERROR_IF_NULL(host_ptr);
+  MS_ERROR_IF_NULL(ptr_);
+  MS_ERROR_IF_NULL(stream);
+
+  auto ret = aclrtMemcpyAsync(ptr_, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtMemcpyAsync host to device failed, the error num[" << ret << "]";
+    return false;
+  }
+  return true;
+}
+
+bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr,
+                                            void *stream) const {
+  MS_ERROR_IF_NULL(host_ptr);
+  MS_ERROR_IF_NULL(ptr_);
+  MS_ERROR_IF_NULL(stream);
+
+  auto ret = aclrtMemcpyAsync(host_ptr, size, ptr_, size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclrtMemcpyAsync device to host failed, the error num[" << ret << "]";
+    return false;
+  }
+  return true;
+}
+
 bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &shape, size_t size,
                                                            mindspore::TypeId type, const void *host_ptr) const {
   bool sync_ok = false;
