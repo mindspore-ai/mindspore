@@ -17,6 +17,7 @@ import shutil
 import glob
 
 import numpy as np
+import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
@@ -25,7 +26,7 @@ from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.train.model import Model
-from mindspore.nn.wrap.cell_wrapper import PipelineCell, MicroBatchInterleaved
+from mindspore.nn.wrap.cell_wrapper import PipelineCell, MicroBatchInterleaved, _MicroBatch, Cell
 
 
 class DatasetLenet():
@@ -114,6 +115,52 @@ class PipelineSplit2(nn.Cell):
     def construct(self, x, label):
         x = self.cell(x)
         return x
+
+
+class PipelineDupCell(Cell):
+    def __init__(self, network, micro_size):
+        super(PipelineDupCell, self).__init__(auto_prefix=False)
+        self.network = network
+        self.micro_inputs = nn.CellList()
+        self.micro_size = micro_size
+        self.add_list = []
+        for _ in range(micro_size):
+            micro_input = _MicroBatch(micro_size)
+            self.micro_inputs.append(micro_input)
+            self.add = P.Add()
+            self.add_list.append(self.add)
+
+    def construct(self, *inputs):
+        ret = None
+        for i in range(self.micro_size):
+            micro_input = self.micro_inputs[i](i, *inputs)
+            output = self.network(*micro_input)
+            if ret is not None:
+                ret = self.add_list[i](ret, output)
+            else:
+                ret = output
+        return ret
+
+
+def test_pipeline_split_no_end():
+    """
+    Feature: Test pipeline without end node.
+    Description: Expect get runtimeError.
+    Expectation: Successful.
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    strategy1 = ((16, 1), (1, 1))
+    strategy2 = ((8, 1), (1, 1))
+    net = PipelineDupCell(PipelineSplit(strategy1, strategy2), 4)
+    params = net.network.cell.block[1].trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optimizer = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optimizer)
+    with pytest.raises(RuntimeError):
+        model.train(2, dataset, dataset_sink_mode=False)
 
 
 def test_pipeline_split_stage0():
