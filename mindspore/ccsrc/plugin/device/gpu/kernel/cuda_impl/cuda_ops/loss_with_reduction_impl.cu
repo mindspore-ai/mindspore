@@ -390,6 +390,14 @@ template CUDA_LIB_EXPORT void KLDivLossGrad<float>(const int &input_size, const 
                                                    const float *input_x, const float *input_y, const float *dloss,
                                                    float *dx, float *dy, cudaStream_t stream);
 
+template CUDA_LIB_EXPORT void KLDivLoss<double>(const int &input_size, const ReductionMode &reduction,
+                                                const double *input_x, const double *input_y, double *loss,
+                                                double *tmp_loss, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void KLDivLossGrad<double>(const int &input_size, const ReductionMode &reduction,
+                                                    const double *input_x, const double *input_y, const double *dloss,
+                                                    double *dx, double *dy, cudaStream_t stream);
+
 template CUDA_LIB_EXPORT void BinaryCrossEntropyLoss<float>(const int &input_size, const ReductionMode &reduction,
                                                             const float *input_x, const float *input_y,
                                                             const float *weight, float *loss, float *tmp_loss,

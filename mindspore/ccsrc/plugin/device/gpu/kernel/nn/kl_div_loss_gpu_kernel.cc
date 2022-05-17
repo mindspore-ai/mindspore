@@ -26,5 +26,9 @@ MS_REG_GPU_KERNEL_ONE(
   KLDivLoss,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   KLDivLossGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(
+  KLDivLoss,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  KLDivLossGpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore

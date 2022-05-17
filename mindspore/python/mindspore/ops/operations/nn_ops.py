@@ -5126,7 +5126,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         return var_dtype, accum_dtype
 
 
-class KLDivLoss(PrimitiveWithInfer):
+class KLDivLoss(Primitive):
     r"""
     Computes the Kullback-Leibler divergence between the logits and the labels.
 
@@ -5134,27 +5134,28 @@ class KLDivLoss(PrimitiveWithInfer):
 
     .. math::
         L = \{l_1,\dots,l_N\}^\top, \quad
-        l_n = y_n \cdot (\log y_n - x_n)
+        l_n = target_n \cdot (\log target_n - x_n)
 
     Then,
 
     .. math::
-        \ell(x, y) = \begin{cases}
+        \ell(x, target) = \begin{cases}
         L, & \text{if reduction} = \text{'none';}\\
         \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{batchmean}(L), & \text{if reduction} = \text{'batchmean';}\\
         \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     where :math:`x` represents `logits`.
-    :math:`y` represents `labels`.
-    :math:`\ell(x, y)` represents `output`.
+    :math:`target` represents `labels`.
+    :math:`\ell(x, target)` represents `output`.
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean' or 'sum'. Default: 'mean'.
+            Its value must be one of 'none', 'mean', 'batchmean' or 'sum'. Default: 'mean'.
 
     Inputs:
-        - **logits** (Tensor) - The input Tensor. The data type must be float32.
+        - **logits** (Tensor) - The input Tensor. The data type must be float16, float32 or float64.
         - **labels** (Tensor) - The label Tensor which has the same shape and data type as `logits`.
 
     Outputs:
@@ -5167,7 +5168,7 @@ class KLDivLoss(PrimitiveWithInfer):
         TypeError: If dtype of `logits` or `labels` is not float32.
 
     Supported Platforms:
-        ``GPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -5189,21 +5190,17 @@ class KLDivLoss(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, reduction='mean'):
         """Initialize KLDivLoss."""
-        self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
-
-    def infer_shape(self, x_shape, y_shape):
-        validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
-        if self.reduction in ('mean', 'sum'):
-            shape = []
+        device_target = context.get_context("device_target")
+        if device_target == "CPU":
+            support_mode = ['none', 'mean', 'batchmean', 'sum']
+        elif device_target == "GPU":
+            support_mode = ['none', 'mean', 'sum']
+        elif device_target == "Ascend":
+            raise ValueError(f"'{self.name}' does not support Ascend platform currently.")
         else:
-            shape = x_shape
-        return shape
+            raise ValueError(f"'{self.name}' unknown device target: '{device_target}'")
 
-    def infer_dtype(self, x_type, y_type):
-        args = {'x': x_type, 'y': y_type}
-        valid_dtypes = (mstype.float16, mstype.float32)
-        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        return x_type
+        self.reduction = validator.check_string(reduction, support_mode, 'reduction', self.name)
 
 
 class BinaryCrossEntropy(Primitive):

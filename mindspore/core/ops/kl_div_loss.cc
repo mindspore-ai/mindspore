@@ -1,0 +1,83 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "ops/kl_div_loss.h"
+#include <map>
+#include <set>
+#include "mindapi/ir/type.h"
+#include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
+
+namespace mindspore {
+namespace ops {
+void KLDivLoss::Init(const std::string &reduction) { set_reduction(reduction); }
+
+void KLDivLoss::set_reduction(const std::string &reduction) {
+  (void)this->AddAttr(kReduction, api::MakeValue(reduction));
+}
+
+std::string KLDivLoss::get_reduction() const { return GetValue<std::string>(GetAttr(ops::kReduction)); }
+
+abstract::ShapePtr KLDivLossInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto op_name = primitive->name();
+  auto input_x_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto input_x_shape = input_x_map[kShape];
+  auto input_target_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
+  auto input_target_shape = input_target_map[kShape];
+  CheckAndConvertUtils::Check("x shape", input_x_shape, kEqual, input_target_shape, op_name, ValueError);
+
+  auto reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
+  if (reduction == kNone) {
+    return std::make_shared<abstract::Shape>(input_x_shape);
+  }
+
+  if (reduction == kBatchMean && input_x_shape.size() == 0) {
+    MS_LOG(EXCEPTION) << "For " << op_name << ", can not do batchmean with x shape = []";
+  }
+
+  std::vector<std::int64_t> y_shape;
+  y_shape.resize(0);
+  return std::make_shared<abstract::Shape>(y_shape);
+}
+
+TypePtr KLDivLossInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto op_name = prim->name();
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  auto input_x_type = input_args[kInputIndex0]->BuildType();
+  auto input_target_type = input_args[kInputIndex1]->BuildType();
+  CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, op_name);
+
+  std::map<std::string, TypePtr> types;
+  types.emplace("x", input_x_type);
+  types.emplace("target", input_target_type);
+  CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
+  return input_x_type;
+}
+
+MIND_API_OPERATOR_IMPL(KLDivLoss, BaseOperator);
+AbstractBasePtr KLDivLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputsNum = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  auto infer_shape = KLDivLossInferShape(primitive, input_args);
+  auto infer_type = KLDivLossInferType(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(KLDivLoss, prim::kPrimKLDivLoss, KLDivLossInfer, nullptr, true);
+}  // namespace ops
+}  // namespace mindspore
