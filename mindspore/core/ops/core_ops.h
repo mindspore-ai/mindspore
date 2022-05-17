@@ -34,6 +34,7 @@ GVAR_DEF(mindspore::HashMap<std::string COMMA ValuePtr>, kSideEffectPropagate,
 #undef COMMA
 constexpr auto kAdjustHue = "AdjustHue";
 constexpr auto kAdjustContrastv2 = "AdjustContrastv2";
+constexpr auto kAdjustSaturation = "AdjustSaturation";
 constexpr auto kGetNext = "GetNext";
 constexpr auto kGather = "Gather";
 constexpr auto kAddcdiv = "Addcdiv";
@@ -839,6 +840,7 @@ GVAR_DEF(PrimitivePtr, kPrimSvd, std::make_shared<Primitive>("Svd"));
 GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppressionV3, std::make_shared<Primitive>("NonMaxSuppressionV3"));
 GVAR_DEF(PrimitivePtr, kPrimAdjustHue, std::make_shared<Primitive>(kAdjustHue));
 GVAR_DEF(PrimitivePtr, kPrimAdjustContrastv2, std::make_shared<Primitive>(kAdjustContrastv2));
+GVAR_DEF(PrimitivePtr, kPrimAdjustSaturation, std::make_shared<Primitive>(kAdjustSaturation));
 
 // Statements
 GVAR_DEF(PrimitivePtr, kPrimReturn, std::make_shared<Primitive>("Return"));
