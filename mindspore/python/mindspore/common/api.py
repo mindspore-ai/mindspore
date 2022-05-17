@@ -403,6 +403,7 @@ class _MindsporeFunctionExecutor:
                     self.input_signature.append(args_list[-1])
                 Validator.check_dynamic_shape(self.input_signature, args_list)
                 compile_args = tuple(self.input_signature)
+                _pynative_executor.set_dynamic_input(self.obj, *compile_args)
         return compile_args
 
 
@@ -767,17 +768,17 @@ class _PynativeExecutor:
         """
         self._executor.grad_net(grad, obj, weights, grad_position, *args, *(kwargs.values()))
 
-    def del_cell(self, cell_id=""):
+    def del_cell(self, obj):
         """
         Clean resource for cell.
 
         Args:
-            cell_id (str): The ID of cell object.
+            obj (Function/Cell): The function or cell instance.
 
         Return:
             None.
         """
-        self._executor.clear_cell(cell_id)
+        self._executor.clear_cell(obj)
 
     def clear_res(self):
         """

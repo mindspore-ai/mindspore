@@ -37,12 +37,17 @@ class MS_CORE_API Cell final : public Named {
   /// \brief Constructor.
   ///
   /// \param[in] name The name of Cell.
-  explicit Cell(const std::string &name) : Named(name) {}
+  explicit Cell(const std::string &name);
   MS_DECLARE_PARENT(Cell, Named);
 
   abstract::AbstractBasePtr ToAbstract() override;
 
   std::string ToString() const override;
+
+  /// \brief Get the id of this Cell.
+  ///
+  /// \return The id of this Cell.
+  string id() const { return id_; }
 
   /// \brief Get information about all attributes.
   ///
@@ -110,6 +115,7 @@ class MS_CORE_API Cell final : public Named {
   ~Cell() override = default;
 
  private:
+  string id_;
   mindspore::HashMap<std::string, ValuePtr> attrs_;
   enum MixedPrecisionType mixed_type_ { kNotSet };
 };
