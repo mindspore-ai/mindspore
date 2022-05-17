@@ -219,7 +219,7 @@ void UpdateGraphsRefNodeAddress(const std::vector<KernelGraphPtr> &graphs) {
   for (const auto &graph : graphs) {
     // The DeviceAddress of the graph parameter has been updated.
     // The output address of RefNode needs to be consistent with the address of parameter.
-    if (!graph->is_executing_sink()) {
+    if (!graph->is_graph_run_mode()) {
       UpdateRefNodeOutputDeviceAddress(graph);
     }
   }

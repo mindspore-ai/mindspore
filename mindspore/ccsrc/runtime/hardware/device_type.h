@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace device {
+enum class RunMode { kUnknown, kKernelMode, kGraphMode };
 enum class DeviceType { kUnknown, kCPU, kAscend, kGPU };
 static const std::map<DeviceType, std::string> device_type_to_name_map = {{DeviceType::kUnknown, "Unknown"},
                                                                           {DeviceType::kAscend, "Ascend"},

@@ -418,7 +418,7 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
   PROF_START(preprocess_before_run_graph);
   SetErrorManagerContext();
   try {
-    if (graph->is_executing_sink()) {
+    if (graph->is_graph_run_mode()) {
       device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
       UpdateExecOrder(graph);
       device::KernelAdjust::GetInstance().InsertDeviceLoopCtrl(graph);
@@ -592,7 +592,7 @@ bool AscendDeviceContext::ExecuteGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   const uint64_t kUSecondInSecond = 1000000;
   bool ret = false;
-  if (graph->is_executing_sink()) {
+  if (graph->is_graph_run_mode()) {
     InsertEventBeforeRunTask(graph);
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -950,7 +950,7 @@ bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vec
 
 void AscendDeviceContext::InsertEventBeforeRunTask(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  if (!graph->is_executing_sink() || graph->is_dynamic_shape()) {
+  if (!graph->is_graph_run_mode() || graph->is_dynamic_shape()) {
     return;
   }
   MS_LOG(DEBUG) << "Insert event between PyNative and Graph";

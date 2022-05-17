@@ -256,7 +256,7 @@ KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const Kerne
 
   // In sink mode, the data exchange between child graphs is expressed as parameters. These parameters are stored
   // in the graph and should be obtained from the super kernel actor.
-  if (kernel_graph->is_executing_sink() &&
+  if (kernel_graph->is_graph_run_mode() &&
       ((node == nullptr) || node->isa<CNode>() || kernel_graph->IsChildGraphResult(node))) {
     return KernelTransformType::kSuperKernelActor;
   }

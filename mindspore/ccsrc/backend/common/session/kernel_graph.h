@@ -429,8 +429,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   bool IsDatasetGraph() const;
 
-  bool is_executing_sink() const { return is_executing_sink_; }
-  void set_is_executing_sink(bool is_executing_sink) { is_executing_sink_ = is_executing_sink; }
+  void set_run_mode(device::RunMode run_mode) { run_mode_ = run_mode; }
+  bool is_graph_run_mode() const { return run_mode_ == device::RunMode::kGraphMode; }
   bool is_loop_count_sink() const { return is_loop_count_sink_; }
   void set_is_loop_count_sink(bool is_loop_count_sink) { is_loop_count_sink_ = is_loop_count_sink; }
   const mindspore::HashMap<AnfNodePtr, AnfNodePtr> &front_backend_anf_map() const { return front_backend_anf_map_; }
@@ -562,8 +562,9 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // Indicate whether the kernels in the graphs acquire Python GIL.
   bool is_need_gil_{false};
 
-  // Indicate whether the kernel graph sink to the device executing.
-  bool is_executing_sink_{false};
+  // Indicate whether the kernel graph sink will run on graph executor or kernel executor
+  device::RunMode run_mode_{device::RunMode::kUnknown};
+
   // Indicate whether the kernel graph loop sink to the device executing.
   bool is_loop_count_sink_{false};
 };

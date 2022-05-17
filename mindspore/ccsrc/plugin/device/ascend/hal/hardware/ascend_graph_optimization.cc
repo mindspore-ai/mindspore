@@ -127,7 +127,7 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
   }
 #endif
 
-  if (graph->is_executing_sink()) {
+  if (graph->is_graph_run_mode()) {
     opt::HideNopNode(graph.get());
   }
 

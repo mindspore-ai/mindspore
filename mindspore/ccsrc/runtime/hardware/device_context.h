@@ -38,7 +38,6 @@ using mindspore::kernel::KernelMod;
 
 const size_t kDeviceContextsNumOne = 1;
 const size_t kDeviceContextsNumTwo = 2;
-enum class RunMode { kUnknown, kKernelMode, kGraphMode };
 
 struct DeviceContextKey {
   // device type name, such as 'GPU' 'Ascend' 'CPU'.

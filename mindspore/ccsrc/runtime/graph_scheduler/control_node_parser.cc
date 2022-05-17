@@ -822,7 +822,7 @@ bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, cons
     return false;
   }
 
-  if (graph->is_executing_sink()) {
+  if (graph->is_graph_run_mode()) {
     MS_LOG(ERROR) << "Not support the execution sink fully in the control flow.";
     return true;
   }

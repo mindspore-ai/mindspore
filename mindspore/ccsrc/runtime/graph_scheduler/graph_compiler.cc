@@ -438,9 +438,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
 
   if (run_mode == device::RunMode::kUnknown) {
     auto run_mode = device_context->GetRunMode(graph);
-    if (run_mode == device::RunMode::kGraphMode) {
-      graph->set_is_executing_sink(true);
-    }
+    graph->set_run_mode(run_mode);
   }
 
   GraphId graph_id;
@@ -488,7 +486,7 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   }
 
   // set executing sink true in graph mode
-  root_graph->set_is_executing_sink(true);
+  root_graph->set_run_mode(device::RunMode::kGraphMode);
   root_graph->set_is_loop_count_sink(true);
 
   // Unify the MindIR, must be before of the graph optimization.
@@ -599,6 +597,7 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
 
+  graph->set_run_mode(device::RunMode::kKernelMode);
   // session_ is SessionBasic, AscendUnifyMindIR has not been executed.
   device_context->UnifyMindIR(graph);
 
