@@ -127,6 +127,7 @@ class ParallelThreadPool : public ActorThreadPool {
   std::atomic_int tasks_end_ = 0;
   ParallelTask *tasks_;
   size_t tasks_size_ = 0;
+  static std::mutex create_thread_pool_muntex_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_PARALLEL_THREADPOOL_H_
