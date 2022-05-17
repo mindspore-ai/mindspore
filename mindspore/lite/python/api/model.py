@@ -15,6 +15,7 @@
 """
 Model API.
 """
+import os
 from enum import Enum
 
 from ._checkparam import check_isinstance
@@ -71,14 +72,17 @@ class Model:
         check_isinstance("model_path", model_path, str)
         check_isinstance("model_type", model_type, ModelType)
         check_isinstance("context", context, Context)
+        if model_path != "":
+            if not os.path.exists(model_path):
+                raise RuntimeError(f"build_from_file failed! model_path is not exist!")
 
         self.model_path_ = model_path
         model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
         if model_type is ModelType.MINDIR:
             model_type_ = _c_lite_wrapper.ModelType.kMindIR
         ret = self._model.build_from_file(self.model_path_, model_type_, context._context)
-        if ret != 0:
-            raise RuntimeError(f"build_from_file failed! Error code is {ret}")
+        if not ret.IsOk():
+            raise RuntimeError(f"build_from_file failed! Error is {ret.ToString()}")
 
     def resize(self, inputs, dims):
         """
@@ -99,25 +103,31 @@ class Model:
         if not isinstance(inputs, list):
             raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
         _inputs = []
+        if not isinstance(dims, list):
+            raise TypeError("dims must be list, but got {}.".format(type(dims)))
         for i, element in enumerate(inputs):
             if not isinstance(element, Tensor):
                 raise TypeError(f"inputs element must be Tensor, but got "
                                 f"{type(element)} at index {i}.")
-            _inputs.append(element._tensor)
-        if not isinstance(dims, list):
-            raise TypeError("dims must be list, but got {}.".format(type(dims)))
         for i, element in enumerate(dims):
             if not isinstance(element, list):
                 raise TypeError(f"dims element must be list, but got "
                                 f"{type(element)} at index {i}.")
             for j, dim in enumerate(element):
                 if not isinstance(dim, int):
-                    raise TypeError(f"shape element must be int, but got "
-                                    f"{type(dim)} at index {j}.")
-
+                    raise TypeError(f"dims element's element must be int, but got "
+                                    f"{type(dim)} at {i}th dims element's {j}th element.")
+        if len(inputs) != len(dims):
+            raise ValueError(f"inputs's size does not match dims's size, but got "
+                             f"inputs: {len(inputs)} and dims: {len(dims)}.")
+        for i, element in enumerate(inputs):
+            if len(element.get_shape()) != len(dims[i]):
+                raise ValueError(f"one of inputs's size does not match one of dims's size, but got "
+                                 f"input: {element.get_shape()} and dim: {len(dims[i])} at {i} index.")
+            _inputs.append(element._tensor)
         ret = self._model.resize(_inputs, dims)
-        if ret != 0:
-            raise RuntimeError(f"resize failed! Error code is {ret}")
+        if not ret.IsOk():
+            raise RuntimeError(f"resize failed! Error is {ret.ToString()}")
 
     def predict(self, inputs, outputs):
         """
@@ -154,8 +164,8 @@ class Model:
             _outputs.append(element._tensor)
 
         ret = self._model.predict(_inputs, _outputs, None, None)
-        if ret != 0:
-            raise RuntimeError(f"predict failed! Error code is {ret}")
+        if not ret.IsOk():
+            raise RuntimeError(f"predict failed! Error is {ret.ToString()}")
 
     def get_inputs(self):
         """
@@ -251,6 +261,8 @@ class RunnerConfig:
     def __init__(self, context, workers_num):
         check_isinstance("context", context, Context)
         check_isinstance("workers_num", workers_num, int)
+        if workers_num < 0:
+            raise ValueError(f"RunnerConfig's init failed! workers_num must be positive.")
         self._runner_config = _c_lite_wrapper.RunnerConfigBind()
         self._runner_config.set_workers_num(workers_num)
         self._runner_config.set_context(context._context)
@@ -293,15 +305,17 @@ class ModelParallelRunner:
             RuntimeError: init ModelParallelRunner failed.
 
         Examples:
-            >>> model_parallel_runner.init("test.ms", runner_config)
+            >>> model_parallel_runner.init("mnist.tflite.ms", runner_config)
         """
         check_isinstance("model_path", model_path, str)
         check_isinstance("runner_config", runner_config, RunnerConfig)
-
+        if model_path != "":
+            if not os.path.exists(model_path):
+                raise RuntimeError(f"ModelParallelRunner's init failed! model_path is not exist!")
         self.model_path_ = model_path
         ret = self._model.init(self.model_path_, runner_config._runner_config)
-        if ret != 0:
-            raise RuntimeError(f"init failed! Error code is {ret}")
+        if not ret.IsOk():
+            raise RuntimeError(f"ModelParallelRunner's init failed! Error is {ret.ToString()}")
 
     def predict(self, inputs, outputs):
         """
@@ -338,8 +352,8 @@ class ModelParallelRunner:
             _outputs.append(element._tensor)
 
         ret = self._model.predict(_inputs, _outputs, None, None)
-        if ret != 0:
-            raise RuntimeError(f"predict failed! Error code is {ret}")
+        if not ret.IsOk():
+            raise RuntimeError(f"predict failed! Error is {ret.ToString()}")
 
     def get_inputs(self):
         """

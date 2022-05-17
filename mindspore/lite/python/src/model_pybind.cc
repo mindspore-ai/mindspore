@@ -27,38 +27,52 @@ void ModelPyBind(const py::module &m) {
     .value("kMindIR", ModelType::kMindIR)
     .value("kMindIR_Lite", ModelType::kMindIR_Lite);
 
+  py::enum_<StatusCode>(m, "StatusCode")
+    .value("kSuccess", StatusCode::kSuccess)
+    .value("kLiteError", StatusCode::kLiteError)
+    .value("kLiteNullptr", StatusCode::kLiteNullptr)
+    .value("kLiteParamInvalid", StatusCode::kLiteParamInvalid)
+    .value("kLiteNoChange", StatusCode::kLiteNoChange)
+    .value("kLiteSuccessExit", StatusCode::kLiteSuccessExit)
+    .value("kLiteMemoryFailed", StatusCode::kLiteMemoryFailed)
+    .value("kLiteNotSupport", StatusCode::kLiteNotSupport)
+    .value("kLiteThreadPoolError", StatusCode::kLiteThreadPoolError)
+    .value("kLiteUninitializedObj", StatusCode::kLiteUninitializedObj)
+    .value("kLiteFileError", StatusCode::kLiteFileError)
+    .value("kLiteServiceDeny", StatusCode::kLiteServiceDeny)
+    .value("kLiteOutOfTensorRange", StatusCode::kLiteOutOfTensorRange)
+    .value("kLiteInputTensorError", StatusCode::kLiteInputTensorError)
+    .value("kLiteReentrantError", StatusCode::kLiteReentrantError)
+    .value("kLiteGraphFileError", StatusCode::kLiteGraphFileError)
+    .value("kLiteNotFindOp", StatusCode::kLiteNotFindOp)
+    .value("kLiteInvalidOpName", StatusCode::kLiteInvalidOpName)
+    .value("kLiteInvalidOpAttr", StatusCode::kLiteInvalidOpAttr)
+    .value("kLiteOpExecuteFailure", StatusCode::kLiteOpExecuteFailure)
+    .value("kLiteFormatError", StatusCode::kLiteFormatError)
+    .value("kLiteInferError", StatusCode::kLiteInferError)
+    .value("kLiteInferInvalid", StatusCode::kLiteInferInvalid)
+    .value("kLiteInputParamInvalid", StatusCode::kLiteInputParamInvalid);
+
+  py::class_<Status, std::shared_ptr<Status>>(m, "Status")
+    .def(py::init<>())
+    .def("ToString", &Status::ToString)
+    .def("IsOk", &Status::IsOk)
+    .def("IsError", &Status::IsError);
+
   py::class_<Model, std::shared_ptr<Model>>(m, "ModelBind")
     .def(py::init<>())
-    .def("build_from_buff",
-         [](Model &model, const void *model_data, size_t data_size, ModelType model_type,
-            const std::shared_ptr<Context> &model_context = nullptr) {
-           auto ret = model.Build(model_data, data_size, model_type, model_context);
-           return static_cast<uint32_t>(ret.StatusCode());
-         })
-    .def("build_from_file",
-         [](Model &model, const std::string &model_path, ModelType model_type,
-            const std::shared_ptr<Context> &context = nullptr) {
-           auto ret = model.Build(model_path, model_type, context);
-           return static_cast<uint32_t>(ret.StatusCode());
-         })
+    .def(
+      "build_from_buff",
+      static_cast<Status (Model::*)(const void *, size_t, ModelType, const std::shared_ptr<Context> &)>(&Model::Build))
+    .def(
+      "build_from_file",
+      static_cast<Status (Model::*)(const std::string &, ModelType, const std::shared_ptr<Context> &)>(&Model::Build))
     .def("build_from_file_with_decrypt",
-         [](Model &model, const std::string &model_path, ModelType model_type,
-            const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
-            const std::string &cropto_lib_path) {
-           auto ret = model.Build(model_path, model_type, model_context, dec_key, dec_mode, cropto_lib_path);
-           return static_cast<uint32_t>(ret.StatusCode());
-         })
-    .def("resize",
-         [](Model &model, const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
-           auto ret = model.Resize(inputs, dims);
-           return static_cast<uint32_t>(ret.StatusCode());
-         })
-    .def("predict",
-         [](Model &model, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-            const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr) {
-           auto ret = model.Predict(inputs, outputs, before, after);
-           return static_cast<uint32_t>(ret.StatusCode());
-         })
+         static_cast<Status (Model::*)(const std::string &, ModelType, const std::shared_ptr<Context> &, const Key &,
+                                       const std::string &, const std::string &)>(&Model::Build))
+    .def("resize", &Model::Resize)
+    .def("predict", static_cast<Status (Model::*)(const std::vector<MSTensor> &, std::vector<MSTensor> *,
+                                                  const MSKernelCallBack &, const MSKernelCallBack &)>(&Model::Predict))
     .def("get_inputs", &Model::GetInputs)
     .def("get_outputs", &Model::GetOutputs)
     .def("get_input_by_tensor_name",
