@@ -67,12 +67,29 @@ class RecvActor : public RpcActor {
   // Besides erasing input data and input controls when finish actor running, inter-process inputs should be erased.
   void EraseInput(const OpContext<DeviceTensor> *context) override;
 
+  // Before calling the Run method in KernelActor, some preprocess like inferring shape should be done. So rewrite the
+  // Run method.
+  void Run(OpContext<DeviceTensor> *const context) override;
+
   // Set the message handler of the server.
   virtual void SetMessageHandler();
 
   std::unique_ptr<TCPServer> server_;
 
  private:
+  // Create abstract and add to the abstract list.
+  void AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const ShapeVector &shapes, TypeId data_type,
+                          size_t input_index);
+
+  // Parse the protobuf message from the given buffer. The format is as below.
+  // |--------22 bytes------|---4 bytes--|PB data size bytes| data size bytes |
+  // |RPC_DYNAMIC_SHAPE_DATA|PB data size|      PB data     | real data       |
+  void ParseDynamicShapeData(const std::string &dynamic_shape_data, AbstractBasePtrList *args_spec_list, size_t count);
+
+  // After Recv actor receives data from a remote peer, the data could be with dynamic shape so we need to preprocess
+  // it, e.g., infer shape for RpcRecv kernel and call Resize().
+  void PreprocessRemoteInput(MessageBase *const msg);
+
   // The message callback of the tcp server.
   MessageBase *HandleMessage(MessageBase *const msg);
 

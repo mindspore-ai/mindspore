@@ -45,22 +45,6 @@ const PrimitiveSet expand_prims{
 };
 const std::set<std::string> kNodeTupleOutSet = {prim::kMakeTuple, prim::kGetNext};
 
-std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape) {
-  MS_EXCEPTION_IF_NULL(shape);
-  std::vector<size_t> shape_size_t;
-  if (AnfUtils::IsShapeDynamic(shape)) {
-    if (std::all_of(shape->max_shape().begin(), shape->max_shape().end(), [](int64_t s) { return s >= 0; })) {
-      std::transform(shape->max_shape().begin(), shape->max_shape().end(), std::back_inserter(shape_size_t),
-                     LongToSize);
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid Max Shape";
-    }
-  } else {
-    std::transform(shape->shape().begin(), shape->shape().end(), std::back_inserter(shape_size_t), LongToSize);
-  }
-  return shape_size_t;
-}
-
 enum class ShapeType { kMaxShape, kMinShape };
 
 void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index, std::vector<KernelWithIndex> *inputs) {
@@ -630,7 +614,7 @@ std::vector<size_t> AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const a
   MS_EXCEPTION_IF_NULL(base_shape);
   if (base_shape->isa<abstract::Shape>()) {
     if (output_idx == 0) {
-      return TransShapeToSizet(base_shape->cast<abstract::ShapePtr>());
+      return AnfUtils::TransShapeToSizet(base_shape->cast<abstract::ShapePtr>());
     }
     MS_LOG(EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index [" << output_idx
                       << trace::DumpSourceLines(node);
@@ -643,7 +627,7 @@ std::vector<size_t> AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const a
     }
     auto b_shp = (*tuple_shape)[output_idx];
     if (b_shp->isa<abstract::Shape>()) {
-      return TransShapeToSizet(b_shp->cast<abstract::ShapePtr>());
+      return AnfUtils::TransShapeToSizet(b_shp->cast<abstract::ShapePtr>());
     } else if (b_shp->isa<abstract::NoShape>()) {
       return std::vector<size_t>();
     } else if (b_shp->isa<abstract::TupleShape>()) {

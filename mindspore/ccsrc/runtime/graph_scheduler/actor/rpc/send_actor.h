@@ -55,6 +55,12 @@ class SendActor : public RpcActor {
   std::unique_ptr<TCPClient> client_;
 
  private:
+  // Serialize dynamic shape data. The format is shown below:
+  // |--------22 bytes------|---4 bytes--|PB data size bytes| data size bytes |
+  // |RPC_DYNAMIC_SHAPE_DATA|PB data size|      PB data     | real data       |
+  void SerializeDynamicShapeMessgae(std::string *msg_body, const ShapeVector &shape_vec, const TypeId &data_type,
+                                    const kernel::AddressPtr &addr);
+
   friend class GraphScheduler;
 
   // This send actor's destination peers' actor ids and route table.

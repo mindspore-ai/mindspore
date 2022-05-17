@@ -80,19 +80,60 @@ void SendActor::SendOutput(OpContext<DeviceTensor> *const context) {
   }
 }
 
+void SendActor::SerializeDynamicShapeMessgae(std::string *msg_body, const ShapeVector &shape_vec,
+                                             const TypeId &data_type, const kernel::AddressPtr &addr) {
+  MS_EXCEPTION_IF_NULL(msg_body);
+  MS_EXCEPTION_IF_NULL(addr);
+
+  rpc::DynamicShapeMessage pb_msg;
+  pb_msg.set_type_id(data_type);
+  *pb_msg.mutable_shape_vector() = {shape_vec.begin(), shape_vec.end()};
+  std::string pb_msg_str = pb_msg.SerializeAsString();
+
+  // 1. Magic header for dynamic shape.
+  msg_body->append(kRpcDynamicShapeData);
+  // 2. The size of the protobuf message DynamicShapeMessage.
+  size_t pb_msg_size = pb_msg_str.size();
+  msg_body->append(reinterpret_cast<char *>(&pb_msg_size), sizeof(pb_msg_size));
+  // 3. Protobuf message DynamicShapeMessage.
+  msg_body->append(pb_msg_str);
+  // 4. The real data buffer of the input.
+  msg_body->append(static_cast<char *>(addr->addr), addr->size);
+}
+
 std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtrList &data_list,
                                                         const std::string &server_url) {
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
   MS_ERROR_IF_NULL_W_RET_VAL(message, nullptr);
   message->to = AID("", server_url);
 
-  size_t total_size = 0;
-  total_size =
-    std::accumulate(data_list.begin(), data_list.end(), total_size,
-                    [](size_t total_size, const kernel::AddressPtr &output) { return total_size + output->size; });
-  message->body.reserve(total_size);
-  for (const auto &data : data_list) {
-    message->body.append(static_cast<char *>(data->addr), data->size);
+  if (is_dynamic_shape_) {
+    MS_LOG(INFO) << "This send actor builds message with dynamic shape.";
+    size_t input_size = common::AnfAlgo::GetInputTensorNum(kernel_);
+    for (size_t i = 0; i < input_size; i++) {
+      auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel_, i, false);
+      auto real_input = input_node_with_index.first;
+      auto real_input_index = input_node_with_index.second;
+      MS_EXCEPTION_IF_NULL(real_input);
+
+      auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
+      for (const auto &shape : shapes) {
+        MS_LOG(INFO) << "Shape of input " << real_input->fullname_with_scope() << " is " << shape;
+      }
+      TypeId data_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
+
+      // Serialize the message body and append the data.
+      SerializeDynamicShapeMessgae(&message->body, shapes, data_type, data_list[i]);
+    }
+  } else {
+    size_t total_size = 0;
+    total_size =
+      std::accumulate(data_list.begin(), data_list.end(), total_size,
+                      [](size_t total_size, const kernel::AddressPtr &output) { return total_size + output->size; });
+    message->body.reserve(total_size);
+    for (const auto &data : data_list) {
+      message->body.append(static_cast<char *>(data->addr), data->size);
+    }
   }
   return message;
 }

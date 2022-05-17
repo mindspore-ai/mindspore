@@ -22,6 +22,7 @@
 #include <condition_variable>
 #include "distributed/rpc/tcp/constants.h"
 #include "plugin/device/cpu/kernel/rpc/rpc_recv_kernel.h"
+#include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
 namespace runtime {
@@ -97,6 +98,7 @@ void RecvActor::RunOpInterProcessData(MessageBase *const msg, OpContext<DeviceTe
   // Parse the message from remote peer and set to rpc recv kernel.
   auto recv_kernel_mod = dynamic_cast<kernel::RpcKernelMod *>(kernel_info_->MutableKernelMod());
   MS_ERROR_IF_NULL_WO_RET_VAL(recv_kernel_mod);
+
   // We set remote data by the interface of the rpc kernel, because currently there's no remote input for a kernel mod.
   recv_kernel_mod->SetRemoteInput(msg);
 
@@ -137,6 +139,131 @@ void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
   KernelActor::EraseInput(context);
   if (input_op_inter_process_.count(context->sequential_num_) != 0) {
     (void)input_op_inter_process_.erase(context->sequential_num_);
+  }
+}
+
+void RecvActor::Run(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(kernel_info_);
+  auto recv_kernel_mod = dynamic_cast<kernel::RpcKernelMod *>(kernel_info_->MutableKernelMod());
+  MS_EXCEPTION_IF_NULL(recv_kernel_mod);
+  auto remote_input = recv_kernel_mod->GetRemoteInput();
+  // Preprocess the remote input in case data is dynamic shape.
+  PreprocessRemoteInput(remote_input);
+  KernelActor::Run(context);
+}
+
+void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const ShapeVector &shapes, TypeId data_type,
+                                   size_t input_index) {
+  MS_EXCEPTION_IF_NULL(args_spec_list);
+  MS_EXCEPTION_IF_NULL(kernel_);
+  auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel_, input_index, false);
+  auto real_input = input_node_with_index.first;
+  size_t real_input_index = input_node_with_index.second;
+  MS_EXCEPTION_IF_NULL(real_input);
+  auto output_addr = AnfAlgo::GetMutableOutputAddr(real_input, real_input_index, false);
+  auto out_tensor = std::make_shared<tensor::Tensor>(data_type, shapes);
+  MS_EXCEPTION_IF_NULL(out_tensor);
+  out_tensor->set_device_address(output_addr, false);
+  out_tensor->data_sync();
+
+  auto real_abs = real_input->abstract();
+  auto updated_shape = std::make_shared<abstract::Shape>(shapes);
+  if (real_abs->isa<abstract::AbstractTensor>()) {
+    real_abs->set_value(out_tensor);
+    real_abs->set_shape(updated_shape);
+  } else if (real_abs->isa<abstract::AbstractTuple>()) {
+    auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(abstract_tuple);
+    MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abstract_tuple->elements().size()), "Index is out of range.");
+    auto tuple_elements = abstract_tuple->elements()[real_input_index];
+    tuple_elements->set_value(out_tensor);
+    tuple_elements->set_shape(updated_shape);
+  }
+  common::AnfAlgo::AddArgList(args_spec_list, real_input, real_input_index);
+}
+
+void RecvActor::ParseDynamicShapeData(const std::string &dynamic_shape_data, AbstractBasePtrList *args_spec_list,
+                                      size_t count) {
+  // The data which could be parsed by offset in dynamic shape scenario.
+  auto data_to_be_parsed = dynamic_shape_data.c_str();
+  // The real data offsets which will be used by RpcRecvKernel.
+  std::vector<size_t> real_data_offsets;
+
+  // Once the magic header is dynamic shape, each input of the Recv is dynamic shape.
+  // So traverse each input and parse the dynamic shape data.
+  size_t last_data_size = 0;
+  for (size_t i = 0; i < count; i++) {
+    if (data_to_be_parsed >= dynamic_shape_data.c_str() + dynamic_shape_data.size()) {
+      MS_LOG(EXCEPTION) << "The dynamic shape data size is invalid.";
+    }
+    // Step 1: parse the magic header which indicates the dynamic shape.
+    std::string dynamic_shape_magic_header(data_to_be_parsed, strlen(kRpcDynamicShapeData));
+    if (dynamic_shape_magic_header != kRpcDynamicShapeData) {
+      MS_LOG(EXCEPTION) << "The dynamie shape data must have the magic header RPC_DYNAMIC_SHAPE_DATA";
+    }
+
+    // Step 2: parse the size of serialized protobuf message.
+    data_to_be_parsed += strlen(kRpcDynamicShapeData);
+    size_t pb_msg_size = 0;
+    MS_EXCEPTION_IF_CHECK_FAIL(memcpy_s(&pb_msg_size, sizeof(pb_msg_size), data_to_be_parsed, sizeof(size_t)) == 0,
+                               "memcpy_s protobuf message size failed.");
+
+    // Step 3: deserialize the protobuf message.
+    data_to_be_parsed += sizeof(pb_msg_size);
+    rpc::DynamicShapeMessage pb_msg;
+    (void)pb_msg.ParseFromArray(data_to_be_parsed, pb_msg_size);
+
+    // Step 4: parse the data shape and
+    ShapeVector shapes(pb_msg.shape_vector().begin(), pb_msg.shape_vector().end());
+    TypeId data_type = static_cast<TypeId>(pb_msg.type_id());
+    data_to_be_parsed += pb_msg_size;
+
+    // Step 5: get the size of real data as recv's input.
+    int64_t real_data_size = 1;
+    std::vector<size_t> size_t_shape(shapes.begin(), shapes.end());
+    if (!kernel::GetShapeSize(size_t_shape, TypeIdToType(data_type), &real_data_size)) {
+      MS_LOG(EXCEPTION) << "Getting shape size for shape " << size_t_shape << " failed.";
+    }
+    data_to_be_parsed += real_data_size;
+
+    // Step 6: update the abstract.
+    AddArgSpecForInput(args_spec_list, shapes, data_type, i);
+
+    real_data_offsets.push_back(strlen(kRpcDynamicShapeData) + sizeof(pb_msg_size) + pb_msg_size + last_data_size);
+    last_data_size = LongToSize(real_data_size);
+  }
+
+  auto recv_kernel_mod = dynamic_cast<kernel::RpcRecvKernelMod *>(kernel_info_->MutableKernelMod());
+  MS_EXCEPTION_IF_NULL(recv_kernel_mod);
+  recv_kernel_mod->set_real_data_offset(real_data_offsets);
+}
+
+void RecvActor::PreprocessRemoteInput(MessageBase *const msg) {
+  MS_EXCEPTION_IF_NULL(msg);
+  if (msg->body.size() <= strlen(kRpcDynamicShapeData)) {
+    MS_LOG(DEBUG) << "This is not a dynamic shape data. No need to preprocess.";
+    return;
+  }
+  std::string msg_magic_header = msg->body.substr(0, strlen(kRpcDynamicShapeData));
+  if (msg_magic_header != kRpcDynamicShapeData) {
+    MS_LOG(DEBUG) << "This is not a dynamic shape data. No need to preprocess.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Preprocess for dynamic shape data.";
+  AbstractBasePtrList args_spec_list;
+  size_t input_size = common::AnfAlgo::GetInputTensorNum(kernel_);
+  ParseDynamicShapeData(msg->body, &args_spec_list, input_size);
+
+  // The args_spec_list is updated in ParseDynamicShapeData method. So do the Infer and Resize operation.
+  auto eval_result = opt::CppInferShape(common::AnfAlgo::GetCNodePrimitive(kernel_), args_spec_list);
+  kernel_->set_abstract(eval_result);
+  auto args = kernel::AbstractArgsFromCNode(kernel_);
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel_);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  if (kernel_mod->Resize(args.op, args.inputs, args.outputs, args.depend_tensor_map) == kernel::KRET_RESIZE_FAILED) {
+    MS_LOG(EXCEPTION) << "Node " << kernel_->fullname_with_scope() << " Resize() failed.";
   }
 }
 
