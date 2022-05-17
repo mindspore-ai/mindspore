@@ -72,6 +72,7 @@ from .rsqrt import _rsqrt_aicpu
 from .rsqrt_grad import _rsqrt_grad_aicpu
 from .search_sorted import _search_sorted_aicpu
 from .stack import _stack_aicpu
+from .unstack import _unstack_aicpu
 from .addcmul import _addcmul_aicpu
 from .uniform_candidate_sampler import _uniform_candidate_sampler_aicpu
 from .log_uniform_candidate_sampler import _log_uniform_candidate_sampler_aicpu

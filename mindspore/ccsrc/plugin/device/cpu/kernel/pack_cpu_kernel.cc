@@ -18,36 +18,15 @@
 #include <thread>
 #include <algorithm>
 #include <string>
-#include <utility>
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kPackOutputsNum = 1;
+}  // namespace
 
-template <typename T>
-class PackFwdCpuKernelFunc : public CpuKernelFunc {
- public:
-  PackFwdCpuKernelFunc() = default;
-  ~PackFwdCpuKernelFunc() override = default;
-
-  void InitFunc(const CNodePtr &kernel_node) override;
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override;
-
- private:
-  void PackTensor(T *output, size_t start, size_t end) const;
-
-  int axis_{0};
-  size_t input_num_{1};
-  size_t output_size_{0};
-  size_t dims_behind_axis_{1};
-  std::unique_ptr<T *[]> inputs_host_ { nullptr };
-  std::string kernel_name_;
-};
-
-template <typename T>
-void PackFwdCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
+void PackFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -69,79 +48,80 @@ void PackFwdCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < output_shape.size(); i++) {
     output_size_ *= output_shape[i];
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool PackFwdCpuKernelFunc<T>::RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                      const std::vector<AddressPtr> &outputs) {
+bool PackFwdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
+  auto node_ = cnode_ptr_.lock();
+  if (!node_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
+  }
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num_, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kPackOutputsNum, kernel_name_);
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-  inputs_host_ = std::make_unique<T *[]>(input_num_);
+  std::unique_ptr<T *[]> inputs_host = std::make_unique<T *[]>(input_num_);
   for (size_t i = 0; i < inputs.size(); i++) {
-    inputs_host_[i] = reinterpret_cast<T *>(inputs[i]->addr);
+    inputs_host[i] = reinterpret_cast<T *>(inputs[i]->addr);
   }
 
   // multi-threading
   size_t input_size = output_size_;
-  auto task = [this, &output](size_t start, size_t end) { PackTensor(output, start, end); };
+  size_t dims_behind_axis = dims_behind_axis_;
+  auto task = [this, &output, &dims_behind_axis, &inputs_host](size_t start, size_t end) {
+    for (size_t pos = start; pos < end; ++pos) {
+      size_t cur_input_index = pos / dims_behind_axis % this->input_num_;
+      size_t cycle_len = this->input_num_ * dims_behind_axis;
+      size_t local_index = pos / cycle_len * dims_behind_axis + pos % cycle_len % dims_behind_axis;
+      output[pos] = inputs_host[cur_input_index][local_index];
+    }
+  };
   ParallelLaunchAutoSearch(task, input_size, this, &parallel_search_info_);
   return true;
 }
 
-template <typename T>
-void PackFwdCpuKernelFunc<T>::PackTensor(T *output, size_t start, size_t end) const {
-  for (size_t pos = start; pos < end; ++pos) {
-    size_t cur_input_index = pos / dims_behind_axis_ % input_num_;
-    size_t cycle_len = input_num_ * dims_behind_axis_;
-    size_t local_index = pos / cycle_len * dims_behind_axis_ + pos % cycle_len % dims_behind_axis_;
-    output[pos] = inputs_host_[cur_input_index][local_index];
-  }
-}
-
-template <typename T>
-std::shared_ptr<CpuKernelFunc> SpecializePackFwdFunc() {
-  return std::make_shared<PackFwdCpuKernelFunc<T>>();
-}
-using SpecializePackFwdFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
-std::vector<std::pair<KernelAttr, SpecializePackFwdFuncCreator>> func_class_list = {
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-   SpecializePackFwdFunc<int8_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-   SpecializePackFwdFunc<int16_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   SpecializePackFwdFunc<int32_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   SpecializePackFwdFunc<int64_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   SpecializePackFwdFunc<uint8_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-   SpecializePackFwdFunc<uint16_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-   SpecializePackFwdFunc<uint32_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   SpecializePackFwdFunc<uint64_t>},
+std::vector<std::pair<KernelAttr, PackFwdCpuKernelMod::PackFunc>> PackFwdCpuKernelMod::func_list_ = {
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   SpecializePackFwdFunc<float16>},
+   &PackFwdCpuKernelMod::LaunchKernel<float16>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   SpecializePackFwdFunc<float>},
+   &PackFwdCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &PackFwdCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   &PackFwdCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+   &PackFwdCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &PackFwdCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &PackFwdCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+   &PackFwdCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+   &PackFwdCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+   &PackFwdCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+   &PackFwdCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &PackFwdCpuKernelMod::LaunchKernel<complex64>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &PackFwdCpuKernelMod::LaunchKernel<complex128>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-   SpecializePackFwdFunc<bool>}};
-}  // namespace
+   &PackFwdCpuKernelMod::LaunchKernel<bool>}};
 
-void PackFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+std::vector<KernelAttr> PackFwdCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  (void)std::transform(func_class_list.begin(), func_class_list.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, SpecializePackFwdFuncCreator> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
-  }
-
-  func_obj_ = func_class_list[index].second();
-  func_obj_->InitFunc(kernel_node);
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, PackFunc> &pair) { return pair.first; });
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Stack, PackFwdCpuKernelMod);

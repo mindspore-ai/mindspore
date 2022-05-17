@@ -23,12 +23,16 @@
 #include <unordered_map>
 #include <vector>
 #include <tuple>
+#include <complex>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/base/unstack_base.h"
 
 namespace mindspore {
 namespace kernel {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+
 class UnpackCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   UnpackCpuKernelMod() = default;
