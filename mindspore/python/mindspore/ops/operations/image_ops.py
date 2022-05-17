@@ -26,11 +26,10 @@ class AdjustHue(Primitive):
     Adjust hue of RGB images.
 
     Note:
-        This is a convenience method that converts an RGB image to float
-        representation, converts it to HSV, adds an offset to the
-        hue channel, converts back to RGB and then back to the original
-        data type. If several adjustments are chained it is advisable to minimize
-        the number of redundant conversions.
+        A convenience method that transform an RGB image to float representation.
+        The image is adjusted by transforming the image to HSV and shifting the intensities in the hue channel,
+        then transform back to original data mode.
+        It is recommended to minimize the number of redundant transformations when several adjustments are chained.
 
     Inputs:
         - **image** (Tensor): RGB image or images. The size of the last dimension must be 3.
