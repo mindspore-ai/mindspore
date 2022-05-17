@@ -10,11 +10,7 @@ mindspore.nn.ConstantPad2d
     - **padding** (Union[int, tuple]) - 对输入的最后两维进行填充的大小。如果padding的类型为int，则在输入最后两维的前后均填充 `padding` 大小，如果padding为长度为4的tuple，形如(padding_0, padding_1, padding_2, padding_3)，那么输入 `x` 对应输出的最后一维的shape为 :math:`padding\_0 + x.shape[-1] + padding\_1` ，那么输入 `x` 对应输出的倒数第二维的shape为 :math:`padding\_2 + x.shape[-2] + padding\_3` ，输出的其余维度与输入保持一致。
     - **value** (Union[int, float]) - 填充值。
 
-    **输入：**
-
-    - **x** (Tensor) - N维Tensor。
-
-    **输出：**
+    **返回：**
 
     Tensor，填充后的Tensor。
 
