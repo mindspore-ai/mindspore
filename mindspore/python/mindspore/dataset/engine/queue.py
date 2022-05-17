@@ -32,12 +32,13 @@ class _SharedQueue(multiprocessing.queues.Queue):
     Class to implement a queue using shared memory for better performance.
     Args:
         size: Number of elements in the queue.
+        count: Shared variable to suppress log printing.
         copy_out: Flag to indidcate whether an extra copy should be done before returning.  If data will immediately be
                   copied before returning, then this can be set to False.
         max_rowsize: Maximum size of any element in the Queue in MB.
     """
 
-    def __init__(self, size, copy_out=False, max_rowsize=6):
+    def __init__(self, size, count, copy_out=False, max_rowsize=6):
         super().__init__(size, ctx=multiprocessing.get_context())
 
         self.copy_out = copy_out
@@ -53,6 +54,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
         self.num_seg = size + 2
         self.data_immediate = 0
         self.data_shared = 1
+        self.count = count
         self.print_error = True
 
         try:
@@ -102,7 +104,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
                     else:
                         if isinstance(r, np.ndarray) and r.size >= self.min_shared_mem:
                             # Only print out error the first time it happens
-                            if self.print_error:
+                            if self.count.value == 0 and self.print_error:
                                 logger.warning(
                                     "Using shared memory queue, but rowsize is larger than allocated memory "
                                     + "max_rowsize "
@@ -111,6 +113,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
                                     + str(start_bytes + r.nbytes)
                                 )
                                 self.print_error = False
+                                self.count.value += 1
                         name_list.append((self.data_immediate, r))
             super().put(name_list, timeout=timeout)
             # note above could generate a queue full exception.  It will be handled by teh caller

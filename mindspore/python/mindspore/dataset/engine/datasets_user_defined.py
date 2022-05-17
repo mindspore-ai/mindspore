@@ -205,10 +205,11 @@ class SamplerFn:
 
         if multi_process and get_enable_shared_mem():
             _check_shm_usage(num_worker, queue_size, max_rowsize)
+        count = multiprocessing.Value('i', 0)
         for _ in range(num_worker):
             if multi_process is True:
                 try:
-                    worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size, self.ppid)
+                    worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size, self.ppid, count)
                 except Exception:
                     raise RuntimeError("Init multiprocessing.Queue() failed, This might be caused by insufficient shm, "
                                        "and the recommended shm size is at least 5 GB.")
@@ -451,10 +452,10 @@ class _GeneratorWorkerMp(multiprocessing.Process):
     Worker process for multiprocess Generator.
     """
 
-    def __init__(self, dataset, eof, max_rowsize, queue_size, ppid):
+    def __init__(self, dataset, eof, max_rowsize, queue_size, ppid, count):
         self.idx_queue = multiprocessing.Queue(queue_size)
         if get_enable_shared_mem():
-            self.res_queue = _SharedQueue(queue_size, max_rowsize=max_rowsize)
+            self.res_queue = _SharedQueue(queue_size, count, max_rowsize=max_rowsize)
         else:
             self.res_queue = multiprocessing.Queue(queue_size)
         self.idx_queue._joincancelled = True  # pylint: disable=W0212
