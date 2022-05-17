@@ -470,7 +470,7 @@ mindspore.Tensor
         - **TypeError** - 如果 `end` 的数据类型不是float16或者float32。
         - **TypeError** - 如果 `weight` 为Tensor且 `weight` 不是float16或者float32。
         - **TypeError** - 如果当前Tensor和 `end` 的数据类型不一致。
-        - **TypeError** - 如果 `weight` 为Tensor且 `end` 、 `weight`和当前Tensor数据类型不一致。
+        - **TypeError** - 如果 `weight` 为Tensor且 `end` 、 `weight` 和当前Tensor数据类型不一致。
         - **ValueError** - 如果 `end` 的维度信息无法相互广播到当前Tensor。
         - **ValueError** - 如果 `weight` 为Tensor且 `weight` 的维度信息无法广播到当前Tensor。
 
@@ -814,14 +814,14 @@ mindspore.Tensor
 
         **参数：**
 
-        - **full_matrices** (bool, optional) - 如果这个参数为True，则计算完整的:math:`U`和:math:`V`。否则:math:`U`和:math:`V`的shape和P有关，P是M和N的较小值, M和N是输入矩阵的行和列。默认值：False。
-        - **compute_uv** (bool, optional) - 如果这个参数为True，则计算:math:`U`和:math:`V`, 否则只计算:math:`S`。默认值：True。
+        - **full_matrices** (bool, optional) - 如果这个参数为True，则计算完整的 :math:`U` 和 :math:`V` 。否则 :math:`U` 和 :math:`V` 的shape和P有关，P是M和N的较小值, M和N是输入矩阵的行和列。默认值：False。
+        - **compute_uv** (bool, optional) - 如果这个参数为True，则计算 :math:`U` 和 :math:`V` , 否则只计算 :math:`S` 。默认值：True。
 
         **返回：**
 
-        - **s** (Tensor) - 奇异值。shape为:math:`(*, P)`。
-        - **u** (Tensor) - 左奇异向量。如果compute_uv为False，该值为空Tensor。shape为:math:`(*, M, P)`。如果full_matrices为true，则shape为:math:`(*, M, M)`。
-        - **v** (Tensor) - 右奇异向量。如果compute_uv为False，该值为空Tensor。shape为:math:`(*, P, N)`。如果full_matrices为true，则shape为:math:`(*, N, N)`。
+        - **s** (Tensor) - 奇异值。shape为 :math:`(*, P)`。
+        - **u** (Tensor) - 左奇异向量。如果compute_uv为False，该值为空Tensor。shape为 :math:`(*, M, P)` 。如果full_matrices为true，则shape为 :math:`(*, M, M)` 。
+        - **v** (Tensor) - 右奇异向量。如果compute_uv为False，该值为空Tensor。shape为 :math:`(*, P, N)` 。如果full_matrices为true，则shape为 :math:`(*, N, N)` 。
 
         **异常：**
 
