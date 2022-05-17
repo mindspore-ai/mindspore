@@ -68,6 +68,7 @@ function Run_x86_codegen() {
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+          return 1;
       fi
 
       bind_mode=""
@@ -92,6 +93,7 @@ function Run_x86_codegen() {
           run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
       else
           run_result='x86_codegen'${suffix}': '${model_name}' failed'; echo ${run_result} >> $5;
+          return 1;
       fi
     done < $3
 }
@@ -183,6 +185,7 @@ function Run_arm_codegen() {
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
       else
           converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+          return 1;
       fi
 
       rm -rf $1/benchmark
@@ -243,6 +246,7 @@ function Run_arm_codegen() {
             run_result=$7'_codegen: '${model_name}' pass'; echo ${run_result} >> $5
         else
             run_result=$7'_codegen: '${model_name}' failed'; echo ${run_result} >> $5;
+            return 1;
         fi
     done < $3
 
