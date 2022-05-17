@@ -87,9 +87,13 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
     for (size_t index = 0; index < alloc_list.size(); index++) {
       if (alloc_list[index]->GetPtr() != nullptr) {
         auto old_dev_addr = alloc_list[index];
-        auto new_dev_addr =
-          device_context->CreateDeviceAddress(dev_ptr_list[index], size_list[index], old_dev_addr->format(),
-                                              old_dev_addr->type_id(), old_dev_addr->host_shape());
+        auto old_size = old_dev_addr->GetSize();
+        if (old_size > size_list[index]) {
+          MS_LOG(EXCEPTION) << "Device size of old device address is large than new device address, " << old_size
+                            << " vs " << size_list[index];
+        }
+        auto new_dev_addr = device_context->CreateDeviceAddress(dev_ptr_list[index], old_size, old_dev_addr->format(),
+                                                                old_dev_addr->type_id(), old_dev_addr->host_shape());
         new_dev_addr->SyncDeviceToDevice(old_dev_addr.get());
         device_context->FreeMemory(old_dev_addr.get());
       }

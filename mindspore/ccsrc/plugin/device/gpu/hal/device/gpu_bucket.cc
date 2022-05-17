@@ -65,7 +65,12 @@ void GPUBucket::AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &to
   for (size_t i = 0; i < to_allocate_address.size(); i++) {
     if (to_allocate_address[i]->GetPtr() != nullptr) {
       auto old_dev_addr = to_allocate_address[i];
-      auto new_dev_addr = device_context->CreateDeviceAddress(dev_ptr_list[i], size_list[i], old_dev_addr->format(),
+      auto old_size = old_dev_addr->GetSize();
+      if (old_size > size_list[i]) {
+        MS_LOG(EXCEPTION) << "Device size from old device address is large than new device address, " << old_size
+                          << " vs " << size_list[i];
+      }
+      auto new_dev_addr = device_context->CreateDeviceAddress(dev_ptr_list[i], old_size, old_dev_addr->format(),
                                                               old_dev_addr->type_id(), old_dev_addr->host_shape());
       new_dev_addr->SyncDeviceToDevice(old_dev_addr.get());
       device_context->FreeMemory(old_dev_addr.get());
