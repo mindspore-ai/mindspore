@@ -242,7 +242,7 @@ public abstract class Client {
             logger.severe("model path cannot be empty");
             return Status.NULLPTR;
         }
-        boolean isSuccess = model.export(modelPath, 1, false, null);
+        boolean isSuccess = model.export(modelPath, 0, false, null);
         if (!isSuccess) {
             logger.severe("save model failed");
             return Status.FAILED;
@@ -296,7 +296,6 @@ public abstract class Client {
             return false;
         }
         graph.free();
-//        model.setupVirtualBatch(32, 0.01f, 1.00f);
         return true;
     }
 
