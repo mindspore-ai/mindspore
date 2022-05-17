@@ -16,6 +16,7 @@
 Testing TypeCast op in DE
 """
 import numpy as np
+import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
@@ -109,6 +110,49 @@ def test_type_cast_string():
         assert c_image.dtype == "float16"
 
 
+def test_type_cast_eager():
+    """
+    Feature: Test eager of TypeCast
+    Description: Cast from string to string / from int to bool / from float to int
+    Expectation: Cast successfully
+    """
+    type_cast_op1 = data_trans.TypeCast(mstype.string)
+    result1 = type_cast_op1("test_strings")
+    assert result1 == "test_strings"
+
+    type_cast_op2 = data_trans.TypeCast(mstype.bool_)
+    result2 = type_cast_op2(0)
+    assert result2.tolist() is False
+
+    type_cast_op3 = data_trans.TypeCast(mstype.int32)
+    result3 = type_cast_op3([1.131613, 0.12415, 68.88])
+    assert result3.tolist() == [1, 0, 68]
+
+
+def test_type_cast_exception():
+    """
+    Feature: Test exception TypeCast
+    Description: Test exception TypeCast
+    Expectation: Fail as expectation
+    """
+    def gen():
+        for _ in range(1):
+            yield np.array(["aaaa", "bbbb", "cccc"])
+
+    with pytest.raises(RuntimeError):
+        dataset = ds.GeneratorDataset(gen, ["data1"])
+        type_cast_op1 = data_trans.TypeCast(mstype.bool_)
+        dataset = dataset.map(type_cast_op1, input_columns=["data1"])
+        for _ in dataset.create_dict_iterator(output_numpy=True):
+            pass
+
+    with pytest.raises(RuntimeError):
+        type_cast_op2 = data_trans.TypeCast(mstype.string)
+        _ = type_cast_op2([1, 2, 3, 4])
+
+
 if __name__ == "__main__":
     test_type_cast()
     test_type_cast_string()
+    test_type_cast_eager()
+    test_type_cast_exception()
