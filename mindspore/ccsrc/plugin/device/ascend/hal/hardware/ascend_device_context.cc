@@ -825,7 +825,7 @@ void *AscendDeviceContext::GetKernelStream(const CNodePtr &node) const {
     auto stream = kernel_mod->stream();
     if (stream == nullptr) {
       stream = compute_stream_;
-      MS_LOG(ERROR) << "Assign default compute stream for node " << node->fullname_with_scope();
+      MS_LOG(INFO) << "Assign default compute stream for node " << node->fullname_with_scope();
     }
     return stream;
   }
