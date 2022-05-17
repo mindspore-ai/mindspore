@@ -127,7 +127,7 @@ abstract::ShapePtr EditDistanceInferShape(const PrimitivePtr &primitive,
 TypePtr EditDistanceInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   const std::set<TypePtr> indices_valid_types = {kInt64};
-  const std::set<TypePtr> values_valid_types = {kFloat32};
+  const std::set<TypePtr> values_valid_types = {kNumber};
 
   auto hypothesis_indices_type = input_args[kIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(hypothesis_indices_type);

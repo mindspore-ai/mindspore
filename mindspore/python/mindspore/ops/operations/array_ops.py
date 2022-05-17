@@ -6210,14 +6210,13 @@ class EditDistance(Primitive):
     Inputs:
         - **hypothesis_indices** (Tensor) - The indices of the hypothesis list SparseTensor. With int64 data type.
           The shape of tensor is :math:`(N, R)`.
-        - **hypothesis_values** (Tensor) - The values of the hypothesis list SparseTensor. With float32 data type.
+        - **hypothesis_values** (Tensor) - The values of the hypothesis list SparseTensor.
           Must be 1-D vector with length of N.
         - **hypothesis_shape** (Tensor) - The shape of the hypothesis list SparseTensor.
           Must be R-length vector with int64 data type. Only constant value is allowed.
         - **truth_indices** (Tensor) - The indices of the truth list SparseTensor. With int64 data type.
           The shape of tensor is :math:`(M, R)`.
         - **truth_values** (Tensor) - The values of the truth list SparseTensor. Must be 1-D vector with length of M.
-          With float32 data type.
         - **truth_shape** (Tensor) - The shape of the truth list SparseTensor.
           Must be R-length vector with int64 data type. Only constant value is allowed.
 
