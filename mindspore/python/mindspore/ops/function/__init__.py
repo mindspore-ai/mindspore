@@ -22,7 +22,8 @@ A collection of function to build neural networks or to compute functions.
 from . import array_func, parameter_func, math_func, nn_func
 from .array_func import (unique, eye, matrix_band_part, fill, fill_, tile, size, ones, ones_like, shape, shape_, ger,
                          dyn_shape, rank, reshape, reshape_, tensor_slice, slice, scalar_to_array, scalar_to_tensor,
-                         tuple_to_array, expand_dims, transpose, scatter_nd, gather, gather_d, gather_nd, scalar_cast,
+                         tuple_to_array, expand_dims, transpose, scatter_nd, scatter_nd_add, scatter_nd_sub, gather,
+                         gather_d, gather_nd, scalar_cast,
                          masked_fill, tensor_scatter_add, tensor_scatter_div, scatter_max, scatter_min, nonzero,
                          space_to_batch_nd, range, select)
 from .parameter_func import assign, assign_add, assign_sub, index_add

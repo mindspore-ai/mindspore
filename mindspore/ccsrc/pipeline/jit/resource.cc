@@ -216,6 +216,8 @@ BuiltInTypeMap &GetMethodMap() {
        {"diagonal", std::string("diagonal")},                              // P.Eye()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()
        {"take", std::string("take")},                                      // P.GatherNd()
+       {"scatter_nd_add", std::string("scatter_nd_add")},                  // scatter_nd_add()
+       {"scatter_nd_sub", std::string("scatter_nd_sub")},                  // scatter_nd_sub()
        {"tensor_scatter_add", std::string("tensor_scatter_add")},          // P.TensorScatterAdd()
        {"tensor_scatter_div", std::string("tensor_scatter_div")},          // P.TensorScatterDiv()
        {"lp_norm", std::string("lp_norm")},                                // lp_norm()

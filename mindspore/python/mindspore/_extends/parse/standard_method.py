@@ -1658,6 +1658,24 @@ def while_cond(x):
     return x
 
 
+def scatter_nd_add(input_x, indices, updates, use_locking=False):
+    """
+    Applies sparse addition to individual values or slices in a tensor.
+    Using given values to update tensor value through the add operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+    """
+    return F.scatter_nd_add(input_x, indices, updates, use_locking)
+
+
+def scatter_nd_sub(input_x, indices, updates, use_locking=False):
+    """
+    Applies sparse subtraction to individual values or slices in a tensor.
+    Using given values to update tensor value through the subtraction operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+    """
+    return F.scatter_nd_sub(input_x, indices, updates, use_locking)
+
+
 def tensor_scatter_add(x, indices, updates):
     """
     Creates a new tensor by adding the values from the positions in `x` indicated by
