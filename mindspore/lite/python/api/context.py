@@ -15,6 +15,8 @@
 """
 Context API.
 """
+import os
+
 from ._checkparam import check_isinstance, check_list_of_element, check_input_shape
 from .lib import _c_lite_wrapper
 
@@ -46,6 +48,8 @@ class Context:
         check_isinstance("thread_affinity_mode", thread_affinity_mode, int)
         check_list_of_element("thread_affinity_core_list", thread_affinity_core_list, int, enable_none=True)
         check_isinstance("enable_parallel", enable_parallel, bool)
+        if thread_num < 0:
+            raise ValueError(f"Context's init failed! thread_num must be positive.")
         core_list = [] if thread_affinity_core_list is None else thread_affinity_core_list
         self._context = _c_lite_wrapper.ContextBind()
         self._context.set_thread_num(thread_num)
@@ -137,6 +141,8 @@ class GPUDeviceInfo(DeviceInfo):
     def __init__(self, device_id=0, enable_fp16=False):
         super(GPUDeviceInfo, self).__init__()
         check_isinstance("device_id", device_id, int)
+        if device_id < 0:
+            raise ValueError(f"GPUDeviceInfo's init failed! device_id must be positive.")
         check_isinstance("enable_fp16", enable_fp16, bool)
         self._device_info = _c_lite_wrapper.GPUDeviceInfoBind()
         self._device_info.set_device_id(device_id)
@@ -213,6 +219,14 @@ class AscendDeviceInfo(DeviceInfo):
         check_isinstance("dynamic_image_size", dynamic_image_size, str)
         check_isinstance("fusion_switch_config_path", fusion_switch_config_path, str)
         check_isinstance("insert_op_cfg_path", insert_op_cfg_path, str)
+        if device_id < 0:
+            raise ValueError(f"AscendDeviceInfo's init failed! device_id must be positive.")
+        if fusion_switch_config_path != "":
+            if not os.path.exists(fusion_switch_config_path):
+                raise RuntimeError(f"AscendDeviceInfo's init failed! fusion_switch_config_path is not exist!")
+        if insert_op_cfg_path != "":
+            if not os.path.exists(insert_op_cfg_path):
+                raise RuntimeError(f"AscendDeviceInfo's init failed! insert_op_cfg_path is not exist!")
         input_format_list = "" if input_format is None else input_format
         input_shape_list = {} if input_shape is None else input_shape
         batch_size_list = [] if dynamic_batch_size is None else dynamic_batch_size
