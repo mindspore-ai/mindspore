@@ -200,16 +200,14 @@ class GraphSplitByPattern:
                 """check stitch_op exists"""
                 return self.stitch_ops or self.stitch_atomic_ops
 
-        def __init__(self, init_op, is_output, unique_id, reach_tab, recompute_ops=None):
+        def __init__(self, init_op, is_output, unique_id, reach_tab):
             self.pattern = PrimLib.iter_type(init_op) if init_op is not None else PrimLib.UNKNOWN
             self.ops = [] if init_op is None else [init_op]
             self.in_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.out_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.mode = None
             self.stitch_info = self.StitchInfo()
-            self.recompute_ops = [] if recompute_ops is None else recompute_ops
-            self.ori_op_map = {}
-            self.is_recompute = False
+            self.recompute_ops = []
             self.is_output = is_output
             self.output_excluded = set()
             if self.pattern == PrimLib.REDUCE:
@@ -266,6 +264,15 @@ class GraphSplitByPattern:
             if stitch_info.stitch_atomic_ops:
                 self.stitch_info.stitch_atomic_ops.update(stitch_info.stitch_atomic_ops)
 
+        def fuse_prepare(self, dom):
+            """do some prepare before fused to dom"""
+            del dom
+            return self.unique_id # I'm not static method
+
+        def fuse_done(self, dom):
+            """do some thing after fused to dom"""
+            dom.reach_tab.fuse(dom.unique_id, self.unique_id)
+
         def fuse(self, area):
             """Fuse `area` to `self`"""
 
@@ -291,8 +298,7 @@ class GraphSplitByPattern:
                     r = rels.pop(area)
                     _update_relation(rels, self, r)
 
-            if area.is_recompute:
-                self.cp_ops(area)
+            area.fuse_prepare(self)
             if self.pattern >= area.pattern:
                 self.ops.extend(area.ops)
             else:
@@ -311,9 +317,8 @@ class GraphSplitByPattern:
             if area.output_excluded:
                 self.output_excluded.update(area.output_excluded)
             self.update_stitch_info(area.stitch_info)
-            if not area.is_recompute:
-                self.reach_tab.fuse(self.unique_id, area.unique_id)
             self.recompute_ops.extend(area.recompute_ops)
+            area.fuse_done(self)
 
         def check_acyclic(self, to):
             """Check circle. It returns false if circle exists"""
@@ -334,27 +339,40 @@ class GraphSplitByPattern:
                         return True
             return False
 
-        def cp_ops(self, area):
+    class RecomputeArea(Area):
+        """RecomputeArea"""
+
+        def __init__(self, unique_id, reach_tab):
+            super().__init__(None, False, unique_id, reach_tab)
+            self.recom_pre = None
+            self.recom_user = None
+            self.recom_dom = None
+            self.dom_user_r = PrimLib.UNKNOWN
+            self.ori_op_map = {}
+            self.recom_map = {}
+            self.fuse_success = False
+
+        def fuse_prepare(self, dom):
             """copy recompute_ops in area to ops, self is area's user"""
-            tail_tensor = area.recompute_ops[-1].output
+            tail_tensor = self.recompute_ops[-1].output
             # copy tensors, all copied are Tensor.PARA_NONE
             tensor_map = {}
-            if area.recompute_ops[0].inputs:
-                tensor_map[area.recompute_ops[0].inputs[0]] = area.recompute_ops[0].inputs[0]
-            for op in area.recompute_ops:
+            if self.recompute_ops[0].inputs:
+                tensor_map[self.recompute_ops[0].inputs[0]] = self.recompute_ops[0].inputs[0]
+            for op in self.recompute_ops:
                 orig_tensor = op.output
                 cp_tensor = Tensor(orig_tensor.name, orig_tensor.shape, orig_tensor.dtype, orig_tensor.data_format)
                 tensor_map[orig_tensor] = cp_tensor
             # copy ops
             cp_ops = []
-            for op in area.recompute_ops:
+            for op in self.recompute_ops:
                 inputs = [tensor_map.get(op.inputs[0])] if op.inputs else []
                 cp_op = Operator(op.prim, inputs, tensor_map.get(op.output), op.attrs)
                 cp_op.all_inputs = cp_op.inputs
                 cp_ops.append(cp_op)
-                area.ori_op_map[cp_op] = op
+                self.ori_op_map[cp_op] = op
             # connect copied ops
-            for op in self.ops:
+            for op in dom.ops:
                 if tail_tensor in op.inputs:
                     op.inputs.remove(tail_tensor)
                     op.inputs.append(tensor_map.get(tail_tensor))
@@ -362,12 +380,59 @@ class GraphSplitByPattern:
                     tensor_map.get(tail_tensor).to_ops.append(op)
             # fill cp_ops in self.recompute_area
             cp_dom_op = None
-            for cp, ori in area.ori_op_map.items():
-                if ori == area.dom_op():
+            for cp, ori in self.ori_op_map.items():
+                if ori == self.dom_op():
                     cp_dom_op = cp
-            area.ops.clear()
-            area.ops.append(cp_dom_op)
-            area.ops.extend((op for op in cp_ops if op != cp_dom_op))
+            self.ops.clear()
+            self.ops.append(cp_dom_op)
+            self.ops.extend((op for op in cp_ops if op != cp_dom_op))
+
+        def fuse_done(self, dom):
+            """do some thing after fused to dom"""
+            del dom
+            self.fuse_success = True
+
+        def reset(self, dom_area, ops, user_area, pre_area):
+            """set the recompute area and connect with other areas"""
+            self.recompute_ops.extend(ops)
+            # recom_area: set dom_op and correct ops length
+            patterns = list(PrimLib.iter_type(op) for op in ops)
+            self.pattern = max(patterns)
+            for i, pat in enumerate(patterns):
+                if pat == self.pattern:
+                    self.ops = [ops[i]] * len(ops)
+                    break
+            # disconnect dom_area and user_area
+            self.dom_user_r = dom_area.out_relations[user_area]
+            dom_area.out_relations.pop(user_area)
+            user_area.in_relations.pop(dom_area)
+            # connect recom_area and user_area
+            user_area.in_relations[self] = self.dom_user_r
+            self.out_relations[user_area] = self.dom_user_r
+            # connect recom_pre and recom_area
+            self.recom_pre = pre_area
+            if self.recom_pre is not None:
+                self.in_relations[self.recom_pre] = dom_area.in_relations[self.recom_pre]
+                self.recom_pre.out_relations[self] = dom_area.in_relations[self.recom_pre]
+            # set related areas
+            self.recom_user = user_area
+            self.recom_dom = dom_area
+            self.fuse_success = False
+
+        def clear(self):
+            """disconnect recom_area from other areas, and clear recom_area"""
+            self.out_relations.clear()
+            self.in_relations.clear()
+            if not self.fuse_success:
+                self.recom_user.in_relations.pop(self)
+                self.recom_user.in_relations[self.recom_dom] = self.dom_user_r
+                self.recom_dom.out_relations[self.recom_user] = self.dom_user_r
+                if self.recom_pre:
+                    self.recom_pre.out_relations.pop(self)
+            self.ops.clear()
+            self.recompute_ops.clear()
+            self.recom_map.update(self.ori_op_map)
+            self.ori_op_map.clear()
 
     def __init__(self, graph, flags):
         self.graph = graph
@@ -392,14 +457,7 @@ class GraphSplitByPattern:
         for i in range(len(self.areas) - 1, -1, -1):
             self.areas[i].link_output()
         if self.enable_recompute:
-            self.recom_area = self.Area(None, False, idx, self.reach_tab)
-            self.recom_area.is_recompute = True
-            self.recom_pre = None
-            self.recom_user = None
-            self.recom_dom = None
-            self.dom_user_r = PrimLib.UNKNOWN
-            self.recom_res = False
-            self.orig_op_map = {}
+            self.recom_area = self.RecomputeArea(idx, self.reach_tab)
 
     def set_area_map(self, ops, area):
         """update area_map after op fused to area"""
@@ -502,17 +560,17 @@ class GraphSplitByPattern:
 
     def fuse_recom(self, selector):
         """Fuse recompute area to its user"""
-        for dominant in [self.recom_area, self.recom_user]:
+        user = self.recom_area.recom_user
+        for dominant in [self.recom_area, user]:
             result = selector(dominant)
             if result and result[0]:
                 fuse_areas, _ = result
                 fuse_areas = self.limit_area_size(dominant, fuse_areas)
                 if not fuse_areas:
                     continue
-                if fuse_areas[0] in [self.recom_area, self.recom_user]:
-                    self.recom_user.fuse(self.recom_area)
-                    self.set_area_map(self.recom_area.ops, self.recom_user)
-                    self.recom_res = True
+                if fuse_areas[0] in [self.recom_area, user]:
+                    user.fuse(self.recom_area)
+                    self.set_area_map(self.recom_area.ops, user)
                     return True
         return False
 
@@ -521,8 +579,8 @@ class GraphSplitByPattern:
         ids = {}
         for i, op in enumerate(self.graph.ops):
             ids[op] = i
-        if hasattr(self, 'orig_op_map'):
-            for k, v in self.orig_op_map.items():
+        if self.enable_recompute:
+            for k, v in self.recom_area.recom_map.items():
                 ids[k] = ids.get(v)
         return ids
 
@@ -545,165 +603,87 @@ class GraphSplitByPattern:
     def split(self):
         """Split graph by pattern"""
         self.pattern_fuse()
-        self.recompute_fuse()
+        if self.enable_recompute:
+            self.recompute_fuse()
         subgraphs, graphmodes = self.to_subgraphs()
         return subgraphs, graphmodes
-
-    def set_recompute(self, dom_area, ops, user_area):
-        """set the recompute area and connect with other areas"""
-        self.recom_area.recompute_ops.extend(ops)
-        # recom_area: set dom_op and correct ops length
-        patterns = list(PrimLib.iter_type(op) for op in ops)
-        self.recom_area.pattern = max(patterns)
-        for i, pat in enumerate(patterns):
-            if pat == self.recom_area.pattern:
-                self.recom_area.ops = [ops[i]] * len(ops)
-                break
-        # disconnect dom_area and user_area
-        self.dom_user_r = dom_area.out_relations[user_area]
-        dom_area.out_relations.pop(user_area)
-        user_area.in_relations.pop(dom_area)
-        # connect recom_area and user_area
-        user_area.in_relations[self.recom_area] = self.dom_user_r
-        self.recom_area.out_relations[user_area] = self.dom_user_r
-        # connect recom_pre and recom_area
-        self.recom_pre = self.area_map.get(ops[0].inputs[0].op) if ops[0].inputs and ops[0].inputs[0].op else None
-        if self.recom_pre is not None:
-            self.recom_area.in_relations[self.recom_pre] = dom_area.in_relations[self.recom_pre]
-            self.recom_pre.out_relations[self.recom_area] = dom_area.in_relations[self.recom_pre]
-        # set related areas
-        self.recom_user = user_area
-        self.recom_dom = dom_area
-        self.recom_res = False
-
-    def clear_recompute(self):
-        """disconnect recom_area from other areas, and clear recom_area"""
-        self.recom_area.out_relations.clear()
-        self.recom_area.in_relations.clear()
-        if not self.recom_res:
-            self.recom_user.in_relations.pop(self.recom_area)
-            self.recom_user.in_relations[self.recom_dom] = self.dom_user_r
-            self.recom_dom.out_relations[self.recom_user] = self.dom_user_r
-            if self.recom_pre:
-                self.recom_pre.out_relations.pop(self.recom_area)
-        self.recom_area.ops.clear()
-        self.recom_area.recompute_ops.clear()
-        self.orig_op_map.update(self.recom_area.ori_op_map)
-        self.recom_area.ori_op_map.clear()
-
-    def to_subgraph(self, dom):
-        """Transform area to subgraphs"""
-        ids = self.index_op()
-        dom_ops = list()
-        dom_ops.extend(dom.ops)
-        dom_ops.sort(key=ids.get)
-        subgraph = []
-        subgraph = Graph('{}_area'.format(self.graph.name), dom_ops)
-        return subgraph
-
-    def find_cheap_regions(self, dom):
-        """extract all the cheap regions in dom area, toposort each region before return"""
-
-        def _grow_region(region_ops, candidate_op, inputs):
-            """include op to region_ops if region grow"""
-            op = candidate_op
-            max_weight = 20
-            weight = 1
-            while weight <= max_weight:
-                # region successfully ends at inputs
-                if not op.inputs:
-                    region_ops.append(op)
-                    return True
-                if op.inputs[0] in inputs and len(op.inputs) == 1 and \
-                        PrimLib.iter_type(op) <= PrimLib.BROADCAST:
-                    region_ops.append(op)
-                    return True
-                # region fails to grow
-                if len(op.inputs) > 1 or PrimLib.iter_type(op) > PrimLib.BROADCAST:
-                    return False
-                # region grows successfully
-                weight = weight + 1
-                region_ops.append(op)
-                op = op.inputs[0].op
-            return False
-
-        def _find_cheap_regions(dom):
-            sub = self.to_subgraph(dom)
-            inputs, outputs = sub.deduce_parameters()
-            if not inputs:
-                return list()
-            cheap_regions = []
-            for output in outputs:
-                #  tensor should have user other than user_area to be fused
-                if len(output.to_ops) < 2:
-                    continue
-                region_ops = []
-                if _grow_region(region_ops, output.op, inputs):
-                    region_ops.reverse()
-                    # tensor size should equal or becomes larger(cast up, broadcast)
-                    if region_ops[0].inputs and region_ops[0].inputs[0].get_size() > region_ops[-1].output.get_size():
-                        continue
-                    cheap_regions.append(region_ops)
-            return cheap_regions
-
-        return _find_cheap_regions(dom)
-
-    def select_user_area(self, tail_tensor):
-        """select the user area has only one edge to dom area"""
-
-        def _get_edge_num(dom_area, user_area):
-            """get edge num between two areas"""
-            dom_graph = self.to_subgraph(dom_area)
-            _, dom_outputs = dom_graph.deduce_parameters()
-            user_graph = self.to_subgraph(user_area)
-            user_inputs, _ = user_graph.deduce_parameters()
-            return len(list(t for t in dom_outputs if t in user_inputs))
-
-        def _select_user_area(tail_tensor):
-            user_areas = []
-            for user_op in tail_tensor.to_ops:
-                user_area = self.area_map.get(user_op)
-                if user_area.pattern == PrimLib.RESHAPE:
-                    continue
-                edge_num = _get_edge_num(self.area_map.get(tail_tensor.op), user_area)
-                if edge_num == 1 and not user_area in user_areas:
-                    user_areas.append(user_area)
-            return user_areas
-
-        return _select_user_area(tail_tensor)
 
     def recompute_fuse(self):
         """find recompute regions and copy them out to new Areas"""
 
-        def do_recompute_fuse():
-            """split the unfusing pattern by add recompute area"""
+        def _get_prods(area, border):
+            """get producer region of border op"""
+            max_weight = 10
+            stack = [border]
+            ops, inputs = [], []
+            while stack:
+                op = stack.pop()
+                if len(op.inputs) > 1 or PrimLib.iter_type(op) > PrimLib.BROADCAST or len(ops) > max_weight:
+                    return None
+                ops.append(op)
+                for t in op.inputs:
+                    if t.op in area.ops:
+                        stack.append(t.op)
+                    else:
+                        inputs.append(t)
+            return ops, inputs
 
-            def recompute_cheap_region(dom):
-                for cheap_region in cheap_regions:
-                    user_areas = self.select_user_area(cheap_region[-1].output)
-                    if not user_areas:
+        def _get_border_info(area):
+            """get border information"""
+            prods, users = {}, {}
+            for op in area.ops:
+                if len(op.output.to_ops) <= 1 and op.output.para_type != Tensor.PARA_OUTPUT:
+                    continue
+                for to in op.output.to_ops:
+                    if to in area.ops:
                         continue
-                    for user_area in user_areas:
-                        self.set_recompute(dom, cheap_region, user_area)
-                        self.pattern_fuse(self.fuse_recom)
-                        self.clear_recompute()
-                        if self.recom_res:
-                            return True
-                return False
+                    user = self.area_map.get(to)
+                    if user.pattern > PrimLib.RESHAPE:
+                        if user in users:
+                            users.get(user).append(op)
+                        else:
+                            users[user] = [op]
+                        if op not in prods:
+                            prods[op] = _get_prods(area, op)
+            return prods, users
 
-            recompute_suc = False
+        def _get_cheap_region(prods, borders):
+            """get cheap region of border ops"""
+            if len(borders) > 1:
+                return []
+            result = []
+            for op in borders:
+                if prods[op]:
+                    prod_ops, inputs = prods[op]
+                    in_size = sum([t.get_size() for t in inputs])
+                    out_size = op.output.get_size()
+                    if in_size <= out_size:
+                        pred = self.area_map.get(inputs[0].op) if inputs and inputs[0].op else None
+                        result.append([pred, prod_ops[::-1]])
+            return result
+
+        def _do_recompute(area):
+            """split the unfusing pattern by add recompute area"""
+            prods, users = _get_border_info(area)
+            for user, borders in users.items():
+                result = _get_cheap_region(prods, borders)
+                for pred, region in result:
+                    self.recom_area.reset(area, region, user, pred)
+                    self.pattern_fuse(self.fuse_recom)
+                    self.recom_area.clear()
+                    if self.recom_area.fuse_success:
+                        return True
+            return False
+
+        changed = True
+        while changed:
+            changed = False
             orig_areas = []
             orig_areas.extend(self.areas)
-            for dom in orig_areas:
-                if dom not in self.areas or not dom.out_relations:
-                    continue
-                cheap_regions = self.find_cheap_regions(dom)
-                if recompute_cheap_region(dom):
-                    recompute_suc = True
-            return recompute_suc
-
-        if self.enable_recompute:
-            while do_recompute_fuse():
+            for area in orig_areas:
+                if area in self.areas and area.out_relations:
+                    changed = _do_recompute(area) or changed
+            if changed:
                 self.pattern_fuse()
 
 
