@@ -104,6 +104,7 @@ jobject GetParallelInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_paralle
   jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
   jobject ret = env->NewObject(array_list, array_list_construct);
   jmethodID array_list_add = env->GetMethodID(array_list, "add", "(Ljava/lang/Object;)Z");
+  env->DeleteLocalRef(array_list);
 
   jclass long_object = env->FindClass("java/lang/Long");
   jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
@@ -126,6 +127,7 @@ jobject GetParallelInOrOutTensors(JNIEnv *env, jobject thiz, jlong model_paralle
     }
     jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(tensor_ptr.release()));
     env->CallBooleanMethod(ret, array_list_add, tensor_addr);
+    env->DeleteLocalRef(tensor_addr);
   }
   return ret;
 }
@@ -147,6 +149,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_ModelParallelRunner_pred
   jmethodID array_list_construct = env->GetMethodID(array_list, "<init>", "()V");
   jobject ret = env->NewObject(array_list, array_list_construct);
   jmethodID array_list_add = env->GetMethodID(array_list, "add", "(Ljava/lang/Object;)Z");
+  env->DeleteLocalRef(array_list);
   auto *pointer = reinterpret_cast<mindspore::ModelParallelRunner *>(model_parallel_runner_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Model pointer from java is nullptr");
@@ -177,7 +180,9 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_ModelParallelRunner_pred
     jclass long_object = env->FindClass("java/lang/Long");
     jmethodID long_object_construct = env->GetMethodID(long_object, "<init>", "(J)V");
     jobject tensor_addr = env->NewObject(long_object, long_object_construct, jlong(tensor_ptr.release()));
+    env->DeleteLocalRef(long_object);
     env->CallBooleanMethod(ret, array_list_add, tensor_addr);
+    env->DeleteLocalRef(tensor_addr);
   }
   return ret;
 }
