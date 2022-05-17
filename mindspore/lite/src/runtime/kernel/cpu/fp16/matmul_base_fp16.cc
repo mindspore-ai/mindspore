@@ -75,7 +75,7 @@ int MatmulBaseFP16CPUKernel::InitBias() {
       max_bias_data = in_tensors().at(THIRD_INPUT)->ElementsNum();
     }
   } else {
-    max_bias_data = UP_ROUND(params_->col_, C16NUM);
+    max_bias_data = UP_ROUND(params_->col_, C8NUM);
   }
   if (max_bias_data > bias_count_) {
     auto bias_ptr_bak = bias_ptr_;
@@ -112,18 +112,8 @@ int MatmulBaseFP16CPUKernel::ReSize() {
     free(src_b_);
     src_b_ = nullptr;
   }
-  if (vec_matmul_) {
-#ifdef ENABLE_ARM64
-    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_, C16NUM));
-    thread_stride_ = UP_DIV(UP_DIV(params_->col_, C16NUM), thread_count_) * C16NUM;
-#else
-    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_, C8NUM));
-    thread_stride_ = UP_DIV(UP_DIV(params_->col_, C8NUM), thread_count_) * C8NUM;
-#endif
-  } else {
-    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_, C8NUM));
-    thread_stride_ = UP_DIV(UP_DIV(params_->col_, C8NUM), thread_count_) * C8NUM;
-  }
+  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_, C8NUM));
+  thread_stride_ = UP_DIV(UP_DIV(params_->col_, C8NUM), thread_count_) * C8NUM;
   auto ret = InitBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitBias failed";
@@ -142,7 +132,7 @@ void MatmulBaseFP16CPUKernel::ResizeParameter() {
   if (vec_matmul_) {
     params_->row_align_ = 1;
 #ifdef ENABLE_ARM64
-    params_->col_align_ = UP_ROUND(params_->col_, C16NUM);
+    params_->col_align_ = UP_ROUND(params_->col_, C8NUM);
 #else
     params_->col_align_ = params_->col_;
 #endif
@@ -215,38 +205,25 @@ void MatmulBaseFP16CPUKernel::InitMatrixA(const void *src_ptr) {
 void MatmulBaseFP16CPUKernel::InitMatrixB(const void *src_ptr, TypeId src_data_type) {
   NNACL_CHECK_NULL_RETURN_VOID(src_ptr);
   const int8_t *int8_src = reinterpret_cast<const int8_t *>(src_ptr);
-
+#ifndef ENABLE_ARM64
   if (vec_matmul_) {
     if (params_->b_transpose_) {
       if (src_data_type == kNumberTypeFloat32) {
         Float32ToFloat16(reinterpret_cast<const float *>(src_ptr), b_pack_ptr_,
                          b_batch_ * params_->col_ * params_->deep_);
       } else {
-#ifdef ENABLE_ARM64
-        for (auto i = 0; i < b_batch_; ++i) {
-          const auto *b_src = reinterpret_cast<const float16_t *>(src_ptr) + i * params_->col_ * params_->deep_;
-          auto *dst = b_pack_ptr_ + i * params_->col_align_ * params_->deep_;
-          RowMajor2Col16MajorFp16Opt(b_src, dst, params_->col_, params_->deep_);
-        }
-#else
         memcpy(b_pack_ptr_, src_ptr, b_batch_ * params_->col_ * params_->deep_ * sizeof(float16_t));
-#endif
       }
     } else {
       for (int i = 0; i < b_batch_; i++) {
-#ifdef ENABLE_ARM64
-        const auto *b_src = reinterpret_cast<const float16_t *>(src_ptr) + i * params_->col_ * params_->deep_;
-        auto *dst = b_pack_ptr_ + i * params_->col_align_ * params_->deep_;
-        RowMajor2Row16MajorFp16Opt(b_src, dst, params_->deep_, params_->col_);
-#else
         const int8_t *batch_src = int8_src + i * params_->deep_ * params_->col_ * lite::DataTypeSize(src_data_type);
         float16_t *dst = b_pack_ptr_ + i * params_->deep_ * params_->col_;
         RowMajor2ColMajorFp16(batch_src, dst, params_->deep_, params_->col_, src_data_type == kNumberTypeFloat32);
-#endif
       }
     }
     return;
   }
+#endif
 
   for (int i = 0; i < b_batch_; i++) {
     const int8_t *src = int8_src + i * params_->deep_ * params_->col_ * lite::DataTypeSize(src_data_type);
