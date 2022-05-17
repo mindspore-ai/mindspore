@@ -25,7 +25,11 @@ class ConcateTensorRT : public TensorRTOp {
   ConcateTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                   const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
                   const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {
+    type_ = primitive->value_type();
+    axis_ = (type_ == schema::PrimitiveType_Concat ? primitive->value_as_Concat()->axis()
+                                                   : primitive->value_as_Stack()->axis());
+  }
 
   ~ConcateTensorRT() override = default;
 
@@ -39,6 +43,8 @@ class ConcateTensorRT : public TensorRTOp {
 
   Format out_format_{Format::NHWC};
   bool same_format_{true};
+  schema::PrimitiveType type_;
+  int axis_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_CONCATE_TENSORRT_H_

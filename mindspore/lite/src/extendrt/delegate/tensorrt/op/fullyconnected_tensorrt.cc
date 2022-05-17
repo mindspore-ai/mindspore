@@ -26,7 +26,7 @@ int FullyConnectedTensorRT::IsSupport(const mindspore::schema::Primitive *primit
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  if (in_tensors.size() != INPUT_SIZE3) {
+  if (in_tensors.size() != INPUT_SIZE2 && in_tensors.size() != INPUT_SIZE3) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
@@ -35,12 +35,12 @@ int FullyConnectedTensorRT::IsSupport(const mindspore::schema::Primitive *primit
 
 int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   int axis = -1;
+  auto primitive = this->GetPrimitive()->value_as_FullConnection();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "convert to primitive FullConnection failed for " << op_name_;
+    return RET_ERROR;
+  }
   if (type_ == schema::PrimitiveType_FullConnection) {
-    auto primitive = this->GetPrimitive()->value_as_FullConnection();
-    if (primitive == nullptr) {
-      MS_LOG(ERROR) << "convert to primitive FullConnection failed for " << op_name_;
-      return RET_ERROR;
-    }
     activation_ = primitive->activation_type();
     axis = primitive->axis();
   }
@@ -54,8 +54,11 @@ int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "PreprocessInputs failed for " << op_name_;
     return ret;
   }
-  auto kernel_weight = ConvertWeight(in_tensors_[1]);
-  auto bias_weight = ConvertWeight(in_tensors_[BIAS_INDEX]);
+  auto kernel_weight = ConvertWeight(in_tensors_[1].Data().get() == nullptr ? in_tensors_[0] : in_tensors_[1]);
+  nvinfer1::Weights bias_weight{};
+  if (primitive->has_bias()) {
+    bias_weight = ConvertWeight(in_tensors_[BIAS_INDEX]);
+  }
   nvinfer1::IFullyConnectedLayer *fc_layer =
     network->addFullyConnected(*(fc_input.trt_tensor_), out_tensors_[0].Shape()[axis], kernel_weight, bias_weight);
   if (fc_layer == nullptr) {

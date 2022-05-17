@@ -15,6 +15,7 @@
  */
 #ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_UTILS_H_
 #define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_UTILS_H_
+#include <experimental/optional>
 #include <vector>
 #include <NvInfer.h>
 #include <NvInferVersion.h>
@@ -71,7 +72,7 @@ nvinfer1::IShuffleLayer *NHWC2NCHW(nvinfer1::INetworkDefinition *network, const 
 
 nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input);
 
-ActivationParams ConvertActivationType(schema::ActivationType activation_type);
+std::experimental::optional<ActivationParams> TryConvertActivationType(schema::ActivationType activation_type);
 
 nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor,
                                          const std::string &op_name);
@@ -106,7 +107,7 @@ std::string GetTensorFormat(ITensorHelper tensor_helper);
 
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensors);
 
-nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode);
+std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(schema::ReduceMode mode);
 
 int PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network, const ITensorHelper &input_tensor_helper,
                              ITensorHelper *out_tensor_helper);
@@ -114,6 +115,8 @@ int PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network, const ITenso
 int GetDimsVolume(const nvinfer1::Dims &dims);
 
 int GetDimsVolume(const std::vector<int64_t> &shape);
+
+std::experimental::optional<nvinfer1::Dims> UnsqueezeDims(const nvinfer1::Dims &in_dims, int pos, int val);
 
 void SerializeValue(void **buffer, const void *value, size_t cpy_size);
 

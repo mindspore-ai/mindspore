@@ -34,8 +34,10 @@ class SplitTensorRT : public TensorRTOp {
     output_num_ = split_op->output_num();
 
     auto size_splits_ptr = split_op->size_splits();
-    size_splits_.resize(size_splits_ptr->size());
-    std::copy(size_splits_ptr->begin(), size_splits_ptr->end(), size_splits_.begin());
+    if (size_splits_ptr != nullptr) {
+      size_splits_.resize(size_splits_ptr->size());
+      std::copy(size_splits_ptr->begin(), size_splits_ptr->end(), size_splits_.begin());
+    }
   }
 
   ~SplitTensorRT() override = default;
