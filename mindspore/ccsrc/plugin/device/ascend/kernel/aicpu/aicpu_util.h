@@ -57,6 +57,7 @@ constexpr auto kStackPop = "StackPop";
 constexpr auto kStackDestroy = "StackDestroy";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
+constexpr auto kGather = "Gather";
 constexpr auto kIdentity = "Identity";
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
 constexpr auto kUpdateCache = "UpdateCache";
@@ -100,8 +101,11 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
 const std::set<std::string> kDynamicInputOps{
   kPrint,           kPack,           kMeshgrid,      kStackInitOpName,          kStackDestroyOpName,
   kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample};
-const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
-  {kMaxPoolV1, "MaxPool"}, {kMaxPoolGradV1, "MaxPoolGrad"}, {kStack, "Pack"}, {kUnstack, "Unpack"}};
+const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{{kMaxPoolV1, "MaxPool"},
+                                                                 {kMaxPoolGradV1, "MaxPoolGrad"},
+                                                                 {kStack, "Pack"},
+                                                                 {kUnstack, "Unpack"},
+                                                                 {kGather, "GatherV2"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number

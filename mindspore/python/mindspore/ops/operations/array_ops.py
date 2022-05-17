@@ -804,6 +804,9 @@ class Gather(Primitive):
     r"""
     Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
 
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
     The following figure shows the calculation process of Gather commonly:
 
     .. image:: Gather.png

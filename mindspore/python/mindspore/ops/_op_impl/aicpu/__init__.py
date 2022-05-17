@@ -27,6 +27,7 @@ from .embedding_lookup import _embedding_lookup_aicpu
 from .padding import _padding_aicpu
 from .gather import _gather_aicpu
 from .gather_grad import _gather_grad_aicpu
+from .gather_d import _gather_d_aicpu
 from .scatter import _scatter_aicpu
 from .identity import _identity_aicpu
 from .edit_distance import _edit_distance_aicpu
