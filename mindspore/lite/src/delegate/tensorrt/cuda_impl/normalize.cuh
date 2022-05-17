@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_ACTIVATION_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_ACTIVATION_H_
+#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_NORMALIZE_H_
+#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_NORMALIZE_H_
 
 template <typename T>
-void Sigmoid(const T *input1, T *output, int element_cnt, cudaStream_t stream);
+void Normalize(const T *input, const T *gamma, const T *beta, T *output, size_t dim_at_axis, float epsilion,
+               int element_cnt, cudaStream_t stream);
 
-template <typename T>
-void Gelu(const T *input1, T *output, int element_cnt, cudaStream_t stream);
-
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_ACTIVATION_H_
+#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_NORMALIZE_H_

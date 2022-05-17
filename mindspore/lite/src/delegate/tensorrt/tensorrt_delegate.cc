@@ -20,30 +20,7 @@
 #include <fstream>
 #include <string>
 #include "src/delegate/delegate_utils.h"
-#include "src/delegate/tensorrt/op/activation_tensorrt.h"
-#include "src/delegate/tensorrt/op/shape_tensorrt.h"
-#include "src/delegate/tensorrt/op/gather_tensorrt.h"
-#include "src/delegate/tensorrt/op/shuffle_tensorrt.h"
-#include "src/delegate/tensorrt/op/concate_tensorrt.h"
-#include "src/delegate/tensorrt/op/convolution_tensorrt.h"
-#include "src/delegate/tensorrt/op/deconvolution_tensorrt.h"
-#include "src/delegate/tensorrt/op/elementwise_tensorrt.h"
-#include "src/delegate/tensorrt/op/reduce_tensorrt.h"
-#include "src/delegate/tensorrt/op/softmax_tensorrt.h"
-#include "src/delegate/tensorrt/op/unary_tensorrt.h"
-#include "src/delegate/tensorrt/op/matmul_tensorrt.h"
-#include "src/delegate/tensorrt/op/scale_tensorrt.h"
-#include "src/delegate/tensorrt/op/slice_tensorrt.h"
-#include "src/delegate/tensorrt/op/pool_tensorrt.h"
-#include "src/delegate/tensorrt/op/pad_tensorrt.h"
-#include "src/delegate/tensorrt/op/resize_tensorrt.h"
-#include "src/delegate/tensorrt/op/equal_tensorrt.h"
-#include "src/delegate/tensorrt/op/cast_tensorrt.h"
-#include "src/delegate/tensorrt/op/topk_tensorrt.h"
-#include "src/delegate/tensorrt/op/reducescatter_tensorrt.h"
-#include "src/delegate/tensorrt/op/allgather_tensorrt.h"
-#include "src/delegate/tensorrt/op/lstm_tensorrt.h"
-#include "src/delegate/tensorrt/op/fullyconnected_tensorrt.h"
+#include "src/delegate/auto_registration_factory.h"
 
 namespace mindspore::lite {
 TensorRTDelegate::~TensorRTDelegate() {
@@ -82,54 +59,6 @@ Status TensorRTDelegate::Init() {
     return mindspore::kLiteError;
   }
   device_info_ = gpu_info;
-  op_func_lists_.clear();
-  op_func_lists_ = {
-    {schema::PrimitiveType_Activation, GetTensorRTOp<ActivationTensorRT>},
-    {schema::PrimitiveType_AllGather, GetTensorRTOp<AllGatherTensorRT>},
-    {schema::PrimitiveType_Concat, GetTensorRTOp<ConcateTensorRT>},
-    {schema::PrimitiveType_Conv2DFusion, GetTensorRTOp<ConvolutionTensorRT>},
-    {schema::PrimitiveType_Cast, GetTensorRTOp<CastTensorRT>},
-    {schema::PrimitiveType_Conv2dTransposeFusion, GetTensorRTOp<DeconvolutionTensorRT>},
-    {schema::PrimitiveType_SubFusion, GetTensorRTOp<ElementWiseTensorRT>},
-    {schema::PrimitiveType_DivFusion, GetTensorRTOp<ElementWiseTensorRT>},
-    {schema::PrimitiveType_PowFusion, GetTensorRTOp<ElementWiseTensorRT>},
-    {schema::PrimitiveType_AddFusion, GetTensorRTOp<ElementWiseTensorRT>},
-    {schema::PrimitiveType_MulFusion, GetTensorRTOp<ElementWiseTensorRT>},
-    {schema::PrimitiveType_Eltwise, GetTensorRTOp<ElementWiseTensorRT>},
-    {schema::PrimitiveType_Minimum, GetTensorRTOp<ElementWiseTensorRT>},
-    {schema::PrimitiveType_Maximum, GetTensorRTOp<ElementWiseTensorRT>},
-    {schema::PrimitiveType_BiasAdd, GetTensorRTOp<ElementWiseTensorRT>},
-    {schema::PrimitiveType_Equal, GetTensorRTOp<EqualTensorRT>},
-    {schema::PrimitiveType_Gather, GetTensorRTOp<GatherTensorRT>},
-    {schema::PrimitiveType_LSTM, GetTensorRTOp<LSTMTensorRT>},
-    {schema::PrimitiveType_MatMulFusion, GetTensorRTOp<MatMulTensorRT>},
-    {schema::PrimitiveType_FullConnection, GetTensorRTOp<FullyConnectedTensorRT>},
-    {schema::PrimitiveType_AvgPoolFusion, GetTensorRTOp<PoolTensorRT>},
-    {schema::PrimitiveType_MaxPoolFusion, GetTensorRTOp<PoolTensorRT>},
-    {schema::PrimitiveType_PadFusion, GetTensorRTOp<PadTensorRT>},
-    {schema::PrimitiveType_ReduceFusion, GetTensorRTOp<ReduceTensorRT>},
-    {schema::PrimitiveType_ReduceScatter, GetTensorRTOp<ReduceScatterTensorRT>},
-    {schema::PrimitiveType_Resize, GetTensorRTOp<ResizeTensorRT>},
-    {schema::PrimitiveType_ScaleFusion, GetTensorRTOp<ScaleTensorRT>},
-    {schema::PrimitiveType_StridedSlice, GetTensorRTOp<SliceTensorRT>},
-    {schema::PrimitiveType_Shape, GetTensorRTOp<ShapeTensorRT>},
-    {schema::PrimitiveType_Unsqueeze, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_Squeeze, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_Reshape, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_Transpose, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_Flatten, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_ExpandDims, GetTensorRTOp<ShuffleTensorRT>},
-    {schema::PrimitiveType_Softmax, GetTensorRTOp<SoftMaxTensorRT>},
-    {schema::PrimitiveType_ArgMaxFusion, GetTensorRTOp<TopKTensorRT>},
-    {schema::PrimitiveType_Sqrt, GetTensorRTOp<UnaryTensorRT>},
-    {schema::PrimitiveType_Abs, GetTensorRTOp<UnaryTensorRT>},
-    {schema::PrimitiveType_Neg, GetTensorRTOp<UnaryTensorRT>},
-    {schema::PrimitiveType_Log, GetTensorRTOp<UnaryTensorRT>},
-    {schema::PrimitiveType_Sin, GetTensorRTOp<UnaryTensorRT>},
-    {schema::PrimitiveType_Cos, GetTensorRTOp<UnaryTensorRT>},
-    {schema::PrimitiveType_Ceil, GetTensorRTOp<UnaryTensorRT>},
-    {schema::PrimitiveType_Floor, GetTensorRTOp<UnaryTensorRT>},
-  };
   int ret = lite::SetCudaDevice(device_info_);
   if (ret != RET_OK) {
     return mindspore::kLiteError;
@@ -241,8 +170,10 @@ TensorRTOp *TensorRTDelegate::FindTensorRTOp(kernel::Kernel *kernel, const schem
   auto out_tensors = kernel->outputs();
   auto name = kernel->name();
   auto node_type = primitive->value_type();
-  if (op_func_lists_.find(node_type) != op_func_lists_.end()) {
-    TensorRTOp *tensorrt_op = op_func_lists_[node_type](primitive, in_tensors, out_tensors, name, kernel->quant_type());
+  auto &plugin_factory = AutoRegistrationFactory<schema::PrimitiveType, TensorRTGetOp>::Get();
+  if (plugin_factory.HasKey(node_type)) {
+    TensorRTOp *tensorrt_op =
+      plugin_factory.GetCreator(node_type)(primitive, in_tensors, out_tensors, name, kernel->quant_type());
     if (tensorrt_op == nullptr) {
       return nullptr;
     }

@@ -23,6 +23,11 @@
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(EqualPluginCreater);
+template class TensorRTPluginCreater<EqualPlugin>;
+template <class T>
+nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
+template <class T>
+std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
 int EqualTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                              const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -85,15 +90,5 @@ nvinfer1::IPluginV2DynamicExt *EqualPlugin::clone() const noexcept {
   plugin->setPluginNamespace(name_space_.c_str());
   return plugin;
 }
-
-nvinfer1::IPluginV2 *EqualPluginCreater::createPlugin(const char *name,
-                                                      const nvinfer1::PluginFieldCollection *fc) noexcept {
-  return new (std::nothrow) EqualPlugin(name);
-}
-
-nvinfer1::IPluginV2 *EqualPluginCreater::deserializePlugin(const char *name, const void *serialData,
-                                                           size_t serialLength) noexcept {
-  MS_LOG(DEBUG) << name << " deserialize";
-  return new (std::nothrow) EqualPlugin(name);
-}
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Equal, EqualTensorRT)
 }  // namespace mindspore::lite

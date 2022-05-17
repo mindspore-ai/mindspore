@@ -20,6 +20,7 @@
 #include <functional>
 #include <unordered_map>
 #include <algorithm>
+#include <vector>
 #include "src/delegate/tensorrt/tensorrt_utils.h"
 #include "NvInferRuntimeCommon.h"
 #include "src/delegate/tensorrt/op/activation_opt_plugin.h"
@@ -27,6 +28,11 @@
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(ActivationOptPluginCreater);
+template class TensorRTPluginCreater<ActivationOptPlugin>;
+template <class T>
+nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
+template <class T>
+std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
 int ActivationOptPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc,
                                  const nvinfer1::PluginTensorDesc *outputDesc, const void *const *inputs,
@@ -71,8 +77,22 @@ int ActivationOptPlugin::RunCuDNNActivation(const nvinfer1::PluginTensorDesc *in
 
 int ActivationOptPlugin::RunCudaActivation(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs,
                                            void *const *outputs, cudaStream_t stream) {
-  Sigmoid(static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]), GetDimsVolume(inputDesc[0].dims),
-          stream);
+  switch (activation_type_) {
+    case (schema::ActivationType::ActivationType_SIGMOID): {
+      Sigmoid(static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]), GetDimsVolume(inputDesc[0].dims),
+              stream);
+      break;
+    }
+    case (schema::ActivationType::ActivationType_GELU): {
+      Gelu(static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]), GetDimsVolume(inputDesc[0].dims),
+           stream);
+      break;
+    }
+    default: {
+      MS_LOG(ERROR) << "invalid activation type: " << static_cast<int>(activation_type_);
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
@@ -86,19 +106,5 @@ size_t ActivationOptPlugin::getSerializationSize() const noexcept { return sizeo
 
 void ActivationOptPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &activation_type_, sizeof(schema::ActivationType));
-}
-
-nvinfer1::IPluginV2 *ActivationOptPluginCreater::createPlugin(const char *name,
-                                                              const nvinfer1::PluginFieldCollection *fc) noexcept {
-  const nvinfer1::PluginField *fields = fc->fields;
-  schema::ActivationType activation_type = static_cast<const schema::ActivationType *>(fields[0].data)[0];
-  return new (std::nothrow) ActivationOptPlugin(name, activation_type);
-}
-
-nvinfer1::IPluginV2 *ActivationOptPluginCreater::deserializePlugin(const char *name, const void *serialData,
-                                                                   size_t serialLength) noexcept {
-  schema::ActivationType activation_type;
-  DeserializeValue(&serialData, &serialLength, &activation_type, sizeof(schema::ActivationType));
-  return new (std::nothrow) ActivationOptPlugin(name, activation_type);
 }
 }  // namespace mindspore::lite

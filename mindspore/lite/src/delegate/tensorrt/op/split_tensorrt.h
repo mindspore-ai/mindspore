@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SLICE_TENSORRT_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SLICE_TENSORRT_H_
+#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SPLIT_TENSORRT_H_
+#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SPLIT_TENSORRT_H_
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
 
 namespace mindspore::lite {
-constexpr int BEGINS_INDEX = 1;
-constexpr int ENDS_INDEX = 2;
-constexpr int HAS_AXIS = 5;
-constexpr int AXIS_INDEX = 3;
-class SliceTensorRT : public TensorRTOp {
+class SplitTensorRT : public TensorRTOp {
  public:
-  SliceTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+  SplitTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
                 const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {
+    auto split_op = primitive->value_as_Split();
+    axis_ = split_op->axis();
+    axis_ = axis_ < 0 ? axis_ + in_tensors_[0].Shape().size() : axis_;
 
-  ~SliceTensorRT() override = default;
+    output_num_ = split_op->output_num();
+
+    auto size_splits_ptr = split_op->size_splits();
+    size_splits_.resize(size_splits_ptr->size());
+    std::copy(size_splits_ptr->begin(), size_splits_ptr->end(), size_splits_.begin());
+  }
+
+  ~SplitTensorRT() override = default;
 
   int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
 
@@ -39,13 +46,9 @@ class SliceTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int ConvertParamsDims();
-  nvinfer1::Dims start_dims_;
-  nvinfer1::Dims size_dims_;
-  nvinfer1::Dims stride_dims_;
-  int strides_index_{0};
-  int axis_index_{0};
-  int shrink_axis_{0};  // pos start from 1
+  int64_t axis_;
+  int64_t output_num_;
+  std::vector<int64_t> size_splits_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SLICE_TENSORRT_H_
+#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SPLIT_TENSORRT_H_

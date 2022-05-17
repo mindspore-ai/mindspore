@@ -104,4 +104,5 @@ int FullyConnectedTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *netwo
   }
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_FullConnection, FullyConnectedTensorRT)
 }  // namespace mindspore::lite

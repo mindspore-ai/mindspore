@@ -50,10 +50,11 @@ class MatMulTensorRT : public TensorRTOp {
   nvinfer1::ITensor *AddBias(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input_tensor);
 
   bool RunOptPlugin();
+  bool RunFullConnect();
 
   bool transpose_a_{false};
   bool transpose_b_{false};
-  Format out_format_;
+  Format out_format_{Format::NHWC};
   schema::ActivationType activation_{schema::ActivationType::ActivationType_NO_ACTIVATION};
   void *weight_ptr_{nullptr};
 };

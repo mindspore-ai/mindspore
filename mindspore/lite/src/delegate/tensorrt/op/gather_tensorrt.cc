@@ -104,4 +104,5 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   this->AddInnerOutTensors(ITensorHelper{op_output, gather_input.format_, gather_input.same_format_});
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Gather, GatherTensorRT)
 }  // namespace mindspore::lite

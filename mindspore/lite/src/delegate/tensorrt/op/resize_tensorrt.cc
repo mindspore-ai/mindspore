@@ -226,4 +226,5 @@ int ResizeTensorRT::SetParams(nvinfer1::IResizeLayer *resize_layer) {
   }
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Resize, ResizeTensorRT)
 }  // namespace mindspore::lite

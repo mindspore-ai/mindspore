@@ -482,4 +482,5 @@ int LSTMTensorRT::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine 
   }
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LSTM, LSTMTensorRT)
 }  // namespace mindspore::lite
