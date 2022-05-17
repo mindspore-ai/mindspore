@@ -27,7 +27,7 @@ namespace ad {
 class KPynativeCell {
  public:
   virtual ~KPynativeCell() = default;
-  virtual void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node) = 0;
+  virtual void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, const ValuePtr &sen_out) = 0;
   // Grad for cell which may have user passed front propagate FuncGraph.
   // c_node: CNode with contains the construct function graph of cell  (index 0) and the formal input parameters of that
   // cell. op_args: the arguments list of each input parameters.

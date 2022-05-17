@@ -100,6 +100,13 @@ def zeros_like_tensor(x):
     return value
 
 
+def OnesLike(x):
+    """Implement `oneslike`."""
+    x = x.asnumpy()
+    value = Tensor(np.ones(x.shape).astype(x.dtype))
+    return value
+
+
 def Switch(c, x, y):
     """Implement `switch`."""
     return x if c else y
