@@ -602,16 +602,19 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   // parameters. (sense_f, sense_x, ...)(*bpro_f) (sense_y)
   AbstractBasePtrList bparams;
   bparams.push_back(SensitivityTransform(primal_func_));
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
+  // Check if primal func graph has the primitive returned sparse result in its bprop().
+  auto real_primal_func = dyn_cast<FuncGraphAbstractClosure>(primal_func_);
+  MS_EXCEPTION_IF_NULL(real_primal_func);
+  FuncGraphPtr primal_func_graph = real_primal_func->func_graph();
+  MS_EXCEPTION_IF_NULL(primal_func_graph);
+  bool has_sparse_bprop_prim = primal_func_graph->has_flag(FUNC_GRAPH_FLAG_SPARSE_BPROP);
   (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(bparams),
-                       [&enable_sparse](const AbstractBasePtr &arg_spec) -> AbstractBasePtr {
-                         MS_EXCEPTION_IF_NULL(arg_spec);
-                         if (enable_sparse && arg_spec->isa<AbstractTensor>()) {
+                       [&has_sparse_bprop_prim](const AbstractBasePtr &arg_abs) -> AbstractBasePtr {
+                         MS_EXCEPTION_IF_NULL(arg_abs);
+                         if (has_sparse_bprop_prim && arg_abs->isa<AbstractTensor>()) {
                            return std::make_shared<AbstractUndetermined>();
                          }
-                         return SensitivityTransform(arg_spec);
+                         return SensitivityTransform(arg_abs);
                        });
   AbstractBasePtr bparams_final = std::make_shared<AbstractTuple>(bparams);
   AbstractFunctionPtr bprop =

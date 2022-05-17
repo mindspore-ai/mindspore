@@ -92,7 +92,6 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<float>(MS_CTX_MEMPOOL_BLOCK_SIZE, kDefaultMempoolBlockSize);
   set_param<std::string>(MS_CTX_PRINT_FILE_PATH, "");
   set_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL, false);
-  set_param<bool>(MS_CTX_ENABLE_SPARSE, false);
   set_param<bool>(MS_CTX_ENABLE_PARALLEL_SPLIT, false);
   set_param<bool>(MS_CTX_ENABLE_INFER_OPT, false);
   set_param<bool>(MS_CTX_GRAD_FOR_SCALAR, false);

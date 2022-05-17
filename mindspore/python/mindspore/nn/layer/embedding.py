@@ -25,7 +25,6 @@ from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_parallel_mode, _get_full_batch
 from mindspore.parallel._ps_context import _is_role_worker, _get_ps_context
 from mindspore.parallel._ps_context import _insert_hash_table_size, _set_cache_enable, _set_rank_id
-from mindspore import context
 from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
 from mindspore.ops.primitive import constexpr
@@ -339,12 +338,6 @@ class EmbeddingLookup(Cell):
             self.cache_enable = True
             if _is_role_worker():
                 self.vocab_size = self.vocab_cache_size
-                if context.get_context("enable_sparse") != self.sparse:
-                    raise ValueError(f"For '{self.cls_name}', the value of parameter 'sparse' must be same for all "
-                                     f"kernels and equal the value of 'enable_sparse' in context setting in "
-                                     f"parameter server cache mode, but got value of parameter 'sparse': {self.sparse}"
-                                     f" and the 'enable_sparse' in context setting: "
-                                     f"{context.get_context('enable_sparse')}.")
 
     def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size):
         """PS embeddingLookup cache enable set."""

@@ -59,6 +59,7 @@ using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 using mindspore::abstract::AbstractUndetermined;
+using mindspore::abstract::EnvSetSparseResultMgr;
 using mindspore::abstract::FuncGraphAbstractClosure;
 
 void HyperMap::Init() {
@@ -645,19 +646,12 @@ GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_
 }
 
 FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &j, const AnfNodePtr &weights, const AnfNodePtr &position,
-                                    const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad,
-                                    const std::vector<AnfNodePtr> &weight_args) {
+                                    const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad) {
   FuncGraphPtr k_child = std::make_shared<FuncGraph>();
   k_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   k_child->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, true);
 
-  AnfNodePtr weights_node = nullptr;
   AnfNodePtr position_node = nullptr;
-  if (weights != nullptr) {
-    weights_node = weights;
-  } else if (!weight_args.empty()) {
-    weights_node = k_child->NewCNodeInOrder(weight_args);
-  }
   if (position != nullptr) {
     position_node = position;
   }
@@ -673,7 +667,7 @@ FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &j, const AnfNodePtr &weigh
   auto f_app = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(0))});
   auto bprop = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(1))});
 
-  GradByParameter(k_child, f_app, bprop, weights_node, position_node, enable_tuple_grad);
+  GradByParameter(k_child, f_app, bprop, weights, position_node, enable_tuple_grad);
   return k_child;
 }
 
@@ -740,6 +734,38 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
   k_child->set_output(k_child->NewCNodeInOrder({NewValueNode(tail_grad_first), b_app}));
 }
 
+namespace {
+// Check if primal func graph has the primitive returned sparse result in its bprop().
+void CheckPrimBpropReturnSparse(const FuncGraphPtr &primal_graph) {
+  bool has_sparse_bprop_prim = false;
+  (void)TopoSort(primal_graph->return_node(), SuccDeeperSimple,
+                 [&has_sparse_bprop_prim](const AnfNodePtr &node) -> IncludeType {
+                   MS_EXCEPTION_IF_NULL(node);
+                   if (has_sparse_bprop_prim) {
+                     return EXCLUDE;
+                   }
+                   auto prim = GetCNodePrimitive(node);
+                   if (prim != nullptr) {
+                     auto do_signature = dyn_cast<mindspore::prim::DoSignaturePrimitive>(prim);
+                     if (do_signature != nullptr) {
+                       prim = dyn_cast<Primitive>(do_signature->function());
+                     }
+                     bool sparse_bprop = GetPrimitiveFlag(prim, GRAPH_FLAG_BPROP_RETURN_SPARSE);
+                     if (sparse_bprop) {
+                       MS_LOG(DEBUG) << "prim: " << prim->ToString() << " has attr 'bprop_return_sparse'";
+                       has_sparse_bprop_prim = true;
+                       return EXCLUDE;
+                     }
+                   }
+                   return FOLLOW;
+                 });
+  if (has_sparse_bprop_prim) {
+    primal_graph->set_flag(FUNC_GRAPH_FLAG_SPARSE_BPROP, true);
+    EnvSetSparseResultMgr::GetInstance().Set(true);
+  }
+}
+}  // namespace
+
 // Generate the graph.
 FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   if (args_spec_list.empty()) {
@@ -761,6 +787,10 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   FuncGraphPtr forward_graph = real_fn->func_graph();
   MS_EXCEPTION_IF_NULL(forward_graph);
   forward_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+
+  // Check if primal func graph has the primitive returned sparse result in its bprop().
+  CheckPrimBpropReturnSparse(forward_graph);
+
   FuncGraphPtr grad_fg = nullptr;
   {
     TraceGuard g(std::make_shared<TraceGradOperation>(forward_graph->debug_info()));

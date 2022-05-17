@@ -34,6 +34,7 @@
 #include "ir/value.h"
 #include "ir/tensor.h"
 #include "abstract/dshape.h"
+#include "abstract/utils.h"
 #include "utils/shape_utils.h"
 
 namespace mindspore {

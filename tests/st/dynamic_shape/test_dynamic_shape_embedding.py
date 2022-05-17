@@ -19,8 +19,7 @@ from mindspore import Tensor, context
 from mindspore.nn import TrainOneStepCell, WithLossCell
 
 
-context.set_context(enable_sparse=True,
-                    mode=context.GRAPH_MODE)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class NetWithEmbeddingLookUp(nn.Cell):

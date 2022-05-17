@@ -307,14 +307,7 @@ AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type
     // Return monad abstract if it is monad type.
     return MakeMonadAbstract(type->cast<MonadTypePtr>());
   } else {
-    // When sparse enabled, the undetermined might be raised and eliminated in opt passes
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
-    if (enable_sparse) {
-      return std::make_shared<abstract::AbstractUndetermined>();
-    }
-    MS_LOG(EXCEPTION) << "evaluator return invalid shape " << base_shape->ToString() << "or type. " << type->ToString();
+    MS_LOG(EXCEPTION) << "Evaluator return invalid shape " << base_shape->ToString() << "or type. " << type->ToString();
   }
 }
 }  // namespace abstract

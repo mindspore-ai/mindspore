@@ -913,6 +913,7 @@ class SparseGatherV2(PrimitiveWithCheck):
     def __init__(self):
         """Initialize SparseGatherV2"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
+        self.add_prim_attr('bprop_return_sparse', True)
 
     def __check__(self, params, indices, axis):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
@@ -6291,6 +6292,7 @@ class EmbeddingLookup(PrimitiveWithCheck):
         self.__setattr_flag__ = True
         self.init_prim_io_names(inputs=['params', 'indices', 'offset'],
                                 outputs=['output'])
+        self.add_prim_attr('bprop_return_sparse', True)
 
     def __check__(self, params, indices, offset):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)

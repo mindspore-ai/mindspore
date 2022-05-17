@@ -7,6 +7,6 @@ s
 	bprop.3:x*
 bprop.3:out*
 bprop.3:dout2
-bprop.3:[CNode]5:3:@95457f6f5c75edb42385b9b7906aa1c6ab0f9d7116b7f1fe413ac74a65097938PbH
-#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]b&
-S-Prim-MakeTuple:4S-Prim-MakeTupleh
+bprop.3:[CNode]5:3:@231212aa03e0343893c3476fd4c71a316576977db00252cc9713d543de78d44cPb&
+S-Prim-MakeTuple:4S-Prim-MakeTuplebH
+#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]h

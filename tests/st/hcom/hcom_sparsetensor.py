@@ -165,7 +165,6 @@ def test_allreduce_sparsegatherv2_adam_auto_parallel():
     indices = Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7]).astype(np.int32))
     epoch = 3
     batch_size = 1
-    context.set_context(enable_sparse=True)
     net = NetWithSparseGatherV2(sparse=True)
     output_sparse = net.train_mindspore_impl(indices, epoch, batch_size)
     net = NetWithSparseGatherV2(sparse=False)

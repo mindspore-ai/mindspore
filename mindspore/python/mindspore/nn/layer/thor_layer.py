@@ -898,10 +898,6 @@ class EmbeddingLookupThor(Cell):
             self.cache_enable = True
             if _is_role_worker():
                 self.vocab_size = self.vocab_cache_size
-                if context.get_context("enable_sparse") != self.sparse:
-                    raise ValueError(f"For '{self.cls_name}', the 'sparse' must be equal to the 'enable_sparse' "
-                                     f"in context setting in parameter server cache mode, but got 'sparse': "
-                                     f"{self.sparse}, 'enable_sparse': {context.get_context('enable_sparse')}.")
 
     def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size):
         """PS embeddingLookup cache enable set."""

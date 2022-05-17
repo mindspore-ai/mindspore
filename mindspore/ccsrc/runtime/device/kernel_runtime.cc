@@ -1909,9 +1909,7 @@ void KernelRuntime::CheckIfSupportPSEmbeddingCache(const session::KernelGraph &g
     } else if (cnode->isa<CNode>() && (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName)) {
       MS_LOG(ERROR) << "The EmbeddingLookup kernel(" << kernel->fullname_with_scope() << ") doesn't enable cache.";
       FinalizePsCache(
-        "All EmbeddingLookup kernels whose input indices are from dataset must enable cache at "
-        "the same time and parameter 'sparse' must be equal to the value of 'enable_sparse' in "
-        "context setting in parameter server training mode.");
+        "All EmbeddingLookup kernels whose input indices are from dataset must enable cache at the same time.");
     }
   }
 }

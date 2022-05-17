@@ -26,12 +26,8 @@ import mindspore.nn as nn
 from mindspore.ops import composite as C
 from mindspore import Tensor, COOTensor, context
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_teardown():
-    context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
-    yield
-    context.set_context(enable_sparse=False)
 
+context.set_context(mode=context.GRAPH_MODE)
 
 grad_op = C.GradOperation(get_all=True)
 

@@ -876,13 +876,6 @@ AbstractBasePtr MakePyInferRes2Abstract(const py::object &output) {
     // Return monad abstract if it is monad type.
     return ToMonadAbstract(type_obj);
   } else {
-    // When sparse enabled, the undetermined might be raised and eliminated in opt passes
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
-    if (enable_sparse) {
-      return std::make_shared<abstract::AbstractUndetermined>();
-    }
     MS_LOG(EXCEPTION) << "Python evaluator return invalid shape or type. " << (std::string)py::str(type_obj);
   }
 }

@@ -642,9 +642,9 @@ def _check_target_specific_cfgs(device, arg_key):
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
-                 max_device_memory=str, print_file_path=str, enable_sparse=bool, max_call_depth=int,
-                 env_config_path=str, graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int,
-                 load_compile_cache=bool, grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str)
+                 max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
+                 graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
+                 grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -703,8 +703,6 @@ def set_context(**kwargs):
     |                         |  check_bprop                 |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  max_call_depth              |  CPU/GPU/Ascend            |
-    |                         +------------------------------+----------------------------+
-    |                         |  enable_sparse               |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  grad_for_scalar             |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
@@ -827,9 +825,6 @@ def set_context(**kwargs):
             The max_call_depth parameter needs to be set when the nested call is too deep or the number
             of subgraphs is too large. If max_call_depth is set larger than before, the system max stack depth should be
             set larger too, otherwise a `core dumped` exception may be raised because of system stack overflow.
-        enable_sparse (bool): Whether to enable sparsity feature. Default: False.
-            For details of sparsity and sparse tensor, please check
-            `sparse tensor <https://www.mindspore.cn/tutorials/en/master/beginner/tensor.html#sparse-tensor>`_.
         grad_for_scalar (bool):  Whether to get gradient for scalar. Default: False.
             When grad_for_scalar is set to True, the function's scalar input can be derived.
             The default value is False. Because the back-end does not support scaling operations currently,
@@ -867,7 +862,6 @@ def set_context(**kwargs):
         >>> set_context(max_device_memory="3.5GB")
         >>> set_context(mempool_block_size="1GB")
         >>> set_context(print_file_path="print.pb")
-        >>> set_context(enable_sparse=True)
         >>> set_context(max_call_depth=80)
         >>> set_context(env_config_path="./env_config.json")
         >>> set_context(auto_tune_mode="GA,RL")

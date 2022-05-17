@@ -163,8 +163,8 @@ std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(const FuncGraphPtr &root) {
   return todo;
 }
 
-// PushSuccessors push cnode inputs to a vector as successors for topo sort.
-static void PushSuccessors(const CNodePtr &cnode, std::vector<AnfNodePtr> *vecs) {
+// To get CNode inputs to a vector as successors for TopoSort().
+static void FetchCNodeSuccessors(const CNodePtr &cnode, std::vector<AnfNodePtr> *vecs) {
   auto &inputs = cnode->inputs();
   vecs->reserve(vecs->size() + inputs.size());
 
@@ -194,7 +194,7 @@ std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
     return vecs;
   } else if (node->func_graph() != nullptr) {
     if (node->isa<CNode>()) {
-      PushSuccessors(node->cast<CNodePtr>(), &vecs);
+      FetchCNodeSuccessors(node->cast<CNodePtr>(), &vecs);
     }
     return vecs;
   }
@@ -217,7 +217,7 @@ std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node) {
     return vecs;
   } else {
     if (node->isa<CNode>()) {
-      PushSuccessors(node->cast<CNodePtr>(), &vecs);
+      FetchCNodeSuccessors(node->cast<CNodePtr>(), &vecs);
     }
     return vecs;
   }
@@ -227,7 +227,7 @@ std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node) {
   std::vector<AnfNodePtr> vecs;
   auto cnode = dyn_cast<CNode>(node);
   if (cnode != nullptr) {
-    PushSuccessors(cnode, &vecs);
+    FetchCNodeSuccessors(cnode, &vecs);
   }
   return vecs;
 }
@@ -251,7 +251,7 @@ std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &
         }
       }
     }
-    PushSuccessors(cnode, &vecs);
+    FetchCNodeSuccessors(cnode, &vecs);
   }
   return vecs;
 }
@@ -275,7 +275,7 @@ std::vector<AnfNodePtr> SuccWithFilter(const GraphFilterFunc &graph_filter, cons
     return vecs;
   } else {
     if (node->isa<CNode>()) {
-      PushSuccessors(node->cast<CNodePtr>(), &vecs);
+      FetchCNodeSuccessors(node->cast<CNodePtr>(), &vecs);
     }
     return vecs;
   }

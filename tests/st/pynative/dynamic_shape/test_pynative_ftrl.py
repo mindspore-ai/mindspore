@@ -20,8 +20,7 @@ from mindspore.nn import TrainOneStepCell
 from mindspore.nn.optim import FTRL, LazyAdam
 from mindspore.ops import operations as P
 
-context.set_context(enable_sparse=True,
-                    mode=context.PYNATIVE_MODE,
+context.set_context(mode=context.PYNATIVE_MODE,
                     device_target="Ascend")
 
 class NetWithSparseGatherV2(nn.Cell):
