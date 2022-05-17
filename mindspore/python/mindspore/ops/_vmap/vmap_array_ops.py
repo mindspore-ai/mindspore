@@ -149,6 +149,7 @@ def get_reshape_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.Select)
 def get_select_vmap_rule(prim, axis_size):
     """VmapRule for 'Select' operation."""
+
     def vmap_rule(condition_bdim, x_bdim, y_bdim):
         is_all_none, result = vmap_general_preprocess(prim, condition_bdim, x_bdim, y_bdim)
         if is_all_none:
@@ -167,7 +168,6 @@ def get_select_vmap_rule(prim, axis_size):
         return (out, 0)
 
     return vmap_rule
-
 
 
 @vmap_rules_getters.register(P.ScatterAdd)
@@ -298,7 +298,7 @@ def get_tensor_shape_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(P.Ger)
-def get_fast_gelu_grad_vmap_rule(prim, axis_size):
+def get_ger_vmap_rule(prim, axis_size):
     """VmapRule for `Ger`."""
 
     def vmap_rule(x1_bdim, x2_bdim):
