@@ -2886,15 +2886,19 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         return self.process_pool is not None
 
     def create_shared_memory(self):
+        """
+        Create shared memory queue across processes.
+        """
         _check_shm_usage(self.num_parallel_workers, 1, self.max_row_size, 2)
         self.arg_q_list = []
         self.res_q_list = []
         self.queues_map = {}
         self.next_queue = 0
+        count = multiprocessing.Value('i', 0)
 
         for _ in range(self.num_parallel_workers):
-            self.arg_q_list.append(_SharedQueue(1, max_rowsize=self.max_row_size))
-            self.res_q_list.append(_SharedQueue(1, max_rowsize=self.max_row_size))
+            self.arg_q_list.append(_SharedQueue(1, count, max_rowsize=self.max_row_size))
+            self.res_q_list.append(_SharedQueue(1, count, max_rowsize=self.max_row_size))
 
     def delete_shared_memory(self):
         """
