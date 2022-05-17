@@ -312,7 +312,7 @@ TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
   for (size_t i = 0; i < (total_node_num / 2); ++i) {
     kill(cgns[i], 9);
   }
-  sleep(timeout + 1);
+  sleep(timeout + 6);
   ASSERT_EQ(total_node_num - (total_node_num / 2), msn.GetAliveNodeNum());
 
   // Kill all the processes of compute graph nodes.
