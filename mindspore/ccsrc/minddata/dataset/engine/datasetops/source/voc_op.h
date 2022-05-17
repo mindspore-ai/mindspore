@@ -50,6 +50,25 @@ class VOCOp : public MappableLeafOp {
  public:
   enum class TaskType { Segmentation = 0, Detection = 1 };
 
+#ifdef ENABLE_PYTHON
+  // Constructor
+  // @param TaskType task_type - task type of VOC
+  // @param std::string task_mode - task mode of VOC
+  // @param std::string folder_path - dir directory of VOC
+  // @param std::map<std::string, int32_t> class_index - input class-to-index of annotation
+  // @param int32_t num_workers - number of workers reading images in parallel
+  // @param int32_t queue_size - connector queue size
+  // @param bool decode - whether to decode images
+  // @param std::unique_ptr<DataSchema> data_schema - the schema of the VOC dataset
+  // @param std::shared_ptr<Sampler> sampler - sampler tells VOCOp what to read
+  // @param extra_metadata - flag to add extra meta-data to row
+  // @param py::function decrypt - Image decryption function, which accepts the path of the encrypted image file
+  //     and returns the decrypted bytes data. Default: None, no decryption.
+  VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
+        const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t queue_size, bool decode,
+        std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, bool extra_metadata,
+        py::function decrypt = py::none());
+#else
   // Constructor
   // @param TaskType task_type - task type of VOC
   // @param std::string task_mode - task mode of VOC
@@ -64,6 +83,7 @@ class VOCOp : public MappableLeafOp {
   VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
         const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t queue_size, bool decode,
         std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, bool extra_metadata);
+#endif
 
   // Destructor
   ~VOCOp() = default;
@@ -150,6 +170,9 @@ class VOCOp : public MappableLeafOp {
   std::map<std::string, int32_t> class_index_;
   std::map<std::string, int32_t> label_index_;
   std::map<std::string, Annotation> annotation_map_;
+#ifdef ENABLE_PYTHON
+  py::function decrypt_;
+#endif
 };
 }  // namespace dataset
 }  // namespace mindspore

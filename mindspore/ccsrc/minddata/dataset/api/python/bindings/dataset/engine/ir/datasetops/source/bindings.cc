@@ -129,13 +129,14 @@ PYBIND_REGISTER(Caltech256Node, 2, ([](const py::module *m) {
 PYBIND_REGISTER(CelebANode, 2, ([](const py::module *m) {
                   (void)py::class_<CelebANode, DatasetNode, std::shared_ptr<CelebANode>>(*m, "CelebANode",
                                                                                          "to create a CelebANode")
-                    .def(py::init([](const std::string &dataset_dir, const std::string &usage,
-                                     const py::handle &sampler, bool decode, const py::list &extensions) {
-                      auto celebA = std::make_shared<CelebANode>(dataset_dir, usage, toSamplerObj(sampler), decode,
-                                                                 toStringSet(extensions), nullptr);
-                      THROW_IF_ERROR(celebA->ValidateParams());
-                      return celebA;
-                    }));
+                    .def(
+                      py::init([](const std::string &dataset_dir, const std::string &usage, const py::handle &sampler,
+                                  bool decode, const py::list &extensions, const py::object &decrypt) {
+                        auto celebA = std::make_shared<CelebANode>(dataset_dir, usage, toSamplerObj(sampler), decode,
+                                                                   toStringSet(extensions), nullptr, decrypt);
+                        THROW_IF_ERROR(celebA->ValidateParams());
+                        return celebA;
+                      }));
                 }));
 
 PYBIND_REGISTER(Cifar10Node, 2, ([](const py::module *m) {
@@ -199,18 +200,17 @@ PYBIND_REGISTER(CMUArcticNode, 2, ([](const py::module *m) {
                       }));
                 }));
 
-PYBIND_REGISTER(CocoNode, 2, ([](const py::module *m) {
-                  (void)py::class_<CocoNode, DatasetNode, std::shared_ptr<CocoNode>>(*m, "CocoNode",
-                                                                                     "to create a CocoNode")
-                    .def(py::init([](const std::string &dataset_dir, const std::string &annotation_file,
-                                     const std::string &task, bool decode, const py::handle &sampler,
-                                     bool extra_metadata) {
-                      std::shared_ptr<CocoNode> coco = std::make_shared<CocoNode>(
-                        dataset_dir, annotation_file, task, decode, toSamplerObj(sampler), nullptr, extra_metadata);
-                      THROW_IF_ERROR(coco->ValidateParams());
-                      return coco;
-                    }));
-                }));
+PYBIND_REGISTER(
+  CocoNode, 2, ([](const py::module *m) {
+    (void)py::class_<CocoNode, DatasetNode, std::shared_ptr<CocoNode>>(*m, "CocoNode", "to create a CocoNode")
+      .def(py::init([](const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+                       bool decode, const py::handle &sampler, bool extra_metadata, const py::object &decrypt) {
+        std::shared_ptr<CocoNode> coco = std::make_shared<CocoNode>(
+          dataset_dir, annotation_file, task, decode, toSamplerObj(sampler), nullptr, extra_metadata, decrypt);
+        THROW_IF_ERROR(coco->ValidateParams());
+        return coco;
+      }));
+  }));
 
 PYBIND_REGISTER(CoNLL2000Node, 2, ([](const py::module *m) {
                   (void)py::class_<CoNLL2000Node, DatasetNode, std::shared_ptr<CoNLL2000Node>>(
@@ -359,12 +359,13 @@ PYBIND_REGISTER(ImageFolderNode, 2, ([](const py::module *m) {
                   (void)py::class_<ImageFolderNode, DatasetNode, std::shared_ptr<ImageFolderNode>>(
                     *m, "ImageFolderNode", "to create an ImageFolderNode")
                     .def(py::init([](const std::string &dataset_dir, bool decode, const py::handle &sampler,
-                                     const py::list &extensions, const py::dict &class_indexing) {
+                                     const py::list &extensions, const py::dict &class_indexing,
+                                     const py::object &decrypt) {
                       // Don't update recursive to true
                       bool recursive = false;  // Will be removed in future PR
-                      auto imagefolder = std::make_shared<ImageFolderNode>(dataset_dir, decode, toSamplerObj(sampler),
-                                                                           recursive, toStringSet(extensions),
-                                                                           toStringMap(class_indexing), nullptr);
+                      auto imagefolder = std::make_shared<ImageFolderNode>(
+                        dataset_dir, decode, toSamplerObj(sampler), recursive, toStringSet(extensions),
+                        toStringMap(class_indexing), nullptr, decrypt);
                       THROW_IF_ERROR(imagefolder->ValidateParams());
                       return imagefolder;
                     }));
@@ -764,10 +765,10 @@ PYBIND_REGISTER(VOCNode, 2, ([](const py::module *m) {
                   (void)py::class_<VOCNode, DatasetNode, std::shared_ptr<VOCNode>>(*m, "VOCNode", "to create a VOCNode")
                     .def(py::init([](const std::string &dataset_dir, const std::string &task, const std::string &usage,
                                      const py::dict &class_indexing, bool decode, const py::handle &sampler,
-                                     bool extra_metadata) {
+                                     bool extra_metadata, const py::object &decrypt) {
                       std::shared_ptr<VOCNode> voc =
                         std::make_shared<VOCNode>(dataset_dir, task, usage, toStringMap(class_indexing), decode,
-                                                  toSamplerObj(sampler), nullptr, extra_metadata);
+                                                  toSamplerObj(sampler), nullptr, extra_metadata, decrypt);
                       THROW_IF_ERROR(voc->ValidateParams());
                       return voc;
                     }));

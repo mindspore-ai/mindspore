@@ -29,9 +29,16 @@ namespace mindspore {
 namespace dataset {
 class CelebANode : public MappableSourceNode {
  public:
+#ifdef ENABLE_PYTHON
+  /// \brief Constructor
+  CelebANode(const std::string &dataset_dir, const std::string &usage, const std::shared_ptr<SamplerObj> &sampler,
+             const bool &decode, const std::set<std::string> &extensions, const std::shared_ptr<DatasetCache> &cache,
+             py::function decrypt = py::none());
+#else
   /// \brief Constructor
   CelebANode(const std::string &dataset_dir, const std::string &usage, const std::shared_ptr<SamplerObj> &sampler,
              const bool &decode, const std::set<std::string> &extensions, const std::shared_ptr<DatasetCache> &cache);
+#endif
 
   /// \brief Destructor
   ~CelebANode() override = default;
@@ -102,6 +109,9 @@ class CelebANode : public MappableSourceNode {
   bool decode_;
   std::set<std::string> extensions_;
   std::shared_ptr<SamplerObj> sampler_;
+#ifdef ENABLE_PYTHON
+  py::function decrypt_;
+#endif
 };
 }  // namespace dataset
 }  // namespace mindspore

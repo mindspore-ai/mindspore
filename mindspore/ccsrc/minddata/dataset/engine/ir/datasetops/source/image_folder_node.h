@@ -32,11 +32,17 @@ namespace dataset {
 /// \brief A Dataset derived class to represent ImageFolder dataset
 class ImageFolderNode : public MappableSourceNode {
  public:
+#ifdef ENABLE_PYTHON
+  /// \brief Constructor
+  ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler, bool recursive,
+                  std::set<std::string> extensions, std::map<std::string, int32_t> class_indexing,
+                  std::shared_ptr<DatasetCache> cache, py::function decrypt = py::none());
+#else
   /// \brief Constructor
   ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler, bool recursive,
                   std::set<std::string> extensions, std::map<std::string, int32_t> class_indexing,
                   std::shared_ptr<DatasetCache> cache);
-
+#endif
   /// \brief Destructor
   ~ImageFolderNode() override = default;
 
@@ -108,6 +114,9 @@ class ImageFolderNode : public MappableSourceNode {
   std::shared_ptr<SamplerObj> sampler_;
   std::map<std::string, int32_t> class_indexing_;
   std::set<std::string> exts_;
+#ifdef ENABLE_PYTHON
+  py::function decrypt_;
+#endif
 };
 }  // namespace dataset
 }  // namespace mindspore

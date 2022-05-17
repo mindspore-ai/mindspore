@@ -27,10 +27,17 @@ namespace mindspore {
 namespace dataset {
 class CocoNode : public MappableSourceNode {
  public:
+#ifdef ENABLE_PYTHON
+  /// \brief Constructor.
+  CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+           const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache,
+           const bool &extra_metadata, py::function decrypt = py::none());
+#else
   /// \brief Constructor.
   CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
            const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache,
            const bool &extra_metadata);
+#endif
 
   /// \brief Destructor.
   ~CocoNode() override = default;
@@ -103,6 +110,9 @@ class CocoNode : public MappableSourceNode {
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
   bool extra_metadata_;
+#ifdef ENABLE_PYTHON
+  py::function decrypt_;
+#endif
 };
 }  // namespace dataset
 }  // namespace mindspore

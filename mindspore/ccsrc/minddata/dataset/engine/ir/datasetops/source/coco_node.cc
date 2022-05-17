@@ -30,6 +30,20 @@
 namespace mindspore {
 namespace dataset {
 
+#ifdef ENABLE_PYTHON
+// Constructor for CocoNode
+CocoNode::CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+                   const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache,
+                   const bool &extra_metadata, py::function decrypt)
+    : MappableSourceNode(std::move(cache)),
+      dataset_dir_(dataset_dir),
+      annotation_file_(annotation_file),
+      task_(task),
+      decode_(decode),
+      sampler_(sampler),
+      extra_metadata_(extra_metadata),
+      decrypt_(decrypt) {}
+#else
 // Constructor for CocoNode
 CocoNode::CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
                    const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache,
@@ -41,11 +55,17 @@ CocoNode::CocoNode(const std::string &dataset_dir, const std::string &annotation
       decode_(decode),
       sampler_(sampler),
       extra_metadata_(extra_metadata) {}
+#endif
 
 std::shared_ptr<DatasetNode> CocoNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
+#ifdef ENABLE_PYTHON
+  auto node = std::make_shared<CocoNode>(dataset_dir_, annotation_file_, task_, decode_, sampler, cache_,
+                                         extra_metadata_, decrypt_);
+#else
   auto node =
     std::make_shared<CocoNode>(dataset_dir_, annotation_file_, task_, decode_, sampler, cache_, extra_metadata_);
+#endif
   node->SetNumWorkers(num_workers_);
   node->SetConnectorQueueSize(connector_que_size_);
   return node;
@@ -135,9 +155,15 @@ Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
+#ifdef ENABLE_PYTHON
+  std::shared_ptr<CocoOp> op =
+    std::make_shared<CocoOp>(task_type, dataset_dir_, annotation_file_, num_workers_, connector_que_size_, decode_,
+                             std::move(schema), std::move(sampler_rt), extra_metadata_, decrypt_);
+#else
   std::shared_ptr<CocoOp> op =
     std::make_shared<CocoOp>(task_type, dataset_dir_, annotation_file_, num_workers_, connector_que_size_, decode_,
                              std::move(schema), std::move(sampler_rt), extra_metadata_);
+#endif
   op->SetTotalRepeats(GetTotalRepeats());
   op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);

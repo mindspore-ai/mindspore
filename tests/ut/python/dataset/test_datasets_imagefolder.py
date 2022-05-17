@@ -12,12 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import os
+import shutil
+import numpy as np
 import pytest
 import mindspore.dataset as ds
+import mindspore.dataset.transforms as data_trans
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testPK/data"
+DATA_DIR_2 = "../data/dataset/testImageNetData2/train"
+DATA_DIR_3 = "../data/dataset/testImageNetData2/encrypt_train"
 
 
 def test_imagefolder_basic():
@@ -903,6 +909,108 @@ def test_imagefolder_exception():
         assert "should be file, but got directory" in str(e)
 
 
+def encrypt_func():
+    """
+    Feature: Encrypt function
+    Description: Encrypt and save the image
+    Expectation: Success
+    """
+    plain_dir = os.path.realpath(DATA_DIR_2)
+    cipher_dir = os.path.realpath(DATA_DIR_3)
+
+    for root, _, files in os.walk(plain_dir):
+        for f in files:
+            fn = os.path.join(root, f)
+
+            enc_file = os.path.join(cipher_dir, os.path.relpath(fn, plain_dir))
+            os.makedirs(os.path.dirname(enc_file), exist_ok=True)
+
+            with open(fn, 'rb')as f:
+                content = f.read()
+
+            new_content = b'helloworld' + content
+
+            with open(enc_file, 'wb')as f:
+                f.write(new_content)
+
+
+def decrypt_func(cipher_file):
+    """
+    Feature: Decrypt function
+    Description: Decrypt encrypted image data
+    Expectation: Decryption is successful, return bytes type data
+    """
+    with open(cipher_file, 'rb')as f:
+        content = f.read()
+        new_content = content[10:]
+    return new_content
+
+
+def test_imagefolder_decrypt():
+    """
+    Feature: Test imagefolder decrypt
+    Description: Support decrypting encrypted image data
+    Expectation: Success
+    """
+    logger.info("Test imagefolder decrypt")
+
+    encrypt_func()
+
+    resize_height = 224
+    resize_width = 224
+
+    # Create dataset and define map operations
+    ds1 = ds.ImageFolderDataset(DATA_DIR_3, decrypt=decrypt_func)
+
+    num_classes = 3
+    decode_op = vision.Decode()
+    resize_op = vision.Resize((resize_height, resize_width), vision.Inter.LINEAR)
+    one_hot_encode = data_trans.OneHot(num_classes)  # num_classes is input argument
+
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
+    ds1 = ds1.map(operations=resize_op, input_columns=["image"])
+    ds1 = ds1.map(operations=one_hot_encode, input_columns=["label"])
+
+    # apply batch operations
+    batch_size = 3
+    ds1 = ds1.batch(batch_size, drop_remainder=True)
+
+    ds2 = ds1
+    alpha = 0.2
+    transforms = [vision.MixUp(batch_size=batch_size, alpha=alpha, is_single=False)
+                  ]
+    ds1 = ds1.map(operations=transforms, input_columns=["image", "label"])
+    num_iter = 0
+    batch1_image1 = 0
+    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            ds2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        image1 = data1["image"]
+        label1 = data1["label"]
+        logger.info("label: {}".format(label1))
+
+        image2 = data2["image"]
+        label2 = data2["label"]
+        logger.info("label2: {}".format(label2))
+
+        if num_iter == 0:
+            batch1_image1 = image1
+
+        if num_iter == 1:
+            lam = np.abs(label2 - label1)
+            logger.info("lam value in multi: {}".format(lam))
+            for index in range(batch_size):
+                if np.square(lam[index]).mean() != 0:
+                    lam_value = 1 - np.sum(lam[index]) / 2
+                    img_golden = lam_value * image2[index] + (1 - lam_value) * batch1_image1[index]
+                    assert image1[index].all() == img_golden.all()
+                    logger.info("====test several batch mixup ok====")
+            break
+        num_iter += 1
+
+    if os.path.exists(DATA_DIR_3):
+        shutil.rmtree(DATA_DIR_3)
+
+
 if __name__ == '__main__':
     test_imagefolder_basic()
     logger.info('test_imagefolder_basic Ended.\n')
@@ -987,3 +1095,6 @@ if __name__ == '__main__':
 
     test_imagefolder_exception()
     logger.info('test_imagefolder_exception Ended.\n')
+
+    test_imagefolder_decrypt()
+    logger.info('test_imagefolder_decrypt Ended.\n')

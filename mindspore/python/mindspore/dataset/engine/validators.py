@@ -111,6 +111,10 @@ def check_imagefolderdataset(method):
         dataset_dir = param_dict.get('dataset_dir')
         check_dir(dataset_dir)
 
+        decrypt = param_dict.get('decrypt')
+        if decrypt is not None and not callable(decrypt):
+            raise TypeError("Argument decrypt is not a callable object, but got " + str(type(decrypt)))
+
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
         validate_dataset_param_value(nreq_param_list, param_dict, list)
@@ -689,6 +693,10 @@ def check_caltech256_dataset(method):
         dataset_dir = param_dict.get('dataset_dir')
         check_dir(dataset_dir)
 
+        decrypt = param_dict.get('decrypt')
+        if decrypt is not None and not callable(decrypt):
+            raise TypeError("Argument decrypt is not a callable object, but got " + str(type(decrypt)))
+
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
         check_sampler_shuffle_shard_options(param_dict)
@@ -731,6 +739,10 @@ def check_vocdataset(method):
         else:
             raise ValueError("Invalid task : " + task + ".")
 
+        decrypt = param_dict.get('decrypt')
+        if decrypt is not None and not callable(decrypt):
+            raise TypeError("Argument decrypt is not a callable object, but got " + str(type(decrypt)))
+
         check_file(imagesets_file)
 
         validate_dataset_param_value(nreq_param_int, param_dict, int)
@@ -767,6 +779,10 @@ def check_cocodataset(method):
 
         if task not in {'Detection', 'Stuff', 'Panoptic', 'Keypoint', 'Captioning'}:
             raise ValueError("Invalid task type: " + task + ".")
+
+        decrypt = param_dict.get('decrypt')
+        if decrypt is not None and not callable(decrypt):
+            raise TypeError("Argument decrypt is not a callable object, but got " + str(type(decrypt)))
 
         validate_dataset_param_value(nreq_param_int, param_dict, int)
 

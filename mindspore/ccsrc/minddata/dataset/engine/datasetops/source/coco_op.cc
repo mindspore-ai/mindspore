@@ -17,11 +17,11 @@
 
 #include <algorithm>
 #include <fstream>
-#include "utils/file_utils.h"
-#include "utils/ms_utils.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
+#include "utils/file_utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -46,6 +46,19 @@ const char kJsonCategoriesName[] = "name";
 const float kDefaultPadValue = -1.0;
 const unsigned int kPadValueZero = 0;
 
+#ifdef ENABLE_PYTHON
+CocoOp::CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
+               int32_t num_workers, int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
+               std::shared_ptr<SamplerRT> sampler, bool extra_metadata, py::function decrypt)
+    : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
+      decode_(decode),
+      task_type_(task_type),
+      image_folder_path_(image_folder_path),
+      annotation_path_(annotation_path),
+      data_schema_(std::move(data_schema)),
+      extra_metadata_(extra_metadata),
+      decrypt_(std::move(decrypt)) {}
+#else
 CocoOp::CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
                int32_t num_workers, int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
                std::shared_ptr<SamplerRT> sampler, bool extra_metadata)
@@ -56,6 +69,7 @@ CocoOp::CocoOp(const TaskType &task_type, const std::string &image_folder_path, 
       annotation_path_(annotation_path),
       data_schema_(std::move(data_schema)),
       extra_metadata_(extra_metadata) {}
+#endif
 
 void CocoOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
@@ -556,7 +570,11 @@ Status CocoOp::CategoriesColumnLoad(const nlohmann::json &categories_tree) {
 
 Status CocoOp::ReadImageToTensor(const std::string &path, const ColDescriptor &col,
                                  std::shared_ptr<Tensor> *tensor) const {
+#ifdef ENABLE_PYTHON
+  RETURN_IF_NOT_OK(MappableLeafOp::ImageDecrypt(path, tensor, decrypt_));
+#else
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(path, tensor));
+#endif
 
   if (decode_) {
     Status rc = Decode(*tensor, tensor);

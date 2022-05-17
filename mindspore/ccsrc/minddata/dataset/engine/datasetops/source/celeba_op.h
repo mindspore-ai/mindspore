@@ -44,6 +44,22 @@ namespace mindspore {
 namespace dataset {
 class CelebAOp : public MappableLeafOp {
  public:
+#ifdef ENABLE_PYTHON
+  // Constructor
+  // @param int32_t - num_workers - Num of workers reading images in parallel
+  // @param std::string - dir directory of celeba dataset
+  // @param int32_t queueSize - connector queue size
+  // @param bool decode - decode the images after reading
+  // @param std::string usage - specify the train, valid, test part or all parts of dataset
+  // @param std::set<std::string> exts - list of file extensions to be included in the dataset
+  // @param std::unique_ptr<DataSchema> schema - path to the JSON schema file or schema object
+  // @param std::unique_ptr<Sampler> sampler - sampler tells CelebAOp what to read
+  // @param py::function decrypt - Image decryption function, which accepts the path of the encrypted image file
+  //     and returns the decrypted bytes data. Default: None, no decryption.
+  CelebAOp(int32_t num_workers, const std::string &dir, int32_t queue_size, bool decode, const std::string &usage,
+           const std::set<std::string> &exts, std::unique_ptr<DataSchema> schema, std::shared_ptr<SamplerRT> sampler,
+           py::function decrypt = py::none());
+#else
   // Constructor
   // @param int32_t - num_workers - Num of workers reading images in parallel
   // @param std::string - dir directory of celeba dataset
@@ -55,6 +71,7 @@ class CelebAOp : public MappableLeafOp {
   // @param std::unique_ptr<Sampler> sampler - sampler tells CelebAOp what to read
   CelebAOp(int32_t num_workers, const std::string &dir, int32_t queue_size, bool decode, const std::string &usage,
            const std::set<std::string> &exts, std::unique_ptr<DataSchema> schema, std::shared_ptr<SamplerRT> sampler);
+#endif
 
   ~CelebAOp() override = default;
 
@@ -112,6 +129,9 @@ class CelebAOp : public MappableLeafOp {
   std::string usage_;
   std::ifstream partition_file_;
   std::string attr_file_;
+#ifdef ENABLE_PYTHON
+  py::function decrypt_;
+#endif
 };
 }  // namespace dataset
 }  // namespace mindspore

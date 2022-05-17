@@ -32,6 +32,20 @@
 namespace mindspore {
 namespace dataset {
 
+#ifdef ENABLE_PYTHON
+ImageFolderNode::ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler,
+                                 bool recursive, std::set<std::string> extensions,
+                                 std::map<std::string, int32_t> class_indexing,
+                                 std::shared_ptr<DatasetCache> cache = nullptr, py::function decrypt)
+    : MappableSourceNode(std::move(cache)),
+      dataset_dir_(dataset_dir),
+      decode_(decode),
+      sampler_(sampler),
+      recursive_(recursive),
+      class_indexing_(class_indexing),
+      exts_(extensions),
+      decrypt_(decrypt) {}
+#else
 ImageFolderNode::ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler,
                                  bool recursive, std::set<std::string> extensions,
                                  std::map<std::string, int32_t> class_indexing,
@@ -43,11 +57,17 @@ ImageFolderNode::ImageFolderNode(std::string dataset_dir, bool decode, std::shar
       recursive_(recursive),
       class_indexing_(class_indexing),
       exts_(extensions) {}
+#endif
 
 std::shared_ptr<DatasetNode> ImageFolderNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
+#ifdef ENABLE_PYTHON
+  auto node = std::make_shared<ImageFolderNode>(dataset_dir_, decode_, sampler, recursive_, exts_, class_indexing_,
+                                                cache_, decrypt_);
+#else
   auto node =
     std::make_shared<ImageFolderNode>(dataset_dir_, decode_, sampler, recursive_, exts_, class_indexing_, cache_);
+#endif
   node->SetNumWorkers(num_workers_);
   node->SetConnectorQueueSize(connector_que_size_);
   return node;
@@ -77,11 +97,17 @@ Status ImageFolderNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const nod
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
+#ifdef ENABLE_PYTHON
+  auto op = std::make_shared<ImageFolderOp>(num_workers_, dataset_dir_, connector_que_size_, recursive_, decode_, exts_,
+                                            class_indexing_, std::move(schema), std::move(sampler_rt), decrypt_);
+#else
   auto op = std::make_shared<ImageFolderOp>(num_workers_, dataset_dir_, connector_que_size_, recursive_, decode_, exts_,
                                             class_indexing_, std::move(schema), std::move(sampler_rt));
+#endif
   op->SetTotalRepeats(GetTotalRepeats());
   op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);
+
   return Status::OK();
 }
 

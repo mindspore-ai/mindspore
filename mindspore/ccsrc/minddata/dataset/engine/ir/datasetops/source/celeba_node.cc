@@ -32,6 +32,20 @@
 namespace mindspore {
 namespace dataset {
 
+#ifdef ENABLE_PYTHON
+// Constructor for CelebANode
+CelebANode::CelebANode(const std::string &dataset_dir, const std::string &usage,
+                       const std::shared_ptr<SamplerObj> &sampler, const bool &decode,
+                       const std::set<std::string> &extensions, const std::shared_ptr<DatasetCache> &cache,
+                       py::function decrypt)
+    : MappableSourceNode(std::move(cache)),
+      dataset_dir_(dataset_dir),
+      usage_(usage),
+      sampler_(sampler),
+      decode_(decode),
+      extensions_(extensions),
+      decrypt_(decrypt) {}
+#else
 // Constructor for CelebANode
 CelebANode::CelebANode(const std::string &dataset_dir, const std::string &usage,
                        const std::shared_ptr<SamplerObj> &sampler, const bool &decode,
@@ -42,10 +56,15 @@ CelebANode::CelebANode(const std::string &dataset_dir, const std::string &usage,
       sampler_(sampler),
       decode_(decode),
       extensions_(extensions) {}
+#endif
 
 std::shared_ptr<DatasetNode> CelebANode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
+#ifdef ENABLE_PYTHON
+  auto node = std::make_shared<CelebANode>(dataset_dir_, usage_, sampler, decode_, extensions_, cache_, decrypt_);
+#else
   auto node = std::make_shared<CelebANode>(dataset_dir_, usage_, sampler, decode_, extensions_, cache_);
+#endif
   node->SetNumWorkers(num_workers_);
   node->SetConnectorQueueSize(connector_que_size_);
   return node;
@@ -75,8 +94,13 @@ Status CelebANode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
+#ifdef ENABLE_PYTHON
+  auto celeba_op = std::make_shared<CelebAOp>(num_workers_, dataset_dir_, connector_que_size_, decode_, usage_,
+                                              extensions_, std::move(schema), std::move(sampler_rt), decrypt_);
+#else
   auto celeba_op = std::make_shared<CelebAOp>(num_workers_, dataset_dir_, connector_que_size_, decode_, usage_,
                                               extensions_, std::move(schema), std::move(sampler_rt));
+#endif
   celeba_op->SetTotalRepeats(GetTotalRepeats());
   celeba_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(celeba_op);

@@ -43,6 +43,22 @@ const char kSegmentationExtension[] = ".png";
 const char kAnnotationExtension[] = ".xml";
 const char kImageSetsExtension[] = ".txt";
 
+#ifdef ENABLE_PYTHON
+VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
+             const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t queue_size, bool decode,
+             std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, bool extra_metadata,
+             py::function decrypt)
+    : MappableLeafOp(num_workers, queue_size, std::move(sampler)),
+      decode_(decode),
+      row_cnt_(0),
+      task_type_(task_type),
+      usage_(task_mode),
+      folder_path_(folder_path),
+      class_index_(class_index),
+      data_schema_(std::move(data_schema)),
+      extra_metadata_(extra_metadata),
+      decrypt_(std::move(decrypt)) {}
+#else
 VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
              const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t queue_size, bool decode,
              std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, bool extra_metadata)
@@ -55,6 +71,7 @@ VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std:
       class_index_(class_index),
       data_schema_(std::move(data_schema)),
       extra_metadata_(extra_metadata) {}
+#endif
 
 void VOCOp::Print(std::ostream &out, bool show_all) const {
   if (!show_all) {
@@ -253,7 +270,11 @@ Status VOCOp::PrepareData() {
   return Status::OK();
 }
 Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor) {
+#ifdef ENABLE_PYTHON
+  RETURN_IF_NOT_OK(MappableLeafOp::ImageDecrypt(path, tensor, decrypt_));
+#else
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(path, tensor));
+#endif
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);
     if (rc.IsError()) {
