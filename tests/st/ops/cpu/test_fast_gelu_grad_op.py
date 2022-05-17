@@ -80,6 +80,7 @@ def test_fast_gelu_grad_float32(shape, dtype):
     Description: test the rightness of FastGeLUGrad cpu kernel.
     Expectation: Success.
     """
+    np.random.seed(1)
     prop_cpu = 1 if np.random.random() > 0.5 else -1
     dy_np = (np.random.randn(*shape) * prop_cpu).astype(dtype)
     x_np = (np.random.randn(*shape) * prop_cpu).astype(dtype)
@@ -103,6 +104,7 @@ def test_fast_gelu_grad_vmap_cpu(dtype, shape=(100, 2)):
     Description: test the rightness of FastGeLUGrad cpu kernel vmap feature.
     Expectation: Success.
     """
+    np.random.seed(1)
 
     net_cpu = FastGeluNet()
     grad = FastGeLUGradCPU(net_cpu)
