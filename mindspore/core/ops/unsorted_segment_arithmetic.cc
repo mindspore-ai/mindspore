@@ -102,13 +102,10 @@ AbstractBasePtr UnsortedSegmentArithmeticInfer(const abstract::AnalysisEnginePtr
 
 MIND_API_OPERATOR_IMPL(UnsortedSegmentMax, BaseOperator);
 MIND_API_OPERATOR_IMPL(UnsortedSegmentMin, BaseOperator);
-MIND_API_OPERATOR_IMPL(UnsortedSegmentProd, BaseOperator);
 
 REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentMax, prim::kPrimUnsortedSegmentMax, UnsortedSegmentArithmeticInfer, nullptr,
                              true);
 REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentMin, prim::kPrimUnsortedSegmentMin, UnsortedSegmentArithmeticInfer, nullptr,
                              true);
-REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentProd, prim::kPrimUnsortedSegmentProd, UnsortedSegmentArithmeticInfer,
-                             nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
