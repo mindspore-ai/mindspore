@@ -29,9 +29,11 @@ void Expm1CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32) {
+  if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32 && input_dtype_ != kNumberTypeFloat64 &&
+      input_dtype_ != kNumberTypeComplex64 && input_dtype_ != kNumberTypeComplex128) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input must be Float16 or Float32, but got: " << input_dtype_;
+                      << "', the dtype of input should be Float16, Float32, Float64, Complex64 or Complex128, but got: "
+                      << input_dtype_;
   }
 }
 
@@ -43,9 +45,16 @@ bool Expm1CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
     LaunchKernel<float16>(inputs, outputs);
   } else if (input_dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
+  } else if (input_dtype_ == kNumberTypeFloat64) {
+    LaunchKernel<double>(inputs, outputs);
+  } else if (input_dtype_ == kNumberTypeComplex64) {
+    LaunchKernel<std::complex<float>>(inputs, outputs);
+  } else if (input_dtype_ == kNumberTypeComplex128) {
+    LaunchKernel<std::complex<double>>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input must be Float16 or Float32, but got: " << TypeIdLabel(input_dtype_);
+                      << "', the dtype of input should be Float16, Float32, Float64, Complex64 or Complex128, but got: "
+                      << TypeIdLabel(input_dtype_);
   }
   return true;
 }

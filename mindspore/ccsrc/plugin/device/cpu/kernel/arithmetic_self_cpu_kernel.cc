@@ -54,6 +54,7 @@ constexpr auto kSin = "Sin";
 constexpr auto kCos = "Cos";
 constexpr auto kTan = "Tan";
 constexpr auto kLog = "Log";
+constexpr auto kExp = "Exp";
 constexpr auto kSinh = "Sinh";
 constexpr auto kCosh = "Cosh";
 constexpr auto kTanh = "Tanh";
@@ -325,6 +326,26 @@ void ComplexCosh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(cosh(in[i]));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
+void Exp(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(exp(static_cast<double>(in[i])));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
+void ComplexExp(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(exp(in[i]));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
@@ -632,7 +653,8 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
                           {prim::kPrimErf->name(), Erf<T>},
                           {prim::kPrimErfc->name(), Erfc<T>},
                           {prim::kPrimSoftsign->name(), Softsign<T>},
-                          {prim::kPrimRelu->name(), Relu<T>}};
+                          {prim::kPrimRelu->name(), Relu<T>},
+                          {prim::kPrimExp->name(), Exp<T>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
@@ -656,7 +678,8 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
                           {prim::kPrimSin->name(), ComplexSin<T>},     {prim::kPrimCos->name(), ComplexCos<T>},
                           {prim::kPrimRsqrt->name(), Rsqrt<T>},        {prim::kPrimTan->name(), Tan<T>},
                           {prim::kPrimTanh->name(), Tanh<T>},          {prim::kPrimAtanh->name(), Atanh<T>},
-                          {prim::kPrimSign->name(), ComplexSign<T>},   {prim::kPrimLog->name(), ComplexLog<T>}};
+                          {prim::kPrimSign->name(), ComplexSign<T>},   {prim::kPrimLog->name(), ComplexLog<T>},
+                          {prim::kPrimExp->name(), ComplexExp<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << kernel_name_ << " with complex as input. ";
@@ -693,7 +716,29 @@ class LogMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
  public:
   LogMKLKernelFunc() : EltWiseCpuKernelMod(kLog) {}
   ~LogMKLKernelFunc() override = default;
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override {
+    EltWiseCpuKernelMod::Init(base_operator, inputs, outputs);
+  }
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    // The Resize of EltWiseCpuKernelMod must be called here.
+    return EltWiseCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  }
+
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+               const std::vector<AddressPtr> &outputs) override {
+    return EltWiseCpuKernelMod::Launch(inputs, workspace, outputs);
+  }
+};
+
+// MKLDNN Exp
+class ExpMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
+ public:
+  ExpMKLKernelFunc() : EltWiseCpuKernelMod(kExp) {}
+  ~ExpMKLKernelFunc() override = default;
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override {
     EltWiseCpuKernelMod::Init(base_operator, inputs, outputs);
@@ -881,7 +926,13 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc}}}};
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc}}},
+  {kExp,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     []() { return std::make_shared<ExpMKLKernelFunc>(); }}}}};
 }  // namespace
 
 bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -1014,6 +1065,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Cos,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kCos); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tan,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kTan); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Exp,
+                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kExp); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sinh,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSinh); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Cosh,
