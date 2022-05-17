@@ -138,8 +138,8 @@ int GatherBaseCPUKernel::UpdateThreadNumProcess(int32_t kernel_type, int64_t per
     return RET_OK;
   }
 
-  thread_num_ = lite::UpdateThreadNum(this->ms_context_, kernel_type, per_unit_load_num, per_unit_store_num, unit_num,
-                                      op_parameter_->thread_num_);
+  thread_num_ =
+    lite::UpdateThreadNum(kernel_type, per_unit_load_num, per_unit_store_num, unit_num, op_parameter_->thread_num_);
   return lite::RET_OK;
 }
 

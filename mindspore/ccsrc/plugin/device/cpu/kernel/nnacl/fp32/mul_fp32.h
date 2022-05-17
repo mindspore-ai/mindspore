@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 #ifndef MINDSPORE_NNACL_FP32_MUL_H_
 #define MINDSPORE_NNACL_FP32_MUL_H_
 
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 #include "nnacl/op_base.h"
 #include "nnacl/base/arithmetic_base.h"
 #include "nnacl/errorcode.h"
