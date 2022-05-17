@@ -796,7 +796,7 @@ class Tensor(Tensor_):
         shape :math:`(m * n)`. If `self` is a Tensor of shape :math:`(*B, m)` and `x` is a Tensor of shape
         :math:`(*B, n)`, then `output` must be a Tensor of shape :math:`(*B, m, n)`.
 
-        Notes:
+        Note:
             In Ascend, batch dimension input is not supported. Specifically, `x1` and `x2` are both required to be 1D
             input Tensors.
 
@@ -1074,7 +1074,6 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
 
-
     def select(self, condition, y):
         r"""
         Returns the selected elements, either from Tensor or input :math:`y`, depending on the condition `condition`.
@@ -1147,7 +1146,6 @@ class Tensor(Tensor_):
             else:
                 input_y = tensor_operator_registry.get('cast')(input_y, mstype.float32)
         return tensor_operator_registry.get('select')(condition, self, input_y)
-
 
     def transpose(self, *axes):
         r"""
@@ -2889,7 +2887,6 @@ class Tensor(Tensor_):
             [-0.7695091 -0.6386359]]
         """
         return tensor_operator_registry.get("svd")(full_matrices, compute_uv)(self)
-
 
     def hardshrink(self, lambd=0.5):
         r"""
