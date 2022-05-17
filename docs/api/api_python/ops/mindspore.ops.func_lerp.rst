@@ -6,7 +6,7 @@ mindspore.ops.lerp
     基于某个浮点数或权重Tensor的值, 计算两个Tensor之间的线性插值。
 
     如果参数 `weight` 是一个Tensor，那么另两个输入的维度信息可以被广播到 `start` 。
-    如果参数 `weight` 是一个浮点数， 那么 `end` 的维度信息可以被广播到`start` 。
+    如果参数 `weight` 是一个浮点数， 那么 `end` 的维度信息可以被广播到 `start` 。
 
     .. math::
 
