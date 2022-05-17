@@ -77,17 +77,6 @@ if(USE_GLOG)
         DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_glog.0.dylib COMPONENT mindspore)
 endif()
 
-install(FILES ${libevent_LIBPATH}/libevent-2.1.7.dylib
-  DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
-install(FILES ${libevent_LIBPATH}/libevent_core-2.1.7.dylib
-  DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
-install(FILES ${libevent_LIBPATH}/libevent_extra-2.1.7.dylib
-  DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
-install(FILES ${libevent_LIBPATH}/libevent_openssl-2.1.7.dylib
-  DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
-install(FILES ${libevent_LIBPATH}/libevent_pthreads-2.1.7.dylib
-  DESTINATION ${INSTALL_LIB_DIR} COMPONENT mindspore)
-
 if(ENABLE_CPU AND NOT WIN32)
     install(
         TARGETS ps_cache

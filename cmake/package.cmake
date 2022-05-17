@@ -100,17 +100,6 @@ if(USE_GLOG)
       DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_glog.so.0 COMPONENT mindspore)
 endif()
 
-install(FILES ${libevent_LIBPATH}/libevent-2.1.so.7.0.1
-  DESTINATION ${INSTALL_LIB_DIR} RENAME libevent-2.1.so.7 COMPONENT mindspore)
-install(FILES ${libevent_LIBPATH}/libevent_core-2.1.so.7.0.1
-  DESTINATION ${INSTALL_LIB_DIR} RENAME libevent_core-2.1.so.7 COMPONENT mindspore)
-install(FILES ${libevent_LIBPATH}/libevent_extra-2.1.so.7.0.1
-  DESTINATION ${INSTALL_LIB_DIR} RENAME libevent_extra-2.1.so.7 COMPONENT mindspore)
-install(FILES ${libevent_LIBPATH}/libevent_openssl-2.1.so.7.0.1
-  DESTINATION ${INSTALL_LIB_DIR} RENAME libevent_openssl-2.1.so.7 COMPONENT mindspore)
-install(FILES ${libevent_LIBPATH}/libevent_pthreads-2.1.so.7.0.1
-  DESTINATION ${INSTALL_LIB_DIR} RENAME libevent_pthreads-2.1.so.7 COMPONENT mindspore)
-
 if(ENABLE_MINDDATA)
     install(
         TARGETS _c_dataengine _c_mindrecord
