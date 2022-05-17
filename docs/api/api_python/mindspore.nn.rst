@@ -170,6 +170,7 @@ Dropout层
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.nn.AdaptiveAvgPool1d
     mindspore.nn.AvgPool1d
     mindspore.nn.AvgPool2d
     mindspore.nn.MaxPool1d
