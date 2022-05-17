@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #include "include/api/allocator.h"
 
 namespace mindspore {
-namespace dpico {
+namespace lite {
 struct AllocatorContext {
   int shiftFactor;
   bool lockFlag;
@@ -45,7 +45,7 @@ class CustomAllocator : public Allocator {
   int SetRefCount(void *ptr, int ref_count) override;
   int DecRefCount(void *ptr, int ref_count) override;
   int IncRefCount(void *ptr, int ref_count) override;
-  size_t total_size() { return this->total_size_; }
+  size_t total_size() const { return this->total_size_; }
   void Clear();
 
  private:
@@ -61,16 +61,16 @@ class CustomAllocator : public Allocator {
   std::mutex lock_;
   size_t total_size_ = 0;
   // <membuf->buf, membuf>
-  std::unordered_map<void *, MemBuf *> allocatedList_;
-  std::multimap<size_t, MemBuf *> freeList_;
+  std::unordered_map<void *, MemBuf *> allocated_list_;
+  std::multimap<size_t, MemBuf *> free_list_;
   // 6 is empirical value
-  unsigned shiftFactor_ = 6;
-  bool lockFlag_ = true;
+  unsigned shift_factor_ = 6;
+  bool lock_flag_ = true;
+  size_t max_malloc_size_ = 0;
 };
-
+using CustomAllocatorPtr = std::shared_ptr<CustomAllocator>;
 constexpr int64_t MAX_MALLOC_SIZE = static_cast<size_t>(2000) * 1024 * 1024;
 constexpr int64_t MAX_THREAD_POOL_SIZE = static_cast<size_t>(3000) * 1024 * 1024;
-}  // namespace dpico
+}  // namespace lite
 }  // namespace mindspore
-
 #endif  // DPICO_SRC_CUSTOM_ALLOCATOR_H_

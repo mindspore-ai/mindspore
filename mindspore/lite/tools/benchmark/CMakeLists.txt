@@ -25,7 +25,7 @@ if(TARGET_HIMIX)
 elseif(TARGET_MIX210)
     set(CMAKE_SKIP_BUILD_RPATH on)
     set(BENCHMARK_LINK_LIB ${BENCHMARK_LINK_LIB} mindspore::json pthread
-        dpico_acl_adapter svp_acl dl securec protobuf-c stdc++)
+        dpico_acl_adapter stdc++)
     if(${MSLITE_REGISTRY_DEVICE}  STREQUAL "SD3403")
         add_subdirectory(${PROVIDERS_DIR}/dpico dpico)
         message("SD3403_SDK_PATH:${SD3403_SDK_PATH}.")

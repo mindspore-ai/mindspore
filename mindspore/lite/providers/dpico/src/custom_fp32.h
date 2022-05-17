@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,113 +17,36 @@
 #ifndef DPICO_SRC_CUSTOM_FP32_H_
 #define DPICO_SRC_CUSTOM_FP32_H_
 
-#include <sys/stat.h>
-#include <cmath>
-#include <iostream>
-#include <fstream>
-#include <cstring>
-#include <map>
-#include <unordered_map>
-#include <memory>
-#include <sstream>
 #include <vector>
-#include <string>
-#include <thread>
 #include "include/api/kernel.h"
-#include "include/svp_acl.h"
-#include "include/svp_acl_mdl.h"
-#include "include/svp_acl_ext.h"
-#include "src/common_utils.h"
-#include "src/custom_infer.h"
+#include "include/errorcode.h"
+#include "manager/acl_model_manager.h"
 
 using mindspore::kernel::Kernel;
-
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 namespace mindspore {
 namespace lite {
 class CustomCPUKernel : public Kernel {
  public:
   CustomCPUKernel(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs,
                   const mindspore::schema::Primitive *primitive, const mindspore::Context *ctx)
-      : Kernel(inputs, outputs, primitive, ctx) {
-    std::map<std::string, std::string> attrs;
-    ExtractAttrsFromPrimitive(primitive, &attrs);
-    for (auto &item : attrs) {
-      SetAttr(item.first, item.second);
-    }
-    num_of_om_model_++;
-  }
+      : Kernel(inputs, outputs, primitive, ctx) {}
 
-  ~CustomCPUKernel() override;
+  ~CustomCPUKernel() = default;
 
   int Prepare() override;
   int ReSize() override;
   int Execute() override;
 
  private:
-  Result DetermineBatchSize();
-  int LoadModelAndInitResource();
-  Result LoadModel();
-  Result PrepareDevice();
-  Result CreateInputs();
-  Result CreateOutputs();
-  Result SetDetParas();
-  Result InitInputsLinkMap();
-  Result InitOutputsLinkMap();
-  Result MallocOutputsData();
-  Result UpdateInputDataset();
-  Result UpdateOutputDataset();
-  Result FlushInputsData();
-  Result InvalidateOutputsData();
-  Result GetStrideParam(size_t *devSize, int index, size_t *stride, svp_acl_mdl_io_dims *dims);
-  Result CreateInput(void *inputDataBuffer, size_t bufferSize, int stride);
-  void *GetDeviceBufferOfTensor(const svp_acl_mdl_io_dims &dims, const size_t &stride);
-  Result CreateTaskBufAndWorkBuf();
-  Result CreateBuf(int index);
-  Result GetInputDims(int index, svp_acl_mdl_io_dims *dims);
-  size_t GetInputDataSize(int index);
-
-  Result PreExecute();
-  Result DeviceExecute();
-  Result CopyTensorsToNpuWithStride();
-  void DumpModelOutputResultToTensor();
-  void WriteOutputToTensor(size_t index, size_t output_tensor_index);
-  void OutputModelResult();
-  void PrintResultToTensor(const std::vector<std::vector<float>> &boxValue);
-  void UpdateDetParas();
-
-  void UnloadModel();
-  void DestroyInput();
-  void DestroyOutput();
-  void TerminateDevice();
+  bool InferShapeDone() const;
+  int PreProcess();
 
  private:
-  uint32_t model_id_ = 0;
-  void *model_mem_ptr_ = nullptr;
-  bool load_flag_ = false;  // model load flag
-  svp_acl_mdl_desc *model_desc_ = nullptr;
-  svp_acl_mdl_dataset *input_dataset_ = nullptr;
-  svp_acl_mdl_dataset *output_dataset_ = nullptr;
-
-  svp_acl_rt_stream stream_;
-
-  std::vector<void *> inputs_data_in_npu_;
-  std::unordered_map<size_t, size_t> inputs_link_map_;         // <tensor_input_idx, om_input_idx>
-  std::unordered_map<size_t, size_t> outputs_link_map_;        // <tensor_output_idx, om_output_idx>
-  std::unordered_map<size_t, bool> inputs_mem_aligned_flag_;   // <tensor_output_idx, is_mem_already_aligned>
-  std::unordered_map<size_t, bool> outputs_mem_aligned_flag_;  // <tensor_input_idx, is_mem_already_aligned>
-  size_t recurrent_total_t = 1;
-  bool is_recurrent_net_ = false;  // true: batch is 1, false: not support Total_t
-  bool is_detection_net_ = false;
-  size_t batch_size_ = 1;
-  bool prepared_ = false;
-  float *det_param_buf_float_ = nullptr;
-  static size_t num_of_om_model_;
-  static std::shared_ptr<Allocator> custom_allocator_;
-  static dpico::CustomInterface custom_infershape_;
-  static DpicoConfigParamExtractor dpico_config_param_extractor_;
-  static DpicoContextManager dpico_context_manager_;
-  static DpicoAicpuThreadManager dpico_aicpu_thread_manager_;
+  AclModelManagerPtr acl_model_manager_{nullptr};
 };
 }  // namespace lite
 }  // namespace mindspore
+
 #endif  // DPICO_SRC_CUSTOM_FP32_H_

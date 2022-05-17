@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_DPICO_SRC_CUSTOM_LOG_H_
-#define MINDSPORE_LITE_TOOLS_BENCHMARK_DPICO_SRC_CUSTOM_LOG_H_
+
+#ifndef DPICO_COMMON_LOG_UTIL_H_
+#define DPICO_COMMON_LOG_UTIL_H_
 
 #include <memory>
 #include <sstream>
 
 // NOTICE: when relative path of 'log.h' changed, macro 'DPICO_LOG_HEAR_FILE_REL_PATH' must be changed
-#define DPICO_LOG_HEAR_FILE_REL_PATH "mindspore/lite/tools/benchmark/dpico/src/custom_log.h"
+#define DPICO_LOG_HEAR_FILE_REL_PATH "mindspore/lite/providers/dpico/common/log_util.h"
 
 // Get start index of file relative path in __FILE__
 static constexpr size_t GetRealPathPos() noexcept {
@@ -96,4 +97,4 @@ class DpicoLogWriter {
 #define MS_LOG_ERROR MSLOG_IF(mindspore::DpicoLogLevel::ERROR)
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_BENCHMARK_DPICO_SRC_CUSTOM_LOG_H_
+#endif  // DPICO_COMMON_LOG_UTIL_H_
