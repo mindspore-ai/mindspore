@@ -43,7 +43,6 @@
 #include "frontend/optimizer/slice_activation_in_recompute.h"
 #include "frontend/optimizer/comm_op_attrs.h"
 #include "frontend/optimizer/environ_conversion.h"
-#include "frontend/optimizer/batchnorm_transform.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/pynative/pynative_execute.h"
@@ -57,6 +56,7 @@
 #include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
+#include "frontend/optimizer/irpass/ge/batchnorm_transform.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -93,7 +93,7 @@ bool BatchNormTransformPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  opt::BatchNormTransform(func_graph, res->manager());
+  opt::irpass::BatchNormTransform(func_graph, res->manager());
   return true;
 }
 
