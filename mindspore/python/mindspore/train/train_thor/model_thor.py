@@ -117,7 +117,6 @@ class ModelThor(Model):
         else:
             self._frequency = optimizer.get_frequency()
         # used to stop training for early stop, such as stopAtTIme or stopATStep
-        self.should_stop = False
         self.switch_branch_one = True
         self.index_first_order = 0
         self.train_network_init_flag = True
@@ -187,7 +186,8 @@ class ModelThor(Model):
         cb_params.net_outputs = outputs
         list_callback.step_end(run_context)
 
-    def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None, sink_size=-1):
+    def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None,
+                                    sink_size=-1, initial_epoch=0):
         """
         Training process. The data would be passed to network through dataset channel.
 
@@ -201,11 +201,13 @@ class ModelThor(Model):
             list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
             sink_size (int): Control the amount of data in each sink. Default: -1.
+            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+                                 Default: 0.
         """
         if sink_size == -1:
-            epoch_num = epoch
+            epoch_num = epoch - initial_epoch
         else:
-            epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size())
+            epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size()) - initial_epoch
 
         iter_first_order = self._frequency - 1
         iter_second_order = 1
@@ -226,7 +228,7 @@ class ModelThor(Model):
         run_context = RunContext(cb_params)
         list_callback.begin(run_context)
 
-        for i in range(epoch):
+        for i in range(initial_epoch, epoch):
             cb_params.cur_epoch_num = i + 1
             list_callback.epoch_begin(run_context)
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
@@ -240,8 +242,8 @@ class ModelThor(Model):
                     self._train_ascend_sink_step(cb_params, train_dataset, iter_first_order, inputs, list_callback,
                                                  run_context)
             list_callback.epoch_end(run_context)
-            self.should_stop = self.should_stop or run_context.get_stop_requested()
-            if self.should_stop:
+            should_stop = False or run_context.get_stop_requested()
+            if should_stop:
                 break
         dataset_helper.stop_send()
 
