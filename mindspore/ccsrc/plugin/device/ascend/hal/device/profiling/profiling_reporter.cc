@@ -97,7 +97,7 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
     }
     auto op_name = point->op_name();
     MsprofGeProfStepData step_point{};
-    step_point.modelId = graph_id_;
+    step_point.modelId = rt_model_id_;
     step_point.streamId = GetStreamId(op_name);
     step_point.taskId = GetTaskId(op_name);
     step_point.timeStamp = 0;
@@ -112,9 +112,9 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
     MS_EXCEPTION_IF_NULL(kernel_mod);
     // The tag of this function should report all tags, it will be saved to ts_track.data.<device_id>.slice_<index>
     // The first step index set to 1, here keep same with ge
-    (void)rtProfilerTraceEx(1, graph_id_, point->tag(), kernel_mod->stream());
+    (void)rtProfilerTraceEx(1, rt_model_id_, point->tag(), kernel_mod->stream());
 
-    MS_LOG(INFO) << "Report step point, graph id: " << graph_id_ << ", op name: " << point->op_name()
+    MS_LOG(INFO) << "Report step point, rt_model_id_: " << rt_model_id_ << ", op name: " << point->op_name()
                  << ", stream id: " << GetStreamId(op_name) << ", task id: " << GetTaskId(op_name)
                  << ", tag: " << point->tag();
   }
@@ -188,7 +188,7 @@ void ProfilingReporter::ReportTask(const CNodePtr &node, const uint32_t stream_i
   task_info.blockDims = GetBlockDim(node);
   // Note: Currently, all steps are hardcoded to 0.
   task_info.curIterNum = 0;
-  task_info.modelId = graph_id_;
+  task_info.modelId = rt_model_id_;
   task_info.streamId = stream_id;
   task_info.taskId = task_id;
   task_info.timeStamp = 0;
@@ -241,7 +241,7 @@ void ProfilingReporter::ReportNode(const CNodePtr &node, uint32_t stream_id, uin
 void ProfilingReporter::BuildProfTensorDataCommon(MsprofGeProfTensorData *tensor_info, uint32_t stream_id,
                                                   uint32_t task_id) {
   MS_EXCEPTION_IF_NULL(tensor_info);
-  tensor_info->modelId = graph_id_;
+  tensor_info->modelId = rt_model_id_;
   tensor_info->streamId = stream_id;
   tensor_info->taskId = task_id;
   // Note: Currently, all steps are hardcoded to 0.

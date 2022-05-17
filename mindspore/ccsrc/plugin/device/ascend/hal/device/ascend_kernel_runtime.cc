@@ -540,13 +540,21 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph &graph) {
   if (ProfilingManager::GetInstance().IsProfilingInitialized()) {
     auto task_ids = ModelRunner::Instance().GetTaskIdList(model_iter->first);
     auto stream_ids = ModelRunner::Instance().GetStreamIdList(model_iter->first);
+    uint32_t rt_model_id = 0;
+    rtModel_t rt_model_handle = ModelRunner::Instance().GetModelHandle(model_iter->first);
+    rtError_t rt_model_ret = rtModelGetId(rt_model_handle, &rt_model_id);
+    if (rt_model_ret != RT_ERROR_NONE) {
+      MS_LOG(WARNING) << "[profiler] Call rt api rtModelGetId failed, ret: " << rt_model_ret;
+    } else {
+      MS_LOG(INFO) << "[profiler] Call rt api rtModelGetId success, rt_model_id: " << rt_model_id;
+    }
     // Report data directly if profiling is start
     if (ProfilingUtils::ValidComputeGraph(graph)) {
       if (ProfilingManager::GetInstance().IsProfilingStart()) {
-        ProfilingUtils::ReportProfilingData(task_ids, stream_ids, graph.graph_id());
+        ProfilingUtils::ReportProfilingData(task_ids, stream_ids, graph.graph_id(), rt_model_id);
       } else {
         // Cache data and save when profiling is start
-        ProfilingUtils::SetReportProfilingData(task_ids, stream_ids, graph.graph_id());
+        ProfilingUtils::SetReportProfilingData(task_ids, stream_ids, graph.graph_id(), rt_model_id);
       }
     }
   }

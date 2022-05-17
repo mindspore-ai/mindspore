@@ -28,6 +28,7 @@ from mindspore.profiler.parser.framework_struct import TASK_DESC_STRUCT
 from mindspore.profiler.parser.framework_struct import TENSOR_DATA_STRUCT
 from mindspore.profiler.parser.framework_struct import STEP_INFO_STRUCT
 from mindspore.profiler.parser.framework_enum import VmDataType, VmFormat, FileDataType, MSPROF_DIFFERENCE
+from mindspore.profiler.parser.framework_enum import MSPROF_MIX_DATA_STRING
 from mindspore.profiler.common.struct_type import StructType
 from mindspore.profiler.common.util import combine_stream_task_id
 from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundException
@@ -253,7 +254,7 @@ class FrameworkParser:
         # skip rsv data, rsv has 7 bytes
         skip_size = 8
         remain_size = data_size - skip_size
-        if flag == 1:
+        if flag == MSPROF_MIX_DATA_STRING:
             unpack_data = struct.unpack(StructType.CHAR.value * remain_size,
                                         item_binary_data[cursor + skip_size:cursor + data_size])
             unpack_data = ''.join(list(map(lambda c: c.decode(), filter(lambda c: c != b'\x00', unpack_data))))
