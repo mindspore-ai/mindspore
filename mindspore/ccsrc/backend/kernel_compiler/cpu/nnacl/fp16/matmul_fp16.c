@@ -394,7 +394,7 @@ void MatMulFp16(const float16_t *a, const float16_t *b, float16_t *c, const floa
 }
 
 #ifdef ENABLE_ARM64
-// 8 X 16
+// 1*8 X 8*8 -> 1 X 8
 void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const float16_t *bias, int act_type, int depth,
                    int col) {
   int ci = col;
@@ -402,11 +402,8 @@ void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const f
 
   while (ci > 0) {
     float16x8_t acc_0 = vdupq_n_f16((float16_t)0.0);
-    float16x8_t acc_1 = vdupq_n_f16((float16_t)0.0);
     if (bias != NULL) {
       acc_0 = vld1q_f16(bias);
-      bias += C8NUM;
-      acc_1 = vld1q_f16(bias);
       bias += C8NUM;
     }
 
@@ -414,16 +411,12 @@ void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const f
     for (; di < depth - C8NUM + 1; di += C8NUM) {
       float16x8_t av = vld1q_f16(a + di);
       float16x8_t bv_0[C8NUM];
-      float16x8_t bv_1[C8NUM];
       for (int i = 0; i < C8NUM; ++i) {
         bv_0[i] = vld1q_f16(bv_base);
-        bv_base += C8NUM;
-        bv_1[i] = vld1q_f16(bv_base);
         bv_base += C8NUM;
       }
       for (int i = 0; i < C8NUM; ++i) {
         acc_0 = vfmaq_n_f16(acc_0, bv_0[i], av[i]);
-        acc_1 = vfmaq_n_f16(acc_1, bv_1[i], av[i]);
       }
     }
     if (di < depth) {
@@ -431,19 +424,14 @@ void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const f
         float16_t ai = a[di];
         float16x8_t bv0 = vld1q_f16(bv_base);
         bv_base += C8NUM;
-        float16x8_t bv1 = vld1q_f16(bv_base);
-        bv_base += C8NUM;
         acc_0 = vfmaq_n_f16(acc_0, bv0, ai);
-        acc_1 = vfmaq_n_f16(acc_1, bv1, ai);
       }
     }
     if (act_type == ActType_Relu) {
       acc_0 = vmaxq_f16(acc_0, vdupq_n_f16((float16_t)0.0));
-      acc_1 = vmaxq_f16(acc_1, vdupq_n_f16((float16_t)0.0));
     }
     if (act_type == ActType_Relu6) {
       acc_0 = vminq_f16(vmaxq_f16(acc_0, vdupq_n_f16((float16_t)0.0)), vdupq_n_f16((float16_t)6.0));
-      acc_1 = vminq_f16(vmaxq_f16(acc_1, vdupq_n_f16((float16_t)0.0)), vdupq_n_f16((float16_t)6.0));
     }
 
     // only save actual col num data
@@ -454,15 +442,6 @@ void VecMatmulFp16(const float16_t *a, const float16_t *b, float16_t *c, const f
       return;
     }
     vst1q_f16(c, acc_0);
-    c += C8NUM;
-    ci -= C8NUM;
-    if (ci < C8NUM) {
-      for (int i = 0; i < ci; ++i) {
-        c[i] = acc_1[i];
-      }
-      return;
-    }
-    vst1q_f16(c, acc_1);
     c += C8NUM;
     ci -= C8NUM;
   }
