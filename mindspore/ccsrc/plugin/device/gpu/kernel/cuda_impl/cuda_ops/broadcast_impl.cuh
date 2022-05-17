@@ -50,6 +50,9 @@ enum BroadcastOpType {
   BROADCAST_TYPE_TRUNCATEMOD = 24,
   BROADCAST_TYPE_COMPLEX = 25,
   BROADCAST_TYPE_XDIVY = 26,
+  BROADCAST_TYPE_BITWISEAND = 27,
+  BROADCAST_TYPE_BITWISEOR = 28,
+  BROADCAST_TYPE_BITWISEXOR = 29,
   BROADCAST_TYPE_INVALID = 0xffffffff,
 };
 
@@ -67,8 +70,8 @@ CUDA_LIB_EXPORT void ElewiseComplexArith(const int &nums, enum BroadcastOpType o
 
 template <typename T>
 CUDA_LIB_EXPORT void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
-                                  const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0,
-                                  const T *x1, bool *y, cudaStream_t stream);
+                                  const std::vector<size_t> &y_dims, enum BroadcastOpType op, const T *x0, const T *x1,
+                                  bool *y, cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,

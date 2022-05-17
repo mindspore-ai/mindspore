@@ -158,6 +158,92 @@ struct RealDivFunc {
 };
 
 template <typename T>
+struct BitwiseAnd {
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return (lhs & rhs); }
+};
+
+template <>
+struct BitwiseAnd<double> {
+  __device__ __host__ __forceinline__ int32_t operator()(const int32_t &lhs, const int32_t &rhs) { return 0; }
+};
+template <>
+struct BitwiseAnd<float> {
+  __device__ __host__ __forceinline__ int16_t operator()(const int16_t &lhs, const int16_t &rhs) { return 0; }
+};
+template <>
+struct BitwiseAnd<half> {
+  __device__ __host__ __forceinline__ int16_t operator()(const int16_t &lhs, const int16_t &rhs) { return 0; }
+};
+template <>
+struct BitwiseAnd<half2> {
+  __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
+    float2 base = __half22float2(lhs);
+    float2 index = __half22float2(rhs);
+    base.x = pow(base.x, index.x);
+    base.y = pow(base.y, index.y);
+    return __float22half2_rn(base);
+  }
+};
+
+template <typename T>
+struct BitwiseOr {
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return (lhs | rhs); }
+};
+
+template <>
+struct BitwiseOr<double> {
+  __device__ __host__ __forceinline__ int32_t operator()(const int32_t &lhs, const int32_t &rhs) { return 0; }
+};
+template <>
+struct BitwiseOr<float> {
+  __device__ __host__ __forceinline__ int16_t operator()(const int16_t &lhs, const int16_t &rhs) { return 0; }
+};
+template <>
+struct BitwiseOr<half> {
+  __device__ __host__ __forceinline__ int16_t operator()(const int16_t &lhs, const int16_t &rhs) { return 0; }
+};
+template <>
+struct BitwiseOr<half2> {
+  // __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) { __float22half2_rn(0); }
+  __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
+    float2 base = __half22float2(lhs);
+    float2 index = __half22float2(rhs);
+    base.x = pow(base.x, index.x);
+    base.y = pow(base.y, index.y);
+    return __float22half2_rn(base);
+  }
+};
+
+template <typename T>
+struct BitwiseXor {
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return (lhs ^ rhs); }
+};
+
+template <>
+struct BitwiseXor<double> {
+  __device__ __host__ __forceinline__ int32_t operator()(const int32_t &lhs, const int32_t &rhs) { return 0; }
+};
+template <>
+struct BitwiseXor<float> {
+  __device__ __host__ __forceinline__ int16_t operator()(const int16_t &lhs, const int16_t &rhs) { return 0; }
+};
+template <>
+struct BitwiseXor<half> {
+  __device__ __host__ __forceinline__ int16_t operator()(const int16_t &lhs, const int16_t &rhs) { return 0; }
+};
+template <>
+struct BitwiseXor<half2> {
+  // __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) { __float22half2_rn(0); }
+  __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
+    float2 base = __half22float2(lhs);
+    float2 index = __half22float2(rhs);
+    base.x = pow(base.x, index.x);
+    base.y = pow(base.y, index.y);
+    return __float22half2_rn(base);
+  }
+};
+
+template <typename T>
 struct ComplexFunc {
   __device__ __host__ __forceinline__ Complex<T> operator()(const T &lhs, const T &rhs) { return Complex<T>(lhs, rhs); }
 };
@@ -651,6 +737,12 @@ void ElewiseArithKernel(const int &nums, enum BroadcastOpType op, const T *x0, c
       return ElewiseArithKernel<T, PowerFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_REALDIV:
       return ElewiseArithKernel<T, RealDivFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_BITWISEAND:
+      return ElewiseArithKernel<T, BitwiseAnd<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_BITWISEOR:
+      return ElewiseArithKernel<T, BitwiseOr<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_BITWISEXOR:
+      return ElewiseArithKernel<T, BitwiseXor<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_MUL:
       return ElewiseArithKernel<T, MulFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_SUB:
@@ -1005,6 +1097,21 @@ void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     case BROADCAST_TYPE_REALDIV:
       return BroadcastArithKernel<T, RealDivFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_BITWISEAND:
+      return BroadcastArithKernel<T, BitwiseAnd<T>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_BITWISEOR:
+      return BroadcastArithKernel<T, BitwiseOr<T>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_BITWISEXOR:
+      return BroadcastArithKernel<T, BitwiseXor<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);

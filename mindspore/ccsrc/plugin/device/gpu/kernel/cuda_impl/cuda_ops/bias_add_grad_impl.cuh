@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BIAS_ADD_GRAD_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BIAS_ADD_GRAD_IMPL_CUH_
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T>
 CUDA_LIB_EXPORT void CalBiasAddGradNHWC(const size_t size, const size_t bias_size,
                                         const T*  dy, T*  db,  cudaStream_t cuda_stream);
