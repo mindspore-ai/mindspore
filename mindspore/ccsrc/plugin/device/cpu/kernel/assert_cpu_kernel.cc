@@ -89,7 +89,7 @@ void AssertCpuKernelMod::AssertPrint(const AddressPtr &input, int summarize) {
     oss << data[j] << " ";
   }
   oss << data[summarize - 1] << "]";
-  MS_LOG(ERROR) << oss.str();
+  std::cout << oss.str() << std::endl;
   return;
 }
 
@@ -100,7 +100,7 @@ bool AssertCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
     return true;
   }
 
-  MS_LOG(ERROR) << "For '" << kernel_name_ << "' condition is false.";
+  std::cout << "For '" << kernel_name_ << "' condition is false." << std::endl;
   for (size_t i = 1; i < inputs.size(); i++) {
     kernel_funcs_[i](this, inputs[i], summarizes_[i]);
   }
