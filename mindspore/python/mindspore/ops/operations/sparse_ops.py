@@ -20,7 +20,7 @@
 
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, prim_attr_register
+from ..primitive import PrimitiveWithInfer, Primitive, prim_attr_register
 
 
 class SparseToDense(PrimitiveWithInfer):
@@ -185,3 +185,65 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
                'dtype': values['dtype'],
                'value': None}
         return out
+
+
+class DenseToCSRSparseMatrix(Primitive):
+    """
+    Converts a dense matrix(maybe batched) to its CSR sparse form.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Inputs:
+        - **dense_input** (Tensor) - A 2-D or 3-D Tensor. It represents the input dense matrix.
+        - **indices** (Tensor) - A 2-D Tensor. It represents indices of all the nonzero elements.
+
+    Outputs:
+        - **y_dense_shape** (Tensor) - A 1-D Tensor. It represents the dense form shape of
+          the output CSR sparse matrix, the shape of which should be :math:`(2,)` or :math:`(3,)`.
+        - **y_batch_pointers** (Tensor) - A 1-D Tensor. Supposing the output CSR sparse matrix is of
+          batch size `n`, it should have shape :math:`(n+1,)`, while the `i`-th element of which stores
+          acummulated counts of nonzero values of the first `i - 1` batches.
+        - **y_row_pointers** (Tensor) - A 1-D Tensor. Supposing the output CSR sparse matrix is of
+          batch size `n` and row number `m`, it can be divided into `n` parts, each part of length
+          `m + 1`. The `i`-th element of each :math:`(m+1,)` vector stores acummulated counts of
+          nonzero values of the first `i - 1` rows in the corresponding batch.
+        - **y_col_indices** (Tensor) - A 1-D Tensor. It represents column indices of the nonzero values
+          in the output CSR sparse matrix.
+        - **y_values** (Tensor) - A 1-D Tensor. It represents all the nonzero values in the
+          output CSR sparse matrix.
+
+    Raises:
+        TypeError: If the dtype of `indices` is not int32 or int64.
+        TypeError: If the dtype of `dense_input` is not float32, float64, complex64 or complex128.
+        ValueError: If either of the inputs is not a tensor.
+        ValueError: If rank of `dense_input` is not 2 or 3.
+        ValueError: If rank of `indices` is not 2.
+        ValueError: If shape[1] of `indices` and rank of `dense_input` is not the same.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[[1., 0.], [0., 2.]]], dtype=ms.float32)
+        >>> indices = Tensor([[0, 0, 0], [0, 1, 1]], dtype=ms.int32)
+        >>> dense_to_csr = ops.DenseToCSRSparseMatrix()
+        >>> out = dense_to_csr(x, indices)
+        >>> print(out[0])
+        [1 2 2]
+        >>> print(out[1])
+        [0 2]
+        >>> print(out[2])
+        [0 1 2]
+        >>> print(out[3])
+        [0 1]
+        >>> print(out[4])
+        [1. 2.]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize DenseToCSRSparseMatrix"""
+        self.init_prim_io_names(
+            inputs=['dense_input', 'indices'],
+            outputs=['y_dense_shape', 'y_batch_pointers', 'y_row_pointers', 'y_col_indices', 'y_values'])
