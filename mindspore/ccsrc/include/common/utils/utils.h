@@ -567,6 +567,12 @@ constexpr auto kAttrForwardOpOutputId = "forward_op_output_id";
 constexpr auto kAttrGroupRankIds = "group_rank_ids";
 constexpr auto kAttrReuseCommunication = "reuse_communication_node";
 constexpr auto kAttrPrecisionFlag = "precision_flag";
+constexpr auto kAttrDfmGroup = "deformable_groups";
+constexpr auto kAttrModulated = "modulated";
+constexpr auto kAttrDilations = "dilations";
+constexpr auto kAttrDataFormat = "data_format";
+constexpr auto kAttrPads = "pads";
+constexpr auto kAttrKsize = "ksize";
 constexpr auto kActualAbstract = "actual_abstract";
 
 // TODO(dsj): for ms_function running in graph_mode. should be delete later

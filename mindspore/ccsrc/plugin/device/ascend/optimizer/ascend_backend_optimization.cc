@@ -64,6 +64,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/space_to_depth_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/diag_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/diag_part_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fission/deformable_offsets_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/max_pool3d_grad_grad_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/adam_weight_decay_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_3d_fusion.h"
@@ -217,6 +218,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<LinSpaceFission>());
   ir_fusion_pm->AddPass(std::make_shared<DiagFission>());
   ir_fusion_pm->AddPass(std::make_shared<DiagPartFission>());
+  ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsFission>());
   ir_fusion_pm->AddPass(std::make_shared<MaxPool3DGradGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<AvgPool3DFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AvgPool3DGradFusion>());
@@ -404,6 +406,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<SpaceToDepthSplit>());
   ir_fusion_pm->AddPass(std::make_shared<DiagFission>());
   ir_fusion_pm->AddPass(std::make_shared<DiagPartFission>());
+  ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsFission>());
   ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<MaxPool3DGradGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<AvgPool3DFusion>());
