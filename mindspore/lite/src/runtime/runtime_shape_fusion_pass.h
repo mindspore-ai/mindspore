@@ -84,9 +84,9 @@ struct ShapeFusionMatrix {
 class ShapeFusionPass {
  public:
   ShapeFusionPass(LiteModel *model, std::vector<lite::Tensor *> *src_tensors)
-      : lite_model_(model), all_nodes_(&(model->all_nodes_)), src_tensors_(src_tensors) {
+      : lite_model_(model), all_nodes_(&(model->graph_.all_nodes_)), src_tensors_(src_tensors) {
     MS_ASSERT(model != nullptr && src_tensors != nullptr);
-    for (auto node : model->all_nodes_) {
+    for (auto node : model->graph_.all_nodes_) {
       for (auto input_idx : node->input_indices_) {
         used_nodes_[input_idx].push_back(node);
       }
@@ -94,7 +94,7 @@ class ShapeFusionPass {
   }
   ~ShapeFusionPass() = default;
 
-  void Run(Model::Node *node, size_t subgraph_index) {
+  void Run(LiteGraph::Node *node, size_t subgraph_index) {
 #ifndef RUNTIME_PASS_CLIP
     if (ConvertToShapeFusion(node) != RET_OK) {
       MS_LOG(WARNING) << "Convert to built-in shape failed: " << node->name_;
@@ -117,16 +117,16 @@ class ShapeFusionPass {
 
  private:
 #ifndef RUNTIME_PASS_CLIP
-  int ConvertToShapeFusion(Model::Node *node);
-  int FusePostNodes(Model::Node *node, size_t subgraph_index);
+  int ConvertToShapeFusion(LiteGraph::Node *node);
+  int FusePostNodes(LiteGraph::Node *node, size_t subgraph_index);
   Tensor *BuildTensorFromShapeFusionMatrix(const ShapeFusionMatrix &shape_fusion_matrix);
-  bool CheckCanFused(const Model::Node *shape_fusion, const Model::Node *post_node, uint32_t input_idx,
+  bool CheckCanFused(const LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node, uint32_t input_idx,
                      size_t subgraph_index);
-  int DoFuse(Model::Node *shape_fusion, const Model::Node *post_node, std::vector<uint32_t> *input_indices,
+  int DoFuse(LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node, std::vector<uint32_t> *input_indices,
              size_t subgraph_index);
-  int GenerateFusedShapeFusionMatrix(Model::Node *shape_fusion, const Model::Node *post_node,
+  int GenerateFusedShapeFusionMatrix(LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node,
                                      std::vector<uint32_t> *input_indices, ShapeFusionMatrix *shape_fusion_matrix);
-  int UpdateShapeFusionMatrix(const Model::Node *post_node, ShapeFusionMatrix *shape_fusion_matrix);
+  int UpdateShapeFusionMatrix(const LiteGraph::Node *post_node, ShapeFusionMatrix *shape_fusion_matrix);
   int GetFusionMatrixFromConstantTensor(const lite::Tensor *tensor, const std::vector<size_t> &shape, int node_type,
                                         ShapeFusionMatrix *constant_matrix);
 
@@ -135,9 +135,9 @@ class ShapeFusionPass {
   std::vector<lite::Tensor *> shape_fusion_outputs_;
 #endif
   LiteModel *lite_model_ = nullptr;
-  const std::vector<Model::Node *> *all_nodes_ = nullptr;
+  const std::vector<LiteGraph::Node *> *all_nodes_ = nullptr;
   std::vector<lite::Tensor *> *src_tensors_ = nullptr;
-  std::map<uint32_t, std::vector<Model::Node *>> used_nodes_;
+  std::map<uint32_t, std::vector<LiteGraph::Node *>> used_nodes_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_SHAPE_FUSION_PASS_H_

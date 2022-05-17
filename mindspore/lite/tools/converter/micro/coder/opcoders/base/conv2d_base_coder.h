@@ -28,7 +28,7 @@ namespace mindspore::lite::micro {
 class Conv2DBaseCoder : public OperatorCoder {
  public:
   Conv2DBaseCoder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const Model::Node *node, size_t node_index, Target target)
+                  const LiteGraph::Node *node, size_t node_index, Target target)
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~Conv2DBaseCoder() override;

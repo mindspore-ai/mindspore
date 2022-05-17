@@ -79,7 +79,7 @@ class ArithmeticFP32Coder final : public OperatorCoder {
 
  public:
   ArithmeticFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                      const Model::Node *node, size_t node_index, Target target)
+                      const LiteGraph::Node *node, size_t node_index, Target target)
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~ArithmeticFP32Coder() override = default;

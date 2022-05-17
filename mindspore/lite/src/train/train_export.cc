@@ -177,10 +177,10 @@ std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite
   return tensorT;
 }
 
-Model::Node *TrainExport::FindNode(const mindspore::kernel::KernelExec *kernel, const Model *model) {
-  auto nodes = model->all_nodes_;
+LiteGraph::Node *TrainExport::FindNode(const mindspore::kernel::KernelExec *kernel, const Model *model) {
+  auto nodes = model->graph_.all_nodes_;
   auto it = std::find_if(nodes.begin(), nodes.end(),
-                         [&kernel](mindspore::lite::Model::Node *n) { return (kernel->name() == n->name_); });
+                         [&kernel](mindspore::lite::LiteGraph::Node *n) { return (kernel->name() == n->name_); });
   if (it == nodes.end()) {
     return nullptr;
   }
@@ -361,9 +361,9 @@ int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::l
     auto id = index.first;
     size_t pid = id - static_cast<size_t>(offset);
     mindspore::lite::Tensor *tensor = tensors.at(pid);
-    schema::Tensor *scTensor = model->all_tensors_.at(pid);
+    schema::Tensor *scTensor = model->graph_.all_tensors_.at(pid);
     auto preferred_dim = WeightDecoder::GetPreferredDim(in_tensors, index.second.op_parameter, index.second.input_index,
-                                                        tensor->shape(), model->version_);
+                                                        tensor->shape(), model->graph_.version_);
     auto tensorT = CreateTensor(tensor, scTensor, preferred_dim, index.second.op_parameter->quant_type_);
     if (tensorT == nullptr) {
       MS_LOG(ERROR) << "error in tensor creation";
@@ -399,7 +399,7 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::KernelExec *> &k
   std::vector<std::pair<size_t, tensor_info>> map_index;
   std::set<size_t> out_set;
   if (meta_graph_ == nullptr) {
-    int status = ExportInit(model->name_, model->version_);
+    int status = ExportInit(model->graph_.name_, model->graph_.version_);
     if (status != RET_OK) {
       return status;
     }

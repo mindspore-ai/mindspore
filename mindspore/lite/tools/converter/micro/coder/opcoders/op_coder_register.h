@@ -27,7 +27,7 @@
 namespace mindspore::lite::micro {
 class OperatorCoder;
 using CoderCreatorFunc = std::function<std::unique_ptr<OperatorCoder>(
-  const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors, const Model::Node *node,
+  const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors, const LiteGraph::Node *node,
   size_t node_index, Target target, int schema_version)>;
 
 class CoderKey {

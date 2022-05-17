@@ -25,7 +25,7 @@ namespace mindspore::lite::micro {
 class ConvolutionDepthwiseINT8Coder : public Conv2DBaseCoder {
  public:
   ConvolutionDepthwiseINT8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                const Model::Node *node, size_t node_index, Target target)
+                                const LiteGraph::Node *node, size_t node_index, Target target)
       : Conv2DBaseCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~ConvolutionDepthwiseINT8Coder() override = default;

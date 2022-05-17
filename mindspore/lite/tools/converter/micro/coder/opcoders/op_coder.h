@@ -36,7 +36,7 @@ constexpr int kPrecision = 19;
 class OperatorCoder {
  public:
   OperatorCoder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                const Model::Node *node, size_t node_index, Target target)
+                const LiteGraph::Node *node, size_t node_index, Target target)
       : input_tensors_(in_tensors),
         output_tensors_(out_tensors),
         target_(target),
@@ -70,7 +70,7 @@ class OperatorCoder {
 
   void set_parameter(OpParameter *parameter);
 
-  const Model::Node *node() const { return this->node_; }
+  const LiteGraph::Node *node() const { return this->node_; }
 
   void AddInitialParameters(Tensor *parameter) { initial_parameters_.push_back(parameter); }
 
@@ -91,7 +91,7 @@ class OperatorCoder {
   std::vector<Tensor *> input_tensors_;
   std::vector<Tensor *> output_tensors_;
   Target target_{kTargetUnknown};
-  const Model::Node *node_{nullptr};
+  const LiteGraph::Node *node_{nullptr};
   Tensor *input_tensor_{nullptr};
   Tensor *output_tensor_{nullptr};
 
@@ -117,7 +117,7 @@ class OperatorCoder {
 // a template func for normal op_coder creator
 template <typename T>
 std::unique_ptr<OperatorCoder> CPUOpCoderCreator(const std::vector<Tensor *> &in_tensors,
-                                                 const std::vector<Tensor *> &out_tensors, const Model::Node *node,
+                                                 const std::vector<Tensor *> &out_tensors, const LiteGraph::Node *node,
                                                  size_t node_index, Target target, int schema_version) {
   if (node == nullptr) {
     MS_LOG(ERROR) << "node is null";

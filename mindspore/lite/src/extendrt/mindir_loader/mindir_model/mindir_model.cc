@@ -38,8 +38,8 @@ int MindirModel::ConvertTensors(std::vector<mindspore::lite::Tensor *> *lite_ten
   }
 
   uint32_t tensor_count = this->all_mindir_tensors_.size();
-  auto model_input_indices = this->input_indices_;
-  auto model_output_indices = this->output_indices_;
+  auto model_input_indices = this->graph_.input_indices_;
+  auto model_output_indices = this->graph_.output_indices_;
 
   for (uint32_t i = 0; i < tensor_count; ++i) {
     // auto *src_tensor = reinterpret_cast<const mind_ir::TensorProto *>(this->all_mindir_tensors_[i]);
@@ -80,7 +80,7 @@ std::string MindirModel::GetModelPath() const { return this->model_path_; }
 
 mindspore::kernel::KernelExec *MindirModel::FindBackendKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,
                                                               const std::vector<mindspore::lite::Tensor *> &out_tensors,
-                                                              const Model::Node *node, lite::Context *context,
+                                                              const LiteGraph::Node *node, lite::Context *context,
                                                               TypeId prefer_data_type) {
   std::shared_ptr<kernel::InnerKernel> inner_kernel =
     mindspore::kernel::KernelModUtil::GetInnerKernel(in_tensors, out_tensors, node, context);
@@ -173,9 +173,9 @@ void MindirModel::Free() {
     delete[](this->buf);
     this->buf = nullptr;
   }
-  auto nodes_size = this->all_nodes_.size();
+  auto nodes_size = this->graph_.all_nodes_.size();
   for (size_t i = 0; i < nodes_size; ++i) {
-    auto node = this->all_nodes_[i];
+    auto node = this->graph_.all_nodes_[i];
     // auto *primitive_shared_ptr =
     //   reinterpret_cast<std::shared_ptr<ops::BaseOperator> *>(const_cast<void *>(node->primitive_));
     auto *primitive_ptr = reinterpret_cast<ops::BaseOperator *>(const_cast<void *>(node->primitive_));
@@ -190,17 +190,17 @@ void MindirModel::Destroy() {
 
   this->all_mindir_tensors_.clear();
 
-  auto nodes_size = this->all_nodes_.size();
+  auto nodes_size = this->graph_.all_nodes_.size();
   for (size_t i = 0; i < nodes_size; ++i) {
-    auto node = this->all_nodes_[i];
+    auto node = this->graph_.all_nodes_[i];
     MS_ASSERT(node != nullptr);
     delete node;
   }
-  this->all_nodes_.clear();
+  this->graph_.all_nodes_.clear();
 
-  auto sub_graph_size = this->sub_graphs_.size();
+  auto sub_graph_size = this->graph_.sub_graphs_.size();
   for (size_t i = 0; i < sub_graph_size; ++i) {
-    auto sub_graph = this->sub_graphs_[i];
+    auto sub_graph = this->graph_.sub_graphs_[i];
     delete sub_graph;
   }
 }

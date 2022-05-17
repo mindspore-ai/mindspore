@@ -30,7 +30,7 @@ class OpCoderBuilder {
 
   OpCoderBuilder &outputs(const std::vector<Tensor *> &outputs);
 
-  OpCoderBuilder &node(const Model::Node *node);
+  OpCoderBuilder &node(const LiteGraph::Node *node);
 
   OpCoderBuilder &parameter(OpParameter *parameter);
 
@@ -53,7 +53,7 @@ class OpCoderBuilder {
 
   std::vector<Tensor *> outputs_;
 
-  const mindspore::lite::Model::Node *node_ = nullptr;
+  const mindspore::lite::LiteGraph::Node *node_ = nullptr;
 
   OpParameter *parameter_{nullptr};
 

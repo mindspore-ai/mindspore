@@ -21,14 +21,14 @@
 #include "include/model.h"
 
 namespace mindspore::lite {
-using SchedCallBack = std::function<bool(const Model::Node *node)>;
+using SchedCallBack = std::function<bool(const LiteGraph::Node *node)>;
 
 class SchedulerCb {
  public:
   explicit SchedulerCb(SchedCallBack fp16_cb) : fp16_cb_(fp16_cb) {}
 
   ~SchedulerCb() = default;
-  bool SchedFp16Kernel(const Model::Node *node) {
+  bool SchedFp16Kernel(const LiteGraph::Node *node) {
     if (fp16_cb_) {
       return fp16_cb_(node);
     }

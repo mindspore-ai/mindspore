@@ -72,7 +72,7 @@ OpCoderBuilder &OpCoderBuilder::outputs(const std::vector<Tensor *> &outputs) {
   return *this;
 }
 
-OpCoderBuilder &OpCoderBuilder::node(const Model::Node *node) {
+OpCoderBuilder &OpCoderBuilder::node(const LiteGraph::Node *node) {
   this->node_ = node;
   return *this;
 }

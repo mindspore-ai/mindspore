@@ -68,7 +68,7 @@ int Train::TransformGraphForTrain(CoderContext *context, const std::vector<std::
                                          schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad};
   OperatorCoder *loss_op = nullptr;
   for (const auto &opcoder : op_coders) {
-    const Model::Node *node = opcoder->node();
+    const LiteGraph::Node *node = opcoder->node();
     int primitive_type = GetPrimitiveType(node->primitive_, schema_version);
     auto item = std::find(loss_types.begin(), loss_types.end(), primitive_type);
     if (item != loss_types.end()) {

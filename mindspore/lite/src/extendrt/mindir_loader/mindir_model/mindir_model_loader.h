@@ -37,11 +37,11 @@ class MindirModelLoader : public ModelLoader {
   // int InitModelBuffer(const char *model_buf, size_t size, bool take_buf);
   bool ConvertModel(const mind_ir::ModelProto &model_proto);
   bool ConvertPrimitives(const mind_ir::ModelProto &model_proto);
-  bool ConvertGraph(const mind_ir::GraphProto &graph_proto, Model::SubGraph *sub_graph = nullptr,
+  bool ConvertGraph(const mind_ir::GraphProto &graph_proto, LiteGraph::SubGraph *sub_graph = nullptr,
                     bool is_main_graph = false);
-  bool ConvertNodes(const mind_ir::GraphProto &graph_proto, Model::SubGraph *sub_graph = nullptr,
+  bool ConvertNodes(const mind_ir::GraphProto &graph_proto, LiteGraph::SubGraph *sub_graph = nullptr,
                     bool is_main_graph = false);
-  bool ConvertTensors(const mind_ir::GraphProto &graph_proto, Model::SubGraph *sub_graph = nullptr,
+  bool ConvertTensors(const mind_ir::GraphProto &graph_proto, LiteGraph::SubGraph *sub_graph = nullptr,
                       bool is_main_graph = false);
   std::any MakePrimitiveC(const std::string &node_type);
 

@@ -27,7 +27,7 @@ namespace mindspore::lite {
 namespace {
 constexpr size_t kInitialSize = 1024;
 }  // namespace
-int ShapeFusionPass::ConvertToShapeFusion(Model::Node *node) {
+int ShapeFusionPass::ConvertToShapeFusion(LiteGraph::Node *node) {
   MS_ASSERT(node != nullptr);
   auto input_tensor = src_tensors_->at(node->input_indices_.front());
   MS_CHECK_TRUE_RET(input_tensor != nullptr, RET_ERROR);
@@ -85,10 +85,10 @@ Tensor *ShapeFusionPass::BuildTensorFromShapeFusionMatrix(const ShapeFusionMatri
   return tensor;
 }
 
-int ShapeFusionPass::FusePostNodes(Model::Node *node, size_t subgraph_index) {
+int ShapeFusionPass::FusePostNodes(LiteGraph::Node *node, size_t subgraph_index) {
   // fuse arithmetic/concat/gather/squeeze/unsqueeze/shape/cast
   MS_ASSERT(node != nullptr);
-  std::queue<Model::Node *> candidate_nodes;
+  std::queue<LiteGraph::Node *> candidate_nodes;
   auto output_index = node->output_indices_.front();
   MS_CHECK_TRUE_RET(used_nodes_.find(output_index) != used_nodes_.end(), RET_ERROR);
   std::vector<uint32_t> visited_outputs;
@@ -133,11 +133,11 @@ int ShapeFusionPass::FusePostNodes(Model::Node *node, size_t subgraph_index) {
   return RET_OK;
 }
 
-bool ShapeFusionPass::CheckCanFused(const Model::Node *shape_fusion, const Model::Node *post_node, uint32_t input_idx,
-                                    size_t subgraph_index) {
+bool ShapeFusionPass::CheckCanFused(const LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node,
+                                    uint32_t input_idx, size_t subgraph_index) {
   MS_ASSERT(shape_fusion != nullptr && post_node != nullptr);
-  MS_CHECK_TRUE_RET(subgraph_index < lite_model_->sub_graphs_.size(), RET_ERROR);
-  auto subgraph = lite_model_->sub_graphs_.at(subgraph_index);
+  MS_CHECK_TRUE_RET(subgraph_index < lite_model_->graph_.sub_graphs_.size(), RET_ERROR);
+  auto subgraph = lite_model_->graph_.sub_graphs_.at(subgraph_index);
   MS_CHECK_TRUE_RET(subgraph != nullptr, RET_ERROR);
   auto &subgraph_node_indices = subgraph->node_indices_;
   bool belong_to_current_subgraph = std::any_of(subgraph_node_indices.begin(), subgraph_node_indices.end(),
@@ -190,7 +190,7 @@ bool ShapeFusionPass::CheckCanFused(const Model::Node *shape_fusion, const Model
   return false;
 }
 
-int ShapeFusionPass::DoFuse(Model::Node *shape_fusion, const Model::Node *post_node,
+int ShapeFusionPass::DoFuse(LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node,
                             std::vector<uint32_t> *input_indices, size_t subgraph_index) {
   MS_ASSERT(shape_fusion != nullptr && post_node != nullptr && input_indices != nullptr);
   ShapeFusionMatrix shape_fusion_matrix;
@@ -222,8 +222,8 @@ int ShapeFusionPass::DoFuse(Model::Node *shape_fusion, const Model::Node *post_n
   shape_fusion->output_indices_.push_back(output_index);
   shape_fusion_matrices_[output_index] = shape_fusion_matrix;
 
-  MS_CHECK_TRUE_RET(subgraph_index < lite_model_->sub_graphs_.size(), RET_ERROR);
-  auto subgraph = lite_model_->sub_graphs_.at(subgraph_index);
+  MS_CHECK_TRUE_RET(subgraph_index < lite_model_->graph_.sub_graphs_.size(), RET_ERROR);
+  auto subgraph = lite_model_->graph_.sub_graphs_.at(subgraph_index);
   MS_CHECK_TRUE_RET(subgraph != nullptr, RET_ERROR);
   auto &subgraph_node_indices = subgraph->node_indices_;
   size_t node_index = std::find(all_nodes_->begin(), all_nodes_->end(), post_node) - all_nodes_->begin();
@@ -241,7 +241,7 @@ int ShapeFusionPass::DoFuse(Model::Node *shape_fusion, const Model::Node *post_n
   return RET_OK;
 }
 
-int ShapeFusionPass::GenerateFusedShapeFusionMatrix(Model::Node *shape_fusion, const Model::Node *post_node,
+int ShapeFusionPass::GenerateFusedShapeFusionMatrix(LiteGraph::Node *shape_fusion, const LiteGraph::Node *post_node,
                                                     std::vector<uint32_t> *input_indices,
                                                     ShapeFusionMatrix *shape_fusion_matrix) {
   MS_ASSERT(shape_fusion != nullptr && post_node != nullptr && shape_fusion_matrix != nullptr);
@@ -295,7 +295,7 @@ int ShapeFusionPass::GenerateFusedShapeFusionMatrix(Model::Node *shape_fusion, c
   return RET_OK;
 }
 
-int ShapeFusionPass::UpdateShapeFusionMatrix(const Model::Node *post_node, ShapeFusionMatrix *shape_fusion_matrix) {
+int ShapeFusionPass::UpdateShapeFusionMatrix(const LiteGraph::Node *post_node, ShapeFusionMatrix *shape_fusion_matrix) {
   MS_ASSERT(post_node != nullptr && shape_fusion_matrix != nullptr);
   switch (post_node->node_type_) {
     case schema::PrimitiveType_Cast:

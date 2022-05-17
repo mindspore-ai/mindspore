@@ -101,9 +101,9 @@ void *CreateMatmulPrimitive() {
   return prim_buf;
 }
 
-Model::Node *CreateMatmulNode(void *prim_buf, const std::string &name) {
+LiteGraph::Node *CreateMatmulNode(void *prim_buf, const std::string &name) {
   auto primitive = flatbuffers::GetRoot<schema::Primitive>(prim_buf);
-  auto node = new Model::Node();
+  auto node = new LiteGraph::Node();
   node->primitive_ = primitive;
   node->name_ = name;
   return node;

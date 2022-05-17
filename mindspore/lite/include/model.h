@@ -25,7 +25,9 @@
 namespace mindspore::lite {
 typedef enum { ModelType_MSLite, ModelType_MindIR } LiteModelType;
 
-struct MS_API Model {
+// LiteGraph can be considered as a light weight and subset of FuncGraph, it can not support the advanced expression of
+// FuncGraph, e.g., non-tail recursive.
+struct MS_API LiteGraph {
   struct Node {
     String name_;
     String op_type_;
@@ -54,8 +56,6 @@ struct MS_API Model {
   Uint32Vector output_indices_;
   TensorPtrVector all_tensors_;
   NodePtrVector all_nodes_;
-  char *buf = nullptr;
-  size_t buf_size_ = 0;
   SubGraphPtrVector sub_graphs_;
 #ifdef ENABLE_MODEL_OBF
   using NodeStatVector = Vector<uint32_t>;
@@ -66,6 +66,11 @@ struct MS_API Model {
   bool model_obfuscated_ = false;
   PrimVector deobf_prims_;
 #endif
+};
+struct MS_API Model {
+  LiteGraph graph_;
+  char *buf = nullptr;
+  size_t buf_size_ = 0;
   LiteModelType model_type_ = mindspore::lite::ModelType_MSLite;
 
   /// \brief Static method to create a Model pointer.

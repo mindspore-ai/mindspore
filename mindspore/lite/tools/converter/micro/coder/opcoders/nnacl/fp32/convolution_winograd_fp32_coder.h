@@ -28,7 +28,7 @@ namespace mindspore::lite::micro::nnacl {
 class ConvolutionWinogradFP32Coder : public Conv2DBaseCoder {
  public:
   ConvolutionWinogradFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                               const Model::Node *node, size_t node_index, Target target, int output_unit)
+                               const LiteGraph::Node *node, size_t node_index, Target target, int output_unit)
       : Conv2DBaseCoder(in_tensors, out_tensors, node, node_index, target), output_unit_(output_unit) {}
 
   int Prepare(CoderContext *const context) override;
