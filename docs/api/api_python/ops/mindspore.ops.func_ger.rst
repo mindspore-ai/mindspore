@@ -22,5 +22,5 @@ mindspore.ops.ger
     **异常：**
 
     - **TypeError** - `x1` 或 `x2` 不是Tensor。
-    - **RuntimeError** - 输入的 `x1` 与 `x2` 数据类型不是float16或float32。
-    - **RuntimeError** - `x1` 与 `x2` batch维 :math:`(*B)` 不相同。
+    - **TypeError** - 输入的 `x1` 与 `x2` 数据类型不是float16或float32。
+    - **ValueError** - `x1` 与 `x2` batch维 :math:`(*B)` 不相同。

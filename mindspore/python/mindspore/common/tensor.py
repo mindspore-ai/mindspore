@@ -796,7 +796,7 @@ class Tensor(Tensor_):
         shape :math:`(m * n)`. If `self` is a Tensor of shape :math:`(*B, m)` and `x` is a Tensor of shape
         :math:`(*B, n)`, then `output` must be a Tensor of shape :math:`(*B, m, n)`.
 
-        Notes:
+        Note:
             In Ascend, batch dimension input is not supported. Specifically, `x1` and `x2` are both required to be 1D
             input Tensors.
 
