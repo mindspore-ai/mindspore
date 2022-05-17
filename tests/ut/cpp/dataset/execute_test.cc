@@ -2902,3 +2902,20 @@ TEST_F(MindDataTestExecute, TestPosterizeEager) {
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
+
+/// Feature: AdjustHue
+/// Description: Test executing AdjustHue op in eager mode
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestAdjustHue) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustHue.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto adjust_hue_op = vision::AdjustHue(0.2);
+
+  auto transform = Execute({decode, adjust_hue_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}

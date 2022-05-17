@@ -99,6 +99,36 @@ class MS_API AdjustGamma final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \note Apply hue adjustment on input image.
+class MS_API AdjustHue final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] hue_factor How much to shift the hue channel, must be in the interval [-0.5, 0.5].
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto adjust_hue_op = vision::AdjustHue(0.2);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, adjust_contrast_op},  // operations
+  ///                            {"image"});                       // input columns
+  /// \endcode
+  explicit AdjustHue(float hue_factor);
+
+  /// \brief Destructor.
+  ~AdjustHue() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Adjust the color saturation of the input image.
 class MS_API AdjustSaturation final : public TensorTransform {
  public:

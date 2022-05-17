@@ -2557,3 +2557,54 @@ TEST_F(MindDataTestPipeline, TestPosterizeParamCheck) {
   // Expect failure: invalid value of Posterize
   EXPECT_EQ(iter2, nullptr);
 }
+
+/// Feature：AdjustHue op
+/// Description: Test function of operator when hue_factor is 0.2
+/// Expectation: Create an ImageFolder dataset then do auto AjustHue on it
+TEST_F(MindDataTestPipeline, TestAdjustHue) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustHue.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+
+  auto adjusthue_op = vision::AdjustHue(0.2);
+
+  ds = ds->Map({adjusthue_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter->Stop();
+}
+
+/// Feature：AdjustHue op
+/// Description: Test improper parameters for AdjustHue C implementation
+/// Expectation: Throw ValueError exception and TypeError exception
+TEST_F(MindDataTestPipeline, TestAdjustHueParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustHueParamCheck.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Case 1: Negative hue_factor
+  // Create objects for the tensor ops
+  auto adjusthue_op = vision::AdjustHue(-2);
+  auto ds1 = ds->Map({adjusthue_op});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid value of AdjustHue
+  EXPECT_EQ(iter1, nullptr);
+}

@@ -7,6 +7,7 @@ endif()
 add_library(kernels-image OBJECT
     adjust_brightness_op.cc
     adjust_gamma_op.cc
+    adjust_hue_op.cc
     adjust_saturation_op.cc
     affine_op.cc
     auto_augment_op.cc
