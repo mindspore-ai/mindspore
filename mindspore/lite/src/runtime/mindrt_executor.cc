@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "src/runtime/mindrt_executor.h"
+#include <algorithm>
+#include <list>
 #include <queue>
 #include <memory>
 #include "src/runtime/lite_mindrt.h"
@@ -26,6 +28,45 @@
 #include "src/runtime/kernel_exec_util.h"
 
 namespace mindspore::lite {
+namespace {
+template <typename T>
+Future<std::list<int>> MindrtAsyncRun(const std::vector<OpDataPtr<T>> &input_data, OpContext<T> *context,
+                                      const std::shared_ptr<ActorMgr> &actor_mgr) {
+  std::list<Future<int>> futures;
+  auto promises = *(context->results_);
+  std::transform(promises.begin(), promises.end(), std::back_inserter(futures),
+                 [](const Promise<int> &promise) { return promise.GetFuture(); });
+  Future<std::list<int>> collect = mindspore::Collect<int>(futures);
+
+  for (auto data : input_data) {
+    Async(data->op_id_, actor_mgr, &mindspore::OpActor<T>::RunOpData, data.get(), context);
+  }
+
+  return collect;
+}
+
+template <typename T>
+int MindrtRun(const std::vector<OpDataPtr<T>> &input_data, std::vector<OpDataPtr<T>> *output_data,
+              const void *kernel_call_back_before, const void *kernel_call_back_after,
+              const std::shared_ptr<ActorMgr> &actor_mgr) {
+  OpContext<T> context;
+  std::vector<Promise<int>> promises(output_data->size());
+  context.sequential_num_ = RandInt::Instance().Get();
+  context.results_ = &promises;
+  context.output_data_ = output_data;
+  context.kernel_call_back_before_ = kernel_call_back_before;
+  context.kernel_call_back_after_ = kernel_call_back_after;
+
+  auto collect = MindrtAsyncRun<T>(input_data, &context, actor_mgr);
+  collect.Wait();
+  if (!collect.IsOK()) {
+    return -1;
+  }
+
+  return 0;
+}
+}  // namespace
+
 int MindrtExecutor::PrepareGraphInput(const std::vector<kernel::KernelExec *> &kernels,
                                       const std::vector<Tensor *> &inputs) {
   auto kernels_size = kernels.size();
@@ -156,44 +197,45 @@ int MindrtExecutor::Prepare(const std::vector<kernel::KernelExec *> &kernels, co
                             const std::vector<Tensor *> &outputs, lite::InnerContext *ctx) {
   MS_ASSERT(ctx != nullptr);
   ctx_ = ctx;
-  auto ret = MindrtInit();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "MindrtInit failed";
-    return ret;
-  }
-  op_actors_ = CreateOpActor(kernels, ctx);
-  if (op_actors_.size() != kernels.size()) {
-    MS_LOG(ERROR) << "CreateOpActor failed";
+  actor_mgr_ = std::make_shared<ActorMgr>();
+  if (actor_mgr_ == nullptr) {
+    MS_LOG(ERROR) << "make_shared ActorMgr failed!";
     return RET_ERROR;
   }
 
-  ret = PrepareGraphInput(kernels, inputs);
+  op_actors_ = CreateOpActor(kernels, ctx, actor_mgr_);
+  if (op_actors_.size() != kernels.size()) {
+    MS_LOG(ERROR) << "CreateOpActor failed!actor num: " << op_actors_.size() << ", kernels num: " << kernels.size();
+    return RET_ERROR;
+  }
+
+  auto ret = PrepareGraphInput(kernels, inputs);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "PrepareGraphInput failed";
+    MS_LOG(ERROR) << "PrepareGraphInput failed!ret: " << ret;
     return ret;
   }
 
   ret = PrepareGraphOutput(kernels, outputs);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "PrepareGraphOutput failed";
+    MS_LOG(ERROR) << "PrepareGraphOutput failed!ret: " << ret;
     return ret;
   }
 
   ret = PreInitActors();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "PreInitActors failed";
+    MS_LOG(ERROR) << "PreInitActors failed!ret: " << ret;
     return ret;
   }
 
   ret = LinkActors();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LinkActors failed";
+    MS_LOG(ERROR) << "LinkActors failed!ret: " << ret;
     return ret;
   }
 
   ret = PostInitActors();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "PostInitActors failed";
+    MS_LOG(ERROR) << "PostInitActors failed!ret: " << ret;
     return ret;
   }
   return RET_OK;
@@ -271,7 +313,7 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
 
   FreeOutputTensor();
 
-  auto ret = MindrtRun<Tensor>(input_data_, &output_data_, &before, &after);
+  auto ret = MindrtRun<Tensor>(input_data_, &output_data_, &before, &after, actor_mgr_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "MindrtRun failed";
     return ret;

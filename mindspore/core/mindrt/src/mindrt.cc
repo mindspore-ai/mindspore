@@ -83,6 +83,10 @@ AID Spawn(const ActorReference actor, bool sharedThread) {
   if (local::g_finalizeMindrtStatus.load() == true) {
     return actor->GetAID();
   } else {
+    auto actor_mgr = actor->get_actor_mgr();
+    if (actor_mgr != nullptr) {
+      return actor_mgr->Spawn(actor, sharedThread);
+    }
     return ActorMgr::GetActorMgrRef()->Spawn(actor, sharedThread);
   }
 }
@@ -94,7 +98,13 @@ void Await(const AID &actor) { ActorMgr::GetActorMgrRef()->Wait(actor); }
 // brief get actor with aid
 ActorReference GetActor(const AID &actor) { return ActorMgr::GetActorMgrRef()->GetActor(actor); }
 
-void Terminate(const AID &actor) { ActorMgr::GetActorMgrRef()->Terminate(actor); }
+void Terminate(const AID &actor, const std::shared_ptr<ActorMgr> &actor_mgr) {
+  if (actor_mgr != nullptr) {
+    actor_mgr->Terminate(actor);
+    return;
+  }
+  ActorMgr::GetActorMgrRef()->Terminate(actor);
+}
 
 void TerminateAll() { mindspore::ActorMgr::GetActorMgrRef()->TerminateAll(); }
 

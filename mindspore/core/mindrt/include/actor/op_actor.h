@@ -115,41 +115,6 @@ class OpActor : public ActorBase {
   mindspore::HashMap<int, std::vector<AID *>> input_op_controls_;
   std::vector<AID> output_control_arrows_;
 };
-
-template <typename T>
-Future<std::list<int>> MindrtAsyncRun(const std::vector<OpDataPtr<T>> &input_data, OpContext<T> *context) {
-  std::list<Future<int>> futures;
-  for (auto promise : *(context->results_)) {
-    futures.push_back(promise.GetFuture());
-  }
-  Future<std::list<int>> collect = mindspore::Collect<int>(futures);
-
-  for (auto data : input_data) {
-    Async(data->op_id_, &mindspore::OpActor<T>::RunOpData, data.get(), context);
-  }
-
-  return collect;
-}
-
-template <typename T>
-int MindrtRun(const std::vector<OpDataPtr<T>> &input_data, std::vector<OpDataPtr<T>> *output_data,
-              const void *kernel_call_back_before, const void *kernel_call_back_after) {
-  OpContext<T> context;
-  std::vector<Promise<int>> promises(output_data->size());
-  context.sequential_num_ = RandInt::Instance().Get();
-  context.results_ = &promises;
-  context.output_data_ = output_data;
-  context.kernel_call_back_before_ = kernel_call_back_before;
-  context.kernel_call_back_after_ = kernel_call_back_after;
-
-  auto collect = MindrtAsyncRun<T>(input_data, &context);
-  collect.Wait();
-  if (!collect.IsOK()) {
-    return -1;
-  }
-
-  return 0;
-}
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_MINDRT_INCLUDE_ACTOR_OP_ACTOR_H

@@ -347,7 +347,8 @@ void LiteOpActor::AsyncOutput(OpContext<Tensor> *context) {
   auto output_size = output_data_arrows_.size();
   for (size_t i = 0; i < output_size; ++i) {
     auto data = outputs_data_[i];
-    Async(output_data_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
+    Async(output_data_arrows_[i]->to_op_id_, get_actor_mgr(), &mindspore::OpActor<Tensor>::RunOpData, data.get(),
+          context);
   }
 }
 
@@ -375,7 +376,7 @@ int LiteOpActor::PrepareOutputData() {
 }
 
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::KernelExec *> &kernels,
-                                                        lite::InnerContext *ctx) {
+                                                        lite::InnerContext *ctx, const std::shared_ptr<ActorMgr> &mgr) {
   std::vector<std::shared_ptr<LiteOpActor>> actors;
   ActorThreadPool *thread_pool = reinterpret_cast<ActorThreadPool *>(ctx->thread_pool());
   if (thread_pool == nullptr) {
@@ -393,6 +394,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
       return actors;
     }
     actor->set_thread_pool(thread_pool);
+    actor->set_actor_mgr(mgr);
     actors.push_back(actor);
   }
 
@@ -404,9 +406,10 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
 
 int MindrtInit() { return mindspore::Initialize("", "", "", ""); }
 
-void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &actor_list) {
+void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &actor_list,
+                     const std::shared_ptr<ActorMgr> &actor_mgr) {
   for (const auto &actor : actor_list) {
-    mindspore::Terminate(actor->GetAID());
+    mindspore::Terminate(actor->GetAID(), actor_mgr);
   }
 }
 }  // namespace mindspore::lite

@@ -113,10 +113,11 @@ class LiteOpActor : public OpActor<lite::Tensor> {
 };
 
 int MindrtInit();
-void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &);
+void MindrtTerminate(const std::vector<std::shared_ptr<LiteOpActor>> &,
+                     const std::shared_ptr<ActorMgr> &actor_mgr = nullptr);
 static std::atomic_int64_t actor_count = 0;
 
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::KernelExec *> &kernels,
-                                                        lite::InnerContext *ctx);
+                                                        lite::InnerContext *ctx, const std::shared_ptr<ActorMgr> &mgr);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_LITE_MINDRT_H_
