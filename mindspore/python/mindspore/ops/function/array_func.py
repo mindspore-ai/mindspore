@@ -29,7 +29,7 @@ tile_ = P.Tile()
 size_ = P.Size()
 shape_ = P.Shape()
 rank_ = P.Rank()
-tensor_shape = P.TensorShape()
+tensor_shape_ = P.TensorShape()
 reshape_ = P.Reshape()
 tensor_slice = P.Slice()
 expand_dims_ = P.ExpandDims()
@@ -528,7 +528,7 @@ def dyn_shape(input_x):
         >>> print(output)
         [3 2 1]
     """
-    return tensor_shape(input_x)
+    return tensor_shape_(input_x)
 
 
 def rank(input_x):
@@ -1033,6 +1033,158 @@ def scatter_nd(indices, updates, shape):
          [0. 0.  0.]]
     """
     return scatter_nd_(indices, updates, shape)
+
+
+def scatter_nd_add(input_x, indices, updates, use_locking=False):
+    r"""
+    Applies sparse addition to individual values or slices in a tensor.
+
+    Using given values to update tensor value through the add operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    `input_x` has rank P and `indices` has rank Q where `Q >= 2`.
+
+    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
+
+    The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of `input_x`.
+
+    `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
+    :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    Args:
+        input_x (Parameter): The target tensor, with data type of Parameter.
+            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        indices (Tensor): The index to do min operation whose data type must be mindspore.int32.
+            The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
+        updates (Tensor): The tensor doing the min operation with `input_x`,
+            the data type is same as `input_x`, the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+
+    Returns:
+        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `indices` is not an int32.
+        ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
+        >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
+        >>> output = ops.scatter_nd_add(input_x, indices, updates, False)
+        >>> print(output)
+        [ 1. 10.  9.  4. 12.  6.  7. 17.]
+        >>> input_x = Parameter(Tensor(np.zeros((4, 4, 4)), mindspore.int32))
+        >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+        ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
+        >>> output = ops.scatter_nd_add(input_x, indices, updates, False)
+        >>> print(output)
+        [[[1 1 1 1]
+          [2 2 2 2]
+          [3 3 3 3]
+          [4 4 4 4]]
+         [[0 0 0 0]
+          [0 0 0 0]
+          [0 0 0 0]
+          [0 0 0 0]]
+         [[5 5 5 5]
+          [6 6 6 6]
+          [7 7 7 7]
+          [8 8 8 8]]
+         [[0 0 0 0]
+          [0 0 0 0]
+          [0 0 0 0]
+          [0 0 0 0]]]
+    """
+    scatter_nd_add_inner = P.ScatterNdAdd(use_locking)
+    return scatter_nd_add_inner(input_x, indices, updates)
+
+
+def scatter_nd_sub(input_x, indices, updates, use_locking=False):
+    r"""
+    Applies sparse subtraction to individual values or slices in a tensor.
+
+    Using given values to update tensor value through the subtraction operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    `input_x` has rank P and `indices` has rank Q where `Q >= 2`.
+
+    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
+
+    The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of `input_x`.
+
+    `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
+    :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to the
+    relatively highest priority data type.
+
+    Args:
+        input_x (Parameter): The target tensor, with data type of Parameter.
+            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        indices (Tensor): The index of input tensor, with int32 data type.
+            The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
+        updates (Tensor): The tensor to be updated to the input tensor, has the same type as input.
+            The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+
+    Returns:
+        Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `indices` is not an int32.
+        ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
+        >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
+        >>> output = ops.scatter_nd_sub(input_x, indices, updates, False)
+        >>> print(output)
+        [ 1. -6. -3.  4. -2.  6.  7. -1.]
+        >>> input_x = Parameter(Tensor(np.zeros((4, 4, 4)), mindspore.int32))
+        >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+        ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
+        >>> output = ops.scatter_nd_sub(input_x, indices, updates, False)
+        >>> print(output)
+        [[[-1 -1 -1 -1]
+          [-2 -2 -2 -2]
+          [-3 -3 -3 -3]
+          [-4 -4 -4 -4]]
+         [[ 0  0  0  0]
+          [ 0  0  0  0]
+          [ 0  0  0  0]
+          [ 0  0  0  0]]
+         [[-5 -5 -5 -5]
+          [-6 -6 -6 -6]
+          [-7 -7 -7 -7]
+          [-8 -8 -8 -8]]
+         [[ 0  0  0  0]
+          [ 0  0  0  0]
+          [ 0  0  0  0]
+          [ 0  0  0  0]]]
+    """
+    scatter_nd_sub_inner = P.ScatterNdSub(use_locking)
+    return scatter_nd_sub_inner(input_x, indices, updates)
 
 
 def gather(input_params, input_indices, axis):
@@ -1569,6 +1721,8 @@ __all__ = [
     'expand_dims',
     'transpose',
     'scatter_nd',
+    'scatter_nd_add',
+    'scatter_nd_sub',
     'tensor_scatter_add',
     'gather',
     'gather_d',
