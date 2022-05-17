@@ -34,6 +34,7 @@ from . import operations as P
 from .operations import _grad_ops
 from .operations import _csr_ops
 from .operations import linalg_ops
+from .operations.array_ops import UniqueConsecutive
 from .composite import _Grad, Shard, _Vmap, _TaylorOperation
 from .._c_expression import security
 
@@ -903,6 +904,7 @@ tensor_operator_registry.register('matrix_diag', matrix_diag)
 tensor_operator_registry.register('hardshrink', P.HShrink)
 tensor_operator_registry.register('svd', linalg_ops.Svd)
 tensor_operator_registry.register('diag', P.Diag)
+tensor_operator_registry.register('unique_consecutive', UniqueConsecutive)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)

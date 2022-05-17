@@ -233,6 +233,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
        {"one_hot", std::string("one_hot")},                                // P.OneHot
        {"gather_nd", std::string("gather_nd")},                            // P.GatherNd()
+       {"unique_consecutive", std::string("unique_consecutive")},          // UniqueConsecutive()
        {"diag", std::string("diag")},                                      // P.Diag()
      }},
     {kObjectTypeRowTensorType,
