@@ -50,7 +50,13 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
   if (axis_from_attr < 0) {
     axis_from_attr += SizeToLong(input_shape.size());
   }
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(origin_concat_cnode, 0);
+  auto output_shape_ptr = common::AnfAlgo::GetOutputDetailShape(origin_concat_cnode, 0);
+  MS_EXCEPTION_IF_NULL(output_shape_ptr);
+  auto output_shapeptr = output_shape_ptr->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(output_shapeptr);
+  auto output_shape = output_shapeptr->shape();
+  auto output_shape_min = output_shapeptr->min_shape();
+  auto output_shape_max = output_shapeptr->max_shape();
   if (axis_from_attr < 0 || axis_from_attr >= SizeToLong(output_shape.size()) ||
       axis_from_attr >= SizeToLong(input_shape.size())) {
     MS_LOG(EXCEPTION) << "The concat_dim value " << axis_from_attr << "is out of range"
@@ -58,12 +64,31 @@ AnfNodePtr ConcatFission::CreateNewConcat(const FuncGraphPtr &func_graph, const 
   }
   auto axis = LongToSize(axis_from_attr);
   output_shape[axis] = 0;
-  for (size_t i = begin_index; i < begin_index + offset; ++i) {
-    input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(origin_concat_cnode, i - 1);
-    output_shape[axis] += input_shape[axis];
+  if (!output_shape_min.empty() && !output_shape_max.empty()) {
+    output_shape_min[axis] = 0;
+    output_shape_max[axis] = 0;
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_concat_cnode, 0)},
-                                              {output_shape}, new_concat.get());
+  for (size_t i = begin_index; i < begin_index + offset; ++i) {
+    auto last_input_shape_ptr = common::AnfAlgo::GetPrevNodeOutputDetailShape(origin_concat_cnode, i - 1);
+    MS_EXCEPTION_IF_NULL(last_input_shape_ptr);
+    auto last_input_shapeptr = last_input_shape_ptr->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(last_input_shapeptr);
+    auto last_input_shape = last_input_shapeptr->shape();
+    auto last_input_shape_min = last_input_shapeptr->min_shape();
+    auto last_input_shape_max = last_input_shapeptr->max_shape();
+    if (last_input_shape[axis] == -1 || output_shape[axis] == -1) {
+      output_shape[axis] = -1;
+    } else {
+      output_shape[axis] += last_input_shape[axis];
+    }
+    if (!output_shape_min.empty() && !last_input_shape_min.empty()) {
+      output_shape_min[axis] += last_input_shape_min[axis];
+      output_shape_max[axis] += last_input_shape_max[axis];
+    }
+  }
+  auto concat_output_shape_ptr = std::make_shared<abstract::Shape>(output_shape, output_shape_min, output_shape_max);
+  common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(origin_concat_cnode, 0)},
+                                               {concat_output_shape_ptr}, new_concat.get());
   return new_concat;
 }
 
@@ -76,9 +101,6 @@ const AnfNodePtr ConcatFission::Process(const FuncGraphPtr &func_graph, const An
                                         const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (common::AnfAlgo::IsDynamicShape(node)) {
-    return nullptr;
-  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // The real input begins with index 1.

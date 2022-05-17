@@ -240,6 +240,48 @@ class Positional(nn.Cell):
         return x, pos_emb
 
 
+class Sort(nn.Cell):
+    def __init__(self):
+        super(Sort, self).__init__()
+        self.sort = ops.Sort(axis=0)
+
+    def construct(self, x):
+        out = self.sort(x)
+        return out
+
+
+class NMSWithMask(nn.Cell):
+    def __init__(self, iou_threshold):
+        super(NMSWithMask, self).__init__()
+        self.nmswithmask = ops.NMSWithMask(iou_threshold)
+
+    def construct(self, x):
+        box, _, mask = self.nmswithmask(x)
+        return box, mask
+
+
+class Concat(nn.Cell):
+    def __init__(self):
+        super(Concat, self).__init__()
+        self.concat = ops.Concat(axis=0)
+
+    def construct(self, x):
+        x = 65 * [x]
+        out = self.concat(x)
+        return out
+
+
+class Stack(nn.Cell):
+    def __init__(self):
+        super(Stack, self).__init__()
+        self.stack = ops.Stack(axis=0)
+
+    def construct(self, x):
+        x = 65 * [x]
+        out = self.stack(x)
+        return out
+
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -323,4 +365,89 @@ def test_dynamic_positional():
     data_type = np.float32
     input_shape = [(32, None, 256)]
     net = Positional(256)
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_sort():
+    """
+    Feature: Test Dynamic sort and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, 64)]
+    net = Sort()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_sort2():
+    """
+    Feature: Test Dynamic sort and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, None)]
+    net = Sort()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_nms_with_mask():
+    """
+    Feature: Test Dynamic NMSWithMask and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, 5)]
+    net = NMSWithMask(0.3)
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_concat():
+    """
+    Feature: Test Dynamic Concat and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, 5)]
+    net = Concat()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_stack():
+    """
+    Feature: Test Dynamic Stack and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, 5)]
+    net = Stack()
     comm_func(dynamic_range, input_shape, data_type, net)

@@ -62,6 +62,10 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
   MS_EXCEPTION_IF_NULL(node);
   auto maxpool_with_argmax = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(maxpool_with_argmax);
+  if (common::AnfAlgo::IsDynamicShape(maxpool_with_argmax)) {
+    MS_LOG(EXCEPTION) << "MaxPoolWithArgmax don't support dynamic shape, node: "
+                      << maxpool_with_argmax->fullname_with_scope();
+  }
 
   TypeId argmax_dtype = kNumberTypeUInt16;
   auto ksize = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_with_argmax, kAttrKernelSize);
@@ -96,6 +100,10 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
   MS_EXCEPTION_IF_NULL(node);
   auto maxpool_grad_with_argmax = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(maxpool_grad_with_argmax);
+  if (common::AnfAlgo::IsDynamicShape(maxpool_grad_with_argmax)) {
+    MS_LOG(EXCEPTION) << "MaxPoolGradWithArgmax don't support dynamic shape, node: "
+                      << maxpool_grad_with_argmax->fullname_with_scope();
+  }
   auto tuple_getitem0_anf = GetMaxPoolWithArgmax(maxpool_grad_with_argmax);
   MS_EXCEPTION_IF_NULL(tuple_getitem0_anf);
 

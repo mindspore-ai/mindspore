@@ -69,11 +69,17 @@ CNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const CNodePtr &inpu
 
 const AnfNodePtr BroadcasttoFission::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                              const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
   auto input_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   if (input_type != kNumberTypeBool) {
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (common::AnfAlgo::IsDynamicShape(cnode)) {
+    MS_LOG(EXCEPTION) << "BroadcastTo don't support dynamic shape, node: " << cnode->fullname_with_scope();
+  }
   auto broad_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrShape);
   auto cast_to_node = AddCastNode(graph, kNumberTypeInt8, cnode, true);
   auto broadcastto_node = AddBroadCastToNode(graph, cast_to_node, broad_shape);

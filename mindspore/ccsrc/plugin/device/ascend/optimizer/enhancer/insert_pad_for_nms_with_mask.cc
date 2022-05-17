@@ -36,7 +36,7 @@ const BaseRef InsertPadForNMSWithMask::DefinePattern() const {
 
 AnfNodePtr InsertPadForNMSWithMask::InsertPadToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
                                                      const TypeId &origin_type,
-                                                     const std::vector<size_t> &origin_shape) const {
+                                                     const abstract::BaseShapePtr &origin_shape) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_pad_inputs;
   auto prim = std::make_shared<Primitive>(prim::kPrimPad->name());
@@ -44,7 +44,7 @@ AnfNodePtr InsertPadForNMSWithMask::InsertPadToGraph(const FuncGraphPtr &func_gr
   new_pad_inputs.push_back(input);
   CNodePtr pad = NewCNode(new_pad_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(pad);
-  common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, pad.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {origin_shape}, pad.get());
   return pad;
 }
 
@@ -52,9 +52,6 @@ const AnfNodePtr InsertPadForNMSWithMask::Process(const FuncGraphPtr &func_graph
                                                   const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (common::AnfAlgo::IsDynamicShape(node)) {
-    return nullptr;
-  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
@@ -66,12 +63,23 @@ const AnfNodePtr InsertPadForNMSWithMask::Process(const FuncGraphPtr &func_graph
   for (size_t input_idx = 0; input_idx < input_num; input_idx++) {
     auto cur_input = common::AnfAlgo::GetInputNode(cnode, input_idx);
     auto origin_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_idx);
-    auto origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, input_idx);
+    auto origin_shape_base_ptr = common::AnfAlgo::GetPrevNodeOutputDetailShape(cnode, input_idx);
+    auto origin_shape_ptr = origin_shape_base_ptr->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(origin_shape_ptr);
+    auto origin_shape = origin_shape_ptr->shape();
+    auto origin_shape_min = origin_shape_ptr->min_shape();
+    auto origin_shape_max = origin_shape_ptr->max_shape();
     if (!(origin_shape.size() == kShapeSize && origin_shape[1] == kShapeValue5)) {
       return nullptr;
     }
     origin_shape[1] = kShapeValue8;
-    auto pad = InsertPadToGraph(func_graph, cur_input, origin_type, origin_shape);
+    if (!origin_shape_min.empty() && !origin_shape_max.empty()) {
+      origin_shape_min[1] = kShapeValue8;
+      origin_shape_max[1] = kShapeValue8;
+    }
+    abstract::ShapePtr out_shape_ptr =
+      std::make_shared<abstract::Shape>(origin_shape, origin_shape_min, origin_shape_max);
+    auto pad = InsertPadToGraph(func_graph, cur_input, origin_type, out_shape_ptr);
     MS_EXCEPTION_IF_NULL(pad);
     pad->set_scope(cnode->scope());
     common::AnfAlgo::SetNodeAttr("paddings", MakeValue(std::vector<std::vector<int64_t>>{{0, 0}, {0, 3}}), pad);
