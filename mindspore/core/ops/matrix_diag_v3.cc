@@ -33,142 +33,125 @@ namespace {
 const int64_t kNumber1 = 1;
 const int64_t kNumber2 = 2;
 constexpr int64_t kMatrixDiagV3InputsNum = 5;
-void CheckTrueValueValidAndKValue(const std::vector<AbstractBasePtr> &input_args, int64_t row_val, int64_t col_val,
-                                  int64_t additional_value, int64_t max_value, int *k_val, size_t k_val_size) {
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto rank = SizeToLong(x_shape.size());
-  int64_t true_value = 1;
-  for (int64_t i = 0; i < rank - kNumber2; i++) {
-    true_value *= x_shape[i];
+
+int64_t GetTensorValue(AbstractBasePtr arg, const std::string &prim_name, const std::string &arg_name) {
+  if (!arg->isa<abstract::AbstractTensor>() || !arg->BuildValue()->isa<tensor::Tensor>()) {
+    MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input '" << arg_name << "' must be const Tensor.";
   }
-  true_value *= additional_value;
-  true_value *= (row_val * col_val);
-  if (true_value > max_value) {
-    MS_EXCEPTION(ValueError) << "For MatrixDiagV3, the number of elements of output must be less than max length: "
-                             << max_value << ", but got " << true_value
-                             << "! The shape of output must be reduced or max_length must be increased.";
+  auto abstract_tensor = arg->cast<abstract::AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(abstract_tensor);
+  auto tensor_value_ptr = abstract_tensor->BuildValue();
+  MS_EXCEPTION_IF_NULL(tensor_value_ptr);
+  auto specified_tensor = tensor_value_ptr->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(specified_tensor);
+  int64_t tensor_val_size = SizeToLong(specified_tensor->DataSize());
+  MS_EXCEPTION_IF_CHECK_FAIL(tensor_val_size == kNumber1,
+                             prim_name + " infers failed when initializing value of '" + arg_name + "'.");
+  auto tensor_ptr = reinterpret_cast<int *>(specified_tensor->data_c());
+  int64_t tensor_val = static_cast<int64_t>(*tensor_ptr);
+  return tensor_val;
+}
+
+ShapeVector GetOutputShape(const std::vector<int64_t> &x_shape, int64_t lower_diag_index, int64_t upper_diag_index,
+                           int64_t row_val, int64_t col_val, const std::string &prim_name) {
+  ShapeVector out_shape;
+  auto x_rank = SizeToLong(x_shape.size());
+  if (lower_diag_index != upper_diag_index) {
+    if (lower_diag_index > upper_diag_index) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] must not be greater than k[1], but got k[0] is "
+                               << lower_diag_index << ", k[1] is " << upper_diag_index << ".";
+    }
+    CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, kNumber2, prim_name);
+    auto num_diags = upper_diag_index - lower_diag_index + 1;
+    if (x_shape[x_rank - kNumber2] != num_diags) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input x_shape[-2] doesn't match with k value.";
+    }
+    (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - kNumber2);
+  } else {
+    (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - kNumber1);
   }
-  if (!(k_val[0] > -row_val && k_val[0] < col_val)) {
+
+  int64_t max_diag_len = x_shape.back();
+  int64_t min_num_rows = max_diag_len - std::min(upper_diag_index, int64_t(0));
+  int64_t min_num_cols = max_diag_len + std::max(lower_diag_index, int64_t(0));
+  if (row_val != -1 && row_val < min_num_rows)
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the number of rows is too small.";
+  if (col_val != -1 && col_val < min_num_cols)
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the number of columns is too small.";
+  if (row_val == -1 && col_val == -1) {
+    row_val = std::max(min_num_rows, min_num_cols);
+    col_val = row_val;
+  } else if (row_val == -1) {
+    row_val = min_num_rows;
+  } else if (col_val == -1) {
+    col_val = min_num_cols;
+  }
+  if (!(row_val == min_num_rows || col_val == min_num_cols)) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the number of rows or columns is not consistent with "
+                             << "the specified k and x.";
+  }
+  if (!(lower_diag_index > -row_val && lower_diag_index < col_val)) {
     MS_EXCEPTION(ValueError) << "For MatrixDiagV3, the value of k must be in (-num_rows, num_cols), "
                              << "meaning the value of k must be in (" << -row_val << ", " << col_val
-                             << ") in this case, but got " << k_val[0] << ".";
+                             << ") in this case, but got " << lower_diag_index << ".";
   }
-  if (k_val_size == kNumber2 && k_val[0] != k_val[1]) {
-    if (!(k_val[1] > -row_val && k_val[1] < col_val)) {
-      MS_EXCEPTION(ValueError) << "For MatrixDiagV3, the value of k must be in (-num_rows, num_cols), "
-                               << "meaning the value of k must be in (" << -row_val << ", " << col_val
-                               << ") in this case, but got " << k_val[1] << ".";
-    }
+  if (!(upper_diag_index > -row_val && upper_diag_index < col_val)) {
+    MS_EXCEPTION(ValueError) << "For MatrixDiagV3, the value of k must be in (-num_rows, num_cols), "
+                             << "meaning the value of k must be in (" << -row_val << ", " << col_val
+                             << ") in this case, but got " << upper_diag_index << ".";
   }
+  out_shape.push_back(row_val);
+  out_shape.push_back(col_val);
+  return out_shape;
 }
-int64_t GetValAndCheckSize(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
-                           size_t index) {
-  // get value of specified input and check its size
-  auto prim_name = primitive->name();
-  if (input_args[index]->isa<abstract::AbstractTensor>() && input_args[index]->BuildValue()->isa<tensor::Tensor>()) {
-    auto abstract_tensor = input_args[index]->cast<abstract::AbstractTensorPtr>();
-    MS_EXCEPTION_IF_NULL(abstract_tensor);
-    auto tensor_value_ptr = abstract_tensor->BuildValue();
-    MS_EXCEPTION_IF_NULL(tensor_value_ptr);
-    auto specified_tensor = tensor_value_ptr->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(specified_tensor);
-    size_t tensor_val_size = LongToSize(specified_tensor->DataSize());
-    if (index == kInputIndex2) {
-      CheckAndConvertUtils::CheckInteger("num_rows size", SizeToLong(tensor_val_size), kEqual, kNumber1, prim_name);
-    } else if (index == kInputIndex3) {
-      CheckAndConvertUtils::CheckInteger("num_cols size", SizeToLong(tensor_val_size), kEqual, kNumber1, prim_name);
-    } else if (index == kInputIndex4) {
-      CheckAndConvertUtils::CheckInteger("padding_value size", SizeToLong(tensor_val_size), kEqual, kNumber1,
-                                         prim_name);
-      return 0;
-    }
-    auto tensor_ptr = reinterpret_cast<int *>(specified_tensor->data_c());
-    int64_t tensor_val = static_cast<int64_t>(*tensor_ptr);
-    return tensor_val;
-  } else {
-    MS_EXCEPTION(TypeError) << "For " << prim_name
-                            << ", input k, num_rows, num_cols and padding_value must be const Tensor.";
-  }
-}
+
 abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();  // then get shape and check rank
+  auto prim_name = primitive->name();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto k_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto row_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto col_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   auto padding_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto x_rank = SizeToLong(x_shape.size());
   auto k_rank = SizeToLong(k_shape.size());
   auto row_rank = SizeToLong(row_shape.size());
   auto col_rank = SizeToLong(col_shape.size());
   auto padding_value_rank = SizeToLong(padding_shape.size());
-  CheckAndConvertUtils::CheckInteger("num_rows rank", row_rank, kEqual, 0, prim_name);
-  CheckAndConvertUtils::CheckInteger("num_cols rank", col_rank, kEqual, 0, prim_name);
-  CheckAndConvertUtils::CheckInteger("padding_value rank", padding_value_rank, kEqual, 0, prim_name);
-  CheckAndConvertUtils::CheckInRange<int64_t>("k rank", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto rank = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber1, prim_name);
-  int64_t max_diag_len = x_shape[rank - 1];
-  auto max_length_ptr = primitive->GetAttr("max_length");
-  MS_EXCEPTION_IF_NULL(max_length_ptr);
-  int64_t max_value = GetValue<int64_t>(max_length_ptr);
+  CheckAndConvertUtils::CheckInRange<int64_t>("rank of 'k'", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'num_rows'", row_rank, kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'num_cols'", col_rank, kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'padding_value'", padding_value_rank, kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, kNumber1, prim_name);
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&
       input_args[kInputIndex1]->BuildValue()->isa<tensor::Tensor>()) {
-    auto k = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();  // get k value and check its size
+    auto k = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(k);
     auto k_value_ptr = k->BuildValue();
     MS_EXCEPTION_IF_NULL(k_value_ptr);
     auto k_tensor = k_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(k_tensor);
     auto k_val = reinterpret_cast<int *>(k_tensor->data_c());
-    size_t k_val_size = LongToSize(k_tensor->DataSize());
-    CheckAndConvertUtils::CheckInRange<int64_t>("k size", SizeToLong(k_val_size), kIncludeBoth, {kNumber1, kNumber2},
+    int64_t k_val_size = SizeToLong(k_tensor->DataSize());
+    CheckAndConvertUtils::CheckInRange<int64_t>("size of 'k'", k_val_size, kIncludeBoth, {kNumber1, kNumber2},
                                                 prim_name);
-    int64_t row_val = GetValAndCheckSize(primitive, input_args, kInputIndex2);  // get row value and check its size
-    int64_t col_val = GetValAndCheckSize(primitive, input_args, kInputIndex3);  // get col value and check its size
-    (void)GetValAndCheckSize(primitive, input_args, kInputIndex4);              // check size of padding_value
-    std::vector<int64_t> out_shape;                                             // calculate out_shape
-    int64_t min_num_rows, min_num_cols;
-    int64_t additional_value = 1;
-    if (k_val_size == 1 || k_val[0] == k_val[1]) {
-      min_num_rows = max_diag_len - std::min(k_val[0], 0);
-      min_num_cols = max_diag_len + std::max(k_val[0], 0);
-      (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - 1);
-      additional_value = x_shape[rank - kNumber2];
-    } else {
-      if (!(k_val[0] <= k_val[1]))
-        MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] can not be greater than k[1].";
-      int64_t num_diags = k_val[1] - k_val[0] + 1;
-      CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
-      if (x_shape[rank - kNumber2] != num_diags)
-        MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input x_shape[-2] doesn't match with k value.";
-      min_num_rows = max_diag_len - std::min(k_val[1], 0);
-      min_num_cols = max_diag_len + std::max(k_val[0], 0);
-      (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - kNumber2);
+    int64_t lower_diag_index = static_cast<int64_t>(k_val[0]);
+    int64_t upper_diag_index = lower_diag_index;
+    if (k_val_size == kNumber2) {
+      upper_diag_index = static_cast<int64_t>(k_val[1]);
     }
-    if (row_val != -1 && row_val < min_num_rows)
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the number of rows is too small.";
-    if (col_val != -1 && col_val < min_num_cols)
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the number of columns is too small.";
-    if (row_val == -1 && col_val == -1) {
-      row_val = std::max(min_num_rows, min_num_cols);
-      col_val = row_val;
-    } else if (row_val == -1) {
-      row_val = min_num_rows;
-    } else if (col_val == -1) {
-      col_val = min_num_cols;
-    }
-    if (!(row_val == min_num_rows || col_val == min_num_cols))
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the number of rows or columns is not consistent with "
-                               << "the specified k and x.";
-    CheckTrueValueValidAndKValue(input_args, row_val, col_val, additional_value, max_value, k_val, k_val_size);
-    out_shape.push_back(row_val);
-    out_shape.push_back(col_val);
+    int64_t row_val = GetTensorValue(input_args[kInputIndex2], prim_name, "num_rows");
+    int64_t col_val = GetTensorValue(input_args[kInputIndex3], prim_name, "num_cols");
+    (void)GetTensorValue(input_args[kInputIndex4], prim_name, "padding_value");
+
+    auto out_shape = GetOutputShape(x_shape, lower_diag_index, upper_diag_index, row_val, col_val, prim_name);
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    ShapeVector out_shape = {-2};
-    ShapeVector infer_shape_min = {0};
-    ShapeVector infer_shape_max = {max_value};
+    // Since the real output shape relies on the value of 'k', 'num_cols' and 'num_rows',
+    // the out_shape is set to {-2} meaning that even the dimension can not be determined.
+    ShapeVector out_shape = {-kNumber2};
+    ShapeVector infer_shape_min = {kNumber1};
+    ShapeVector infer_shape_max = {kNumber2};
     return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
   }
 }
