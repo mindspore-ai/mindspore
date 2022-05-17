@@ -55,6 +55,8 @@ from .array_func import (
     scatter_nd,
     scatter_nd_add,
     scatter_nd_sub,
+    scatter_nd_div,
+    scatter_nd_min,
     gather,
     gather_d,
     gather_nd,
