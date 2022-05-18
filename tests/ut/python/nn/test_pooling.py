@@ -98,3 +98,25 @@ def test_adaptive_avg_pool_1d():
     net = AdaptiveAvgPool1dNet(2)
     input_ = Tensor(np.random.randint(0, 255, [1, 3, 6]).astype(np.float32))
     _cell_graph_executor.compile(net, input_)
+
+
+class AdaptiveMaxPool1dNet(nn.Cell):
+    """AdaptiveMaxPool1d."""
+
+    def __init__(self, output_size):
+        super(AdaptiveMaxPool1dNet, self).__init__()
+        self.adaptive_max_pool_1d = nn.AdaptiveMaxPool1d(output_size)
+
+    def construct(self, x):
+        return self.adaptive_max_pool_1d(x)
+
+
+def test_adaptive_max_pool_1d():
+    """
+    Feature: Test AdaptiveMaxPool1d.
+    Description: Test AdaptiveMaxPool1d functional.
+    Expectation: Success.
+    """
+    net = AdaptiveMaxPool1dNet(2)
+    input_ = Tensor(np.random.randint(0, 255, [1, 3, 6]).astype(np.float32))
+    _cell_graph_executor.compile(net, input_)

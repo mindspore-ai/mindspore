@@ -21,7 +21,7 @@ import mindspore.context as context
 from mindspore.common import dtype as mstype
 from ..cell import Cell
 
-__all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'AdaptiveAvgPool1d']
+__all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'AdaptiveAvgPool1d', 'AdaptiveMaxPool1d']
 
 
 class _PoolNd(Cell):
@@ -494,6 +494,80 @@ class AdaptiveAvgPool1d(Cell):
         x = self.expand(x, 2)
         avg_pool = P.AvgPool(kernel_size=kernel_size, strides=stride)
         x = avg_pool(x)
+        x = self.squeeze(x)
+
+        return x
+
+
+class AdaptiveMaxPool1d(Cell):
+    r"""
+    1D adaptive maximum pooling for temporal data.
+
+    Applies a 1D adaptive maximum pooling over an input Tensor which can be regarded as
+    a composition of 1D input planes.
+
+    Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`,
+    AdaptiveMaxPool1d outputs regional maximum in the :math:`(L_{in})`-dimension. The output is of
+    shape :math:`(N_{in}, C_{in}, L_{out})`, where :math:`L_{out}` is defined by `output_size`
+
+    Note:
+        :math:`(L_{in})` must be divisible by `output_size`.
+
+    Args:
+        output_size (int): the target output size :math:`L_{out}`.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16, float32 or float64 data type.
+
+    Outputs:
+        Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `x`.
+
+    Raises:
+        TypeError: If `x` is neither float16 nor float32 nor float64.
+        TypeError: If `output_size` is not an int.
+        ValueError: If `output_size` is less than 1.
+        ValueError: If the last dimension of `x` is smaller than `output_size`.
+        ValueError: If the last dimension of `x` is not divisible by `output_size`.
+        ValueError: If length of shape of `x` is not equal to 3.
+
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> pool = nn.AdaptiveMaxPool1d(output_size=3)
+        >>> x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
+        >>> output = pool(x)
+        >>> result = output.shape
+        >>> print(result)
+        (1, 3, 3)
+    """
+
+    def __init__(self, output_size):
+        """Initialize AdaptiveMaxPool1d."""
+        super(AdaptiveMaxPool1d, self).__init__()
+        validator.check_int(output_size, 1, Rel.GE, "output_size", self.cls_name)
+        validator.check_value_type('output_size', output_size, [int], self.cls_name)
+        self.expand = P.ExpandDims()
+        self.squeeze = P.Squeeze(2)
+        self.output_size = output_size
+        self.shape = F.shape
+        self.dtype = P.DType()
+
+    def construct(self, x):
+        _adaptive_shape_check(self.shape(x), self.output_size, self.cls_name)
+        _adaptive_dtype_check(self.dtype(x), self.cls_name)
+
+        _, _, width = self.shape(x)
+        stride = width // self.output_size
+        kernel_size = width - (self.output_size - 1) * stride
+
+        stride = (1, width // self.output_size)
+        kernel_size = (1, kernel_size)
+
+        max_pool = P.MaxPool(kernel_size=kernel_size, strides=stride)
+        x = self.expand(x, 2)
+        x = max_pool(x)
         x = self.squeeze(x)
 
         return x
