@@ -29,6 +29,7 @@
 #include "ir/meta_tensor.h"
 #include "utils/log_adapter.h"
 #include "base/float16.h"
+#include "base/user_data.h"
 #include "utils/shape_utils.h"
 #include "utils/ms_exception.h"
 #include "ir/device_event.h"
@@ -574,6 +575,32 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \return The memory chunk pointer and offset, nullptr and 0 if no memory chunk exists.
   std::pair<void *, size_t> GetChunkOffset() const;
 
+  /// \brief Set user data.
+  ///
+  /// \param[in] key The key of user data.
+  /// \param[in] value The value of user data, nullptr to erase the user data.
+  template <typename T>
+  void set_user_data(const std::string &key, const std::shared_ptr<T> &value) {
+    user_data_.set<T>(key, value);
+  }
+
+  /// \brief Get user data.
+  ///
+  /// \param[in] key The key of user data.
+  ///
+  /// \return Pointer to user data.
+  template <typename T>
+  std::shared_ptr<T> user_data(const std::string &key) const {
+    return user_data_.get<T>(key);
+  }
+
+  /// \brief Check whether there is corresponding user data by the given key.
+  ///
+  /// \param[in] key The key of user data.
+  ///
+  /// \return True if it exists, otherwise false.
+  bool has_user_data(const std::string &key) const { return user_data_.has(key); }
+
   /// \brief Reset tensors data so that they are using contiguous memory chunks grouped by data type.
   ///
   /// \param[in] tensors The tensors to be processed.
@@ -619,6 +646,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
   std::function<void(void)> lazy_callback_{nullptr};
+  UserData user_data_;
 };
 
 // CSRTensor entity class
