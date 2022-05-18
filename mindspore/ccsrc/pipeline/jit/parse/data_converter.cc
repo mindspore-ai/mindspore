@@ -32,7 +32,6 @@
 #include "utils/symbolic.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
-#include "ir/variable.h"
 
 namespace mindspore {
 namespace parse {
@@ -513,7 +512,6 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
     std::make_shared<ByTypeDataConverter<MetaTensor>>(ObjCast<MetaTensorPtr>),
     std::make_shared<ByTypeDataConverter<CSRTensor>>(ObjCast<CSRTensorPtr>),
     std::make_shared<ByTypeDataConverter<COOTensor>>(ObjCast<COOTensorPtr>),
-    std::make_shared<ByTypeDataConverter<Variable>>(ObjCast<VariablePtr>),
     std::make_shared<ByTypeDataConverter<py::tuple>>(ConvertTuple),
     std::make_shared<ByTypeDataConverter<py::list>>(ConvertList),
     std::make_shared<ByTypeDataConverter<py::bool_>>(PyCast<BoolImm, bool>),

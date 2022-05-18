@@ -356,6 +356,8 @@ class _MindsporeFunctionExecutor:
         for i in args_list:
             if isinstance(i, (Tensor, CSRTensor, COOTensor)):
                 new_inputs.append(i)
+            elif hasattr(i, "__ms_mutable__") and getattr(i, "__ms_mutable__"):
+                new_inputs.append(i)
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
                 new_inputs.append(i)
             elif self.enable_tuple_broaden and isinstance(i, tuple) and _check_all_tensor(i):

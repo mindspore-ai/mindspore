@@ -22,7 +22,7 @@ from mindspore import Tensor, CSRTensor, COOTensor, RowTensor, ms_function, ms_c
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.common.variable import Variable
+from mindspore.common.mutable import mutable
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -624,74 +624,74 @@ def test_isinstance_wrong_cmp_input_4():
     assert "isinstance() arg 2 must be a type or tuple of types" in str(err.value)
 
 
-@pytest.mark.skip(reason='Variable feature not support scalar input')
-def test_isinstance_x_variable():
+@pytest.mark.skip(reason='mutable feature not support scalar input')
+def test_isinstance_x_mutable():
     """
     Feature: Graph isinstance.
-    Description: Graph isinstance when x is variable.
+    Description: Graph isinstance when x is mutable.
     Expectation: No exception.
     """
     @ms_function
     def foo(x):
         return isinstance(x, (int, tuple))
 
-    x = Variable(2)
+    x = mutable(2)
     assert foo(x)
 
 
-@pytest.mark.skip(reason='Variable feature not support scalar input')
-def test_isinstance_x_variable_2():
+@pytest.mark.skip(reason='mutable feature not support scalar input')
+def test_isinstance_x_mutable_2():
     """
     Feature: Graph isinstance.
-    Description: Graph isinstance when x is variable.
+    Description: Graph isinstance when x is mutable.
     Expectation: No exception.
     """
     @ms_function
     def foo(x):
         return isinstance(x, (int, tuple))
 
-    x = Variable(True)
+    x = mutable(True)
     assert foo(x)
 
 
-@pytest.mark.skip(reason='Variable feature not support scalar input')
-def test_isinstance_x_variable_3():
+@pytest.mark.skip(reason='mutable feature not support scalar input')
+def test_isinstance_x_mutable_3():
     """
     Feature: Graph isinstance.
-    Description: Graph isinstance when x is variable.
+    Description: Graph isinstance when x is mutable.
     Expectation: No exception.
     """
     @ms_function
     def foo(x):
         return isinstance(x, (int, tuple))
 
-    x = Variable([1, 2, 3, 4])
+    x = mutable([1, 2, 3, 4])
     assert not foo(x)
 
 
-def test_isinstance_x_variable_4():
+def test_isinstance_x_mutable_4():
     """
     Feature: Graph isinstance.
-    Description: Graph isinstance when x is variable.
+    Description: Graph isinstance when x is mutable.
     Expectation: No exception.
     """
     @ms_function
     def foo(x):
         return isinstance(x, (int, list))
 
-    x = Variable([Tensor(1), Tensor(2), Tensor(3)])
+    x = mutable([Tensor(1), Tensor(2), Tensor(3)])
     assert foo(x)
 
 
-def test_isinstance_x_variable_5():
+def test_isinstance_x_mutable_5():
     """
     Feature: Graph isinstance.
-    Description: Graph isinstance when x is variable.
+    Description: Graph isinstance when x is mutable.
     Expectation: No exception.
     """
     @ms_function
     def foo(x):
         return isinstance(x, (int, tuple))
 
-    x = Variable([Tensor(1), Tensor(2), Tensor(3)])
+    x = mutable([Tensor(1), Tensor(2), Tensor(3)])
     assert not foo(x)
