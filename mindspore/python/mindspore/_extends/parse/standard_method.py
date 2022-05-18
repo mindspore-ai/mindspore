@@ -546,8 +546,10 @@ def cumsum(x, axis=None, dtype=None):
         x = x.ravel()
         axis = 0
     check_axis_in_range_const(axis, x.ndim)
-    if dtype is not None and original_dtype != dtype:
-        return cumsum_(x, axis).astype(dtype, copy=False)
+    if dtype is not None:
+        dtype = check_astype_dtype_const(dtype)
+        if original_dtype != dtype:
+            return cumsum_(x, axis).astype(dtype, copy=False)
     return cumsum_(x, axis)
 
 
@@ -853,6 +855,7 @@ def trace(x, offset=0, axis1=0, axis2=1, dtype=None):
     shape = d.shape
     if dtype is None:
         dtype = d.dtype
+    dtype = check_astype_dtype_const(dtype)
     if shape[-1] == 0:
         return F.fill(dtype, shape[:-1], 0)
     res = F.reduce_sum(d.astype(mstype.float32), -1)
@@ -1184,8 +1187,10 @@ def clip(x, xmin, xmax, dtype=None):
             x = F.minimum(x, xmax)
     if is_scalar:
         return x.squeeze()
-    if dtype is not None and dtype != x.dtype:
-        return x.astype(dtype)
+    if dtype is not None:
+        dtype = check_astype_dtype_const(dtype)
+        if dtype != x.dtype:
+            return x.astype(dtype)
     return x
 
 
@@ -1331,6 +1336,7 @@ def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disa
     """
     input_x = x.astype(mstype.int32) if x.dtype == mstype.bool_ else x
     dtype = input_x.dtype if dtype is None else dtype
+    dtype = check_astype_dtype_const(dtype)
     if not isinstance(keepdims, int):
         const_utils.raise_type_error("integer argument expected")
     if initial is not None and not isinstance(initial, (int, float, bool)):
