@@ -21,3 +21,4 @@ mindspore.ops.InplaceUpdate
 
     - **TypeError** - `indices` 不是int或Tuple。
     - **TypeError** - `indices` 为Tuple，而其包含的某一元素非int类型。
+

@@ -20,6 +20,7 @@
 #include <algorithm>
 #include "mindspore/core/ops/inplace_add.h"
 #include "mindspore/core/ops/inplace_sub.h"
+#include "mindspore/core/ops/inplace_update.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,6 +36,13 @@ struct Sub {
   template <typename T>
   inline T operator()(const T &lhs, const T &rhs) const {
     return lhs - rhs;
+  }
+};
+
+struct Update {
+  template <typename T>
+  inline T operator()(const T &lhs, const T &rhs) const {
+    return rhs;
   }
 };
 template <typename T>
@@ -53,6 +61,9 @@ class InplaceOpCpuTypeFunc : public DeprecatedCpuKernelFunc {
       indices_ = kernel_ptr->get_indices();
     } else if (kernel_name_ == ops::kNameInplaceSub) {
       auto kernel_ptr = std::make_shared<ops::InplaceSub>(base_operator->GetPrim());
+      indices_ = kernel_ptr->get_indices();
+    } else if (kernel_name_ == ops::kNameInplaceUpdate) {
+      auto kernel_ptr = std::make_shared<ops::InplaceUpdate>(base_operator->GetPrim());
       indices_ = kernel_ptr->get_indices();
     } else {
       MS_LOG(EXCEPTION) << "InplaceOp cpu does not support " << kernel_name_;
@@ -112,6 +123,7 @@ class InplaceOpCpuTypeFunc : public DeprecatedCpuKernelFunc {
     static std::unordered_map<std::string, TypeComputeFunc> inplaceOpFuncMap = {
       {prim::kPrimInplaceAdd->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<Add>},
       {prim::kPrimInplaceSub->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<Sub>},
+      {prim::kPrimInplaceUpdate->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<Update>},
     };
     if (inplaceOpFuncMap.find(kernel_name_) == inplaceOpFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'InplaceOp', only supports operators in " << Unorderedmap2Str(inplaceOpFuncMap)
@@ -158,6 +170,15 @@ static const mindspore::HashMap<std::string, OpFuncList> kernel_attr_list = {
      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
       InplaceOpCpuFunc<float16>},
    }},
+  {ops::kNameInplaceUpdate,
+   {
+     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      InplaceOpCpuFunc<int32_t>},
+     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      InplaceOpCpuFunc<float>},
+     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+      InplaceOpCpuFunc<float16>},
+   }},
 };
 }  // namespace
 
@@ -193,5 +214,6 @@ std::vector<KernelAttr> InPlaceOpCpuKernelMod::GetOpSupport() {
 
 MS_KERNEL_FACTORY_REG_WITH_NAME_PARAM(NativeCpuKernelMod, InplaceAdd, InPlaceOpCpuKernelMod);
 MS_KERNEL_FACTORY_REG_WITH_NAME_PARAM(NativeCpuKernelMod, InplaceSub, InPlaceOpCpuKernelMod);
+MS_KERNEL_FACTORY_REG_WITH_NAME_PARAM(NativeCpuKernelMod, InplaceUpdate, InPlaceOpCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

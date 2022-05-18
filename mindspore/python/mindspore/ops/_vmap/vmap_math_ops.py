@@ -241,6 +241,32 @@ def get_broadcast_to_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.InplaceAdd)
+@vmap_rules_getters.register(P.InplaceSub)
+@vmap_rules_getters.register(P.InplaceUpdate)
+def get_inplace_ops_vmap_rule(prim, axis_size):
+    """VmapRule for `InplaceAdd`, `InplaceSub`, `InplaceUpdate` operation."""
+
+    def vmap_rule(x_bdim, v_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, v_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        v, v_dim = v_bdim
+        if x_dim is None:
+            x = _broadcast_by_axis(x, -1, axis_size)
+        else:
+            x = mnp.moveaxis(x, x_dim, -1)
+        if v_dim is None:
+            v = _broadcast_by_axis(v, -1, axis_size)
+        else:
+            v = mnp.moveaxis(v, v_dim, -1)
+        out = prim(x, v)
+        return (out, out.ndim - 1)
+    return vmap_rule
+
+
 @constexpr
 def _get_reduce_batch_axis(axis, x_dim, x_ndim):
     """get batch_axis for reduce* operation."""

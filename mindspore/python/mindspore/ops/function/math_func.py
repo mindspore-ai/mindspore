@@ -730,6 +730,119 @@ def floor(x):
     return floor_(x)
 
 
+def inplace_update(x, v, indices):
+    """
+    Updates specified rows with values in `v`.
+
+    Args:
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of x
+            to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
+        x (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
+            float32, float16 and int32.
+        v (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
+            the first dimension, which must be the same as the size of `indices`.
+
+    Returns:
+        Tensor, with the same type and shape as the input `x`.
+
+    Raises:
+        TypeError: If `indices` is neither int nor tuple.
+        TypeError: If `indices` is a tuple and its element is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> indices = (0, 1)
+        >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> inplace_update = ops.InplaceUpdate(indices)
+        >>> output = inplace_update(x, v)
+        >>> print(output)
+        [[0.5 1. ]
+         [1.  1.5]
+         [5.  6. ]]
+    """
+    inplace_update_inner = P.InplaceUpdate(indices)
+    return inplace_update_inner(x, v)
+
+
+def inplace_add(x, v, indices):
+    """
+    Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
+
+    Args:
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
+            to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
+        x (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        v (Tensor) - The second input is a tensor that has the same dimension sizes as `x` except
+            the first dimension, which must be the same as indices' size. It has the same data type with `x`.
+
+    Returns:
+        Tensor, has the same shape and dtype as `x`.
+
+    Raises:
+        TypeError: If `indices` is neither int nor tuple.
+        TypeError: If `indices` is a tuple whose elements are not all int.
+        ValueError: If length of shape of `x` is not equal to length of shape of `input_v`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> indices = (0, 1)
+        >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> inplaceAdd = ops.InplaceAdd(indices)
+        >>> output = inplaceAdd(x, input_v)
+        >>> print(output)
+        [[1.5 3. ]
+         [4.  5.5]
+         [5.  6. ]]
+    """
+    inplace_add_inner = P.InplaceAdd(indices)
+    return inplace_add_inner(x, v)
+
+
+def inplace_sub(x, v, indices):
+    """
+    Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.
+
+    Args:
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
+            to subtract with `v`. It is an int or tuple, whose value is in [0, the first dimension size of `x`).
+        x (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        v (Tensor) - The second input is a tensor who has the same dimension sizes as `x` except
+            the first dimension, which must be the same as indices' size. It has the same data type with `x`.
+
+    Returns:
+        Tensor, has the same shape and dtype as `x`.
+
+    Raises:
+        TypeError: If `indices` is neither int nor tuple.
+        TypeError: If `indices` is a tuple whose elements are not all int.
+        ValueError: If length of shape of `x` is not equal to length of shape of `input_v`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> indices = (0, 1)
+        >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> inplaceSub = ops.InplaceSub(indices)
+        >>> output = inplaceSub(x, input_v)
+        >>> print(output)
+        [[0.5 1. ]
+         [2.  2.5]
+         [5.  6. ]]
+    """
+    inplace_sub_inner = P.InplaceSub(indices)
+    return inplace_sub_inner(x, v)
+
+
 def logical_not(x):
     """
     Computes the "logical NOT" of a tensor element-wise.
@@ -2894,6 +3007,9 @@ __all__ = [
     'equal',
     'not_equal',
     'ne',
+    'inplace_update',
+    'inplace_add',
+    'inplace_sub',
     'isfinite',
     'isnan',
     'isreal',
