@@ -4730,7 +4730,7 @@ class BesselY0(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_y0 = ops.BesselY0()
@@ -4762,7 +4762,7 @@ class BesselY1(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_y1 = ops.BesselY1()
