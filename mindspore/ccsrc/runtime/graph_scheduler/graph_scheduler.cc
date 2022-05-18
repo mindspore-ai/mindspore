@@ -701,7 +701,7 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
       MS_LOG(INFO) << "The graph " << graph->graph_id() << " is an empty graph and skips linking.";
       continue;
     }
-    if (graph->is_executing_sink()) {
+    if (graph->is_graph_run_mode()) {
       LinkDataArrowInSinkMode(graph, graph_compiler_info, &auto_monad_actors);
     } else {
       // In the control flow, the communication nodes need to be guaranteed to be executed in order. The order
@@ -797,7 +797,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
     }
 
     // The graph sink mode has no device queue data source actor.
-    if (!graph->is_executing_sink()) {
+    if (!graph->is_graph_run_mode()) {
       // Build device queue data source actor.
       const auto &execution_order = graph->execution_order();
       const auto &iter =
@@ -829,7 +829,7 @@ std::vector<CustomActorPtr> GraphScheduler::BuildCustomActor(const GraphCompiler
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     const auto &graph = graph_compiler_info.graphs_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if (graph->is_executing_sink()) {
+    if (graph->is_graph_run_mode()) {
       continue;
     }
 
@@ -856,7 +856,7 @@ std::vector<KernelActorPtr> GraphScheduler::BuildKernelActor(const GraphCompiler
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if (graph->is_executing_sink()) {
+    if (graph->is_graph_run_mode()) {
       continue;
     }
 
@@ -897,7 +897,7 @@ std::vector<SuperKernelActorPtr> GraphScheduler::BuildSuperKernelActor(const Gra
     const auto &graph = graph_compiler_info.graphs_[i];
     const auto &device_context = graph_compiler_info.device_contexts_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if (!graph->is_executing_sink()) {
+    if (!graph->is_graph_run_mode()) {
       continue;
     }
 
@@ -980,7 +980,7 @@ DataPrepareActorPtr GraphScheduler::BuildDataPrepareActor(const GraphCompilerInf
     for (size_t index = 0; index < graph_compiler_info.graphs_.size(); ++index) {
       const auto &graph = graph_compiler_info.graphs_[index];
       MS_EXCEPTION_IF_NULL(graph);
-      if (graph->is_executing_sink()) {
+      if (graph->is_graph_run_mode()) {
         continue;
       }
 
@@ -1642,7 +1642,7 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
     MS_EXCEPTION_IF_NULL(graph);
-    if (graph->is_executing_sink()) {
+    if (graph->is_graph_run_mode()) {
       continue;
     }
 
@@ -2149,7 +2149,7 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
 
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
-    ofs << "\tgraph_id:" << graph->graph_id() << "\tis_executing_sink:" << graph->is_executing_sink()
+    ofs << "\tgraph_id:" << graph->graph_id() << "\tis_graph_run_mode:" << graph->is_graph_run_mode()
         << "\tis_loop_count_sink:" << graph->is_loop_count_sink()
         << "\texecution_strategy:" << graph_compiler_info.strategy_ << "\n";
 

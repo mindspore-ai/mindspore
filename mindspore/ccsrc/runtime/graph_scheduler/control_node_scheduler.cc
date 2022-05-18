@@ -1462,7 +1462,7 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
   auto &execution_order = graph->execution_order();
   for (const auto &kernel : execution_order) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if ((!graph->is_executing_sink()) && (IsSkippedKernelActor(kernel) || !IsKernelActor(kernel))) {
+    if ((!graph->is_graph_run_mode()) && (IsSkippedKernelActor(kernel) || !IsKernelActor(kernel))) {
       continue;
     }
     for (size_t i = 0; i < common::AnfAlgo::GetInputNum(kernel); ++i) {

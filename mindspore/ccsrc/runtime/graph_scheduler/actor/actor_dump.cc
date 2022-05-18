@@ -192,7 +192,7 @@ void DumpSuperKernelActor(const SuperKernelActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(graph);
 
   ofs << "\t\tgraph_id:" << graph->graph_id() << "\tgraphl_name:" << graph->ToString()
-      << "\tis_executing_sink:" << graph->is_executing_sink() << "\tis_loop_count_sink:" << graph->is_loop_count_sink()
+      << "\tis_graph_run_mode:" << graph->is_graph_run_mode() << "\tis_loop_count_sink:" << graph->is_loop_count_sink()
       << "\tinputs_num:" << (graph->input_nodes()).size() << "\tkernels_num:" << (graph->execution_order()).size()
       << "\n";
 
