@@ -177,6 +177,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::ConvScaleFusion>(config->fmk));
   fusion_pm->AddPass(std::make_shared<opt::TfNormFusion>());
   fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion2>());
   fusion_pm->AddPass(std::make_shared<opt::BatchMatMulFusion>());
   fusion_pm->AddPass(std::make_shared<opt::BatchNormToScaleFusion>());
   fusion_pm->AddPass(std::make_shared<opt::SigmoidMulFusion>());

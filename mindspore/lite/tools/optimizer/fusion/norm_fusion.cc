@@ -550,5 +550,42 @@ const BaseRef OnnxLayerNormFusion::DefinePattern() const {
   VectorRef add2_ref = VectorRef({is_add2, mul_ref, beta_});
   return add2_ref;
 }
+
+// little different from OnnxLayerNormFusion on mul's inputs order
+const BaseRef OnnxLayerNormFusion2::DefinePattern() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
+  VectorRef mean1_ref = VectorRef({mean1_, input_, mean1_axes_});
+  auto is_sub1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSubFusion>);
+  MS_CHECK_TRUE_RET(is_sub1 != nullptr, {});
+  VectorRef sub1_ref = VectorRef({is_sub1, input_, mean1_ref});
+  auto is_sub2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSubFusion>);
+  MS_CHECK_TRUE_RET(is_sub2 != nullptr, {});
+  VectorRef sub2_ref = VectorRef({is_sub2, input_, mean1_ref});
+  auto is_pow = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimPowFusion>);
+  MS_CHECK_TRUE_RET(is_pow != nullptr, {});
+  auto is_var = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(is_var != nullptr, {});
+  VectorRef pow_ref = VectorRef({is_pow, sub2_ref, is_var});
+  VectorRef mean2_ref = VectorRef({mean2_, pow_ref, mean2_axes_});
+  auto is_add1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
+  MS_CHECK_TRUE_RET(is_add1 != nullptr, {});
+  VectorRef add1_ref = VectorRef({is_add1, mean2_ref, epsilon_});
+  auto is_sqrt = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSqrt>);
+  MS_CHECK_TRUE_RET(is_sqrt != nullptr, {});
+  VectorRef sqrt_ref = VectorRef({is_sqrt, add1_ref});
+  auto is_div = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimDivFusion>);
+  MS_CHECK_TRUE_RET(is_div != nullptr, {});
+  VectorRef div_ref = VectorRef({is_div, sub1_ref, sqrt_ref});
+  auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
+  MS_CHECK_TRUE_RET(is_mul != nullptr, {});
+  VectorRef mul_ref = VectorRef({is_mul, div_ref, gamma_});
+  auto is_add2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAddFusion>);
+  MS_CHECK_TRUE_RET(is_add2 != nullptr, {});
+  VectorRef add2_ref = VectorRef({is_add2, mul_ref, beta_});
+  return add2_ref;
+}
 }  // namespace opt
 }  // namespace mindspore
