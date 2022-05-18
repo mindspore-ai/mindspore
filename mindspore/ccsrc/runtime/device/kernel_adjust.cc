@@ -831,15 +831,17 @@ void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::
   MS_LOG(INFO) << "Start Insert Overflow Check Operations.";
 
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  std::vector<std::shared_ptr<session::KernelGraph>> child_graph_list;
+  std::set<std::shared_ptr<session::KernelGraph>> child_graph_list;
   std::queue<std::shared_ptr<session::KernelGraph>> graph_queue;
   graph_queue.push(kernel_graph_ptr);
   while (!graph_queue.empty()) {
     auto graph = graph_queue.front();
-    (void)child_graph_list.emplace_back(graph);
+    (void)child_graph_list.insert(graph);
     graph_queue.pop();
     for (auto child_graph : graph->child_graph_order()) {
-      graph_queue.push(child_graph.lock());
+      if (child_graph_list.count(child_graph.lock()) == 0) {
+        graph_queue.push(child_graph.lock());
+      }
     }
   }
 
