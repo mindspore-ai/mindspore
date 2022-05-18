@@ -101,22 +101,12 @@ class SoftmaxGrad(ReciprocalGrad):
     """Performs grad of Softmax operation."""
 
 
-class SqrtGrad(PrimitiveWithInfer):
+class SqrtGrad(Primitive):
     """Performs grad of Sqrt operation."""
 
     @prim_attr_register
     def __init__(self):
         """Initialize SqrtGrad"""
-
-    def infer_shape(self, x_shape, dout_shape):
-        validator.check("x shape", x_shape, "dout shape", dout_shape, Rel.EQ, self.name)
-        return x_shape
-
-    def infer_dtype(self, x_dtype, dout_dtype):
-        args = {"x": x_dtype, "dout": dout_dtype}
-        valid_types = [mstype.float16, mstype.float32, mstype.float64]
-        validator.check_tensors_dtypes_same_and_valid(args, valid_types, self.name)
-        return x_dtype
 
 
 class BatchNormGrad(Primitive):

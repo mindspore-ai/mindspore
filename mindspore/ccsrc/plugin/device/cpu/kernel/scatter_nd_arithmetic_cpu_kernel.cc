@@ -37,7 +37,7 @@ constexpr size_t kUpdatesIndex = 2;
 constexpr size_t kOutputIndex = 0;
 
 template <typename T, typename S>
-class ScatterNdArithmeticCpuKernelFunc : public CpuKernelFunc {
+class ScatterNdArithmeticCpuKernelFunc : public DeprecatedCpuKernelFunc {
  public:
   ScatterNdArithmeticCpuKernelFunc() = default;
   ~ScatterNdArithmeticCpuKernelFunc() override = default;
@@ -227,10 +227,10 @@ bool ScatterNdArithmeticCpuKernelFunc<T, S>::RunFunc(const std::vector<kernel::A
 }
 
 template <typename T, typename S>
-std::shared_ptr<CpuKernelFunc> SpecializeScatterNdArithFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeScatterNdArithFunc() {
   return std::make_shared<ScatterNdArithmeticCpuKernelFunc<T, S>>();
 }
-using ScatterNdArithFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using ScatterNdArithFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::vector<std::pair<KernelAttr, ScatterNdArithFuncCreator>> func_list_ = {
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)

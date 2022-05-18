@@ -87,7 +87,7 @@ void ElementRealDivComplex(const T *input1, const T *input2, T *out, size_t size
 }
 
 template <typename T>
-class ArithmeticCpuTypeFunc : public CpuKernelFunc {
+class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
  public:
   ~ArithmeticCpuTypeFunc() override = default;
   explicit ArithmeticCpuTypeFunc(const CNodePtr &kernel_node) {
@@ -710,10 +710,10 @@ void ArithmeticCpuTypeFunc<T>::Atan2(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
-std::shared_ptr<CpuKernelFunc> SpecializeArithFunc(const CNodePtr &kernel_node) {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeArithFunc(const CNodePtr &kernel_node) {
   return std::make_shared<ArithmeticCpuTypeFunc<T>>(kernel_node);
 }
-using ArithmeticCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>(const CNodePtr &)>;
+using ArithmeticCpuFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>(const CNodePtr &)>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFuncCreator>>> kernel_attr_list = {
   {kSub,
    {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),

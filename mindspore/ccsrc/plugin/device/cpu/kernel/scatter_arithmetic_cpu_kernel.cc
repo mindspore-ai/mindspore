@@ -30,7 +30,7 @@ constexpr size_t kScatterArithmeticInputsNum = 3;
 constexpr size_t kScatterArithmeticOutputsNum = 1;
 
 template <typename T>
-class ScatterArithmeticCpuKernelFunc : public CpuKernelFunc {
+class ScatterArithmeticCpuKernelFunc : public DeprecatedCpuKernelFunc {
  public:
   ScatterArithmeticCpuKernelFunc() = default;
   ~ScatterArithmeticCpuKernelFunc() override = default;
@@ -252,10 +252,10 @@ void ScatterArithmeticCpuKernelFunc<T>::ScatterUpdate(T *input, const int *indic
 }
 
 template <typename T>
-std::shared_ptr<CpuKernelFunc> SpecializeScatterArithFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeScatterArithFunc() {
   return std::make_shared<ScatterArithmeticCpuKernelFunc<T>>();
 }
-using SpecializeScatterArithFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using SpecializeScatterArithFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeScatterArithFuncCreator>>>
   func_class_list_map = {{kScatterAdd,
                           {{KernelAttr()

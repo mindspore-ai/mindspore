@@ -51,7 +51,7 @@ class ScatterArithmeticCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::shared_ptr<CpuKernelFunc> func_obj_;
+  std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
   std::string kernel_type_{kUnKnown};
 };
 }  // namespace kernel

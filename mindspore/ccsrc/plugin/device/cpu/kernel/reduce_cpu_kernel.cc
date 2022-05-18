@@ -37,7 +37,7 @@ constexpr auto kReduceAllName = "ReduceAll";
 constexpr auto kReduceAnyName = "ReduceAny";
 
 template <typename T>
-class ReduceCpuKernelFunc : public CpuKernelFunc {
+class ReduceCpuKernelFunc : public DeprecatedCpuKernelFunc {
  public:
   ReduceCpuKernelFunc() = default;
   ~ReduceCpuKernelFunc() override = default;
@@ -255,10 +255,10 @@ void ReduceCpuKernelFunc<T>::AccelerateLongVector(T *input_addr, T *output_addr,
   }
 }
 template <typename T>
-std::shared_ptr<CpuKernelFunc> SpecializeReduceFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeReduceFunc() {
   return std::make_shared<ReduceCpuKernelFunc<T>>();
 }
-using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using SpecializeReduceFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>>> kernel_attr_list = {
   {kReduceMeanName,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},

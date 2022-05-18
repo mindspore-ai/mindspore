@@ -50,7 +50,7 @@ class CastCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   TypeId source_dtype_{kTypeUnknown};
   TypeId target_dtype_{kTypeUnknown};
 
-  std::shared_ptr<CpuKernelFunc> kernel_func_;
+  std::shared_ptr<DeprecatedCpuKernelFunc> kernel_func_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -28,7 +28,7 @@ namespace {
 constexpr auto kMatMul = "MatMul";
 constexpr auto kBatchMatMul = "BatchMatMul";
 
-using MatMulFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using MatMulFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, MatMulFuncCreator>>> support_list_map = {
   {kMatMul,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

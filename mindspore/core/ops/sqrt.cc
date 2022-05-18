@@ -63,6 +63,20 @@ TypePtr SqrtInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
 }
 
 ValuePtr SqrtInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  static const std::map<TypeId, std::function<void(void *origin, void *target, size_t size)>> sqrt_func_map = {
+    {kNumberTypeInt8, &ImplSqrt<int8_t>},
+    {kNumberTypeInt16, &ImplSqrt<int16_t>},
+    {kNumberTypeInt32, &ImplSqrt<int32_t>},
+    {kNumberTypeInt64, &ImplSqrt<int64_t>},
+    {kNumberTypeUInt8, &ImplSqrt<uint8_t>},
+    {kNumberTypeUInt16, &ImplSqrt<uint16_t>},
+    {kNumberTypeUInt32, &ImplSqrt<uint32_t>},
+    {kNumberTypeUInt64, &ImplSqrt<uint64_t>},
+    {kNumberTypeFloat16, &ImplSqrt<float16>},
+    {kNumberTypeFloat32, &ImplSqrt<float>},
+    {kNumberTypeFloat64, &ImplSqrt<double>},
+    {kNumberTypeComplex64, &ImplSqrt<std::complex<float>>},
+    {kNumberTypeComplex128, &ImplSqrt<std::complex<double>>}};
   if (input_args.empty()) {
     return nullptr;
   }
@@ -74,7 +88,6 @@ ValuePtr SqrtInferValue(const PrimitivePtr &prim, const std::vector<AbstractBase
   if (x_tensor == nullptr) {
     return nullptr;
   }
-
   auto data_size = x_tensor->DataSize();
   auto dtype = x_tensor->data_type();
   auto shape = SqrtInferShape(prim, input_args)->shape();
@@ -82,69 +95,17 @@ ValuePtr SqrtInferValue(const PrimitivePtr &prim, const std::vector<AbstractBase
   auto result_tensor = std::make_shared<tensor::Tensor>(dtype, shape);
   auto x_datac = x_tensor->data_c();
   auto result_datac = result_tensor->data_c();
-  switch (dtype) {
-    case kNumberTypeInt8: {
-      ImplSqrt<int8_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeInt16: {
-      ImplSqrt<int16_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeInt32: {
-      ImplSqrt<int32_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeInt64: {
-      ImplSqrt<int64_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeUInt8: {
-      ImplSqrt<uint8_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeUInt16: {
-      ImplSqrt<uint16_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeUInt32: {
-      ImplSqrt<uint32_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeUInt64: {
-      ImplSqrt<uint64_t>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeFloat16: {
-      ImplSqrt<float16>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeFloat32: {
-      ImplSqrt<float>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeFloat64: {
-      ImplSqrt<double>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeComplex64: {
-      ImplSqrt<std::complex<float>>(x_datac, result_datac, data_size);
-      break;
-    }
-    case kNumberTypeComplex128: {
-      ImplSqrt<std::complex<double>>(x_datac, result_datac, data_size);
-      break;
-    }
-    default: {
-      MS_EXCEPTION(TypeError)
-        << "For '" << prim->name()
-        << "', the supported data type is ['int8', 'int16', 'int32', 'int64', 'uint8', "
-           "'uint16','uint32', 'uint64','float16', 'float32', 'float64', 'complex64', 'complex128'], but got "
-        << TypeIdToString(dtype) << ".";
-    }
+  auto iter = sqrt_func_map.find(dtype);
+  if (iter == sqrt_func_map.end()) {
+    MS_EXCEPTION(TypeError)
+      << "For '" << prim->name()
+      << "', the supported data type is ['int8', 'int16', 'int32', 'int64', 'uint8', "
+         "'uint16','uint32', 'uint64','float16', 'float32', 'float64', 'complex64', 'complex128'], but got "
+      << TypeIdToString(dtype) << ".";
   }
+  iter->second(x_datac, result_datac, data_size);
   return result_tensor;
-}
+}  // namespace
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Sqrt, BaseOperator);

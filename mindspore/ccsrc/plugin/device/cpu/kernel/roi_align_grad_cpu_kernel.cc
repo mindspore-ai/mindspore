@@ -24,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 template <typename T>
-class ROIAlignGradCpuKernelFunc : public CpuKernelFunc {
+class ROIAlignGradCpuKernelFunc : public DeprecatedCpuKernelFunc {
  public:
   ROIAlignGradCpuKernelFunc() = default;
   ~ROIAlignGradCpuKernelFunc() override = default;
@@ -334,10 +334,10 @@ void ROIAlignGradCpuKernelFunc<T>::bin_box(int thread_idx, const T *roi_boxes, i
 }
 
 template <typename T>
-std::shared_ptr<CpuKernelFunc> SpecializeROIAlignGradFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeROIAlignGradFunc() {
   return std::make_shared<ROIAlignGradCpuKernelFunc<T>>();
 }
-using SpecializeROIAlignGradFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using SpecializeROIAlignGradFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::vector<std::pair<KernelAttr, SpecializeROIAlignGradFuncCreator>> kernel_attr_list = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    SpecializeROIAlignGradFunc<float>},
