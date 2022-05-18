@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,6 @@
 
 namespace mindspore {
 namespace opt {
-bool GeLUFusion::Init() const {
-  input_ = std::make_shared<Var>();
-  return input_ != nullptr;
-}
-
 CNodePtr GeLUFusion::CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                     const EquivPtr &equiv) const {
   MS_ASSERT(func_graph != nullptr && node != nullptr && equiv != nullptr);
@@ -40,7 +35,7 @@ CNodePtr GeLUFusion::CreateGeLUNode(const FuncGraphPtr &func_graph, const AnfNod
   gelu_prim->set_activation_type(mindspore::GELU);
   gelu_prim->set_approximate(approximate_);
   auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);
-  MS_ASSERT(input_node != nullptr);
+  MS_CHECK_TRUE_RET(input_node != nullptr, nullptr);
   auto gelu_cnode = func_graph->NewCNode(gelu_prim_c, {input_node});
   MS_CHECK_TRUE_RET(gelu_cnode != nullptr, nullptr);
   gelu_cnode->set_fullname_with_scope(node->fullname_with_scope() + "_gelu");
@@ -74,8 +69,8 @@ const float GeLUFusion::GetParameterValue(const EquivPtr &equiv, const VarPtr &i
   return *static_cast<float *>(param_value_lite->data_c());
 }
 
-const AnfNodePtr GeLUFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                     const EquivPtr &equiv) const {
+AnfNodePtr GeLUFusion::Process(const std::string &pattern_name, const mindspore::FuncGraphPtr &func_graph,
+                               const mindspore::AnfNodePtr &node, const mindspore::EquivPtr &equiv) const {
   if (func_graph == nullptr || node == nullptr || equiv == nullptr) {
     return nullptr;
   }
@@ -85,7 +80,7 @@ const AnfNodePtr GeLUFusion::Process(const FuncGraphPtr &func_graph, const AnfNo
   if (IsMarkedTrainOp(utils::cast<CNodePtr>(node))) {
     return nullptr;
   }
-  if (!CheckPattern(equiv)) {
+  if (!CheckPattern(pattern_name, equiv)) {
     return nullptr;
   }
   auto cnode = CreateGeLUNode(func_graph, node, equiv);
