@@ -54,11 +54,7 @@ constexpr int kThreadIdle = 2;  // idle, the thread is waiting
 
 // used in scenarios with unequal division of task
 // the parameters indicate the start and end coefficients
-#ifdef BUILD_LITE
-typedef int (*Func)(void *param, int task_id, float l, float r);
-#else
 using Func = std::function<int(void *, int, float, float)>;
-#endif
 using Content = void *;
 
 typedef struct Task {
