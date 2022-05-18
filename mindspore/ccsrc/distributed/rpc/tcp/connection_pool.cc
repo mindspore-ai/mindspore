@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <mutex>
 #include "distributed/rpc/tcp/connection_pool.h"
 
 namespace mindspore {
@@ -30,11 +29,7 @@ void ConnectionPool::CloseConnection(Connection *conn) {
   // Trigger Exit message note that this should be called before erasing link. Because we may chang deleted flag
   // by to in this fun. And if deleted has been set to true, it means Exit message has been send before, do nothing.
   if (!conn->deleted) {
-    DeleteConnInfo(conn->destination, conn->socket_fd);
-  }
-
-  if (!conn->destination.empty()) {
-    (void)connections_.erase(conn->destination);
+    DeleteConnInfo(conn);
   }
   conn->Close();
   delete conn;
@@ -42,6 +37,7 @@ void ConnectionPool::CloseConnection(Connection *conn) {
 }
 
 Connection *ConnectionPool::FindConnection(const std::string &dst_url) {
+  std::lock_guard<std::mutex> lock(mutex_);
   Connection *conn = nullptr;
   auto iter = connections_.find(dst_url);
   if (iter != connections_.end()) {
@@ -62,7 +58,8 @@ void ConnectionPool::ResetAllConnMetrics() {
 void ConnectionPool::DeleteConnection(const std::string &dst_url) {
   Connection *conn = FindConnection(dst_url);
   if (conn != nullptr) {
-    MS_LOG(INFO) << "Delete tcp connection to:" << dst_url;
+    std::lock_guard<std::mutex> lock(mutex_);
+    connections_.erase(dst_url);
     CloseConnection(conn);
   }
 }
@@ -91,6 +88,7 @@ void ConnectionPool::AddConnection(Connection *conn) {
     MS_LOG(INFO) << "unLink fd:" << tmpConn->socket_fd << ",to:" << tmpConn->destination.c_str();
     CloseConnection(tmpConn);
   }
+  std::lock_guard<std::mutex> lock(mutex_);
   (void)connections_.emplace(conn->destination, conn);
 }
 
@@ -113,7 +111,8 @@ void ConnectionPool::DeleteConnInfo(int fd) {
   (void)conn_infos_.erase(fd);
 }
 
-void ConnectionPool::DeleteConnInfo(const std::string &to, int fd) {
+void ConnectionPool::DeleteConnInfo(Connection *conn) {
+  int fd = conn->socket_fd;
   // If run in double link pattern, link fd and send fd must be the same, send Exit message bind on this fd
   if (double_link_) {
     DeleteConnInfo(fd);
@@ -123,7 +122,6 @@ void ConnectionPool::DeleteConnInfo(const std::string &to, int fd) {
   // If run in single link pattern, link fd and send fd may not be the same, we should send Exit message bind
   // on link fd and remote link fd. Here 'deleted' flag should be set true to avoid duplicate Exit message with
   // same aid.
-  Connection *conn = FindConnection(to);
   if (conn != nullptr) {
     conn->deleted = true;
     DeleteConnInfo(conn->socket_fd);

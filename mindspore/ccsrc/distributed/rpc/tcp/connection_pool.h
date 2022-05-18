@@ -20,6 +20,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <mutex>
 
 #include "distributed/rpc/tcp/constants.h"
 #include "distributed/rpc/tcp/connection.h"
@@ -75,7 +76,7 @@ class ConnectionPool {
   ConnectionInfo *FindConnInfo(int socket_fd, const std::string &dst_url);
 
   void DeleteConnInfo(int socket_fd);
-  void DeleteConnInfo(const std::string &to, int socket_fd);
+  void DeleteConnInfo(Connection *conn);
   void DeleteAllConnInfos();
 
   bool double_link_;
@@ -91,6 +92,9 @@ class ConnectionPool {
 
   // each to_url has two fds at most, and each fd has multiple linkinfos
   std::map<int, std::set<ConnectionInfo *>> conn_infos_;
+
+  // This mutex is used for protecting the modification of connections.
+  std::mutex mutex_;
 
   friend class TCPComm;
 };
