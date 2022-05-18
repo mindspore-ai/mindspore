@@ -1708,6 +1708,13 @@ def nonzero(x):
     return F.nonzero(x)
 
 
+def diag(x):
+    """
+    Constructs a diagonal tensor with a given diagonal values.
+    """
+    return F.diag(x)
+
+
 def coo_to_csr(x):
     """convert coo to csr."""
     row_indices = x.indices[:, 0]

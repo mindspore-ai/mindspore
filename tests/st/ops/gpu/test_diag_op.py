@@ -149,3 +149,39 @@ def test_diag_with_dynamic_shape():
     Expectation: The value and shape of output are the expected values.
     """
     diag_with_dynamic_shape(np.float32)
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_diag_functional():
+    """
+    Feature: Diag op with functional interface.
+    Description: Test diag op with functional interface.
+    Expectation: The value and shape of output are the expected values.
+    """
+    context.set_context(device_target="GPU")
+    x = Tensor(np.array([1, 2, 5]).astype(np.float64))
+    output = P.diag(x)
+    expect = np.array([[1, 0, 0],
+                       [0, 2, 0],
+                       [0, 0, 5]]).astype(np.float64)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level2
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_diag_tensor():
+    """
+    Feature: Diag op with tensor interface.
+    Description: Test diag op with tensor interface.
+    Expectation: The value and shape of output are the expected values.
+    """
+    context.set_context(device_target="GPU")
+    x = Tensor(np.array([1, 2, 5]).astype(np.float64))
+    output = x.diag()
+    expect = np.array([[1, 0, 0],
+                       [0, 2, 0],
+                       [0, 0, 5]]).astype(np.float64)
+    assert (output.asnumpy() == expect).all()

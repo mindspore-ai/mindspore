@@ -259,6 +259,7 @@ Array Operation
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.diag
     mindspore.ops.expand_dims
     mindspore.ops.gather
     mindspore.ops.gather_d
