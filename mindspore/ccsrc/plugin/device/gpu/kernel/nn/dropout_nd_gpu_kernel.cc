@@ -110,7 +110,7 @@ int DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();

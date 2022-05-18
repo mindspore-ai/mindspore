@@ -23,7 +23,7 @@
 #include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/math/unary_op_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_class/unary_helper.h"
 
 namespace mindspore {
 namespace kernel {

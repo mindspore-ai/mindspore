@@ -15,10 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/math/unary_op_gpu_kernel.h"
-#include <map>
-#include <functional>
-#include <utility>
-#include <algorithm>
+#include <memory>
 
 namespace mindspore {
 namespace kernel {
@@ -50,162 +47,283 @@ constexpr auto kSign = "Sign";
 constexpr auto kSin = "Sin";
 constexpr auto kSqrt = "Sqrt";
 constexpr auto kSquare = "Square";
-
-template <typename T>
-std::unique_ptr<cukernel::GpuKernelHelperBase> CreateUnaryKernelPtr(const std::string &kernel_name,
-                                                                    const uint32_t &device_id) {
-  return std::make_unique<cukernel::UnaryHelperGpuKernel<T>>(kernel_name, device_id);
-}
-using UnaryPtrCreatorFunc =
-  std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
-
-const std::map<std::string, std::vector<std::pair<KernelAttr, UnaryPtrCreatorFunc>>> kernel_attr_map = {
-  {kExp,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kExpm1,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kLog,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kLog1p,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kErf,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kErfc,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kNeg,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateUnaryKernelPtr<char>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateUnaryKernelPtr<uchar>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateUnaryKernelPtr<int>}}},
-  {kReciprocal,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kInv,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateUnaryKernelPtr<int>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kInvert,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateUnaryKernelPtr<char>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateUnaryKernelPtr<uchar>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateUnaryKernelPtr<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), CreateUnaryKernelPtr<uint32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateUnaryKernelPtr<int16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), CreateUnaryKernelPtr<uint16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateUnaryKernelPtr<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), CreateUnaryKernelPtr<uint64_t>}}},
-  {kSquare,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kSqrt,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kRsqrt,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kSin,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kAsin,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kAsinh,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kCos,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kCosh,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kACos,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kAcosh,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kAtan,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kAbs,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateUnaryKernelPtr<int>}}},
-  {kFloor,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kCeil,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kRint,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kRound,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateUnaryKernelPtr<int>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
-  {kSign,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateUnaryKernelPtr<int>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}}};
 }  // namespace
 
-bool UnaryOpGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  kernel_node_ = kernel_node;
-  std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto index = GetMatchKernelAttrIdxWithException(kernel_node, GetOpSupport());
-  helper_ptr_ = std::move(kernel_attr_map.at(kernel_type_)[index].second(kernel_name, device_id_));
-  std::vector<std::vector<int64_t>> input_shapes;
-  std::vector<std::vector<int64_t>> output_shapes;
-  auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-  auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
-  is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-  if (is_null_input_) {
-    input_size_list_.emplace_back(0);
-    output_size_list_.emplace_back(0);
-    return true;
-  }
-  std::vector<int64_t> int64_inp_shape;
-  std::vector<int64_t> int64_out_shape;
-  std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(int64_inp_shape), SizeToLong);
-  std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(int64_out_shape), SizeToLong);
-  input_shapes.emplace_back(int64_inp_shape);
-  output_shapes.emplace_back(int64_out_shape);
-  int flag = helper_ptr_->CalMemSize(input_shapes, output_shapes);
-  if (flag != 0) {
+std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::UnaryOpFunc>>>
+  UnaryOpGpuKernelMod::kernel_attr_map_ = {
+    {kExp,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kExpm1,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kLog,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kLog1p,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kErf,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kErfc,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kNeg,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+       &UnaryOpGpuKernelMod::LaunchKernel<char>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+       &UnaryOpGpuKernelMod::LaunchKernel<uchar>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<int>}}},
+    {kReciprocal,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kInv,
+     {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<int>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kInvert,
+     {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+       &UnaryOpGpuKernelMod::LaunchKernel<char>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+       &UnaryOpGpuKernelMod::LaunchKernel<uchar>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<int32_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<uint32_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+       &UnaryOpGpuKernelMod::LaunchKernel<int16_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+       &UnaryOpGpuKernelMod::LaunchKernel<uint16_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+       &UnaryOpGpuKernelMod::LaunchKernel<int64_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+       &UnaryOpGpuKernelMod::LaunchKernel<uint64_t>}}},
+    {kSquare,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kSqrt,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+       &UnaryOpGpuKernelMod::LaunchKernel<char>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+       &UnaryOpGpuKernelMod::LaunchKernel<int16_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<int32_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+       &UnaryOpGpuKernelMod::LaunchKernel<int64_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+       &UnaryOpGpuKernelMod::LaunchKernel<uchar>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+       &UnaryOpGpuKernelMod::LaunchKernel<uint16_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<uint32_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+       &UnaryOpGpuKernelMod::LaunchKernel<uint64_t>}}},
+    {kRsqrt,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kSin,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kAsin,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kAsinh,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kCos,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kCosh,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kACos,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kAcosh,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kAtan,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kAbs,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<int>}}},
+    {kFloor,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kCeil,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kRint,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kRound,
+     {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<int>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kSign,
+     {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<int>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}}};
+
+bool UnaryOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto iter = kernel_attr_map_.find(kernel_name_);
+  if (iter == kernel_attr_map_.end()) {
+    MS_LOG(ERROR) << "For 'Unary op', the kernel name must be in" << kernel::Map2Str(kernel_attr_map_) << ", but got "
+                  << kernel_name_;
     return false;
   }
-  InitSizeLists();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = kernel_attr_map_.at(kernel_name_)[index].second;
   return true;
 }
 
-std::vector<KernelAttr> UnaryOpGpuKernelMod::GetOpSupport() {
-  auto iter = kernel_attr_map.find(kernel_type_);
-  if (iter == kernel_attr_map.end()) {
-    MS_LOG(EXCEPTION) << "Unary gpu do not support " << kernel_type_;
+int UnaryOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
   }
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  size_t input_element_num = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
+  is_null_input_ = (input_element_num == 0);
+  if (is_null_input_) {
+    return KRET_OK;
+  }
+  return KRET_OK;
+}
 
+std::vector<KernelAttr> UnaryOpGpuKernelMod::GetOpSupport() {
+  auto iter = kernel_attr_map_.find(kernel_name_);
+  if (iter == kernel_attr_map_.end()) {
+    MS_LOG(ERROR) << "For 'Unary op', the kernel name must be in" << kernel::Map2Str(kernel_attr_map_) << ", but got "
+                  << kernel_name_;
+    return std::vector<KernelAttr>{};
+  }
   std::vector<KernelAttr> support_list;
   (void)std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, UnaryPtrCreatorFunc> &item) { return item.first; });
+                       [](const std::pair<KernelAttr, UnaryOpFunc> &item) { return item.first; });
   return support_list;
+}
+
+template <typename T>
+bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                       const std::vector<kernel::AddressPtr> &outputs) {
+  auto input_ptr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
+  auto output_ptr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  static const std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map = {
+    {kExp, Exponential<T>}, {kExpm1, Expm1<T>},   {kLog, Logarithm<T>}, {kLog1p, Log1p<T>},
+    {kErf, Erf<T>},         {kErfc, Erfc<T>},     {kNeg, Negative<T>},  {kReciprocal, Reciprocal<T>},
+    {kInv, Inv<T>},         {kInvert, Invert<T>}, {kSquare, Square<T>}, {kSqrt, Sqrt<T>},
+    {kRsqrt, Rsqrt<T>},     {kSin, Sin<T>},       {kCos, Cos<T>},       {kCosh, Cosh<T>},
+    {kAsin, Asin<T>},       {kACos, ACos<T>},     {kAtan, Atan<T>},     {kAsinh, Asinh<T>},
+    {kAcosh, Acosh<T>},     {kAbs, Abs<T>},       {kFloor, Floor<T>},   {kCeil, Ceil<T>},
+    {kRint, Rint<T>},       {kRound, Round<T>},   {kSign, Sign<T>}};
+
+  auto iter = func_map.find(kernel_name_);
+  if (iter == func_map.end()) {
+    MS_LOG(ERROR) << "For 'UnaryOp', only support these types: " << kernel::Map2Str(func_map) << " currently, but got "
+                  << kernel_name_;
+    return false;
+  }
+  iter->second(input_ptr, output_ptr, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
+  return true;
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Abs, []() { return std::make_shared<UnaryOpGpuKernelMod>(kAbs); });

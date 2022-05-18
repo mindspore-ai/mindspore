@@ -924,7 +924,7 @@ class SparseGatherV2(PrimitiveWithCheck):
         validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
 
 
-class Padding(PrimitiveWithInfer):
+class Padding(Primitive):
     """
     Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
 
@@ -1391,7 +1391,7 @@ class MatrixSetDiagV3(Primitive):
         self.init_prim_io_names(inputs=['x', 'diagonal', 'k'], outputs=['y'])
 
 
-class MatrixBandPart(PrimitiveWithInfer):
+class MatrixBandPart(Primitive):
     r"""
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
