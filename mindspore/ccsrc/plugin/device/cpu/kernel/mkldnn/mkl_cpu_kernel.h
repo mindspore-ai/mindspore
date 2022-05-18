@@ -252,8 +252,8 @@ class MKLCpuKernelMod : public NativeCpuKernelMod {
     return desc;
   }
   void Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem);
-
   size_t GetSize(const dnnl::memory::desc &desc) const;
+  dnnl::memory::data_type GetDnnlDataType(TypeId ms_type_id);
   void SetDataHandle(dnnl::memory mem, void *ptr);
   void *GetDataHandle(const dnnl::memory &mem) const;
   std::unordered_map<int, dnnl::memory> arguments_;

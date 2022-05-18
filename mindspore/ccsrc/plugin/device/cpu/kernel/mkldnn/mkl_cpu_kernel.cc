@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <map>
 #include "utils/ms_utils.h"
 #include "utils/profile.h"
 
@@ -462,6 +463,21 @@ size_t MKLCpuKernelMod::GetSize(const dnnl::memory::desc &desc) const {
   auto size = desc.get_size();
   MS_LOG(DEBUG) << "end to invoke dnnl::memory::desc::get_size()";
   return size;
+}
+
+dnnl::memory::data_type MKLCpuKernelMod::GetDnnlDataType(TypeId ms_type_id) {
+  static const std::map<TypeId, dnnl::memory::data_type> dnnl_data_type_map = {
+    {kNumberTypeFloat16, dnnl::memory::data_type::f16},
+    {kNumberTypeFloat32, dnnl::memory::data_type::f32},
+    {kNumberTypeInt32, dnnl::memory::data_type::s32},
+    {kNumberTypeInt8, dnnl::memory::data_type::s8},
+    {kNumberTypeUInt8, dnnl::memory::data_type::u8}};
+  auto iter = dnnl_data_type_map.find(ms_type_id);
+  if (iter == dnnl_data_type_map.end()) {
+    MS_LOG(ERROR) << "Dnnl do not support data type:" << TypeIdToString(ms_type_id);
+    return dnnl::memory::data_type::undef;
+  }
+  return iter->second;
 }
 
 void MKLCpuKernelMod::Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem) {
