@@ -10,7 +10,6 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-
 # limitations under the License.
 # ============================================================================
 
@@ -248,6 +247,38 @@ class SameTypeShape(PrimitiveWithInfer):
         validator.check('x dtype', x['dtype'], 'y dtype', y['dtype'], Rel.EQ, self.name, TypeError)
         validator.check('x shape', x['shape'], 'y shape', y['shape'], Rel.EQ, self.name)
         return x
+
+
+class CheckNumerics(Primitive):
+    """
+    Checks a tensor for NaN and Inf values.
+
+    Inputs:
+        - **x** (Tensor) - Input Tensor of any dimension. The data type is float16, float32 or float64.
+
+    Outputs:
+        Tensor, has the same shape and data type as `x` if `x` has no nan or inf values.
+
+    Raises:
+        TypeError: If `x` data type is not float16, float32, float64.
+        RuntimeError: If `x` has nan or inf values.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 3], [2, 4]], dtype=np.float32))
+        >>> checknumerics = ops.CheckNumerics()
+        >>> output = checknumerics(x)
+        >>> print(output)
+        [[1. 3.]
+         [2. 4.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init CheckNumerics"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
 class Cast(PrimitiveWithInfer):

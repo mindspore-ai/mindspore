@@ -26,6 +26,7 @@ from ..operations.array_ops import MatrixDiagV3
 from ..operations.array_ops import MatrixDiagPartV3
 from ..operations.array_ops import MatrixSetDiagV3
 from ..operations.array_ops import Triu
+from ..operations.array_ops import CheckNumerics
 from ..operations.array_ops import SegmentMax
 from ..operations.array_ops import SegmentMin
 from ..operations.array_ops import SegmentSum
@@ -223,6 +224,17 @@ def get_bprop_triu(self):
     def bprop(x, out, dout):
         dx = triu(dout)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(CheckNumerics)
+def get_bprop_check_numerics(self):
+    """Generate bprop for CheckNumerics"""
+    check_numerics = CheckNumerics()
+
+    def bprop(x_input, out, dout):
+        return (check_numerics(dout),)
 
     return bprop
 
