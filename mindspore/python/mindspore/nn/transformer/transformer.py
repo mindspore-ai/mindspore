@@ -673,13 +673,13 @@ class VocabEmbedding(Cell):
         self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size]),
                                          name='embedding_table', parallel_optimizer=False)
         if parallel_config.vocab_emb_dp:
-            self.gather = P.GatherV2().shard(((1, 1), (parallel_config.data_parallel, 1)))
+            self.gather = P.Gather().shard(((1, 1), (parallel_config.data_parallel, 1)))
             logger.info(f"Using {parallel_config.data_parallel} data parallel for the embedding lookup.")
         else:
             if self.vocab_size % parallel_config.model_parallel != 0:
                 raise ValueError(f"The vocab size of the embedding {self.vocab_size} must be a "
                                  f"multiple of parallel_config.model_parallel {parallel_config.model_parallel}.")
-            self.gather = P.GatherV2().shard(((parallel_config.model_parallel, 1), (1, 1)))
+            self.gather = P.Gather().shard(((parallel_config.model_parallel, 1), (1, 1)))
             logger.info(f"Using {parallel_config.data_parallel} model parallel for the embedding lookup.")
 
     def construct(self, input_ids):
@@ -843,6 +843,7 @@ class MultiHeadAttention(Cell):
                  use_past=False,
                  parallel_config=default_dpmp_config):
         super(MultiHeadAttention, self).__init__()
+        self._is_ascend = context.get_context('device_target') in ["Ascend"]
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
             _check_config(parallel_config)
             self.is_parallel_mode = _get_parallel_mode() in (
@@ -903,6 +904,7 @@ class MultiHeadAttention(Cell):
             self.dropout = _Dropout(1 - hidden_dropout_rate)
             self.prob_dropout = _Dropout(1 - attention_dropout_rate)
             self.softmax = nn.Softmax().to_float(softmax_compute_type)
+            self.softmax_3d = nn.Softmax().to_float(softmax_compute_type)
             self.expand_dims = P.ExpandDims()
 
             # Query
@@ -1038,7 +1040,6 @@ class MultiHeadAttention(Cell):
                                              (parallel_config.model_parallel,)))
             self.dtype = compute_dtype
             self.softmax_dtype = softmax_compute_type
-            self._is_ascend = context.get_context('device_target') in ["Ascend"]
             if self.use_past:
                 # operators used for state reuse
                 seq_range = np.arange(src_seq_length).reshape(1, 1, -1)
