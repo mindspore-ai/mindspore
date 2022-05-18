@@ -16,11 +16,8 @@
 import argparse
 import numpy as np
 
-import mindspore.context as context
+import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore import export
 from src.model import LeNet5
 from src.adam import AdamWeightDecayOp
 
@@ -33,7 +30,7 @@ args, _ = parser.parse_known_args()
 device_target = args.device_target
 mindir_path = args.mindir_path
 
-context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
+ms.set_context(mode=ms.GRAPH_MODE, device_target=device_target)
 
 if __name__ == "__main__":
     epoch = 1
@@ -42,16 +39,16 @@ if __name__ == "__main__":
     criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
     net_adam_opt = AdamWeightDecayOp(network.trainable_params(), weight_decay=0.1)
-    net_with_criterion = WithLossCell(network, criterion)
-    train_network = TrainOneStepCell(net_with_criterion, net_opt)
+    net_with_criterion = nn.WithLossCell(network, criterion)
+    train_network = nn.TrainOneStepCell(net_with_criterion, net_opt)
     train_network.set_train()
     losses = []
 
     for _ in range(epoch):
-        data = Tensor(np.random.rand(32, 3, 32, 32).astype(np.float32))
-        label = Tensor(np.random.randint(0, 61, (32)).astype(np.int32))
+        data = ms.Tensor(np.random.rand(32, 3, 32, 32).astype(np.float32))
+        label = ms.Tensor(np.random.randint(0, 61, (32)).astype(np.int32))
         loss = train_network(data, label).asnumpy()
         losses.append(loss)
-        export(train_network, data, label, file_name=mindir_path,
-               file_format='MINDIR')  # Add the export statement to obtain the model file in MindIR format.
+        ms.export(train_network, data, label, file_name=mindir_path,
+                  file_format='MINDIR')  # Add the export statement to obtain the model file in MindIR format.
     print(losses)
