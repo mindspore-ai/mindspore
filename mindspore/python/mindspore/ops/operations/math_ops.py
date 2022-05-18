@@ -5321,6 +5321,44 @@ class Conj(Primitive):
         self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 
+class ComplexAbs(Primitive):
+    r"""
+    Returns a Tensor that is the absolute value part of the input.
+
+    The complex numbers in input must be of the form a + bj, where a is the real part and b is the imaginary part.
+
+    .. math::
+
+        y = \sqrt{a^2+b^2}.
+
+    Inputs:
+        -**x** (Tensor) - A Tensor, types: complex64, complex128.
+
+    Outputs:
+        -**y** (Tensor) - Tensor, has the same shape as x. If the type of x is complex64, the type of y is float32.
+        If the type of x is complex128, the type of y is float64.
+
+    Raises:
+       TypeError: If the input is not a Tensor.
+       TypeError: If the input type is not complex64 or complex128.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.asarray(np.complex(3+4j)), mindspore.complex64)
+        >>> complex_abs = ops.ComplexAbs()
+        >>> output = complex_abs(x)
+        >>> print(output)
+        5.0
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ComplexAbs"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
 class Real(Primitive):
     """
     Returns a Tensor that is the real part of the input.

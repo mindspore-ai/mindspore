@@ -189,6 +189,7 @@ from .priority_replay_buffer import _prb_push_op_cpu
 from .priority_replay_buffer import _prb_sample_op_cpu
 from .priority_replay_buffer import _prb_update_op_cpu
 from .equal import _equal_aicpu
+from .complex_abs import _complex_abs_aicpu
 from .priority_replay_buffer import _prb_destroy_op_cpu
 from .right_shift import _right_shift_aicpu
 from .tril import _tril_aicpu
