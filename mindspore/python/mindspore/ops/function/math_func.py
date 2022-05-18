@@ -2202,9 +2202,9 @@ def lerp(start, end, weight):
         output_{i} = start_{i} + weight_{i} * (end_{i} - start_{i})
 
     Args:
-        start (Tensor) - The tensor with the starting points. Data type must be float16 or float32.
-        end (Tensor) - The tensor with the ending points. Data type must be float16 or float32.
-        weight (Union[float, Tensor]) – The weight for the interpolation formula. Must be a float
+        start (Tensor): The tensor with the starting points. Data type must be float16 or float32.
+        end (Tensor): The tensor with the ending points. Data type must be float16 or float32.
+        weight (Union[float, Tensor]): The weight for the interpolation formula. Must be a float
             or a scalar tensor with float16 or float32 data type.
 
     Returns:
@@ -2212,7 +2212,7 @@ def lerp(start, end, weight):
 
     Raises:
         TypeError: If `start` or `end` is not a tensor.
-        TypeError: If `weight` is neither float nor tensor.
+        TypeError: If `weight` is neither scalar(float) nor tensor.
         TypeError: If dtype of `start` or `end` is neither float16 nor float32.
         TypeError: If dtype of `weight` is neither float16 nor float32 when it is a tensor.
         TypeError: If `start` and `end` have different data types.

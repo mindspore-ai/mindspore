@@ -880,20 +880,20 @@ class Tensor(Tensor_):
         Args:
             end (Tensor): The tensor with the ending points. Data type must be float16 or float32.
             weight (Union[float, Tensor]): The weight for the interpolation formula. Must be a float
-            or a scalar tensor with float16 or float32 data type.
+                or a scalar tensor with float16 or float32 data type.
 
         Returns:
             Tensor, has the same type and shape as self tensor.
 
         Raises:
             TypeError: If `end` is not a tensor.
-            TypeError: If `weight` is neither float nor tensor.
+            TypeError: If `weight` is neither scalar(float) nor tensor.
             TypeError: If dtype of `end` is neither float16 nor float32.
             TypeError: If dtype of `weight` is neither float16 nor float32 when it is a tensor.
             TypeError: If self tensor and `end` have different data types.
-            TypeError: If self tensor `end` and `weight` have different data types when `weight` is a tensor.
-            ValueError: If `end` could not be broadcast to a tensor with shape of self tensor.
-            ValueError: If `weight` could not be broadcast to tensors with shapes of and `end` when it is a tensor.
+            TypeError: If self tensor, `end` and `weight` have different data types when `weight` is a tensor.
+            ValueError: If `end` could not be broadcast to tensor with shape of self tensor.
+            ValueError: If `weight` could not be broadcast to tensor with shapes of `end` when it is a tensor.
 
         Supported Platforms:
             ``Ascend`` ``CPU``
