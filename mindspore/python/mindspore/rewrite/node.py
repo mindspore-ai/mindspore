@@ -1077,8 +1077,14 @@ class Node:
                 raise RuntimeError("size of self._normalized_args_keys should be equal to size of elements of tuple")
             for index, elt in enumerate(tuple_ast.elts):
                 scoped_value: ScopedValue = self._normalized_args.get(self._normalized_args_keys[index])
-                if isinstance(elt, (ast.Constant, ast.Str, ast.Num, ast.Bytes, ast.Name)):
+                if isinstance(elt, ast.Constant):
                     elt.value = scoped_value.value
+                elif isinstance(elt, (ast.Str, ast.Bytes)):
+                    elt.s = scoped_value.value
+                elif isinstance(elt, ast.Num):
+                    elt.n = scoped_value.value
+                elif isinstance(elt, ast.Name):
+                    elt.id = scoped_value.value
                 elif isinstance(elt, ast.Attribute) and isinstance(elt.value, ast.Name):
                     elt.value.id = scoped_value.scope
                     elt.value = scoped_value.value
