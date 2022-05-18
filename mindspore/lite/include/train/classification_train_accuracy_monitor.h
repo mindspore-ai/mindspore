@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace lite {
 
-class ClassificationTrainAccuracyMonitor : public session::TrainLoopCallBack {
+class ClassificationTrainAccuracyMonitor : public TrainLoopCallBack {
  public:
   explicit ClassificationTrainAccuracyMonitor(int print_every_n = INT_MAX,
                                               int accuracy_metrics = METRICS_CLASSIFICATION,
@@ -35,10 +35,10 @@ class ClassificationTrainAccuracyMonitor : public session::TrainLoopCallBack {
                                               const std::vector<int> &output_indexes = {0});
   virtual ~ClassificationTrainAccuracyMonitor() = default;
 
-  void Begin(const session::TrainLoopCallBackData &cb_data) override;
-  void EpochBegin(const session::TrainLoopCallBackData &cb_data) override;
-  int EpochEnd(const session::TrainLoopCallBackData &cb_data) override;
-  void StepEnd(const session::TrainLoopCallBackData &cb_data) override;
+  void Begin(const TrainLoopCallBackData &cb_data) override;
+  void EpochBegin(const TrainLoopCallBackData &cb_data) override;
+  int EpochEnd(const TrainLoopCallBackData &cb_data) override;
+  void StepEnd(const TrainLoopCallBackData &cb_data) override;
   const std::vector<GraphPoint> &GetAccuracyPoints() const { return accuracies_; }
 
  private:

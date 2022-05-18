@@ -25,9 +25,8 @@ class MindrtRuntimeTest : public mindspore::CommonTest {
   MindrtRuntimeTest() = default;
 };
 
-int CheckRuntime(mindspore::session::LiteSession *session) {
-  mindspore::lite::LiteSession *lite_session = reinterpret_cast<mindspore::lite::LiteSession *>(session);
-  auto kernels = lite_session->get_kernels();
+int CheckRuntime(mindspore::lite::LiteSession *session) {
+  auto kernels = session->get_kernels();
 
   int cpu_kernel_count = 0;
   int gpu_kernel_count = 0;
@@ -69,7 +68,7 @@ TEST_F(MindrtRuntimeTest, Runtime) {
   gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = false;
   context->device_list_.push_back(gpu_device_ctx);
 
-  mindspore::session::LiteSession *session = mindspore::session::LiteSession::CreateSession(context.get());
+  mindspore::lite::LiteSession *session = mindspore::lite::LiteSession::CreateSession(context.get());
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());
@@ -87,9 +86,8 @@ TEST_F(MindrtRuntimeTest, Runtime) {
   delete session;
 }
 
-int CheckRuntime2(mindspore::session::LiteSession *session) {
-  mindspore::lite::LiteSession *lite_session = reinterpret_cast<mindspore::lite::LiteSession *>(session);
-  auto kernels = lite_session->get_kernels();
+int CheckRuntime2(mindspore::lite::LiteSession *session) {
+  auto kernels = session->get_kernels();
 
   for (auto kernel : kernels) {
     if (kernel->subgraph_type() != mindspore::kernel::kCpuFP16SubGraph) {
@@ -119,7 +117,7 @@ TEST_F(MindrtRuntimeTest, RuntimeFp16) {
   auto &cpu_device_ctx = context->device_list_[0];
   cpu_device_ctx.device_info_.cpu_device_info_.enable_float16_ = true;
 
-  mindspore::session::LiteSession *session = mindspore::session::LiteSession::CreateSession(context.get());
+  mindspore::lite::LiteSession *session = mindspore::lite::LiteSession::CreateSession(context.get());
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());

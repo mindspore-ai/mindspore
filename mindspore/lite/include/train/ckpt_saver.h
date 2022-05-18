@@ -25,20 +25,20 @@
 namespace mindspore {
 namespace lite {
 
-class CkptSaver : public session::TrainLoopCallBack {
+class CkptSaver : public TrainLoopCallBack {
  public:
   CkptSaver(size_t save_every_n, std::string filename_prefix)
       : save_every_n_(save_every_n), filename_prefix_(std::move(filename_prefix)) {}
 
   ~CkptSaver() override = default;
 
-  int EpochEnd(const session::TrainLoopCallBackData &cb_data) override {
+  int EpochEnd(const TrainLoopCallBackData &cb_data) override {
     if ((cb_data.epoch_ + 1) % save_every_n_ == 0) {
       auto cpkt_fn = filename_prefix_ + "_trained_" + std::to_string(cb_data.epoch_ + 1) + ".ms";
       remove(cpkt_fn.c_str());
       cb_data.session_->Export(cpkt_fn);
     }
-    return session::RET_CONTINUE;
+    return RET_CONTINUE;
   }
 
  private:

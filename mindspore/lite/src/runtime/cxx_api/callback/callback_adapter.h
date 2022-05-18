@@ -22,32 +22,32 @@
 
 namespace mindspore {
 
-class TrainLoopCallBackAdapter : public session::TrainLoopCallBack {
+class TrainLoopCallBackAdapter : public lite::TrainLoopCallBack {
  public:
   explicit TrainLoopCallBackAdapter(Model *model, TrainCallBack *call_back) : model_(model), call_back_(call_back) {}
   TrainLoopCallBackAdapter() = delete;
 
-  void Begin(const session::TrainLoopCallBackData &i_cb_data) override {
+  void Begin(const lite::TrainLoopCallBackData &i_cb_data) override {
     call_back_->Begin(TrainCallBackData(i_cb_data.train_mode_, i_cb_data.epoch_, i_cb_data.step_, model_));
   };
 
-  void End(const session::TrainLoopCallBackData &i_cb_data) override {
+  void End(const lite::TrainLoopCallBackData &i_cb_data) override {
     call_back_->End(TrainCallBackData(i_cb_data.train_mode_, i_cb_data.epoch_, i_cb_data.step_, model_));
   };
 
-  void EpochBegin(const session::TrainLoopCallBackData &i_cb_data) override {
+  void EpochBegin(const lite::TrainLoopCallBackData &i_cb_data) override {
     call_back_->EpochBegin(TrainCallBackData(i_cb_data.train_mode_, i_cb_data.epoch_, i_cb_data.step_, model_));
   };
 
-  int EpochEnd(const session::TrainLoopCallBackData &i_cb_data) override {
+  int EpochEnd(const lite::TrainLoopCallBackData &i_cb_data) override {
     return call_back_->EpochEnd(TrainCallBackData(i_cb_data.train_mode_, i_cb_data.epoch_, i_cb_data.step_, model_));
   };
 
-  void StepBegin(const session::TrainLoopCallBackData &i_cb_data) override {
+  void StepBegin(const lite::TrainLoopCallBackData &i_cb_data) override {
     call_back_->StepBegin(TrainCallBackData(i_cb_data.train_mode_, i_cb_data.epoch_, i_cb_data.step_, model_));
   };
 
-  void StepEnd(const session::TrainLoopCallBackData &i_cb_data) override {
+  void StepEnd(const lite::TrainLoopCallBackData &i_cb_data) override {
     call_back_->StepEnd(TrainCallBackData(i_cb_data.train_mode_, i_cb_data.epoch_, i_cb_data.step_, model_));
   };
 

@@ -25,7 +25,6 @@
 #include <atomic>
 #include "src/runtime/kernel_exec.h"
 #include "include/ms_tensor.h"
-#include "include/lite_session.h"
 #include "src/runtime/lite_model.h"
 #include "src/runtime/inner_context.h"
 #include "src/runtime/runtime_allocator.h"
@@ -41,11 +40,13 @@
 
 namespace mindspore {
 namespace lite {
-class LiteSession : public session::LiteSession {
+class LiteSession {
  public:
   LiteSession();
-  ~LiteSession() override;
-  static session::LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
+  virtual ~LiteSession();
+  static LiteSession *CreateSession(const lite::Context *context);
+  static LiteSession *CreateSession(const char *model_buf, size_t size, const lite::Context *context);
+  static LiteSession *CreateSession(const std::string &model_path, const lite::Context *context);
   int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size);
   int LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type, const size_t &buf_size,
                                const std::shared_ptr<mindspore::Context> &ms_context);
@@ -62,19 +63,19 @@ class LiteSession : public session::LiteSession {
   static const char *LoadModelByPath(const std::string &file, mindspore::ModelType model_type, size_t *size,
                                      const std::shared_ptr<mindspore::Context> &ms_context);
   virtual int Init(InnerContext *context);
-  void BindThread(bool if_bind) override;
-  int CompileGraph(Model *model) override;
-  std::vector<mindspore::tensor::MSTensor *> GetInputs() const override;
-  mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &name) const override;
-  int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
-  std::vector<mindspore::tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const override;
-  std::vector<std::string> GetOutputTensorNames() const override;
-  mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const override;
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const override;
-  int BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
-                            std::map<std::string, unsigned int> *outputGLTexture) override;
-  int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
-             const std::vector<std::vector<int>> &dims) override;
+  virtual void BindThread(bool if_bind);
+  virtual int CompileGraph(Model *model);
+  virtual std::vector<mindspore::tensor::MSTensor *> GetInputs() const;
+  virtual mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &name) const;
+  virtual int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
+  virtual std::vector<mindspore::tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const;
+  virtual std::vector<std::string> GetOutputTensorNames() const;
+  virtual mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const;
+  virtual std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const;
+  virtual int BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
+                                    std::map<std::string, unsigned int> *outputGLTexture);
+  virtual int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+                     const std::vector<std::vector<int>> &dims);
   void InitExecutionConfig(std::map<std::string, TypeId> *config) { execution_plan_ = config; }
   void set_model(Model *model) { this->model_ = model; }
   const std::vector<kernel::KernelExec *> &get_kernels() const { return this->kernels_; }
@@ -83,6 +84,41 @@ class LiteSession : public session::LiteSession {
     config_info_ = config_info;
   }
   const std::vector<Tensor *> &GetTensors() const { return this->tensors_; }
+
+  virtual int Train() { return mindspore::lite::RET_ERROR; }
+  virtual bool IsTrain() { return false; }
+  virtual int Eval() { return mindspore::lite::RET_OK; }
+  virtual bool IsEval() { return true; }
+  virtual int SetLearningRate(float learning_rate) { return mindspore::lite::RET_ERROR; }
+  virtual float GetLearningRate() { return 0.0; }
+  virtual int SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f) {
+    return mindspore::lite::RET_ERROR;
+  }
+  virtual std::vector<tensor::MSTensor *> GetPredictions() const {
+    std::vector<tensor::MSTensor *> outputs;
+    return outputs;
+  }
+  virtual int Export(const std::string &file_name, lite::ModelType model_type = lite::MT_TRAIN,
+                     lite::QuantizationType quant_type = lite::QT_DEFAULT, lite::FormatType = lite::FT_FLATBUFFERS,
+                     std::vector<std::string> out_put_tensor_name = {}) {
+    return mindspore::lite::RET_ERROR;
+  }
+  virtual int UpdateWeights(std::vector<tensor::MSTensor *> new_weights) { return mindspore::lite::RET_ERROR; }
+  virtual std::vector<tensor::MSTensor *> GetFeatureMaps() const {
+    std::vector<tensor::MSTensor *> features;
+    return features;
+  }
+  virtual int UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features) { return mindspore::lite::RET_ERROR; }
+  virtual std::vector<tensor::MSTensor *> GetGradients() const {
+    std::vector<tensor::MSTensor *> gradients;
+    return gradients;
+  }
+  virtual int ApplyGradients(const std::vector<tensor::MSTensor *> &gradients) { return mindspore::lite::RET_ERROR; }
+  virtual std::vector<tensor::MSTensor *> GetOptimizerParams() const {
+    std::vector<tensor::MSTensor *> params;
+    return params;
+  }
+  virtual int SetOptimizerParams(const std::vector<tensor::MSTensor *> &params) { return mindspore::lite::RET_ERROR; }
 
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);

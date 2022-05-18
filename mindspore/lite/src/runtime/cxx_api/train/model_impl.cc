@@ -68,8 +68,8 @@ Status ModelImpl::PrepareMetrics(Model *model, std::vector<session::Metrics *> *
 }
 
 Status ModelImpl::ConvertCallbacks(Model *model, std::vector<TrainCallBack *> *i_cbs,
-                                   std::vector<session::TrainLoopCallBack *> *o_cbs,
-                                   std::vector<session::TrainLoopCallBack *> *adapter_cbs) {
+                                   std::vector<lite::TrainLoopCallBack *> *o_cbs,
+                                   std::vector<lite::TrainLoopCallBack *> *adapter_cbs) {
   if (i_cbs == nullptr || o_cbs == nullptr || adapter_cbs == nullptr) {
     MS_LOG(ERROR) << "Null input callbacks";
     return kLiteUninitializedObj;

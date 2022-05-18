@@ -17,7 +17,6 @@
 #include "tools/benchmark/run_benchmark.h"
 #include <string>
 #include <memory>
-#include "tools/benchmark/benchmark.h"
 #include "tools/benchmark/benchmark_unified_api.h"
 #include "tools/benchmark/benchmark_c_api.h"
 
@@ -51,8 +50,6 @@ int RunBenchmark(int argc, const char **argv) {
   BenchmarkBase *benchmark = nullptr;
   if (api_type == nullptr || std::string(api_type) == "NEW") {
     benchmark = new (std::nothrow) BenchmarkUnifiedApi(&flags);
-  } else if (std::string(api_type) == "OLD") {
-    benchmark = new (std::nothrow) Benchmark(&flags);
   } else if (std::string(api_type) == "C") {
     benchmark = new (std::nothrow) tools::BenchmarkCApi(&flags);
   } else {

@@ -31,7 +31,7 @@ class MindrtParallelTest : public mindspore::CommonTest {
   MindrtParallelTest() {}
 };
 
-int CheckOffline1(session::LiteSession *session) {
+int CheckOffline1(lite::LiteSession *session) {
   /* -----------  start check -------------- */
   lite::LiteSession *lite_session = reinterpret_cast<lite::LiteSession *>(session);
   auto kernels = lite_session->get_kernels();
@@ -86,7 +86,7 @@ int CheckOffline1(session::LiteSession *session) {
   return lite::RET_OK;
 }
 
-int CheckRuntime1(session::LiteSession *session) {
+int CheckRuntime1(lite::LiteSession *session) {
   lite::LiteSession *lite_session = reinterpret_cast<lite::LiteSession *>(session);
   auto kernels = lite_session->get_kernels();
   if (kernels.size() != 6) {
@@ -115,7 +115,7 @@ TEST_F(MindrtParallelTest, offline1) {
   ASSERT_NE(context, nullptr);
   context->enable_parallel_ = true;
 
-  session::LiteSession *session = session::LiteSession::CreateSession(context.get());
+  lite::LiteSession *session = lite::LiteSession::CreateSession(context.get());
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());
@@ -153,7 +153,7 @@ TEST_F(MindrtParallelTest, runtime1) {
   ASSERT_NE(context, nullptr);
   context->enable_parallel_ = true;
 
-  session::LiteSession *session = session::LiteSession::CreateSession(context.get());
+  lite::LiteSession *session = lite::LiteSession::CreateSession(context.get());
   ASSERT_NE(session, nullptr);
 
   int benchmark_ret = session->CompileGraph(model.get());

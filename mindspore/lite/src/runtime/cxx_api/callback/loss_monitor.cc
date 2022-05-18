@@ -50,7 +50,7 @@ const std::vector<GraphPoint> &LossMonitor::GetLossPoints() {
     return empty_vector;
   }
 
-  session::TrainLoopCallBack *internal_call_back = callback_impl_->GetInternalCallback();
+  lite::TrainLoopCallBack *internal_call_back = callback_impl_->GetInternalCallback();
   if (internal_call_back == nullptr) {
     MS_LOG(ERROR) << "Internal callback is null.";
     return empty_vector;

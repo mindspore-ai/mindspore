@@ -55,7 +55,7 @@ int StepLRLambda(float *lr, int epoch, void *lr_cb_data) {
 LRScheduler::LRScheduler(LR_Lambda lambda_func, void *lr_cb_data, int step)
     : lambda_func_(lambda_func), lr_data_(lr_cb_data), step_(step) {}
 
-int LRScheduler::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
+int LRScheduler::EpochEnd(const TrainLoopCallBackData &cb_data) {
   if (((static_cast<int>(cb_data.epoch_) + 1) % step_) == 0) {
     float lr = cb_data.session_->GetLearningRate();
     int update = lambda_func_(&lr, cb_data.epoch_, lr_data_);
@@ -63,11 +63,11 @@ int LRScheduler::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
       int ret = cb_data.session_->SetLearningRate(lr);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Error setting Leraning rate in train session";
-        return mindspore::session::RET_EXIT;
+        return RET_EXIT;
       }
     }
   }
-  return mindspore::session::RET_CONTINUE;
+  return RET_CONTINUE;
 }
 }  // namespace lite
 }  // namespace mindspore

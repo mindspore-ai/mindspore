@@ -16,7 +16,7 @@
 
 #include <jni.h>
 #include "common/ms_log.h"
-#include "include/train/train_session.h"
+#include "src/train/train_session.h"
 #include "include/train/train_cfg.h"
 #include "include/errorcode.h"
 
@@ -32,7 +32,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_TrainSession_createTr
   }
   auto *lite_context_ptr = static_cast<mindspore::lite::Context *>(pointer);
 
-  auto session = mindspore::session::TrainSession::CreateTrainSession(env->GetStringUTFChars(file_name, JNI_FALSE),
+  auto session = mindspore::lite::TrainSession::CreateTrainSession(env->GetStringUTFChars(file_name, JNI_FALSE),
                                                                      lite_context_ptr, train_mode, nullptr);
   if (session == nullptr) {
     MS_LOGE("CreateTrainSession failed");

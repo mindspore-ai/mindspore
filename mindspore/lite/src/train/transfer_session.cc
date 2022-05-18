@@ -42,7 +42,7 @@ TransferSession::TransferSession(const char *model_buf_backbone, size_t size_bac
   if (lite_model_ != nullptr) {
     std::copy(model_buf_backbone, model_buf_backbone + size_backbone, lite_model_);
     backbone_session_ =
-      reinterpret_cast<lite::LiteSession *>(session::LiteSession::CreateSession(lite_model_, size_backbone, context));
+      reinterpret_cast<LiteSession *>(LiteSession::CreateSession(lite_model_, size_backbone, context));
     if (backbone_session_ != nullptr) {
       is_valid_ = true;
     } else {
@@ -312,10 +312,10 @@ lite::LiteSession *CreateTransferSessionInt(const char *model_buf_backbone, size
 }
 }  // namespace lite
 
-session::LiteSession *session::TrainSession::CreateTransferSession(const std::string &filename_backbone,
-                                                                   const std::string &filename_head,
-                                                                   const lite::Context *ctxt, bool train_mode,
-                                                                   const lite::TrainCfg *cfg) {
+lite::LiteSession *lite::TrainSession::CreateTransferSession(const std::string &filename_backbone,
+                                                             const std::string &filename_head,
+                                                             const lite::Context *ctxt, bool train_mode,
+                                                             const lite::TrainCfg *cfg) {
   size_t size_head = 0;
   size_t size_backbone = 0;
   std::string filename = filename_head;

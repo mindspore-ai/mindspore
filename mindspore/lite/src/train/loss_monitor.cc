@@ -26,11 +26,11 @@
 
 namespace mindspore {
 namespace lite {
-void LossMonitor::Begin(const session::TrainLoopCallBackData &cb_data) {
+void LossMonitor::Begin(const TrainLoopCallBackData &cb_data) {
   if (cb_data.epoch_ == 0) losses_.clear();
 }
 
-void LossMonitor::EpochBegin(const session::TrainLoopCallBackData &cb_data) {
+void LossMonitor::EpochBegin(const TrainLoopCallBackData &cb_data) {
   if (losses_.size() != cb_data.epoch_) {
     MS_LOG(WARNING) << "losses array does not match epoch number";
   } else {
@@ -38,15 +38,15 @@ void LossMonitor::EpochBegin(const session::TrainLoopCallBackData &cb_data) {
   }
 }
 
-int LossMonitor::EpochEnd(const session::TrainLoopCallBackData &cb_data) {
+int LossMonitor::EpochEnd(const TrainLoopCallBackData &cb_data) {
   if (cb_data.step_ > 0) losses_.at(cb_data.epoch_).second /= static_cast<float>(cb_data.step_ + 1);
   if (print_every_n_ > 0) {
     std::cout << "Epoch (" << (cb_data.epoch_ + 1) << "):\tLoss is " << losses_.at(cb_data.epoch_).second << std::endl;
   }
-  return mindspore::session::RET_CONTINUE;
+  return RET_CONTINUE;
 }
 
-void LossMonitor::StepEnd(const session::TrainLoopCallBackData &cb_data) {
+void LossMonitor::StepEnd(const TrainLoopCallBackData &cb_data) {
   auto outputs = cb_data.session_->GetOutputs();
   for (auto it = outputs.begin(); it != outputs.end(); ++it) {
     if (it->second->ElementsNum() == 1) {

@@ -30,6 +30,7 @@
 #include "src/runtime/cxx_api/graph/graph_data.h"
 #include "src/runtime/inner_context.h"
 #include "src/runtime/lite_session.h"
+#include "include/train/train_loop_callback.h"
 
 template <class T>
 void clearVectorOfPointers(std::vector<T> *v) {
@@ -105,13 +106,13 @@ class ModelImpl {
     return kSuccess;
   }
   std::vector<Metrics *> GetMetrics() { return metrics_; }
-  const session::LiteSession *GetSession() const { return session_.get(); }
+  const lite::LiteSession *GetSession() const { return session_.get(); }
 
  protected:
   // Utility methods
   Status ConvertCallbacks(Model *model, std::vector<TrainCallBack *> *i_cbs,
-                          std::vector<session::TrainLoopCallBack *> *o_cbs,
-                          std::vector<session::TrainLoopCallBack *> *adapter_cbs);
+                          std::vector<lite::TrainLoopCallBack *> *o_cbs,
+                          std::vector<lite::TrainLoopCallBack *> *adapter_cbs);
   Status PrepareMetrics(Model *model, std::vector<session::Metrics *> *o_ms,
                         std::vector<session::Metrics *> *adapter_ms);
 

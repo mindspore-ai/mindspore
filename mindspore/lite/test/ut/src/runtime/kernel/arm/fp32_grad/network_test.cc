@@ -27,7 +27,7 @@
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "include/train/train_cfg.h"
-#include "include/train/train_session.h"
+#include "src/train/train_session.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
 #include "src/runtime/kernel_registry.h"
@@ -38,12 +38,12 @@ namespace mindspore {
 class NetworkTest : public mindspore::CommonTest {
  public:
   NetworkTest() {}
-  int32_t runNet(mindspore::session::LiteSession *session, const std::string &in, const std::string &out,
+  int32_t runNet(mindspore::lite::LiteSession *session, const std::string &in, const std::string &out,
                  const char *tensor_name, bool debug = false);
 };
 
-int32_t fileIterator(mindspore::session::LiteSession *session, const std::string &path,
-                     std::function<int32_t(mindspore::session::LiteSession *session, const std::string &)> cb) {
+int32_t fileIterator(mindspore::lite::LiteSession *session, const std::string &path,
+                     std::function<int32_t(mindspore::lite::LiteSession *session, const std::string &)> cb) {
   int32_t res = 0;
   if (auto dir = opendir(path.c_str())) {
     while (auto f = readdir(dir)) {
@@ -58,7 +58,7 @@ int32_t fileIterator(mindspore::session::LiteSession *session, const std::string
 }
 void replaceExt(const std::string &src, std::string *dst) { *dst = src.substr(0, src.find_last_of('.')) + ".emb"; }
 
-int32_t NetworkTest::runNet(mindspore::session::LiteSession *session, const std::string &in, const std::string &out,
+int32_t NetworkTest::runNet(mindspore::lite::LiteSession *session, const std::string &in, const std::string &out,
                             const char *tensor_name, bool debug) {
   // setup input
   auto inputs = session->GetInputs();
@@ -101,7 +101,7 @@ TEST_F(NetworkTest, efficient_net) {
   context->thread_num_ = 1;
 
   std::string net = "./nets/effnetb0_fwd_nofuse.ms";
-  auto session = session::TrainSession::CreateTrainSession(net, context, false);
+  auto session = lite::TrainSession::CreateTrainSession(net, context, false);
   ASSERT_NE(session, nullptr);
 
   std::string in = "./nets/effNet_input_x_1_3_224_224.bin";
@@ -122,7 +122,7 @@ TEST_F(NetworkTest, mobileface_net) {
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
-  auto session = session::LiteSession::CreateSession(context);
+  auto session = lite::LiteSession::CreateSession(context);
   ASSERT_NE(session, nullptr);
   auto ret = session->CompileGraph(model);
   ASSERT_EQ(lite::RET_OK, ret);
@@ -147,7 +147,7 @@ TEST_F(NetworkTest, noname) {
   lite::TrainCfg cfg;
   cfg.loss_name_.clear();
   cfg.loss_name_.emplace_back("nhwc");
-  auto session = mindspore::session::TrainSession::CreateTrainSession(net, &context, true, &cfg);
+  auto session = mindspore::lite::TrainSession::CreateTrainSession(net, &context, true, &cfg);
   ASSERT_NE(session, nullptr);
   auto tensors_map = session->GetOutputs();
   auto tensor_names = session->GetOutputTensorNames();
@@ -168,7 +168,7 @@ TEST_F(NetworkTest, setname) {
   train_cfg.loss_name_.clear();
   train_cfg.loss_name_.emplace_back("nhwc");
 
-  auto session = mindspore::session::TrainSession::CreateTrainSession(net, &context, true, &train_cfg);
+  auto session = mindspore::lite::TrainSession::CreateTrainSession(net, &context, true, &train_cfg);
   ASSERT_NE(session, nullptr);
 
   auto tensors_map = session->GetOutputs();

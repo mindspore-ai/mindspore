@@ -24,11 +24,11 @@ namespace mindspore {
 class CallbackImpl {
  public:
   CallbackImpl() = delete;
-  explicit CallbackImpl(session::TrainLoopCallBack *cb) : internal_call_back_(cb) {}
-  session::TrainLoopCallBack *GetInternalCallback() { return internal_call_back_; }
+  explicit CallbackImpl(lite::TrainLoopCallBack *cb) : internal_call_back_(cb) {}
+  lite::TrainLoopCallBack *GetInternalCallback() { return internal_call_back_; }
 
  protected:
-  session::TrainLoopCallBack *internal_call_back_ = nullptr;
+  lite::TrainLoopCallBack *internal_call_back_ = nullptr;
 };
 }  // namespace mindspore
 

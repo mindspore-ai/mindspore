@@ -1293,8 +1293,8 @@ size_t TrainSession::GetInplaceTensorOffset(kernel::KernelExec *kernel,
 }
 }  // namespace lite
 
-session::LiteSession *session::TrainSession::CreateTrainSession(const std::string &fn, const lite::Context *context,
-                                                                bool train_mode, const lite::TrainCfg *cfg) {
+lite::LiteSession *lite::TrainSession::CreateTrainSession(const std::string &fn, const lite::Context *context,
+                                                          bool train_mode, const lite::TrainCfg *cfg) {
   if (context == nullptr) {
     MS_LOG(ERROR) << "context cannot be nullptr";
     return nullptr;
