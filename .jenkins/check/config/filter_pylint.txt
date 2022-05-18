@@ -120,6 +120,7 @@
 "mindspore/tests/ut/python/rewrite/test_node.py"                                                        "syntax-error"
 "mindspore/tests/ut/python/rewrite/test_node.py"                                                        "protected-access"
 "mindspore/tests/ut/python/rewrite/test_symbol_tree.py"                                                 "len-as-condition"
+"mindspore/tests/ut/python/rewrite/test_lenet.py"                                                       "protected-access"
 "mindspore/tests/ut/python/test_log.py"                                                                 "possibly-unused-variable"
 "mindspore/tests/ut/python/test_log.py"                                                                 "protected-access"
 "mindspore/tests/ut/python/train/summary/test_summary_collector.py"                                     "protected-access"
