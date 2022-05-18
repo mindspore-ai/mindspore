@@ -30,13 +30,9 @@ bool LerpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
-    return false;
+  if (auto ret = MatchKernelFunc(base_operator, inputs, outputs); !ret) {
+    return ret;
   }
-  kernel_func_ = func_list_[index].second;
   return true;
 }
 
@@ -72,7 +68,7 @@ void LerpCpuKernelMod::ResetResource() noexcept {
 }
 
 template <typename T>
-bool LerpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool LerpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &outputs) {
   if (start_shape_ == end_shape_ && start_shape_ == weight_shape_) {
     auto *input_start = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
@@ -111,25 +107,22 @@ bool LerpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
   return true;
 }
 
-std::vector<std::pair<KernelAttr, LerpCpuKernelMod::LerpFunc>> LerpCpuKernelMod::func_list_ = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &LerpCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &LerpCpuKernelMod::LaunchKernel<float>}};
-
-std::vector<KernelAttr> LerpCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, LerpFunc> &pair) { return pair.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, LerpCpuKernelMod::KernelRunFunc>> &LerpCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, LerpCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &LerpCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &LerpCpuKernelMod::LaunchKernel<float>},
+  };
+  return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Lerp, LerpCpuKernelMod);
 }  // namespace kernel
