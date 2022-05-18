@@ -21,6 +21,53 @@ from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 
 
+class AdjustSaturation(Primitive):
+    """
+    Adjust saturation of RGB images.
+
+    Note:
+        This is a convenience method that converts RGB images to float representation, converts them to HSV,
+        adds an offset to the saturation channel, converts back to RGB and then back to the original data type.
+        If several adjustments are chained it is advisable to minimize the number of redundant conversions.
+
+    inputs:
+        - **image** (Tensor): Images to adjust. Must be one of the following types: float16, float32.
+           At least 3-D.The last dimension is interpreted as channels, and must be three.
+        - **scale** (Tensor): A float scale to add to the saturation. A Tensor of type float32. Must be 0-D.
+
+    Output:
+        Adjusted image(s), same shape and dtype as `image`.
+
+    Raises:
+        TypeError: If any iput is not Tensor.
+        TypeError: If the type of `image` is not one of the following dtype: float16, float32.
+        TypeError: If the type of `scale` is not float32.
+        ValueError: If the dimension of the 'image' is less than 3, or the last dimension of the 'image' is not 3.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+      >>> x = Tensor([[[1.0, 2.0, 3.0],
+      ...       [4.0, 5.0, 6.0]],
+      ...     [[7.0, 8.0, 9.0],
+      ...       [10.0, 11.0, 12.0]]])
+      >>> scale = Tensor(float(0.5))
+      >>> adjustsaturation = AdjustSaturation()
+      >>> output = adjustsaturation(x, scale)
+      >>> print(output)
+             [[[ 2.         2.4999998  3.       ]
+          [ 5.         5.5        6.       ]]
+         [[ 8.         8.5        9.       ]
+          [11.        11.5       12.       ]]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize AdjustSaturation"""
+        self.init_prim_io_names(inputs=['images', 'scale'], outputs=['y'])
+
+
 class AdjustContrastv2(Primitive):
     """
     Adjust contrastv2 of images.

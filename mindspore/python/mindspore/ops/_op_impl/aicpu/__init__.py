@@ -178,3 +178,4 @@ from .adjust_hue import _adjust_hue_aicpu
 from .maxpool_v1 import _maxpool_v1_aicpu
 from .maxpool_grad_v1 import _maxpool_grad_v1_aicpu
 from .dense_to_csr_sparse_matrix import _dense_to_csr_sparse_matrix_aicpu
+from .adjust_saturation import _adjust_saturation_aicpu
