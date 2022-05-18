@@ -21,6 +21,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <utility>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
@@ -34,43 +35,42 @@ constexpr auto kSigmoid = "Sigmoid";
 constexpr auto kTanh = "Tanh";
 constexpr auto kSoftplus = "Softplus";
 constexpr auto kUnKnown = "UnKnown";
-class EltWiseCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class EltWiseCpuKernelMod : public MKLCpuKernelMod {
  public:
   EltWiseCpuKernelMod() = default;
-  explicit EltWiseCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  explicit EltWiseCpuKernelMod(const std::string &kernel_name) : kernel_name_(kernel_name) {}
   ~EltWiseCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
- protected:
-  std::vector<KernelAttr> GetOpSupport() override {
-    static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
-      {kElu, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-      {kReLU, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-      {kReLU6, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-      {kExp, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-      {kLog, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-      {kSigmoid, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-      {kTanh, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-      {kSoftplus, {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-      {prim::kPrimMish->name(), {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}},
-      {prim::kPrimMish->name(), {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)}}};
-    auto iter = support_list_map.find(kernel_type_);
-    if (iter == support_list_map.end()) {
-      MS_LOG(EXCEPTION) << "Does not support " << kernel_type_ << "!";
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    if (is_null_input_) {
+      return true;
     }
-    return iter->second;
+    return kernel_func_(this, inputs, outputs);
   }
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
  private:
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using EltWiseFunc = std::function<bool(EltWiseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &)>;
+  static std::map<std::string, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::EltWiseFunc>>> kernel_attr_map_;
+  EltWiseFunc kernel_func_;
   dnnl::eltwise_forward::desc GetForwardEltwiseDesc(const dnnl::memory::desc src_desc);
-
   dnnl::prop_kind dnnl_forward_{dnnl::prop_kind::forward_training};
-
-  std::string kernel_type_{kUnKnown};
+  std::string kernel_name_{kUnKnown};
+  std::vector<size_t> src_shape_{};
+  size_t input_element_num_{0};
+  bool is_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

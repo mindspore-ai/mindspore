@@ -69,20 +69,16 @@ bool LrnCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
 int LrnCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs,
                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   TypeId ms_type_id = inputs.at(kIndex0)->GetDtype();
-  std::map<TypeId, dnnl::memory::data_type> dnnl_data_type_map = {{kNumberTypeFloat16, dnnl::memory::data_type::f16},
-                                                                  {kNumberTypeFloat32, dnnl::memory::data_type::f32}};
-
-  if (dnnl_data_type_map.find(ms_type_id) == dnnl_data_type_map.end()) {
+  auto dnnl_type_id = GetDnnlDataType(ms_type_id);
+  if (dnnl_type_id == dnnl::memory::data_type::undef) {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "' LrnCpuKernelMod::Resize failed, dnnl do not support data type:" << TypeIdToString(ms_type_id);
+                  << "', LrnCpuKernelMod::Resize failed, dnnl do not support data type:" << TypeIdToString(ms_type_id);
     return KRET_RESIZE_FAILED;
   }
-  auto dnnl_type_id = dnnl_data_type_map[ms_type_id];
   std::vector<size_t> input_shape_;
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
@@ -96,7 +92,7 @@ int LrnCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   primitive_ = CreatePrimitive<dnnl::lrn_forward>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, src_desc);
-  return ret;
+  return KRET_OK;
 }
 
 template <typename T>

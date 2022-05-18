@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/cpu/kernel/arithmetic_self_cpu_kernel.h"
-
 #include <algorithm>
 #include <cmath>
 #include <complex>
@@ -24,9 +23,7 @@
 #include <thread>
 #include <unordered_map>
 #include <utility>
-
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "plugin/device/cpu/kernel/mkldnn/eltwise_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -620,26 +617,6 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
   func_pair->second(this, input, output, lens);
 }
 
-// MKLDNN Sqrt
-class SqrtMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
- public:
-  SqrtMKLKernelFunc() : EltWiseCpuKernelMod(kSqrt) {}
-  ~SqrtMKLKernelFunc() override = default;
-
-  void InitFunc(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    if (kernel_name != kSqrt) {
-      MS_LOG(EXCEPTION) << "Must be " << kSqrt << ", but got " << kernel_name;
-    }
-    EltWiseCpuKernelMod::InitKernel(kernel_node);
-  }
-
-  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-               const std::vector<AddressPtr> &outputs) override {
-    return EltWiseCpuKernelMod::Launch(inputs, workspace, outputs);
-  }
-};
-
 std::shared_ptr<CpuKernelFunc> CreateArithSelfFunc() { return std::make_shared<ArithmeticSelfCpuKernelFunc>(); }
 using ArithFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>>> arith_kernel_attr_list_map = {
@@ -753,10 +730,6 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
-  {kSqrt,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     []() { return std::make_shared<SqrtMKLKernelFunc>(); }}}},
   {kErf,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
@@ -865,8 +838,6 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atanh,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAtanh); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Abs,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAbs); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sqrt,
-                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSqrt); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erf,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErf); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erfc,
