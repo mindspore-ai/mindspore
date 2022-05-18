@@ -28,7 +28,8 @@ from mindspore._c_expression import MSContext, ms_ctx_param
 from mindspore._checkparam import args_type_check, Validator, args_unreset_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
-from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context
+from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context, \
+    _need_reset_device_target_for_ps
 from .default_config import __device_target__, __package_name__
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
@@ -221,6 +222,10 @@ class _Context:
                            "For 'context.set_context', please set the argument 'device_target' "
                            "to 'CPU', 'GPU' or 'Ascend',if you set it to 'Davinci', it will be automatically "
                            "changed to 'Ascend'.")
+        # If in Parameter Server mode, Ascend card should not be used by server and scheduler.
+        if _need_reset_device_target_for_ps(target):
+            logger.info("Reset device target to CPU when set_device_target.")
+            target = "CPU"
         self.set_param(ms_ctx_param.device_target, target)
         if self.enable_debug_runtime and target == "CPU":
             self.set_backend_policy("vm")

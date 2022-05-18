@@ -17,6 +17,7 @@
 import os
 from mindspore._checkparam import Validator, Rel
 from mindspore._c_expression import PSContext
+from mindspore import context
 from mindspore import log as logger
 
 _ps_context = None
@@ -34,10 +35,27 @@ def ps_context():
         _ps_context = PSContext.get_instance()
     return _ps_context
 
+
+def _need_reset_device_target_for_ps(target):
+    '''
+    For Ascend backend, the card can't be occupied by multiple processes in distributed traning,
+    so we need to reset the device target for some roles.
+    '''
+    is_server = (_get_ps_context("ms_role") in ["MS_PSERVER", "MS_SERVER", "MS_SCHED"])
+    return is_server and target == "Ascend"
+
+
+def set_ps_enable(enable):
+    ps_context().set_ps_enable(enable)
+    # If this is Server or Scheduler and device target is Ascend, reset the target to CPU
+    if _need_reset_device_target_for_ps(context.get_context("device_target")):
+        logger.info("Reset device target to CPU when set_ps_enable.")
+        context.set_context(device_target="CPU")
+
 _set_ps_context_func_map = {
     "server_mode": ps_context().set_server_mode,
     "ms_role": ps_context().set_ms_role,
-    "enable_ps": ps_context().set_ps_enable,
+    "enable_ps": set_ps_enable,
     "enable_fl": ps_context().set_ps_enable,
     "worker_num": ps_context().set_worker_num,
     "server_num": ps_context().set_server_num,
