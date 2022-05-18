@@ -70,6 +70,42 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   void Finalize();
 
  private:
+  // Perform Local and Device Cache hit/miss analysis and prefetch cache for missing embeddings.
+  bool PrefetchCache();
+
+  // Analyze the hit/miss info of the local host cache and device cache, and calculate the swapping and
+  // mapping information of the missing feature id that needs to be inserted into the cache.
+  bool CountCacheMissIds(const int *batch_ids, const size_t batch_ids_len, int *hash_index);
+
+  // Increase the current global step of cache prefetching operation.
+  bool IncreaseStep();
+
+  // Wait the computed graph finish current step when there is not enough free memory space in the cache, in order to
+  // delete the feature vector used by the current step from the cache.
+  bool WaitGraphRun();
+
+  // Parse the hit and swap information of the currently preprocessed id in the device cache.
+  bool ParseDeviceData(size_t id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, int *hash_index);
+  // Parse the hit and swap out to device cache information of the currently preprocessed id of the local host cache.
+  bool ParseHostDataHostToDevice(size_t id);
+  // Parse the swap in information from device cache of the currently preprocessed id of the local host cache.
+  bool ParseHostDataDeviceToHost();
+
+  // Batch preprocess the current batch ids information of cache hitting or exceeding the range of the embedding table
+  // slice corresponding to the process.
+  bool CheckCacheHitOrOutRange(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *in_device,
+                               bool *out_range);
+  // Thread execution function of method 'CheckCacheHitOrOutRange'.
+  bool CheckCacheHitOrOutRangeFunc(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *in_device,
+                                   bool *out_range, size_t *hash_hit_count);
+
+  // Reset EmbeddingHashMap for device and local host cache.
+  bool ResetEmbeddingHashMap();
+
+  // Update the current computed graph's step to real global step at the time when this actor starts to prefetch cache
+  // for a batch ids.
+  void set_current_graph_step() { graph_running_step_ = graph_step_; }
+
   // When the device cache does not reach 100% hit, the cache needs to be updated, which involves cache insertion and
   // deletion. That is, push the non-hotspot embeddings on the local side to the remote, and pull the missing embeddings
   // on the local side from the remote.
@@ -106,9 +142,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // different feature id ranges. Therefore, when the local side performs the push or pull embeddings operation, the
   // embeddings and ids need to be divided, and then communicate with the corresponding remote: Partition ids by
   // remote embedding slice bound and get unique ids.
-  void PartitionIds(const int *ids, size_t ids_num, std::vector<std::vector<int>> *slice_ids_list);
+  bool PartitionIds(const int *ids, size_t ids_num, std::vector<std::vector<int>> *slice_ids_list);
   // Partition ids end embeddings by remote embedding slice bound.
-  void PartitionIdsAndEmbeddings(const int *ids, size_t ids_num, const float *embeddings, size_t embeddings_len,
+  bool PartitionIdsAndEmbeddings(const int *ids, size_t ids_num, const float *embeddings, size_t embeddings_len,
                                  std::vector<std::vector<int>> *slice_ids_list,
                                  std::vector<std::vector<float>> *slice_embeddings_list);
 
@@ -203,6 +239,29 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // The flag which indicates whether this actor is running to prefetch cache.
   std::atomic_bool running_{false};
+
+  // The current global step of the computed graph.
+  std::atomic_ulong graph_step_{0};
+  // The computed graph's global step at the time when this actor starts to prefetch cache for a batch ids.
+  size_t graph_running_step_{0};
+  // The current global step of cache prefetching operation.
+  size_t data_step_{0};
+
+  // Dataset channel name, used in dataset switching scenarios.
+  std::string channel_name_;
+
+  // Data parser condition variable for prefetching cache, used to start and synchronize intermediate state for cache
+  // prefetching.
+  std::condition_variable data_parser_;
+  // Data parser mutex for prefetching cache.
+  std::mutex data_mutex_;
+
+  // Whether device cache prefetching process needs to wait the computed graph finish current step when there is not
+  // enough free memory space in the cache.
+  bool device_cache_need_wait_graph_{false};
+  // Whether local host cache prefetching process needs to wait the computed graph finish current step when there is not
+  // enough free memory space in the cache.
+  bool host_cache_need_wait_graph_{false};
 };
 
 using EmbeddingCachePrefetchActorPtr = std::shared_ptr<EmbeddingCachePrefetchActor>;
