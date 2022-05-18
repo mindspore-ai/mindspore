@@ -30,7 +30,8 @@ from .._checkparam import check_input_data, check_output_data, Validator
 from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
-    _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check
+    _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check, \
+    _reset_op_id_with_offset
 from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, _cache_enable, \
                                    _enable_distributed_mindrt
 from ..nn.metrics import Loss
@@ -918,6 +919,11 @@ class Model:
                     sink_size=sink_size,
                     initial_epoch=initial_epoch)
 
+        # When it's Parameter Server training and using MindRT,
+        # the node id should be reset to start from 0.
+        if _is_ps_mode() and _enable_distributed_mindrt():
+            _reset_op_id_with_offset()
+
     def build(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, jit_config=None):
         """
         Build computational graphs and data graphs with the sink mode.
@@ -1100,8 +1106,16 @@ class Model:
 
         with _CallbackManager(callbacks) as list_callback:
             if dataset_sink_mode:
-                return self._eval_dataset_sink_process(valid_dataset, list_callback, cb_params)
-            return self._eval_process(valid_dataset, list_callback, cb_params)
+                eval_result = self._eval_dataset_sink_process(valid_dataset, list_callback, cb_params)
+            else:
+                eval_result = self._eval_process(valid_dataset, list_callback, cb_params)
+
+        # When it's Parameter Server training and using MindRT,
+        # the node id should be reset to start from 0.
+        if _is_ps_mode() and _enable_distributed_mindrt():
+            _reset_op_id_with_offset()
+
+        return eval_result
 
     def predict(self, *predict_data):
         """
@@ -1129,6 +1143,12 @@ class Model:
         result = self._predict_network(*predict_data)
 
         check_output_data(result)
+
+        # When it's Parameter Server training and using MindRT,
+        # the node id should be reset to start from 0.
+        if _is_ps_mode() and _enable_distributed_mindrt():
+            _reset_op_id_with_offset()
+
         return result
 
     def _infer_train_check(self, train_dataset, dataset_sink_mode, sink_size):
