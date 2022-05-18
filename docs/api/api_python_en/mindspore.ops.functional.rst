@@ -267,6 +267,7 @@ Array Operation
     mindspore.ops.shape
     mindspore.ops.size
     mindspore.ops.tensor_scatter_add
+    mindspore.ops.tensor_scatter_sub
     mindspore.ops.tensor_scatter_div
     mindspore.ops.space_to_batch_nd
     mindspore.ops.tile
