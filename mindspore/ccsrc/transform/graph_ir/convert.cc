@@ -778,7 +778,7 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
     for (unsigned int i = 1; i < c->inputs().size(); i++) {
       TraceOutput(c->input(i));
     }
-  } else if (name == prim::kPrimDepend->name()) {
+  } else if (name == prim::kPrimDepend->name() || name == prim::kPrimLoad->name()) {
     if (c->inputs().size() < 3) {  // "Depend" primitive have 3 inputs
       MS_LOG(EXCEPTION) << "length of inputs is " << c->inputs().size() << ", which is less than 3";
     }
