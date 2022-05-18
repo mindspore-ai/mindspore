@@ -923,9 +923,9 @@ class Validator:
             err_msg2 = f"but got indices shape: {indices_shp[0]}, values shape: {values_shp[0]}."
             raise ValueError(err_msg1 + err_msg2)
         if values_shp[1: ] != csr_shp[2: ]:
-            raise ValueError(f"csr_tensor's shape[1: ] must be equal to  value's shape[2: ],"\
-                            f"but csr_tensor's shape[1: ] got: {values_shp[1: ]} and value's shape[2: ]"\
-                            f"got: {csr_shp[2: ]}")
+            raise ValueError(f"csr_tensor's shape[2: ] must be equal to  value's shape[1: ],"\
+                            f"but csr_tensor's shape[2: ] got: {csr_shp[2: ]} and value's shape[1: ]"\
+                            f"got: {values_shp[1: ]}")
 
     @staticmethod
     def check_csr_tensor_dtype(indptr_dtype, indices_dtype):
