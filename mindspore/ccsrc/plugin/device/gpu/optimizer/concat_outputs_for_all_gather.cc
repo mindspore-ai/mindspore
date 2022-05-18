@@ -113,8 +113,11 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
       ShapeVector tensor_shape;
       auto min_shape = std::get<kIndex2>(output_info)[i];
       auto max_shape = std::get<kIndex3>(output_info)[i];
-      max_shape[0] *= rank_size;
-      min_shape[0] *= rank_size;
+      if (!min_shape.empty() && !max_shape.empty()) {
+        max_shape[0] *= rank_size;
+        min_shape[0] *= rank_size;
+      }
+
       std::transform(shape.begin(), shape.end(), std::back_inserter(tensor_shape), SizeToLong);
       BaseShapePtr base_shape = std::make_shared<abstract::Shape>(tensor_shape, min_shape, max_shape);
       common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, {base_shape}, concat.get());

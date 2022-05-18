@@ -110,8 +110,12 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(kernel_info.first, kernel_info.second);
     std::vector<int64_t> shape_tmp;
     std::transform(labels_shape.begin(), labels_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
-    min_shape.emplace_back(depth);
-    max_shape.emplace_back(depth);
+
+    if (!min_shape.empty() && !max_shape.empty()) {
+      min_shape.emplace_back(depth);
+      max_shape.emplace_back(depth);
+    }
+
     common::AnfAlgo::SetOutputTypeAndDetailShape(
       {kNumberTypeFloat32}, {std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape)}, one_hot_node.get());
   } else {
@@ -149,9 +153,13 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
     ShapeVector shape_tmp = {static_cast<int64_t>(labels_shape[0])};
     auto min_shape = common::AnfAlgo::GetOutputMinShape(one_hot_node, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(one_hot_node, 0);
-    std::vector<BaseShapePtr> shapes = {
-      std::make_shared<abstract::Shape>(shape_tmp, ShapeVector(min_shape[0]), ShapeVector(max_shape[0])),
-      common::AnfAlgo::GetOutputDetailShape(one_hot_node, 0)};
+    if (!min_shape.empty() && !max_shape.empty()) {
+      min_shape = ShapeVector(min_shape[0]);
+      max_shape = ShapeVector(max_shape[0]);
+    }
+
+    std::vector<BaseShapePtr> shapes = {std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape),
+                                        common::AnfAlgo::GetOutputDetailShape(one_hot_node, 0)};
     common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, softmax_node.get());
   } else {
     auto shapes = {loss_shape, labels_shape};
@@ -248,8 +256,11 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
   if (AnfUtils::IsShapeDynamic(y_shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0);
-    min_shape.emplace_back(1);
-    max_shape.emplace_back(1);
+    if (!min_shape.empty() && !max_shape.empty()) {
+      min_shape.emplace_back(1);
+      max_shape.emplace_back(1);
+    }
+
     std::vector<int64_t> shape_tmp;
     std::transform(y_shape.begin(), y_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
     common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)},
@@ -285,8 +296,11 @@ CNodePtr CreateExpandDimsPynative(const FuncGraphPtr &graph, const CNodePtr &rea
   if (AnfUtils::IsShapeDynamic(y_shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0);
-    min_shape.emplace_back(1);
-    max_shape.emplace_back(1);
+    if (!min_shape.empty() && !max_shape.empty()) {
+      min_shape.emplace_back(1);
+      max_shape.emplace_back(1);
+    }
+
     std::vector<int64_t> shape_tmp;
     std::transform(y_shape.begin(), y_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
     common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)},

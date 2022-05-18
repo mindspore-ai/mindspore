@@ -128,8 +128,11 @@ CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, cons
       ShapeVector new_shape;
       auto min_shape = common::AnfAlgo::GetOutputMinShape(input_node, 0);
       auto max_shape = common::AnfAlgo::GetOutputMaxShape(input_node, 0);
-      std::swap(min_shape[kDim0], min_shape[kDim1]);
-      std::swap(max_shape[kDim0], max_shape[kDim1]);
+      if (!min_shape.empty() && !max_shape.empty()) {
+        std::swap(min_shape[kDim0], min_shape[kDim1]);
+        std::swap(max_shape[kDim0], max_shape[kDim1]);
+      }
+
       std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(new_shape), SizeToLong);
       common::AnfAlgo::SetOutputTypeAndDetailShape(
         types, {std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape)}, transpose.get());
@@ -333,8 +336,11 @@ CNodePtr Conv2DBackpropFilterUnifyMindIR::CreateDepthwiseConv2DBackpropFilter(co
     ShapeVector new_shape;
     auto min_shape = common::AnfAlgo::GetOutputMinShape(conv2d_backfil, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(conv2d_backfil, 0);
-    std::swap(min_shape[0], min_shape[1]);
-    std::swap(max_shape[0], max_shape[1]);
+    if (!min_shape.empty() && !max_shape.empty()) {
+      std::swap(min_shape[0], min_shape[1]);
+      std::swap(max_shape[0], max_shape[1]);
+    }
+
     std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(new_shape), SizeToLong);
     common::AnfAlgo::SetOutputTypeAndDetailShape(
       types, {std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape)}, depth_conv_backfil.get());

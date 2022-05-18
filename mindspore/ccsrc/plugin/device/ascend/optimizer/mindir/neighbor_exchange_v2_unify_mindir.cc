@@ -60,6 +60,14 @@ bool IsBottom(const std::vector<int64_t> &send_rank_ids) {
          send_rank_ids[kRankIdFive] != kInvalidId;
 }
 
+inline void UpdateMaxMinShape(std::vector<int64_t> *min_shape, std::vector<int64_t> *max_shape, bool is_dynamic,
+                              int64_t value, const size_t dim) {
+  if (!min_shape->empty() && !max_shape->empty()) {
+    (*min_shape)[dim] = (is_dynamic) ? value : (*min_shape)[dim];
+    (*max_shape)[dim] = (is_dynamic) ? value : (*max_shape)[dim];
+  }
+}
+
 // cal split attrs size_splits, shapes and num_split
 int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first, const bool is_last,
                       const size_t split_dim, const std::vector<int64_t> &send_lens, std::vector<int64_t> *size_splits,
@@ -89,8 +97,8 @@ int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first
     split_middle_size -= first_size;
     shape_tmp[split_dim] = static_cast<size_t>(first_size);
     shapes->push_back(shape_tmp);
-    (*min_shape)[split_dim] = (is_dynamic) ? first_size : (*min_shape)[split_dim];
-    (*max_shape)[split_dim] = (is_dynamic) ? first_size : (*max_shape)[split_dim];
+
+    UpdateMaxMinShape(min_shape, max_shape, is_dynamic, first_size, split_dim);
   }
   if (is_last) {
     // middle
@@ -99,8 +107,9 @@ int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first
       ++num_split;
       size_splits->push_back(split_middle_size);
       shape_tmp[split_dim] = static_cast<size_t>(split_middle_size);
-      (*min_shape)[split_dim] = (is_dynamic) ? split_middle_size : (*min_shape)[split_dim];
-      (*max_shape)[split_dim] = (is_dynamic) ? split_middle_size : (*max_shape)[split_dim];
+
+      UpdateMaxMinShape(min_shape, max_shape, is_dynamic, split_middle_size, split_dim);
+
       shapes->push_back(shape_tmp);
     }
     // last
@@ -112,8 +121,9 @@ int64_t CalSplitAttrs(const std::vector<size_t> &base_shape, const bool is_first
     ++num_split;
     size_splits->push_back(split_middle_size);
     shape_tmp[split_dim] = static_cast<size_t>(split_middle_size);
-    (*min_shape)[split_dim] = (is_dynamic) ? split_middle_size : (*min_shape)[split_dim];
-    (*max_shape)[split_dim] = (is_dynamic) ? split_middle_size : (*max_shape)[split_dim];
+
+    UpdateMaxMinShape(min_shape, max_shape, is_dynamic, split_middle_size, split_dim);
+
     shapes->push_back(shape_tmp);
   }
   return num_split;
@@ -490,13 +500,11 @@ std::vector<CNodePtr> NeighborExchangeV2UnifyMindIR::CreateSplitNodes(const Func
       if (corner_splitvs_is_input_top[i]) {
         (void)split_input.insert(split_input.end(), split_outputs_top.begin(), split_outputs_top.begin() + 1);
         shape_tmp[kHDim] = LongToSize(send_lens[0]);
-        min_shape[kHDim] = (is_dynamic) ? send_lens[0] : min_shape[kHDim];
-        max_shape[kHDim] = (is_dynamic) ? send_lens[0] : max_shape[kHDim];
+        UpdateMaxMinShape(&min_shape, &max_shape, is_dynamic, send_lens[0], kHDim);
       } else {
         (void)split_input.insert(split_input.end(), split_outputs_bottom.end() - 1, split_outputs_bottom.end());
         shape_tmp[kHDim] = LongToSize(send_lens[1]);
-        min_shape[kHDim] = (is_dynamic) ? send_lens[1] : min_shape[kHDim];
-        max_shape[kHDim] = (is_dynamic) ? send_lens[1] : max_shape[kHDim];
+        UpdateMaxMinShape(&min_shape, &max_shape, is_dynamic, send_lens[1], kHDim);
       }
       auto pair_tmp = std::make_pair(min_shape, max_shape);
       split_v = CreateSplitNode(graph, split_input, shape_tmp, corner_splitvs_is_first[i], !corner_splitvs_is_first[i],
@@ -546,14 +554,18 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateLeftRightConcat(const FuncGraphPtr
   if (recv_rank_ids[first_ids] != kInvalidId) {
     ++input_num;
     single_shape[kDim2] += static_cast<size_t>(recv_lens[0]);  // H in NCHW
-    max_shape[kDim2] += (is_dynamic) ? recv_lens[0] : 0;
-    min_shape[kDim2] += (is_dynamic) ? recv_lens[0] : 0;
+    if (!min_shape.empty() && !max_shape.empty()) {
+      max_shape[kDim2] += (is_dynamic) ? recv_lens[0] : 0;
+      min_shape[kDim2] += (is_dynamic) ? recv_lens[0] : 0;
+    }
   }
   if (recv_rank_ids[last_ids] != kInvalidId) {
     ++input_num;
     single_shape[kDim2] += static_cast<size_t>(recv_lens[1]);  // H in NCHW
-    max_shape[kDim2] += (is_dynamic) ? recv_lens[1] : 0;
-    min_shape[kDim2] += (is_dynamic) ? recv_lens[1] : 0;
+    if (!min_shape.empty() && !max_shape.empty()) {
+      max_shape[kDim2] += (is_dynamic) ? recv_lens[1] : 0;
+      min_shape[kDim2] += (is_dynamic) ? recv_lens[1] : 0;
+    }
   }
   if (is_left) {
     (void)concat_input.insert(concat_input.end(), all_to_all_v_outputs.rbegin(),
@@ -603,8 +615,11 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
 
     ++input_num_all;
     single_shape[concat_dim] += LongToSize(first_len);
-    max_shape[concat_dim] += (is_dynamic) ? first_len : 0;
-    min_shape[concat_dim] += (is_dynamic) ? first_len : 0;
+
+    if (!min_shape.empty() && !max_shape.empty()) {
+      max_shape[concat_dim] += (is_dynamic) ? first_len : 0;
+      min_shape[concat_dim] += (is_dynamic) ? first_len : 0;
+    }
   }
 
   concat_input_all.push_back(neighbor_exchange_v2_input);
@@ -832,8 +847,9 @@ std::vector<CNodePtr> NeighborExchangeV2GradUnifyMindIR::CreateSplitNodesForGrad
       int64_t num_split_w = 0;
       std::vector<size_t> base_shape(shape);
       base_shape[kHDim] = static_cast<size_t>(size_split_h[i]);
-      min_shape[kHDim] = (is_dynamic) ? size_split_h[i] : min_shape[kHDim];
-      max_shape[kHDim] = (is_dynamic) ? size_split_h[i] : max_shape[kHDim];
+
+      UpdateMaxMinShape(&min_shape, &max_shape, is_dynamic, size_split_h[i], kHDim);
+
       auto pair_tmp = std::make_pair(min_shape, max_shape);
       auto split_v_left_right = CreateSplitNode(graph, split_input, base_shape, is_left, is_right, kWDim, send_lens,
                                                 dtype, &pair_tmp, &num_split_w, *this);

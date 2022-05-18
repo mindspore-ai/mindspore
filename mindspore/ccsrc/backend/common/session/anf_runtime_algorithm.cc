@@ -958,6 +958,22 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const Anf
     auto dtype = GetInputDeviceDataType(anf_node, index);
     (void)trans::TransShapeToDevice(device_shape, format, anf_node, index, dtype, false);
   }
+
+  if (device_shape.empty()) {
+    KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
+    auto shape = common::AnfAlgo::GetOutputInferShapeSigned(kernel_with_index.first, kernel_with_index.second);
+    std::vector<size_t> ret_shape;
+    constexpr size_t kDefaultValueForDynamicDim = 1;
+    auto ConvertNegOneToDefault = [&kDefaultValueForDynamicDim](int64_t size) {
+      return size < 0 ? kDefaultValueForDynamicDim : LongToSize(size);
+    };
+    std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToDefault);
+    auto format = GetInputFormat(anf_node, index);
+    auto dtype = GetInputDeviceDataType(anf_node, index);
+    (void)trans::TransShapeToDevice(ret_shape, format, anf_node, index, dtype, false);
+    return ret_shape;
+  }
+
   return device_shape;
 }
 
@@ -972,6 +988,21 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const An
     auto dtype = GetOutputDeviceDataType(anf_node, index);
     (void)trans::TransShapeToDevice(device_shape, format, anf_node, index, dtype);
   }
+
+  if (device_shape.empty()) {
+    auto shape = common::AnfAlgo::GetOutputInferShapeSigned(anf_node, index);
+    std::vector<size_t> ret_shape;
+    constexpr size_t kDefaultValueForDynamicDim = 1;
+    auto ConvertNegOneToOne = [&kDefaultValueForDynamicDim](int64_t size) {
+      return size < 0 ? kDefaultValueForDynamicDim : LongToSize(size);
+    };
+    std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToOne);
+    auto format = GetOutputFormat(anf_node, index);
+    auto dtype = GetOutputDeviceDataType(anf_node, index);
+    (void)trans::TransShapeToDevice(ret_shape, format, anf_node, index, dtype, false);
+    return ret_shape;
+  }
+
   return device_shape;
 }
 

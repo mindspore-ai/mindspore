@@ -90,8 +90,11 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
   if (AnfUtils::IsShapeDynamic(shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(all_to_all_input, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(all_to_all_input, 0);
-    max_shape[LongToSize(split_dim)] /= split_count;
-    min_shape[LongToSize(split_dim)] /= split_count;
+    if (!min_shape.empty() && !max_shape.empty()) {
+      max_shape[LongToSize(split_dim)] /= split_count;
+      min_shape[LongToSize(split_dim)] /= split_count;
+    }
+
     ShapeVector new_shape;
     std::transform(shape.begin(), shape.end(), std::back_inserter(new_shape), SizeToLong);
 
@@ -177,8 +180,11 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
   if (AnfUtils::IsShapeDynamic(single_shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(all_to_all_v_outputs[0], 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(all_to_all_v_outputs[0], 0);
-    max_shape[LongToSize(concat_dim)] *= split_count;
-    min_shape[LongToSize(concat_dim)] *= split_count;
+    if (!min_shape.empty() && !max_shape.empty()) {
+      max_shape[LongToSize(concat_dim)] *= split_count;
+      min_shape[LongToSize(concat_dim)] *= split_count;
+    }
+
     ShapeVector new_shape;
     (void)std::transform(single_shape.begin(), single_shape.end(), std::back_inserter(new_shape), SizeToLong);
     common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)},
