@@ -166,6 +166,85 @@ Shapes GetValueListShape(const AnfNodePtr &node) {
   return shapes;
 }
 
+bool IsControlFlowNode(const AnfNodePtr &node) {
+  // Only switch or FuncCall nodes are control flow nodes
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  // func node
+  if (cnode->input(0)->isa<CNode>() && IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch)) {
+    return true;
+  }
+  return false;
+}
+
+int64_t GetTupleGetItemIndex(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!cnode->input(TUPLE_GETITEM_INDEX_POS)->isa<ValueNode>()) {
+    MS_LOG(EXCEPTION) << "The index of tuple getitem is not a value node";
+  }
+
+  ValuePtr tuple_index_value = GetValueNode(cnode->input(TUPLE_GETITEM_INDEX_POS));
+  MS_EXCEPTION_IF_NULL(tuple_index_value);
+  if (!tuple_index_value->isa<Int64Imm>()) {
+    MS_LOG(EXCEPTION) << "The index of tuple getitem is not int64";
+  }
+  return tuple_index_value->cast<Int64ImmPtr>()->value();
+}
+
+void RedistributionNextNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager, NodeUsersMap *node_users_map,
+                            int64_t get_item_index,
+                            std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(node_users_map);
+  auto node_set = (*node_users_map)[cnode];
+  for (auto &node_pair : node_set) {
+    auto use_cnode = node_pair.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(use_cnode);
+    if (IsPrimitiveCNode(use_cnode, prim::kPrimTupleGetItem)) {
+      get_item_index = LongToInt(GetTupleGetItemIndex(use_cnode));
+    }
+    // depend, auto monad and control flow op don't need to jump over
+    if ((IsPrimitiveCNode(use_cnode, prim::kPrimDepend) && node_pair.second != 1) ||
+        IsPrimitiveCNode(use_cnode, prim::kPrimUpdateState) || IsPrimitiveCNode(use_cnode, prim::kPrimSwitch)) {
+      continue;
+    }
+    if (IsParallelCareNode(use_cnode) && use_cnode->has_user_data<OperatorInfo>()) {
+      next_nodes->push_back(std::make_pair(node_pair, get_item_index));
+    } else {
+      // search recursively
+      RedistributionNextNode(use_cnode, manager, node_users_map, get_item_index, next_nodes);
+    }
+  }
+}
+
+void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
+                           std::vector<AnfNodePtr> *pre_nodes) {
+  if (IsControlFlowNode(cnode)) {
+    auto switch_cnode = cnode->input(0)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(switch_cnode);
+    // extract true branch, false branch is usually also a control flow graph
+    auto fg = GetValueNode<FuncGraphPtr>(switch_cnode->input(2));
+    MS_EXCEPTION_IF_NULL(fg);
+    auto fg_out = fg->output()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(fg_out);
+    // control flow node, need enter graph to find redistribution pre node.
+    RedistributionPreNode(fg_out, manager, pre_nodes);
+  }
+  if (IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
+      IsPrimitiveCNode(cnode, prim::kPrimCast)) {
+    auto cnode_input = cnode->input(1)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode_input);
+    RedistributionPreNode(cnode_input, manager, pre_nodes);
+  }
+  if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>()) {
+    pre_nodes->push_back(cnode);
+  }
+}
+
 Shapes GetNodeShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   Shapes shapes;
@@ -173,7 +252,7 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     return GetValueListShape(node);
   }
   BaseShapePtr base_shape_ptr = node->Shape();
-  if (node->isa<CNode>()) {
+  if (node->isa<CNode>() && !IsControlFlowNode(node)) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode->input(0)->isa<CNode>()) {
       if (cnode->inputs().size() < 2) {

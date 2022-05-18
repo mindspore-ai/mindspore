@@ -505,7 +505,7 @@ void BroadCastMicroBatch(const CNodePtr &node, NodeUsersMap *node_users_map, con
   }
   for (auto &node_pair : node_users) {
     auto user_node = node_pair.first->cast<CNodePtr>();
-    if (user_node->HasPrimalAttr(MICRO)) {
+    if (user_node->HasPrimalAttr(MICRO) || IsPrimitiveCNode(user_node, prim::kPrimUpdateState)) {
       continue;
     }
     user_node->AddPrimalAttr(MICRO, value);
