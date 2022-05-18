@@ -82,7 +82,8 @@ class Callback:
     Each method of Callback class corresponds to a stage in training or eval process, and those methods
     have the same input `run_context`, which hold context information of the model in
     training or eval process. When defining a Callback subclass or creating a custom Callback,
-    override these methods.
+    Note that you should override methods with names prefixed with "on_train" or "on_eval",
+    otherwise ValueError will be raised if the custimized Callbacks used in `model.fit`.
 
     When creating a custom Callback, model context information can be obtained in Callback
     methods by calling `RunContext.original_args()`, which is a dictionary varivable
@@ -122,6 +123,7 @@ class Callback:
     def begin(self, run_context):
         """
         Called once before the network executing.
+        A backwards compatibility alias for `on_train_begin` and `on_eval_begin`.
 
         Args:
             run_context (RunContext): Include some information of the model.
@@ -130,6 +132,7 @@ class Callback:
     def epoch_begin(self, run_context):
         """
         Called before each epoch beginning.
+        A backwards compatibility alias for `on_train_epoch_begin` and `on_eval_epoch_begin`.
 
         Args:
             run_context (RunContext): Include some information of the model.
@@ -138,6 +141,7 @@ class Callback:
     def epoch_end(self, run_context):
         """
         Called after each epoch finished.
+        A backwards compatibility alias for `on_train_epoch_end` and `on_eval_epoch_end`.
 
         Args:
             run_context (RunContext): Include some information of the model.
@@ -146,6 +150,7 @@ class Callback:
     def step_begin(self, run_context):
         """
         Called before each step beginning.
+        A backwards compatibility alias for `on_train_step_begin` and `on_eval_step_begin`.
 
         Args:
             run_context (RunContext): Include some information of the model.
@@ -154,6 +159,7 @@ class Callback:
     def step_end(self, run_context):
         """
         Called after each step finished.
+        A backwards compatibility alias for `on_train_step_end` and `on_eval_step_end`.
 
         Args:
             run_context (RunContext): Include some information of the model.
@@ -162,10 +168,119 @@ class Callback:
     def end(self, run_context):
         """
         Called once after network training.
+        A backwards compatibility alias for `on_train_end` and `on_eval_end`.
 
         Args:
             run_context (RunContext): Include some information of the model.
         """
+
+    def on_train_begin(self, run_context):
+        """
+        Called once before the network training.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.begin(run_context)
+
+    def on_train_epoch_begin(self, run_context):
+        """
+        Called before each training epoch begin.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.epoch_begin(run_context)
+
+    def on_train_epoch_end(self, run_context):
+        """
+        Called after each training epoch end.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.epoch_end(run_context)
+
+    def on_train_step_begin(self, run_context):
+        """
+        Called before each training step begin.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.step_begin(run_context)
+
+    def on_train_step_end(self, run_context):
+        """
+        Called after each training step end.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.step_end(run_context)
+
+    def on_train_end(self, run_context):
+        """
+        Called after training end.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.end(run_context)
+
+    def on_eval_begin(self, run_context):
+        """
+        Called before eval begin.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.begin(run_context)
+
+    def on_eval_epoch_begin(self, run_context):
+        """
+        Called before eval epoch begin.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.epoch_begin(run_context)
+
+    def on_eval_epoch_end(self, run_context):
+        """
+        Called after eval epoch end.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.epoch_end(run_context)
+
+    def on_eval_step_begin(self, run_context):
+        """
+        Called before each eval step begin.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.step_begin(run_context)
+
+    def on_eval_step_end(self, run_context):
+        """
+        Called after each eval step end.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.step_end(run_context)
+
+    def on_eval_end(self, run_context):
+        """
+        Called after eval end.
+
+        Args:
+            run_context (RunContext): Include some information of the model.
+        """
+        self.end(run_context)
 
 
 class CallbackManager(Callback):
@@ -208,7 +323,7 @@ class CallbackManager(Callback):
         return self._stack.__exit__(*err)
 
     def begin(self, run_context):
-        """Called once before network training."""
+        """Called once before network train or eval."""
         for cb in self._callbacks:
             cb.begin(run_context)
 
@@ -223,7 +338,7 @@ class CallbackManager(Callback):
             cb.epoch_end(run_context)
 
     def step_begin(self, run_context):
-        """Called before each epoch begin."""
+        """Called before each step begin."""
         for cb in self._callbacks:
             cb.step_begin(run_context)
 
@@ -233,9 +348,69 @@ class CallbackManager(Callback):
             cb.step_end(run_context)
 
     def end(self, run_context):
-        """Called once after network training."""
+        """Called once after network train or eval."""
         for cb in self._callbacks:
             cb.end(run_context)
+
+    def on_train_begin(self, run_context):
+        """Called before network train."""
+        for cb in self._callbacks:
+            cb.on_train_begin(run_context)
+
+    def on_train_epoch_begin(self, run_context):
+        """Called before each train epoch begin."""
+        for cb in self._callbacks:
+            cb.on_train_epoch_begin(run_context)
+
+    def on_train_epoch_end(self, run_context):
+        """Called after each train epoch finished."""
+        for cb in self._callbacks:
+            cb.on_train_epoch_end(run_context)
+
+    def on_train_step_begin(self, run_context):
+        """Called before each train step begin."""
+        for cb in self._callbacks:
+            cb.on_train_step_begin(run_context)
+
+    def on_train_step_end(self, run_context):
+        """Called after each train step finished."""
+        for cb in self._callbacks:
+            cb.step_end(run_context)
+
+    def on_train_end(self, run_context):
+        """Called after network train end."""
+        for cb in self._callbacks:
+            cb.on_train_end(run_context)
+
+    def on_eval_begin(self, run_context):
+        """Called before network eval."""
+        for cb in self._callbacks:
+            cb.on_eval_begin(run_context)
+
+    def on_eval_epoch_begin(self, run_context):
+        """Called before eval epoch begin."""
+        for cb in self._callbacks:
+            cb.on_eval_epoch_begin(run_context)
+
+    def on_eval_epoch_end(self, run_context):
+        """Called after eval epoch finished."""
+        for cb in self._callbacks:
+            cb.on_eval_epoch_end(run_context)
+
+    def on_eval_step_begin(self, run_context):
+        """Called before each eval step begin."""
+        for cb in self._callbacks:
+            cb.on_eval_step_begin(run_context)
+
+    def on_eval_step_end(self, run_context):
+        """Called after each eval step finished."""
+        for cb in self._callbacks:
+            cb.on_eval_step_end(run_context)
+
+    def on_eval_end(self, run_context):
+        """Called after network eval end."""
+        for cb in self._callbacks:
+            cb.on_eval_end(run_context)
 
 
 class InternalCallbackParam(dict):

@@ -22,7 +22,7 @@ from ._callback import Callback
 
 class TimeMonitor(Callback):
     """
-    Monitor the time in training.
+    Monitor the time in train or eval process.
 
     Args:
         data_size (int): How many steps are the intervals between print information each time.
@@ -71,6 +71,7 @@ class TimeMonitor(Callback):
         epoch_seconds = (time.time() - self.epoch_time) * 1000
         step_size = self.data_size
         cb_params = run_context.original_args()
+        mode = cb_params.get("mode", "")
         if hasattr(cb_params, "batch_num"):
             batch_num = cb_params.batch_num
             if isinstance(batch_num, int) and batch_num > 0:
@@ -78,4 +79,5 @@ class TimeMonitor(Callback):
         Validator.check_positive_int(step_size)
 
         step_seconds = epoch_seconds / step_size
-        print("epoch time: {:5.3f} ms, per step time: {:5.3f} ms".format(epoch_seconds, step_seconds), flush=True)
+        print("{} epoch time: {:5.3f} ms, per step time: {:5.3f} ms".format
+              (mode.title(), epoch_seconds, step_seconds), flush=True)

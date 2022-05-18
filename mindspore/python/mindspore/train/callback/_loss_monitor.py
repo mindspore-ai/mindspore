@@ -23,7 +23,7 @@ from ._callback import Callback
 
 class LossMonitor(Callback):
     """
-    Monitor the loss in training.
+    Monitor the loss in train or monitor the loss and eval metrics in fit.
 
     If the loss is NAN or INF, it will terminate training.
 
@@ -90,3 +90,17 @@ class LossMonitor(Callback):
         if self._per_print_times != 0 and (cb_params.cur_step_num - self._last_print_time) >= self._per_print_times:
             self._last_print_time = cb_params.cur_step_num
             print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num, cur_step_in_epoch, loss), flush=True)
+
+    def on_train_epoch_end(self, run_context):
+        """
+        When LossMoniter used in `model.fit`, print eval metrics at the end of epoch if current epoch
+        should do evaluation.
+
+        Args:
+            run_context (RunContext): Include some information of the model. For more details,
+                    please refer to :class:`mindspore.RunContext`.
+        """
+        cb_params = run_context.original_args()
+        metrics = cb_params.get("metrics")
+        if metrics:
+            print("Eval result: epoch %d, metrics: %s" % (cb_params.cur_epoch_num, metrics))

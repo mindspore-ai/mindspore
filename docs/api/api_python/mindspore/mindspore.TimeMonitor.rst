@@ -3,7 +3,7 @@ mindspore.TimeMonitor
 
 .. py:class:: mindspore.TimeMonitor(data_size=None)
 
-    监控训练时间。
+    监控训练或推理的时间。
 
     **参数：**
 

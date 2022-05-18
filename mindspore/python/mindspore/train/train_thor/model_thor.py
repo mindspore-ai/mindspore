@@ -150,7 +150,7 @@ class ModelThor(Model):
             self.switch_branch_one = not self.switch_branch_one
             outputs = self._train_network(*inputs)
             cb_params.net_outputs = outputs
-            list_callback.step_end(run_context)
+            list_callback.on_train_step_end(run_context)
         else:
             cb_params.cur_step_num += 1
             if self.train_network_init_flag:
@@ -163,7 +163,7 @@ class ModelThor(Model):
             if self.index_first_order == iter_first_order:
                 self.index_first_order = 0
                 self.switch_branch_one = not self.switch_branch_one
-                list_callback.step_end(run_context)
+                list_callback.on_train_step_end(run_context)
 
     def _train_ascend_sink_step(self, cb_params, train_dataset, iter_first_order, inputs, list_callback, run_context):
         """train ascend sink step"""
@@ -184,10 +184,10 @@ class ModelThor(Model):
         self.switch_branch_one = not self.switch_branch_one
         outputs = self._train_network(*inputs)
         cb_params.net_outputs = outputs
-        list_callback.step_end(run_context)
+        list_callback.on_train_step_end(run_context)
 
     def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None,
-                                    sink_size=-1, initial_epoch=0):
+                                    sink_size=-1, initial_epoch=0, valid_infos=None):
         """
         Training process. The data would be passed to network through dataset channel.
 
@@ -204,6 +204,9 @@ class ModelThor(Model):
             initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
                                  Default: 0.
         """
+        valid_dataset, _, _ = valid_infos
+        if valid_dataset:
+            raise ValueError("Evaluation in training is currently not supported in the second-order scenario of thor.")
         if sink_size == -1:
             epoch_num = epoch - initial_epoch
         else:
@@ -226,28 +229,28 @@ class ModelThor(Model):
         cb_params.cur_step_num = 0
 
         run_context = RunContext(cb_params)
-        list_callback.begin(run_context)
+        list_callback.on_train_begin(run_context)
 
         for i in range(initial_epoch, epoch):
             cb_params.cur_epoch_num = i + 1
-            list_callback.epoch_begin(run_context)
+            list_callback.on_train_epoch_begin(run_context)
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
                 if _need_to_full() and context.get_context("device_target") == "GPU":
                     inputs = _to_full_tensor(inputs, self._device_number, self._global_rank)
-                list_callback.step_begin(run_context)
+                list_callback.on_train_step_begin(run_context)
                 if context.get_context("device_target") == "GPU":
                     self._train_gpu_sink_step(cb_params, inputs, list_callback, iter_first_order, run_context)
                 else:
                     self._train_ascend_sink_step(cb_params, train_dataset, iter_first_order, inputs, list_callback,
                                                  run_context)
-            list_callback.epoch_end(run_context)
+            list_callback.on_train_epoch_end(run_context)
             should_stop = False or run_context.get_stop_requested()
             if should_stop:
                 break
         dataset_helper.stop_send()
 
-        list_callback.end(run_context)
+        list_callback.on_train_end(run_context)
 
 
 __all__ = ["ModelThor"]

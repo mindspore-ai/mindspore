@@ -27,7 +27,8 @@ from .callback._checkpoint import _chg_ckpt_file_name_if_same_exist
 from ..common.tensor import Tensor
 from ..nn.metrics import get_metrics
 from .._checkparam import check_input_data, check_output_data, Validator
-from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback
+from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor
+from .callback import __all__ as internal_cb_names
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check, \
@@ -503,7 +504,8 @@ class Model:
         return [callbacks]
 
     @_save_final_ckpt
-    def _train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1, initial_epoch=0):
+    def _train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1, initial_epoch=0,
+               valid_dataset=None, valid_frequency=1, valid_dataset_sink_mode=True):
         """
         Training.
 
@@ -541,6 +543,7 @@ class Model:
         cb_params.device_number = self._device_number
         cb_params.train_dataset = train_dataset
         cb_params.list_callback = self._transform_callbacks(callbacks)
+        valid_infos = (valid_dataset, valid_frequency, valid_dataset_sink_mode)
         if context.get_context("mode") == context.PYNATIVE_MODE:
             cb_params.list_callback.insert(0, _StepSync())
             callbacks = cb_params.list_callback
@@ -555,17 +558,21 @@ class Model:
         with _CallbackManager(callbacks) as list_callback:
             self._check_reuse_dataset(train_dataset)
             if not dataset_sink_mode:
-                self._train_process(epoch, train_dataset, list_callback, cb_params, initial_epoch)
+                self._train_process(epoch, train_dataset, list_callback, cb_params, initial_epoch, valid_infos)
             elif context.get_context("device_target") == "CPU":
                 logger.info("The CPU cannot support dataset sink mode currently."
                             "So the training process will be performed with dataset not sink.")
-                self._train_process(epoch, train_dataset, list_callback, cb_params, initial_epoch)
+                self._train_process(epoch, train_dataset, list_callback, cb_params, initial_epoch, valid_infos)
             else:
                 self._train_dataset_sink_process(epoch, train_dataset, list_callback,
-                                                 cb_params, sink_size, initial_epoch)
+                                                 cb_params, sink_size, initial_epoch, valid_infos)
+
+    @staticmethod
+    def _should_eval(epoch, validation_freq):
+        return epoch % validation_freq == 0 if isinstance(validation_freq, int) else epoch in validation_freq
 
     def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None,
-                                    sink_size=-1, initial_epoch=0):
+                                    sink_size=-1, initial_epoch=0, valid_infos=None):
         """
         Training process. The data would be passed to network through dataset channel.
 
@@ -593,7 +600,7 @@ class Model:
         cb_params.dataset_sink_mode = True
 
         run_context = RunContext(cb_params)
-        list_callback.begin(run_context)
+        list_callback.on_train_begin(run_context)
         # used to stop training for early stop, such as stopAtTIme or stopATStep
         dataset_helper = None
         if hasattr(train_dataset, '_dataset_helper'):
@@ -609,7 +616,7 @@ class Model:
             cb_params.cur_epoch_num = self.epoch_iter + 1 + initial_epoch
             self._current_epoch_num = cb_params.cur_epoch_num
             self._current_step_num = 0
-            list_callback.epoch_begin(run_context)
+            list_callback.on_train_epoch_begin(run_context)
             dataset_helper, train_network = self._exec_preprocess(is_train=True,
                                                                   dataset=train_dataset,
                                                                   dataset_sink_mode=True,
@@ -632,22 +639,51 @@ class Model:
                     cb_params.cur_step_num += 1
                 self._current_step_num = int((cb_params.cur_step_num - 1) % cb_params.batch_num + 1)
                 cb_params.train_dataset_element = inputs
-                list_callback.step_begin(run_context)
+                list_callback.on_train_step_begin(run_context)
                 outputs = train_network(*inputs)
                 cb_params.net_outputs = outputs
                 # In disaster recovery scenarios, need not to execute callbacks if this step executes failed.
                 need_exec_callback_step_end = not (self.enable_recovery and _get_recovery_context("need_reset"))
                 if need_exec_callback_step_end:
-                    list_callback.step_end(run_context)
+                    list_callback.on_train_step_end(run_context)
 
                 if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
                     os._exit(0)
 
             dataset_helper.continue_send()
+
+            valid_dataset, valid_frequency, valid_dataset_sink_mode = valid_infos
+            if valid_dataset and self._should_eval(cb_params.cur_epoch_num, valid_frequency):
+
+                train_cur_step_num = cb_params.cur_step_num
+                train_batch_num = cb_params.batch_num
+                train_dataset_sink_mode = cb_params.dataset_sink_mode
+                train_net_outputs = cb_params.net_outputs
+
+                eval_callback = []
+                for cb in list_callback._callbacks:
+                    if cb.__class__.__name__ in internal_cb_names:
+                        if isinstance(cb, TimeMonitor):
+                            eval_callback.append(cb)
+                    else:
+                        eval_callback.append(cb)
+
+                self._eval_in_fit(valid_dataset,
+                                  callbacks=eval_callback,
+                                  dataset_sink_mode=valid_dataset_sink_mode,
+                                  cb_params=cb_params)
+                cb_params.mode = "train"
+                cb_params.cur_step_num = train_cur_step_num
+                cb_params.batch_num = train_batch_num
+                cb_params.dataset_sink_mode = train_dataset_sink_mode
+                cb_params.net_outputs = train_net_outputs
+
             # In disaster recovery scenarios, need not to execute callbacks if this epoch executes failed.
             need_exec_callback_epoch_end = not (self.enable_recovery and _get_recovery_context("need_reset"))
             if need_exec_callback_epoch_end:
-                list_callback.epoch_end(run_context)
+                list_callback.on_train_epoch_end(run_context)
+            if "metrics" in cb_params:
+                cb_params.pop("metrics")
 
             should_stop = run_context.get_stop_requested()
             if should_stop:
@@ -663,7 +699,7 @@ class Model:
         dataset_helper.stop_send()
         dataset_helper.release()
 
-        list_callback.end(run_context)
+        list_callback.on_train_end(run_context)
 
     def _check_enable_recovery(self):
         """
@@ -753,7 +789,8 @@ class Model:
 
             _set_recovery_context(need_reset=False)
 
-    def _train_process(self, epoch, train_dataset, list_callback=None, cb_params=None, initial_epoch=0):
+    def _train_process(self, epoch, train_dataset, list_callback=None, cb_params=None, initial_epoch=0,
+                       valid_infos=None):
         """
         Training process. The data would be passed to network directly.
 
@@ -776,13 +813,13 @@ class Model:
         cb_params.cur_step_num = 0
         cb_params.dataset_sink_mode = False
         run_context = RunContext(cb_params)
-        list_callback.begin(run_context)
+        list_callback.on_train_begin(run_context)
         for i in range(initial_epoch, epoch):
             cb_params.cur_epoch_num = i + 1
             self._current_epoch_num = cb_params.cur_epoch_num
             self._current_step_num = 0
 
-            list_callback.epoch_begin(run_context)
+            list_callback.on_train_epoch_begin(run_context)
 
             for next_element in dataset_helper:
                 len_element = len(next_element)
@@ -795,7 +832,7 @@ class Model:
                 self._current_step_num = int((cb_params.cur_step_num - 1) % cb_params.batch_num + 1)
 
                 cb_params.train_dataset_element = next_element
-                list_callback.step_begin(run_context)
+                list_callback.on_train_step_begin(run_context)
                 outputs = self._train_network(*next_element)
                 cb_params.net_outputs = outputs
                 if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():
@@ -803,24 +840,52 @@ class Model:
                     overflow = np.all(overflow.asnumpy())
                     self._loss_scale_manager.update_loss_scale(overflow)
 
-                list_callback.step_end(run_context)
+                list_callback.on_train_step_end(run_context)
                 if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
                     os._exit(0)
                 should_stop = run_context.get_stop_requested()
                 if should_stop:
                     break
 
+            valid_dataset, valid_frequency, valid_dataset_sink_mode = valid_infos
+            if valid_dataset and self._should_eval(cb_params.cur_epoch_num, valid_frequency):
+                train_cur_step_num = cb_params.cur_step_num
+                train_batch_num = cb_params.batch_num
+                train_dataset_sink_mode = cb_params.dataset_sink_mode
+                train_net_outputs = cb_params.net_outputs
+
+                eval_callback = []
+                for cb in list_callback._callbacks:
+                    if cb.__class__.__name__ in internal_cb_names:
+                        if isinstance(cb, TimeMonitor):
+                            eval_callback.append(cb)
+                    else:
+                        eval_callback.append(cb)
+
+                self._eval_in_fit(valid_dataset,
+                                  callbacks=eval_callback,
+                                  dataset_sink_mode=valid_dataset_sink_mode,
+                                  cb_params=cb_params)
+
+                cb_params.mode = "train"
+                cb_params.cur_step_num = train_cur_step_num
+                cb_params.batch_num = train_batch_num
+                cb_params.dataset_sink_mode = train_dataset_sink_mode
+                cb_params.net_outputs = train_net_outputs
+
             train_dataset.reset()
 
             # if param is cache enable, flush data from cache to host before epoch end
             self._flush_from_cache(cb_params)
 
-            list_callback.epoch_end(run_context)
+            list_callback.on_train_epoch_end(run_context)
+            if "metrics" in cb_params:
+                cb_params.pop("metrics")
             should_stop = run_context.get_stop_requested()
             if should_stop:
                 break
 
-        list_callback.end(run_context)
+        list_callback.on_train_end(run_context)
 
     def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1, initial_epoch=0):
         """
@@ -912,6 +977,9 @@ class Model:
 
         _device_number_check(self._parallel_mode, self._device_number)
 
+        if callbacks:
+            self._check_methods_for_custom_callbacks(callbacks, "train")
+
         self._train(epoch,
                     train_dataset,
                     callbacks=callbacks,
@@ -923,6 +991,140 @@ class Model:
         # the node id should be reset to start from 0.
         if _is_ps_mode() and _enable_distributed_mindrt():
             _reset_op_id_with_offset()
+
+    @staticmethod
+    def _check_methods_for_custom_callbacks(callbacks, current_mode):
+        """
+        Check whether methods of custimized callbacks are valid.
+
+        Args:
+            callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object.
+            current_mode (str): 'fit', 'train' or 'eval'.
+        """
+        old_version_methods_names = {'begin', 'end', 'epoch_begin', 'epoch_end', 'step_begin', 'step_end'}
+        if not isinstance(callbacks, list):
+            callbacks = [callbacks]
+        for cb in callbacks:
+            cb_name = cb.__class__.__name__
+            if  cb_name not in internal_cb_names:
+                cb_methods_names = set(cb.__class__.__dict__.keys())
+                invalid_methods_names = cb_methods_names & old_version_methods_names
+                if invalid_methods_names:
+                    if current_mode in ["train", "eval"]:
+                        logger.warning("For %s callback, %s methods may not be supported in later version, "
+                                       "Use methods prefixed with 'on_train' or 'on_eval' instead "
+                                       "when using customized callbacks." % (cb_name, invalid_methods_names))
+                    else:
+                        raise ValueError("For %s callback, %s methods may not be supported in later version, "
+                                         "Use methods prefixed with 'on_train' or 'on_eval' instead when"
+                                         "using customized callbacks." % (cb_name, invalid_methods_names))
+
+    def fit(self, epoch, train_dataset, valid_dataset=None, valid_frequency=1, callbacks=None,
+            dataset_sink_mode=True, valid_dataset_sink_mode=True, sink_size=-1, initial_epoch=0):
+        """
+        Fit API.
+
+        Evaluation process will be performed during training process if `valid_dataset` is provided.
+
+        More details please refer to `mindspore.Model.train` and `mindspore.Model.eval`.
+
+        Args:
+            epoch (int): Total training epochs. Generally, train network will be trained on complete dataset per epoch.
+                         If `dataset_sink_mode` is set to True and `sink_size` is greater than 0, each epoch will
+                         train `sink_size` steps instead of total steps of dataset.
+                         If `epoch` used with `initial_epoch`, it is to be understood as "final epoch".
+            train_dataset (Dataset): A training dataset iterator. If `loss_fn` is defined, the data and label will be
+                                     passed to the `network` and the `loss_fn` respectively, so a tuple (data, label)
+                                     should be returned from dataset. If there is multiple data or labels, set `loss_fn`
+                                     to None and implement calculation of loss in `network`,
+                                     then a tuple (data1, data2, data3, ...) with all data returned from dataset
+                                     will be passed to the `network`.
+            valid_dataset (Dataset): Dataset to evaluate the model. If `valid_dataset` is provided, evaluation process
+                                     will be performed on the end of training process. Default: None.
+            valid_frequency (int, list): Only relevant if `valid_dataset` is provided.  If an integer, specifies
+                         how many training epochs to run before a new validation run is performed,
+                         e.g. `valid_frequency=2` runs validation every 2 epochs.
+                         If a list, specifies the epochs on which to run validation,
+                         e.g. `valid_frequency=[1, 5]` runs validation at the end of the 1st, 5th epochs.
+                         Default: 1
+            callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object,
+                                                            which should be executed while training.
+                                                            Default: None.
+            dataset_sink_mode (bool): Determines whether to pass the train data through dataset channel.
+                                      Configure pynative mode or CPU, the training process will be performed with
+                                      dataset not sink. Default: True.
+            valid_dataset_sink_mode (bool): Determines whether to pass the validation data through dataset channel.
+                                      Default: True.
+            sink_size (int): Control the amount of data in each sink. `sink_size` is invalid if `dataset_sink_mode`
+                             is False.
+                             If sink_size = -1, sink the complete dataset for each epoch.
+                             If sink_size > 0, sink sink_size data for each epoch.
+                             Default: -1.
+            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+                                 Default: 0.
+
+        Examples:
+            >>> from mindspore import Model, nn, FixedLossScaleManager
+            >>>
+            >>> # For details about how to build the dataset, please refer to the tutorial
+            >>> # document on the official website.
+            >>> train_dataset = create_custom_dataset()
+            >>> valid_dataset = create_custom_dataset()
+            >>> net = Net()
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+            >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+            >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics="accuracy")
+            >>> model.fit(2, train_dataset, valid_dataset)
+        """
+
+        dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
+        valid_dataset_sink_mode = Validator.check_bool(valid_dataset_sink_mode)
+
+        if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode:
+            raise ValueError("Dataset sink mode is currently not supported when training with a GraphCell.")
+
+        if hasattr(train_dataset, '_warmup_epoch') and train_dataset._warmup_epoch != epoch:
+            raise ValueError("when use Model.build to initialize model, the value of parameter `epoch` in Model.build "
+                             "should be equal to value in Model.fit, but got {} and {} separately."
+                             .format(train_dataset._warmup_epoch, epoch))
+
+        if dataset_sink_mode and _is_ps_mode() and not _cache_enable():
+            raise ValueError("Parameter server mode does not support 'data_sink_mode=True'.")
+
+        Validator.check_is_int(sink_size)
+        Validator.check_non_negative_int(initial_epoch)
+        if initial_epoch >= epoch:
+            raise ValueError(f"For 'Model.train', the parameter 'epoch' must bigger than parameter 'initial_epoch',"
+                             f" but got the parameter 'epoch' is {epoch}, 'initial_epoch' is {initial_epoch}.")
+        dataset_size = train_dataset.get_dataset_size()
+        if dataset_size == 0:
+            raise ValueError("There is no valid data in dataset, please check dataset file firstly.")
+        if sink_size == -1:
+            sink_size = dataset_size
+        if sink_size < -1 or sink_size == 0:
+            raise ValueError("For 'Model.fit', The parameter 'sink_size' must be -1 or positive, "
+                             "but got {}.".format(sink_size))
+
+        _device_number_check(self._parallel_mode, self._device_number)
+
+        if not isinstance(valid_frequency, (int, list)):
+            raise ValueError(f"For 'Model.fit', the type of 'valid_frequency' must be a list or a integer, but got"
+                             "type {type(validation_freq)}.")
+
+        if valid_dataset and not self._metric_fns:
+            raise ValueError("For 'Model.fit', if valid_dataset is not None, the model argument 'metrics' can not be"
+                             "None or empty, you should set the argument 'metrics' for model.")
+        if callbacks:
+            self._check_methods_for_custom_callbacks(callbacks, "fit")
+        self._train(epoch,
+                    train_dataset,
+                    callbacks=callbacks,
+                    dataset_sink_mode=dataset_sink_mode,
+                    sink_size=sink_size,
+                    initial_epoch=initial_epoch,
+                    valid_dataset=valid_dataset,
+                    valid_frequency=valid_frequency,
+                    valid_dataset_sink_mode=valid_dataset_sink_mode)
 
     def build(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, jit_config=None):
         """
@@ -971,6 +1173,40 @@ class Model:
             _cell_graph_executor.set_jit_config(jit_config)
         self._init(train_dataset, valid_dataset, sink_size, epoch)
 
+    def _eval_in_fit(self, valid_dataset, callbacks=None, dataset_sink_mode=True, cb_params=None):
+        """
+        Evaluation process in `mindspore.Model.fit`.
+
+        Args:
+            valid_dataset (Dataset): Dataset to evaluate the model. If `valid_dataset` is provided, evaluation process
+                                     will be performed on the end of training process. Default: None.
+            callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object, which should be
+                                     executed while evaluation. Default: None.
+            valid_dataset_sink_mode (bool): Determines whether to pass the validation data through dataset channel.
+                                     Default: True.
+            cb_params (_InternalCallbackParam): Callback parameters. Default: None.
+        """
+        if isinstance(self._eval_network, nn.GraphCell) and dataset_sink_mode:
+            raise ValueError("Sink mode is currently not supported when evaluating with a GraphCell.")
+
+        cb_params.eval_network = self._eval_network
+        cb_params.valid_dataset = valid_dataset
+        cb_params.batch_num = valid_dataset.get_dataset_size()
+        cb_params.mode = "eval"
+        cb_params.cur_step_num = 0
+
+        self._clear_metrics()
+
+        if context.get_context("device_target") == "CPU" and dataset_sink_mode:
+            dataset_sink_mode = False
+            logger.info("CPU cannot support dataset sink mode currently."
+                        "So the evaluating process will be performed with dataset non-sink mode.")
+
+        with _CallbackManager(callbacks) as list_callback:
+            if dataset_sink_mode:
+                return self._eval_dataset_sink_process(valid_dataset, list_callback, cb_params)
+            return self._eval_process(valid_dataset, list_callback, cb_params)
+
     def _eval_dataset_sink_process(self, valid_dataset, list_callback=None, cb_params=None):
         """
         Evaluation. The data would be passed to network through dataset channel.
@@ -990,20 +1226,20 @@ class Model:
                                                              dataset_sink_mode=True)
         cb_params.eval_network = eval_network
         cb_params.dataset_sink_mode = True
-        list_callback.begin(run_context)
-        list_callback.epoch_begin(run_context)
+        list_callback.on_eval_begin(run_context)
+        list_callback.on_eval_epoch_begin(run_context)
         for inputs in dataset_helper:
             cb_params.cur_step_num += 1
-            list_callback.step_begin(run_context)
+            list_callback.on_eval_step_begin(run_context)
             outputs = eval_network(*inputs)
             cb_params.net_outputs = outputs
-            list_callback.step_end(run_context)
+            list_callback.on_eval_step_end(run_context)
             self._update_metrics(outputs)
 
-        list_callback.epoch_end(run_context)
+        list_callback.on_eval_epoch_end(run_context)
         metrics = self._get_metrics()
         cb_params.metrics = metrics
-        list_callback.end(run_context)
+        list_callback.on_eval_end(run_context)
 
         return metrics
 
@@ -1021,25 +1257,25 @@ class Model:
         """
         run_context = RunContext(cb_params)
         cb_params.dataset_sink_mode = False
-        list_callback.begin(run_context)
+        list_callback.on_eval_begin(run_context)
         dataset_helper, _ = self._exec_preprocess(is_train=False,
                                                   dataset=valid_dataset,
                                                   dataset_sink_mode=False)
-        list_callback.epoch_begin(run_context)
+        list_callback.on_eval_epoch_begin(run_context)
         for next_element in dataset_helper:
             cb_params.cur_step_num += 1
-            list_callback.step_begin(run_context)
+            list_callback.on_eval_step_begin(run_context)
             next_element = _transfer_tensor_to_tuple(next_element)
             outputs = self._eval_network(*next_element)
             cb_params.net_outputs = outputs
-            list_callback.step_end(run_context)
+            list_callback.on_eval_step_end(run_context)
             self._update_metrics(outputs)
 
-        list_callback.epoch_end(run_context)
+        list_callback.on_eval_epoch_end(run_context)
         valid_dataset.reset()
         metrics = self._get_metrics()
         cb_params.metrics = metrics
-        list_callback.end(run_context)
+        list_callback.on_eval_end(run_context)
         return metrics
 
     def eval(self, valid_dataset, callbacks=None, dataset_sink_mode=True):
@@ -1087,7 +1323,8 @@ class Model:
                              "you should set the argument 'metrics' for model.")
         if isinstance(self._eval_network, nn.GraphCell) and dataset_sink_mode:
             raise ValueError("Sink mode is currently not supported when evaluating with a GraphCell.")
-
+        if callbacks:
+            self._check_methods_for_custom_callbacks(callbacks, "eval")
         cb_params = _InternalCallbackParam()
         cb_params.eval_network = self._eval_network
         cb_params.valid_dataset = valid_dataset
