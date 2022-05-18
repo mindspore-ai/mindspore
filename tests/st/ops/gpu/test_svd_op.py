@@ -146,3 +146,39 @@ def test_svd_net6():
     s, u, v = linalg_ops.Svd(full_matrices=True, compute_uv=True)(tensor_a)
     output = matmul(u, matmul(matrix_diag(s, (3, 2)), transpose(v, (1, 0))))
     assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_svd_vmap1():
+    """
+    Feature: Svd
+    Description: test cases for svd: vmap
+    Expectation: the result match to numpy
+    """
+    a = np.random.rand(5, 3, 3)
+    tensor_a = Tensor(a, dtype=mindspore.float32)
+    net = SvdNet(True, True)
+    svd_vmap = ops.vmap(net, (0,), 0)
+    s, u, v = svd_vmap(tensor_a)
+    output = batch_matmul(u, batch_matmul(matrix_diag(s, (5, 3, 3)), transpose(v, (0, 2, 1))))
+    assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_svd_vmap2():
+    """
+    Feature: Svd
+    Description: test cases for svd: vmap
+    Expectation: the result match to numpy
+    """
+    a = np.random.rand(5, 3, 3)
+    tensor_a = Tensor(a, dtype=mindspore.float32)
+    net = SvdNet(True, False)
+    svd_vmap = ops.vmap(net, (0,), 0)
+    s, _, _ = svd_vmap(tensor_a)
+    n_s = np.linalg.svd(a, full_matrices=True, compute_uv=False)
+    assert np.allclose(n_s, s.asnumpy(), rtol=RTOL, atol=ATOL)

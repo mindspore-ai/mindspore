@@ -21,6 +21,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from mindspore.common import Tensor
 from mindspore.ops.operations.math_ops import Lerp
+from mindspore.ops.operations import linalg_ops
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis
@@ -356,6 +357,30 @@ def get_index_add_vmap_rule(prim, axis_size):
             y = mnp.moveaxis(y, y_dim, x_dim)
         out = op(x, indices, y, u_monad)
         return (out, x_dim)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(linalg_ops.Svd)
+def get_svd_vmap_rule(prim, axis_size):
+    """VmapRule for 'Svd' operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+        compute_uv = True
+    else:
+        compute_uv = prim.compute_uv
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        s, u, v = prim(x)
+        if compute_uv:
+            return (s, 0), (u, 0), (v, 0)
+        return (s, 0), (u, None), (v, None)
 
     return vmap_rule
 
