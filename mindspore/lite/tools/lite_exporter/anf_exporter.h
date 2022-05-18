@@ -29,7 +29,6 @@
 #include "ir/func_graph.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "tools/converter/converter_context.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/node_util.h"
 

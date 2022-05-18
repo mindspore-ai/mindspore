@@ -71,6 +71,8 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/*.cc
         )
 
+list(REMOVE_ITEM CONVERTER_SRC cxx_api/converter.cc)
+
 if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
     add_subdirectory(adapter/dpico)
 endif()
