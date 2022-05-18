@@ -1632,11 +1632,22 @@ class Cell(Cell_):
         self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
 
-    def flatten_weights(self):
+    def flatten_weights(self, fusion_size=0):
         """
         Reset data for weight parameters so that they are using contiguous memory chunks grouped by data type.
+
+        Note:
+            By default, parameters with same data type will using a single contiguous memory chunk. but for
+            some models with huge number of parameters, splitting a large memory chunk into several smaller
+            memory chunks has the potential for performance gains, if this is the case, we can use 'fusion_size'
+            to limit the maximum memory chunk size.
+
+        Args:
+            fusion_size (int): Maximum memory chunk size in bytes, 0 for unlimited. Default: 0.
         """
-        Tensor._flatten_tensors(self.trainable_params())  # pylint: disable=W0212
+        if fusion_size < 0:
+            raise ValueError(f"Negative 'fusion_size' {fusion_size} is invalid.")
+        Tensor._flatten_tensors(self.trainable_params(), fusion_size)  # pylint: disable=W0212
 
     def _run_forward_pre_hook(self, inputs):
         """
@@ -2126,7 +2137,7 @@ class Cell(Cell_):
         current_stage = rank_id // per_stage_devices
         params = []
         for param in self.trainable_params():
-            if not param._pipeline_stage_list:
+            if not param._pipeline_stage_list:  # pylint: disable=W0212
                 raise RuntimeError("For 'infer_param_pipeline_stage', the parameter {} does not belong to any stage, "
                                    "please check whether the cell where the param locates has been set "
                                    "'pipeline_stage'. Otherwise, the parameter should use 'add_pipeline_stage' "

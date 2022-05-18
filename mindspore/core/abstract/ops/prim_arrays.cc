@@ -1118,6 +1118,62 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
   return ret;
 }
 
+// Helper struct for FlattenConcat infer.
+struct ChunkInfo {
+  size_t bytes{0};  // number of bytes.
+  size_t size{0};   // number of elements.
+};
+
+using ChunkMap = std::map<TypeId, std::vector<ChunkInfo>>;
+
+// Group inputs by data type and fusion size.
+static ChunkMap GroupingAbstractTensors(const AbstractBasePtrList &elements, size_t fusion_size,
+                                        const std::string &prim_name) {
+  ChunkMap chunk_map;
+  for (auto &element : elements) {
+    auto abs_tensor = dyn_cast<abstract::AbstractTensor>(element);
+    if (abs_tensor == nullptr) {
+      MS_LOG(EXCEPTION) << "The input element for '" << prim_name << "' should be Tensor, but got "
+                        << element->type_name() << ".";
+    }
+    // Calculate data size (number of elements) by shape.
+    auto base_shape = abs_tensor->BuildShape();
+    MS_EXCEPTION_IF_NULL(base_shape);
+    auto shape = base_shape->cast<ShapePtr>();
+    if (shape == nullptr) {
+      MS_LOG(EXCEPTION) << "The input tensors for '" << prim_name << "' should have shape, but got "
+                        << base_shape->ToString() << ".";
+    }
+    auto data_size = SizeOf(shape->shape());
+    if (data_size == 0) {
+      MS_LOG(EXCEPTION) << "The input tensors for '" << prim_name << "'should have static shape, but got "
+                        << shape->ToString() << ".";
+    }
+    // Find data type from the AbstractTensor.
+    const auto &element_abs = abs_tensor->element();
+    MS_EXCEPTION_IF_NULL(element_abs);
+    auto dtype = element_abs->BuildType();
+    MS_EXCEPTION_IF_NULL(dtype);
+    const auto type_id = dtype->type_id();
+    const auto data_bytes = data_size * abstract::TypeIdSize(type_id);
+    if (fusion_size != 0 && fusion_size < data_bytes) {
+      MS_LOG(EXCEPTION) << "Fusion size " << fusion_size << " is too small for a tensor size " << data_bytes << ".";
+    }
+    // Group them by data type and fusion size.
+    auto &chunks = chunk_map[type_id];
+    if (chunks.empty()) {
+      (void)chunks.emplace_back();
+    }
+    if (fusion_size != 0 && chunks.back().bytes + data_bytes > fusion_size) {
+      (void)chunks.emplace_back();
+    }
+    auto &chunk = chunks.back();
+    chunk.bytes += data_bytes;
+    chunk.size += data_size;
+  }
+  return chunk_map;
+}
+
 AbstractBasePtr InferImplFlattenConcat(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list) {
   CheckArgsSize(primitive->name(), args_spec_list, 1);
@@ -1126,42 +1182,20 @@ AbstractBasePtr InferImplFlattenConcat(const AnalysisEnginePtr &, const Primitiv
     MS_LOG(EXCEPTION) << "The input for '" << primitive->name() << "' should be tuple or list, but got "
                       << args_spec_list[0]->type_name();
   }
-  // Group inputs by data type and calculate their chunk sizes.
-  std::map<TypeId, size_t> chunks;
-  for (auto &element : seq->elements()) {
-    auto abs_tensor = dyn_cast<abstract::AbstractTensor>(element);
-    if (abs_tensor == nullptr) {
-      MS_LOG(EXCEPTION) << "The input element for '" << primitive->name() << "' should be Tensor, but got "
-                        << element->type_name();
-    }
-    // Calculate data size (number of elements) by shape.
-    auto base_shape = abs_tensor->BuildShape();
-    MS_EXCEPTION_IF_NULL(base_shape);
-    auto shape = base_shape->cast<ShapePtr>();
-    if (shape == nullptr) {
-      MS_LOG(EXCEPTION) << "The input tensors for '" << primitive->name() << "' should have shape, but got "
-                        << base_shape->ToString();
-    }
-    auto data_size = SizeOf(shape->shape());
-    if (data_size == 0) {
-      MS_LOG(EXCEPTION) << "The input tensors for '" << primitive->name() << "'should have static shape, but got "
-                        << shape->ToString();
-    }
-    // Find data type from the AbstractTensor.
-    const auto &element_abs = abs_tensor->element();
-    MS_EXCEPTION_IF_NULL(element_abs);
-    auto dtype = element_abs->BuildType();
-    MS_EXCEPTION_IF_NULL(dtype);
-    // Group them by data type.
-    chunks[dtype->type_id()] += data_size;
-  }
-  // Make result AbstractTuple.
+  // Get fusion size from primitive attribute.
+  const auto fusion_size_attr = primitive->GetAttr("fusion_size");
+  const size_t fusion_size = static_cast<size_t>(fusion_size_attr != nullptr ? GetValue<int64_t>(fusion_size_attr) : 0);
+  // Group inputs by data type and fusion size.
+  auto chunk_map = GroupingAbstractTensors(seq->elements(), fusion_size, primitive->name());
+  // Make result AbstractTuple according to the grouping result.
   AbstractBasePtrList tuple_element;
-  tuple_element.reserve(chunks.size());
-  for (auto &chunk : chunks) {
-    ShapeVector shape_vec{static_cast<int64_t>(chunk.second)};
-    auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(chunk.first), shape_vec);
-    (void)tuple_element.emplace_back(abs);
+  for (auto &entry : chunk_map) {
+    auto dtype = TypeIdToType(entry.first);
+    for (auto &chunk : entry.second) {
+      ShapeVector shape_vec{static_cast<int64_t>(chunk.size)};
+      auto abs = std::make_shared<abstract::AbstractTensor>(dtype, shape_vec);
+      (void)tuple_element.emplace_back(abs);
+    }
   }
   return std::make_shared<abstract::AbstractTuple>(std::move(tuple_element));
 }

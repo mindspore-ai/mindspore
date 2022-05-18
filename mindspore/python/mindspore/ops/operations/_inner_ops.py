@@ -1776,7 +1776,6 @@ class PsROIPooling(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, pooled_height, pooled_width, num_rois, spatial_scale, out_dim, group_size):
-
         """Initialize PsROIPooling"""
         validator.check_value_type("pooled_height", pooled_height, [int], self.name)
         validator.check_value_type("pooled_width", pooled_width, [int], self.name)
@@ -2007,6 +2006,9 @@ class FlattenConcat(Primitive):
     """
     Flatten input tensors and concatenate them into several chunk tensors grouped by data types.
 
+    Args:
+        fusion_size (int): Maximum memory chunk size in bytes, 0 for unlimited. Default: 0.
+
     Inputs:
         - **tensors** (tuple[Tensor], list[Tensor]) - The input Tensors to be flattened and concatenated.
 
@@ -2031,8 +2033,11 @@ class FlattenConcat(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, fusion_size=0):
         """Initialize FlattenConcat"""
+        validator.check_non_negative_int(fusion_size, 'fusion_size', self.name)
+        self.fusion_size = fusion_size
+        self.add_prim_attr('fusion_size', fusion_size)
 
 
 class KMeansCentroids(PrimitiveWithInfer):
