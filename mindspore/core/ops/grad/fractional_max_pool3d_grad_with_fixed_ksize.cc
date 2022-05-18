@@ -56,7 +56,8 @@ abstract::ShapePtr FractionalMaxPool3DGradWithFixedKsizeInferShape(const Primiti
   auto op_name = primitive->name();
   auto data_format = GetValue<std::string>(primitive->GetAttr(kFormat));
   if (data_format != "NCDHW" && data_format != "NDHWC") {
-    MS_EXCEPTION(ValueError) << "data_format is neither NCDHW nor NDHWC." << data_format;
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', data_format is neither NCDHW nor NDHWC." << data_format
+                             << ".";
   }
   (void)CheckAndConvertUtils::CheckInteger("input_number", SizeToLong(input_args.size()), kEqual, kInputsSize, op_name);
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, kInputIndex0);
@@ -69,13 +70,18 @@ abstract::ShapePtr FractionalMaxPool3DGradWithFixedKsizeInferShape(const Primiti
   auto out_backprop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
   auto argmax_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape];
   if (origin_input_shape.size() != DIM_SIZE4 && origin_input_shape.size() != DIM_SIZE5) {
-    MS_EXCEPTION(TypeError) << "input_shape of FractionalMaxPool3DWithFixedkernel_size must be 4 or 5.";
+    MS_EXCEPTION(TypeError) << "For '" << op_name
+                            << "', the dimension of 'origin_input' must be equal to 4 or 5, but got "
+                            << std::to_string(origin_input_shape.size()) << ".";
   }
   if (out_backprop_shape.size() != DIM_SIZE4 && out_backprop_shape.size() != DIM_SIZE5) {
-    MS_EXCEPTION(TypeError) << "grad_shape of FractionalMaxPool3DWithFixedkernel_size must be 4 or 5.";
+    MS_EXCEPTION(TypeError) << "For '" << op_name
+                            << "', the dimension of 'out_backprop' must be equal to 4 or 5, but got "
+                            << std::to_string(out_backprop_shape.size()) << ".";
   }
   if (argmax_shape.size() != DIM_SIZE4 && argmax_shape.size() != DIM_SIZE5) {
-    MS_EXCEPTION(TypeError) << "argmax_shape of FractionalMaxPool3DWithFixedkernel_size must be 4 or 5.";
+    MS_EXCEPTION(TypeError) << "For '" << op_name << "', the dimension of 'argmax' must be equal to 4 or 5, but got "
+                            << std::to_string(argmax_shape.size()) << ".";
   }
   int64_t n_dim_;
   int64_t c_dim_;
@@ -129,7 +135,7 @@ abstract::ShapePtr FractionalMaxPool3DGradWithFixedKsizeInferShape(const Primiti
     }
   }
   if (std::any_of(output_size.begin(), output_size.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
-    MS_LOG(EXCEPTION) << "output_size is not valid.";
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', output_size is not valid.";
   }
   return std::make_shared<abstract::Shape>(output_size);
 }

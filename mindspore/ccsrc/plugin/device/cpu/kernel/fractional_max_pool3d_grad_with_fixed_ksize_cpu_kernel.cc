@@ -102,30 +102,38 @@ void FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::InitKernel(const CNodePt
     outputW_ = out_backprop_shape_[w_dim_];
   }
   if (!(input_dims == kDimSize4 || input_dims == kDimSize5)) {
-    MS_EXCEPTION(TypeError) << "Input data dimensions must be equal to 4 or 5, but got " << input_dims;
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_
+                            << "', the dimension of 'input' must be equal to 4 or 5, but got " << input_dims << ".";
   }
   for (size_t i = 0; i < input_dims; i++) {
     if (input_shape_[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "FractionalMaxPool3DGradWithFixedKsize: expected the "
-                                  "input dimension cannot be empty";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                               << "', expected 'input' have non-empty spatial dimensions, but 'input' has sizes "
+                               << input_shape_[i] << " with dimension " << i << " being empty.";
     }
   }
   if (!(out_backprop_dims == kDimSize4 || out_backprop_dims == kDimSize5)) {
-    MS_EXCEPTION(TypeError) << "out_backprop data dimensions must be equal to 4 or 5, but got " << out_backprop_dims;
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_
+                            << "', the dimension of 'out_backprop' must be equal to 4 or 5, but got "
+                            << out_backprop_dims << ".";
   }
   for (size_t i = 0; i < out_backprop_dims; i++) {
     if (out_backprop_shape_[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "FractionalMaxPool3DGradWithFixedKsize: expected the "
-                                  "out_backprop dimension cannot be empty";
+      MS_EXCEPTION(ValueError)
+        << "For '" << kernel_name_
+        << "', expected 'out_backprop' have non-empty spatial dimensions, but 'out_backprop' has sizes "
+        << out_backprop_shape_[i] << " with dimension " << i << " being empty.";
     }
   }
   if (!(argmax_dims == kDimSize4 || argmax_dims == kDimSize5)) {
-    MS_EXCEPTION(TypeError) << "argmax data dimensions must be equal to 4 or 5, but got " << argmax_dims;
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_
+                            << "', the dimension of 'argmax' must be equal to 4 or 5, but got " << argmax_dims << ".";
   }
   for (size_t i = 0; i < argmax_dims; i++) {
     if (argmax_shape_[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "FractionalMaxPool3DGradWithFixedKsize: expected the "
-                                  "argmax dimension cannot be empty";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                               << "', expected 'argmax' have non-empty spatial dimensions, but 'argmax' has sizes "
+                               << argmax_shape_[i] << " with dimension " << i << " being empty.";
     }
   }
 }
@@ -138,7 +146,7 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(cons
   auto output_data = reinterpret_cast<backprop_t *>(outputs[0]->addr);
   size_t output_size = outputs[0]->size;
   if (memset_s(output_data, output_size, 0, output_size) != EOK) {
-    MS_LOG(EXCEPTION) << "Output buffer memset failed.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
   if (input_shape_.size() == kDimSize4) {
     auto shard_fractional_max_pool3d_grad_with_fixed_ksize = [&](size_t start, size_t end) {
@@ -153,8 +161,7 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(cons
               argmax_t outputIndex = t * outputH_ * outputW_ + h * outputW_ + w;
               argmax_t index = argmaxForPlane[outputIndex];
               if (index < 0 && index >= inputD_ * inputH_ * inputW_) {
-                MS_LOG(EXCEPTION) << "FractionalMaxPool3DGradWithFixedKsize "
-                                     "index value is illegal.";
+                MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', index value is illegal.";
               }
               outputForPlane[index] += outbackpropForPlane[outputIndex];
             }
@@ -180,8 +187,7 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::GradComputeTemplate(cons
                 argmax_t outputIndex = t * outputH_ * outputW_ + h * outputW_ + w;
                 argmax_t index = argmaxForPlane[outputIndex];
                 if (index < 0 && index >= inputD_ * inputH_ * inputW_) {
-                  MS_LOG(EXCEPTION) << "FractionalMaxPool3DGradWithFixedKsize "
-                                       "index value is illegal.";
+                  MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', index value is illegal.";
                 }
                 outputForPlane[index] += outbackpropForPlane[outputIndex];
               }
@@ -205,7 +211,8 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(
     case kNumberTypeInt64:
       return GradComputeTemplate<backprop_t, int64_t>(inputs, outputs);
     default:
-      MS_EXCEPTION(TypeError) << "argmax_type" << argmax_type_ << "not support, must be in [{DT_INT32, DT_INT64}].";
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the type of 'argmax'" << argmax_type_
+                              << "not support, must be in [{DT_INT32, DT_INT64}].";
       return false;
   }
 }
@@ -227,7 +234,7 @@ bool FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::Launch(const std::vector
     case kNumberTypeInt64:
       return DoComputeWithArgmaxType<int64_t>(inputs, outputs, argmax_type_);
     default:
-      MS_EXCEPTION(TypeError) << "out_backprop_type" << out_backprop_type_
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the type of 'out_backprop'" << out_backprop_type_
                               << "not support, must be in [{DT_FLOAT16, DT_FLOAT, DT_DOUBLE, DT_INT32, DT_INT64}].";
   }
   return true;
