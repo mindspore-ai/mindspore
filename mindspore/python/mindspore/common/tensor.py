@@ -3138,18 +3138,16 @@ class RowTensor(RowTensor_):
 
     Examples:
         >>> import mindspore as ms
-        >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, RowTensor
         >>> indices = Tensor([0])
         >>> values = Tensor([[1, 2]], dtype=ms.float32)
-        >>> out = Net((3, 2))(indices, values)
         >>> shape = (3, 2)
         >>> x = RowTensor(indices, values, shape)
         >>> print(x.values)
         [[1. 2.]]
         >>> print(x.indices)
         [0]
-        >>> print(x.shape)
+        >>> print(x.dense_shape)
         (3, 2)
     """
 

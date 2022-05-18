@@ -144,6 +144,9 @@ class OptimizeIRPassLib {
   // RowTensor Eliminate
   SubstitutionPtr row_tensor_eliminate_;
 
+  // MakeRowTensor Subsititution
+  SubstitutionPtr make_sparse_tensor_to_make_tuple_;
+
   // RowTensorAddZerosLike Eliminate
   SubstitutionPtr row_tensor_add_zeros_like_;
 

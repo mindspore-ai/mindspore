@@ -47,8 +47,8 @@ class CSRReduceSum(PrimitiveWithInfer):
         ...     def construct(self, indptr, indices, values, dense_shape, axis):
         ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         ...         return self.op(csr_tensor, axis)
-        >>> indptr = Tensor([0, 1, 2])
-        >>> indices = Tensor([0, 1])
+        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> indices = Tensor([0, 1], dtype=mstype.int32)
         >>> values = Tensor([2, 1], dtype=mstype.float32)
         >>> dense_shape = (2, 4)
         >>> out = Net()(indptr, indices, values, dense_shape, 1)
@@ -95,8 +95,8 @@ class CSRMV(PrimitiveWithInfer):
         ...     def construct(self, indptr, indices, values, dense_shape, dense):
         ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         ...         return self.op(csr_tensor, dense)
-        >>> indptr = Tensor([0, 1, 2])
-        >>> indices = Tensor([0, 1])
+        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> indices = Tensor([0, 1], dtype=mstype.int32)
         >>> values = Tensor([2, 1], dtype=mstype.float32)
         >>> dense_shape = (2, 4)
         >>> dense = Tensor([[1], [1], [1], [1]], dtype=mstype.float32)
@@ -148,8 +148,8 @@ class CSRMul(PrimitiveWithInfer):
         ...     def construct(self, indptr, indices, values, dense_shape, dense):
         ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
         ...         return self.op(csr_tensor, dense)
-        >>> indptr = Tensor([0, 1, 2])
-        >>> indices = Tensor([0, 1])
+        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> indices = Tensor([0, 1], dtype=mstype.int32)
         >>> values = Tensor([2, 1], dtype=mstype.float32)
         >>> dense_shape = (2, 4)
         >>> dense = Tensor([[1., 1, 1, 1], [1, 1, 1, 1]], dtype=mstype.float32)
@@ -197,8 +197,8 @@ class CSRGather(PrimitiveWithInfer):
         ...
         ...     def construct(self, indptr, indices, dense, sparse_shape):
         ...         return self.op(indptr, indices, dense, sparse_shape)
-        >>> indptr = Tensor([0, 1, 2])
-        >>> indices = Tensor([0, 1])
+        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> indices = Tensor([0, 1], dtype=mstype.int32)
         >>> sparse_shape = (2, 4)
         >>> dense = Tensor([[1., 1, 1, 1], [1, 1, 1, 1]], dtype=mstype.float32)
         >>> out = Net()(indptr, indices, dense, sparse_shape)
@@ -241,7 +241,7 @@ class CSR2COO(PrimitiveWithInfer):
         ...
         ...     def construct(self, indptr, nnz):
         ...         return self.op(indptr, nnz)
-        >>> indptr = Tensor([0, 1, 2])
+        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
         >>> out = Net()(indptr, 2)
         >>> print(out)
         [1 1]

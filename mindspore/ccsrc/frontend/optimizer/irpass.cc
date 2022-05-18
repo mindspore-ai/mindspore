@@ -46,6 +46,7 @@
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass/row_tensor_eliminate.h"
 #include "frontend/optimizer/irpass/sparse_tensor_eliminate.h"
+#include "frontend/optimizer/irpass/make_sparse_tensor_to_make_tuple.h"
 #include "frontend/optimizer/irpass/stack_unstack_eliminate.h"
 #include "frontend/optimizer/irpass/switch_or_switch_layer_defer_inline.h"
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
@@ -255,6 +256,11 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   sparse_tensor_eliminate_ = MakeSubstitution(
     std::make_shared<SparseTensorEliminater>(), "sparse_tensor_eliminate",
     {prim::kPrimCOOTensorGetIndices, prim::kPrimCOOTensorGetValues, prim::kPrimCOOTensorGetDenseShape});
+
+  // MakeSparseTensor to MakeTuple
+  make_sparse_tensor_to_make_tuple_ =
+    MakeSubstitution(std::make_shared<MakeSparseTensorToMakeTuple>(), "make_sparse_tensor_to_make_tuple",
+                     {prim::kPrimMakeRowTensor, prim::kPrimMakeCOOTensor, prim::kPrimMakeCSRTensor});
 
   // Value_Based Eliminate
   value_based_eliminate_ = MakeSubstitution(std::make_shared<ValueBasedEliminate>(), "value_based_eliminate",
