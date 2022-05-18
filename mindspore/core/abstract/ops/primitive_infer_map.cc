@@ -274,6 +274,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimFusedPullWeight, R{nullptr, nullptr, true}},
     // RL Ops
     {prim::kPrimTensorArrayStack, R{InferImplTensorArrayStack, nullptr, true}},
+    {prim::kPrimKMeansCentroids, R{InferImplKMeansCentroids, nullptr, true}},
   };
   return prim_eval_implement_map;
 }

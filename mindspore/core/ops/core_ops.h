@@ -1050,6 +1050,7 @@ GVAR_DEF(PrimitivePtr, kPrimTensorArrayStack, std::make_shared<Primitive>("Tenso
 GVAR_DEF(PrimitivePtr, kPrimTensorArray, std::make_shared<Primitive>("TensorArray"));
 GVAR_DEF(PrimitivePtr, kPrimTensorArrayWrite, std::make_shared<Primitive>("TensorArrayWrite"));
 GVAR_DEF(PrimitivePtr, kPrimTensorArrayGather, std::make_shared<Primitive>("TensorArrayGather"));
+GVAR_DEF(PrimitivePtr, kPrimKMeansCentroids, std::make_shared<Primitive>("KMeansCentroids"));
 
 class DoSignaturePrimitive : public Primitive {
  public:
