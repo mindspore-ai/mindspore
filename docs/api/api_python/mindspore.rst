@@ -145,6 +145,7 @@ mindspore
 
     mindspore.ms_function
     mindspore.ms_class
+    mindspore.mutable
 
 日志
 ----
