@@ -28,6 +28,7 @@ from ..operations.array_ops import MatrixSetDiagV3
 from ..operations.array_ops import Triu
 from ..operations.array_ops import IdentityN
 from ..operations.array_ops import CheckNumerics
+from ..operations.array_ops import ConjugateTranspose
 from ..operations.array_ops import SegmentMax
 from ..operations.array_ops import SegmentMin
 from ..operations.array_ops import SegmentSum
@@ -213,6 +214,18 @@ def get_bprop_coalesce(self):
 
     def bprop(x_indices, x_values, x_shape, out, dout):
         return dout
+
+    return bprop
+
+
+@bprop_getters.register(ConjugateTranspose)
+def get_bprop_conjugate_transpose(self):
+    """Generate bprop for ConjugateTranspose"""
+    conjugate_transpose = ConjugateTranspose()
+    invert_permutation = P.InvertPermutation()
+
+    def bprop(x, perm, out, dout):
+        return conjugate_transpose(dout, invert_permutation(perm)), zeros_like(perm)
 
     return bprop
 
