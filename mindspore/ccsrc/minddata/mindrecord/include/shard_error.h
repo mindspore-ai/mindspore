@@ -44,11 +44,23 @@ namespace mindrecord {
     }                                                 \
   } while (false)
 
-#define CHECK_FAIL_RETURN_UNEXPECTED_MR(_condition, _e)                                      \
-  do {                                                                                       \
-    if (!(_condition)) {                                                                     \
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, MINDRECORD_SRC_FILE_NAME, _e); \
-    }                                                                                        \
+#define STATUS_ERROR_MR(_error_code, _e) mindspore::Status(_error_code, __LINE__, MINDRECORD_SRC_FILE_NAME, _e)
+
+#define RETURN_STATUS_ERROR_MR(_error_code, _e) \
+  do {                                          \
+    return STATUS_ERROR_MR(_error_code, _e);    \
+  } while (false)
+
+#define RETURN_STATUS_UNEXPECTED_MR(_e)                         \
+  do {                                                          \
+    RETURN_STATUS_ERROR_MR(StatusCode::kMDUnexpectedError, _e); \
+  } while (false)
+
+#define CHECK_FAIL_RETURN_UNEXPECTED_MR(_condition, _e) \
+  do {                                                  \
+    if (!(_condition)) {                                \
+      RETURN_STATUS_UNEXPECTED_MR(_e);                  \
+    }                                                   \
   } while (false)
 
 #define RETURN_UNEXPECTED_IF_NULL_MR(_ptr)                                      \
@@ -59,16 +71,11 @@ namespace mindrecord {
     }                                                                           \
   } while (false)
 
-#define RETURN_STATUS_UNEXPECTED_MR(_e)                                                    \
-  do {                                                                                     \
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, MINDRECORD_SRC_FILE_NAME, _e); \
-  } while (false)
-
-#define CHECK_FAIL_RETURN_SYNTAX_ERROR_MR(_condition, _e)                                \
-  do {                                                                                   \
-    if (!(_condition)) {                                                                 \
-      return Status(StatusCode::kMDSyntaxError, __LINE__, MINDRECORD_SRC_FILE_NAME, _e); \
-    }                                                                                    \
+#define CHECK_FAIL_RETURN_SYNTAX_ERROR_MR(_condition, _e)     \
+  do {                                                        \
+    if (!(_condition)) {                                      \
+      RETURN_STATUS_ERROR_MR(StatusCode::kMDSyntaxError, _e); \
+    }                                                         \
   } while (false)
 
 enum MSRStatus {

@@ -137,7 +137,7 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
     } else {
       // If asked to spill to disk instead but there is no storage set up, simply return no memory
       // instead.
-      RETURN_STATUS_OOM("No enough storage for cache server to cache data");
+      RETURN_STATUS_OOM("No enough storage for cache server to cache data.");
     }
   } else {
     return rc;

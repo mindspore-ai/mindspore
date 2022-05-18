@@ -17,14 +17,10 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_COMMON_SHARD_UTILS_H_
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_COMMON_SHARD_UTILS_H_
 
-#if defined(_WIN32) || defined(_WIN64)
 #ifndef _CRT_RAND_S
 #define _CRT_RAND_S
 #endif
 #include <stdlib.h>
-#else
-#include <stdlib.h>
-#endif
 #include <libgen.h>
 #include <limits.h>
 #include <sys/stat.h>

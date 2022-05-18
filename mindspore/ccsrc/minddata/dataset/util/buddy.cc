@@ -37,10 +37,10 @@ Status BuddySpace::Init() {
   const int kLvlMin = 3;
   const int kLvlMax = 18;
   if (log_min_ < 0) {
-    RETURN_STATUS_UNEXPECTED("log_min must be positive : " + std::to_string(log_min_));
+    RETURN_STATUS_UNEXPECTED("log_min must be positive, but got: " + std::to_string(log_min_));
   }
   if (num_lvl_ < kLvlMin || num_lvl_ > kLvlMax) {
-    RETURN_STATUS_UNEXPECTED("num_lvl must be between 3 and 18 : " + std::to_string(num_lvl_));
+    RETURN_STATUS_UNEXPECTED("num_lvl must be between 3 and 18, but got: " + std::to_string(num_lvl_));
   }
   min_ = BitLeftShift(1, log_min_);
   max_ = BitLeftShift(1, log_min_ + num_lvl_ - 1);
