@@ -297,6 +297,52 @@ def get_tensor_shape_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.OneHot)
+def get_one_hot_vmap_rule(prim, axis_size):
+    """VmapRule for `OneHot` operation."""
+    if isinstance(prim, str):
+        prim_name = prim
+        prim = Primitive(prim)
+    else:
+        prim_name = prim.name
+
+    axis = prim.axis
+
+    def vmap_rule(indices_bdim, depth_bdim, on_value_bdim, off_value_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, indices_bdim, depth_bdim, on_value_bdim, off_value_bdim)
+        if is_all_none:
+            return result
+
+        indices, indices_dim = indices_bdim
+        depth, depth_dim = depth_bdim
+        on_value, on_value_dim = on_value_bdim
+        off_value, off_value_dim = off_value_bdim
+
+        if depth_dim is not None:
+            _raise_value_error(
+                "The source axis of `depth` in {} must be None, but got {}.".format(prim_name, depth_dim))
+
+        if on_value_dim is not None:
+            _raise_value_error(
+                "The source axis of `on_value` in {} must be None, but got {}.".format(prim_name, on_value_dim))
+
+        if off_value_dim is not None:
+            _raise_value_error(
+                "The source axis of `off_value` in {} must be None, but got {}.".format(prim_name, off_value_dim))
+        ndim = F.rank(indices)
+        new_axis = axis
+        if axis >= 0 and indices_dim <= axis:
+            new_axis = axis + 1
+        elif indices_dim == (ndim-1):
+            if axis in (-1, (ndim-1)):
+                new_axis = ndim-1
+        out = P.OneHot(new_axis)(indices, depth, on_value, off_value)
+
+        return (out, indices_dim)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.Ger)
 def get_ger_vmap_rule(prim, axis_size):
     """VmapRule for `Ger`."""

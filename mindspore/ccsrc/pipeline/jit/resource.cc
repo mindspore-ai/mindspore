@@ -229,6 +229,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"repeat", std::string("repeat")},                                  // C.repeat_elements
        {"cdist", std::string("cdist")},                                    // P.cdist
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
+       {"one_hot", std::string("one_hot")},                                // P.OneHot
      }},
     {kObjectTypeRowTensorType,
      {

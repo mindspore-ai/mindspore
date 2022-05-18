@@ -1386,10 +1386,10 @@ class Tensor(Tensor_):
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 
@@ -2761,6 +2761,54 @@ class Tensor(Tensor_):
          [[[4.]]]]
         """
         return tensor_operator_registry.get('space_to_batch_nd')(block_shape, paddings)(self)
+
+    def one_hot(self, depth, on_value, off_value, axis=-1):
+        r"""
+        Computes a one-hot tensor.
+
+        The locations represented by self in `self` take value `on_value`, while all
+        other locations take value `off_value`.
+
+        Note:
+            If self is rank `N`, the output will have rank `N+1`. The new axis is created at dimension `axis`.
+
+        Args:
+            depth(int): A scalar defining the depth of the one-hot dimension.
+            on_value(Tensor): A value to fill in output when `self[j] = i`.
+                Support uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64,
+                bool, complex64, complex128.
+            off_value(Tensor): A value to fill in output when `self[j] != i`.
+                Has the same data type as `on_value`.
+            axis(int): Position to insert the value. e.g. If shape of `self` is :math:`(N, C)`, and `axis` is -1,
+                the output shape will be :math:`(N, C, D)`, If `axis` is 0, the output shape will be :
+                math:`(D, N, C)`. Default: -1.
+
+        Returns:
+            Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
+
+        Raises:
+            TypeError: If `axis` or `depth` is not an int.
+            TypeError: If dtype of `self` is not uint8, int32 or int64.
+            TypeError: If `self`, `on_value` or `off_value` is not a Tensor.
+            ValueError: If `axis` is not in range [-1, ndim].
+            ValueError: If `depth` is less than 0.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> indices = Tensor(np.array([0, 1, 2]), mindspore.int32)
+            >>> depth, on_value, off_value = 3, Tensor(1.0, mindspore.float32), Tensor(0.0, mindspore.float32)
+            >>> output = indices.one_hot(depth, on_value, off_value)
+            >>> print(output)
+            [[1. 0. 0.]
+            [0. 1. 0.]
+            [0. 0. 1.]]
+        """
+        self._init_check()
+        validator.check_is_int(axis, 'axis')
+        validator.check_int_range(axis, - 1, self.ndim, Rel.INC_BOTH, 'axis')
+        return tensor_operator_registry.get('one_hot')(axis)(self, depth, on_value, off_value)
 
     def var(self, axis=None, ddof=0, keepdims=False):
         """

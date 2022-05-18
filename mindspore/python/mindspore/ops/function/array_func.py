@@ -148,6 +148,54 @@ def matrix_band_part(x, lower, upper):
     return matrix_band_part_(x, lower, upper)
 
 
+def one_hot(indices, depth, on_value, off_value, axis=-1):
+    r"""
+    Computes a one-hot tensor.
+
+    The locations represented by indices in `indices` take value `on_value`, while all
+    other locations take value `off_value`.
+
+    Note:
+        If the input indices is rank `N`, the output will have rank `N+1`. The new axis is created at dimension `axis`.
+
+    Args:
+        indices(Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
+            Data type must be uint8, int32 or int64.
+        depth(int): A scalar defining the depth of the one-hot dimension.
+        on_value(Tensor): A value to fill in output when `indices[j] = i`.
+            Support uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64,
+            bool, complex64, complex128.
+        off_value(Tensor): A value to fill in output when `indices[j] != i`.
+            Has the same data type as `on_value`.
+        axis(int): Position to insert the value. e.g. If shape of `self` is :math:`(N, C)`, and `axis` is -1,
+            the output shape will be :math:`(N, C, D)`, If `axis` is 0, the output shape will be :math:`(D, N, C)`.
+            Default: -1.
+
+    Returns:
+        Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
+
+    Raises:
+        TypeError: If `axis` or `depth` is not an int.
+        TypeError: If dtype of `indices` is not uint8, int32 or int64.
+        TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
+        ValueError: If `axis` is not in range [-1, ndim].
+        ValueError: If `depth` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> indices = Tensor(np.array([0, 1, 2]), mindspore.int32)
+        >>> depth, on_value, off_value = 3, Tensor(1.0, mindspore.float32), Tensor(0.0, mindspore.float32)
+        >>> output = ops.one_hot(indices, depth, on_value, off_value, axis=-1)
+        >>> print(output)
+        [[1. 0. 0.]
+         [0. 1. 0.]
+         [0. 0. 1.]]
+    """
+    return P.OneHot(axis)(indices, depth, on_value, off_value)
+
+
 def fill(type, shape, value):
     """
     Create a Tensor of the specified shape and fill it with the specified value.
@@ -1774,6 +1822,7 @@ __all__ = [
     'gather',
     'gather_d',
     'gather_nd',
+    'one_hot',
     'masked_fill',
     'tensor_scatter_div',
     'scatter_max',

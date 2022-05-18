@@ -585,6 +585,31 @@ mindspore.Tensor
 
         Tensor，维度为2，类型为int64。
 
+    .. py:method:: one_hot(depth, on_value, off_value, axis=-1)
+
+        生成一个新的one-hot类型的Tensor。 输入Tensor中的值代表位置索引，对应位置取值为 `on_value` ，而在其他所有位置取值为 `off_value` 。
+
+        .. note::
+            如果输入索引为秩 `N` ，则输出为秩 `N+1` 。新轴在 `axis` 处创建。
+
+        **参数：**
+
+        - **depth** (int) - 输入的Scalar，定义one-hot的深度。
+        - **on_value** (Tensor) - 在输入Tensor的值表示的位置索引处，用来填充输出的值。数据类型为float16或float32。
+        - **off_value** (Tensor) - 在除了输入Tensor的值表示的位置索引处之外的位置，用来填充输出的值。数据类型与 `on_value` 的相同。
+        - **axis** (int) - 指定one-hot的计算维度。例如，如果 输入索引Tensor的shape为 :math:`(N, C)` ，`axis` 为-1，
+                           则输出shape为 :math:`(N, C, D)` ，如果 `axis` 为0，则输出shape为 :math:`(D, N, C)` 。默认值：-1。
+
+        **返回：**
+
+        Tensor，one-hot类型的Tensor。shape为 :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)` 。
+
+        **异常：**
+
+        - **TypeError** - `axis` 或 `depth` 不是int。
+        - **ValueError** - `axis` 不在[-1，ndim]范围内。
+        - **ValueError** - `depth` 小于0。
+
     .. py:method:: pow(power)
 
         计算Tensor中每个元素的 `power` 次幂。
