@@ -21,7 +21,7 @@ import sys
 import pytest
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_train_lenet_by_data_parallel():
