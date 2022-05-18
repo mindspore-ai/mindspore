@@ -43,8 +43,8 @@ class Model:
     Examples:
         >>> import mindspore_lite as mslite
         >>> model = mslite.Model()
-        >>> context.append_device_info(mslite.CPUDeviceInfo())
-        >>> model.build_from_file("mnist.tflite.ms", mslite.ModelType.MINDIR_LITE, context)
+        >>> print(model)
+        model_path: .
     """
 
     def __init__(self):
@@ -70,14 +70,20 @@ class Model:
             RuntimeError: build model failed.
 
         Examples:
-            >>> model.build_from_file("mnist.tflite.ms", mslite.ModelType.MINDIR_LITE, context)
+            >>> import mindspore_lite as mslite
+            >>> model = mslite.Model()
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
+            >>> print(model)
+            model_path: mobilenetv2.ms.
         """
         check_isinstance("model_path", model_path, str)
         check_isinstance("model_type", model_type, ModelType)
         check_isinstance("context", context, Context)
         if model_path != "":
             if not os.path.exists(model_path):
-                raise RuntimeError(f"build_from_file failed! model_path is not exist!")
+                raise RuntimeError(f"build_from_file failed, model_path does not exist!")
 
         self.model_path_ = model_path
         model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
@@ -100,8 +106,17 @@ class Model:
             RuntimeError: resize model failed.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> model = mslite.Model()
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
             >>> inputs = model.get_inputs()
-            >>> model.resize(inputs, [[1, 224, 224, 3]])
+            >>> print("Before resize, the first input shape: ", inputs[0].get_shape())
+            Before resize, the first input shape: [1, 224, 224, 3]
+            >>> model.resize(inputs, [[1, 112, 112, 3]])
+            >>> print("After resize, the first input shape: ", inputs[0].get_shape())
+            After resize, the first input shape: [1, 112, 112, 3]
         """
         if not isinstance(inputs, list):
             raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
@@ -121,11 +136,11 @@ class Model:
                     raise TypeError(f"dims element's element must be int, but got "
                                     f"{type(dim)} at {i}th dims element's {j}th element.")
         if len(inputs) != len(dims):
-            raise ValueError(f"inputs's size does not match dims's size, but got "
+            raise ValueError(f"inputs' size does not match dims's size, but got "
                              f"inputs: {len(inputs)} and dims: {len(dims)}.")
         for i, element in enumerate(inputs):
             if len(element.get_shape()) != len(dims[i]):
-                raise ValueError(f"one of inputs's size does not match one of dims's size, but got "
+                raise ValueError(f"one of inputs' size does not match one of dims's size, but got "
                                  f"input: {element.get_shape()} and dim: {len(dims[i])} at {i} index.")
             _inputs.append(element._tensor)
         ret = self._model.resize(_inputs, dims)
@@ -142,12 +157,71 @@ class Model:
 
         Raises:
             TypeError: type of input parameters are invalid.
-            RuntimeError: resize model failed.
+            RuntimeError: predict model failed.
 
         Examples:
+            >>> # predict which indata is from file
+            >>> import mindspore_lite as mslite
+            >>> import numpy ad np
+            >>> model = mslite.Model()
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
             >>> inputs = model.get_inputs()
             >>> outputs = model.get_outputs()
+            >>> in_data = np.fromfile("mobilenetv2.ms.bin", dtype=np.float32)
+            >>> inputs[0].set_data_from_numpy(in_data)
             >>> model.predict(inputs, outputs)
+            >>> for output in outputs:
+            ...     data = output.get_data_to_numpy()
+            ...     print("outputs: ", data)
+            outputs:  [[8.9401474e-05 4.4536911e-05 1.0089713e-04 ... 3.2687691e-05 \
+                        3.6021424e-04 8.3650106e-05]]
+
+            >>> # predict which indata is numpy array
+            >>> import mindspore_lite as mslite
+            >>> import numpy ad np
+            >>> model = mslite.Model()
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
+            >>> inputs = model.get_inputs()
+            >>> outputs = model.get_outputs()
+            >>> for input in inputs:
+            ...     in_data = np.arange(1 * 224 * 224 * 3, dtype=np.float32).reshape((1, 224, 224, 3))
+            ...     input.set_data_from_numpy(in_data)
+
+            >>> model.predict(inputs, outputs)
+            >>> for output in outputs:
+            ...     data = output.get_data_to_numpy()
+            ...     print("outputs: ", data)
+            outputs:  [[0.00035889 0.00065501 0.00052926 ... 0.00018387 0.00148318 0.00116824]]
+
+            >>> # predict which indata is new mslite tensor with numpy array
+            >>> import mindspore_lite as mslite
+            >>> import numpy ad np
+            >>> model = mslite.Model()
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
+            >>> inputs = model.get_inputs()
+            >>> outputs = model.get_outputs()
+            >>> input_tensors = []
+            >>> for input in inputs:
+            ...     input_tensor = mslite.Tensor()
+            ...     input_tensor.set_data_type(input.get_data_type())
+            ...     input_tensor.set_shape(input.get_shape())
+            ...     input_tensor.set_format(input.get_format())
+            ...     input_tensor.set_tensor_name(input.get_data_name())
+            ...     in_data = np.arange(1 * 224 * 224 * 3, dtype=np.float32).reshape((1, 224, 224, 3))
+            ...     input_tensor.set_data_from_numpy(in_data)
+            ...     input_tensors.append(input_tensor)
+
+            >>> model.predict(input_tensors, outputs)
+            >>> for output in outputs:
+            ...     data = output.get_data_to_numpy()
+            ...     print("outputs: ", data)
+            outputs:  [[0.00035889 0.00065501 0.00052926 ... 0.00018387 0.00148318 0.00116824]]
         """
         if not isinstance(inputs, list):
             raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
@@ -178,6 +252,11 @@ class Model:
             list[Tensor], the inputs tensor list of the model.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> model = mslite.Model()
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
             >>> inputs = model.get_inputs()
         """
         inputs = []
@@ -193,6 +272,11 @@ class Model:
             list[Tensor], the outputs tensor list of the model.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> model = mslite.Model()
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
             >>> outputs = model.get_outputs()
         """
         outputs = []
@@ -214,7 +298,15 @@ class Model:
             TypeError: type of input parameters are invalid.
 
         Examples:
-            >>> input = model.get_input_by_tensor_name("tensor_in")
+            >>> import mindspore_lite as mslite
+            >>> model = mslite.Model()
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
+            >>> input_tensor = model.get_input_by_tensor_name("graph_input-173")
+            >>> print(input_tensor)
+            tensor_name: graph_input-173, data_type: DataType.FLOAT32, shape: [1, 224, 224, 3], \
+            format: Format.NHWC, element_num: 150528, data_size: 602112.
         """
         check_isinstance("tensor_name", tensor_name, str)
         _tensor = self._model.get_input_by_tensor_name(tensor_name)
@@ -236,7 +328,15 @@ class Model:
             TypeError: type of input parameters are invalid.
 
         Examples:
-            >>> output = model.get_output_by_tensor_name("tensor_out")
+            >>> import mindspore_lite as mslite
+            >>> model = mslite.Model()
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
+            >>> output_tensor = model.get_output_by_tensor_name("Softmax-65")
+            >>> print(output_tensor)
+            tensor_name: Softmax-65, data_type: DataType.FLOAT32, shape: [1, 1001], \
+            format: Format.NHWC, element_num: 1001, data_size: 4004.
         """
         check_isinstance("tensor_name", tensor_name, str)
         _tensor = self._model.get_output_by_tensor_name(tensor_name)
@@ -247,8 +347,9 @@ class Model:
 
 class RunnerConfig:
     """
-    RunnerConfig Class
-
+    RunnerConfig Class defines runner config of one or more servables.
+    The class can be used to make model parallel runner which corresponds to the service provided by a model.
+    The client sends inference tasks and receives inference results through server.
     Args:
         context (Context): Define the context used to store options during execution.
         workers_num (int): the num of workers.
@@ -257,18 +358,27 @@ class RunnerConfig:
         TypeError: type of input parameters are invalid.
 
     Examples:
+        >>> # only for serving inference
         >>> import mindspore_lite as mslite
-        >>> runner_config = mslite.RunnerConfig(context, 4)
+        >>> context = mslite.Context()
+        >>> context.append_device_info(mslite.CPUDeviceInfo())
+        >>> runner_config = mslite.RunnerConfig(context=context, workers_num=4)
+        >>> print(runner_config)
+        workers num: 4, context: 0, .
     """
 
-    def __init__(self, context, workers_num):
-        check_isinstance("context", context, Context)
-        check_isinstance("workers_num", workers_num, int)
-        if workers_num < 0:
-            raise ValueError(f"RunnerConfig's init failed! workers_num must be positive.")
+    def __init__(self, context=None, workers_num=None):
+        if context is not None:
+            check_isinstance("context", context, Context)
+        if workers_num is not None:
+            check_isinstance("workers_num", workers_num, int)
+            if workers_num < 0:
+                raise ValueError(f"RunnerConfig's init failed! workers_num must be positive.")
         self._runner_config = _c_lite_wrapper.RunnerConfigBind()
-        self._runner_config.set_workers_num(workers_num)
-        self._runner_config.set_context(context._context)
+        if context is not None:
+            self._runner_config.set_context(context._context)
+        if workers_num is not None:
+            self._runner_config.set_workers_num(workers_num)
 
     def __str__(self):
         res = f"workers num: {self._runner_config.get_workers_num()}, " \
@@ -284,8 +394,11 @@ class ModelParallelRunner:
         None
 
     Examples:
+        >>> # only for serving inference
         >>> import mindspore_lite as mslite
         >>> model_parallel_runner = mslite.ModelParallelRunner()
+        >>> print(model_parallel_runner)
+        model_path: .
     """
 
     def __init__(self):
@@ -295,7 +408,7 @@ class ModelParallelRunner:
     def __str__(self):
         return f"model_path: {self.model_path_}."
 
-    def init(self, model_path, runner_config):
+    def init(self, model_path, runner_config=None):
         """
         build a model parallel runner from model path so that it can run on a device.
 
@@ -308,15 +421,25 @@ class ModelParallelRunner:
             RuntimeError: init ModelParallelRunner failed.
 
         Examples:
-            >>> model_parallel_runner.init("mnist.tflite.ms", runner_config)
+            >>> import mindspore_lite as mslite
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> runner_config = mslite.RunnerConfig(context=context, workers_num=4)
+            >>> model_parallel_runner = mslite.ModelParallelRunner()
+            >>> model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=runner_config)
+            >>> print(model_parallel_runner)
+            model_path: mobilenetv2.ms.
         """
         check_isinstance("model_path", model_path, str)
-        check_isinstance("runner_config", runner_config, RunnerConfig)
         if model_path != "":
             if not os.path.exists(model_path):
-                raise RuntimeError(f"ModelParallelRunner's init failed! model_path is not exist!")
+                raise RuntimeError(f"ModelParallelRunner's init failed, model_path does not exist!")
         self.model_path_ = model_path
-        ret = self._model.init(self.model_path_, runner_config._runner_config)
+        if runner_config is not None:
+            check_isinstance("runner_config", runner_config, RunnerConfig)
+            ret = self._model.init(self.model_path_, runner_config._runner_config)
+        else:
+            ret = self._model.init(self.model_path_)
         if not ret.IsOk():
             raise RuntimeError(f"ModelParallelRunner's init failed! Error is {ret.ToString()}")
 
@@ -330,12 +453,25 @@ class ModelParallelRunner:
 
         Raises:
             TypeError: type of input parameters are invalid.
-            RuntimeError: resize model failed.
+            RuntimeError: predict model failed.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> runner_config = mslite.RunnerConfig(context=context, workers_num=4)
+            >>> model_parallel_runner = mslite.ModelParallelRunner()
+            >>> model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=runner_config)
             >>> inputs = model_parallel_runner.get_inputs()
+            >>> in_data = np.fromfile("mobilenetv2.ms.bin", dtype=np.float32)
+            >>> inputs[0].set_data_from_numpy(in_data)
             >>> outputs = model_parallel_runner.get_outputs()
             >>> model_parallel_runner.predict(inputs, outputs)
+            >>> for output in outputs:
+            ...     data = output.get_data_to_numpy()
+            ...     print("outputs: ", data)
+            outputs:  [[8.9401474e-05 4.4536911e-05 1.0089713e-04 ... 3.2687691e-05 \
+                        3.6021424e-04 8.3650106e-05]]
         """
         if not isinstance(inputs, list):
             raise TypeError("inputs must be list, but got {}.".format(type(inputs)))
@@ -366,6 +502,12 @@ class ModelParallelRunner:
             list[Tensor], the inputs tensor list of the model.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> runner_config = mslite.RunnerConfig(context=context, workers_num=4)
+            >>> model_parallel_runner = mslite.ModelParallelRunner()
+            >>> model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=runner_config)
             >>> inputs = model_parallel_runner.get_inputs()
         """
         inputs = []
@@ -381,6 +523,12 @@ class ModelParallelRunner:
             list[Tensor], the outputs tensor list of the model.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> runner_config = mslite.RunnerConfig(context=context, workers_num=4)
+            >>> model_parallel_runner = mslite.ModelParallelRunner()
+            >>> model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=runner_config)
             >>> outputs = model_parallel_runner.get_outputs()
         """
         outputs = []

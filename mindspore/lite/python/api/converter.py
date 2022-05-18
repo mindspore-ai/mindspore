@@ -15,7 +15,22 @@
 """
 Converter API.
 """
+from enum import Enum
 from .lib import _c_lite_wrapper
+
+__all__ = ['FmkType', 'Converter']
+
+
+class FmkType(Enum):
+    """
+    The FmkType is used to define Input model framework type.
+    """
+    kFmkTypeTf = 0
+    kFmkTypeCaffe = 1
+    kFmkTypeOnnx = 2
+    kFmkTypeMs = 3
+    kFmkTypeTflite = 4
+    kFmkTypePytorch = 5
 
 
 class Converter:
@@ -23,10 +38,10 @@ class Converter:
     Converter is used to convert third-party models.
 
     Args:
-        fmk_type(Enum, optional): Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX.
-        model_file (str, optional): Input model file.
-                                    TF: *.pb | TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx.
-        output_file (list, optional): Output model file path. Will add .ms automatically.
+        fmk_type(Enum): Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX.
+        model_file (str): Input model file.
+                          TF: *.pb | TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx.
+        output_file (list): Output model file path. Will add .ms automatically.
         weight_file (str, optional): Input model weight file. Needed when fmk is CAFFE. CAFFE: *.caffemodel,
         config_file (str, optional): Configuration for post-training, offline split op to parallel,
                                      disable op fusion ability and set plugin so path.
@@ -57,7 +72,7 @@ class Converter:
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> device_info = mslite.context.AscendDeviceInfo(input_format="NHWC")
+        >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "mobilenetv2.tflite", "mobilenetv2.tflite")
     """
 
     def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file=None, weight_fp16=None,
@@ -84,4 +99,9 @@ class Converter:
         return res
 
     def converter(self):
-        pass
+        """
+        Converter is used to convert third-party models.
+        """
+        ret = self._converter.converter
+        if not ret.IsOk():
+            raise RuntimeError(f"build_from_file failed! Error is {ret.ToString()}")
