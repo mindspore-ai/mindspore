@@ -13,13 +13,9 @@
 # limitations under the License.
 # ============================================================================
 
-from mindspore import nn
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.ops import composite as C
-from mindspore.common.tensor import Tensor
-from mindspore.common import dtype as mstype
-from mindspore.common.parameter import ParameterTuple
+import mindspore as ms
+import mindspore.nn as nn
+import mindspore.ops as ops
 
 
 class ClipByNorm(nn.Cell):
@@ -29,25 +25,25 @@ class ClipByNorm(nn.Cell):
 
     def __init__(self):
         super(ClipByNorm, self).__init__()
-        self.reduce_sum = P.ReduceSum(keep_dims=True)
-        self.select_ = P.Select()
-        self.greater_ = P.Greater()
-        self.cast = P.Cast()
-        self.sqrt = P.Sqrt()
-        self.max_op = P.Maximum()
-        self.shape = P.Shape()
-        self.reshape = P.Reshape()
-        self.fill = P.Fill()
-        self.expand_dims = P.ExpandDims()
-        self.dtype = P.DType()
+        self.reduce_sum = ops.ReduceSum(keep_dims=True)
+        self.select_ = ops.Select()
+        self.greater_ = ops.Greater()
+        self.cast = ops.Cast()
+        self.sqrt = ops.Sqrt()
+        self.max_op = ops.Maximum()
+        self.shape = ops.Shape()
+        self.reshape = ops.Reshape()
+        self.fill = ops.Fill()
+        self.expand_dims = ops.ExpandDims()
+        self.dtype = ops.DType()
 
     def construct(self, x, clip_norm):
         """add ms_function decorator for pynative mode"""
-        mul_x = F.square(x)
+        mul_x = ops.square(x)
         if mul_x.shape == (1,):
-            l2sum = self.cast(mul_x, mstype.float32)
+            l2sum = self.cast(mul_x, ms.float32)
         else:
-            l2sum = self.cast(self.reduce_sum(mul_x), mstype.float32)
+            l2sum = self.cast(self.reduce_sum(mul_x), ms.float32)
         cond = self.greater_(l2sum, 0)
         ones_ = self.fill(self.dtype(cond), self.shape(cond), 1.0)
         l2sum_safe = self.select_(cond, l2sum, self.cast(ones_, self.dtype(l2sum)))
@@ -56,13 +52,13 @@ class ClipByNorm(nn.Cell):
         intermediate = x * clip_norm
 
         max_norm = self.max_op(l2norm, clip_norm)
-        values_clip = self.cast(intermediate, mstype.float32) / self.expand_dims(max_norm, -1)
+        values_clip = self.cast(intermediate, ms.float32) / self.expand_dims(max_norm, -1)
         values_clip = self.reshape(values_clip, self.shape(x))
-        values_clip = F.identity(values_clip)
+        values_clip = ops.identity(values_clip)
         return values_clip
 
 
-clip_grad = C.MultitypeFuncGraph("clip_grad")
+clip_grad = ops.MultitypeFuncGraph("clip_grad")
 
 
 @clip_grad.register("Number", "Number", "Tensor")
@@ -80,17 +76,17 @@ def _clip_grad(clip_type, clip_value, grad):
     """
     if clip_type not in (0, 1):
         return grad
-    dt = F.dtype(grad)
+    dt = ops.dtype(grad)
     if clip_type == 0:
-        new_grad = C.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
-                                   F.cast(F.tuple_to_array((clip_value,)), dt))
+        new_grad = ops.clip_by_value(grad, ops.cast(ops.tuple_to_array((-clip_value,)), dt),
+                                     ops.cast(ops.tuple_to_array((clip_value,)), dt))
     else:
-        new_grad = ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
+        new_grad = ClipByNorm()(grad, ops.cast(ops.tuple_to_array((clip_value,)), dt))
     return new_grad
 
 
-grad_scale = C.MultitypeFuncGraph("grad_scale")
-reciprocal = P.Reciprocal()
+grad_scale = ops.MultitypeFuncGraph("grad_scale")
+reciprocal = ops.Reciprocal()
 
 
 @grad_scale.register("Tensor", "Tensor")
@@ -110,11 +106,12 @@ class ClipGradients(nn.Cell):
     Returns:
         List, a list of clipped_grad tuples.
     """
+
     def __init__(self):
         super(ClipGradients, self).__init__()
         self.clip_by_norm = nn.ClipByNorm()
-        self.cast = P.Cast()
-        self.dtype = P.DType()
+        self.cast = ops.Cast()
+        self.dtype = ops.DType()
 
     def construct(self,
                   grads,
@@ -127,10 +124,10 @@ class ClipGradients(nn.Cell):
         for grad in grads:
             dt = self.dtype(grad)
             if clip_type == 0:
-                t = C.clip_by_value(grad, self.cast(F.tuple_to_array((-clip_value,)), dt),
-                                    self.cast(F.tuple_to_array((clip_value,)), dt))
+                t = ops.clip_by_value(grad, self.cast(ops.tuple_to_array((-clip_value,)), dt),
+                                      self.cast(ops.tuple_to_array((clip_value,)), dt))
             else:
-                t = self.clip_by_norm(grad, self.cast(F.tuple_to_array((clip_value,)), dt))
+                t = self.clip_by_norm(grad, self.cast(ops.tuple_to_array((clip_value,)), dt))
             new_grads = new_grads + (t,)
         return new_grads
 
@@ -139,17 +136,18 @@ class CrossEntropy(nn.Cell):
     """
     Cross Entropy loss
     """
+
     def __init__(self, num_labels):
         super(CrossEntropy, self).__init__()
-        self.onehot = P.OneHot()
-        self.on_value = Tensor(1.0, mstype.float32)
-        self.off_value = Tensor(0.0, mstype.float32)
-        self.reduce_sum = P.ReduceSum()
-        self.reduce_mean = P.ReduceMean()
-        self.reshape = P.Reshape()
+        self.onehot = ops.OneHot()
+        self.on_value = ms.Tensor(1.0, ms.float32)
+        self.off_value = ms.Tensor(0.0, ms.float32)
+        self.reduce_sum = ops.ReduceSum()
+        self.reduce_mean = ops.ReduceMean()
+        self.reshape = ops.Reshape()
         self.last_idx = (-1,)
-        self.neg = P.Neg()
-        self.cast = P.Cast()
+        self.neg = ops.Neg()
+        self.cast = ops.Cast()
         self.num_labels = num_labels
 
     def construct(self, logits, label_ids):
@@ -157,7 +155,7 @@ class CrossEntropy(nn.Cell):
         one_hot_labels = self.onehot(label_ids, self.num_labels, self.on_value, self.off_value)
         per_example_loss = self.neg(self.reduce_sum(one_hot_labels * logits, self.last_idx))
         loss = self.reduce_mean(per_example_loss, self.last_idx)
-        return_value = self.cast(loss, mstype.float32)
+        return_value = self.cast(loss, ms.float32)
         return return_value
 
 
@@ -178,7 +176,7 @@ class NetworkWithMLMLoss(nn.Cell):
         super(NetworkWithMLMLoss, self).__init__(auto_prefix=False)
         self.mlm_network = network
         self.vocab_size = vocab_size
-        self.reshape = P.Reshape()
+        self.reshape = ops.Reshape()
         self.loss_fct = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 
     def construct(self, input_ids, input_mask, token_type_id, label_ids):
@@ -197,15 +195,15 @@ class NetworkTrainCell(nn.Cell):
         self.weights = optimizer.parameters
         self.optimizer = optimizer
         self.sens = sens
-        self.grad = C.GradOperation(get_by_list=True,
-                                    sens_param=True)
+        self.grad = ops.GradOperation(get_by_list=True,
+                                      sens_param=True)
         self.clip_type = 1
         self.clip_value = 1.0
-        self.cast = P.Cast()
-        self.hyper_map = C.HyperMap()
+        self.cast = ops.Cast()
+        self.hyper_map = ops.HyperMap()
 
-        self.get_weights_by_key = P.PullWeight()
-        self.over_weights_by_key = P.PushWeight()
+        self.get_weights_by_key = ops.PullWeight()
+        self.over_weights_by_key = ops.PushWeight()
 
         self.get_weights_by_key_input_1, \
         self.get_weights_by_key_input_2, \
@@ -215,13 +213,30 @@ class NetworkTrainCell(nn.Cell):
         self.over_weights_by_key_input_2, \
         self.over_weights_by_key_input_3 = self._over_weights_by_key_inputs(self.network.parameters_and_names())
 
+    def construct(self, input_ids, input_mask, token_type_id, label_ids):
+        weights = self.weights
+        res = self._communication_with_server_1(self.get_weights_by_key_input_1)
+        input_ids = ops.depend(input_ids, res)
+        loss = self.network(input_ids, input_mask, token_type_id, label_ids)
+        grads = self.grad(self.network, weights)(input_ids,
+                                                 input_mask,
+                                                 token_type_id,
+                                                 label_ids,
+                                                 self.cast(ops.tuple_to_array((self.sens,)),
+                                                           ms.float32))
+        grads = self.hyper_map(ops.partial(clip_grad, self.clip_type, self.clip_value), grads)
+        loss = ops.depend(loss, self.optimizer(grads))
+        weights1 = ops.depend(self.over_weights_by_key_input_1, loss)
+        loss = ops.depend(loss, self._communication_with_server_2(weights1))
+        return loss
+
     def _communication_with_server_1(self, weights):
-        result = self.hyper_map(F.partial(self.get_weights_by_key), weights,
+        result = self.hyper_map(ops.partial(self.get_weights_by_key), weights,
                                 self.get_weights_by_key_input_2, self.get_weights_by_key_input_3)
         return result
 
     def _communication_with_server_2(self, weights):
-        result = self.hyper_map(F.partial(self.over_weights_by_key), weights,
+        result = self.hyper_map(ops.partial(self.over_weights_by_key), weights,
                                 self.over_weights_by_key_input_2,
                                 self.over_weights_by_key_input_3)
         return result
@@ -237,7 +252,7 @@ class NetworkTrainCell(nn.Cell):
                 weight_names.append(weight[1].name)
                 weight_indices.append(index)
             index += 1
-        return ParameterTuple(filtered_weights), tuple(weight_names), tuple(weight_indices)
+        return ms.ParameterTuple(filtered_weights), tuple(weight_names), tuple(weight_indices)
 
     def _over_weights_by_key_inputs(self, weights):
         filtered_weights = []
@@ -250,50 +265,4 @@ class NetworkTrainCell(nn.Cell):
                 weight_names.append(weight[1].name)
                 weight_indices.append(index)
             index += 1
-        return ParameterTuple(filtered_weights), tuple(weight_names), tuple(weight_indices)
-
-    def construct(self, input_ids, input_mask, token_type_id, label_ids):
-        weights = self.weights
-        res = self._communication_with_server_1(self.get_weights_by_key_input_1)
-        input_ids = F.depend(input_ids, res)
-        loss = self.network(input_ids, input_mask, token_type_id, label_ids)
-        grads = self.grad(self.network, weights)(input_ids,
-                                                 input_mask,
-                                                 token_type_id,
-                                                 label_ids,
-                                                 self.cast(F.tuple_to_array((self.sens,)),
-                                                           mstype.float32))
-        grads = self.hyper_map(F.partial(clip_grad, self.clip_type, self.clip_value), grads)
-        loss = F.depend(loss, self.optimizer(grads))
-        weights1 = F.depend(self.over_weights_by_key_input_1, loss)
-        loss = F.depend(loss, self._communication_with_server_2(weights1))
-        return loss
-
-
-class NetworkNoClientTrainCell(nn.Cell):
-    def __init__(self, network, optimizer, sens=1.0):
-        super(NetworkNoClientTrainCell, self).__init__(auto_prefix=False)
-        self.network = network
-        self.network.set_grad()
-        self.weights = optimizer.parameters
-        self.optimizer = optimizer
-        self.sens = sens
-        self.grad = C.GradOperation(get_by_list=True,
-                                    sens_param=True)
-        self.clip_type = 1
-        self.clip_value = 1.0
-        self.cast = P.Cast()
-        self.hyper_map = C.HyperMap()
-
-    def construct(self, input_ids, input_mask, token_type_id, label_ids):
-        weights = self.weights
-        loss = self.network(input_ids, input_mask, token_type_id, label_ids)
-        grads = self.grad(self.network, weights)(input_ids,
-                                                 input_mask,
-                                                 token_type_id,
-                                                 label_ids,
-                                                 self.cast(F.tuple_to_array((self.sens,)),
-                                                           mstype.float32))
-        grads = self.hyper_map(F.partial(clip_grad, self.clip_type, self.clip_value), grads)
-        self.optimizer(grads)
-        return loss
+        return ms.ParameterTuple(filtered_weights), tuple(weight_names), tuple(weight_indices)

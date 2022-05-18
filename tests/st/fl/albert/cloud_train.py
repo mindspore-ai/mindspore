@@ -19,9 +19,8 @@ import sys
 import ast
 from time import time
 import numpy as np
-from mindspore import context, Tensor
-from mindspore.train.serialization import save_checkpoint
-from mindspore.nn import Adam as AdamWeightDecay
+import mindspore as ms
+import mindspore.nn as nn
 from src.config import train_cfg, server_net_cfg
 from src.model import AlbertModelCLS
 from src.cell_wrapper import NetworkWithCLSLoss, NetworkTrainCell
@@ -96,7 +95,6 @@ def server_train(args):
     start = time()
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device_id
-    output_dir = args.output_dir
 
     device_target = args.device_target
     server_mode = args.server_mode
@@ -189,12 +187,9 @@ def server_train(args):
         "download_compress_type": download_compress_type,
     }
 
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
     # mindspore context
-    context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
-    context.set_fl_context(**fl_ctx)
+    ms.set_context(mode=ms.GRAPH_MODE, device_target=device_target)
+    ms.set_fl_context(**fl_ctx)
     print('Context setting is done! Time cost: {}'.format(time() - start))
     sys.stdout.flush()
     start = time()
@@ -221,9 +216,9 @@ def server_train(args):
         {'params': server_other_params, 'weight_decay': 0.0},
         {'order_params': server_params}
     ]
-    server_optimizer = AdamWeightDecay(server_group_params,
-                                       learning_rate=train_cfg.server_cfg.learning_rate,
-                                       eps=train_cfg.optimizer_cfg.AdamWeightDecay.eps)
+    server_optimizer = nn.Adam(server_group_params,
+                               learning_rate=train_cfg.server_cfg.learning_rate,
+                               eps=train_cfg.optimizer_cfg.AdamWeightDecay.eps)
     server_network_train_cell = NetworkTrainCell(network_with_cls_loss, optimizer=server_optimizer)
 
     print('Optimizer construction is done! Time cost: {}'.format(time() - start))
@@ -232,18 +227,16 @@ def server_train(args):
 
     # train process
     for _ in range(1):
-        input_ids = Tensor(np.zeros((train_cfg.batch_size, server_net_cfg.seq_length), np.int32))
-        attention_mask = Tensor(np.zeros((train_cfg.batch_size, server_net_cfg.seq_length), np.int32))
-        token_type_ids = Tensor(np.zeros((train_cfg.batch_size, server_net_cfg.seq_length), np.int32))
-        label_ids = Tensor(np.zeros((train_cfg.batch_size,), np.int32))
+        input_ids = ms.Tensor(np.zeros((train_cfg.batch_size, server_net_cfg.seq_length), np.int32))
+        attention_mask = ms.Tensor(np.zeros((train_cfg.batch_size, server_net_cfg.seq_length), np.int32))
+        token_type_ids = ms.Tensor(np.zeros((train_cfg.batch_size, server_net_cfg.seq_length), np.int32))
+        label_ids = ms.Tensor(np.zeros((train_cfg.batch_size,), np.int32))
         model_start_time = time()
         cls_loss = server_network_train_cell(input_ids, attention_mask, token_type_ids, label_ids)
         time_cost = time() - model_start_time
         print('server: cls_loss {} time_cost {}'.format(cls_loss, time_cost))
         sys.stdout.flush()
         del input_ids, attention_mask, token_type_ids, label_ids, cls_loss
-        output_path = os.path.join(output_dir, 'final.ckpt')
-        save_checkpoint(server_network_train_cell.network, output_path)
 
     print('Training process is done! Time cost: {}'.format(time() - start))
 

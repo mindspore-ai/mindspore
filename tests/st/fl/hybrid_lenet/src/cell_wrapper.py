@@ -13,17 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
-from mindspore.context import ParallelMode
-from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean,
-                                       _get_parallel_mode)
-from mindspore.common.parameter import ParameterTuple
-from mindspore.ops import composite as C
-from mindspore.ops import functional as F
-from mindspore.ops import operations as P
-from mindspore.nn.cell import Cell
-from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
+import mindspore as ms
+import mindspore.nn as nn
+import mindspore.ops as ops
 
-class TrainOneStepCellWithServerCommunicator(Cell):
+
+class TrainOneStepCellWithServerCommunicator(nn.Cell):
     r"""
     Network training package class.
 
@@ -48,31 +43,6 @@ class TrainOneStepCellWithServerCommunicator(Cell):
     Supported Platforms:
         ``Ascend`` ``GPU``
 
-    Examples:
-        >>> net = Net()
-        >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits()
-        >>> optim = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> #1) Using the WithLossCell existing provide
-        >>> loss_net = nn.WithLossCell(net, loss_fn)
-        >>> train_net = nn.TrainOneStepCell(loss_net, optim)
-        >>>
-        >>> #2) Using user-defined WithLossCell
-        >>> class MyWithLossCell(Cell):
-        ...    def __init__(self, backbone, loss_fn):
-        ...        super(MyWithLossCell, self).__init__(auto_prefix=False)
-        ...        self._backbone = backbone
-        ...        self._loss_fn = loss_fn
-        ...
-        ...    def construct(self, x, y, label):
-        ...        out = self._backbone(x, y)
-        ...        return self._loss_fn(out, label)
-        ...
-        ...    @property
-        ...    def backbone_network(self):
-        ...        return self._backbone
-        ...
-        >>> loss_net = MyWithLossCell(net, loss_fn)
-        >>> train_net = nn.TrainOneStepCell(loss_net, optim)
     """
 
     def __init__(self, network, optimizer, sens=1.0):
@@ -82,37 +52,28 @@ class TrainOneStepCellWithServerCommunicator(Cell):
         self.network.add_flags(defer_inline=True)
         self.weights = optimizer.parameters
         self.optimizer = optimizer
-        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
+        self.grad = ops.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
-        self.reducer_flag = False
-        self.grad_reducer = F.identity
-        self.parallel_mode = _get_parallel_mode()
-        if self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
-            self.reducer_flag = True
-        if self.reducer_flag:
-            mean = _get_gradients_mean()
-            degree = _get_device_num()
-            self.grad_reducer = DistributedGradReducer(self.weights, mean, degree)
 
-        self.hyper_map = C.HyperMap()
+        self.hyper_map = ops.HyperMap()
 
-        self.pull_weight_by_key = P.PullWeight()
-        self.push_weight_by_key = P.PushWeight()
+        self.pull_weight_by_key = ops.PullWeight()
+        self.push_weight_by_key = ops.PushWeight()
 
-        self.pull_weights,\
-        self.pull_weight_names,\
+        self.pull_weights, \
+        self.pull_weight_names, \
         self.pull_weight_indices = self._pull_weight_inputs(self.network.parameters_and_names())
 
-        self.push_weights,\
-        self.push_weight_names,\
+        self.push_weights, \
+        self.push_weight_names, \
         self.push_weight_indices = self._push_weight_inputs(self.network.parameters_and_names())
 
     def _pull_from_server(self, weights, names, indices):
-        result = self.hyper_map(F.partial(self.pull_weight_by_key), weights, names, indices)
+        result = self.hyper_map(ops.partial(self.pull_weight_by_key), weights, names, indices)
         return result
 
     def _push_to_server(self, weights, names, indices):
-        result = self.hyper_map(F.partial(self.push_weight_by_key), weights, names, indices)
+        result = self.hyper_map(ops.partial(self.push_weight_by_key), weights, names, indices)
         return result
 
     @staticmethod
@@ -129,7 +90,7 @@ class TrainOneStepCellWithServerCommunicator(Cell):
                 weight_indices.append(index)
             index += 1
 
-        return ParameterTuple(filtered_weights), tuple(weight_names), tuple(weight_indices)
+        return ms.ParameterTuple(filtered_weights), tuple(weight_names), tuple(weight_indices)
 
     @staticmethod
     def _push_weight_inputs(weights):
@@ -145,20 +106,19 @@ class TrainOneStepCellWithServerCommunicator(Cell):
                 weight_indices.append(index)
             index += 1
 
-        return ParameterTuple(filtered_weights), tuple(weight_names), tuple(weight_indices)
+        return ms.ParameterTuple(filtered_weights), tuple(weight_names), tuple(weight_indices)
 
     def construct(self, *inputs):
         weights = self.weights
         res = self._pull_from_server(self.pull_weights,
                                      self.pull_weight_names, self.pull_weight_indices)
-        inputs = F.depend(inputs, res)
+        inputs = ops.depend(inputs, res)
         loss = self.network(*inputs)
-        sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
+        sens = ops.Fill()(ops.DType()(loss), ops.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(*inputs, sens)
-        grads = self.grad_reducer(grads)
 
-        loss = F.depend(loss, self.optimizer(grads))
-        push_weights = F.depend(self.push_weights, loss)
-        loss = F.depend(loss, self._push_to_server(push_weights,
-                                                   self.push_weight_names, self.push_weight_indices))
+        loss = ops.depend(loss, self.optimizer(grads))
+        push_weights = ops.depend(self.push_weights, loss)
+        loss = ops.depend(loss, self._push_to_server(push_weights,
+                                                     self.push_weight_names, self.push_weight_indices))
         return loss

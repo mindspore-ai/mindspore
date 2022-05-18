@@ -17,14 +17,10 @@ import argparse
 import ast
 import numpy as np
 
-import mindspore.context as context
+import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore.common import dtype as mstype
-from mindspore.nn import WithLossCell
 from src.cell_wrapper import TrainOneStepCellWithServerCommunicator
 from src.model import LeNet5, PushMetrics
-# from src.adam import AdamWeightDecayOp
 
 parser = argparse.ArgumentParser(description="test_hybrid_train_lenet")
 parser.add_argument("--device_target", type=str, default="CPU")
@@ -58,7 +54,6 @@ parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 parser.add_argument("--dp_eps", type=float, default=50.0)
 parser.add_argument("--dp_delta", type=float, default=0.01)  # 1/worker_num
 parser.add_argument("--dp_norm_clip", type=float, default=1.0)
-# parameters for encrypt_type='PW_ENCRYPT'
 parser.add_argument("--share_secrets_ratio", type=float, default=1.0)
 parser.add_argument("--cipher_time_window", type=int, default=300000)
 parser.add_argument("--reconstruct_secrets_threshold", type=int, default=3)
@@ -172,16 +167,17 @@ ctx = {
     "download_compress_type": download_compress_type,
 }
 
-context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
-context.set_fl_context(**ctx)
+ms.set_context(mode=ms.GRAPH_MODE, device_target=device_target)
+ms.set_fl_context(**ctx)
 
 if __name__ == "__main__":
     epoch = 50000
     np.random.seed(0)
     network = LeNet5(62)
     push_metrics = PushMetrics()
-    if context.get_fl_context("ms_role") == "MS_WORKER":
-        # Please do not freeze layers if you want to both get and overwrite these layers to servers, which is meaningless.
+    if ms.get_fl_context("ms_role") == "MS_WORKER":
+        # Please do not freeze layers if you want to both get and overwrite these layers to servers,
+        # which is meaningless.
         network.conv1.weight.requires_grad = False
         network.conv2.weight.requires_grad = False
         # Get weights before running backbone.
@@ -196,18 +192,18 @@ if __name__ == "__main__":
     criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)
     # net_opt = AdamWeightDecayOp(network.trainable_params(), weight_decay=0.1)
-    net_with_criterion = WithLossCell(network, criterion)
+    net_with_criterion = nn.WithLossCell(network, criterion)
     # train_network = TrainOneStepCell(net_with_criterion, net_opt)
     train_network = TrainOneStepCellWithServerCommunicator(net_with_criterion, net_opt)
     train_network.set_train()
     losses = []
 
     for i in range(epoch):
-        data = Tensor(np.random.rand(32, 3, 32, 32).astype(np.float32))
-        label = Tensor(np.random.randint(0, 61, (32)).astype(np.int32))
+        data = ms.Tensor(np.random.rand(32, 3, 32, 32).astype(np.float32))
+        label = ms.Tensor(np.random.randint(0, 61, (32)).astype(np.int32))
         loss = train_network(data, label).asnumpy()
-        if context.get_fl_context("ms_role") == "MS_WORKER":
+        if ms.get_fl_context("ms_role") == "MS_WORKER":
             if (i + 1) % worker_step_num_per_iteration == 0:
-                push_metrics(Tensor(loss, mstype.float32), Tensor(loss, mstype.float32))
+                push_metrics(ms.Tensor(loss, ms.float32), ms.Tensor(loss, ms.float32))
         losses.append(loss)
     print(losses)

@@ -16,10 +16,9 @@
 import os
 import pickle
 import numpy as np
-from mindspore import dataset as ds
-from mindspore.dataset.transforms import c_transforms as C
-from mindspore.common.tensor import Tensor
-from mindspore.common import dtype as mstype
+import mindspore as ms
+import mindspore.dataset as ds
+import mindspore.dataset.transforms.c_transforms as c_transforms
 
 
 class InputFeatures:
@@ -141,7 +140,7 @@ def create_ms_dataset(data_list, label_list, max_seq_length, tokenizer, batch_si
     if do_shuffle:
         dataset = dataset.shuffle(buffer_size=10000)
 
-    type_cast_op = C.TypeCast(mstype.int32)
+    type_cast_op = c_transforms.TypeCast(ms.int32)
     dataset = dataset.map(operations=[type_cast_op])
     dataset = dataset.batch(batch_size=batch_size, drop_remainder=drop_remainder)
     return dataset
@@ -182,6 +181,6 @@ class ConstructMaskAndReplaceTensor:
             if self.keep_last_unchange:
                 self.mask_tensor[i, seq_lengths[i] - 1] = 1
                 self.replace_tensor[i, seq_lengths[i] - 1] = 0
-        mask_tensor = Tensor(self.mask_tensor, dtype=mstype.int32)
-        replace_tensor = Tensor(self.replace_tensor, dtype=mstype.int32)
+        mask_tensor = ms.Tensor(self.mask_tensor, dtype=ms.int32)
+        replace_tensor = ms.Tensor(self.replace_tensor, dtype=ms.int32)
         return mask_tensor, replace_tensor

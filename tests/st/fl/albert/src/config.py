@@ -16,7 +16,7 @@
 """config script"""
 
 from easydict import EasyDict as edict
-from mindspore.common import dtype as mstype
+import mindspore as ms
 from src.model import AlbertConfig
 
 
@@ -88,8 +88,8 @@ server_net_cfg = AlbertConfig(
     return_all_encoders=False,
     output_attentions=False,
     output_hidden_states=False,
-    dtype=mstype.float32,
-    compute_type=mstype.float32,
+    dtype=ms.float32,
+    compute_type=ms.float32,
     is_training=True,
     num_labels=4,
     use_word_embeddings=True
@@ -124,8 +124,8 @@ client_net_cfg = AlbertConfig(
     return_all_encoders=False,
     output_attentions=False,
     output_hidden_states=False,
-    dtype=mstype.float32,
-    compute_type=mstype.float32,
+    dtype=ms.float32,
+    compute_type=ms.float32,
     is_training=True,
     num_labels=4,
     use_word_embeddings=True

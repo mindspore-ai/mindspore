@@ -14,7 +14,7 @@
 # ============================================================================
 
 import copy
-from mindspore.common.initializer import initializer
+import mindspore as ms
 
 
 def average_weights(para_list):
@@ -46,7 +46,7 @@ def restore_params(network, param_dict, init_adam=True):
         param.init_data()
         if init_adam:
             if 'adam' in param.name:
-                param.set_data(initializer('zeros', shape=param.shape, dtype=param.dtype))
+                param.set_data(ms.common.initializer('zeros', shape=param.shape, dtype=param.dtype))
             elif param.name in param_dict:
                 param.set_data(param_dict[param.name])
         else:
@@ -79,10 +79,12 @@ def get_worker_upload_list():
         'classifier.weight',
         'classifier.bias']
 
+
 def upload_to_server(network, worker_upload_list):
     for param in network.trainable_params():
         if param.name in worker_upload_list:
             param.set_param_fl(push_to_server=True)
+
 
 def get_worker_download_list():
     return [
@@ -106,10 +108,12 @@ def get_worker_download_list():
         'albert.encoder.albert_layer_groups.0.albert_layers.0.full_layer_layer_norm.beta'
     ]
 
+
 def download_from_server(network, worker_download_list):
     for param in network.trainable_params():
         if param.name in worker_download_list:
             param.set_param_fl(pull_from_server=True)
+
 
 def get_freeze_list():
     return [
@@ -119,6 +123,7 @@ def get_freeze_list():
         'albert.embedding_postprocessor.layernorm.gamma',
         'albert.embedding_postprocessor.layernorm.beta'
     ]
+
 
 def freeze(network, freeze_list):
     for param in network.trainable_params():
