@@ -103,18 +103,13 @@ int ThreadCostModel::GetOptimalThreadNum(const ThreadCostContext *thread_cost_co
   return block_count;
 }
 
-int ThreadNumUpdateStrategy(const Context *context, const ThreadCostContext *thread_cost_context, int task_num) {
+int ThreadNumUpdateStrategy(const ThreadCostContext *thread_cost_context, int task_num) {
   if (task_num <= 1) {
     return task_num;
   }
-  ThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();
-  if (pool == nullptr) {
-    MS_LOG(ERROR) << "thread pool is nullptr";
-    return RET_NULL_PTR;
-  }
 
   if (thread_cost_context != nullptr) {
-    if (ThreadCostModel::ThreadNum(thread_cost_context) == 1) {
+    if (ThreadCostModel::ThreadNum(thread_cost_context) <= 1) {
       return 1;
     }
     int opt_thread = static_cast<int>(ThreadCostModel::ParallelDegree(thread_cost_context));
@@ -124,15 +119,15 @@ int ThreadNumUpdateStrategy(const Context *context, const ThreadCostContext *thr
   return task_num;
 }
 
-int UpdateThreadNum(const Context *context, int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
-                    int64_t unit_num, int thread_num) {
+int UpdateThreadNum(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num, int64_t unit_num,
+                    int thread_num) {
   if (kernel_compute_cost_map_.count(kernel_type) > 0) {
     lite::ThreadCostContext thread_cost_context;
     thread_cost_context.per_unit_compute_cost_ = kernel_compute_cost_map_.at(kernel_type);
     thread_cost_context.per_unit_load_num_ = per_unit_load_num;
     thread_cost_context.per_unit_store_num_ = per_unit_store_num;
     thread_cost_context.total_unit_num_ = unit_num;
-    return ThreadNumUpdateStrategy(context, &thread_cost_context, thread_num);
+    return ThreadNumUpdateStrategy(&thread_cost_context, thread_num);
   }
   return thread_num;
 }

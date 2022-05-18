@@ -71,14 +71,14 @@ struct ThreadCostModel {
 };
 
 float GetKernelComputeCost(int32_t kernel_type);
-int ThreadNumUpdateStrategy(const Context *context, const ThreadCostContext *thread_cost_context, int task_num);
+int ThreadNumUpdateStrategy(const ThreadCostContext *thread_cost_context, int task_num);
 
 #ifdef DYNAMIC_THREAD_DISTRIBUTE
-int UpdateThreadNum(const Context *context, int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
-                    int64_t unit_num, int thread_num);
+int UpdateThreadNum(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num, int64_t unit_num,
+                    int thread_num);
 #else
-inline int UpdateThreadNum(const Context *context, int32_t kernel_type, int64_t per_unit_load_num,
-                           int64_t per_unit_store_num, int64_t unit_num, int thread_num) {
+inline int UpdateThreadNum(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num, int64_t unit_num,
+                           int thread_num) {
   return thread_num;
 }
 #endif
