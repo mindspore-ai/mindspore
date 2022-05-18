@@ -495,8 +495,9 @@ enum PrimType {
   PrimType_RandomNormal = 206,
   PrimType_NLLLoss = 207,
   PrimType_NLLLossGrad = 208,
+  PrimType_GatherD = 209,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_NLLLossGrad + 1,
+  PrimType_MAX = PrimType_GatherD + 1,
 
   // inner operators.
   PrimType_Inner_ToFormat = 10000,

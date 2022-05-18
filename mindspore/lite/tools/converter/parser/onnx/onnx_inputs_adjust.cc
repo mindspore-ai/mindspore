@@ -421,6 +421,27 @@ STATUS AdjustRandomNormal(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
   cnode->set_input(1, parameter);
   return RET_OK;
 }
+
+STATUS AdjustGatherD(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(func_graph != nullptr && cnode != nullptr);
+  auto gather_d_node = ops::GetOperator<ops::GatherD>(cnode->input(0));
+  MS_CHECK_TRUE_RET(gather_d_node != nullptr, RET_ERROR);
+  auto prim = gather_d_node->GetPrim();
+  MS_CHECK_TRUE_RET(prim != nullptr, RET_ERROR);
+  MS_CHECK_TRUE_RET(prim->GetAttr(ops::kDims) != nullptr, RET_ERROR);
+  int32_t dim_val = GetValue<int32_t>(prim->GetAttr(ops::kDims));
+  auto dim_parameter_ptr = mindspore::opt::BuildIntValueParameterNode(func_graph, dim_val, "dim");
+  MS_CHECK_TRUE_RET(dim_parameter_ptr != nullptr, RET_ERROR);
+  auto attr_index = cnode->input(THIRD_INPUT);
+  MS_ASSERT(attr_index != nullptr);
+  std::vector<AnfNodePtr> new_inputs;
+  new_inputs.push_back(cnode->inputs()[FIRST_INPUT]);
+  new_inputs.push_back(cnode->inputs()[SECOND_INPUT]);
+  new_inputs.push_back(static_cast<AnfNodePtr>(dim_parameter_ptr));
+  new_inputs.push_back(attr_index);
+  cnode->set_inputs(new_inputs);
+  return RET_OK;
+}
 }  // namespace
 
 bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph) {
@@ -462,6 +483,8 @@ bool OnnxInputAdjust::Adjust(const FuncGraphPtr &func_graph) {
       status = AdjustResize(&need_update_manager, cnode);
     } else if (opt::CheckPrimitiveType(node, prim::kPrimRandomNormal)) {
       status = AdjustRandomNormal(func_graph, cnode);
+    } else if (opt::CheckPrimitiveType(node, prim::kPrimGatherD)) {
+      status = AdjustGatherD(func_graph, cnode);
     } else {
       continue;
     }

@@ -226,6 +226,7 @@ union PrimitiveType {
     RandomNormal,
     NLLLoss,
     NLLLossGrad,
+    GatherD,
 }
 
 table Abs {
@@ -1265,4 +1266,7 @@ table NLLLoss {
 
 table NLLLossGrad {
     reduction: Reduction;
+}
+
+table GatherD {
 }

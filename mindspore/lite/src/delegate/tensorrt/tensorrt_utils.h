@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,6 +151,14 @@ nvinfer1::Dims ConvertCudaDims(const std::vector<T> &shape) {
     MS_LOG(WARNING) << "ms shape is invalid or empty.";
   }
   return dims;
+}
+
+inline size_t IntToSize(int u) {
+  if (u < 0) {
+    MS_LOG(WARNING) << "The int value(" << u << ") is less than 0.";
+    return SIZE_MAX;
+  }
+  return static_cast<size_t>(u);
 }
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_

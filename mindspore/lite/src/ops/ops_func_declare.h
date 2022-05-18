@@ -256,6 +256,7 @@
 #include "ops/random_normal.h"
 #include "ops/nllloss.h"
 #include "ops/grad/nllloss_grad.h"
+#include "ops/gather_d.h"
 
 namespace mindspore::lite::ops {
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP) std::unique_ptr<schema::PrimitiveT> MSOp2SchemaOp(const mindspore::ops::OP *op);
@@ -479,6 +480,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(DynamicQuant)
 FUNC_MSOP2SCHEMAOP_DECLARE(RandomNormal)
 FUNC_MSOP2SCHEMAOP_DECLARE(NLLLoss)
 FUNC_MSOP2SCHEMAOP_DECLARE(NLLLossGrad)
+FUNC_MSOP2SCHEMAOP_DECLARE(GatherD)
 #endif
 }  // namespace mindspore::lite::ops
 #else
