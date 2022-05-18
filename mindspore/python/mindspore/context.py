@@ -638,8 +638,8 @@ def _check_target_specific_cfgs(device, arg_key):
 
 @args_unreset_check(device_id=int, variable_memory_max_size=str, max_device_memory=str, mempool_block_size=str)
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
-                 save_graphs_path=str, auto_tune_mode=str,
-                 enable_reduce_precision=bool, variable_memory_max_size=str,
+                 save_graphs_path=str, enable_dump=bool, auto_tune_mode=str,
+                 save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
                  max_device_memory=str, print_file_path=str, enable_sparse=bool, max_call_depth=int,
@@ -675,6 +675,10 @@ def set_context(**kwargs):
     | Debug Configuration     |  save_graphs                 |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  save_graphs_path            |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  enable_dump                 |  Ascend                    |
+    |                         +------------------------------+----------------------------+
+    |                         |  save_dump_path              |  Ascend                    |
     |                         +------------------------------+----------------------------+
     |                         |  print_file_path             |  Ascend                    |
     |                         +------------------------------+----------------------------+
@@ -730,6 +734,8 @@ def set_context(**kwargs):
             If the specified directory does not exist, the system will automatically create the directory.
             During distributed training, graphs will be saved to the directory of
             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
+        enable_dump (bool): This parameters is deprecated, and will be deleted in the next version.
+        save_dump_path (str): This parameters is deprecated, and will be deleted in the next version.
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
             a file by default, and print_file_path is not set, the screen will be displayed.
             If the saved file already exists, the timestamp suffix will be added to the file. Saving data to a file
@@ -880,7 +886,7 @@ def set_context(**kwargs):
                              f"type {__device_target__}, but got {device}.")
     device = ctx.get_param(ms_ctx_param.device_target)
     for key, value in kwargs.items():
-        if key == 'enable_auto_mixed_precision':
+        if key in ('enable_auto_mixed_precision', 'enable_dump', 'save_dump_path'):
             logger.warning(f"For 'context.set_context', '{key}' parameters will be deprecated."
                            "For details, please see the interface parameter API comments")
             continue
