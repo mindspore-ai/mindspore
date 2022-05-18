@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ms_function, ops
 from mindspore.ops import operations as P
 
 
@@ -84,13 +84,64 @@ def test_net():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_tensor_pow():
+def test_tensor_pow_pynative():
     """
     Feature: Tensor interface pow.
-    Description: test tensor interface pow.
+    Description: test tensor interface pow in pynative mode.
     Expectation: Success.
     """
     x = Tensor([1, 2, 3])
     y = Tensor([1, 2, 3])
     output = x.pow(y)
     assert np.all(output.asnumpy() == np.array([1, 4, 27]))
+
+
+@ms_function
+def tensor_pow_func(x, y):
+    return x.pow(y)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_pow_graph():
+    """
+    Feature: Tensor interface pow.
+    Description: test tensor interface pow in graph mode.
+    Expectation: Success.
+    """
+    x = Tensor([1, 2, 3])
+    y = Tensor([1, 2, 3])
+    output = tensor_pow_func(x, y)
+    assert np.all(output.asnumpy() == np.array([1, 4, 27]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pow_functional():
+    """
+    Feature: Tensor interface pow.
+    Description: test functional interface pow.
+    Expectation: Success.
+    """
+    x = Tensor([1, 2, 3])
+    y = Tensor([1, 2, 3])
+    output = ops.pow(x, y)
+    assert np.all(output.asnumpy() == np.array([1, 4, 27]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pow_vmap():
+    """
+    Feature: Tensor interface pow.
+    Description: test pow operation with vmap.
+    Expectation: Success.
+    """
+    x = Tensor([[1, 2, 3], [3, 2, 1]])
+    y = Tensor([[1, 2, 3], [3, 2, 1]])
+    pow_vmap = ops.vmap(tensor_pow_func, (0, 0), 0)
+    output = pow_vmap(x, y)
+    assert np.all(output.asnumpy() == np.array([[1, 4, 27], [27, 4, 1]]))
