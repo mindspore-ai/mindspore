@@ -19,6 +19,8 @@ import mindspore.numpy as mnp
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
+from mindspore.common import Tensor
+from mindspore.ops.operations.math_ops import Lerp
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis
@@ -113,6 +115,54 @@ def get_broadcast_binary_op_vmap_rule(prim, axis_size):
 
         out = prim(x, y)
         return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(Lerp)
+def get_lerp_vamp_rule(prim, axis_size):
+    """VmapRule for ternary operations with broadcasting, such as `Lerp` ."""
+
+    def broadcast_a_b_shape(a_bdim, b_bdim):
+        a, a_dim = a_bdim
+        b, b_dim = b_bdim
+        if F.rank(a):
+            a = _bdim_at_front(a, a_dim, 1)
+
+        if F.rank(b):
+            b = _bdim_at_front(b, b_dim, 1)
+        a_shape = F.shape(a)
+        b_shape = F.shape(b)
+        a = _handle_broadcasting(a, a_shape, b_shape)
+        b = _handle_broadcasting(b, b_shape, a_shape)
+        return a, b
+
+    def vmap_rule(start_bdim, end_bdim, weight_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, start_bdim, end_bdim, weight_bdim)
+        if is_all_none:
+            return result
+        start, start_dim = start_bdim
+        end, end_dim = end_bdim
+        weight, weight_dim = weight_bdim
+        start_shape = F.shape(start)
+        end_shape = F.shape(end)
+        # Just broadcast end shape to start.
+        if not isinstance(weight, Tensor):
+            if start_dim == end_dim and start_shape == end_shape:
+                out = prim(start, end, weight)
+                return out, start_dim
+            start, end = broadcast_a_b_shape(start_bdim, end_bdim)
+        # Both broadcast end and weight to start.
+        else:
+            weight_shape = F.shape(weight)
+            if (start_dim == end_dim and start_dim == weight_dim) and (
+                    start_shape == end_shape and start_shape == weight_shape):
+                out = prim(start, end, weight)
+                return out, start_dim
+            start, end = broadcast_a_b_shape(start_bdim, end_bdim)
+            start, weight = broadcast_a_b_shape(start_bdim, weight_bdim)
+        out = prim(start, end, weight)
+        return out, 0
 
     return vmap_rule
 
