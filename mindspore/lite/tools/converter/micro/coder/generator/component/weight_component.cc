@@ -22,7 +22,7 @@
 #include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
-void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
   ofs << g_hwLicense;
   // include all operator header
   for (const auto &h_file : ctx->h_files()) {
@@ -32,8 +32,8 @@ void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext
       << "#include <stdint.h>\n"
       << "#include <string.h>\n"
       << "extern unsigned char *" << ctx->buffer_name() << ";\n"
-      << "extern uint8_t *" << ctx->weight_name() << ";\n";
-  ofs << "enum STATUS {\n"
+      << "extern uint8_t *" << ctx->weight_name() << ";\n"
+      << "enum STATUS {\n"
          "  RET_OK = 0,\n"
          "  RET_ERROR = 1,\n"
          "};\n\n";
@@ -69,7 +69,7 @@ void CodeModelParamsData(std::ofstream &ofs, const std::map<std::string, Tensor 
 }
 
 void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::unique_ptr<CoderContext> &ctx,
-                           Configurator *config) {
+                           const Configurator &config) {
   // reverse key and value of tensors_map
   std::map<std::string, Tensor *> address_map;
   for (const auto &item : ctx->tensors_map()) {
@@ -82,9 +82,11 @@ void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::
       continue;
     }
     if (CheckConstantTensor(tensor)) {
-      hofs << "extern " << GetTensorDataType(tensor->data_type()) << name << "[];\n";
-      if (config->target() != kARM32M) {
+      if (config.target() != kARM32M) {
+        hofs << "extern " << GetTensorDataType(tensor->data_type()) << name << "[];\n";
         cofs << GetTensorDataType(tensor->data_type()) << name << "[" << tensor->ElementsNum() << "];\n";
+      } else {
+        hofs << "extern const " << GetTensorDataType(tensor->data_type()) << name << "[];\n";
       }
     } else if (tensor->category() == lite::Category::VAR) {
       hofs << "extern " << GetTensorDataType(tensor->data_type()) << "*" << name << ";\n";
@@ -102,8 +104,8 @@ void CodeInitWeightState(std::ofstream &ofs) {
       << "int Init(void *weight_buffer, int weight_size);\n\n";
 }
 
-void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, Configurator *config) {
-  if (config->target() != kARM32M) {
+void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
+  if (config.target() != kARM32M) {
     ofs << "static size_t PackWeightSize() {\n";
     ofs << "  size_t w_size = 0;\n";
     for (const auto &block : ctx->GetInitWeightSizeCode()) {

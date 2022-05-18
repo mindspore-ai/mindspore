@@ -25,7 +25,39 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite::micro {
-void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+const char model_runtime_init_source[] = R"RAW(
+typedef struct {
+  void *runtime_buffer;
+  MSTensorHandleArray inputs;
+  MSTensorHandleArray outputs;
+} MicroModel;
+MSModelHandle MSModelCreate() {
+  MicroModel *micro_model = (MicroModel *)malloc(sizeof(MicroModel));
+  if (micro_model == NULL) {
+    return NULL;
+  }
+)RAW";
+const char model_runtime_malloc_source[] = R"RAW(
+  int buffer_size = GetBufferSize();
+  void *runtime_buffer = malloc(buffer_size);
+  if (runtime_buffer == NULL) {
+    return NULL;
+  }
+  micro_model->runtime_buffer = runtime_buffer;
+  int ret = SetBuffer(runtime_buffer);
+  if (ret != kMSStatusSuccess) {
+    return NULL;
+  }
+
+)RAW";
+
+void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
+  ofs << model_runtime_init_source;
+  if (config.target() != kARM32M) {
+    ofs << model_runtime_malloc_source;
+  } else {
+    ofs << "micro_model->runtime_buffer = " << ctx->buffer_name() << ";\n";
+  }
   auto array_tostring = [&ofs](Tensor *tensor, const std::string &prefix, size_t index) {
     ofs << kAlignedString << prefix << "_tensors[" << index << "] = malloc(sizeof(MicroTensor));\n";
     ofs << kAlignedString << prefix << "_tensors[" << index << "]->type = " << EnumNameMSDataType(tensor->data_type())
@@ -98,18 +130,26 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
 }
 
 void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
-  ofs << "void MSModelDestroy(MSModelHandle *model) {\n"
-         "  if (*model) {\n"
-         "    MicroModel *micro_model = (MicroModel *)*model;\n"
-         "    if (micro_model->runtime_buffer) {\n"
-         "      free(micro_model->runtime_buffer);\n"
-         "      micro_model->runtime_buffer = NULL;\n"
-         "    }\n"
-         "    MSTensorHandleArrayDestroy(micro_model->inputs);\n"
-         "    MSTensorHandleArrayDestroy(micro_model->outputs);\n"
-         "    free(*model);\n"
-         "    *model = NULL;\n"
-         "  }\n";
+  ofs << "void MSModelDestroy(MSModelHandle *model) {\n";
+  if (config->target() != kARM32M) {
+    ofs << "  if (*model) {\n"
+           "    MicroModel *micro_model = (MicroModel *)*model;\n"
+           "    if (micro_model->runtime_buffer) {\n"
+           "      free(micro_model->runtime_buffer);\n"
+           "      micro_model->runtime_buffer = NULL;\n"
+           "    }\n"
+           "    MSTensorHandleArrayDestroy(micro_model->inputs);\n"
+           "    MSTensorHandleArrayDestroy(micro_model->outputs);\n"
+           "    free(*model);\n"
+           "    *model = NULL;\n"
+           "  }\n";
+  } else {
+    ofs << "  if (*model) {\n"
+           "    free(*model);\n"
+           "    *model = NULL;\n"
+           "  }\n";
+  }
+
   if (config->support_parallel()) {
     ofs << "  ClearThreadPool();\n";
   }
@@ -283,32 +323,35 @@ void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
          "}\n";
 }
 
-void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
+                               const Configurator &config) {
   ofs << "void "
       << "FreeResource() {\n";
-  ofs << "  " << ctx->buffer_name() << "= NULL;\n";
-  std::vector<Tensor *> inputs = ctx->graph_inputs();
-  size_t size = inputs.size();
-  for (size_t i = 0; i < size; ++i) {
-    ofs << "  " << ctx->input_name() + std::to_string(i) << " = NULL;\n";
-  }
-  ofs << "  void **allocated[] = {\n";
-  size_t num = 0;
-  for (const auto &item : ctx->tensors_map()) {
-    Tensor *tensor = item.first;
-    std::string name = item.second;
-    if (tensor->data() != nullptr && !(CheckConstantTensor(tensor))) {
-      ofs << "    (void**)&" << name << ",\n";
-      num++;
+  if (config.target() != kARM32M) {
+    ofs << "  " << ctx->buffer_name() << "= NULL;\n";
+    std::vector<Tensor *> inputs = ctx->graph_inputs();
+    size_t size = inputs.size();
+    for (size_t i = 0; i < size; ++i) {
+      ofs << "  " << ctx->input_name() + std::to_string(i) << " = NULL;\n";
     }
+    ofs << "  void **allocated[] = {\n";
+    size_t num = 0;
+    for (const auto &item : ctx->tensors_map()) {
+      Tensor *tensor = item.first;
+      std::string name = item.second;
+      if (tensor->data() != nullptr && !(CheckConstantTensor(tensor))) {
+        ofs << "    (void**)&" << name << ",\n";
+        num++;
+      }
+    }
+    ofs << "\n  };\n";
+    ofs << "  for (int i = 0; i < " << num << "; ++i) {\n"
+        << "    *(allocated[i]) = NULL;\n"
+        << "  }\n";
+    ofs << "  if (" << ctx->weight_name() << " != NULL) {\n";
+    ofs << "    free(" << ctx->weight_name() << ");\n";
+    ofs << "    " << ctx->weight_name() << " = NULL;\n  }\n";
   }
-  ofs << "\n  };\n";
-  ofs << "  for (int i = 0; i < " << num << "; ++i) {\n"
-      << "    *(allocated[i]) = NULL;\n"
-      << "  }\n";
-  ofs << "  if (" << ctx->weight_name() << " != NULL) {\n";
-  ofs << "    free(" << ctx->weight_name() << ");\n";
-  ofs << "    " << ctx->weight_name() << " = NULL;\n  }\n";
   ofs << "}\n";
 }
 
