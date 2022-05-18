@@ -80,8 +80,7 @@ Status BuildVocabOp::WorkerEntry(int32_t worker_id) {
 Status BuildVocabOp::operator()() {
   // launch the collector thread
   if (tree_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "[Internal ERROR] Pipeline init failed, Execution tree not set.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(distributor_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(collector_queue_->Register(tree_->AllTasks()));

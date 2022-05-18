@@ -30,34 +30,47 @@
 #include <utility>
 
 #include "include/api/status.h"
+#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
-#define RETURN_IF_NOT_OK(_s) \
-  do {                       \
-    Status __rc = (_s);      \
-    if (__rc.IsError()) {    \
-      return __rc;           \
-    }                        \
+#define RETURN_IF_NOT_OK(_s)       \
+  do {                             \
+    mindspore::Status __rc = (_s); \
+    if (__rc.IsError()) {          \
+      return __rc;                 \
+    }                              \
   } while (false)
 
-#define RETURN_STATUS_UNEXPECTED(_e)                                       \
-  do {                                                                     \
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, _e); \
+#define STATUS_ERROR(_error_code, _e) mindspore::Status(_error_code, __LINE__, DATASET_SRC_FILE_NAME, _e)
+
+#define RETURN_STATUS_ERROR(_error_code, _e)                                    \
+  do {                                                                          \
+    return mindspore::Status(_error_code, __LINE__, DATASET_SRC_FILE_NAME, _e); \
   } while (false)
 
-#define CHECK_FAIL_RETURN_UNEXPECTED(_condition, _e)                         \
-  do {                                                                       \
-    if (!(_condition)) {                                                     \
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, _e); \
-    }                                                                        \
+#define RETURN_STATUS_UNEXPECTED(_e)                                                                          \
+  do {                                                                                                        \
+    return mindspore::Status(mindspore::StatusCode::kMDUnexpectedError, __LINE__, DATASET_SRC_FILE_NAME, _e); \
   } while (false)
 
-#define CHECK_FAIL_RETURN_SYNTAX_ERROR(_condition, _e)                   \
-  do {                                                                   \
-    if (!(_condition)) {                                                 \
-      return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, _e); \
-    }                                                                    \
+#define CHECK_FAIL_RETURN_UNEXPECTED(_condition, _e)                                                            \
+  do {                                                                                                          \
+    if (!(_condition)) {                                                                                        \
+      return mindspore::Status(mindspore::StatusCode::kMDUnexpectedError, __LINE__, DATASET_SRC_FILE_NAME, _e); \
+    }                                                                                                           \
+  } while (false)
+
+#define RETURN_SYNTAX_ERROR(_e)                                                                           \
+  do {                                                                                                    \
+    return mindspore::Status(mindspore::StatusCode::kMDSyntaxError, __LINE__, DATASET_SRC_FILE_NAME, _e); \
+  } while (false)
+
+#define CHECK_FAIL_RETURN_SYNTAX_ERROR(_condition, _e)                                                      \
+  do {                                                                                                      \
+    if (!(_condition)) {                                                                                    \
+      return mindspore::Status(mindspore::StatusCode::kMDSyntaxError, __LINE__, DATASET_SRC_FILE_NAME, _e); \
+    }                                                                                                       \
   } while (false)
 
 #define RETURN_UNEXPECTED_IF_NULL(_ptr)                                         \
@@ -71,23 +84,28 @@ namespace dataset {
 #define RETURN_OK_IF_TRUE(_condition) \
   do {                                \
     if (_condition) {                 \
-      return Status::OK();            \
+      return mindspore::Status::OK(); \
     }                                 \
   } while (false)
 
-#define LOG_AND_RETURN_STATUS_SYNTAX_ERROR(_e)                         \
-  do {                                                                 \
-    MS_LOG(ERROR) << _e;                                               \
-    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, _e); \
+#define LOG_AND_RETURN_STATUS_SYNTAX_ERROR(_e)                                                            \
+  do {                                                                                                    \
+    MS_LOG(ERROR) << _e;                                                                                  \
+    return mindspore::Status(mindspore::StatusCode::kMDSyntaxError, __LINE__, DATASET_SRC_FILE_NAME, _e); \
   } while (false)
 
 #define RETURN_SECOND_IF_ERROR(_s, _r) \
   do {                                 \
-    Status __rc = (_s);                \
+    mindspore::Status __rc = (_s);     \
     if (__rc.IsError()) {              \
       MS_LOG(ERROR) << __rc;           \
       return _r;                       \
     }                                  \
+  } while (false)
+
+#define RETURN_STATUS_OOM(_e)                                                                             \
+  do {                                                                                                    \
+    return mindspore::Status(mindspore::StatusCode::kMDOutOfMemory, __LINE__, DATASET_SRC_FILE_NAME, _e); \
   } while (false)
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)

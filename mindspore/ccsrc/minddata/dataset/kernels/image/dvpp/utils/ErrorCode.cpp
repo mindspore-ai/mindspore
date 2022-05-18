@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "mindspore/core/utils/log_adapter.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "ErrorCode.h"
 
 std::string GetAppErrCodeInfo(const APP_ERROR err) {

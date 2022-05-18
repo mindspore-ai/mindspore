@@ -251,7 +251,7 @@ std::string GetAppErrCodeInfo(const APP_ERROR err);
 void AssertErrorCode(const int code, const std::string file, const std::string function, const int line);
 void CheckErrorCode(const int code, const std::string file, const std::string function, const int line);
 
-#define RtAssert(code) AssertErrorCode(code, __FILE__, __FUNCTION__, __LINE__);
-#define RtCheckError(code) CheckErrorCode(code, __FILE__, __FUNCTION__, __LINE__);
+#define RtAssert(code) AssertErrorCode(code, DATASET_SRC_FILE_NAME, __FUNCTION__, __LINE__);
+#define RtCheckError(code) CheckErrorCode(code, DATASET_SRC_FILE_NAME, __FUNCTION__, __LINE__);
 
 #endif  // ERROR_CODE_H_

@@ -42,7 +42,7 @@ Status IntrpService::Register(std::string *name, IntrpResource *res) {
   SharedLock stateLck(&state_lock_);
   // Now double check the state
   if (ServiceState() != STATE::kRunning) {
-    return Status(StatusCode::kMDInterrupted, __LINE__, __FILE__, "Interrupt service is shutting down");
+    RETURN_STATUS_ERROR(StatusCode::kMDInterrupted, "Interrupt service is shutting down");
   } else {
     std::lock_guard<std::mutex> lck(mutex_);
     try {

@@ -70,11 +70,11 @@ void Task::operator()() {
       ShutdownGroup();
     }
   } catch (const std::bad_alloc &e) {
-    rc_ = Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, e.what());
+    rc_ = STATUS_ERROR(StatusCode::kMDOutOfMemory, e.what());
     MS_LOG(ERROR) << rc_;
     ShutdownGroup();
   } catch (const std::exception &e) {
-    rc_ = Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, e.what());
+    rc_ = STATUS_ERROR(StatusCode::kMDUnexpectedError, e.what());
     MS_LOG(ERROR) << rc_;
     ShutdownGroup();
   }
@@ -134,7 +134,7 @@ Status Task::Run() {
       running_ = true;
       caught_severe_exception_ = false;
     } catch (const std::exception &e) {
-      rc = Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, e.what());
+      rc = STATUS_ERROR(StatusCode::kMDUnexpectedError, e.what());
     }
   }
   return rc;

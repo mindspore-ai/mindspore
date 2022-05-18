@@ -62,7 +62,7 @@ Status JiebaTokenizerOp::Tokenize(std::string_view sentence_v, std::vector<std::
 Status JiebaTokenizerOp::AddWord(const std::string &word, int freq) {
   RETURN_UNEXPECTED_IF_NULL(jieba_parser_);
   if (jieba_parser_->InsertUserWord(word, freq, "") == false) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "AddWord: add word failed.");
+    RETURN_STATUS_UNEXPECTED("AddWord: add word failed.");
   }
   return Status::OK();
 }

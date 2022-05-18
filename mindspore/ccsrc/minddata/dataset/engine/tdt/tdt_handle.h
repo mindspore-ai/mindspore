@@ -20,7 +20,7 @@
 #include <map>
 #include <thread>
 #include <utility>
-#include "utils/log_adapter.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "acl/acl_tdt.h"
 
 namespace mindspore {

@@ -37,12 +37,10 @@ Status BuddySpace::Init() {
   const int kLvlMin = 3;
   const int kLvlMax = 18;
   if (log_min_ < 0) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "log_min must be positive : " + std::to_string(log_min_));
+    RETURN_STATUS_UNEXPECTED("log_min must be positive : " + std::to_string(log_min_));
   }
   if (num_lvl_ < kLvlMin || num_lvl_ > kLvlMax) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "num_lvl must be between 3 and 18 : " + std::to_string(num_lvl_));
+    RETURN_STATUS_UNEXPECTED("num_lvl must be between 3 and 18 : " + std::to_string(num_lvl_));
   }
   min_ = BitLeftShift(1, log_min_);
   max_ = BitLeftShift(1, log_min_ + num_lvl_ - 1);
@@ -52,7 +50,7 @@ Status BuddySpace::Init() {
   try {
     mem_ = std::make_unique<uint8_t[]>(offset_3);
   } catch (const std::bad_alloc &e) {
-    return Status(StatusCode::kMDOutOfMemory);
+    RETURN_STATUS_OOM("Out of memory.");
   }
   (void)memset_s(mem_.get(), offset_3, 0, offset_3);
   auto ptr = mem_.get();
@@ -73,7 +71,7 @@ Status BuddySpace::Alloc(const uint64_t sz, BSpaceDescriptor *desc, addr_t *p) n
     *p = addr;
     return Status::OK();
   } else {
-    return Status(StatusCode::kMDBuddySpaceFull, "BuddySpace full. Not an error. Please ignore.");
+    RETURN_STATUS_ERROR(StatusCode::kMDBuddySpaceFull, "BuddySpace full. Not an error. Please ignore.");
   }
 }
 
@@ -401,7 +399,7 @@ Status BuddySpace::CreateBuddySpace(std::unique_ptr<BuddySpace> *out_bs, int log
   Status rc;
   auto bs = new (std::nothrow) BuddySpace(log_min, num_lvl);
   if (bs == nullptr) {
-    return Status(StatusCode::kMDOutOfMemory);
+    RETURN_STATUS_OOM("Out of memory.");
   }
   rc = bs->Init();
   if (rc.IsOk()) {

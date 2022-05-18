@@ -28,9 +28,9 @@ class __attribute__((visibility("default"))) ShardOperator {
   virtual ~ShardOperator() = default;
 
   Status operator()(ShardTaskList &tasks) {
-    RETURN_IF_NOT_OK(this->PreExecute(tasks));
-    RETURN_IF_NOT_OK(this->Execute(tasks));
-    RETURN_IF_NOT_OK(this->SufExecute(tasks));
+    RETURN_IF_NOT_OK_MR(this->PreExecute(tasks));
+    RETURN_IF_NOT_OK_MR(this->Execute(tasks));
+    RETURN_IF_NOT_OK_MR(this->SufExecute(tasks));
     return Status::OK();
   }
 

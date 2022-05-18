@@ -41,8 +41,7 @@ BuildSentencePieceVocabOp::BuildSentencePieceVocabOp(std::shared_ptr<SentencePie
 
 Status BuildSentencePieceVocabOp::operator()() {
   if (tree_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "[Internal ERROR] Pipeline init failed, Execution tree not set.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(sentence_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
@@ -86,11 +85,10 @@ Status BuildSentencePieceVocabOp::SentenceThread() {
   sentencepiece::util::Status s_status =
     sentencepiece::SentencePieceTrainer::Train(BuildParams(), sentence_iter.get(), &model_proto);
   if (!s_status.ok()) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, s_status.message());
+    RETURN_STATUS_UNEXPECTED(s_status.message());
   } else {
     if (vocab_ == nullptr) {
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                    "[Internal ERROR] SentencePiece vocab should not be null.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] SentencePiece vocab should not be null.");
     }
     vocab_->set_model_proto(model_proto);
   }
@@ -151,9 +149,10 @@ void BuildSentencePieceVocabOp::Next(std::string *sentence) {
 
   if (new_row[col_id_]->type().IsNumeric() || new_row[col_id_]->Rank() > 1) {
     ret_status_ =
-      Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-             "Invalid data, build_sentence_piece_vocab only supports string data with rank equal to 1, but got type: " +
-               new_row[col_id_]->type().ToString() + ", rank: " + std::to_string(new_row[col_id_]->Rank()));
+      STATUS_ERROR(StatusCode::kMDUnexpectedError,
+                   "Invalid data, build_sentence_piece_vocab only supports string data with rank equal to 1, "
+                   "but got type: " +
+                     new_row[col_id_]->type().ToString() + ", rank: " + std::to_string(new_row[col_id_]->Rank()));
     read_done_ = true;
     return;
   }

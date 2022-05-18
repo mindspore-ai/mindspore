@@ -46,14 +46,14 @@ Status ValidateScalar(const std::string &op_name, const std::string &scalar_name
   if (range.empty() || range.size() > 2) {
     std::string err_msg = op_name + ": expecting range size 1 or 2, but got: " + std::to_string(range.size());
     MS_LOG(ERROR) << err_msg;
-    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+    RETURN_SYNTAX_ERROR(err_msg);
   }
   if ((left_open_interval && scalar <= range[0]) || (!left_open_interval && scalar < range[0])) {
     std::string interval_description = left_open_interval ? " greater than " : " greater than or equal to ";
     std::string err_msg = op_name + ": '" + scalar_name + "' must be" + interval_description +
                           std::to_string(range[0]) + ", got: " + std::to_string(scalar);
     MS_LOG(ERROR) << err_msg;
-    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+    RETURN_SYNTAX_ERROR(err_msg);
   }
   if (range.size() == 2) {
     if ((right_open_interval && scalar >= range[1]) || (!right_open_interval && scalar > range[1])) {
@@ -63,7 +63,7 @@ Status ValidateScalar(const std::string &op_name, const std::string &scalar_name
                             std::to_string(range[0]) + ", " + std::to_string(range[1]) + right_bracket +
                             ", got: " + std::to_string(scalar);
       MS_LOG(ERROR) << err_msg;
-      return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+      RETURN_SYNTAX_ERROR(err_msg);
     }
   }
   return Status::OK();
@@ -75,7 +75,10 @@ Status ValidateEnum(const std::string &op_name, const std::string &enum_name, co
                     const std::vector<T> &enum_list) {
   auto existed = std::find(enum_list.begin(), enum_list.end(), enumeration);
   std::string err_msg = op_name + ": Invalid " + enum_name + ", check input value of enum.";
-  return existed != enum_list.end() ? Status::OK() : Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
+  if (existed != enum_list.end()) {
+    return Status::OK();
+  }
+  RETURN_SYNTAX_ERROR(err_msg);
 }
 
 // Helper function to validate color attribute

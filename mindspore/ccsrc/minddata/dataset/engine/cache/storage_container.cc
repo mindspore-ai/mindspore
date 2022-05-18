@@ -102,7 +102,7 @@ Status StorageContainer::Write(const ReadableSlice &dest, off64_t offset) const 
   if (r_sz != sz) {
     errno_t err = (r_sz == 0) ? EOF : errno;
     if (errno == ENOSPC) {
-      return Status(StatusCode::kMDNoSpace, __LINE__, __FILE__);
+      RETURN_STATUS_ERROR(StatusCode::kMDNoSpace, "no space left.");
     } else {
       RETURN_STATUS_UNEXPECTED(strerror(err));
     }

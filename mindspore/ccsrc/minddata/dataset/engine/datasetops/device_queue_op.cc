@@ -134,7 +134,7 @@ Status DeviceQueueOp::operator()() {
 
 #ifdef ENABLE_DUMP_IR
   if (md_channel_info_ == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "[Internal ERROR] RDR module init failed.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] RDR module init failed.");
   }
 #endif
   if (device_type_ == DeviceType::Ascend) {
@@ -316,7 +316,7 @@ Status DeviceQueueOp::SendRowToTdt(TensorRow curr_row, bool is_profiling_enable,
       MS_LOG(INFO) << "stop_send received";
       return Status::OK();
     }
-    return Status(
+    RETURN_STATUS_ERROR(
       StatusCode::kMDTDTPushFailure,
       "TDT Push data into device Failed, check the first error or TraceBack first, more checking advises are: "
       "1) if training is not ready, error might raised by network computing operator or environment configuration. "
@@ -344,7 +344,7 @@ Status DeviceQueueOp::CheckPushStatus(Status status, bool stop_send, bool *send_
       MS_LOG(WARNING) << "Thread has already been terminated.";
       return Status::OK();
     }
-    return Status(
+    RETURN_STATUS_ERROR(
       StatusCode::kMDTDTPushFailure,
       "TDT Push data into device Failed, check the first error or TraceBack first, more checking advises are: "
       "1) if training is not ready, error might raised by network computing operator or environment configuration. "
@@ -357,8 +357,7 @@ Status DeviceQueueOp::CheckPushStatus(Status status, bool stop_send, bool *send_
 #ifdef ENABLE_TDTQUE
 Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
   if (!create_data_info_queue_) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "[Internal ERROR] DataInfo queue is not created.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] DataInfo queue is not created.");
   }
   // This place has a race condition with operator(), so the first one
   // arrive here will do the initialize work.
@@ -374,7 +373,7 @@ Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
 }
 #else
 Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
-  return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "'GetDataInfo' only supported on Ascend.");
+  RETURN_STATUS_UNEXPECTED("'GetDataInfo' only supported on Ascend.");
 }
 #endif
 
@@ -389,7 +388,7 @@ Status DeviceQueueOp::SetThreadDevice() {
     err += std::to_string(static_cast<int>(ret));
     err += "], ";
     err += cudaGetErrorString(ret);
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err);
+    RETURN_STATUS_UNEXPECTED(err);
   }
   return Status::OK();
 }
@@ -445,8 +444,7 @@ Status DeviceQueueOp::PushDataToGPU() {
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
   auto ret = GpuBufferMgr::GetInstance().Open(channel_name_, {}, release_function);
   if (ret != BlockQueueStatus_T::SUCCESS) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "[Internal ERROR] Failed to open channel for sending data.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to open channel for sending data.");
   }
 
   while (!(items.empty() && !eoe_flag) && !GpuBufferMgr::GetInstance().IsClosed()) {
@@ -459,8 +457,8 @@ Status DeviceQueueOp::PushDataToGPU() {
       // Data prefetch only when PS mode enables cache.
       if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_,
                                                           items[0].data_type_)) {
-        return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__,
-                      "[Internal ERROR] Failed to prefetch data in current PS mode(cache data when sending).");
+        RETURN_STATUS_ERROR(StatusCode::kMDTimeOut,
+                            "[Internal ERROR] Failed to prefetch data in current PS mode(cache data when sending).");
       }
       RETURN_IF_NOT_OK(RetryPushData(items, is_profiling_enable, &push_cost));
 #ifndef ENABLE_SECURITY
@@ -523,8 +521,7 @@ Status DeviceQueueOp::RetryPushData(const std::vector<DataItemGpu> &items, const
     BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(channel_name_, items, WAIT_TIME);
     if (ret) {
       if (ret == BlockQueueStatus_T::ERROR_INPUT) {
-        return Status(
-          StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+        RETURN_STATUS_UNEXPECTED(
           "Invalid data, the types or shapes of current row is different with previous row(i.e. do batch operation but "
           "drop_reminder is False, or without resize image into the same size, these will cause shapes differs).");
       } else {
@@ -649,19 +646,18 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
   for (auto &sub_item : *items) {
     auto rc = pool_[worker_id]->Allocate(sub_item.data_len_, &sub_item.data_ptr_);
     if (rc.IsError() || sub_item.data_ptr_ == nullptr) {
-      return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, "Memory malloc failed, check memory usage.");
+      RETURN_STATUS_OOM("Memory malloc failed, check memory usage.");
     }
     if (curr_row[i] == nullptr) {
       MS_LOG(ERROR) << "[Internal ERROR] The pointer curr_row[" << i << "] is null";
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                    "[Internal ERROR] TensorRow 'curr_row' contains nullptr.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] TensorRow 'curr_row' contains nullptr.");
     }
     sub_item.data_type_ = curr_row[i]->type().ToString();
     const unsigned char *column_data = curr_row[i]->GetBuffer();
     if (memcpy_s(sub_item.data_ptr_, sub_item.data_len_, column_data,
                  static_cast<uint32_t>(curr_row[i++]->SizeInBytes())) != 0) {
       MS_LOG(ERROR) << "[Internal ERROR] memcpy_s failed.";
-      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "[Internal ERROR] memcpy_s failed.");
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] memcpy_s failed.");
     }
   }
 
@@ -673,8 +669,7 @@ Status DeviceQueueOp::ClearDevice() {
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
   auto ret = GpuBufferMgr::GetInstance().Open(channel_name_, {}, release_function);
   if (ret != BlockQueueStatus_T::SUCCESS) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "[Internal ERROR] Failed to open channel for clearing the device.");
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to open channel for clearing the device.");
   }
 
   ret = GpuBufferMgr::GetInstance().Clear(channel_name_);

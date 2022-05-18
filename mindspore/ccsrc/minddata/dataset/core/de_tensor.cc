@@ -18,11 +18,10 @@
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/core/type_id.h"
+#include "minddata/dataset/util/log_adapter.h"
 #ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
 #define EXCEPTION_IF_NULL(ptr) MS_EXCEPTION_IF_NULL(ptr)
 #else
-#include "mindspore/lite/src/common/log_adapter.h"
 #define EXCEPTION_IF_NULL(ptr) MS_ASSERT((ptr) != nullptr)
 #endif
 

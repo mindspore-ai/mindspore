@@ -172,7 +172,7 @@ Status NumaMemoryPool::Allocate(size_t n, void **p) {
   }
   // Handle the case we have done one round robin search.
   if (ptr == nullptr) {
-    return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
+    RETURN_STATUS_OOM("Out of memory.");
   }
   return rc;
 }

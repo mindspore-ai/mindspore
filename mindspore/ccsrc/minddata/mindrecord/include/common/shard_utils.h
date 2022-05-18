@@ -17,9 +17,16 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_COMMON_SHARD_UTILS_H_
 #define MINDSPORE_CCSRC_MINDDATA_MINDRECORD_INCLUDE_COMMON_SHARD_UTILS_H_
 
+#if defined(_WIN32) || defined(_WIN64)
+#ifndef _CRT_RAND_S
+#define _CRT_RAND_S
+#endif
+#include <stdlib.h>
+#else
+#include <stdlib.h>
+#endif
 #include <libgen.h>
 #include <limits.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include <sys/statfs.h>
@@ -32,6 +39,7 @@
 #include <ctime>
 #include <future>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <random>
@@ -42,10 +50,10 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "minddata/mindrecord/include/common/log_adapter.h"
 #include "minddata/mindrecord/include/shard_error.h"
 #include "nlohmann/json.hpp"
 #include "./sqlite3.h"
-#include "utils/log_adapter.h"
 
 /* To be used when dlog is ok #include "./slog.h" */
 #ifdef DEBUG
@@ -203,6 +211,10 @@ uint32_t GetMaxThreadNum();
 /// \param ds shared ptr of vector of absolute path
 /// \return Status
 Status GetDatasetFiles(const std::string &path, const json &addresses, std::shared_ptr<std::vector<std::string>> *ds);
+
+/// \brief get random
+/// \return std::mt19937
+std::mt19937 GetRandomDevice();
 }  // namespace mindrecord
 }  // namespace mindspore
 

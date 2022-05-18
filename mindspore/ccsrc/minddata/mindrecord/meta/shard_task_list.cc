@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/util/random.h"
 #include "minddata/mindrecord/include/shard_task_list.h"
 #include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
@@ -92,13 +91,13 @@ ShardTask &ShardTaskList::GetTaskByID(int64_t id) { return task_list_[id]; }
 int64_t ShardTaskList::GetTaskSampleByID(int64_t id) { return sample_ids_[id]; }
 
 int64_t ShardTaskList::GetRandomTaskID() {
-  std::mt19937 gen = mindspore::dataset::GetRandomDevice();
+  std::mt19937 gen = GetRandomDevice();
   std::uniform_int_distribution<> dis(0, sample_ids_.size() - 1);
   return dis(gen);
 }
 
 ShardTask &ShardTaskList::GetRandomTask() {
-  std::mt19937 gen = mindspore::dataset::GetRandomDevice();
+  std::mt19937 gen = GetRandomDevice();
   std::uniform_int_distribution<> dis(0, task_list_.size() - 1);
   return task_list_[dis(gen)];
 }

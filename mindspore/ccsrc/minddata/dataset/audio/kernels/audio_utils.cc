@@ -1016,13 +1016,13 @@ Status ReadWaveFile(const std::string &wav_file_dir, std::vector<float> *wavefor
   in.read(reinterpret_cast<char *>(header), sizeof(WavHeader));
   *sample_rate = header->sample_rate;
   float bytes_per_sample = header->bits_per_sample / 8;
+  auto sub_chunk2_size = header->sub_chunk2_size;
   if (bytes_per_sample == 0) {
     in.close();
     delete header;
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "ReadWaveFile: zero division error, bits per sample of the audio can not be zero.");
+    RETURN_STATUS_UNEXPECTED("ReadWaveFile: zero division error, bits per sample of the audio can not be zero.");
   }
-  int num_samples = header->sub_chunk2_size / bytes_per_sample;
+  int num_samples = sub_chunk2_size / bytes_per_sample;
   std::unique_ptr<int16_t[]> data = std::make_unique<int16_t[]>(num_samples);
   in.read(reinterpret_cast<char *>(data.get()), sizeof(int16_t) * num_samples);
   waveform_vec->resize(num_samples);

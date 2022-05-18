@@ -179,8 +179,7 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
     auto cache_state = static_cast<CacheServiceState>(out);
     if (cache_state == CacheServiceState::kFetchPhase ||
         (cache_state == CacheServiceState::kBuildPhase && cookie_.empty())) {
-      return Status(StatusCode::kMDDuplicateKey, __LINE__, __FILE__,
-                    "Not an error and we should bypass the build phase");
+      RETURN_STATUS_ERROR(StatusCode::kMDDuplicateKey, "Not an error and we should bypass the build phase");
     }
     if (async_buffer_stream_) {
       // Reset the async buffer stream to its initial state. Any stale status and data would get cleaned up.

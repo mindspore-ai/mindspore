@@ -93,7 +93,7 @@ Status CircularPool::Allocate(size_t n, void **p) {
       auto it = cirIt.Next();
       Arena *ba = it->get();
       if (ba->get_max_size() < n) {
-        return Status(StatusCode::kMDOutOfMemory);
+        RETURN_STATUS_OOM("Out of memory.");
       }
       // If we are asked to move forward the tail
       if (move_tail) {
@@ -126,7 +126,7 @@ Status CircularPool::Allocate(size_t n, void **p) {
         // Re-acquire the shared lock and try again
         lock_s.Downgrade();
       } else {
-        return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
+        RETURN_STATUS_OOM("Out of memory.");
       }
     }
   } while (ptr == nullptr);
@@ -222,7 +222,7 @@ Status CircularPool::CreateCircularPool(std::shared_ptr<MemoryPool> *out_pool, i
   }
   auto pool = new (std::nothrow) CircularPool(max_size_in_gb, arena_size, is_cuda_malloc);
   if (pool == nullptr) {
-    return Status(StatusCode::kMDOutOfMemory);
+    RETURN_STATUS_OOM("Out of memory.");
   }
   if (createOneArena) {
     rc = pool->AddOneArena();
@@ -243,7 +243,7 @@ Status CircularPool::CreateCircularPool(std::shared_ptr<MemoryPool> *out_pool, i
   }
   auto pool = new (std::nothrow) CircularPool(max_size_in_gb, arena_size);
   if (pool == nullptr) {
-    return Status(StatusCode::kMDOutOfMemory);
+    RETURN_STATUS_OOM("Out of memory.");
   }
   if (createOneArena) {
     rc = pool->AddOneArena();

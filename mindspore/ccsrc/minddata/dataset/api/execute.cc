@@ -25,11 +25,7 @@
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/kernels/ir/tensor_operation.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
+#include "minddata/dataset/util/log_adapter.h"
 #ifdef ENABLE_ACL
 #include "minddata/dataset/core/ascend_resource.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"

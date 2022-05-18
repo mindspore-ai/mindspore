@@ -84,8 +84,8 @@ Status ShardSample::UpdateTasks(ShardTaskList &tasks, int64_t taking) {
   if (tasks.permutation_.empty()) {
     ShardTaskList new_tasks;
     auto total_no = tasks.sample_ids_.size();
-    CHECK_FAIL_RETURN_UNEXPECTED(total_no > 0,
-                                 "[Internal ERROR] 'total_no' should be positive but got: " + std::to_string(total_no));
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(
+      total_no > 0, "[Internal ERROR] 'total_no' should be positive but got: " + std::to_string(total_no));
     if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
       for (int64_t i = 0; i < indices_.size(); ++i) {
         int64_t index = ((indices_[i] % total_no) + total_no) % total_no;
@@ -113,8 +113,8 @@ Status ShardSample::UpdateTasks(ShardTaskList &tasks, int64_t taking) {
   } else {
     ShardTaskList new_tasks;
     int64_t total_no = tasks.permutation_.size();
-    CHECK_FAIL_RETURN_UNEXPECTED(total_no > 0,
-                                 "[Internal ERROR] 'total_no' should be positive but got: " + std::to_string(total_no));
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(
+      total_no > 0, "[Internal ERROR] 'total_no' should be positive but got: " + std::to_string(total_no));
     int64_t cnt = 0;
     for (int64_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
       if (no_of_samples_ != 0 && cnt == no_of_samples_) break;
@@ -147,9 +147,10 @@ Status ShardSample::Execute(ShardTaskList &tasks) {
     no_of_samples_ = std::min(no_of_samples_, total_no);
     taking = no_of_samples_ - no_of_samples_ % no_of_categories;
   } else if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
-    CHECK_FAIL_RETURN_UNEXPECTED(static_cast<int64_t>(indices_.size()) <= total_no,
-                                 "Invalid input, indices size: " + std::to_string(indices_.size()) +
-                                   " should be less than or equal to database size: " + std::to_string(total_no) + ".");
+    CHECK_FAIL_RETURN_UNEXPECTED_MR(static_cast<int64_t>(indices_.size()) <= total_no,
+                                    "Invalid input, indices size: " + std::to_string(indices_.size()) +
+                                      " should be less than or equal to database size: " + std::to_string(total_no) +
+                                      ".");
   } else {  // constructor TopPercent
     if (numerator_ > 0 && denominator_ > 0 && numerator_ <= denominator_) {
       if (numerator_ == 1 && denominator_ > 1) {  // sharding
@@ -159,8 +160,9 @@ Status ShardSample::Execute(ShardTaskList &tasks) {
         taking -= (taking % no_of_categories);
       }
     } else {
-      RETURN_STATUS_UNEXPECTED("[Internal ERROR] 'numerator_': " + std::to_string(numerator_) +
-                               " should be positive and less than denominator_: " + std::to_string(denominator_) + ".");
+      RETURN_STATUS_UNEXPECTED_MR("[Internal ERROR] 'numerator_': " + std::to_string(numerator_) +
+                                  " should be positive and less than denominator_: " + std::to_string(denominator_) +
+                                  ".");
     }
   }
   return UpdateTasks(tasks, taking);
@@ -168,7 +170,7 @@ Status ShardSample::Execute(ShardTaskList &tasks) {
 
 Status ShardSample::SufExecute(ShardTaskList &tasks) {
   if (sampler_type_ == kSubsetRandomSampler) {
-    RETURN_IF_NOT_OK((*shuffle_op_)(tasks));
+    RETURN_IF_NOT_OK_MR((*shuffle_op_)(tasks));
   }
   return Status::OK();
 }

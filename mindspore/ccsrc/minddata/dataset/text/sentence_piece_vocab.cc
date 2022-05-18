@@ -81,7 +81,7 @@ Status SentencePieceVocab::BuildFromFile(const std::vector<std::string> &path_li
   sentencepiece::util::Status s_status = sentencepiece::SentencePieceTrainer::Train(unorder_map, nullptr, &model_proto);
   if (!s_status.ok()) {
     std::string err_msg = "SentencePieceVocab: " + std::string(s_status.message());
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
   vocab->get()->set_model_proto(model_proto);
 

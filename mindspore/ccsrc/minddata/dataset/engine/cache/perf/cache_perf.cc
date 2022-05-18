@@ -16,7 +16,7 @@
 
 #include "minddata/dataset/engine/cache/perf/cache_perf_run.h"
 #include <iostream>
-#include "mindspore/core/utils/log_adapter.h"
+#include "minddata/dataset/util/log_adapter.h"
 namespace ms = mindspore;
 namespace ds = mindspore::dataset;
 

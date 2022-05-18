@@ -223,7 +223,7 @@ Status ChildIterator::Drain() {
     RETURN_IF_NOT_OK(current_op_->child(child_idx_)->GetNextRow(&row));
   }
   if (row.eof()) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Child iterator picked up EOF in drain.");
+    RETURN_STATUS_UNEXPECTED("Child iterator picked up EOF in drain.");
   }
   return Status::OK();
 }

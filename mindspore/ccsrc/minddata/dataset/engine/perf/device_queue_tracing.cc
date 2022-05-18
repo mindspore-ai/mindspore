@@ -17,11 +17,7 @@
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include <fstream>
 #include <string>
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/path.h"
 #include "mindspore/core/utils/ms_utils.h"
 
