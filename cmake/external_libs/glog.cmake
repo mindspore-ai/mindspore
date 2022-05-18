@@ -33,10 +33,7 @@ set(glog_option -DBUILD_TESTING=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD
         -DCMAKE_BUILD_TYPE=Release)
 
 if(WIN32 AND NOT MSVC)
-    execute_process(COMMAND "${CMAKE_C_COMPILER}" -dumpmachine
-        OUTPUT_VARIABLE i686_or_x86_64
-    )
-    if(i686_or_x86_64 MATCHES "^i686-")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
         set(glog_option ${glog_option} -DHAVE_DBGHELP=ON)
     endif()
 endif()
