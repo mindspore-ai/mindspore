@@ -20,28 +20,24 @@
 #include <memory>
 #include <map>
 #include <set>
+#include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "utils/tensor_construct_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
-
+#include "include/common/utils/utils.h"
 namespace mindspore {
 namespace ops {
+int64_t CTCLossV2::get_blank() const { return GetValue<int64_t>(GetAttr(kAttrBlank)); }
+std::string CTCLossV2::get_reduction() const { return GetValue<std::string>(GetAttr(kAttrReduction)); }
 namespace {
 abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   constexpr size_t kLenLogProbs = 3;
   constexpr size_t kLenTarget = 2;
   constexpr int64_t kMulti = 2;
-  constexpr int64_t kInputSize = 4;
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, kInputSize,
-                                           prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+
   auto log_probs_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto targets_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto log_probs_shape = log_probs_shape_map[kShape];
@@ -68,8 +64,11 @@ abstract::TupleShapePtr CTCLossV2InferShape(const PrimitivePtr &primitive,
 TuplePtr CTCLossV2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
-  const std::set<TypePtr> valid_types = {kFloat32};
-  auto type = CheckAndConvertUtils::CheckTypeValid("log_probs", input_args[0]->BuildType(), valid_types, name);
+  auto type = CheckAndConvertUtils::CheckTypeValid("log_probs", input_args[kInputIndex0]->BuildType(),
+                                                   {kFloat32, kFloat64}, name);
+  CheckAndConvertUtils::CheckTypeValid("targets", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64}, name);
+  CheckAndConvertUtils::CheckTypeValid("input_lengths", input_args[kInputIndex2]->BuildType(), {kInt32, kInt64}, name);
+  CheckAndConvertUtils::CheckTypeValid("target_lengths", input_args[kInputIndex3]->BuildType(), {kInt32, kInt64}, name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
 }
 }  // namespace
@@ -77,10 +76,11 @@ TuplePtr CTCLossV2InferType(const PrimitivePtr &primitive, const std::vector<Abs
 MIND_API_OPERATOR_IMPL(CTCLossV2, BaseOperator);
 AbstractBasePtr CTCLossV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  return abstract::MakeAbstract(CTCLossV2InferShape(primitive, input_args), CTCLossV2InferType(primitive, input_args));
+  constexpr int64_t kInputNum = 4;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  auto type = CTCLossV2InferType(primitive, input_args);
+  auto shape = CTCLossV2InferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(CTCLossV2, prim::kPrimCTCLossV2, CTCLossV2Infer, nullptr, true);
 }  // namespace ops
