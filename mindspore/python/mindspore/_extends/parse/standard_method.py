@@ -1521,6 +1521,16 @@ def hardshrink(x, lambd=0.5):
     return P.HShrink(lambd)(x)
 
 
+def adaptive_avgpool2d(x, output_size):
+    """
+    2D adaptive average pooling for temporal data.
+    """
+    check_value_type("output_size", output_size, [int, tuple], "Tensor")
+    if isinstance(output_size, tuple):
+        check_int(len(output_size), 2, validator.Rel.EQ, "length of output_size", "Tensor")
+    return F.adaptive_avgpool2d(x, output_size)
+
+
 def getitem(data, index):
     """Implementation of `getitem`."""
     return data.__getitem__(index)
@@ -1958,6 +1968,7 @@ check_type_support = constexpr(validator.check_type_support)
 check_is_int = constexpr(validator.check_is_int)
 check_type_name = constexpr(validator.check_type_name)
 check_value_type = constexpr(validator.check_value_type)
+check_int = constexpr(validator.check_int)
 
 
 def tensor_bool(x):

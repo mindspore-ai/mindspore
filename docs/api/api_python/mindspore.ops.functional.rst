@@ -44,6 +44,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.adaptive_avgpool2d
     mindspore.ops.pdist
 
 激活函数

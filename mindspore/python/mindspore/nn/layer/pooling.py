@@ -23,7 +23,7 @@ from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from ..cell import Cell
 
 __all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'AdaptiveAvgPool1d', 'AdaptiveMaxPool1d',
-           'AdaptiveMaxPool2d']
+           'AdaptiveMaxPool2d', 'AdaptiveAvgPool2d']
 
 
 class _PoolNd(Cell):
@@ -502,6 +502,68 @@ class AdaptiveAvgPool1d(Cell):
         x = self.squeeze(x)
 
         return x
+
+
+class AdaptiveAvgPool2d(Cell):
+    r"""
+    2D adaptive average pooling for temporal data.
+
+    This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
+    That is, for any input size, the size of the specified output is H x W.
+    The number of output features is equal to the number of input features.
+
+    The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
+    H is the feature height, and W is the feature width.
+
+    .. math::
+        \begin{align}
+        h_{start} &= floor(i * H_{in} / H_{out})\\
+        h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\
+        w_{start} &= floor(j * W_{in} / W_{out})\\
+        w_{end} &= ceil((j + 1) * W_{in} / W_{out})\\
+        Output(i,j) &= \frac{\sum Input[h_{start}:h_{end}, w_{start}:w_{end}]}{(h_{end}- h_{start})
+        * (w_{end}- w_{start})}
+        \end{align}
+
+    Args:
+        output_size (Union[int, tuple]): The target output size is H x W.
+            `ouput_size` can be a tuple consisted of int type H and W, or a single H for H x H, or None.
+            If it is None, it means the output size is the same as the input size.
+
+    Inputs:
+        - **x** (Tensor) - The input of AdaptiveAvgPool2d, which is a 3D or 4D tensor,
+          with float16, float32 or float64 data type.
+
+    Outputs:
+        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is not float16, float32 or float64.
+        ValueError: If the dimension of `input_x` is less than or equal to the dimension of `output_size`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> pool = nn.AdaptiveAvgPool2d(2)
+        >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
+        >>> output = pool(input_x)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 2, 2)
+    """
+
+    def __init__(self, output_size):
+        """Initialize AdaptiveAvgPool2d."""
+        super(AdaptiveAvgPool2d, self).__init__()
+        self.adaptive_avgpool2d = P.AdaptiveAvgPool2D(output_size)
+
+    def construct(self, x):
+        return self.adaptive_avgpool2d(x)
 
 
 class AdaptiveMaxPool1d(Cell):

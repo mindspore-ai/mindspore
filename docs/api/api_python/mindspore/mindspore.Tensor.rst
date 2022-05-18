@@ -29,14 +29,26 @@ mindspore.Tensor
         **返回：**
 
         Tensor。
+    
+    .. py:method:: adaptive_avgpool2d(output_size)
 
-    .. py:method:: tan()
+        2维自适应平均池化。
 
-        返回每个元素的正切值。
+        更多参考详见 :func:`mindspore.ops.adaptive_avgpool2d`。
+
+        **参数：**
+
+        **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，也可以是H * H的单个H，或None，如果是None，则意味着输出大小与该Tensor相同。
 
         **返回：**
 
-        Tensor。
+        Tensor，数据类型与该Tensor相同。
+
+        **异常：**
+
+        - **ValueError** - 如果 `output_size` 是tuple，并且 `output_size` 的长度不是2。
+        - **ValueError** - Tensor的维度小于或等于 `output_size` 的维度。
+        - **TypeError** - Tensor的数据类型不是float16、float32或者float64。
 
     .. py:method:: all(axis=(), keep_dims=False)
 
@@ -607,6 +619,12 @@ mindspore.Tensor
         **返回：**
 
         1维的bool类型Tensor，与 `x` shape相同。对于 `x` 中的样本标签 `i`，如果它在该Tensor的前 `k` 个预测值中，则输出值为True，否则为False。
+
+        **异常：**
+
+        - **TypeError** - `k` 不是int类型。
+        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - 该Tensor的数据类型非float16或float32。
 
     .. py:method:: item(index=None)
 
@@ -1320,6 +1338,14 @@ mindspore.Tensor
         **异常：**
 
         - **ValueError** - `axis` 超出范围，或 `mode` 被设置为'raise'、'wrap'和'clip'以外的值。
+
+    .. py:method:: tan()
+
+        返回每个元素的正切值。
+
+        **返回：**
+
+        Tensor。
 
     .. py:method:: tensor_scatter_add(indices, updates)
 

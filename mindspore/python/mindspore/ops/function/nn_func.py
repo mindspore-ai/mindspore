@@ -18,6 +18,97 @@
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN
 
+
+def adaptive_avgpool2d(x, output_size):
+    r"""
+    2D adaptive average pooling for temporal data.
+
+    This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
+    That is, for any input size, the size of the specified output is H x W.
+    The number of output features is equal to the number of input features.
+
+    The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
+    H is the feature height, and W is the feature width.
+
+    For adaptive average pooling for 2D:
+
+    ..  math::
+        \begin{align}
+        h_{start} &= floor(i * H_{in} / H_{out})\\
+        h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\
+        w_{start} &= floor(j * W_{in} / W_{out})\\
+        w_{end} &= ceil((j + 1) * W_{in} / W_{out})\\
+        Output(i,j) &= \frac{\sum Input[h_{start}:h_{end}, w_{start}:w_{end}]}{(h_{end}- h_{start})
+        * (w_{end}- w_{start})}
+        \end{align}
+
+    Args:
+        input_x (Tensor): The input of adaptive_avgpool2d, which is a 3D or 4D tensor,
+          with float16, float32 or float64 data type.
+        output_size (Union[int, tuple]): The target output size is H x W.
+            `ouput_size` can be a tuple consisted of int type H and W, or a single H for H x H, or None.
+            If it is None, it means the output size is the same as the input size.
+
+    Returns:
+        Tensor, with the same type as the `input_x`.
+
+        Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
+
+    .. math::
+
+        out\_shape = \begin{cases}
+        input\_x\_shape[-2] + output\_size[1], & \text{if output_size is (None, w);}\\
+        output\_size[0] + input\_x\_shape[-1], & \text{if output_size is (h, None);}\\
+        input\_x\_shape[-2:], & \text{if output_size is (None, None);}\\
+        (h, h), & \text{if output_size is h;}\\
+        (h, w), & \text{if output_size is (h, w)}
+        \end{cases}
+
+    Raises:
+        ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is not float16, float32 or float64.
+        ValueError: If the dimension of `input_x` is less than or equal to the dimension of `output_size`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> # case 1: output_size=(None, 2)
+        >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
+        >>> output = ops.adaptive_avgpool2d(input_x, (None, 2))
+        >>> print(output)
+        [[[1.5 2.5]
+          [4.5 5.5]
+          [7.5 8.5]]
+         [[1.5 2.5]
+          [4.5 5.5]
+          [7.5 8.5]]
+         [[1.5 2.5]
+          [4.5 5.5]
+          [7.5 8.5]]]
+        >>> # case 2: output_size=2
+        >>> output = ops.adaptive_avgpool2d(input_x, 2)
+        >>> print(output)
+        [[[3. 4.]
+          [6. 7.]]
+         [[3. 4.]
+          [6. 7.]]
+         [[3. 4.]
+          [6. 7.]]]
+        >>> # case 3: output_size=(1, 2)
+        >>> output = ops.adaptive_avgpool2d(input_x, (1, 2))
+        >>> print(output)
+        [[[4.5 5.5]]
+         [[4.5 5.5]]
+         [[4.5 5.5]]]
+    """
+    adaptive_avgpool2d_ = P.AdaptiveAvgPool2D(output_size)
+    return adaptive_avgpool2d_(x)
+
+
 fast_gelu_ = P.FastGeLU()
 softsign_ = P.Softsign()
 
@@ -496,6 +587,7 @@ def intopk(x1, x2, k):
 
 
 __all__ = [
+    'adaptive_avgpool2d',
     'deformable_conv2d',
     'fast_gelu',
     'hardshrink',

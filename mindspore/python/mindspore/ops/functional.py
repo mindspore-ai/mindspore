@@ -952,6 +952,7 @@ tensor_operator_registry.register('pdist', NN.Pdist)
 tensor_operator_registry.register('inplace_update', P.InplaceUpdate)
 tensor_operator_registry.register('inplace_add', P.InplaceAdd)
 tensor_operator_registry.register('inplace_sub', P.InplaceSub)
+tensor_operator_registry.register('adaptive_avgpool2d', adaptive_avgpool2d)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)
