@@ -13,7 +13,7 @@ mindspore.ops.scatter_min
 
     输入的 `input_x` 和 `updates` 遵循隐式类型转换规则，以确保数据类型一致。如果数据类型不同，则低精度数据类型将转换为高精度的数据类型。当 `updates` 不支持转成 `input_x` 需要的数据类型时，则会抛出RuntimeError异常。
 
-    **输入：**
+    **参数：**
 
     - **input_x** (Parameter) - scatter_min的输入，任意维度的Parameter。
     - **indices** (Tensor) - 指定最小值操作的索引，数据类型必须为mindspore.int32或者mindspore.int64。

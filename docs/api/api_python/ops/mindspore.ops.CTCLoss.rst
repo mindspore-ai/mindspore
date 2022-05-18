@@ -17,7 +17,7 @@ mindspore.ops.CTCLoss
 
     **输入：**
 
-    - **x** (Tensor) - 输入Tensor，其shape为 :math:`(max\_time, batch\_size, num\_classes)` 的三维Tensor。 `num_classes` 表示类别数，必须是 `num_labels + 1` ， `num_labels` 表示实际标签的数量。保留空白标签。默认空白标签为`num_classes - 1`。数据类型必须为float16、float32或float64。
+    - **x** (Tensor) - 输入Tensor，其shape为 :math:`(max\_time, batch\_size, num\_classes)` 的三维Tensor。 `num_classes` 表示类别数，必须是 `num_labels + 1` ， `num_labels` 表示实际标签的数量。保留空白标签。默认空白标签为 `num_classes - 1` 。数据类型必须为float16、float32或float64。
     - **labels_indices** (Tensor) - 标签的索引。 `labels_indices[i, :] = [b, t]` 表示 `labels_values[i]` 存储 `(batch b, time t)` 的ID。数据类型必须为int64，秩必须为2。
     - **labels_values** (Tensor) - 一维Tensor。这些值与给定的批次和时间相关联。数据类型必须为int32。 `labels_values[i]` 必须在 `[0, num_classes)` 的范围内。
     - **sequence_length** (Tensor) - 包含序列长度的Tensor，shape为 :math:`(batch_size,)` 。数据类型必须为int32。Tensor中的每个值不得大于最大时间。

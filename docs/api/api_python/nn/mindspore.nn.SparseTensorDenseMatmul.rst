@@ -12,7 +12,7 @@ mindspore.nn.SparseTensorDenseMatmul
 
     **输入：**
 
-    - **indices**(Tensor) - 二维Tensor，表示元素在稀疏Tensor中的位置。支持int32、int64，每个元素值都应该是非负的。shape为 :math:`(n, 2)` 。
+    - **indices** (Tensor) - 二维Tensor，表示元素在稀疏Tensor中的位置。支持int32、int64，每个元素值都应该是非负的。shape为 :math:`(n, 2)` 。
     - **values** (Tensor) - 一维Tensor，表示 `indices` 位置上对应的值。支持float16、float32、float64、int32、int64。shape为 :math:`(n,)` 。
     - **sparse_shape** (tuple) - 指定稀疏Tensor的shape，由两个正整数组成，表示稀疏Tensor的shape为 :math:`(N, C)` 。
     - **dense** (Tensor) - 二维Tensor，数据类型与 `values` 相同。
