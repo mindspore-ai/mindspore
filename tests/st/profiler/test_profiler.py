@@ -187,7 +187,8 @@ class TestProfiler:
 
         model.train(1, ds_train, dataset_sink_mode=True)
         profiler.analyse()
-        profiler.op_analyse(op_name="Conv2D")
+        if device_target != 'Ascend':
+            profiler.op_analyse(op_name="Conv2D")
 
     def _check_gpu_profiling_file(self):
         op_detail_file = self.profiler_path + f'gpu_op_detail_info_{self.device_id}.csv'

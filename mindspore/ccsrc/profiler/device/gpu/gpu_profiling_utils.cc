@@ -173,10 +173,10 @@ std::string ProfilingUtils::GetGraphSecondLastKernelName(const std::vector<CNode
   std::string second_last_kernel_name;
   auto iter = cnode_exec_order.rbegin();
   ++iter;
-  if (iter != cnode_exec_order.rend()) {
-    second_last_kernel_name = (*iter)->fullname_with_scope();
+  if (iter == cnode_exec_order.rend()) {
+    --iter;
   }
-
+  second_last_kernel_name = (*iter)->fullname_with_scope();
   return second_last_kernel_name;
 }
 
