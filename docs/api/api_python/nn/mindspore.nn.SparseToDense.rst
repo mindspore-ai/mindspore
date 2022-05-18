@@ -9,7 +9,7 @@ mindspore.nn.SparseToDense
 
     **输入：**
     
-    - **sparse_tensor** (:class:`mindspore.SparseTensor`) - 要转换的稀疏Tensor。
+    - **coo_tensor** (:class:`mindspore.COOTensor`) - 要转换的稀疏Tensor。
 
     **输出：**
 

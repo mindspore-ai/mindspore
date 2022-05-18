@@ -16,7 +16,6 @@ mindspore.ops.DynamicRNN
         \end{array}
 
     其中， 
-
 	:math:`h_{t+1}` 是在 `t+1` 时刻的隐藏状态。 
 	:math:`x_{t+1}` 是在 `t+1` 时刻的输入。
 	:math:`h_{t}` 是在 `t` 时刻的隐藏状态或在 `0` 时刻的初始隐藏状态。
@@ -43,7 +42,7 @@ mindspore.ops.DynamicRNN
 
     - **x** (Tensor) - 输入的词汇。shape为 :math:`(num\_step, batch\_size, input\_size)` 的Tensor。数据类型必须为float16。
     - **w** (Tensor) - 输入的权重。shape为 :math:`(input\_size + hidden\_size, 4 * hidden\_size)` 的Tensor。数据类型必须为float16。
-    - **b** (Tensor) - 输入的偏置。shape为 :math`(4 * hidden\_size)` 的Tensor。数据类型必须为float16或float32。
+    - **b** (Tensor) - 输入的偏置。shape为 :math:`(4 * hidden\_size)` 的Tensor。数据类型必须为float16或float32。
     - **seq_length** (Tensor) - 每个批次中句子的真实长度。shape为 :math:`(batch\_size, )` 的Tensor。当前仅支持None。
     - **init_h** (Tensor) - 在初始时刻的隐藏状态。shape为 :math:`(1, batch\_size, hidden\_size)` 的Tensor。数据类型必须为float16。
     - **init_c** (Tensor) - 在初始时刻的Cell状态。shape为 :math:`(1, batch\_size, hidden\_size)` 的Tensor。数据类型必须为float16。

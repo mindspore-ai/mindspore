@@ -59,7 +59,7 @@
 
         表示算子是否支持动态shape。
 
-        参数：
+        **参数：**
 
         - **dynamic_shape** (bool) - 表示是否支持动态shape的标识。默认值：False。
 

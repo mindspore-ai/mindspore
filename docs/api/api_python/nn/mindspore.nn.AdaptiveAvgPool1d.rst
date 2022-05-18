@@ -1,5 +1,5 @@
 mindspore.nn.AdaptiveAvgPool1d
-=======================
+==============================
 
 .. py:class:: mindspore.nn.AdaptiveAvgPool1d(output_size)
 
