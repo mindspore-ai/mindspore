@@ -5611,7 +5611,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
         ValueError: If the element of `paddings` is not an integer larger than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> block_shape = [2, 2]

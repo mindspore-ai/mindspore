@@ -212,6 +212,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"argmin", std::string("argmin")},                                  // P.Argmax()
        {"resize", std::string("resize")},                                  // P.Reshape()
        {"select", std::string("select")},                                  // P.Select()
+       {"space_to_batch_nd", std::string("space_to_batch_nd")},            // P.SpaceToBatchND
        {"choose", std::string("choose")},                                  // P.Select()
        {"diagonal", std::string("diagonal")},                              // P.Eye()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()
