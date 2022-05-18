@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MaximumCpuKernelMod : public NativeCpuKernelMod {
+class MaximumCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<MaximumCpuKernelMod> {
  public:
   MaximumCpuKernelMod() = default;
   ~MaximumCpuKernelMod() override = default;
@@ -39,10 +39,12 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  private:
   bool IsBroadcast() const;
@@ -69,12 +71,8 @@ class MaximumCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   void BroadcastArith(const T *input_x, const T *input_y, T *output) const;
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-
-  using MaximumLaunchFunc = std::function<bool(MaximumCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, MaximumLaunchFunc>> func_list_;
-  MaximumLaunchFunc kernel_func_;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
   bool need_broadcast_{false};
   size_t input_x_num_{1};

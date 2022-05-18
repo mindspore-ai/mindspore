@@ -32,7 +32,7 @@
 
 namespace mindspore {
 namespace kernel {
-class BitwiseCpuKernelMod : public NativeCpuKernelMod {
+class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<BitwiseCpuKernelMod> {
  public:
   BitwiseCpuKernelMod() = default;
   explicit BitwiseCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
@@ -40,7 +40,7 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -51,17 +51,15 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-
-  using BitwiseLaunchFunc = std::function<bool(BitwiseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, BitwiseLaunchFunc>> func_list_;
-  BitwiseLaunchFunc kernel_func_;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
   std::string kernel_type_{"Unknown"};
   std::string kernel_name_;

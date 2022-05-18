@@ -28,7 +28,7 @@
 namespace mindspore::kernel {
 constexpr auto kUnknown = "Unknown";
 
-class FastGeLUGradCpuKernelMod : public NativeCpuKernelMod {
+class FastGeLUGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<FastGeLUGradCpuKernelMod> {
  public:
   FastGeLUGradCpuKernelMod() = default;
   explicit FastGeLUGradCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
@@ -42,21 +42,20 @@ class FastGeLUGradCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
  private:
-  using FastGeluGradLaunchFunc = std::function<bool(FastGeLUGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                                    const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, FastGeluGradLaunchFunc>> func_list_;
-  FastGeluGradLaunchFunc kernel_func_;
   std::string kernel_type_{kUnknown};
 };
 }  // namespace mindspore::kernel

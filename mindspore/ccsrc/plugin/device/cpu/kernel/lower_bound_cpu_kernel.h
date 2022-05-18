@@ -24,7 +24,7 @@
 #include "plugin/factory/ms_factory.h"
 namespace mindspore {
 namespace kernel {
-class LowerBoundCpuKernelMod : public NativeCpuKernelMod {
+class LowerBoundCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<LowerBoundCpuKernelMod> {
  public:
   LowerBoundCpuKernelMod() = default;
   ~LowerBoundCpuKernelMod() override = default;
@@ -35,21 +35,20 @@ class LowerBoundCpuKernelMod : public NativeCpuKernelMod {
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename I, typename O>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using LowerBoundFunc = std::function<bool(LowerBoundCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                            const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, LowerBoundFunc>> func_list_;
-  LowerBoundFunc kernel_func_;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
   std::vector<int64_t> sorted_x_shape_;
   std::vector<int64_t> values_shape_;
   std::vector<int64_t> output_shape_;

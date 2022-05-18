@@ -37,10 +37,10 @@ constexpr size_t kBetaIdx = 7;
 constexpr size_t kOutIndptr = 0;
 constexpr size_t kOutIndices = 1;
 constexpr size_t kOutValue = 2;
-bool SparseMatirxAddCpuKernelMod::Init(const BaseOperatorPtr &base_operater, const std::vector<KernelTensorPtr> &inputs,
+bool SparseMatirxAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs) {
   outputs_ = outputs;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixAdd>(base_operater);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseMatrixAdd>(base_operator);
   kernel_name_ = kernel_ptr->name();
   size_t input_num = inputs.size();
   if (input_num != kInputNum) {
@@ -54,13 +54,9 @@ bool SparseMatirxAddCpuKernelMod::Init(const BaseOperatorPtr &base_operater, con
     MS_LOG(ERROR) << "The supported dims for input is " << kMatrixDims << "-D, but get " << dense_shape.size();
     return false;
   }
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(WARNING) << kernel_name_ << " does not support this data type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  kernel_func_ = func_list_[index].second;
   row_ = LongToSize(dense_shape[0]);
   for (size_t i = 0; i < kOutputNum; i++) {
     auto dtype = inputs[i]->GetDtype();
@@ -77,7 +73,7 @@ int SparseMatirxAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 }
 
 template <typename T, typename S>
-bool SparseMatirxAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+bool SparseMatirxAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputNum << ", but got "
@@ -175,8 +171,9 @@ bool SparseMatirxAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
       &SparseMatirxAddCpuKernelMod::LaunchKernel<index_type, value_type>                            \
   }
 
-std::vector<std::pair<KernelAttr, SparseMatirxAddCpuKernelMod::SparseMatrixAddFunc>>
-  SparseMatirxAddCpuKernelMod::func_list_ = {
+const std::vector<std::pair<KernelAttr, SparseMatirxAddCpuKernelMod::KernelRunFunc>>
+  &SparseMatirxAddCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, SparseMatirxAddCpuKernelMod::KernelRunFunc>> func_list = {
     // float values
     CPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeFloat32, int16_t, float),
     CPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat32, int, float),
@@ -196,13 +193,9 @@ std::vector<std::pair<KernelAttr, SparseMatirxAddCpuKernelMod::SparseMatrixAddFu
     // int16 values
     CPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeInt16, int16_t, int16_t),
     CPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt16, int, int16_t),
-    CPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeInt16, int64_t, int16_t)};
-
-std::vector<KernelAttr> SparseMatirxAddCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, SparseMatrixAddFunc> &pair) { return pair.first; });
-  return support_list;
+    CPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeInt16, int64_t, int16_t),
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseMatrixAdd, SparseMatirxAddCpuKernelMod);

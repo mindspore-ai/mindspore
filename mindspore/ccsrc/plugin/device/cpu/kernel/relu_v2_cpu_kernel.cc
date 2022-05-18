@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 constexpr auto kReLUV2 = "ReLUV2";
 constexpr const size_t kReLUV2InputsNum = 1;
 constexpr const size_t kReLUV2OutputsNum = 2;
-
 template <typename T>
-bool ReLUV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool ReLUV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kReLUV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReLUV2OutputsNum, kernel_name_);
@@ -51,31 +50,28 @@ bool ReLUV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   return true;
 }
 
-std::vector<std::pair<KernelAttr, ReLUV2CpuKernelMod::ReLUV2LaunchFunc>> ReLUV2CpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeUInt8),
-   &ReLUV2CpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeUInt8),
-   &ReLUV2CpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeUInt8),
-   &ReLUV2CpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt8),
-   &ReLUV2CpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt8),
-   &ReLUV2CpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-   &ReLUV2CpuKernelMod::LaunchKernel<int32_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
-   &ReLUV2CpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   &ReLUV2CpuKernelMod::LaunchKernel<uint8_t>},
-  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt8),
-   &ReLUV2CpuKernelMod::LaunchKernel<uint16_t>}};
-
-std::vector<KernelAttr> ReLUV2CpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, ReLUV2LaunchFunc> &pair) { return pair.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, ReLUV2CpuKernelMod::KernelRunFunc>> &ReLUV2CpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, ReLUV2CpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeUInt8),
+     &ReLUV2CpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeUInt8),
+     &ReLUV2CpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeUInt8),
+     &ReLUV2CpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeUInt8),
+     &ReLUV2CpuKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeUInt8),
+     &ReLUV2CpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+     &ReLUV2CpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+     &ReLUV2CpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &ReLUV2CpuKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt8),
+     &ReLUV2CpuKernelMod::LaunchKernel<uint16_t>},
+  };
+  return func_list;
 }
 
 bool ReLUV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -90,22 +86,17 @@ bool ReLUV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     return false;
   }
 
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!pair.first) {
-    MS_LOG(ERROR) << "'" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
 
-  kernel_func_ = func_list_[pair.second].second;
   return true;
 }
 
 int ReLUV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
@@ -113,7 +104,7 @@ int ReLUV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of input shape must be 4, but got " << input_shape.size();
     return KRET_RESIZE_FAILED;
   }
-  return 0;
+  return KRET_OK;
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLUV2,

@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseMatirxAddCpuKernelMod : public NativeCpuKernelMod {
+class SparseMatirxAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<SparseMatirxAddCpuKernelMod> {
  public:
   SparseMatirxAddCpuKernelMod() = default;
   ~SparseMatirxAddCpuKernelMod() override = default;
@@ -32,9 +32,9 @@ class SparseMatirxAddCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operater, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -42,16 +42,16 @@ class SparseMatirxAddCpuKernelMod : public NativeCpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
   std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using SparseMatrixAddFunc = std::function<bool(SparseMatirxAddCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                                 const std::vector<AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, SparseMatrixAddFunc>> func_list_;
-  SparseMatrixAddFunc kernel_func_;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
+
   size_t row_ = 0;
   std::vector<TypeId> types_;
   std::vector<KernelTensorPtr> outputs_ = {};

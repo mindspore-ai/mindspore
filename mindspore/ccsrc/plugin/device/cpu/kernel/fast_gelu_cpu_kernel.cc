@@ -27,7 +27,7 @@ constexpr const size_t kFastGeluInputsNum = 1;
 constexpr const size_t kFastGeluOutputsNum = 1;
 
 template <typename T>
-bool FastGeLUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool FastGeLUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastGeluInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastGeluOutputsNum, kernel_name_);
@@ -50,17 +50,15 @@ bool FastGeLUCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   return true;
 }
 
-std::vector<std::pair<KernelAttr, FastGeLUCpuKernelMod::FastGeluLaunchFunc>> FastGeLUCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &FastGeLUCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &FastGeLUCpuKernelMod::LaunchKernel<float>}};
-
-std::vector<KernelAttr> FastGeLUCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, FastGeluLaunchFunc> &pair) { return pair.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, FastGeLUCpuKernelMod::KernelRunFunc>> &FastGeLUCpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, FastGeLUCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &FastGeLUCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &FastGeLUCpuKernelMod::LaunchKernel<float>},
+  };
+  return func_list;
 }
 
 bool FastGeLUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -75,14 +73,10 @@ bool FastGeLUCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
 
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!pair.first) {
-    MS_LOG(ERROR) << "'" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
 
-  kernel_func_ = func_list_[pair.second].second;
   return true;
 }
 

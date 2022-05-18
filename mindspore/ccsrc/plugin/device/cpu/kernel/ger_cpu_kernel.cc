@@ -53,21 +53,17 @@ bool GerCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vect
     return false;
   }
 
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(ERROR) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  kernel_func_ = func_list_[index].second;
+
   return true;
 }
 
 int GerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                             const std::vector<KernelTensorPtr> &outputs,
                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != 0) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
@@ -101,7 +97,7 @@ int GerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 }
 
 template <typename T>
-bool GerCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool GerCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGerInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGerOutputsNum, kernel_name_);
@@ -130,17 +126,14 @@ bool GerCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
   return true;
 }
 
-std::vector<std::pair<KernelAttr, GerCpuKernelMod::GerLaunchFunc>> GerCpuKernelMod::func_list_ = {
-  {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    &GerCpuKernelMod::LaunchKernel<float16>},
-   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    &GerCpuKernelMod::LaunchKernel<float>}}};
-
-std::vector<KernelAttr> GerCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, GerLaunchFunc> &pair) { return pair.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, GerCpuKernelMod::KernelRunFunc>> &GerCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, GerCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &GerCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &GerCpuKernelMod::LaunchKernel<float>},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Ger,

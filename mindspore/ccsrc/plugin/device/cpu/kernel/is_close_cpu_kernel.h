@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class IsCloseCpuKernelMod : public NativeCpuKernelMod {
+class IsCloseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<IsCloseCpuKernelMod> {
  public:
   IsCloseCpuKernelMod() = default;
   ~IsCloseCpuKernelMod() override = default;
@@ -38,20 +38,19 @@ class IsCloseCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
-  using IsCloseLaunchFunc = std::function<bool(IsCloseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                               const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, IsCloseLaunchFunc>> func_list_;
-  IsCloseLaunchFunc kernel_func_;
   float rtol_{1e-5};
   float atol_{1e-8};
   bool equal_nan_{true};

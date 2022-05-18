@@ -59,22 +59,16 @@ bool CTCLossV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   }
   reduction_ = iter->second;
 
-  // Dealing with multiple types
-  {
-    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-    if (!is_match) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
-      return false;
-    }
-    kernel_func_ = func_list_[index].second;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
   }
+
   return true;
 }
 int CTCLossV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     dyamic_shape_ = ret == KRET_UNKNOWN_SHAPE;
     return ret;
   }
@@ -225,47 +219,44 @@ T CTCLossV2CpuKernelMod::DoReduce(T *neg_log_likelihood, const S *target_lengths
   }
 }
 
-std::vector<KernelAttr> CTCLossV2CpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, CTCLossV2Func> &pair) { return pair.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, CTCLossV2CpuKernelMod::KernelRunFunc>> &CTCLossV2CpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, CTCLossV2CpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &CTCLossV2CpuKernelMod::LaunchKernel<float, int>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &CTCLossV2CpuKernelMod::LaunchKernel<double, int>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &CTCLossV2CpuKernelMod::LaunchKernel<float, int64_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &CTCLossV2CpuKernelMod::LaunchKernel<double, int64_t>},
+  };
+  return func_list;
 }
-
-std::vector<std::pair<KernelAttr, CTCLossV2CpuKernelMod::CTCLossV2Func>> CTCLossV2CpuKernelMod::func_list_ = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &CTCLossV2CpuKernelMod::LaunchKernel<float, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   &CTCLossV2CpuKernelMod::LaunchKernel<double, int>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &CTCLossV2CpuKernelMod::LaunchKernel<float, int64_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddInputAttr(kNumberTypeInt64)
-     .AddOutputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   &CTCLossV2CpuKernelMod::LaunchKernel<double, int64_t>},
-};
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CTCLossV2, CTCLossV2CpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -46,14 +46,11 @@ bool IndexAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
     return false;
   }
 
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(ERROR) << "IndexAdd does not support this kernel data type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
+
   base_operator_ = base_operator;
-  kernel_func_ = func_list_[index].second;
 
   return true;
 }
@@ -61,8 +58,7 @@ bool IndexAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
 int IndexAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs,
                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
   // Get input, output and attr info
@@ -70,7 +66,7 @@ int IndexAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   y_shape_ = inputs[kIndex2]->GetShapeVector();
   indices_shape_ = inputs[kIndex1]->GetShapeVector();
   axis_ = GetValue<int64_t>(base_operator_->GetAttr(AXIS));
-  return 0;
+  return KRET_OK;
 }
 
 void IndexAddCpuKernelMod::CheckParams() {
@@ -168,57 +164,54 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
   return true;
 }
 
-std::vector<std::pair<KernelAttr, IndexAddCpuKernelMod::IndexAddFunc>> IndexAddCpuKernelMod::func_list_ = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeFloat64)
-     .AddOutputAttr(kNumberTypeFloat64),
-   &IndexAddCpuKernelMod::LaunchKernel<double>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &IndexAddCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &IndexAddCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32),
-   &IndexAddCpuKernelMod::LaunchKernel<int32_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt16)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt16)
-     .AddOutputAttr(kNumberTypeInt16),
-   &IndexAddCpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt8)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeInt8)
-     .AddOutputAttr(kNumberTypeInt8),
-   &IndexAddCpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddInputAttr(kNumberTypeInt32)
-     .AddInputAttr(kNumberTypeUInt8)
-     .AddOutputAttr(kNumberTypeUInt8),
-   &IndexAddCpuKernelMod::LaunchKernel<uint8_t>}};
-
-std::vector<KernelAttr> IndexAddCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, IndexAddFunc> &pair) { return pair.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, IndexAddCpuKernelMod::KernelRunFunc>> &IndexAddCpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, IndexAddCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &IndexAddCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &IndexAddCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &IndexAddCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt32),
+     &IndexAddCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddOutputAttr(kNumberTypeInt16),
+     &IndexAddCpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt8)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt8)
+       .AddOutputAttr(kNumberTypeInt8),
+     &IndexAddCpuKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddOutputAttr(kNumberTypeUInt8),
+     &IndexAddCpuKernelMod::LaunchKernel<uint8_t>},
+  };
+  return func_list;
 }
-
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IndexAdd, IndexAddCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

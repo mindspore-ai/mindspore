@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseAddCpuKernelMod : public NativeCpuKernelMod {
+class SparseAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<SparseAddCpuKernelMod> {
  public:
   SparseAddCpuKernelMod() = default;
   ~SparseAddCpuKernelMod() override = default;
@@ -32,27 +32,27 @@ class SparseAddCpuKernelMod : public NativeCpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operater, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
   std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T, typename S>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
   template <typename T>
   int CompareTowIndices(const T &a_indices, const T &b_indices, int64_t a_row, int64_t b_row, const size_t dims);
-  using SparseAddFunc = std::function<bool(SparseAddCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, SparseAddFunc>> func_list_;
-  SparseAddFunc kernel_func_;
+
   float thresh_ = 0;
   std::vector<TypeId> types_;
   std::vector<KernelTensorPtr> outputs_ = {};

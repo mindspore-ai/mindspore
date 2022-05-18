@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class IndexAddCpuKernelMod : public NativeCpuKernelMod {
+class IndexAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<IndexAddCpuKernelMod> {
  public:
   IndexAddCpuKernelMod() = default;
   ~IndexAddCpuKernelMod() override = default;
@@ -46,19 +46,16 @@ class IndexAddCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   void CheckParams();
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-  using IndexAddFunc =
-    std::function<bool(IndexAddCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, IndexAddFunc>> func_list_;
-  IndexAddFunc kernel_func_{nullptr};
   BaseOperatorPtr base_operator_;
   std::vector<int64_t> x_shape_;
   std::vector<int64_t> y_shape_;

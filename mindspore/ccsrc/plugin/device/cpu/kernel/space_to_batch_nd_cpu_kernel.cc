@@ -130,16 +130,10 @@ bool SpaceToBatchNDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   paddings_ = kernel_ptr->get_paddings();
   block_rank_ = block_size_.size();
 
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, SpaceToBatchNDFunc> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(ERROR) << "SpaceToBatchNd does not support this kernel data type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  kernel_func_ = func_list_[index].second;
+
   return true;
 }
 
@@ -165,11 +159,12 @@ int SpaceToBatchNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
 
   off_set_ = input_shape_.size() - block_size_.size();
 
-  return 0;
+  return KRET_OK;
 }
 
-std::vector<std::pair<KernelAttr, SpaceToBatchNDCpuKernelMod::SpaceToBatchNDFunc>>
-  SpaceToBatchNDCpuKernelMod::func_list_ = {
+const std::vector<std::pair<KernelAttr, SpaceToBatchNDCpuKernelMod::KernelRunFunc>>
+  &SpaceToBatchNDCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, SpaceToBatchNDCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      &SpaceToBatchNDCpuKernelMod::LaunchKernel<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
@@ -191,8 +186,10 @@ std::vector<std::pair<KernelAttr, SpaceToBatchNDCpuKernelMod::SpaceToBatchNDFunc
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &SpaceToBatchNDCpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     &SpaceToBatchNDCpuKernelMod::LaunchKernel<double>}};
-
+     &SpaceToBatchNDCpuKernelMod::LaunchKernel<double>},
+  };
+  return func_list;
+}
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SpaceToBatchND, SpaceToBatchNDCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

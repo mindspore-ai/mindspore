@@ -51,13 +51,9 @@ bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                   << reduction;
     return false;
   }
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  kernel_func_ = func_list_[index].second;
   return true;
 }
 
@@ -66,8 +62,7 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
-  int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
@@ -97,7 +92,7 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     // The output is a scalar in ReductionType mean or sum.
     output_size_list_.emplace_back(unit_byte_size);
   }
-  return ret;
+  return KRET_OK;
 }
 
 template <typename T>
@@ -184,26 +179,25 @@ void BCEWithLogitsLossCpuKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-std::vector<std::pair<KernelAttr, BCEWithLogitsLossCpuKernelMod::BceFunc>> BCEWithLogitsLossCpuKernelMod::func_list_ = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddInputAttr(kNumberTypeFloat16)
-     .AddOutputAttr(kNumberTypeFloat16),
-   &BCEWithLogitsLossCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32),
-   &BCEWithLogitsLossCpuKernelMod::LaunchKernel<float>}};
-std::vector<KernelAttr> BCEWithLogitsLossCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, BceFunc> &pair) { return pair.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, BCEWithLogitsLossCpuKernelMod::KernelRunFunc>>
+  &BCEWithLogitsLossCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, BCEWithLogitsLossCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &BCEWithLogitsLossCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &BCEWithLogitsLossCpuKernelMod::LaunchKernel<float>},
+  };
+  return func_list;
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BCEWithLogitsLoss, BCEWithLogitsLossCpuKernelMod);
 }  // namespace kernel
