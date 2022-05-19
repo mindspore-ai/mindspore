@@ -51,8 +51,6 @@ class GPUDeviceContext : public DeviceContext {
 
   // Optimize the kernel graph for graph mode.
   void OptimizeGraph(const KernelGraphPtr &graph) const override;
-  // Optimize the single operator graph for PyNative mode.
-  void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
 
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
@@ -69,7 +67,7 @@ class GPUDeviceContext : public DeviceContext {
 
   bool LoadCollectiveCommLib() override;
 
-  void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const override;
+  void PreprocessBeforeRun(const KernelGraphPtr &graph) const override;
 
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);

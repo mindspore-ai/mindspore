@@ -89,7 +89,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
         auto old_dev_addr = alloc_list[index];
         auto old_size = old_dev_addr->GetSize();
         if (old_size > size_list[index]) {
-          MS_LOG(EXCEPTION) << "Device size of old device address is large than new device address, " << old_size
+          MS_LOG(EXCEPTION) << "Device size of old device address is larger than new device address, " << old_size
                             << " vs " << size_list[index];
         }
         auto new_dev_addr = device_context->CreateDeviceAddress(dev_ptr_list[index], old_size, old_dev_addr->format(),

@@ -545,7 +545,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 #endif
 
   // Adjust kernel graph before run graph.
-  device_context->PreprocessBeforeRunGraph(graph);
+  device_context->PreprocessBeforeRun(graph);
 
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph, device_context, false);
@@ -598,11 +598,12 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   MS_EXCEPTION_IF_NULL(device_context);
 
   graph->set_run_mode(device::RunMode::kKernelMode);
+  graph->set_is_from_single_op(true);
   // session_ is SessionBasic, AscendUnifyMindIR has not been executed.
   device_context->UnifyMindIR(graph);
 
   // Select kernel and optimize
-  device_context->OptimizeSingleOpGraph(graph);
+  device_context->OptimizeGraph(graph);
 
   UpdateRefInfoBeforeCreateKernel(op_run_info, graph);
 
@@ -651,7 +652,7 @@ void GraphCompiler::BuildSingleOpGraphs(const std::vector<KernelGraphPtr> &graph
   device_context->CreateKernel(node_to_build);
 
   for (const auto &graph : graphs) {
-    device_context->PreprocessBeforeRunSingleOpGraph(graph);
+    device_context->PreprocessBeforeRun(graph);
     CreateKernelWorkspaceDeviceAddress(device_context, graph);
     // Need to execute after PreprocessBeforeRunSingleOpGraph
     runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);

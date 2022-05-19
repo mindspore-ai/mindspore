@@ -429,6 +429,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   bool IsDatasetGraph() const;
 
+  void set_is_from_single_op(bool is_from_single_op) { is_from_single_op_ = is_from_single_op; }
+  bool is_from_single_op() const { return is_from_single_op_; }
   void set_run_mode(device::RunMode run_mode) { run_mode_ = run_mode; }
   bool is_graph_run_mode() const { return run_mode_ == device::RunMode::kGraphMode; }
   bool is_loop_count_sink() const { return is_loop_count_sink_; }
@@ -561,6 +563,9 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   // Indicate whether the kernels in the graphs acquire Python GIL.
   bool is_need_gil_{false};
+
+  // Indicate whether the kernel graph is constructed from single op in function graph
+  bool is_from_single_op_{false};
 
   // Indicate whether the kernel graph sink will run on graph executor or kernel executor
   device::RunMode run_mode_{device::RunMode::kUnknown};

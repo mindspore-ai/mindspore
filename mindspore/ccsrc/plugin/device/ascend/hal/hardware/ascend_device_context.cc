@@ -354,7 +354,11 @@ void AscendDeviceContext::UnifyMindIR(const KernelGraphPtr &graph) const {
 
 void AscendDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  AscendGraphOptimization::GetInstance().OptimizeGraph(graph);
+  if (graph->is_from_single_op()) {
+    AscendGraphOptimization::GetInstance().OptimizeSingleOpGraph(graph);
+  } else {
+    AscendGraphOptimization::GetInstance().OptimizeGraph(graph);
+  }
 }
 
 void AscendDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
@@ -409,6 +413,15 @@ void AscendDeviceContext::SetAtomicCleanToNodes(const KernelGraphPtr &graph,
         ascend_kernel_mod->SetAtomicCleanNodes(atomics);
       }
     }
+  }
+}
+
+void AscendDeviceContext::PreprocessBeforeRun(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  if (graph->is_from_single_op()) {
+    PreprocessBeforeRunSingleOpGraph(graph);
+  } else {
+    PreprocessBeforeRunGraph(graph);
   }
 }
 
@@ -693,11 +706,6 @@ bool AscendDeviceContext::DestroyStream(void *stream) const {
     return false;
   }
   return true;
-}
-
-// kernel by kernel mode interface
-void AscendDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
-  AscendGraphOptimization::GetInstance().OptimizeSingleOpGraph(graph);
 }
 
 void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const {
