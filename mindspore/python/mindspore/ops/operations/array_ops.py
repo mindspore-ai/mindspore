@@ -4859,7 +4859,7 @@ class ScatterNdAdd(_ScatterNdOp):
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
         >>> use_locking = False
-        >>> scatter_nd_add = ScatterNdAdd()
+        >>> scatter_nd_add = ScatterNdAdd(use_locking)
         >>> output = scatter_nd_add(input_x, indices, updates)
         >>> print(output)
         [[[1 1 1 1]
@@ -4908,7 +4908,7 @@ class ScatterNdSub(_ScatterNdOp):
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
         >>> use_locking = False
-        >>> scatter_nd_sub = ScatterNdSub()
+        >>> scatter_nd_sub = ScatterNdSub(use_locking)
         >>> output = scatter_nd_sub(input_x, indices, updates)
         >>> print(output)
         [[[-1 -1 -1 -1]

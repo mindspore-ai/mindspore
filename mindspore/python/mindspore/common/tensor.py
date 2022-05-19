@@ -1386,10 +1386,10 @@ class Tensor(Tensor_):
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 
@@ -1789,155 +1789,6 @@ class Tensor(Tensor_):
         minimum = tensor_operator_registry.get("minimum")
         return reduce_(self, reduce_min(keepdims), cmp_fn=minimum(), axis=axis, keepdims=keepdims,
                        initial=initial, where=where)
-
-    def scatter_nd_add(self, indices, updates, use_locking=False):
-        r"""
-        Applies sparse addition to individual values or slices in a tensor.
-
-        Using given values to update tensor value through the add operation, along with the input indices.
-        This operation outputs the self tensor after the update is done,
-        which makes it convenient to use the updated value.
-
-        Self tensor has rank P and `indices` has rank Q where `Q >= 2`.
-
-        `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
-
-        The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of self tensor.
-
-        `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
-        :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
-
-        Inputs of self tensor and `updates` comply with the implicit type conversion rules
-        to make the data types consistent. If they have different data types, the lower priority
-        data type will be converted to the relatively highest priority data type.
-
-        Args:
-            indices (Tensor): The index to do min operation whose data type must be mindspore.int32.
-                The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
-            updates (Tensor): The tensor doing the min operation with self tensor,
-                the data type is same as self tensor,
-                the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-            use_locking (bool): Whether to protect the assignment by a lock. Default: False.
-
-        Returns:
-            Tensor, the updated self tensor, has the same shape and type as self tensor.
-
-        Raises:
-            TypeError: If `use_locking` is not a bool.
-            TypeError: If `indices` is not an int32.
-            ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-            RuntimeError: If the data type of self tensor and `updates` conversion of Parameter
-                          is required when data type conversion of Parameter is not supported.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
-            >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
-            >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-            >>> output = input_x.scatter_nd_add(indices, updates, False)
-            >>> print(output)
-            [ 1. 10.  9.  4. 12.  6.  7. 17.]
-            >>> input_x = Parameter(Tensor(np.zeros((4, 4, 4)), mindspore.int32))
-            >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
-            >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
-            ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
-            >>> output = input_x.scatter_nd_add(indices, updates, False)
-            >>> print(output)
-            [[[1 1 1 1]
-              [2 2 2 2]
-              [3 3 3 3]
-              [4 4 4 4]]
-             [[0 0 0 0]
-              [0 0 0 0]
-              [0 0 0 0]
-              [0 0 0 0]]
-             [[5 5 5 5]
-              [6 6 6 6]
-              [7 7 7 7]
-              [8 8 8 8]]
-             [[0 0 0 0]
-              [0 0 0 0]
-              [0 0 0 0]
-              [0 0 0 0]]]
-        """
-        self._init_check()
-        return tensor_operator_registry.get("scatter_nd_add")(use_locking)(self, indices, updates)
-
-    def scatter_nd_sub(self, indices, updates, use_locking=False):
-        r"""
-        Applies sparse subtraction to individual values or slices in a tensor.
-
-        Using given values to update tensor value through the subtraction operation, along with the input indices.
-        This operation outputs the self tensor after the update is done,
-        which makes it convenient to use the updated value.
-
-        Self tensor has rank P and `indices` has rank Q where `Q >= 2`.
-
-        `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
-
-        The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of self tensor.
-
-        `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
-        :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
-
-        Inputs of self tensor and `updates` comply with the implicit type conversion rules
-        to make the data types consistent. If they have different data types,
-        the lower priority data type will be converted to the relatively highest priority data type.
-
-        Args:
-            indices (Tensor): The index of input tensor, with int32 data type.
-                The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
-            updates (Tensor): The tensor to be updated to the input tensor, has the same type as input.
-                The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-            use_locking (bool): Whether to protect the assignment by a lock. Default: False.
-
-        Returns:
-            Tensor, has the same shape and type as self tensor.
-
-        Raises:
-            TypeError: If `use_locking` is not a bool.
-            TypeError: If `indices` is not an int32.
-            ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
-            RuntimeError: If the data type of self tensor and `updates` conversion of Parameter
-                          is required when data type conversion of Parameter is not supported.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
-            >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
-            >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-            >>> output = input_x.scatter_nd_sub(indices, updates, False)
-            >>> print(output)
-            [ 1. -6. -3.  4. -2.  6.  7. -1.]
-            >>> input_x = Parameter(Tensor(np.zeros((4, 4, 4)), mindspore.int32))
-            >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
-            >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
-            ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
-            >>> output = input_x.scatter_nd_sub(indices, updates, False)
-            >>> print(output)
-            [[[-1 -1 -1 -1]
-              [-2 -2 -2 -2]
-              [-3 -3 -3 -3]
-              [-4 -4 -4 -4]]
-             [[ 0  0  0  0]
-              [ 0  0  0  0]
-              [ 0  0  0  0]
-              [ 0  0  0  0]]
-             [[-5 -5 -5 -5]
-              [-6 -6 -6 -6]
-              [-7 -7 -7 -7]
-              [-8 -8 -8 -8]]
-             [[ 0  0  0  0]
-              [ 0  0  0  0]
-              [ 0  0  0  0]
-              [ 0  0  0  0]]]
-        """
-        self._init_check()
-        return tensor_operator_registry.get("scatter_nd_sub")(use_locking)(self, indices, updates)
 
     def tensor_scatter_add(self, indices, updates):
         """
