@@ -24,3 +24,4 @@
     - **TypeError** - `axis` 不是int。
     - **TypeError** - `descending` 不是bool。
     - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+    - **ValueError** - 当 `axis` 取值不在[-len(x.shape), len(x.shape))范围内。
