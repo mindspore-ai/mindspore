@@ -783,11 +783,19 @@ mindspore.Tensor
     .. py:method:: gather_nd(input_x, indices)
 
         按索引从张量中获取切片。
+        使用给定的索引从具有指定形状的张量中搜集切片。
+        `indices`是一个K维的整数张量，假定它的K-1维张量中的每一个元素是`input_x`的切片，那么有：
+
+        .. math::
+            output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
+        
+        `indices`的最后一维不能超过`input_x`的秩：
+        :math:`indices.shape[-1] <= input\_x.rank`。
 
         **参数：**
 
-        - **input_x** (Tensor) - 输入张量，是一个数据类型为int64、int32、float32、float16、int8、uint8或bool的Tensor。
-        - **indices** (Tensor) - 获取收集元素的索引。支持的数据类型包括：int32，int64。每个索引元素的取值范围为[-input_x_rank[dim], input_x_rank[dim])。
+        - **input_x** (Tensor) - 待搜集元素的目标张量，它的shape是 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **indices** (Tensor) - 获取收集元素的索引张量，其数据类型包括：int32，int64。
 
         **返回：**
 
@@ -795,7 +803,7 @@ mindspore.Tensor
 
         **异常：**
 
-        - **ValueError** - `input_x` 的shape长度小于 `indices` 的最后一个维度。
+        - **ValueError** - 如果 `input_x` 的shape长度小于 `indices` 的最后一个维度。
 
 
     .. py:method:: shape
