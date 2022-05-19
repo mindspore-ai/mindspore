@@ -220,8 +220,8 @@ Text Processing
 Mathematical Operators
 ----------------------
 
-Element-by-Element Operation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Element-wise Operator
+^^^^^^^^^^^^^^^^^^^^^
 
 .. msplatformautosummary::
     :toctree: ops
