@@ -709,3 +709,27 @@ def test_list_slice_negetive_error():
     with pytest.raises(ValueError) as err:
         net(a, b, -1, -3, -3)
     assert "attempt to assign sequence of size 3 to extended slice of size 1" in str(err.value)
+
+
+def test_list_slice_negetive_step():
+    """
+    Feature: List assign
+    Description: Test negative step list slice assign
+    Expectation: ValueError
+    """
+    @ms_function
+    def ms_func():
+        a = [1, 2, 3, 4, 5]
+        b = [11, 22, 33, 44, 55]
+        a[-1:-4:-1] = b[-1:-4:-1]
+        return a
+
+    def py_func():
+        a = [1, 2, 3, 4, 5]
+        b = [11, 22, 33, 44, 55]
+        a[-1:-4:-1] = b[-1:-4:-1]
+        return tuple(a)
+
+    x = py_func()
+    y = ms_func()
+    assert x == y
