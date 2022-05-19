@@ -459,7 +459,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     Raises:
         ValueError: Checkpoint file's format is incorrect.
         ValueError: Parameter's dict is None after load checkpoint file.
-        ValueError: The type of `specify_prefix` or `filter_prefix` is incorrect.
+        TypeError: The type of `specify_prefix` or `filter_prefix` is incorrect.
 
     Examples:
         >>> from mindspore import load_checkpoint

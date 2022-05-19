@@ -520,7 +520,7 @@ class Model:
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink.
             sink_size (int): Control the amount of data in each sink. Default: -1.
-            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+            initial_epoch (int): Epoch at which to start train, it used for resuming a previous training run.
                                  Default: 0.
         """
         epoch = Validator.check_positive_int(epoch)
@@ -579,7 +579,7 @@ class Model:
             list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
             sink_size (int): Control the amount of data in each sink. Default: -1.
-            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+            initial_epoch (int): Epoch at which to start train, it used for resuming a previous training run.
                                  Default: 0.
         """
         is_graph = (context.get_context("mode") == context.GRAPH_MODE)
@@ -766,7 +766,7 @@ class Model:
                                      function respectively.
             list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
-            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+            initial_epoch (int): Epoch at which to start train, it used for resuming a previous training run.
                                  Default: 0.
         """
         dataset_helper, _ = self._exec_preprocess(is_train=True,
@@ -866,7 +866,7 @@ class Model:
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
                              Default: -1.
-            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+            initial_epoch (int): Epoch at which to start train, it used for resuming a previous training run.
                                  Default: 0.
 
         Examples:
