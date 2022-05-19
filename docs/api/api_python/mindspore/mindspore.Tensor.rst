@@ -757,6 +757,11 @@ mindspore.Tensor
 
         Tensor，与当前Tensor的shape相同。
 
+        **异常：**
+
+        - **TypeError** - `y` 不是Tensor、int或者float。
+        - **ValueError** - 输入的shape不相同。
+
     .. py:method:: space_to_batch_nd(block_shape, paddings)
 
         将空间维度划分为对应大小的块，然后在批次维度重排张量。
