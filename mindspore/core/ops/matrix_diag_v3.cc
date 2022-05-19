@@ -30,14 +30,11 @@
 namespace mindspore {
 namespace ops {
 namespace {
-const int64_t kNumber1 = 1;
-const int64_t kNumber2 = 2;
-constexpr int64_t kMatrixDiagV3InputsNum = 5;
-
 int64_t GetTensorValue(AbstractBasePtr arg, const std::string &prim_name, const std::string &arg_name) {
   if (!arg->isa<abstract::AbstractTensor>() || !arg->BuildValue()->isa<tensor::Tensor>()) {
     MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input '" << arg_name << "' must be const Tensor.";
   }
+  constexpr int64_t number_one = 1;
   auto abstract_tensor = arg->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(abstract_tensor);
   auto tensor_value_ptr = abstract_tensor->BuildValue();
@@ -45,7 +42,7 @@ int64_t GetTensorValue(AbstractBasePtr arg, const std::string &prim_name, const 
   auto specified_tensor = tensor_value_ptr->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(specified_tensor);
   int64_t tensor_val_size = SizeToLong(specified_tensor->DataSize());
-  MS_EXCEPTION_IF_CHECK_FAIL(tensor_val_size == kNumber1,
+  MS_EXCEPTION_IF_CHECK_FAIL(tensor_val_size == number_one,
                              prim_name + " infers failed when initializing value of '" + arg_name + "'.");
   auto tensor_ptr = reinterpret_cast<int *>(specified_tensor->data_c());
   int64_t tensor_val = static_cast<int64_t>(*tensor_ptr);
@@ -56,19 +53,21 @@ ShapeVector GetOutputShape(const std::vector<int64_t> &x_shape, int64_t lower_di
                            int64_t row_val, int64_t col_val, const std::string &prim_name) {
   ShapeVector out_shape;
   auto x_rank = SizeToLong(x_shape.size());
+  constexpr int64_t number_one = 1;
+  constexpr int64_t number_two = 2;
   if (lower_diag_index != upper_diag_index) {
     if (lower_diag_index > upper_diag_index) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] must not be greater than k[1], but got k[0] is "
                                << lower_diag_index << ", k[1] is " << upper_diag_index << ".";
     }
-    CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, kNumber2, prim_name);
+    CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, number_two, prim_name);
     auto num_diags = upper_diag_index - lower_diag_index + 1;
-    if (x_shape[x_rank - kNumber2] != num_diags) {
+    if (x_shape[x_rank - number_two] != num_diags) {
       MS_EXCEPTION(ValueError) << "For " << prim_name << ", the input x_shape[-2] doesn't match with k value.";
     }
-    (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - kNumber2);
+    (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - number_two);
   } else {
-    (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - kNumber1);
+    (void)out_shape.insert(out_shape.end(), x_shape.begin(), x_shape.end() - number_one);
   }
 
   int64_t max_diag_len = x_shape.back();
@@ -118,11 +117,13 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
   auto row_rank = SizeToLong(row_shape.size());
   auto col_rank = SizeToLong(col_shape.size());
   auto padding_value_rank = SizeToLong(padding_shape.size());
-  CheckAndConvertUtils::CheckInRange<int64_t>("rank of 'k'", k_rank, kIncludeBoth, {0, kNumber1}, prim_name);
+  constexpr int64_t number_one = 1;
+  constexpr int64_t number_two = 2;
+  CheckAndConvertUtils::CheckInRange<int64_t>("rank of 'k'", k_rank, kIncludeBoth, {0, number_one}, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of 'num_rows'", row_rank, kEqual, 0, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of 'num_cols'", col_rank, kEqual, 0, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of 'padding_value'", padding_value_rank, kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, kNumber1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterEqual, number_one, prim_name);
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>() &&
       input_args[kInputIndex1]->BuildValue()->isa<tensor::Tensor>()) {
     auto k = input_args[kInputIndex1]->cast<abstract::AbstractTensorPtr>();
@@ -133,11 +134,11 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION_IF_NULL(k_tensor);
     auto k_val = reinterpret_cast<int *>(k_tensor->data_c());
     int64_t k_val_size = SizeToLong(k_tensor->DataSize());
-    CheckAndConvertUtils::CheckInRange<int64_t>("size of 'k'", k_val_size, kIncludeBoth, {kNumber1, kNumber2},
+    CheckAndConvertUtils::CheckInRange<int64_t>("size of 'k'", k_val_size, kIncludeBoth, {number_one, number_two},
                                                 prim_name);
     int64_t lower_diag_index = static_cast<int64_t>(k_val[0]);
     int64_t upper_diag_index = lower_diag_index;
-    if (k_val_size == kNumber2) {
+    if (k_val_size == number_two) {
       upper_diag_index = static_cast<int64_t>(k_val[1]);
     }
     int64_t row_val = GetTensorValue(input_args[kInputIndex2], prim_name, "num_rows");
@@ -149,9 +150,12 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
   } else {
     // Since the real output shape relies on the value of 'k', 'num_cols' and 'num_rows',
     // the out_shape is set to {-2} meaning that even the dimension can not be determined.
-    ShapeVector out_shape = {-kNumber2};
-    ShapeVector infer_shape_min = {kNumber1};
-    ShapeVector infer_shape_max = {kNumber2};
+    // The real output shape will be updated before launching kernel, so min/max shape are not necessary to set
+    // correctly.
+    ShapeVector out_shape = {-2};
+    ShapeVector infer_shape_min;
+    ShapeVector infer_shape_max;
+    infer_shape_min = infer_shape_max = {1};
     return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
   }
 }
@@ -202,7 +206,8 @@ std::string MatrixDiagV3::get_align() const {
 AbstractBasePtr MatrixDiagV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMatrixDiagV3InputsNum, primitive->name());
+  constexpr int64_t inputs_num = 5;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, inputs_num, primitive->name());
   // Check 'align' attribute.
   auto align_ptr = primitive->GetAttr(kAlign);
   MS_EXCEPTION_IF_NULL(align_ptr);
