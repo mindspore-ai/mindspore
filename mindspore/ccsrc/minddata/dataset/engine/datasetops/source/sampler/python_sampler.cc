@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 
 #include <string>
 #include <utility>
+
+#include "minddata/dataset/kernels/data/data_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -45,7 +47,10 @@ Status PythonSamplerRT::GetNextSample(TensorRow *out) {
       try {
         py::object py_ret = py_sampler_instance.attr("_get_indices")();
         py::array np_sample_ids = py_ret.cast<py::array>();
-        RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(np_sample_ids, &sample_ids));  // copy numpy to tensor
+        std::shared_ptr<Tensor> ids_from_np;
+        RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(np_sample_ids, &ids_from_np));  // copy numpy to tensor
+        // date type of sample ids got from numpy is not sure on different platforms, so cast it to int64
+        RETURN_IF_NOT_OK(TypeCast(ids_from_np, &sample_ids, DataType(DataType::DE_INT64)));
 
         if (HasChildSampler()) {
           for (auto it = sample_ids->begin<int64_t>(); it != sample_ids->end<int64_t>(); ++it) {
