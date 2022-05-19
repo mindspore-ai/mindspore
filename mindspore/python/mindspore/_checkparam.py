@@ -993,6 +993,40 @@ class Validator:
             check_dyn_shape_value_equal(i, dyn_inputs[i].shape, actual_inputs[i].shape)
         return True
 
+    @staticmethod
+    def check_element_type_of_iterable(arg_name, arg_value, valid_types, prim_name=None):
+        """Check type of the element of a iterabel object, execpt dict."""
+        Validator.check_value_type(arg_name, arg_value, [list, tuple], prim_name)
+        type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in valid_types]
+        num_types = len(valid_types)
+        msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+        for element in arg_value:
+            if not isinstance(element, tuple(valid_types)):
+                raise TypeError(f"{msg_prefix} type of '{arg_name}' should be {'one of ' if num_types > 1 else ''}"
+                                f"{type_names if num_types > 1 else type_names[0]}, "
+                                f"but got '{element}' with type '{type(element).__name__}'.")
+
+    @staticmethod
+    def check_element_type_of_dict(arg_name, arg_value, key_types, value_types, prim_name=None):
+        """Check the type of key and value of a dict."""
+        Validator.check_value_type(arg_name, arg_value, [dict], prim_name)
+        msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+        type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in key_types]
+        num_types = len(key_types)
+        for element in arg_value.keys():
+            if not isinstance(element, tuple(key_types)):
+                raise TypeError(f"{msg_prefix} type of '{arg_name}' should be {'one of ' if num_types > 1 else ''}"
+                                f"{type_names if num_types > 1 else type_names[0]}, "
+                                f"but got '{element}' with type '{type(element).__name__}'.")
+
+        type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in value_types]
+        num_types = len(value_types)
+        for element in arg_value.values():
+            if not isinstance(element, tuple(value_types)):
+                raise TypeError(f"{msg_prefix} type of '{arg_name}' should be {'one of ' if num_types > 1 else ''}"
+                                f"{type_names if num_types > 1 else type_names[0]}, "
+                                f"but got '{element}' with type '{type(element).__name__}'.")
+
 
 def check_dyn_shape_value_equal(index, dyn_shape, actual_shape):
     """Check the consistency of dynamic shape and actual input shape."""

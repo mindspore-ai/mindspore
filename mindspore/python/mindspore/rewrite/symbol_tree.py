@@ -314,7 +314,8 @@ class SymbolTree(Observer, Observable):
 
     def add_global_vars(self, key: str, value):
         if self._global_vars.get(key) is not None:
-            raise RuntimeError("Key of global_vars duplicated:", key)
+            logger.info(f"The key '{key}' is duplicated")
+            return
         self._global_vars[key] = value
 
     def get_nodes_dict(self):
@@ -804,6 +805,7 @@ class SymbolTree(Observer, Observable):
         self._remove_unused_import()
         if self._init_func_ast:
             self._remove_unused_field()
+        self._remove_duplicated_import()
         ast.fix_missing_locations(self._module_ast)
         # Find all ast.ClassDef which can be export to code
         # Replace duplicated ast.ClassDef reference in main-ClassDef
@@ -885,6 +887,17 @@ class SymbolTree(Observer, Observable):
                     raise RuntimeError("Can not erase field ast node in __init__ function because of multi-targets")
                 AstModifier.erase_ast_from_function(self._init_func_ast, self._init_func_ast.body[i])
         ast.fix_missing_locations(self._init_func_ast)
+
+    def _remove_duplicated_import(self):
+        """Remove duplicated import of 'net'."""
+        imports = []
+        for body in self._module_ast.body:
+            if isinstance(body, (ast.ImportFrom, ast.Import)):
+                import_str = astunparse.unparse(body)
+                if import_str not in imports:
+                    imports.append(import_str)
+                else:
+                    self._module_ast.body.remove(body)
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, Node):

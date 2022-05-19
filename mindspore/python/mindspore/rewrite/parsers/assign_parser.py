@@ -373,8 +373,8 @@ class AssignParser(Parser):
                 # so main-network should observe sub-network
                 replacer = AstReplacer(new_stree.get_class_ast())
                 replacer.replace_all(new_stree.get_ori_cls_name(), new_stree.get_opt_cls_name())
-                return TreeNode(new_stree, father_ast_node, targets, func, call_args, call_kwargs, func_name,
-                                new_stree.get_origin_network())
+                return TreeNode.create_tree_node(new_stree, father_ast_node, targets, func, call_args, call_kwargs,
+                                                 func_name, new_stree.get_origin_network())
             return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, call_kwargs, func_name)
         raise RuntimeError("Only support Cell operator or Primitive operator, got ", type(op).__name__)
 

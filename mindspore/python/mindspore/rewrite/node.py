@@ -20,6 +20,7 @@ import inspect
 from mindspore.nn import Cell
 from mindspore.ops import Primitive
 from mindspore import log as logger
+from .._checkparam import Validator, Rel
 from .ast_helpers import AstModifier
 from .api.scoped_value import ScopedValue, ValueType
 from .api.node_type import NodeType
@@ -88,8 +89,8 @@ class Node:
         self._name = name
         self._func: Optional[ScopedValue] = func
         self._targets: [ScopedValue] = targets
-        self._args_num = len(args)
-        self._kwargs_num = len(kwargs)
+        self._args_num = len(args) if args is not None else 0
+        self._kwargs_num = len(kwargs) if kwargs is not None else 0
         self._normalized_args_keys = []  # for saving args' order
         self._normalized_args = self._get_normalized_args(args, kwargs)
         # edge of node
@@ -241,6 +242,15 @@ class Node:
             is_sub_net (bool): Indicate that is `cell` a network. If `is_sub_net` is true, Rewrite will try to parse the
                 `cell` to a TreeNode, else a CallCell Node. Default is a False.
         """
+        Validator.check_value_type("op", op, [Cell, Primitive], "Node")
+        if ast_node is not None:
+            Validator.check_value_type("ast_node", ast_node, [ast.AST], "Node")
+        Validator.check_element_type_of_iterable("targets", targets, [ScopedValue, str], "Node")
+        Validator.check_value_type("func", func, [ScopedValue, str], "Node")
+        if args is not None:
+            Validator.check_element_type_of_iterable("args", args, [ScopedValue], "Node")
+        if kwargs is not None:
+            Validator.check_element_type_of_dict("kwargs", kwargs, [str], [ScopedValue], "Node")
         cls_name = type(op).__name__
 
         if args is None:
@@ -697,30 +707,27 @@ class Node:
         Args:
             arg_idx (int): Indicate which input being modified.
             node (Node): Node as new input. Can be a node or name of node.
-            out_idx ([int, optional]): Indicate which output of 'node' as new argument. Default is None which means use
-                first output of 'node_to_link' as new input.
+            out_idx ([int, optional]): Indicate which output of `node` as new argument. Default is None which means use
+                first output of `node_to_link` as new input.
 
         Raises:
-            RuntimeError: If 'arg_idx' is out of range.
-            RuntimeError: If 'node' has multi-outputs while 'out_idx' is None or 'out_idx' is not offered.
+            ValueError: If `arg_idx` is out of range.
+            ValueError: If `node` has multi-outputs while `out_idx` is None or `out_idx` is not offered.
         """
-        if not isinstance(node, Node):
-            raise TypeError("node should be Node, got: ", type(node))
-        if arg_idx >= self._args_num or arg_idx < 0:
-            raise RuntimeError("arg_idx out of range: ", arg_idx)
+        Validator.check_value_type("node", node, [Node], "Node")
+        Validator.check_int_range(arg_idx, 0, self._args_num, Rel.INC_LEFT, "arg_idx")
         if out_idx is None:
             if len(node._targets) != 1:
                 raise RuntimeError("node should has one output when out_idx is not provided")
             out_idx = 0
-        if out_idx >= len(node._targets):
-            raise RuntimeError("out_idx out of range: ", out_idx)
+        Validator.check_int_range(out_idx, 0, len(node._targets), Rel.INC_LEFT, "arg_idx")
         new_arg = node._targets[out_idx]
         self._normalized_args[self._normalized_args_keys[arg_idx]] = new_arg
         self._sync_arg()
 
     def set_arg(self, arg: Union[ScopedValue, str], index: int) -> (ScopedValue, ScopedValue):
         """
-        Set argument of 'node'.
+        Set argument of `node`.
         Note that when _normalized_args is updated, corresponding ast node would be updated also.
 
         Args:
@@ -728,10 +735,10 @@ class Node:
             arg (Union[ScopedValue, str]): New argument to been set.
 
         Raises:
-            ValueError: If 'index' is out of range.
+            ValueError: If `index` is out of range.
         """
-        if index < 0 or index >= self._args_num:
-            raise ValueError("Index out of range while setting arg, index:", index, ", range:[0, ", self._args_num, ")")
+        Validator.check_int_range(index, 0, self._args_num, Rel.INC_LEFT, "index")
+        Validator.check_value_type("arg", arg, [ScopedValue, str], "Node")
         if isinstance(arg, str):
             arg = ScopedValue.create_naming_value(arg)
         old_arg = self._normalized_args.get(self._normalized_args_keys[index])
@@ -741,7 +748,7 @@ class Node:
 
     def set_args(self, args: [ScopedValue]):
         """
-        Set arguments of 'node'.
+        Set arguments of `node`.
         Note that when _normalized_args is updated, corresponding ast node would be updated also.
 
         Args:
@@ -750,8 +757,8 @@ class Node:
         Raises:
             TypeError: Element of new argument is not an instance of ScopedValue.
         """
-        if len(args) != self._args_num:
-            raise RuntimeError("Length of args should be equal to _args_num, ", len(args), " vs ", self._args_num)
+        Validator.check_int_range(len(args), 0, self._args_num, Rel.INC_LEFT, "Length of args")
+        Validator.check_element_type_of_iterable("args", args, [ScopedValue], "Node")
         for arg_index, arg in enumerate(args):
             if not isinstance(arg, ScopedValue):
                 raise TypeError("arg should be ScopedValue, got: ", type(arg))
@@ -770,9 +777,8 @@ class Node:
             TypeError: Value of new argument is not an instance of ScopedValue.
             RuntimeError: Length of new arguments is not equal to length of old arguments.
         """
-        if len(kwargs) != self._kwargs_num:
-            raise RuntimeError("Length of kwargs should be equal to _kwargs_num, ", len(kwargs), " vs ",
-                               self._kwargs_num)
+        Validator.check_int_range(len(kwargs), 0, self._kwargs_num, Rel.INC_LEFT, "Length of kwargs")
+        Validator.check_element_type_of_dict("kwargs", kwargs, [str], [ScopedValue], "Node")
         for key, arg in kwargs.items():
             if key not in self._normalized_args.keys() or key not in self._normalized_args_keys:
                 raise RuntimeError("Input key is not exist, ", key)
@@ -1134,7 +1140,7 @@ class Node:
 class TreeNode(Node):
     """Tree type Node who holds a handler of SymbolTree."""
 
-    def __init__(self, tree, ast_node: ast.AST, targets: [ScopedValue], func: Union[ScopedValue, str],
+    def __init__(self, tree, ast_node: ast.AST, targets: [ScopedValue], func: ScopedValue,
                  args: [ScopedValue], kwargs: {str: ScopedValue}, name: str, instance):
         """
         Constructor of Node. Rewrite recommend to invoking class method of Node to instantiate an instance of Node such
@@ -1158,8 +1164,8 @@ class TreeNode(Node):
         self.symbol_tree = tree
 
     @classmethod
-    def create_tree_node(cls, tree, ast_node: ast.AST, targets: [ScopedValue], func: ScopedValue, args: [ScopedValue],
-                         kwargs: {str: ScopedValue}, name: str = "", instance=None):
+    def create_tree_node(cls, tree, ast_node: ast.AST, targets: Union[ScopedValue, str], func: Union[ScopedValue, str],
+                         args: [ScopedValue], kwargs: {str: ScopedValue}, name: str = "", instance=None):
         """
         Class method of TreeNode. Instantiate an instance of node whose type is Tree. A Tree node represents an invoking
         to sub-network.
@@ -1180,6 +1186,9 @@ class TreeNode(Node):
             raise ValueError("Argument instance should be a Cell: ", type(instance))
         non_custom_args = Node._handle_custom_obj_in_args(args)
         non_custom_kwargs = Node._handle_custom_obj_in_kwargs(kwargs)
+        new_targets = Node._handle_targets(targets)
+        if isinstance(func, str):
+            func = ScopedValue.create_naming_value(func)
         if ast_node is None:
-            ast_node = AstModifier.create_call_assign(targets, func, non_custom_args, non_custom_kwargs)
-        return cls(tree, ast_node, targets, func, args, kwargs, name, instance)
+            ast_node = AstModifier.create_call_assign(new_targets, func, non_custom_args, non_custom_kwargs)
+        return cls(tree, ast_node, new_targets, func, args, kwargs, name, instance)

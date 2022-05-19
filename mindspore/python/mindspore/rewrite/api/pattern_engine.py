@@ -18,7 +18,9 @@ from typing import Tuple, Union, List, Type
 import abc
 
 from mindspore.nn import Cell
+from mindspore.ops.primitive import Primitive
 from mindspore import log as logger
+from ..._checkparam import Validator
 from .node_type import NodeType
 from .node import Node
 from .symbol_tree import SymbolTree
@@ -36,6 +38,9 @@ class PatternNode:
     """
 
     def __init__(self, pattern_node_name: str, match_type: Type = Type[None], inputs: ['PatternNode'] = None):
+        Validator.check_value_type("pattern_node_name", pattern_node_name, [str], "PatternNode")
+        if inputs is not None:
+            Validator.check_element_type_of_iterable("inputs", inputs, [PatternNode], "PatternNode")
         self._name = pattern_node_name
         self._type = match_type
         if inputs is None:
@@ -53,8 +58,11 @@ class PatternNode:
 
         Returns:
             A `PatternNode` created from `node`.
-        """
 
+        Raises:
+            TypeError: If `node` is not a `Node` instance.
+        """
+        Validator.check_value_type("node", node, [Node], "PatternNode")
         pattern_node: PatternNode = PatternNode(node.get_targets()[0])
         if node.get_node_type() is NodeType.CallCell:
             pattern_node._type = node.get_instance_type()
@@ -70,8 +78,11 @@ class PatternNode:
 
         Returns:
             A `PatternNode` as root of pattern created from rewrite node.
-        """
 
+        Raises:
+            TypeError: If `node` is not a `Node` instance.
+        """
+        Validator.check_value_type("node", node, [Node], "PatternNode")
         pattern_node: PatternNode = PatternNode.from_node(node)
         inputs = []
         for node_input in node.get_inputs():
@@ -89,8 +100,11 @@ class PatternNode:
 
         Returns:
             A `PatternNode` as root of pattern created from cell type list.
-        """
 
+        Raises:
+            TypeError: If `type_list` is not a `list`.
+        """
+        Validator.check_value_type("type_list", type_list, [list], "PatternNode")
         last_node = None
         for i, cell_type in enumerate(type_list):
             cur_node: PatternNode = PatternNode(str(i) + "-" + str(cell_type), cell_type, [])
@@ -107,8 +121,11 @@ class PatternNode:
 
         Args:
             node (PatternNode): Cell type as an input.
-        """
 
+        Raises:
+            TypeError: If `node` is not a `PatternNode` instance.
+        """
+        Validator.check_value_type("node", node, [PatternNode], "PatternNode")
         self._inputs.append(node)
 
     def set_inputs(self, inputs):
@@ -117,8 +134,11 @@ class PatternNode:
 
         Args:
             inputs (list[PatternNode]) : Inputs to be set as inputs of current `PatternNode`.
-        """
 
+        Raises:
+            TypeError: If `inputs` is not a `list` or input in `inputs` is not `PatternNode` instance.
+        """
+        Validator.check_element_type_of_iterable("inputs", inputs, [PatternNode], "PatternNode")
         self._inputs = inputs
 
     def match(self, node: Node) -> bool:
@@ -127,8 +147,11 @@ class PatternNode:
 
         Args:
             node (Node) : A rewrite node to be match.
-        """
 
+        Raises:
+            TypeError: If `node` is not a `Node` instance.
+        """
+        Validator.check_value_type("node", node, [Node], "PatternNode")
         return self._type == node.get_instance_type()
 
     def get_inputs(self):
@@ -204,6 +227,14 @@ class PatternEngine:
     """
 
     def __init__(self, pattern: Union[PatternNode, List], replacement: Replacement = None):
+        Validator.check_value_type("replacement", replacement, [Replacement], "PatternEngine")
+        if isinstance(pattern, List):
+            for p in pattern:
+                if not issubclass(p, (Cell, Primitive)):
+                    raise TypeError(f"The type of 'pattern' should be one of [Cell, Primitive]"
+                                    f"but got '{p}' with type '{type(p).__name__}'.")
+        else:
+            Validator.check_value_type("pattern", pattern, [PatternNode], "PatternEngine")
         if isinstance(pattern, PatternNode):
             self._is_chain = False
             self._replacement: Replacement = replacement
@@ -276,9 +307,9 @@ class PatternEngine:
             A bool represents if `stree` been changed.
 
         Raises:
-            RuntimeError: If `SymbolTree` has no return node.
+            TypeError: If `stree` is not a `SymbolTree` instance.
         """
-
+        Validator.check_value_type("stree", stree, [SymbolTree], "PatternEngine")
         changed = False
         # IR match
         queue: [Node] = stree.get_inputs()

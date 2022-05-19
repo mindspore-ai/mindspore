@@ -104,7 +104,7 @@ class SymbolTreeDumper:
                     elif isinstance(arg, ScopedValue):
                         arg_name = arg.value
                     else:
-                        raise RuntimeError(f"arg type {type(arg)} of {arg} is not supported now")
+                        raise RuntimeError(f"Arg type '{type(arg)} 'of '{arg}' is not supported now")
 
                     if arg_name in self._dump_key2index.keys():
                         arg_str += f"{self._dump_key2index[arg_name]}, "

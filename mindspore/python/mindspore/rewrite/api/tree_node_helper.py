@@ -15,6 +15,8 @@
 """Rewrite module api: TreeNodeHelper."""
 from typing import Optional
 
+from mindspore import log as logger
+from ..._checkparam import Validator
 from .symbol_tree import SymbolTree
 from .node import Node
 from .node_type import NodeType
@@ -42,12 +44,14 @@ class TreeNodeHelper:
 
         Raises:
             RuntimeError: If `node`'s type is not `NodeType.Tree`.
+            TypeError: If `node` is not a `Node` instance.
         """
-
+        Validator.check_value_type("node", node, [Node], "TreeNodeHelper")
         if node.get_node_type() == NodeType.Tree:
             node_impl = node.get_handler()
             subtree: SymbolTreeImpl = node_impl.symbol_tree
             if subtree is None:
                 return None
             return SymbolTree(subtree)
-        raise RuntimeError("Current node is not a Tree node")
+        logger.info(f"Current node is not a Tree node, current node type: {type(node)}")
+        return None

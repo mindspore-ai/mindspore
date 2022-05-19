@@ -17,6 +17,8 @@
 from typing import Union, Optional
 
 from mindspore.nn import Cell
+from mindspore.ops.primitive import Primitive
+from ..._checkparam import Validator
 from ..node import Node as NodeImpl
 from ..symbol_tree import SymbolTree as SymbolTreeImpl
 from .node_type import NodeType
@@ -42,14 +44,10 @@ class Node:
     def __init__(self, node: NodeImpl):
         self._node = node
 
-    def get_handler(self) -> NodeImpl:
-        """
-        Get handler of node implementation.
 
-        Returns:
-            An instance of `NodeImpl`.
-        """
-        return self._node
+    def __eq__(self, other: 'Node'):
+        Validator.check_value_type("other", other, [Node], "Node")
+        return self._node == other._node
 
     @staticmethod
     def create_call_cell(cell: Cell, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None,
@@ -83,15 +81,31 @@ class Node:
             An instance of `Node`.
 
         Raises:
-            RuntimeError: If `cell` is not a `Cell`.
-            RuntimeError: If `targets` is None.
-            RuntimeError: If target in `targets` is not a `NamingValue`-`ScopedValue`.
-            RuntimeError: If arg in `args` is not a `NamingValue`-`ScopedValue` or a `CustomObjValue`-`ScopedValue`.
-            RuntimeError: If value of kwarg in `kwargs` is not a `NamingValue`-`ScopedValue` or a
-                `CustomObjValue`-`ScopedValue`.
+            TypeError: If `cell` is not a `Cell`.
+            TypeError: If `targets` is not `list`.
+            TypeError: If the type of `targets` is not in `[ScopedValue, str]`.
+            TypeError: If arg in `args` is not a `ScopedValue`.
+            TypeError: If key of `kwarg` is not a str or value of kwarg in `kwargs` is not a `ScopedValue`.
         """
+        Validator.check_value_type("cell", cell, [Cell, Primitive], "Node")
+        Validator.check_element_type_of_iterable("targets", targets, [ScopedValue, str], "Node")
+        Validator.check_value_type("name", name, [str], "Node")
+        Validator.check_value_type("is_sub_net", is_sub_net, [bool], "Node")
+        if args is not None:
+            Validator.check_element_type_of_iterable("args", args, [ScopedValue], "Node")
+        if kwargs is not None:
+            Validator.check_element_type_of_dict("kwargs", kwargs, [str], [ScopedValue], "Node")
         return Node(NodeImpl.create_call_op(cell, None, targets, ScopedValue.create_naming_value(name, "self"),
                                             args, kwargs, name, is_sub_net))
+
+    def get_handler(self) -> NodeImpl:
+        """
+        Get handler of node implementation.
+
+        Returns:
+            An instance of `NodeImpl`.
+        """
+        return self._node
 
     def get_prev(self) -> 'Node':
         """
@@ -146,10 +160,11 @@ class Node:
             arg (Union[ScopedValue, str]): New argument to been set.
 
         Raises:
-            RuntimeError: If `index` is out of range.
-            RuntimeError: If `arg` a `NamingValue`-`ScopedValue` or a `CustomObjValue`-`ScopedValue` when `arg` is an
-                `ScopedValue`.
+            TypeError: If `index` is not a `int` number.
+            TypeError: If the type of `arg` is not in [`ScopedValue`, `str].
         """
+        Validator.check_value_type("index", index, [int], "Node")
+        Validator.check_value_type("arg", arg, [ScopedValue, str], "Node")
         belong_symbol_tree: SymbolTreeImpl = self._node.get_belong_symbol_tree()
         if belong_symbol_tree is None:
             self._node.set_arg(arg, index)
@@ -169,10 +184,17 @@ class Node:
         Raises:
             RuntimeError: If `src_node` is not belong to current `SymbolTree`.
             RuntimeError: If current node and `src_node` is not belong to same `SymbolTree`.
-            RuntimeError: If `arg_idx` is out of range.
-            RuntimeError: If `out_idx` is out of range.
-            RuntimeError: If `src_node` has multi-outputs while `out_idx` is None or `out_idx` is not offered.
+            TypeError: If `arg_idx` is not a `int` number.
+            ValueError: If `arg_idx` is out of range.
+            TypeError: If `src_node` is not a `Node` instance.
+            TypeError: If `out_idx` is not a `int` number.
+            ValueError: If `out_idx` is out of range.
+            ValueError: If `src_node` has multi-outputs while `out_idx` is None or `out_idx` is not offered.
         """
+        Validator.check_value_type("arg_idx", arg_idx, [int], "Node")
+        Validator.check_value_type("src_node", src_node, [Node], "Node")
+        if out_idx is not None:
+            Validator.check_value_type("out_idx", out_idx, [int], "Node")
         belong_symbol_tree: SymbolTreeImpl = self._node.get_belong_symbol_tree()
         if belong_symbol_tree is None:
             self._node.set_arg_by_node(arg_idx, src_node._node, out_idx)
@@ -279,7 +301,11 @@ class Node:
         Args:
             key (str): Key of attribute.
             value (object): Value of attribute.
+
+        Raises:
+            TypeError: If `key` is not a `str`.
         """
+        Validator.check_value_type("key", key, [str], "Node attribute")
         self._node.set_attribute(key, value)
 
     def get_attributes(self) -> {str: object}:
@@ -297,8 +323,9 @@ class Node:
 
         Returns:
             A object as attribute.
-        """
-        return self._node.get_attribute(key)
 
-    def __eq__(self, other: 'Node'):
-        return self._node == other._node
+        Raises:
+            TypeError: If `key` is not a `str`.
+        """
+        Validator.check_value_type("key", key, [str], "Node attribute")
+        return self._node.get_attribute(key)
