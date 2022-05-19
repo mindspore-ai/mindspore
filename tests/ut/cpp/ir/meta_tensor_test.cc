@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
@@ -28,7 +29,6 @@ using mindspore::tensor::TensorPy;
 
 namespace mindspore {
 namespace tensor {
-
 class TestMetaTensor : public UT::Common {
  public:
   TestMetaTensor() {}
@@ -374,5 +374,31 @@ TEST_F(TestTensor, TensorPyCast) {
   ASSERT_EQ(shape, shape3);
 }
 
+/// Feature: Tensor
+/// Description: Test user data for Tensor.
+/// Expectation: user data works as expected.
+TEST_F(TestTensor, TensorWithUserData) {
+  auto tensor = std::make_shared<Tensor>(3.14f);
+  auto mydata = std::make_shared<std::string>("mydata");
+
+  // Set user data.
+  tensor->set_user_data("mykey", mydata);
+  ASSERT_TRUE(tensor->has_user_data("mykey"));
+  ASSERT_EQ(tensor->user_data<std::string>("mykey"), mydata);
+
+  // Copy with user data.
+  auto tensor1 = std::make_shared<Tensor>(*tensor);
+  ASSERT_TRUE(tensor1->has_user_data("mykey"));
+  ASSERT_EQ(tensor1->user_data<std::string>("mykey"), mydata);
+
+  // Erase user data.
+  tensor->set_user_data<std::string>("mykey", nullptr);
+  ASSERT_FALSE(tensor->has_user_data("mykey"));
+  ASSERT_EQ(tensor->user_data<std::string>("mykey"), nullptr);
+
+  // user data in tensor1 is not removed.
+  ASSERT_TRUE(tensor1->has_user_data("mykey"));
+  ASSERT_EQ(tensor1->user_data<std::string>("mykey"), mydata);
+}
 }  // namespace tensor
 }  // namespace mindspore
