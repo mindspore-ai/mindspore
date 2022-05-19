@@ -56,19 +56,6 @@ mindspore.Tensor
 
         Tensor。如果在指定轴方向上所有Tensor元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则默认降维。
 
-    .. py:method:: cdist(input_y, p=2.0)
-
-        计算两个tensor的p-范数距离。
-
-        **参数：**
-
-        - **input_y** (tensor) - 。输入的向量。
-        - **p** (float) - P -范数距离的P值，P∈[0，∞]。默认值:2.0。
-
-        **返回：**
-
-        Tensor。p-范数距离，数据类型与输入一致。
-
     .. py:method:: argmax(axis=None)
 
         返回指定轴上最大值的索引。
@@ -200,6 +187,28 @@ mindspore.Tensor
         **异常：**
 
         - **ValueError** - 输入Tensor和任一 `choices` 无法广播。
+
+    .. py:method:: cdist(input_y, p=2.0)
+
+        计算两个tensor的p-范数距离。
+
+        **参数：**
+
+        - **input_y** (tensor) - 。输入的向量。
+        - **p** (float) - P -范数距离的P值，P∈[0，∞]。默认值:2.0。
+
+        **返回：**
+
+        Tensor。p-范数距离，数据类型与输入一致。
+
+        **异常：**
+
+        - **TypeError** - 如果输入参数 `input_y` 不是Tensor类型。
+        - **TypeError** - 如果当前Tensor或输入参数 `input_y` 的数据类型不是float16或者float32。
+        - **TypeError** - 如果参数 `p` 不是一个float值。
+        - **ValueError** - 如果参数 `p` 是负数。
+        - **ValueError** - 如果当前Tensor的维度信息与输入参数 `input_y` 不相同。
+        - **ValueError** - 如果当前Tensor或输入参数 `input_y` 不是2维或3维。
 
     .. py:method:: clip(xmin, xmax, dtype=None)
 
