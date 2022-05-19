@@ -50,20 +50,35 @@ def mutable(input_data):
 
     Currently, all the inputs of Cell except Tensor such as scalar, tuple, list and dict, are regarded as constant
     values. The constant values are non-differentiable and used to do constant folding in the optimization process.
-    We provide 'mutable' to make the constant inputs of Cell 'mutable'. A 'mutable' constant input means that it is
-    changed to be a variable input just like Tensor and the most important thing is that it will be differentiable.
 
-    Besides, currently when the network input is tuple[Tensor], list[Tensor] or dict[Tensor], if the value of tensor
-    is changed without changing the shape and dtype, the network will be re-compiled because the these inputs are
-    regarded as constant values. Now we can avoid this problem by using 'mutable'.
+    Besides, currently when the network input is tuple[Tensor], list[Tensor] or dict[Tensor], even without changing
+    the shape and dtype of the Tensors, the network will be re-compiled when calling this network repeatedly because
+    the these inputs are regarded as constant values.
+
+    To solve the above problems, we provide api `mutable` to make the constant inputs of Cell 'mutable'. A 'mutable'
+    input means that it is changed to be a variable input just like Tensor and the most important thing is that it
+    will be differentiable.
+
+    Args:
+        input_data (Union[Tensor, tuple[Tensor], list[Tensor], dict[Tensor]]): The input data to be made mutable.
 
     .. warning::
         - This is an experimental prototype that is subject to change or deletion.
         - The runtime has not yet supported to handle the scalar data flow. So we only support tuple[Tensor],
           list[Tensor] or dict[Tensor] for network input to avoid the re-compiled problem now.
+        - Tensor is mutable by default, when the `input_data` is Tensor, we just return the origin Tensor and nothing
+          is done.
+        - Currently we only support to use this api outside the network temporarily.
 
-    Args:
-        input_data (Union[Tensor, tuple[Tensor], list[Tensor], dict[Tensor]]): The input data to be made mutable.
+    Returns:
+        The origin input data which has been set mutable.
+
+    Raises:
+        TypeError: If `input_data` is not one of Tensor, tuple[Tensor], list[Tensor], dict[Tensor] or their nested
+        structure.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.nn as nn

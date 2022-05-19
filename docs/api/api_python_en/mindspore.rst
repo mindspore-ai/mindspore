@@ -256,6 +256,7 @@ JIT
 
     mindspore.ms_function
     mindspore.ms_class
+    mindspore.mutable
 
 Log
 ---
