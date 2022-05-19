@@ -74,6 +74,7 @@
 #define MS_BLEND512_F32(src1, src2, mask) _mm512_mask_blend_ps(mask, src1, src2)
 #define MS_BLEND512_EPI32(src1, src2, mask) _mm512_mask_blend_epi32(mask, src1, src2)
 #define MS_CAST512_F32_S32(src) _mm512_castsi512_ps(src)
+#define MS_REDUCE_ADD512_F32(src) _mm512_reduce_add_ps(src)
 
 static inline float MS_GET_MAX512_F32(__m512 src) {
   float result = MS_F32X16_GETI(src, 0);

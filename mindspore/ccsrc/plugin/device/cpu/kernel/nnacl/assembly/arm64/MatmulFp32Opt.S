@@ -109,8 +109,12 @@ LoopRow:
         ble LoopDepthStartHalf
 
     LoopDepthStart:
-        ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-        ld1 {v3.4s, v4.4s}, [x14], #32
+        prfm pldl1strm, [x14, #632]
+        ld1 {v3.4s}, [x14], #16
+        ld1 {v0.4s}, [x10], #16
+        prfm pldl1keep, [x10, #632]
+        ld1 {v1.4s, v2.4s}, [x10], #32
+        ld1 {v4.4s}, [x14], #16
         fmul v8.4s, v3.4s, v0.s[0]
         fmul v10.4s, v3.4s, v0.s[1]
         fmul v12.4s, v3.4s, v0.s[2]
@@ -140,8 +144,12 @@ LoopRow:
         beq Bias
 
         LoopDepth:
-            ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-            ld1 {v3.4s, v4.4s}, [x14], #32
+            prfm pldl1strm, [x14, #632]
+            ld1 {v3.4s}, [x14], #16
+            ld1 {v0.4s}, [x10], #16
+            prfm pldl1keep, [x10, #632]
+            ld1 {v1.4s, v2.4s}, [x10], #32
+            ld1 {v4.4s}, [x14], #16
             fmla v8.4s, v3.4s, v0.s[0]
             fmla v10.4s, v3.4s, v0.s[1]
             fmla v12.4s, v3.4s, v0.s[2]
@@ -264,8 +272,12 @@ LoopRow:
             b Write
 
     LoopDepthStartHalf:
-        ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-        ld1 {v3.4s, v4.4s}, [x14], #32
+        prfm pldl1strm, [x14, #632]
+        ld1 {v3.4s}, [x14], #16
+        ld1 {v0.4s}, [x10], #16
+        prfm pldl1keep, [x10, #632]
+        ld1 {v1.4s, v2.4s}, [x10], #32
+        add x14, x14, #16
         fmul v8.4s, v3.4s, v0.s[0]
         fmul v10.4s, v3.4s, v0.s[1]
         fmul v12.4s, v3.4s, v0.s[2]
@@ -283,8 +295,12 @@ LoopRow:
         beq BiasHalf
 
         LoopDepthHalf:
-            ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-            ld1 {v3.4s, v4.4s}, [x14], #32
+            prfm pldl1strm, [x14, #632]
+            ld1 {v3.4s}, [x14], #16
+            ld1 {v0.4s}, [x10], #16
+            prfm pldl1keep, [x10, #632]
+            ld1 {v1.4s, v2.4s}, [x10], #32
+            add x14, x14, #16
             fmla v8.4s, v3.4s, v0.s[0]
             fmla v10.4s, v3.4s, v0.s[1]
             fmla v12.4s, v3.4s, v0.s[2]
@@ -380,8 +396,12 @@ LoopRow8:
         ble LoopDepthStartHalf8
 
     LoopDepthStart8:
-        ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-        ld1 {v3.4s, v4.4s}, [x14], #32
+        prfm pldl1strm, [x14, #632]
+        ld1 {v3.4s}, [x14], #16
+        ld1 {v0.4s}, [x10], #16
+        prfm pldl1keep, [x10, #632]
+        ld1 {v1.4s, v2.4s}, [x10], #32
+        ld1 {v4.4s}, [x14], #16
         fmul v8.4s, v3.4s, v0.s[0]
         fmul v10.4s, v3.4s, v0.s[1]
         fmul v12.4s, v3.4s, v0.s[2]
@@ -403,8 +423,12 @@ LoopRow8:
         beq Bias8
 
         LoopDepth8:
-            ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-            ld1 {v3.4s, v4.4s}, [x14], #32
+            prfm pldl1strm, [x14, #632]
+            ld1 {v3.4s}, [x14], #16
+            ld1 {v0.4s}, [x10], #16
+            prfm pldl1keep, [x10, #632]
+            ld1 {v1.4s, v2.4s}, [x10], #32
+            ld1 {v4.4s}, [x14], #16
             fmla v8.4s, v3.4s, v0.s[0]
             fmla v10.4s, v3.4s, v0.s[1]
             fmla v12.4s, v3.4s, v0.s[2]
@@ -495,8 +519,12 @@ LoopRow8:
             b Write
 
     LoopDepthStartHalf8:
-        ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-        ld1 {v3.4s, v4.4s}, [x14], #32
+        prfm pldl1strm, [x14, #632]
+        ld1 {v3.4s}, [x14], #16
+        ld1 {v0.4s}, [x10], #16
+        prfm pldl1keep, [x10, #632]
+        ld1 {v1.4s, v2.4s}, [x10], #32
+        add x14, x14, #16
         fmul v8.4s, v3.4s, v0.s[0]
         fmul v10.4s, v3.4s, v0.s[1]
         fmul v12.4s, v3.4s, v0.s[2]
@@ -510,8 +538,12 @@ LoopRow8:
         beq BiasHalf8
 
         LoopDepthHalf8:
-            ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-            ld1 {v3.4s, v4.4s}, [x14], #32
+            prfm pldl1strm, [x14, #632]
+            ld1 {v3.4s}, [x14], #16
+            ld1 {v0.4s}, [x10], #16
+            prfm pldl1keep, [x10, #632]
+            ld1 {v1.4s, v2.4s}, [x10], #32
+            add x14, x14, #16
             fmla v8.4s, v3.4s, v0.s[0]
             fmla v10.4s, v3.4s, v0.s[1]
             fmla v12.4s, v3.4s, v0.s[2]
@@ -590,8 +622,12 @@ LoopRow4:
         ble LoopDepthStartHalf4
 
     LoopDepthStart4:
-        ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-        ld1 {v3.4s, v4.4s}, [x14], #32
+        prfm pldl1strm, [x14, #632]
+        ld1 {v3.4s}, [x14], #16
+        ld1 {v0.4s}, [x10], #16
+        prfm pldl1keep, [x10, #632]
+        add x10, x10, #32
+        ld1 {v4.4s}, [x14], #16
         fmul v8.4s, v3.4s, v0.s[0]
         fmul v10.4s, v3.4s, v0.s[1]
         fmul v12.4s, v3.4s, v0.s[2]
@@ -605,8 +641,12 @@ LoopRow4:
         beq Bias4
 
         LoopDepth4:
-            ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-            ld1 {v3.4s, v4.4s}, [x14], #32
+            prfm pldl1strm, [x14, #632]
+            ld1 {v3.4s}, [x14], #16
+            ld1 {v0.4s}, [x10], #16
+            prfm pldl1keep, [x10, #632]
+            add x10, x10, #32
+            ld1 {v4.4s}, [x14], #16
             fmla v8.4s, v3.4s, v0.s[0]
             fmla v10.4s, v3.4s, v0.s[1]
             fmla v12.4s, v3.4s, v0.s[2]
@@ -665,8 +705,12 @@ LoopRow4:
             b Write
 
     LoopDepthStartHalf4:
-        ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-        ld1 {v3.4s, v4.4s}, [x14], #32
+        prfm pldl1strm, [x14, #632]
+        ld1 {v3.4s}, [x14], #16
+        ld1 {v0.4s}, [x10], #16
+        prfm pldl1keep, [x10, #632]
+        add x10, x10, #32
+        add x14, x14, #16
         fmul v8.4s, v3.4s, v0.s[0]
         fmul v10.4s, v3.4s, v0.s[1]
         fmul v12.4s, v3.4s, v0.s[2]
@@ -676,8 +720,12 @@ LoopRow4:
         beq BiasHalf4
 
         LoopDepthHalf4:
-            ld1 {v0.4s, v1.4s, v2.4s}, [x10], #48
-            ld1 {v3.4s, v4.4s}, [x14], #32
+            prfm pldl1strm, [x14, #632]
+            ld1 {v3.4s}, [x14], #16
+            ld1 {v0.4s}, [x10], #16
+            prfm pldl1keep, [x10, #632]
+            add x10, x10, #32
+            add x14, x14, #16
             fmla v8.4s, v3.4s, v0.s[0]
             fmla v10.4s, v3.4s, v0.s[1]
             fmla v12.4s, v3.4s, v0.s[2]

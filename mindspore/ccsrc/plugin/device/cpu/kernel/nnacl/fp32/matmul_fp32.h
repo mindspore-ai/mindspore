@@ -125,13 +125,13 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
 void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
                 int col, int stride, int out_type);
 
-void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, int row, int deep);
+void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, int row, int deep, int act_type);
 
-void GemmIsNotPackOptimize(const float *a, const float *b, float *c, const float *bias, int m, int k);
+void GemmIsNotPackOptimize(const float *a, const float *b, float *c, const float *bias, int m, int k, int act_type);
 
 #ifdef ENABLE_ARM64
 void GemmIsNotPackByRow(const float *a, const float *b, float *c, const float *bias, int start_row, int end_row,
-                        int deep);
+                        int deep, int act_type);
 #endif
 #ifdef __cplusplus
 }
