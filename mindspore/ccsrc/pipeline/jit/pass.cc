@@ -49,7 +49,7 @@
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "frontend/optimizer/irpass/branch_culling.h"
 #include "frontend/optimizer/irpass/meta_fg_eliminate.h"
-#include "frontend/optimizer/irpass/ge_specialized_prepare.h"
+#include "frontend/optimizer/irpass/ge/ge_specialized_prepare.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/irpass/shard_eliminate.h"
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
@@ -538,6 +538,21 @@ OptPassGroupMap GetGeSpecializedPhases() {
   return map;
 }
 
+OptPassGroupMap GetAvgPoolGradForGEPass(const opt::irpass::OptimizeIRPassLib &irpass) {
+  opt::OptPassConfig avg_pool_grad = opt::OptPassConfig({irpass.avg_pool_grad_for_ge_});
+  OptPassGroupMap map({{"avg_pool_grad_for_ge", avg_pool_grad}});
+  return map;
+}
+
+OptPassGroupMap GetDropoutForGEPass(const opt::irpass::OptimizeIRPassLib &irpass) {
+  opt::OptPassConfig dropout = opt::OptPassConfig({
+    irpass.dropout_for_ge_,
+    irpass.dropout_grad_for_ge_,
+  });
+  OptPassGroupMap map({{"dropout_for_ge", dropout}});
+  return map;
+}
+
 OptPassGroupMap GetOptPynativeGradEpiloguePhases(const opt::irpass::OptimizeIRPassLib &irpass) {
   auto opt_a = GetOptPassesA(irpass);
   auto a3 = opt_a[opt_a.size() - 1];
@@ -594,6 +609,9 @@ void InitOpt(const ResourcePtr &res) {
       Optimizer::MakeOptimizer("opt_after_recompute", res, GetAfterRecomputePass(irpass));
     g_pass_opts["sparse_split"] =
       Optimizer::MakeOptimizer("sparse_spilt", res, GetSparseSoftmaxCrossEntropyWithLogitsSplitPass(irpass));
+    g_pass_opts["avg_pool_grad_for_ge"] =
+      Optimizer::MakeOptimizer("avg_pool_grad_for_ge", res, GetAvgPoolGradForGEPass(irpass));
+    g_pass_opts["dropout_for_ge"] = Optimizer::MakeOptimizer("dropout_for_ge", res, GetDropoutForGEPass(irpass));
   }
 }
 }  // namespace
@@ -633,6 +651,8 @@ bool ControlGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_contro
 bool PrepareGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_prepare"); }
 bool OptAfterRecomputeGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_after_recompute"); }
 bool SparseSplitPass(const ResourcePtr &res) { return OptPassGroup(res, "sparse_split"); }
+bool AvgPoolGradForGEPass(const ResourcePtr &res) { return OptPassGroup(res, "avg_pool_grad_for_ge"); }
+bool DropoutGradForGEPass(const ResourcePtr &res) { return OptPassGroup(res, "dropout_for_ge"); }
 
 bool OptPassRNGroup(const ResourcePtr &res) { return OptPassGroup(res, "renormal"); }
 
@@ -846,6 +866,8 @@ std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"opt_control", ControlGroup},
                                    {"opt_prepare", PrepareGroup},
                                    {"sparse_split", SparseSplitPass},
+                                   {"avg_pool_grad_for_ge", AvgPoolGradForGEPass},
+                                   {"dropout_for_ge", DropoutGradForGEPass},
                                    {"cconv", CconvPass}};
 
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},

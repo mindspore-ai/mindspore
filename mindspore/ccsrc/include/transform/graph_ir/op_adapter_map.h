@@ -72,6 +72,7 @@ constexpr const char kNameRsqrtGrad[] = "RsqrtGrad";
 constexpr const char kNameSqrtGrad[] = "SqrtGrad";
 constexpr const char kNameReciprocalGrad[] = "ReciprocalGrad";
 constexpr const char kNameAvgPoolGrad[] = "AvgPoolGrad";
+constexpr const char kNameAvgPoolGradGe[] = "AvgPoolGradGe";
 constexpr const char kNameMaxPoolGradWithArgmax[] = "MaxPoolGradWithArgmax";
 constexpr const char kNameApplyMomentum[] = "ApplyMomentum";
 constexpr const char kNameDropoutDoMask[] = "DropoutDoMask";

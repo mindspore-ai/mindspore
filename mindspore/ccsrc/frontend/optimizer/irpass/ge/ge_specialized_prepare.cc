@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frontend/optimizer/irpass/ge_specialized_prepare.h"
+#include "frontend/optimizer/irpass/ge/ge_specialized_prepare.h"
 
 #include <memory>
 #include <utility>

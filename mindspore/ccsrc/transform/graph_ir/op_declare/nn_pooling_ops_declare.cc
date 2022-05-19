@@ -93,6 +93,7 @@ ATTR_MAP(AvgPoolGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), 
                          {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(AvgPoolGrad) = {{0, OUTPUT_DESC(out_grad)}};
 REG_ADPT_DESC(AvgPoolGrad, kNameAvgPoolGrad, ADPT_DESC(AvgPoolGrad))
+REG_ADPT_DESC(AvgPoolGradGe, kNameAvgPoolGradGe, ADPT_DESC(AvgPoolGrad))
 
 // MaxPoolWithArgmax
 INPUT_MAP(MaxPoolWithArgmax) = {{1, INPUT_DESC(x)}};

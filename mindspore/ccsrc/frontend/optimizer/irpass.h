@@ -174,6 +174,12 @@ class OptimizeIRPassLib {
 
   // sparse_softmax_cross_entropy_with_logits split for GE
   SubstitutionPtr sparse_softmax_cross_entropy_with_logits_;
+  // ge AvgPoolGrad process
+  SubstitutionPtr avg_pool_grad_for_ge_;
+
+  // ge Dropout DropoutGrad process
+  SubstitutionPtr dropout_for_ge_;
+  SubstitutionPtr dropout_grad_for_ge_;
 };
 
 // the collection of irpass for resolve action
