@@ -166,8 +166,8 @@ bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_
   MS_EXCEPTION_IF_NULL(dst_device_tensor);
   MS_EXCEPTION_IF_NULL(src_device_tensor);
   if (src_device_tensor->GetSize() != dst_device_tensor->GetSize()) {
-    MS_LOG(WARNING) << "Copy size is not equal, input size:" << src_device_tensor->GetSize()
-                    << ", output size:" << dst_device_tensor->GetSize();
+    MS_LOG(INFO) << "Copy size is not equal, input size:" << src_device_tensor->GetSize()
+                 << ", output size:" << dst_device_tensor->GetSize();
   }
 
   // Exist the size alignment in some device, so get the min device size.
