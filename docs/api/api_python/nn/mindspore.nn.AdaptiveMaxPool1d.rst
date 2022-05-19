@@ -5,7 +5,7 @@ mindspore.nn.AdaptiveMaxPool1d
 
     对输入的多维数据进行一维平面上的自适应最大池化运算。
 
-    通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` ，AdaptiveMaxPool1d在 :math:`(L_{in})` 维度上输出区域最大值。
+    通常，输入的shape为 :math:`(N_{in}, C_{in}, L_{in})` ，AdaptiveMaxPool1d在 :math:`L_{in}` 维度上输出区域最大值。
     输出的shape为 :math:`(N_{in}, C_{in}, L_{out})` ，其中， :math:`L_{out}` 为 `output_size`。
 
     .. note::

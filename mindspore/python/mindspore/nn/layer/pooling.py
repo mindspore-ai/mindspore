@@ -432,12 +432,12 @@ class AdaptiveAvgPool1d(Cell):
     a composition of 1D input planes.
 
     Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`,
-    AdaptiveAvgPool1d outputs regional average in the :math:`(L_{in})`-dimension.
+    AdaptiveAvgPool1d outputs regional average in the :math:`L_{in}`-dimension.
     The output is of shape :math:`(N_{in}, C_{in}, L_{out})`,
-    where :math:`L_{out})` is defined by `output_size`
+    where :math:`L_{out}` is defined by `output_size`.
 
     Note:
-        :math:`(L_{in})` must be divisible by `output_size`.
+        :math:`L_{in}` must be divisible by `output_size`.
 
     Args:
         output_size (int): the target output size :math:`L_{out}`.
@@ -507,11 +507,11 @@ class AdaptiveMaxPool1d(Cell):
     a composition of 1D input planes.
 
     Typically, the input is of shape :math:`(N_{in}, C_{in}, L_{in})`,
-    AdaptiveMaxPool1d outputs regional maximum in the :math:`(L_{in})`-dimension. The output is of
-    shape :math:`(N_{in}, C_{in}, L_{out})`, where :math:`L_{out}` is defined by `output_size`
+    AdaptiveMaxPool1d outputs regional maximum in the :math:`L_{in}`-dimension. The output is of
+    shape :math:`(N_{in}, C_{in}, L_{out})`, where :math:`L_{out}` is defined by `output_size`.
 
     Note:
-        :math:`(L_{in})` must be divisible by `output_size`.
+        :math:`L_{in}` must be divisible by `output_size`.
 
     Args:
         output_size (int): the target output size :math:`L_{out}`.
