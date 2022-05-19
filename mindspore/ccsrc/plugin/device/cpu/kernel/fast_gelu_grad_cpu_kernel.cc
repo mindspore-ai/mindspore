@@ -28,6 +28,7 @@ constexpr const size_t kFastGeluGradOutputsNum = 1;
 
 template <typename T>
 bool FastGeLUGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &,
                                             const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kFastGeluGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kFastGeluGradOutputsNum, kernel_name_);
@@ -55,18 +56,15 @@ bool FastGeLUGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   return true;
 }
 
-std::vector<std::pair<KernelAttr, FastGeLUGradCpuKernelMod::FastGeluGradLaunchFunc>>
-  FastGeLUGradCpuKernelMod::func_list_ = {
+const std::vector<std::pair<KernelAttr, FastGeLUGradCpuKernelMod::KernelRunFunc>>
+  &FastGeLUGradCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, FastGeLUGradCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      &FastGeLUGradCpuKernelMod::LaunchKernel<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &FastGeLUGradCpuKernelMod::LaunchKernel<float>}};
-
-std::vector<KernelAttr> FastGeLUGradCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, FastGeluGradLaunchFunc> &pair) { return pair.first; });
-  return support_list;
+     &FastGeLUGradCpuKernelMod::LaunchKernel<float>},
+  };
+  return func_list;
 }
 
 bool FastGeLUGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -81,14 +79,10 @@ bool FastGeLUGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
     return false;
   }
 
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!pair.first) {
-    MS_LOG(ERROR) << "'" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
 
-  kernel_func_ = func_list_[pair.second].second;
   return true;
 }
 

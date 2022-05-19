@@ -30,8 +30,8 @@ bool LerpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (auto ret = MatchKernelFunc(base_operator, inputs, outputs); !ret) {
-    return ret;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
   }
   return true;
 }
@@ -40,8 +40,7 @@ int LerpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
-  int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto start_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -53,7 +52,7 @@ int LerpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   (void)std::transform(weight_shape.begin(), weight_shape.end(), std::back_inserter(weight_shape_), LongToSize);
   (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
   output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
-  return ret;
+  return KRET_OK;
 }
 
 void LerpCpuKernelMod::ResetResource() noexcept {

@@ -26,7 +26,8 @@
 namespace mindspore {
 namespace kernel {
 enum ReductionType { kNone, kMean, kSum };
-class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod {
+class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod,
+                                      public MatchKernelHelper<BCEWithLogitsLossCpuKernelMod> {
  public:
   BCEWithLogitsLossCpuKernelMod() = default;
   ~BCEWithLogitsLossCpuKernelMod() override = default;
@@ -44,16 +45,15 @@ class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod {
 
   void ResetResource() noexcept;
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-
-  using BceFunc = std::function<bool(BCEWithLogitsLossCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
   size_t input_size_{1};
   std::vector<size_t> input_logits_shape_;
@@ -61,8 +61,6 @@ class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> input_weight_shape_;
   std::vector<size_t> input_post_weight_shape_;
   ReductionType reduction_{kNone};
-  BceFunc kernel_func_;
-  static std::vector<std::pair<KernelAttr, BceFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

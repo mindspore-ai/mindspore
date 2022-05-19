@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class DropoutNdCpuKernelMod : public NativeCpuKernelMod {
+class DropoutNdCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<DropoutNdCpuKernelMod> {
  public:
   DropoutNdCpuKernelMod() { ResetResource(); }
   ~DropoutNdCpuKernelMod() override = default;
@@ -42,8 +42,10 @@ class DropoutNdCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   void ResetResource() noexcept;
@@ -53,10 +55,6 @@ class DropoutNdCpuKernelMod : public NativeCpuKernelMod {
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
 
-  using DropoutNdFunc =
-    std::function<bool(DropoutNdCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   size_t batches_{1};
@@ -65,8 +63,6 @@ class DropoutNdCpuKernelMod : public NativeCpuKernelMod {
   size_t element_per_channel_{1};
   float keep_prob_{0.0};
   std::vector<KernelTensorPtr> outputs_ = {};
-  DropoutNdFunc kernel_func_;
-  static std::vector<std::pair<KernelAttr, DropoutNdFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

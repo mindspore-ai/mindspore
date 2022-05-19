@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CTCLossV2CpuKernelMod : public NativeCpuKernelMod {
+class CTCLossV2CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<CTCLossV2CpuKernelMod> {
  public:
   CTCLossV2CpuKernelMod() = default;
   ~CTCLossV2CpuKernelMod() override = default;
@@ -42,8 +42,10 @@ class CTCLossV2CpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
   std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; };
 
@@ -86,11 +88,6 @@ class CTCLossV2CpuKernelMod : public NativeCpuKernelMod {
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-  using CTCLossV2Func =
-    std::function<bool(CTCLossV2CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  CTCLossV2Func kernel_func_;
-  static std::vector<std::pair<KernelAttr, CTCLossV2Func>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

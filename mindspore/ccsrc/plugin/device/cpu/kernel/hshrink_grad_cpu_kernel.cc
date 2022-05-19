@@ -25,14 +25,6 @@ namespace {
 constexpr size_t kHShrinkGradInputsNum = 2;
 constexpr size_t kHShrinkGradOutputsNum = 1;
 }  // namespace
-
-std::vector<KernelAttr> HShrinkGradCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, HShrinkGradFunc> &pair) { return pair.first; });
-  return support_list;
-}
-
 bool HShrinkGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
@@ -49,19 +41,16 @@ bool HShrinkGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
   }
   lambd_ = kernel_ptr->get_lambd();
 
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!pair.first) {
-    MS_LOG(ERROR) << "'" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
 
-  kernel_func_ = func_list_[pair.second].second;
   return true;
 }
 
 template <typename T>
 bool HShrinkGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                           const std::vector<AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHShrinkGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHShrinkGradOutputsNum, kernel_name_);
@@ -86,12 +75,16 @@ bool HShrinkGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   return true;
 }
 
-std::vector<std::pair<KernelAttr, HShrinkGradCpuKernelMod::HShrinkGradFunc>> HShrinkGradCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &HShrinkGradCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &HShrinkGradCpuKernelMod::LaunchKernel<float16>},
-};
+const std::vector<std::pair<KernelAttr, HShrinkGradCpuKernelMod::KernelRunFunc>> &HShrinkGradCpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, HShrinkGradCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &HShrinkGradCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &HShrinkGradCpuKernelMod::LaunchKernel<float16>},
+  };
+  return func_list;
+}
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, HShrinkGrad, HShrinkGradCpuKernelMod);
 }  // namespace kernel

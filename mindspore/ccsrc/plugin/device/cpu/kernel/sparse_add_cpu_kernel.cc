@@ -36,10 +36,10 @@ constexpr size_t kBValuesIdx = 3;
 constexpr size_t kSumIndicesIdx = 0;
 constexpr size_t kSumValuesIdx = 1;
 
-bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operater, const std::vector<KernelTensorPtr> &inputs,
+bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
   outputs_ = outputs;
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseAdd>(base_operater);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SparseAdd>(base_operator);
   thresh_ = kernel_ptr->get_thresh();
   kernel_name_ = kernel_ptr->name();
   size_t input_num = inputs.size();
@@ -48,13 +48,9 @@ bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operater, const std
                   << kInputNum << " tensors, but get " << input_num;
     return false;
   }
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(WARNING) << kernel_name_ << " does not support this data type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  kernel_func_ = func_list_[index].second;
 
   for (size_t i = 0; i < kOutputNum; i++) {
     auto dtype = inputs[i]->GetDtype();
@@ -85,7 +81,7 @@ int SparseAddCpuKernelMod::CompareTowIndices(const T &a_indices, const T &b_indi
 }
 
 template <typename T, typename S>
-bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kInputNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputNum << ", but got "
@@ -190,25 +186,22 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
       &SparseAddCpuKernelMod::LaunchKernel<index_type, value_type>                           \
   }
 
-std::vector<std::pair<KernelAttr, SparseAddCpuKernelMod::SparseAddFunc>> SparseAddCpuKernelMod::func_list_ = {
-  // float values
-  CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat32, int, float),
-  // double values
-  CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat64, int, double),
-  // int values
-  CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int, int),
-  // int64 values
-  CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int, int64_t),
-  // int16 values
-  CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt16, int, int16_t)};
-
-std::vector<KernelAttr> SparseAddCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, SparseAddFunc> &pair) { return pair.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, SparseAddCpuKernelMod::KernelRunFunc>> &SparseAddCpuKernelMod::GetFuncList()
+  const {
+  static const std::vector<std::pair<KernelAttr, SparseAddCpuKernelMod::KernelRunFunc>> func_list = {
+    // float values
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat32, int, float),
+    // double values
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat64, int, double),
+    // int values
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int, int),
+    // int64 values
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int, int64_t),
+    // int16 values
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt16, int, int16_t),
+  };
+  return func_list;
 }
-
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseAdd, SparseAddCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

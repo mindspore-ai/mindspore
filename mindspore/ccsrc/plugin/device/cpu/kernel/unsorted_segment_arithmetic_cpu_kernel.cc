@@ -73,16 +73,14 @@ bool UnsortedSegmentArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_ope
                                                  const std::vector<KernelTensorPtr> &inputs,
                                                  const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
-  if (!is_match) {
+
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnsortedSegmentArithInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUnsortedSegmentArithOutputsNum, kernel_name_);
 
-  kernel_func_ = func_list_[index].second;
   return true;
 }
 
@@ -90,8 +88,7 @@ int UnsortedSegmentArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_op
                                                   const std::vector<KernelTensorPtr> &inputs,
                                                   const std::vector<KernelTensorPtr> &outputs,
                                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KRET_OK;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
+  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
 
@@ -112,23 +109,18 @@ int UnsortedSegmentArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_op
   return KRET_OK;
 }
 
-std::vector<std::pair<KernelAttr, UnsortedSegmentArithmeticCpuKernelMod::UnsortedSegmentArithmeticFunc>>
-  UnsortedSegmentArithmeticCpuKernelMod::func_list_ = {
+const std::vector<std::pair<KernelAttr, UnsortedSegmentArithmeticCpuKernelMod::KernelRunFunc>>
+  &UnsortedSegmentArithmeticCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, UnsortedSegmentArithmeticCpuKernelMod::KernelRunFunc>> func_list = {
     {UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t)},
     {UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
     {UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t)},
     {UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t)},
     {UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t)},
-    {UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)}};
-
-std::vector<KernelAttr> UnsortedSegmentArithmeticCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, UnsortedSegmentArithmeticFunc> &pair) { return pair.first; });
-
-  return support_list;
+    {UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t)},
+  };
+  return func_list;
 }
-
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentMin, UnsortedSegmentArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, UnsortedSegmentMax, UnsortedSegmentArithmeticCpuKernelMod);
 }  // namespace kernel

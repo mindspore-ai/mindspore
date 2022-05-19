@@ -32,7 +32,7 @@
 
 namespace mindspore {
 namespace kernel {
-class GerCpuKernelMod : public NativeCpuKernelMod {
+class GerCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<GerCpuKernelMod> {
  public:
   GerCpuKernelMod() = default;
   explicit GerCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
@@ -40,7 +40,7 @@ class GerCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -49,17 +49,15 @@ class GerCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-
-  using GerLaunchFunc = std::function<bool(GerCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, GerLaunchFunc>> func_list_;
-  GerLaunchFunc kernel_func_;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
   std::string kernel_type_{"Unknown"};
   std::string kernel_name_;

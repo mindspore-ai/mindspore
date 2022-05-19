@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SpaceToBatchNDCpuKernelMod : public NativeCpuKernelMod {
+class SpaceToBatchNDCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<SpaceToBatchNDCpuKernelMod> {
  public:
   SpaceToBatchNDCpuKernelMod() = default;
   ~SpaceToBatchNDCpuKernelMod() override = default;
@@ -46,17 +46,14 @@ class SpaceToBatchNDCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  private:
   void CheckParam();
 
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-  using SpaceToBatchNDFunc =
-    std::function<bool(SpaceToBatchNDCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, SpaceToBatchNDFunc>> func_list_;
-  SpaceToBatchNDFunc kernel_func_;
 
   std::vector<std::vector<int64_t>> paddings_;
   std::vector<int64_t> block_size_;

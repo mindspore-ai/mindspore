@@ -31,7 +31,8 @@
 
 namespace mindspore {
 namespace kernel {
-class UnsortedSegmentArithmeticCpuKernelMod : public NativeCpuKernelMod {
+class UnsortedSegmentArithmeticCpuKernelMod : public NativeCpuKernelMod,
+                                              public MatchKernelHelper<UnsortedSegmentArithmeticCpuKernelMod> {
  public:
   UnsortedSegmentArithmeticCpuKernelMod() = default;
   ~UnsortedSegmentArithmeticCpuKernelMod() override = default;
@@ -48,18 +49,15 @@ class UnsortedSegmentArithmeticCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs,
              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-  using UnsortedSegmentArithmeticFunc =
-    std::function<bool(UnsortedSegmentArithmeticCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, UnsortedSegmentArithmeticFunc>> func_list_;
-  UnsortedSegmentArithmeticFunc kernel_func_;
 
   size_t comp_size_ = 1;
   size_t loop_size_ = 1;

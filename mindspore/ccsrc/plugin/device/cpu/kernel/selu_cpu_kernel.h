@@ -26,14 +26,14 @@
 
 namespace mindspore {
 namespace kernel {
-class SeluCpuKernelMod : public NativeCpuKernelMod {
+class SeluCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<SeluCpuKernelMod> {
  public:
   SeluCpuKernelMod() = default;
   ~SeluCpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -42,18 +42,18 @@ class SeluCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using SeluFunc = std::function<bool(SeluCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                      const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
+
   size_t output_size_{1};
-  SeluFunc kernel_func_;
   std::vector<size_t> output_shape_;
-  static std::vector<std::pair<KernelAttr, SeluFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -25,14 +25,6 @@ namespace {
 constexpr size_t kHShrinkInputsNum = 1;
 constexpr size_t kHShrinkOutputsNum = 1;
 }  // namespace
-
-std::vector<KernelAttr> HShrinkCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, HShrinkFunc> &pair) { return pair.first; });
-  return support_list;
-}
-
 bool HShrinkCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
@@ -49,19 +41,15 @@ bool HShrinkCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
   lambd_ = kernel_ptr->get_lambd();
 
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!pair.first) {
-    MS_LOG(ERROR) << "'" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
 
-  kernel_func_ = func_list_[pair.second].second;
   return true;
 }
 
 template <typename T>
-bool HShrinkCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool HShrinkCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHShrinkInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHShrinkOutputsNum, kernel_name_);
@@ -84,13 +72,15 @@ bool HShrinkCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   return true;
 }
 
-std::vector<std::pair<KernelAttr, HShrinkCpuKernelMod::HShrinkFunc>> HShrinkCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &HShrinkCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &HShrinkCpuKernelMod::LaunchKernel<float16>},
-};
-
+const std::vector<std::pair<KernelAttr, HShrinkCpuKernelMod::KernelRunFunc>> &HShrinkCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, HShrinkCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &HShrinkCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &HShrinkCpuKernelMod::LaunchKernel<float16>},
+  };
+  return func_list;
+}
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, HShrink, HShrinkCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
