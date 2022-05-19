@@ -17,8 +17,7 @@ import argparse
 import os
 import sys
 from time import time
-from mindspore import context
-from mindspore.train.serialization import load_checkpoint
+import mindspore as ms
 from src.config import eval_cfg, server_net_cfg
 from src.dataset import load_datasets
 from src.utils import restore_params
@@ -52,7 +51,7 @@ def server_eval(args):
     vocab_map_ids_path = args.vocab_map_ids_path
 
     # mindspore context
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    ms.set_context(mode=ms.GRAPH_MODE, device_target='GPU')
     print('Context setting is done! Time cost: {}'.format(time() - start))
     sys.stdout.flush()
     start = time()
@@ -72,7 +71,7 @@ def server_eval(args):
     # main model
     albert_model_cls = AlbertModelCLS(server_net_cfg)
     albert_model_cls.set_train(False)
-    param_dict = load_checkpoint(model_path)
+    param_dict = ms.load_checkpoint(model_path)
     restore_params(albert_model_cls, param_dict)
     print('Model construction is done! Time cost: {}'.format(time() - start))
     sys.stdout.flush()
