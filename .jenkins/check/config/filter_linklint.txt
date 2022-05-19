@@ -48,3 +48,4 @@ https://github.com/FrozenGene/tflite/releases/download/v1.13.1/tflite-1.13.1-py3
 https://github.com/siju-samuel/darknet/blob/master/
 https://developer.download.nvidia.cn/compute/cuda/repos/ubuntu
 https://developer.download.nvidia.cn/compute/machine-learning/repos/ubuntu
+https://dl.google.com/dl/android/maven2/
