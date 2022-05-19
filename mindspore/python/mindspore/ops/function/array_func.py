@@ -40,9 +40,10 @@ scatter_nd_ = P.ScatterNd()
 gather_ = P.Gather()
 gather_d_ = P.GatherD()
 gather_nd_ = P.GatherNd()
-tensor_scatter_add_ = P.TensorScatterAdd()
 nonzero_ = NonZero()
 scalar_cast_ = P.ScalarCast()
+tensor_scatter_add_ = P.TensorScatterAdd()
+tensor_scatter_sub_ = P.TensorScatterSub()
 tensor_scatter_div_ = P.TensorScatterDiv()
 scalar_to_array_ = P.ScalarToArray()
 scalar_to_tensor_ = P.ScalarToTensor()
@@ -1441,7 +1442,6 @@ def tensor_scatter_add(input_x, indices, updates):
     return tensor_scatter_add_(input_x, indices, updates)
 
 
-tensor_scatter_sub_ = P.TensorScatterSub()
 def tensor_scatter_sub(input_x, indices, updates):
     """
     Creates a new tensor by subtracting the values from the positions in `input_x` indicated by

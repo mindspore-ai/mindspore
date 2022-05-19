@@ -390,10 +390,10 @@ def swapaxes(x, axis1, axis2):
     new_perm = None
     if axis2 + 1 < x.ndim:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
     else:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
     return F.transpose(x, new_perm)
 
@@ -1667,24 +1667,6 @@ def while_cond(x):
     return x
 
 
-def scatter_nd_add(input_x, indices, updates, use_locking=False):
-    """
-    Applies sparse addition to individual values or slices in a tensor.
-    Using given values to update tensor value through the add operation, along with the input indices.
-    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
-    """
-    return F.scatter_nd_add(input_x, indices, updates, use_locking)
-
-
-def scatter_nd_sub(input_x, indices, updates, use_locking=False):
-    """
-    Applies sparse subtraction to individual values or slices in a tensor.
-    Using given values to update tensor value through the subtraction operation, along with the input indices.
-    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
-    """
-    return F.scatter_nd_sub(input_x, indices, updates, use_locking)
-
-
 def tensor_scatter_add(x, indices, updates):
     """
     Creates a new tensor by adding the values from the positions in `x` indicated by
@@ -2054,6 +2036,7 @@ def space_to_batch_nd(x, block_shape, paddings):
          [[[4.]]]]
     """
     return P.SpaceToBatchND(block_shape, paddings)(x)
+
 
 ##################
 # Sparse methods #
