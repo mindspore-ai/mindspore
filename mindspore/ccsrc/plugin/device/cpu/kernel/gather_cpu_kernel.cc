@@ -66,6 +66,7 @@ void GatherCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   kernel_func_ = func_list_[index].second;
+  node_wpt_ = kernel_node;
 }
 
 template <typename T>
@@ -75,8 +76,19 @@ bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   const auto *input_tensor = reinterpret_cast<int8_t *>(inputs[0]->addr);
   const auto *indices_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
   auto *output_addr = reinterpret_cast<int8_t *>(outputs[0]->addr);
-  if (is_dynamic_shape_) {
-    axis_ = reinterpret_cast<int64_t *>(inputs[2]->addr)[0];
+  if (!node_wpt_.expired()) {
+    auto node = node_wpt_.lock();
+    if (!node) {
+      MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+    }
+    if (inputs.size() == kGatherInputsNum) {
+      axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(node, AXIS);
+    } else if (inputs.size() == kGatherInputsNum + 1) {
+      axis_ = reinterpret_cast<int64_t *>(inputs[2]->addr)[0];
+    } else {
+      MS_LOG(EXCEPTION) << "Gather requires " << kGatherInputsNum << " or " << (kGatherInputsNum + 1)
+                        << " inputs, but got " << inputs.size();
+    }
   }
 
   int dims = SizeToInt(input_shape_.size());
