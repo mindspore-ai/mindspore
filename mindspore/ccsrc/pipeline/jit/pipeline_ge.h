@@ -33,12 +33,7 @@ namespace mindspore {
 namespace pipeline {
 namespace py = pybind11;
 
-void SetGeOption(const std::map<std::string, std::string> &options);
-
-void RunGEInitGraph(const py::dict &init_params, const std::string &phase);
-
-py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::tuple &args,
-                       const std::string &phase = "train");
+void DoExecNonInputGraph(const std::string &phase);
 
 FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::dict &init_params,
                           const std::string &phase, const py::object &broadcast_params = {});

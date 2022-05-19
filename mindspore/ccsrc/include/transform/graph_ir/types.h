@@ -29,7 +29,7 @@
 #include "graph/tensor.h"
 #include "external/ge/ge_api.h"
 
-using GeTensor = ge::Tensor;
+using GeTensor = ::ge::Tensor;
 
 namespace mindspore {
 namespace transform {
@@ -38,16 +38,16 @@ enum Status : int { SUCCESS = 0, FAILED, INVALID_ARGUMENT, ALREADY_EXISTS, NOT_F
 using MeTensor = mindspore::tensor::Tensor;
 using MeTensorPtr = std::shared_ptr<MeTensor>;
 using MeDataType = mindspore::TypeId;
-using GeDataType = ge::DataType;
-using GeFormat = ge::Format;
-using GeShape = ge::Shape;
+using GeDataType = ::ge::DataType;
+using GeFormat = ::ge::Format;
+using GeShape = ::ge::Shape;
 using GeTensorPtr = std::shared_ptr<GeTensor>;
-using GeTensorDesc = ge::TensorDesc;
+using GeTensorDesc = ::ge::TensorDesc;
 using AnfGraph = FuncGraph;
 using AnfGraphPtr = FuncGraphPtr;
-using Operator = ge::Operator;
-using OperatorPtr = std::shared_ptr<ge::Operator>;
-using DfGraph = ge::Graph;
+using Operator = ::ge::Operator;
+using OperatorPtr = std::shared_ptr<::ge::Operator>;
+using DfGraph = ::ge::Graph;
 using DfGraphPtr = std::shared_ptr<DfGraph>;
 using TensorMap = mindspore::HashMap<std::string, std::shared_ptr<MeTensor>>;
 using OptionMap = std::map<std::string, std::string>;
@@ -55,12 +55,14 @@ using TensorOrderMap = std::map<std::string, std::shared_ptr<tensor::Tensor>>;
 
 struct DfGraphWrapper {
  public:
-  DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr, const OptionMap &options);
+  DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr,
+                 const std::vector<transform::GeTensorPtr> &inputs, const OptionMap &options);
   ~DfGraphWrapper() {}
 
   std::string name_;
   int id_;
   DfGraphPtr graph_ptr_;
+  std::vector<transform::GeTensorPtr> inputs_ = {};
   OptionMap options_ = {};
 };
 

@@ -549,8 +549,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   graph->SetOptimizerFlag();
 
   if (run_mode == device::RunMode::kUnknown) {
-    auto run_mode = device_context->GetRunMode(graph);
-    graph->set_run_mode(run_mode);
+    graph->set_run_mode(device_context->GetRunMode(graph));
   }
 
   GraphId graph_id;
@@ -611,6 +610,20 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   for (const auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
     graph->set_root_graph_id(root_graph->graph_id());
+  }
+
+  // todo: waiting for GraphExecutor
+  if (MsContext::GetInstance()->backend_policy() == "ge") {
+    auto manager = MakeManager();
+    for (const auto &graph : all_graphs) {
+      MS_EXCEPTION_IF_NULL(graph);
+      manager->AddFuncGraph(graph);
+      graph->set_manager(manager);
+    }
+    MS_EXCEPTION_IF_NULL(device_context->graph_executor_);
+    device_context->graph_executor_->CompileGraph(root_graph, {});
+    root_graph->CacheGraphOutputToFrontNodeWithIndex({root_graph->output()}, {func_graph->output()});
+    return root_graph->graph_id();
   }
 
   // set executing sink true in graph mode

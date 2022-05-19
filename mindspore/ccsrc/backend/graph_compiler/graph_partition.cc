@@ -655,15 +655,6 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
         return true;
       }
     }
-#ifdef ENABLE_D
-    if (backend_name_ == kGeVm) {
-      auto name = GetCNodeFuncName(cnode);
-      auto adpt = transform::FindAdapter(name);
-      if (adpt == nullptr) {
-        return true;
-      }
-    }
-#endif
   }
   return false;
 }

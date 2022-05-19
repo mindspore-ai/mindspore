@@ -54,6 +54,7 @@ COMMON_EXPORT GeDataType ConvertDataType(const MeDataType &type);
 COMMON_EXPORT MeTensorPtr ConvertGeTensor(GeTensorPtr ge_tensor, const ShapeVector &request_dims);
 COMMON_EXPORT MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor);
 COMMON_EXPORT MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor, const TypeId &me_type);
+
 // df graph manager
 COMMON_EXPORT std::shared_ptr<transform::GraphRunner> GetGraphRunner();
 COMMON_EXPORT std::shared_ptr<ge::Session> GetGeSession();
@@ -61,7 +62,8 @@ COMMON_EXPORT void SetGeSession(const std::shared_ptr<ge::Session> &sess_ptr);
 COMMON_EXPORT GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options);
 COMMON_EXPORT void SetGraphRunner(const GraphRunnerPtr &runner);
 COMMON_EXPORT void ClearGraph();
-COMMON_EXPORT Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options = {});
+COMMON_EXPORT Status AddGraph(const std::string &name, const DfGraphPtr &graph,
+                              const std::vector<transform::GeTensorPtr> &inputs = {}, const OptionMap &options = {});
 COMMON_EXPORT void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr);
 COMMON_EXPORT DfGraphWrapperPtr GetGraphByName(const std::string &name);
 
@@ -87,12 +89,13 @@ COMMON_EXPORT DfGraphPtr GetBroadcastGraph(DfGraphConvertorPtr converter);
 // new session
 COMMON_EXPORT std::shared_ptr<ge::Session> NewSession(const SessionOptions &sess_options);
 
+COMMON_EXPORT Status BuildAllGraphs(const std::shared_ptr<GraphRunner> &runner);
+
 COMMON_EXPORT Status RunGraph(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options,
                               const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
 
-COMMON_EXPORT Status RunGraph(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options,
-                              const std::vector<GeTensorPtr> &inputs, std::vector<MeTensorPtr> *outputs,
-                              const std::vector<TypeId> &me_types);
+COMMON_EXPORT Status RunGraphAsync(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options,
+                                   const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
 COMMON_EXPORT void ClearOpAdapterMap();
 
 COMMON_EXPORT transform::Status CompileDatasetGraph(const DatasetGraphParam &param,

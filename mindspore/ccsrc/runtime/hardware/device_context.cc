@@ -15,6 +15,7 @@
  */
 
 #include "runtime/hardware/device_context.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace device {
@@ -65,12 +66,6 @@ void *DeviceResManager::GetStream(size_t stream_id) const {
 
 bool DeviceResManager::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   MS_EXCEPTION_IF_NULL(address);
-  auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
-  if (device_name_in_address != device_context_->device_context_key().device_name_) {
-    MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
-                      << ", type name in context:" << device_context_->device_context_key().device_name_;
-  }
-
   if (address->GetPtr() != nullptr) {
     MS_LOG(EXCEPTION) << "Memory leak detected!";
   }
@@ -89,12 +84,6 @@ void DeviceResManager::FreeMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   if (address->GetPtr() == nullptr) {
     MS_LOG(EXCEPTION) << "Device ptr is null in device address to release!";
-  }
-
-  auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
-  if (device_name_in_address != device_context_->device_context_key().device_name_) {
-    MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
-                      << ", type name in context:" << device_context_->device_context_key().device_name_;
   }
 
   if (!address->from_mem_pool()) {

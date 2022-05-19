@@ -41,7 +41,6 @@ struct LinConvertResult {
 
 using LinkFuncType = std::function<LinConvertResult(const GraphSegmentPtr &, const std::string &)>;
 extern LinkFuncType MsVmConvert;
-extern std::set<std::string> backend_list;
 std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(const AnfNodePtrList &lst);
 }  // namespace compile
 }  // namespace mindspore

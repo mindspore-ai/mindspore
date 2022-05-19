@@ -26,9 +26,9 @@ mindspore::HashMap<std::string, OpAdapterDescPtr> adpt_map_ = {
 }  // namespace
 
 template <>
-mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<ge::Operator>::cus_input_map_{};
+mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<::ge::Operator>::cus_input_map_{};
 template <>
-mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<ge::Operator>::cus_output_map_{};
+mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<::ge::Operator>::cus_output_map_{};
 
 mindspore::HashMap<std::string, OpAdapterDescPtr> &OpAdapterMap::get() { return adpt_map_; }
 }  // namespace transform

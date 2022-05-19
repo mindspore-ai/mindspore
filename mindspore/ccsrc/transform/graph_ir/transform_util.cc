@@ -237,6 +237,7 @@ GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &fo
   return tensor_ptr;
 }
 #endif
+
 GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::string &format) {
   // get tensor data type size
   MS_EXCEPTION_IF_NULL(tensor);

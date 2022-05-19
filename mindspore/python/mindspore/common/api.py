@@ -96,20 +96,6 @@ def _wrap_func(fn):
     return wrapper
 
 
-def _exec_init_graph(obj, init_phase):
-    """Execute the parameter initializer graph."""
-    inst_executor = GraphExecutor_.get_instance()
-    param_dict = OrderedDict()
-    for name, param in obj.parameters_dict().items():
-        if not param.is_init:
-            param_dict[name] = param
-            param.is_init = True
-            param.data.init_flag = True
-
-    if param_dict:
-        inst_executor.run_init_graph(param_dict, init_phase)
-
-
 def _check_all_tensor(sequence):
     for element in sequence:
         if not isinstance(element, Tensor) and not (isinstance(element, tuple) and _check_all_tensor(element)):
@@ -222,18 +208,6 @@ class _MindsporeFunctionExecutor:
         self._graph_executor = GraphExecutor_.get_instance()
         self._create_time = ms_create_time
 
-    def build_data_init_graph(self, graph_name):
-        """Build GE data graph and init graph for the given graph name."""
-        if self.obj is None:
-            logger.warning("Make sure parameter should not be used in function")
-            para_dict = OrderedDict()
-            self._graph_executor.build_data_graph(para_dict, graph_name)
-            return
-        self._graph_executor.build_data_graph(self.obj.parameters_dict(), graph_name,
-                                              self.obj.parameters_broadcast_dict())
-        init_phase = "init_subgraph" + graph_name[graph_name.find("."):]
-        _exec_init_graph(self.obj, init_phase)
-
     def _set_compile_cache_dep_files(self):
         # If enable compile cache, get the dependency files list
         enable_compile_cache = context.get_context("enable_compile_cache")
@@ -328,8 +302,6 @@ class _MindsporeFunctionExecutor:
 
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
-        if context.get_context("enable_ge"):
-            self.build_data_init_graph(phase)
         ms_compile_cache.add(phase)
         return phase
 
@@ -1103,10 +1075,7 @@ class _CellGraphExecutor:
 
         # the following GE init process is not needed when use vm or ms backend
         if enable_ge:
-            self._build_data_graph(obj, phase)
-            if "export" not in phase:
-                init_phase = "init_subgraph." + str(obj.create_time) + "." + str(id(obj)) + '.' + obj.arguments_key
-                _exec_init_graph(obj, init_phase)
+            pass
         elif "export" in phase:
             self._build_data_graph(obj, phase)
         elif BROADCAST_PHASE not in phase and _get_parameter_broadcast():

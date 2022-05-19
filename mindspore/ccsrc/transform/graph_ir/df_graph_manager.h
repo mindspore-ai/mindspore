@@ -36,7 +36,8 @@ class DfGraphManager {
   void ClearGraph() noexcept;
 
   static DfGraphManager &GetInstance();
-  Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options = {});
+  Status AddGraph(const std::string &name, const DfGraphPtr &graph,
+                  const std::vector<transform::GeTensorPtr> &inputs = {}, const OptionMap &options = {});
   std::vector<DfGraphWrapperPtr> GetAllGraphs();
   std::set<string> GetSavedGraphs();
   void AddSavedGraphs(const std::string &id);
@@ -47,8 +48,8 @@ class DfGraphManager {
   std::shared_ptr<transform::GraphRunner> GetGraphRunner();
   void SetGraphRunner(const std::shared_ptr<transform::GraphRunner> &graph_runner_ptr) noexcept;
   void DeleteGraphRunner() noexcept;
-  void SetGeSession(const std::shared_ptr<ge::Session> &sess_ptr);
-  std::shared_ptr<ge::Session> GetGeSession();
+  void SetGeSession(const std::shared_ptr<::ge::Session> &sess_ptr);
+  std::shared_ptr<::ge::Session> GetGeSession();
   void DeleteGeSession() noexcept;
   void EraseAnfGraph();
 
@@ -62,7 +63,7 @@ class DfGraphManager {
   int graph_id_;
   std::map<uint32_t, AnfGraphPtr> anf_graphs_;
   std::shared_ptr<transform::GraphRunner> graph_runner_ptr_;
-  std::shared_ptr<ge::Session> sess_ptr_;
+  std::shared_ptr<::ge::Session> sess_ptr_;
 };
 }  // namespace transform
 }  // namespace mindspore

@@ -51,8 +51,8 @@ class CustomOperator : public Operator {
 
 namespace mindspore {
 namespace transform {
-using CusOperatorPtr = std::shared_ptr<ge::CustomOperator>;
-using CustomOperator = ge::CustomOperator;
+using CusOperatorPtr = std::shared_ptr<::ge::CustomOperator>;
+using CustomOperator = ::ge::CustomOperator;
 using AttrFunc = std::function<void(OperatorPtr, ValuePtr)>;
 using OutputFunc = std::function<OutHandler(OperatorPtr)>;
 using InputOpFunc = std::function<void(OperatorPtr, OperatorPtr)>;
@@ -113,7 +113,7 @@ class BaseOpAdapter {
  public:
   virtual ~BaseOpAdapter() {}
   virtual OperatorPtr generate(const AnfNodePtr &anf) = 0;
-  virtual OperatorPtr generate(const std::string &type) { return std::make_shared<ge::Operator>(type); }
+  virtual OperatorPtr generate(const std::string &type) { return std::make_shared<::ge::Operator>(type); }
   virtual OperatorPtr generateDynOutputOp(const AnfNodePtr &anf) { return nullptr; }
   virtual void setDynamicOutputNum(const OperatorPtr &op, size_t dyn_output_size) { return; }
   virtual int setSubgraph(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) = 0;

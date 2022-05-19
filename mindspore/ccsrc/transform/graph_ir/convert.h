@@ -49,7 +49,7 @@
 namespace mindspore {
 namespace transform {
 class BaseOpAdapter;
-using HcomBroadcast = ge::op::HcomBroadcast;
+using HcomBroadcast = ::ge::op::HcomBroadcast;
 using OpAdapterPtr = std::shared_ptr<BaseOpAdapter>;
 
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
@@ -126,9 +126,9 @@ class DfGraphConvertor {
   void DrawOpInput(const AnfNodePtr &node, const AnfNodePtr &pred, size_t i);
   void SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node);
   void SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
-                      const DfGraphPtr &broadcast_graph, std::vector<ge::Operator> broadcast_input);
+                      const DfGraphPtr &broadcast_graph, std::vector<::ge::Operator> broadcast_input);
   void MakeDatasetHandler(const std::string &name, const size_t &input_idx, const AnfNodePtr &it);
-  void SetupParamInitSubGraph(const TensorOrderMap &tensors, std::vector<ge::Operator> *init_input);
+  void SetupParamInitSubGraph(const TensorOrderMap &tensors, std::vector<::ge::Operator> *init_input);
   void DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it);
 
   DfGraphPtr GetComputeGraph();
@@ -141,7 +141,7 @@ class DfGraphConvertor {
   void set_training(bool is_training) { training_ = is_training; }
 
  protected:
-  void InitLoopVar(std::vector<ge::Operator> *init_input);
+  void InitLoopVar(std::vector<::ge::Operator> *init_input);
 
  private:
   std::ostringstream compute_sout_;
@@ -245,7 +245,7 @@ class DfGraphConvertor {
   mindspore::HashMap<AnfNode *, std::shared_ptr<std::vector<AnfNodePtr>>> case_input_handle_cache_;
   mindspore::HashMap<std::string, AnfNodePtr> params_;
   mindspore::HashMap<std::string, OperatorPtr> vars_;
-  std::vector<std::pair<ge::Operator, std::string>> graph_outputs_;
+  std::vector<std::pair<::ge::Operator, std::string>> graph_outputs_;
   std::vector<AnfNodePtr> graph_anf_outputs_;
   std::vector<OperatorPtr> graph_const_inputs_;
   std::vector<OperatorPtr> init_ops_;
