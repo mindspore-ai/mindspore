@@ -126,9 +126,11 @@ class Conv2d(_Conv):
     is a convolution kernel slice with shape :math:`(\text{kernel_size[0]}, \text{kernel_size[1]})`,
     where :math:`\text{kernel_size[0]}` and :math:`\text{kernel_size[1]}` are the height and width of the convolution
     kernel respectively. :math:`\text{bias}` is the bias parameter and :math:`\text{X}` is the input tensor.
-    The shape of full convolution kernel is
+    In this case, `data_format` of the input tensor is 'NCHW' and the shape of full convolution kernel is
     :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
-    where `group` is the number of groups to split the input `x` in the channel dimension.
+    where `group` is the number of groups to split the input `x` in the channel dimension. If `data_format` of the
+    input tensor is 'NHWC', the shape of full convolution kernel will be
+    :math:`(C_{out}, \text{kernel_size[0]}, \text{kernel_size[1]}), C_{in} / \text{group}`.
 
     For more details, please refers to the paper `Gradient Based Learning Applied to Document
     Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
