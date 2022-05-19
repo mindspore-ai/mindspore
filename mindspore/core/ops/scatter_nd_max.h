@@ -15,9 +15,9 @@
  */
 #ifndef MINDSPORE_CORE_OPS_SCATTER_ND_MAX_H_
 #define MINDSPORE_CORE_OPS_SCATTER_ND_MAX_H_
+
 #include <memory>
 #include <vector>
-
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -28,6 +28,12 @@ class MIND_API ScatterNdMax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScatterNdMax);
   ScatterNdMax() : BaseOperator(kNameScatterNdMax) { InitIOName({"input_x", "indices", "updates"}, {"y"}); }
+
+  void Init(const bool use_locking = false);
+
+  void set_use_locking(const bool use_locking);
+
+  bool get_use_locking() const;
 };
 
 abstract::AbstractBasePtr ScatterNdMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

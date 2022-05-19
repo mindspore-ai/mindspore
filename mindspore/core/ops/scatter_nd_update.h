@@ -16,9 +16,9 @@
 
 #ifndef MINDSPORE_CORE_OPS_SCATTER_ND_UPDATE_H_
 #define MINDSPORE_CORE_OPS_SCATTER_ND_UPDATE_H_
+
 #include <vector>
 #include <memory>
-
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -33,7 +33,11 @@ class MIND_API ScatterNdUpdate : public BaseOperator {
   /// \brief Constructor.
   ScatterNdUpdate() : BaseOperator(kNameScatterNdUpdate) { InitIOName({"input_x", "indices", "update"}, {"output"}); }
   /// \brief Init.
-  void Init() const {}
+  void Init(const bool use_locking = false);
+
+  void set_use_locking(const bool use_locking);
+
+  bool get_use_locking() const;
 };
 abstract::AbstractBasePtr ScatterNdUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const std::vector<abstract::AbstractBasePtr> &input_args);
