@@ -981,6 +981,20 @@ bool IsPyObjTypeInvalid(const py::object &obj) {
          !py::isinstance<py::int_>(obj) && !py::isinstance<py::float_>(obj);
 }
 
+bool IsConstPrimOrConstInput(const OpExecInfoPtr &op_exec_info, size_t index) {
+  MS_EXCEPTION_IF_NULL(op_exec_info);
+  auto prim = op_exec_info->py_primitive;
+  MS_EXCEPTION_IF_NULL(prim);
+  bool is_const_prim = prim->is_const_prim();
+  const auto &const_input_index = prim->get_const_input_indexes();
+  bool have_const_input = !const_input_index.empty();
+  bool is_const_input =
+    have_const_input && std::find(const_input_index.begin(), const_input_index.end(), index) != const_input_index.end();
+  MS_LOG(DEBUG) << prim->ToString() << " is const prim " << prim->is_const_prim() << ", is_const_input "
+                << is_const_input;
+  return is_const_prim || is_const_input;
+}
+
 // Shallow Copy Value and change shape
 ValuePtr ShallowCopyValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
@@ -1309,34 +1323,24 @@ void ForwardExecutor::SetNonCostantValueAbs(const AbstractBasePtr &abs, size_t i
       }
     }
   }
-  MS_LOG(DEBUG) << "Set " << i << "th abs " << abs->ToString();
   node_abs_map_[id] = abs;
 }
 
 AbstractBasePtr ForwardExecutor::GetInputObjAbstract(const OpExecInfoPtr &op_exec_info, size_t i,
                                                      const py::object &obj) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
-
-  auto prim = op_exec_info->py_primitive;
-  MS_EXCEPTION_IF_NULL(prim);
   const auto &id = GetId(obj);
   AbstractBasePtr abs = nullptr;
 
-  MS_LOG(DEBUG) << "Set input abs for arg id " << id;
   auto it = node_abs_map_.find(id);
   if (it != node_abs_map_.end()) {
     abs = it->second;
   }
-  const auto const_input_index = prim->get_const_input_indexes();
-  bool have_const_input = !const_input_index.empty();
-  bool is_const_prim = prim->is_const_prim();
-  MS_LOG(DEBUG) << prim->ToString() << " abs is nullptr " << (abs == nullptr) << " is_const_value "
-                << prim->is_const_prim();
-  bool is_const_input =
-    have_const_input && std::find(const_input_index.begin(), const_input_index.end(), i) != const_input_index.end();
-  if (abs == nullptr || is_const_prim || is_const_input) {
+  MS_LOG(DEBUG) << "Abstract cache hit " << (abs == nullptr);
+  bool is_const_prim_or_input = IsConstPrimOrConstInput(op_exec_info, i);
+  if (abs == nullptr || is_const_prim_or_input) {
     abs = PyObjToValue(obj)->ToAbstract();
-    if (!is_const_prim && !is_const_input) {
+    if (!is_const_prim_or_input) {
       SetNonCostantValueAbs(abs, i, id);
     }
   }
@@ -1346,6 +1350,13 @@ AbstractBasePtr ForwardExecutor::GetInputObjAbstract(const OpExecInfoPtr &op_exe
 AbstractBasePtr ForwardExecutor::GetTupleInputAbstract(const OpExecInfoPtr &op_exec_info, const py::object &obj,
                                                        const std::string &id, size_t input_index) {
   abstract::AbstractBasePtrList abs_list;
+  if (!IsConstPrimOrConstInput(op_exec_info, input_index)) {
+    auto it = node_abs_map_.find(id);
+    if (it != node_abs_map_.end()) {
+      return it->second;
+    }
+  }
+  MS_LOG(DEBUG) << "Abstract cache not hit";
   auto tuple = obj.cast<py::tuple>();
   auto tuple_size = tuple.size();
   for (size_t i = 0; i < tuple_size; ++i) {
@@ -1364,6 +1375,7 @@ AbstractBasePtr ForwardExecutor::GetTupleInputAbstract(const OpExecInfoPtr &op_e
   } else {
     node_abs = std::make_shared<abstract::AbstractList>(abs_list);
   }
+  node_abs_map_[id] = node_abs;
   return node_abs;
 }
 
@@ -1376,6 +1388,7 @@ void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
     const auto &obj = op_exec_info->op_inputs[i];
     const auto &id = GetId(obj);
     // Get tuple or list abs
+    MS_LOG(DEBUG) << "Set input abs for arg id " << id;
     if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
       auto abs = GetTupleInputAbstract(op_exec_info, obj, id, i);
       auto shape = abs->BuildShape();
@@ -1386,6 +1399,7 @@ void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
         SaveIdWithDynamicShape(op_exec_info, id, obj, abs);
       }
       args_spec_list->emplace_back(abs);
+      MS_LOG(DEBUG) << "Set " << i << "th abs " << args_spec_list->back()->ToString();
       continue;
     }
     auto out_it = dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs.find(id);
@@ -1398,6 +1412,7 @@ void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
       const auto &input_abs = GetInputObjAbstract(op_exec_info, i, obj);
       args_spec_list->emplace_back(input_abs);
     }
+    MS_LOG(DEBUG) << "Set " << i << "th abs " << args_spec_list->back()->ToString();
   }
 }
 
