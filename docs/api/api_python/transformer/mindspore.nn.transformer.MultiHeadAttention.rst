@@ -5,7 +5,7 @@
     .. math::
            MultiHeadAttention(query, key, vector) = Dropout(Concat(head_1, \dots, head_h)W^O)
 
-    其中， `head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)` 。注意：输出层的投影计算中带有偏置参数。
+    其中， :math:`head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)` 。注意：输出层的投影计算中带有偏置参数。
 
     如果query tensor、key tensor和value tensor相同，则上述即为自注意力机制的计算过程。
 
