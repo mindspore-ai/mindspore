@@ -185,3 +185,22 @@ def test_range_vmap():
     vmap_range = ops.vmap(range_fn, (None, None, None, 0), 0)
     output = vmap_range(start, limit, delta, a)
     assert np.all(output.asnumpy() == np.array([[1, 5, 9], [1, 5, 9]]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_range_vmap_wrong_in_axis():
+    """
+    Feature: Ops range with vmap.
+    Description: Test ops range in vmap with wrong in axis value.
+    Expectation: ValueError.
+    """
+    start = Tensor([0, 1], mstype.int32)
+    limit = Tensor(10, mstype.int32)
+    delta = Tensor(4, mstype.int32)
+    a = Tensor([[1, 1, 1], [1, 1, 1]])
+    vmap_range = ops.vmap(range_fn, (0, None, None, 0), 0)
+    with pytest.raises(ValueError) as ex:
+        vmap_range(start, limit, delta, a)
+    assert "For operator Range, all axis for inputs should be None" in str(ex.value)
