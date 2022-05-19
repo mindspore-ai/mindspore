@@ -76,6 +76,10 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.bessel_k0e
     mindspore.ops.bessel_y0
     mindspore.ops.bessel_y1
+    mindspore.ops.bessel_i1
+    mindspore.ops.bessel_i1e
+    mindspore.ops.bessel_k1
+    mindspore.ops.bessel_k1e
     mindspore.ops.bitwise_and
     mindspore.ops.bitwise_or
     mindspore.ops.bitwise_xor
