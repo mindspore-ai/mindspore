@@ -79,6 +79,7 @@ constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
 constexpr auto kEnvironGet = "EnvironGet";
 constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
+constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
 constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
 constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
@@ -101,11 +102,10 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
 const std::set<std::string> kDynamicInputOps{
   kPrint,           kPack,           kMeshgrid,      kStackInitOpName,          kStackDestroyOpName,
   kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample};
-const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{{kMaxPoolV1, "MaxPool"},
-                                                                 {kMaxPoolGradV1, "MaxPoolGrad"},
-                                                                 {kStack, "Pack"},
-                                                                 {kUnstack, "Unpack"},
-                                                                 {kGather, "GatherV2"}};
+const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
+  {kMaxPoolV1, "MaxPool"}, {kMaxPoolGradV1, "MaxPoolGrad"},
+  {kStack, "Pack"},        {kUnstack, "Unpack"},
+  {kGather, "GatherV2"},   {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number

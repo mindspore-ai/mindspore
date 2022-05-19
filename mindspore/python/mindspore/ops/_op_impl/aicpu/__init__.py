@@ -75,6 +75,7 @@ from .search_sorted import _search_sorted_aicpu
 from .stack import _stack_aicpu
 from .unstack import _unstack_aicpu
 from .addcmul import _addcmul_aicpu
+from .sample_distorted_bounding_box_v2 import _sample_distorted_bounding_box_v2_aicpu
 from .uniform_candidate_sampler import _uniform_candidate_sampler_aicpu
 from .log_uniform_candidate_sampler import _log_uniform_candidate_sampler_aicpu
 from .compute_accidental_hits import _compute_accidental_hits_aicpu
