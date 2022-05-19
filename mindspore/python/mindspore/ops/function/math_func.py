@@ -16,6 +16,8 @@
 """Defines math operators with functional form."""
 
 from mindspore.ops import operations as P
+from ..operations.math_ops import (BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
+                                   BesselK1e)
 
 #####################################
 # Public Operation Functions.
@@ -68,14 +70,18 @@ bitwise_xor_ = P.BitwiseXor()
 invert_ = P.Invert()
 erf_ = P.Erf()
 erfc_ = P.Erfc()
-bessel_j1_ = P.BesselJ1()
-bessel_j0_ = P.BesselJ0()
+bessel_j1_ = BesselJ1()
+bessel_j0_ = BesselJ0()
 bessel_i0_ = P.BesselI0()
 bessel_i0e_ = P.BesselI0e()
-bessel_k0_ = P.BesselK0()
-bessel_k0e_ = P.BesselK0e()
-bessel_y0_ = P.BesselY0()
-bessel_y1_ = P.BesselY1()
+bessel_k0_ = BesselK0()
+bessel_k0e_ = BesselK0e()
+bessel_y0_ = BesselY0()
+bessel_y1_ = BesselY1()
+bessel_i1_ = P.BesselI1()
+bessel_i1e_ = P.BesselI1e()
+bessel_k1_ = BesselK1()
+bessel_k1e_ = BesselK1e()
 equal_ = P.Equal()
 isfinite_ = P.IsFinite()
 isnan_ = P.IsNan()
@@ -84,8 +90,6 @@ maximum_ = P.Maximum()
 minimum_ = P.Minimum()
 lerp_ = P.Lerp()
 tensor_round_ = P.Round()
-bessel_y0_ = P.BesselY0()
-bessel_y1_ = P.BesselY1()
 matrix_determinant_ = P.MatrixDeterminant()
 log_matrix_determinant_ = P.LogMatrixDeterminant()
 
@@ -2233,9 +2237,117 @@ def lerp(start, end, weight):
     return lerp_(start, end, weight)
 
 
+def bessel_i1(x):
+    r"""
+    Computes the Bessel i1 function of x element-wise.
+
+    Args:
+        x (Tensor): The input tensor. The data type must be float16, float32 or float64.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
+        >>> output = ops.bessel_i1(x)
+        >>> print(output)
+        [-0.5651591, -0.25789431, 0.25789431, 0.5651591]
+    """
+    return bessel_i1_(x)
+
+
+def bessel_i1e(x):
+    r"""
+    Computes the Bessel i1e function of x element-wise.
+
+    Args:
+        x (Tensor): The input tensor. The data type must be float16, float32 or float64.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
+        >>> output = ops.bessel_i1e(x)
+        >>> print(output)
+        [-0.20791042, -0.15642083, 0.15642083, 0.20791042]
+    """
+    return bessel_i1e_(x)
+
+
+def bessel_k1(x):
+    r"""
+    Computes the Bessel k1 function of x element-wise.
+
+    Args:
+        x (Tensor): The input tensor. The data type must be float16, float32 or float64.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
+        >>> output = ops.bessel_k1(x)
+        >>> print(output)
+        [1.65644112, 0.60190723, 0.13986588, 0.0124835]
+    """
+    return bessel_k1_(x)
+
+
+def bessel_k1e(x):
+    r"""
+    Computes the Bessel k1e function of x element-wise.
+
+    Args:
+        x (Tensor): The input tensor. The data type must be float16, float32 or float64.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
+        >>> output = ops.bessel_k1e(x)
+        >>> print(output)
+        [2.73100971, 1.63615349, 1.03347685, 0.68157595]
+    """
+    return bessel_k1e_(x)
+
 #####################################
 # Reduction Operation Functions.
 #####################################
+
 
 def lp_norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
     r"""
@@ -2358,6 +2470,10 @@ __all__ = [
     'bessel_k0',
     'bessel_k0e',
     'bessel_y0',
-    'bessel_y1'
+    'bessel_y1',
+    'bessel_i1',
+    'bessel_i1e',
+    'bessel_k1',
+    'bessel_k1e'
 ]
 __all__.sort()

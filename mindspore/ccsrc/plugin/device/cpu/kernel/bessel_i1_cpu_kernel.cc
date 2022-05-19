@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "plugin/device/cpu/kernel/bessel_i1_cpu_kernel.h"
-#include <algorithm>
 #include <functional>
+#include <map>
 #include <cmath>
-#include <tuple>
-#include <type_traits>
-#include "utils/ms_utils.h"
+#include "plugin/device/cpu/kernel/bessel_i1_cpu_kernel.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/bessel_i1.h"
+#include "mindspore/core/ops/bessel_i1e.h"
+#include "abstract/utils.h"
 
+namespace mindspore {
+namespace kernel {
 namespace {
 constexpr size_t kBesselI1InputsNum = 1;
 constexpr size_t kBesselI1OutputsNum = 1;
-
 constexpr size_t kBesselI1eInputsNum = 1;
 constexpr size_t kBesselI1eOutputsNum = 1;
 
@@ -49,34 +50,11 @@ static double B[] = {
   7.78576235018280120474E-1};
 }  // namespace
 
-namespace mindspore {
-namespace kernel {
-double BesselI1CpuKernelMod::bessel_i1_func(double x) {
-  const double ZERO = 0.0;
-  const double BAR = 8.0;
-  const double C1 = 2.0;
-  const double C2 = 32.0;
-  const int DEG1 = 29;
-  const int DEG2 = 25;
-  double z;
-
-  z = fabs(x);
-  if (z <= BAR) {
-    double y = (z / C1) - C1;
-    z = chbevl(y, A, DEG1) * z * exp(z);
-  } else {
-    z = exp(z) * chbevl(C2 / z - C1, B, DEG2) / sqrt(z);
-  }
-  if (x < ZERO) {
-    z = -z;
-  }
-  return (z);
-}
-
-double BesselI1CpuKernelMod::chbevl(double x, double array[], int n) {
+double BesselI1CpuKernelMod::chbevl(double x, const double array[], int n) {
   const double C1 = 0.5;
-  double b0, b1, b2, *p;
-  int i;
+  double b0, b1, b2;
+  const double *p;
+  size_t i;
 
   p = array;
   b0 = *p++;
@@ -92,6 +70,28 @@ double BesselI1CpuKernelMod::chbevl(double x, double array[], int n) {
   return (C1 * (b0 - b2));
 }
 
+double BesselI1CpuKernelMod::bessel_i1_func(double x) {
+  const double ZERO = 0.0;
+  const double BAR = 8.0;
+  const double C1 = 2.0;
+  const double C2 = 32.0;
+  const int DEG1 = 29;
+  const int DEG2 = 25;
+  double z;
+
+  z = fabs(x);
+  if (z <= BAR) {
+    double y = (z / C1) - C1;
+    z = BesselI1CpuKernelMod::chbevl(y, A, DEG1) * z * exp(z);
+  } else {
+    z = exp(z) * BesselI1CpuKernelMod::chbevl(C2 / z - C1, B, DEG2) / sqrt(z);
+  }
+  if (x < ZERO) {
+    z = -z;
+  }
+  return (z);
+}
+
 template <typename T>
 void BesselI1CpuKernelMod::BesselI1Func(const T *input, T *output, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
@@ -99,39 +99,57 @@ void BesselI1CpuKernelMod::BesselI1Func(const T *input, T *output, size_t start,
   }
 }
 
-void BesselI1CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kBesselI1InputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kBesselI1OutputsNum, kernel_name_);
+bool BesselI1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::BesselI1>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast BesselI1 ops failed!";
+    return false;
+  }
+  kernel_name_ = kernel_ptr->name();
+  if (inputs.size() != kBesselI1InputsNum || outputs.size() != kBesselI1OutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "': input and output size should be " << kBesselI1InputsNum << " and "
+                  << kBesselI1OutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+
+  input_shape_ = inputs[0]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
+  input_dtype_ = inputs[0]->GetDtype();
   input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+
+  switch (input_dtype_) {
+    case kNumberTypeFloat64:
+      kernel_func_ = &BesselI1CpuKernelMod::LaunchKernel<double>;
+      break;
+    case kNumberTypeFloat32:
+      kernel_func_ = &BesselI1CpuKernelMod::LaunchKernel<float>;
+      break;
+    case kNumberTypeFloat16:
+      kernel_func_ = &BesselI1CpuKernelMod::LaunchKernel<float16>;
+      break;
+    default:
+      MS_LOG(ERROR) << "BesselI1 kernel does not support " << TypeIdToString(input_dtype_);
+      return false;
+  }
+  return true;
 }
 
-bool BesselI1CpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                  const std::vector<AddressPtr> &outputs) {
-  bool ret = true;
-  if (input_dtype_ == kNumberTypeFloat16) {
-    ret = LaunchKernel<float16>(inputs, outputs);
-  } else if (input_dtype_ == kNumberTypeFloat32) {
-    ret = LaunchKernel<float>(inputs, outputs);
-  } else if (input_dtype_ == kNumberTypeFloat64) {
-    ret = LaunchKernel<double>(inputs, outputs);
-  } else {
-    ret = false;
-    MS_EXCEPTION(TypeError) << "Unsupported input data type for operator [" << kernel_name_
-                            << "]: " << TypeIdToType(input_dtype_)->ToString();
+int BesselI1CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
+    return ret;
   }
-  return ret;
+  return 0;
 }
 
 template <typename T>
-bool BesselI1CpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  const auto input = reinterpret_cast<T *>(inputs[0]->addr);
+bool BesselI1CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
 
   auto end = inputs[0]->size / sizeof(T);
@@ -163,33 +181,14 @@ double BesselI1eCpuKernelMod::bessel_i1e_func(double x) {
   z = fabs(x);
   if (z <= BAR) {
     double y = (z / C1) - C1;
-    z = chbevl(y, A, DEG1) * z;
+    z = BesselI1CpuKernelMod::chbevl(y, A, DEG1) * z;
   } else {
-    z = chbevl(C2 / z - C1, B, DEG2) / sqrt(z);
+    z = BesselI1CpuKernelMod::chbevl(C2 / z - C1, B, DEG2) / sqrt(z);
   }
   if (x < ZERO) {
     z = -z;
   }
   return (z);
-}
-
-double BesselI1eCpuKernelMod::chbevl(double x, double array[], int n) {
-  const double C1 = 0.5;
-  double b0, b1, b2, *p;
-  int i;
-
-  p = array;
-  b0 = *p++;
-  b1 = 0.0;
-  i = n - 1;
-
-  do {
-    b2 = b1;
-    b1 = b0;
-    b0 = x * b1 - b2 + *p++;
-  } while (--i);
-
-  return (C1 * (b0 - b2));
 }
 
 template <typename T>
@@ -199,39 +198,57 @@ void BesselI1eCpuKernelMod::BesselI1eFunc(const T *input, T *output, size_t star
   }
 }
 
-void BesselI1eCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  CHECK_KERNEL_INPUTS_NUM(input_num, kBesselI1eInputsNum, kernel_name_);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  CHECK_KERNEL_OUTPUTS_NUM(output_num, kBesselI1eOutputsNum, kernel_name_);
+bool BesselI1eCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::BesselI1e>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast BesselI1e ops failed!";
+    return false;
+  }
+  kernel_name_ = kernel_ptr->name();
+  if (inputs.size() != kBesselI1eInputsNum || outputs.size() != kBesselI1eOutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "': input and output size should be " << kBesselI1eInputsNum << " and "
+                  << kBesselI1eOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+
+  input_shape_ = inputs[0]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
+  input_dtype_ = inputs[0]->GetDtype();
   input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+
+  switch (input_dtype_) {
+    case kNumberTypeFloat64:
+      kernel_func_ = &BesselI1eCpuKernelMod::LaunchKernel<double>;
+      break;
+    case kNumberTypeFloat32:
+      kernel_func_ = &BesselI1eCpuKernelMod::LaunchKernel<float>;
+      break;
+    case kNumberTypeFloat16:
+      kernel_func_ = &BesselI1eCpuKernelMod::LaunchKernel<float16>;
+      break;
+    default:
+      MS_LOG(ERROR) << "BesselI1e kernel does not support " << TypeIdToString(input_dtype_);
+      return false;
+  }
+  return true;
 }
 
-bool BesselI1eCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs) {
-  bool ret = true;
-  if (input_dtype_ == kNumberTypeFloat16) {
-    ret = LaunchKernel<float16>(inputs, outputs);
-  } else if (input_dtype_ == kNumberTypeFloat32) {
-    ret = LaunchKernel<float>(inputs, outputs);
-  } else if (input_dtype_ == kNumberTypeFloat64) {
-    ret = LaunchKernel<double>(inputs, outputs);
-  } else {
-    MS_EXCEPTION(TypeError) << "Unsupported input data type for operator [" << kernel_name_
-                            << "]: " << TypeIdToType(input_dtype_)->ToString();
+int BesselI1eCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
+    return ret;
   }
-  return ret;
+  return 0;
 }
 
 template <typename T>
-bool BesselI1eCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
-  const auto input = reinterpret_cast<T *>(inputs[0]->addr);
+bool BesselI1eCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
 
   auto end = inputs[0]->size / sizeof(T);
@@ -242,10 +259,10 @@ bool BesselI1eCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 }
 
 std::vector<KernelAttr> BesselI1eCpuKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  std::vector<KernelAttr> support_list = {
+    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
     KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
+    KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)};
   return support_list;
 }
 

@@ -24,6 +24,8 @@ from mindspore.ops.operations.math_ops import Lerp
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis
+from ..operations.math_ops import (BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
+                                   BesselK1e)
 
 
 @constexpr
@@ -398,11 +400,15 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.Imag)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.IsNan)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.IsInf)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.IsFinite)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.BesselJ0)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.BesselJ1)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(BesselJ0)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(BesselJ1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI0)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI0e)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.BesselK0)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.BesselK0e)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.BesselY0)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.BesselY1)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(BesselK0)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(BesselK0e)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(BesselY0)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(BesselY1)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI1)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI1e)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(BesselK1)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(BesselK1e)(get_unop_vmap_rule)
