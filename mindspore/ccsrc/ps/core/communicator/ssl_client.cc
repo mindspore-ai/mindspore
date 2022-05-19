@@ -67,9 +67,13 @@ void SSLClient::InitSSL() {
   X509 *cert = nullptr;
   STACK_OF(X509) *ca_stack = nullptr;
   BIO *bio = BIO_new_file(client_cert.c_str(), "rb");
-  MS_EXCEPTION_IF_NULL(bio);
+  if (bio == nullptr) {
+    MS_LOG(EXCEPTION) << "Read client cert file failed.";
+  }
   PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
-  MS_EXCEPTION_IF_NULL(p12);
+  if (p12 == nullptr) {
+    MS_LOG(EXCEPTION) << "Create PKCS12 cert failed, please check whether the certificate is correct.";
+  }
   BIO_free_all(bio);
   if (!PKCS12_parse(p12, client_password.c_str(), &pkey, &cert, &ca_stack)) {
     MS_LOG(EXCEPTION) << "PKCS12_parse failed.";
@@ -89,7 +93,9 @@ void SSLClient::InitSSL() {
     MS_LOG(WARNING) << "The key:" << kCaCertPath << "'s value is not exist.";
   }
   BIO *ca_bio = BIO_new_file(ca_path.c_str(), "r");
-  MS_EXCEPTION_IF_NULL(ca_bio);
+  if (ca_bio == nullptr) {
+    MS_LOG(EXCEPTION) << "Read CA cert file failed.";
+  }
   X509 *caCert = PEM_read_bio_X509(ca_bio, nullptr, nullptr, nullptr);
 
   X509_CRL *crl = nullptr;
@@ -103,21 +109,7 @@ void SSLClient::InitSSL() {
   }
 
   CommUtil::verifyCertPipeline(caCert, cert);
-
-  SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
-  if (!SSL_CTX_load_verify_locations(ssl_ctx_, ca_path.c_str(), nullptr)) {
-    MS_LOG(EXCEPTION) << "SSL load ca location failed!";
-  }
-
-  std::string default_cipher_list = CommUtil::ParseConfig(*config_, kCipherList);
-  std::vector<std::string> ciphers = CommUtil::Split(default_cipher_list, kColon);
-  if (!CommUtil::VerifyCipherList(ciphers)) {
-    MS_LOG(EXCEPTION) << "The cipher is wrong.";
-  }
-  if (!SSL_CTX_set_cipher_list(ssl_ctx_, default_cipher_list.c_str())) {
-    MS_LOG(EXCEPTION) << "SSL use set cipher list failed!";
-  }
-  InitSSLCtx(cert, pkey, crl);
+  InitSSLCtx(*config_, cert, pkey, crl, ca_path);
   StartCheckCertTime(*config_, cert);
 
   EVP_PKEY_free(pkey);
@@ -127,7 +119,21 @@ void SSLClient::InitSSL() {
   }
 }
 
-void SSLClient::InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey, X509_CRL *crl) {
+void SSLClient::InitSSLCtx(const Configuration &config, const X509 *cert, const EVP_PKEY *pkey, X509_CRL *crl,
+                           std::string ca_path) {
+  SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
+  if (!SSL_CTX_load_verify_locations(ssl_ctx_, ca_path.c_str(), nullptr)) {
+    MS_LOG(EXCEPTION) << "SSL load ca location failed!";
+  }
+
+  std::string default_cipher_list = CommUtil::ParseConfig(config, kCipherList);
+  std::vector<std::string> ciphers = CommUtil::Split(default_cipher_list, kColon);
+  if (!CommUtil::VerifyCipherList(ciphers)) {
+    MS_LOG(EXCEPTION) << "The cipher is wrong.";
+  }
+  if (!SSL_CTX_set_cipher_list(ssl_ctx_, default_cipher_list.c_str())) {
+    MS_LOG(EXCEPTION) << "SSL use set cipher list failed!";
+  }
   if (!SSL_CTX_use_certificate(ssl_ctx_, const_cast<X509 *>(cert))) {
     MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
   }

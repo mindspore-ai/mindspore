@@ -147,6 +147,8 @@ class BACKEND_EXPORT FLWorker {
   void ProcessAfterScalingOut();
   void ProcessAfterScalingIn();
 
+  void HandleQueryNodeScaleStateRequest(const std::shared_ptr<ps::core::MessageHandler> &message);
+
   std::atomic_bool running_;
   uint32_t server_num_;
   uint32_t worker_num_;
@@ -172,7 +174,8 @@ class BACKEND_EXPORT FLWorker {
   // This variable represents the worker iteration state and should be changed by worker training process.
   std::atomic<IterationState> worker_iteration_state_;
 
-  // The flag that represents whether worker is in safemode, which is decided by both worker and server iteration state.
+  // The flag that represents whether worker is in safemode, which is decided by both worker and server iteration
+  // state.
   std::atomic_bool safemode_;
 
   // The private key used for computing the pairwise encryption's secret.
@@ -186,6 +189,10 @@ class BACKEND_EXPORT FLWorker {
 
   // The public keys used for computing the pairwise encryption's secret.
   std::vector<EncryptPublicKeys> public_keys_list_;
+
+  std::shared_ptr<ps::core::TaskExecutor> task_executor_;
+
+  std::shared_ptr<ps::core::CommunicatorBase> communicator_;
 };
 }  // namespace worker
 }  // namespace fl

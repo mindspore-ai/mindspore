@@ -185,7 +185,9 @@ void NodeManager::UpdateHeartbeat(const std::string &node_id) {
   std::lock_guard<std::mutex> lock(heartbeat_mutex_);
   struct timeval current_time {};
   (void)gettimeofday(&current_time, nullptr);
-  heartbeats_[node_id] = current_time;
+  if (registered_nodes_info_.count(node_id) > 0) {
+    heartbeats_[node_id] = current_time;
+  }
 }
 
 std::vector<ServersMeta> NodeManager::FetchServersMeta() {

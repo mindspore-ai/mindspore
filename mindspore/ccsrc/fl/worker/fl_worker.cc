@@ -35,22 +35,19 @@ void FLWorker::Run() {
     return;
   }
   running_ = true;
-  worker_num_ = ps::PSContext::instance()->worker_num();
-  server_num_ = ps::PSContext::instance()->server_num();
   scheduler_ip_ = ps::PSContext::instance()->scheduler_ip();
   scheduler_port_ = ps::PSContext::instance()->scheduler_port();
   worker_step_num_per_iteration_ = ps::PSContext::instance()->worker_step_num_per_iteration();
-  ps::PSContext::instance()->cluster_config().scheduler_host = scheduler_ip_;
-  ps::PSContext::instance()->cluster_config().scheduler_port = scheduler_port_;
-  ps::PSContext::instance()->cluster_config().initial_worker_num = worker_num_;
-  ps::PSContext::instance()->cluster_config().initial_server_num = server_num_;
-  MS_LOG(INFO) << "Initialize cluster config for worker. Worker number:" << worker_num_
-               << ", Server number:" << server_num_ << ", Scheduler ip:" << scheduler_ip_
-               << ", Scheduler port:" << scheduler_port_
-               << ", Worker training step per iteration:" << worker_step_num_per_iteration_;
 
   worker_node_ = std::make_shared<ps::core::WorkerNode>();
   MS_EXCEPTION_IF_NULL(worker_node_);
+  constexpr size_t kExecutorThreadPoolSize = 32;
+  task_executor_ = std::make_shared<ps::core::TaskExecutor>(kExecutorThreadPoolSize);
+  communicator_ = worker_node_->GetOrCreateTcpComm(scheduler_ip_, static_cast<int16_t>(scheduler_port_),
+                                                   ps::PSContext::instance()->worker_num(),
+                                                   ps::PSContext::instance()->server_num(), task_executor_);
+  communicator_->RegisterMsgCallBack(
+    "queryNodeScaleState", std::bind(&FLWorker::HandleQueryNodeScaleStateRequest, this, std::placeholders::_1));
 
   worker_node_->SetCancelSafeModeCallBack([this]() -> void { safemode_ = false; });
   worker_node_->RegisterEventCallback(ps::core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
@@ -76,10 +73,13 @@ void FLWorker::Run() {
   });
 
   InitializeFollowerScaler();
-  if (!worker_node_->Start()) {
-    MS_LOG(EXCEPTION) << "Starting worker node failed.";
+  if (!communicator_->Start()) {
+    MS_LOG(EXCEPTION) << "Starting communicator failed.";
     return;
   }
+
+  server_num_ = worker_node_->server_num();
+  worker_num_ = worker_node_->worker_num();
   rank_id_ = worker_node_->rank_id();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
@@ -266,6 +266,22 @@ void FLWorker::ProcessAfterScalingIn() {
                << ". Exit safemode.";
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
   safemode_ = false;
+}
+
+void FLWorker::HandleQueryNodeScaleStateRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+
+  nlohmann::basic_json<std::map, std::vector, std::string> response;
+  response["node_scale_state"] = worker_node_->node_scale_state_str();
+
+  auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(tcp_comm);
+  if (!tcp_comm->SendResponse(response.dump().c_str(), response.dump().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Response query node scale state success, response data is " << response.dump().c_str();
 }
 }  // namespace worker
 }  // namespace fl
