@@ -95,21 +95,21 @@ int LrnCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   return KRET_OK;
 }
 
-template <typename T>
 bool LrnCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &outputs) {
-  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  SetArgumentHandle(DNNL_ARG_SRC, input);
-  SetArgumentHandle(DNNL_ARG_DST, output);
+  constexpr size_t kInputsNum = 1;
+  constexpr size_t kOutputsNum = 1;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
+  SetArgumentHandle(DNNL_ARG_SRC, inputs.at(kIndex0)->addr);
+  SetArgumentHandle(DNNL_ARG_DST, outputs.at(kIndex0)->addr);
   ExecutePrimitive();
   return true;
 }
 
 std::vector<std::pair<KernelAttr, LrnCpuKernelMod::LrnFunc>> LrnCpuKernelMod::func_list_ = {
   // For kNumberTypeFloat16 input data type will cast to kNumberTypeFloat32 from frontend to backend.
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &LrnCpuKernelMod::LaunchKernel<float>}};
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), &LrnCpuKernelMod::LaunchKernel}};
 
 std::vector<KernelAttr> LrnCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

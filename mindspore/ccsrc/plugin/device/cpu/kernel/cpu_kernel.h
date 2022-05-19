@@ -226,9 +226,16 @@ class CpuKernelFunc {
  public:
   CpuKernelFunc() = default;
   virtual ~CpuKernelFunc() = default;
+  virtual void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                        const std::vector<KernelTensorPtr> &outputs) {}
+  virtual int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
+    return KRET_OK;
+  }
   virtual bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                        const std::vector<AddressPtr> &outputs) = 0;
-  virtual void InitFunc(const BaseOperatorPtr &base_operator) {}
   ParallelSearchInfo parallel_search_info_;
 };
 

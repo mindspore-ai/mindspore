@@ -18,12 +18,13 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
-#include <map>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "plugin/device/cpu/kernel/mkldnn/eltwise_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -32,7 +33,6 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
 constexpr float kMaxNegSerialSize = 5000.0f;
-constexpr float kMaxSquareSerialSize = 5000.0f;
 constexpr size_t kInputsNum = 1;
 constexpr size_t kOutputsNum = 1;
 
@@ -65,27 +65,23 @@ constexpr auto kErf = "Erf";
 constexpr auto kErfc = "Erfc";
 constexpr auto kSoftsign = "Softsign";
 
-class ArithmeticSelfCpuKernelFunc : public DeprecatedCpuKernelFunc {
+class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
  public:
   ArithmeticSelfCpuKernelFunc() = default;
   ~ArithmeticSelfCpuKernelFunc() override = default;
-
-  void InitFunc(const CNodePtr &kernel_node) override;
-
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override;
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                const std::vector<AddressPtr> &outputs) override;
 
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
   void LaunchLogicalNot(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
   template <typename T>
   void LaunchKernelComplex(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
+  std::string kernel_name_{kUnknown};
   TypeId dtype_{kTypeUnknown};
-  std::string kernel_name_;
 };
 
 template <typename T>
@@ -502,10 +498,11 @@ static std::vector<std::pair<KernelAttr, LaunchFunc>> identity_kernel_attr_lists
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), IdentityCpuFunc<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), IdentityCpuFunc<bool>}};
 
-void ArithmeticSelfCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+void ArithmeticSelfCpuKernelFunc::InitFunc(const BaseOperatorPtr &base_operator,
+                                           const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &) {
+  kernel_name_ = base_operator->name();
+  dtype_ = inputs.at(kIndex0)->GetDtype();
 }
 
 bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
@@ -590,7 +587,7 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticSelfFuncMap)
+    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', only supports operators in " << Unorderedmap2Str(arithmeticSelfFuncMap)
                       << ", but got " << kernel_name_;
   }
   func_pair->second(this, input, output, lens);
@@ -612,15 +609,37 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
                           {prim::kPrimAtanh->name(), Atanh<T>},        {prim::kPrimSign->name(), ComplexSign<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "ArithmeticSelfCpuKernelFunc does not support " << kernel_name_ << " with complex as input. ";
+    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << kernel_name_ << " with complex as input. ";
   }
   func_pair->second(this, input, output, lens);
 }
 
-std::shared_ptr<DeprecatedCpuKernelFunc> CreateArithSelfFunc() {
-  return std::make_shared<ArithmeticSelfCpuKernelFunc>();
-}
-using ArithFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
+// MKLDNN Sqrt
+class SqrtMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
+ public:
+  SqrtMKLKernelFunc() : EltWiseCpuKernelMod(kSqrt) {}
+  ~SqrtMKLKernelFunc() override = default;
+
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override {
+    EltWiseCpuKernelMod::Init(base_operator, inputs, outputs);
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    // The Resize of EltWiseCpuKernelMod must be called here.
+    return EltWiseCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  }
+
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+               const std::vector<AddressPtr> &outputs) override {
+    return EltWiseCpuKernelMod::Launch(inputs, workspace, outputs);
+  }
+};
+
+std::shared_ptr<CpuKernelFunc> CreateArithSelfFunc() { return std::make_shared<ArithmeticSelfCpuKernelFunc>(); }
+using ArithFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>>> arith_kernel_attr_list_map = {
   {kRsqrt,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
@@ -732,6 +751,10 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+  {kSqrt,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     []() { return std::make_shared<SqrtMKLKernelFunc>(); }}}},
   {kErf,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
@@ -743,26 +766,49 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}}};
 }  // namespace
 
-void ArithmeticSelfCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
+bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto iter = arith_kernel_attr_list_map.find(kernel_name_);
+  if (iter == arith_kernel_attr_list_map.end()) {
+    MS_LOG(ERROR) << "For 'ArithmeticSelf', the kernel name must be in " << kernel::Map2Str(arith_kernel_attr_list_map)
+                  << ", but got " << kernel_name_;
+    return false;
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "ArithmeticSelf cpu does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For 'ArithmeticSelf', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-
   func_obj_ = arith_kernel_attr_list_map[kernel_name_][index].second();
-  func_obj_->InitFunc(kernel_node);
+  func_obj_->InitFunc(base_operator, inputs, outputs);
+  return true;
+}
+
+int ArithmeticSelfCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs,
+                                       const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  // Note: This is to call the Resize of SqrtMKLKernelFunc.
+  if (int ret = func_obj_->Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_element_num = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
+  is_null_input_ = (input_element_num == 0);
+  if (is_null_input_) {
+    return KRET_OK;
+  }
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> ArithmeticSelfCpuKernelMod::GetOpSupport() {
-  auto iter = arith_kernel_attr_list_map.find(kernel_type_);
+  auto iter = arith_kernel_attr_list_map.find(kernel_name_);
   if (iter == arith_kernel_attr_list_map.end()) {
-    MS_LOG(EXCEPTION) << "Arithmetic self cpu does not support " << kernel_type_;
+    MS_LOG(EXCEPTION) << "Arithmetic self cpu does not support " << kernel_name_;
   }
 
   std::vector<KernelAttr> support_list;
@@ -772,16 +818,36 @@ std::vector<KernelAttr> ArithmeticSelfCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-void IdentityCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool IdentityCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (kernel_name_ != prim::kIdentity) {
+    MS_LOG(ERROR) << "For 'Identity', the kernel name must be 'Identity', but got " << kernel_name_;
+    return false;
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Identity cpu does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
-
   kernel_func_ = identity_kernel_attr_lists[index].second;
+  return true;
+}
+
+int IdentityCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_element_num = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
+  is_null_input_ = (input_element_num == 0);
+  if (is_null_input_) {
+    return KRET_OK;
+  }
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> IdentityCpuKernelMod::GetOpSupport() {
@@ -840,6 +906,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atanh,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAtanh); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Abs,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAbs); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sqrt,
+                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSqrt); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erf,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErf); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erfc,

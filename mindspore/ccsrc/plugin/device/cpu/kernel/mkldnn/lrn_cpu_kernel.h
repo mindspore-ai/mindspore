@@ -47,7 +47,6 @@ class LrnCpuKernelMod : public MKLCpuKernelMod {
 
  private:
   bool GetLrnAttr(const BaseOperatorPtr &base_operator);
-  template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   using LrnFunc = std::function<bool(LrnCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &)>;
