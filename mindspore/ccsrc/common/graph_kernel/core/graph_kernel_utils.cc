@@ -30,6 +30,7 @@
 #include "include/common/utils/utils.h"
 #include "common/graph_kernel/model/op_node.h"
 #include "common/graph_kernel/model/graph_builder.h"
+#include "ops/primitive_c.h"
 
 constexpr int MINIMUM_MAJOR_VERSION = 7;
 
@@ -224,7 +225,13 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, 
       MS_LOG(EXCEPTION) << "Node " << op_node->debug_name() << " should be a Primitive node";
     }
     auto op = std::static_pointer_cast<inner::PrimOp>(op_node);
-    AnfNodePtrList inputs = {NewValueNode(std::make_shared<Primitive>(op->op(), op->attrs()))};
+    auto primitive = std::make_shared<Primitive>(op->op(), op->attrs());
+    auto prim = GetOpsPrim(primitive->name());
+    if (prim != nullptr) {
+      primitive->AddAttr(kAttrInputNames, prim->GetAttr(kAttrInputNames));
+      primitive->AddAttr(kAttrOutputNames, prim->GetAttr(kAttrOutputNames));
+    }
+    AnfNodePtrList inputs = {NewValueNode(primitive)};
     (void)std::transform(op->inputs().begin(), op->inputs().end(), std::back_inserter(inputs),
                          [&node_map, &cb](const inner::NodePtr &inp) -> AnfNodePtr {
                            auto iter = node_map.find(inp);
@@ -337,5 +344,12 @@ FuncGraphManagerPtr GkUtils::GetFuncGraphManager(const FuncGraphPtr &func_graph)
 void GkUtils::UpdateFuncGraphManager(const FuncGraphManagerPtr &mng, const FuncGraphPtr &func_graph) {
   mng->RemoveRoots();
   mng->KeepRoots({func_graph});
+}
+
+PrimitivePtr GkUtils::GetOpsPrim(const std::string &name) {
+  auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+  auto iter = op_primc_fns.find(name);
+  if (iter == op_primc_fns.end()) return nullptr;
+  return iter->second();
 }
 }  // namespace mindspore::graphkernel
