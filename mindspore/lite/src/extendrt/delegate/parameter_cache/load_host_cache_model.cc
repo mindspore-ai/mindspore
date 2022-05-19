@@ -56,8 +56,8 @@ Status HostCacheModel::LoadCache(const std::string &model_path) {
     return kLiteGraphFileError;
   }
 
-  auto allTensors = cache_model_->all_tensors_;
-  for (auto node : cache_model_->all_nodes_) {
+  auto allTensors = cache_model_->graph_.all_tensors_;
+  for (auto node : cache_model_->graph_.all_nodes_) {
     // only support embedding cache
     if (node == nullptr || node->node_type_ != schema::PrimitiveType_Gather) {
       continue;

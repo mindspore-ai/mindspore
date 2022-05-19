@@ -130,7 +130,7 @@ class SearchSubGraph {
   const schema::Primitive *CreatePartialPrimitive(int64_t subgraph_index);
 
  private: /* public cost-model func  */
-  CostModel CalculateConv2DFusion(const Model::Node *node);
+  CostModel CalculateConv2DFusion(const LiteGraph::Node *node);
   void dfs(int i, int n, int current_sum, int except_value, int *min_value, std::vector<bool> *tmp_group,
            std::vector<bool> *cor_group, std::vector<Subgraph> *sub_graphs);
 
@@ -143,7 +143,7 @@ class SearchSubGraph {
   std::vector<Tensor> tensors_;
   std::vector<Subgraph> sub_graphs_;
   std::unordered_map<uint32_t, std::vector<Subgraph>> node_sub_map_;
-  std::vector<Model::Node *> node_list_;
+  std::vector<LiteGraph::Node *> node_list_;
   DeviceType major_dt_;
   DeviceType minor_dt_;
   size_t major_thread_;

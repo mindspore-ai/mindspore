@@ -68,7 +68,7 @@ class TrainExport {
   bool IsNodeNonDepend(const std::unique_ptr<schema::CNodeT> &node, const std::vector<size_t> &sinked_tensor_idxes);
   int TopologicalSort();
   void PrepareRemap(int offset);
-  Model::Node *FindNode(const mindspore::kernel::KernelExec *kernel, const Model *model);
+  LiteGraph::Node *FindNode(const mindspore::kernel::KernelExec *kernel, const Model *model);
   std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor, int preferred_dim,
                                                 const int tensor_quant_type);
   std::unique_ptr<schema::CNodeT> CreateCNode(const mindspore::kernel::KernelExec *kernel,

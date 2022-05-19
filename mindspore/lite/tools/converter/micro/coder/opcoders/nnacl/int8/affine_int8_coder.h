@@ -27,7 +27,7 @@ namespace mindspore::lite::micro::nnacl {
 class AffineInt8Coder final : public OperatorCoder {
  public:
   AffineInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const Model::Node *node, size_t node_index, Target target)
+                  const LiteGraph::Node *node, size_t node_index, Target target)
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~AffineInt8Coder() override {
@@ -60,7 +60,7 @@ class AffineInt8Coder final : public OperatorCoder {
   lite::Tensor *splice_output_{nullptr};
   int8_t *previous_output_{nullptr};
   std::vector<void *> allocated_;
-  lite::Model::Node *matmul_node_{nullptr};
+  lite::LiteGraph::Node *matmul_node_{nullptr};
 
   std::unique_ptr<OperatorCoder> full_matmul_coder_{nullptr};
   std::unique_ptr<OperatorCoder> increment_matmul_coder_{nullptr};

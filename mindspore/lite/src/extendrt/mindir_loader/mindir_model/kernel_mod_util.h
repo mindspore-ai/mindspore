@@ -30,7 +30,7 @@ class KernelModUtil {
  public:
   static std::shared_ptr<mindspore::kernel::InnerKernel> GetInnerKernel(
     const std::vector<mindspore::lite::Tensor *> &in_tensors, const std::vector<mindspore::lite::Tensor *> &out_tensors,
-    const mindspore::lite::Model::Node *node, lite::Context *context);
+    const mindspore::lite::LiteGraph::Node *node, lite::Context *context);
 };
 }  // namespace mindspore::kernel
 

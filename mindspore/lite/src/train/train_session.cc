@@ -117,14 +117,14 @@ void TrainSession::FreeWorkSpace() {
 }
 
 int TrainSession::InitCallBack() {
-  sched_mix_precision_callback_ = [&](const Model::Node *node) {
+  sched_mix_precision_callback_ = [&](const LiteGraph::Node *node) {
     if (!context_->IsCpuFloat16Enabled()) {
       return false;
     }
     bool force_fp16 = false;
     auto node_type = GetPrimitiveType(node->primitive_, SCHEMA_VERSION::SCHEMA_CUR);
     if (node_type == schema::PrimitiveType_Cast) {
-      schema::Tensor *tensor = model_.get()->all_tensors_.at(node->input_indices_[0]);
+      schema::Tensor *tensor = model_.get()->graph_.all_tensors_.at(node->input_indices_[0]);
       if (tensor->dataType() == kNumberTypeFloat16) {
         force_fp16 = true;
       } else if (tensor->dataType() == kNumberTypeFloat32) {
@@ -133,7 +133,7 @@ int TrainSession::InitCallBack() {
     } else {
       auto in_size = node->input_indices_.size();
       for (std::size_t k = 0; k < in_size; k++) {
-        schema::Tensor *tensor = model_->all_tensors_.at(node->input_indices_[k]);
+        schema::Tensor *tensor = model_->graph_.all_tensors_.at(node->input_indices_[k]);
         if ((tensor->dataType() == kNumberTypeFloat16) && (tensor->nodeType() == NodeType_ValueNode)) {
           force_fp16 = true;
           break;
@@ -1157,7 +1157,7 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
   bool orig_train_state = IsTrain();
   Eval();
   TrainExport texport(file_name);
-  int status = texport.ExportInit(model_.get()->name_, model_.get()->version_);
+  int status = texport.ExportInit(model_.get()->graph_.name_, model_.get()->graph_.version_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot init export";
     return status;

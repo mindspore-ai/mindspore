@@ -28,7 +28,7 @@ namespace mindspore::lite::micro::nnacl {
 class FullConnectionInt8Coder final : public MatMulBaseInt8Coder {
  public:
   FullConnectionInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                          const Model::Node *node, size_t node_index, Target target)
+                          const LiteGraph::Node *node, size_t node_index, Target target)
       : MatMulBaseInt8Coder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~FullConnectionInt8Coder() override = default;

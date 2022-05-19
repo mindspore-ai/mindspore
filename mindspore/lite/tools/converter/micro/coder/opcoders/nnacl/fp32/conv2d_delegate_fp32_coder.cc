@@ -63,8 +63,8 @@ void SetInputOutputShapeInfo(ConvParameter *conv_param, const lite::Tensor *inpu
 
 std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderSelect(const std::vector<Tensor *> &in_tensors,
                                                              const std::vector<Tensor *> &out_tensors,
-                                                             const Model::Node *node, size_t node_index, Target target,
-                                                             int schema_version) {
+                                                             const LiteGraph::Node *node, size_t node_index,
+                                                             Target target, int schema_version) {
   const void *primitive = node->primitive_;
   if (primitive == nullptr) {
     return nullptr;
@@ -101,14 +101,14 @@ std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderSelect(const std::vector<T
 }
 
 std::unique_ptr<OperatorCoder> CreateDelegateConv(const std::vector<Tensor *> &in_tensors,
-                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node,
+                                                  const std::vector<Tensor *> &out_tensors, const LiteGraph::Node *node,
                                                   size_t node_index, Target target, int schema_version) {
   return CPUOpCoderCreator<ConvDelegateCoder>(in_tensors, out_tensors, node, node_index, target, schema_version);
 }
 
 std::unique_ptr<OperatorCoder> CPUConvDwFp32CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                          const std::vector<Tensor *> &out_tensors,
-                                                         const Model::Node *node, size_t node_index, Target target,
+                                                         const LiteGraph::Node *node, size_t node_index, Target target,
                                                          int schema_version) {
   return CPUOpCoderCreator<ConvolutionDepthwiseFP32Coder>(in_tensors, out_tensors, node, node_index, target,
                                                           schema_version);
@@ -116,7 +116,7 @@ std::unique_ptr<OperatorCoder> CPUConvDwFp32CoderCreator(const std::vector<Tenso
 
 std::unique_ptr<OperatorCoder> CPUConv2DFusionFP32CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                                const std::vector<Tensor *> &out_tensors,
-                                                               const Model::Node *node, size_t node_index,
+                                                               const LiteGraph::Node *node, size_t node_index,
                                                                Target target, int schema_version) {
   const void *primitive = node->primitive_;
   if (primitive == nullptr) {

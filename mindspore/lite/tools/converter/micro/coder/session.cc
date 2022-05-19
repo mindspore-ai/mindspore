@@ -187,7 +187,7 @@ int CoderSession::InitTensorsRef() {
   return RET_OK;
 }
 
-OpParameter *CoderSession::GenParameterAndInfer(const Model::Node *node, const std::vector<lite::Tensor *> &inputs,
+OpParameter *CoderSession::GenParameterAndInfer(const LiteGraph::Node *node, const std::vector<lite::Tensor *> &inputs,
                                                 std::vector<lite::Tensor *> *outputs) const {
   auto primitive = node->primitive_;
   MS_CHECK_PTR_RET_NULL(primitive);
@@ -219,10 +219,10 @@ int CoderSession::CreateOpCoders() {
   Target code_target = config->target();
   CodeMode code_mode = config->code_mode();
   bool support_parallel = config->support_parallel();
-  uint32_t nodes_size = model->all_nodes_.size();
+  uint32_t nodes_size = model->graph_.all_nodes_.size();
   OpCoderBuilder builder;
   for (uint32_t i = 0; i < nodes_size; ++i) {
-    const auto *node = model->all_nodes_.at(i);
+    const auto *node = model->graph_.all_nodes_.at(i);
     if (node == nullptr) {
       MS_LOG(ERROR) << "node is nullptr";
       return RET_ERROR;

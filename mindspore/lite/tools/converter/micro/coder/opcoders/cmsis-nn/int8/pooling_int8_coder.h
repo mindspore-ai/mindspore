@@ -27,7 +27,7 @@ namespace mindspore::lite::micro::cmsis {
 class PoolingInt8Coder final : public OperatorCoder {
  public:
   PoolingInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                   const Model::Node *node, size_t node_index, Target target)
+                   const LiteGraph::Node *node, size_t node_index, Target target)
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
   ~PoolingInt8Coder() override = default;
 

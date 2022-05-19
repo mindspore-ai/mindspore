@@ -26,7 +26,7 @@ namespace mindspore::lite::micro::nnacl {
 class ReduceFP32Coder final : public ReduceBaseCoder {
  public:
   ReduceFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const Model::Node *node, size_t node_index, Target target)
+                  const LiteGraph::Node *node, size_t node_index, Target target)
       : ReduceBaseCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~ReduceFP32Coder() override = default;

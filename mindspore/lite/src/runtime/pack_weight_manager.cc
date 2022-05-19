@@ -58,9 +58,9 @@ STATUS PackWeightManager::StoreOriginTensorData(Model *model) {
     return RET_OK;
   }
   auto lite_model = reinterpret_cast<LiteModel *>(model);
-  auto kernel_num = model->all_nodes_.size();
+  auto kernel_num = model->graph_.all_nodes_.size();
   for (size_t i = 0; i < kernel_num; i++) {
-    auto node = model->all_nodes_[i];
+    auto node = model->graph_.all_nodes_[i];
     for (size_t j = 0; j < node->input_indices_.size(); j++) {
       auto tensor_index = node->input_indices_[j];
       auto src_tensor = lite_model->GetSchemaTensor(tensor_index);

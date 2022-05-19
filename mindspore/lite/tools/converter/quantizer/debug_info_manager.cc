@@ -314,10 +314,10 @@ int DebugInfoManager::AddComparedInfo(const mindspore::MSCallBackParam &call_bac
 std::map<std::string, mindspore::schema::Tensor *> DebugInfoManager::ParseInputTensors(
   const mindspore::lite::LiteModel &model) {
   std::map<std::string, mindspore::schema::Tensor *> maps;
-  for (auto &node : model.all_nodes_) {
+  for (auto &node : model.graph_.all_nodes_) {
     for (auto &index : node->input_indices_) {
-      auto tensor_name = model.all_tensors_[index]->name()->str();
-      maps[tensor_name] = model.all_tensors_[index];
+      auto tensor_name = model.graph_.all_tensors_[index]->name()->str();
+      maps[tensor_name] = model.graph_.all_tensors_[index];
     }
   }
   return maps;
@@ -325,10 +325,10 @@ std::map<std::string, mindspore::schema::Tensor *> DebugInfoManager::ParseInputT
 
 std::map<std::string, mindspore::schema::Tensor *> DebugInfoManager::ParseOutputTensorFromModel(const Model &model) {
   std::map<std::string, mindspore::schema::Tensor *> maps;
-  for (auto &node : model.all_nodes_) {
+  for (auto &node : model.graph_.all_nodes_) {
     for (auto &index : node->output_indices_) {
-      auto tensor_name = model.all_tensors_[index]->name()->str();
-      maps[tensor_name] = model.all_tensors_[index];
+      auto tensor_name = model.graph_.all_tensors_[index]->name()->str();
+      maps[tensor_name] = model.graph_.all_tensors_[index];
     }
   }
   return maps;

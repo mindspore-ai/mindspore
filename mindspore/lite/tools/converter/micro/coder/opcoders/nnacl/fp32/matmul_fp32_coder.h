@@ -25,7 +25,7 @@ namespace mindspore::lite::micro::nnacl {
 class MatMulFP32Coder final : public MatMulFP32BaseCoder {
  public:
   MatMulFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const Model::Node *node, size_t node_index, Target target)
+                  const LiteGraph::Node *node, size_t node_index, Target target)
       : MatMulFP32BaseCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~MatMulFP32Coder() override = default;

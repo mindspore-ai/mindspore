@@ -24,13 +24,13 @@
 #include "tools/converter/micro/coder/wrapper/base/affine_wrapper.h"
 
 namespace mindspore::lite::micro::nnacl {
-Model::Node *CreateMatmulNode(void *prim_buf, const std::string &name);
+LiteGraph::Node *CreateMatmulNode(void *prim_buf, const std::string &name);
 void *CreateMatmulPrimitive();
 
 class AffineFP32Coder final : public OperatorCoder {
  public:
   AffineFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const Model::Node *node, size_t node_index, Target target)
+                  const LiteGraph::Node *node, size_t node_index, Target target)
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~AffineFP32Coder() override {
@@ -49,7 +49,7 @@ class AffineFP32Coder final : public OperatorCoder {
   AffineParameter *affine_param_{nullptr};
   SpliceWrapperParam *splice_param_{nullptr};
   void *matmul_primitive_{nullptr};
-  lite::Model::Node *matmul_node_{nullptr};
+  lite::LiteGraph::Node *matmul_node_{nullptr};
 
   lite::Tensor *full_input_{nullptr};
   lite::Tensor *increment_input_{nullptr};

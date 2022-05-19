@@ -43,7 +43,7 @@ class CoderSession {
   int GenerateCode();
 
  private:
-  OpParameter *GenParameterAndInfer(const Model::Node *node, const std::vector<lite::Tensor *> &inputs,
+  OpParameter *GenParameterAndInfer(const LiteGraph::Node *node, const std::vector<lite::Tensor *> &inputs,
                                     std::vector<lite::Tensor *> *outputs) const;
   int InitOpcodersInputsAndOutputs();
   int InitTensorsRef();

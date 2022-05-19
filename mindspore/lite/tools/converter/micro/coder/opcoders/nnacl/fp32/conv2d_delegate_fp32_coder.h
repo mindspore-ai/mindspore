@@ -24,7 +24,7 @@ namespace mindspore::lite::micro::nnacl {
 class ConvDelegateCoder : public OperatorCoder {
  public:
   ConvDelegateCoder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                    const Model::Node *node, size_t node_index, Target target)
+                    const LiteGraph::Node *node, size_t node_index, Target target)
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~ConvDelegateCoder() override = default;
@@ -38,21 +38,21 @@ class ConvDelegateCoder : public OperatorCoder {
 void SetInputOutputShapeInfo(ConvParameter *conv_param, const lite::Tensor *input, const lite::Tensor *output);
 std::unique_ptr<OperatorCoder> CPUConvolutionFP32CoderSelect(const std::vector<Tensor *> &in_tensors,
                                                              const std::vector<Tensor *> &out_tensors,
-                                                             const Model::Node *node, size_t node_index, Target target,
-                                                             int schema_version);
+                                                             const LiteGraph::Node *node, size_t node_index,
+                                                             Target target, int schema_version);
 
 std::unique_ptr<OperatorCoder> CreateDelegateConv(const std::vector<Tensor *> &in_tensors,
-                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node,
+                                                  const std::vector<Tensor *> &out_tensors, const LiteGraph::Node *node,
                                                   size_t node_index, Target target, int schema_version);
 
 std::unique_ptr<OperatorCoder> CPUConvDwFp32CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                          const std::vector<Tensor *> &out_tensors,
-                                                         const Model::Node *node, size_t node_index, Target target,
+                                                         const LiteGraph::Node *node, size_t node_index, Target target,
                                                          int schema_version);
 
 std::unique_ptr<OperatorCoder> CPUConv2DFusionFP32CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                                const std::vector<Tensor *> &out_tensors,
-                                                               const Model::Node *node, size_t node_index,
+                                                               const LiteGraph::Node *node, size_t node_index,
                                                                Target target, int schema_version);
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_OPCODERS_NNACL_FP32_CONV2D_DELEGATE_FP32_CODER_H

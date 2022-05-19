@@ -26,8 +26,8 @@ using mindspore::schema::PrimitiveType_Activation;
 namespace mindspore::lite::micro::nnacl {
 std::unique_ptr<OperatorCoder> CPUActivationINT8CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                              const std::vector<Tensor *> &out_tensors,
-                                                             const Model::Node *node, size_t node_index, Target target,
-                                                             int schema_version) {
+                                                             const LiteGraph::Node *node, size_t node_index,
+                                                             Target target, int schema_version) {
   const void *primitive_c = node->primitive_;
   if (primitive_c == nullptr) {
     return nullptr;

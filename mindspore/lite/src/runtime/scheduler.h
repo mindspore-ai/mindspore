@@ -65,17 +65,17 @@ class Scheduler {
   bool CheckRunNCXPass();
   int SchedulePreProcess();
   int CheckInputParam(std::vector<kernel::KernelExec *> *dst_kernels);
-  void FindNodeInoutTensors(const Model::Node &node, std::vector<Tensor *> *inputs, std::vector<Tensor *> *outputs);
-  Model::Node *NodeInputIsPartial(const Model::Node *node);
-  int InferPartialShape(const Model::Node *node);
-  int InferCallShape(const Model::Node *node);
-  int InferNodeShape(const Model::Node *node);
+  void FindNodeInoutTensors(const LiteGraph::Node &node, std::vector<Tensor *> *inputs, std::vector<Tensor *> *outputs);
+  LiteGraph::Node *NodeInputIsPartial(const LiteGraph::Node *node);
+  int InferPartialShape(const LiteGraph::Node *node);
+  int InferCallShape(const LiteGraph::Node *node);
+  int InferNodeShape(const LiteGraph::Node *node);
   void FreeOpParameters();
   int InferSubGraphShape(size_t subgraph_index);
   // schedule a node to kernel according to context and kernels registered
   int HandleBuildinCpuKernelWeight(const kernel::SubGraphType &belong_subgraph_type, const kernel::KernelExec *kernel);
   kernel::KernelExec *FindBackendKernel(const std::vector<Tensor *> &in_tensors,
-                                        const std::vector<Tensor *> &out_tensors, const Model::Node *node,
+                                        const std::vector<Tensor *> &out_tensors, const LiteGraph::Node *node,
                                         TypeId prefer_data_type = kTypeUnknown);
   int FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                     OpParameter *op_parameter, const kernel::KernelKey &desc, TypeId kernel_data_type,
@@ -89,17 +89,17 @@ class Scheduler {
                     TypeId prefer_data_type);
 #endif
   int FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                         const Model::Node *node, TypeId data_type, kernel::KernelExec **kernel);
+                         const LiteGraph::Node *node, TypeId data_type, kernel::KernelExec **kernel);
 
   int InitKernels(std::vector<kernel::KernelExec *> &&dst_kernels);
-  kernel::KernelExec *SchedulePartialToKernel(const lite::Model::Node *src_node);
+  kernel::KernelExec *SchedulePartialToKernel(const lite::LiteGraph::Node *src_node);
   // schedule a partial node to a subgraph_kernel
   std::vector<kernel::KernelExec *> ScheduleSubGraphToSubGraphKernels(const int &subgraph_index);
   // schedule a node to a kernel
-  kernel::KernelExec *ScheduleNodeToKernel(const Model::Node *src_node, TypeId prefer_data_type = kTypeUnknown);
+  kernel::KernelExec *ScheduleNodeToKernel(const LiteGraph::Node *src_node, TypeId prefer_data_type = kTypeUnknown);
   // schedule a Model::Graph into a vector of subgraph_kernel
   int ScheduleGraphToKernels(std::vector<kernel::KernelExec *> *dst_kernels, TypeId prefer_data_type = kTypeUnknown);
-  // schedule a Model::SubGraph into a vector of kernel and subgraph_kernel
+  // schedule a LiteGraph::SubGraph into a vector of kernel and subgraph_kernel
   int ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kernel::KernelExec *> *dst_kernels,
                                 std::vector<lite::Tensor *> *in_tensors, std::vector<lite::Tensor *> *out_tensors,
                                 TypeId prefer_data_type = kTypeUnknown);
@@ -117,16 +117,16 @@ class Scheduler {
 
   // other methods
   static TypeId GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors);
-  int CopyPartialShapeToSubGraph(const lite::Model::Node *partial_node);
-  int RestoreSubGraphInput(const lite::Model::Node *partial_node);
+  int CopyPartialShapeToSubGraph(const lite::LiteGraph::Node *partial_node);
+  int RestoreSubGraphInput(const lite::LiteGraph::Node *partial_node);
 
-  bool IsControlFlowPattern(const lite::Model::Node &partial_node);
+  bool IsControlFlowPattern(const lite::LiteGraph::Node &partial_node);
   STATUS DelQuantDTypeCastKernel(std::vector<kernel::KernelExec *> *kernels);
 #ifdef ENABLE_FP16
   int SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type);
 #endif
-  int InferSwitchShape(const Model::Node *node);
-  Model::Node *NodeInputIsSwitchType(const Model::Node *node);
+  int InferSwitchShape(const LiteGraph::Node *node);
+  LiteGraph::Node *NodeInputIsSwitchType(const LiteGraph::Node *node);
   bool SubGraphHasScheduled(const int &index);
   void SubGraphMarkScheduled(const int &index);
   int ConstructControlFlowMainGraph(std::vector<kernel::KernelExec *> *kernels);
@@ -165,7 +165,7 @@ class Scheduler {
   std::unordered_map<size_t, kernel::KernelExec *> subgraph_index_subgraph_kernel_map_{};
   std::set<int> scheduled_subgraph_index_{};
   std::unordered_map<kernel::KernelExec *, size_t> partial_kernel_subgraph_index_map_{};
-  std::set<lite::Model::Node *> partial_cnode_inferred_{};
+  std::set<lite::LiteGraph::Node *> partial_cnode_inferred_{};
   ControlFlowSchedulerPtr control_flow_scheduler_ = nullptr;
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   std::map<std::string, TypeId> *execution_plan_ = nullptr;

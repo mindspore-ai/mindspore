@@ -25,6 +25,7 @@
 #include "src/runtime/kernel_exec.h"
 
 using Model = mindspore::lite::Model;
+using LiteGraph = mindspore::lite::LiteGraph;
 
 namespace mindspore::infer {
 class AbstractBaseModel : public Model {
@@ -35,7 +36,7 @@ class AbstractBaseModel : public Model {
   virtual std::string GetModelPath() const = 0;
   virtual mindspore::kernel::KernelExec *FindBackendKernel(const std::vector<mindspore::lite::Tensor *> &in_tensors,
                                                            const std::vector<mindspore::lite::Tensor *> &out_tensors,
-                                                           const Model::Node *node, lite::Context *context,
+                                                           const LiteGraph::Node *node, lite::Context *context,
                                                            TypeId prefer_data_type) = 0;
 };
 }  // namespace mindspore::infer

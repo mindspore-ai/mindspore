@@ -26,7 +26,7 @@ namespace mindspore::lite::micro::cmsis {
 class Conv2DInt8Coder final : public Conv2DBaseCoder {
  public:
   explicit Conv2DInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                           const Model::Node *node, size_t node_index, Target target)
+                           const LiteGraph::Node *node, size_t node_index, Target target)
       : Conv2DBaseCoder(in_tensors, out_tensors, node, node_index, target) {}
   int Prepare(CoderContext *context) override;
 

@@ -262,7 +262,7 @@ int Conv2DINT8Coder::DoCode(CoderContext *const context) {
 
 std::unique_ptr<OperatorCoder> CPUConv2DINT8CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                          const std::vector<Tensor *> &out_tensors,
-                                                         const Model::Node *node, size_t node_index, Target target,
+                                                         const LiteGraph::Node *node, size_t node_index, Target target,
                                                          int schema_version) {
   const void *primitive = node->primitive_;
   if (primitive == nullptr) {
@@ -300,7 +300,7 @@ std::unique_ptr<OperatorCoder> CPUConv2DINT8CoderCreator(const std::vector<Tenso
 
 std::unique_ptr<OperatorCoder> CPUConv2DFusionINT8CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                                const std::vector<Tensor *> &out_tensors,
-                                                               const Model::Node *node, size_t node_index,
+                                                               const LiteGraph::Node *node, size_t node_index,
                                                                Target target, int schema_version) {
   const void *primitive = node->primitive_;
   if (primitive == nullptr) {

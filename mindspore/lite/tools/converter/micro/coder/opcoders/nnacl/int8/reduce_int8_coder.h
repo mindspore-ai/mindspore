@@ -27,7 +27,7 @@ namespace mindspore::lite::micro::nnacl {
 class ReduceInt8Coder final : public ReduceBaseCoder {
  public:
   ReduceInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                  const Model::Node *node, size_t node_index, Target target)
+                  const LiteGraph::Node *node, size_t node_index, Target target)
       : ReduceBaseCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~ReduceInt8Coder() override {

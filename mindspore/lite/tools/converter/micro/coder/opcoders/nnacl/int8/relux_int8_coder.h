@@ -29,7 +29,7 @@ namespace mindspore::lite::micro::nnacl {
 class ReluxInt8Coder : public OperatorCoder {
  public:
   ReluxInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                 const Model::Node *node, size_t node_index, Target target)
+                 const LiteGraph::Node *node, size_t node_index, Target target)
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~ReluxInt8Coder() override = default;
@@ -48,7 +48,7 @@ class ReluxInt8Coder : public OperatorCoder {
 class ReluInt8Coder final : public ReluxInt8Coder {
  public:
   ReluInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                const Model::Node *node, size_t node_index, Target target)
+                const LiteGraph::Node *node, size_t node_index, Target target)
       : ReluxInt8Coder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~ReluInt8Coder() override = default;
@@ -64,7 +64,7 @@ class ReluInt8Coder final : public ReluxInt8Coder {
 class Relu6Int8Coder final : public ReluxInt8Coder {
  public:
   Relu6Int8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                 const Model::Node *node, size_t node_index, Target target)
+                 const LiteGraph::Node *node, size_t node_index, Target target)
       : ReluxInt8Coder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~Relu6Int8Coder() override = default;

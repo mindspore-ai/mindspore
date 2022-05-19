@@ -52,9 +52,9 @@ AbstractBaseModel *MindirModelLoader::ImportModel(const char *model_buf, size_t 
 }
 
 bool MindirModelLoader::ConvertModel(const mind_ir::ModelProto &model_proto) {
-  this->model_->name_ = "";
+  this->model_->graph_.name_ = "";
   if (model_proto.has_model_version()) {
-    this->model_->version_ = model_proto.model_version();
+    this->model_->graph_.version_ = model_proto.model_version();
   }
 
   MS_CHECK_TRUE_MSG(
@@ -63,7 +63,7 @@ bool MindirModelLoader::ConvertModel(const mind_ir::ModelProto &model_proto) {
   this->tensor_count_ = 0;
   this->node_count_ = 0;
   if (model_proto.has_graph()) {
-    this->model_->name_ = model_proto.graph().name();
+    this->model_->graph_.name_ = model_proto.graph().name();
     // root graph, do not pass sub graph
     if (model_proto.functions_size() > 0) {
       MS_CHECK_TRUE_MSG(
@@ -71,18 +71,18 @@ bool MindirModelLoader::ConvertModel(const mind_ir::ModelProto &model_proto) {
         "MindirModelLoader: Import model failed, convert root graph error, please check the correctness of the file.");
     } else {
       // no subgraph, add graph to subgraph
-      auto *sub_graph = new Model::SubGraph();
+      auto *sub_graph = new LiteGraph::SubGraph();
       sub_graph->name_ = model_proto.graph().name();
       MS_CHECK_TRUE_MSG(
         ConvertGraph(model_proto.graph(), sub_graph, true), false,
         "MindirModelLoader: Import model failed, convert root graph error, please check the correctness of the file.");
-      this->model_->sub_graphs_.push_back(sub_graph);
+      this->model_->graph_.sub_graphs_.push_back(sub_graph);
     }
   }
 
   for (int i = 0; i < model_proto.functions_size(); i++) {
     auto sub_graph_proto = model_proto.functions(i);
-    auto *sub_graph = new Model::SubGraph();
+    auto *sub_graph = new LiteGraph::SubGraph();
     if (sub_graph == nullptr) {
       MS_LOG(ERROR) << "MindirModelLoader: Import model failed, new sub graph failed.";
       return mindspore::lite::RET_ERROR;
@@ -93,7 +93,7 @@ bool MindirModelLoader::ConvertModel(const mind_ir::ModelProto &model_proto) {
     MS_CHECK_TRUE_MSG(
       ConvertGraph(sub_graph_proto, sub_graph), false,
       "MindirModelLoader: Import model failed, convert sub graph error, please check the correctness of the file.");
-    this->model_->sub_graphs_.push_back(sub_graph);
+    this->model_->graph_.sub_graphs_.push_back(sub_graph);
   }
   MS_LOG(INFO) << "MindirModelLoader: Import model successful.";
   return true;
@@ -134,7 +134,7 @@ bool MindirModelLoader::ConvertPrimitives(const mind_ir::ModelProto &model_proto
   return true;
 }
 
-bool MindirModelLoader::ConvertGraph(const mind_ir::GraphProto &graph_proto, Model::SubGraph *sub_graph,
+bool MindirModelLoader::ConvertGraph(const mind_ir::GraphProto &graph_proto, LiteGraph::SubGraph *sub_graph,
                                      bool is_main_graph) {
   MS_CHECK_TRUE_MSG(
     ConvertTensors(graph_proto, sub_graph, is_main_graph), false,
@@ -145,7 +145,7 @@ bool MindirModelLoader::ConvertGraph(const mind_ir::GraphProto &graph_proto, Mod
   return true;
 }
 
-bool MindirModelLoader::ConvertTensors(const mind_ir::GraphProto &graph_proto, Model::SubGraph *sub_graph,
+bool MindirModelLoader::ConvertTensors(const mind_ir::GraphProto &graph_proto, LiteGraph::SubGraph *sub_graph,
                                        bool is_main_graph) {
   for (int i = 0; i < graph_proto.input_size(); i++) {
     const mind_ir::TensorProto &tensor_proto = graph_proto.input(i).tensor(0);
@@ -157,7 +157,7 @@ bool MindirModelLoader::ConvertTensors(const mind_ir::GraphProto &graph_proto, M
       sub_graph->tensor_indices_.push_back(this->tensor_count_);
     }
     if (is_main_graph) {
-      this->model_->input_indices_.push_back(this->tensor_count_);
+      this->model_->graph_.input_indices_.push_back(this->tensor_count_);
     }
     this->tensor_count_++;
   }
@@ -171,7 +171,7 @@ bool MindirModelLoader::ConvertTensors(const mind_ir::GraphProto &graph_proto, M
       sub_graph->tensor_indices_.push_back(this->tensor_count_);
     }
     if (is_main_graph) {
-      this->model_->output_indices_.push_back(this->tensor_count_);
+      this->model_->graph_.output_indices_.push_back(this->tensor_count_);
     }
     this->tensor_count_++;
   }
@@ -188,7 +188,7 @@ bool MindirModelLoader::ConvertTensors(const mind_ir::GraphProto &graph_proto, M
   return true;
 }
 
-bool MindirModelLoader::ConvertNodes(const mind_ir::GraphProto &graph_proto, Model::SubGraph *sub_graph,
+bool MindirModelLoader::ConvertNodes(const mind_ir::GraphProto &graph_proto, LiteGraph::SubGraph *sub_graph,
                                      bool is_main_graph) {
   for (int i = 0; i < graph_proto.node_size(); i++) {
     auto node_proto = graph_proto.node(i);
@@ -209,7 +209,7 @@ bool MindirModelLoader::ConvertNodes(const mind_ir::GraphProto &graph_proto, Mod
       }
       continue;
     }
-    auto *node = new Model::Node();
+    auto *node = new LiteGraph::Node();
     if (node == nullptr) {
       MS_LOG(ERROR) << "MindirModelLoader: Convert nodes failed, new node failed.";
       return false;
@@ -241,7 +241,7 @@ bool MindirModelLoader::ConvertNodes(const mind_ir::GraphProto &graph_proto, Mod
       node->output_indices_.push_back(it->second);
     }
 
-    this->model_->all_nodes_.push_back(node);
+    this->model_->graph_.all_nodes_.push_back(node);
     if (sub_graph != nullptr) {
       sub_graph->node_indices_.push_back(this->node_count_);
     }

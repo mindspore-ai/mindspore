@@ -60,9 +60,9 @@ int CoderGraph::ConvertTensors() {
   };
 
   // deal with allTensors
-  uint32_t tensorCount = model_->all_tensors_.size();
+  uint32_t tensorCount = model_->graph_.all_tensors_.size();
   for (uint32_t i = 0; i < tensorCount; ++i) {
-    schema::Tensor *origin_tensor = model_->all_tensors_.at(i);
+    schema::Tensor *origin_tensor = model_->graph_.all_tensors_.at(i);
     MS_CHECK_PTR_WITH_EXE(origin_tensor, clear_tensors());
     // tensor dims
     std::vector<int> shape;
@@ -132,13 +132,13 @@ int CoderGraph::InitGraphInOutTensors() {
   std::vector<uint32_t> input_indices;
   for (auto in_node_index : graph_input_node_indexes) {
     in_node_index = static_cast<uint32_t>(in_node_index);
-    auto in_node = model_->all_nodes_.at(in_node_index);
+    auto in_node = model_->graph_.all_nodes_.at(in_node_index);
     MS_CHECK_PTR(in_node);
     for (uint32_t i = 0; i < in_node->input_indices_.size(); i++) {
       auto in_tensor_index = size_t(in_node->input_indices_.at(i));
       bool is_graph_input = false;
-      for (uint32_t j = 0; j < model_->input_indices_.size(); j++) {
-        if (in_tensor_index == size_t(model_->input_indices_.at(j))) {
+      for (uint32_t j = 0; j < model_->graph_.input_indices_.size(); j++) {
+        if (in_tensor_index == size_t(model_->graph_.input_indices_.at(j))) {
           input_indices.push_back(static_cast<uint32_t>(in_tensor_index));
           is_graph_input = true;
           break;
@@ -158,12 +158,12 @@ int CoderGraph::InitGraphInOutTensors() {
   auto graph_output_node_indexes = lite::GetGraphOutputNodes(model_);
   for (auto out_node_index : graph_output_node_indexes) {
     out_node_index = static_cast<uint32_t>(out_node_index);
-    auto *out_node = model_->all_nodes_.at(out_node_index);
+    auto *out_node = model_->graph_.all_nodes_.at(out_node_index);
     for (uint32_t i = 0; i < out_node->output_indices_.size(); i++) {
       auto out_tensor_index = size_t(out_node->output_indices_.at(i));
       bool is_graph_output = false;
-      for (uint32_t j = 0; j < model_->output_indices_.size(); j++) {
-        if (out_tensor_index == size_t(model_->output_indices_.at(j))) {
+      for (uint32_t j = 0; j < model_->graph_.output_indices_.size(); j++) {
+        if (out_tensor_index == size_t(model_->graph_.output_indices_.at(j))) {
           output_indices.push_back(static_cast<uint32_t>(out_tensor_index));
           is_graph_output = true;
           break;
@@ -247,22 +247,23 @@ std::vector<uint32_t> CoderGraph::output_indices() const { return this->output_i
 
 void CoderGraph::DumpUnSupportLayer(Target target) {
   std::cerr << "==========dump all unsupported layer for codegen=====" << std::endl;
-  std::for_each(model_->all_nodes_.begin(), model_->all_nodes_.end(), [this, target](const Model::Node *node) {
-    if (node->primitive_ == nullptr) {
-      return;
-    }
-    // fake create opcoders
-    uint32_t input_idx = node->input_indices_.at(0);
-    Tensor *t = all_tensors_.at(input_idx);
-    TypeId dtype = t->data_type();
-    int pt = GetPrimitiveType(node->primitive_, reinterpret_cast<lite::LiteModel *>(model_)->GetSchemaVersion());
-    CoderKey key(target, dtype, pt);
-    // search from the opcoder registry
-    if (OpCoderFactory::GetInstance()->FindOpCoder(key) == nullptr) {
-      std::cerr << node->name_ << ", primitive type: "
-                << mindspore::schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(pt))
-                << ", data_type: " << EnumNameDataType(dtype) << std::endl;
-    }
-  });
+  std::for_each(
+    model_->graph_.all_nodes_.begin(), model_->graph_.all_nodes_.end(), [this, target](const LiteGraph::Node *node) {
+      if (node->primitive_ == nullptr) {
+        return;
+      }
+      // fake create opcoders
+      uint32_t input_idx = node->input_indices_.at(0);
+      Tensor *t = all_tensors_.at(input_idx);
+      TypeId dtype = t->data_type();
+      int pt = GetPrimitiveType(node->primitive_, reinterpret_cast<lite::LiteModel *>(model_)->GetSchemaVersion());
+      CoderKey key(target, dtype, pt);
+      // search from the opcoder registry
+      if (OpCoderFactory::GetInstance()->FindOpCoder(key) == nullptr) {
+        std::cerr << node->name_ << ", primitive type: "
+                  << mindspore::schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(pt))
+                  << ", data_type: " << EnumNameDataType(dtype) << std::endl;
+      }
+    });
 }
 }  // namespace mindspore::lite::micro

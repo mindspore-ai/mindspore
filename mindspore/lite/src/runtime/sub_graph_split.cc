@@ -75,8 +75,8 @@ void SearchSubGraph::UpdateOfflineParallelFlag() {
   }
   // visited whole models to find any conv && depthwise conv have been set to device type
   offline_parallel_enable_ = std::any_of(
-    this->model_->all_nodes_.begin(), this->model_->all_nodes_.end(),
-    [&](const lite::Model::Node *node) { return IsOfflineParallelNode(node->primitive_, node->device_type_); });
+    this->model_->graph_.all_nodes_.begin(), this->model_->graph_.all_nodes_.end(),
+    [&](const lite::LiteGraph::Node *node) { return IsOfflineParallelNode(node->primitive_, node->device_type_); });
 }
 
 bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgraphs) {
@@ -90,8 +90,8 @@ bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgra
     if (heads.size() != kDefaultInputs || ends.size() != kDefaultInputs) {
       return false;
     }
-    auto head_node = model_->all_nodes_.at(heads.front());
-    auto end_node = model_->all_nodes_.at(ends.front());
+    auto head_node = model_->graph_.all_nodes_.at(heads.front());
+    auto end_node = model_->graph_.all_nodes_.at(ends.front());
     if (!IsOfflineParallelNode(head_node->primitive_, head_node->device_type_) ||
         !IsOfflineParallelNode(end_node->primitive_, end_node->device_type_)) {
       return false;
@@ -103,7 +103,7 @@ bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgra
         continue;
       }
       auto input_node_index = tensors_.at(input).out_nodes_.front();
-      if (GetPrimitiveType(model_->all_nodes_.at(input_node_index)->primitive_, SCHEMA_VERSION::SCHEMA_CUR) !=
+      if (GetPrimitiveType(model_->graph_.all_nodes_.at(input_node_index)->primitive_, SCHEMA_VERSION::SCHEMA_CUR) !=
           schema::PrimitiveType_SplitWithOverlap) {
         return false;
       }
@@ -115,7 +115,7 @@ bool SearchSubGraph::CheckIsParallelSubGraph(const std::vector<Subgraph> &subgra
         continue;
       }
       auto output_node_index = tensors_.at(output).in_nodes_.front();
-      if (GetPrimitiveType(model_->all_nodes_.at(output_node_index)->primitive_, SCHEMA_VERSION::SCHEMA_CUR) !=
+      if (GetPrimitiveType(model_->graph_.all_nodes_.at(output_node_index)->primitive_, SCHEMA_VERSION::SCHEMA_CUR) !=
           schema::PrimitiveType_Concat) {
         return false;
       }
@@ -152,7 +152,7 @@ void SearchSubGraph::dfs(int i, int n, int current_sum, int except_value, int *m
   return;
 }
 
-SearchSubGraph::CostModel SearchSubGraph::CalculateConv2DFusion(const Model::Node *node) {
+SearchSubGraph::CostModel SearchSubGraph::CalculateConv2DFusion(const LiteGraph::Node *node) {
   CostModel cost;
   std::vector<uint32_t> inputs = node->input_indices_;
   std::vector<uint32_t> outputs = node->output_indices_;
@@ -219,7 +219,7 @@ const schema::Primitive *SearchSubGraph::CreatePartialPrimitive(int64_t subgraph
 }
 
 void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
-  Model::SubGraph *main_graphs = model_->sub_graphs_.front();
+  LiteGraph::SubGraph *main_graphs = model_->graph_.sub_graphs_.front();
 
   for (Subgraph &subgraph : *sub_graphs) {
     if (subgraph.nodes_.empty()) {
@@ -228,17 +228,17 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
 
     DeviceType device_type = subgraph.device_;
     size_t thread_num = subgraph.thread_;
-    int new_sub_index = static_cast<int>(model_->sub_graphs_.size());
-    int partial_index = static_cast<int>(model_->all_nodes_.size());
+    int new_sub_index = static_cast<int>(model_->graph_.sub_graphs_.size());
+    int partial_index = static_cast<int>(model_->graph_.all_nodes_.size());
     int particial_replace_index = partial_index;
 
-    Model::SubGraph *new_sub_graph = new (std::nothrow) Model::SubGraph();
+    LiteGraph::SubGraph *new_sub_graph = new (std::nothrow) LiteGraph::SubGraph();
     if (new_sub_graph == nullptr) {
       MS_LOG(ERROR) << "New sub graph failed!";
       return;
     }
     new_sub_graph->name_ = "SubSplit" + std::to_string(new_sub_index);
-    Model::Node *new_partial_node = new (std::nothrow) Model::Node();
+    LiteGraph::Node *new_partial_node = new (std::nothrow) LiteGraph::Node();
     if (new_partial_node == nullptr) {
       MS_LOG(ERROR) << "New partial node failed!";
       delete new_sub_graph;
@@ -258,7 +258,7 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
 
     while (!subgraph.nodes_.empty()) {
       uint32_t node_index = subgraph.nodes_.front();
-      Model::Node *cur_node = model_->all_nodes_[node_index];
+      LiteGraph::Node *cur_node = model_->graph_.all_nodes_[node_index];
       new_sub_graph->node_indices_.push_back(node_index);
 
       auto iter = find(main_graphs->node_indices_.begin(), main_graphs->node_indices_.end(), node_index);
@@ -272,7 +272,7 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
     }
 
     for (uint32_t head_index : subgraph.heads_) {
-      Model::Node *head_node = model_->all_nodes_[head_index];
+      LiteGraph::Node *head_node = model_->graph_.all_nodes_[head_index];
       std::vector<uint32_t> inputs = head_node->input_indices_;
       for (auto input : inputs) {
         if (tensors_[input].type_ == CONST) {
@@ -298,15 +298,15 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
     }
 
     for (uint32_t end_index : subgraph.ends_) {
-      Model::Node *end_node = model_->all_nodes_[end_index];
+      LiteGraph::Node *end_node = model_->graph_.all_nodes_[end_index];
       std::vector<uint32_t> outputs = end_node->output_indices_;
       new_sub_graph->output_indices_.insert(new_sub_graph->output_indices_.end(), outputs.begin(), outputs.end());
       new_partial_node->output_indices_.insert(new_partial_node->output_indices_.end(), outputs.begin(), outputs.end());
     }
 
     main_graphs->node_indices_.insert(main_graphs->node_indices_.begin() + particial_replace_index, partial_index);
-    model_->all_nodes_.push_back(std::move(new_partial_node));
-    model_->sub_graphs_.push_back(std::move(new_sub_graph));
+    model_->graph_.all_nodes_.push_back(std::move(new_partial_node));
+    model_->graph_.sub_graphs_.push_back(std::move(new_sub_graph));
   }
 
   sub_graphs->clear();
@@ -314,7 +314,7 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
 }
 
 bool SearchSubGraph::IsNodeSubGraphHead(uint32_t node_index, const std::vector<uint32_t> &ready_nodes) {
-  std::vector<uint32_t> output_indexes = model_->all_nodes_.at(node_index)->output_indices_;
+  std::vector<uint32_t> output_indexes = model_->graph_.all_nodes_.at(node_index)->output_indices_;
   std::vector<uint32_t> output_nodes;
   for (uint32_t out_t : output_indexes) {
     std::vector<uint32_t> cur_nodes = tensors_[out_t].in_nodes_;
@@ -350,10 +350,10 @@ bool SearchSubGraph::IsNodeSubGraphHeadWithRoot(uint32_t node_index, const std::
 }
 
 void SearchSubGraph::SearchMultyInNodes(std::vector<uint32_t> *multy_in_nodes) {
-  std::vector<uint32_t> all_main_sub_nodes = model_->sub_graphs_[0]->node_indices_;
+  std::vector<uint32_t> all_main_sub_nodes = model_->graph_.sub_graphs_[0]->node_indices_;
   for (size_t i = 0; i < all_main_sub_nodes.size(); i++) {
     uint32_t node_index = all_main_sub_nodes[i];
-    Model::Node *node = node_list_[node_index];
+    LiteGraph::Node *node = node_list_[node_index];
 
     if (IsPartialNode(node->primitive_, model_->GetSchemaVersion())) {
       continue;
@@ -388,7 +388,7 @@ void SearchSubGraph::InsertNode(uint32_t index, Subgraph *subgraph, uint32_t las
     return;
   }
 
-  Model::Node *node = node_list_.at(index);
+  LiteGraph::Node *node = node_list_.at(index);
   if (node == nullptr) {
     return;
   }
@@ -449,7 +449,7 @@ void SearchSubGraph::OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint
       if (std::find(used_heads.begin(), used_heads.end(), head_node_index) != used_heads.end()) {
         break;
       }
-      std::vector<uint32_t> head_input_tensors = model_->all_nodes_[head_node_index]->input_indices_;
+      std::vector<uint32_t> head_input_tensors = model_->graph_.all_nodes_[head_node_index]->input_indices_;
       RemoveConstNode(&head_input_tensors);
       if (head_input_tensors.size() != 1) continue;
 
@@ -457,7 +457,7 @@ void SearchSubGraph::OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint
       if (input_nodes.size() != 1) continue;
       uint32_t input_node_index = input_nodes.at(0);
 
-      std::vector<uint32_t> input_tensors = model_->all_nodes_[input_node_index]->input_indices_;
+      std::vector<uint32_t> input_tensors = model_->graph_.all_nodes_[input_node_index]->input_indices_;
       RemoveConstNode(&input_tensors);
       if (input_tensors.size() != 1) continue;
 
@@ -483,7 +483,7 @@ void SearchSubGraph::OptimizeAfterFusion(std::vector<Subgraph> *sub_graphs, uint
 }
 
 void SearchSubGraph::InsertHeadNode(uint32_t head_node_index, Subgraph *subgraph) {
-  Model::Node *node = node_list_.at(head_node_index);
+  LiteGraph::Node *node = node_list_.at(head_node_index);
   std::vector<uint32_t> head_node_inputs = node->input_indices_;
   RemoveConstNode(&head_node_inputs);
 
@@ -506,7 +506,7 @@ void SearchSubGraph::InsertHeadNode(uint32_t head_node_index, Subgraph *subgraph
 }
 
 void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph, uint32_t last_index) {
-  Model::Node *node = node_list_.at(node_index);
+  LiteGraph::Node *node = node_list_.at(node_index);
   MS_CHECK_PTR_IF_NULL(node);
 
   auto subs_iter = node_sub_map_.find(node_index);
@@ -539,7 +539,7 @@ void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph, ui
 
     std::set<uint32_t> subs_head_baklist = subs_head;
     for (uint32_t head_node : subs_head) {
-      std::vector<uint32_t> head_input_tensors = model_->all_nodes_[head_node]->input_indices_;
+      std::vector<uint32_t> head_input_tensors = model_->graph_.all_nodes_[head_node]->input_indices_;
       RemoveConstNode(&head_input_tensors);
       if (head_input_tensors.size() != 1) continue;
       std::vector<uint32_t> input_nodes = tensors_.at(head_input_tensors.at(0)).out_nodes_;
@@ -592,7 +592,7 @@ void SearchSubGraph::InsertNodeByMid(uint32_t node_index, Subgraph *subgraph, ui
 void SearchSubGraph::InitMiddleSubgraph(const std::vector<uint32_t> *multy_in_nodes) {
   for (uint32_t node_index : *multy_in_nodes) {
     std::vector<Subgraph> node_subs;
-    Model::Node *node = node_list_[node_index];
+    LiteGraph::Node *node = node_list_[node_index];
     for (uint32_t input_tensor_index : node->input_indices_) {
       Tensor *tensor = &tensors_[input_tensor_index];
       if (tensor->type_ == CONST || tensor->type_ == INPUT) continue;
@@ -616,7 +616,7 @@ void SearchSubGraph::InitMiddleSubgraph(const std::vector<uint32_t> *multy_in_no
 
 void SearchSubGraph::InitSearchSubGraphByMiddle() {
   sub_graphs_.clear();
-  node_list_ = model_->all_nodes_;
+  node_list_ = model_->graph_.all_nodes_;
 
   std::vector<uint32_t> multy_in_nodes;
 
@@ -637,7 +637,7 @@ void SearchSubGraph::InitSearchSubGraphByMiddle() {
 
 void SearchSubGraph::InitSearchSubGraphByOutput() {
   sub_graphs_.clear();
-  node_list_ = model_->all_nodes_;
+  node_list_ = model_->graph_.all_nodes_;
 
   for (auto out : *output_nodes_) {
     Subgraph subgraph;
@@ -650,12 +650,12 @@ void SearchSubGraph::InitSearchSubGraphByOutput() {
 }
 
 void SearchSubGraph::InitSearchTensor() {
-  tensors_.resize(model_->all_tensors_.size());
+  tensors_.resize(model_->graph_.all_tensors_.size());
 
   /* Set Tensor Type */
   for (size_t i = 0; i < tensors_.size(); i++) {
     tensors_[i].type_ = NORMAL;
-    mindspore::schema::Tensor *src_tensor = model_->all_tensors_[i];
+    mindspore::schema::Tensor *src_tensor = model_->graph_.all_tensors_[i];
     if (src_tensor == nullptr) {
       continue;
     }
@@ -664,14 +664,14 @@ void SearchSubGraph::InitSearchTensor() {
       tensors_[i].type_ = CONST;
     }
   }
-  std::vector<uint32_t> graph_input = model_->sub_graphs_[0]->input_indices_;
+  std::vector<uint32_t> graph_input = model_->graph_.sub_graphs_[0]->input_indices_;
   for (auto in : graph_input) {
     tensors_[in].type_ = INPUT;
   }
 
   /* Set Tensor In and out Node */
-  for (size_t index = 0; index < model_->all_nodes_.size(); index++) {
-    Model::Node *node = model_->all_nodes_[index];
+  for (size_t index = 0; index < model_->graph_.all_nodes_.size(); index++) {
+    LiteGraph::Node *node = model_->graph_.all_nodes_[index];
     std::vector<uint32_t> input = node->input_indices_;
     for (uint32_t in : input) {
       tensors_[in].in_nodes_.push_back(index);
@@ -722,9 +722,9 @@ void SearchSubGraph::InitSubgraphRuntimeInfo(std::vector<Subgraph> *sub_graphs) 
 }
 
 void SearchSubGraph::InitMainGraphDevice(DeviceType dt) {
-  Model::SubGraph *main_graph = model_->sub_graphs_.front();
+  LiteGraph::SubGraph *main_graph = model_->graph_.sub_graphs_.front();
   for (uint32_t node_index : main_graph->node_indices_) {
-    Model::Node *node = model_->all_nodes_[node_index];
+    LiteGraph::Node *node = model_->graph_.all_nodes_[node_index];
     node->device_type_ = dt;
   }
 }
@@ -780,7 +780,7 @@ void SearchSubGraph::CalculateCostModel(std::vector<Subgraph> *sub_graphs) {
       cost.io_cost_ = 0;
       cost.mul_cost_ = 1;
 
-      Model::Node *node = model_->all_nodes_[node_index];
+      LiteGraph::Node *node = model_->graph_.all_nodes_[node_index];
       if (GetPrimitiveType(node->primitive_, SCHEMA_VERSION::SCHEMA_CUR) == schema::PrimitiveType_Conv2DFusion) {
         cost = CalculateConv2DFusion(node);
       }
@@ -852,14 +852,14 @@ void SearchSubGraph::SubGraphSplitByMiddle() {
 
 void SearchSubGraph::SubGraphSplitByOffLineParallel() {
   sub_graphs_.clear();
-  node_list_ = model_->all_nodes_;
+  node_list_ = model_->graph_.all_nodes_;
 
   std::vector<uint32_t> multy_in_nodes;
 
   SearchMultyInNodes(&multy_in_nodes);
 
   for (uint32_t node_index : multy_in_nodes) {
-    Model::Node *node = node_list_[node_index];
+    LiteGraph::Node *node = node_list_[node_index];
     if (GetPrimitiveType(node->primitive_, SCHEMA_VERSION::SCHEMA_CUR) != schema::PrimitiveType_Concat) {
       continue;
     }
@@ -890,7 +890,7 @@ void SearchSubGraph::SubGraphSplitByOffLineParallel() {
     // init graph device type
     for (auto &subgraph : subgraphs) {
       uint32_t head_node_index = subgraph.heads_.front();
-      subgraph.device_ = static_cast<lite::DeviceType>(model_->all_nodes_.at(head_node_index)->device_type_);
+      subgraph.device_ = static_cast<lite::DeviceType>(model_->graph_.all_nodes_.at(head_node_index)->device_type_);
       if (subgraph.device_ == DT_GPU) {
         subgraph.thread_ = major_thread_;
         subgraph.tid_ = 0;
@@ -942,7 +942,7 @@ void SearchSubGraph::InsertParallelNode(uint32_t index, Subgraph *subgraph) {
     Subgraph new_graph;
     subgraph = &new_graph;
   }
-  Model::Node *node = node_list_[index];
+  LiteGraph::Node *node = node_list_[index];
   //  has been searched
   if (node == nullptr) {
     return;
@@ -999,7 +999,7 @@ void SearchSubGraph::CheckSubHeadEnd(Subgraph *sub) {
       delete_head.push_back(head_node);
       continue;
     }
-    Model::Node *node = model_->all_nodes_.at(head_node);
+    LiteGraph::Node *node = model_->graph_.all_nodes_.at(head_node);
     std::vector<uint32_t> in_tensors = node->input_indices_;
     std::vector<uint32_t> in_nodes;
     for (uint32_t in_t : in_tensors) {
@@ -1039,14 +1039,14 @@ void SearchSubGraph::CheckSubHeadEnd(Subgraph *sub) {
 }
 
 bool SearchSubGraph::ValidInParallel() {
-  Model::Node *front_node = model_->all_nodes_.at(0);
+  LiteGraph::Node *front_node = model_->graph_.all_nodes_.at(0);
   if (front_node->quant_type_ != schema::QuantType_QUANT_NONE) {
     return false;
   }
   if (major_dt_ == DT_NPU) {
     return false;
   }
-  if (model_->sub_graphs_.size() > 1) {
+  if (model_->graph_.sub_graphs_.size() > 1) {
     return false;
   }
   if (model_->GetSchemaVersion() != SCHEMA_VERSION::SCHEMA_CUR) {
@@ -1074,7 +1074,7 @@ void SearchSubGraph::InsertNodeBegin(uint32_t index, Subgraph *subgraph, std::ve
   size_t last_index = index;
 
   while (1) {
-    Model::Node *node = node_list_.at(index);
+    LiteGraph::Node *node = node_list_.at(index);
     if (node == nullptr) {
       subgraph->heads_.push_back(last_index);
       return;
@@ -1133,7 +1133,7 @@ void SearchSubGraph::SubGraphSplitByOperator() {
     return;
   }
   sub_graphs_.clear();
-  node_list_ = model_->all_nodes_;
+  node_list_ = model_->graph_.all_nodes_;
   std::queue<size_t> outputs{};
   for (auto out : *output_nodes_) {
     outputs.push(out);

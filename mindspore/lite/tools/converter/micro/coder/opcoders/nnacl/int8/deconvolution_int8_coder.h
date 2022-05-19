@@ -26,7 +26,7 @@ namespace mindspore::lite::micro::nnacl {
 class DeconvolutionInt8Coder final : public Conv2DBaseCoder {
  public:
   DeconvolutionInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                         const Model::Node *node, size_t node_index, Target target)
+                         const LiteGraph::Node *node, size_t node_index, Target target)
       : Conv2DBaseCoder(in_tensors, out_tensors, node, node_index, target) {}
   ~DeconvolutionInt8Coder() override { delete matmul_param_; }
 

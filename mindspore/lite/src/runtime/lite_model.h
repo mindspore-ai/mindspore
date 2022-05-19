@@ -67,7 +67,7 @@ class LiteModel : public Model {
   bool CheckQuantAllInit(const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::QuantParam>> *quant_params);
 
   template <typename T = schema::MetaGraph, typename U = schema::CNode>
-  int SetQuantType(const T &meta_graph, const U *c_node, Node *node) {
+  int SetQuantType(const T &meta_graph, const U *c_node, LiteGraph::Node *node) {
     node->quant_type_ = c_node->quantType();
     if (node->quant_type_ < schema::QuantType_MIN || node->quant_type_ > schema::QuantType_MAX) {
       MS_LOG(ERROR) << "node->quant_type_:" << node->quant_type_ << " is invalid.";
@@ -123,7 +123,7 @@ class LiteModel : public Model {
   bool ConvertNodes(const T &meta_graph) {
     MS_CHECK_TRUE_MSG(meta_graph.nodes() != nullptr, false, "meta_graph is invalid, please check your model file.");
     for (size_t i = 0; i < meta_graph.nodes()->size(); ++i) {
-      auto *node = new (std::nothrow) Model::Node();
+      auto *node = new (std::nothrow) LiteGraph::Node();
       MS_CHECK_TRUE_MSG(node != nullptr, false, "new node fail!");
       auto c_node = meta_graph.nodes()->template GetAs<U>(i);
       MS_CHECK_TRUE_MSG(c_node != nullptr, false, "get as cnode fail!");
@@ -150,7 +150,7 @@ class LiteModel : public Model {
           return false;
         }
         if (dst_prim == nullptr) {
-          this->all_nodes_.push_back(node);
+          this->graph_.all_nodes_.push_back(node);
           continue;
         }
         this->deobf_prims_.push_back(dst_prim);
@@ -181,7 +181,7 @@ class LiteModel : public Model {
           node->output_indices_.push_back(size_t(c_node->outputIndex()->template GetAs<uint32_t>(j)));
         }
       }
-      this->all_nodes_.push_back(node);
+      this->graph_.all_nodes_.push_back(node);
     }
     return true;
   }
@@ -200,7 +200,7 @@ class LiteModel : public Model {
         return false;
       }
       MS_CHECK_TRUE_RET(tensor->format() >= schema::Format_MIN && tensor->format() <= schema::Format_MAX, false);
-      this->all_tensors_.push_back(const_cast<mindspore::schema::Tensor *>(tensor));
+      this->graph_.all_tensors_.push_back(const_cast<mindspore::schema::Tensor *>(tensor));
     }
     return true;
   }
@@ -212,7 +212,7 @@ class LiteModel : public Model {
       MS_LOG(ERROR) << "meta_graph is invalid, please check your model file.";
       return RET_ERROR;
     }
-    auto *subgraph = new (std::nothrow) Model::SubGraph();
+    auto *subgraph = new (std::nothrow) LiteGraph::SubGraph();
     if (subgraph == nullptr) {
       MS_LOG(ERROR) << "new subGraph fail!";
       return RET_ERROR;
@@ -236,17 +236,17 @@ class LiteModel : public Model {
     for (uint32_t i = 0; i < tensor_count; ++i) {
       subgraph->tensor_indices_.push_back(i);
     }
-    this->sub_graphs_.push_back(subgraph);
+    this->graph_.sub_graphs_.push_back(subgraph);
     return RET_OK;
   }
 
   template <typename T = schema::MetaGraph, typename U = schema::CNode>
   int GenerateModel(const T &meta_graph) {
     if (meta_graph.name() != nullptr) {
-      this->name_ = meta_graph.name()->c_str();
+      this->graph_.name_ = meta_graph.name()->c_str();
     }
     if (meta_graph.version() != nullptr) {
-      this->version_ = meta_graph.version()->c_str();
+      this->graph_.version_ = meta_graph.version()->c_str();
     }
     if (!ConvertNodes<T, U>(meta_graph)) {
       MS_LOG(ERROR) << "convert node failed";
@@ -266,11 +266,11 @@ class LiteModel : public Model {
     // converterInputOutput
     auto in_count = meta_graph.inputIndex()->size();
     for (uint32_t i = 0; i < in_count; ++i) {
-      this->input_indices_.push_back(meta_graph.inputIndex()->Get(i));
+      this->graph_.input_indices_.push_back(meta_graph.inputIndex()->Get(i));
     }
     auto out_count = meta_graph.outputIndex()->size();
     for (uint32_t i = 0; i < out_count; ++i) {
-      this->output_indices_.push_back(meta_graph.outputIndex()->Get(i));
+      this->graph_.output_indices_.push_back(meta_graph.outputIndex()->Get(i));
     }
 
     if (meta_graph.subGraph() == nullptr) {
@@ -295,7 +295,9 @@ class LiteModel : public Model {
     return RET_OK;
   }
 
-  void SetNodeDeviceType(Node *node, const schema::CNode &c_node) { node->device_type_ = c_node.deviceType(); }
+  void SetNodeDeviceType(LiteGraph::Node *node, const schema::CNode &c_node) {
+    node->device_type_ = c_node.deviceType();
+  }
 
   int GenerateModelByVersion();
 
@@ -305,10 +307,9 @@ class LiteModel : public Model {
 
   int SubGraphVerify() const;
 
-  int SubGraphInOutVerify(const Model::SubGraph *graph) const;
+  int SubGraphInOutVerify(const LiteGraph::SubGraph *graph) const;
 
  public:
-  size_t buf_size_ = 0;
   std::vector<void *> node_bufs_;
 
  protected:
