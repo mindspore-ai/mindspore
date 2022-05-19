@@ -26,7 +26,7 @@ namespace {
 constexpr size_t kInputSize = 2;
 constexpr size_t kOutputSize = 1;
 template <typename T>
-class ROIAlignCpuKernelFunc : public CpuKernelFunc {
+class ROIAlignCpuKernelFunc : public DeprecatedCpuKernelFunc {
  public:
   ROIAlignCpuKernelFunc() = default;
   ~ROIAlignCpuKernelFunc() override = default;
@@ -273,10 +273,10 @@ void ROIAlignCpuKernelFunc<T>::bin_box(int thread_idx, const T *roi_boxes, int r
 }
 
 template <typename T>
-std::shared_ptr<CpuKernelFunc> SpecializeROIAlignFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeROIAlignFunc() {
   return std::make_shared<ROIAlignCpuKernelFunc<T>>();
 }
-using SpecializeROIAlignFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using SpecializeROIAlignFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::vector<std::pair<KernelAttr, SpecializeROIAlignFuncCreator>> kernel_attr_list = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    SpecializeROIAlignFunc<float>},

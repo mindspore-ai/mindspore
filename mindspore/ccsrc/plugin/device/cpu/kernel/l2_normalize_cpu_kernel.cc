@@ -28,7 +28,7 @@ constexpr size_t kL2NormalizeInputsNum = 1;
 constexpr size_t kL2NormalizeOutputsNum = 1;
 
 template <typename T>
-class L2NormalizeCpuFunc : public CpuKernelFunc {
+class L2NormalizeCpuFunc : public DeprecatedCpuKernelFunc {
  public:
   L2NormalizeCpuFunc() = default;
   ~L2NormalizeCpuFunc() override = default;
@@ -178,10 +178,10 @@ bool L2NormalizeCpuFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &input
 }
 
 template <typename T>
-std::shared_ptr<CpuKernelFunc> SpecializeL2NormFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeL2NormFunc() {
   return std::make_shared<L2NormalizeCpuFunc<T>>();
 }
-using SpecializeL2NormFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using SpecializeL2NormFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::vector<std::pair<KernelAttr, SpecializeL2NormFuncCreator>> func_class_list = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), SpecializeL2NormFunc<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeL2NormFunc<float>}};

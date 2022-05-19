@@ -65,7 +65,7 @@ constexpr auto kErf = "Erf";
 constexpr auto kErfc = "Erfc";
 constexpr auto kSoftsign = "Softsign";
 
-class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
+class ArithmeticSelfCpuKernelFunc : public DeprecatedCpuKernelFunc {
  public:
   ArithmeticSelfCpuKernelFunc() = default;
   ~ArithmeticSelfCpuKernelFunc() override = default;
@@ -617,8 +617,10 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
   func_pair->second(this, input, output, lens);
 }
 
-std::shared_ptr<CpuKernelFunc> CreateArithSelfFunc() { return std::make_shared<ArithmeticSelfCpuKernelFunc>(); }
-using ArithFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+std::shared_ptr<DeprecatedCpuKernelFunc> CreateArithSelfFunc() {
+  return std::make_shared<ArithmeticSelfCpuKernelFunc>();
+}
+using ArithFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>>> arith_kernel_attr_list_map = {
   {kRsqrt,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},

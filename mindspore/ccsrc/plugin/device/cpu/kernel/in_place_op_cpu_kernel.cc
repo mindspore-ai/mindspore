@@ -39,7 +39,7 @@ struct Sub {
   }
 };
 template <typename T>
-class InplaceOpCpuTypeFunc : public CpuKernelFunc {
+class InplaceOpCpuTypeFunc : public DeprecatedCpuKernelFunc {
  public:
   ~InplaceOpCpuTypeFunc() override = default;
   explicit InplaceOpCpuTypeFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -125,12 +125,12 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
 };
 
 template <typename T>
-std::shared_ptr<CpuKernelFunc> InplaceOpCpuFunc(const BaseOperatorPtr &base_operator,
-                                                const std::vector<KernelTensorPtr> &inputs,
-                                                const std::vector<KernelTensorPtr> &outputs) {
+std::shared_ptr<DeprecatedCpuKernelFunc> InplaceOpCpuFunc(const BaseOperatorPtr &base_operator,
+                                                          const std::vector<KernelTensorPtr> &inputs,
+                                                          const std::vector<KernelTensorPtr> &outputs) {
   return std::make_shared<InplaceOpCpuTypeFunc<T>>(base_operator, inputs, outputs);
 }
-using InplaceOpCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>(
+using InplaceOpCpuFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>(
   const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
   const std::vector<KernelTensorPtr> &outputs)>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, InplaceOpCpuFuncCreator>>> kernel_attr_list = {

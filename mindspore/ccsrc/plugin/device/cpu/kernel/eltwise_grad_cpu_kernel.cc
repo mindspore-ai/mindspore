@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <utility>
 #include <string>
-#include <map>
+#include <functional>
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "nnacl/fp32_grad/activation_grad.h"
@@ -49,12 +49,11 @@ class EltWiseGradCpuTypeFunc : public CpuKernelFunc {
  public:
   EltWiseGradCpuTypeFunc() = default;
   ~EltWiseGradCpuTypeFunc() override = default;
-  void InitFunc(const CNodePtr &kernel_node) override;
+  void InitFunc(const BaseOperatorPtr &base_operator) override;
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void InitComputeFunc();
   void ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AbsGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
@@ -86,7 +85,7 @@ void EltWiseGradCpuTypeFunc<T>::ReluGrad(const T *input1, const T *input2, T *ou
 
   int ret = ::ReluGrad(input1 + start, input2 + start, end - start, out + start);
   if (ret == NNACL_ERR) {
-    MS_LOG(EXCEPTION) << "ReLUGrad execute failed. Error no: " << ret;
+    MS_LOG(EXCEPTION) << "For 'ReLUGrad', execute failed. Error no: " << ret;
   }
 }
 
@@ -98,7 +97,7 @@ void EltWiseGradCpuTypeFunc<T>::ReLU6Grad(const T *input1, const T *input2, T *o
 
   int ret = ::Relu6Grad(input1 + start, input2 + start, end - start, out + start);
   if (ret == NNACL_ERR) {
-    MS_LOG(EXCEPTION) << "ReLU6Grad execute failed. Error no: " << ret;
+    MS_LOG(EXCEPTION) << "For 'ReLU6Grad', execute failed. Error no: " << ret;
   }
 }
 
@@ -107,7 +106,7 @@ void EltWiseGradCpuTypeFunc<T>::AbsGrad(const T *input1, const T *input2, T *out
   if constexpr (std::is_same<T, float>::value) {
     int ret = ::ElementAbsGrad(input1 + start, input2 + start, out + start, end - start);
     if (ret == NNACL_ERR) {
-      MS_LOG(EXCEPTION) << "AbsGrad execute failed. Error no: " << ret;
+      MS_LOG(EXCEPTION) << "For 'AbsGrad', execute failed. Error no: " << ret;
     }
   } else {
     for (size_t i = start; i < end; i++) {
@@ -124,7 +123,7 @@ void EltWiseGradCpuTypeFunc<T>::SigmoidGrad(const T *input1, const T *input2, T 
 
   int ret = ::SigmoidGrad(input2 + start, input1 + start, end - start, out + start);
   if (ret == NNACL_ERR) {
-    MS_LOG(EXCEPTION) << "SigmoidGrad execute failed. Error no: " << ret;
+    MS_LOG(EXCEPTION) << "For 'SigmoidGrad', execute failed. Error no: " << ret;
   }
 }
 
@@ -158,7 +157,7 @@ void EltWiseGradCpuTypeFunc<T>::TanhGrad(const T *input1, const T *input2, T *ou
 
   int ret = ::TanhGrad(input2 + start, input1 + start, end - start, out + start);
   if (ret == NNACL_ERR) {
-    MS_LOG(EXCEPTION) << "TanhGrad execute failed. Error no: " << ret;
+    MS_LOG(EXCEPTION) << "For 'TanhGrad', execute failed. Error no: " << ret;
   }
 }
 
@@ -326,13 +325,13 @@ void EltWiseGradCpuTypeFunc<T>::SoftplusGrad(const T *input1, const T *input2, T
 
   int ret = ::SoftplusGrad(input1 + start, input2 + start, end - start, out + start);
   if (ret == NNACL_ERR) {
-    MS_LOG(EXCEPTION) << "SoftplusGrad execute failed. Error no: " << ret;
+    MS_LOG(EXCEPTION) << "For 'SoftplusGrad', execute failed. Error no: " << ret;
   }
 }
 
 template <typename T>
-void EltWiseGradCpuTypeFunc<T>::InitFunc(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator) {
+  kernel_name_ = base_operator->name();
   if constexpr (std::is_same_v<T, double>) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
@@ -347,7 +346,7 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const CNodePtr &kernel_node) {
               {prim::kPrimAcoshGrad->name(), &EltWiseGradCpuTypeFunc<T>::AcoshGrad},
               {prim::kPrimAbsGrad->name(), &EltWiseGradCpuTypeFunc<T>::AbsGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCpu does not support " << kernel_name_ << " with double as input.";
+      MS_LOG(EXCEPTION) << "For 'EltWiseGrad', it does not support " << kernel_name_ << " with double as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
     return;
@@ -371,7 +370,7 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const CNodePtr &kernel_node) {
               {prim::kPrimAcoshGrad->name(), &EltWiseGradCpuTypeFunc<T>::AcoshGrad},
               {prim::kPrimSoftplusGrad->name(), &EltWiseGradCpuTypeFunc<T>::SoftplusGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCpu does not support " << kernel_name_ << " with float as input.";
+      MS_LOG(EXCEPTION) << "For 'EltWiseGrad', it does not support " << kernel_name_ << " with float as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
     return;
@@ -383,7 +382,7 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const CNodePtr &kernel_node) {
               {prim::kPrimInvGrad->name(), &EltWiseGradCpuTypeFunc<T>::InvGrad},
               {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCpu does not support " << kernel_name_ << " with int as input.";
+      MS_LOG(EXCEPTION) << "For 'EltWiseGrad', it does not support " << kernel_name_ << " with int as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
   }
@@ -394,7 +393,7 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const CNodePtr &kernel_node) {
               {prim::kPrimAsinhGrad->name(), &EltWiseGradCpuTypeFunc<T>::ComplexAsinhGrad},
               {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
-      MS_LOG(EXCEPTION) << "EltWiseGradCpu does not support " << kernel_name_;
+      MS_LOG(EXCEPTION) << "For 'EltWiseGrad', it does not support " << kernel_name_;
     }
     compute_func_ = elt_map.at(kernel_name_);
   }
@@ -529,33 +528,52 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> ke
      &SpecializeEltWiseGradFunc<complex64>}}}};
 }  // namespace
 
-void EltWiseGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
+bool EltWiseGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto iter = kernel_attr_list_map.find(kernel_name_);
+  if (iter == kernel_attr_list_map.end()) {
+    MS_LOG(ERROR) << "For 'EltWiseGrad', the kernel name must be in " << kernel::Map2Str(kernel_attr_list_map)
+                  << ", but got " << kernel_name_;
+    return false;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "EltWiseGrad does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For 'EltWiseGrad', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
 
-  func_obj_ = kernel_attr_list_map[kernel_type_][index].second();
-  func_obj_->InitFunc(kernel_node);
+  func_obj_ = kernel_attr_list_map[kernel_name_][index].second();
+  func_obj_->InitFunc(base_operator);
+  return true;
+}
+
+int EltWiseGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto input_element_num = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
+  is_null_input_ = (input_element_num == 0);
+  if (is_null_input_) {
+    return KRET_OK;
+  }
+  return KRET_OK;
 }
 
 std::vector<KernelAttr> EltWiseGradCpuKernelMod::GetOpSupport() {
-  auto iter = kernel_attr_list_map.find(kernel_type_);
+  auto iter = kernel_attr_list_map.find(kernel_name_);
   if (iter == kernel_attr_list_map.end()) {
-    MS_LOG(EXCEPTION) << "EltWiseGrad does not support " << kernel_type_;
+    MS_LOG(ERROR) << "For 'EltWiseGrad', it does not support " << kernel_name_;
+    return std::vector<KernelAttr>{};
   }
-
   std::vector<KernelAttr> support_list;
   (void)std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, FuncCreator> &pair) { return pair.first; });
-
   return support_list;
 }
 

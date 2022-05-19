@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MatMulCpuKernelFunc : public CpuKernelFunc, private DeprecatedMKLCpuKernelMod {
+class MatMulCpuKernelFunc : public DeprecatedCpuKernelFunc, private DeprecatedMKLCpuKernelMod {
  public:
   MatMulCpuKernelFunc() = default;
   ~MatMulCpuKernelFunc() override = default;

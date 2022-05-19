@@ -21,14 +21,14 @@
 #include <memory>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameReLUGrad = "ReLUGrad";
-class MIND_API ReLUGrad : public BaseOperator {
+class MIND_API ReluGrad : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ReLUGrad);
-  ReLUGrad() : BaseOperator(kNameReLUGrad) { InitIOName({"x"}, {"output"}); }
+  MIND_API_BASE_MEMBER(ReluGrad);
+  ReluGrad() : BaseOperator(prim::kReLUGrad) { InitIOName({"x"}, {"output"}); }
   void Init() const {}
 };
 }  // namespace ops

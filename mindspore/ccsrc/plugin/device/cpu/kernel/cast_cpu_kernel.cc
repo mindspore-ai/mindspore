@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 template <typename S, typename T>
-class CastCpuKernelFunc : public CpuKernelFunc {
+class CastCpuKernelFunc : public DeprecatedCpuKernelFunc {
  public:
   CastCpuKernelFunc() = default;
   ~CastCpuKernelFunc() override = default;
@@ -62,10 +62,10 @@ bool CastCpuKernelFunc<S, T>::RunFunc(const std::vector<AddressPtr> &inputs, con
 }
 
 template <typename S, typename T>
-std::shared_ptr<CpuKernelFunc> CreateCastFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> CreateCastFunc() {
   return std::make_shared<CastCpuKernelFunc<S, T>>();
 }
-using CastCpuKernelFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using CastCpuKernelFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 
 static std::vector<std::pair<KernelAttr, CastCpuKernelFuncCreator>> kernel_attr_lists = {
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateCastFunc<uint8_t, uint8_t>},

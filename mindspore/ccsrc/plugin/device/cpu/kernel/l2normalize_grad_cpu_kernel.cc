@@ -27,7 +27,7 @@ constexpr size_t kL2NormalizeGradInputsNum = 3;
 constexpr size_t kL2NormalizeGradOutputsNum = 1;
 
 template <typename T>
-class L2NormalizeGradCpuFunc : public CpuKernelFunc {
+class L2NormalizeGradCpuFunc : public DeprecatedCpuKernelFunc {
  public:
   L2NormalizeGradCpuFunc() = default;
   ~L2NormalizeGradCpuFunc() override = default;
@@ -194,10 +194,10 @@ void L2NormalizeGradCpuFunc<T>::GetOutput(const std::vector<T> &input_x_vector, 
 }
 
 template <typename T>
-std::shared_ptr<CpuKernelFunc> SpecializeL2NormGradFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeL2NormGradFunc() {
   return std::make_shared<L2NormalizeGradCpuFunc<T>>();
 }
-using SpecializeL2NormGradFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using SpecializeL2NormGradFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 std::vector<std::pair<KernelAttr, SpecializeL2NormGradFuncCreator>> func_class_list = {
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)

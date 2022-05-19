@@ -29,7 +29,7 @@ namespace {
 using rolling::Method;
 
 template <typename T, typename S>
-class RollingCpuKernelFunc : public CpuKernelFunc {
+class RollingCpuKernelFunc : public DeprecatedCpuKernelFunc {
  public:
   RollingCpuKernelFunc() = default;
   ~RollingCpuKernelFunc() override = default;
@@ -252,10 +252,10 @@ bool RollingCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs,
 }
 
 template <typename T, typename S>
-std::shared_ptr<CpuKernelFunc> SpecializeRollingFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeRollingFunc() {
   return std::make_shared<RollingCpuKernelFunc<T, S>>();
 }
-using SpecializeRollingFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using SpecializeRollingFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::vector<std::pair<KernelAttr, SpecializeRollingFuncCreator>> kernel_attr_list = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    SpecializeRollingFunc<float, float>},

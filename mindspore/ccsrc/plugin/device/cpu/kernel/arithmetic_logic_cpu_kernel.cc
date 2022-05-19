@@ -38,7 +38,7 @@ constexpr auto kEqual = "Equal";
 constexpr auto kNotEqual = "NotEqual";
 
 template <typename T>
-class ArithLogicCpuTypeFunc : public CpuKernelFunc {
+class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
  public:
   ArithLogicCpuTypeFunc() = default;
   ~ArithLogicCpuTypeFunc() override = default;
@@ -128,7 +128,7 @@ class ArithLogicCpuTypeFunc : public CpuKernelFunc {
 };
 
 template <typename T>
-class ArithComplexLogicCpuTypeFunc : public CpuKernelFunc {
+class ArithComplexLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
  public:
   ArithComplexLogicCpuTypeFunc() = default;
   ~ArithComplexLogicCpuTypeFunc() override = default;
@@ -354,14 +354,14 @@ void ArithLogicCpuTypeFunc<T>::LessEqual(const T *input1, const T *input2, bool 
 }
 
 template <typename T>
-std::shared_ptr<CpuKernelFunc> SpecializeArithLogFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeArithLogFunc() {
   return std::make_shared<ArithLogicCpuTypeFunc<T>>();
 }
 template <typename T>
-std::shared_ptr<CpuKernelFunc> SpecializeArithLogComplexFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeArithLogComplexFunc() {
   return std::make_shared<ArithComplexLogicCpuTypeFunc<T>>();
 }
-using ArithLogicCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using ArithLogicCpuFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFuncCreator>>> kernel_attr_lists = {
   {prim::kPrimLess->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),

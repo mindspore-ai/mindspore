@@ -18,6 +18,7 @@
 #include <complex>
 #include <memory>
 #include <vector>
+#include <map>
 #include <limits>
 #include <string>
 #include "mindspore/core/ir/dtype/type_id.h"
@@ -31,16 +32,24 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kInputMinNum = 2;
 constexpr size_t kOutputNum = 1;
-class EltWiseGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+constexpr auto kUnKnown = "UnKnown";
+class EltWiseGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   EltWiseGradCpuKernelMod() = default;
-  explicit EltWiseGradCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  explicit EltWiseGradCpuKernelMod(const std::string &kernel_name) : kernel_name_(kernel_name) {}
   ~EltWiseGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
+    if (is_null_input_) {
+      return true;
+    }
     if (inputs.size() < kInputMinNum || outputs.size() != kOutputNum) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', it requires at least 2 inputs and 1 output, but got "
                     << inputs.size() << " input(s) and " << outputs.size() << " output(s).";
@@ -58,7 +67,8 @@ class EltWiseGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   std::shared_ptr<CpuKernelFunc> func_obj_;
-  std::string kernel_type_;
+  bool is_null_input_{false};
+  std::string kernel_name_{kUnKnown};
 };
 }  // namespace kernel
 }  // namespace mindspore

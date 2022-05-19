@@ -210,15 +210,25 @@ class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {
   std::vector<TypeId> GetOutputDtypes(const CNodePtr &kernel_node);
 };
 
+class DeprecatedCpuKernelFunc {
+ public:
+  DeprecatedCpuKernelFunc() = default;
+  virtual ~DeprecatedCpuKernelFunc() = default;
+  virtual bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                       const std::vector<AddressPtr> &outputs) = 0;
+  virtual void InitFunc(const CNodePtr &kernel_node) {}
+  virtual void InitInputOutputSize(const CNodePtr &kernel_node, std::vector<size_t> *input_size_list,
+                                   std::vector<size_t> *output_size_list, std::vector<size_t> *workspace_size_list) {}
+  ParallelSearchInfo parallel_search_info_;
+};
+
 class CpuKernelFunc {
  public:
   CpuKernelFunc() = default;
   virtual ~CpuKernelFunc() = default;
   virtual bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                        const std::vector<AddressPtr> &outputs) = 0;
-  virtual void InitFunc(const CNodePtr &kernel_node) {}
-  virtual void InitInputOutputSize(const CNodePtr &kernel_node, std::vector<size_t> *input_size_list,
-                                   std::vector<size_t> *output_size_list, std::vector<size_t> *workspace_size_list) {}
+  virtual void InitFunc(const BaseOperatorPtr &base_operator) {}
   ParallelSearchInfo parallel_search_info_;
 };
 

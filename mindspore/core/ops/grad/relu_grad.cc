@@ -16,11 +16,8 @@
 #include "ops/grad/relu_grad.h"
 #include <string>
 #include <algorithm>
-#include <map>
-#include <set>
 #include <vector>
 #include "abstract/param_validator.h"
-#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
@@ -65,13 +62,13 @@ TypePtr ReLUGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(ReLUGrad, BaseOperator);
+MIND_API_OPERATOR_IMPL(ReluGrad, BaseOperator);
 AbstractBasePtr ReLUGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   auto type = ReLUGradInferType(primitive, input_args);
   auto shape = ReLUGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ReLUGrad, prim::kPrimReluGrad, ReLUGradInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(ReluGrad, prim::kPrimReluGrad, ReLUGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

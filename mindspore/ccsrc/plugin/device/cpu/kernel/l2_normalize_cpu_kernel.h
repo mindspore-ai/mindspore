@@ -41,7 +41,7 @@ class L2NormalizeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::shared_ptr<CpuKernelFunc> func_obj_;
+  std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
 };
 }  // namespace kernel
 }  // namespace mindspore

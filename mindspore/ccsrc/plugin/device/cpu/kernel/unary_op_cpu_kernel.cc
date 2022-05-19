@@ -32,7 +32,7 @@ constexpr auto kConj = "Conj";
 constexpr auto kCeil = "Ceil";
 
 template <typename T, typename S>
-class UnaryOpCpuKernelFunc : public CpuKernelFunc {
+class UnaryOpCpuKernelFunc : public DeprecatedCpuKernelFunc {
  public:
   UnaryOpCpuKernelFunc() = default;
   ~UnaryOpCpuKernelFunc() override = default;
@@ -137,10 +137,10 @@ bool UnaryOpCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs, 
 }
 
 template <typename T, typename S>
-std::shared_ptr<CpuKernelFunc> SpecializeUnaryFunc() {
+std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeUnaryFunc() {
   return std::make_shared<UnaryOpCpuKernelFunc<T, S>>();
 }
-using UnaryOpCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
+using UnaryOpCpuFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>> kernel_attr_list = {
   {kReal,
    {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),

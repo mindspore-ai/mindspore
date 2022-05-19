@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MatmulDoubleCpuKernelFunc : public CpuKernelFunc {
+class MatmulDoubleCpuKernelFunc : public DeprecatedCpuKernelFunc {
  public:
   MatmulDoubleCpuKernelFunc() = default;
   ~MatmulDoubleCpuKernelFunc() override = default;
