@@ -468,11 +468,12 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
   auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
   uint64_t offset = 0;
   for (size_t i = 0; i < input_size; ++i) {
-    if (common::AnfAlgo::IsNoneInput(kernel, i)) {
+    auto real_index = AnfAlgo::GetRealInputIndex(kernel, i);
+    if (common::AnfAlgo::IsNoneInput(kernel, real_index)) {
       continue;
     }
     aicpu::dump::Input input;
-    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, i);
+    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(kernel, real_index);
     auto input_node = input_node_with_index.first;
     auto input_index = input_node_with_index.second;
     std::string output_format = AnfAlgo::GetOutputFormat(input_node, input_index);
@@ -491,7 +492,7 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
 
     input.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(args)) + offset);
     // device  address data size
-    auto address = AnfAlgo::GetPrevNodeOutputAddr(kernel, i);
+    auto address = AnfAlgo::GetPrevNodeOutputAddr(kernel, real_index);
     MS_EXCEPTION_IF_NULL(address);
     input.set_size(address->GetSize());
     MS_LOG(INFO) << "[DataDump] input " << i << " address size:" << input.size();
