@@ -21,6 +21,7 @@ from .parsers.class_def_parser import g_classdef_parser
 from .parsers.function_def_parser import g_functiondef_parser
 from .parsers.arguments_parser import g_arguments_parser
 from .parsers.assign_parser import g_assign_parser
+from .parsers.if_parser import g_if_parser
 from .parsers.return_parser import g_return_parser
 from .api.scoped_value import ScopedValue, ValueType
 from .api.symbol_tree import SymbolTree
