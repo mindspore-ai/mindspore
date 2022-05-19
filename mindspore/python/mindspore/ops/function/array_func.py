@@ -19,7 +19,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
 from ...common import Tensor
-from ..operations.array_ops import NonZero
+from ..operations.array_ops import NonZero, MatrixDiagV3
 
 eye_ = P.Eye()
 fill_ = P.Fill()
@@ -1582,6 +1582,22 @@ def nonzero(x):
     return nonzero_(x)
 
 
+def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_LEFT"):
+    """
+    Returns a batched diagonal tensor with given batched diagonal values.
+    """
+    if isinstance(k, int) and not isinstance(k, bool):
+        k = cast(k, mstype.int32)
+    if isinstance(num_rows, int) and not isinstance(num_rows, bool):
+        num_rows = cast(num_rows, mstype.int32)
+    if isinstance(num_cols, int) and not isinstance(num_cols, bool):
+        num_cols = cast(num_cols, mstype.int32)
+    if isinstance(padding_value, (float, int)) and not isinstance(padding_value, bool):
+        padding_value = cast(padding_value, x.dtype)
+    matrix_diag_v3 = MatrixDiagV3(align)
+    return matrix_diag_v3(x, k, num_rows, num_cols, padding_value)
+
+
 ##############################
 # Type Conversion Functions.
 ##############################
@@ -1828,6 +1844,7 @@ __all__ = [
     'scatter_max',
     'scatter_min',
     'select',
-    'nonzero'
+    'nonzero',
+    'matrix_diag',
 ]
 __all__.sort()

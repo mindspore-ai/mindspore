@@ -818,6 +818,13 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     return res.astype(dtype)
 
 
+def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_LEFT"):
+    """
+    Returns a batched diagonal tensor with given batched diagonal values.
+    """
+    return F.matrix_diag(x, k, num_rows, num_cols, padding_value, align)
+
+
 def trace(x, offset=0, axis1=0, axis2=1, dtype=None):
     """
     Returns the sum along diagonals of the array.

@@ -995,6 +995,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('log_matrix_determinant')(self)
 
+    def matrix_diag(self, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_LEFT"):
+        """
+        Returns a batched diagonal tensor with given batched diagonal values.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('matrix_diag')(self, k, num_rows, num_cols, padding_value, align)
+
     def pow(self, power):
         r"""
         Calculate the power of Tensor.

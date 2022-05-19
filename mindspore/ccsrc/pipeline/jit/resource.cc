@@ -215,6 +215,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"space_to_batch_nd", std::string("space_to_batch_nd")},            // P.SpaceToBatchND
        {"choose", std::string("choose")},                                  // P.Select()
        {"diagonal", std::string("diagonal")},                              // P.Eye()
+       {"matrix_diag", std::string("matrix_diag")},                        // matrix_diag()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()
        {"take", std::string("take")},                                      // P.GatherNd()
        {"tensor_scatter_add", std::string("tensor_scatter_add")},          // P.TensorScatterAdd()
