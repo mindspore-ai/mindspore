@@ -117,38 +117,46 @@ void FractionalMaxPool3DWithFixedKsizeCPUKernelMod::InitKernel(const CNodePtr &k
     }
   }
   if (outputD_ + kernelsizeD_ - 1 >= inputD_) {
-    MS_EXCEPTION(ValueError) << "FractionalMaxPool3DWithFixedKsize out(): pool depth ," << kernelsizeD_
-                             << "too large relative to input depth" << inputD_;
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', out(): pool depth ," << kernelsizeD_
+                             << "too large relative to input depth" << inputD_ << ".";
   }
   if (outputH_ + kernelsizeH_ - 1 >= inputH_) {
-    MS_EXCEPTION(ValueError) << "FractionalMaxPool3DWithFixedKsize out(): pool height ," << kernelsizeD_
-                             << "too large relative to input height" << inputD_;
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', out(): pool height ," << kernelsizeH_
+                             << "too large relative to input height" << inputH_ << ".";
   }
   if (outputW_ + kernelsizeW_ - 1 >= inputW_) {
-    MS_EXCEPTION(ValueError) << "FractionalMaxPool3DWithFixedKsize out(): pool width ," << kernelsizeD_
-                             << "too large relative to input width" << inputD_;
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', out(): pool width ," << kernelsizeW_
+                             << "too large relative to input width" << inputW_ << ".";
   }
   if (!(input_num_dims == kDimSize4 || input_num_dims == kDimSize5)) {
-    MS_EXCEPTION(TypeError) << "Input data dimensions must be equal to 4 or 5, but got " << input_num_dims;
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the dimension of 'x' must be equal to 4 or 5, but got "
+                            << input_num_dims << ".";
   }
   if (random_samples_dims != kDimSize3) {
-    MS_EXCEPTION(TypeError) << "random_samples dimensions must be equal to 3, but got " << random_samples_dims;
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_
+                            << "', the dimension of 'random_samples' must be equal to 3, but got "
+                            << random_samples_dims << ".";
   }
   if (output_shape_dims != kDimSize3) {
-    MS_EXCEPTION(TypeError) << "output_shape dimensions must be equal to 3, but got " << output_shape_dims;
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_
+                            << "', the dimension of 'output_shape' must be equal to 3, but got " << output_shape_dims
+                            << ".";
   }
   if (ksize_dims != kDimSize3) {
-    MS_EXCEPTION(TypeError) << "ksize dimensions must be equal to 3, but got " << ksize_dims;
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the dimension of 'ksize' must be equal to 3, but got "
+                            << ksize_dims << ".";
   }
   for (size_t i = 0; i < input_num_dims; i++) {
     if (input_shape_[i] <= 0) {
-      MS_EXCEPTION(ValueError) << "FractionalMaxPool3DWithFixedKsize: expected the "
-                                  "input dimension cannot be empty";
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                               << "', expected 'x' have non-empty spatial dimensions, but 'x' has sizes "
+                               << input_shape_[i] << " with dimension " << i << " being empty.";
     }
   }
   if (random_samples_shape_[kDimSize2] != kDimSize3) {
-    MS_EXCEPTION(ValueError) << "The third dimension of random_samples must be 3, but got "
-                             << random_samples_shape_[kDimSize2];
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                             << "', expected the third dimension of 'random_samples' must be 3, but got "
+                             << random_samples_shape_[kDimSize2] << ".";
   }
 }
 
@@ -239,16 +247,13 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::FractionalMaxPool3DWithFixed
           for (h2 = inputH_Start; h2 < inputH_Start + kernelsizeH_; ++h2) {
             for (w2 = inputW_Start; w2 < inputW_Start + kernelsizeW_; ++w2) {
               if (t2 < 0 && t2 >= inputD_) {
-                MS_LOG(EXCEPTION) << "FractionalMaxPool3DWithFixedKsize "
-                                     "index T value is illegal.";
+                MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', index T value is illegal.";
               }
               if (h2 < 0 && h2 >= inputH_) {
-                MS_LOG(EXCEPTION) << "FractionalMaxPool3DWithFixedKsize "
-                                     "index H value is illegal.";
+                MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', index H value is illegal.";
               }
               if (w2 < 0 && w2 >= inputW_) {
-                MS_LOG(EXCEPTION) << "FractionalMaxPool3DWithFixedKsize "
-                                     "index W value is illegal.";
+                MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', index W value is illegal.";
               }
               argmax_t planeIndex = t2 * inputH_ * inputW_ + h2 * inputW_ + w2;
               scalar_t val = inputForPlane[planeIndex];
@@ -277,7 +282,8 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithArgmaxType(cons
     case kNumberTypeInt64:
       return ComputeTemplate<scalar_t, random_sample_t, int64_t>(inputs, outputs);
     default:
-      MS_EXCEPTION(TypeError) << "argmax_type" << argmax_type_ << "not support, must be in [{DT_INT32, DT_INT64}].";
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the type of 'argmax'" << argmax_type_
+                              << "not support, must be in [{DT_INT32, DT_INT64}].";
       return false;
   }
 }
@@ -293,7 +299,7 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::DoComputeWithRandomSamplesTy
     case kNumberTypeFloat64:
       return DoComputeWithArgmaxType<scalar_t, double>(inputs, outputs, argmax_type_);
     default:
-      MS_EXCEPTION(TypeError) << "random_samples_type" << random_samples_type_
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the type of 'random_samples'" << random_samples_type_
                               << "not support, must be in [{DT_FLOAT16, DT_FLOAT, DT_DOUBLE}].";
       return false;
   }
@@ -316,7 +322,7 @@ bool FractionalMaxPool3DWithFixedKsizeCPUKernelMod::Launch(const std::vector<Add
     case kNumberTypeInt64:
       return DoComputeWithRandomSamplesType<int64_t>(inputs, outputs, random_samples_type_);
     default:
-      MS_EXCEPTION(TypeError) << "FractionalMaxPool3DWithFixedKsize kernel data type not support.";
+      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', does not support this kernel data type.";
   }
   return true;
 }
