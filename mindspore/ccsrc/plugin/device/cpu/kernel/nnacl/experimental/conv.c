@@ -20,11 +20,11 @@
 #include "nnacl/op_base.h"
 #include "nnacl/kernel.h"
 
-KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
-  if (in[0]->format_ == Format_NHWC) {
+KernelBase *CreateConv(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize) {
+  if (in[0].format_ == Format_NHWC) {
     return NULL;
-  } else if (in[0]->format_ == Format_NCHW) {
-    if (in[0]->format_ != Format_NC16HW16) {
+  } else if (in[0].format_ == Format_NCHW) {
+    if (in[0].format_ != Format_NC16HW16) {
       return NULL;
     }
     KConv2d *conv = (KConv2d *)malloc(sizeof(KConv2d));
@@ -43,7 +43,7 @@ KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, TensorC
     conv->base.resize = conv2d_resize_fp32_nchwx_avx512;
     conv->base.inferShape = conv2d_infershape_fp32_nchwx_avx512;
 
-    conv->base.funcs = GetCoreFuncs(in[0]->data_type_ == kNumberTypeFloat16);
+    conv->base.funcs = GetCoreFuncs(in[0].data_type_ == kNumberTypeFloat16);
 
     return (KernelBase *)conv;
   } else {

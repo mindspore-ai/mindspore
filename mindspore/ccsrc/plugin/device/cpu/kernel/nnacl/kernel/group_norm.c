@@ -21,7 +21,7 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/tensor_c.h"
 
-static int groupnorm_resize(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+static int groupnorm_resize(struct KernelBase *self);
 static int groupnorm_prepare(struct KernelBase *self);
 static int groupnorm_release(struct KernelBase *self);
 static int groupnorm_compute(struct KernelBase *self);
@@ -29,17 +29,13 @@ typedef struct GroupNormStru {
   KernelBase base;
 } GroupNormStru;
 
-static int groupnorm_resize(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
+static int groupnorm_resize(struct KernelBase *self) {
   GroupNormStru *groupnorm = (GroupNormStru *)self;
   GroupNormParameter *param = (GroupNormParameter *)groupnorm->base.param;
 
   groupnorm_release(self);
 
-  TensorC *in0 = in[0];
-  if (in0 == NULL) {
-    return NNACL_ERR;
-  }
-
+  TensorC *in0 = &(self->in[0]);
   if (in0->shape_size_ < C1NUM) {
     return NNACL_ERR;
   }
@@ -93,9 +89,9 @@ static int groupnorm_do_compute(void *param, int task_id, float lhs_scale, float
 
   GroupNormStru *groupnorm_stru = (GroupNormStru *)param;
   GroupNormParameter *groupnorm_param = (GroupNormParameter *)groupnorm_stru->base.param;
-  int ret = GroupNormFp32(groupnorm_stru->base.in[0]->data_, groupnorm_stru->base.in[C1NUM]->data_,
-                          groupnorm_stru->base.in[C2NUM]->data_, groupnorm_param->mean_, groupnorm_param->variance_,
-                          groupnorm_param, task_id, groupnorm_stru->base.out[0]->data_);
+  int ret = GroupNormFp32(groupnorm_stru->base.in[0].data_, groupnorm_stru->base.in[C1NUM].data_,
+                          groupnorm_stru->base.in[C2NUM].data_, groupnorm_param->mean_, groupnorm_param->variance_,
+                          groupnorm_param, task_id, groupnorm_stru->base.out[0].data_);
 
   return ret;
 }
@@ -104,7 +100,7 @@ static int groupnorm_compute(struct KernelBase *self) {
   return self->env->parallelLaunch(self->env->threadPool, groupnorm_do_compute, self, self->param->thread_num_);
 }
 
-KernelBase *CreateGroupNorm(OpParameter *param, TensorC **in, size_t insize, TensorC **out, size_t outsize) {
+KernelBase *CreateGroupNorm(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize) {
   GroupNormStru *groupnorm = (GroupNormStru *)malloc(sizeof(GroupNormStru));
   if (groupnorm == NULL) {
     return NULL;

@@ -27,7 +27,7 @@ typedef struct KConv2d {
 #ifdef __cplusplus
 extern "C" {
 #endif
-KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+KernelBase *CreateConv(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize);
 #ifdef __cplusplus
 }
 #endif

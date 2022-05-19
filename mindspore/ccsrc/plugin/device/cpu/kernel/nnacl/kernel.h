@@ -33,13 +33,13 @@ typedef struct KernelBase {
   int (*release)(struct KernelBase *self);
   int (*compute)(struct KernelBase *self);
   int (*inferShape)(struct KernelBase *self);
-  int (*resize)(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+  int (*resize)(struct KernelBase *self);
   OpParameter *param;
   // by design, kernelBase's methods are not responsible for input/output tensors' management, user must be invokes
   // KernelBase's infer shape and allocate/free input/output tensor at necessary time.
-  TensorC **in;
+  TensorC *in;
   size_t insize;
-  TensorC **out;
+  TensorC *out;
   size_t outsize;
   ExecEnv *env;
   bool inferShape_;
@@ -55,15 +55,15 @@ typedef struct KernelBase {
   }
 #endif
 
-typedef KernelBase *(*KernelCreator)(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+typedef KernelBase *(*KernelCreator)(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize);
 void RegKernelCreator(int opType, int format, int dataType, KernelCreator func);
 CoreFuncs *GetCoreFuncs(bool use_fp16);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize,
-                         int data_type, FormatC format);
+KernelBase *CreateKernel(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
+                         FormatC format);
 bool SupportKernelC(int opType, int format, int dataType);
 ExecEnv *GetExecEnv(void);
 #ifdef __cplusplus

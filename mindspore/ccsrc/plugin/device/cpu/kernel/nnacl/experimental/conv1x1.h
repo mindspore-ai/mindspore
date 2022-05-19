@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-KernelBase *CreateConv1x1(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+KernelBase *CreateConv1x1(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize);
 
 #ifdef __cplusplus
 }

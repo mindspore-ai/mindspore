@@ -42,8 +42,8 @@ class GroupnormCPUKernel : public LiteKernel {
 
  protected:
   KernelBase *kernel_ = nullptr;
-  TensorC *in_[DIMENSION_3D] = {nullptr};
-  TensorC *out_[DIMENSION_1D] = {nullptr};
+  TensorC in_[DIMENSION_3D];
+  TensorC out_[DIMENSION_1D];
 };
 }  // namespace mindspore::kernel
 

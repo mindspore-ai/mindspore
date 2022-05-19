@@ -74,7 +74,7 @@ int CPUKernel::ReSize() {
 
   UpdateTensorC();
 
-  return kernel_->resize(kernel_, &in_, in_size_, &out_, out_size_);
+  return kernel_->resize(kernel_);
 }
 
 int CPUKernel::Run() {
@@ -84,15 +84,15 @@ int CPUKernel::Run() {
 
   for (size_t i = 0; i < in_size_; i++) {
     if (in_tensors_[i]->IsConst() == false) {
-      kernel_->in[i]->data_ = in_tensors_[i]->data();
-      kernel_->in[i]->data_type_ = in_tensors_[i]->data_type();
+      kernel_->in[i].data_ = in_tensors_[i]->data();
+      kernel_->in[i].data_type_ = in_tensors_[i]->data_type();
     }
   }
 
   for (size_t i = 0; i < out_size_; i++) {
     if (out_tensors_[i]->IsConst() == false) {
-      kernel_->out[i]->data_ = out_tensors_[i]->data();
-      kernel_->out[i]->data_type_ = out_tensors_[i]->data_type();
+      kernel_->out[i].data_ = out_tensors_[i]->data();
+      kernel_->out[i].data_type_ = out_tensors_[i]->data_type();
     }
   }
 
@@ -120,7 +120,7 @@ int CPUKernel::InitKernel(const KernelKey &key) {
 
   UpdateTensorC();
 
-  kernel_ = CreateKernel(op_parameter_, &in_, in_size_, &out_, out_size_, key.data_type, (FormatC)key.format);
+  kernel_ = CreateKernel(op_parameter_, in_, in_size_, out_, out_size_, key.data_type, (FormatC)key.format);
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }

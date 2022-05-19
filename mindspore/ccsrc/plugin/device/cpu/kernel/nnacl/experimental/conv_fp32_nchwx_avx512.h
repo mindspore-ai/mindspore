@@ -21,6 +21,5 @@ int conv2d_prepare_fp32_nchwx_avx512(struct KernelBase *self);
 int conv2d_release_fp32_nchwx_avx512(struct KernelBase *self);
 int conv2d_compute_fp32_nchwx_avx512(struct KernelBase *self);
 int conv2d_infershape_fp32_nchwx_avx512(struct KernelBase *self);
-int conv2d_resize_fp32_nchwx_avx512(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *out[],
-                                    size_t outsize);
+int conv2d_resize_fp32_nchwx_avx512(struct KernelBase *self);
 #endif

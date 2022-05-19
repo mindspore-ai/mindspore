@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-KernelBase *CreateGatherD(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+KernelBase *CreateGatherD(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize);
 
 #ifdef __cplusplus
 }
