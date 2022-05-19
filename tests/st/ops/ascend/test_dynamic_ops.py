@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -162,6 +162,15 @@ class BatchNormNet(nn.Cell):
 
     def construct(self, x):
         return self.bn(x)
+
+
+class SquareSumAllNet(nn.Cell):
+    def __init__(self):
+        super(SquareSumAllNet, self).__init__()
+        self.square_sum_all = ops.SquareSumAll()
+
+    def construct(self, x, y):
+        return self.square_sum_all(x, y)
 
 
 @pytest.mark.level1
@@ -362,3 +371,28 @@ def test_dynamic_batchnorm():
     input_shape = [(batch_size, 256, None, 12), (batch_size, 256, None, 12)]
     net = BatchNormNet(256)
     common_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_square_sum_all():
+    """
+    Feature: Test SquareSumAll. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    batch_size = 16
+    data_list = []
+    for i in range(1, 4):
+        data_list.append((np.random.rand(batch_size, i).astype(np.float32),
+                          np.random.rand(batch_size, i).astype(np.float32)))
+
+    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
+    dataset.set_dynamic_columns(columns={"data1": [batch_size, None], "data2": [batch_size, None]})
+    net = SquareSumAllNet()
+
+    out = dynamic_shape_sink_process(net, dataset)
+    out_expect = fixed_shape_process(net, dataset)
+    assert compare(out, out_expect)

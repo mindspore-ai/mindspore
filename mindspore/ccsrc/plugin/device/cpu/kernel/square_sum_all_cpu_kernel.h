@@ -39,8 +39,14 @@ class SquareSumAllCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t input_size_;
   TypeId dtype_;
 
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
+
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  void InitWorkspaceSize();
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
 };
 }  // namespace kernel
 }  // namespace mindspore
