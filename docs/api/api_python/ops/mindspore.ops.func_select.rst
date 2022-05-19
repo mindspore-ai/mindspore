@@ -32,4 +32,4 @@ mindspore.ops.select
     **异常：**
 
     - **TypeError** - `x` 和 `y` 不是Tensor、int或者float。
-    - **TypeError** - 输入的shape不同。
+    - **ValueError** - 输入的shape不同。
