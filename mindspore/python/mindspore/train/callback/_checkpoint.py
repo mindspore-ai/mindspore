@@ -30,6 +30,7 @@ from mindspore.parallel._cell_wrapper import destroy_allgather_cell
 from mindspore.parallel._recovery_context import _set_recovery_context, _get_recovery_context
 from ._callback import Callback, set_cur_net
 from ...common.tensor import Tensor
+from ...common.parameter import Parameter
 
 _cur_dir = os.getcwd()
 _save_dir = _cur_dir
@@ -91,8 +92,8 @@ class CheckpointConfig:
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False.
         saved_network (Cell): Network to be saved in checkpoint file. If the saved_network has no relation
             with the network in training, the initial value of saved_network will be saved. Default: None.
-        append_info (list): The information save to checkpoint file. Support "epoch_num", "step_num" and dict.
-            The key of dict must be str, the value of dict must be one of int float and bool. Default: None.
+        append_info (list): The information save to checkpoint file. Support "epoch_num", "step_num" and dict. The key
+            of dict must be str, the value of dict must be one of int, float, bool, Parameter or Tensor. Default: None
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: None.
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
@@ -331,7 +332,7 @@ class CheckpointConfig:
                     raise TypeError(f"For 'CheckpointConfig', the element of 'append_info' must has only one dict, "
                                     "but got {dict_num}")
                 for key, value in element.items():
-                    if isinstance(key, str) and isinstance(value, (int, float, bool)):
+                    if isinstance(key, str) and isinstance(value, (int, float, bool, str, Parameter, Tensor)):
                         handle_append_info[key] = value
                     else:
                         raise TypeError(f"For 'CheckpointConfig', the key type of the dict 'append_info' "

@@ -24,14 +24,15 @@ import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import context, Model
+from mindspore import dataset as ds
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore.nn import SoftmaxCrossEntropyWithLogits
-from mindspore.nn import WithLossCell, TrainOneStepCell
+from mindspore.common.initializer import Normal
+from mindspore.nn import SoftmaxCrossEntropyWithLogits, WithLossCell, TrainOneStepCell, Accuracy
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.train.callback import _CheckpointManager
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, _CheckpointManager
 from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, \
      export, _save_graph, load
 from tests.security_utils import security_off_wrap
@@ -142,6 +143,75 @@ def test_load_checkpoint_error_filename():
         load_checkpoint(ckpt_file_name)
 
 
+class LeNet5(nn.Cell):
+    """
+    Lenet network
+    """
+    def __init__(self, num_class=10, num_channel=1):
+        super(LeNet5, self).__init__()
+        self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
+        self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
+        self.fc1 = nn.Dense(16 * 5 * 5, 120, weight_init=Normal(0.02))
+        self.fc2 = nn.Dense(120, 84, weight_init=Normal(0.02))
+        self.fc3 = nn.Dense(84, num_class, weight_init=Normal(0.02))
+        self.relu = nn.ReLU()
+        self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.flatten = nn.Flatten()
+
+    def construct(self, x):
+        x = self.max_pool2d(self.relu(self.conv1(x)))
+        x = self.max_pool2d(self.relu(self.conv2(x)))
+        x = self.flatten(x)
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+
+def get_data(num, img_size=(1, 32, 32), num_classes=10, is_onehot=True):
+    """Get Data"""
+    for _ in range(num):
+        img = np.random.randn(*img_size)
+        target = np.random.randint(0, num_classes)
+        target_ret = np.array([target]).astype(np.float32)
+        if is_onehot:
+            target_onehot = np.zeros(shape=(num_classes,))
+            target_onehot[target] = 1
+            target_ret = target_onehot.astype(np.float32)
+        yield img.astype(np.float32), target_ret
+
+
+def create_dataset(num_data=32, batch_size=32, repeat_size=1):
+    """Generate Data"""
+    input_data = ds.GeneratorDataset(list(get_data(num_data)), column_names=['data', 'label'])
+    input_data = input_data.batch(batch_size, drop_remainder=True)
+    input_data = input_data.repeat(repeat_size)
+    return input_data
+
+
+def test_checkpointconfig_append_info_and_load_checkpoint():
+    """
+    Feature: Save checkpoint for CheckpointConfig's append_info and load checkpoint.
+    Description: Test save checkpoint and load checkpoint for CheckpointConfig's append_info.
+    Expectation: Checkpoint for CheckpointConfig's append_info can be saved and reloaded.
+    """
+    if os.path.exists('./ckptconfig_append_info-1_1.ckpt'):
+        os.chmod('./ckptconfig_append_info-1_1.ckpt', stat.S_IWRITE)
+        os.remove('./ckptconfig_append_info-1_1.ckpt')
+
+    ds_train = create_dataset()
+    network = LeNet5(10)
+    net_loss = nn.SoftmaxCrossEntropyWithLogits()
+    net_opt = nn.Momentum(network.trainable_params(), learning_rate=0.01, momentum=0.9)
+    model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
+    config_ck = CheckpointConfig(save_checkpoint_steps=1, keep_checkpoint_max=1,
+                                 append_info=[{'param_1': Tensor(200.0),
+                                               'param_2': Parameter(Tensor([[1, 2], [3, 4]])),
+                                               'param_3': 'param_string'}])
+    ckpt_cb = ModelCheckpoint(prefix='ckptconfig_append_info', directory='./', config=config_ck)
+    model.train(epoch=1, train_dataset=ds_train, callbacks=[LossMonitor(), ckpt_cb])
+
+
 def test_save_checkpoint_for_list_append_info_and_load_checkpoint():
     """
     Feature: Save checkpoint for list append info and load checkpoint.
@@ -162,7 +232,8 @@ def test_save_checkpoint_for_list_append_info_and_load_checkpoint():
     parameter_list.append(one_param)
     parameter_list.append(param1)
     parameter_list.append(param2)
-    append_dict = {"lr": 0.01, "epoch": 20, "train": True}
+    append_dict = {"lr": 0.01, "epoch": 20, "train": True, "par_string": "string_test",
+                   "par_param": Parameter(Tensor(1.0)), "par_tensor": Tensor([[1, 2], [2, 3]])}
     if os.path.exists('./parameters.ckpt'):
         os.chmod('./parameters.ckpt', stat.S_IWRITE)
         os.remove('./parameters.ckpt')
@@ -171,11 +242,18 @@ def test_save_checkpoint_for_list_append_info_and_load_checkpoint():
     save_checkpoint(parameter_list, ckpt_file_name, append_dict=append_dict)
     par_dict = load_checkpoint(ckpt_file_name)
 
-    assert len(par_dict) == 6
+    assert len(par_dict) == 9
     assert par_dict['param_test'].name == 'param_test'
     assert par_dict['param_test'].data.dtype == mstype.float32
     assert par_dict['param_test'].data.shape == (1, 3, 224, 224)
-    assert isinstance(par_dict, dict)
+
+    assert par_dict.get('par_string') == "string_test"
+    assert par_dict.get('par_param').name == 'par_param'
+    assert par_dict.get('par_param').data.dtype == mstype.float32
+    assert par_dict.get('par_param').data.shape == ()
+    assert par_dict.get('par_tensor').name == 'par_tensor'
+    assert par_dict.get('par_tensor').data.dtype == mstype.int64
+    assert par_dict.get('par_tensor').data.shape == (2, 2)
 
 
 def test_checkpoint_manager():
@@ -252,7 +330,7 @@ def test_load_param_into_net_erro_dict_param():
     assert net.conv1.weight.data.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
-    one_param = ''
+    one_param = 1
     parameter_dict["conv1.weight"] = one_param
     with pytest.raises(TypeError):
         load_param_into_net(net, parameter_dict)
