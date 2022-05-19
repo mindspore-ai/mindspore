@@ -779,6 +779,24 @@ mindspore.Tensor
         - **ValueError** - 如果 `paddings` 的形状不是 (2, M), 其中 M 为 `block_shape` 的长度。
         - **ValueError** - 如果 `block_shape` 的元素不是大于一的整数。
         - **ValueError** - 如果 `paddings` 的元素不是非负的整数。
+    
+    .. py:method:: gather_nd(input_x, indices)
+
+        按索引从张量中获取切片。
+
+        **参数：**
+
+        - **input_x** (Tensor) - 输入张量，是一个数据类型为int64、int32、float32、float16、int8、uint8或bool的Tensor。
+        - **indices** (Tensor) - 获取收集元素的索引。支持的数据类型包括：int32，int64。每个索引元素的取值范围为[-input_x_rank[dim], input_x_rank[dim])。
+
+        **返回：**
+
+        Tensor，具有与入参 `input_x` 相同的数据类型，shape维度为indices_shape[:-1] + input_x_shape[indices_shape[-1]:]。
+
+        **异常：**
+
+        - **ValueError** - `input_x` 的shape长度小于 `indices` 的最后一个维度。
+
 
     .. py:method:: shape
         :property:

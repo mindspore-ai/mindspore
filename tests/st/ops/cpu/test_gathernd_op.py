@@ -21,6 +21,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -174,6 +175,36 @@ def test_case9():
     print(outputs)
     expected = [[1, 5], [3, 6]]  # (2, 2, 2)
     assert np.allclose(outputs.asnumpy(), np.array(expected))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_gather_nd_vmap():
+    """
+    Feature: gather_nd vmap test on cpu.
+    Description: test the rightness of gathernd vmap feature.
+    Expectation: use vmap rule's result equal to manually batched.
+    """
+
+    def cal_gather_nd(x, index):
+        return P.GatherNd()(x, index)
+
+    x = Tensor(np.array([[[[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+                          [[2, 2, 2, 2], [2, 2, 2, 2], [2, 2, 2, 2]]],
+                         [[[3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3]],
+                          [[4, 4, 4, 4], [4, 4, 4, 4], [4, 4, 4, 4]]]]).astype(np.float32))
+
+    y = Tensor(np.array([[[[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+                          [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]],
+                         [[[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+                          [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]]]).astype(np.int32))
+
+    vmap_gather_nd = vmap(vmap(cal_gather_nd, in_axes=(-1, -1)), in_axes=(-1, -1))
+    outputs = vmap_gather_nd(x, y)
+    expect = np.array([[[1, 3], [1, 3], [1, 3]], [[1, 3], [1, 3], [1, 3]], [
+        [1, 3], [1, 3], [1, 3]], [[1, 3], [1, 3], [1, 3]]]).astype(np.float32)
+    assert np.allclose(outputs.asnumpy(), expect)
 
 
 if __name__ == '__main__':

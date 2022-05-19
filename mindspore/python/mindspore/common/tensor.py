@@ -2792,6 +2792,37 @@ class Tensor(Tensor_):
         validator.check_int_range(axis, - 1, self.ndim, Rel.INC_BOTH, 'axis')
         return tensor_operator_registry.get('one_hot')(axis)(self, depth, on_value, off_value)
 
+    def gather_nd(self, indices):
+        r"""
+        Gathers slices from a tensor by indices.
+        Using given indices to gather slices from a tensor with a specified shape.
+        `indices` is an K-dimensional integer tensor. Supposes it as a (K-1)-dimensional tensor and each element of it
+        defines a slice of `input_x`:
+        .. math::
+            output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
+        The last dimension of `indices` can not more than the rank of `input_x`:
+        :math:`indices.shape[-1] <= input\_x.rank`.
+        Args:
+            input_x (Tensor): The target tensor to gather values.
+                The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+            indices (Tensor): The index tensor, with int32 or int64 data type.
+        Returns:
+            Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].
+        Raises:
+            ValueError: If length of shape of `input_x` is less than the last dimension of `indices`.
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+        Examples:
+            >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+            >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
+            >>> output = input_x.gather_nd(indices)
+            >>> print(output)
+            [-0.1  0.5]
+        """
+        self._init_check()
+        validator.check_value_type('indices', indices, (Tensor_,), 'Tensor.gather_nd')
+        return tensor_operator_registry.get('gather_nd')(self, indices)
+
     def var(self, axis=None, ddof=0, keepdims=False):
         """
         Compute the variance along the specified axis.
