@@ -182,7 +182,6 @@ class ConstantPad1d(_ConstantPadNd):
         [[[[1.  1.  1.  1.  0.5]
            [1.  1.  1.  1.  0.5]
            [1.  1.  1.  1.  0.5]]
-
           [[1.  1.  1.  1.  0.5]
            [1.  1.  1.  1.  0.5]
            [1.  1.  1.  1.  0.5]]]]
@@ -197,7 +196,6 @@ class ConstantPad1d(_ConstantPadNd):
         [[[[0.5 1.  1.  1.  1.  0.5]
            [0.5 1.  1.  1.  1.  0.5]
            [0.5 1.  1.  1.  1.  0.5]]
-
           [[0.5 1.  1.  1.  1.  0.5]
            [0.5 1.  1.  1.  1.  0.5]
            [0.5 1.  1.  1.  1.  0.5]]]]
@@ -212,7 +210,6 @@ class ConstantPad1d(_ConstantPadNd):
         [[[[1. 1. 1.]
            [1. 1. 1.]
            [1. 1. 1.]]
-
           [[1. 1. 1.]
            [1. 1. 1.]
            [1. 1. 1.]]]]
@@ -277,7 +274,6 @@ class ConstantPad2d(_ConstantPadNd):
            [1.  1.  1.  0.5]
            [1.  1.  1.  0.5]
            [0.5 0.5 0.5 0.5]]
-
           [[1.  1.  1.  0.5]
            [1.  1.  1.  0.5]
            [1.  1.  1.  0.5]
@@ -345,12 +341,10 @@ class ConstantPad3d(_ConstantPadNd):
            [0.5 0.5 0.5 0.5]
            [0.5 0.5 0.5 0.5]
            [0.5 0.5 0.5 0.5]]
-
           [[1.  1.  1.  0.5]
            [1.  1.  1.  0.5]
            [1.  1.  1.  0.5]
            [0.5 0.5 0.5 0.5]]
-
           [[1.  1.  1.  0.5]
            [1.  1.  1.  0.5]
            [1.  1.  1.  0.5]
@@ -394,6 +388,7 @@ class ZeroPad2d(ConstantPad2d):
     Raises:
         TypeError: If `padding` is not a tuple or int.
         ValueError: If the length of `padding` is more than 4 or not a multiple of 2.
+        ValueError: If the output shape after padding is not positive.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -412,7 +407,6 @@ class ZeroPad2d(ConstantPad2d):
            [1. 1. 1. 0.]
            [1. 1. 1. 0.]
            [0. 0. 0. 0.]]
-
           [[1. 1. 1. 0.]
            [1. 1. 1. 0.]
            [1. 1. 1. 0.]
