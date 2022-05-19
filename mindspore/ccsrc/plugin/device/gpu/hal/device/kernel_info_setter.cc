@@ -457,7 +457,7 @@ std::pair<std::string, ExceptionType> PrintUnsupportedTypeWarning(const CNodePtr
        << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list.";
     etype = NotSupportError;
   } else {
-    ss << "Select GPU kernel op[" << kernel_name << "] fail! Incompatible data type!\nThe supported data types are "
+    ss << "Select GPU operator[" << kernel_name << "] fail! Unsupported data type!\nThe supported data types are "
        << supported_type_lists << ", but get " << build_type;
     etype = TypeError;
   }

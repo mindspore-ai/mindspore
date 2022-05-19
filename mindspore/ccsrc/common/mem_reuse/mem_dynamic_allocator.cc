@@ -481,13 +481,13 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
     size_t total_idle_mem1 = 0;
     size_t total_idle_mem2 = 0;
     // Dump the memory block info and memory buf info.
-    MS_LOG(INFO) << mem_type << " all mem_block info: counts[" << mem_mng->mem_block_list_.size() << "].";
+    MS_LOG(WARNING) << mem_type << " all mem_block info: counts[" << mem_mng->mem_block_list_.size() << "].";
     for (auto iter = mem_mng->mem_block_list_.begin(); iter != mem_mng->mem_block_list_.end(); ++iter) {
       total_mem += (*iter)->size();
       auto mem_buf_map = (*iter)->block_all_mem_buf_map_;
-      MS_LOG(INFO) << " MemBlock info: number[" << iter - mem_mng->mem_block_list_.begin() << "] mem_buf_counts["
-                   << mem_buf_map.size() << "] base_address[" << (*iter)->device_addr() << "] block_size["
-                   << (*iter)->size() << "].";
+      MS_LOG(WARNING) << " MemBlock info: number[" << iter - mem_mng->mem_block_list_.begin() << "] mem_buf_counts["
+                      << mem_buf_map.size() << "] base_address[" << (*iter)->device_addr() << "] block_size["
+                      << (*iter)->size() << "].";
       for (auto iter_mem_buf = mem_buf_map.begin(); iter_mem_buf != mem_buf_map.end(); ++iter_mem_buf) {
         auto mem_buf = iter_mem_buf->second;
         MS_EXCEPTION_IF_NULL(mem_buf);
@@ -502,7 +502,7 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
       }
     }
     // Dump all the idle memory buf info.
-    MS_LOG(INFO) << mem_type << " all idle mem_buf info: counts[" << mem_mng->idle_mem_buf_map_.size() << "].";
+    MS_LOG(WARNING) << mem_type << " all idle mem_buf info: counts[" << mem_mng->idle_mem_buf_map_.size() << "].";
     for (auto iter_idle = mem_mng->idle_mem_buf_map_.begin(); iter_idle != mem_mng->idle_mem_buf_map_.end();
          ++iter_idle) {
       auto mem_buf = iter_idle->second;
@@ -512,8 +512,8 @@ void DynamicMemPoolBestFit::DumpDynamicMemPoolDebugInfo() {
                    << "] status[" << kBufStatusString.at(mem_buf->status_) << "].";
     }
     // Dump the memory statistical info.
-    MS_LOG(INFO) << mem_type << " total allocated memory[" << total_mem << "], used memory[" << total_used_mem
-                 << "], idle memory[" << total_idle_mem1 << "].";
+    MS_LOG(WARNING) << mem_type << " total allocated memory[" << total_mem << "], used memory[" << total_used_mem
+                    << "], idle memory[" << total_idle_mem1 << "].";
     if (total_idle_mem1 != total_idle_mem2) {
       MS_LOG(ERROR) << "Check error: the idle memory in the mem_block is not equal the global idle memory.";
     }
