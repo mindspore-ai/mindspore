@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "include/common/debug/common.h"
 #include "fl/server/model_store.h"
 #include "fl/server/server.h"
 #include "ps/core/comm_util.h"
@@ -987,6 +988,16 @@ string Iteration::GetDataRateFilePath() {
   if (!ps::core::CommUtil::ParseAndCheckConfigJson(file_configuration_.get(), kDataRate, &data_rate_config)) {
     MS_LOG(EXCEPTION) << "Data rate parament in config is not correct";
   }
+  std::string error_msg = "Data rate path is not valid";
+  if (!Common::IsPathValid(data_rate_config.storage_file_path, MAX_DIRECTORY_LENGTH, error_msg)) {
+    MS_LOG(EXCEPTION) << "Data rate path " << data_rate_config.storage_file_path << " is not valid";
+  }
+  FILE *fd = fopen(data_rate_config.storage_file_path.c_str(), "r");
+  if (fd == nullptr) {
+    MS_LOG(EXCEPTION) << data_rate_config.storage_file_path << " is not exist";
+    return "";
+  }
+  fclose(fd);
   return data_rate_config.storage_file_path;
 }
 
