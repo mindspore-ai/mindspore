@@ -22,6 +22,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
+from mindspore import ops
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -386,6 +387,16 @@ class ErfcNet(nn.Cell):
         return self.erfc(x)
 
 
+class LogAddExp2Func(nn.Cell):
+    def __init__(self):
+        super(LogAddExp2Func, self).__init__()
+        self.logaddexp2 = ops.logaddexp2
+
+    def construct(self, x1, x2):
+        y = self.logaddexp2(x1, x2)
+        return y
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -440,6 +451,11 @@ test_case_math_ops = [
         'block': ErfcNet(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
         'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
+    }),
+    ('LogAddExp2', {
+        'block': LogAddExp2Func(),
+        'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
+        'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
     }),
 ]
 
