@@ -85,12 +85,14 @@ int CPUKernel::Run() {
   for (size_t i = 0; i < in_size_; i++) {
     if (in_tensors_[i]->IsConst() == false) {
       kernel_->in[i]->data_ = in_tensors_[i]->data();
+      kernel_->in[i]->data_type_ = in_tensors_[i]->data_type();
     }
   }
 
   for (size_t i = 0; i < out_size_; i++) {
     if (out_tensors_[i]->IsConst() == false) {
       kernel_->out[i]->data_ = out_tensors_[i]->data();
+      kernel_->out[i]->data_type_ = out_tensors_[i]->data_type();
     }
   }
 
