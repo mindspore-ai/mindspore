@@ -1259,3 +1259,19 @@ mindspore.Tensor
         **返回：**
 
         Tensor，具有与入参 `shape` 相同的维度。
+    
+     .. py:method:: pdist(p=2.0)
+
+        计算输入中每对行向量之间的p-范数距离。
+
+        .. math::
+                y[n] = \sqrt[p]{{\mid x_{i} - x_{j} \mid}^p}
+
+        **参数：**
+
+        - **p** (float) - P -范数距离的P值，P∈[0，∞]。默认值:2.0。
+
+        **返回：**
+
+        Tensor，类型与 `x` 一致。
+

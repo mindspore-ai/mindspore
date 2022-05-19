@@ -17,6 +17,7 @@
 
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.operations import nn_ops as NN
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
@@ -153,6 +154,23 @@ def get_fast_gelu_grad_vmap_rule(prim, axis_size):
         out = prim(x, dy)
         return (out, 0)
 
+    return vmap_rule
+
+
+@vmap_rules_getters.register(NN.Pdist)
+def get_pdist_vmap_rule(prim, axis_size):
+    """VmapRule for `Pdist`"""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+        prim.add_prim_attr('p', 2.0)
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        out = prim(x)
+        return out, 0
     return vmap_rule
 
 

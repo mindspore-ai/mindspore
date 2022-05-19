@@ -179,6 +179,7 @@ from .nn_func import (
     fast_gelu,
     hardshrink,
     softsign,
+    pdist,
 )
 from .linalg_func import (
     svd,

@@ -36,6 +36,16 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
 神经网络层算子
 ----------------
 
+神经网络
+^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.pdist
+
 激活函数
 ^^^^^^^^^^
 

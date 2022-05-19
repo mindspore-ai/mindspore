@@ -3346,6 +3346,39 @@ class Tensor(Tensor_):
             return output, counts
         return output
 
+    def pdist(self, p=2.0):
+        r"""
+        Computes the p-norm distance between each pair of row vectors in the input.
+
+        .. math::
+            y[n] = \sqrt[p]{{\mid x_{i} - x_{j} \mid}^p}
+
+        where :math:`x_{i}, x_{j}` are two different row vectors in the input.
+
+        Args:
+            p (float): p value for the p norm distance to calculate between each vector pair ∈[0,∞]. Default: 2.0.
+
+        Returns:
+            Tensor, has the same dtype as self.
+
+        Raises:
+            TypeError: If dtype of Tensor is float16, float32 or float64.
+            TypeError: If `p` is not a float.
+            ValueError: If `p` is a negative float.
+            ValueError: If dimension of Tensor is less than 2.
+
+        Supported Platforms:
+            ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]).astype(np.float32))
+            >>> y = x.pdist(p=2.0)
+            >>> print(y)
+            [1.4142135 2.828427 1.4142135]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('pdist')(p)(self)
+
     def diag(self):
         r"""
         Constructs a diagonal tensor with a given diagonal values.

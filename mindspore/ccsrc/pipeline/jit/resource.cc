@@ -240,6 +240,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"gather_nd", std::string("gather_nd")},                            // P.GatherNd()
        {"unique_consecutive", std::string("unique_consecutive")},          // UniqueConsecutive()
        {"diag", std::string("diag")},                                      // P.Diag()
+       {"pdist", std::string("pdist")},                                    // F.pdist()
      }},
     {kObjectTypeRowTensorType,
      {
