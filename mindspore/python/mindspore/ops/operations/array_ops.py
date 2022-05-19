@@ -6219,6 +6219,7 @@ class Sort(Primitive):
         TypeError: If `axis` is not an int.
         TypeError: If `descending` is not a bool.
         TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `axis` is not in range of [-len(x.shape), len(x.shape)).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
