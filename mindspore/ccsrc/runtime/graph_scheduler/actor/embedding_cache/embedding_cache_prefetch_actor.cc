@@ -130,20 +130,20 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheUpdateKernel() {
 
 bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embedding_cache, size_t indices_num,
                                                     size_t cache_size, size_t embedding_size, void *outputs) {
-  MS_EXCEPTION_IF_NULL(indices);
-  MS_EXCEPTION_IF_NULL(embedding_cache);
-  MS_EXCEPTION_IF_NULL(outputs);
-  MS_EXCEPTION_IF_NULL(embedding_cache_lookup_node_);
+  MS_ERROR_IF_NULL(indices);
+  MS_ERROR_IF_NULL(embedding_cache);
+  MS_ERROR_IF_NULL(outputs);
+  MS_ERROR_IF_NULL(embedding_cache_lookup_node_);
 
   // 1. Update parameter nodes' shape.
   auto input_param_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, 0);
-  MS_EXCEPTION_IF_NULL(input_param_node);
+  MS_ERROR_IF_NULL(input_param_node);
   const ShapeVector input_param_shape = {SizeToLong(cache_size), SizeToLong(embedding_size)};
   auto input_param_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, input_param_shape);
   input_param_node->set_abstract(input_param_abstract);
 
   auto input_indices_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, 1);
-  MS_EXCEPTION_IF_NULL(input_indices_node);
+  MS_ERROR_IF_NULL(input_indices_node);
   const ShapeVector input_indices_shape = {SizeToLong(indices_num)};
   auto input_indices_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, input_indices_shape);
   input_indices_node->set_abstract(input_indices_abstract);
@@ -160,7 +160,7 @@ bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embeddi
     std::make_shared<Address>(indices, indices_num * sizeof(int))};
   AddressPtrList kernel_outputs = {std::make_shared<Address>(outputs, indices_num * embedding_size * sizeof(float))};
 
-  MS_EXCEPTION_IF_NULL(device_context_);
+  MS_ERROR_IF_NULL(device_context_);
   auto ret = device_context_->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {}, kernel_outputs);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_lookup_node_->fullname_with_scope() << " failed.";
@@ -171,26 +171,26 @@ bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embeddi
 
 bool EmbeddingCachePrefetchActor::UpdateDeviceCache(void *indices, void *update_value, size_t indices_num,
                                                     size_t cache_size, size_t embedding_size, void *embedding_cache) {
-  MS_EXCEPTION_IF_NULL(indices);
-  MS_EXCEPTION_IF_NULL(update_value);
-  MS_EXCEPTION_IF_NULL(embedding_cache);
-  MS_EXCEPTION_IF_NULL(embedding_cache_update_node_);
+  MS_ERROR_IF_NULL(indices);
+  MS_ERROR_IF_NULL(update_value);
+  MS_ERROR_IF_NULL(embedding_cache);
+  MS_ERROR_IF_NULL(embedding_cache_update_node_);
 
   // 1. Update parameter nodes' shape.
   auto input_param_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, 0);
-  MS_EXCEPTION_IF_NULL(input_param_node);
+  MS_ERROR_IF_NULL(input_param_node);
   const ShapeVector input_param_shape = {SizeToLong(cache_size), SizeToLong(embedding_size)};
   auto input_param_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, input_param_shape);
   input_param_node->set_abstract(input_param_abstract);
 
   auto input_indices_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, 1);
-  MS_EXCEPTION_IF_NULL(input_indices_node);
+  MS_ERROR_IF_NULL(input_indices_node);
   const ShapeVector input_indices_shape = {SizeToLong(indices_num)};
   auto input_indices_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, input_indices_shape);
   input_indices_node->set_abstract(input_indices_abstract);
 
   auto update_values_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, 2);
-  MS_EXCEPTION_IF_NULL(update_values_node);
+  MS_ERROR_IF_NULL(update_values_node);
   const ShapeVector update_values_shape = {SizeToLong(indices_num), SizeToLong(embedding_size)};
   auto update_values_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, update_values_shape);
   update_values_node->set_abstract(update_values_abstract);
@@ -209,12 +209,370 @@ bool EmbeddingCachePrefetchActor::UpdateDeviceCache(void *indices, void *update_
   AddressPtrList kernel_outputs = {
     std::make_shared<Address>(embedding_cache, cache_size * embedding_size * sizeof(float))};
 
-  MS_EXCEPTION_IF_NULL(device_context_);
+  MS_ERROR_IF_NULL(device_context_);
   auto ret = device_context_->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {}, kernel_outputs);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_update_node_->fullname_with_scope() << " failed.";
     return false;
   }
+  return true;
+}
+
+void EmbeddingCachePrefetchActor::Run() {
+  // Note:Need to wait data channel ready.
+
+  MS_LOG(INFO) << "Begin prefetching cache.";
+  while (running_) {
+    if (!PrefetchCache()) {
+      running_ = false;
+    }
+  }
+  MS_LOG(INFO) << "End prefetching cache.";
+}
+
+bool EmbeddingCachePrefetchActor::PrefetchCache() {
+  // 1. Acquire batch ids
+  void *data = nullptr;
+  RETURN_IF_FALSE_WITH_LOG(PsDataPrefetch::GetInstance().QueryData(channel_name_, &data), "Query input data failed.");
+
+  if (data == nullptr) {
+    MS_LOG(INFO) << "There is no input data of dataset channel name:" << channel_name_;
+    std::unique_lock<std::mutex> locker(data_mutex_);
+    const int64_t longest_time_to_wait = 100;
+    (void)data_parser_.wait_for(locker, std::chrono::milliseconds(longest_time_to_wait));
+    return true;
+  }
+
+  RETURN_IF_FALSE_WITH_LOG(IncreaseStep(), "Increase step failed.");
+  auto data_size = PsDataPrefetch::GetInstance().data_size(channel_name_);
+  if (data_size == 0) {
+    MS_LOG(ERROR) << "The data size of batch ids can not be zero.";
+    return false;
+  }
+  auto batch_ids = reinterpret_cast<int *>(data);
+  auto batch_ids_num = data_size / sizeof(int);
+  std::unique_ptr<int[]> hash_index = std::make_unique<int[]>(batch_ids_num);
+  auto ret = memset_s(&statistics_info_, sizeof(statistics_info_), 0, sizeof(statistics_info_));
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "Memset for cache statistics info failed, errno[" << ret << "]";
+    return false;
+  }
+
+  // 2. Count cache miss ids.
+  RETURN_IF_FALSE_WITH_LOG(CountCacheMissIds(batch_ids, batch_ids_num, hash_index.get()),
+                           "Count cache miss ids failed.");
+
+  if ((device_cache_need_wait_graph_ || host_cache_need_wait_graph_) && (!WaitGraphRun())) {
+    MS_LOG(ERROR) << "Cache prefetching waits graph finish failed.";
+    return false;
+  }
+
+  // 3. If the device cache does not reach 100% hit rate, the cache needs to be updated.
+  RETURN_IF_FALSE_WITH_LOG(UpdateCache(), "Update local cache failed.");
+
+  // 4. Replace the batch_ids by hash index for GetNext operator to get hash index as input.
+  size_t dest_len = data_size;
+  ret = memcpy_s(data, dest_len, hash_index.get(), data_size);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "Memcpy hash index failed, errno[" << ret << "]";
+    return false;
+  }
+  RETURN_IF_FALSE_WITH_LOG(PsDataPrefetch::GetInstance().FinalizeData(channel_name_), "Finalize data failed.");
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::IncreaseStep() {
+  if (data_step_ >= UINT64_MAX) {
+    MS_LOG(ERROR) << "The data step (" << data_step_ << ") will exceed the maximum value of uint64_t.";
+    return false;
+  }
+  data_step_++;
+  set_current_graph_step();
+  if (graph_running_step_ > data_step_) {
+    MS_LOG(ERROR) << "The graph running step (" << graph_running_step_ << ") exceed the data step (" << data_step_
+                  << ").";
+    return false;
+  }
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::CountCacheMissIds(const int *batch_ids, const size_t batch_ids_num, int *hash_index) {
+  MS_ERROR_IF_NULL(batch_ids);
+  MS_ERROR_IF_NULL(hash_index);
+
+  statistics_info_.batch_id_count_ = batch_ids_num;
+  std::unique_ptr<bool[]> in_device = std::make_unique<bool[]>(batch_ids_num);
+  std::unique_ptr<bool[]> out_range = std::make_unique<bool[]>(batch_ids_num);
+  auto ret = memset_s(in_device.get(), batch_ids_num * sizeof(bool), 0, batch_ids_num * sizeof(bool));
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "Memset failed, errno[" << ret << "]";
+    return false;
+  }
+  ret = memset_s(out_range.get(), batch_ids_num * sizeof(bool), 0, batch_ids_num * sizeof(bool));
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "Memset failed, errno[" << ret << "]";
+    return false;
+  }
+
+  // 1. Analyze the hit/miss info of the local host cache and device cache.
+  RETURN_IF_FALSE_WITH_LOG(
+    CheckCacheHitOrOutRange(batch_ids, batch_ids_num, hash_index, in_device.get(), out_range.get()),
+    "Check cache hit or out range failed.");
+  RETURN_IF_FALSE_WITH_LOG(ResetEmbeddingHashMap(), "Reset embedding hash map failed.");
+
+  // 2.calculate the swapping and mapping(feature id to cache index) information of the missing feature id that needs to
+  // be inserted into the cache.
+  for (size_t i = 0; i < batch_ids_num; i++) {
+    if (in_device[i] || out_range[i]) {
+      continue;
+    }
+    bool need_swap_host_to_device = true;
+    bool need_swap_device_to_host = true;
+    int index = INVALID_INDEX_VALUE;
+    RETURN_IF_FALSE_WITH_LOG(
+      ParseDeviceData(batch_ids[i], &need_swap_device_to_host, &need_swap_host_to_device, &index),
+      "Parse device cache data failed.");
+    hash_index[i] = index + local_device_cache_bounds_.first;
+    if (need_swap_host_to_device) {
+      RETURN_IF_FALSE_WITH_LOG(ParseHostDataHostToDevice(batch_ids[i]),
+                               "Parse local host cache data(swap local host cache to device) failed.");
+    }
+    if (need_swap_device_to_host) {
+      RETURN_IF_FALSE_WITH_LOG(ParseHostDataDeviceToHost(),
+                               "Parse local host cache data(swap device cache to local host) failed.");
+    }
+  }
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::ParseDeviceData(size_t id, bool *need_swap_device_to_host,
+                                                  bool *need_swap_host_to_device, int *hash_index) {
+  MS_ERROR_IF_NULL(need_swap_device_to_host);
+  MS_ERROR_IF_NULL(need_swap_host_to_device);
+  MS_ERROR_IF_NULL(hash_index);
+  MS_ERROR_IF_NULL(embedding_device_cache_);
+  auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(device_hash_map);
+
+  int index = INVALID_INDEX_VALUE;
+  const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
+  const auto &iter = hash_id_to_index.find(id);
+  if (iter != hash_id_to_index.end()) {
+    *need_swap_device_to_host = false;
+    *need_swap_host_to_device = false;
+    index = iter->second;
+    if (device_hash_map->hash_step(index) != data_step_) {
+      statistics_info_.hash_hit_count_++;
+      device_hash_map->set_hash_step(index, data_step_);
+    }
+  } else {
+    int *device_to_host_index = embedding_device_cache_->device_to_host_index.get();
+    int *device_to_host_ids = embedding_device_cache_->device_to_host_ids.get();
+    int *host_to_device_index = embedding_device_cache_->host_to_device_index.get();
+    int *host_to_device_ids = embedding_device_cache_->host_to_device_ids.get();
+    MS_ERROR_IF_NULL(host_to_device_index);
+    MS_ERROR_IF_NULL(host_to_device_ids);
+    auto tmp_device_to_host_size = statistics_info_.device_to_host_size_;
+    while (true) {
+      // Calculate the mapping of id to index.
+      index = device_hash_map->ParseData(id, device_to_host_index, device_to_host_ids, data_step_, graph_running_step_,
+                                         &(statistics_info_.device_to_host_size_), &device_cache_need_wait_graph_);
+      if (index == INVALID_INDEX_VALUE) {
+        if (!WaitGraphRun()) {
+          return false;
+        }
+        continue;
+      }
+      host_to_device_index[statistics_info_.host_to_device_size_] = index;
+      host_to_device_ids[statistics_info_.host_to_device_size_] = id;
+      statistics_info_.host_to_device_size_++;
+      *need_swap_device_to_host = statistics_info_.device_to_host_size_ > tmp_device_to_host_size;
+      break;
+    }
+  }
+
+  *hash_index = index;
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::ParseHostDataHostToDevice(size_t id) {
+  MS_ERROR_IF_NULL(embedding_host_cache_);
+  int *host_to_device_index = embedding_host_cache_->host_to_device_index.get();
+  MS_ERROR_IF_NULL(host_to_device_index);
+  auto &host_hash_map = embedding_host_cache_->host_hash_map_;
+  MS_ERROR_IF_NULL(host_hash_map);
+
+  const auto &hash_id_to_index = host_hash_map->hash_id_to_index();
+  const auto &iter = hash_id_to_index.find(id);
+  if (iter != hash_id_to_index.end()) {
+    auto index = iter->second;
+    if (host_hash_map->hash_step(index) != data_step_) {
+      host_hash_map->set_hash_step(index, data_step_);
+    }
+    host_to_device_index[statistics_info_.host_to_device_size_ - 1] = index;
+  } else {
+    int *host_to_server_index = embedding_host_cache_->host_to_server_index.get();
+    int *host_to_server_ids = embedding_host_cache_->host_to_server_ids.get();
+    int *server_to_host_index = embedding_host_cache_->server_to_host_index.get();
+    int *server_to_host_ids = embedding_host_cache_->server_to_host_ids.get();
+    MS_ERROR_IF_NULL(server_to_host_index);
+    MS_ERROR_IF_NULL(server_to_host_ids);
+    while (true) {
+      // Calculate the mapping of id to index.
+      auto index =
+        host_hash_map->ParseData(id, host_to_server_index, host_to_server_ids, data_step_, graph_running_step_,
+                                 &statistics_info_.host_to_server_size_, &host_cache_need_wait_graph_);
+      if (index == INVALID_INDEX_VALUE) {
+        RETURN_IF_FALSE_WITH_LOG(WaitGraphRun(), "Wait graph run failed.");
+        continue;
+      }
+      host_to_device_index[statistics_info_.host_to_device_size_ - 1] = index;
+      server_to_host_index[statistics_info_.server_to_host_size_] = index;
+      server_to_host_ids[statistics_info_.server_to_host_size_++] = id;
+      break;
+    }
+  }
+
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::ParseHostDataDeviceToHost() {
+  MS_ERROR_IF_NULL(embedding_device_cache_);
+  MS_ERROR_IF_NULL(embedding_host_cache_);
+  int *device_to_host_ids = embedding_device_cache_->device_to_host_ids.get();
+  int *device_to_host_index = embedding_host_cache_->device_to_host_index.get();
+  MS_ERROR_IF_NULL(device_to_host_ids);
+  MS_ERROR_IF_NULL(device_to_host_index);
+
+  auto &host_hash_map = embedding_host_cache_->host_hash_map_;
+  MS_ERROR_IF_NULL(host_hash_map);
+  int swap_device_to_host_id = device_to_host_ids[statistics_info_.device_to_host_size_ - 1];
+  const auto &hash_id_to_index = host_hash_map->hash_id_to_index();
+  const auto &iter = hash_id_to_index.find(swap_device_to_host_id);
+  if (iter != hash_id_to_index.end()) {
+    auto index = iter->second;
+    if (host_hash_map->hash_step(index) != data_step_) {
+      host_hash_map->set_hash_step(index, data_step_);
+    }
+    device_to_host_index[statistics_info_.device_to_host_size_ - 1] = index;
+  } else {
+    int *host_to_server_index = embedding_host_cache_->host_to_server_index.get();
+    int *host_to_server_ids = embedding_host_cache_->host_to_server_ids.get();
+    while (true) {
+      // Calculate the mapping of id to index.
+      auto index = host_hash_map->ParseData(swap_device_to_host_id, host_to_server_index, host_to_server_ids,
+                                            data_step_, graph_running_step_, &statistics_info_.host_to_server_size_,
+                                            &host_cache_need_wait_graph_);
+      if (index == INVALID_INDEX_VALUE) {
+        RETURN_IF_FALSE_WITH_LOG(WaitGraphRun(), "Wait graph run");
+        continue;
+      }
+      device_to_host_index[statistics_info_.device_to_host_size_ - 1] = index;
+      break;
+    }
+  }
+
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::CheckCacheHitOrOutRangeFunc(const int *batch_ids, const size_t batch_ids_num,
+                                                              int *hash_index, bool *in_device, bool *out_range,
+                                                              size_t *hash_hit_count) {
+  MS_ERROR_IF_NULL(batch_ids);
+  MS_ERROR_IF_NULL(hash_index);
+  MS_ERROR_IF_NULL(in_device);
+  MS_ERROR_IF_NULL(out_range);
+  MS_ERROR_IF_NULL(hash_hit_count);
+  MS_ERROR_IF_NULL(embedding_device_cache_);
+  auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(device_hash_map);
+  const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
+
+  for (size_t i = 0; i < batch_ids_num; ++i) {
+    if (batch_ids[i] < local_embedding_slice_bounds_.first) {
+      hash_index[i] = batch_ids[i] - local_embedding_slice_bounds_.first + local_device_cache_bounds_.first;
+      out_range[i] = true;
+      continue;
+    }
+    if (batch_ids[i] >= local_embedding_slice_bounds_.second) {
+      hash_index[i] = batch_ids[i] + local_device_cache_bounds_.second;
+      out_range[i] = true;
+      continue;
+    }
+    auto iter = hash_id_to_index.find(batch_ids[i]);
+    if (iter != hash_id_to_index.end()) {
+      hash_index[i] = iter->second + local_device_cache_bounds_.first;
+      if (device_hash_map->hash_step(iter->second) != data_step_) {
+        ++(*hash_hit_count);
+        device_hash_map->set_hash_step(iter->second, data_step_);
+      }
+      in_device[i] = true;
+    }
+  }
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::CheckCacheHitOrOutRange(const int *batch_ids, const size_t batch_ids_num,
+                                                          int *hash_index, bool *in_device, bool *out_range) {
+  MS_ERROR_IF_NULL(batch_ids);
+  MS_ERROR_IF_NULL(hash_index);
+  MS_ERROR_IF_NULL(in_device);
+  MS_ERROR_IF_NULL(out_range);
+
+  size_t thread_num = batch_ids_num / kMaxIdsPerThread + 1;
+  thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
+  std::thread threads[kMaxThreadNum];
+  size_t hash_hit_count[kMaxThreadNum] = {0};
+  size_t i = 0;
+  size_t offset = 0;
+
+  for (; i < thread_num; ++i) {
+    if (offset >= batch_ids_num) {
+      break;
+    }
+    size_t proc_len = batch_ids_num / thread_num + (i < (batch_ids_num % thread_num) ? 1 : 0);
+    threads[i] = std::thread(&EmbeddingCachePrefetchActor::CheckCacheHitOrOutRangeFunc, this, batch_ids + offset,
+                             proc_len, hash_index + offset, in_device + offset, out_range + offset, hash_hit_count + i);
+    offset += proc_len;
+  }
+  if (offset != batch_ids_num) {
+    MS_LOG(WARNING) << "Check id in device inadequate, total:" << batch_ids_num << " checked:" << offset;
+  }
+
+  for (size_t j = 0; j < i; j++) {
+    threads[j].join();
+  }
+  for (size_t j = 0; j < i; j++) {
+    statistics_info_.hash_hit_count_ += hash_hit_count[j];
+  }
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::ResetEmbeddingHashMap() {
+  MS_ERROR_IF_NULL(embedding_device_cache_);
+  const auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(device_hash_map);
+  MS_ERROR_IF_NULL(embedding_host_cache_);
+  const auto &host_hash_map = embedding_host_cache_->host_hash_map_;
+  MS_ERROR_IF_NULL(host_hash_map);
+  device_hash_map->Reset();
+  host_hash_map->Reset();
+  device_cache_need_wait_graph_ = false;
+  host_cache_need_wait_graph_ = false;
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::WaitGraphRun() {
+  MS_LOG(INFO) << "Hash table has no space to insert new data and retries within 2 minutes.";
+  std::unique_lock<std::mutex> locker(data_mutex_);
+  const int64_t longest_time_to_wait = 120;
+  if (!data_parser_.wait_for(locker, std::chrono::seconds(longest_time_to_wait),
+                             [this] { return graph_step_ > graph_running_step_; })) {
+    MS_LOG(ERROR) << "Data parse timeout, suggest to enlarge the vocab cache size(graph step:" << graph_step_
+                  << ", graph running step:" << graph_running_step_ << ").";
+    return false;
+  }
+  set_current_graph_step();
   return true;
 }
 
@@ -279,7 +637,7 @@ bool EmbeddingCachePrefetchActor::PushCacheFromDeviceToLocalHost(const HashTable
     LookupDeviceCache(embedding_device_cache_->hash_swap_index_addr_, hash_table_addr, swap_indices_size,
                       cache_vocab_size, embedding_size, embedding_device_cache_->hash_swap_value_addr_),
     "Lookup device cache failed.");
-  MS_EXCEPTION_IF_NULL(device_context_);
+  MS_ERROR_IF_NULL(device_context_);
   RETURN_IF_FALSE_WITH_LOG(device_context_->SyncStream(stream_id_), "Synchronize stream failed.");
   RETURN_IF_FALSE_WITH_LOG(
     InsertLocalHostCache(embedding_size, IntToSize(swap_indices_size), host_cache_device_to_host_index,
@@ -343,7 +701,7 @@ bool EmbeddingCachePrefetchActor::PullCacheFromLocalHostToDevice(const HashTable
     UpdateDeviceCache(embedding_device_cache_->hash_swap_index_addr_, embedding_device_cache_->hash_swap_value_addr_,
                       swap_indices_size, cache_vocab_size, embedding_size, hash_table_addr),
     "Update device embedding cache failed.");
-  MS_EXCEPTION_IF_NULL(device_context_);
+  MS_ERROR_IF_NULL(device_context_);
   RETURN_IF_FALSE_WITH_LOG(device_context_->SyncStream(stream_id_), "Synchronize stream failed.");
   return true;
 }
@@ -467,12 +825,13 @@ bool EmbeddingCachePrefetchActor::LookupLocalHostCache(size_t embedding_size, si
 
 bool EmbeddingCachePrefetchActor::PullEembeddingsFromRemote(const int *ids, size_t ids_num,
                                                             std::vector<float> *outputs) {
-  MS_EXCEPTION_IF_NULL(ids);
-  MS_EXCEPTION_IF_NULL(outputs);
+  MS_ERROR_IF_NULL(ids);
+  MS_ERROR_IF_NULL(outputs);
 
   std::vector<std::vector<int>> slice_ids_list(server_num_);
   // 1. Partition ids by remote embedding slice bound and get unique ids.
-  PartitionIds(ids, ids_num, &slice_ids_list);
+  RETURN_IF_FALSE_WITH_LOG(PartitionIds(ids, ids_num, &slice_ids_list), "Partition ids failed.");
+
   for (size_t i = 0; i < server_num_; i++) {
     auto &slice_ids = slice_ids_list[i];
     if (slice_ids.empty()) {
@@ -480,10 +839,8 @@ bool EmbeddingCachePrefetchActor::PullEembeddingsFromRemote(const int *ids, size
     }
 
     // 2. Send unique ids to remote to do embedding lookup.
-    if (!SendToRemote(i, slice_ids.data(), slice_ids.size() * sizeof(int))) {
-      MS_LOG(ERROR) << "Send ids to server failed.";
-      return false;
-    }
+    RETURN_IF_FALSE_WITH_LOG(SendToRemote(i, slice_ids.data(), slice_ids.size() * sizeof(int)),
+                             "Send ids to server failed.");
   }
 
   std::vector<std::vector<float>> slice_embeddings_list(server_num_);
@@ -494,30 +851,27 @@ bool EmbeddingCachePrefetchActor::PullEembeddingsFromRemote(const int *ids, size
 
     // 3. Wait embeddings result.
     auto &slice_embeddings = slice_embeddings_list[i];
-    if (!WaitRespFromRemote(i, &slice_embeddings)) {
-      MS_LOG(ERROR) << "Wait response from server failed.";
-      return false;
-    }
+    RETURN_IF_FALSE_WITH_LOG(WaitRespFromRemote(i, &slice_embeddings), "Wait response from server failed.");
   }
 
   // 4. Retrieve embeddings by input ids order.
-  if (!RetrieveEmbeddings(ids, ids_num, slice_ids_list, slice_embeddings_list, outputs)) {
-    MS_LOG(ERROR) << "Retrieve embeddings failed.";
-    return false;
-  }
+  RETURN_IF_FALSE_WITH_LOG(RetrieveEmbeddings(ids, ids_num, slice_ids_list, slice_embeddings_list, outputs),
+                           "Retrieve embeddings failed.");
 
   return true;
 }
 
 bool EmbeddingCachePrefetchActor::PushEmbeddingsToRemote(const int *ids, size_t ids_num, const float *embeddings,
                                                          size_t embeddings_len) {
-  MS_EXCEPTION_IF_NULL(ids);
-  MS_EXCEPTION_IF_NULL(embeddings);
+  MS_ERROR_IF_NULL(ids);
+  MS_ERROR_IF_NULL(embeddings);
 
   std::vector<std::vector<int>> slice_ids_list(server_num_);
   std::vector<std::vector<float>> slice_embeddings_list(server_num_);
   // 1. Partition ids end embeddings by remote embedding slice bound.
-  PartitionIdsAndEmbeddings(ids, ids_num, embeddings, embeddings_len, &slice_ids_list, &slice_embeddings_list);
+  RETURN_IF_FALSE_WITH_LOG(
+    PartitionIdsAndEmbeddings(ids, ids_num, embeddings, embeddings_len, &slice_ids_list, &slice_embeddings_list),
+    "Partition ids and embeddings failed.");
 
   for (size_t i = 0; i < server_num_; i++) {
     auto &slice_ids = slice_ids_list[i];
@@ -527,11 +881,9 @@ bool EmbeddingCachePrefetchActor::PushEmbeddingsToRemote(const int *ids, size_t 
 
     // 2. Send embeddings to remote.
     auto &slice_embeddings = slice_embeddings_list[i];
-    if (!SendToRemote(i, slice_ids.data(), slice_ids.size() * sizeof(int), slice_embeddings.data(),
-                      slice_embeddings.size() * sizeof(float))) {
-      MS_LOG(ERROR) << "Send ids and embeddings to server failed.";
-      return false;
-    }
+    RETURN_IF_FALSE_WITH_LOG(SendToRemote(i, slice_ids.data(), slice_ids.size() * sizeof(int), slice_embeddings.data(),
+                                          slice_embeddings.size() * sizeof(float)),
+                             "Send ids and embeddings to server failed.");
   }
 
   return true;
@@ -563,10 +915,10 @@ void EmbeddingCachePrefetchActor::GetRemoteEmbeddingSliceBound() {
   }
 }
 
-void EmbeddingCachePrefetchActor::PartitionIds(const int *ids, size_t ids_num,
+bool EmbeddingCachePrefetchActor::PartitionIds(const int *ids, size_t ids_num,
                                                std::vector<std::vector<int>> *slice_ids_list) {
-  MS_EXCEPTION_IF_NULL(ids);
-  MS_EXCEPTION_IF_NULL(slice_ids_list);
+  MS_ERROR_IF_NULL(ids);
+  MS_ERROR_IF_NULL(slice_ids_list);
 
   for (size_t i = 0; i < slice_ids_list->size(); i++) {
     int begin = SizeToInt(remote_embedding_slice_bounds_[i].first);
@@ -582,19 +934,22 @@ void EmbeddingCachePrefetchActor::PartitionIds(const int *ids, size_t ids_num,
     std::vector<int> &slice_ids = slice_ids_list->at(i);
     (void)std::for_each(unique_ids.begin(), unique_ids.end(), [&](int id) { slice_ids.push_back(id); });
   }
+
+  return true;
 }
 
-void EmbeddingCachePrefetchActor::PartitionIdsAndEmbeddings(const int *ids, size_t ids_num, const float *embeddings,
+bool EmbeddingCachePrefetchActor::PartitionIdsAndEmbeddings(const int *ids, size_t ids_num, const float *embeddings,
                                                             size_t embeddings_len,
                                                             std::vector<std::vector<int>> *slice_ids_list,
                                                             std::vector<std::vector<float>> *slice_embeddings_list) {
-  MS_EXCEPTION_IF_NULL(ids);
-  MS_EXCEPTION_IF_NULL(embeddings);
-  MS_EXCEPTION_IF_NULL(slice_ids_list);
-  MS_EXCEPTION_IF_NULL(slice_embeddings_list);
+  MS_ERROR_IF_NULL(ids);
+  MS_ERROR_IF_NULL(embeddings);
+  MS_ERROR_IF_NULL(slice_ids_list);
+  MS_ERROR_IF_NULL(slice_embeddings_list);
 
   if (ids_num == 0) {
-    return;
+    MS_LOG(WARNING) << "The ids number is 0";
+    return true;
   }
 
   size_t embedding_dim = (embeddings_len / ids_num) / sizeof(float);
@@ -613,6 +968,7 @@ void EmbeddingCachePrefetchActor::PartitionIdsAndEmbeddings(const int *ids, size
       }
     }
   }
+  return true;
 }
 
 bool EmbeddingCachePrefetchActor::SendToRemote(size_t server_rank_id, const void *keys, size_t keys_len,
@@ -630,10 +986,11 @@ bool EmbeddingCachePrefetchActor::RetrieveEmbeddings(const int *ids, size_t ids_
                                                      const std::vector<std::vector<int>> &slice_ids_list,
                                                      const std::vector<std::vector<float>> &slice_embeddings_list,
                                                      std::vector<float> *outputs) {
-  MS_EXCEPTION_IF_NULL(ids);
-  MS_EXCEPTION_IF_NULL(outputs);
+  MS_ERROR_IF_NULL(ids);
+  MS_ERROR_IF_NULL(outputs);
 
   if (ids_num == 0) {
+    MS_LOG(WARNING) << "The ids number is 0";
     return true;
   }
 
