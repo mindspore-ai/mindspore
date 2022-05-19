@@ -123,6 +123,9 @@ class DeviceContext {
   // Destroy all streams created by 'CreateStream'.
   bool DestroyAllStreams();
 
+  // Get physical stream based on logical stream id.
+  void *GetStream(size_t stream_id) const;
+
   // Get rank id for distributed training.
   // It is deprecated and will be removed in a future version
   virtual uint32_t GetRankID() const { return 0; }

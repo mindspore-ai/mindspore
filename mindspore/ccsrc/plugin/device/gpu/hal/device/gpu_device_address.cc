@@ -23,6 +23,7 @@
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "plugin/device/gpu/hal/hardware/gpu_device_context.h"
+#include "plugin/device/gpu/hal/device/gpu_common.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #include "debug/tensor_load.h"
@@ -162,6 +163,27 @@ bool GPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
     return false;
   }
   return GPUDeviceManager::GetInstance().SyncStream(stream);
+}
+
+bool GPUDeviceAddress::AsyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr,
+                                         void *stream) const {
+  MS_ERROR_IF_NULL(host_ptr);
+  MS_ERROR_IF_NULL(ptr_);
+  MS_ERROR_IF_NULL(stream);
+
+  CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream),
+                              "CopyHostMemToDeviceAsync failed");
+  return true;
+}
+
+bool GPUDeviceAddress::AsyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr, void *stream) const {
+  MS_ERROR_IF_NULL(host_ptr);
+  MS_ERROR_IF_NULL(ptr_);
+  MS_ERROR_IF_NULL(stream);
+
+  CHECK_RET_WITH_RETURN_ERROR(CudaDriver::CopyDeviceMemToHostAsync(host_ptr, ptr_, size, stream),
+                              "CopyHostMemToDeviceAsync failed");
+  return true;
 }
 
 void GPUDeviceAddress::ClearDeviceMemory() {

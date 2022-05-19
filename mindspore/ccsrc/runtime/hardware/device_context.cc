@@ -53,6 +53,16 @@ bool DeviceContext::DestroyAllStreams() {
   return true;
 }
 
+void *DeviceContext::GetStream(size_t stream_id) const {
+  auto iter = stream_ids_.find(stream_id);
+  if (iter == stream_ids_.end()) {
+    MS_LOG(ERROR) << "Can not find stream for stream id[" << stream_id << "]";
+    return nullptr;
+  }
+
+  return iter->second;
+}
+
 bool DeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   MS_EXCEPTION_IF_NULL(address);
   auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
