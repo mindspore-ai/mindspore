@@ -55,6 +55,7 @@
 #include "common/graph_kernel/reduce_fake_out_mem.h"
 #include "common/graph_kernel/depend_elimination.h"
 #include "common/graph_kernel/floatstatus_addn_fusion.h"
+#include "common/graph_kernel/parallel_optimizer.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_build.h"
 
@@ -84,6 +85,9 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Spread the MakeTuple input of UpdateState
   pm->Add(std::make_shared<SpreadUpdateState>(), OptLevel_1);
+
+  // Parallel optimizer by UpdateState reorganization
+  pm->Add(std::make_shared<ParallelOptimizer>(), OptLevel_2);
 
   // Eliminate the common nodes that generated in SpreadUpdateState
   pm->Add(std::make_shared<GraphKernelCSE>(), OptLevel_1);
