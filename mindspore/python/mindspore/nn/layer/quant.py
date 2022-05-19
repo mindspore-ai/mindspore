@@ -762,7 +762,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=channel_axis,
                                                      num_channels=out_channels)
-        self.freeze_bn = True
+        self.freeze_bn = False
         self.bn_train = P.BatchNorm(is_training=True, epsilon=self.eps,
                                     momentum=self.momentum, data_format=self.format)
 
