@@ -5748,6 +5748,50 @@ class Trace(Primitive):
         pass
 
 
+class SparseSegmentMean(Primitive):
+    """
+    Computes the mean along sparse segments of a tensor.
+
+    Inputs:
+        - **x** (Tensor) - A Tensor, and its rank must be greater equal than 1.
+        - **indices** (Tensor) - A 1-D Tensor, has same rank as `segment_ids`.
+        - **segment_ids** (Tensor) - A 1-D Tensor, must have the same type as `indices`.
+          Values should be sorted and can be repeated.
+
+    Outputs:
+        Tensor, with the same data type and shape as input 'x', except for dimension 0
+        which is the number of segments.
+
+    Raises:
+        TypeError: If the dtype of `x` is not one of the following dtype: float32, float64.
+        TypeError: If the dtype of `indices` and `segment_ids` are not one of the following dtype: int32, int64.
+        TypeError: If the dtype of `indices` and `segment_ids` are not the same.
+        ValueError: If the shape of `x`, 'indices' or `segment_ids` don't meet the parameter description.
+        ValueError: If the size of 'indices' and `segment_ids` are not the same.
+        RuntimeError: If the value of `indices` are out of range[0, x.shape[0]).
+        RuntimeError: If the value of `segment_ids` are not sorted or negative.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0, 1, 2], [1, 2, 3], [3, 6, 7]], dtype=mindspore.float32)
+        >>> indices = Tensor([0, 1, 2], dtype=mindspore.int32)
+        >>> segment_ids = Tensor([1,2,2], dtype=mindspore.int32)
+        >>> sparse_segment_mean = ops.SparseSegmentMean()
+        >>> out = sparse_segment_mean(x, indices, segment_ids)
+        >>> print(out)
+        [[0. 0. 0.]
+         [0. 1. 2.]
+         [2. 4. 5.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSegmentMean"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'segment_ids'], outputs=['y'])
+
+
 class Zeta(Primitive):
     """
     Compute the Hurwitz zeta function ζ(x,q).

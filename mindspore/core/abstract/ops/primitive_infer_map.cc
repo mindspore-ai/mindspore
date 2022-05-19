@@ -40,13 +40,9 @@
 #include "utils/ms_context.h"
 #include "ops/tile.h"
 #include "ops/slice.h"
-#include "ops/matrix_diag_part_v3.h"
-#include "ops/matrix_diag_v3.h"
-#include "ops/matrix_set_diag_v3.h"
 #include "ops/grad/slice_grad.h"
 #include "ops/lstm.h"
 #include "ops/stack.h"
-#include "ops/ragged_range.h"
 
 namespace mindspore {
 namespace abstract {
@@ -84,6 +80,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kFillV2 = prim::kPrimFillV2->name();
   static const auto &kFractionalAvgPoolGrad = prim::kPrimFractionalAvgPoolGrad->name();
   static const auto &kTransposeNOD = prim::kPrimTransposeNOD->name();
+  static const auto &kSparseSegmentMean = prim::kPrimSparseSegmentMean->name();
   // Common dynamic shape depends.
   static const PrimShapeDependMap dynamic_shape_depends{{kUnsortedSegmentSum, ShapeSet{2}},
                                                         {kFractionalAvgPoolGrad, ShapeSet{0}},
@@ -114,7 +111,8 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kReduceSum, ShapeSet{1}},
                                                         {kTruncatedNormal, ShapeSet{0}},
                                                         {kRaggedRange, ShapeSet{0, 1, 2}},
-                                                        {kTransposeNOD, ShapeSet{1}}};
+                                                        {kTransposeNOD, ShapeSet{1}},
+                                                        {kSparseSegmentMean, ShapeSet{2}}};
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
