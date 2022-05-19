@@ -53,7 +53,7 @@ int CTCLossV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   num_labels_ = log_probs_shape[kIndex2];
   const auto target_shape = inputs[kIndex1]->GetShapeVector();
   max_target_length_ = target_shape[kIndex1];
-  const auto input_length_shape = inputs[kIndex3]->GetShapeVector();
+  const auto input_length_shape = inputs[kIndex2]->GetShapeVector();
   if (!(blank_ >= 0 && blank_ < num_labels_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << ", the attr blank must be in label range [ 0, " << num_labels_
                   << " ), but got value " << blank_ << ".";
