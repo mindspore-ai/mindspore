@@ -1,0 +1,52 @@
+﻿mindspore.ops.AdaptiveAvgPool2D
+================================
+
+.. py:class:: mindspore.ops.AdaptiveAvgPool2D(output_size)
+
+    2维自适应平均池化。
+
+    对输入Tensor，提供2维的自适应平均池化操作，也就是说，对于输入任何尺寸，指定输出的尺寸都为H * W。但是输入和输出特征的数目不会变化。
+
+    输入和输出数据格式可以是"NCHW"和"CHW"。N是批处理大小，C是通道数，H是特征高度，W是特征宽度。
+
+    对于2维的自适应平均池化操作，有如下公式：
+
+    ..  math::
+        \begin{align}
+        h_{start} &= floor(i * H_{in} / H_{out})\\
+        h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\
+        w_{start} &= floor(j * W_{in} / W_{out})\\
+        w_{end} &= ceil((j + 1) * W_{in} / W_{out})\\
+        Output(i,j) &= \frac{\sum Input[h_{start}:h_{end}, w_{start}:w_{end}]}{(h_{end}- h_{start})
+        * (w_{end}- w_{start})}
+        \end{align}
+
+    **参数:**
+
+    - **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，也可以是H * H的单个H，或None，如果是None，这意味着输出大小与输入相同。
+
+    **输入：**
+
+    - **input_x** (Tensor) - AdaptiveAvgPool2D的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
+
+    **输出：**
+
+    Tensor，数据类型与 `input_x` 相同。
+
+    输出的shape为 `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape` 。
+
+    .. math::
+        out\_shape = \begin{cases}
+        input\_x\_shape[-2] + output\_size[1], & \text{if output_size is (None, w);}\\
+        output\_size[0] + input\_x\_shape[-1], & \text{if output_size is (h, None);}\\
+        input\_x\_shape[-2:], & \text{if output_size is (None, None);}\\
+        (h, h), & \text{if output_size is h;}\\
+        (h, w), & \text{if output_size is (h, w)}
+        \end{cases}
+
+    **异常：**
+
+    - **ValueError** - 如果 `output_size` 是tuple，并且 `output_size` 的长度不是2。
+    - **TypeError** - 如果 `input_x` 不是Tensor。
+    - **TypeError** - 如果 `input_x` 的数据类型不是float16、float32或者float64。
+    - **ValueError** - 如果 `input_x` 的维度小于或等于 `output_size` 的维度。
