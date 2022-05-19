@@ -21,6 +21,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor, Parameter, ParameterTuple
+from mindspore.ops.functional import vmap
 
 
 class NetIndexAdd(nn.Cell):
@@ -324,3 +325,73 @@ def test_index_add_dynamic():
     net.set_inputs(Tensor(idx), y_dyn)
     output = net(Tensor(idx), Tensor(y))
     assert (output.asnumpy() == expect).all()
+
+
+def vmap_case():
+    class Net(nn.Cell):
+        def __init__(self, axis):
+            super(Net, self).__init__()
+            self.index_add = ops.IndexAdd(axis)
+
+        def construct(self, a, idx, b):
+            return self.index_add(a, idx, b)
+
+    class WrapNet(nn.Cell):
+        def __init__(self, net, a, in_axes, out_axes):
+            super(WrapNet, self).__init__()
+            self.net = net
+            self.a = a
+            self.in_axes = in_axes
+            self.out_axes = out_axes
+
+        def construct(self, idx, b):
+            return vmap(self.net, self.in_axes, self.out_axes)(self.a, idx, b)
+
+    # batch dimension of x and y is same, batch dimension <= axis
+    x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)))
+    indices = Tensor(np.array([0, 2], dtype=np.int32))
+    y = Tensor(np.array([[0.5, 1], [1, 1.5], [2, 2.5]], dtype=np.float32))
+    output = WrapNet(Net(0), x, (0, None, 0), 0)(indices, y)
+    expect = np.array([[1.5, 2, 4], [5, 5, 7.5], [9, 8, 11.5]], dtype=np.float32)
+    assert np.allclose(output.asnumpy(), expect)
+
+    # batch dimension of x and y is different, batch dimension <= axis
+    x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)))
+    indices = Tensor(np.array([0, 2], dtype=np.int32))
+    y = Tensor(np.array([[0.5, 1, 2], [1, 1.5, 2.5]], dtype=np.float32))
+    output = WrapNet(Net(0), x, (0, None, 1), 0)(indices, y)
+    expect = np.array([[1.5, 2, 4], [5, 5, 7.5], [9, 8, 11.5]], dtype=np.float32)
+    assert np.allclose(output.asnumpy(), expect)
+
+    # batch dimension y is None
+    x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)))
+    indices = Tensor(np.array([0, 2], dtype=np.int32))
+    y = Tensor(np.array([0.5, 1], dtype=np.float32))
+    output = WrapNet(Net(0), x, (0, None, None), 0)(indices, y)
+    expect = np.array([[1.5, 2, 4], [4.5, 5, 7], [7.5, 8, 10]], dtype=np.float32)
+    assert np.allclose(output.asnumpy(), expect)
+
+    # batch dimension of x and y is same, batch dimension > axis
+    x = Parameter(Tensor(np.array([[[1, 1], [1, 1]],
+                                   [[2, 2], [2, 2]],
+                                   [[3, 3], [3, 3]]], dtype=np.float32)))
+    indices = Tensor(np.array([0, 2], dtype=np.int32))
+    y = Tensor(np.array([[[0, 0.5], [1, 1.5]], [[1.5, 2], [2.5, 3]]], dtype=np.float32))
+    output = WrapNet(Net(0), x, (2, None, 2), 2)(indices, y)
+    expect = np.array([[[1, 1.5], [2, 2.5]],
+                       [[2, 2], [2, 2]],
+                       [[4.5, 5], [5.5, 6]]], dtype=np.float32)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_index_add_vmap_cpu():
+    """
+    Feature: test IndexAdd vmap on CPU.
+    Description: inputs with batch.
+    Expectation: the result match with expect
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    vmap_case()
