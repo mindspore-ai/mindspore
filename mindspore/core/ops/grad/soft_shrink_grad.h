@@ -31,6 +31,12 @@ class MIND_API SoftShrinkGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SoftShrinkGrad);
   SoftShrinkGrad() : BaseOperator(kNameSoftShrinkGrad) { InitIOName({"input_grad", "input_x"}, {"output"}); }
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.HShrink for the inputs.
+  void Init(const float &lambd = 0.5);
+  /// \brief Method to set lambd. The Default value is 0.5.
+  void set_lambd(const float &lambd = 0.5);
+  /// \brief Method to get lambd.
+  float get_lambd() const;
 };
 abstract::AbstractBasePtr SoftShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const std::vector<abstract::AbstractBasePtr> &input_args);

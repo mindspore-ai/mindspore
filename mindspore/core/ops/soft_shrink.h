@@ -33,6 +33,12 @@ class MIND_API SoftShrink : public BaseOperator {
   MIND_API_BASE_MEMBER(SoftShrink);
   /// \brief Constructor.
   SoftShrink() : BaseOperator(kNameSoftShrink) { InitIOName({"input_x"}, {"output"}); }
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.HShrink for the inputs.
+  void Init(const float &lambd = 0.5);
+  /// \brief Method to set lambd. The Default value is 0.5.
+  void set_lambd(const float &lambd = 0.5);
+  /// \brief Method to get lambd.
+  float get_lambd() const;
 };
 
 abstract::AbstractBasePtr SoftShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

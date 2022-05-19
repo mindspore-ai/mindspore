@@ -28,6 +28,21 @@
 
 namespace mindspore {
 namespace ops {
+void SoftShrink::Init(const float &lambd) {
+  set_lambd(lambd);
+  return;
+}
+
+void SoftShrink::set_lambd(const float &lambd) {
+  AddAttr(kLambd, api::MakeValue(lambd));
+  return;
+}
+
+float SoftShrink::get_lambd() const {
+  auto value_ptr = GetAttr(kLambd);
+  return GetValue<float>(value_ptr);
+}
+
 namespace {
 abstract::ShapePtr SoftShrinkInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -54,13 +69,14 @@ TypePtr SoftShrinkInferType(const PrimitivePtr &prim, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(SoftShrink, BaseOperator);
 AbstractBasePtr SoftShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(SoftShrinkInferType(primitive, input_args),
-                                                    SoftShrinkInferShape(primitive, input_args)->shape());
+  auto infer_type = SoftShrinkInferType(primitive, input_args);
+  auto infer_shape = SoftShrinkInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
+MIND_API_OPERATOR_IMPL(SoftShrink, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SoftShrink, prim::kPrimSoftShrink, SoftShrinkInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
