@@ -225,6 +225,124 @@ class BoundingBoxDecode(Primitive):
             validator.check_equal_int(len(max_shape), 2, "max_shape len", self.name)
 
 
+class SampleDistortedBoundingBoxV2(Primitive):
+    r"""
+    Generate a single randomly distorted bounding box for an image.
+
+    Bounding box annotations are often supplied in addition to ground-truth labels in image recognition or object
+    localization tasks. A common technique for training such a system is to randomly distort an image while preserving
+    its content, i.e. data augmentation. This Op outputs a randomly distorted localization of an object, i.e. bounding
+    box, given an `image_size`, `bounding_boxes` and a series of constraints. The output is returned as 3 tensors:
+    `begin`, `size` and `bboxes`. The first 2 tensors can be fed directly into mindspore.ops.Slice to crop the image.
+    The latter is the generated distorted bounding box.
+
+    Args:
+    seed (int): If either seed or seed2 are set to non-zero, the random number generator is seeded by the given seed.
+                Otherwise, it is seeded by a random seed. Default: 0.
+    seed2 (int): A second seed to avoid seed collision. Default: 0.
+    aspect_ratio_range (Union[list(float), tuple(float)]): The cropped area of the image must have an aspect ratio =
+                                                           width / height within this range. The value of this
+                                                           attribute should be positive. Default: (0.75, 1.33).
+    area_range (Union[list(float), tuple(float)]): The cropped area of the image must contain a fraction of the
+                                                   supplied image within this range. The value of this attribute should
+                                                   be in range (0.0, 1.0]. Default: (0.05, 1.0).
+    max_attempts (int): Number of attempts at generating a cropped region of the image of the specified constraints.
+                        After max_attempts failures, return the entire image. The value of this attribute should be
+                        positive. Default: 100.
+    use_image_if_no_bounding_boxes (bool): Controls behavior if no bounding boxes supplied. If no bounding boxes
+                                           supplied (`bounding_boxes` in shape [0, N, 4] or [batch, 0, 4]), and this
+                                           attribute is set True, then assume an implicit bounding box covering the
+                                           whole input, else if this attribute is set False, then raise an error.
+                                           Default: False.
+
+    Inputs:
+        - **image_size** (Tensor) - 1-D, containing [height, width, channels]. The value of this input tensor should be
+                                    positive.
+        - **bounding_boxes** (Tensor) - 3-D with shape [batch, N, 4] describing the N bounding boxes associated with
+                                        the image. The value of this input tensor should be in range [0.0, 1.0]. The
+                                        data type is float32.
+        - **min_object_covered** (Tensor) - The cropped area of the image must contain at least this fraction of any
+                                            bounding box supplied. The value of this parameter should be in range
+                                            [0.0, 1.0]. In the case of 0, the cropped area does not need to overlap any
+                                            of the bounding boxes supplied. The data type is float32.
+
+    Outputs:
+        - **begin** (Tensor) - A 1-D Tensor, containing [offset_height, offset_width, 0]. The data type is same as
+                               `image_size`.
+        - **size** (Tensor) - A 1-D Tensor, containing [target_height, target_width, -1]. The data type is same as
+                              `image_size`. When the data type of `image_size` is uint8, the last value of `size`,
+                              which is originally -1, will be forced to 255.
+        - **bboxes** (Tensor) - A 3-D Tensor with shape [1, 1, 4], containing the distorted bounding box. The data type
+                                is float32.
+
+    Raises:
+        TypeError: If `image_size` is not a Tensor.
+        TypeError: If `bounding_boxes` is not a Tensor.
+        TypeError: If `min_object_covered` is not a Tensor.
+        TypeError: If `seed` is not an int.
+        TypeError: If `seed2` is not an int.
+        TypeError: If `aspect_ratio_range` is not a list or a tuple with type float.
+        TypeError: If `area_range` is not a list or a tuple with type float.
+        TypeError: If `max_attempts` is not an int.
+        TypeError: If `use_image_if_no_bounding_boxes` is not a bool.
+        ValueError: If the dimension of `image_size` is not 1.
+        ValueError: If the elements of `image_size` is not 3.
+        ValueError: If the dimension of `bounding_boxes` is not 3.
+        ValueError: If the elements of each bounding box in `bounding_boxes` is not 4.
+        ValueError: If the dimension of `min_object_covered` is not 1.
+        ValueError: If the elements of `min_object_covered` is not 1.
+        ValueError: If the elements of `aspect_ratio_range` list or tuple is not 2.
+        ValueError: If the values of `aspect_ratio_range` is not positive.
+        ValueError: If the second value of `aspect_ratio_range` is less than or equal to the first one.
+        ValueError: If the elements of `area_range` list or tuple is not 2.
+        ValueError: If the values of `area_range` is out of range (0.0, 1.0].
+        ValueError: If the second value of `area_range` is less than or equal to the first one.
+        ValueError: If the value of `max_attempts` is not positive.
+        ValueError: If `use_image_if_no_bounding_boxes` is False and no bounding boxes supplied.
+        RuntimeError: If the values of `image_size` is not positive.
+        RuntimeError: If the values of `bounding_boxes` is out of range [0.0, 1.0].
+        RuntimeError: If the `bounding_boxes` cannot make up a bounding boxes.
+        RuntimeError: If the value of `min_object_covered` is out of range [0.0, 1.0].
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> image_size = Tensor([640, 480, 3], mindspore.int32)
+        >>> bounding_boxes = Tensor([[[0.38, 0.17, 0.95, 0.40]]], mindspore.float32)
+        >>> min_object_covered = Tensor([0.8], mindspore.float32)
+        >>> sample_distorted_bounding_box_v2 = \
+        ...   ops.SampleDistortedBoundingBoxV2(seed=1, seed2=1, aspect_ratio_range=(0.9, 1.1),
+        ...                                    area_range=(0.1,1.0), max_attempts=100,
+        ...                                    use_image_if_no_bounding_boxes=False)
+        >>> output = sample_distorted_bounding_box_v2(image_size, bounding_boxes, min_object_covered)
+        >>> begin, size, bboxes = output[0], output[1], output[2]
+        >>> print(begin)
+        [133   1   0]
+        >>> print(size)
+        [502 457  -1]
+        >>> print(bboxes)
+        [[[0.2078125  0.00208333 0.9921875  0.95416665]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0, seed2=0, \
+                  aspect_ratio_range=(0.75, 1.33), \
+                  area_range=(0.05, 1.0), \
+                  max_attempts=100, \
+                  use_image_if_no_bounding_boxes=False):
+        validator.check_is_int(seed, "seed", self.name)
+        validator.check_is_int(seed2, "seed2", self.name)
+        validator.check_value_type("aspect_ratio_range", aspect_ratio_range, [list, tuple], self.name)
+        validator.check_value_type("area_range", area_range, [list, tuple], self.name)
+        validator.check_positive_int(max_attempts, "max_attempts", self.name)
+        validator.check_bool(use_image_if_no_bounding_boxes, "use_image_if_no_bounding_boxes", self.name)
+        for i, value in enumerate(aspect_ratio_range):
+            validator.check_value_type("aspect_ratio_range[%d]" % i, value, [float], self.name)
+        for i, value in enumerate(area_range):
+            validator.check_value_type("area_range[%d]" % i, value, [float], self.name)
+
+
 class CheckValid(PrimitiveWithInfer):
     """
     Checks bounding box.

@@ -214,6 +214,7 @@ constexpr auto kTaylor = "Taylor";
 
 // Others
 constexpr auto kMakeTuple = "MakeTuple";
+constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kAssign = "Assign";
 constexpr auto kAssignAdd = "AssignAdd";
 constexpr auto kAssignSub = "AssignSub";
@@ -934,6 +935,7 @@ GVAR_DEF(PrimitivePtr, kPrimListAppend, std::make_shared<Primitive>("list_append
 GVAR_DEF(PrimitivePtr, kPrimListLen, std::make_shared<Primitive>("list_len"));
 
 // Other miscellaneous
+GVAR_DEF(PrimitivePtr, kPrimSampleDistortedBoundingBoxV2, std::make_shared<Primitive>(kSampleDistortedBoundingBoxV2));
 GVAR_DEF(PrimitivePtr, kPrimEnvironCreate, std::make_shared<Primitive>(kEnvironCreate));
 GVAR_DEF(PrimitivePtr, kPrimEnvironSet, std::make_shared<Primitive>(kEnvironSet));
 GVAR_DEF(PrimitivePtr, kPrimEnvironGet, std::make_shared<Primitive>(kEnvironGet));

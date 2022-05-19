@@ -39,6 +39,7 @@ from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
+from mindspore.ops.operations.other_ops import SampleDistortedBoundingBoxV2
 from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
@@ -3154,6 +3155,13 @@ test_case_other_ops = [
         'block': P.BoundingBoxDecode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0), max_shape=(768, 1280)),
         'desc_inputs': [[256, 4], [256, 4]],
         'desc_bprop': [[256, 4]],
+        'skip': ['backward']}),
+    ('SampleDistortedBoundingBoxV2', {
+        'block': SampleDistortedBoundingBoxV2(seed=1, seed2=1, aspect_ratio_range=[0.9, 1.1], area_range=[0.1, 1.0],
+                                              max_attempts=100, use_image_if_no_bounding_boxes=False),
+        'desc_inputs': (Tensor(np.array([640, 480, 3], np.int32)),
+                        Tensor(np.array([[[0.38, 0.17, 0.95, 0.40]]], np.float32)),
+                        Tensor(np.array([0.8], np.float32))),
         'skip': ['backward']}),
     ('GatherNd', {
         'block': P.GatherNd(),
