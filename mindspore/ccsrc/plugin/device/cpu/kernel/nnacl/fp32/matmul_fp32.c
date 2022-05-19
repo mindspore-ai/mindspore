@@ -16,16 +16,8 @@
 
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
-#ifdef ENABLE_SSE
-#ifdef _MSC_VER
-#include <immintrin.h>
-#else
-#include <x86intrin.h>
-#endif
-#endif
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+
 void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; ++r) {
     for (int c = 0; c < col; ++c) {

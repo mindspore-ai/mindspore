@@ -22,8 +22,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <limits.h>
-
-#include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_ARM
+#include <arm_neon.h>
+#endif
 
 #define C1NUM 1
 #define C2NUM 2

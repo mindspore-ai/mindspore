@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32/deconv_winograd_fp32.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, const ConvParameter *conv_param,
                          const DeConvParam *deconv_param) {

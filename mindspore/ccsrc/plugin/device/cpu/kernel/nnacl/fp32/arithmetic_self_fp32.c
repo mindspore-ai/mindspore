@@ -17,6 +17,7 @@
 #include <string.h>
 #include <math.h>
 #include "nnacl/fp32/arithmetic_self_fp32.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 // abs:
 // 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)

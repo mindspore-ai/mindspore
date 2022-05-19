@@ -123,6 +123,37 @@ static inline float MS_GET_SUM512_F32(__m512 src) {
 #define MS512_INT64_TO_INT16(src) _mm512_cvtepi64_epi16(src)
 #define MS512_INT64_TO_INT32(src) _mm512_cvtepi64_epi32(src)
 
+static inline MS_FLOAT32X16 simd_exp512_f32(MS_FLOAT32X16 input) {
+  static MS_FLOAT32X16 maxv = {88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f,
+                               88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
+  static MS_FLOAT32X16 minv = {-88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f,
+                               -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f};
+  static MS_FLOAT32X16 param[] = {
+    {0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f,
+     0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f},
+    {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120,
+     1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
+    {1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24,
+     1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24},
+    {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6,
+     1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
+    {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f},
+    {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}};
+  input = MS_MAX512_F32(minv, MS_MIN512_F32(input, maxv));
+  MS_INT32X16 integer = MS_CVT512PS_EPI32(MS_DIV512_F32(input, param[0]));
+  MS_FLOAT32X16 decimal = MS_SUB512_F32(input, MS_MUL512_F32(MS_CVT512EPI32_PS(integer), param[0]));
+  MS_INT32X16 int_exp = MS_SLLI512_EPI32(MS_ADD512_EPI32(integer, MS_MOV512_EPI32(127)), 23);
+  MS_FLOAT32X16 tmp = MS_MUL512_F32(decimal, (MS_ADD512_F32(param[2], MS_MUL512_F32(decimal, param[1]))));
+  tmp = MS_MUL512_F32(decimal, MS_ADD512_F32(param[4], MS_MUL512_F32(decimal, MS_ADD512_F32(param[3], tmp))));
+  MS_FLOAT32X16 decimal_exp = MS_ADD512_F32(param[5], MS_MUL512_F32(decimal, MS_ADD512_F32(param[5], tmp)));
+  return MS_MUL512_F32(decimal_exp, MS_CAST512_F32_S32(int_exp));
+}
+
+static inline void simd_exp512(MS_FLOAT32X16 input, float *dst) {
+  MS_FLOAT32X16 res = simd_exp512_f32(input);
+  MS_ST512_F32(dst, res);
+}
+
 static inline MS_FLOAT32X16 MS_TANHX16_F32(MS_FLOAT32X16 src) {
   static const MS_FLOAT32X16 data0 = {378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f,
                                       378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f};
