@@ -1278,6 +1278,15 @@ class AscendAutoMonadConverter {
       return Assign(target, source, link, keep, output);
     }
     // Assign tuple.
+    auto source_abs = source->abstract();
+    MS_EXCEPTION_IF_NULL(source_abs);
+    if (!common::AnfAlgo::CheckPrimitiveType(source, prim::kPrimMakeTuple) &&
+        source_abs->isa<abstract::AbstractTuple>()) {
+      MS_EXCEPTION_IF_NULL(kernel_graph_);
+      auto make_tuple = kernel_graph_->TransTupleToMakeTuple(source);
+      return AssignAll(target, make_tuple, link, keep, output);
+    }
+
     std::vector<AnfNodePtr> targets = common::AnfAlgo::GetAllOutput(target);
     std::vector<AnfNodePtr> sources = common::AnfAlgo::GetAllOutput(source);
     if (targets.size() != sources.size()) {
