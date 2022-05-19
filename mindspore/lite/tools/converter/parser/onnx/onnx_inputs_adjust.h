@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 #include "backend/common/optimizer/pass.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::converter::FmkType;

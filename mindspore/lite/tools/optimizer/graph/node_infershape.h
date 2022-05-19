@@ -24,7 +24,6 @@
 #include "schema/inner/model_generated.h"
 #include "src/tensor.h"
 #include "tools/lite_exporter/fetch_content.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/format_utils.h"
 
 using mindspore::converter::FmkType;

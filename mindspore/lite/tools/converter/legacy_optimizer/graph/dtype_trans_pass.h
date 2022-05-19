@@ -21,7 +21,6 @@
 #include <utility>
 #include "tools/converter/optimizer.h"
 #include "tools/common/graph_util.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/common/tensor_util.h"
 #include "nnacl/op_base.h"
 

@@ -24,7 +24,6 @@
 #include "ops/split_with_overlap.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "include/common/utils/utils.h"
-#include "tools/converter/converter_flags.h"
 #include "include/errorcode.h"
 #include "tools/optimizer/parallel/operator_info_register.h"
 #include "tools/optimizer/parallel/spliter.h"
