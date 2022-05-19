@@ -26,10 +26,10 @@
 
 namespace mindspore {
 namespace kernel {
-class GatherV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class GatherCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
-  GatherV2CpuKernelMod() = default;
-  ~GatherV2CpuKernelMod() override = default;
+  GatherCpuKernelMod() = default;
+  ~GatherCpuKernelMod() override = default;
 
   void CheckParam(const CNodePtr &kernel_node);
 
@@ -46,10 +46,10 @@ class GatherV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using GatherV2Func = std::function<bool(GatherV2CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, GatherV2Func>> func_list_;
-  GatherV2Func kernel_func_;
+  using GatherFunc = std::function<bool(GatherCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, GatherFunc>> func_list_;
+  GatherFunc kernel_func_;
 
   std::vector<size_t> input_shape_;
   std::vector<size_t> indices_shape_;

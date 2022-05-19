@@ -26,27 +26,14 @@
 
 namespace mindspore {
 namespace ops {
-// gather
-MIND_API_OPERATOR_IMPL(Gather, BaseOperator);
-AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                            const std::vector<AbstractBasePtr> &input_args) {
+namespace {
+abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
-  constexpr size_t input_num = 3;
-  abstract::CheckArgsSize(op_name, input_args, input_num);
-  abstract::AbstractTensorPtr params =
-    CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
   abstract::AbstractTensorPtr indices =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
-  // check
-  std::set<TypePtr> valid_params_types = {kTensorType};
-  (void)CheckAndConvertUtils::CheckSubClass("params_type", input_args[kInputIndex0]->BuildType(), valid_params_types,
-                                            op_name);
-  std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("index_type", input_args[kInputIndex1]->BuildType(), int_types,
-                                                   op_name);
-  (void)CheckAndConvertUtils::CheckTypeValid("axis_type", input_args[kInputIndex2]->BuildType(), int_types, op_name);
-
+  abstract::AbstractTensorPtr params =
+    CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
   bool ind_dyn = (!indices->shape()->min_shape().empty() && !indices->shape()->max_shape().empty());
   bool param_dyn = (!params->shape()->min_shape().empty() && !params->shape()->max_shape().empty());
   int64_t axis_val = 0;
@@ -64,7 +51,7 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
     axis_val = GetValue<int64_t>(axis->BuildValue());
   } else {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', the third input type must be tensor or scalar, but got invalid abstract type:"
+                      << "', the third input type should be tensor or scalar, but got invalid abstract type:"
                       << input_args[kInputIndex2]->type_name() << ".";
   }
   auto params_shp = params->shape()->shape();
@@ -76,7 +63,7 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   ShapeVector param_shp_max = (param_dyn) ? params->shape()->max_shape() : params->shape()->shape();
   ShapeVector indices_shp_min = (ind_dyn) ? indices->shape()->min_shape() : indices->shape()->shape();
   ShapeVector indices_shp_max = (ind_dyn) ? indices->shape()->max_shape() : indices->shape()->shape();
-  // check axis_val within interval: [-params_rank, params_rank)
+  // check axis_val within interval: [0, params_rank)
   if (!(-params_rank <= axis_val) || !(axis_val < params_rank)) {
     MS_LOG(EXCEPTION) << "For 'Gather', axis value must be within range [" << -params_rank << ", " << params_rank
                       << "], but got: " << axis_val << ".";
@@ -95,11 +82,41 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   if (ind_dyn || param_dyn) {
     ShapeVector min_shape = calc_shape(indices_shp_min, param_shp_min);
     ShapeVector max_shape = calc_shape(indices_shp_max, param_shp_max);
-    return abstract::MakeAbstract(std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape),
-                                  params->BuildType());
+    return std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);
   }
-  return abstract::MakeAbstract(std::make_shared<abstract::Shape>(out_shape), params->BuildType());
+  return std::make_shared<abstract::Shape>(out_shape);
 }
+
+TypePtr GatherInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const std::string &op_name = primitive->name();
+  constexpr size_t input_num = 3;
+  abstract::CheckArgsSize(op_name, input_args, input_num);
+  std::set<TypePtr> valid_params_types = {kTensorType};
+  (void)CheckAndConvertUtils::CheckSubClass("params", input_args[kInputIndex0]->BuildType(), valid_params_types,
+                                            op_name);
+  std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->BuildType(), int_types,
+                                                   op_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("axis", input_args[kInputIndex2]->BuildType(), int_types, op_name);
+
+  abstract::AbstractTensorPtr params =
+    CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
+  return params->BuildType();
+}
+}  // namespace
+
+AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputsNum = 3;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputsNum, primitive->name());
+  auto infer_type = GatherInferType(primitive, input_args);
+  auto infer_shape = GatherInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+MIND_API_OPERATOR_IMPL(Gather, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Gather, prim::kPrimGather, GatherInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
