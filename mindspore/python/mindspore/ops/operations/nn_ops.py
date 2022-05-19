@@ -163,7 +163,7 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
     r"""
     2D adaptive average pooling for temporal data.
 
-    Refer to :func:`mindspore.ops.adaptive_avgpool2d` for more detail.
+    Refer to :func:`mindspore.ops.adaptive_avg_pool2d` for more detail.
 
     Supported Platforms:
         ``GPU``
@@ -1992,21 +1992,7 @@ class AvgPool(_Pool):
     r"""
     Average pooling operation.
 
-    Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
-    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPool outputs
-    regional average in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows.
-
-    .. math::
-        \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
-        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
-
-    .. warning::
-        - Global pooling is supported.
-        - For Ascend, the height of "kernel_size" and the weight of "kernel_size" are positive integers
-          within the range [1, 255]. ksize_h * ksize_w < 256.
-        - For Ascend, due to instruction restrictions, the values of "strides_h" and "strides_w" are
-          positive integers within the range [1, 63].
+    Refer to :func:`mindspore.ops.avg_pool2d` for more detail.
 
     Args:
         kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
@@ -2015,8 +2001,8 @@ class AvgPool(_Pool):
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        pad_mode (str): The optional value for pad mode, is "same" or "valid".
-            Default: "valid".
+        pad_mode (str): The optional value for pad mode, is 'same' or 'valid'.
+            Default: 'valid'.
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
               the input. The total number of padding will be calculated in horizontal and vertical
@@ -2036,9 +2022,9 @@ class AvgPool(_Pool):
 
     Raises:
         TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
         ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
-        ValueError: If `kernel_size` or `strides` is less than 1.
         ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:

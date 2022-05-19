@@ -20,7 +20,7 @@ from mindspore.ops.operations import nn_ops as NN
 from ...common.tensor import Tensor
 
 
-def adaptive_avgpool2d(x, output_size):
+def adaptive_avg_pool2d(x, output_size):
     r"""
     2D adaptive average pooling for temporal data.
 
@@ -44,7 +44,7 @@ def adaptive_avgpool2d(x, output_size):
         \end{align}
 
     Args:
-        input_x (Tensor): The input of adaptive_avgpool2d, which is a 3D or 4D tensor,
+        input_x (Tensor): The input of adaptive_avg_pool2d, which is a 3D or 4D tensor,
           with float16, float32 or float64 data type.
         output_size (Union[int, tuple]): The target output size is H x W.
             `ouput_size` can be a tuple consisted of int type H and W, or a single H for H x H, or None.
@@ -79,7 +79,7 @@ def adaptive_avgpool2d(x, output_size):
         >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
         ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
-        >>> output = ops.adaptive_avgpool2d(input_x, (None, 2))
+        >>> output = ops.adaptive_avg_pool2d(input_x, (None, 2))
         >>> print(output)
         [[[1.5 2.5]
           [4.5 5.5]
@@ -91,7 +91,7 @@ def adaptive_avgpool2d(x, output_size):
           [4.5 5.5]
           [7.5 8.5]]]
         >>> # case 2: output_size=2
-        >>> output = ops.adaptive_avgpool2d(input_x, 2)
+        >>> output = ops.adaptive_avg_pool2d(input_x, 2)
         >>> print(output)
         [[[3. 4.]
           [6. 7.]]
@@ -100,7 +100,7 @@ def adaptive_avgpool2d(x, output_size):
          [[3. 4.]
           [6. 7.]]]
         >>> # case 3: output_size=(1, 2)
-        >>> output = ops.adaptive_avgpool2d(input_x, (1, 2))
+        >>> output = ops.adaptive_avg_pool2d(input_x, (1, 2))
         >>> print(output)
         [[[4.5 5.5]]
          [[4.5 5.5]]
@@ -108,6 +108,74 @@ def adaptive_avgpool2d(x, output_size):
     """
     adaptive_avgpool2d_ = P.AdaptiveAvgPool2D(output_size)
     return adaptive_avgpool2d_(x)
+
+
+def avg_pool2d(x, kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW'):
+    r"""
+    Average pooling operation.
+
+    Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, outputs regional average in the
+    :math:`(H_{in}, W_{in})`-dimension. Given kernel size :math:`(k_{h}, k_{w})` and `strides` , the operation
+    is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, h, w) = \frac{1}{k_{h} * k_{w}} \sum_{m=0}^{k_{h}-1} \sum_{n=0}^{k_{w}-1}
+        \text{input}(N_i, C_j, strides[0] \times h + m, strides[1] \times w + n)
+
+    .. warning::
+        - Global pooling is supported.
+        - For Ascend, the height of `kernel_size` and the weight of `kernel_size` are positive integers
+          within the range [1, 255]. ksize_h * ksize_w < 256.
+        - For Ascend, due to instruction restrictions, the values of 'strides_h' and 'strides_w' are
+          positive integers within the range [1, 63].
+
+    Args:
+        x (Tensor): Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value.
+            It is an int number that represents height and width of the kernel, or a tuple
+            of two int numbers that represent height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        pad_mode (str): The optional value for pad mode, is 'same' or 'valid'.
+            Default: 'valid'.
+
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
+        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'.
+            Default: 'NCHW'.
+
+    Returns:
+        Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If length of shape of `x` is not equal to 4.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
+        >>> output = ops.avg_pool2d(x, kernel_size=2, strides=1, pad_mode='VALID')
+        >>> print(output)
+        [[[[ 2.5   3.5   4.5]
+           [ 6.5   7.5   8.5]]
+          [[14.5  15.5  16.5]
+           [18.5  19.5  20.5]]
+          [[26.5  27.5  28.5]
+           [30.5  31.5  32.5]]]]
+    """
+    return P.AvgPool(kernel_size, strides, pad_mode, data_format)(x)
 
 
 slice_ = P.Slice()
@@ -911,7 +979,8 @@ def resize_bilinear(x, size, align_corners=False, half_pixel_centers=False):
 
 
 __all__ = [
-    'adaptive_avgpool2d',
+    'adaptive_avg_pool2d',
+    'avg_pool2d',
     'celu',
     'deformable_conv2d',
     'fast_gelu',
