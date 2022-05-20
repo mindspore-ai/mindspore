@@ -28,9 +28,9 @@ _ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
 @_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
                     "RowTensor", "Tensor", "Tensor", "Bool", "Bool",
                     "Function", "Bool", "Function", "Bool")
-def _tensor_run_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
-                                gradient, weight, moment, ps_parameter, cache_enable,
-                                distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
+def _tensor_run_opt_with_sparse_dist(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
+                                     gradient, weight, moment, ps_parameter, cache_enable,
+                                     distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices
@@ -49,14 +49,46 @@ def _tensor_run_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power, le
 @_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
                     "Tensor", "Tensor", "Tensor", "Bool", "Bool",
                     "Function", "Bool", "Function", "Bool")
-def _tensor_run_opt(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
-                    gradient, weight, moment, ps_parameter, cache_enable,
-                    distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
+def _tensor_run_opt_dist(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
+                         gradient, weight, moment, ps_parameter, cache_enable,
+                         distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
     """Apply ftrl optimizer to the weight parameter."""
     success = True
     if use_flag:
         success = F.depend(success, distributed_opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
     elif ps_parameter and not cache_enable:
+        op_shape = P.Shape()
+        success = F.depend(success, pull(push((gradient, learning_rate, l1, l2, lr_power),
+                                              (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
+    else:
+        success = F.depend(success, opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
+    return success
+
+
+@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
+                    "RowTensor", "Tensor", "Tensor", "Bool", "Bool")
+def _tensor_run_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
+                                gradient, weight, moment, ps_parameter, cache_enable):
+    """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
+    success = True
+    indices = gradient.indices
+    values = gradient.values
+    if ps_parameter and not cache_enable:
+        op_shape = P.Shape()
+        shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))
+        success = F.depend(success, pull(push((values, indices), shapes), weight))
+    else:
+        success = F.depend(success, spars_opt(weight, moment, linear, values, indices))
+    return success
+
+
+@_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
+                    "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+def _tensor_run_opt(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
+                    gradient, weight, moment, ps_parameter, cache_enable):
+    """Apply ftrl optimizer to the weight parameter."""
+    success = True
+    if ps_parameter and not cache_enable:
         op_shape = P.Shape()
         success = F.depend(success, pull(push((gradient, learning_rate, l1, l2, lr_power),
                                               (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
@@ -253,11 +285,16 @@ class FTRL(Optimizer):
         grads = self._grad_sparse_indices_deduplicate(grads)
         lr = self.get_lr()
 
-        success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                      self.l1, self.l2, self.lr_power, lr),
-                            linear, grads, params, moments, self.ps_parameters, self.cache_enable,
-                            self.distributed_opts, self.use_distributed_opt_flags,
-                            self.distributed_sparse_opts, self.use_distributed_sparse_opt_flags)
+        if self.use_dist_optimizer:
+            success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
+                                          self.l1, self.l2, self.lr_power, lr),
+                                linear, grads, params, moments, self.ps_parameters, self.cache_enable,
+                                self.distributed_opts, self.use_distributed_opt_flags,
+                                self.distributed_sparse_opts, self.use_distributed_sparse_opt_flags)
+        else:
+            success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
+                                          self.l1, self.l2, self.lr_power, lr),
+                                linear, grads, params, moments, self.ps_parameters, self.cache_enable)
         return success
 
     @Optimizer.target.setter
@@ -283,6 +320,7 @@ class FTRL(Optimizer):
         self._target = value
 
     def _init_distributed_opts(self, use_locking, learning_rate, l1, l2, lr_power):
+        self.use_dist_optimizer = self.use_distibuted_optimizer()
         self.distributed_opts, self.use_distributed_opt_flags =\
         self.get_distributed_optimizer_list("ftrl", use_locking=use_locking)
         self.distributed_sparse_opts, self.use_distributed_sparse_opt_flags =\
