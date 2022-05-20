@@ -44,7 +44,7 @@ dependencies {
     // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
     compile('com.squareup.okhttp3:okhttp:3.14.9')
     // https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java
-    compile('com.google.flatbuffers:flatbuffers-java:2.0.2')
+    compile('com.google.flatbuffers:flatbuffers-java:2.0.0')
     compile('org.bouncycastle:bcprov-jdk15on:1.68')
     compile project(':common')
     compile project(':linux_x86')
