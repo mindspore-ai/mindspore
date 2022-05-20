@@ -60,14 +60,12 @@ void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node);
 void InsertRedistribution(const RedistributionOpListPtr &redistribution_oplist_ptr, const CNodePtr &node,
                           const FuncGraphPtr &func_graph, int64_t pos, const CNodePtr &pre_node);
 
-TensorLayout GetTensorInLayout(const CNodePtr &pre_node, const PrimitivePtr &pre_prim,
-                               const OperatorInfoPtr &distribute_operator_pre);
+TensorLayout GetTensorInLayout(const AnfNodePtr &pre_node, int get_item_index);
 
 OperatorInfoPtr GetDistributeOperator(const CNodePtr &node);
 
-void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const OperatorInfoPtr &distribute_operator,
-                    const CNodePtr &middle_node, int64_t index, TensorRedistribution tensor_redistribution,
-                    const CNodePtr &pre_node);
+void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const AnfNodePtr &pre_node,
+                    TensorRedistribution tensor_redistribution, int get_item_index);
 
 bool StrategyFound(const mindspore::HashMap<std::string, ValuePtr> &attrs);
 
@@ -79,8 +77,7 @@ void MarkForwardCNode(const FuncGraphPtr &root);
 
 bool FindCommunicationOp(const std::vector<AnfNodePtr> &all_nodes);
 
-void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_operator, const CNodePtr &insert_node,
-                        const TensorRedistribution &tensor_redistribution, const CNodePtr &pre_node);
+void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tensor_redistribution);
 
 void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node);
 
@@ -146,8 +143,6 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes, const FuncGrap
 
 // main step of Parallel
 bool StepParallel(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer);
-
-int64_t GetTupleGetItemIndex(const CNodePtr &cnode);
 
 Status ParallelInit();
 

@@ -394,21 +394,22 @@ void InsertGetTensorSliceOp(const Operator &op, const CNodePtr &node, const Func
   InsertNode(op, node, LongToSize(pos), pre_node, func_graph, instance_name);
 }
 
-TensorLayout GetTensorInLayout(const CNodePtr &middle_node, const PrimitivePtr &middle_prim,
-                               const OperatorInfoPtr &distribute_operator) {
+TensorLayout GetTensorInLayout(const AnfNodePtr &pre_node, int get_item_index) {
   TensorInfo tensorinfo_in;
-  if (middle_prim->name() == prim::kTupleGetItem) {
-    auto value_node = middle_node->input(2)->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(value_node);
-    size_t index_s = LongToSize(GetValue<int64_t>(value_node->value()));
-    if (index_s >= distribute_operator->outputs_tensor_info().size()) {
-      MS_LOG(EXCEPTION) << "The index out of range, index: " << index_s
-                        << ", vector size: " << distribute_operator->outputs_tensor_info().size();
+  auto pre_cnode = pre_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(pre_cnode);
+  auto distribute_operator = GetDistributeOperator(pre_cnode);
+  MS_EXCEPTION_IF_NULL(distribute_operator);
+  if (get_item_index != -1) {
+    if (get_item_index >= SizeToInt(distribute_operator->outputs_tensor_info().size())) {
+      MS_LOG(EXCEPTION) << "The index out of range. Node: " << pre_node->DebugString() << " index: " << get_item_index
+                        << " outputs_tensor_info's size: " << distribute_operator->outputs_tensor_info().size();
     }
-    tensorinfo_in = distribute_operator->outputs_tensor_info()[index_s];
+    tensorinfo_in = distribute_operator->outputs_tensor_info()[get_item_index];
   } else {
     if (distribute_operator->outputs_tensor_info().empty()) {
-      MS_LOG(EXCEPTION) << "The outputs tensor info is empty";
+      MS_LOG(EXCEPTION) << "The outputs tensor info is empty."
+                        << " Node:" << pre_node->DebugString();
     }
     tensorinfo_in = distribute_operator->outputs_tensor_info()[0];
   }
@@ -424,49 +425,42 @@ OperatorInfoPtr GetDistributeOperator(const CNodePtr &node) {
   return distribute_operator;
 }
 
-void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const OperatorInfoPtr &distribute_operator,
-                    const CNodePtr &middle_node, int64_t index, TensorRedistribution tensor_redistribution,
-                    const CNodePtr &pre_node) {
-  FuncGraphPtr func_graph = middle_node->func_graph();
-  if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Redistribution:get graph failed";
-  }
-  CNodePtr next_node = node_pair.first->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(next_node);
-  auto middle_value = middle_node->input(0)->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(middle_value);
-  PrimitivePtr middle_prim = middle_value->value()->cast<PrimitivePtr>();
-  MS_EXCEPTION_IF_NULL(middle_prim);
-  OperatorInfoPtr next_distribute_operator = GetDistributeOperator(next_node);
-  if (next_distribute_operator == nullptr) {
-    MS_LOG(EXCEPTION) << "Failure: " << next_node->ToString() << " GetDistributeOperator failed";
-  }
-  RankList dev_list = distribute_operator->stage_device_list();
-  std::string next_prim_name = GetValueNode<PrimitivePtr>(next_node->input(0))->name();
-  MS_LOG(DEBUG) << "Redistribution: middle_prim " << middle_prim->name() << " next_prim " << next_prim_name;
-  MS_LOG(DEBUG) << "Redistribution: middle_node " << middle_node->ToString() << " next_node " << next_node->ToString();
+void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const AnfNodePtr &pre_node,
+                    TensorRedistribution tensor_redistribution, int get_item_index) {
+  auto next_cnode = node_pair.first->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(next_cnode);
+  auto func_graph = next_cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto next_distribute_operator = GetDistributeOperator(next_cnode);
+  MS_EXCEPTION_IF_NULL(next_distribute_operator);
+  auto pre_cnode = pre_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(pre_cnode);
+  auto distribute_operator = GetDistributeOperator(pre_cnode);
+  MS_EXCEPTION_IF_NULL(distribute_operator);
+  auto dev_list = distribute_operator->stage_device_list();
+
+  MS_LOG(DEBUG) << "Redistribution for pre_node: " << pre_cnode->DebugString()
+                << " next_node: " << next_cnode->DebugString();
   // extract tensor layout in and out
   if (distribute_operator->outputs_tensor_info().empty()) {
     MS_LOG(WARNING) << "pre_node's tensorinfo_in is empty, operator name is " << distribute_operator->name();
     return;
   }
-
-  if (LongToSize(index - 1) >= next_distribute_operator->inputs_tensor_info().size()) {
-    MS_LOG(WARNING) << "The index is out of range, the index is " << (index - 1) << ", the vector size is "
-                    << next_distribute_operator->inputs_tensor_info().size() << "next operator name is "
-                    << next_distribute_operator->name();
+  if (LongToSize(node_pair.second - 1) >= next_distribute_operator->inputs_tensor_info().size()) {
+    MS_LOG(WARNING) << "The index is out of range, the index is " << (node_pair.second - 1) << ", the vector size is "
+                    << next_distribute_operator->inputs_tensor_info().size() << "next node is "
+                    << next_cnode->DebugString();
     return;
   }
-  TensorInfo tensorinfo_out = next_distribute_operator->inputs_tensor_info()[LongToSize(index - 1)];
+  TensorInfo tensorinfo_out = next_distribute_operator->inputs_tensor_info()[LongToSize(node_pair.second - 1)];
   TensorLayout tensorlayout_out = tensorinfo_out.tensor_layout();
-  TensorLayout tensorlayout_in = GetTensorInLayout(middle_node, middle_prim, distribute_operator);
-  if (IsPrimitiveCNode(middle_node, prim::kPrimReceive)) {
-    tensorlayout_in = *(middle_node->user_data<TensorLayout>());
+  TensorLayout tensorlayout_in = GetTensorInLayout(pre_node, get_item_index);
+  if (IsPrimitiveCNode(pre_node, prim::kPrimReceive)) {
+    tensorlayout_in = *(pre_node->user_data<TensorLayout>());
   }
   if (tensor_redistribution.Init(tensorlayout_in, tensorlayout_out, dev_list) == FAILED) {
-    MS_LOG(ERROR) << "Redistribution: middle_prim " << middle_prim->name() << " next_prim : " << next_prim_name;
-    MS_LOG(ERROR) << "Redistribution: middle_node " << middle_node->ToString() << " next_node "
-                  << next_node->ToString();
+    MS_LOG(ERROR) << "Redistribution: pre_node " << pre_cnode->DebugString() << " next_node "
+                  << next_cnode->DebugString();
     DumpGraph(func_graph, "redistribution_error");
     MS_LOG(EXCEPTION) << "Failure:tensor_redistribution init failed";
   }
@@ -477,7 +471,7 @@ void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const Opera
   MS_LOG(DEBUG) << "Redistribution size " << redistribution_oplist_ptr->first.size();
   if (!redistribution_oplist_ptr->first.empty()) {
     // insert node before next node
-    InsertRedistribution(redistribution_oplist_ptr, next_node, func_graph, node_pair.second, pre_node);
+    InsertRedistribution(redistribution_oplist_ptr, next_cnode, func_graph, node_pair.second, pre_cnode);
   }
 }
 
@@ -543,50 +537,31 @@ bool FindCommunicationOp(const std::vector<AnfNodePtr> &all_nodes) {
   return false;
 }
 
-void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_operator, const CNodePtr &insert_node,
-                        const TensorRedistribution &tensor_redistribution, const CNodePtr &pre_node) {
-  MS_EXCEPTION_IF_NULL(node->func_graph());
-  FuncGraphManagerPtr manager = node->func_graph()->manager();
+void StepRedistribution(const CNodePtr &cnode, const TensorRedistribution &tensor_redistribution) {
+  MS_EXCEPTION_IF_NULL(cnode->func_graph());
+  FuncGraphManagerPtr manager = cnode->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  AnfNodeIndexSet node_set = manager->node_users()[node];
-  CNodePtr insert_node_new;
+  // In pipeline parallel mode, redistribution is inserted after receive, not send.
+  if (IsPrimitiveCNode(cnode, prim::kPrimSend) || IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) ||
+      IsPrimitiveCNode(cnode, prim::kPrimMakeList)) {
+    return;
+  }
+  // Find Redistribution pre_nodes
+  std::vector<AnfNodePtr> pre_nodes;
+  RedistributionPreNode(cnode, manager, &pre_nodes);
+  if (pre_nodes.size() > 1) {
+    MS_LOG(EXCEPTION) << " Don't support Redistribution has multiple pre_node.";
+  }
 
-  if (IsPrimitiveCNode(node, prim::kPrimSend)) {
-    return;
-  }
-  if (AnfNodeIsPrimitive(node, MAKE_TUPLE) || AnfNodeIsPrimitive(node, MAKE_LIST)) {
-    MS_LOG(INFO) << "No need to insert redistribution op between make_tuple node and the next node";
-    return;
-  }
-  if (IsValueNode<Primitive>(node->input(0))) {
-    auto current_value = node->input(0)->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(current_value);
-    PrimitivePtr current_prim = current_value->value()->cast<PrimitivePtr>();
-    MS_EXCEPTION_IF_NULL(current_prim);
-    insert_node_new = ((current_prim->name() == prim::kTupleGetItem) ? node : insert_node);
-  } else {
-    insert_node_new = insert_node;
-  }
-  MS_EXCEPTION_IF_NULL(insert_node_new);
-  for (auto &node_pair : node_set) {
-    CNodePtr use_cnode = node_pair.first->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(use_cnode);
-    if (!IsValueNode<Primitive>(use_cnode->input(0))) {
-      StepRedistribution(use_cnode, distribute_operator, insert_node_new, tensor_redistribution, pre_node);
-    } else {
-      ValueNodePtr prim_anf_node = use_cnode->input(0)->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(prim_anf_node);
-      PrimitivePtr node_prim = prim_anf_node->value()->cast<PrimitivePtr>();
-      MS_EXCEPTION_IF_NULL(node_prim);
-      if ((node_prim->name() == DEPEND && node_pair.second != 1) || node_prim->name() == UPDATESTATE) {
-        continue;
-      }
-      if (IsParallelCareNode(use_cnode) && use_cnode->has_user_data<OperatorInfo>()) {
-        Redistribution(node_pair, distribute_operator, insert_node_new, node_pair.second, tensor_redistribution,
-                       pre_node);
-      } else {
-        StepRedistribution(use_cnode, distribute_operator, insert_node_new, tensor_redistribution, pre_node);
-      }
+  // Find Redistribution next_nodes
+  auto node_users_map = manager->node_users();
+  std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> next_nodes;
+  RedistributionNextNode(cnode, manager, &node_users_map, -1, &next_nodes);
+
+  // Insert Redistribution nodes between pre_nodes and next_nodes
+  for (auto &pre_node : pre_nodes) {
+    for (auto &next_node : next_nodes) {
+      Redistribution(next_node.first, pre_node, tensor_redistribution, next_node.second);
     }
   }
 }
@@ -830,24 +805,6 @@ void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node
   MS_EXCEPTION_IF_NULL(replace_output);
   replace_output->set_primal_attrs(node->primal_attrs());
   (void)manager->Replace(node, replace_output);
-}
-
-int64_t GetTupleGetItemIndex(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() != 3) {
-    MS_LOG(EXCEPTION) << cnode->ToString() << " size( " << cnode->inputs().size() << " ) is not 3";
-  }
-
-  if (!cnode->input(TUPLE_GETITEM_INDEX_POS)->isa<ValueNode>()) {
-    MS_LOG(EXCEPTION) << "The index of tuple getitem is not a value node";
-  }
-
-  ValuePtr tuple_index_value = GetValueNode(cnode->input(TUPLE_GETITEM_INDEX_POS));
-  MS_EXCEPTION_IF_NULL(tuple_index_value);
-  if (!tuple_index_value->isa<Int64Imm>()) {
-    MS_LOG(EXCEPTION) << "The index of tuple getitem is not int32";
-  }
-  return tuple_index_value->cast<Int64ImmPtr>()->value();
 }
 
 void InsertVirtualDivOp(const VirtualDivOp &virtual_div_op, const CNodePtr &node) {
@@ -2474,24 +2431,36 @@ void InsertForwardOps(const OperatorInfoPtr &distribute_operator, const CNodePtr
   }
 }
 
-void StepReplace(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(distribute_operator);
-  MS_EXCEPTION_IF_NULL(cnode);
-  // StepReplaceOp
-  OperatorVector replace_op = distribute_operator->replace_op();
-  if (!replace_op.empty()) {
-    MS_LOG(INFO) << "StepReplaceOp " << cnode->ToString();
-    StepReplaceOp(replace_op, cnode);
-  }
+void StepReplace(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (node->isa<CNode>()) {
+      auto cnode = node->cast<CNodePtr>();
+      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>() || IsSomePrimitive(cnode, RECEIVE) ||
+          IsSomePrimitive(cnode, SEND)) {
+        continue;
+      }
 
-  // StepReplaceGraph: after calling StepReplaceGraph, cnode can not be used anymore.
-  ReplaceGraphPtr replace_graph = distribute_operator->replace_graph(cnode);
-  if (!replace_op.empty() && replace_graph) {
-    MS_LOG(EXCEPTION) << "Only one of replace_op or replace_op can be used";
-  }
-  if (replace_graph) {
-    MS_LOG(INFO) << "StepReplaceGraph " << cnode->ToString();
-    StepReplaceGraph(replace_graph, cnode);
+      OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
+      MS_EXCEPTION_IF_NULL(distribute_operator);
+      // StepReplace
+      MS_EXCEPTION_IF_NULL(distribute_operator);
+      auto replace_op = distribute_operator->replace_op();
+      if (!replace_op.empty()) {
+        MS_LOG(INFO) << "StepReplaceOp " << cnode->ToString();
+        StepReplaceOp(replace_op, cnode);
+      }
+
+      // StepReplaceGraph: after calling StepReplaceGraph, cnode can not be used anymore.
+      auto replace_graph = distribute_operator->replace_graph(cnode);
+      if (!replace_op.empty() && replace_graph) {
+        MS_LOG(EXCEPTION) << "Only one of replace_op or replace_op can be used";
+      }
+      if (replace_graph) {
+        MS_LOG(INFO) << "StepReplaceGraph " << cnode->ToString();
+        StepReplaceGraph(replace_graph, cnode);
+      }
+    }
   }
 }
 
@@ -2620,47 +2589,38 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
       // the make_tuple is parallel care node, but it may have not operator info
-      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>()) {
+      if ((!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>()) && !IsControlFlowNode(cnode)) {
         continue;
       }
-
-      OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
-      MS_EXCEPTION_IF_NULL(distribute_operator);
+      OperatorInfoPtr distribute_operator = nullptr;
+      if (!IsControlFlowNode(cnode)) {
+        distribute_operator = GetDistributeOperator(cnode);
+        MS_EXCEPTION_IF_NULL(distribute_operator);
+      }
 
       // skip Send Receive
       if (!cnode->HasPrimalAttr(PIPELINE_PARAM)) {
         // insert forward ops
-        InsertForwardOps(distribute_operator, cnode);
+        if (!IsControlFlowNode(cnode)) {
+          InsertForwardOps(distribute_operator, cnode);
+        }
 
         // insert redistribution ops
-        StepRedistribution(cnode, distribute_operator, cnode, tensor_redistribution, cnode);
+        StepRedistribution(cnode, tensor_redistribution);
       }
       // insert backward ops
-      if (has_backward || IsPynativeParallel()) {
+      if (!IsControlFlowNode(cnode) && (has_backward || IsPynativeParallel())) {
         BackwardCommunication(root, distribute_operator, cnode, sens_loss_pairs);
       }
-
-      distribute_operator->ReplaceNodeInputOrAttrs();
+      if (!IsControlFlowNode(cnode)) {
+        distribute_operator->ReplaceNodeInputOrAttrs();
+      }
     } else if (IsValueNode<Tensor>(node) || IsValueNode<ValueList>(node) || IsValueNode<ValueTuple>(node)) {
       StepSplitTensor(node, manager);
     }
   }
-
-  for (auto &node : all_nodes) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (node->isa<CNode>()) {
-      auto cnode = node->cast<CNodePtr>();
-      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>() || IsSomePrimitive(cnode, RECEIVE) ||
-          IsSomePrimitive(cnode, SEND)) {
-        continue;
-      }
-
-      OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
-      MS_EXCEPTION_IF_NULL(distribute_operator);
-      // StepReplace
-      StepReplace(distribute_operator, cnode);
-    }
-  }
+  // StepReplace
+  StepReplace(all_nodes);
 }
 
 bool IsCohesiveNode(const CNodePtr &cnode) {

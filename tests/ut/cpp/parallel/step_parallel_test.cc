@@ -503,6 +503,7 @@ TEST_F(TestStepParallel, GetTensorInLayout) {
   CNodePtr node = Make_Node(inputs_x_dims, inputs_y_dims, outputs_dims);
   std::vector<AnfNodePtr> inputs(node->inputs());
   CNodePtr node1 = func_graph->NewCNode(inputs);
+  node1->set_in_forward_flag(true);
   PrimitivePtr prim = node1->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
   ValuePtr transpose_a = MakeValue(false);
   ValuePtr transpose_b = MakeValue(false);
@@ -518,11 +519,10 @@ TEST_F(TestStepParallel, GetTensorInLayout) {
   std::vector<Shapes> shape = {inputs_shape, outputs_shape};
   OperatorInfoPtr matmul_info = OperatorInstance(prim, attrs, shape);
   matmul_info->Init(strategyPtr, nullptr);
-  node->set_user_data<OperatorInfo>(matmul_info);
-  OperatorInfoPtr distribute_operator_pre = node->user_data<OperatorInfo>();
+  node1->set_user_data<OperatorInfo>(matmul_info);
   TensorLayout tensorlayout_e;
   Shape array = {64, 64};
-  TensorLayout tensorlayout = GetTensorInLayout(node1, prim, distribute_operator_pre);
+  TensorLayout tensorlayout = GetTensorInLayout(node1, -1);
   Shape tensor_shape_test = tensorlayout.tensor_shape().array();
   ASSERT_EQ(array, tensor_shape_test);
 }
