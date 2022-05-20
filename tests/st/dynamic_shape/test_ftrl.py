@@ -20,9 +20,9 @@ from mindspore.nn import TrainOneStepCell
 from mindspore.nn.optim import FTRL, LazyAdam
 from mindspore.ops import operations as P
 
-context.set_context(enable_sparse=True,
-                    mode=context.GRAPH_MODE,
+context.set_context(mode=context.GRAPH_MODE,
                     device_target="Ascend")
+
 
 class NetWithSparseGatherV2(nn.Cell):
     def __init__(self):
@@ -34,6 +34,7 @@ class NetWithSparseGatherV2(nn.Cell):
 
     def construct(self, indices, label):
         return self.gather(self.weight1, indices, self.axis) + self.weight2
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -55,6 +56,7 @@ def test_ftrl_net():
     np.allclose(net.weight2.asnumpy(), np.array([[[0.6821311, 0.6821311]],
                                                  [[0.6821311, 0.6821311]],
                                                  [[0.6821311, 0.6821311]]]))
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training

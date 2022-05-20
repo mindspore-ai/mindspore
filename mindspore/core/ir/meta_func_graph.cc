@@ -28,13 +28,6 @@ abstract::AbstractBasePtr MetaFuncGraph::ToAbstract() {
 }
 
 FuncGraphPtr MetaFuncGraph::GenerateStubFunc(const TypePtrList &types) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
-  if (!enable_sparse) {
-    return nullptr;
-  }
-
   std::vector<AnfNodePtr> parameters;
   ParameterPtr undetermined_param = nullptr;
   auto stub = std::make_shared<FuncGraph>();

@@ -78,7 +78,6 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .value("enable_dump", MsCtxParam::MS_CTX_ENABLE_DUMP)
                            .value("enable_graph_kernel", MsCtxParam::MS_CTX_ENABLE_GRAPH_KERNEL)
                            .value("enable_reduce_precision", MsCtxParam::MS_CTX_ENABLE_REDUCE_PRECISION)
-                           .value("enable_sparse", MsCtxParam::MS_CTX_ENABLE_SPARSE)
                            .value("precompile_only", MsCtxParam::MS_CTX_PRECOMPILE_ONLY)
                            .value("enable_profiling", MsCtxParam::MS_CTX_ENABLE_PROFILING)
                            .value("save_graphs", MsCtxParam::MS_CTX_SAVE_GRAPHS_FLAG)

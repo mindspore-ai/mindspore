@@ -58,6 +58,24 @@ void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVec
 AbstractBasePtr MakeAbstract(const BaseShapePtr &base_shape, const TypePtr &type);
 MS_CORE_API AbstractBasePtr MakeMonadAbstract(const MonadTypePtr &type);
 MS_CORE_API AbstractBasePtr MakeAbstractTensor(const ShapePtr &shape, const TypePtr &type);
+
+class MS_CORE_API EnvSetSparseResultMgr {
+ public:
+  static EnvSetSparseResultMgr &GetInstance() noexcept {
+    static EnvSetSparseResultMgr instance;
+    return instance;
+  }
+  EnvSetSparseResultMgr(const EnvSetSparseResultMgr &) = delete;
+  EnvSetSparseResultMgr &operator=(const EnvSetSparseResultMgr &) = delete;
+  ~EnvSetSparseResultMgr() = default;
+
+  bool Get() const { return env_set_sparse_result_; }
+  void Set(bool env_set_sparse_result) { env_set_sparse_result_ = env_set_sparse_result; }
+
+ private:
+  EnvSetSparseResultMgr() = default;
+  bool env_set_sparse_result_{false};
+};
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_UTILS_H_

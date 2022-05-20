@@ -161,9 +161,7 @@ Status GatherInfo::GetAttrs() {
     dynamic_shape_indices_ = true;
   }
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
-  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  bool enable_sparse = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_SPARSE);
-  if (ps::PsDataPrefetch::GetInstance().cache_enable() && enable_sparse) {
+  if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
     dynamic_shape_indices_ = true;
   }
 #endif

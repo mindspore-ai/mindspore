@@ -33,7 +33,7 @@ parser.add_argument("--device_target", type=str, default="Ascend")
 args, _ = parser.parse_known_args()
 device_target = args.device_target
 context.set_context(
-    mode=context.GRAPH_MODE, device_target=device_target, enable_sparse=True
+    mode=context.GRAPH_MODE, device_target=device_target
 )
 context.set_ps_context(enable_ps=True)
 

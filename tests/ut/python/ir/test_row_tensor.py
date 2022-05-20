@@ -42,12 +42,7 @@ from mindspore.train import Model
 from ....dataset_mock import MindData
 
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_teardown():
-    context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
-    yield
-    context.set_context(enable_sparse=False)
-
+context.set_context(mode=context.GRAPH_MODE)
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -115,6 +110,7 @@ class MySparseGatherV2(PrimitiveWithInfer):
     def __init__(self):
         """init index_select"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
+        self.add_prim_attr('bprop_return_sparse', True)
 
     def __infer__(self, params, indices, axis):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)

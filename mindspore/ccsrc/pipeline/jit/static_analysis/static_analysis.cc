@@ -381,8 +381,10 @@ void AnalysisEngine::ClearEvaluatorCache() {
     MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_mgr());
     evaluator->evaluator_cache_mgr()->Clear();
   }
-  // Release Exception to avoid hup at exit.
+  // Release exception to avoid hup at exit.
   StaticAnalysisException::Instance().ClearException();
+  // Reset the EnvironGet sparse option.
+  EnvSetSparseResultMgr::GetInstance().Set(false);
 }
 
 void AnalysisEngine::Clear() {

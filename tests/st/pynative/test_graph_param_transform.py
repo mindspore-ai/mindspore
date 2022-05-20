@@ -23,7 +23,7 @@ from mindspore.ops import composite as C
 
 
 def setup_module():
-    context.set_context(mode=context.PYNATIVE_MODE, enable_sparse=False)
+    context.set_context(mode=context.PYNATIVE_MODE)
 
 
 class _Grad(nn.Cell):

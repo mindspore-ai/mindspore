@@ -353,6 +353,10 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
   bool result = false;
 
   if (!CheckCmpValid(cmp)) {
+    auto cmp_type = cmp->BuildType();
+    MS_EXCEPTION_IF_NULL(cmp_type);
+    MS_LOG(ERROR) << "cmp: " << cmp->ToString() << ", cmp_type: " << cmp_type->ToString()
+                  << ", cmp_type_id: " << TypeIdToType(cmp_type->type_id());
     MS_EXCEPTION(TypeError) << "isinstance() arg 2 must be a type or tuple of types.";
   }
 

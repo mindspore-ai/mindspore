@@ -117,10 +117,7 @@ AbstractBasePtr InferImplEnvironGet(const AnalysisEnginePtr &, const PrimitivePt
   }
 
   MS_LOG(DEBUG) << "key: " << key->ToString() << ", value: " << default_value->ToString();
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
-  if (enable_sparse && default_value->isa<AbstractTensor>()) {
+  if (default_value->isa<AbstractTensor>() && EnvSetSparseResultMgr::GetInstance().Get()) {
     auto tensor_value = default_value->cast<AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor_value);
     return std::make_shared<AbstractUndetermined>(tensor_value->element()->Clone(), tensor_value->shape()->Clone());
@@ -149,7 +146,7 @@ AbstractBasePtr InferImplEnvironSet(const AnalysisEnginePtr &, const PrimitivePt
   // args: Three objects of a subclass of AbstractBase, env, key, value.
   CheckArgsSize(primitive->name(), args_spec_list, kSizeThree);
 
-  auto key = args_spec_list[1];
+  auto key = args_spec_list[kIndexOne];
   ValuePtr key_value_ptr = key->GetValueTrack();
   MS_EXCEPTION_IF_NULL(key_value_ptr);
   auto key_value_track = key_value_ptr->cast<SymbolicKeyInstancePtr>();
@@ -160,7 +157,11 @@ AbstractBasePtr InferImplEnvironSet(const AnalysisEnginePtr &, const PrimitivePt
   auto expected = key_value_track->abstract();
   MS_EXCEPTION_IF_NULL(expected);
 
-  MS_LOG(DEBUG) << "key: " << key->ToString() << ", value: " << args_spec_list[kIndexTwo]->ToString();
+  auto value = args_spec_list[kIndexTwo];
+  MS_LOG(DEBUG) << "key: " << key->ToString() << ", value: " << value->ToString();
+  if (value->isa<AbstractUndetermined>() && !value->isa<AbstractTensor>()) {
+    EnvSetSparseResultMgr::GetInstance().Set(true);
+  }
   return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
 }
 

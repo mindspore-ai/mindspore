@@ -244,8 +244,6 @@ class ParallelMultiHotFactory:
         self.opt = Adam(params=net.get_parameters())
         if self.target == 'CPU':
             self.opt.target = self.target
-        if self.sparse:
-            context.set_context(enable_sparse=True)
         self.model = Model(network=net,
                            loss_fn=self.loss_fn,
                            optimizer=self.opt)

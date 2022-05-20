@@ -22,11 +22,8 @@ from mindspore.nn import Cell, TrainOneStepCell, LazyAdam
 from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_teardown():
-    context.set_context(enable_sparse=True)
-    yield
-    context.set_context(enable_sparse=False)
+
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net(Cell):

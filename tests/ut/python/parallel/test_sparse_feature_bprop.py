@@ -32,9 +32,8 @@ grad_all = C.GradOperation(get_all=True)
 
 @pytest.fixture(name="test_context")
 def _test_context():
-    context.set_context(enable_sparse=True)
+    context.set_context(mode=context.GRAPH_MODE)
     yield
-    context.set_context(enable_sparse=False)
     context.reset_auto_parallel_context()
 
 

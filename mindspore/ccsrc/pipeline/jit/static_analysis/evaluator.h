@@ -66,21 +66,14 @@ class Evaluator : public Base {
   }
 
   virtual EvalResultPtr EvalUndeterminedArgs(const AbstractBasePtrList &args_abs_list) {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
-    if (!enable_sparse) {
-      return nullptr;
-    }
-
-    auto is_abstract = std::any_of(args_abs_list.begin(), args_abs_list.end(), [](auto &arg) -> bool {
+    auto is_undetermined = std::any_of(args_abs_list.begin(), args_abs_list.end(), [](auto &arg) -> bool {
       if (arg->BuildType()->type_id() == kObjectTypeUndeterminedType) {
         return true;
       }
       return false;
     });
-    if (is_abstract) {
-      MS_LOG(DEBUG) << "Eval " << identifier_ << " return abstract result";
+    if (is_undetermined) {
+      MS_LOG(DEBUG) << "Eval " << identifier_ << " return undetermined abstract result";
       return std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), std::make_shared<AttrValueMap>());
     }
     return nullptr;

@@ -97,7 +97,7 @@ def test_resnet_imagenet_8p_mpi():
     """
     epoch_size = 2
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_graph_kernel=False, enable_sparse=False)
+    context.set_context(enable_graph_kernel=False)
     context.reset_auto_parallel_context()
     context.reset_ps_context()
     context.set_auto_parallel_context(device_num=8, parallel_mode=ParallelMode.DATA_PARALLEL,

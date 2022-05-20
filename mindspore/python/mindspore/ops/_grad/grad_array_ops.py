@@ -26,7 +26,6 @@ from ..functional import broadcast_gradient_args
 from .. import functional as F
 from .grad_base import bprop_getters
 from ..primitive import constexpr
-from ... import context
 from ...common import dtype as mstype
 from ...common.tensor import RowTensor
 from .._utils.utils import range_op, get_1d_shape, generate_shape_index, is_shape_unknown
@@ -116,19 +115,9 @@ def dout_cast_row_tensor(dout, x):
 @bprop_getters.register(P.Cast)
 def get_bprop_cast(self):
     """Generate bprop for Cast"""
-    cast = P.Cast()
-    get_dtype = P.DType()
-
     def bprop(x, t, out, dout):
-        dx = cast(dout, get_dtype(x))
-        return dx, zeros_like(t)
-
-    def bprop_sparse(x, t, out, dout):
         dx = dout_cast(dout, x)
         return dx, zeros_like(t)
-
-    if context.get_context('enable_sparse'):
-        return bprop_sparse
 
     return bprop
 
