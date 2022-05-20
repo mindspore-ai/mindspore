@@ -16,9 +16,9 @@
 
 #ifndef MINDSPORE_CORE_OPS_SCATTER_ND_MUL_H_
 #define MINDSPORE_CORE_OPS_SCATTER_ND_MUL_H_
+
 #include <memory>
 #include <vector>
-
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -29,6 +29,12 @@ class MIND_API ScatterNdMul : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScatterNdMul);
   ScatterNdMul() : BaseOperator(kNameScatterNdMul) { InitIOName({"input_x", "indices", "updates"}, {"y"}); }
+
+  void Init(const bool use_locking = false);
+
+  void set_use_locking(const bool use_locking);
+
+  bool get_use_locking() const;
 };
 
 abstract::AbstractBasePtr ScatterNdMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

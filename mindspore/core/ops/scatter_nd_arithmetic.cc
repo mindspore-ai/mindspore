@@ -21,11 +21,8 @@
 #include "ops/scatter_nd_div.h"
 #include "ops/scatter_nd_max.h"
 #include "ops/scatter_nd_min.h"
-
 #include <map>
-#include <set>
 #include <string>
-
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -96,6 +93,84 @@ TypePtr ScatterNdArithmeticInferType(const PrimitivePtr &primitive, const std::v
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types, prim_name);
 }
 }  // namespace
+
+void ScatterNdUpdate::Init(const bool use_locking) { this->set_use_locking(use_locking); }
+
+void ScatterNdUpdate::set_use_locking(const bool use_locking) {
+  (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking));
+}
+
+bool ScatterNdUpdate::get_use_locking() const {
+  auto value_ptr = this->GetAttr(kUseLocking);
+  return GetValue<bool>(value_ptr);
+}
+
+void ScatterNdAdd::Init(const bool use_locking) { this->set_use_locking(use_locking); }
+
+void ScatterNdAdd::set_use_locking(const bool use_locking) {
+  (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking));
+}
+
+bool ScatterNdAdd::get_use_locking() const {
+  auto value_ptr = this->GetAttr(kUseLocking);
+  return GetValue<bool>(value_ptr);
+}
+
+void ScatterNdSub::Init(const bool use_locking) { this->set_use_locking(use_locking); }
+
+void ScatterNdSub::set_use_locking(const bool use_locking) {
+  (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking));
+}
+
+bool ScatterNdSub::get_use_locking() const {
+  auto value_ptr = this->GetAttr(kUseLocking);
+  return GetValue<bool>(value_ptr);
+}
+
+void ScatterNdMul::Init(const bool use_locking) { this->set_use_locking(use_locking); }
+
+void ScatterNdMul::set_use_locking(const bool use_locking) {
+  (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking));
+}
+
+bool ScatterNdMul::get_use_locking() const {
+  auto value_ptr = this->GetAttr(kUseLocking);
+  return GetValue<bool>(value_ptr);
+}
+
+void ScatterNdDiv::Init(const bool use_locking) { this->set_use_locking(use_locking); }
+
+void ScatterNdDiv::set_use_locking(const bool use_locking) {
+  (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking));
+}
+
+bool ScatterNdDiv::get_use_locking() const {
+  auto value_ptr = this->GetAttr(kUseLocking);
+  return GetValue<bool>(value_ptr);
+}
+
+void ScatterNdMax::Init(const bool use_locking) { this->set_use_locking(use_locking); }
+
+void ScatterNdMax::set_use_locking(const bool use_locking) {
+  (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking));
+}
+
+bool ScatterNdMax::get_use_locking() const {
+  auto value_ptr = this->GetAttr(kUseLocking);
+  return GetValue<bool>(value_ptr);
+}
+
+void ScatterNdMin::Init(const bool use_locking) { this->set_use_locking(use_locking); }
+
+void ScatterNdMin::set_use_locking(const bool use_locking) {
+  (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking));
+}
+
+bool ScatterNdMin::get_use_locking() const {
+  auto value_ptr = this->GetAttr(kUseLocking);
+  return GetValue<bool>(value_ptr);
+}
+
 MIND_API_OPERATOR_IMPL(ScatterNdUpdate, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScatterNdAdd, BaseOperator);
 MIND_API_OPERATOR_IMPL(ScatterNdSub, BaseOperator);
