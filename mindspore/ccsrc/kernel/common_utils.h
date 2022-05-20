@@ -150,6 +150,7 @@ void SaveJsonInfo(const std::string &json_name, const std::string &info, const s
 std::string GetProcessor(const AnfNodePtr &anf_node);
 Processor GetProcessor(const string &processor);
 bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b);
+bool IsSameShape(const std::vector<int64_t> &shape_a, const std::vector<int64_t> &shape_b);
 std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
                                                           const std::vector<AnfNodePtr> &input_list,
                                                           const std::vector<AnfNodePtr> &output_list);

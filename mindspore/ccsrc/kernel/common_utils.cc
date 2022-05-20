@@ -529,6 +529,18 @@ bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &
   return true;
 }
 
+bool IsSameShape(const std::vector<int64_t> &shape_a, const std::vector<int64_t> &shape_b) {
+  if (shape_a.size() != shape_b.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < shape_a.size(); ++i) {
+    if (shape_a[i] != shape_b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
                                                           const std::vector<AnfNodePtr> &input_list,
                                                           const std::vector<AnfNodePtr> &output_list) {
