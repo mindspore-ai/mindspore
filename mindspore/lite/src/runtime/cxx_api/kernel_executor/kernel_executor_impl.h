@@ -40,6 +40,7 @@ class KernelExecutorImpl {
   Status GetOpParameter();
   Status InitInOutTensor(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs);
   void FreeInOutTensor();
+  bool TensorIsValid(const MSTensor &ms_tensor, const lite::Tensor *lite_tensor);
 
  private:
   const schema::Primitive *primitive_ = nullptr;
