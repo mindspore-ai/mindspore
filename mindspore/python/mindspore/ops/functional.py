@@ -902,6 +902,7 @@ tensor_operator_registry.register('nonzero', nonzero)
 tensor_operator_registry.register('matrix_diag', matrix_diag)
 tensor_operator_registry.register('hardshrink', P.HShrink)
 tensor_operator_registry.register('svd', linalg_ops.Svd)
+tensor_operator_registry.register('diag', P.Diag)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)

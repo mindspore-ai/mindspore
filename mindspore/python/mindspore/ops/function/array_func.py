@@ -51,6 +51,7 @@ tuple_to_array_ = P.TupleToArray()
 masked_fill_ = P.MaskedFill()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
 ger_ = P.Ger()
+diag_ = P.Diag()
 
 
 @constexpr
@@ -1805,6 +1806,41 @@ def masked_fill(x, mask, value):
     return masked_fill_(x, mask, value)
 
 
+def diag(input_x):
+    r"""
+    Constructs a diagonal tensor with a given diagonal values.
+
+    Assume `input_x` has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
+    rank 2k with dimensions :math:`[D_1,..., D_k, D_1,..., D_k]` where:
+    :math:`output[i_1,..., i_k, i_1,..., i_k] = input_x[i_1,..., i_k]` and 0 everywhere else.
+
+    Args:
+        input_x (Tensor): The input tensor.
+
+    Returns:
+        Tensor, has the same dtype as the `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If rank of `input_x` is less than 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> input_x = Tensor([1, 2, 3, 4])
+        >>> output = ops.diag(input_x)
+        >>> print(output)
+        [[1, 0, 0, 0],
+         [0, 2, 0, 0],
+         [0, 0, 3, 0],
+         [0, 0, 0, 4]]
+    """
+    return diag_(input_x)
+
+
 __all__ = [
     'unique',
     'eye',
@@ -1848,5 +1884,6 @@ __all__ = [
     'select',
     'nonzero',
     'matrix_diag',
+    'diag'
 ]
 __all__.sort()

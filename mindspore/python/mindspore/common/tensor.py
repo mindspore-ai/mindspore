@@ -3045,6 +3045,37 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('hardshrink')(lambd)(self)
 
 
+    def diag(self):
+        r"""
+        Constructs a diagonal tensor with a given diagonal values.
+
+        Assume self tensor has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
+        rank 2k with dimensions :math:`[D_1,..., D_k, D_1,..., D_k]` where:
+        :math:`output[i_1,..., i_k, i_1,..., i_k] = self[i_1,..., i_k]` and 0 everywhere else.
+
+        Returns:
+            Tensor, has the same dtype as self tensor.
+
+        Raises:
+            ValueError: If rank of self tensor is less than 1.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> x = Tensor([1, 2, 3, 4])
+            >>> output = x.diag()
+            >>> print(output)
+            [[1, 0, 0, 0],
+             [0, 2, 0, 0],
+             [0, 0, 3, 0],
+             [0, 0, 0, 4]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('diag')()(self)
+
+
 class RowTensor(RowTensor_):
     """
     A sparse representation of a set of tensor slices at given indices.

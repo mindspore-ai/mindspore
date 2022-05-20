@@ -3779,22 +3779,10 @@ class Diag(PrimitiveWithInfer):
 
     Constructs a diagonal tensor with a given diagonal values.
 
-    Assume `input_x` has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
-    rank 2k with dimensions :math:`[D_1,..., D_k, D_1,..., D_k]` where:
-    :math:`output[i_1,..., i_k, i_1,..., i_k] = input_x[i_1,..., i_k]` and 0 everywhere else.
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor. The input shape must be less than 5d.
-
-    Outputs:
-        Tensor, has the same dtype as the `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        ValueError: If rank of `input_x` is less than 1.
+    Refer to :func:`mindspore.ops.diag` for more detail.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4])
