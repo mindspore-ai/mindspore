@@ -127,13 +127,12 @@ std::vector<KernelAttr> EltWiseCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-template <typename T>
 bool EltWiseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  SetArgumentHandle(DNNL_ARG_SRC, inputs[0]->addr);
-  SetArgumentHandle(DNNL_ARG_DST, outputs[0]->addr);
+  SetArgumentHandle(DNNL_ARG_SRC, inputs.at(kIndex0)->addr);
+  SetArgumentHandle(DNNL_ARG_DST, outputs.at(kIndex0)->addr);
   ExecutePrimitive();
   return true;
 }
@@ -142,34 +141,34 @@ std::map<std::string, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::Elt
   EltWiseCpuKernelMod::kernel_attr_map_ = {
     {kElu,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel<float>}}},
+       &EltWiseCpuKernelMod::LaunchKernel}}},
     {kReLU,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel<float>}}},
+       &EltWiseCpuKernelMod::LaunchKernel}}},
     {kReLU6,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel<float>}}},
+       &EltWiseCpuKernelMod::LaunchKernel}}},
     {kExp,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel<float>}}},
+       &EltWiseCpuKernelMod::LaunchKernel}}},
     {kLog,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel<float>}}},
+       &EltWiseCpuKernelMod::LaunchKernel}}},
     {kSigmoid,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel<float>}}},
+       &EltWiseCpuKernelMod::LaunchKernel}}},
     {kTanh,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel<float>}}},
+       &EltWiseCpuKernelMod::LaunchKernel}}},
     {kSoftplus,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel<float>}}},
+       &EltWiseCpuKernelMod::LaunchKernel}}},
     {prim::kPrimMish->name(),
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel<float>}}},
+       &EltWiseCpuKernelMod::LaunchKernel}}},
     {prim::kPrimSqrt->name(),
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel<float>}}}};
+       &EltWiseCpuKernelMod::LaunchKernel}}}};
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Elu, []() { return std::make_shared<EltWiseCpuKernelMod>(kElu); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU,
@@ -186,7 +185,5 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softplus,
                                  []() { return std::make_shared<EltWiseCpuKernelMod>(kSoftplus); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mish,
                                  []() { return std::make_shared<EltWiseCpuKernelMod>(prim::kPrimMish->name()); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sqrt,
-                                 []() { return std::make_shared<EltWiseCpuKernelMod>(prim::kPrimSqrt->name()); });
 }  // namespace kernel
 }  // namespace mindspore

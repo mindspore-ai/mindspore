@@ -22,6 +22,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -29,16 +30,21 @@ namespace mindspore {
 namespace kernel {
 constexpr auto kUnknown = "Unknown";
 
-class ArithmeticSelfCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class ArithmeticSelfCpuKernelMod : public NativeCpuKernelMod {
  public:
   ArithmeticSelfCpuKernelMod() = default;
-  explicit ArithmeticSelfCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  explicit ArithmeticSelfCpuKernelMod(const std::string &kernel_name) : kernel_name_(kernel_name) {}
   ~ArithmeticSelfCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
+    if (is_null_input_) {
+      return true;
+    }
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
@@ -46,19 +52,25 @@ class ArithmeticSelfCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
-  std::string kernel_type_{kUnknown};
+  std::shared_ptr<CpuKernelFunc> func_obj_;
+  std::string kernel_name_{kUnknown};
+  bool is_null_input_{false};
 };
 
 using LaunchFunc = std::function<bool(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
-class IdentityCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class IdentityCpuKernelMod : public NativeCpuKernelMod {
  public:
   IdentityCpuKernelMod() = default;
   ~IdentityCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
+    if (is_null_input_) {
+      return true;
+    }
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), 1, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
     return kernel_func_(inputs, outputs);
@@ -69,6 +81,7 @@ class IdentityCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   LaunchFunc kernel_func_;
+  bool is_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
