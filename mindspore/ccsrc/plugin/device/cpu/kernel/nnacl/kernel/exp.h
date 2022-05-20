@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-KernelBase *CreateExp(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize);
 
 #ifdef __cplusplus
 }

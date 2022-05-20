@@ -34,8 +34,8 @@ class ConvolutionCPUFp32 : public LiteKernel {
 
  private:
   KernelBase *kernel;
-  TensorC *in[2];
-  TensorC *out[1];
+  TensorC in[2];
+  TensorC out[1];
 };
 }  // namespace mindspore::kernel
 

@@ -36,15 +36,9 @@ GroupnormCPUKernel::GroupnormCPUKernel(OpParameter *parameter, const std::vector
   }
 
   for (size_t i = 0; i < in_tensors_.size(); i++) {
-    in_[i] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
-    if (in_[i] != nullptr) {
-      Tensor2TensorC(in_tensors_.at(i), in_[i]);
-    }
+    Tensor2TensorC(in_tensors_.at(i), &(in_[i]));
   }
-  out_[0] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
-  if (out_[0] != nullptr) {
-    Tensor2TensorC(out_tensors_.at(0), out_[0]);
-  }
+  Tensor2TensorC(out_tensors_.at(0), &(out_[0]));
 }
 
 GroupnormCPUKernel::~GroupnormCPUKernel() {
@@ -53,10 +47,6 @@ GroupnormCPUKernel::~GroupnormCPUKernel() {
   }
   kernel_->release(kernel_);
   free(kernel_);
-  for (size_t i = 0; i < in_tensors_.size(); i++) {
-    free(in_[i]);
-  }
-  free(out_[0]);
 }
 
 int GroupnormCPUKernel::Prepare() {
@@ -77,17 +67,17 @@ int GroupnormCPUKernel::ReSize() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
-  return kernel_->resize(kernel_, in_, in_tensors().size(), out_, 1);
+  return kernel_->resize(kernel_);
 }
 
 int GroupnormCPUKernel::Run() {
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }
-  kernel_->in[0]->data_ = in_tensors().at(0)->data();
-  kernel_->in[C1NUM]->data_ = in_tensors().at(C1NUM)->data();
-  kernel_->in[C2NUM]->data_ = in_tensors().at(C2NUM)->data();
-  kernel_->out[0]->data_ = out_tensors().front()->data();
+  kernel_->in[0].data_ = in_tensors().at(0)->data();
+  kernel_->in[C1NUM].data_ = in_tensors().at(C1NUM)->data();
+  kernel_->in[C2NUM].data_ = in_tensors().at(C2NUM)->data();
+  kernel_->out[0].data_ = out_tensors().front()->data();
   return kernel_->compute(kernel_);
 }
 

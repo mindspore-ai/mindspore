@@ -55,8 +55,8 @@ bool SupportKernelC(int opType, int format, int dataType) {
   return creator != NULL;
 }
 
-KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize,
-                         int data_type, FormatC format) {
+KernelBase *CreateKernel(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
+                         FormatC format) {
   Init_MSC_VER_kernels();
   KernelCreator creator = g_kernelCreatorRegistry[param->type_][format][data_type - kNumberTypeBegin - 1];
   if (creator == NULL) {

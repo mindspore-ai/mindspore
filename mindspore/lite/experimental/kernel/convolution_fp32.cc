@@ -22,11 +22,9 @@ ConvolutionCPUFp32::ConvolutionCPUFp32(OpParameter *parameter, std::vector<lite:
                                        std::vector<lite::Tensor *> out_tensors, const lite::Context *ctx)
     : LiteKernel(parameter, in_tensors, out_tensors, ctx) {
   for (size_t i = 0; i < in_tensors.size(); i++) {
-    in[i] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
-    Tensor2TensorC(in_tensors[i], in[i]);
+    Tensor2TensorC(in_tensors[i], &(in[i]));
   }
-  out[0] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
-  Tensor2TensorC(out_tensors[0], out[0]);
+  Tensor2TensorC(out_tensors[0], &(out[0]));
 }
 
 ConvolutionCPUFp32::~ConvolutionCPUFp32() {
@@ -35,10 +33,6 @@ ConvolutionCPUFp32::~ConvolutionCPUFp32() {
   }
   kernel->release(kernel);
   free(kernel);
-  for (size_t i = 0; i < in_tensors_.size(); i++) {
-    free(in[i]);
-  }
-  free(out[0]);
 }
 
 int ConvolutionCPUFp32::Prepare() {
@@ -47,7 +41,7 @@ int ConvolutionCPUFp32::Prepare() {
     return -1;
   }
 
-  auto ret = kernel->resize(kernel, in, in_tensors_.size(), out, 1);
+  auto ret = kernel->resize(kernel);
   if (ret != NNACL_OK) {
     return ret;
   }
@@ -56,5 +50,5 @@ int ConvolutionCPUFp32::Prepare() {
 }
 
 int ConvolutionCPUFp32::Run() { return kernel->compute(kernel); }
-int ConvolutionCPUFp32::ReSize() { return kernel->resize(kernel, in, in_tensors_.size(), out, 1); }
+int ConvolutionCPUFp32::ReSize() { return kernel->resize(kernel); }
 }  // namespace mindspore::kernel

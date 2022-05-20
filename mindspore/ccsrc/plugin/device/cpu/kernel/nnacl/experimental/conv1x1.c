@@ -27,13 +27,13 @@ typedef struct Conv1x1Stru {
   uint8_t *weight_;
 } Conv1x1Stru;
 
-int conv1x1_resize(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) { return 0; }
+int conv1x1_resize(struct KernelBase *self) { return 0; }
 
 int conv1x1_prepare(struct KernelBase *self) {
   Conv1x1Stru *conv = (Conv1x1Stru *)self;
   ConvParameter *param = (ConvParameter *)conv->base.param;
 
-  conv->base.funcs = GetCoreFuncs(conv->base.in[0]->data_type_ == kNumberTypeFloat16);
+  conv->base.funcs = GetCoreFuncs(conv->base.in[0].data_type_ == kNumberTypeFloat16);
 
   int row_tile, deep_tile, col_tile;
   conv->base.funcs->InitMatmulTileCount(&row_tile, &deep_tile, &col_tile);
@@ -41,7 +41,7 @@ int conv1x1_prepare(struct KernelBase *self) {
   conv->weight_ = (uint8_t *)(conv->base.env->alloc(
     conv->base.env->allocator,
     UP_ROUND(param->output_channel_, col_tile) * UP_ROUND(param->input_channel_, deep_tile) * row_tile));
-  conv->base.funcs->PackRight(conv->base.in[1]->data_, conv->weight_, 1, param->input_channel_, param->output_channel_);
+  conv->base.funcs->PackRight(conv->base.in[1].data_, conv->weight_, 1, param->input_channel_, param->output_channel_);
 
   if (conv->base.insize < kInputSize2) {
     conv->bias_ = NULL;
@@ -52,7 +52,7 @@ int conv1x1_prepare(struct KernelBase *self) {
   conv->bias_ = (uint8_t *)(conv->base.env->alloc(conv->base.env->allocator, bias_size));
 
   memset(conv->bias_, 0, bias_size);
-  memcpy(conv->bias_, conv->base.in[kBiasIndex]->data_, param->output_channel_);
+  memcpy(conv->bias_, conv->base.in[kBiasIndex].data_, param->output_channel_);
 
   return 0;
 }
@@ -68,14 +68,14 @@ int conv1x1_compute(struct KernelBase *self) {
   Conv1x1Stru *conv = (Conv1x1Stru *)self;
   ConvParameter *param = (ConvParameter *)conv->base.param;
 
-  BaseMatmul(conv->base.in[0]->data_, conv->weight_, conv->bias_, conv->base.out[0]->data_,
+  BaseMatmul(conv->base.in[0].data_, conv->weight_, conv->bias_, conv->base.out[0].data_,
              param->input_h_ * param->input_w_, param->input_channel_, param->output_channel_, param->act_type_,
              param->op_parameter_.thread_num_, &conv->base);
   return 0;
 }
 
-KernelBase *CreateConv1x1(OpParameter *param, TensorC **in, size_t insize, TensorC **out, size_t outsize) {
-  if (in[0]->format_ != Format_NC4HW4) {
+KernelBase *CreateConv1x1(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize) {
+  if (in[0].format_ != Format_NC4HW4) {
     return NULL;
   }
   Conv1x1Stru *conv1x1 = (Conv1x1Stru *)malloc(sizeof(Conv1x1Stru));

@@ -27,14 +27,14 @@ typedef struct GatherDStru {
 int gather_d_prepare(struct KernelBase *self) {
   GatherDStru *gather_d = (GatherDStru *)self;
   GatherParameter *param = (GatherParameter *)gather_d->base.param;
-  param->axis_ = ((int *)((self->in[0])[1].data_))[0];
+  param->axis_ = ((int *)(self->in[1].data_))[0];
   return NNACL_OK;
 }
 
-int gather_d_resize(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
+int gather_d_resize(struct KernelBase *self) {
   GatherDStru *gather_d = (GatherDStru *)self;
   GatherParameter *param = (GatherParameter *)gather_d->base.param;
-  int input_rank = (self->in[0])[0].shape_size_;
+  int input_rank = self->in[0].shape_size_;
   if (param->axis_ >= input_rank || param->axis_ < -input_rank) {
     return NNACL_PARAM_INVALID;
   }
@@ -52,11 +52,9 @@ int gather_d_compute(struct KernelBase *self) {
   GatherParameter *param = (GatherParameter *)gather_d_stru->base.param;
   NNACL_CHECK_NULL_RETURN_ERR(param);
 
-  TensorC *inputs = gather_d_stru->base.in[0];
-  NNACL_CHECK_NULL_RETURN_ERR(inputs);
-  TensorC input = inputs[0];
-  TensorC index = inputs[2];
-  TensorC output = (gather_d_stru->base.out[0])[0];
+  TensorC input = gather_d_stru->base.in[0];
+  TensorC index = gather_d_stru->base.in[2];
+  TensorC output = gather_d_stru->base.out[0];
 
   const void *input_data = input.data_;
   NNACL_CHECK_NULL_RETURN_ERR(input_data);
@@ -105,7 +103,7 @@ int gather_d_compute(struct KernelBase *self) {
   return status;
 }
 
-KernelBase *CreateGatherD(OpParameter *param, TensorC **in, size_t insize, TensorC **out, size_t outsize) {
+KernelBase *CreateGatherD(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize) {
   GatherDStru *gather_d = (GatherDStru *)malloc(sizeof(GatherDStru));
   gather_d->base.param = param;
   gather_d->base.in = in;

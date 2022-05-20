@@ -28,7 +28,7 @@ int conv2d_prepare_fp32_nchwx_avx512(struct KernelBase *self) {
   self->env = GetExecEnv();
 
   int rowIndex = 0;
-  TensorC *weight = self->in[kWeightIndex];
+  TensorC *weight = &(self->in[kWeightIndex]);
 
   int cout = weight->shape_[kNCHW_N];
   int cin = weight->shape_[kNCHW_C];
@@ -89,9 +89,9 @@ int PosMapz2nZ(int srcOffset, int srcw, int nh) {
 int conv2d_compute_fp32_nchwx_avx512(struct KernelBase *self) {
   KConv2d *conv = (KConv2d *)self;
   ConvParameter *param = (ConvParameter *)self->param;
-  TensorC *in = self->in[kInputIndex];
-  TensorC *weight = self->in[kWeightIndex];
-  TensorC *out = self->out[kOutputIndex];
+  TensorC *in = &(self->in[kInputIndex]);
+  TensorC *weight = &(self->in[kWeightIndex]);
+  TensorC *out = &(self->out[kOutputIndex]);
 
   float *weightData = (float *)weight->data_;
 
@@ -201,19 +201,16 @@ int conv2d_compute_fp32_nchwx_avx512(struct KernelBase *self) {
 }
 
 int conv2d_infershape_fp32_nchwx_avx512(struct KernelBase *self) {
-  return Conv2dInferShape((const struct TensorC *const *)self->in, self->insize, self->out, self->outsize, self->param);
+  return Conv2dInferShape((const struct TensorC *const *)(&(self->in)), self->insize, &(self->out), self->outsize,
+                          self->param);
 }
-int conv2d_resize_fp32_nchwx_avx512(struct KernelBase *self, TensorC *inputs[], size_t insize, TensorC *outputs[],
-                                    size_t outsize) {
-  KConv2d *conv = (KConv2d *)self;
-  self->in = inputs;
-  self->insize = insize;
-  self->out = outputs;
-  self->outsize = outsize;
 
-  TensorC *in = self->in[kInputIndex];
-  TensorC *weight = self->in[kWeightIndex];
-  TensorC *out = self->out[kOutputIndex];
+int conv2d_resize_fp32_nchwx_avx512(struct KernelBase *self) {
+  KConv2d *conv = (KConv2d *)self;
+
+  TensorC *in = &(self->in[kInputIndex]);
+  TensorC *weight = &(self->in[kWeightIndex]);
+  TensorC *out = &(self->out[kOutputIndex]);
   int kh = weight->shape_[kNCHW_H];
   int kw = weight->shape_[kNCHW_W];
 
