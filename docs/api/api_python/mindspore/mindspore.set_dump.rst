@@ -14,7 +14,7 @@ mindspore.set_dump
         - 此API只在Ascend后端的图模式有效。
         - 此API只支持训练开始前调用。如果在训练过程中调用这个API，可能不会有效果。
         - 使用 `set_dump(Cell, True)` 后，Cell正向计算和反向计算（梯度运算产生的计算）中的算子会被Dump。
-        - 对于 :class:`mindspore.nn.SoftMaxCrossEntropyWithLogits` 层，正向计算和反向计算使用同一组算子。因此，只能看到反向计算中的Dump数据。请注意，当使用 `sparse=True` 和 `reduce=“mean”` 初始化时， :class:`mindspore.nn.SoftmaxCrossEntropyWithLogits` 层也将在内部使用这些算子。
+        - 对于 :class:`mindspore.nn.SoftmaxCrossEntropyWithLogits` 层，正向计算和反向计算使用同一组算子。因此，只能看到反向计算中的Dump数据。请注意，当使用 `sparse=True` 和 `reduce=“mean”` 初始化时， :class:`mindspore.nn.SoftmaxCrossEntropyWithLogits` 层也将在内部使用这些算子。
 
     **参数：**
 
