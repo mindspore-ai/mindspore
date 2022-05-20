@@ -29,7 +29,7 @@ std::vector<mindspore::MSTensor> GetGraphInTensors(std::vector<T *> ops, std::ve
   auto is_op_output = [&](mindspore::MSTensor tensor) -> bool {
     for (auto op : ops) {
       auto out_tensors = op->outputs();
-      if (find(out_tensors.begin(), out_tensors.end(), tensor) != out_tensors.end()) {
+      if (std::find(out_tensors.begin(), out_tensors.end(), tensor) != out_tensors.end()) {
         return true;
       }
     }
@@ -59,7 +59,7 @@ std::vector<mindspore::MSTensor> GetGraphOutTensors(const std::vector<T *> &ops)
   auto is_op_input = [&](const mindspore::MSTensor tensor) -> bool {
     for (auto op : ops) {
       auto in_tensors = op->inputs();
-      if (find(in_tensors.begin(), in_tensors.end(), tensor) != in_tensors.end()) {
+      if (std::find(in_tensors.begin(), in_tensors.end(), tensor) != in_tensors.end()) {
         return true;
       }
     }
@@ -76,11 +76,11 @@ std::vector<mindspore::MSTensor> GetGraphOutTensors(const std::vector<T *> &ops)
 
   for (auto op : ops) {
     for (auto out_op : op->out_ops()) {
-      if (find(ops.begin(), ops.end(), out_op) == ops.end()) {
+      if (std::find(ops.begin(), ops.end(), out_op) == ops.end()) {
         // visit the out op that is not in the subgraph
         for (auto tensor : op->outputs()) {
-          if (find(out_op->inputs().begin(), out_op->inputs().end(), tensor) != out_op->inputs().end() &&
-              find(outputs.begin(), outputs.end(), tensor) == outputs.end()) {
+          if (std::find(out_op->inputs().begin(), out_op->inputs().end(), tensor) != out_op->inputs().end() &&
+              std::find(outputs.begin(), outputs.end(), tensor) == outputs.end()) {
             // find the connected tensor
             outputs.push_back(tensor);
             break;
@@ -99,7 +99,8 @@ std::vector<mindspore::MSTensor> GraphInTensors(const std::vector<T *> &ops, Del
   std::vector<mindspore::MSTensor> all_in_tensors;
   for (auto op : ops) {
     for (auto in_tensor : op->inputs()) {
-      if (in_tensor.Data() != nullptr && find(in_tensors.begin(), in_tensors.end(), in_tensor) == in_tensors.end()) {
+      if (in_tensor.Data() != nullptr &&
+          std::find(in_tensors.begin(), in_tensors.end(), in_tensor) == in_tensors.end()) {
         all_in_tensors.push_back(in_tensor);
       }
     }
@@ -126,11 +127,11 @@ std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<T *> &ops, De
   std::vector<mindspore::MSTensor> all_out_tensors;
   for (auto op : ops) {
     for (auto out_tensor : op->outputs()) {
-      if (find(out_tensors.begin(), out_tensors.end(), out_tensor) == out_tensors.end()) {
+      if (std::find(out_tensors.begin(), out_tensors.end(), out_tensor) == out_tensors.end()) {
         all_out_tensors.push_back(out_tensor);
       }
-      if (find(model->outputs().begin(), model->outputs().end(), out_tensor) != model->outputs().end() &&
-          find(out_tensors.begin(), out_tensors.end(), out_tensor) == out_tensors.end()) {
+      if (std::find(model->outputs().begin(), model->outputs().end(), out_tensor) != model->outputs().end() &&
+          std::find(out_tensors.begin(), out_tensors.end(), out_tensor) == out_tensors.end()) {
         out_tensors.push_back(out_tensor);
       }
     }
@@ -142,7 +143,8 @@ std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<T *> &ops, De
     }
     // The input of other kernels is the output of the current subgraph kernel.
     for (auto in_tensor : (*iter)->inputs()) {
-      if (find(all_out_tensors.begin(), all_out_tensors.end(), in_tensor) != all_out_tensors.end()) {
+      if (std::find(all_out_tensors.begin(), all_out_tensors.end(), in_tensor) != all_out_tensors.end() &&
+          std::find(out_tensors.begin(), out_tensors.end(), in_tensor) == out_tensors.end()) {
         out_tensors.push_back(in_tensor);
       }
     }
@@ -155,7 +157,7 @@ std::vector<T *> FindPreOps(T *cur_op, std::vector<T *> all_ops) {
   std::vector<T *> in_ops;
   for (auto in_tensor : cur_op->inputs()) {
     for (auto op : all_ops) {
-      if (find(op->outputs().begin(), op->outputs().end(), in_tensor) != op->outputs().end()) {
+      if (std::find(op->outputs().begin(), op->outputs().end(), in_tensor) != op->outputs().end()) {
         in_ops.push_back(op);
       }
     }
@@ -168,7 +170,7 @@ std::vector<T *> FindNextOps(T *cur_op, std::vector<T *> all_ops) {
   std::vector<T *> out_ops;
   for (auto out_tensor : cur_op->outputs()) {
     for (auto op : all_ops) {
-      if (find(op->inputs().begin(), op->inputs().end(), out_tensor) != op->inputs().end()) {
+      if (std::find(op->inputs().begin(), op->inputs().end(), out_tensor) != op->inputs().end()) {
         out_ops.push_back(op);
       }
     }
@@ -191,8 +193,8 @@ int GetGraphInOutOps(const std::vector<mindspore::MSTensor> &inputs, const std::
                      std::vector<T *> *in_ops, std::vector<T *> *out_ops, const std::vector<T *> &all_ops) {
   for (auto in_tensor : inputs) {
     for (auto op : all_ops) {
-      if (find(op->inputs().begin(), op->inputs().end(), in_tensor) != op->inputs().end() &&
-          find(in_ops->begin(), in_ops->end(), op) == in_ops->end()) {
+      if (std::find(op->inputs().begin(), op->inputs().end(), in_tensor) != op->inputs().end() &&
+          std::find(in_ops->begin(), in_ops->end(), op) == in_ops->end()) {
         in_ops->push_back(op);
       }
     }
@@ -204,8 +206,8 @@ int GetGraphInOutOps(const std::vector<mindspore::MSTensor> &inputs, const std::
 
   for (auto out_tensor : outputs) {
     for (auto op : all_ops) {
-      if (find(op->outputs().begin(), op->outputs().end(), out_tensor) != op->outputs().end() &&
-          find(out_ops->begin(), out_ops->end(), op) == out_ops->end()) {
+      if (std::find(op->outputs().begin(), op->outputs().end(), out_tensor) != op->outputs().end() &&
+          std::find(out_ops->begin(), out_ops->end(), op) == out_ops->end()) {
         out_ops->push_back(op);
       }
     }
