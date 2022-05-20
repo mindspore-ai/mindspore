@@ -321,8 +321,6 @@ std::vector<KernelAttr> UnaryOpGpuKernelMod::GetOpSupport() {
 template <typename T>
 bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_ptr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto output_ptr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
   static const std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map = {
     {kExp, Exponential<T>}, {kExpm1, Expm1<T>},   {kLog, Logarithm<T>}, {kLog1p, Log1p<T>},
     {kErf, Erf<T>},         {kErfc, Erfc<T>},     {kNeg, Negative<T>},  {kReciprocal, Reciprocal<T>},
@@ -333,13 +331,14 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     {kRint, Rint<T>},       {kRound, Round<T>},   {kSign, Sign<T>},     {kAtanh, Atanh<T>},
     {kTan, Tan<T>},
   };
-
   auto iter = func_map.find(kernel_name_);
   if (iter == func_map.end()) {
     MS_LOG(ERROR) << "For 'UnaryOp', only support these types: " << kernel::Map2Str(func_map) << " currently, but got "
                   << kernel_name_;
     return false;
   }
+  auto input_ptr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
+  auto output_ptr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
   iter->second(input_ptr, output_ptr, input_size_list_[0] / sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
 }

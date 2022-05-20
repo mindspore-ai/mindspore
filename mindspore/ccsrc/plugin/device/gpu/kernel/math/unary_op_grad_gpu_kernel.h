@@ -21,52 +21,52 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unary_op_grad_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_class/unary_grad_helper.h"
 
 namespace mindspore {
 namespace kernel {
-class UnaryGradOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+constexpr auto kUnKnown = "UnKnown";
+
+class UnaryGradOpGpuKernelMod : public NativeGpuKernelMod {
  public:
-  explicit UnaryGradOpGpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) { ResetResource(); }
+  explicit UnaryGradOpGpuKernelMod(const std::string &kernel_type) : kernel_name_(kernel_type) {}
   ~UnaryGradOpGpuKernelMod() override = default;
 
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
-    std::vector<void *> input_addrs = ConvertPtrs(inputs);
-    std::vector<void *> output_addrs = ConvertPtrs(outputs);
-    std::vector<void *> work_addrs;
-    int flag = helper_ptr_->Process(input_addrs, output_addrs, work_addrs, stream_ptr);
-    if (flag != 0) {
-      return false;
-    }
-    return true;
+    cuda_stream_ = cuda_stream;
+    return kernel_func_(this, inputs, outputs);
   }
-  bool Init(const CNodePtr &kernel_node) override;
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_ = helper_ptr_->GetInputSizeList();
-    output_size_list_ = helper_ptr_->GetOutputSizeList();
-    workspace_size_list_ = helper_ptr_->GetWorkSizeList();
-  }
-  void ResetResource() noexcept override {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using UnaryOpGradFunc = std::function<bool(UnaryGradOpGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                             const std::vector<kernel::AddressPtr> &)>;
+  static std::map<std::string, std::vector<std::pair<KernelAttr, UnaryGradOpGpuKernelMod::UnaryOpGradFunc>>>
+    kernel_attr_map_;
+  UnaryOpGradFunc kernel_func_;
   bool is_null_input_{false};
-  std::string kernel_type_{"Unknown"};
-  uint32_t deprecated_deviced_id_{0};
+  std::string kernel_name_{kUnKnown};
+  void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
