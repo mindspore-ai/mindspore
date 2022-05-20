@@ -214,7 +214,10 @@ void TaskManager::InterruptMaster(const Status &rc) {
     master->rc_ = rc;
     master->caught_severe_exception_ = true;
     // Move log error here for some scenarios didn't call GetMasterThreadRc
-    MS_LOG(ERROR) << "Task is terminated with err msg(more detail in info level log):" << master->rc_;
+    if (master->rc_.StatusCode() != mindspore::StatusCode::kMDPyFuncException) {
+      // use python operation, the error had been raised in python layer. So disable log prompt here.
+      MS_LOG(ERROR) << "Task is terminated with err msg (more details are in info level logs): " << master->rc_;
+    }
   }
 }
 
