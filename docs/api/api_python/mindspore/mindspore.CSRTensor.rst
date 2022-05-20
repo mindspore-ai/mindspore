@@ -6,6 +6,14 @@ mindspore.CSRTensor
     用来表示某一张量在给定索引上非零元素的集合，其中行索引由 `indptr` 表示，列索引由 `indices` 
     表示，非零值由 `values` 表示。
 
+    如果 `indptr` 是[0, 1, 2, 2]， `indices` 是[1, 2]， `values` 是[1., 2.]， `shape` 是(3, 4)，那么它对应的稠密Tensor如下：
+
+    .. code-block::
+
+        [[0., 1., 0., 0.],
+         [0., 0., 2., 0.],
+         [0., 0., 0., 0.]]
+
     .. note::
         这是一个实验特性，在未来可能会发生API的变化。
         如果values或indices的长度超出了indptr所指定的取值范围，超出部分的行为将没有定义。

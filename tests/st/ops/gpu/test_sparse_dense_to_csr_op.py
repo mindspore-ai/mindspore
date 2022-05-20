@@ -19,12 +19,14 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
+from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix
 
 
 def generate_data(shape, datatype="float32", indicetype="int32", density=0.2):
-    dense_tensor = np.random.random(shape).astype(datatype)
-    dense_tensor[dense_tensor > 0.2] = 0
+    mask = np.random.random(shape)
+    mask[mask > 0.2] = 0
+    dense_tensor = (np.random.random(shape) * 10).astype(datatype)
+    dense_tensor[mask == 0] = 0
     indices = np.array(dense_tensor.nonzero()).T.astype(indicetype)
     return dense_tensor, indices
 
@@ -32,7 +34,7 @@ def generate_data(shape, datatype="float32", indicetype="int32", density=0.2):
 def generate_expected_res(dense_data, indices):
     """Generate the correct result via scipy"""
     if len(dense_data.shape) == 2:
-        scipy_csr = csr_matrix(data[0])
+        scipy_csr = csr_matrix(dense_data)
         ret = (scipy_csr.shape, (0, scipy_csr.nnz), scipy_csr.indptr, scipy_csr.indices, scipy_csr.data)
         return ret
     # 3D
@@ -63,54 +65,46 @@ def compare_res(res, expected):
 class DenseToCSRNet(nn.Cell):
     def __init__(self):
         super(DenseToCSRNet, self).__init__()
-        self.to_csr = P.DenseToCSRSparseMatrix()
+        self.to_csr = DenseToCSRSparseMatrix()
 
     def construct(self, x, indices):
         return self.to_csr(x, indices)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
+@pytest.mark.parametrize('indicetype, datatype', [("int32", "float32"),
+                                                  ("int32", "float64"),
+                                                  ("int32", "complex64"),
+                                                  ("int32", "complex128")])
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_2d_dense_to_csr():
+def test_2d_dense_to_csr(indicetype, datatype):
     """
     Feature: Test 2D dense tensor to csr tensor.
     Description: Test 2D dense tensor(without batch dimension) to csr tensor.
     Expectation: Success.
     """
-    data = generate_data((10, 10))
+    data = generate_data((10, 10), datatype=datatype, indicetype=indicetype)
     net = DenseToCSRNet()
     out = net(Tensor(data[0]), Tensor(data[1]))
     expected = generate_expected_res(*data)
     compare_res(out, expected)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
+@pytest.mark.parametrize('indicetype, datatype', [("int32", "float32"),
+                                                  ("int32", "float64"),
+                                                  ("int32", "complex64"),
+                                                  ("int32", "complex128")])
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_3d_dense_to_csr():
+def test_3d_dense_to_csr(indicetype, datatype):
     """
     Feature: Test 3D dense tensor to csr tensor.
     Description: Test 3D dense tensor(with batch dimension) to csr tensor.
     Expectation: Success.
     """
-    data = generate_data((3, 4, 5))
-    net = DenseToCSRNet()
-    out = net(Tensor(data[0]), Tensor(data[1]))
-    expected = generate_expected_res(*data)
-    compare_res(out, expected)
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_3d_dense_to_csr_fp64():
-    """
-    Feature: Test 3D dense tensor to csr tensor.
-    Description: Test 3D dense tensor(with batch dimension, fp64) to csr tensor.
-    Expectation: Success.
-    """
-    data = generate_data((3, 4, 5), datatype="float64")
+    data = generate_data((3, 4, 5), datatype=datatype, indicetype=indicetype)
     net = DenseToCSRNet()
     out = net(Tensor(data[0]), Tensor(data[1]))
     expected = generate_expected_res(*data)

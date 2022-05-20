@@ -221,6 +221,10 @@ from .nn_func import (
 from .linalg_func import (
     svd,
 )
+from .sparse_func import (
+    dense_to_sparse_coo,
+    dense_to_sparse_csr,
+)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -228,4 +232,5 @@ __all__.extend(parameter_func.__all__)
 __all__.extend(math_func.__all__)
 __all__.extend(nn_func.__all__)
 __all__.extend(linalg_func.__all__)
+__all__.extend(sparse_func.__all__)
 __all__.sort()

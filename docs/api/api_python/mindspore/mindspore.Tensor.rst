@@ -1643,5 +1643,40 @@ mindspore.Tensor
         **返回：**
 
         Tensor，具有与入参 `shape` 相同的维度。
-    
 
+    .. py:method:: to_coo()
+
+        将一个Tensor稀疏化成一个COOTensor
+
+        .. note::
+            现在只支持2维Tensor。
+
+        **返回：**
+
+        返回一个2维的COOTensor，是原稠密Tensor的稀疏化表示。其中数据分别为：
+        - **indices** (Tensor) - 二维整数张量，其中N和ndims分别表示稀疏张量中 `values` 的数量和COOTensor维度的数量。
+        - **values** (Tensor) - 一维张量，用来给 `indices` 中的每个元素提供数值。
+        - **shape** (tuple(int)) - 整数元组，用来指定稀疏矩阵的稠密形状。目前只支持2维Tensor输入，所以 `shape` 长度只能为2。
+
+        **异常：**
+
+        - **ValueError** - `tensor` 不是2维Tensor。
+
+    .. py:method:: to_csr()
+
+        将一个Tensor稀疏化成一个CSRTensor
+
+        .. note::
+            现在只支持2维Tensor。
+
+        **返回：**
+
+        返回一个2维的CSRTensor，是原稠密Tensor的稀疏化表示。其中数据分别为：
+        - **indptr** (Tensor) - 一维整数张量，其中M等于 `shape[0] + 1` , 表示每行非零元素的在 `values` 中存储的起止位置。
+        - **indices** (Tensor) - 一维整数张量，其中N等于非零元素数量，表示每个元素的列索引值。
+        - **values** (Tensor) - 一维张量，用来表示索引对应的数值。
+        - **shape** (tuple(int)) - 整数元组，用来指定稀疏矩阵的稠密形状。目前只支持2维Tensor输入，所以 `shape` 长度只能为2。
+
+        **异常：**
+
+        - **ValueError** - `tensor` 不是2维Tensor。

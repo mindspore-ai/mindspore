@@ -362,3 +362,28 @@ def test_coo_bprop():
     compare_res(test_coo_to_abs(indices, values, dense_shape), values_absgrad)
     compare_res(test_coo_to_csr(indices, values, dense_shape), values_on)
     compare_res(test_coo_to_dense(indices, values, dense_shape), values_on)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dense_to_coo():
+    """
+    Feature: Test dense tensor to coo methods.
+    Description: Test tensor.to_coo().
+    Expectation: Success.
+    """
+    dense_tensor = Tensor([[0, 1, 2, 0], [0, 0, 0, 0], [1, 0, 0, 0]], dtype=mstype.float32)
+
+    def test_to_coo(dense_tensor):
+        return dense_tensor.to_coo()
+
+    coo_tensor = test_to_coo(dense_tensor)
+    coo_tensor_graph = ms_function(test_to_coo)(dense_tensor)
+    expect = COOTensor(Tensor([[0, 1], [0, 2], [2, 0]], dtype=mstype.int32),
+                       Tensor([1, 2, 1], dtype=mstype.float32),
+                       (3, 4))
+    assert isinstance(coo_tensor, COOTensor)
+    assert isinstance(coo_tensor, COOTensor)
+    compare_coo(coo_tensor, expect)
+    compare_coo(coo_tensor_graph, expect)

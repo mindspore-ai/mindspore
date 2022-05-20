@@ -3894,6 +3894,67 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('soft_shrink')(lambd)(self)
 
+    def to_coo(self):
+        """
+        Convert a Tensor to COOTensor.
+
+        Note:
+            Only 2-D tensor is supported for now.
+
+        Returns:
+            COOTensor, a 2-D coo_tensor, containing:
+            indices: the positions of all non-zero values of the input.
+            values: the non-zero values of the dense tensor.
+            shape: the shape of the coo_tensor.
+
+        Raises:
+            ValueError: If input tensor is not 2-D.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[1,  0], [-5, 0]]), mindspore.float32)
+            >>> output = x.to_coo()
+            >>> print(output)
+        """
+        self._init_check()
+        return tensor_operator_registry.get('dense_to_sparse_coo')(self)
+
+    def to_csr(self):
+        """
+        Convert a Tensor to CSRTensor.
+
+        Note:
+            Only 2-D tensor is supported for now.
+
+        Returns:
+            CSRTensor, a 2-D csr_tensor, containing:
+            indptr: indicates the start and end point for `values` in each row.
+            indices: the column positions of all non-zero values of the input.
+            values: the non-zero values of the dense tensor.
+            shape: the shape of the csr_tensor.
+
+        Raises:
+            ValueError: If input tensor is not 2-D.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[1,  0], [-5, 0]]), mindspore.float32)
+            >>> output = x.to_csr()
+            >>> print(output)
+        """
+        self._init_check()
+        return tensor_operator_registry.get('dense_to_sparse_csr')(self)
+
     def unique_consecutive(self, return_idx=False, return_counts=False, axis=None):
         """
         Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.
@@ -4485,6 +4546,15 @@ class CSRTensor(CSRTensor_):
     Constructs a sparse tensor in CSR (Compressed Sparse Row) format, with specified
     values indicated by `values` and row and column positions indicated by `indptr`
     and `indices`.
+
+    For example, if indptr is [0, 1, 2, 2], indices is [1, 2], values is [1., 2.], shape is
+    (3, 4), then the dense representation of the sparse tensor will be:
+
+    .. code-block::
+
+        [[0., 1., 0., 0.],
+         [0., 0., 2., 0.],
+         [0., 0., 0., 0.]]
 
     Note:
         This is an experimental feature and is subjected to change.

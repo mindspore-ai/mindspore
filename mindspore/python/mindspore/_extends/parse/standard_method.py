@@ -1718,6 +1718,22 @@ def narrow(x, axis, start, length):
     return F.narrow(x, axis, start, length)
 
 
+def to_csr(x):
+    """
+    Convert a Tensor to CSRTensor.
+    Please refer to tensor.py Tensor::to_csr(self) for more details.
+    """
+    return F.dense_to_sparse_csr(x)
+
+
+def to_coo(x):
+    """
+    Convert a Tensor to COOTensor.
+    Please refer to tensor.py Tensor::to_coo(self) for more details.
+    """
+    return F.dense_to_sparse_coo(x)
+
+
 @constexpr
 def check_select_condition(cond_type):
     """

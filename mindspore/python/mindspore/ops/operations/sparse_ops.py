@@ -291,7 +291,7 @@ class DenseToCSRSparseMatrix(Primitive):
         ValueError: If shape[1] of `indices` and rank of `dense_input` is not the same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[[1., 0.], [0., 2.]]], dtype=ms.float32)

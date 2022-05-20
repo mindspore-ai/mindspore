@@ -67,6 +67,7 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
              dev_batch_indices_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
+
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
