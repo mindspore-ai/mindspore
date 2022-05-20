@@ -1,0 +1,57 @@
+
+set(ENABLE_CPU on)
+add_compile_definitions(USE_GLOG)
+string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+
+add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
+remove_definitions(-DBUILD_LITE_INFERENCE)
+
+set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC})
+
+add_library(mindspore-extendrt SHARED ${MSLITE_EXTEND_RUNTIME_SRC})
+
+add_subdirectory(${CCSRC_DIR}/backend/common/session mindspore_ccsrc)
+
+if(MSLITE_ENABLE_ACL)
+    include_directories(${TOP_DIR}/graphengine/inc/external)
+    add_subdirectory(kernel/ascend)
+    link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
+endif()
+
+if(SUPPORT_CUDA)
+    set(CUDA_PATH $ENV{CUDA_HOME})
+    include_directories(${CCSRC_DIR}/plugin/device/gpu/kernel)
+    set(ENABLE_GPU on)
+    add_definitions(-DENABLE_GPU)
+    set(CUDA_VERSION 11.1)
+    include_directories(${CUDA_PATH})
+    include_directories(${CUDA_PATH}/include)
+    find_package(CUDA)
+    add_subdirectory(kernel/cuda)
+    list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
+    add_subdirectory(${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops cuda_ops)
+    target_link_libraries(mindspore-extendrt cuda_lite_kernel_mid cuda_ops mindspore_core)
+endif()
+
+if(SUPPORT_TENSORRT)
+    add_compile_definitions(GPU_TENSORRT)
+    set(TENSORRT_PATH $ENV{TENSORRT_PATH})
+    set(CUDA_PATH $ENV{CUDA_HOME})
+    set(TENSORRT_LIB_PATH ${TENSORRT_PATH}/lib)
+    set(CUDA_LIB_PATH ${CUDA_PATH}/lib64)
+    include_directories(${TENSORRT_PATH}/include)
+    include_directories(${CUDA_PATH}/include)
+    add_subdirectory(delegate/tensorrt)
+    target_link_libraries(mindspore-extendrt tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
+    # target_link_libraries(mindspore-lite tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
+    # target_link_libraries(mindspore-lite_static tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
+else()
+    set(TENSORRT_STUB
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
+    )
+    add_library(tensorrt_stub OBJECT ${TENSORRT_STUB})
+    target_link_libraries(mindspore-extendrt tensorrt_stub)
+    # target_link_libraries(mindspore-lite tensorrt_stub)
+    # target_link_libraries(mindspore-lite_static tensorrt_stub)
+endif()

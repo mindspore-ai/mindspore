@@ -146,13 +146,14 @@ set(MODEL_LOADER_FRAMEWORK_SRC
 )
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
-remove_definitions(-DBUILD_LITE_INFERENCE)
+# add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
+# remove_definitions(-DBUILD_LITE_INFERENCE)
 
-# string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-# string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wno-error=return-type")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wno-error=return-type")
+# # include(${LITE_DIR}/cmake/ccsrc_module.cmake)
+# # string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+# # string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+# # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wno-error=return-type")
+# # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wno-error=return-type")
 
 set(MINDIR_MODEL_SRC
         ${MINDIR_MODEL_SRC}
@@ -167,17 +168,25 @@ set(MINDIR_KERNEL_SRC
         ${MINDIR_KERNEL_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/inner_kernel.cc)
 
-set(LITE_SRC
-        ${LITE_SRC}
+# set(LITE_SRC
+#         ${LITE_SRC}
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/less_test_kernel_mod.cc
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_mock.cc)
+
+set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
+        ${MINDIR_MODEL_SRC}
+        ${MINDIR_KERNEL_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/less_test_kernel_mod.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_mock.cc)
+
+add_subdirectory(extendrt)
 endif()
 
 set(LITE_SRC
         ${LITE_SRC}
         ${MODEL_LOADER_FRAMEWORK_SRC}
-        ${MINDIR_MODEL_SRC}
-        ${MINDIR_KERNEL_SRC}
+        # ${MINDIR_MODEL_SRC}
+        # ${MINDIR_KERNEL_SRC}
         )
 
 if(MSLITE_ENABLE_MODEL_ENCRYPTION)
@@ -410,7 +419,7 @@ add_subdirectory(runtime/kernel/cpu)
 add_library(lite_src_mid OBJECT ${LITE_SRC})
 add_dependencies(lite_src_mid fbs_src)
 
-if(MSLITE_ENABLE_ACL)
+if(MSLITE_ENABLE_ACL AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     include_directories(${TOP_DIR}/graphengine/inc/external)
     add_subdirectory(extendrt/kernel/ascend)
     link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
@@ -472,21 +481,25 @@ if(MSLITE_ENABLE_MINDRT)
 endif()
 
 if(SUPPORT_TENSORRT)
-    add_compile_definitions(GPU_TENSORRT)
-    set(TENSORRT_PATH $ENV{TENSORRT_PATH})
-    set(CUDA_PATH $ENV{CUDA_HOME})
-    set(TENSORRT_LIB_PATH ${TENSORRT_PATH}/lib)
-    set(CUDA_LIB_PATH ${CUDA_PATH}/lib64)
-    include_directories(${TENSORRT_PATH}/include)
-    include_directories(${CUDA_PATH}/include)
-    add_subdirectory(extendrt/delegate/tensorrt)
+    if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        add_compile_definitions(GPU_TENSORRT)
+        set(TENSORRT_PATH $ENV{TENSORRT_PATH})
+        set(CUDA_PATH $ENV{CUDA_HOME})
+        set(TENSORRT_LIB_PATH ${TENSORRT_PATH}/lib)
+        set(CUDA_LIB_PATH ${CUDA_PATH}/lib64)
+        include_directories(${TENSORRT_PATH}/include)
+        include_directories(${CUDA_PATH}/include)
+        add_subdirectory(extendrt/delegate/tensorrt)
+    endif()
     target_link_libraries(mindspore-lite tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
     target_link_libraries(mindspore-lite_static tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
 else()
-    set(TENSORRT_STUB
-        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/delegate/tensorrt/distribution/distribution_base.cc
-    )
-    add_library(tensorrt_stub OBJECT ${TENSORRT_STUB})
+    if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        set(TENSORRT_STUB
+            ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/delegate/tensorrt/distribution/distribution_base.cc
+        )
+        add_library(tensorrt_stub OBJECT ${TENSORRT_STUB})
+    endif()
     target_link_libraries(mindspore-lite tensorrt_stub)
     target_link_libraries(mindspore-lite_static tensorrt_stub)
 endif()
@@ -576,7 +589,7 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
     endif()
 endif()
 
-if(SUPPORT_CUDA)
+if(SUPPORT_CUDA AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     set(CUDA_PATH $ENV{CUDA_HOME})
     include_directories(${CCSRC_DIR}/plugin/device/gpu/kernel)
     set(ENABLE_GPU on)
@@ -585,7 +598,7 @@ if(SUPPORT_CUDA)
     include_directories(${CUDA_PATH})
     include_directories(${CUDA_PATH}/include)
     find_package(CUDA)
-    add_subdirectory(runtime/kernel/cuda)
+    add_subdirectory(extendrt/kernel/cuda)
     list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
     add_subdirectory(${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops cuda_ops)
     target_link_libraries(mindspore-lite cuda_lite_kernel_mid cuda_ops mindspore_core)
