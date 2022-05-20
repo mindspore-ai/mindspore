@@ -4417,7 +4417,7 @@ class BesselI0(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_i0 = ops.BesselI0()
@@ -4448,7 +4448,7 @@ class BesselI1(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_i1 = ops.BesselI1()
@@ -4487,7 +4487,7 @@ class BesselI0e(Primitive):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_i0e = ops.BesselI0e()
@@ -4517,7 +4517,7 @@ class BesselI1e(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16 or float32.
+          Data type must be float16 or float32, float64.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -4527,7 +4527,7 @@ class BesselI1e(Primitive):
         TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_i1e = ops.BesselI1e()
@@ -4550,16 +4550,16 @@ class BesselK0(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16, float32.
+          Data type must be float16, float32, float64.
 
     Outputs:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor of float16, float32.
+        TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> bessel_k0 = ops.BesselK0()
@@ -4581,16 +4581,16 @@ class BesselK1(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16, float32.
+          Data type must be float16, float32, float64.
 
     Outputs:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor of float16, float32.
+        TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> bessel_k1 = ops.BesselK1()
@@ -4612,16 +4612,16 @@ class BesselK0e(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16, float32.
+          Data type must be float16, float32, float64.
 
     Outputs:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor of float16, float32.
+        TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> bessel_k0e = ops.BesselK0e()
@@ -4643,16 +4643,16 @@ class BesselK1e(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16, float32.
+          Data type must be float16, float32, float64.
 
     Outputs:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor of float16, float32.
+        TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> bessel_k1e = ops.BesselK1e()
@@ -4683,7 +4683,7 @@ class BesselJ0(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_j0 = ops.BesselJ0()
@@ -4715,7 +4715,7 @@ class BesselJ1(Primitive):
         TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_j1 = ops.BesselJ1()
@@ -4744,10 +4744,10 @@ class BesselY0(Primitive):
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor of float16, float32.
+        TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_y0 = ops.BesselY0()
@@ -4776,10 +4776,10 @@ class BesselY1(Primitive):
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor of float16, float32.
+        TypeError: If `x` is not a Tensor of float16, float32, float64.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> bessel_y1 = ops.BesselY1()

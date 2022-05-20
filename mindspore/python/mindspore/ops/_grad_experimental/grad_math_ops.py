@@ -33,7 +33,6 @@ from ..operations.math_ops import Igamma, Igammac
 from ..primitive import constexpr
 from ..operations.math_ops import ReduceStd
 
-
 transpose = P.Transpose()
 
 
@@ -228,8 +227,8 @@ def get_bprop_lp_norm(self):
             input_scaled = input_x
             scale_v = dout / out
         else:
-            input_scaled = pow_op(abs_op(input_x), (p-2)) * input_x
-            scale_v = dout / pow_op(out, (p-1))
+            input_scaled = pow_op(abs_op(input_x), (p - 2)) * input_x
+            scale_v = dout / pow_op(out, (p - 1))
         return (input_scaled * scale_v,)
 
     return bprop
@@ -281,6 +280,7 @@ def get_bprop_log_matrix_determinant(self):
         return (dx,)
 
     return bprop
+
 
 @bprop_getters.register(P.CholeskyInverse)
 def get_bprop_cholesky_inverse(self):
@@ -342,6 +342,7 @@ def get_bprop_bessel_i0(self):
     def bprop(x, out, dout):
         dx = dout * bessel_i1(x)
         return (dx,)
+
     return bprop
 
 
@@ -358,6 +359,7 @@ def get_bprop_bessel_i1(self):
         dout_dx = mnp.where(equal(x, 0.), cast(1., dtype(x)), bessel_i0(x) - div(out, x))
         dx = dout * dout_dx
         return (dx,)
+
     return bprop
 
 
@@ -369,6 +371,7 @@ def get_bprop_bessel_j0(self):
     def bprop(x, out, dout):
         dx = -dout * bessel_j1(x)
         return (dx,)
+
     return bprop
 
 
@@ -385,6 +388,7 @@ def get_bprop_bessel_j1(self):
         dout_dx = mnp.where(equal(x, 0.), cast(0.5, dtype(x)), bessel_j0(x) - div(out, x))
         dx = dout * dout_dx
         return (dx,)
+
     return bprop
 
 
@@ -422,6 +426,7 @@ def get_bprop_bessel_k0e(self):
     def bprop(x, out, dout):
         dx = dout * (out - bessel_k1e(x))
         return (dx,)
+
     return bprop
 
 
@@ -435,6 +440,33 @@ def get_bprop_bessel_k1e(self):
         dout_dx = out * (1. - reciprocal(x)) - bessel_k0e(x)
         dx = dout * dout_dx
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(math.BesselY0)
+def get_bprop_bessel_y0(self):
+    """Generate bprop for BesselY0"""
+    bessel_y1 = math.BesselY1()
+
+    def bprop(x, out, dout):
+        dx = -dout * bessel_y1(x)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(math.BesselY1)
+def get_bprop_bessel_y1(self):
+    """Generate bprop for BesselY1"""
+    div = P.Div()
+    bessel_y0 = math.BesselY0()
+
+    def bprop(x, out, dout):
+        dout_dx = bessel_y0(x) - div(out, x)
+        dx = dout * dout_dx
+        return (dx,)
+
     return bprop
 
 
@@ -527,6 +559,7 @@ def get_bprop_igamma(self):
     exp_ = P.Exp()
     reshape_ = P.Reshape()
     reduce_sum_ = P.ReduceSum()
+
     def bprop(a, x, out, dout):
         sa = shape_(a)
         sx = shape_(x)
@@ -551,6 +584,7 @@ def get_bprop_igammac(self):
     reshape_ = P.Reshape()
     reduce_sum_ = P.ReduceSum()
     neg_ = P.Neg()
+
     def bprop(a, x, out, dout):
         sa = shape_(a)
         sx = shape_(x)
