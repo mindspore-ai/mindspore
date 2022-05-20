@@ -1009,18 +1009,26 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
     PushTensor(args, origin_parameters, parameter, &input_tensor);
   }
   (void)input_tensors.emplace_back(input_tensor);
-
   // Run in the pynative mode.
   MS_EXCEPTION_IF_NULL(outputs);
   // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
   if (real_execution_mode_ == kPynativeMode) {
-    RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
+    bool is_cut_graph = std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
+                                    [](const KernelGraphPtr &graph) { return graph->has_flag(kFlagsIsCutGraph); });
+    if (is_cut_graph) {
+      RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
+    } else {
+      // Release python gil.
+      mindspore::ScopedLongRunning long_running;
+      RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
+    }
     MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
     return;
   }
 
-  // Run actor DAG.
+  // Release python gil.
   mindspore::ScopedLongRunning long_running;
+  // Run actor DAG.
   const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
   MS_EXCEPTION_IF_NULL(actor_set);
   runtime::GraphScheduler::GetInstance().Run(actor_set, graph_compiler_info.device_contexts_, input_tensors);
