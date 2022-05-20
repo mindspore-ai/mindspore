@@ -236,7 +236,7 @@ enum class KernelModType {
   HostKernelMod,
 };
 
-enum KernelErrorCode { KRET_OK = 0, KRET_RESIZE_FAILED = 1, KRET_UNKNOWN_SHAPE = 2 };
+enum KernelErrorCode { KRET_OK = 0, KRET_RESIZE_FAILED = 1, KRET_UNKNOWN_SHAPE = 2, KRET_UNKNOWN_OUT_SHAPE = 3 };
 
 class KernelMod {
  public:

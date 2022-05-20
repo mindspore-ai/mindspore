@@ -53,6 +53,7 @@ class SparseMatirxAddCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
                     const std::vector<kernel::AddressPtr> &outputs);
 
   size_t row_ = 0;
+  size_t dense_size_ = 0;
   std::vector<TypeId> types_;
   std::vector<KernelTensorPtr> outputs_ = {};
 };
