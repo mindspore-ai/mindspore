@@ -32,7 +32,7 @@ namespace ops {
 MIND_API_OPERATOR_IMPL(FillV2, BaseOperator);
 abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "Input[0] only support tensor!";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', input[0] must be tensor.";
   }
   MS_EXCEPTION_IF_NULL(primitive);
   const uint32_t kInputDims = 1;
@@ -65,7 +65,7 @@ abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::ve
   auto shape_v = shape_ptr->shape();
   if (shape_v.size() != kInputDims) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', input must be a 1-D tensor, but got: " << shape_v.size() << "-D.";
+                             << "', input must be a 1-D tensor, but got a: " << shape_v.size() << "-D tensor.";
   }
   if (!input_args[0]->BuildValue()->isa<AnyValue>() && !input_args[0]->BuildValue()->isa<None>()) {
     std::vector<int64_t> out_shape;
@@ -78,7 +78,8 @@ abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::ve
           shape_m *= input_shape_ptr[i];
         } else {
           MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                                   << "', each dimension of input shape must be greater than 0.";
+                                   << "', each dimension of input shape must be greater than 0, but got input shape "
+                                   << i << ": " << input_shape_ptr[i] << ".";
         }
       }
     } else if (input_type_element->type_id() == kNumberTypeInt64) {
@@ -89,7 +90,8 @@ abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::ve
           shape_m *= input_shape_ptr[i];
         } else {
           MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                                   << "', each dimension of input shape must be greater than 0.";
+                                   << "', each dimension of input shape must be greater than 0, but got input shape "
+                                   << i << ": " << input_shape_ptr[i] << ".";
         }
       }
     } else {

@@ -52,8 +52,10 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
     out_shape[i + offset] = x_block_prod - crops_sum;
   }
   if (out_shape[0] % block_shape_prod != 0) {
-    MS_EXCEPTION(ValueError) << prim_name << " input_x dimension 0 " << out_shape[0]
-                             << " must be divisible by block_shape_prod " << block_shape_prod;
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << "', the first dim of 'input_x' must be divisible by 'block_shape_prod'. But got first dim of 'input_x': "
+      << out_shape[0] << ", 'block_shape_prod' with value: " << block_shape_prod << ".";
   }
   out_shape[0] = int64_t(floor(out_shape[0] / static_cast<float>(block_shape_prod)));
   if (input_min_shape.size() == 0 || input_max_shape.size() == 0) {
@@ -72,12 +74,16 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
     output_max_shape[i + offset] = x_block_prod_max - crops_sum;
   }
   if (output_min_shape[0] % block_shape_prod != 0) {
-    MS_EXCEPTION(ValueError) << prim_name << " input_x dimension 0 " << output_min_shape[0]
-                             << " must be divisible by block_shape_prod " << block_shape_prod;
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the first dim of output min shape must be divisible by 'block_shape_prod'. But got "
+                                "first dim of output min shape: "
+                             << output_min_shape[0] << ", 'block_shape_prod' with value: " << block_shape_prod << ".";
   }
   if (output_max_shape[0] % block_shape_prod != 0) {
-    MS_EXCEPTION(ValueError) << prim_name << " input_x dimension 0 " << output_max_shape[0]
-                             << " must be divisible by block_shape_prod " << block_shape_prod;
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the first dim of output max shape must be divisible by 'block_shape_prod'. But got "
+                                "first dim of output max shape: "
+                             << output_min_shape[0] << ", 'block_shape_prod' with value: " << block_shape_prod << ".";
   }
   output_min_shape[0] = int64_t(floor(output_min_shape[0] / static_cast<float>(block_shape_prod)));
   output_max_shape[0] = int64_t(floor(output_max_shape[0] / static_cast<float>(block_shape_prod)));

@@ -150,7 +150,7 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
       MS_LOG(EXCEPTION)
         << "For '" << op_name
         << "', the size of max_value and min_value must be equal to the shape rank, but got max_value's size: "
-        << max_value.size() << ", min_value's size: " << min_value.size() << ".";
+        << max_value.size() << ", min_value's size: " << min_value.size() << ", shape rank: " << shape_rank << ".";
     }
     ShapeVector out_min_shape = CalDynamicOutputShape(primitive, min_value);
     ShapeVector out_max_shape = CalDynamicOutputShape(primitive, max_value);

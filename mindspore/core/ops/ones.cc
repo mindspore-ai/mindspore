@@ -47,7 +47,7 @@ TypePtr OnesInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   // check
   auto dtype_value = input_args[1]->BuildValue();
   if (!dtype_value->isa<Type>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the dtype of Ones must be Type(), but got an invalid type!";
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', 'dtype' must be Type(), but got an invalid type!";
   }
   auto output_type = dtype_value->cast<TypePtr>();
   const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,

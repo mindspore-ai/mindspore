@@ -108,9 +108,9 @@ abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::v
   }
   if (lu_pivots_shape[lu_pivots_shape.size() - 1] != lu_data_shape[lu_data_shape.size() - 1]) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
-                             << "', the last dimension of lu_pivots must be the same as lu_data's, "
-                             << "but got lu_pivots': " << lu_pivots_shape[lu_pivots_shape.size() - 1]
-                             << ", lu_data's: " << lu_data_shape[lu_data_shape.size() - 1] << ".";
+                             << "', the last dim of lu_pivots must be the same as lu_data's last dim, "
+                             << "but got lu_pivots' last dim: " << lu_pivots_shape[lu_pivots_shape.size() - 1]
+                             << ", lu_data's last dim: " << lu_data_shape[lu_data_shape.size() - 1] << ".";
   }
   for (size_t i = 0; i < lu_pivots_shape.size(); i++) {
     if (lu_data_shape[i] != lu_pivots_shape[i]) {

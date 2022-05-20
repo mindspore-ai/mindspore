@@ -67,14 +67,13 @@ static void seg_left_equation(const std::string &left_equation, const std::strin
       if ((found_ell && (*left_elements)[cur_element].size() > input_shapes[cur_element].size() + 1) ||
           (!found_ell && (*left_elements)[cur_element].size() != input_shapes[cur_element].size())) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the number of subscript in " << cur_element
-                                 << " operand in the eqaution must match inputs[" << cur_element
-                                 << "].dim(), but it does not.";
+                                 << " operand in the eqaution does not match inputs[" << cur_element << "].dim().";
       }
       ++cur_element;
       if (cur_element >= input_shapes.size()) {
         MS_EXCEPTION(ValueError)
           << "For '" << prim_name
-          << "', the number of inputs must be equal to the number of inputs and equation's operand, but it does not.";
+          << "', the number of inputs must be equal to the number of inputs and equation's operand.";
       }
       found_ell = false;
     } else {
@@ -83,15 +82,14 @@ static void seg_left_equation(const std::string &left_equation, const std::strin
     }
   }
   if (cur_element != input_shapes.size() - 1) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << prim_name
-      << "', the number of inputs must be equal to the number of inputs and equation's operand, but it does not.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the number of inputs must be equal to the number of equation's operand.";
   }
   for (size_t i = 0; i < (*left_elements).size(); ++i) {
     auto it = std::find((*left_elements)[i].begin(), (*left_elements)[i].end(), kEinsumEllVal);
     if ((*left_elements)[i].size() != input_shapes[i].size() && it == (*left_elements)[i].end()) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the number of subscript in " << i
-                               << " operand in the eqaution must match inputs[" << i << "].dim(), but it does not.";
+                               << " operand in the eqaution does not match inputs[" << i << "].dim().";
     }
   }
 }
@@ -207,7 +205,7 @@ static void element_map_shape(const std::string &prim_name, const std::vector<st
         if ((*element_shape_map)[kEinsumEllVal] != temp_vec) {
           MS_EXCEPTION(ValueError)
             << "For '" << prim_name
-            << "', the same ellipsis in equation can only represent the same dimension in inputs, but it does not.";
+            << "', the same ellipsis in equation can only represent the same dimension in inputs.";
         }
       } else {
         (*element_shape_map)[kEinsumEllVal] = temp_vec;

@@ -57,9 +57,11 @@ abstract::ShapePtr BroadcastToInferShape(const PrimitivePtr &primitive,
   (void)primitive->AddAttr("shape", MakeValue(input_x));
   for (size_t i = 0; i < x_shape.size(); i++) {
     if (input_x[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
-      MS_EXCEPTION(ValueError) << "Not support shapes for broadcast, x_shape: "
-                               << input_args[0]->BuildShape()->ToString()
-                               << ", target shape: " << x_shape_ptr->ToString();
+      MS_EXCEPTION(ValueError)
+        << "For '" << prim_name
+        << "', in order to broadcast, each dimension pair must be equal or input dimension is 1 or target "
+           "dimension is -1. But got x_shape: "
+        << input_args[0]->BuildShape()->ToString() << ", target shape: " << x_shape_ptr->ToString() << ".";
     }
   }
   return x_shape_ptr;

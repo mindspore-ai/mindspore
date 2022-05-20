@@ -139,7 +139,7 @@ ValuePtr EqualInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
       MS_EXCEPTION(TypeError) << "For '" << prim->name()
                               << "', the supported type is in the list: ['bool', 'int8', 'int16', 'int32', 'int64', "
                                  "'complex64', 'complex128', 'uint8', 'float16', 'float32', 'float64'], but got "
-                              << result_type->ToString();
+                              << result_type->ToString() << ".";
     }
   }
   return result_tensor;

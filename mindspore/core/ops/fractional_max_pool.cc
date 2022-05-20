@@ -46,12 +46,12 @@ abstract::TupleShapePtr FractionalMaxPoolInferShape(const PrimitivePtr &primitiv
   }
   auto pooling_ratio = GetValue<std::vector<float>>(primitive->GetAttr(kPoolingRatio));
   if (pooling_ratio.size() != kPoolingRatioDims) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the size of parameter 'pooling_ratio' must be 4, but got "
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the size of parameter pooling ratio must be 4, but got "
                              << std::to_string(pooling_ratio.size()) << ".";
   }
   if (pooling_ratio[kInputIndex0] != 1.0) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
-                             << "', the first element of parameter 'pooling_ratio' must be 1.0, but got "
+                             << "', the first element of parameter pooling ratio must be 1.0, but got "
                              << std::to_string(pooling_ratio[0]) << ".";
   }
   if (pooling_ratio[kInputIndex1] < 1.0) {
@@ -65,7 +65,7 @@ abstract::TupleShapePtr FractionalMaxPoolInferShape(const PrimitivePtr &primitiv
                              << std::to_string(pooling_ratio[kInputIndex2]) << ".";
   }
   if (pooling_ratio[kInputIndex3] != 1.0) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the forth element of 'pooling_ratio' must be 1.0, but got: "
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the forth element of pooling ratio must be 1.0, but got: "
                              << std::to_string(pooling_ratio[kInputIndex3]) << ".";
   }
   std::vector<int64_t> out_shape(x_rank);

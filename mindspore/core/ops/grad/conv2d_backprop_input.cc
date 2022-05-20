@@ -120,7 +120,10 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
 
       auto x_size_len = LongToSize(shape_shape[0]);
       if (shape_max.size() != x_size_len || shape_min.size() != x_size_len) {
-        MS_LOG(EXCEPTION) << "For " << prim_name << ", x size's min or max value is valid.";
+        MS_LOG(EXCEPTION) << "For " << prim_name
+                          << ", x size's min and max value must be equal to x size len, but got min value: "
+                          << shape_min.size() << ", max value: " << shape_max.size() << ", x size len: " << x_size_len
+                          << ".";
       }
 
       for (size_t i = 0; i < x_size_len; i++) {
@@ -140,7 +143,7 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
     auto size_type = input_size->BuildType();
     MS_EXCEPTION_IF_NULL(size_type);
     MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', input[x size] must be a tuple or Tensor, but got: " << size_type->ToString() << ".";
+                            << "', input x's size must be a tuple or Tensor, but got: " << size_type->ToString() << ".";
   }
   auto dout_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropInputDoutIndex]->BuildShape())[kShape];

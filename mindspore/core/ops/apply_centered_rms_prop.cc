@@ -42,9 +42,9 @@ abstract::ShapePtr ApplyCenteredRMSPropInferShape(const PrimitivePtr &primitive,
   // var and mg must have the same shape when is not dynamic
   if (!var_shape_ptr->IsDynamic() && !mg_shape_ptr->IsDynamic()) {
     if (*var_shape != *mg_shape) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name
-                               << "', 'mean_gradient'must have the same shape as 'var'. But got 'mean_gradient' shape: "
-                               << mg_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
+      MS_EXCEPTION(ValueError)
+        << "For '" << op_name << "', 'mean_gradient' must have the same shape as 'var'. But got 'mean_gradient' shape: "
+        << mg_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
   // var and ms must have the same shape when is not dynamic
