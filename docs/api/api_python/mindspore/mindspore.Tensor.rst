@@ -775,6 +775,8 @@ mindspore.Tensor
 
         将空间维度划分为对应大小的块，然后在批次维度重排张量。
 
+        更多参考详见 :func:`mindspore.ops.space_to_batch_nd`。
+
         **参数：**
 
         - **block_shape** (list[int], tuple[int], int) - 块形状描述空间维度为分割的个数。
@@ -793,7 +795,7 @@ mindspore.Tensor
         - **ValueError** - 如果 `paddings` 的形状不是 (2, M), 其中 M 为 `block_shape` 的长度。
         - **ValueError** - 如果 `block_shape` 的元素不是大于一的整数。
         - **ValueError** - 如果 `paddings` 的元素不是非负的整数。
-    
+
     .. py:method:: gather_nd(input_x, indices)
 
         按索引从张量中获取切片。
@@ -818,7 +820,6 @@ mindspore.Tensor
         **异常：**
 
         - **ValueError** - 如果 `input_x` 的shape长度小于 `indices` 的最后一个维度。
-
 
     .. py:method:: shape
         :property:
