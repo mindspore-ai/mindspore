@@ -899,6 +899,7 @@ tensor_operator_registry.register('zeros_like', P.ZerosLike)
 tensor_operator_registry.register('space_to_batch_nd', P.SpaceToBatchND)
 tensor_operator_registry.register('one_hot', P.OneHot)
 tensor_operator_registry.register('nonzero', nonzero)
+tensor_operator_registry.register('matrix_diag', matrix_diag)
 tensor_operator_registry.register('hardshrink', P.HShrink)
 tensor_operator_registry.register('svd', linalg_ops.Svd)
 # ms cannot support Tensor(True) compare

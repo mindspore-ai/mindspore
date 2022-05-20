@@ -25,7 +25,7 @@ from .array_func import (unique, eye, matrix_band_part, fill, fill_, tile, size,
                          tuple_to_array, expand_dims, transpose, scatter_nd, scatter_nd_add, scatter_nd_sub, gather,
                          gather_d, gather_nd, scalar_cast, masked_fill, tensor_scatter_add, tensor_scatter_sub,
                          tensor_scatter_div, scatter_max, scatter_min, nonzero, space_to_batch_nd, range, select,
-                         one_hot)
+                         one_hot, matrix_diag)
 from .parameter_func import assign, assign_add, assign_sub, index_add
 from .math_func import (addn, absolute, abs, tensor_add, add, neg_tensor, neg, tensor_lt, less, tensor_le, le, lerp,
                         lp_norm, round, tensor_gt, gt, tensor_ge, ge, tensor_sub, sub, tensor_mul, mul, tensor_div, div,
