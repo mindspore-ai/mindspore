@@ -190,8 +190,20 @@ def get_select_vmap_rule(prim, axis_size):
 
 @vmap_rules_getters.register(P.ScatterAdd)
 @vmap_rules_getters.register(P.ScatterNdAdd)
+@vmap_rules_getters.register(P.ScatterMin)
 def get_scatter_add_vmap_rule(prim, axis_size):
-    """VmapRule for `Scatter*` operations, such as `ScatterAdd` and `ScatterNdAdd`."""
+    """
+    VmapRule for `Scatter*` operations, such as `ScatterAdd`, `ScatterNdAdd` and `ScatterMin`.
+    sactter_func_map: high-dimensional implementation for recording Scatter class operators
+    and ScatterNd class operators.
+    sactter_func_list: used to record all Scatter class operators.
+    """
+    sactter_func_map = {
+        "ScatterAdd": P.ScatterNdAdd,
+        "ScatterNdAdd": P.ScatterNdAdd,
+        "ScatterMin": P.ScatterNdMin,
+    }
+    sactter_func_list = ["ScatterAdd", "ScatterMin"]
     if isinstance(prim, str):
         prim_name = prim
         prim = Primitive(prim)
@@ -200,7 +212,7 @@ def get_scatter_add_vmap_rule(prim, axis_size):
         prim_name = prim.name
         use_locking = prim.use_locking
 
-    scatter_nd_add = P.ScatterNdAdd(use_locking)
+    scatter_func = sactter_func_map.get(prim_name)(use_locking)
     concat = P.Concat(-1)
 
     def vmap_rule(ref_bdim, indices_bdim, updates_bdim, u_monad):
@@ -217,14 +229,14 @@ def get_scatter_add_vmap_rule(prim, axis_size):
         elif ref_dim == 0:
             indices = _bdim_at_front(indices, indices_dim, axis_size)
             updates = _bdim_at_front(updates, updates_dim, axis_size)
-            if prim_name == "ScatterAdd":
+            if prim_name in sactter_func_list:
                 indices = F.expand_dims(indices, -1)
 
             indices_shape = F.shape(indices)
             prefix_shape, expand_shape = _get_prefix_expand_shape(indices_shape)
             prefix = P.BroadcastTo(prefix_shape)(F.reshape(mnp.arange(axis_size), expand_shape))
             indices = concat((prefix, indices))
-            out = scatter_nd_add(ref, indices, updates, u_monad)
+            out = scatter_func(ref, indices, updates, u_monad)
         else:
             _raise_value_error("The source axis of `ref` in `{}` must be 0 or None, "
                                "but got {}.".format(prim_name, ref_dim))

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 from mindspore.ops.operations import _inner_ops as inner
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -101,6 +102,27 @@ def scatter_func_d2_net(func, inputx, indices_1, updates_1, indices_2, updates_2
     out1 = net(indices_1, updates_1)
     out2 = net(indices_2, updates_2)
     return (out1, out2)
+
+
+class ScatterFuncVmapNet(nn.Cell):
+    def __init__(self, func):
+        super(ScatterFuncVmapNet, self).__init__()
+        self.scatter_min = func_map.get(func)()
+
+    def construct(self, inputx, indices, updates):
+        return self.scatter_min(inputx, indices, updates)
+
+
+class VmapNet(nn.Cell):
+    def __init__(self, net, inputx, in_axes, out_axes):
+        super(VmapNet, self).__init__()
+        self.net = net
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+        self.inputx = Parameter(inputx, name="inputx")
+
+    def construct(self, indices, updates):
+        return vmap(self.net, self.in_axes, self.out_axes)(self.inputx, indices, updates)
 
 
 @pytest.mark.level0
@@ -928,9 +950,41 @@ def test_scatter_func_dynamic_two_inputs():
     np.testing.assert_array_almost_equal(output_2.asnumpy(), expected_2)
 
 
-if __name__ == "__main__":
-    test_scatter_func_disordered_dynamic_int32()
-    test_scatter_func_disordered_dynamic_int8()
-    test_scatter_func_disordered_dynamic_uint8()
-    test_scatter_func_input_less_than_1_dynamic_float32()
-    test_scatter_func_dynamic_two_inputs()
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_scatter_func_indices_vmap():
+    """
+    Feature: test scatter_min vmap.
+    Description: in_axes: (0, 0, None).
+    Expectation: the result match with numpy result
+    """
+    inputx = Parameter(Tensor(np.array(
+        [[[0, 1, 2], [3, 4, 5]], [[0, 1, 2], [3, 4, 5]], [[0, 1, 2], [3, 4, 5]]]
+    ).astype(np.int32)), name="inputx")
+    indices = Tensor(np.array([[[0, 1], [1, 1]], [[0, 1], [0, 1]], [[1, 1], [1, 0]]]).astype(np.int32))
+    updates = Tensor(np.array([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]]]).astype(np.int32))
+    output = VmapNet(ScatterFuncVmapNet("min"), inputx, (0, 0, None), 0)(indices, updates)
+
+    expected = np.array(
+        [[[0, 1, 1], [2, 2, 2]], [[0, 1, 1], [2, 2, 2]], [[0, 1, 2], [1, 1, 1]]]
+    ).astype(np.int32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_scatter_func_updates_vmap():
+    """
+    Feature: test scatter_min vmap.
+    Description: in_axes: (0, None, 0).
+    Expectation: the result match with numpy result
+    """
+    inputx = Parameter(Tensor(np.array([[0.1, 1.0, 2.2], [3.0, 4.3, 5.5]]).astype(np.float32)), name="inputx")
+    indices = Tensor(np.array([0, 1]).astype(np.int32))
+    updates = Tensor(np.array([[1.0, 0.1], [1.2, 1.3]]).astype(np.float32))
+    output = VmapNet(ScatterFuncVmapNet("min"), inputx, (0, None, 0), 0)(indices, updates)
+
+    expected = np.array([[0.1, 0.1, 2.2], [1.2, 1.3, 5.5]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
