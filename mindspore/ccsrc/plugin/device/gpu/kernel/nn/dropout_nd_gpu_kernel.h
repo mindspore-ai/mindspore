@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class DropoutNDGpuKernelMod : public NativeGpuKernelMod {
+class DropoutNDGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<DropoutNDGpuKernelMod> {
  public:
   DropoutNDGpuKernelMod() { ResetResource(); }
   ~DropoutNDGpuKernelMod() override = default;
@@ -45,7 +45,10 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  std::vector<KernelAttr> GetOpSupport() override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   void ResetResource() noexcept;
@@ -55,11 +58,7 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
-  using DropoutNdFunc =
-    std::function<bool(DropoutNDGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
- private:
   bool is_null_input_{false};
   bool states_init_{false};
   std::vector<size_t> input_shape_;
@@ -71,8 +70,6 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod {
   void *cuda_stream_{nullptr};
   cudnnHandle_t cudnn_handle_{};
   curandGenerator_t cu_rand_generator_{nullptr};
-  DropoutNdFunc kernel_func_{};
-  static std::vector<std::pair<KernelAttr, DropoutNdFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
