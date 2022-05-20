@@ -627,6 +627,7 @@ Tensor::Tensor(const Tensor &tensor)
       device_sync_(tensor.device_sync_),
       need_release_device_mem_(tensor.need_release_device_mem_),
       cache_enable_(tensor.cache_enable_),
+      base_shape_ptr_(tensor.base_shape_ptr_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       padding_type_(tensor.padding_type()),
@@ -646,11 +647,13 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       device_sync_(tensor.device_sync_),
       need_release_device_mem_(tensor.need_release_device_mem_),
       cache_enable_(tensor.cache_enable_),
+      base_shape_ptr_(tensor.base_shape_ptr_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
-      lazy_callback_(tensor.lazy_callback_) {}
+      lazy_callback_(tensor.lazy_callback_),
+      user_data_(tensor.user_data_) {}
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape, TensorDataPtr data)
     : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {}
