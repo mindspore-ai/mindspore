@@ -1104,7 +1104,7 @@ def scatter_nd_add(input_x, indices, updates, use_locking=False):
             The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index to do min operation whose data type must be mindspore.int32.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
-        updates (Tensor): The tensor doing the min operation with `input_x`,
+        updates (Tensor): The tensor doing the addition operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
         use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 
@@ -1180,7 +1180,7 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
             The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index of input tensor, with int32 data type.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
-        updates (Tensor): The tensor to be updated to the input tensor, has the same type as input.
+        updates (Tensor): The tensor doing the subtraction operation with `input_x`, has the same type as input.
             The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
         use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 

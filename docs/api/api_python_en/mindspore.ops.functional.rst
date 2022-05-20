@@ -333,6 +333,8 @@ Parameter Operation Oprators
     mindspore.ops.assign_sub
     mindspore.ops.index_add
     mindspore.ops.scatter_min
+    mindspore.ops.scatter_nd_add
+    mindspore.ops.scatter_nd_sub
 
 .. list-table::
    :widths: 50 50
@@ -340,10 +342,6 @@ Parameter Operation Oprators
 
    * - functional
      - Description
-   * - mindspore.ops.scatter_nd_add
-     - Refer to :func:`mindspore.ops.scatter_nd_add`.
-   * - mindspore.ops.scatter_nd_sub
-     - Refer to :func:`mindspore.ops.scatter_nd_sub`.
    * - mindspore.ops.scatter_nd_update
      - Refer to :class:`mindspore.ops.ScatterNdUpdate`.
    * - mindspore.ops.scatter_update
