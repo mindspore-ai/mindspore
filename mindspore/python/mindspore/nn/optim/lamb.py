@@ -19,11 +19,13 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 from .optimizer import opt_init_args_register
+
 from .. import layer
 
 
@@ -139,23 +141,9 @@ def _update_run_op_ascend(beta1, beta2, eps, global_step, lr, weight_decay, para
         Tensor, the new value of v after updating.
     """
     if optim_filter:
-        op_cast = P.Cast()
-        op_norm = layer.Norm()
-        op_lamb_apply_optimizer_assign = P.LambApplyOptimizerAssign()
-        op_lamb_apply_weight_assign = P.LambApplyWeightAssign()
-
-        param_fp32 = op_cast(param, mstype.float32)
-        gradient_fp32 = op_cast(gradient, mstype.float32)
-        new_global_step = op_cast(global_step, mstype.float32)
-        weight_decay_flag = op_cast(decay_flag, mstype.float32)
-
-        update, _, _ = op_lamb_apply_optimizer_assign(gradient_fp32, v, m, param_fp32,
-                                                      beta1, 1.0 - beta1, beta2, 1.0 - beta2, eps,
-                                                      new_global_step, weight_decay_flag, weight_decay)
-        w_norm = op_norm(param_fp32)
-        g_norm = op_norm(update)
-        update = F.depend(update, op_lamb_apply_weight_assign(w_norm, g_norm, lr, update, param))
-        return update
+        op_lamb = inner.Lamb()
+        return op_lamb(param, m, v, lr, beta1, beta2, eps, weight_decay, global_step,
+                       gradient, decay_flag)
     return gradient
 
 

@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-TuplePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto var_type = input_args[kInputIndex0]->BuildType();
   auto m_type = input_args[kInputIndex1]->BuildType();
@@ -58,9 +58,9 @@ TuplePtr LambInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   (void)CheckAndConvertUtils::CheckTypeValid("global_step", global_step_type, num_type, prim_name);
   (void)CheckAndConvertUtils::CheckTypeValid("decay_flag", decay_flag_type, bool_set, prim_name);
 
-  return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, m_type, v_type});
+  return var_type;
 }
-abstract::TupleShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto m_shape_ptr = input_args[kInputIndex1]->BuildShape();
@@ -70,8 +70,9 @@ abstract::TupleShapePtr LambInferShape(const PrimitivePtr &primitive, const std:
       grad_shape_ptr->IsDynamic()) {
     MS_LOG(WARNING) << "var is dynamic" << var_shape_ptr->IsDynamic() << "m is dynamic" << m_shape_ptr->IsDynamic()
                     << "v is dynamic" << v_shape_ptr->IsDynamic() << "grad is dynamic" << grad_shape_ptr->IsDynamic();
-    return std::make_shared<abstract::TupleShape>(
-      std::vector<abstract::BaseShapePtr>{var_shape_ptr, m_shape_ptr, v_shape_ptr});
+    auto var_shape_output = var_shape_ptr->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(var_shape_output);
+    return var_shape_output;
   }
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
@@ -80,8 +81,10 @@ abstract::TupleShapePtr LambInferShape(const PrimitivePtr &primitive, const std:
   CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, m_shape, prim_name);
   CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, v_shape, prim_name);
   CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, grad_shape, prim_name);
-  return std::make_shared<abstract::TupleShape>(
-    std::vector<abstract::BaseShapePtr>{var_shape_ptr, m_shape_ptr, v_shape_ptr});
+
+  auto var_shape_output = var_shape_ptr->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(var_shape_output);
+  return var_shape_output;
 }
 }  // namespace
 
@@ -95,7 +98,7 @@ AbstractBasePtr LambInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
     MS_EXCEPTION_IF_NULL(item);
   }
   const int64_t kInputNum = 11;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto infer_type = LambInferType(primitive, input_args);
   auto infer_shape = LambInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
