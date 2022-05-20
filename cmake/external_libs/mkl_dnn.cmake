@@ -1,5 +1,10 @@
 set(onednn_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 set(onednn_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+
+if(NOT MINDSPORE_PROJECT_DIR)
+set(MINDSPORE_PROJECT_DIR ${CMAKE_SOURCE_DIR})
+endif()
+
 if(USE_MS_THREADPOOL_FOR_DNNL)
     set(USE_MS_THREADPOOL "-DDNNL_CPU_RUNTIME=THREADPOOL")
 else()
@@ -34,9 +39,9 @@ else()
         LIBS dnnl mkldnn
         URL ${REQ_URL}
         MD5 ${MD5}
-        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/onednn/0001-fix-user-threadpool-bug.patch
-        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/onednn/0002-fix-pool-nthr-bug.patch
-        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/onednn/0003-fix-zero-threads-identified-on-AMD.patch
+        PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/onednn/0001-fix-user-threadpool-bug.patch
+        PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/onednn/0002-fix-pool-nthr-bug.patch
+        PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/onednn/0003-fix-zero-threads-identified-on-AMD.patch
         CMAKE_OPTION -DDNNL_ARCH_OPT_FLAGS='' -DDNNL_BUILD_EXAMPLES=OFF -DDNNL_BUILD_TESTS=OFF
             ${USE_MS_THREADPOOL} -DDNNL_ENABLE_CONCURRENT_EXEC=ON)
 endif()

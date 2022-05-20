@@ -4,6 +4,10 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(libevent_LDFLAGS "-Wl,-z,now")
 endif()
 
+if(NOT MINDSPORE_PROJECT_DIR)
+set(MINDSPORE_PROJECT_DIR ${CMAKE_SOURCE_DIR})
+endif()
+
 if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/libevent/repository/archive/release-2.1.12-stable.tar.gz")
     set(MD5 "0d5a27436bf7ff8253420c8cf09f47ca")
@@ -20,7 +24,7 @@ mindspore_add_pkg(libevent
         LIBS event event_pthreads event_core event_openssl
         URL ${REQ_URL}
         MD5 ${MD5}
-        PATCHES ${CMAKE_SOURCE_DIR}/third_party/patch/libevent/libevent.patch001
+        PATCHES ${MINDSPORE_PROJECT_DIR}/third_party/patch/libevent/libevent.patch001
         CMAKE_OPTION -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_TESTING=OFF -DOPENSSL_ROOT_DIR:PATH=${openssl_ROOT}
           -DEVENT__LIBRARY_TYPE:STRING=STATIC)
 
