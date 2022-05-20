@@ -1602,6 +1602,87 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
     return matrix_diag_v3(x, k, num_rows, num_cols, padding_value)
 
 
+def meshgrid(inputs, indexing='xy'):
+    """
+    Generates coordinate matrices from given coordinate tensors.
+
+    Given N one-dimensional coordinate tensors, returns a tuple outputs of N N-D
+    coordinate tensors for evaluating expressions on an N-D grid.
+
+    Args:
+        inputs (Union[tuple]): A Tuple of N 1-D Tensor objects.
+            The length of input should be greater than 1. The data type is Number.
+        indexing ('xy', 'ij', optional): Cartesian ('xy', default) or
+            matrix ('ij') indexing of output. In the 2-D case with
+            inputs of length `M` and `N`, the outputs are of shape `(N, M)`
+            for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D
+            case with inputs of length `M`, `N` and `P`, outputs are of shape
+            `(N, M, P)` for 'xy' indexing and `(M, N, P)` for 'ij' indexing.
+
+    Outputs:
+        Tensors, A Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
+
+    Raises:
+        TypeError: If `indexing` is not a str or `input` is not a tuple.
+        ValueError: If `indexing` is neither 'xy' nor 'ij'.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
+        >>> y = Tensor(np.array([5, 6, 7]).astype(np.int32))
+        >>> z = Tensor(np.array([8, 9, 0, 1, 2]).astype(np.int32))
+        >>> inputs = (x, y, z)
+        >>> output = ops.meshgrid(inputs, indexing='xy')
+        >>> print(output)
+        (Tensor(shape=[3, 4, 5], dtype=Int32, value=
+         [[[1, 1, 1, 1, 1],
+           [2, 2, 2, 2, 2],
+           [3, 3, 3, 3, 3],
+           [4, 4, 4, 4, 4]],
+          [[1, 1, 1, 1, 1],
+           [2, 2, 2, 2, 2],
+           [3, 3, 3, 3, 3],
+           [4, 4, 4, 4, 4]],
+          [[1, 1, 1, 1, 1],
+           [2, 2, 2, 2, 2],
+           [3, 3, 3, 3, 3],
+           [4, 4, 4, 4, 4]]]),
+         Tensor(shape=[3, 4, 5], dtype=Int32, value=
+         [[[5, 5, 5, 5, 5],
+           [5, 5, 5, 5, 5],
+           [5, 5, 5, 5, 5],
+           [5, 5, 5, 5, 5]],
+          [[6, 6, 6, 6, 6],
+           [6, 6, 6, 6, 6],
+           [6, 6, 6, 6, 6],
+           [6, 6, 6, 6, 6]],
+          [[7, 7, 7, 7, 7],
+           [7, 7, 7, 7, 7],
+           [7, 7, 7, 7, 7],
+           [7, 7, 7, 7, 7]]]),
+         Tensor(shape=[3, 4, 5], dtype=Int32, value=
+         [[[8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2]],
+          [[8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2]],
+          [[8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2]]]))
+    """
+    meshgrid_op = P.Meshgrid(indexing)
+    return meshgrid_op(inputs)
+
+
 ##############################
 # Type Conversion Functions.
 ##############################
@@ -1917,6 +1998,7 @@ __all__ = [
     'select',
     'nonzero',
     'matrix_diag',
-    'diag'
+    'diag',
+    'meshgrid'
 ]
 __all__.sort()

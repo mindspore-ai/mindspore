@@ -39,9 +39,7 @@ std::string Meshgrid::get_indexing() const {
 namespace {
 abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
-  auto elements = input_args[0]->isa<abstract::AbstractTuple>()
-                    ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
-                    : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
+  auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
   (void)CheckAndConvertUtils::CheckInteger("Meshgrid input num", SizeToLong(elements.size()), kGreaterThan, 1,
                                            primitive->name());
   ShapeVector output_shape;
@@ -63,9 +61,7 @@ abstract::TupleShapePtr MeshgridInferShape(const PrimitivePtr &primitive,
 }
 
 TuplePtr MeshgridInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  auto elements = input_args[0]->isa<abstract::AbstractTuple>()
-                    ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
-                    : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
+  auto elements = input_args[0]->cast<abstract::AbstractTuplePtr>()->elements();
   (void)CheckAndConvertUtils::CheckInteger("Meshgrid input num", SizeToLong(elements.size()), kGreaterThan, 1,
                                            prim->name());
   std::map<std::string, TypePtr> types;
@@ -83,8 +79,8 @@ AbstractBasePtr MeshgridInfer(const abstract::AnalysisEnginePtr &, const Primiti
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input data type must be list or tuple of tensors.";
+  if (!input_args[0]->isa<abstract::AbstractTuple>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input must be tuple of tensors.";
   }
   // todo check input numberi
   const int64_t kInputNum = 1;

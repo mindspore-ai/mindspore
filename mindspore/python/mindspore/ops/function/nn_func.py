@@ -87,7 +87,8 @@ def hardshrink(x, lambd=0.5):
         [[ 0.      1.      2.    ]
         [ 0.      0.     -2.1233]]
     """
-    return P.HShrink(lambd)(x)
+    hshrink_op = P.HShrink(lambd)
+    return hshrink_op(x)
 
 
 __all__ = [
