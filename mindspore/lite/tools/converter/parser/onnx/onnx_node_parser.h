@@ -39,12 +39,13 @@ namespace mindspore {
 namespace lite {
 class ExternalDataInfo {
  public:
-  const std::string GetRelPath() const { return rel_path_; }
-  static STATUS Create(const google::protobuf::RepeatedPtrField<onnx::StringStringEntryProto> &externalData,
-                       ExternalDataInfo *externalDataInfo);
+  const std::string GetRelativePath() const { return relative_path_; }
+  static STATUS Create(const google::protobuf::RepeatedPtrField<onnx::StringStringEntryProto> &external_data,
+                       ExternalDataInfo *external_data_info);
 
  private:
-  std::string rel_path_;
+  static bool StringMapKeyIs(const std::string &key, const onnx::StringStringEntryProto &string_map);
+  std::string relative_path_;
   off_t offset_ = 0;
   size_t length_ = 0;
   std::string checksum_;
@@ -91,7 +92,6 @@ class OnnxNodeParser {
 
  private:
   static int64_t opset_version_;
-  static void *buffer_;
 };
 }  // namespace lite
 }  // namespace mindspore
