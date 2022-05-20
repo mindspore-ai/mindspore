@@ -7595,6 +7595,11 @@ class RightShift(Primitive):
     Raises:
         TypeError: If `input_x` or `input_y` is not tensor.
         TypeError: If `input_x` and `input_y` could not be broadcast.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
         >>> rightshift = ops.RightShift()
         >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.uint8))
         >>> input_y = Tensor(np.array([1, 1, 1]).astype(np.uint8))
