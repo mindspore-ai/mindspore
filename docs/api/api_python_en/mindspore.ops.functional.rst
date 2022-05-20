@@ -219,6 +219,7 @@ Linear Algebraic Operators
     :template: classtemplate.rst
 
     mindspore.ops.matmul
+    mindspore.ops.cdist
     mindspore.ops.ger
 
 Tensor Operation Operators

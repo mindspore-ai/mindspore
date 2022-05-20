@@ -612,7 +612,7 @@ class Tensor(Tensor_):
         Computes batched the p-norm distance between each pair of the two collections of row vectors.
 
         Args:
-            input_y (Tensor) - as the same dtype as `self`, Input tensor of shape :math:`(B, R, M)`.
+            input_y (Tensor): as the same dtype as `self`, Input tensor of shape :math:`(B, R, M)`.
             p (float): P value for the p-norm distance to calculate between each vector pair, P ∈ [0,∞]. Default: 2.0.
 
         Returns:
