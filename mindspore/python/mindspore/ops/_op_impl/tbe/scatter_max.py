@@ -23,14 +23,19 @@ scatter_max_op_info = TBERegOp("ScatterMax") \
     .compute_cost(10) \
     .kernel_name("scatter_max") \
     .partial_flag(True) \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .attr("use_locking", "optional", "bool", "all") \
     .input(0, "var", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \
     .input(2, "updates", False, "required", "all") \
     .output(0, "var", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I64_Default, DataType.I32_Default, DataType.I32_Default) \
     .get_op_info()
 
 

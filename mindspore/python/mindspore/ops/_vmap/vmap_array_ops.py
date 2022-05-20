@@ -191,11 +191,12 @@ def get_select_vmap_rule(prim, axis_size):
 
 @vmap_rules_getters.register(P.ScatterAdd)
 @vmap_rules_getters.register(P.ScatterMin)
+@vmap_rules_getters.register(P.ScatterMax)
 @vmap_rules_getters.register(P.ScatterNdAdd)
 @vmap_rules_getters.register(P.ScatterNdSub)
 def get_scatter_add_vmap_rule(prim, axis_size):
     """
-    VmapRule for `Scatter*` operations, such as `ScatterAdd`, `ScatterNdAdd` and `ScatterMin`.
+    VmapRule for `Scatter*` operations, such as `ScatterAdd`, `ScatterNdAdd`, `ScatterMin` and `ScatterMax`.
     sactter_func_map: high-dimensional implementation for recording Scatter class operators
     and ScatterNd class operators.
     sactter_func_list: used to record all Scatter class operators.
@@ -203,10 +204,11 @@ def get_scatter_add_vmap_rule(prim, axis_size):
     sactter_func_map = {
         "ScatterAdd": P.ScatterNdAdd,
         "ScatterMin": P.ScatterNdMin,
+        "ScatterMax": P.ScatterNdMax,
         "ScatterNdAdd": P.ScatterNdAdd,
         "ScatterNdSub": P.ScatterNdSub,
     }
-    sactter_func_list = ["ScatterAdd", "ScatterMin"]
+    sactter_func_list = ["ScatterAdd", "ScatterMin", "ScatterMax"]
     if isinstance(prim, str):
         prim_name = prim
         prim = Primitive(prim)

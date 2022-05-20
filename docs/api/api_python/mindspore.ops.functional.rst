@@ -335,6 +335,7 @@ Parameter操作算子
     mindspore.ops.assign_sub
     mindspore.ops.index_add
     mindspore.ops.scatter_min
+    mindspore.ops.scatter_max
     mindspore.ops.scatter_nd_add
     mindspore.ops.scatter_nd_sub
 
