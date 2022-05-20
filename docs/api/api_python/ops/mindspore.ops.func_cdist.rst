@@ -5,9 +5,6 @@ mindspore.ops.cdist
 
     计算两个tensor的p-范数距离。
 
-    .. note::
-        结合ReverseV2算子可以得到一个反对角线为1的Tensor，但是目前ReverseV2算子只支持Ascend和GPU平台。
-
     **参数：**
 
     - **x** (tensor) - 输入tensor x，输入shape [B, P, M]。

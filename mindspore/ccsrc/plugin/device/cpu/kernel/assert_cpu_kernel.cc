@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,50 @@
 #include "abstract/utils.h"
 namespace mindspore {
 namespace kernel {
+void PrintDataInt8(const AddressPtr &input, int summarize) {
+  std::ostringstream oss;
+  oss << "input data: [";
+  int8_t *data = reinterpret_cast<int8_t *>(input->addr);
+  for (int j = 0; j < summarize - 1; j++) {
+    oss << static_cast<int32_t>(data[j]) << " ";
+  }
+  oss << static_cast<int32_t>(data[summarize - 1]) << "]";
+  std::cout << oss.str() << std::endl;
+  return;
+}
+
+void PrintDataUInt8(const AddressPtr &input, int summarize) {
+  std::ostringstream oss;
+  oss << "input data: [";
+  uint8_t *data = reinterpret_cast<uint8_t *>(input->addr);
+  for (int j = 0; j < summarize - 1; j++) {
+    oss << static_cast<uint32_t>(data[j]) << " ";
+  }
+  oss << static_cast<uint32_t>(data[summarize - 1]) << "]";
+  std::cout << oss.str() << std::endl;
+  return;
+}
+
+template <typename T>
+void PrintData(const AddressPtr &input, int summarize) {
+  std::ostringstream oss;
+  oss << "input data: [";
+  T *data = reinterpret_cast<T *>(input->addr);
+  for (int j = 0; j < summarize - 1; j++) {
+    oss << data[j] << " ";
+  }
+  oss << data[summarize - 1] << "]";
+  std::cout << oss.str() << std::endl;
+  return;
+}
+
 std::map<TypeId, AssertCpuKernelMod::AssertPrintFunc> AssertCpuKernelMod::func_map_ = {
-  {kNumberTypeFloat16, &AssertCpuKernelMod::AssertPrint<float16>},
-  {kNumberTypeFloat32, &AssertCpuKernelMod::AssertPrint<float>},
-  {kNumberTypeFloat64, &AssertCpuKernelMod::AssertPrint<double>},
-  {kNumberTypeInt8, &AssertCpuKernelMod::AssertPrint<int8_t>},
-  {kNumberTypeInt16, &AssertCpuKernelMod::AssertPrint<int16_t>},
-  {kNumberTypeInt32, &AssertCpuKernelMod::AssertPrint<int32_t>},
-  {kNumberTypeInt64, &AssertCpuKernelMod::AssertPrint<int64_t>},
-  {kNumberTypeUInt8, &AssertCpuKernelMod::AssertPrint<uint8_t>},
-  {kNumberTypeUInt16, &AssertCpuKernelMod::AssertPrint<uint16_t>},
-  {kNumberTypeUInt32, &AssertCpuKernelMod::AssertPrint<uint32_t>},
-  {kNumberTypeUInt64, &AssertCpuKernelMod::AssertPrint<uint64_t>},
-  {kNumberTypeBool, &AssertCpuKernelMod::AssertPrint<bool>}};
+  {kNumberTypeFloat16, PrintData<float16>}, {kNumberTypeFloat32, PrintData<float>},
+  {kNumberTypeFloat64, PrintData<double>},  {kNumberTypeInt8, PrintDataInt8},
+  {kNumberTypeInt16, PrintData<int16_t>},   {kNumberTypeInt32, PrintData<int32_t>},
+  {kNumberTypeInt64, PrintData<int64_t>},   {kNumberTypeUInt8, PrintDataUInt8},
+  {kNumberTypeUInt16, PrintData<uint16_t>}, {kNumberTypeUInt32, PrintData<uint32_t>},
+  {kNumberTypeUInt64, PrintData<uint64_t>}, {kNumberTypeBool, PrintData<bool>}};
 
 bool AssertCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
@@ -80,19 +111,6 @@ std::vector<KernelAttr> AssertCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-template <typename T>
-void AssertCpuKernelMod::AssertPrint(const AddressPtr &input, int summarize) {
-  std::ostringstream oss;
-  oss << "input data: [";
-  T *data = reinterpret_cast<T *>(input->addr);
-  for (int j = 0; j < summarize - 1; j++) {
-    oss << data[j] << " ";
-  }
-  oss << data[summarize - 1] << "]";
-  std::cout << oss.str() << std::endl;
-  return;
-}
-
 bool AssertCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                 const std::vector<AddressPtr> &outputs) {
   auto cond = static_cast<bool *>(inputs[0]->addr);
@@ -102,7 +120,7 @@ bool AssertCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
 
   std::cout << "For '" << kernel_name_ << "' condition is false." << std::endl;
   for (size_t i = 1; i < inputs.size(); i++) {
-    kernel_funcs_[i](this, inputs[i], summarizes_[i]);
+    kernel_funcs_[i](inputs[i], summarizes_[i]);
   }
 
   return true;

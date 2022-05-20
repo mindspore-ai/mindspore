@@ -30,21 +30,29 @@ class AssertTEST(nn.Cell):
     def construct(self, cond, x):
         return self.assert1(cond, x)
 
-
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize("data_type", [np.float32, np.float16])
-def test_selu_op(data_type):
+@pytest.mark.platform_x86_cpu_training
+def test_assert_op():
     """
     Feature: Assert cpu kernel
     Description: test the assert summarize = 10.
     Expectation: match to np benchmark.
     """
     assert1 = AssertTEST(10)
-    x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0]).astype(data_type))
-    y = Tensor(np.array([-2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0]).astype(data_type))
+    a = Tensor(np.array([1.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0]).astype(np.float32))
+    b = Tensor(np.array([2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0]).astype(np.float16))
+    c = Tensor(np.array([3.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0]).astype(np.float64))
+    d = Tensor(np.array([4, -4]).astype(np.int16))
+    e = Tensor(np.array([5, 6, 7, -4]).astype(np.int32))
+    f = Tensor(np.array([5, 6, 7, 5, 6, 7, 5, 6, 7, -4]).astype(np.int64))
+    g = Tensor(np.array([6, -4]).astype(np.int8))
+    h = Tensor(np.array([7]).astype(np.uint16))
+    i = Tensor(np.array([8, 6, 7]).astype(np.uint32))
+    j = Tensor(np.array([9, 6, 7, 5, 6, 7, 5, 6, 7]).astype(np.uint64))
+    k = Tensor(np.array([10]).astype(np.uint8))
+    l = Tensor(np.array([True, False]).astype(np.bool))
     context.set_context(mode=context.GRAPH_MODE)
-    assert1(True, [x, y])
+    assert1(True, [a, b, c, d, e, f, g, h, i, j, k, l])
     context.set_context(mode=context.PYNATIVE_MODE)
-    assert1(False, [x, y])
+    assert1(False, [a, b, c, d, e, f, g, h, i, j, k, l])

@@ -2232,20 +2232,36 @@ def cdist(x, y, p=2.0):
     """
     Computes batched the p-norm distance between each pair of the two collections of row vectors.
 
-    Refer to :func:`mindspore.ops.cdist` for more detal
+    Args:
+        x (Tensor): Input tensor of shape :math:`(B, P, M)`.
+          Letter :math:`B` represents 0 or positive int number.
+          When :math:`B` is equal to 0, it means this dimension can be ignored,
+          i.e. shape of the tensor is :math:`(P, M)`.
+        y (Tensor): Input tensor of shape :math:`(B, R, M)`.
+        p (float): P value for the p-norm distance to calculate between each vector pair, P ∈ [0,∞]. Default: 2.0.
+
+    Returns:
+        Tensor, has the same dtype as `x`, which shape is :math:`(B, P, R)`.
+
+    Raises:
+        TypeError: If `x` or `y` is not a Tensor.
+        TypeError: If dtype of `x` or `y` is neither float16 nor float32.
+        TypeError: If `p` is not a float.
+        ValueError: If `p` is a negative float.
+        ValueError: If dimension of `x` is not the same as `y`.
+        ValueError: If dimension of `x` or `y` is neither 2 nor 3.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
-        >>> input_y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
-        >>> output = ops.cdist(input_x, input_y, 2.0)
+        >>> x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
+        >>> y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
+        >>> output = ops.cdist(x, y, 2.0)
         >>> print(output)
         [[[2.8284273 2.8284273]
           [1.4142137 1.4142137]]]
     """
-
     cdist_ = P.Cdist(p)
     return cdist_(x, y)
 
