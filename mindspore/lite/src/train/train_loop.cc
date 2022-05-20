@@ -81,7 +81,7 @@ int TrainLoop::Train(int epochs, Dataset *ds, std::vector<TrainLoopCallBack *> c
         return RET_ERROR;
       }
     }
-    int break_loop = false;
+    bool break_loop = false;
     for (auto cb : cbs) {
       ret = cb->EpochEnd(cb_data);
       if (ret != RET_CONTINUE) {
@@ -166,7 +166,7 @@ int TrainLoop::LoadData(std::vector<tensor::MSTensor *> inputs, dataset::MSTenso
     return RET_STOP_TRAINING;
   }
 
-  for (unsigned int i = 0; i < num_of_inputs; i++) {
+  for (size_t i = 0; i < num_of_inputs; i++) {
     auto *input_data = reinterpret_cast<unsigned char *>(inputs.at(i)->MutableData());
     const auto *row_data = reinterpret_cast<const unsigned char *>(row_vec->at(i).MutableData());
     auto data_size = row_vec->at(i).DataSize();
