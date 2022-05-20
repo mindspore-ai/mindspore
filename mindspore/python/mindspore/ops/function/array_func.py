@@ -1504,13 +1504,15 @@ def space_to_batch_nd(input_x, block_size, paddings):
     :math:`block\_shape` and :math:`paddings`. Then the shape of the output tensor will be
     :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`, where
 
-        :math:`n' = n*(block\_shape[0]*...*block\_shape[M])`
-
-        :math:`w'_i = (w_i+paddings[i][0]+paddings[i][1])//block\_shape[i]`
+    .. math::
+        \begin{array}{ll} \\
+            n' = n*(block\_shape[0] * ... * block\_shape[M]) \\
+            w'_i = (w_i + paddings[i][0] + paddings[i][1])//block\_shape[i]
+        \end{array}
 
     Args:
         input_x (Tensor): The input tensor. It must be a 4-D tensor on Ascend.
-        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
+        block_size (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
             than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
             number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the same,
             equal to `block_shape`. M must be 2 on Ascend.
@@ -1534,7 +1536,7 @@ def space_to_batch_nd(input_x, block_size, paddings):
         TypeError: If `paddings` is neither list nor tuple.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> block_shape = [2, 2]
@@ -1545,7 +1547,7 @@ def space_to_batch_nd(input_x, block_size, paddings):
         [[[[1.]]]
          [[[2.]]]
          [[[3.]]]
-         [[[4.]]]]`
+         [[[4.]]]]
     """
     return P.SpaceToBatchND(block_size, paddings)(input_x)
 
