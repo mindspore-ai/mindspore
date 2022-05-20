@@ -1756,15 +1756,13 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
     def _compute_time_inside_step(self, metric_timeline, step_time_list):
         """Compute per step time of metric_timeline."""
-        per_step_time_list = []
+        per_step_time_list = [0 for i in range(len(step_time_list))]
         step = 0
-        cur_step_metric_time = 0
         step_end_time = step_time_list[step][self._start_time_idx] + \
                         step_time_list[step][self._duration_idx]
         for time_item in metric_timeline:
             start_time = time_item[self._start_time_idx]
             if start_time > step_end_time:
-                per_step_time_list.append(cur_step_metric_time)
                 step += 1
                 if step >= len(step_time_list):
                     logger.warning("Compute profiler compute_time_inside_step time, "
@@ -1773,9 +1771,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
                     break
                 step_end_time = step_time_list[step][self._start_time_idx] + \
                                 step_time_list[step][self._duration_idx]
-                cur_step_metric_time = 0
-            cur_step_metric_time += time_item[self._duration_idx]
-        per_step_time_list.append(cur_step_metric_time)
+            per_step_time_list[step] += time_item[self._duration_idx]
 
         return per_step_time_list
 
