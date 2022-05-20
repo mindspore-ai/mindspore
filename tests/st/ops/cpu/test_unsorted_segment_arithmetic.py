@@ -94,6 +94,10 @@ def unsorted_segment_arith_expected(func, x, segment_ids, num_segments):
 
     for i in range(ids_size):
         out_index = trans_ids[i]
+        if out_index < 0:
+            continue
+        if out_index >= num_segments:
+            continue
         result[out_index] = f(result[out_index], trans_inp[i])
 
     return result

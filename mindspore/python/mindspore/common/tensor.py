@@ -759,13 +759,13 @@ class Tensor(Tensor_):
             - The operator can't handle division by 0 exceptions, so the user needs to make sure
               there is no 0 value in `updates`.
 
-        Inputs:
-            - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-              The rank must be at least 2.
-            - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-              and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+        Args:
+            indices (Tensor): The index of input tensor whose data type is int32 or int64.
+                The rank must be at least 2.
+            updates (Tensor): The tensor to update the input tensor, has the same type as input,
+                and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
-        Outputs:
+        Returns:
             Tensor, has the same shape and type as self tensor.
 
         Raises:
