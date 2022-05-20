@@ -172,15 +172,6 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
     return false;
   }
 
-  if (unknow_type_ == device::ascend::UnknowShapeOpType::DEPEND_COMPUTE) {
-    ret = aclrtMemcpyAsync(ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(), ext_info_addr_dev_,
-                           ext_info_size_, ACL_MEMCPY_DEVICE_TO_HOST, stream_);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "AclrtMemcpyAsync output shape failed. Op name: " << cnode->fullname_with_scope();
-      return false;
-    }
-  }
-
   return true;
 }
 
@@ -201,7 +192,12 @@ void DynamicAicpuOpKernelMod::SyncData() {
   }
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_);
-  auto ret = rtStreamSynchronize(stream_);
+  auto ret = aclrtMemcpyAsync(ext_info_handler_->GetExtInfo(), ext_info_handler_->GetExtInfoLen(), ext_info_addr_dev_,
+                              ext_info_size_, ACL_MEMCPY_DEVICE_TO_HOST, stream_);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "AclrtMemcpyAsync output shape failed. Op name: " << cnode->fullname_with_scope();
+  }
+  ret = rtStreamSynchronize(stream_);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call runtime rtStreamSynchronize failed. Op name: " << cnode->fullname_with_scope();
   }
