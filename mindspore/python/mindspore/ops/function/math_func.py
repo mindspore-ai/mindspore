@@ -21,7 +21,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from ..operations.math_ops import (Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
-                                   BesselK1e)
+                                   BesselK1e, Renorm)
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ..._c_expression import Tensor as Tensor_
@@ -2851,6 +2851,46 @@ def lp_norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
     return lp_norm_inner(input_x)
 
 
+def renorm(input_x, p, dim, maxnorm):
+    """
+    Renormalizes the sub-tensors along dimension `dim`, and each sub-tensor's p-norm should not exceed the
+    'maxnorm'. The values of current sub-tensor don't need change if the p-norm of the sub-tensor is less than
+    `maxnorm`. Otherwise the sub-tensor needs to be modified to the original value of the corresponding position
+    divided by the p-norm of the substensor and then multiplied by `maxnorm`.
+
+    Note:
+        The input must be a tensor.
+
+    Args:
+        input_x: A Tensor, types: float32 or float16.
+        p (float): P-norm.
+        dim (int): The dimension that expected to get the slice-tensor.
+        maxnorm (float): Max norm.
+
+    Returns:
+        Tensor, has the same dtype and shape as input_x.
+
+    Raises:
+        TypeError: If dtype of `p` is not int.
+        TypeError: If dtype of `dim` is not int.
+        TypeError: If dtype of `maxnorm` is not float32.
+        ValueError: If the value of `p` less than 1.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Example:
+        >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
+        >>> y = ops.renorm(x, p=1, dim=0, maxnorm=5.)
+        >>> print(y)
+        [[1.       1.        1.        1.       ]
+        [1.6666666 1.6666666 1.6666666 1.6666666]
+        [1.6666667 1.6666667 1.6666667 1.6666667]]
+    """
+    renorm_ = Renorm(p, dim, maxnorm)
+    return renorm_(input_x)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -2884,6 +2924,7 @@ __all__ = [
     'tensor_pow',
     'pow',
     'pows',
+    'renorm',
     'tensor_mod',
     'floor_mod',
     'floormod',

@@ -37,6 +37,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/reduce_sum_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/cdist_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
+#include "plugin/device/ascend/optimizer/ir_fission/renorm_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/tensor_scatter_fission.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/square_sum_fusion.h"
@@ -349,6 +350,9 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTransposeForSort>());
+  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  ir_fusion_pm->AddPass(std::make_shared<RenormSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
 
@@ -435,6 +439,9 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTensorMoveForHcclOp>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTransposeForSort>());
+  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  ir_fusion_pm->AddPass(std::make_shared<RenormSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
 
   optimizer->AddPassManager(ir_fusion_pm);

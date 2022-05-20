@@ -1987,6 +1987,16 @@ def lp_norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
     return F.lp_norm(input_x, axis, p, keep_dims, epsilon)
 
 
+def renorm(input_x, p, dim, maxnorm):
+    """
+    Renormalizes the sub-tensors along dimension `dim`, and each sub-tensor's p-norm should not exceed the
+    'maxnorm'. The values of current sub-tensor don't need change if the p-norm of the sub-tensor is less than
+    `maxnorm`. Otherwise the sub-tensor needs to be modified to the original value of the corresponding position
+    divided by the p-norm of the substensor and then multiplied by `maxnorm`.
+    """
+    return F.renorm(input_x, p, dim, maxnorm)
+
+
 def list_bool(x):
     """Implementation of `tuple_bool`."""
     return len(x) != 0

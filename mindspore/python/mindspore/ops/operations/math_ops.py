@@ -5794,3 +5794,36 @@ class Bernoulli(Primitive):
         validator.check_value_type("seed", seed, [int], self.name)
         if seed != -1 and seed < 0:
             raise ValueError(f"Seed must be -1 or a non-negative integer, but got {seed}.")
+
+
+class Renorm(Primitive):
+    """
+    Renormalizes the sub-tensors along dimension `dim`, and each sub-tensor's p-norm should not exceed the
+    'maxnorm'. The values of current sub-tensor don't need change if the p-norm of the sub-tensor is less than
+    `maxnorm`. Otherwise the sub-tensor needs to be modified to the original value of the corresponding position
+    divided by the p-norm of the substensor and then multiplied by `maxnorm`.
+
+    Refer to :func::`mindspore.ops.renorm` for more detail.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Example:
+        >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
+        >>> y = Renorm(x, p=1, dim=0, maxnorm=5.)
+        >>> print(y)
+        [[1.       1.        1.        1.       ]
+        [1.6666666 1.6666666 1.6666666 1.6666666]
+        [1.6666667 1.6666667 1.6666667 1.6666667]]
+    """
+
+    @prim_attr_register
+    def __init__(self, p, dim, maxnorm):
+        """Initialize Renorm."""
+        if int(p) <= 0:
+            raise ValueError(f"Renorm op don't support non-positive-norm, but got{p}")
+        validator.check_value_type("p", p, [int], self.name)
+        validator.check_value_type("dim", dim, [int], self.name)
+        validator.check_value_type("maxnorm", maxnorm, [float], self.name)
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        self.add_prim_attr("p", float(p))

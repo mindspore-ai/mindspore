@@ -89,6 +89,7 @@ constexpr auto kAsin = "Asin";
 constexpr auto kAsinGrad = "AsinGrad";
 constexpr auto kTrunc = "Trunc";
 constexpr auto kLpNorm = "LpNorm";
+constexpr auto kRenorm = "Renorm";
 constexpr auto kSquare = "Square";
 constexpr auto kRealInner = "RealInner";
 constexpr auto kReal = "Real";
@@ -673,6 +674,7 @@ GVAR_DEF(PrimitivePtr, kPrimNthElement, std::make_shared<Primitive>("NthElement"
 GVAR_DEF(PrimitivePtr, kPrimGridSampler2D, std::make_shared<Primitive>(kGridSampler2D));
 GVAR_DEF(PrimitivePtr, kPrimGridSampler2DGrad, std::make_shared<Primitive>(kGridSampler2DGrad));
 GVAR_DEF(PrimitivePtr, kPrimPdist, std::make_shared<Primitive>("Pdist"));
+GVAR_DEF(PrimitivePtr, kPrimRenorm, std::make_shared<Primitive>(kRenorm));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));
