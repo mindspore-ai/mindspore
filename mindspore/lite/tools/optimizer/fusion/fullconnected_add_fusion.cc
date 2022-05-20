@@ -193,7 +193,6 @@ AnfNodePtr FullconnectedAddFusion::Process(const std::string &pattern_name, cons
       fc_primc->set_activation_type(add_primc->get_activation_type());
     }
   }
-  fc_cnode->set_fullname_with_scope(node->fullname_with_scope());
   (void)manager->Replace(node, fc_cnode);
   return nullptr;
 }

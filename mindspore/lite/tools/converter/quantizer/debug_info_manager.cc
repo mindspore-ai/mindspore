@@ -772,7 +772,7 @@ int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Mo
     return ret;
   }
 
-  file_name = "output_param.csv";
+  file_name = "output_summary.csv";
   auto output_param_save_path = CreateFilePath(config.commonQuantParam.debug_info_save_path, file_name);
   ret = SaveOutputInfo(output_param_save_path);
   if (ret != RET_OK) {

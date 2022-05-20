@@ -292,7 +292,7 @@ int ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const 
   }
   new_weight_paramter->set_default_param(new_weight_tensor);
   new_weight_paramter->set_abstract(conv_weight_node->abstract());
-  new_weight_paramter->set_name(conv_node->fullname_with_scope() + conv_weight_node->fullname_with_scope());
+  new_weight_paramter->set_name(conv_weight_node->fullname_with_scope());
   manager->SetEdge(conv_node, kConvWeightIndex, new_weight_paramter);
   return lite::RET_OK;
 }

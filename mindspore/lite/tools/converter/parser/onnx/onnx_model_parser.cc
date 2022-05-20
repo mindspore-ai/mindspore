@@ -955,7 +955,7 @@ STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncG
     MS_LOG(ERROR) << "new cnode error";
     return RET_ERROR;
   }
-  new_cnode->set_fullname_with_scope(onnx_node.op_type() + "_" + onnx_node.output(0));
+  new_cnode->set_fullname_with_scope(onnx_node.name());
   auto status = BuildOpOutputs(onnx_node, anf_graph, anf_nodes_map, new_cnode);
   return status;
 }

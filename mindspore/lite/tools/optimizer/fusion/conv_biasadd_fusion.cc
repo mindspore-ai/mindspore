@@ -27,6 +27,7 @@
 
 namespace mindspore::opt {
 namespace {
+constexpr size_t kAddWeightIndex = 2;
 bool IsConvExtendNode(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
@@ -200,7 +201,7 @@ int ConvBiasaddFusion::DoFuison(const FuncGraphPtr &func_graph, const AnfNodePtr
   auto conv_new_bias =
     AddNewBiasNode(fusion_data.data(), func_graph, out_channel, static_cast<TypeId>(add_bias_info.data_type_));
   MS_CHECK_TRUE_RET(conv_new_bias != nullptr, lite::RET_NULL_PTR);
-  conv_new_bias->set_name(conv_cnode->fullname_with_scope() + "_bias");
+  conv_new_bias->set_name(add_cnode->input(kAddWeightIndex)->fullname_with_scope());
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
   if (conv_cnode->size() > kInputSizeThree) {
