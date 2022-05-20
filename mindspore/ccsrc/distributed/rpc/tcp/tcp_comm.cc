@@ -228,9 +228,8 @@ void TCPComm::EventCallBack(void *connection) {
     (void)conn->Flush();
     conn->conn_mutex->unlock();
   } else if (conn->state == ConnectionState::kDisconnecting) {
-    conn->conn_mutex->lock();
+    std::lock_guard<std::mutex> lock(*conn_mutex_);
     conn_pool_->DeleteConnection(conn->destination);
-    conn->conn_mutex->unlock();
   }
 }
 
@@ -304,10 +303,11 @@ ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
   auto task = [msg, this] {
     std::lock_guard<std::mutex> lock(*conn_mutex_);
     // Search connection by the target address
-    Connection *conn = conn_pool_->FindConnection(msg->to.Url());
+    std::string destination = msg->to.Url();
+    Connection *conn = conn_pool_->FindConnection(destination);
     if (conn == nullptr) {
       MS_LOG(ERROR) << "Can not found remote link and send fail name: " << msg->name.c_str()
-                    << ", from: " << msg->from.Url().c_str() << ", to: " << msg->to.Url().c_str();
+                    << ", from: " << msg->from.Url().c_str() << ", to: " << destination;
       DropMessage(msg);
       int error_no = -1;
       return error_no;

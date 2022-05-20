@@ -42,7 +42,7 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
   common::SetEnv(kEnvMetaServerPort, server_port.c_str());
 
-  size_t total_node_num = 8;
+  size_t total_node_num = 4;
   std::vector<std::shared_ptr<ComputeGraphNode>> cgns;
   MetaServerNode msn("meta_server_node", total_node_num);
   ASSERT_TRUE(msn.Initialize());
@@ -209,7 +209,7 @@ TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
 
   constexpr char kEnvMSRole[] = "MS_ROLE";
   common::SetEnv(kEnvMSRole, "MS_SCHED");
-  size_t total_node_num = 8;
+  size_t total_node_num = 4;
   MetaServerNode msn("meta_server_node", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 

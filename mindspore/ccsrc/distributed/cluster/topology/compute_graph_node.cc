@@ -139,6 +139,7 @@ bool ComputeGraphNode::Heartbeat() {
 
   MS_LOG(INFO) << "The heartbeat thread is started.";
   size_t interval = 3;
+  size_t timeout = 10;
 
   while (enable_hb_) {
     HeartbeatMessage hb_msg;
@@ -149,17 +150,14 @@ bool ComputeGraphNode::Heartbeat() {
     auto message = CreateMessage(server_url, MessageName::kHeartbeat, content);
     MS_EXCEPTION_IF_NULL(message);
 
-    // Reconnect to the meta server node if no any connection exists.
-    size_t total_retry = 3;
-    const size_t connect_retry = 3;
-    while (!tcp_client_->IsConnected(server_url) && total_retry-- > 0) {
-      tcp_client_->Connect(server_url, connect_retry);
+    MessageBase *response = tcp_client_->ReceiveSync(std::move(message), timeout);
+    if (response == nullptr) {
+      MS_LOG(ERROR) << "Failed to send heartbeat message to meta server node and try to reconnect to the meta server.";
+      while (!Reconnect()) {
+        continue;
+      }
     }
 
-    // Send the heartbeat message.
-    if (tcp_client_->IsConnected(server_url)) {
-      tcp_client_->SendSync(std::move(message));
-    }
     sleep(interval);
   }
 
@@ -185,7 +183,7 @@ bool ComputeGraphNode::ReconnectIfNeeded(std::function<bool(void)> func, const s
 }
 
 bool ComputeGraphNode::Reconnect() {
-  const auto &server_url = meta_server_addr_.GetUrl();
+  auto server_url = meta_server_addr_.GetUrl();
   // Disconnect from meta server node firstly.
   while (tcp_client_->IsConnected(server_url)) {
     tcp_client_->Disconnect(server_url);

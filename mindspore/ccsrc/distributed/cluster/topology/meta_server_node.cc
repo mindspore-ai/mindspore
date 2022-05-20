@@ -213,10 +213,15 @@ MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) 
   if (nodes_.find(node_id) != nodes_.end()) {
     auto &node = nodes_[node_id];
     time(&(node->last_update));
+
+    auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess,
+                                  std::to_string(static_cast<int>(MessageName::kSuccess)));
+    MS_EXCEPTION_IF_NULL(response);
+    return response.release();
   } else {
     MS_LOG(ERROR) << "Invalid node: " << node_id << ".";
+    return rpc::NULL_MSG;
   }
-  return rpc::NULL_MSG;
 }
 
 MessageBase *const MetaServerNode::ProcessWriteMetadata(MessageBase *const message) {
