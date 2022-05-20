@@ -730,13 +730,21 @@ void SetSequenceElementsUseFlagsRecursively(const AbstractBasePtr &abs, bool new
 
   SetSequenceElementsUseFlags(abs, new_flag);
 
-  // Check its elements if it's sequence node.
+  // Check its elements if it's a sequence node.
   auto sequence_abs = dyn_cast<abstract::AbstractSequence>(abs);
-  if (sequence_abs == nullptr) {
+  if (sequence_abs != nullptr) {
+    for (auto &element : sequence_abs->elements()) {
+      SetSequenceElementsUseFlagsRecursively(element, new_flag);
+    }
     return;
   }
-  for (auto &element : sequence_abs->elements()) {
-    SetSequenceElementsUseFlagsRecursively(element, new_flag);
+
+  // Check its elements if it's a dictionary node.
+  auto dictionary_abs = dyn_cast<abstract::AbstractDictionary>(abs);
+  if (dictionary_abs != nullptr) {
+    for (auto &element : dictionary_abs->elements()) {
+      SetSequenceElementsUseFlagsRecursively(element.second, new_flag);
+    }
   }
 }
 }  // namespace mindspore
