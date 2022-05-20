@@ -357,6 +357,25 @@ def test_replace_one_to_one():
     assert new_conv_node.get_targets()[0] == list(relu2.get_normalized_args().values())[0]
 
 
+def test_replace_one_to_one_with_same_arg_and_target():
+    """
+    Feature: Python api replace of SymbolTree of Rewrite.
+    Description: Call replace to replace an origin node to a new node whose arg and target are same.
+    Expectation: Success.
+    """
+    stree, _, relu1, _ = create_symbol_tree()
+    construct_ast: ast.FunctionDef = getattr(stree, "_root_ast")
+    assert len(construct_ast.body) == 6
+    assert get_symbol_tree_nodes_count(stree) == 7
+
+    new_conv = Conv2d(16, 16, 5)
+    new_conv_node = NodeApi.create_call_cell(new_conv, [ScopedValue.create_naming_value("new_conv")],
+                                             [ScopedValue.create_naming_value("new_conv")]).get_handler()
+    stree.replace(relu1, [new_conv_node])
+    assert get_symbol_tree_nodes_count(stree) == 7
+    assert stree.get_node("new_conv")
+
+
 def test_replace_one_to_multi():
     """
     Feature: Python api replace of SymbolTree of Rewrite.

@@ -131,30 +131,41 @@ class SymbolTree(Observer, Observable):
         Returns:
             An instance of Node represents root of input nodes.
         """
-        consumers: [ScopedValue] = []
+        consumers: {ScopedValue: [Node]} = {}
         target_dict: {ScopedValue: Node} = {}
         for node in nodes:
-            consumers.extend(node.get_args())
+            for arg in node.get_args():
+                if consumers.get(arg):
+                    consumers[arg].append(node)
+                else:
+                    consumers[arg] = [node]
             for _, arg in node.get_kwargs():
-                consumers.append(arg)
+                if consumers.get(arg):
+                    consumers[arg].append(node)
+                else:
+                    consumers[arg] = [node]
             for target in node.get_targets():
                 if target_dict.get(target) is not None:
-                    raise RuntimeError("Target of node duplicated")
+                    raise RuntimeError(f"Target({target}) of node duplicated")
                 target_dict[target] = node
         # find root node
         root = None
         for node in nodes:
             used = 0
             for target in node.get_targets():
-                if target in consumers:
-                    used += 1
-                    break
+                cur_consumers = consumers.get(target)
+                if not cur_consumers:
+                    continue
+                for cur_consumer in cur_consumers:
+                    if id(cur_consumer) != id(node):
+                        used += 1
+                        break
             if used == 0:
                 if root is not None:
-                    raise RuntimeError("Replacement should only has one root")
+                    raise RuntimeError("Replacement should only has one root, found multi-root")
                 root = node
         if root is None:
-            raise RuntimeError("No root node found in replacement nodes")
+            raise RuntimeError("Replacement should only has one root, found no root")
         # link node's input
         for node in nodes:
             inputs = []

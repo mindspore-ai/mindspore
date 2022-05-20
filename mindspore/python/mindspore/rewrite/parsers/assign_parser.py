@@ -30,6 +30,7 @@ from ..api.scoped_value import ScopedValue, ValueType
 from ..symbol_tree_builder import SymbolTreeBuilder
 from ..ast_helpers import AstReplacer, AstModifier
 from ..common.event import Event
+from ..namespace import is_subtree
 
 
 class AssignParser(Parser):
@@ -190,9 +191,6 @@ class AssignParser(Parser):
             results[keyword.arg] = AssignParser._create_scopedvalue(keyword.value)
         return results
 
-    def _is_subtree_cell(self, cell: Cell) -> bool:
-        return not type(cell).__name__ in self._cell_namespce
-
     @staticmethod
     def _find_op_and_type(func_scope, func_name, stree: SymbolTree):
         """
@@ -331,7 +329,7 @@ class AssignParser(Parser):
         if isinstance(op, Primitive):
             return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, call_kwargs, func_name)
         if isinstance(op, Cell):
-            is_sub_tree = self._is_subtree_cell(op)
+            is_sub_tree = is_subtree(type(op).__name__)
             if is_sub_tree:
                 stb = SymbolTreeBuilder(op)
                 new_stree = stb.build()
