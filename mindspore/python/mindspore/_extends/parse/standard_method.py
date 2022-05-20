@@ -1715,6 +1715,13 @@ def diag(x):
     return F.diag(x)
 
 
+def masked_select(x, mask):
+    """
+    Returns a new 1-D Tensor which indexes the input tensor according to the boolean mask.
+    """
+    return F.masked_select(x, mask)
+
+
 def coo_to_csr(x):
     """convert coo to csr."""
     row_indices = x.indices[:, 0]

@@ -2940,6 +2940,28 @@ class Tensor(Tensor_):
                 repeated_subs.append(tensor_operator_registry.get('repeat_elements')(sub, rep, axis))
         return tensor_operator_registry.get('concatenate')(axis)(repeated_subs)
 
+    def masked_select(self, mask):
+        """
+        Returns a new 1-D Tensor which indexes the input tensor according to the boolean mask.
+
+        Returns:
+            A 1-D Tensor, with the same type as x.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
+            >>> mask = Tensor(np.array([1, 0, 1, 0]), mindspore.bool_)
+            >>> output = x.masked_select(mask)
+            >>> print(output)
+            [1 3]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('masked_select')(self, mask)
+
     def nonzero(self):
         """
         Return a tensor of the positions of all non-zero values.

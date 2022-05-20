@@ -6513,7 +6513,7 @@ class MaskedSelect(PrimitiveWithCheck):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)

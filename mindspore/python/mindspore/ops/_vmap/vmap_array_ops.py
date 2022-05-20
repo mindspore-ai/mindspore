@@ -20,7 +20,8 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error
+from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error, \
+    _handle_broadcasting
 
 
 @vmap_rules_getters.register("Cast")
@@ -358,6 +359,34 @@ def get_one_hot_vmap_rule(prim, axis_size):
         out = P.OneHot(new_axis)(indices, depth, on_value, off_value)
 
         return (out, indices_dim)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.MaskedSelect)
+def get_masked_select_vmap_rule(prim, axis_size):
+    """VmapRule for `MaskedSelect`."""
+
+    def vmap_rule(x_bdim, mask_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, mask_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        mask, mask_dim = mask_bdim
+        if mask_dim is not None:
+            _raise_value_error("The source axis of `mask` in `P.MaskedSelect` must be None, "
+                               "but got {}.".format(mask_dim))
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_shape = F.shape(x)
+        mask_shape = F.shape(mask)
+        x = _handle_broadcasting(x, x_shape, mask_shape)
+        out = prim(x, mask)
+        x_rank = F.rank(x)
+        if x_rank > 1:
+            out = F.reshape(out, (x_shape[0], -1))
+        return (out, 0)
 
     return vmap_rule
 

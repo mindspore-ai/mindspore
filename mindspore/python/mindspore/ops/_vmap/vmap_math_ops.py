@@ -23,7 +23,7 @@ from mindspore.common import Tensor
 from mindspore.ops.operations.math_ops import Lerp
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
-    get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis
+    get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting
 from ..operations.math_ops import (BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
                                    BesselK1e)
 
@@ -31,41 +31,6 @@ from ..operations.math_ops import (BesselJ0, BesselJ1, BesselK0, BesselK0e, Bess
 @constexpr
 def _broadcast_shape(nd, x_ndim, x_shape):
     return x_shape + (1,) * (nd - x_ndim)
-
-
-@constexpr
-def _get_broadcast_shape(x_shape, y_shape):
-    """Get the broadcast shape for _handle_broadcasting."""
-    x_len = len(x_shape)
-    y_len = len(y_shape)
-
-    if x_len >= y_len:
-        return x_shape
-
-    # scalar case
-    if not x_len:
-        return (1,) * y_len
-
-    broadcast_shape = ()
-    x_index = x_len - 1
-
-    for i in range(y_len - 1, 0, -1):
-        if x_index == 0:
-            broadcast_shape = (1,) + broadcast_shape
-        elif x_shape[x_index] == y_shape[i] or y_shape[i] == 1 or x_shape[x_index] == 1:
-            broadcast_shape = (x_shape[x_index],) + broadcast_shape
-            x_index -= 1
-        else:
-            broadcast_shape = (1,) + broadcast_shape
-
-    finnal_shape = (x_shape[0],) + tuple(broadcast_shape)
-    return finnal_shape
-
-
-def _handle_broadcasting(x, x_shape, y_shape):
-    """Handle the broadcasting for the broadcast_binary_op."""
-    broadcast_shape = _get_broadcast_shape(x_shape, y_shape)
-    return F.reshape(x, broadcast_shape)
 
 
 @vmap_rules_getters.register(P.Add)
