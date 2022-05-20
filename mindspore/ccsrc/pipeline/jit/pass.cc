@@ -38,6 +38,7 @@
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
+#include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
@@ -844,7 +845,46 @@ bool EnvironConversionPass(const ResourcePtr &resource) {
   return true;
 }
 
+// Build service-side graph for embedding distributed cache based on Parameter Server.
+bool AddEmbeddingCachePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  if (!ps::PSContext::instance()->cache_enable() || !distributed::cluster::ClusterContext::instance()->initialized() ||
+      !ps::PSContext::instance()->is_server()) {
+    return true;
+  }
+
+  FuncGraphPtr func_graph = resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto node = distributed::cluster::ClusterContext::instance()->node();
+  MS_EXCEPTION_IF_NULL(node);
+
+  // 1. Build service-size graph.
+  auto node_role = distributed::cluster::ClusterContext::instance()->node_role();
+  uint32_t worker_num = ps::PSContext::instance()->worker_num();
+  std::shared_ptr<parallel::PsEmbeddingCacheInserter> embedding_cache_inserter =
+    std::make_shared<parallel::PsEmbeddingCacheInserter>(func_graph, static_cast<int64_t>(node->rank_id()), node_role,
+                                                         worker_num);
+  if (!embedding_cache_inserter->Run()) {
+    MS_LOG(ERROR) << "Insert ps embedding cache failed.";
+    return false;
+  }
+
+  // 2. Renomalize: Infer shape and Set abstract for all nodes in graph.
+  abstract::AbstractBasePtrList args_abs;
+  auto parameters = func_graph->parameters();
+  (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_abs),
+                       [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
+  FuncGraphPtr new_fg = Renormalize(resource, func_graph, args_abs);
+  resource->set_func_graph(new_fg);
+  resource->set_args_abs(args_abs);
+#endif
+
+  return true;
+}
+
 std::vector<PassItem> kVmPasses = {
+  {"add_embedding_cache", AddEmbeddingCachePass},
   {"simplify_data_structures", SimplifyDataStructuresPass},
   {"opt_a", OptPassAGroup},
   {"clean_after_opta", CleanAfterOptAPass},
