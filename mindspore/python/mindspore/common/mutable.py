@@ -75,7 +75,7 @@ def mutable(input_data):
 
     Raises:
         TypeError: If `input_data` is not one of Tensor, tuple[Tensor], list[Tensor], dict[Tensor] or their nested
-        structure.
+            structure.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
