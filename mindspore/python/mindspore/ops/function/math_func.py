@@ -15,9 +15,19 @@
 
 """Defines math operators with functional form."""
 
+from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from ..operations.math_ops import (BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
                                    BesselK1e)
+from ...common.tensor import Tensor
+from ..._c_expression import Tensor as Tensor_
+
+
+@constexpr
+def _make_tensor(val, dtype):
+    """Returns the tensor with value `val` and dtype `dtype`."""
+    return Tensor(val, dtype)
+
 
 #####################################
 # Public Operation Functions.
@@ -2172,6 +2182,52 @@ def minimum(x, y):
     return minimum_(x, y)
 
 
+def logaddexp2(x1, x2):
+    """
+    Computes the logarithm of the sum of exponentiations in base of 2 of the inputs.
+
+    Calculates ``log2(2**x1 + 2**x2)``. This function is useful in machine learning when the computed
+    probability of an event may be small beyond the range of normal floating point numbers.
+    In this case, the base-2 logarithm of the calculated probability can be used instead.
+    This function allows to add probabilities stored in this way.
+
+    Args:
+        x1 (Tensor): Input tensor.
+        x2 (Tensor): Input tensor. If ``x1.shape != x2.shape``, they must be broadcastable to
+            a common shape (which becomes the shape of the output).
+
+    Returns:
+        Tensor or scalar. This is a scalar if both `x1` and `x2` are scalars.
+
+    Raises:
+        TypeError: If `x1`, `x2` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([2, 4, 8]).astype(np.float16))
+        >>> x2 = Tensor(np.array([2]).astype(np.float16))
+        >>> output = ops.logaddexp2(x1, x2)
+        >>> print(output)
+        [3. 4.32 8.02]
+    """
+
+    log_op = P.Log()
+    pow_op = P.Pow()
+    add_op = P.Add()
+
+    if not isinstance(x1, (Tensor, Tensor_)):
+        raise TypeError("The input x1 must be Tensor.")
+    if not isinstance(x2, (Tensor, Tensor_)):
+        raise TypeError("The input x2 must be Tensor.")
+
+    add_exp = add_op(pow_op(2, x1), pow_op(2, x2))
+    tensor_2 = _make_tensor(2, add_exp.dtype)
+
+    return log_op(add_exp) / log_op(tensor_2)
+
+
 def cdist(x, y, p=2.0):
     """
     Computes batched the p-norm distance between each pair of the two collections of row vectors.
@@ -2400,6 +2456,7 @@ __all__ = [
     'neg',
     'tensor_lt',
     'less',
+    'logaddexp2',
     'tensor_le',
     'le',
     'lerp',
