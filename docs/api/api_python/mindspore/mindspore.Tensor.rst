@@ -800,12 +800,12 @@ mindspore.Tensor
 
         按索引从张量中获取切片。
         使用给定的索引从具有指定形状的张量中搜集切片。
-        `indices`是一个K维的整数张量，假定它的K-1维张量中的每一个元素是`input_x`的切片，那么有：
+        `indices` 是一个K维的整数张量，假定它的K-1维张量中的每一个元素是 `input_x` 的切片，那么有：
 
         .. math::
             output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
         
-        `indices`的最后一维不能超过`input_x`的秩：
+        `indices` 的最后一维不能超过 `input_x` 的秩：
         :math:`indices.shape[-1] <= input\_x.rank`。
 
         **参数：**
