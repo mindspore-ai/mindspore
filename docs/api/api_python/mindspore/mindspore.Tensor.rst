@@ -746,7 +746,7 @@ mindspore.Tensor
 
     .. py:method:: select(condition, y)
 
-        根据条件判断Tensor中的元素的值，来决定输出中的相应元素是从当前Tensor（如果元素值为True）还是从 `y`（如果元素值为False）中选择。
+        根据条件判断Tensor中的元素的值，来决定输出中的相应元素是从当前Tensor（如果元素值为True）还是从 `y` （如果元素值为False）中选择。
 
         该算法可以被定义为：
 
