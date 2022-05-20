@@ -55,7 +55,6 @@ class AssertCpuKernelMod : public NativeCpuKernelMod {
   std::vector<AssertPrintFunc> kernel_funcs_;
   std::vector<int> summarizes_;
   int summarize_ = 0;
-  size_t unit_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore
