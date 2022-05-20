@@ -20,6 +20,7 @@
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/fp32_grad/activation_grad.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 int ReluGrad(const float *src0, const float *src1, size_t length, float *dst) {
   size_t i = 0;

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/fp32/prelu_fp32.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 #ifdef ENABLE_ARM64
 static inline void PRelu4x16(const float *in, float *out, const float *cur_slope, size_t step) {

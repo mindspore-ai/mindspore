@@ -18,6 +18,7 @@
 #include <math.h>
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/op_base.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 // 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
 #define SimdBatchNormFp32CoreCalc(block_size, block_num, unit_input, mean, variance, param, unit_output, c)        \

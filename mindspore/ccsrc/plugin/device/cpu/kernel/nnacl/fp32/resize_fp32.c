@@ -17,6 +17,7 @@
 #include "nnacl/fp32/resize_fp32.h"
 #include "nnacl/common_func.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 void CalculateCoordinate(float out, int in, int *bottom, int *top, float *bottom_weight) {
   *bottom = (int)(floorf(out));

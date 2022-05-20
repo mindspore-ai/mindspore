@@ -17,6 +17,7 @@
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 // 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
 #define SimdFp32ReluCoreCalc(block_size, block_num, src, length, dst, i)                                        \

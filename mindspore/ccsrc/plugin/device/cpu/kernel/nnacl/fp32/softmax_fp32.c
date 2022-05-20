@@ -17,6 +17,7 @@
 #include <math.h>
 #include <float.h>
 #include "nnacl/fp32/exp_fp32.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 // 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
 #define SimdSoftmaxNormCoreCalc1(block_size, block_num, src, cur_batch_offset, max, channel, index)  \

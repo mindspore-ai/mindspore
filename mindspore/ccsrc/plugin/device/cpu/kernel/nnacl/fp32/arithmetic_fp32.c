@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include <math.h>
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 #define ACCURACY_DATA 0.00000001
 

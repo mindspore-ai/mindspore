@@ -18,6 +18,7 @@
 #include <float.h>
 #include "nnacl/errorcode.h"
 #include "nnacl/common_func.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 #ifdef ENABLE_NNACL_INFER_SHAPE
 #include "nnacl/reduce_parameter.h"

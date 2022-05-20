@@ -16,8 +16,11 @@
 
 #include "nnacl/fp32/power_fp32.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 #if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+typedef MS_FLOAT32X4 (*PowerSimdFun)(MS_FLOAT32X4 x, const float *exponent);
+
 MS_FLOAT32X4 OptimizedPowerSimd(MS_FLOAT32X4 x, const float *exponent) {
   int exp = abs((int)(*exponent));
   MS_FLOAT32X4 result = MS_MOVQ_F32(1.0f);
@@ -33,6 +36,15 @@ MS_FLOAT32X4 OptimizedPowerSimd(MS_FLOAT32X4 x, const float *exponent) {
   }
   return MS_DIVQ_F32(MS_MOVQ_F32(1), result);
 }
+
+MS_FLOAT32X4 StdPowerSimd(MS_FLOAT32X4 x, const float *exponent) {
+  MS_FLOAT32X4 result;
+  for (int i = 0; i < 4; ++i) {
+    MS_F32X4_GETI(result, i) = powf(MS_F32X4_GETI(x, i), *exponent);
+  }
+  return result;
+}
+
 #endif
 
 float OptimizedPowerScalar(float x, const float *exponent) {
