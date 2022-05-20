@@ -870,7 +870,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         >>>
         >>> net = LeNet()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
-        >>> export(net, Tensor(input_tensor), file_name='lenet', file_format='MINDIR')
+        >>> export(net, input_tensor, file_name='lenet', file_format='MINDIR')
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     if check_input_dataset(*inputs, dataset_type=mindspore.dataset.Dataset):
