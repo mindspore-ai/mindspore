@@ -26,8 +26,6 @@
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore::kernel {
-constexpr auto kUnknown = "Unknown";
-
 class ScaleGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   ScaleGradCpuKernelMod() = default;

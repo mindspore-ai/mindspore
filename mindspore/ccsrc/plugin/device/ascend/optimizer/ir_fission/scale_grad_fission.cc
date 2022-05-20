@@ -88,8 +88,11 @@ const AnfNodePtr ScaleGradFission::Process(const FuncGraphPtr &graph, const AnfN
     float scale_value = 0.0;
     if (scale_type_id == kNumberTypeFloat32) {
       scale_value = *(static_cast<float *>(tensor->data_c()));
-    } else {
+    } else if (scale_type_id == kNumberTypeFloat16) {
       scale_value = static_cast<float>(*(static_cast<float16 *>(tensor->data_c())));
+    } else {
+      MS_LOG(EXCEPTION) << "Scale value's type is error, must be float32 or float16, but get "
+                        << TypeIdToString(scale_type_id);
     }
 
     if (scale_value == 1.0) {
@@ -111,8 +114,8 @@ const AnfNodePtr ScaleGradFission::Process(const FuncGraphPtr &graph, const AnfN
   std::vector<AnfNodePtr> outputs;
   for (size_t index = 1; index < input_size - 1; index++) {
     auto input = ori_inputs[index];
-    auto input_tyupe_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, index - 1);
-    if (input_tyupe_id == scale_type_id) {
+    auto input_type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, index - 1);
+    if (input_type_id == scale_type_id) {
       auto out = CreateNodeOfBinaryOp(graph, kMulOpName, input, scale_node);
       outputs.push_back(out);
     } else {
