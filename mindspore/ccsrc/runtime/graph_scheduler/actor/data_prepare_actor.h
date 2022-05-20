@@ -76,6 +76,9 @@ class DataPrepareActor : public DebugAwareActor {
 
   void UpdateDynamicShape(const AnfNodePtr &input_node, const TensorPtr &input_tensor);
 
+  void UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
+                                      const KernelGraphPtr &graph, const DeviceContext *device_context);
+
   void PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                        OpContext<DeviceTensor> *const context);
   void PrepareDataForHostTensorQueue(const std::vector<std::vector<TensorPtr>> &input_tensors,

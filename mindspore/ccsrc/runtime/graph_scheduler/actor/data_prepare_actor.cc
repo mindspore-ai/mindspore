@@ -279,6 +279,44 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
                                               input_node.get());
 }
 
+void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
+                                                      const KernelGraphPtr &graph,
+                                                      const DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  auto tensor_data_size = input_tensor->data().nbytes();
+  auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
+  MS_EXCEPTION_IF_NULL(input_node);
+  auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (device_address->GetPtr() == nullptr) {
+    // Sync tensor data size to device address for allocating the appropriate size.
+    device_address->SetSize(tensor_data_size);
+  }
+  // If tensor address and device address are different (heterogeneous scenarios), or device address is persisted
+  // Update device address data in data source actor process.
+  if (device_address->is_ptr_persisted() ||
+      (tensor_address != nullptr && (tensor_address->GetDeviceType() != device_address->GetDeviceType() ||
+                                     tensor_address->format() != device_address->format()))) {
+    return;
+  }
+  if (tensor_address != nullptr) {
+    // Assign tensor address to input data node and set `ref_count` to `SIZE_MAX` for avoiding clean
+    AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
+    tensor_address->SetNodeIndex(input_node, 0);
+    tensor_address->set_ref_count(SIZE_MAX);
+  } else if (device_address->GetPtr() != nullptr) {
+    // The `device_address` may come from another previous tensor. In order to prevent pollute the device data of
+    // previous tensor, creating a new device address for holding current input tensor data.
+    auto new_device_address = device_context->CreateDeviceAddress(
+      nullptr, tensor_data_size, device_address->format(), device_address->type_id(), device_address->host_shape());
+    MS_EXCEPTION_IF_NULL(new_device_address);
+    AnfAlgo::SetOutputAddr(new_device_address, 0, input_node.get());
+    new_device_address->SetNodeIndex(input_node, 0);
+    new_device_address->set_ref_count(SIZE_MAX);
+  }
+}
+
 void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                    OpContext<DeviceTensor> *const context, GraphExecutionStrategy real_strategy) {
   MS_EXCEPTION_IF_NULL(context);
@@ -393,6 +431,8 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
   for (size_t i = 0; i < graph_compiler_info_->graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info_->graphs_[i];
     MS_EXCEPTION_IF_NULL(graph);
+    const auto device_context = graph_compiler_info_->device_contexts_[i];
+    MS_EXCEPTION_IF_NULL(device_context);
 
     const auto &input_nodes = graph->input_nodes();
     const auto &tensors = input_tensors[i];
@@ -420,22 +460,7 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
       }
       host_tensors[tensor_position] = input_tensor;
 
-      auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
-      auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
-      MS_EXCEPTION_IF_NULL(device_address);
-      // Passthrough input node: graph(..., input_node, ...) -> return(..., input_node, ...)
-      auto passthrough_inp_node =
-        graph->GetFrontNodeWithIndexByGraphOutput(std::make_pair(input_node, 0)).first != nullptr;
-      // In order to avoid the device ptr_ being hold by the input tensor and the output tensor, the tensor address
-      // cannot be directly set to the passthrough input node. The 'ptr_' of passthrough input node is re-malloced and
-      // device to device copy by input tensor address.
-      if ((tensor_address != nullptr) && (tensor_address->GetDeviceType() == device_address->GetDeviceType()) &&
-          !device_address->is_ptr_persisted() && tensor_address->format() == device_address->format() &&
-          !passthrough_inp_node) {
-        AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
-        tensor_address->SetNodeIndex(input_node, 0);
-      }
-      device_address->SetSize(input_tensor->data().nbytes());
+      UpdateDeviceAddressForDataNode(input_node, input_tensor, graph, device_context);
     }
   }
 

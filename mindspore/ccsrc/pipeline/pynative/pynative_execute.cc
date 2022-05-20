@@ -1022,6 +1022,8 @@ ValuePtr ShallowCopyValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &val
 
 void SaveIdWithDynamicAbstract(const py::object &obj, const AbstractBasePtr &abs,
                                OrderedMap<std::string, abstract::AbstractBasePtr> *obj_id_with_dynamic_abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  MS_EXCEPTION_IF_NULL(obj_id_with_dynamic_abs);
   if (py::isinstance<py::tuple>(obj) && abs->isa<abstract::AbstractTuple>()) {
     const auto &obj_tuple = py::cast<py::tuple>(obj);
     const auto &abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
@@ -2176,6 +2178,20 @@ void GradExecutor::DoOpGrad(const OpExecInfoPtr &op_exec_info, const CNodePtr &c
   }
 }
 
+void GradExecutor::SaveDynShapeAbsForMsFunction(const py::object &forward_out, const FuncGraphPtr &ms_func_graph) {
+  MS_EXCEPTION_IF_NULL(ms_func_graph);
+  auto output_node = ms_func_graph->output();
+  MS_EXCEPTION_IF_NULL(output_node);
+  if (ms_func_graph->modify_output()) {
+    auto make_tuple = output_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(make_tuple);
+    output_node = make_tuple->input(1);
+    MS_EXCEPTION_IF_NULL(output_node);
+  }
+  SaveIdWithDynamicAbstract(forward_out, output_node->abstract(),
+                            &(forward()->dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs));
+}
+
 void GradExecutor::UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info,
                                                   const ValuePtr &new_forward_value) {
   MS_LOG(DEBUG) << "Ms func graph has already ran before. The graph phase is: " << graph_phase();
@@ -2518,6 +2534,38 @@ void ForwardExecutor::SetFeedDynamicInputAbs(const py::object &cell, const py::a
       }
     }
   }
+}
+
+py::object ForwardExecutor::GetDynamicInput(const py::object &actual_input) {
+  if (py::isinstance<py::tuple>(actual_input)) {
+    py::tuple tuple_actual_args = py::cast<py::tuple>(actual_input);
+    size_t args_size = tuple_actual_args.size();
+    py::tuple dyn_shape_args = py::tuple(args_size);
+    for (size_t i = 0; i < args_size; ++i) {
+      dyn_shape_args[i] = GetDynamicInput(tuple_actual_args[i]);
+    }
+    return dyn_shape_args;
+  } else if (py::isinstance<py::list>(actual_input)) {
+    py::list list_actual_args = py::cast<py::list>(actual_input);
+    size_t args_size = list_actual_args.size();
+    py::list dyn_shape_args;
+    for (size_t i = 0; i < args_size; ++i) {
+      dyn_shape_args.append(GetDynamicInput(list_actual_args[i]));
+    }
+    return dyn_shape_args;
+  } else if (py::isinstance<tensor::Tensor>(actual_input)) {
+    const auto &obj_id_with_dynamic_output_abs = dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs;
+    auto iter = obj_id_with_dynamic_output_abs.find(GetId(actual_input));
+    if (iter != obj_id_with_dynamic_output_abs.end()) {
+      auto tensor_ptr = py::cast<tensor::TensorPtr>(actual_input);
+      MS_EXCEPTION_IF_NULL(tensor_ptr);
+      auto dyn_tensor = std::make_shared<tensor::Tensor>(tensor_ptr->data_type(), tensor_ptr->shape_c());
+      dyn_tensor->set_base_shape(GetShapeFromAbstract(iter->second));
+      auto py_dyn_tensor = ValueToPyData(dyn_tensor);
+      return py_dyn_tensor;
+    }
+  }
+  return actual_input;
 }
 
 void ForwardExecutor::SaveOutputDynamicShape(const OpExecInfoPtr &op_exec_info, const AbstractBasePtr &real_abs,
@@ -3767,22 +3815,24 @@ void GradExecutor::GradMsFunctionInner(const std::string &phase, const py::objec
 }
 
 py::object GradExecutor::GradMsFunction(const py::object &out, const py::args &args) {
-  // Get actual forward output object.
   if (graph_phase().empty()) {
     MS_LOG(EXCEPTION) << "The graph phase is empty, can not obtain ms_function func graph.";
   }
+  // Get forward graph
   const auto &phase = graph_phase();
   MS_LOG(DEBUG) << "ms_function func graph phase: " << phase;
   auto executor = pipeline::GraphExecutorPy::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
   FuncGraphPtr ms_func_graph = executor->GetFuncGraph(phase);
   MS_EXCEPTION_IF_NULL(ms_func_graph);
+  // Get actual forward output object.
   py::object ret = out;
   if (ms_func_graph->modify_output()) {
     auto tuple_out = py::cast<py::tuple>(out);
     ret = tuple_out[0];
   }
-
+  // Save dynamic shape info if output tensors of forward graph have dynamic shapes
+  SaveDynShapeAbsForMsFunction(ret, ms_func_graph);
   // Make Adjoint for grad graph of ms_function.
   if (!grad_flag_) {
     MS_LOG(DEBUG) << "Only run forward infer computation, no need to construct grad graph.";
@@ -3865,6 +3915,10 @@ void PynativeExecutor::set_graph_phase(const std::string &graph_phase) {
 
 void PynativeExecutor::SetDynamicInput(const py::object &cell, const py::args &args) {
   forward_executor()->SetDynamicInput(cell, args);
+}
+
+py::object PynativeExecutor::GetDynamicInput(const py::object &actual_input) {
+  return forward_executor()->GetDynamicInput(actual_input);
 }
 
 void PynativeExecutor::set_py_exe_path(const py::object &py_exe_path) {
@@ -4051,6 +4105,7 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
                                 "Executor set grad flag.")
                            .def("set_dynamic_input", &PynativeExecutor::SetDynamicInput, "set dynamic input")
+                           .def("get_dynamic_input", &PynativeExecutor::GetDynamicInput, "get dynamic input")
                            .def("set_py_exe_path", &PynativeExecutor::set_py_exe_path,
                                 py::arg("py_exe_path") = py::str(""), "set python executable path.")
                            .def("set_kernel_build_server_dir", &PynativeExecutor::set_kernel_build_server_dir,
