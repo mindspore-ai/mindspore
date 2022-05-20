@@ -47,6 +47,8 @@ CUDA_LIB_EXPORT void Rsqrt(const T *input, T *output, const size_t count, cudaSt
 template <typename T>
 CUDA_LIB_EXPORT void Sin(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+CUDA_LIB_EXPORT void Tan(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 CUDA_LIB_EXPORT void Cos(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT void Cosh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
