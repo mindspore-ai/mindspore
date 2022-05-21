@@ -50,7 +50,7 @@ if(MSVC)
             -DBUILD_ZLIB=ON
             -DBUILD_JPEG=ON
             -DBUILD_PNG=ON
-            -DBUILD_OPENEXR=OFF
+            -DWITH_OPENEXR=OFF
             -DBUILD_TESTS=OFF
             -DBUILD_PERF_TESTS=OFF
             -DBUILD_opencv_apps=OFF
@@ -59,12 +59,12 @@ if(MSVC)
             -DBUILD_opencv_videoio=OFF
             -DWITH_FFMPEG=OFF
             -DWITH_TIFF=ON
-            -DBUILD_TIFF=OFF
+            -DBUILD_TIFF=ON
             -DWITH_JASPER=OFF
             -DBUILD_JASPER=OFF
             -DCV_TRACE=OFF    # cause memory usage increacing
-            -DTIFF_INCLUDE_DIR=${tiff_INC}
-            -DTIFF_LIBRARY=${tiff_LIB})
+            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
+            PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002)
 elseif(WIN32)
     mindspore_add_pkg(opencv
                 VER 4.5.2
@@ -77,7 +77,7 @@ elseif(WIN32)
                 -DBUILD_ZLIB=ON
                 -DBUILD_JPEG=ON
                 -DBUILD_PNG=ON
-                -DBUILD_OPENEXR=OFF
+                -DWITH_OPENEXR=OFF
                 -DBUILD_TESTS=OFF
                 -DBUILD_PERF_TESTS=OFF
                 -DBUILD_opencv_apps=OFF
@@ -86,13 +86,13 @@ elseif(WIN32)
                 -DBUILD_opencv_videoio=OFF
                 -DWITH_FFMPEG=OFF
                 -DWITH_TIFF=ON
-                -DBUILD_TIFF=OFF
+                -DBUILD_TIFF=ON
                 -DWITH_JASPER=OFF
                 -DBUILD_JASPER=OFF
                 -DCV_TRACE=OFF    # cause memory usage increacing
                 -DWITH_LAPACK=OFF
-                -DTIFF_INCLUDE_DIR=${tiff_INC}
-                -DTIFF_LIBRARY=${tiff_LIB})
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002)
 else()
     mindspore_add_pkg(opencv
                 VER 4.5.2
@@ -104,7 +104,7 @@ else()
                 -DBUILD_ZLIB=ON
                 -DBUILD_JPEG=ON
                 -DBUILD_PNG=ON
-                -DBUILD_OPENEXR=OFF
+                -DWITH_OPENEXR=OFF
                 -DBUILD_TESTS=OFF
                 -DBUILD_PERF_TESTS=OFF
                 -DBUILD_opencv_apps=OFF
@@ -112,13 +112,13 @@ else()
                 -DBUILD_opencv_python3=OFF
                 -DWITH_FFMPEG=OFF
                 -DWITH_TIFF=ON
-                -DBUILD_TIFF=OFF
+                -DBUILD_TIFF=ON
                 -DWITH_JASPER=OFF
                 -DBUILD_JASPER=OFF
                 -DCV_TRACE=OFF    # cause memory usage increacing
                 -DWITH_LAPACK=OFF
-                -DTIFF_INCLUDE_DIR=${tiff_INC}
-                -DTIFF_LIBRARY=${tiff_LIB})
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0561_and_CVE-2022-0562.patch001
+                PATCHES ${TOP_DIR}/third_party/patch/opencv/libtiff/CVE-2022-0908.patch002)
 endif()
 
 if(MSVC)
