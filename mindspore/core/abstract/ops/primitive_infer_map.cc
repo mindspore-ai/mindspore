@@ -69,6 +69,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kGatherV2 = prim::kPrimGatherV2->name();
   static const auto &kSparseGatherV2 = prim::kPrimSparseGatherV2->name();
   static const auto &kRange = prim::kPrimRange->name();
+  static const auto &kRangeV2 = prim::kPrimRangeV2->name();
   static const auto &kConv2DBackpropFilter = prim::kPrimConv2DBackpropFilter->name();
   static const auto &kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
   static const auto &kTile = prim::kPrimTile->name();
@@ -94,6 +95,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kGatherV2, ShapeSet{2}},
                                                         {kSparseGatherV2, ShapeSet{2}},
                                                         {kRange, ShapeSet{0, 1, 2}},
+                                                        {kRangeV2, ShapeSet{0, 1, 2}},
                                                         {kConv2DBackpropFilter, ShapeSet{2}},
                                                         {kConv2DBackpropInput, ShapeSet{2}},
                                                         {kOneHot, ShapeSet{1, 3}},

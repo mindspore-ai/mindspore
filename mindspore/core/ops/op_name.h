@@ -111,6 +111,7 @@ constexpr auto kMaxSkipSize = "max_skip_size";
 constexpr auto kMaxClassesPerDetection = "max_classes_per_detection";
 constexpr auto kMaxDetections = "max_detections";
 constexpr auto kMaxNorm = "max_norm";
+constexpr auto kMaxLen = "maxlen";
 constexpr auto kMin = "min";
 constexpr auto kMinSize = "min_size";
 constexpr auto kMinSizes = "min_sizes";

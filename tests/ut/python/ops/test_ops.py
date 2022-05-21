@@ -45,6 +45,7 @@ from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.math_ops import RaggedRange
+from mindspore.ops.operations.array_ops import RangeV2
 from mindspore.ops.operations.nn_ops import FractionalMaxPool, DataFormatVecPermute
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
 from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
@@ -2247,6 +2248,10 @@ test_case_nn_ops = [
         'block': inner.Range(1.0, 5.0),
         'desc_inputs': [Tensor(np.ones([10]).astype(np.float32))],
         'desc_bprop': [[10]]}),
+    ('RangeV2', {
+        'block': RangeV2(),
+        'desc_inputs': [Tensor(0, mstype.int32), Tensor(10, mstype.int32), Tensor(1, mstype.int32)],
+        'skip': ['backward']}),
     ('UnsortedSegmentSum', {
         'block': P.UnsortedSegmentSum(),
         'desc_const': [1280],

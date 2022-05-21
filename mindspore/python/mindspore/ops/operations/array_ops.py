@@ -6404,6 +6404,60 @@ class Range(PrimitiveWithCheck):
         return None
 
 
+class RangeV2(Primitive):
+    """
+    Creates a sequence of numbers that begins at `start`, ends at `limit` but not including `limit`
+    and extends by increments of `delta`.
+
+    The types of all 3 inputs must be the same. The type of the resulting tensor is
+    the same as the type of the inputs.
+
+    Args:
+        maxlen (int): Memory that can fit `maxlen` many elements
+            will be allocated for the output. Optional, must be positive, defaults to 1000000.
+            If the output has more than `maxlen` elements, a `ValueError` will occur.
+
+    Inputs:
+        - **start** (Tensor) - A scalar Tensor. The first number in the sequence. Must have
+          type: int32 or float32 or int64 or float64
+        - **limit** (Tensor) - A scalar Tensor. Upper limit of the sequence, exclusive. Must
+          have type: int32 or float32 or int64 or float64
+        - **delta** (Tensor) - A scalar Tensor. Number that increments `start`. Must have
+          type: int32 or float32 or int64 or float64
+
+    Outputs:
+       A 1D Tensor, with the same type as the inputs.
+
+    Raises:
+        TypeError: If datatype of `start`, `limit` and `delta` not supported.
+        TypeError: If datatype of `start`, `limit` and `delta` not same.
+        TypeError: If attr `max_len` is not int.
+        TypeError: If `start` or `limit` or `delta` is not scalar Tensor.
+        ValueError: If value of `max_len` is negative.
+        ValueError: If `delta` >= 0 when `start` > `limit`.
+        ValueError: If `delta` <= 0 when `start` < `limit`.
+        ValueError: If the output has more than `maxlen` elements
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> start = Tensor(0, mstype.int32)
+        >>> limit = Tensor(10, mstype.int32)
+        >>> delta = Tensor(4, mstype.int32)
+        >>> output = ops.RangeV2()(start, limit, delta)
+        >>> print(output)
+        [0 4 8]
+    """
+
+    @prim_attr_register
+    def __init__(self, maxlen=1000000):
+        """Initialize RangeV2"""
+        self.init_prim_io_names(inputs=['start', 'limit', 'delta'], outputs=['output'])
+        validator.check_value_type("maxlen", maxlen, [int], self.name)
+        validator.check_positive_int(maxlen, "maxlen", self.name)
+
+
 class MaskedFill(Primitive):
     """
     Fills elements of self tensor with value where mask is True.
