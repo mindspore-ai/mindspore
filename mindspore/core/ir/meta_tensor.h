@@ -140,7 +140,7 @@ class MS_CORE_API MetaTensor : public Value {
   ///
   /// \param[in] shape The shape of the tensor.
   /// \return The shape's size.
-  size_t set_shape(const ShapeVector &shape) {
+  virtual size_t set_shape(const ShapeVector &shape) {
     this->shape_ = shape;
     return shape_.size();
   }

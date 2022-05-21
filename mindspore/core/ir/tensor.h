@@ -319,6 +319,8 @@ class MS_CORE_API Tensor final : public MetaTensor {
 
   TypeId set_data_type(TypeId data_type) override;
 
+  size_t set_shape(const ShapeVector &shape) override;
+
   /// \brief Get information about shape and data type.
   ///
   /// \return Information about shape and data type.

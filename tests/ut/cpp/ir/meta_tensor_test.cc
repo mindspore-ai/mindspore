@@ -400,5 +400,38 @@ TEST_F(TestTensor, TensorWithUserData) {
   ASSERT_TRUE(tensor1->has_user_data("mykey"));
   ASSERT_EQ(tensor1->user_data<std::string>("mykey"), mydata);
 }
+
+/// Feature: Tensor
+/// Description: Test set new shape for tensor.
+/// Expectation: Tensor's shape will be changed and data will be reinitialized.
+TEST_F(TestTensor, TensorSetShapeDataTest) {
+  // Create a Tensor with wanted data type and shape
+  std::vector<int64_t> old_shape({2, 3});
+  Tensor tensor(TypeId::kNumberTypeInt64, std::vector<int64_t>(old_shape));
+  tensor.set_shape(old_shape);
+  ASSERT_EQ(6, tensor.DataSize());
+  ASSERT_EQ(nullptr, tensor.data().const_data());
+
+  // Init a data buffer
+  int64_t ge_tensor_data[] = {1, 2, 3, 4, 5, 6};
+  // Get the writable data pointer from the tensor
+  int64_t *tensor_data = reinterpret_cast<int64_t *>(tensor.data_c());
+  // Copy data from buffer to tensor's data
+  errno_t ret = memcpy_s(tensor_data, tensor.data().nbytes(), ge_tensor_data, sizeof(ge_tensor_data));
+  ASSERT_EQ(0, ret);
+  ASSERT_NE(nullptr, tensor.data().const_data());
+
+  // Shape change larger
+  std::vector<int64_t> large_shape({3, 4});
+  tensor.set_shape(large_shape);
+  ASSERT_EQ(12, tensor.DataSize());
+  ASSERT_EQ(nullptr, tensor.data().const_data());
+
+  // Shape change litter
+  std::vector<int64_t> little_shape({1, 2});
+  tensor.set_shape(little_shape);
+  ASSERT_EQ(2, tensor.DataSize());
+  ASSERT_EQ(nullptr, tensor.data().const_data());
+}
 }  // namespace tensor
 }  // namespace mindspore

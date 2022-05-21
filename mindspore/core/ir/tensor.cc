@@ -829,6 +829,13 @@ TypeId Tensor::set_data_type(TypeId data_type) {
   return data_type;
 }
 
+size_t Tensor::set_shape(const ShapeVector &shape) {
+  if (DataSize() != SizeOf(shape)) {
+    data_ = MakeTensorData(data_type_, shape);
+  }
+  return MetaTensor::set_shape(shape);
+}
+
 std::pair<void *, size_t> Tensor::GetChunkOffset() const {
   // Get sub-data.
   auto sub_data = std::dynamic_pointer_cast<TensorSubData>(data_ptr());
