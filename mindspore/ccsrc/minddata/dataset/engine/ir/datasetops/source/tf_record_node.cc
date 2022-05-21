@@ -31,6 +31,7 @@
 
 namespace mindspore {
 namespace dataset {
+static std::once_flag ValidateFirstRowLogFlag;
 
 std::shared_ptr<DatasetNode> TFRecordNode::Copy() {
   std::shared_ptr<TFRecordNode> node;
@@ -60,10 +61,9 @@ Status TFRecordNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateScalar("TFRecordDataset", "num_samples", num_samples_, {0}, false));
   RETURN_IF_NOT_OK(ValidateDatasetShardParams("TFRecordDataset", num_shards_, shard_id_));
 
-  std::vector<std::string> invalid_files(dataset_files_.size());
-  auto it = std::copy_if(dataset_files_.begin(), dataset_files_.end(), invalid_files.begin(),
-                         [](const std::string &filename) { return !TFReaderOp::ValidateFirstRowCrc(filename); });
-  invalid_files.resize(std::distance(invalid_files.begin(), it));
+  std::vector<std::string> invalid_files;
+  std::call_once(ValidateFirstRowLogFlag, [&]() { invalid_files = TFReaderOp::ValidateFirstRowCrc(dataset_files_); });
+
   std::string err_msg;
   if (!invalid_files.empty()) {
     err_msg += "Invalid file, the following files either cannot be opened, or are not valid tfrecord files:\n";

@@ -102,7 +102,7 @@ class TFReaderOp : public NonMappableLeafOp {
   /// @return Vector of the input file names
   std::vector<std::string> FileNames() { return dataset_files_list_; }
 
-  static bool ValidateFirstRowCrc(const std::string &filename);
+  static std::vector<std::string> ValidateFirstRowCrc(const std::vector<std::string> &filename);
 
  private:
   // Reads a tf_file file and loads the data into multiple TensorRows.
