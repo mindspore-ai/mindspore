@@ -235,7 +235,7 @@ class TreeGetters : public TreeConsumer {
   Status Init(std::shared_ptr<DatasetNode> d) override;
 
   Status GetOutputTypes(std::vector<DataType> *types);
-  Status GetOutputShapes(std::vector<TensorShape> *shapes);
+  Status GetOutputShapes(std::vector<TensorShape> *shapes, bool estimate = false);
   Status GetBatchSize(int64_t *batch_size);
   Status GetRepeatCount(int64_t *repeat_count);
   Status GetNumClasses(int64_t *num_classes);
@@ -251,6 +251,7 @@ class TreeGetters : public TreeConsumer {
   int64_t dataset_size_;
   std::vector<DataType> first_row_type_;
   std::vector<TensorShape> first_row_shape_;
+  std::vector<TensorShape> estimated_row_shape_;
   bool first_row_obtained_;  // whether first row (which could be empty) is obtained by TreeGetter
   bool init_flag_;           // indicate whether the tree has initialized
 
