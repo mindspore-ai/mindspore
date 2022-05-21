@@ -50,7 +50,7 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<DeviceTensor> &input, std:
       RETURN_STATUS_UNEXPECTED(error);
     }
   } catch (const std::exception &e) {
-    std::string error = "[ERROR] Fail in DvppDecodeJpegOp:" + std::string(e.what());
+    std::string error = "[ERROR] Fail in DvppDecodePngOp:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();

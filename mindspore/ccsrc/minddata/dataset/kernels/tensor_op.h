@@ -122,6 +122,9 @@ constexpr char kToTensorOp[] = "ToTensorOp";
 constexpr char kUniformAugOp[] = "UniformAugOp";
 constexpr char kVerticalFlipOp[] = "VerticalFlipOp";
 
+// video
+constexpr char kDvppDecodeVideoOp[] = "DvppDecodeVideoOp";
+
 // text
 constexpr char kBasicTokenizerOp[] = "BasicTokenizerOp";
 constexpr char kBertTokenizerOp[] = "BertTokenizerOp";

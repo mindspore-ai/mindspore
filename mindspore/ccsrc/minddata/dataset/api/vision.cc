@@ -302,6 +302,33 @@ std::shared_ptr<TensorOperation> Decode::Parse(const MapTargetDevice &env) {
 }
 
 #ifdef ENABLE_ACL
+// DvppDecodeVideo Transform Operation.
+struct DvppDecodeVideo::Data {
+  Data(const std::vector<uint32_t> &size, VdecStreamFormat type, VdecOutputFormat out_format, const std::string &output)
+      : size_(size), format_(out_format), en_type_(type), output_(output) {}
+
+  std::vector<uint32_t> size_;
+  VdecOutputFormat format_;
+  VdecStreamFormat en_type_;
+  std::string output_;
+};
+
+DvppDecodeVideo::DvppDecodeVideo(const std::vector<uint32_t> &size, VdecStreamFormat type, VdecOutputFormat out_format,
+                                 const std::vector<char> &output)
+    : data_(std::make_shared<Data>(size, type, out_format, CharToString(output))) {}
+
+std::shared_ptr<TensorOperation> DvppDecodeVideo::Parse() {
+  return std::make_shared<DvppDecodeVideoOperation>(data_->size_, data_->en_type_, data_->format_, data_->output_);
+}
+
+std::shared_ptr<TensorOperation> DvppDecodeVideo::Parse(const MapTargetDevice &env) {
+  if (env == MapTargetDevice::kAscend310) {
+    return std::make_shared<DvppDecodeVideoOperation>(data_->size_, data_->en_type_, data_->format_, data_->output_);
+  }
+  MS_LOG(ERROR) << "Unsupported MapTargetDevice, only kAscend310 is supported.";
+  return nullptr;
+}
+
 // DvppDecodeResize Transform Operation.
 struct DvppDecodeResizeJpeg::Data {
   explicit Data(const std::vector<uint32_t> &resize) : resize_(resize) {}

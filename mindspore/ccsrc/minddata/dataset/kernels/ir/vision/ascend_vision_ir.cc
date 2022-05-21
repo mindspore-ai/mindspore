@@ -21,9 +21,11 @@
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_video_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_png_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_normalize_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_resize_jpeg_op.h"
+#include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/validators.h"
 
 namespace mindspore {
@@ -136,6 +138,92 @@ Status DvppDecodeResizeOperation::from_json(nlohmann::json op_params, std::share
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kDvppDecodeResizeOperation));
   std::vector<uint32_t> resize = op_params["size"];
   *operation = std::make_shared<vision::DvppDecodeResizeOperation>(resize);
+  return Status::OK();
+}
+
+// DvppDecodeVideoOperation
+DvppDecodeVideoOperation::DvppDecodeVideoOperation(const std::vector<uint32_t> &size, VdecStreamFormat type,
+                                                   VdecOutputFormat out_format, const std::string &output)
+    : size_(size), format_(out_format), en_type_(type), output_(output) {}
+
+Status DvppDecodeVideoOperation::ValidateParams() {
+  // check size_
+  if (size_.empty() || size_.size() > 2) {
+    std::string err_msg =
+      "DvppDecodeVideo: Video frame size must be a vector of one or two elements, got: " + std::to_string(size_.size());
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  // check height and width
+  uint32_t height, width;
+  height = size_[0];
+  width = size_[1];
+
+  if ((width <= kFrameWidthMin) || (width > kFrameWidthMax)) {
+    std::string err_msg = "DvppDecodeVideo: video frame width " + std::to_string(width) +
+                          " is invalid, the legal range is [" + std::to_string(kFrameWidthMin) + ", " +
+                          std::to_string(kFrameWidthMax) + "]";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if ((height < kFrameHeightMin) || (height > kFrameHeightMax)) {
+    std::string err_msg = "DvppDecodeVideo: video frame height " + std::to_string(height) +
+                          " is invalid, the legal range is [" + std::to_string(kFrameHeightMin) + ", " +
+                          std::to_string(kFrameHeightMax) + "]";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if (en_type_ < VdecStreamFormat::kH265MainLevel || en_type_ > VdecStreamFormat::kH264HighLevel) {
+    std::string err_msg = "DvppDecodeVideo: Invalid VdecStreamFormat, check input value of enum.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (format_ < VdecOutputFormat::kYuvSemiplanar420 || format_ > VdecOutputFormat::kYvuSemiplanar420) {
+    std::string err_msg = "DvppDecodeVideo: Invalid VdecOutputFormat, check input value of enum.";
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  // check and normalize output path
+  Path output(output_);
+  if (!output.Exists()) {
+    RETURN_IF_NOT_OK(output.CreateDirectories());
+  }
+  if (!output.IsDirectory()) {
+    std::string err_msg = "DvppDecodeVideo: Invalid out path, check path: " + output.ToString();
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  output_ = output.ToString();
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> DvppDecodeVideoOperation::Build() {
+  uint32_t height, width;
+  height = size_[0];
+  width = size_[1];
+  auto tensor_op = std::make_shared<DvppDecodeVideoOp>(width, height, en_type_, format_, output_);
+  return tensor_op;
+}
+
+Status DvppDecodeVideoOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = size_;
+  args["en_type"] = en_type_;
+  args["out_format"] = format_;
+  args["output"] = output_;
+  *out_json = args;
+  return Status::OK();
+}
+
+Status DvppDecodeVideoOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "size", kDvppDecodeVideoOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "en_type", kDvppDecodeVideoOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "out_format", kDvppDecodeVideoOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "output", kDvppDecodeVideoOperation));
+
+  std::vector<uint32_t> size = op_params["size"];
+  VdecStreamFormat type = static_cast<VdecStreamFormat>(op_params["en_type"]);
+  VdecOutputFormat out_format = static_cast<VdecOutputFormat>(op_params["out_format"]);
+  std::string output = op_params["output"];
+
+  *operation = std::make_shared<vision::DvppDecodeVideoOperation>(size, type, out_format, output);
   return Status::OK();
 }
 

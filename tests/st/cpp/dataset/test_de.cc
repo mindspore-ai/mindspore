@@ -25,6 +25,7 @@
 #include "minddata/dataset/include/dataset/vision_ascend.h"
 #endif
 #include "minddata/dataset/kernels/tensor_op.h"
+#include "minddata/dataset/util/path.h"
 #include "include/api/model.h"
 #include "include/api/serialization.h"
 #include "include/api/context.h"
@@ -250,5 +251,54 @@ TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
   ASSERT_EQ(image.DataType(), mindspore::DataType::kNumberTypeUInt8);
   ASSERT_EQ(image.IsDevice(), true);
   Transform.DeviceMemoryRelease();
+#endif
+}
+
+/// Feature: Dvpp decode video
+/// Description: 8 frames H265 video
+/// Expectation: success
+TEST_F(TestDE, TestDvppDecodeVideoH265) {
+#ifdef ENABLE_ACL
+  auto context = ContextAutoSet();
+  ASSERT_TRUE(context != nullptr);
+  ASSERT_TRUE(context->MutableDeviceInfo().size() == 1);
+  auto ascend310_info = context->MutableDeviceInfo()[0]->Cast<AscendDeviceInfo>();
+  ASSERT_TRUE(ascend310_info != nullptr);
+  auto device_id = ascend310_info->GetDeviceID();
+
+  auto video = ReadFileToTensor("./data/dataset/FHD_8frame_1920x1080.h265");
+
+  // Define dvpp transform
+  std::vector<uint32_t> size = {1080, 1920};
+  std::string path = "./output/frames";
+  Path output(path);
+  auto remove_all = [](Path &path) {
+      std::vector<Path> all_files;
+      auto dir_it = Path::DirIterator::OpenDirectory(&path);
+      while(dir_it !=nullptr && dir_it->HasNext()) {
+          auto file = dir_it->Next();
+          all_files.emplace_back(file);
+      }
+      for(auto f: all_files) {
+          f.Remove();
+      }
+  };
+
+  remove_all(output);
+  std::shared_ptr<TensorTransform> decode(new vision::DvppDecodeVideo(size, VdecStreamFormat::kH265MainLevel, path));
+  mindspore::dataset::Execute Transform({decode}, MapTargetDevice::kCpu, device_id);
+
+  // Apply transform on video
+  Status rc = Transform(video, &video);
+  ASSERT_TRUE(rc.IsOk());
+
+  int count = 0;
+  auto dir_it = Path::DirIterator::OpenDirectory(&output);
+  while(dir_it !=nullptr && dir_it->HasNext()) {
+      auto file = dir_it->Next();
+      count ++;
+  }
+  ASSERT_EQ(count, 8);
+  remove_all(output);
 #endif
 }

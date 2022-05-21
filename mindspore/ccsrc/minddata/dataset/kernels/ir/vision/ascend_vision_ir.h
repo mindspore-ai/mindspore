@@ -40,6 +40,7 @@ constexpr char kDvppDecodeResizeOperation[] = "DvppDecodeResize";
 constexpr char kDvppDecodeResizeCropOperation[] = "DvppDecodeResizeCrop";
 constexpr char kDvppDecodeJpegOperation[] = "DvppDecodeJpeg";
 constexpr char kDvppDecodePngOperation[] = "DvppDecodePng";
+constexpr char kDvppDecodeVideoOperation[] = "DvppDecodeVideo";
 constexpr char kDvppNormalizeOperation[] = "DvppNormalize";
 constexpr char kDvppResizeJpegOperation[] = "DvppResizeJpeg";
 
@@ -115,6 +116,32 @@ class DvppDecodeJpegOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kDvppDecodeJpegOperation; }
+};
+
+class DvppDecodeVideoOperation : public TensorOperation {
+ public:
+  DvppDecodeVideoOperation(const std::vector<uint32_t> &size, VdecStreamFormat type, VdecOutputFormat out_format,
+                           const std::string &output);
+
+  ~DvppDecodeVideoOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kDvppDecodeVideoOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+  static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
+
+ private:
+  std::vector<uint32_t> size_;
+  VdecOutputFormat format_;
+
+  VdecStreamFormat en_type_;
+
+  std::string output_;
 };
 
 class DvppDecodePngOperation : public TensorOperation {

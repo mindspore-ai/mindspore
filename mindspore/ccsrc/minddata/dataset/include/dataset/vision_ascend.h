@@ -98,6 +98,82 @@ class MS_API DvppDecodeResizeCropJpeg final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Decode H264/H265 video using the hardware algorithm of
+///     DVPP module on Ascend series chip.
+class MS_API DvppDecodeVideo final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] size Parameter vector of two integers for each dimension of input video frames, with respect to H,W
+  ///     order.
+  /// \param[in] type An enum for the coding protocol of video.
+  ///   - VdecStreamFormat::kH265MainLevel, video coding protocol is H265-main level.
+  ///   - VdecStreamFormat::kH264BaselineLevel, video coding protocol is H264-baseline level.
+  ///   - VdecStreamFormat::kH264MainLevel, video coding protocol is H264-main level.
+  ///   - VdecStreamFormat::kH264HighLevel, video coding protocol is H264-high level.
+  /// \param[in] out_format An enum for the format of output image (default=VdecOutputFormat::kYUV_SEMIPLANAR_420).
+  ///   - VdecOutputFormat::kYUV_SEMIPLANAR_420, format of output image is YUV420SP NV12 8bit.
+  ///   - VdecOutputFormat::kYVU_SEMIPLANAR_420, format of output image is YUV420SP NV21 8bit.
+  /// \param[in] output The output path of the decoded images corresponds to video frames.
+  /// \par Example
+  /// \code
+  ///     namespace ds = mindspore::dataset;
+  ///
+  ///     /* Define operations */
+  ///     std::shared_ptr<ds::TensorTransform> dvpp_decode(new ds::vision::DvppDecodeVideo({1080, 1920},
+  ///                                                      ds::VdecStreamFormat::kH265MainLevel));
+  ///
+  ///     /* define preprocessor */
+  ///     ds::Execute preprocessor({dvpp_decode}, ds::MapTargetDevice::kCpu, 0);
+  ///
+  /// \endcode
+
+  DvppDecodeVideo(const std::vector<uint32_t> &size, VdecStreamFormat type,
+                  VdecOutputFormat out_format = VdecOutputFormat::kYuvSemiplanar420,
+                  const std::string &output = "./output")
+      : DvppDecodeVideo(size, type, out_format, StringToChar(output)) {}
+
+  /// \brief Constructor.
+  /// \param[in] size Parameter vector of two integers for each dimension of input video frames, with respect to H,W
+  ///     order.
+  /// \param[in] type An enum for the coding protocol of video.
+  ///   - VdecStreamFormat::kH265MainLevel, video coding protocol is H265-main level.
+  ///   - VdecStreamFormat::kH264BaselineLevel, video coding protocol is H264-baseline level.
+  ///   - VdecStreamFormat::kH264MainLevel, video coding protocol is H264-main level.
+  ///   - VdecStreamFormat::kH264HighLevel, video coding protocol is H264-high level.
+  /// \param[in] output The output path of the decoded images corresponds to video frames.
+  /// \par Example
+  /// \code
+  ///     namespace ds = mindspore::dataset;
+  ///
+  ///     /* Define operations */
+  ///     std::shared_ptr<ds::TensorTransform> dvpp_decode(new ds::vision::DvppDecodeVideo({1080, 1920}));
+  ///
+  ///     /* define preprocessor */
+  ///     ds::Execute preprocessor({dvpp_decode}, ds::MapTargetDevice::kCpu, 0);
+  ///
+  /// \endcode
+
+  DvppDecodeVideo(const std::vector<uint32_t> &size, VdecStreamFormat type, const std::string &output = "./output")
+      : DvppDecodeVideo(size, type, VdecOutputFormat::kYuvSemiplanar420, StringToChar(output)) {}
+
+  DvppDecodeVideo(const std::vector<uint32_t> &size, VdecStreamFormat type, VdecOutputFormat out_format,
+                  const std::vector<char> &output);
+
+  /// \brief Destructor.
+  ~DvppDecodeVideo() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Decode PNG image using the hardware algorithm of
 ///     Ascend series chip DVPP module.
 class MS_API DvppDecodePng final : public TensorTransform {
