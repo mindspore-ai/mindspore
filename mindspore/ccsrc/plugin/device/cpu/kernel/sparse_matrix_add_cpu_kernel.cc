@@ -77,6 +77,7 @@ int SparseMatirxAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
       MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
       return KRET_RESIZE_FAILED;
     }
+    output_size_list_.clear();
     auto max_out_size = std::min(input_size_list_[kAIndicesIdx] + input_size_list_[kBIndicesIdx], dense_size_);
     output_size_list_.emplace_back(input_size_list_[0]);
     output_size_list_.emplace_back(max_out_size);
