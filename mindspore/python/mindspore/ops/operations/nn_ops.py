@@ -1233,8 +1233,7 @@ class Conv2D(Primitive):
             and width of the 2D convolution window. Single int means the value is for both the height and the width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
-        mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution ,
-                       2 deconvolution, 3 depthwise convolution. Default: 1.
+        mode (int): Modes for different convolutions. The value is currently not used. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are
             "same", "valid" and "pad". Default: "valid".
 
@@ -2132,8 +2131,7 @@ class Conv2DTranspose(Conv2DBackpropInput):
                     top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
                     padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
         pad_list (Union[str, None]): The pad list like (top, bottom, left, right). Default: None.
-        mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution ,
-                       2 deconvolution, 3 depthwise convolution. Default: 1.
+        mode (int): Modes for different convolutions. The value is currently not used. Default: 1.
         stride (Union[int. tuple[int]]): The stride to be applied to the convolution filter. Default: 1.
         dilation (Union[int. tuple[int]]): Specifies the dilation rate to be used for the dilated convolution.
             Default: 1.
