@@ -153,6 +153,7 @@ from .scatter_nd_d import _scatter_nd_d_tbe
 from .scatter_nd_add import _scatter_nd_add_tbe
 from .scatter_nd_add_ds import _scatter_nd_add_ds_tbe
 from .scatter_nd_sub import _scatter_nd_sub_tbe
+from .scatter_nd_sub_ds import _scatter_nd_sub_ds_tbe
 from .scatter_non_aliasing_add import _scatter_non_aliasing_add_tbe
 from .scatter_non_aliasing_add_ds import _scatter_non_aliasing_add_ds_tbe
 from .reduce_mean import _reduce_mean_tbe
@@ -505,6 +506,7 @@ from .lrn_grad import _lrn_grad_tbe
 from .scatter_max import _scatter_max_tbe
 from .scatter_min import _scatter_min_tbe
 from .scatter_sub import _scatter_sub_tbe
+from .scatter_sub_ds import _scatter_sub_ds_tbe
 from .scatter_mul import _scatter_mul_tbe
 from .scatter_div import _scatter_div_tbe
 from .mod import _mod_tbe
