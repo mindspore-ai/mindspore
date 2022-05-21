@@ -2182,6 +2182,44 @@ def minimum(x, y):
     return minimum_(x, y)
 
 
+def logaddexp(x1, x2):
+    """
+    Computes the logarithm of the sum of exponentiations of the inputs.
+
+    Calculates ``log(exp(x1) + exp(x2))``. This function is useful in statistics, where the
+    computed probability of an event may be so small that it exceeds the range of a normal
+    floating point number. In this case, the logarithm of the calculated probability is stored.
+    This function allows to add probabilities stored in this way.
+
+    Args:
+        x1 (Tensor): Input Tensor.
+        x2 (Tensor): Input Tensor. If ``x1.shape != x2.shape``, they must be broadcastable to
+            a common shape (which becomes the shape of the output).
+
+    Returns:
+        Tensor or scalar. This is a scalar if both `x1` and `x2` are scalars.
+
+    Raises:
+        TypeError: If `x1`, `x2` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([1, 2, 3]).astype(np.float16))
+        >>> x2 = Tensor(np.array(2).astype(np.float16))
+        >>> output = ops.logaddexp(x1, x2)
+        >>> print(output)
+        [2.312 2.693 3.312]
+    """
+
+    log_op = P.Log()
+    exp_op = P.Exp()
+
+    y = log_op(exp_op(x1)+exp_op(x2))
+    return y
+
+
 def logaddexp2(x1, x2):
     """
     Computes the logarithm of the sum of exponentiations in base of 2 of the inputs.
@@ -2462,6 +2500,7 @@ __all__ = [
     'lerp',
     'lp_norm',
     'tensor_gt',
+    'logaddexp',
     'gt',
     'tensor_ge',
     'ge',

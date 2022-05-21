@@ -21,8 +21,8 @@ import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common import dtype as mstype
 from mindspore import ops
+from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -387,6 +387,16 @@ class ErfcNet(nn.Cell):
         return self.erfc(x)
 
 
+class LogAddExpFunc(nn.Cell):
+    def __init__(self):
+        super(LogAddExpFunc, self).__init__()
+        self.logaddexp = ops.logaddexp
+
+    def construct(self, x1, x2):
+        y = self.logaddexp(x1, x2)
+        return y
+
+
 class LogAddExp2Func(nn.Cell):
     def __init__(self):
         super(LogAddExp2Func, self).__init__()
@@ -454,6 +464,11 @@ test_case_math_ops = [
     }),
     ('LogAddExp2', {
         'block': LogAddExp2Func(),
+        'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
+        'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
+    }),
+    ('LogAddExp', {
+        'block': LogAddExpFunc(),
         'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
         'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
     }),

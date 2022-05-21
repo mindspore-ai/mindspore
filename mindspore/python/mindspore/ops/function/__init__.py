@@ -31,7 +31,7 @@ from .math_func import (addn, absolute, abs, tensor_add, add, neg_tensor, neg, t
                         lp_norm, round, tensor_gt, gt, tensor_ge, ge, tensor_sub, sub, tensor_mul, mul, tensor_div, div,
                         tensor_floordiv, floor_div, floordiv, tensor_pow, pow, pows, tensor_mod, floor_mod, floormod,
                         tensor_exp, exp, tensor_expm1, expm1, equal, not_equal, ne, isfinite, isnan, same_type_shape,
-                        log, log_matrix_determinant, matrix_determinant, maximum, logaddexp2,
+                        log, log_matrix_determinant, matrix_determinant, maximum, logaddexp, logaddexp2,
                         invert, minimum, floor, logical_not, logical_or, logical_and, sin, cos, tan,
                         asin, acos, atan, sinh, cosh, tanh, asinh, acosh, atanh, atan2, bitwise_and, bitwise_or,
                         bitwise_xor, erf, erfc, cdist, bessel_i0, bessel_i0e, bessel_j0, bessel_j1, bessel_k0,
