@@ -44,6 +44,18 @@ TypePtr BucketizeInferType(const PrimitivePtr &primitive, const std::vector<Abst
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Bucketize, BaseOperator);
+
+void Bucketize::Init(const std::vector<float> &boundaries) { this->set_boundaries(boundaries); }
+
+void Bucketize::set_boundaries(const std::vector<float> &boundaries) {
+  (void)this->AddAttr(kBoundaries, api::MakeValue(boundaries));
+}
+
+std::vector<float> Bucketize::get_boundaries() const {
+  auto value_ptr = GetAttr(kBoundaries);
+  return GetValue<std::vector<float>>(value_ptr);
+}
+
 AbstractBasePtr BucketizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

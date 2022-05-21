@@ -44,6 +44,7 @@ constexpr auto kBias = "bias";
 constexpr auto kBidirectional = "bidirectional";
 constexpr auto kBlockSize = "block_size";
 constexpr auto kBlockShape = "block_shape";
+constexpr auto kBoundaries = "boundaries";
 constexpr auto kCellClip = "cell_clip";
 constexpr auto kCellDepth = "cell_depth";
 constexpr auto kCenterPointBox = "center_point_box";

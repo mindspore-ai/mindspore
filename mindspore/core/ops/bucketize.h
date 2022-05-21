@@ -38,6 +38,14 @@ class MIND_API Bucketize : public BaseOperator {
   // /// \brief Destructor.
   // ~Bucketize() = default;
   MIND_API_BASE_MEMBER(Bucketize);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Bucketize for the inputs.
+  void Init(const std::vector<float> &boundaries);
+  /// \brief Set boundaries.
+  void set_boundaries(const std::vector<float> &boundaries);
+  /// \brief Get boundaries.
+  ///
+  /// \return boundaries.
+  std::vector<float> get_boundaries() const;
 };
 
 abstract::AbstractBasePtr BucketizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
