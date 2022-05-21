@@ -43,6 +43,8 @@ def test_flatten_tensors_basic():
     # Get flattened tensors.
     chunks2 = Tensor._get_flattened_tensors([t1, t2, t3])  # pylint: disable=W0212
     assert chunks == chunks2
+    fusion_size = Tensor._get_fusion_size(chunks2)  # pylint: disable=W0212
+    assert fusion_size == 0
 
 
 def test_flatten_tensors_order():
@@ -166,3 +168,109 @@ def test_cell_flatten_weights_with_init():
     assert Parameter._is_flattened(net.trainable_params())  # pylint: disable=W0212
     chunks = Parameter._get_flattened_tensors(net.trainable_params())  # pylint: disable=W0212
     assert np.allclose(chunks[0].asnumpy(), np.array([1, 2, 1, 1, 1, 6]))
+
+
+def test_flatten_tensors_with_fusion_size_1():
+    """
+    Feature: Flatten tensors.
+    Description: Flatten f32 tensors with fusion size.
+    Expectation: Flatten tensor works as expected.
+    """
+    t1 = Tensor(np.ones([1], np.float32))
+    t2 = Tensor(np.ones([2], np.float32))
+    t3 = Tensor(np.ones([3], np.float32))
+    t4 = Tensor(np.ones([4], np.float32))
+    tensor_list = [t1, t2, t3, t4]
+    # Do flatten.
+    chunks = Tensor._flatten_tensors(tensor_list, 4 * 4)  # pylint: disable=W0212
+    # After flatten.
+    assert len(chunks) == 3
+    assert Tensor._is_flattened(tensor_list)  # pylint: disable=W0212
+    assert chunks[0].dtype == ms.float32
+    assert chunks[0].shape == [3]
+    assert chunks[1].shape == [3]
+    assert chunks[2].shape == [4]
+    assert np.allclose(chunks[0].asnumpy(), np.ones([3], np.float32))
+    assert np.allclose(chunks[1].asnumpy(), np.ones([3], np.float32))
+    assert np.allclose(chunks[2].asnumpy(), np.ones([4], np.float32))
+    # Get flattened tensors.
+    chunks2 = Tensor._get_flattened_tensors(tensor_list)  # pylint: disable=W0212
+    assert chunks == chunks2
+    # Get fusion size from flattened tensors.
+    fusion_size = Tensor._get_fusion_size(chunks2)  # pylint: disable=W0212
+    assert fusion_size == (4 * 4)
+
+
+def test_flatten_tensors_with_fusion_size_2():
+    """
+    Feature: Flatten tensors.
+    Description: Flatten f32 and f16 tensors with fusion size.
+    Expectation: Flatten tensor works as expected.
+    """
+    t1 = Tensor(np.ones([1], np.float32))
+    t2 = Tensor(np.ones([2], np.float32))
+    t3 = Tensor(np.ones([3], np.float32))
+    t4 = Tensor(np.ones([4], np.float32))
+    t10 = Tensor(np.ones([1], np.float16))
+    t20 = Tensor(np.ones([2], np.float16))
+    t30 = Tensor(np.ones([3], np.float16))
+    t40 = Tensor(np.ones([4], np.float16))
+    tensor_list = [t1, t2, t3, t4, t10, t20, t30, t40]
+    # Do flatten.
+    chunks = Tensor._flatten_tensors(tensor_list, 20)  # pylint: disable=W0212
+    # After flatten.
+    assert len(chunks) == 4
+    assert Tensor._is_flattened(tensor_list)  # pylint: disable=W0212
+
+    assert chunks[0].dtype == ms.float16
+    assert chunks[1].dtype == ms.float32
+    assert chunks[2].dtype == ms.float32
+    assert chunks[3].dtype == ms.float32
+
+    assert chunks[0].shape == [10]  # f16: 1 + 2 + 3 + 4
+    assert chunks[1].shape == [3]  # f32: 1 + 2
+    assert chunks[2].shape == [3]  # f32: 3
+    assert chunks[3].shape == [4]  # f32: 4
+
+    assert np.allclose(chunks[0].asnumpy(), np.ones([10], np.float16))
+    assert np.allclose(chunks[1].asnumpy(), np.ones([3], np.float32))
+    assert np.allclose(chunks[2].asnumpy(), np.ones([3], np.float32))
+    assert np.allclose(chunks[3].asnumpy(), np.ones([4], np.float32))
+
+    # Get flattened tensors.
+    chunks2 = Tensor._get_flattened_tensors(tensor_list)  # pylint: disable=W0212
+    assert chunks == chunks2
+    # Get fusion size from flattened tensors.
+    fusion_size = Tensor._get_fusion_size(chunks2)  # pylint: disable=W0212
+    assert fusion_size == (20)
+
+
+def test_cell_flatten_weights_with_fusion_size():
+    """
+    Feature: Flatten tensors.
+    Description: Flatten weights for Cell with fusion size.
+    Expectation: Flatten weights works as expected.
+    """
+    class MyCell(Cell):
+        def __init__(self):
+            super(MyCell, self).__init__()
+            self.para1 = Parameter(Tensor([1, 2], ms.float32))
+            self.para2 = Parameter(Tensor([3, 4, 5], ms.float32))
+            self.para3 = Parameter(Tensor([6], ms.float32))
+            self.para4 = Parameter(Tensor([7], ms.float32))
+            self.para5 = Parameter(Tensor([8], ms.float32))
+
+        def construct(self, x):
+            return x
+
+    net = MyCell()
+    assert not Parameter._is_flattened(net.trainable_params())  # pylint: disable=W0212
+    net.flatten_weights(fusion_size=12)
+    assert Parameter._is_flattened(net.trainable_params())  # pylint: disable=W0212
+    chunks = Parameter._get_flattened_tensors(net.trainable_params())  # pylint: disable=W0212
+    assert len(chunks) == 3
+    assert np.allclose(chunks[0].asnumpy(), np.array([1, 2]))
+    assert np.allclose(chunks[1].asnumpy(), np.array([3, 4, 5]))
+    assert np.allclose(chunks[2].asnumpy(), np.array([6, 7, 8]))
+    fusion_size = Parameter._get_fusion_size(chunks)  # pylint: disable=W0212
+    assert fusion_size == 12

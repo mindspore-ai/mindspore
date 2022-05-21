@@ -543,9 +543,10 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data.strides
                                  (4, 4)
                              )mydelimiter")
-                           .def("_flatten_tensors", Tensor::FlattenTensors)
+                           .def("_flatten_tensors", Tensor::FlattenTensors, py::arg("fusion_size") = 0)
                            .def("_is_flattened", Tensor::IsFlattened)
                            .def("_get_flattened_tensors", Tensor::GetFlattenedTensors)
+                           .def("_get_fusion_size", Tensor::GetFusionSize)
                            .def("from_numpy", TensorPy::MakeTensorOfNumpy, R"mydelimiter(
                              Creates a Tensor from a numpy.ndarray without copy.
 

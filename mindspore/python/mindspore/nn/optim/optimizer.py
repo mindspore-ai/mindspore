@@ -161,6 +161,7 @@ class Optimizer(Cell):
         self._unique = True
         self._target = context.get_context("device_target")
         self._use_flattened_params = False
+        self._grad_fusion_size = 0
         self.dynamic_lr = False
         self.assignadd = P.AssignAdd()
         self.global_step = Parameter(initializer(0, [1], mindspore.int32), name='global_step')
@@ -252,8 +253,9 @@ class Optimizer(Cell):
             return parameters
         # Convert chunk tensors to parameters.
         self._use_flattened_params = True
-        return [Parameter._from_tensor(t, name='_chunk_param_' + str(t.dtype))  # pylint: disable=W0212
-                for t in chunk_tensors]
+        self._grad_fusion_size = Tensor._get_fusion_size(chunk_tensors)  # pylint: disable=W0212
+        return [Parameter._from_tensor(t, name='_chunk_param' + str(i) + '_' + str(t.dtype))  # pylint: disable=W0212
+                for i, t in enumerate(chunk_tensors)]
 
     def _use_parallel_optimizer(self):
         """Indicates whether to use automatic parallelism."""
@@ -359,7 +361,7 @@ class Optimizer(Cell):
             tuple[Tensor], The gradients after flattened, or the original gradients if parameters are not flattened.
         """
         if self._use_flattened_params:
-            flatten_concat = inner.FlattenConcat()
+            flatten_concat = inner.FlattenConcat(fusion_size=self._grad_fusion_size)
             return flatten_concat(gradients)
         return gradients
 

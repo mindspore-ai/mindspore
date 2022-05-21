@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <map>
+#include <vector>
 #include "mindapi/base/type_id.h"
 #include "abstract/utils.h"
 #include "abstract/abstract_value.h"
@@ -31,6 +32,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_utils_secure.h"
 #include "utils/shape_utils.h"
+#include "utils/ordered_set.h"
 
 namespace mindspore {
 namespace tensor {
@@ -839,11 +841,11 @@ std::pair<void *, size_t> Tensor::GetChunkOffset() const {
   return {owner_tensor->data_c(), sub_data->data_offset()};
 }
 
-// A helper data structure for flatten tensors.
+// TensorChunk holds info for a chunk.
 struct TensorChunk {
-  size_t size{0};    // total num of elements.
-  size_t offset{0};  // current offset in bytes in tensor data.
-  TensorPtr tensor;  // the chunk tensor.
+  size_t size{0};                  // chunk size in the number of elements.
+  size_t bytes{0};                 // chunk size in bytes.
+  std::vector<TensorPtr> tensors;  // tensors belong to this chunk.
 };
 
 static TypeId normalize_type(TypeId type_id) {
@@ -854,38 +856,55 @@ static TypeId normalize_type(TypeId type_id) {
   return type_id;
 }
 
-TensorPtrList Tensor::FlattenTensors(const TensorPtrList &tensors) {
+static std::map<TypeId, std::vector<TensorChunk>> GroupingTensors(const TensorPtrList &tensors, size_t fusion_size) {
   // Use std::map to keep order by type id.
-  std::map<TypeId, TensorChunk> chunks;
-  // Calculate chunk sizes.
+  std::map<TypeId, std::vector<TensorChunk>> group_info;
   for (auto &tensor : tensors) {
     MS_EXCEPTION_IF_NULL(tensor);
-    auto &chunk = chunks[normalize_type(tensor->data_type())];
+    auto tensor_bytes = static_cast<size_t>(tensor->data().nbytes());
+    if ((fusion_size != 0) && (tensor_bytes > fusion_size)) {
+      MS_LOG(EXCEPTION) << "Fusion size " << fusion_size << " is too small for a tensor size " << tensor_bytes << ".";
+    }
+    auto &chunks = group_info[normalize_type(tensor->data_type())];
+    if (chunks.empty()) {
+      (void)chunks.emplace_back();
+    }
+    if ((fusion_size != 0) && (chunks.back().bytes + tensor_bytes > fusion_size)) {
+      (void)chunks.emplace_back();
+    }
+    auto &chunk = chunks.back();
     chunk.size += tensor->DataSize();
+    chunk.bytes += tensor_bytes;
+    chunk.tensors.emplace_back(tensor);
   }
+  return group_info;
+}
+
+TensorPtrList Tensor::FlattenTensors(const TensorPtrList &tensors, size_t fusion_size) {
+  // Result tensor list.
+  TensorPtrList result_list;
+  // Grouping tensors by data type and fusion size.
+  auto group_info = GroupingTensors(tensors, fusion_size);
   // Create chunk tensors and copy data to them.
-  for (auto &tensor : tensors) {
-    auto chunk_dtype = normalize_type(tensor->data_type());
-    auto &chunk = chunks[chunk_dtype];
-    // Initialize chunk tensor if required.
-    if (chunk.tensor == nullptr) {
+  for (auto &type_group : group_info) {
+    auto chunk_dtype = normalize_type(type_group.first);
+    for (auto &chunk : type_group.second) {
       // Chunk tensor is always 1 rank.
       ShapeVector shape{static_cast<int64_t>(chunk.size)};
-      // Create a lazy initialized tensor, the tensor data will be
-      // allocated when we begin to copy small tensors data into it.
-      chunk.tensor = std::make_shared<Tensor>(chunk_dtype, shape);
+      // Create chunk thensor as a lazy initialized tensor, the tensor data
+      // will be allocated when we begin to copy small tensors data into it.
+      auto chunk_tensor = std::make_shared<Tensor>(chunk_dtype, shape);
+      // Reset and copy tensors data.
+      size_t offset = 0;
+      for (auto &tensor : chunk.tensors) {
+        auto sub_data = MakeTensorSubData(chunk_tensor, offset, tensor->data_ptr());
+        offset += sub_data->nbytes();
+        tensor->data_ = sub_data;
+      }
+      // Save chunk tensor to result list.
+      (void)result_list.emplace_back(std::move(chunk_tensor));
     }
-    // Copy and create sub-data.
-    auto sub_data = MakeTensorSubData(chunk.tensor, chunk.offset, tensor->data_ptr());
-    chunk.offset += sub_data->nbytes();
-    // Reset tensor data.
-    tensor->data_ = sub_data;
   }
-  // Generate result list.
-  TensorPtrList result_list;
-  result_list.reserve(chunks.size());
-  (void)std::transform(chunks.begin(), chunks.end(), std::back_inserter(result_list),
-                       [](const auto &chunk) { return chunk.second.tensor; });
   return result_list;
 }
 
@@ -900,7 +919,7 @@ bool Tensor::IsFlattened(const TensorPtrList &tensors) {
 
 TensorPtrList Tensor::GetFlattenedTensors(const TensorPtrList &tensors) {
   // Use std::map to keep order by type id.
-  std::map<TypeId, TensorPtr> chunk_tensors;
+  std::map<TypeId, OrderedSet<TensorPtr>> chunk_map;
   for (auto &tensor : tensors) {
     // Get sub-data.
     auto sub_data = std::dynamic_pointer_cast<TensorSubData>(tensor->data_ptr());
@@ -911,23 +930,36 @@ TensorPtrList Tensor::GetFlattenedTensors(const TensorPtrList &tensors) {
     // Get owner tensor from sub-data.
     auto owner_tensor = sub_data->GetOwner();
     MS_EXCEPTION_IF_NULL(owner_tensor);
-    // Find chunk tensor by its data type.
+    // Add as chunk tensor by its data type.
     auto chunk_dtype = normalize_type(tensor->data_type());
-    auto &chunk_tensor = chunk_tensors[chunk_dtype];
-    if (chunk_tensor == nullptr) {
-      chunk_tensor = owner_tensor;
-    } else if (chunk_tensor != owner_tensor) {
-      // There should be only one chunk tensor for same data type.
-      MS_LOG(WARNING) << "Tensors are not flattened together.";
-      return {};
-    }
+    chunk_map[chunk_dtype].add(owner_tensor);
   }
   // Generate result tensor list.
   TensorPtrList result_tensors;
-  result_tensors.reserve(chunk_tensors.size());
-  (void)std::transform(chunk_tensors.begin(), chunk_tensors.end(), std::back_inserter(result_tensors),
-                       [](const auto &chunk) { return chunk.second; });
+  for (auto &entry : chunk_map) {
+    auto &chunk_tensors = entry.second;
+    result_tensors.insert(result_tensors.end(), chunk_tensors.begin(), chunk_tensors.end());
+  }
   return result_tensors;
+}
+
+size_t Tensor::GetFusionSize(const TensorPtrList &flat_tensors) {
+  size_t fusion_size = 0;
+  std::map<TypeId, size_t> type_groups;
+  for (auto &tensor : flat_tensors) {
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto tensor_bytes = static_cast<size_t>(tensor->data().nbytes());
+    if (tensor_bytes > fusion_size) {
+      fusion_size = tensor_bytes;
+    }
+    ++type_groups[tensor->data_type()];
+  }
+  const bool only_one_chunk_for_each_type =
+    std::all_of(type_groups.begin(), type_groups.end(), [](auto const &e) { return e.second == 1; });
+  if (only_one_chunk_for_each_type) {
+    return 0;
+  }
+  return fusion_size;
 }
 
 CSRTensor::CSRTensor(const TensorPtr indptr, const TensorPtr indices, const TensorPtr values, const ShapeVector &shape)

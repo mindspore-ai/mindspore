@@ -604,9 +604,10 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \brief Reset tensors data so that they are using contiguous memory chunks grouped by data type.
   ///
   /// \param[in] tensors The tensors to be processed.
+  /// \param[in] fusion_size Maximum memory chunk size in bytes, 0 for unlimited.
   ///
   /// \return Tensors that data are pointed to each contiguous memory chunks.
-  static TensorPtrList FlattenTensors(const TensorPtrList &tensors);
+  static TensorPtrList FlattenTensors(const TensorPtrList &tensors, size_t fusion_size = 0);
 
   /// \brief Check if FlattenTensors called for the input tensors.
   ///
@@ -621,6 +622,13 @@ class MS_CORE_API Tensor final : public MetaTensor {
   ///
   /// \return Tensors that data are pointed to each contiguous memory chunks, empty if failed.
   static TensorPtrList GetFlattenedTensors(const TensorPtrList &tensors);
+
+  /// \brief Get the fusion size for the given flat tensors.
+  ///
+  /// \param[in] flat_tensors The input flat tensors.
+  ///
+  /// \return fusion size for the given flat tensors.
+  static size_t GetFusionSize(const TensorPtrList &flat_tensors);
 
  private:
   void ExecuteLazyTask() const;
