@@ -809,7 +809,7 @@ class PopulationCount(Primitive):
 
     Inputs:
         - **input** (Tensor) - Tensor of any dimension. The data type must be int16 or uint16 (Ascend).
-          The data type must be int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU).
+          The data type must be int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU and GPU).
 
     Outputs:
         Tensor, with the same shape as the input, and the data type is uint8.
@@ -820,7 +820,7 @@ class PopulationCount(Primitive):
                    If dtype of `input` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> population_count = ops.PopulationCount()
