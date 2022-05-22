@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 #ifdef ENABLE_AVX512
+#pragma GCC push_options
+#pragma GCC target("avx512f")
+
 #include "nnacl/fp32/matmul_avx512_fp32.h"
 #include "nnacl/op_base.h"
 
@@ -199,4 +202,5 @@ void MatVecMulAvx512Fp32(const float *a, const float *b, float *c, const float *
     }
   }
 }
+#pragma GCC pop_options
 #endif
