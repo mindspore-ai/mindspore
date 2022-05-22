@@ -73,6 +73,9 @@ class BACKEND_EXPORT ClusterContext {
   // Return node object of this process.
   const std::shared_ptr<ps::core::Node> &node() const;
 
+  // Return the shadow node.
+  const std::shared_ptr<topology::NodeBase> &node_base() const;
+
   // Return node role in this cluster.
   const std::string &node_role() const;
 

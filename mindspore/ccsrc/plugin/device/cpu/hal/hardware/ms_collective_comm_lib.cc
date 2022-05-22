@@ -22,8 +22,15 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
+// These keywords is used for synchronization of collective communication's metadata(eg. unique id).
+constexpr char kGroupInfoPrefix[] = "group_info_";
+constexpr char kGroupName[] = "group_name";
+constexpr char kUniqueId[] = "unique_id";
 MsCollectiveCommLib::MsCollectiveCommLib() {
   node_ = std::dynamic_pointer_cast<ps::core::AbstractNode>(ClusterContext::instance()->node());
+  cgn_ = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
+    ClusterContext::instance()->node_base());
+
   // Generate the global group name with node role.
   global_group_name_ = kMCCLGlobalGroupName;
   MS_LOG(INFO) << "Global group name of MindSpore collective communication library is " << global_group_name_;
@@ -107,6 +114,7 @@ bool MsCollectiveCommLib::BroadcastUniqueID(const std::string &group_name, size_
 
 bool MsCollectiveCommLib::SendHostHashName(size_t host_hash_name) const {
   CHECK_IF_NULL(node_);
+  CHECK_IF_NULL(cgn_);
   ps::core::SendHostHashNameMessage send_host_name_msg;
   send_host_name_msg.set_node_id(node_->node_id());
   send_host_name_msg.set_rank_id(node_->rank_id());
@@ -131,6 +139,7 @@ bool MsCollectiveCommLib::SendHostHashName(size_t host_hash_name) const {
 bool MsCollectiveCommLib::QueryHostHashNames(std::vector<size_t> *host_hash_names) const {
   CHECK_IF_NULL(host_hash_names);
   CHECK_IF_NULL(node_);
+  CHECK_IF_NULL(cgn_);
   ps::core::GeneralQueryMessage general_query_msg;
   general_query_msg.set_node_id(node_->node_id());
   general_query_msg.set_rank_id(node_->rank_id());
@@ -166,6 +175,7 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
                                        const void *root_info) const {
   CHECK_IF_NULL(root_info);
   CHECK_IF_NULL(node_);
+  CHECK_IF_NULL(cgn_);
 
   ps::core::SendUniqueIDMessage send_unique_id_msg;
   send_unique_id_msg.set_node_id(node_->node_id());
@@ -187,12 +197,25 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
     MS_LOG(WARNING) << "Send unique id to scheduler failed, error msg: " << resp_msg.error();
     return false;
   }
+
+  // Create the group info which contains the unique id and send it to the meta server.
+  std::string group_info_key = kGroupInfoPrefix + group_name;
+  nlohmann::json group_info;
+  group_info[kGroupName] = group_name;
+  group_info[kUniqueId] = std::string(static_cast<char *>(const_cast<void *>(root_info)), root_info_size);
+
+  if (!cgn_->PutMetadata(group_info_key, group_info.dump())) {
+    MS_LOG(ERROR) << "Failed to send unique id to meta server.";
+    return false;
+  }
   return true;
 }
 
 bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) const {
   CHECK_IF_NULL(root_info);
   CHECK_IF_NULL(node_);
+  CHECK_IF_NULL(cgn_);
+
   ps::core::QueryUniqueIDMessage query_unique_id_msg;
   query_unique_id_msg.set_node_id(node_->node_id());
   query_unique_id_msg.set_group_name(group_name);
@@ -211,7 +234,15 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
     return false;
   }
 
-  auto ret = memcpy_s(root_info, root_info_size, resp_msg.unique_id().data(), resp_msg.unique_id().length());
+  std::string group_info_key = kGroupInfoPrefix + group_name;
+  auto retval = cgn_->GetMetadata(group_info_key);
+  nlohmann::json group_info = nlohmann::json::parse(retval);
+  if (!group_info.contains(kUniqueId)) {
+    MS_LOG(ERROR) << "Failed to parse group info: " << retval;
+  }
+
+  std::string unique_id = group_info.at(kUniqueId).get<std::string>();
+  auto ret = memcpy_s(root_info, root_info_size, unique_id.data(), unique_id.length());
   if (ret != EOK) {
     MS_LOG(WARNING) << "The memcpy_s error, errorno(" << ret << ")";
     return false;
