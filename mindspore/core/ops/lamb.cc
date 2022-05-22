@@ -35,15 +35,12 @@ TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   auto decay_type = input_args[kInputIndex7]->BuildType();
   auto global_step_type = input_args[kInputIndex8]->BuildType();
   auto grad_type = input_args[kInputIndex9]->BuildType();
-  auto decay_flag_type = input_args[kInputIndex10]->BuildType();
 
   std::map<std::string, TypePtr> type_dict;
   type_dict.emplace("var", var_type);
   type_dict.emplace("m", m_type);
   type_dict.emplace("v", v_type);
   type_dict.emplace("grad", grad_type);
-  type_dict.emplace("lr", lr_type);
-  type_dict.emplace("decay", decay_type);
   std::set<TypePtr> num_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                 kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(type_dict, num_type, prim_name);
@@ -51,12 +48,12 @@ TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   type_dict1.emplace("beta1", beta1_type);
   type_dict1.emplace("beta2", beta2_type);
   type_dict1.emplace("epsilon", epsilon_type);
-  std::set<TypePtr> float_set = {kFloat16, kFloat32};
+  type_dict1.emplace("lr", lr_type);
+  type_dict1.emplace("decay", decay_type);
+  std::set<TypePtr> float_set = {kFloat32};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(type_dict1, float_set, prim_name, true);
 
-  std::set<TypePtr> bool_set = {kBool};
   (void)CheckAndConvertUtils::CheckTypeValid("global_step", global_step_type, num_type, prim_name);
-  (void)CheckAndConvertUtils::CheckTypeValid("decay_flag", decay_flag_type, bool_set, prim_name);
 
   return var_type;
 }
@@ -97,7 +94,7 @@ AbstractBasePtr LambInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const int64_t kInputNum = 11;
+  const int64_t kInputNum = 10;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputNum, prim_name);
   auto infer_type = LambInferType(primitive, input_args);
   auto infer_shape = LambInferShape(primitive, input_args);

@@ -142,9 +142,8 @@ class MyLamb(nn.Cell):
         self.gradient = Parameter(gradient, name="grad")
         self.lamb = inner.Lamb()
 
-    def construct(self, beta1, beta2, eps, global_step, lr, weight_decay, decay_flag):
-        return self.lamb(self.param, self.m, self.v, lr, beta1, beta2, eps, weight_decay, global_step, self.gradient,
-                         decay_flag)
+    def construct(self, beta1, beta2, eps, global_step, lr, weight_decay):
+        return self.lamb(self.param, self.m, self.v, lr, beta1, beta2, eps, weight_decay, global_step, self.gradient)
 
 
 def test_gpu_net():
@@ -154,7 +153,7 @@ def test_gpu_net():
     Expectation: get the same result when use new lamb kernel and old kernel
     """
     my_lamb = MyLamb(param_val, m_val, v_val, grad_val)
-    my_lamb(beta1_val, beta2_val, eps_val, global_step_val, lr_val, weight_decay_val, True)
+    my_lamb(beta1_val, beta2_val, eps_val, global_step_val, lr_val, weight_decay_val)
 
     lamb_gpu_origin = LambGPUOrigin(param_val, m_val, v_val, grad_val)
     lamb_gpu_origin(beta1_val, beta2_val, eps_val, global_step_val, lr_val, weight_decay_val, True)
@@ -169,7 +168,7 @@ def test_ascend_net():
     Expectation: get the same result when use new lamb kernel and old kernel
     """
     my_lamb = MyLamb(param_val, m_val, v_val, grad_val)
-    my_lamb(beta1_val, beta2_val, eps_val, global_step_val, lr_val, weight_decay_val, True)
+    my_lamb(beta1_val, beta2_val, eps_val, global_step_val, lr_val, weight_decay_val)
 
     lamb_ascend_origin = LambAscendOrigin(param_val, m_val, v_val, grad_val)
     lamb_ascend_origin(beta1_val, beta2_val, eps_val, global_step_val, lr_val, weight_decay_val, True)

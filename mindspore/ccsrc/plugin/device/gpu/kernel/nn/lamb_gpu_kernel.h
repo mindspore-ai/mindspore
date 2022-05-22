@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUM = 11;
+constexpr size_t INPUT_NUM = 10;
 constexpr size_t kArgMaxDim = 7;
 constexpr float ten = 10;
 
@@ -43,7 +43,6 @@ constexpr size_t kEpsilonIndex = 6;
 constexpr size_t kWeightDecayIndex = 7;
 constexpr size_t kGlobalStepIndex = 8;
 constexpr size_t kGradIndex = 9;
-constexpr size_t kDecayFlagIndex = 10;
 
 // workspaces param index
 constexpr size_t kUpdateIndex = 0;
@@ -72,21 +71,20 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     T *variable = GetDeviceAddress<T>(inputs, kVarIndex);
     T *m = GetDeviceAddress<T>(inputs, kMIndex);
     T *v = GetDeviceAddress<T>(inputs, kVIndex);
-    T *learning_rate = GetDeviceAddress<T>(inputs, kLearningRateIndex);
+    float *learning_rate = GetDeviceAddress<float>(inputs, kLearningRateIndex);
     float *beta1 = GetDeviceAddress<float>(inputs, kBeta1Index);
     float *beta2 = GetDeviceAddress<float>(inputs, kBeta2Index);
     float *epsilon = GetDeviceAddress<float>(inputs, kEpsilonIndex);
-    T *decay = GetDeviceAddress<T>(inputs, kWeightDecayIndex);
+    float *decay = GetDeviceAddress<float>(inputs, kWeightDecayIndex);
     int32_t *global_step = GetDeviceAddress<int32_t>(inputs, kGlobalStepIndex);
     T *gradient = GetDeviceAddress<T>(inputs, kGradIndex);
-    bool *decay_flag = GetDeviceAddress<bool>(inputs, kDecayFlagIndex);
     float *update = GetDeviceAddress<float>(workspaces, kUpdateIndex);
     float *var_float = GetDeviceAddress<float>(workspaces, kVarFloatIndex);
     float *grad_float = GetDeviceAddress<float>(workspaces, kGradFloatIndex);
     float *g_hat_var = GetDeviceAddress<float>(workspaces, kGHatValIndex);
 
     ApplyLambEraly(inputs[0]->size / sizeof(T), variable, m, v, beta1, beta2, epsilon, decay, global_step, gradient,
-                   decay_flag, update, var_float, grad_float, g_hat_var, reinterpret_cast<cudaStream_t>(stream_ptr));
+                   update, var_float, grad_float, g_hat_var, reinterpret_cast<cudaStream_t>(stream_ptr));
 
     float trust_ratio{0};
     CalcTrustRatio(workspaces, var_float, grad_float, g_hat_var, stream_ptr, &trust_ratio);
@@ -176,7 +174,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     input_size_list_.push_back(decay_size_);
     input_size_list_.push_back(global_step_size_);
     input_size_list_.push_back(gradient_size_);
-    input_size_list_.push_back(decay_flag_size_);
     workspace_size_list_.push_back(update_size_);
     workspace_size_list_.push_back(var_float_size_);
     workspace_size_list_.push_back(grad_float_size_);
@@ -253,7 +250,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     decay_size_ = sizeof(T);
     global_step_size_ = sizeof(int32_t);
     gradient_size_ = sizeof(T);
-    decay_flag_size_ = sizeof(bool);
     update_size_ = sizeof(float);
     var_float_size_ = sizeof(float);
     grad_float_size_ = sizeof(float);
@@ -386,7 +382,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
   size_t decay_size_{0};
   size_t global_step_size_{0};
   size_t gradient_size_{0};
-  size_t decay_flag_size_{0};
   size_t update_size_{0};
   size_t var_float_size_{0};
   size_t grad_float_size_{0};
