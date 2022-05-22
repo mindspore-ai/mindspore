@@ -218,6 +218,9 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
   void SetPad3D(const CNodePtr &kernel_node) {
+    const int kPadListSize = 6;
+    const int kDims = 3;
+    const int kPadScale = 2;
     auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
     pad_mode_ = GetValue<std::string>(prim->GetAttr("pad_mode"));
@@ -255,14 +258,23 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       paddingA[0] = pad_front_;
       paddingA[1] = pad_top_;
       paddingA[2] = pad_left_;
-    } else {
+    } else if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
       pad_depth_ = 0;
       pad_height_ = 0;
       pad_width_ = 0;
+    } else {
+      const std::vector<int64_t> &pad_list = GetValue<std::vector<int64_t>>(prim->GetAttr("pad_list"));
+      if (pad_list.size() != kPadListSize) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad_list' must be " << kPadListSize
+                          << ", but got " << pad_list.size();
+      }
+      for (size_t idx = 0; idx < kDims; idx++) {
+        paddingA[idx] = pad_list[idx * kPadScale];
+      }
     }
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetPoolingNdDescriptor(pooling_descriptor_, pooling_mode_, CUDNN_NOT_PROPAGATE_NAN,
-                                                            3, windowDimA, paddingA, strideA),
+                                                            kDims, windowDimA, paddingA, strideA),
                                 "cudnnSetPoolingNdDescriptor failed");
   }
 
