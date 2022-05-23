@@ -137,12 +137,12 @@ class LiteModel : public Model {
       auto src_prim_type = src_prim->value_type();
       unsigned char *dst_prim = nullptr;
       if (src_prim_type == schema::PrimitiveType_GenOP) {
-        if (i >= this->all_nodes_stat_.size() || i >= this->all_prims_type_.size()) {
+        if (i >= this->graph_.all_nodes_stat_.size() || i >= this->graph_.all_prims_type_.size()) {
           delete node;
           return false;
         }
-        auto src_node_stat = this->all_nodes_stat_[i];
-        auto dst_prim_type = this->all_prims_type_[i];
+        auto src_node_stat = this->graph_.all_nodes_stat_[i];
+        auto dst_prim_type = this->graph_.all_prims_type_[i];
         auto ret = DeObfuscatePrimitive(src_prim, src_node_stat, &dst_prim, schema::PrimitiveType(dst_prim_type));
         if (!ret) {
           MS_LOG(ERROR) << "Deobfuscate primitive failed!";
@@ -153,7 +153,7 @@ class LiteModel : public Model {
           this->graph_.all_nodes_.push_back(node);
           continue;
         }
-        this->deobf_prims_.push_back(dst_prim);
+        this->graph_.deobf_prims_.push_back(dst_prim);
         src_prim = reinterpret_cast<const schema::Primitive *>(flatbuffers::GetRoot<schema::Primitive>(dst_prim));
       }
       node->primitive_ = const_cast<schema::Primitive *>(src_prim);
