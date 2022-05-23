@@ -244,25 +244,22 @@ class Addcdiv(Primitive):
         y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
 
     Inputs:
-        - **input_data** (Tensor) - The tensor to be added, with data type float16 and float32.
-        - **x1** (Tensor) - The numerator tensor, with data type float16 and float32.
-        - **x2** (Tensor) - The denominator tensor, with data type float16 and float32.
-        - **value** (Tensor) - The multiplier for tensor x1/x2, with data type float16, float32.
+        - **input_data** (Tensor) - The tensor to be added.
+        - **x1** (Tensor) - The numerator tensor.
+        - **x2** (Tensor) - The denominator tensor.
+        - **value** (Tensor) - The multiplier for tensor x1/x2.
 
     Outputs:
         Tensor y, has the same shape and dtype as x1/x2.
 
     Raises:
         TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
-        TypeError: If dtype of `input_data` is not one of: float32, float16.
-        TypeError: If dtype of `x1` or `x2` is not one of: float32, float16.
-        TypeError: If dtype of `value` is not one of: float32, float16.
         ValueError: If `x1` could not be broadcast to a tensor with shape of `x2`.
         ValueError: If `value` could not be broadcast to tensors with shapes of `x1/x2`.
         ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1/x2)`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_data = Tensor(np.array([1, 1, 1, 1]), mindspore.float32)

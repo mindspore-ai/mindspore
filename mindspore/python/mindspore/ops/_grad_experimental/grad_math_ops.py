@@ -164,10 +164,28 @@ def get_bprop_index_addcdiv(self):
     neg_op = P.Neg()
 
     def bprop(input_data, x1, x2, value, out, dout):
-        dx1 = mul_op(dout, div_op(value, x2))
-        dx2 = neg_op(mul_op(mul_op(mul_op(x1, value), pow_op(x2, -2)), dout))
-        dvalue = mul_op(dout, div_op(x1, x2))
-        return dout, dx1, dx2, dvalue
+        dinput_data = dout
+        if dout.dtype in [mstype.float16, mstype.int64, mstype.float64]:
+            input_data = F.cast(input_data, mstype.float32)
+            x1 = F.cast(x1, mstype.float32)
+            x2 = F.cast(x2, mstype.float32)
+            value = F.cast(value, mstype.float32)
+            dinput_data = F.cast(dinput_data, mstype.float32)
+        inner_out = mul_op(value, div_op(x1, x2)) + input_data
+        dx2 = neg_op(mul_op(mul_op(mul_op(x1, value), pow_op(x2, -2)), dinput_data))
+        dx1 = mul_op(dinput_data, div_op(value, x2))
+        dvalue = mul_op(dinput_data, div_op(x1, x2))
+        _, dinput_data = binop_grad_common(inner_out, input_data, dinput_data, dinput_data)
+        _, dx1 = binop_grad_common(inner_out, x1, dinput_data, dx1)
+        _, dx2 = binop_grad_common(inner_out, x2, dinput_data, dx2)
+        _, dvalue = binop_grad_common(inner_out, value, dinput_data, dvalue)
+        if dout.dtype in [mstype.float16, mstype.int64, mstype.float64]:
+            dinput_data = F.cast(dinput_data, dout.dtype)
+            dx1 = F.cast(dx1, dout.dtype)
+            dx2 = F.cast(dx2, dout.dtype)
+            dvalue = F.cast(dvalue, dout.dtype)
+
+        return dinput_data, dx1, dx2, dvalue
 
     return bprop
 
