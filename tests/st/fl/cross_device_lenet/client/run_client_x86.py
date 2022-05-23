@@ -252,11 +252,10 @@ for i in range(client_num):
     cmd_client += "mkdir ${execute_path}/client_" + str(i) + "/ &&"
     cmd_client += "cd ${execute_path}/client_" + str(i) + "/ || exit &&"
 
-    jar_dir_path = os.path.abspath(os.path.dirname(jarPath))
-    case_dir_path = os.path.abspath(os.path.dirname(case_jarPath))
-    model_path = "--module-path=" + jar_dir_path + ":" + case_dir_path
-    cmd_client += "java " + model_path + " -jar "
-    cmd_client += jarPath + " "
+    MAIN_CLASS_NAME = "com.mindspore.flclient.SyncFLJob"
+    java_class_path = "-cp " + case_jarPath + ":" + jarPath
+    cmd_client += "java " + java_class_path + " "
+    cmd_client += MAIN_CLASS_NAME + " "
     cmd_client += train_path + " "
     cmd_client += eval_path + " "
     cmd_client += infer_path + " "
