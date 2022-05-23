@@ -76,3 +76,18 @@ def test_gather_nd_dyn_ascend():
     dyn_case()
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     dyn_case()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gather_nd_dyn_gpu():
+    """
+    Feature: test GatherNd dynamic shape on GPU.
+    Description: inputs is dynamic shape.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    dyn_case()
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    dyn_case()

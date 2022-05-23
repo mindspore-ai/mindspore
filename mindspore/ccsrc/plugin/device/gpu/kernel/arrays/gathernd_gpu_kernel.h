@@ -123,6 +123,20 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
+  void ResetResource() noexcept override {
+    ResetSizeLists();
+    is_null_input_ = false;
+    memcpy_flag_ = false;
+    input_shapes_.clear();
+    indices_shapes_.clear();
+    output_shapes_.clear();
+    dims_.clear();
+    batch_indices_.clear();
+    batch_strides_.clear();
+    dev_batch_indices_ = nullptr;
+    dev_batch_strides_ = nullptr;
+  }
+
  protected:
   void InitSizeLists() override {
     size_t size = common::AnfAlgo::TensorSizeInByte<T>(input_shapes_);
