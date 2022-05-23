@@ -23,7 +23,9 @@
 
 #define MS_F32X4_GETI(src, i) src[i]
 #define MS_FLOAT32X4 float32x4_t
+#define MS_FLOAT128_F32 float32x4_t
 #define MS_INT32X4 int32x4_t
+#define MS_INT128_EPI32 int32x4_t
 #define MS_UINT32X4 uint32x4_t
 #define MS_MASK128_TYPE MS_UINT32X4
 #define MS_LDQ_F32 vld1q_f32
@@ -221,6 +223,8 @@ static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {
   res = MS_BLENDQ_F32(res, neg, down_mask);
   return res;
 }
+
+#define MS_TANH128_F32 MS_TANHX4_F32
 
 static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 dst;

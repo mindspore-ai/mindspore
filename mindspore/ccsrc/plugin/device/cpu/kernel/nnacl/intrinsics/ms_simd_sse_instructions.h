@@ -27,7 +27,9 @@
 #endif
 
 #define MS_FLOAT32X4 __m128
+#define MS_FLOAT128_F32 __m128
 #define MS_INT32X4 __m128i
+#define MS_INT128_EPI32 __m128i
 #define MS_MASK128_TYPE MS_FLOAT32X4
 #define MS_LDQ_F32 _mm_loadu_ps
 #define MS_LD128_F32 _mm_loadu_ps
@@ -210,6 +212,8 @@ static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {
     data2);
   return MS_MINQ_F32(MS_MAXQ_F32(MS_DIVQ_F32(a, b), neg), pos);
 }
+
+#define MS_TANH128_F32 MS_TANHX4_F32
 
 static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 dst;

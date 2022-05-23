@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,173 @@
 #ifdef ENABLE_ARM
 #include "nnacl/intrinsics/ms_simd_neon_instructions.h"
 #endif
+
+#define MS_SIMD_AVX512_INSTRUCTION(instruction, suffix) instruction##512##suffix
+#define MS_SIMD_AVX_INSTRUCTION(instruction, suffix) instruction##256##suffix
+#define MS_SIMD_SSE_INSTRUCTION(instruction, suffix) instruction##128##suffix
+#define MS_SIMD_NEON_INSTRUCTION(instruction, suffix) instruction##128##suffix
+
+#define MS_SIMD_INSTRUCTION_F32(instruction) MS_SIMD_INSTRUCTION(instruction, _F32)
+#define MS_SIMD_INSTRUCTION_EPI32(instruction) MS_SIMD_INSTRUCTION(instruction, _EPI32)
+
+// define (float/int) data
+#define SIMD_F32 MS_SIMD_INSTRUCTION_F32(MS_FLOAT)
+#define SIMD_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_INT)
+#define SIMD_MASK MS_SIMD_INSTRUCTION(MS_MASK, _TYPE)
+
+// move (float/int) data
+#define SIMD_MOV_F32 MS_SIMD_INSTRUCTION_F32(MS_MOV)
+#define SIMD_MOV_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_MOV)
+
+// load (float/int) data
+#define SIMD_LD_F32 MS_SIMD_INSTRUCTION_F32(MS_LD)
+#define SIMD_LD_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_LD)
+
+// load 4 (float/int) data
+#define SIMD_LDX4_F32 MS_SIMD_INSTRUCTION_F32(MS_LDX4)
+#define SIMD_LDX4_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_LDX4)
+
+// stored (float/int) data
+#define SIMD_ST_F32 MS_SIMD_INSTRUCTION_F32(MS_ST)
+#define SIMD_ST_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_ST)
+
+// add (float/int) op
+#define SIMD_ADD_F32 MS_SIMD_INSTRUCTION_F32(MS_ADD)
+#define SIMD_ADD_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_ADD)
+#define SIMD_ADD_N_F32(val1, val2) MS_EXPAND(SIMD_ADD_F32(val1, SIMD_MOV_F32(val2)))
+#define SIMD_ADD_N_EPI32(val1, val2) MS_EXPAND(SIMD_ADD_EPI32(val1, SIMD_MOV_EPI32(val2)))
+
+// sub (float/int) op
+#define SIMD_SUB_F32 MS_SIMD_INSTRUCTION_F32(MS_SUB)
+#define SIMD_SUB_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_SUB)
+#define SIMD_SUB_N_F32(val1, val2) MS_EXPAND(SIMD_SUB_F32(val1, SIMD_MOV_F32(val2)))
+#define SIMD_SUB_N_EPI32(val1, val2) MS_EXPAND(SIMD_SUB_EPI32(val1, SIMD_MOV_EPI32(val2)))
+
+// div (float/int) op
+#define SIMD_DIV_F32 MS_SIMD_INSTRUCTION_F32(MS_DIV)
+#define SIMD_DIV_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_DIV)
+#define SIMD_DIV_N_F32(val1, val2) MS_EXPAND(SIMD_DIV_F32(val1, SIMD_MOV_F32(val2)))
+#define SIMD_DIV_N_EPI32(val1, val2) MS_EXPAND(SIMD_DIV_EPI32(val1, SIMD_MOV_EPI32(val2)))
+
+// sqrt (float) op
+#define SIMD_SQRT_F32 MS_SIMD_INSTRUCTION_F32(MS_SQRT)
+
+// rsqrt (float) op
+#define SIMD_RSQRT_F32 MS_SIMD_INSTRUCTION_F32(MS_RSQRT)
+
+// log (float) op
+#define SIMD_LOG_F32 MS_SIMD_INSTRUCTION_F32(MS_LOG)
+
+// cos (float) op
+#define SIMD_COS_F32 MS_SIMD_INSTRUCTION_F32(MS_COS)
+
+// sin (float) op
+#define SIMD_SIN_F32 MS_SIMD_INSTRUCTION_F32(MS_SIN)
+
+// erf (float) op
+#define SIMD_ERF_F32 MS_SIMD_INSTRUCTION_F32(MS_ERF)
+
+// log (float) op
+#define SIMD_ABS_F32 MS_SIMD_INSTRUCTION_F32(MS_ABS)
+
+// round (float) op
+#define SIMD_ROUND_F32 MS_SIMD_INSTRUCTION_F32(MS_ROUND)
+
+// ceil (float) op
+#define SIMD_CEIL_F32 MS_SIMD_INSTRUCTION_F32(MS_CEIL)
+
+// floor (float) op
+#define SIMD_FLOOR_F32 MS_SIMD_INSTRUCTION_F32(MS_FLOOR)
+
+// tanh (float) op
+#define SIMD_TANH_F32 MS_SIMD_INSTRUCTION_F32(MS_TANH)
+
+// min (float/int) op
+#define SIMD_MIN_F32 MS_SIMD_INSTRUCTION_F32(MS_MIN)
+#define SIMD_MIN_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_MIN)
+#define SIMD_MIN_N_F32(val1, val2) MS_EXPAND(SIMD_MIN_F32(val1, SIMD_MOV_F32(val2)))
+#define SIMD_MIN_N_EPI32(val1, val2) MS_EXPAND(SIMD_MIN_EPI32(val1, SIMD_MOV_EPI32(val2)))
+
+// max (float/int) op
+#define SIMD_MAX_F32 MS_SIMD_INSTRUCTION_F32(MS_MAX)
+#define SIMD_MAX_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_MAX)
+#define SIMD_MAX_N_F32(val1, val2) MS_EXPAND(SIMD_MAX_F32(val1, SIMD_MOV_F32(val2)))
+#define SIMD_MAX_N_EPI32(val1, val2) MS_EXPAND(SIMD_MAX_EPI32(val1, SIMD_MOV_EPI32(val2)))
+
+// get max (float/int) op
+#define SIMD_GET_MAX_F32 MS_SIMD_INSTRUCTION_F32(MS_GET_MAX)
+#define SIMD_GET_MAX_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_GET_MAX)
+
+// get max (float/int) op
+#define SIMD_GET_SUM_F32 MS_SIMD_INSTRUCTION_F32(MS_GET_SUM)
+
+// clamp (float/int) op
+#define SIMD_CLAMP_F32(val, min_val, max_val) SIMD_MIN_F32(SIMD_MAX_F32(val, min_val), max_val)
+#define SIMD_CLAMP_EPI32(val, min_val, max_val) SIMD_MIN_EPI32(SIMD_MAX_EPI32(val, min_val), max_val)
+#define SIMD_CLAMP_N_F32(val, min_val, max_val) \
+  SIMD_MIN_F32(SIMD_MAX_F32(val, SIMD_MOV_F32(min_val)), SIMD_MOV_F32(max_val))
+#define SIMD_CLAMP_N_EPI32(val, min_val, max_val) \
+  SIMD_MIN_EPI32(SIMD_MAX_EPI32(val, SIMD_MOV_EPI32(min_val)), SIMD_MOV_EPI32(max_val))
+
+// mul (float/int) op
+#define SIMD_MUL_F32 MS_SIMD_INSTRUCTION_F32(MS_MUL)
+#define SIMD_MUL_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_MUL)
+#define SIMD_MUL_N_F32(val1, val2) MS_EXPAND(SIMD_MUL_F32(val1, SIMD_MOV_F32(val2)))
+#define SIMD_MUL_N_EPI32(val1, val2) MS_EXPAND(SIMD_MUL_EPI32(val1, SIMD_MOV_EPI32(val2)))
+
+// fma (float/int) op
+#define SIMD_FMADD_F32 MS_SIMD_INSTRUCTION_F32(MS_FMADD)
+
+// fms (float/int) op
+#define SIMD_FMSUB_F32 MS_SIMD_INSTRUCTION_F32(MS_FMSUB)
+
+// square (float/int) op
+#define SIMD_MUL_SQUARE_F32 MS_SIMD_INSTRUCTION_F32(MS_MUL_SQUARE)
+#define SIMD_MUL_SQUARE_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_MUL_SQUARE)
+
+// exp (float) op
+#define SIMD_EXP_ST_F32 MS_SIMD_INSTRUCTION(simd_exp, )
+#define SIMD_EXP_F32 MS_SIMD_INSTRUCTION(simd_exp, _f32)
+
+#define SIMD_CMPLE_F32 MS_SIMD_INSTRUCTION_F32(MS_CMPLE)
+#define SIMD_CMPGT_F32 MS_SIMD_INSTRUCTION_F32(MS_CMPGT)
+#define SIMD_BLEND_F32 MS_SIMD_INSTRUCTION_F32(MS_BLEND)
+
+// enable avx512
+#if defined(ENABLE_AVX512)
+#define SIMD_RUN_AVX512(function, index, ...) index = function##AVX512(index, __VA_ARGS__)
+#else
+#define SIMD_RUN_AVX512(function, index, ...)
+#endif
+
+// enable avx256
+#if defined(ENABLE_AVX)
+#define SIMD_RUN_AVX(function, index, ...) index = function##AVX(index, __VA_ARGS__)
+#else
+#define SIMD_RUN_AVX(function, index, ...)
+#endif
+
+// enable sse
+#if defined(ENABLE_SSE)
+#define SIMD_RUN_SSE(function, index, ...) index = function##SSE(index, __VA_ARGS__)
+#else
+#define SIMD_RUN_SSE(function, index, ...)
+#endif
+
+// enable neon
+#if defined(ENABLE_NEON)
+#define SIMD_RUN_NEON(function, index, ...) index = function##NEON(index, __VA_ARGS__)
+#else
+#define SIMD_RUN_NEON(function, index, ...)
+#endif
+
+#define SIMD_RUN_NO_SCALAR(function, index, ...)   \
+  do {                                             \
+    SIMD_RUN_AVX512(function, index, __VA_ARGS__); \
+    SIMD_RUN_AVX(function, index, __VA_ARGS__);    \
+    SIMD_RUN_SSE(function, index, __VA_ARGS__);    \
+    SIMD_RUN_NEON(function, index, __VA_ARGS__);   \
+  } while (0)
 
 #define SIMD512_BLOCK16 32  // SIMD : 512 = 16 x 32
 #define SIMD256_BLOCK16 16  // SIMD : 256 = 16 x 16
