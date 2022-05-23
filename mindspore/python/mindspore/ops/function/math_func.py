@@ -15,6 +15,8 @@
 
 """Defines math operators with functional form."""
 
+import numpy as np
+from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from ..operations.math_ops import (BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
@@ -102,6 +104,7 @@ lerp_ = P.Lerp()
 tensor_round_ = P.Round()
 matrix_determinant_ = P.MatrixDeterminant()
 log_matrix_determinant_ = P.LogMatrixDeterminant()
+exp2_ = P.Pow()
 
 
 #####################################
@@ -222,6 +225,34 @@ def add(x, y):
         Float32
     """
     return tensor_add(x, y)
+
+
+def exp2(x):
+    """
+    Computes the base two exponential function of input.
+
+    Calculates ``2^x``.
+
+    Args:
+        x (Tensor): Input tensor.
+
+    Returns:
+        Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+     Examples:
+        >>> x = Tensor(np.array([2, 3, 4]), mindspore.float32)
+        >>> output = ops.exp2(x)
+        >>> print(output)
+        [ 4.  8. 16.]
+    """
+
+    tensor_2 = Tensor(np.array(2.0).astype(np.float32))
+    if x.dtype == mstype.float16:
+        tensor_2 = Tensor(np.array(2.0).astype(np.float16))
+    return exp2_(tensor_2, x)
 
 
 def neg(x):
@@ -2586,6 +2617,7 @@ __all__ = [
     'bessel_i1',
     'bessel_i1e',
     'bessel_k1',
-    'bessel_k1e'
+    'bessel_k1e',
+    'exp2'
 ]
 __all__.sort()
