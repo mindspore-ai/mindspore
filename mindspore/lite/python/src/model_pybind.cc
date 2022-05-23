@@ -98,19 +98,10 @@ void ModelPyBind(const py::module &m) {
 
   py::class_<ModelParallelRunner, std::shared_ptr<ModelParallelRunner>>(m, "ModelParallelRunnerBind")
     .def(py::init<>())
-    .def("init",
-         [](ModelParallelRunner &model, const std::string &model_path,
-            const std::shared_ptr<RunnerConfig> &runner_config) {
-           auto ret = model.Init(model_path, runner_config);
-           return static_cast<uint32_t>(ret.StatusCode());
-         })
+    .def("init", &ModelParallelRunner::Init)
     .def("get_inputs", &ModelParallelRunner::GetInputs)
     .def("get_outputs", &ModelParallelRunner::GetOutputs)
-    .def("predict", [](ModelParallelRunner &model, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                       const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr) {
-      auto ret = model.Predict(inputs, outputs, before, after);
-      return static_cast<uint32_t>(ret.StatusCode());
-    });
+    .def("predict", &ModelParallelRunner::Predict);
 #endif
 }
 }  // namespace mindspore::lite
