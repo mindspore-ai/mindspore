@@ -57,7 +57,7 @@
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
 #include "frontend/optimizer/irpass/expand_dump_flag.h"
 #include "frontend/optimizer/irpass/ge/batchnorm_transform.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
 #include "ps/util.h"
 #include "ps/ps_context.h"
 #endif
@@ -246,7 +246,7 @@ namespace {
 bool ReAutoMonadWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr &) { return ReAutoMonad(root); }
 
 bool parallel_mode() {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return false;
   }
@@ -680,7 +680,7 @@ bool CommOpAddAttrs(const ResourcePtr &resource) {
 
 bool AddCacheEmbeddingPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
   if (ps::PSContext::instance()->is_ps_mode()) {
     return true;
   }

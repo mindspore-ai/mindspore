@@ -24,10 +24,7 @@
 #include "utils/hash_map.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "ir/tensor.h"
-#include "include/transform/graph_ir/convert.h"
-#include "include/transform/graph_ir/df_graph_manager.h"
-#include "include/transform/graph_ir/graph_builder.h"
-#include "include/transform/graph_ir/graph_runner.h"
+#include "include/transform/graph_ir/utils.h"
 #include "include/common/debug/draw.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/convert_utils_py.h"
@@ -42,19 +39,16 @@ using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
-using mindspore::transform::DfGraphConvertor;
-using mindspore::transform::DfGraphManager;
 using mindspore::transform::GeTensorPtr;
 using mindspore::transform::MeTensorPtr;
 using mindspore::transform::Status;
-using mindspore::transform::TransformUtil;
 
 void DoExecNonInputGraph(const std::string &phase) {
   std::vector<GeTensorPtr> ge_tensors;
   std::vector<GeTensorPtr> ge_outputs;
   transform::RunOptions run_options;
   run_options.name = phase;
-  auto graph_runner = DfGraphManager::GetInstance().GetGraphRunner();
+  auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(ERROR) << "Can not found GraphRunner";
     return;
@@ -63,7 +57,7 @@ void DoExecNonInputGraph(const std::string &phase) {
   {
     // Release GIL before calling into (potentially long-running) C++ code
     py::gil_scoped_release release;
-    Status ret = graph_runner->RunGraph(run_options, ge_tensors, &ge_outputs);
+    Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
     if (ret != Status::SUCCESS) {
       MS_LOG(ERROR) << "Exec graph:" << run_options.name << " failed";
       return;
@@ -76,7 +70,7 @@ void SetGeOption(const std::map<std::string, std::string> &options) {
 }
 
 Status CreateSessionAndGraphRunner(bool is_training = true) {
-  std::shared_ptr<ge::Session> sess = DfGraphManager::GetInstance().GetGeSession();
+  std::shared_ptr<ge::Session> sess = transform::GetGeSession();
   if (sess == nullptr) {
     transform::SessionOptions options;
     if (is_training) {
@@ -89,14 +83,14 @@ Status CreateSessionAndGraphRunner(bool is_training = true) {
     }
 
     options["ge.enablePrintOpPass"] = "0";
-    sess = transform::GraphRunner::NewSession(options);
-    DfGraphManager::GetInstance().SetGeSession(sess);
+    sess = transform::NewSession(options);
+    transform::SetGeSession(sess);
   }
 
   transform::GraphRunnerOptions options;
   options.sess_ptr = sess;
-  auto graph_runner = std::make_shared<transform::GraphRunner>(options);
-  DfGraphManager::GetInstance().SetGraphRunner(graph_runner);
+  auto graph_runner = transform::NewGraphRunner(options);
+  transform::SetGraphRunner(graph_runner);
   return Status::SUCCESS;
 }
 
@@ -104,9 +98,8 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, const std::string &phase) {
   std::vector<int64_t> ge_types;
-  (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types), [](const TypePtr &i) -> int64_t {
-    return transform::TransformUtil::ConvertDataType(i->type_id());
-  });
+  (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types),
+                       [](const TypePtr &i) -> int64_t { return transform::ConvertDataType(i->type_id()); });
 
   ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
   ConfigManager::GetInstance().set_iter_num(queue_name, size);
@@ -115,7 +108,7 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
   DatasetGraphParam param(queue_name, size, batch_size, ge_types, shapes, input_indexes);
   ConfigManager::GetInstance().set_dataset_param(param);
 
-  if (transform::BuildDatasetGraph(param, phase) != transform::SUCCESS) {
+  if (transform::CompileDatasetGraph(param, phase) != transform::SUCCESS) {
     MS_LOG(ERROR) << "Build dateset graph failed.";
     return false;
   }
@@ -174,19 +167,19 @@ void ConvertObjectToTensors(const py::dict &dict, TensorOrderMap *const tensors)
 bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::dict &init_params,
                 const std::string &phase, const py::object &broadcast_params) {
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
-  DfGraphConvertor converter(anf_graph);
+  auto converter = transform::NewConverter(anf_graph);
 
   size_t pos = phase.find('.');
   std::string net_id = ((pos == std::string::npos || pos == phase.size() - 1) ? phase : phase.substr(pos + 1));
   std::string phase_prefix = phase.substr(0, pos);
   if (phase_prefix == "export") {
     MS_LOG(INFO) << "Set DfGraphConvertor training : false";
-    converter.set_training(false);
+    transform::SetTraining(converter, false);
   }
 
   TensorOrderMap init_tensors{};
   ConvertObjectToTensors(init_params, &init_tensors);
-  (void)converter.ConvertAllNode().InitParam(init_tensors).BuildGraph();
+  transform::BuildGraph(converter, init_tensors);
 
   if (!broadcast_params.is_none()) {
     if (!py::isinstance<py::dict>(broadcast_params)) {
@@ -195,41 +188,45 @@ bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::di
     }
     py::dict broadcast = broadcast_params.cast<py::dict>();
     if (broadcast.empty()) {
-      (void)converter.GenerateBroadcastGraph(init_tensors);
+      transform::GenerateBroadcastGraph(converter, init_tensors);
     } else {
       TensorOrderMap broadcast_tensors{};
       ConvertObjectToTensors(broadcast, &broadcast_tensors);
-      (void)converter.GenerateBroadcastGraph(broadcast_tensors);
+      transform::GenerateBroadcastGraph(converter, broadcast_tensors);
     }
     MS_LOG(INFO) << "Generate broadcast graph with params and broadcast_empty is " << broadcast.empty();
   }
-
-  (void)converter.GenerateCheckpointGraph();
-  if (converter.ErrCode() != 0) {
-    DfGraphManager::GetInstance().ClearGraph();
-    MS_LOG(ERROR) << "Convert df graph failed, err:" << converter.ErrCode();
+  transform::GenerateCheckpointGraph(converter);
+  auto err_code = transform::ErrCode(converter);
+  if (err_code != 0) {
+    transform::ClearGraph();
+    MS_LOG(ERROR) << "Convert df graph failed, err:" << err_code;
     return false;
   }
 #ifdef ENABLE_DUMP_IR
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
-    converter.DrawComputeGraph(GetSaveGraphsPathName("ge_graph.dot"));                      // for debug
-    converter.DrawInitGraph(GetSaveGraphsPathName("init_graph.dot"));                       // for debug
-    converter.DrawSaveCheckpointGraph(GetSaveGraphsPathName("save_checkpoint_graph.dot"));  // for debug
+    // for debug
+    transform::DrawComputeGraph(converter, GetSaveGraphsPathName("ge_graph.dot"));
+    // for debug
+    transform::DrawInitGraph(converter, GetSaveGraphsPathName("init_graph.dot"));
+    // for debug
+    transform::DrawSaveCheckpointGraph(converter, GetSaveGraphsPathName("save_checkpoint_graph.dot"));
   }
 #endif
   std::string init_graph = "init_subgraph." + net_id;
   std::string checkpoint_name = "save." + net_id;
   if (phase.find("train") != std::string::npos) {
-    (void)DfGraphManager::GetInstance().AddGraph(phase, converter.GetComputeGraph(), {{"ge.exec.variable_acc", "1"}});
+    (void)transform::AddGraph(phase, transform::GetComputeGraph(converter), {{"ge.exec.variable_acc", "1"}});
   } else {
-    (void)DfGraphManager::GetInstance().AddGraph(phase, converter.GetComputeGraph());
+    (void)transform::AddGraph(phase, transform::GetComputeGraph(converter));
   }
-  (void)DfGraphManager::GetInstance().AddGraph(init_graph, converter.GetInitGraph());
-  (void)DfGraphManager::GetInstance().AddGraph(BROADCAST_GRAPH_NAME, converter.GetBroadcastGraph());
 
-  Status ret = DfGraphManager::GetInstance().AddGraph(checkpoint_name, converter.GetSaveCheckpointGraph());
+  (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
+  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
+
+  Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));
   if (ret == Status::SUCCESS) {
-    DfGraphManager::GetInstance().SetAnfGraph(checkpoint_name, anf_graph);
+    transform::SetAnfGraph(checkpoint_name, anf_graph);
   }
 
   return true;
@@ -281,7 +278,7 @@ void RunGEInitGraph(const py::dict &init_params, const std::string &phase) {
   (void)std::transform(inputs_with_name.begin(), inputs_with_name.end(), std::back_inserter(inputs),
                        [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
 
-  std::vector<GeTensorPtr> ge_tensors = TransformUtil::ConvertInputTensors(inputs, kOpFormat_NCHW);
+  std::vector<GeTensorPtr> ge_tensors = transform::ConvertInputTensors(inputs, kOpFormat_NCHW);
   if (ge_tensors.size() != inputs.size()) {
     MS_LOG(ERROR) << "Args convert to ge tensor error.";
     return;
@@ -292,18 +289,18 @@ void RunGEInitGraph(const py::dict &init_params, const std::string &phase) {
   transform::RunOptions run_options;
 
   run_options.name = phase;
-  if (DfGraphManager::GetInstance().GetGraphByName(phase) == nullptr) {
+  if (transform::GetGraphByName(phase) == nullptr) {
     MS_LOG(WARNING) << "Can not find " << phase << " sub graph, don't need data init subgraph in INFER mode.";
     return;
   }
-  auto graph_runner = DfGraphManager::GetInstance().GetGraphRunner();
+  auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
   }
   {
     // Release GIL before calling into (potentially long-running) C++ code
     py::gil_scoped_release release;
-    Status ret = graph_runner->RunGraph(run_options, ge_tensors, &ge_outputs);
+    Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
     if (ret != Status::SUCCESS) {
       MS_LOG(EXCEPTION) << "Exec " << phase << " graph failed.";
     }
@@ -311,9 +308,9 @@ void RunGEInitGraph(const py::dict &init_params, const std::string &phase) {
     MS_LOG(INFO) << "Exec " << phase << " graph success.";
 
     if ((ConfigManager::GetInstance().parallel_strategy() == ParallelStrategy::DISTRIBUTION) &&
-        (DfGraphManager::GetInstance().GetGraphByName(BROADCAST_GRAPH_NAME) != nullptr)) {
+        (transform::GetGraphByName(BROADCAST_GRAPH_NAME) != nullptr)) {
       run_options.name = BROADCAST_GRAPH_NAME;
-      ret = graph_runner->RunGraph(run_options, ge_tensors, &ge_outputs);
+      ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
       if (ret != Status::SUCCESS) {
         MS_LOG(EXCEPTION) << "Exec BROADCAST_GRAPH_NAME failed.";
       }
@@ -423,14 +420,13 @@ void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me
 
 std::shared_ptr<py::object> DoExecGraphAsync(const FuncGraphPtr &graph, const std::vector<MeTensorPtr> &inputs,
                                              const std::string &phase) {
-  std::vector<GeTensorPtr> ge_tensors = TransformUtil::ConvertInputTensors(inputs, kOpFormat_NCHW);
+  std::vector<GeTensorPtr> ge_tensors = transform::ConvertInputTensors(inputs, kOpFormat_NCHW);
   if (ge_tensors.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Convert me args to ge tensor error.";
   }
-
   transform::RunOptions run_options;
   run_options.name = phase;
-  auto graph_runner = DfGraphManager::GetInstance().GetGraphRunner();
+  auto graph_runner = transform::GetGraphRunner();
   if (graph_runner == nullptr) {
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
   }
@@ -448,7 +444,7 @@ std::shared_ptr<py::object> DoExecGraphAsync(const FuncGraphPtr &graph, const st
     py::gil_scoped_release release;
     MS_LOG(DEBUG) << "Run graph begin, inputs size is: " << inputs.size();
     try {
-      Status ret = graph_runner->RunGraph(run_options, ge_tensors, &me_outputs, me_types);
+      Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &me_outputs, me_types);
       MS_LOG(DEBUG) << "Run graph finish, outputs size is: " << me_outputs.size();
       if (ret != Status::SUCCESS) {
         MS_LOG(ERROR) << "Exec graph failed";
@@ -543,7 +539,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const
 
 void ExportDFGraph(const std::string &file_name, const std::string &phase) {
   MS_LOG(DEBUG) << "Export graph begin.";
-  transform::DfGraphWrapperPtr wrap_ptr = DfGraphManager::GetInstance().GetGraphByName(phase);
+  transform::DfGraphWrapperPtr wrap_ptr = transform::GetGraphByName(phase);
   if (wrap_ptr == nullptr) {
     MS_LOG(ERROR) << "Get graph form DfGraphManager failed!";
     return;

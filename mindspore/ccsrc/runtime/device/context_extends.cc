@@ -31,8 +31,8 @@
 #include "common/util/error_manager/error_manager.h"
 #endif
 #ifdef ENABLE_D
-#include "include/transform/graph_ir/df_graph_manager.h"
 #include "debug/data_dump/dump_json_parser.h"
+#include "include/transform/graph_ir/utils.h"
 #endif
 #include "profiler/device/profiling.h"
 
@@ -45,11 +45,9 @@ namespace {
 constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 const std::vector<std::string> kGeDumpMode = {"all", "input", "output"};
 }  // namespace
-using mindspore::transform::DfGraphManager;
 #endif
 
 constexpr auto kUnknowErrorString = "Unknown error occurred";
-
 #ifndef NO_DLIB
 // Open tdt dataset
 bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
@@ -367,8 +365,7 @@ bool FinalizeGe(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
   if (force || ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) == 0) {
     ms_context_ptr->set_param<uint32_t>(MS_CTX_GE_REF, 0);
     try {
-      DfGraphManager::GetInstance().DeleteGraphRunner();
-      DfGraphManager::GetInstance().DeleteGeSession();
+      transform::ClearGeSessionAndRunner();
     } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Error occurred when deleting GE graph runner and session fail. Error: " << e.what();
     } catch (...) {

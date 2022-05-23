@@ -15,14 +15,12 @@
  */
 #ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CALLBACKS_GE_H_
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CALLBACKS_GE_H_
-
 #ifdef ENABLE_D
 #include <map>
 #include <vector>
 #include <string>
 #include <memory>
 #include "include/transform/graph_ir/types.h"
-#include "include/transform/graph_ir/util.h"
 #include "ir/tensor.h"
 #include "include/common/visible.h"
 

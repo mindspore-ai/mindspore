@@ -29,7 +29,7 @@
 #include "include/common/utils/utils.h"
 #include "frontend/parallel/step_parallel.h"
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
 #include "ps/ps_context.h"
 #include "ps/core/node.h"
 #include "distributed/cluster/cluster_context.h"
@@ -69,7 +69,7 @@ std::string GetCompileCacheDir() {
 }
 
 std::string GetRole() {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   const std::string &server_mode = ps::PSContext::instance()->server_mode();
   if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) &&
       ps::PSContext::instance()->is_server()) {

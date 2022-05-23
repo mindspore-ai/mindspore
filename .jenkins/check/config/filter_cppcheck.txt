@@ -27,6 +27,7 @@
 "mindspore/mindspore/ccsrc/pipeline/jit/static_analysis/auto_monad.cc"                                "containerOutOfBounds"
 "mindspore/mindspore/core/load_mindir/anf_model_parser.cc"                                            "stlIfStrFind"
 "mindspore/mindspore/ccsrc/frontend/optimizer/ad/kpynative.cc"                                        "containerOutOfBounds"
+"mindspore/mindspore/ccsrc/pipeline/jit/action.cc"                                                    "unreadVariable"
 
 # MindData
 "mindspore/mindspore/ccsrc/minddata/dataset/engine/dataset_iterator.cc"                               "useStlAlgorithm"

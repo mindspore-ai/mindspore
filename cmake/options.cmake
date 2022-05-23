@@ -122,6 +122,11 @@ if(ENABLE_TESTCASES OR (NOT ENABLE_D))
     add_compile_definitions(NO_DLIB=1)
 endif()
 
+if(NOT (ENABLE_TESTCASES OR ENABLE_TEST) AND NOT (CMAKE_SYSTEM_NAME MATCHES "Windows" OR
+        CMAKE_SYSTEM_NAME MATCHES "Darwin"))
+    add_compile_definitions(WITH_BACKEND)
+endif()
+
 if(ENABLE_DUMP_IR)
     add_compile_definitions(ENABLE_DUMP_IR)
 endif()

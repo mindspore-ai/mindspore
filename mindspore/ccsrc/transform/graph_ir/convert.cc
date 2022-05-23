@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/transform/graph_ir/convert.h"
+#include "transform/graph_ir/convert.h"
 
 #include <cinttypes>
 #include <algorithm>
@@ -30,16 +30,15 @@
 #include "utils/symbolic.h"
 #include "include/common/utils/config_manager.h"
 #include "include/common/utils/convert_utils.h"
+#include "include/transform/graph_ir/utils.h"
 #include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
-#include "include/transform/graph_ir/op_adapter_map.h"
+#include "transform/graph_ir/op_adapter_map.h"
 #include "ops/state_ops.h"
 #include "ops/array_ops.h"
 #include "ops/elewise_calculation_ops.h"
 #include "ops/math_ops.h"
-#ifdef ENABLE_D
 #include "ops/save_ops.h"
-#endif
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_adapter_desc.h"
 
@@ -97,101 +96,6 @@ std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg, const AnfNodePtr
 }  // namespace
 
 // ---------------implement of DfGraphConvertor-------------
-bool IsCaseNode(const CNodePtr node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->inputs().empty() && node->input(0)->isa<CNode>() &&
-      GetCNodeFuncName(node->input(0)->cast<CNodePtr>()) == "switch_layer") {
-    return true;
-  }
-  return false;
-}
-
-bool IsPartialCNode(const AnfNodePtr node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  if (GetCNodeFuncName(cnode) == prim::kPrimPartial->name()) {
-    return true;
-  }
-  return false;
-}
-
-bool IsPartialSuccNode(const AnfNodePtr node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  if (!cnode->inputs().empty()) {
-    for (size_t i = 0; i < cnode->inputs().size(); i++) {
-      if (IsPartialCNode(cnode->input(i))) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-bool IsWhileNode(const AnfNodePtr &node) {
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  if (!IsPartialSuccNode(node)) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  if (!IsPartialCNode(cnode->input(0))) {
-    return false;
-  }
-  auto partial_node = cnode->input(0);
-  MS_EXCEPTION_IF_NULL(partial_node);
-
-  auto c_partial_node = partial_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(c_partial_node);
-
-  auto graph_node_input = c_partial_node->input(1);
-  MS_EXCEPTION_IF_NULL(graph_node_input);
-  auto graph_node = graph_node_input->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(graph_node);
-  auto graph_node_value = graph_node->value();
-  MS_EXCEPTION_IF_NULL(graph_node_value);
-  auto cond_graph = graph_node_value->cast<FuncGraphPtr>();
-  MS_EXCEPTION_IF_NULL(cond_graph);
-  if (!cond_graph->recursive()) {
-    return false;
-  }
-  const auto &cond_set = cond_graph->nodes();
-  for (auto beg = cond_set.begin(); beg != cond_set.end(); beg++) {
-    if (!((*beg)->isa<CNode>())) {
-      continue;
-    }
-    auto c_beg = (*beg)->cast<CNodePtr>();
-    if (IsPartialSuccNode(c_beg) && c_beg->inputs().size() == kSwitchInputSize &&
-        IsPartialCNode(c_beg->input(kSwitchBodyIndex)) && IsPartialCNode(c_beg->input(kSwitchAfterIndex)) &&
-        GetCNodeFuncName(c_beg) == prim::kPrimSwitch->name()) {
-      auto func_graph = node->func_graph();
-      MS_LOG(DEBUG) << "there is while node: " << node->ToString() << " in graph: " << func_graph->ToString();
-      return true;
-    }
-  }
-  return false;
-}
-
-std::string GetCNodeTargetFuncName(const CNodePtr cnode) {
-  if (IsCaseNode(cnode)) {
-    return string(kNameCase);
-  }
-  if (IsWhileNode(cnode)) {
-    return string(kNameWhile);
-  }
-  auto name = GetCNodeFuncName(cnode);
-  if (name == "switch_layer") {
-    name = "";
-  }
-  return name;
-}
 
 bool IsDynamicShapeNode(const AnfNodePtr node) {
   auto shape = node->Shape();
@@ -205,32 +109,6 @@ bool IsDynamicShapeNode(const AnfNodePtr node) {
     return true;
   }
   return false;
-}
-
-OpAdapterPtr DfGraphConvertor::FindAdapter(const AnfNodePtr node, bool train) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<CNode>()) {
-    auto cnode = node->cast<CNodePtr>();
-
-    std::string name = kNameCustomOp;
-    if (!IsCustomCNode(cnode)) {
-      name = GetCNodeTargetFuncName(cnode);
-    }
-
-    auto it_adpt = OpAdapterMap::get().find(name);
-    if (it_adpt != OpAdapterMap::get().end()) {
-      return it_adpt->second->Get(train);
-    }
-    MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
-  }
-
-  if (node->isa<ValueNode>()) {
-    return OpAdapterMap::get()[kNameConst]->Get(train);
-  }
-  if (node->isa<Parameter>()) {
-    return OpAdapterMap::get()[kNameParam]->Get(train);
-  }
-  return OpAdapterPtr(nullptr);
 }
 
 void DfGraphConvertor::InitLoopVar(std::vector<ge::Operator> *init_input) {
@@ -304,14 +182,6 @@ void DfGraphConvertor::InitLoopVar(std::vector<ge::Operator> *init_input) {
     init_ops_.push_back(assign_one);
     init_ops_.push_back(assign_zero);
   }
-}
-
-OpAdapterPtr DfGraphConvertor::FindAdapter(const std::string &name, bool train) {
-  auto it = OpAdapterMap::get().find(name);
-  if (it != OpAdapterMap::get().end()) {
-    return it->second->Get(train);
-  }
-  MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
 }
 
 void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it) {

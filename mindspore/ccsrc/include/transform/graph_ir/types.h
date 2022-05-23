@@ -50,6 +50,21 @@ using OperatorPtr = std::shared_ptr<ge::Operator>;
 using DfGraph = ge::Graph;
 using DfGraphPtr = std::shared_ptr<DfGraph>;
 using TensorMap = mindspore::HashMap<std::string, std::shared_ptr<MeTensor>>;
+using OptionMap = std::map<std::string, std::string>;
+using TensorOrderMap = std::map<std::string, std::shared_ptr<tensor::Tensor>>;
+
+struct DfGraphWrapper {
+ public:
+  DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr, const OptionMap &options);
+  ~DfGraphWrapper() {}
+
+  std::string name_;
+  int id_;
+  DfGraphPtr graph_ptr_;
+  OptionMap options_ = {};
+};
+
+using DfGraphWrapperPtr = std::shared_ptr<DfGraphWrapper>;
 
 struct OutHandler {
   OperatorPtr op;
@@ -63,6 +78,20 @@ struct OutHandler {
 struct ControlEdge {
   OperatorPtr src_op;
   OperatorPtr dest_op;
+};
+
+using SessionOptions = std::map<std::string, std::string>;
+
+struct GraphRunnerOptions {
+  std::string target{"default_graph_runner"};
+  SessionOptions options;
+  // if sess_ptr is nullptr, GraphRunner will create a new ge session
+  std::shared_ptr<ge::Session> sess_ptr{nullptr};
+};
+
+struct RunOptions {
+  // graph's name
+  std::string name;
 };
 }  // namespace transform
 }  // namespace mindspore

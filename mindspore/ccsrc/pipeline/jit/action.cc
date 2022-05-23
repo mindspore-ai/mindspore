@@ -53,7 +53,7 @@
 #include "backend/graph_compiler/transform.h"
 #include "load_mindir/infer_mindir.h"
 #include "debug/data_dump/dump_json_parser.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
 #include "ps/parameter_server.h"
 #include "ps/scheduler.h"
 #include "ps/worker.h"
@@ -667,7 +667,7 @@ bool OptInlineAction(const ResourcePtr &resource) {
 bool GeOptimizeAction(const ResourcePtr &resource) { return OptimizeAction(resource, kGePasses); }
 
 bool VmOptimizeAction(const ResourcePtr &resource) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   if (ps::PSContext::instance()->is_ps_mode()) {
     (void)kVmPasses.emplace_back(PassItem("server_communication_op_fusion", ps::Util::FuseServerCommOps));
   }
@@ -1093,7 +1093,7 @@ bool ExecuteAction(const ResourcePtr &resource) {
   return true;
 }
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
 bool StartPSWorkerAction(const ResourcePtr &) {
   ps::Worker::GetInstance().Run();
   return true;
@@ -1479,7 +1479,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
     (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
   }
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   (void)actions.emplace_back(std::make_pair("distribtued_split", DistributedSplitAction));
   if (ps::PSContext::instance()->is_worker()) {
     if (distributed::cluster::ClusterContext::instance()->initialized()) {
@@ -1521,7 +1521,7 @@ std::vector<ActionItem> MindIRPipeline() {
   return actions;
 }
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
 std::vector<ActionItem> ServerPipeline(const ResourcePtr &resource) {
   if (resource->EnableCompileCache() && resource->func_graph() != nullptr) {
     return {std::make_pair("server", StartServerAction)};

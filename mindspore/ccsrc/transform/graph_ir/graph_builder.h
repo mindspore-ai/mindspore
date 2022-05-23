@@ -23,12 +23,11 @@
 #include <map>
 #include <utility>
 #include "include/transform/graph_ir/types.h"
-#include "include/transform/graph_ir/convert.h"
-#include "include/common/visible.h"
+#include "transform/graph_ir/convert.h"
 
 namespace mindspore {
 namespace transform {
-COMMON_EXPORT Status BuildDatasetGraph(const DatasetGraphParam &param, const std::string &phase = "dataset");
+Status BuildDatasetGraph(const DatasetGraphParam &param, const std::string &phase = "dataset");
 }  // namespace transform
 }  // namespace mindspore
 

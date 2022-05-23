@@ -26,9 +26,7 @@ namespace mindspore::transform {
 DECLARE_OP_ADAPTER(Print)
 DECLARE_OP_USE_DYN_INPUT(Print)
 
-#ifdef ENABLE_D
 DECLARE_OP_ADAPTER(Assert)
 DECLARE_OP_USE_DYN_INPUT(Assert)
-#endif
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_LOGGING_OPS_DECLARE_H_

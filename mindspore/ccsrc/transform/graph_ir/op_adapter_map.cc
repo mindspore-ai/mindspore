@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/transform/graph_ir/op_adapter_map.h"
+#include "transform/graph_ir/op_adapter_map.h"
 #include <memory>
 #include "graph/operator.h"
 #include "transform/graph_ir/op_adapter_desc.h"

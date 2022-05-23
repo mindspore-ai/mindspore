@@ -23,12 +23,8 @@
 #include <queue>
 #include <string>
 #include <vector>
-
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
-#ifdef ENABLE_D
-#include "include/transform/graph_ir/convert.h"
-#endif
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"

@@ -19,7 +19,8 @@
 #include <string>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "include/transform/graph_ir/util.h"
+#include "abstract/utils.h"
+#include "transform/graph_ir/transform_util.h"
 #include "runtime/device/memory_manager.h"
 
 namespace mindspore::hccl {
@@ -60,7 +61,7 @@ void AllToAllvCalcParam::CalcOpParam() {
   std::vector<size_t> output_real_mem_size(output_num);
   for (size_t i = 0; i < input_num; ++i) {
     auto ms_shape = AnfAlgo::GetInputDeviceShape(cnode, i);
-    auto type_size = transform::TransformUtil::GetDataTypeSize(AnfAlgo::GetInputDeviceDataType(cnode, i));
+    auto type_size = abstract::TypeIdSize(AnfAlgo::GetInputDeviceDataType(cnode, i));
     if (type_size == 0) {
       MS_LOG(EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
     }
@@ -71,7 +72,7 @@ void AllToAllvCalcParam::CalcOpParam() {
   }
   for (size_t i = 0; i < output_num; ++i) {
     auto ms_shape = AnfAlgo::GetOutputDeviceShape(cnode, i);
-    auto type_size = transform::TransformUtil::GetDataTypeSize(AnfAlgo::GetOutputDeviceDataType(cnode, i));
+    auto type_size = abstract::TypeIdSize(AnfAlgo::GetOutputDeviceDataType(cnode, i));
     if (type_size == 0) {
       MS_LOG(EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
     }

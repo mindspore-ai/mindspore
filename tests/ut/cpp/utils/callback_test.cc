@@ -20,7 +20,7 @@
 #include "common/common_test.h"
 #include "pipeline/jit/pipeline.h"
 #include "include/common/utils/python_adapter.h"
-#include "include/transform/graph_ir/df_graph_manager.h"
+#include "mindspore/ccsrc/transform/graph_ir/df_graph_manager.h"
 #include "include/common/debug/draw.h"
 #ifdef ENABLE_D
 #include "include/common/utils/callbacks_ge.h"

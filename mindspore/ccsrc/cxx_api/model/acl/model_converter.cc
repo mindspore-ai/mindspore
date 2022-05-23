@@ -16,8 +16,7 @@
 
 #include "cxx_api/model/acl/model_converter.h"
 #include <memory>
-#include "include/transform/graph_ir/convert.h"
-#include "include/transform/graph_ir/graph_runner.h"
+#include "include/transform/graph_ir/utils.h"
 #include "mindspore/core/utils/ms_context.h"
 #include "include/api/serialization.h"
 #include "graph/model.h"
@@ -43,23 +42,23 @@ transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
 }
 
 bool CreateSessionAndGraphRunner() {
-  std::shared_ptr<ge::Session> sess = transform::DfGraphManager::GetInstance().GetGeSession();
+  std::shared_ptr<ge::Session> sess = transform::GetGeSession();
   if (sess == nullptr) {
     transform::SessionOptions options;
     options["ge.trainFlag"] = "0";
     options["ge.enablePrintOpPass"] = "0";
-    sess = transform::GraphRunner::NewSession(options);
-    transform::DfGraphManager::GetInstance().SetGeSession(sess);
+    sess = transform::NewSession(options);
+    transform::SetGeSession(sess);
   }
 
   transform::GraphRunnerOptions options;
   options.sess_ptr = sess;
-  auto graph_runner = std::make_shared<transform::GraphRunner>(options);
+  auto graph_runner = transform::NewGraphRunner(options);
   if (graph_runner == nullptr) {
     MS_LOG(ERROR) << "Create new graph runner failed";
     return false;
   } else {
-    transform::DfGraphManager::GetInstance().SetGraphRunner(graph_runner);
+    transform::SetGraphRunner(graph_runner);
   }
 
   return true;
@@ -68,27 +67,29 @@ bool CreateSessionAndGraphRunner() {
 
 transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) {
   MS_EXCEPTION_IF_NULL(anf_graph);
-  transform::DfGraphConvertor converter(anf_graph);
+  auto converter = transform::NewConverter(anf_graph);
   std::string net_id = "0";
   std::string init_graph = "init_subgraph." + net_id;
   std::string checkpoint_name = "save." + net_id;
 
-  converter.set_training(false);
-  (void)converter.ConvertAllNode().InitParam(GetParams(anf_graph)).BuildGraph();
-  (void)converter.GenerateCheckpointGraph();
-  if (converter.ErrCode() != 0) {
-    transform::DfGraphManager::GetInstance().ClearGraph();
-    MS_LOG(ERROR) << "Convert df graph failed, err:" << converter.ErrCode();
+  transform::SetTraining(converter, false);
+
+  (void)transform::BuildGraph(converter, GetParams(anf_graph));
+
+  (void)transform::GenerateCheckpointGraph(converter);
+  auto err_code = transform::ErrCode(converter);
+  if (err_code != 0) {
+    transform::ClearGraph();
+    MS_LOG(ERROR) << "Convert df graph failed, err:" << err_code;
     return nullptr;
   }
-  (void)transform::DfGraphManager::GetInstance().AddGraph(anf_graph->ToString(), converter.GetComputeGraph());
-  (void)transform::DfGraphManager::GetInstance().AddGraph(init_graph, converter.GetInitGraph());
-  (void)transform::DfGraphManager::GetInstance().AddGraph(BROADCAST_GRAPH_NAME, converter.GetBroadcastGraph());
+  (void)transform::AddGraph(anf_graph->ToString(), transform::GetComputeGraph(converter));
+  (void)transform::AddGraph(init_graph, transform::GetInitGraph(converter));
+  (void)transform::AddGraph(BROADCAST_GRAPH_NAME, transform::GetBroadcastGraph(converter));
 
-  transform::Status ret =
-    transform::DfGraphManager::GetInstance().AddGraph(checkpoint_name, converter.GetSaveCheckpointGraph());
+  transform::Status ret = transform::AddGraph(checkpoint_name, transform::GetSaveCheckpointGraph(converter));
   if (ret == transform::Status::SUCCESS) {
-    transform::DfGraphManager::GetInstance().SetAnfGraph(checkpoint_name, anf_graph);
+    transform::SetAnfGraph(checkpoint_name, anf_graph);
   }
 
   (void)setenv("GE_TRAIN", "0", 1);
@@ -98,7 +99,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
     return nullptr;
   }
 
-  auto wrap_ptr = transform::DfGraphManager::GetInstance().GetGraphByName(anf_graph->ToString());
+  auto wrap_ptr = transform::GetGraphByName(anf_graph->ToString());
   if (wrap_ptr == nullptr) {
     MS_LOG(ERROR) << "Get graph form DfGraphManager failed!";
     return nullptr;

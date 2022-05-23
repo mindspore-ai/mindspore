@@ -14,7 +14,7 @@
  * Limitations under the License.
  */
 
-#include "include/transform/graph_ir/graph_runner.h"
+#include "transform/graph_ir/graph_runner.h"
 #include <algorithm>
 #include <string>
 #include <memory>
@@ -71,7 +71,6 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
       MS_LOG(WARNING) << "graph runner sess_ is nullptr!";
     }
   }
-
 #ifdef ENABLE_D
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

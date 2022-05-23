@@ -69,7 +69,7 @@
 #endif
 #endif
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
 #include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/worker.h"
@@ -82,10 +82,8 @@
 
 #ifdef ENABLE_D
 #include "pipeline/jit/pipeline_ge.h"
-#include "include/transform/graph_ir/convert.h"
-#include "include/transform/graph_ir/df_graph_manager.h"
-#include "include/transform/graph_ir/op_adapter_map.h"
-#include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
+#include "transform/graph_ir/op_adapter_map.h"
+#include "include/transform/graph_ir/utils.h"
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 #endif
 
@@ -107,14 +105,9 @@ using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTensorPtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
-
 #ifdef ENABLE_D
-#ifndef ENABLE_SECURITY
-using mindspore::device::ascend::ProfilingManager;
-#endif
 using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 #endif
-
 const char IR_TYPE_ANF[] = "anf_ir";
 const char IR_TYPE_ONNX[] = "onnx_ir";
 const char IR_TYPE_MINDIR[] = "mind_ir";
@@ -529,27 +522,26 @@ py::dict GraphExecutorPy::GetAllreduceFusion(const std::string &phase) {
 // Not support multi thread, not support nested call too.
 // Here using nested_called flg to avoid nested call.
 void GraphExecutorPy::DelNetRes(const py::set &id) {
-#ifdef ENABLE_D
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   std::string backend = ms_context->backend_policy();
-  if (backend == "ge") {
-    FinalizeBackend();
+  if (device_target == kAscendDevice) {
+    if (backend == "ge") {
+      FinalizeBackend();
+    } else {
+      ConfigManager::GetInstance().ResetIterNum();
+    }
   } else {
     ConfigManager::GetInstance().ResetIterNum();
   }
-#else
-  ConfigManager::GetInstance().ResetIterNum();
-#endif
   for (auto item : id) {
     DelOneNetRes(item);
   }
 #ifdef ENABLE_D
   if (backend == "ge" && !id.empty() && info_.size() == 0) {
     // because Ge only support one Session exist at the same time ,so we delete the old one
-    transform::DfGraphManager::GetInstance().DeleteGraphRunner();
-    transform::DfGraphManager::GetInstance().EraseAnfGraph();
-    transform::DfGraphManager::GetInstance().DeleteGeSession();
+    transform::EraseGeResource();
   }
 #endif
 }
@@ -754,10 +746,10 @@ bool IsPhaseLoadFromMindIR(const std::string &phase) {
 std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase, bool use_vm) {
   MS_EXCEPTION_IF_NULL(resource);
   bool is_air = IsPhaseExportAir(phase);
-
-  std::string backend = MsContext::GetInstance()->backend_policy();
-
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string backend = ms_context->backend_policy();
+#ifdef WITH_BACKEND
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     auto node = distributed::cluster::ClusterContext::instance()->node();
     MS_EXCEPTION_IF_NULL(node);
@@ -1107,7 +1099,6 @@ void Pipeline::Run() {
   MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
   FuncGraphPtr user_graph = nullptr;
-
   WITH(MsProfile::GetProfile())[&user_graph, this]() {
     size_t i = 0;
     for (auto &action : actions_) {
@@ -1238,6 +1229,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   }
   auto phase = py::cast<std::string>(phase_obj);
   auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
 #ifdef ENABLE_D
   if (ms_context->backend_policy() == "ge") {
     return ExecDFGraph(info_, args, phase);
@@ -1380,7 +1372,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   if ((ps::PSContext::instance()->is_ps_mode()) && (!ps::PSContext::instance()->is_worker())) {
     return true;
   }
@@ -1449,7 +1441,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   auto runner = convert_fn(segment, "");
   ConfigManager::GetInstance().set_iter_num(queue_name, size);
   // PS cache does not support loop sink.
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
     ConfigManager::GetInstance().set_iter_num(queue_name, 1);
@@ -1530,9 +1522,9 @@ void InitHccl() {
 }
 
 void FinalizeHccl() {
-#ifdef ENABLE_D
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+#ifdef ENABLE_D
   auto backend = ms_context->backend_policy();
   if (backend == "ge") {
     (void)FinalizeBackend();
@@ -1641,7 +1633,7 @@ void ClearResAtexit() {
   device::DeviceContextManager::GetInstance().WaitTaskFinishOnDevice();
 
   RecordExitStatus();
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     (void)distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
   } else if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
@@ -1702,8 +1694,8 @@ void ClearResAtexit() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() == "ge") {
-    transform::DfGraphManager::GetInstance().ClearGraph();
-    transform::OpAdapterMap::get().clear();
+    transform::ClearGraphWrapper();
+    transform::ClearOpAdapterMap();
   } else {
     MS_LOG(INFO) << "Start clear ConfigManager...";
     ConfigManager::GetInstance().ResetIterNum();
