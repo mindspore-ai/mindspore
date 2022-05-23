@@ -6832,34 +6832,13 @@ class TensorScatterMax(_TensorScatterOp):
 
 class TensorScatterMin(_TensorScatterOp):
     """
-    By comparing the value at the position indicated by the index in input_x with the value in the `updates`,
+    By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
     the value at the index will eventually be equal to the smallest one to create a new tensor.
 
-    The last axis of the index is the depth of each index vector. For each index vector,
-    there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of input_x[indices].
-    For more details, see use cases.
-
-    Note:
-        If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `updates` will not be updated to `input_x`.
-
-    Inputs:
-        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-          The rank must be at least 2.
-        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x`.
-
-    Raises:
-        TypeError: If dtype of `indices` is neither int32 nor int64.
-        ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+    Refer to :func:`mindspore.ops.tensor_scatter_min` for more detail.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
