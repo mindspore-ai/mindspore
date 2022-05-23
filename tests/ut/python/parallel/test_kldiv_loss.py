@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import numpy as np
-
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, context
 from mindspore.nn import Cell
@@ -41,6 +40,7 @@ def test_kldiv_loss_mean_auto_parallel():
     Description: auto parallel, reduction is 'mean'
     Expectation: compile success
     """
+    context.set_context(device_target="GPU")
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0, full_batch=True)
     reduction = 'mean'
     net = Net(reduction)
@@ -53,6 +53,7 @@ def test_kldiv_loss_none_auto_parallel():
     Description: auto parallel, reduction is 'none'
     Expectation: compile success
     """
+    context.set_context(device_target="GPU")
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0, full_batch=True)
     reduction = 'none'
     net = Net(reduction)
@@ -65,6 +66,7 @@ def test_kldiv_loss_sum_auto_parallel():
     Description: auto parallel, reduction is 'sum'
     Expectation: compile success
     """
+    context.set_context(device_target="GPU")
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0, full_batch=True)
     reduction = 'sum'
     net = Net(reduction)
@@ -77,6 +79,7 @@ def test_kldiv_loss_mean_data_parallel():
     Description: data parallel, reduction is 'mean'
     Expectation: compile success
     """
+    context.set_context(device_target="GPU")
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=1)
     reduction = 'mean'
     net = Net(reduction)
@@ -92,6 +95,7 @@ def test_kldiv_loss_none_data_parallel():
     Description: data parallel, reduction is 'none'
     Expectation: compile success
     """
+    context.set_context(device_target="GPU")
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=1)
     reduction = 'none'
     net = Net(reduction)
@@ -104,6 +108,7 @@ def test_kldiv_loss_none_model_parallel():
     Description: model parallel, reduction is 'none'
     Expectation: compile success
     """
+    context.set_context(device_target="GPU")
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=5)
     reduction = 'none'
     strategy = ((2, 2), (2, 2))
@@ -117,6 +122,7 @@ def test_kldiv_loss_mean_model_parallel():
     Description: model parallel, reduction is 'mean'
     Expectation: compile success
     """
+    context.set_context(device_target="GPU")
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=5)
     reduction = 'mean'
     strategy = ((4, 2), (4, 2))
