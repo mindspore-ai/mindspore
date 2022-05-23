@@ -134,6 +134,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     :template: classtemplate.rst
 
     mindspore.nn.Dense
+    mindspore.nn.BiDense
 
 Dropout层
 -----------------

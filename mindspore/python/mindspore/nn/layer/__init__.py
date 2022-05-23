@@ -23,6 +23,7 @@ from .activation import *
 from .normalization import *
 from .container import *
 from .conv import *
+from .dense import *
 from .rnns import *
 from .rnn_cells import *
 from .basic import *
@@ -41,6 +42,7 @@ __all__.extend(activation.__all__)
 __all__.extend(normalization.__all__)
 __all__.extend(container.__all__)
 __all__.extend(conv.__all__)
+__all__.extend(dense.__all__)
 __all__.extend(rnn_cells.__all__)
 __all__.extend(rnns.__all__)
 __all__.extend(basic.__all__)
