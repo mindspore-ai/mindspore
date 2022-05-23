@@ -38,6 +38,7 @@ class AstModifier(ast.NodeTransformer):
             if id(body) == id(to_erase):
                 ast_func.body.remove(body)
                 return True
+            # hardcode for ast.If
             if isinstance(body, ast.If):
                 for if_body in body.body:
                     if id(if_body) == id(to_erase):
@@ -168,25 +169,28 @@ class AstModifier(ast.NodeTransformer):
                     ast_func.body.insert(index + 1, ast_assign)
                 ast.fix_missing_locations(ast_func)
                 return ast_assign
+            # hardcode for ast.If
             if isinstance(body, ast.If):
                 for if_index in range(0, len(body.body)):
                     if_body = body.body[if_index]
-                    if id(if_body) == id(index_ast):
-                        if insert_before:
-                            body.body.insert(if_index, ast_assign)
-                        else:
-                            body.body.insert(if_index + 1, ast_assign)
-                        ast.fix_missing_locations(body)
-                        return ast_assign
+                    if id(if_body) != id(index_ast):
+                        continue
+                    if insert_before:
+                        body.body.insert(if_index, ast_assign)
+                    else:
+                        body.body.insert(if_index + 1, ast_assign)
+                    ast.fix_missing_locations(body)
+                    return ast_assign
                 for if_index in range(0, len(body.orelse)):
                     else_body = body.orelse[if_index]
-                    if id(else_body) == id(index_ast):
-                        if insert_before:
-                            body.orelse.insert(if_index, ast_assign)
-                        else:
-                            body.orelse.insert(if_index + 1, ast_assign)
-                        ast.fix_missing_locations(body)
-                        return ast_assign
+                    if id(else_body) != id(index_ast):
+                        continue
+                    if insert_before:
+                        body.orelse.insert(if_index, ast_assign)
+                    else:
+                        body.orelse.insert(if_index + 1, ast_assign)
+                    ast.fix_missing_locations(body)
+                    return ast_assign
         raise RuntimeError("insert position is not contained in ast_func")
 
     @staticmethod

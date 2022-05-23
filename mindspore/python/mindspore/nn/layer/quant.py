@@ -806,12 +806,9 @@ class Conv2dBnFoldQuantOneConv(Cell):
         """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
-            'fake={}, momentum={}, quant_delay={}'.format(self.in_channels, self.out_channels,
-                                                          self.kernel_size, self.stride,
-                                                          self.pad_mode, self.padding, self.dilation,
-                                                          self.group,
-                                                          self.fake, self.momentum,
-                                                          self.fake_quant_weight.quant_delay)
+            'fake={}, momentum={}'.format(self.in_channels, self.out_channels, self.kernel_size, self.stride,
+                                          self.pad_mode, self.padding, self.dilation, self.group, self.fake,
+                                          self.momentum)
         return s
 
     def construct(self, x):
@@ -1038,12 +1035,9 @@ class Conv2dBnFoldQuant(Cell):
         """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
-            'fake={}, freeze_bn={}, momentum={}, quant_delay={}'.format(self.in_channels, self.out_channels,
-                                                                        self.kernel_size, self.stride,
-                                                                        self.pad_mode, self.padding, self.dilation,
-                                                                        self.group,
-                                                                        self.fake, self.freeze_bn, self.momentum,
-                                                                        self.fake_quant_weight.quant_delay)
+            'fake={}, freeze_bn={}, momentum={}'.format(self.in_channels, self.out_channels, self.kernel_size,
+                                                        self.stride, self.pad_mode, self.padding, self.dilation,
+                                                        self.group, self.fake, self.freeze_bn, self.momentum)
         return s
 
     def construct(self, x):
@@ -1229,9 +1223,8 @@ class Conv2dBnWithoutFoldQuant(Cell):
         """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
-            'has_bias={}, quant_delay={}'.format(self.in_channels, self.out_channels, self.kernel_size, self.stride,
-                                                 self.pad_mode, self.padding, self.dilation, self.group,
-                                                 self.has_bias, self.fake_quant_weight.quant_delay)
+            'has_bias={}'.format(self.in_channels, self.out_channels, self.kernel_size, self.stride, self.pad_mode,
+                                 self.padding, self.dilation, self.group, self.has_bias)
         return s
 
 
@@ -1390,9 +1383,8 @@ class Conv2dQuant(Cell):
         """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
-            'has_bias={}, quant_delay={}'.format(self.in_channels, self.out_channels, self.kernel_size, self.stride,
-                                                 self.pad_mode, self.padding, self.dilation, self.group,
-                                                 self.has_bias, self.fake_quant_weight.quant_delay)
+            'has_bias={}'.format(self.in_channels, self.out_channels, self.kernel_size, self.stride, self.pad_mode,
+                                 self.padding, self.dilation, self.group, self.has_bias)
         return s
 
 

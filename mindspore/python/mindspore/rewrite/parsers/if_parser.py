@@ -44,21 +44,35 @@ class IfParser(Parser):
         test_code = astunparse.unparse(node.test)
         test_code = test_code.replace("self", "stree.get_origin_network()")
         bodies = None
+        src_bodies = None
+        dst_bodies = None
+        test_value = True
         try:
             test_value = eval(test_code)
-            if test_value:
-                bodies = node.body
-            else:
-                bodies = node.orelse
         except Exception:
             raise NotImplementedError("Only support ast.If whose test can be eval, got:", test_code)
 
+        bodies = node.body if test_value else node.orelse
         for body in bodies:
             parser: Parser = ParserRegister.instance().get_parser(type(body))
             if parser is None:
                 stree.append_python_node(node, body)
             else:
                 parser.process(stree, body)
+
+        # hardcode for if, ME need both branch of ast.If has same output
+        src_bodies = node.body if test_value else node.orelse
+        dst_bodies = node.orelse if test_value else node.body
+        dst_bodies.clear()
+        if src_bodies:
+            for ast_node in src_bodies:
+                if not isinstance(ast_node, ast.Assign):
+                    continue
+                targets = ast_node.targets
+                for target in targets:
+                    dst_bodies.append(ast.Assign(targets=[target], value=ast.Constant(value=0, ctx=ast.Load())))
+        else:
+            dst_bodies.append(ast.Pass())
 
 
 g_if_parser = reg_parser(IfParser())

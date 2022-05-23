@@ -78,6 +78,10 @@ class _BatchNorm(Cell):
                              f" but got {use_batch_statistics}.")
         self.num_features = num_features
         self.eps = eps
+        self.beta_init = beta_init
+        self.gamma_init = gamma_init
+        self.moving_mean_init = moving_mean_init
+        self.moving_var_init = moving_var_init
         self.moving_mean = Parameter(initializer(
             moving_mean_init, num_features), name="mean", requires_grad=False)
         self.moving_variance = Parameter(initializer(

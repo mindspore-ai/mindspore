@@ -369,9 +369,10 @@ def test_replace_one_to_one_with_same_arg_and_target():
     assert get_symbol_tree_nodes_count(stree) == 7
 
     new_conv = Conv2d(16, 16, 5)
-    new_conv_node = NodeApi.create_call_cell(new_conv, [ScopedValue.create_naming_value("new_conv")],
-                                             [ScopedValue.create_naming_value("new_conv")]).get_handler()
+    new_conv_node = NodeApi.create_call_cell(new_conv, [ScopedValue.create_naming_value("x_2")],
+                                             [ScopedValue.create_naming_value("x_2")], name="new_conv").get_handler()
     stree.replace(relu1, [new_conv_node])
+    assert new_conv_node.get_args()[0].value == "x_2"
     assert get_symbol_tree_nodes_count(stree) == 7
     assert stree.get_node("new_conv")
 
