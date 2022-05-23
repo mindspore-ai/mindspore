@@ -124,7 +124,8 @@ Nonlinear Activation Function Layer
     mindspore.nn.Softmax
     mindspore.nn.SoftShrink
     mindspore.nn.Tanh
-    
+    mindspore.nn.Threshold
+
 Linear Layer
 ------------
 
