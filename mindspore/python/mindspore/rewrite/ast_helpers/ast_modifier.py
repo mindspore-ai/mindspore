@@ -41,6 +41,12 @@ class AstModifier(ast.NodeTransformer):
         return False
 
     @staticmethod
+    def erase_func_from_class_by_name(ast_class: ast.ClassDef, func_name: str):
+        for body in ast_class.body:
+            if isinstance(body, ast.FunctionDef) and body.name == func_name:
+                ast_class.body.remove(body)
+
+    @staticmethod
     def insert_sub_ast(ast_father: ast.AST, ast_son: ast.AST, index_ast: Optional[ast.AST] = None,
                        insert_before=True) -> ast.AST:
         """

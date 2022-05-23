@@ -682,8 +682,6 @@ class SymbolTree(Observer, Observable):
                 value.isolate()
                 break
         self._topo_mgr.on_erase_node(node)
-        if self._node_visitor:
-            self._node_visitor.remove_node(node)
         return node
 
     def replace(self, old_node: Node, new_nodes: [Node]) -> Node:
@@ -844,6 +842,9 @@ class SymbolTree(Observer, Observable):
         for i in range(len(self._module_ast.body) - 1, -1, -1):
             body = self._module_ast.body[i]
             if not isinstance(body, (ast.Import, ast.ImportFrom)):
+                continue
+            if isinstance(body, ast.ImportFrom) and body.module == "cell":
+                self._module_ast.body.remove(body)
                 continue
             for alias in body.names:
                 name = alias.asname if alias.asname else alias.name

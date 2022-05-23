@@ -44,6 +44,9 @@ class FunctionDefParser(Parser):
             else:
                 parser.process(stree, body)
 
+        for body in node.body:
+            if isinstance(body, ast.For):
+                node.body.remove(body)
         if hasattr(node, "decorator_list"):
             stree.try_append_python_node(node, node.decorator_list)
         if hasattr(node, "returns"):
