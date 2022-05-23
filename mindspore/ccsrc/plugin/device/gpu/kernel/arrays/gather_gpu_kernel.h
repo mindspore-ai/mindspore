@@ -21,6 +21,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,7 +42,7 @@ class GatherFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
     Gather(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[2], dims_[3],
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+           reinterpret_cast<cudaStream_t>(stream_ptr), GET_CTX_DEVICE_ID);
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {

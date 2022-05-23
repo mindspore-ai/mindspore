@@ -47,7 +47,10 @@ const std::vector<TensorRTOp *> &TensorRTOp::in_ops() const { return this->in_op
 
 const std::vector<TensorRTOp *> &TensorRTOp::out_ops() const { return this->out_ops_; }
 
-void TensorRTOp::SetRuntime(TensorRTRuntime *runtime) { this->runtime_ = runtime; }
+void TensorRTOp::SetRuntime(TensorRTRuntime *runtime) {
+  this->runtime_ = runtime;
+  device_id_ = runtime_->GetDeviceID();
+}
 
 bool TensorRTOp::IsShapeKnown() {
   if (this->in_tensors_.size() == 1 && this->in_tensors_[0].Shape().size() == 0) {

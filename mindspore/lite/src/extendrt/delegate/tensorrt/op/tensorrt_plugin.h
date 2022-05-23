@@ -23,8 +23,8 @@
 namespace mindspore::lite {
 class TensorRTPlugin : public nvinfer1::IPluginV2DynamicExt {
  public:
-  TensorRTPlugin(const std::string &layer_name, const std::string &plugin_name)
-      : layer_name_(layer_name), plugin_name_(plugin_name) {}
+  TensorRTPlugin(const std::string &layer_name, const std::string &plugin_name, uint32_t device_id = 0)
+      : layer_name_(layer_name), plugin_name_(plugin_name), device_id_(device_id) {}
 
   // It doesn't make sense to make GeluPluginDynamic without arguments, so we delete
   // default constructor.
@@ -61,6 +61,7 @@ class TensorRTPlugin : public nvinfer1::IPluginV2DynamicExt {
   std::string name_space_;
   std::string plugin_version_{"1"};
   std::string plugin_name_;
+  uint32_t device_id_{0};
 };
 
 template <class T>

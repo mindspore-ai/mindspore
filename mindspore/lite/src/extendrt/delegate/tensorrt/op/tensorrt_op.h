@@ -147,6 +147,8 @@ class TensorRTOp {
   TensorRTRuntime *runtime_{nullptr};
 
   DynamicShapeParams dynamic_shape_params_;
+
+  uint32_t device_id_{0};
 };
 
 template <class T>

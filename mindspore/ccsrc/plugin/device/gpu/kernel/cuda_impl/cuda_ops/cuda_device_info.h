@@ -34,7 +34,7 @@ namespace gpu {
 class GPUdeviceInfo {
  public:
   explicit GPUdeviceInfo(const uint32_t device_id);
-  ~GPUdeviceInfo() = default;
+  ~GPUdeviceInfo();
   inline int threads_num() const { return threads_per_block_; }
   inline int threads_num(int size) const { return std::min(size, threads_per_block_); }
   inline int major_sm() const { return major_sm_; }
@@ -58,6 +58,7 @@ class GPUdeviceInfo {
   int minor_sm_;
   size_t max_share_memory_;
   bool check_sm_{true};
+  static pthread_rwlock_t rwlock_;
 };
 
 #define CUDA_BLOCKS(device_id, total_threads) \
