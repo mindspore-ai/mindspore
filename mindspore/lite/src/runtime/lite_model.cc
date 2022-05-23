@@ -63,10 +63,10 @@ void LiteModel::Free() {
   inner_all_tensors_.clear();
 
 #ifdef ENABLE_MODEL_OBF
-  for (auto &prim : deobf_prims_) {
+  for (auto &prim : graph_.deobf_prims_) {
     free(prim);
   }
-  deobf_prims_.resize(0);
+  graph_.deobf_prims_.resize(0);
 #endif
 }
 
@@ -340,7 +340,7 @@ int LiteModel::GenerateModelByVersion() {
     if (IsMetaGraphObfuscated<schema::MetaGraph>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph))) {
       model_deobf =
         GetModelDeObfuscator<schema::MetaGraph>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph), this);
-      this->model_obfuscated_ = true;
+      this->graph_.model_obfuscated_ = true;
       if (model_deobf == nullptr) {
         return RET_ERROR;
       }
@@ -349,7 +349,7 @@ int LiteModel::GenerateModelByVersion() {
     status = GenerateModel<schema::MetaGraph, schema::CNode>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph));
   }
 #ifdef ENABLE_MODEL_OBF
-  if (this->model_obfuscated_) {
+  if (this->graph_.model_obfuscated_) {
     MS_ASSERT(model_deobf != nullptr);
     status = DeObfuscateModel(this, model_deobf);
     if (status != RET_OK) {
