@@ -92,7 +92,7 @@ STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPt
     MS_LOG(ERROR) << "init parameter from tensor info failed";
     return RET_ERROR;
   }
-  rmatmul_input->set_name(stack_node->fullname_with_scope() + "right_parameter");
+  rmatmul_input->set_name(stack_node->fullname_with_scope());
 
   return RET_OK;
 }
@@ -383,7 +383,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   }
   auto matmul_cnode = func_graph->NewCNode(matmul_inputs);
   MS_CHECK_TRUE_RET(matmul_cnode != nullptr, nullptr);
-  matmul_cnode->set_fullname_with_scope("matmul_" + stack_cnode->fullname_with_scope());
+  matmul_cnode->set_fullname_with_scope(stack_cnode->fullname_with_scope());
   MS_CHECK_TRUE_RET(stack_cnode->abstract() != nullptr, nullptr);
   matmul_cnode->set_abstract(stack_cnode->abstract()->Clone());
   if (right_transpose) {
