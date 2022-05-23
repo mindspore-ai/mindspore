@@ -43,7 +43,7 @@ constexpr size_t kBNOutputNum = 3;
 constexpr size_t kTupleSize = 2;
 constexpr size_t kSubInputTensorNum = 2;
 constexpr size_t kMulInputTensorNum = 2;
-constexpr char kOpsFunctionModelName[] = "mindspore.ops.function.math_func";
+constexpr char kMathOpsFunctionModelName[] = "mindspore.ops.function.math_func";
 constexpr char kMomentum[] = "momentum";
 }  // namespace
 
@@ -75,7 +75,7 @@ AnfNodePtr CreateSubNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &input
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kSubInputTensorNum, "Check Sub input size fail!");
   auto mean = inputs[0];
   auto tuple_getitems = inputs[1];
-  static py::object sub_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "tensor_sub");
+  py::object sub_prim = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_sub");
   const auto &sub_adapter = py::cast<PrimitivePyAdapterPtr>(sub_prim);
   MS_EXCEPTION_IF_NULL(sub_adapter);
   auto prim_sub = sub_adapter->attached_primitive();
@@ -107,7 +107,7 @@ AnfNodePtr CreateMulNode(const FuncGraphPtr &fg, const vector<AnfNodePtr> &input
   MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == kMulInputTensorNum, "Check Sub input size fail!");
   auto data_node = inputs[0];
   auto sub_node = inputs[1];
-  static py::object mul_prim = python_adapter::GetPyFn(kOpsFunctionModelName, "tensor_mul");
+  py::object mul_prim = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_mul");
   const auto &mul_adapter = py::cast<PrimitivePyAdapterPtr>(mul_prim);
   MS_EXCEPTION_IF_NULL(mul_adapter);
   auto prim_mul = mul_adapter->attached_primitive();
