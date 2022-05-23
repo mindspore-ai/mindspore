@@ -124,6 +124,8 @@ class FlopsParser:
         step_idx = 0
         aicore_file_doc = os.path.join(self._input_dir, "data")
         source_files = self._get_aicore_files(aicore_file_doc)
+        if not source_files:
+            return
         # parse all sliced aicore files.
         for source_file in source_files:
             source_file = validate_and_normalize_path(source_file)
@@ -418,7 +420,8 @@ class FlopsParser:
         """Get aicore files."""
         aicore_files = self._search_file(profiler_dir)
         if not aicore_files:
-            raise ProfilerPathErrorException('The aicore file does not exist.')
+            logger.warning("Aicore file does not exist.")
+            return[]
 
         return aicore_files
 

@@ -63,7 +63,7 @@ def thor_end():
     thor_cost /= 4
     print(f"resnet thor_loss: {thor_loss}, thor_cost: {thor_cost}")
     assert thor_loss < 7
-    assert thor_cost < 30
+    assert thor_cost < 40
     for i in range(4):
         shutil.rmtree(os.path.join(sh_path, f"train_parallel{i+4}"))
 

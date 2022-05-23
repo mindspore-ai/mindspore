@@ -57,13 +57,8 @@ uint64_t GetProfilingModule() {
 }
 
 Status ProfilingManager::PluginInit() const {
-  if (prof_cb_.msprofReporterCallback == nullptr) {
-    MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
-    return PROF_FAILED;
-  }
-  int32_t ret = prof_cb_.msprofReporterCallback(static_cast<uint32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
-                                                static_cast<uint32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_INIT),
-                                                nullptr, 0);
+  int32_t ret = MsprofReportData(static_cast<uint32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+                                 static_cast<uint32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_INIT), nullptr, 0);
   if (ret != UintToInt(PROF_SUCCESS)) {
     MS_LOG(ERROR) << "MsprofReporter init failed, ret: " << ret;
     return PROF_FAILED;
@@ -72,13 +67,9 @@ Status ProfilingManager::PluginInit() const {
 }
 
 void ProfilingManager::PluginUnInit() const {
-  if (prof_cb_.msprofReporterCallback == nullptr) {
-    MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
-    return;
-  }
-  int32_t cb_ret = prof_cb_.msprofReporterCallback(
-    static_cast<uint32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
-    static_cast<uint32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_UNINIT), nullptr, 0);
+  int32_t cb_ret =
+    MsprofReportData(static_cast<uint32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+                     static_cast<uint32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_UNINIT), nullptr, 0);
   if (cb_ret != 0) {
     MS_LOG(WARNING) << "profiling plugin uninit failed, ret:%d" << cb_ret;
   }
@@ -130,7 +121,7 @@ bool ProfilingManager::InitProfiling(const std::string &profiling_path, uint32_t
 }
 
 bool ProfilingManager::ProfRegisterCtrlCallback() const {
-  rtError_t rt_ret = rtProfRegisterCtrlCallback(GE, CtrlCallbackHandle);
+  rtError_t rt_ret = MsprofRegisterCallback(GE, CtrlCallbackHandle);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtProfRegisterCtrlCallback failed.";
     return false;
@@ -161,14 +152,9 @@ void ProfilingManager::ReportErrorMessage() const {
 }
 
 Status ProfilingManager::CallMsprofReport(const NotNull<ReporterData *> reporter_data) const {
-  if (prof_cb_.msprofReporterCallback == nullptr) {
-    MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
-    return PROF_FAILED;
-  }
-  int32_t ret =
-    prof_cb_.msprofReporterCallback(static_cast<int32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
-                                    static_cast<int32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_REPORT),
-                                    static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
+  int32_t ret = MsprofReportData(static_cast<int32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+                                 static_cast<int32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_REPORT),
+                                 static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
 
   if (ret != UintToInt(PROF_SUCCESS)) {
     ReportErrorMessage();
@@ -249,9 +235,9 @@ void ProfilingManager::QueryHashId(const int32_t &device_id, const std::string &
   hash_data.dataLen = src_str.size();
   hash_data.data = reinterpret_cast<unsigned char *>(const_cast<char *>(src_str.c_str()));
 
-  const int32_t ret = prof_cb_.msprofReporterCallback(
-    static_cast<int32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
-    static_cast<int32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_HASH), &hash_data, sizeof(MsprofHashData));
+  const int32_t ret = MsprofReportData(static_cast<int32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+                                       static_cast<int32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_HASH),
+                                       &hash_data, sizeof(MsprofHashData));
   if (ret != UintToInt(PROF_SUCCESS)) {
     ReportErrorMessage();
     MS_LOG(EXCEPTION) << "[Profiling] Query hash id of long string failed, src string is " << src_str.c_str()

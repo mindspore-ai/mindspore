@@ -90,3 +90,22 @@ ACL_FUNC_VISIBILITY aclprofConfig *aclprofCreateConfig(uint32_t *deviceIdList, u
 }
 
 ACL_FUNC_VISIBILITY aclError aclprofDestroyConfig(const aclprofConfig *profilerConfig) { return ACL_SUCCESS; }
+
+/**
+ * @name  profRegisterCallback
+ * @brief register callback to profiling
+ * @param moduleId  [IN] module Id
+ * @param handle    [IN] the pointer of callback
+ */
+MSVP_PROF_API int32_t MsprofRegisterCallback(uint32_t moduleId, ProfCommandHandle handle) { return 0; }
+
+/*
+ * @name profReportData
+ * @brief start reporter/stop reporter/report date
+ * @param moduleId  [IN] enum profReporterModuleId
+ * @param type      [IN] enum profReporterCallbackType
+ * @param data      [IN] data (nullptr on INTI/UNINIT)
+ * @param len       [IN] data size (0 on INIT/UNINIT)
+ * @return enum MsprofErrorCod
+ */
+MSVP_PROF_API int32_t MsprofReportData(uint32_t moduleId, uint32_t type, void* data, uint32_t len) { return 0; }

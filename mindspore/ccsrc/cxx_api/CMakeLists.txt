@@ -130,25 +130,25 @@ if(ENABLE_D OR ENABLE_ACL)
     # 310 mode
     add_compile_definitions(ENABLE_DVPP_INTERFACE)
     find_library(acl libascendcl.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_CANN_RUNTIME_PATH})
+                ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_NEW_PATH})
     find_library(acl_cblas libacl_cblas.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_CANN_RUNTIME_PATH})
+                ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_NEW_PATH})
     find_library(acl_dvpp libacl_dvpp.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_CANN_RUNTIME_PATH})
+                ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_NEW_PATH})
     find_library(acl_runtime libruntime.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_CANN_RUNTIME_PATH})
+                ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_NEW_PATH})
     find_library(ge_compiler libge_compiler.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_CANN_RUNTIME_PATH})
+                ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_NEW_PATH})
     find_library(libplatform libplatform.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_CANN_RUNTIME_PATH})
+                ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_NEW_PATH})
     find_library(libcompress libcompress.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_CANN_RUNTIME_PATH})
+                ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_NEW_PATH})
     find_library(libopskernel libopskernel.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_CANN_RUNTIME_PATH})
+                ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_NEW_PATH})
     find_library(libaicore_utils libaicore_utils.so ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-                ${ASCEND_CANN_RUNTIME_PATH})
+                ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_NEW_PATH})
     find_library(libaicpu_engine_common libaicpu_engine_common.so ${ASCEND_RUNTIME_PATH}
-                ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
+                ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_NEW_PATH})
 
     target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--no-as-needed graph ${ge_compiler}
             ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel}

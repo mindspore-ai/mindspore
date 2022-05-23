@@ -103,7 +103,8 @@ if(MSLITE_ENABLE_ACL)
         include(${TOP_DIR}/cmake/dependency_graphengine.cmake)
     endif()
     add_subdirectory(adapter/acl)
-    link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
+    link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH}
+                ${ASCEND_CANN_RUNTIME_NEW_PATH})
 endif()
 
 file(GLOB CXX_API_SRCS
