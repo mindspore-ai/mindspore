@@ -319,6 +319,16 @@ def get_tensor_shape_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@constexpr
+def _get_one_hot_vmap_axis(orig_axis, ndim, indices_dim):
+    """Find vmap axis for OneHot."""
+    if orig_axis >= 0 and indices_dim <= orig_axis:
+        return orig_axis + 1
+    if indices_dim == (ndim-1) and orig_axis in (-1, (ndim-1)):
+        return ndim-1
+    return orig_axis
+
+
 @vmap_rules_getters.register(P.OneHot)
 def get_one_hot_vmap_rule(prim, axis_size):
     """VmapRule for `OneHot` operation."""
@@ -352,12 +362,7 @@ def get_one_hot_vmap_rule(prim, axis_size):
             _raise_value_error(
                 "The source axis of `off_value` in {} must be None, but got {}.".format(prim_name, off_value_dim))
         ndim = F.rank(indices)
-        new_axis = axis
-        if axis >= 0 and indices_dim <= axis:
-            new_axis = axis + 1
-        elif indices_dim == (ndim - 1):
-            if axis in (-1, (ndim - 1)):
-                new_axis = ndim - 1
+        new_axis = _get_one_hot_vmap_axis(axis, ndim, indices_dim)
         out = P.OneHot(new_axis)(indices, depth, on_value, off_value)
 
         return (out, indices_dim)

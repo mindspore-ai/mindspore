@@ -138,14 +138,16 @@ def one_hot_vmap(in_type, value_type):
     indices = Tensor(np.array([[1, 3, 2, 4, 0], [1, 3, 2, 4, 0]]).astype(in_type))
     outputs = vmap(cal_onehot, in_axes=(0, None, None, None), out_axes=0)(indices, depth, on_value, off_value)
 
-    x_manual = np.array([[1, 3, 2, 4, 0], [1, 3, 2, 4, 0]]).astype(in_type)
-
-    def manually_batched(xs):
-        output = []
-        for i in range(xs.shape[0]):
-            output.append(cal_onehot(Tensor(xs[i]), depth, on_value, off_value).asnumpy())
-        return np.stack(output)
-    expect = manually_batched(x_manual)
+    expect = np.array([[[0.0, 1.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 1.0],
+                        [1.0, 0.0, 0.0, 0.0, 0.0]],
+                       [[0.0, 1.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0, 1.0],
+                        [1.0, 0.0, 0.0, 0.0, 0.0]]]).astype(in_type)
     assert np.allclose(expect, outputs.asnumpy(), 1.e-4, 1.e-7)
 
 
