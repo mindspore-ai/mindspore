@@ -79,7 +79,7 @@ class TrainLoop {
 
   /// \brief Performs the training Loop
   ///
-  /// \param[in] epoch The number of epochs to run
+  /// \param[in] epochs The number of epochs to run
   /// \param[in] dataset Pointer to MindData Dataset object
   /// \param[in] cbs A vector of TrainLoopCallBack objects
   /// \param[in] load_func a function that load (and can manipulate) data from Minddata Dataset array into model

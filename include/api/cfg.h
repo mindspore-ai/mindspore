@@ -34,7 +34,12 @@ class MixPrecisionCfg {
     this->keep_batchnorm_fp32_ = true;
     this->num_of_not_nan_iter_th_ = iter_th;
   }
-
+  MixPrecisionCfg(const MixPrecisionCfg &rhs) {
+    this->dynamic_loss_scale_ = rhs.dynamic_loss_scale_;
+    this->loss_scale_ = rhs.loss_scale_;
+    this->keep_batchnorm_fp32_ = rhs.keep_batchnorm_fp32_;
+    this->num_of_not_nan_iter_th_ = rhs.num_of_not_nan_iter_th_;
+  }
   ~MixPrecisionCfg() = default;
 
   bool dynamic_loss_scale_ = false;   /**< Enable/disable dynamic loss scale during mix precision training */
@@ -46,13 +51,18 @@ class MixPrecisionCfg {
 
 class TrainCfg {
  public:
-  TrainCfg() { this->loss_name_.emplace_back("_loss_fn"); }
-
+  TrainCfg() = default;
+  TrainCfg(const TrainCfg &rhs) {
+    this->loss_name_ = rhs.loss_name_;
+    this->mix_precision_cfg_ = rhs.mix_precision_cfg_;
+    this->accumulate_gradients_ = rhs.accumulate_gradients_;
+  }
   ~TrainCfg() = default;
 
   OptimizationLevel optimization_level_ = kO0;
-  std::vector<std::string> loss_name_; /**< Set part of the name that identify a loss kernel */
-  MixPrecisionCfg mix_precision_cfg_;  /**< Mix precision configuration */
+  std::vector<std::string> loss_name_ = {"loss_fct",
+                                         "_loss_fn"}; /**< Set part of the name that identify a loss kernel */
+  MixPrecisionCfg mix_precision_cfg_;                 /**< Mix precision configuration */
   bool accumulate_gradients_ = false;
 };
 }  // namespace mindspore
