@@ -1,0 +1,165 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef MINDSPORE_NNACL_FP32_ACTIVATION_@SIMD_INSTRUCTION@_H_
+#define MINDSPORE_NNACL_FP32_ACTIVATION_@SIMD_INSTRUCTION@_H_
+
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#include "nnacl/intrinsics/ms_simd_@SIMD_INSTRUCTION_LOWER@_instructions.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+@SIMD_INSTRUCTION_BEGIN@
+
+static inline int Fp32Relu@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    SIMD_F32 zero = SIMD_MOV_F32(0.0f);
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_ST_F32(dst + index, SIMD_MAX_F32(SIMD_LD_F32(src + index), zero));
+    }
+    return index;
+}
+
+static inline int Int32Relu@SIMD_INSTRUCTION@(int index, const int32_t *src, int length, int32_t *dst) {
+    SIMD_EPI32 zero = SIMD_MOV_EPI32(0.0f);
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_ST_EPI32(dst + index, SIMD_MAX_EPI32(SIMD_LD_EPI32(src + index), zero));
+    }
+    return index;
+}
+
+static inline int Fp32Relu6@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    SIMD_F32 zero = SIMD_MOV_F32(0.0f);
+    SIMD_F32 six = SIMD_MOV_F32(6.0f);
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_ST_F32(dst + index, SIMD_CLAMP_F32(SIMD_LD_F32(src + index), zero, six));
+    }
+    return index;
+}
+
+static inline int LRelu@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float alpha) {
+    SIMD_F32 alpha_data = SIMD_MOV_F32(alpha);
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 src_tmp = SIMD_LD_F32(src + index);
+        SIMD_MASK mask = SIMD_CMPGT_F32(SIMD_MOV_F32(0.0f), src_tmp);
+        SIMD_ST_F32(dst + index, SIMD_BLEND_F32(src_tmp, SIMD_MUL_F32(src_tmp, alpha_data), mask));
+    }
+    return index;
+}
+
+static inline int Sigmoid@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_EXP_ST_F32(SIMD_SUB_F32(SIMD_MOV_F32(0.0f), (SIMD_LD_F32(src + index))), dst + index);
+        SIMD_ST_F32(dst + index,
+                    SIMD_DIV_F32(SIMD_MOV_F32(1.0f), SIMD_ADD_F32(SIMD_MOV_F32(1.0f), SIMD_LD_F32(dst + index))));
+    }
+    return index;
+}
+
+static inline int Tanh@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 input = SIMD_LD_F32(src + index);
+        SIMD_ST_F32(dst + index, SIMD_TANH_F32(input));
+    }
+    return index;
+}
+
+static inline int Swish@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 src_value = SIMD_LD_F32(src + index);
+        SIMD_F32 sigmoid_value = SIMD_LD_F32(dst + index);
+        SIMD_F32 result = SIMD_MUL_F32(src_value, sigmoid_value);
+        SIMD_ST_F32(dst + index, result);
+    }
+    return index;
+}
+
+static inline int HSwish@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 src_value = SIMD_LD_F32(src + index);
+        SIMD_F32 relu6 = SIMD_CLAMP_N_F32(SIMD_ADD_N_F32(src_value, 3), 0, 6);
+        SIMD_ST_F32(dst + index, SIMD_DIV_N_F32(SIMD_MUL_F32(src_value, relu6), 6));
+    }
+    return index;
+}
+
+static inline int HSigmoid@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 src_value = SIMD_LD_F32(src + index);
+        SIMD_F32 relu6 = SIMD_CLAMP_N_F32(SIMD_ADD_N_F32(src_value, 3), 0, 6);
+        SIMD_ST_F32(dst + index, SIMD_DIV_N_F32(relu6, 6));
+    }
+    return index;
+}
+
+static inline int HardTanhNoLimitMin@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float min_val,
+                                            float max_val) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_ST_F32(dst + index, SIMD_MIN_N_F32(SIMD_LD_F32(src + index), max_val));
+    }
+    return index;
+}
+
+static inline int HardTanhNoLimitMax@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float min_val,
+                                            float max_val) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_ST_F32(dst + index, SIMD_MAX_N_F32(SIMD_LD_F32(src + index), min_val));
+    }
+    return index;
+}
+
+static inline int HardTanhLimitMinMax@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float min_val,
+                                             float max_val) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_ST_F32(dst + index, SIMD_CLAMP_N_F32(SIMD_LD_F32(src + index), min_val, max_val));
+    }
+    return index;
+}
+
+static inline int Gelu@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 in = SIMD_LD_F32(src + index);
+        SIMD_F32 tmp1 = SIMD_MUL_F32(SIMD_MUL_N_F32(in, 0.035677408136f), in);
+        SIMD_F32 tmp2 = SIMD_MUL_F32(SIMD_ADD_N_F32(tmp1, 0.79788456080287f), in);
+        SIMD_ST_F32(dst + index, SIMD_MUL_F32(SIMD_MUL_N_F32(in, 0.5f), SIMD_ADD_N_F32(SIMD_TANH_F32(tmp2), 1.0f)));
+    }
+    return index;
+}
+
+static inline int Elu@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float alpha) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 src_tmp = SIMD_LD_F32(src + index);
+        SIMD_F32 exp_tmp = SIMD_SUB_N_F32(SIMD_EXP_F32(src_tmp), 1.0f);
+        SIMD_MASK mask = SIMD_CMPLE_F32(src_tmp, SIMD_MOV_F32(0.0f));
+        SIMD_ST_F32(dst + index, SIMD_BLEND_F32(src_tmp, SIMD_MUL_N_F32(exp_tmp, alpha), mask));
+    }
+    return index;
+}
+
+static inline int Celu@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float alpha) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 src_tmp = SIMD_LD_F32(src + index);
+        SIMD_F32 exp_tmp = SIMD_SUB_N_F32(SIMD_EXP_F32(SIMD_DIV_N_F32(src_tmp, alpha)), 1.0f);
+        SIMD_MASK mask = SIMD_CMPLE_F32(src_tmp, SIMD_MOV_F32(0.0f));
+        SIMD_ST_F32(dst + index, SIMD_BLEND_F32(src_tmp, SIMD_MUL_N_F32(exp_tmp, alpha), mask));
+    }
+    return index;
+}
+
+@SIMD_INSTRUCTION_END@
+#ifdef __cplusplus
+}
+#endif
+#endif
