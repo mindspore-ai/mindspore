@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_Assert_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_Assert_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ASSERT_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ASSERT_CPU_KERNEL_H_
 
 #include <vector>
 #include <memory>
@@ -45,10 +45,7 @@ class AssertCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T>
-  void AssertPrint(const AddressPtr &input, int summarize);
-
-  using AssertPrintFunc = std::function<void(AssertCpuKernelMod *, const AddressPtr &, int)>;
+  using AssertPrintFunc = std::function<void(const AddressPtr &, int)>;
 
   static std::map<TypeId, AssertCpuKernelMod::AssertPrintFunc> func_map_;
 
@@ -59,4 +56,4 @@ class AssertCpuKernelMod : public NativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CDIST_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ASSERT_CPU_KERNEL_H_

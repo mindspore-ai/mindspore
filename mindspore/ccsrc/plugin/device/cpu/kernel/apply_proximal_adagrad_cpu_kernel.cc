@@ -93,36 +93,42 @@ int ApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   std::vector<int64_t> l2_shape = inputs[kL2Index]->GetShapeVector();
   std::vector<int64_t> grad_shape = inputs[kGradIndex]->GetShapeVector();
   if (var_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'var' must be at least 1-D, but got scalar or None.";
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of 'var' must be at least 1-D, but got scalar or None.";
+    return KRET_RESIZE_FAILED;
   }
   if (!IsSameShape(var_shape, accum_shape)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of 'accum' must be the same as the shape of 'var', "
-                         "but got the shape of 'accum': "
-                      << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'accum' must be the same as the shape of 'var', "
+                     "but got the shape of 'accum': "
+                  << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+    return KRET_RESIZE_FAILED;
   }
   if (!IsSameShape(var_shape, grad_shape)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of 'grad' must be the same as the shape of 'var', "
-                         "but got the shape of 'grad': "
-                      << Vector2Str(grad_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'grad' must be the same as the shape of 'var', "
+                     "but got the shape of 'grad': "
+                  << Vector2Str(grad_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+    return KRET_RESIZE_FAILED;
   }
 
   if (!lr_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'lr' must be a scalar,and dimension of 'lr' must be 0,but got the dimension of 'lr': "
-                      << Vector2Str(lr_shape);
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', 'lr' must be a scalar,and dimension of 'lr' must be 0,but got the dimension of 'lr': "
+                  << Vector2Str(lr_shape);
+    return KRET_RESIZE_FAILED;
   }
   if (!l1_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'l1' must be a scalar,and dimension of 'l1' must be 0,but got the dimension of 'l1': "
-                      << Vector2Str(l1_shape);
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', 'l1' must be a scalar,and dimension of 'l1' must be 0,but got the dimension of 'l1': "
+                  << Vector2Str(l1_shape);
+    return KRET_RESIZE_FAILED;
   }
   if (!l2_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'l2' must be a scalar,and dimension of 'l2' must be 0,but got the dimension of 'l2': "
-                      << Vector2Str(l2_shape);
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', 'l2' must be a scalar,and dimension of 'l2' must be 0,but got the dimension of 'l2': "
+                  << Vector2Str(l2_shape);
+    return KRET_RESIZE_FAILED;
   }
 
   input_elements_ = input_size_list_[0] / unit_size_;

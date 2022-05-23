@@ -46,7 +46,8 @@ int AssertGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   }
   auto inputs_size = inputs.size();
   if (inputs_size < 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be greater than 1, but got " << inputs_size;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be greater than or equal to 1, but got "
+                  << inputs_size;
     return KRET_RESIZE_FAILED;
   }
 
@@ -60,9 +61,10 @@ int AssertGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     summarizes_[i - 1] = static_cast<int>(std::min(static_cast<size_t>(summarize_), element));
   }
   input_addrs_.resize(input_data_size);
-  workspace_size_list_.push_back(sizeof(void *) * input_data_size);
-  workspace_size_list_.push_back(sizeof(int) * input_data_size);
-  workspace_size_list_.push_back(sizeof(int) * input_data_size);
+  workspace_size_list_.clear();
+  workspace_size_list_.emplace_back(sizeof(void *) * input_data_size);
+  workspace_size_list_.emplace_back(sizeof(int) * input_data_size);
+  workspace_size_list_.emplace_back(sizeof(int) * input_data_size);
 
   return KRET_OK;
 }

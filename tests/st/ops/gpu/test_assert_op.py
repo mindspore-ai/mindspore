@@ -36,7 +36,7 @@ class AssertTEST(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 def test_assert_op():
     """
-    Feature: Assert cpu kernel
+    Feature: Assert gpu kernel
     Description: test the assert summarize = 10.
     Expectation: match to np benchmark.
     """
