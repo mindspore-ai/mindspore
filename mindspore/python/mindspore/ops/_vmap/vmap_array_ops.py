@@ -189,8 +189,9 @@ def get_select_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(P.ScatterAdd)
-@vmap_rules_getters.register(P.ScatterNdAdd)
 @vmap_rules_getters.register(P.ScatterMin)
+@vmap_rules_getters.register(P.ScatterNdAdd)
+@vmap_rules_getters.register(P.ScatterNdSub)
 def get_scatter_add_vmap_rule(prim, axis_size):
     """
     VmapRule for `Scatter*` operations, such as `ScatterAdd`, `ScatterNdAdd` and `ScatterMin`.
@@ -200,8 +201,9 @@ def get_scatter_add_vmap_rule(prim, axis_size):
     """
     sactter_func_map = {
         "ScatterAdd": P.ScatterNdAdd,
-        "ScatterNdAdd": P.ScatterNdAdd,
         "ScatterMin": P.ScatterNdMin,
+        "ScatterNdAdd": P.ScatterNdAdd,
+        "ScatterNdSub": P.ScatterNdSub,
     }
     sactter_func_list = ["ScatterAdd", "ScatterMin"]
     if isinstance(prim, str):
@@ -352,9 +354,9 @@ def get_one_hot_vmap_rule(prim, axis_size):
         new_axis = axis
         if axis >= 0 and indices_dim <= axis:
             new_axis = axis + 1
-        elif indices_dim == (ndim-1):
-            if axis in (-1, (ndim-1)):
-                new_axis = ndim-1
+        elif indices_dim == (ndim - 1):
+            if axis in (-1, (ndim - 1)):
+                new_axis = ndim - 1
         out = P.OneHot(new_axis)(indices, depth, on_value, off_value)
 
         return (out, indices_dim)
@@ -421,4 +423,5 @@ def get_gather_nd_vmap_rule(prim, axis_size):
         out = gather_nd(x, indices)
         out = prim(x, indices)
         return (out, 0)
+
     return vmap_rule

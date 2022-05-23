@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 import mindspore.nn as nn
+import mindspore.ops.operations as P
 from mindspore import Tensor, context
 from mindspore.ops.functional import vmap
 from mindspore.ops.operations.math_ops import Lerp
@@ -29,6 +30,21 @@ class LerpNet(nn.Cell):
     def construct(self, start, end, weight):
         output = self.lerp(start, end, weight)
         return output
+
+
+class DynamicShapeNet(nn.Cell):
+    def __init__(self, axis=0):
+        super(DynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.gather = P.Gather()
+        self.lerp = LerpNet()
+        self.axis = axis
+
+    def construct(self, start, end, weight, indices):
+        unique_indices, _ = self.unique(indices)
+        real_start = self.gather(start, unique_indices, self.axis)
+        real_end = self.gather(end, unique_indices, self.axis)
+        return real_start, real_end, self.lerp(real_start, real_end, weight)
 
 
 class LerpVMapNet(nn.Cell):
@@ -126,6 +142,37 @@ def test_lerp(data_shape, data_type):
     context.set_context(mode=context.PYNATIVE_MODE)
     output = lerp(Tensor(start), Tensor(end), Tensor(np.array(weight, dtype=data_type)))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize("data_type", [np.float32, np.float16])
+def test_lerp_dy_shape(data_type):
+    """
+    Feature: Test Lerp DyNamicShape.
+    Description: The input shape may need to broadcast.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    np.random.seed(1)
+    data_shape = (4, 5, 7)
+    start = np.random.random(data_shape).astype(data_type)
+    end = np.ones(data_shape).astype(data_type)
+    indices = np.random.randint(0, 4, size=4)
+    weight = 0.5
+    loss = 1e-6
+    if data_type == np.float16:
+        loss = 1e-3
+    net = DynamicShapeNet()
+    real_start, real_end, ms_result = net(Tensor(start), Tensor(end), weight, Tensor(indices))
+    np_result = lerp_np_bencmark(real_start.asnumpy(), real_end.asnumpy(), weight)
+    np.testing.assert_allclose(np_result, ms_result.asnumpy(), rtol=loss, atol=loss)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = DynamicShapeNet()
+    real_start, real_end, ms_result = net(Tensor(start), Tensor(end), weight, Tensor(indices))
+    np_result = lerp_np_bencmark(real_start.asnumpy(), real_end.asnumpy(), weight)
+    np.testing.assert_allclose(np_result, ms_result.asnumpy(), rtol=loss, atol=loss)
 
 
 @pytest.mark.level0
