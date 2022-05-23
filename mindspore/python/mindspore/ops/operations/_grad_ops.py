@@ -2570,3 +2570,52 @@ class IgammaGradA(Primitive):
     def __init__(self):
         """Initialize IgammaGradA"""
         self.init_prim_io_names(inputs=['a', 'x'], outputs=['z'])
+
+
+class GridSampler2DGrad(Primitive):
+    """
+    Computes gradients for GridSampler2D operation.
+
+    Args:
+        interpolation_mode (str): An optional string specifying the interpolation method. The optional values are
+            "bilinear" or "nearest". Default: "bilinear".
+        padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
+            "reflection". Default: "zeros".
+        align_corners (bool): An optional bool. If "true", the centers of the corner pixels of the input and output
+            tensors are aligned. Defaults to "false".
+
+    Inputs:
+        - **grad** (Tensor) - A 4-D tensor whose dtype is float16 or float32 and whose shape is :math:`(N, C,
+          H_{out}, W_{out})`. The shape is inconsistent with the shape of the output result of forward calculation.
+        - **input_x** (Tensor) - A 4-D tensor whose dtype is the same as `grad` and whose shape is :math:`(N, C,
+         H_{in}, W_{in})`.
+        - **grid** (Tensor) - A 4-D tensor whose dtype is the same as `grad` and whose
+         shape is :math:`(N, H_{out}, W_{out}, 2)`.
+
+    Outputs:
+        - **dx** (Tensor) - A 4-D tensor whose dtype and shape are the same as `input_x`.
+        - **dgrid** (Tensor) - A 4-D tensor whose dtype and shape are the same as `grid`.
+
+    Raises:
+        TypeError: If `grad`, `input_x` or `grid` is not a Tensor.
+        TypeError: If the dtypes of `grad`, `input_x` and `grid` are inconsistent.
+        TypeError: If the dtype of `grad`, `input_x` or `grid` is not a valid type.
+        TypeError: If `align_corners` is not a boolean value.
+        ValueError: If the rank of `grad`, `input_x` or `grid` is not equal to 4.
+        ValueError: If the first dimension of `grad`, `input_x` and `grid` are inconsistent.
+        ValueError: If the last dimension of `grid` is not equal to 2.
+        ValueError: If `interpolation_mode` is not "bilinear", "nearest" or a string value.
+        ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
+        ValueError: If the shape of `grad` is inconsistent with the shape of the output result of forward calculation.
+
+    Supported Platforms:
+        ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, interpolation_mode='bilinear', padding_mode='zeros', align_corners=False):
+        """Initialize GridSampler2DGrad."""
+        validator.check_string(interpolation_mode, ['bilinear', 'nearest'], 'interpolation_mode', self.name)
+        validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
+        validator.check_bool(align_corners, 'align_corners', self.name)
+        self.init_prim_io_names(inputs=['grad', 'input_x', 'grid'], outputs=['dx', 'dgrid'])

@@ -9487,3 +9487,67 @@ class PSROIPooling(Primitive):
         self.add_prim_attr('spatial_scale', self.spatial_scale)
         self.add_prim_attr('group_size', self.group_size)
         self.add_prim_attr('output_dim', self.output_dim)
+
+
+class GridSampler2D(Primitive):
+    """
+    This operation samples 2d input_x by using interpolation based on flow field grid, which is usually gennerated by
+    affine_grid.
+
+    Args:
+        interpolation_mode (str): An optional string specifying the interpolation method. The optional values are
+            "bilinear" or "nearest". Default: "bilinear".
+        padding_mode (str): An optional string specifying the pad method. The optional values are "zeros", "border" or
+            "reflection". Default: "zeros".
+        align_corners (bool): An optional bool. If "true", the centers of the corner pixels of the input and output
+            tensors are aligned. Defaults to "false".
+
+    Inputs:
+        - **input_x** (Tensor) - A 4-D tensor with dtype of float16 or float32 and shape of :math:`(N, C,
+          H_{in}, W_{in})`.
+        - **grid** (Tensor) - A 4-D tensor whose dtype is the same as `input_x` and whose shape is :math:`(N,
+          H_{out}, W_{out}, 2)`. Used to specify the sampling pixel locations normalized by the input spatial
+          dimensions.
+
+    Outputs:
+       A 4-D Tensor whose dtype is the same as `input_x` and whose shape is :math:`(N, C, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `input_x` or `grid` is not a Tensor.
+        TypeError: If the dtypes of `input_x` and `grid` are inconsistent.
+        TypeError: If the dtype of `input_x` or `grid` is not a valid type.
+        TypeError: If `align_corners` is not a boolean value.
+        ValueError: If the rank of `input_x` or `grid` is not equal to 4.
+        ValueError: If the first dimension of `input_x` is not equal to that of `grid`.
+        ValueError: If the forth dimension of `grid` is not equal to 2.
+        ValueError: If `interpolation_mode` is not "bilinear", "nearest" or a string value.
+        ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
+
+    Supported Platforms:
+        ``Ascend````CPU``
+        >>> gridsampler = ops.GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+        >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
+        >>> grid = Tensor(np.arange(-9, 9, 0.5).reshape((2, 3, 3, 2)).astype(np.float32))
+        >>> output = gridsampler(input_x, grid)
+        >>> print(output)
+        [[[[ 0.     0.     0.   ]
+           [ 0.     0.     0.   ]
+           [ 0.     0.     0.5  ]]
+          [[ 0.     0.     0.   ]
+           [ 0.     0.     0.   ]
+           [ 0.     1.5    4.5  ]]]
+         [[[10.     8.25   1.375]
+           [ 0.     0.     0.   ]
+           [ 0.     0.     0.   ]]
+          [[14.    11.25   1.875]
+           [ 0.     0.     0.   ]
+           [ 0.     0.     0.   ]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, interpolation_mode='bilinear', padding_mode='zeros', align_corners=False):
+        """Initialize GridSampler2D."""
+        validator.check_string(interpolation_mode, ['bilinear', 'nearest'], 'interpolation_mode', self.name)
+        validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
+        validator.check_bool(align_corners, 'align_corners', self.name)
+        self.init_prim_io_names(inputs=['input', 'grid'], outputs=['output'])
