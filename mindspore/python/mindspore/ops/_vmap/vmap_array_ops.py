@@ -287,6 +287,7 @@ def get_scatter_add_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.TensorScatterAdd)
 @vmap_rules_getters.register(P.TensorScatterSub)
 @vmap_rules_getters.register(P.TensorScatterMul)
+@vmap_rules_getters.register(P.TensorScatterDiv)
 def get_tensor_scatter_op_vmap_rule(prim, axis_size):
     """
     VmapRule for `TensorScatter*` operations, such as `TensorScatterMul`.
@@ -296,6 +297,7 @@ def get_tensor_scatter_op_vmap_rule(prim, axis_size):
         "TensorScatterAdd": P.TensorScatterAdd,
         "TensorScatterSub": P.TensorScatterSub,
         "TensorScatterMul": P.TensorScatterMul,
+        "TensorScatterDiv": P.TensorScatterDiv,
     }
     if isinstance(prim, str):
         prim_name = prim

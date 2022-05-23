@@ -72,15 +72,13 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
   }
 
   if (x_shape.size() < ids_shape.size()) {
-    MS_LOG(ERROR) << "For " << prim_name << ", invalid input_args and segment_ids shape size";
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    MS_EXCEPTION(TypeError) << "For " << prim_name << ", invalid input_args and segment_ids shape size";
   }
 
   for (size_t i = 0; i < ids_shape.size(); i++) {
     if (x_shape[i] != ids_shape[i]) {
-      MS_LOG(ERROR) << "For " << prim_name << ", invalid input_args and segment_ids shape[" << i << "]: " << x_shape[i]
-                    << ", " << ids_shape[i];
-      return x_shape_ptr->cast<abstract::ShapePtr>();
+      MS_EXCEPTION(TypeError) << "For " << prim_name << ", invalid input_args and segment_ids shape[" << i
+                              << "]: " << x_shape[i] << ", " << ids_shape[i];
     }
   }
 

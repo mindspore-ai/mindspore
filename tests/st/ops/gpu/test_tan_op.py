@@ -131,7 +131,7 @@ def test_tan_dy_shape():
     Description: test cases for dynamic shape.
     Expectation: raise TypeError.
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     np.random.seed(1)
     in_np = np.random.rand(3, 5, 2).astype(np.float32)

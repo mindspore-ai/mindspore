@@ -32,7 +32,6 @@ __global__ void SoftShrinkComp(size_t size, const T *input, const float lambd, T
 template <typename T>
 __global__ void SoftShrinkGradComp(size_t size, const T *input, const float lambd, T *output) {
   const T positive_lambd = static_cast<T>(lambd);
-  const T negative_lambd = static_cast<T>(-1 * lambd);
   const T zero = static_cast<T>(0);
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     output[pos] = (input[pos] > zero) ? (input[pos] + positive_lambd)
