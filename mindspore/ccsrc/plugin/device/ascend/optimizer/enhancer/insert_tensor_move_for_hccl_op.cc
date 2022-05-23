@@ -101,7 +101,7 @@ bool InsertTensorMoveForHcclOp::NeedInsertTensorMove(const FuncGraphPtr &graph, 
   // example3: NodeA --> NopNode --> Allreduce
   //                             --> other RealNode(!Allreude)
   // when input is used by others
-  if (IsNodeOutPutUsedByOtherRealKernel(graph, input, input_idx, cur_node)) {
+  if (IsNodeOutPutUsedByOtherRealKernel(graph, real_input, input_idx, cur_node)) {
     return true;
   }
   if (common::AnfAlgo::IsNopNode(real_input)) {
