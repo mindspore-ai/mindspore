@@ -35,7 +35,7 @@ struct Context::Data {
 #ifdef PARALLEL_INFERENCE
   int32_t thread_num = 8;
   int affinity_mode_ = 1;
-  int32_t inter_op_parallel_num_ = 4;
+  int32_t inter_op_parallel_num_ = 1;
 #else
   int32_t thread_num = 2;
   int affinity_mode_ = 0;
