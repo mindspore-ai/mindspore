@@ -33,7 +33,7 @@
 #include "backend/common/pass/add_dynamic_shape_attr.h"
 #include "backend/common/pass/add_akg_kernel_attrs.h"
 #include "backend/common/pass/sparse_process.h"
-#include "backend/common/pass/insert_assign_for_custom_op.h"
+#include "backend/common/pass/inplace_assign_for_custom_op.h"
 #include "backend/common/pass/flatten_concat_fission.h"
 #include "backend/common/optimizer/dynamic_shape/convert_custom_op.h"
 #include "backend/common/optimizer/dynamic_shape/link_custom_op.h"
@@ -121,7 +121,7 @@ void CommonUnifyMindIR(const std::shared_ptr<session::KernelGraph> &kernel_graph
   auto pm = std::make_shared<PassManager>("common_unify_mindir_pm");
   pm->AddPass(std::make_shared<ConvTransposeToConvBackpropInputPass>());
   pm->AddPass(std::make_shared<CustomOpRegInfoToAttr>());
-  pm->AddPass(std::make_shared<InsertAssignForCustomOp>());
+  pm->AddPass(std::make_shared<InplaceAssignForCustomOp>());
   opt->AddPassManager(pm);
   (void)opt->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

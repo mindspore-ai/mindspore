@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/pass/insert_assign_for_custom_op.h"
+#include "backend/common/pass/inplace_assign_for_custom_op.h"
 
 #include <memory>
 #include <vector>
@@ -54,41 +54,36 @@ std::vector<std::vector<int64_t>> GetHybridInplaceIndex(const CNodePtr &cnode) {
   return inplace_index;
 }
 
-CNodePtr InsertAssign(const FuncGraphPtr &func_graph, const AnfNodePtr &src, const CNodePtr &dst) {
-  // Insert UpdateState, Load and Assign, need mount a UMonad node.
+CNodePtr InplaceAssign(const FuncGraphPtr &func_graph, const AnfNodePtr &src, const CNodePtr &dst) {
+  // Insert UpdateState, Load, need mount a UMonad node.
   auto u = NewValueNode(kUMonad);
   u->set_abstract(kUMonad->ToAbstract());
 
-  // Insert Assign
-  AnfNodePtrList assign_inputs = {NewValueNode(prim::kPrimAssign), dst, src, u};
-  auto assign_cnode = func_graph->NewCNode(assign_inputs);
-  assign_cnode->set_abstract(dst->abstract());
-
   // Insert UpdateState
-  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u, assign_cnode};
+  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u, dst};
   auto update_state_cnode = func_graph->NewCNode(update_state_inputs);
   update_state_cnode->set_abstract(kUMonad->ToAbstract());
 
   // Insert Load
-  AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), dst, update_state_cnode};
+  AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), src, update_state_cnode};
   auto load_cnode = func_graph->NewCNode(load_inputs);
   load_cnode->set_abstract(dst->abstract());
 
   return load_cnode;
 }
 
-CNodePtr InsertAssignAfterCustom(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+CNodePtr InplaceAssignAfterCustom(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   auto inplace_info = GetHybridInplaceIndex(cnode);
   if (inplace_info.size() != 1) return nullptr;
   auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
   if (auto i = LongToSize(inplace_info[0][kCustomInput]); i < input_size) {
-    return InsertAssign(func_graph, cnode->input(i + 1), cnode);
+    return InplaceAssign(func_graph, cnode->input(i + 1), cnode);
   } else {
     return nullptr;
   }
 }
 
-CNodePtr InsertAssignAfterTupleGetItem(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+CNodePtr InplaceAssignAfterTupleGetItem(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   auto input_node = cnode->input(kRealInputNodeIndexInTupleGetItem);
   MS_EXCEPTION_IF_NULL(input_node);
   auto real_input = dyn_cast<CNode>(input_node);
@@ -104,7 +99,7 @@ CNodePtr InsertAssignAfterTupleGetItem(const FuncGraphPtr &func_graph, const CNo
       if (index[kCustomOutput] == gt_idx && index[kCustomInput] >= 0) {
         auto custom_input_size = common::AnfAlgo::GetInputTensorNum(real_input);
         if (auto i = LongToSize(index[kCustomInput]); i < custom_input_size) {
-          return InsertAssign(func_graph, real_input->input(i + 1), cnode);
+          return InplaceAssign(func_graph, real_input->input(i + 1), cnode);
         }
       }
     }
@@ -112,8 +107,8 @@ CNodePtr InsertAssignAfterTupleGetItem(const FuncGraphPtr &func_graph, const CNo
   return nullptr;
 }
 
-const AnfNodePtr InsertAssignForCustomOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                  const EquivPtr &) const {
+const AnfNodePtr InplaceAssignForCustomOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                   const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -123,10 +118,10 @@ const AnfNodePtr InsertAssignForCustomOp::Process(const FuncGraphPtr &func_graph
 
   if (IsPrimitiveCNode(cnode, prim::kPrimCustom) && visited_.find(cnode) == visited_.end()) {
     visited_.insert(cnode);
-    return InsertAssignAfterCustom(func_graph, cnode);
+    return InplaceAssignAfterCustom(func_graph, cnode);
   } else if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && visited_.find(cnode) == visited_.end()) {
     visited_.insert(cnode);
-    return InsertAssignAfterTupleGetItem(func_graph, cnode);
+    return InplaceAssignAfterTupleGetItem(func_graph, cnode);
   }
 
   return nullptr;

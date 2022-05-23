@@ -229,6 +229,7 @@ def test_hybrid_ascend_graph_mode():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     hybrid_outer_product()
+    hybrid_custom_inplace_assign_one_output()
 
 
 @pytest.mark.level0

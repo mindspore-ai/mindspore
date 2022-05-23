@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INSERT_ASSIGN_FOR_CUSTOM_OP_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INSERT_ASSIGN_FOR_CUSTOM_OP_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INPLACE_ASSIGN_FOR_CUSTOM_OP_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INPLACE_ASSIGN_FOR_CUSTOM_OP_H_
 #include "ir/anf.h"
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class InsertAssignForCustomOp : public PatternProcessPass {
+class InplaceAssignForCustomOp : public PatternProcessPass {
  public:
-  explicit InsertAssignForCustomOp(bool multigraph = true)
-      : PatternProcessPass("insert_assign_for_custom_op", multigraph) {}
-  ~InsertAssignForCustomOp() override = default;
+  explicit InplaceAssignForCustomOp(bool multigraph = true)
+      : PatternProcessPass("inplace_assign_for_custom_op", multigraph) {}
+  ~InplaceAssignForCustomOp() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
@@ -33,4 +33,4 @@ class InsertAssignForCustomOp : public PatternProcessPass {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INSERT_ASSIGN_FOR_CUSTOM_OP_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_INPLACE_ASSIGN_FOR_CUSTOM_OP_H_
