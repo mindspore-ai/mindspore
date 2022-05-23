@@ -2652,27 +2652,28 @@ class Tensor(Tensor_):
 
     def gather_nd(self, indices):
         r"""
-        Gathers slices from a tensor by indices.
-        Using given indices to gather slices from a tensor with a specified shape.
-        `input_x` is a target tensor of the element to be collected,
-        The shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions.
+        Gathers slices from a input tensor by indices.
+        Using given indices to gather slices from a input tensor with a specified shape.
+        input tensor's shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions. For convenience
+        define it as `input_x`.
         `indices` is an K-dimensional integer tensor. Suppose that it is a (K-1)-dimensional tensor and each element
-        of it defines a slice of `input_x`:
+        of it defines a slice of input tensor:
 
         .. math::
             output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
 
-        The last dimension of `indices` can not more than the rank of `input_x`:
+        The last dimension of `indices` can not more than the rank of input tensor:
         :math:`indices.shape[-1] <= input\_x.rank`.
 
         Args:
             indices (Tensor): The index tensor that gets the collected elements, with int32 or int64 data type.
 
         Returns:
-            Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].
+            Tensor, has the same type as input tensor and the shape is:
+            :math:`indices\_shape[:-1] + input\_x\_shape[indices\_shape[-1]:]`.
 
         Raises:
-            ValueError: If length of shape of `input_x` is less than the last dimension of `indices`.
+            ValueError: If length of shape of input tensor is less than the last dimension of `indices`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
