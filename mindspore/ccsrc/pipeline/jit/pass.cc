@@ -168,6 +168,7 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
     irpass.reduce_eliminate_,
     irpass.tile_eliminate_,
     irpass.arithmetic_simplify_,
+    irpass.make_sparse_tensor_to_make_tuple_,
   });
 
   opt::OptPassConfig inline_opt = opt::OptPassConfig({
