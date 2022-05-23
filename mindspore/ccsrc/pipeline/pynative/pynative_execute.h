@@ -104,6 +104,8 @@ class TopCellInfo {
   void set_need_compile_graph(bool need_compile_graph) { need_compile_graph_ = need_compile_graph; }
   bool forward_already_run() const { return forward_already_run_; }
   void set_forward_already_run(bool set_forward_already_run) { forward_already_run_ = set_forward_already_run; }
+  void set_is_dynamic_structure(bool is_dynamic_structure) { is_dynamic_structure_ = is_dynamic_structure; }
+  bool is_dynamic_structure() const { return is_dynamic_structure_; }
   pipeline::ResourcePtr resource() const { return resource_; }
   FuncGraphPtr df_builder() const { return df_builder_; }
   FuncGraphPtr fg() const { return fg_; }
@@ -150,6 +152,7 @@ class TopCellInfo {
   bool is_init_kpynative_{false};
   bool forward_already_run_{false};
   bool need_compile_graph_{false};
+  bool is_dynamic_structure_{false};
   size_t op_num_{0};
   size_t grad_order_{0};
   pipeline::ResourcePtr resource_{nullptr};

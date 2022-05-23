@@ -1419,7 +1419,8 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto parallel_mode = parallel_context->parallel_mode();
   bool is_parallel_forward_ms_function =
-    !graph->is_bprop() && (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
+    !graph->has_flag(kFlagIsPynativeBpropGraph) &&
+    (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
   for (const auto &input_node : graph->input_nodes()) {
     auto params = common::AnfAlgo::GetAllOutput(input_node);
     for (const auto &param : params) {
@@ -2617,12 +2618,12 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &op_output_map);
     HandleOpOutputs(kernel, op_outputs, cnode_refcount, &op_output_map, &graph_output_info);
     // Save grad node to Bucket
-    if (kernel_graph->is_bprop()) {
+    if (kernel_graph->has_flag(kFlagIsPynativeBpropGraph)) {
       AddGradAddrToBucket(graph_id, graph_output_info.graph_output_tensors);
     }
   }
   // Clear bucket resources every step
-  if (kernel_graph->is_bprop()) {
+  if (kernel_graph->has_flag(kFlagIsPynativeBpropGraph)) {
     ClearAllBucket(graph_id);
   }
 
@@ -2699,10 +2700,8 @@ void SetGraphBpropAttr(const KernelGraphPtr &graph) {
   auto &execution_orders = graph->execution_order();
   if (std::any_of(execution_orders.begin(), execution_orders.end(),
                   [](const AnfNodePtr &node) { return node->scope()->name().rfind("Gradient", 0) == 0; })) {
-    graph->set_is_bprop(true);
+    graph->set_flag(kFlagIsPynativeBpropGraph, true);
     MS_LOG(INFO) << "Match bprop graph";
-  } else {
-    graph->set_is_bprop(false);
   }
 }
 
@@ -2798,7 +2797,7 @@ void SessionBasic::InitAllBucket(const KernelGraphPtr &graph, const device::Devi
   }
   SetGraphBpropAttr(graph);
 
-  if (!graph->is_bprop()) {
+  if (!graph->has_flag(kFlagIsPynativeBpropGraph)) {
     return;
   }
 

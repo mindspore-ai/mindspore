@@ -1033,9 +1033,10 @@ bool TaskEmitAction(const ResourcePtr &resource) {
   DisableMindRT(resource);
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   auto is_parallel = (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
-  bool pynative_switch_to_graph_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
-                                       (!func_graph->is_bprop() || func_graph->manager()->func_graphs().size() > 1) &&
-                                       !is_parallel;
+  bool pynative_switch_to_graph_mode =
+    context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
+    (!func_graph->has_flag(kFlagIsPynativeBpropGraph) || func_graph->manager()->func_graphs().size() > 1) &&
+    !is_parallel;
   SetRunMode(resource, pynative_switch_to_graph_mode);
   auto bc_ptr = resource->GetResult(kBackend).cast<compile::BackendPtr>();
   MS_EXCEPTION_IF_NULL(bc_ptr);

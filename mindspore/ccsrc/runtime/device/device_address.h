@@ -22,6 +22,7 @@
 #include <memory>
 #include <map>
 #include <utility>
+#include "ir/tensor.h"
 #include "ir/dtype.h"
 #include "ir/device_sync.h"
 #include "utils/shape_utils.h"
@@ -107,6 +108,10 @@ class DeviceAddress : public mindspore::DeviceSync {
   std::string device_name() const { return device_name_; }
   uint32_t device_id() const { return device_id_; }
 
+  void set_from_tensor(const std::weak_ptr<tensor::Tensor> &from_tensor) { from_tensors_.emplace_back(from_tensor); }
+  std::vector<std::weak_ptr<tensor::Tensor>> from_tensors() const { return from_tensors_; }
+  void clear_from_tensors() { from_tensors_.clear(); }
+
   virtual void SetNodeIndex(const AnfNodePtr &node, size_t out_index) { node_index_ = {node, out_index}; }
   KernelWithIndex GetNodeIndex() const {
     return node_index_.first.expired() ? KernelWithIndex{nullptr, node_index_.second}
@@ -167,6 +172,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   ShapeVector host_shape_{};
   // {node, out_index}
   std::pair<AnfNodeWeakPtr, size_t> node_index_{AnfNodePtr(nullptr), 0};
+  std::vector<std::weak_ptr<tensor::Tensor>> from_tensors_;
   // The device address of the node that owns the device address cannot be updated and replaced.
   // Application scenario: set to true when the hardware execution mode requires that ptr cannot be changed during
   // execution.

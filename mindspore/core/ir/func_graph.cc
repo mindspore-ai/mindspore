@@ -43,7 +43,6 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
       kw_only_args_count_(0),
       hyper_param_count_(0),
       is_generated_(false),
-      is_bprop_(false),
       return_(nullptr),
       manager_(),
       debug_info_(std::move(debug_info)),
@@ -142,7 +141,7 @@ ParameterPtr FuncGraph::AddWeightParameter(const std::string &name) {
   return p;
 }
 
-bool FuncGraph::has_flag(const std::string &key) {
+bool FuncGraph::has_flag(const std::string &key) const {
   auto iter = attrs_.find(key);
   if (iter != attrs_.cend()) {
     MS_EXCEPTION_IF_NULL(iter->second);

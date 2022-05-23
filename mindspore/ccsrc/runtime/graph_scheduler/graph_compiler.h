@@ -183,12 +183,12 @@ class GraphCompiler {
   // Remove single op kernel graph cache and output nodes cache.
   void EraseSingleOpCache(const GraphInfo &graph_info, const GraphId &graph_id);
 
- private:
-  DISABLE_COPY_AND_ASSIGN(GraphCompiler);
-
   // The implementation of compiling graph in Graph Mode, including optimizing graph,
   // setting operator info, creating kernel and transforming kernel graph to ActorSet.
   GraphId CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
+
+ private:
+  DISABLE_COPY_AND_ASSIGN(GraphCompiler);
 
   // Add operators' output and input reference map to the graph.
   void AddOutInRefToGraph(const KernelGraphPtr &graph) const;

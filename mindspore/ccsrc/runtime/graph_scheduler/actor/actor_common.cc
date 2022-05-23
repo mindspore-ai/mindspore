@@ -226,7 +226,21 @@ void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext
     device_tensor->DecreaseRefCount();
     if (device_tensor->ref_count() == 0) {
       if (device_tensor->GetPtr() != nullptr) {
-        FreeMemory(device_tensor, device_context);
+        auto from_tensors = device_tensor->from_tensors();
+        if (from_tensors.empty()) {
+          FreeMemory(device_tensor, device_context);
+        } else {
+          std::for_each(from_tensors.begin(), from_tensors.end(), [](const std::weak_ptr<tensor::Tensor> &t) {
+            auto tensor = t.lock();
+            if (tensor != nullptr) {
+              tensor->set_device_address(nullptr);
+            }
+          });
+          device_tensor->clear_from_tensors();
+          // Reset device address status
+          device_tensor->set_original_ref_count(SIZE_MAX);
+          device_tensor->ResetRefCount();
+        }
       }
       device_tensor->ResetRefCount();
     }

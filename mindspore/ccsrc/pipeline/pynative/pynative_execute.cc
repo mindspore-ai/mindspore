@@ -872,6 +872,8 @@ void ReplaceNewTensorsInGradGraph(const TopCellInfoPtr &top_cell, const OpExecIn
   std::vector<tensor::TensorPtr> total_output_tensors;
   TensorValueToTensor(added_out, &total_output_tensors);
   RunReplace(added_make_tuple, total_output_tensors, grad_graph);
+  std::for_each(total_output_tensors.begin(), total_output_tensors.end(),
+                [](tensor::TensorPtr &tensor) { tensor->set_is_forward_output(true); });
   top_cell->set_op_info_with_ms_func_forward_tensors(op_exec_info->op_info, total_output_tensors);
 }
 
@@ -926,6 +928,13 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
       MS_EXCEPTION_IF_NULL(old_device_address);
       auto new_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
       MS_EXCEPTION_IF_NULL(new_device_address);
+
+      // CPU host tensor data_c is different from device address if the address is from mem_pool.
+      if (new_device_address->from_mem_pool()) {
+        pre_tensor->set_device_address(new_device_address);
+        continue;
+      }
+
       auto old_ptr = old_device_address->GetMutablePtr();
       MS_EXCEPTION_IF_NULL(old_ptr);
       auto new_ptr = new_device_address->GetPtr();
@@ -3338,7 +3347,10 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
   // Get bprop graph of top cell
   auto bprop_graph = GetBpropGraph(grad, cell, w_args, p_args, size, args);
   MS_EXCEPTION_IF_NULL(bprop_graph);
-  bprop_graph->set_is_bprop(true);
+  if (top_cell()->is_dynamic_structure()) {
+    bprop_graph->set_flag(kFlagIsDynamicStructure, true);
+  }
+  bprop_graph->set_flag(kFlagIsPynativeBpropGraph, true);
   resource->set_func_graph(bprop_graph);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -3666,6 +3678,7 @@ void GradExecutor::CheckNeedCompileGraph() {
     pre_top_cell->Clear();
     already_run_top_cell_[already_top_cell_id] = new_top_cell;
     g_pyobj_id_cache.clear();
+    top_cell()->set_is_dynamic_structure(true);
   } else {
     MS_LOG(DEBUG) << "The op info has not been changed, no need to compile graph again";
     pre_top_cell->set_input_args_id(new_top_cell->input_args_id());

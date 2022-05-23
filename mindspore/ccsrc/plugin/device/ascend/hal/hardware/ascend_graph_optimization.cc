@@ -37,6 +37,22 @@ namespace device {
 namespace ascend {
 using AscendAutoMonad = mindspore::session::AscendAutoMonad;
 
+namespace {
+void RemoveUnusedValueNode(const KernelGraphPtr &graph) {
+  auto m = graph->manager();
+  auto node_users = m->node_users();
+  mindspore::HashSet<ValueNodePtr> unused_value_nodes;
+  for (auto &value_node : graph->graph_value_nodes()) {
+    if (node_users.find(value_node) == node_users.end()) {
+      unused_value_nodes.insert(value_node);
+    }
+  }
+  for (auto &value_node : unused_value_nodes) {
+    graph->RemoveNodeFromGraph(value_node);
+  }
+}
+}  // namespace
+
 void AscendGraphOptimization::Reset() {
   MS_LOG(INFO) << "Clear Ascend Graph Optimization Resource.";
   memo_.clear();
@@ -60,7 +76,9 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   OptimizeGraphWithDeviceInfo(graph);
   OptimizeExecutionOrder(graph);
   PostOptimization(graph);
-  // must clear memo_ which holds kernel graph after using AscendGraphOptimization class.
+
+  RemoveUnusedValueNode(graph);
+
   memo_.clear();
   // clear and reset graph_manager_ after optimization
   graph_manager_ = MakeManager();
