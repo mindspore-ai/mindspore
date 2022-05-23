@@ -90,8 +90,11 @@ CNodePtr GatherV2DsFission::CreatePad(const FuncGraphPtr &graph, const CNodePtr 
     ShapeVector max_shape(param_dyn_shape->max_shape());
     ShapeVector min_shape(param_dyn_shape->min_shape());
     ShapeVector new_shape(shape);
-    max_shape[max_shape.size() - 1] = SizeToLong(pad_dim_size);
-    min_shape[min_shape.size() - 1] = SizeToLong(pad_dim_size);
+    if (!min_shape.empty() && !max_shape.empty()) {
+      max_shape[max_shape.size() - 1] = SizeToLong(pad_dim_size);
+      min_shape[min_shape.size() - 1] = SizeToLong(pad_dim_size);
+    }
+
     abstract->set_shape(std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape));
   }
   pad->set_abstract(abstract);

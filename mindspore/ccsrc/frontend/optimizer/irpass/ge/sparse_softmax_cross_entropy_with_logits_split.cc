@@ -158,9 +158,15 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
     ShapeVector shape_tmp = {static_cast<int64_t>(labels_shape[0])};
     auto min_shape = common::AnfAlgo::GetOutputMinShape(one_hot_node, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(one_hot_node, 0);
-    std::vector<BaseShapePtr> shapes = {
-      std::make_shared<abstract::Shape>(shape_tmp, ShapeVector(min_shape[0]), ShapeVector(max_shape[0])),
-      common::AnfAlgo::GetOutputDetailShape(one_hot_node, 0)};
+    std::vector<BaseShapePtr> shapes;
+    if (!min_shape.empty() && !max_shape.empty()) {
+      shapes = {std::make_shared<abstract::Shape>(shape_tmp, ShapeVector(min_shape[0]), ShapeVector(max_shape[0])),
+                common::AnfAlgo::GetOutputDetailShape(one_hot_node, 0)};
+    } else {
+      shapes = {std::make_shared<abstract::Shape>(shape_tmp, ShapeVector({}), ShapeVector({})),
+                common::AnfAlgo::GetOutputDetailShape(one_hot_node, 0)};
+    }
+
     common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, softmax_node.get());
   } else {
     // Loss shape:(N,) labels shape:(N,C)
