@@ -20,6 +20,19 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.functional import vmap
+
+
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
+
+class NetHShrinkGrad(nn.Cell):
+    def __init__(self, lambd=0.5):
+        super(NetHShrinkGrad, self).__init__()
+        self.hard_shrink_grad = G.HShrinkGrad(lambd)
+
+    def construct(self, grad, input_x):
+        return self.hard_shrink_grad(grad, input_x)
 
 
 def hshrink_grad_op_np_bencmark(grad, input_x, lambd):
@@ -49,20 +62,40 @@ def test_hshrink_grad(dtype, data_shape, lambd):
     Description: test the rightness of HShrinkGrad cpu kernel
     Expectation: the output is same as hshrink_grad_op_np_bencmark output
     """
-    class NetHShrinkGrad(nn.Cell):
-        def __init__(self):
-            super(NetHShrinkGrad, self).__init__()
-            self.hard_shrink_grad = G.HShrinkGrad(lambd)
-
-        def construct(self, grad, input_x):
-            return self.hard_shrink_grad(grad, input_x)
-
     grad_data = np.random.random(data_shape).astype(dtype)
     input_data = np.random.uniform(
         low=-1, high=1, size=data_shape).astype(dtype)
     benchmark_output = hshrink_grad_op_np_bencmark(
         grad_data, input_data, lambd)
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-    hshrink_grad = NetHShrinkGrad()
+    hshrink_grad = NetHShrinkGrad(lambd)
     output = hshrink_grad(Tensor(grad_data), Tensor(input_data))
     assert np.allclose(output.asnumpy(), benchmark_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('axis', [2])
+def test_hshrink_grad_vmap_cpu(axis):
+    """
+    Feature: HShrinkGrad cpu kernel
+    Description: test the rightness of HShrinkGrad cpu kernel vmap feature.
+    Expectation: Success.
+    """
+    hshrink = NetHShrinkGrad()
+
+    def hshrink_func(grad, input_x):
+        """hshrink_func"""
+        return hshrink(grad, input_x)
+
+    grad_data = np.random.random((3, axis, 5)).astype(np.float32)
+    input_data = np.random.uniform(
+        low=-1, high=1, size=(3, axis, 5)).astype(np.float32)
+
+    output_vmap = vmap(hshrink_func, in_axes=(1, 1))(
+        Tensor(grad_data), Tensor(input_data))
+
+    output_manually = hshrink(Tensor(
+        grad_data.transpose(1, 0, 2)), Tensor(input_data.transpose(1, 0, 2)))
+
+    assert np.array_equal(output_vmap.asnumpy(), output_manually)

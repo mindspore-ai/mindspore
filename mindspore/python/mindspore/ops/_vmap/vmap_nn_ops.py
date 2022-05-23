@@ -122,10 +122,14 @@ def get_dropout_nd_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(G.FastGeLUGrad)
+@vmap_rules_getters.register(G.HShrinkGrad)
 def get_fast_gelu_grad_vmap_rule(prim, axis_size):
-    """VmapRule for `FastGeLUGrad`."""
+    """VmapRule for common activation grad operation."""
     if isinstance(prim, str):
+        prim_name = prim
         prim = Primitive(prim)
+    else:
+        prim_name = prim.name
 
     def vmap_rule(x_bdim, dy_bdim):
         x, x_dim = x_bdim
@@ -143,8 +147,9 @@ def get_fast_gelu_grad_vmap_rule(prim, axis_size):
         x_shape = F.shape(x)
         dy_shape = F.shape(dy)
         if x_shape != dy_shape:
-            raise RuntimeError("For FastGelUGrad vmap, input x shape is supposed to be the same as input dy shape "
-                               "after batch transforming, but got x_shape {}, dy_shape {}".format(x_shape, dy_shape))
+            raise RuntimeError("For {} vmap, input x shape is supposed to be the same as input dy shape "
+                               "after batch transforming, but got x_shape {}, dy_shape {}"
+                               .format(prim_name, x_shape, dy_shape))
         out = prim(x, dy)
         return (out, 0)
 
