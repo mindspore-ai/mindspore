@@ -39,9 +39,9 @@ abstract::ShapePtr IOUInferShape(const PrimitivePtr &primitive, const std::vecto
   auto x_shp = x_shape_map[kShape];
   auto y_shp = y_shape_map[kShape];
   if (x_shp.size() != 2 || y_shp.size() != 2) {
-    MS_EXCEPTION(ValueError) << "For 'BatchMatMul', input x, y must have the same dimension size and must be greater"
-                             << "or equal to 3. But got x size = " << x_shp.size() << ", y size = " << y_shp.size()
-                             << ".";
+    MS_EXCEPTION(ValueError)
+      << "For 'BatchMatMul', input x, y must have the same dimension size and must be 2. But got x size = "
+      << x_shp.size() << ", y size = " << y_shp.size() << ".";
   }
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(x_shp[1]), kGreaterEqual, 4, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(y_shp[1]), kGreaterEqual, 4, prim_name);

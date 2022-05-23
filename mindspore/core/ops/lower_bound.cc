@@ -29,18 +29,18 @@ abstract::ShapePtr LowerBoundInferShape(const PrimitivePtr &primitive, const std
   size_t size_exp = 2;
   if (x_shape.size() != size_exp) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', the rank of sorted_x must be 2, but got: " << values_shape.size() << ".";
+                             << "', the rank of 'sorted_x' must be 2, but got: " << values_shape.size() << ".";
   }
   if (values_shape.size() != size_exp) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', the rank of values must be 2, but got: " << values_shape.size() << ".";
+                             << "', the rank of 'values' must be 2, but got: " << values_shape.size() << ".";
   }
   if (x_shape[0] != values_shape[0]) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << primitive->name()
-      << "', the first dimension of the shape of sorted_x must be equal to that of values, but got shape of values: "
-      << input_args[1]->BuildShape()->ToString() << ", shape of sorted_x:" << input_args[0]->BuildShape()->ToString()
-      << ".";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the first dimension of the shape of 'sorted_x' must be equal to that of 'values', "
+                                "but got shape of 'values': "
+                             << input_args[1]->BuildShape()->ToString()
+                             << ", shape of 'sorted_x':" << input_args[0]->BuildShape()->ToString() << ".";
   }
   return std::make_shared<abstract::Shape>(values_shape);
 }

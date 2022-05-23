@@ -95,11 +95,11 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
       (beta_shape_list.size() + begin_params_axis_u < input_shape_list.size())) {
     MS_EXCEPTION(ValueError)
       << "For '" << op_name
-      << ", begin_params_axis must be less than or equal to input_x shape size, gama shape size add "
+      << "', begin_params_axis must be less than or equal to input_x shape size, gamma shape size add "
          "begin_params_axis must be equal to or greater than input_x shape size, and beta shape size add "
-         "begin_params_axis must be equal to or greater than input_x shape size, but got begin_params_axis: "
-      << begin_params_axis << ", input_x shape size: " << input_shape_list.size()
-      << ", gama shape size: " << gamma_shape_list.size() << ", beta shape size: " << beta_shape_list.size() << ".";
+         "begin_params_axis must be equal to or greater than input_x shape size, But got begin_params_axis: "
+      << begin_params_axis_u << ", input_x shape size: " << input_shape_list.size()
+      << ", gamma shape size: " << gamma_shape_list.size() << ", beta shape size: " << beta_shape_list.size() << ".";
   }
   for (size_t i = begin_params_axis_u; i < input_shape_list.size(); ++i) {
     size_t gamma_beta_shape_dim = i - begin_params_axis_u;

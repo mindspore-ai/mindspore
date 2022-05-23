@@ -57,7 +57,10 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
     for (size_t j = 0; j < element0_rank; ++j) {
       if (j != axis && elementi_shape[j] != element0_shape[j]) {
         MS_LOG(EXCEPTION) << "For '" << prim_name << "', element " << i
-                          << " shape in input should concat with first element, but it can not.";
+                          << " shape in input can not concat with first element. To perform concat in the axis 0 "
+                             "direction, except for the 0th axis, all other axes must have the same shape. But got "
+                          << "element" << i << "_shape[" << j << "]: " << elementi_shape[j] << ", element0_shape[" << j
+                          << "]: " << element0_shape[j] << ".";
       }
     }
     all_shp = all_shp == -1 || elementi_shape[axis] == -1 ? -1 : all_shp + elementi_shape[axis];

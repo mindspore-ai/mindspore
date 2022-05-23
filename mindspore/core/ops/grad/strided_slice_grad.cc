@@ -86,8 +86,8 @@ abstract::ShapePtr StridedSliceGradInferShape(const PrimitivePtr &primitive,
   if (shape_max.size() != shapex_len || shape_min.size() != shapex_len) {
     MS_LOG(EXCEPTION)
       << "For '" << prim_name
-      << "', shapex's min value size and max value size must match with shapex size. But got min value size: "
-      << shape_min.size() << ",  max value size: " << shape_max.size() << ", shapex size: " << shapex_len << ".";
+      << "', 'shapex' min value size and max value size must match with 'shapex' size. But got min value size: "
+      << shape_min.size() << ",  max value size: " << shape_max.size() << ", 'shapex' size: " << shapex_len << ".";
   }
   for (size_t i = 0; i < shapex_len; i++) {
     if (shape_min[i] == shape_max[i]) {

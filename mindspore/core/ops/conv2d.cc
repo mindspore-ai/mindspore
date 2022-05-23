@@ -45,7 +45,7 @@ void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
     if ((shape[i] < 0) && (shape[i] != Shape::SHP_ANY)) {
       MS_EXCEPTION(ValueError) << "For '" << op << "',  shape element [" << i
-                               << "] must be positive integer or SHP_ANY, but got: " << shape[i] << ".";
+                               << "] must be positive integer or -1, but got: " << shape[i] << ".";
     }
   }
 }
@@ -217,10 +217,10 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   if ((x_shape[c_axis] != Shape::SHP_ANY) && (w_shape[c_axis] != Shape::SHP_ANY) &&
       ((x_shape[c_axis] / group) != w_shape[c_axis])) {
     MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', 'C_in' of input 'x' shape divide by parameter 'group' should be "
+                      << "', 'C_in' of input 'x' shape divide by parameter 'group' must be "
                          "equal to 'C_in' of input 'weight' shape: "
                       << w_shape[c_axis] << ", but got 'C_in' of input 'x' shape: " << x_shape[c_axis]
-                      << ", and 'group': " << group;
+                      << ", and 'group': " << group << ".";
   }
   int64_t out_channel = CheckAttrPositiveInt64(prim_name, primitive->GetAttr("out_channel"), "out_channel");
   if ((w_shape[n_axis] != Shape::SHP_ANY) && (w_shape[n_axis] != out_channel)) {
@@ -245,8 +245,8 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   int64_t pad_mode;
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr("pad_mode"), &pad_mode);
   if (!CheckConv2dShape(prim_name, input_args, x_shape, w_shape, padding, pad_mode, w_axis, h_axis)) {
-    MS_LOG(EXCEPTION)
-      << "Shape error for Conv2d, input shape's h and w after padding is less than kernel_size's h and w dims.";
+    MS_LOG(EXCEPTION) << "For 'Conv2d', input shape's h and w after padding must be greater than or equal to "
+                         "kernel_size's h and w respectively.";
   }
 
   std::vector<int64_t> output_hw;

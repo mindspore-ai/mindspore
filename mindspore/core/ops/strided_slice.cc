@@ -319,7 +319,8 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
       *slice_len = LongToSize(slice_shape->shape()[0]);
     }
   } else {
-    MS_EXCEPTION(TypeError) << "For 'StridedSlice', '" << arg_name << "' must be tuple or Tensor.";
+    MS_EXCEPTION(TypeError) << "For 'StridedSlice', '" << arg_name
+                            << "' must be tuple or Tensor, but got: " << input_arg->BuildType()->ToString() << ".";
   }
 
   if (arg_name == "strides") {

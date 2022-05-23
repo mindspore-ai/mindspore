@@ -60,12 +60,11 @@ abstract::ShapePtr BoundingBoxDecodeInferShape(const PrimitivePtr &primitive,
   const int64_t last_dimension = 4;
   if (anchor_box_shape[1] != last_dimension) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', 'anchor_box' must have a last dimension of 4, but got: " << anchor_box_shape[1]
-                             << ".";
+                             << "', 'anchor_box' last dimension must be 4, but got: " << anchor_box_shape[1] << ".";
   }
   if (deltas_shape[1] != last_dimension) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', 'deltas' must have a last dimension of 4, but got: " << deltas_shape[1] << ".";
+                             << "', 'deltas' last dimension must be 4, but got: " << deltas_shape[1] << ".";
   }
 
   auto x_shape = anchor_box->cast<abstract::ShapePtr>();

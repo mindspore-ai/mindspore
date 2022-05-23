@@ -46,8 +46,8 @@ abstract::ShapePtr SoftplusGradInfershape(const PrimitivePtr &primitive,
   if (!x_shape_ptr->IsDynamic() && !output_shape_ptr->IsDynamic()) {
     if (*x_shape != *output_shape) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name
-                               << "', evaluator arg x and output must have the same shape, but got x shape: "
-                               << x_shape->ToString() << ", output shape: " << output_shape->ToString() << ".";
+                               << "', evaluator arg 'x' and 'output' must have the same shape, but got 'x' shape: "
+                               << x_shape->ToString() << ", 'output' shape: " << output_shape->ToString() << ".";
     }
   }
   auto shape_element = x_shape_ptr;

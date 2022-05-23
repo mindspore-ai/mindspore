@@ -55,4 +55,4 @@ def test_lenet5_exception():
     net = train_step_with_loss_warp(LeNet5())
     with pytest.raises(RuntimeError) as info:
         _cell_graph_executor.compile(net, predict, label)
-    assert "'C_in' of input 'x' shape divide by parameter 'group' should be " in str(info.value)
+    assert "'C_in' of input 'x' shape divide by parameter 'group' must be " in str(info.value)

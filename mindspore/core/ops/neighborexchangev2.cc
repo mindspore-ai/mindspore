@@ -54,8 +54,10 @@ std::vector<int64_t> CheckAttrSize(const PrimitivePtr &primitive, const std::str
   }
 
   if (attr_value.size() != attr_size) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', attr '" << attr_name << "' size must be equal to "
-                             << attr_size << ", but got: " << attr_value.size() << ".";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', attr '" << attr_name
+                             << "' size must be equal to attr_value size"
+                             << ", but got attr " << attr_name << " size: " << attr_size
+                             << ", attr_value size: " << attr_value.size() << ".";
   }
 
   return attr_value;

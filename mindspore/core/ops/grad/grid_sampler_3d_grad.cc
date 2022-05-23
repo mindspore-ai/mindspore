@@ -36,15 +36,15 @@ abstract::TupleShapePtr GridSampler3DGradInferShape(const PrimitivePtr &primitiv
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kOne]->BuildShape())[kShape];
   auto grid_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kTwo]->BuildShape())[kShape];
   if (grad_shape.size() != kFive) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', grad must be a 5-D tensor, but got a "
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'grad' must be a 5-D tensor, but got a "
                              << std::to_string(grad_shape.size()) << "-D tensor.";
   }
   if (input_x_shape.size() != kFive) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input_x must be a 5-D tensor, but got a "
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'input_x' must be a 5-D tensor, but got a "
                              << std::to_string(input_x_shape.size()) << "-D tensor.";
   }
   if (grid_shape.size() != kFive) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', grid must be a 5-D tensor, but got a "
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', 'grid' must be a 5-D tensor, but got a "
                              << std::to_string(grid_shape.size()) << "-D tensor.";
   }
   if (input_x_shape[kZero] != grid_shape[kZero]) {
@@ -55,7 +55,7 @@ abstract::TupleShapePtr GridSampler3DGradInferShape(const PrimitivePtr &primitiv
       << ", the shape of 'input_x': " << input_args[kOne]->BuildShape()->ToString() << ".";
   }
   if (grid_shape[kFour] != kThree) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the last dimension of grid must be 3, but got "
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the last dimension of 'grid' must be 3, but got "
                              << std::to_string(grid_shape[kFour]) << ".";
   }
   std::vector<int64_t> out_shape = {input_x_shape[kZero], input_x_shape[kOne], grid_shape[kOne], grid_shape[kTwo],
@@ -69,7 +69,7 @@ abstract::TupleShapePtr GridSampler3DGradInferShape(const PrimitivePtr &primitiv
   }
   if (shape_error) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', the shape of grad must be the same as that of output, but got grad shape: "
+                             << "', the shape of 'grad' must be the same as that of output, but got 'grad' shape: "
                              << input_args[kZero]->BuildShape()->ToString() << ", output shape: ("
                              << std::to_string(out_shape[kZero]) << ", " << std::to_string(out_shape[kOne]) << ", "
                              << std::to_string(out_shape[kTwo]) << ", " << std::to_string(out_shape[kThree]) << ", "
