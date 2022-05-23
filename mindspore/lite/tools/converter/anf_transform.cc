@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@
 #include "tools/optimizer/graph/special_node_postprocess.h"
 #include "tools/optimizer/graph/specify_graph_input_format.h"
 #include "tools/optimizer/graph/dump_graph.h"
+#include "tools/optimizer/graph/eliminate_redundant_cast_pass.h"
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "tools/optimizer/parallel/spliter.h"
@@ -365,6 +366,30 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, converter::Flags *co
   return RET_OK;
 }
 
+bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  auto eliminate_cast_pass = std::make_shared<opt::EliminateRedundantCastPass>(config->fmk, config->trainModel);
+  MS_CHECK_TRUE_RET(eliminate_cast_pass != nullptr, false);
+  if (!eliminate_cast_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "Run cast elimination pass failed.";
+    return false;
+  }
+
+  auto reduce_act_pass = std::make_shared<opt::ReduceSameActPass>();
+  MS_CHECK_TRUE_RET(reduce_act_pass != nullptr, false);
+  if (!reduce_act_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "Run reduce same act pass failed.";
+    return false;
+  }
+
+  auto split_one_pass = std::make_shared<opt::SplitOnePass>();
+  MS_CHECK_TRUE_RET(split_one_pass != nullptr, false);
+  if (!split_one_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "Run split one pass failed.";
+    return false;
+  }
+  return true;
+}
+
 FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   MS_ASSERT(old_graph != nullptr);
   MS_ASSERT(config != nullptr);
@@ -395,17 +420,8 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     }
   }
 
-  auto reduce_act_pass = std::make_shared<opt::ReduceSameActPass>();
-  MS_CHECK_TRUE_RET(reduce_act_pass != nullptr, nullptr);
-  if (!reduce_act_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "Run reduce same act pass failed.";
-    return nullptr;
-  }
-
-  auto split_one_pass = std::make_shared<opt::SplitOnePass>();
-  MS_CHECK_TRUE_RET(split_one_pass != nullptr, nullptr);
-  if (!split_one_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "Run split one pass failed.";
+  if (!RunEliminateRedundantPass(old_graph, config)) {
+    MS_LOG(ERROR) << "Run elimination of redundant pass failed.";
     return nullptr;
   }
 

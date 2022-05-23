@@ -29,8 +29,11 @@ namespace opt {
 class InferShapePass : public Pass {
  public:
   explicit InferShapePass(FmkType fmk_type = converter::kFmkTypeMs, bool train_flag = false,
-                          const std::string &name = "InferShapePass")
-      : Pass(name), fmk_type_(fmk_type), train_flag_(train_flag) {}
+                          bool take_infer_invalid_as_failure = false, const std::string &name = "InferShapePass")
+      : Pass(name),
+        fmk_type_(fmk_type),
+        train_flag_(train_flag),
+        take_infer_invalid_as_failure_(take_infer_invalid_as_failure) {}
   ~InferShapePass() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
@@ -48,6 +51,7 @@ class InferShapePass : public Pass {
  protected:
   FmkType fmk_type_{converter::kFmkTypeMs};
   bool train_flag_{false};
+  bool take_infer_invalid_as_failure_{false};
   std::shared_ptr<NodeInferShape> node_infer_shape_{nullptr};
   std::map<FuncGraphPtr, std::vector<AnfNodePtr>> sub_inputs_map_{};
   FuncGraphManagerPtr manager_{nullptr};
