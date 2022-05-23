@@ -29,6 +29,21 @@
 
 namespace mindspore {
 namespace ops {
+void SoftShrinkGrad::Init(const float &lambd) {
+  set_lambd(lambd);
+  return;
+}
+
+void SoftShrinkGrad::set_lambd(const float &lambd) {
+  AddAttr(kLambd, api::MakeValue(lambd));
+  return;
+}
+
+float SoftShrinkGrad::get_lambd() const {
+  auto value_ptr = GetAttr(kLambd);
+  return GetValue<float>(value_ptr);
+}
+
 namespace {
 abstract::ShapePtr SoftShrinkGradInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
@@ -55,12 +70,14 @@ TypePtr SoftShrinkGradInferType(const PrimitivePtr &prim, const std::vector<Abst
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(SoftShrinkGrad, BaseOperator);
 AbstractBasePtr SoftShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(SoftShrinkGradInferType(primitive, input_args),
-                                                    SoftShrinkGradInferShape(primitive, input_args));
+  auto infer_type = SoftShrinkGradInferType(primitive, input_args);
+  auto infer_shape = SoftShrinkGradInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+MIND_API_OPERATOR_IMPL(SoftShrinkGrad, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(SoftShrinkGrad, prim::kPrimSoftShrinkGrad, SoftShrinkGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
