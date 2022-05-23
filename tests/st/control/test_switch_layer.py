@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
 import pytest
 
@@ -115,22 +114,3 @@ def test_cell_in_list():
 
     assert out == Tensor(160, mstype.int32)
     assert grad_out == Tensor(16, mstype.int32)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_cell_in_list_ge():
-    """
-    Feature: Switch layer in while in ge backend.
-    Description: test recursive switch layer in ge backend.
-    Expectation: success.
-    """
-    os.environ['MS_ENABLE_GE'] = "1"
-    net = CellInList()
-    t = Tensor(20, mstype.int32)
-    x = Tensor(0, mstype.int32)
-    out = net(t, x)
-    del os.environ['MS_ENABLE_GE']
-    assert out == Tensor(320, mstype.int32)
