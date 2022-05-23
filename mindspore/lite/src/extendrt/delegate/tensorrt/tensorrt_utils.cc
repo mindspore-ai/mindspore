@@ -568,6 +568,22 @@ int GetDimsVolume(const std::vector<int64_t> &shape) {
   return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
 }
 
+std::experimental::optional<nvinfer1::Dims> SqueezeDims(const nvinfer1::Dims &in_dims, int pos) {
+  if (in_dims.nbDims <= 1) {
+    MS_LOG(ERROR) << "invalid shape size: " << in_dims.nbDims << "for squeeze.";
+    return {};
+  }
+  nvinfer1::Dims out_dims;
+  int i = 0;
+  for (int j = 0; j <= in_dims.nbDims; ++j) {
+    if (j != pos) {
+      out_dims.d[i++] = in_dims.d[j];
+    }
+  }
+  out_dims.nbDims = in_dims.nbDims - 1;
+  return std::experimental::optional<nvinfer1::Dims>(out_dims);
+}
+
 std::experimental::optional<nvinfer1::Dims> UnsqueezeDims(const nvinfer1::Dims &in_dims, int pos, int val) {
   if (in_dims.nbDims >= static_cast<size_t>(in_dims.MAX_DIMS)) {
     MS_LOG(ERROR) << "invalid shape size: " << in_dims.nbDims << "for unsqueeze.";

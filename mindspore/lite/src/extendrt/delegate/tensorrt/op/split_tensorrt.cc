@@ -37,7 +37,7 @@ int SplitTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     return RET_ERROR;
   }
   if (axis_ < 0 || axis_ >= in_tensors_[0].Shape().size()) {
-    MS_LOG(ERROR) << "invalid axis : " << primitive->value_as_Split()->axis();
+    MS_LOG(ERROR) << "invalid axis : " << axis_;
     return RET_ERROR;
   }
 
@@ -69,12 +69,6 @@ int SplitTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 }
 
 int SplitTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  auto split_op = this->GetPrimitive()->value_as_Split();
-  if (split_op == nullptr) {
-    MS_LOG(ERROR) << "convert StridedSlice failed: " << op_name_;
-    return RET_ERROR;
-  }
-
   ITensorHelper split_input;
   int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &split_input);
   if (ret != RET_OK || split_input.trt_tensor_ == nullptr) {
@@ -101,6 +95,16 @@ int SplitTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
 
     nvinfer1::ITensor *out_tensor = slice_layer->getOutput(0);
+    if (type_ = schema::PrimitiveType_Unstack) {
+      auto shuffer_layer = network->addShuffle(*out_tensor);
+      auto shuffer_dims_opt = SqueezeDims(out_tensor->getDimensions(), axis_);
+      if (!shuffer_dims_opt) {
+        MS_LOG(ERROR) << "SqueezeDims failed.";
+        return RET_ERROR;
+      }
+      shuffer_layer->setReshapeDimensions(shuffer_dims_opt.value());
+      out_tensor = shuffer_layer->getOutput(0);
+    }
     out_tensor->setName((op_name_ + "_" + std::to_string(i)).c_str());
     this->AddInnerOutTensors(ITensorHelper{out_tensor, split_input.format_, split_input.same_format_});
   }
@@ -108,4 +112,5 @@ int SplitTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Split, SplitTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Unstack, SplitTensorRT)
 }  // namespace mindspore::lite

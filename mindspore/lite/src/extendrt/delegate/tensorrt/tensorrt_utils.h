@@ -116,6 +116,8 @@ int GetDimsVolume(const nvinfer1::Dims &dims);
 
 int GetDimsVolume(const std::vector<int64_t> &shape);
 
+std::experimental::optional<nvinfer1::Dims> SqueezeDims(const nvinfer1::Dims &in_dims, int pos);
+
 std::experimental::optional<nvinfer1::Dims> UnsqueezeDims(const nvinfer1::Dims &in_dims, int pos, int val);
 
 void SerializeValue(void **buffer, const void *value, size_t cpy_size);
