@@ -193,8 +193,7 @@ void AiCoreDynamicKernel::AllocateWorkspace() {
   for (auto size : workspaces_size_) {
     auto device_address_ptr = std::make_shared<AscendDeviceAddress>(nullptr, size, kAscendDevice, device_id);
     device_address_ptr->set_is_ptr_persisted(true);
-    auto device_ptr = runtime_instance->MallocMem(MemType::kDynamicMem, size, device_address_ptr);
-    if (device_ptr == nullptr) {
+    if (auto ret = runtime_instance->GetMemoryManager()->MallocMemFromMemPool(device_address_ptr, size); !ret) {
       MS_LOG(EXCEPTION) << "MallocMem from memory pool failed. Node info :" << cnode->fullname_with_scope();
     }
     workspace_addr_.emplace_back(device_address_ptr);
