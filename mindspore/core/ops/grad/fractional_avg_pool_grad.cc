@@ -124,6 +124,12 @@ AbstractBasePtr FractionalAvgPoolGradInfer(const abstract::AnalysisEnginePtr &, 
   auto infer_shape = FractionalAvgPoolGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+bool FractionalAvgPoolGrad::get_overlapping() const {
+  auto value_ptr = GetAttr("overlapping");
+  return GetValue<bool>(value_ptr);
+}
+
 REGISTER_PRIMITIVE_EVAL_IMPL(FractionalAvgPoolGrad, prim::kPrimFractionalAvgPoolGrad, FractionalAvgPoolGradInfer,
                              nullptr, true);
 }  // namespace ops

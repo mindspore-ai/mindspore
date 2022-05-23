@@ -33,6 +33,10 @@ class MIND_API FractionalMaxPoolGrad : public BaseOperator {
   FractionalMaxPoolGrad() : BaseOperator(kNameFractionalMaxPoolGrad) {
     InitIOName({"orig_input", "orig_output", "out_backprop", "row_pooling_sequence", "col_pooling_sequence"}, {"y"});
   }
+  bool get_overlapping() const;
+  /// \brief Method to get overlapping attributes.
+  ///
+  /// \return overlapping attributes.
 };
 abstract::AbstractBasePtr FractionalMaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                      const std::vector<abstract::AbstractBasePtr> &input_args);

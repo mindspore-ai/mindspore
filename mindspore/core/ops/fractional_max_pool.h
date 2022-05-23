@@ -33,6 +33,45 @@ class MIND_API FractionalMaxPool : public BaseOperator {
   FractionalMaxPool() : BaseOperator(kNameFractionalMaxPool) {
     InitIOName({"x"}, {"y", "row_pooling_sequence", "col_pooling_sequence"});
   }
+  void Init(const std::vector<float> pooling_ratio, const bool pseudo_random = false, const bool overlapping = false,
+            const bool deterministic = false, const int64_t seed = 0, const int64_t seed2 = 0);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FractionalMaxPool for the inputs.
+  void set_pooling_ratio(const std::vector<float> pooling_ratio);
+  /// \brief Set pooling ratio.
+  void set_pseudo_random(const bool pseudo_random);
+  /// \brief Set pseudo random.
+  void set_overlapping(const bool overlapping);
+  /// \brief Set overlapping.
+  void set_deterministic(const bool deterministic);
+  /// \brief Set deterministic.
+  void set_seed(const int64_t seed);
+  /// \brief Set seed.
+  void set_seed2(const int64_t seed2);
+  /// \brief Set seed2.
+  std::vector<float> get_pooling_ratio() const;
+  /// \brief Method to get pooling ratio attributes.
+  ///
+  /// \return pooling ratio attributes.
+  bool get_pseudo_random() const;
+  /// \brief Method to get pseudo random attributes.
+  ///
+  /// \return pseudo random attributes.
+  bool get_overlapping() const;
+  /// \brief Method to get overlapping attributes.
+  ///
+  /// \return overlapping attributes.
+  bool get_deterministic() const;
+  /// \brief Method to get deterministic attributes.
+  ///
+  /// \return deterministic attributes.
+  int64_t get_seed() const;
+  /// \brief Method to get seed attributes.
+  ///
+  /// \return seed attributes.
+  int64_t get_seed2() const;
+  /// \brief Method to get seed2 attributes.
+  ///
+  /// \return pooling seed2 attributes.
 };
 abstract::AbstractBasePtr FractionalMaxPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
