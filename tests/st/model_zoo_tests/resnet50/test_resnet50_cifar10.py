@@ -50,6 +50,43 @@ def test_resnet50_cifar10_ascend():
     assert sum(loss_list) / len(loss_list) < 0.70
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_single
+def test_ge_resnet50_cifar10_ascend():
+    """
+    Feature: Resnet50 in ge process
+    Description: test_ge_resnet50_cifar10_ascend
+    Expectation: Success
+    """
+    os.environ['MS_ENABLE_GE'] = '1'
+    os.environ['MS_GE_TRAIN'] = '1'
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    model_path = "{}/../../../../tests/models/official/cv".format(current_path)
+    model = "resnet"
+    utils.copy_files(model_path, current_path, model)
+    cur_model_path = os.path.join(current_path, "resnet")
+    list_old = ["total_epochs=config.epoch_size", "config.epoch_size - config.pretrain_epoch_size",
+                "=dataset_sink_mode"]
+    list_new = ["total_epochs=1", "1", "=False"]
+    utils.exec_sed_command(list_old, list_new, os.path.join(cur_model_path, "train.py"))
+    dataset = os.path.join(utils.data_root, "cifar-10-batches-bin")
+    #Do not execute ckpt graph
+    config = os.path.join(cur_model_path, "config", "resnet50_cifar10_config.yaml")
+    list_old = ["save_checkpoint: True"]
+    list_new = ["save_checkpoint: False"]
+    utils.exec_sed_command(list_old, list_new, config)
+    exec_network_shell = "cd {}/resnet/scripts; bash run_standalone_train.sh {} {}"\
+        .format(current_path, dataset, config)
+    os.system(exec_network_shell)
+    cmd = "ps -ef | grep python | grep train.py | grep -v grep"
+    result = utils.process_check(120, cmd)
+    assert result
+    log_file = os.path.join(cur_model_path, "scripts/train/log")
+    loss_list = utils.get_loss_data_list(log_file)
+    assert loss_list[-1] < 1.7
+
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_resnet50_cifar10_gpu_accuracy():
