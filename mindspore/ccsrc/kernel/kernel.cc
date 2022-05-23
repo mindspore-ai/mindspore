@@ -163,11 +163,10 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
   output_size_list_.clear();
   for (auto &output : outputs) {
     auto shape = output->GetShapeVector();
-    // If any output shape contains -1, means input shape is dynamic, so just return do nothing.
+    // If any output shape contains -1, means output shape is dynamic, so just return do nothing.
     if (!IsValidShape(shape)) {
-      input_size_list_.clear();
       output_size_list_.clear();
-      return KRET_UNKNOWN_SHAPE;
+      return KRET_UNKNOWN_OUT_SHAPE;
     }
     size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
     size_t tensor_size =

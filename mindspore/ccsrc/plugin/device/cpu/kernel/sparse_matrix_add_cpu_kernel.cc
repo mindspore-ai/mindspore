@@ -62,6 +62,8 @@ bool SparseMatirxAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     auto dtype = inputs[i]->GetDtype();
     (void)types_.emplace_back(dtype);
   }
+  dense_size_ = row_ * LongToSize(dense_shape[1]) * GetTypeByte(TypeIdToType(types_[1]));
+  is_need_retrieve_output_shape_ = true;
   return true;
 }
 
@@ -69,7 +71,19 @@ int SparseMatirxAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                         const std::vector<KernelTensorPtr> &inputs,
                                         const std::vector<KernelTensorPtr> &outputs,
                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  return KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret == KRET_UNKNOWN_OUT_SHAPE) {
+    if (input_size_list_.size() != kInputNum) {
+      MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
+      return KRET_RESIZE_FAILED;
+    }
+    auto max_out_size = std::min(input_size_list_[kAIndicesIdx] + input_size_list_[kBIndicesIdx], dense_size_);
+    output_size_list_.emplace_back(input_size_list_[0]);
+    output_size_list_.emplace_back(max_out_size);
+    output_size_list_.emplace_back(max_out_size / GetTypeByte(TypeIdToType(types_[kAIndicesIdx])) *
+                                   GetTypeByte(TypeIdToType(types_[kAValuesIdx])));
+  }
+  return ret;
 }
 
 template <typename T, typename S>
