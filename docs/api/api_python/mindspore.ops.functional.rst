@@ -264,6 +264,7 @@ Array操作
     mindspore.ops.gather
     mindspore.ops.gather_d
     mindspore.ops.gather_nd
+    mindspore.ops.masked_select
     mindspore.ops.nonzero
     mindspore.ops.one_hot
     mindspore.ops.range

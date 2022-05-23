@@ -49,6 +49,7 @@ scalar_to_array_ = P.ScalarToArray()
 scalar_to_tensor_ = P.ScalarToTensor()
 tuple_to_array_ = P.TupleToArray()
 masked_fill_ = P.MaskedFill()
+masked_select_ = P.MaskedSelect()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
 ger_ = P.Ger()
 diag_ = P.Diag()
@@ -1770,6 +1771,37 @@ def tuple_to_array(input_x):
     return tuple_to_array_(input_x)
 
 
+def masked_select(x, mask):
+    """
+    Returns a new 1-D Tensor which indexes the input tensor according to the boolean mask.
+    The shapes of the mask tensor and the input tensor don't need to match, but they must be broadcastable.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **mask** (Tensor[bool]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        A 1-D Tensor, with the same type as x.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
+        >>> mask = Tensor(np.array([1, 0, 1, 0]), mindspore.bool_)
+        >>> output = ops.masked_select(x, mask)
+        >>> print(output)
+        [1 3]
+    """
+    return masked_select_(x, mask)
+
+
 def masked_fill(x, mask, value):
     """
     Fills elements of self tensor with value where mask is True.
@@ -1878,6 +1910,7 @@ __all__ = [
     'gather_nd',
     'one_hot',
     'masked_fill',
+    'masked_select',
     'tensor_scatter_div',
     'scatter_max',
     'scatter_min',

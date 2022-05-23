@@ -38,6 +38,41 @@ def get_vmap_rule(prim, axis_size):
 
 
 @constexpr
+def _get_broadcast_shape_without_axis(x_shape, y_shape):
+    """Get the broadcast shape for _handle_broadcasting."""
+    x_len = len(x_shape)
+    y_len = len(y_shape)
+
+    if x_len >= y_len:
+        return x_shape
+
+    # scalar case
+    if not x_len:
+        return (1,) * y_len
+
+    broadcast_shape = ()
+    x_index = x_len - 1
+
+    for i in range(y_len - 1, 0, -1):
+        if x_index == 0:
+            broadcast_shape = (1,) + broadcast_shape
+        elif x_shape[x_index] == y_shape[i] or y_shape[i] == 1 or x_shape[x_index] == 1:
+            broadcast_shape = (x_shape[x_index],) + broadcast_shape
+            x_index -= 1
+        else:
+            broadcast_shape = (1,) + broadcast_shape
+
+    finnal_shape = (x_shape[0],) + tuple(broadcast_shape)
+    return finnal_shape
+
+
+def _handle_broadcasting(x, x_shape, y_shape):
+    """Handle the broadcasting shape."""
+    broadcast_shape = _get_broadcast_shape_without_axis(x_shape, y_shape)
+    return F.reshape(x, broadcast_shape)
+
+
+@constexpr
 def _raise_value_error(info, param=None):
     """Constexpr for raise_value_error."""
     if param is None:

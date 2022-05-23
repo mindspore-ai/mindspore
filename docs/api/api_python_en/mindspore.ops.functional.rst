@@ -265,6 +265,7 @@ Array Operation
     mindspore.ops.gather_d
     mindspore.ops.gather_nd
     mindspore.ops.one_hot
+    mindspore.ops.masked_select
     mindspore.ops.nonzero
     mindspore.ops.range
     mindspore.ops.rank
