@@ -1776,11 +1776,11 @@ def masked_select(x, mask):
     Returns a new 1-D Tensor which indexes the input tensor according to the boolean mask.
     The shapes of the mask tensor and the input tensor don't need to match, but they must be broadcastable.
 
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **mask** (Tensor[bool]) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+    Args:
+        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        mask (Tensor[bool]): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
-    Outputs:
+    Returns:
         A 1-D Tensor, with the same type as x.
 
     Raises:

@@ -547,12 +547,12 @@ mindspore.Tensor
 
         **参数：**
 
-        - **x** (Tensor) - 它的shape是：(x_1, x_2, ..., x_R)。
-        - **mask** (Tensor[bool]) - 它的shape是：(x_1, x_2, ..., x_R)。
+        - **x** (Tensor) - 它的shape是 :math:`(x_1, x_2, ..., x_R)`。
+        - **mask** (Tensor[bool]) - 它的shape是 :math:`(x_1, x_2, ..., x_R)`。
 
         **返回：**
 
-        一个一维Tensor, 类型与input相同。
+        一个一维张量，类型与input相同。
 
         **异常：**
 
