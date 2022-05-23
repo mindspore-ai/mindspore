@@ -5,7 +5,7 @@
 
     多尺度计算两个图像之间的结构相似性（SSIM）。
 
-    基于Zhou Wang、Eero P.Simoncelli和Alan C.Bovik在2004年于Signals, Systems 和 Computers上发表的 `Multiscale structural similarity for image quality assessment<https://ieeexplore.ieee.org/document/1292216>`_ 。
+    基于Zhou Wang、Eero P.Simoncelli和Alan C.Bovik在2004年于Signals, Systems 和 Computers上发表的 `Multiscale structural similarity for image quality assessment <https://ieeexplore.ieee.org/document/1292216>`_ 。
 
     .. math::
         l(x,y)&=\frac{2\mu_x\mu_y+C_1}{\mu_x^2+\mu_y^2+C_1}, C_1=(K_1L)^2.\\

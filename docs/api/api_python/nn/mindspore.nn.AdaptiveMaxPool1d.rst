@@ -1,5 +1,5 @@
 mindspore.nn.AdaptiveMaxPool1d
-=======================
+==============================
 
 .. py:class:: mindspore.nn.AdaptiveMaxPool1d(output_size)
 
