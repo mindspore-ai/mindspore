@@ -466,6 +466,12 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   }
   AnfAlgo::UpdateGraphValidRefPair(graph);
 
+  for (auto &node : graph->execution_order()) {
+    if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
+      graph->set_flag(kFlagsIsCutGraph, true);
+      break;
+    }
+  }
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
 }
