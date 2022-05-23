@@ -1012,7 +1012,7 @@ ValuePtr ShallowCopyValue(const OpExecInfoPtr &op_exec_info, const ValuePtr &val
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_EXCEPTION_IF_NULL(value);
   auto tensor_abs = op_exec_info->abstract;
-  if (tensor_abs->isa<abstract::AbstractRef>()) {
+  if (tensor_abs->isa<abstract::AbstractRefTensor>()) {
     tensor_abs = tensor_abs->cast<abstract::AbstractRefPtr>()->CloneAsTensor();
   }
   auto new_shape = tensor_abs->BuildShape()->cast<abstract::ShapePtr>();
@@ -3484,7 +3484,7 @@ void GradExecutor::UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr
       if (param_node->abstract() != nullptr) {
         auto input_shape = input_abs->BuildShape()->ToString();
         auto param_tensor_abs = param_node->abstract();
-        if (param_tensor_abs->isa<abstract::AbstractRef>()) {
+        if (param_tensor_abs->isa<abstract::AbstractRefTensor>()) {
           param_tensor_abs = param_tensor_abs->cast<abstract::AbstractRefPtr>()->CloneAsTensor();
         }
         auto ir_base_shape = param_tensor_abs->BuildShape();
@@ -3542,7 +3542,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   ss << "grad{" << arg_size << "}";
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->debug_info()->set_name(ss.str());
-  // Get the parameters items and add the value to args_spec
+  // Get the parameters items and add the value to args_abs
   if (grad->sens_param() && top_cell()->last_output_abs() != nullptr) {
     auto shape = top_cell()->last_output_abs()->BuildShape();
     MS_EXCEPTION_IF_NULL(shape);

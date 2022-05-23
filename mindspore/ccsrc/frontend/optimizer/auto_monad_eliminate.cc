@@ -50,11 +50,11 @@ std::optional<std::string> GetRefKey(const AnfNodePtr &node) {
   if (abs_ref == nullptr) {
     return std::nullopt;
   }
-  auto ref_key = abs_ref->ref_key_value()->cast<RefKeyPtr>();
+  auto ref_key = abs_ref->ref_key_value()->cast<StringImmPtr>();
   if (ref_key == nullptr) {
     return std::nullopt;
   }
-  return ref_key->name();
+  return ref_key->value();
 }
 
 bool HasSideEffect(const CNodePtr &cnode) {

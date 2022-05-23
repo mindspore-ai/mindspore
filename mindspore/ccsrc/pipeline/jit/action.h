@@ -31,23 +31,23 @@ extern const char kMsConvert[];
 namespace pipeline {
 using ActionItem = std::pair<std::string, std::function<bool(ResourcePtr)>>;
 
-bool ParseAction(const ResourcePtr &res);
-bool SymbolResolveAction(const ResourcePtr &res);
-bool AutoMonadAction(const ResourcePtr &res);
-bool AbstractSpecializeAction(const ResourcePtr &res);
-bool GeOptimizeAction(const ResourcePtr &res);
-bool VmOptimizeAction(const ResourcePtr &res);
-bool PynativeElimOpt(const ResourcePtr &res);
-bool TaskEmitAction(const ResourcePtr &res);
-bool ExecuteAction(const ResourcePtr &res);
-bool StartPSWorkerAction(const ResourcePtr &res);
-bool StartFLWorkerAction(const ResourcePtr &res);
-bool StartPSServerAction(const ResourcePtr &res);
-bool StartPSSchedulerAction(const ResourcePtr &res);
+bool ParseAction(const ResourcePtr &resource);
+bool SymbolResolveAction(const ResourcePtr &resource);
+bool AutoMonadAction(const ResourcePtr &resource);
+bool AbstractSpecializeAction(const ResourcePtr &resource);
+bool GeOptimizeAction(const ResourcePtr &resource);
+bool VmOptimizeAction(const ResourcePtr &resource);
+bool PynativeElimOpt(const ResourcePtr &resource);
+bool TaskEmitAction(const ResourcePtr &resource);
+bool ExecuteAction(const ResourcePtr &resource);
+bool StartPSWorkerAction(const ResourcePtr &resource);
+bool StartFLWorkerAction(const ResourcePtr &resource);
+bool StartPSServerAction(const ResourcePtr &resource);
+bool StartPSSchedulerAction(const ResourcePtr &resource);
 // This action is only for federated learning only. In later version, parameter server mode and federated learning will
 // use the same action.
-bool StartServerAction(const ResourcePtr &res);
-bool DistributedSplitAction(const ResourcePtr &res);
+bool StartServerAction(const ResourcePtr &resource);
+bool DistributedSplitAction(const ResourcePtr &resource);
 
 std::vector<ActionItem> GePipeline();
 std::vector<ActionItem> VmPipeline(const ResourcePtr &resource);
@@ -55,12 +55,12 @@ std::vector<ActionItem> MindIRPipeline();
 std::vector<ActionItem> PServerPipeline(const ResourcePtr &resource);
 std::vector<ActionItem> ServerPipeline(const ResourcePtr &resource);
 std::vector<ActionItem> PSchedulerPipeline(const ResourcePtr &resource);
-abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraphPtr &func_graph,
-                                         const abstract::AbstractBasePtrList &args_spec, bool clear = false);
-FuncGraphPtr ProgramSpecialize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
+abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
+                                         const abstract::AbstractBasePtrList &args_abs, bool clear = false);
+FuncGraphPtr ProgramSpecialize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
                                const abstract::AnalysisContextPtr &context);
-FuncGraphPtr Renormalize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
-                         const abstract::AbstractBasePtrList &args_spec);
+FuncGraphPtr Renormalize(const ResourcePtr &resource, const FuncGraphPtr &func_graph,
+                         const abstract::AbstractBasePtrList &args_abs);
 void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr);
 }  // namespace pipeline
 }  // namespace mindspore

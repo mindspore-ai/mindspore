@@ -29,10 +29,10 @@ import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
-from .tensor import Tensor as MsTensor
-from .tensor import CSRTensor as MsCSRTensor
-from .tensor import COOTensor as MsCOOTensor
-from .tensor import RowTensor as MsRowTensor
+from .tensor import Tensor as PythonTensor
+from .tensor import CSRTensor as PythonCSRTensor
+from .tensor import COOTensor as PythonCOOTensor
+from .tensor import RowTensor as PythonRowTensor
 from .initializer import initializer
 from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
@@ -60,14 +60,14 @@ def _convert_python_data(data):
     Returns:
         data, a data convert C++ to python
     """
-    if isinstance(data, Tensor) and not isinstance(data, MsTensor):
-        return MsTensor(data, internal=True)
-    if isinstance(data, CSRTensor) and not isinstance(data, MsCSRTensor):
-        return MsCSRTensor(csr_tensor=data)
-    if isinstance(data, COOTensor) and not isinstance(data, MsCOOTensor):
-        return MsCOOTensor(coo_tensor=data)
-    if isinstance(data, RowTensor) and not isinstance(data, MsRowTensor):
-        return MsRowTensor(row_tensor=data)
+    if isinstance(data, Tensor) and not isinstance(data, PythonTensor):
+        return PythonTensor(data, internal=True)
+    if isinstance(data, CSRTensor) and not isinstance(data, PythonCSRTensor):
+        return PythonCSRTensor(csr_tensor=data)
+    if isinstance(data, COOTensor) and not isinstance(data, PythonCOOTensor):
+        return PythonCOOTensor(coo_tensor=data)
+    if isinstance(data, RowTensor) and not isinstance(data, PythonRowTensor):
+        return PythonRowTensor(row_tensor=data)
     if isinstance(data, tuple):
         return tuple(_convert_python_data(x) for x in data)
     if isinstance(data, list):
@@ -341,9 +341,9 @@ class _MindsporeFunctionExecutor:
             device_num = context.get_auto_parallel_context('device_num')
             new_args_list = ()
             for arg in args_list:
-                if isinstance(arg, MsTensor):
+                if isinstance(arg, PythonTensor):
                     new_shape = (arg.shape[0] * device_num,) + arg.shape[1:]
-                    new_args_list += (MsTensor(np.zeros(shape=new_shape), arg.dtype),)
+                    new_args_list += (PythonTensor(np.zeros(shape=new_shape), arg.dtype),)
                 else:
                     new_args_list += (arg,)
             phase = self.compile(new_args_list, self.fn.__name__)
@@ -377,7 +377,7 @@ class _MindsporeFunctionExecutor:
         if isinstance(self.obj, ms.nn.Cell) and self.obj.get_inputs():
             compile_args = self.obj.get_inputs()
             for args in compile_args:
-                Validator.check_isinstance("args set in `set_inputs()` of Cell", args, MsTensor)
+                Validator.check_isinstance("args set in `set_inputs()` of Cell", args, PythonTensor)
             Validator.check_dynamic_shape(compile_args, args_list)
         # Case: If dynamic shape tensors have been assigned to `input_signature`, they are preferred as compile args.
         if self.input_signature is not None:
@@ -515,7 +515,7 @@ def ms_function(fn=None, obj=None, input_signature=None, hash_args=None):
                 logger.warning("Obj is no longer in use, and the function's own object has been used to \
                                 distinguish whether it has been compiled.")
             process_obj = None
-            if args and not isinstance(args[0], MsTensor) and hasattr(args[0], func.__name__):
+            if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
             if process_obj is None and is_pynative_parallel():
                 process_obj = obj

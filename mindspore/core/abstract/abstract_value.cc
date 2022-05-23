@@ -1153,7 +1153,7 @@ std::string AbstractJTagged::ToString() const {
   return buffer.str();
 }
 
-AbstractRef::AbstractRef(const AbstractTensorPtr &ref_value, const ValuePtr &ref_key_value)
+AbstractRefTensor::AbstractRefTensor(const AbstractTensorPtr &ref_value, const ValuePtr &ref_key_value)
     : AbstractTensor(*ref_value), ref_key_value_(ref_key_value) {
   set_type(std::make_shared<RefType>());
   MS_EXCEPTION_IF_NULL(ref_key_value);
@@ -1162,14 +1162,14 @@ AbstractRef::AbstractRef(const AbstractTensorPtr &ref_value, const ValuePtr &ref
   }
 }
 
-TypePtr AbstractRef::BuildType() const {
+TypePtr AbstractRefTensor::BuildType() const {
   auto type = AbstractTensor::BuildType();
   MS_EXCEPTION_IF_NULL(type);
   auto subtype = type->cast<TensorTypePtr>();
   return std::make_shared<RefType>(subtype);
 }
 
-bool AbstractRef::operator==(const AbstractRef &other) const {
+bool AbstractRefTensor::operator==(const AbstractRefTensor &other) const {
   if (this == &other) {
     return true;
   }
@@ -1182,30 +1182,30 @@ bool AbstractRef::operator==(const AbstractRef &other) const {
   return AbstractTensor::equal_to(other);
 }
 
-bool AbstractRef::operator==(const AbstractBase &other) const {
-  if (!other.isa<AbstractRef>()) {
+bool AbstractRefTensor::operator==(const AbstractBase &other) const {
+  if (!other.isa<AbstractRefTensor>()) {
     return false;
   }
-  return *this == static_cast<const AbstractRef &>(other);
+  return *this == static_cast<const AbstractRefTensor &>(other);
 }
 
-AbstractBasePtr AbstractRef::Join(const std::shared_ptr<AbstractRef> &other) {
+AbstractBasePtr AbstractRefTensor::Join(const std::shared_ptr<AbstractRefTensor> &other) {
   if (*this == *other) {
-    return shared_from_base<AbstractRef>();
+    return shared_from_base<AbstractRefTensor>();
   }
   // Firstly, join the ref_key_value.
   auto joined_ref_key = ValueJoin(ref_key_value_, other->ref_key_value_);
   // Secondly , join the tensor value.
   auto joined_tensor = AbstractTensor::Join(other)->cast<AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(joined_tensor);
-  return std::make_shared<AbstractRef>(joined_tensor, joined_ref_key);
+  return std::make_shared<AbstractRefTensor>(joined_tensor, joined_ref_key);
 }
 
-AbstractBasePtr AbstractRef::Join(const AbstractBasePtr &other) {
+AbstractBasePtr AbstractRefTensor::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
   // Abstract ref join abstract ref
-  if (other->isa<AbstractRef>()) {
-    return AbstractRef::Join(other->cast<AbstractRefPtr>());
+  if (other->isa<AbstractRefTensor>()) {
+    return AbstractRefTensor::Join(other->cast<AbstractRefPtr>());
   }
   // Abstract ref join other abstract are same to AbstractTensor::Join.
   auto joined_tensor = AbstractTensor::Join(other);
@@ -1216,20 +1216,20 @@ AbstractBasePtr AbstractRef::Join(const AbstractBasePtr &other) {
   return joined_tensor;
 }
 
-AbstractBasePtr AbstractRef::Clone() const {
+AbstractBasePtr AbstractRefTensor::Clone() const {
   auto abs_tensor = AbstractTensor::Clone()->cast<AbstractTensorPtr>();
-  return std::make_shared<AbstractRef>(abs_tensor, ref_key_value_);
+  return std::make_shared<AbstractRefTensor>(abs_tensor, ref_key_value_);
 }
 
-AbstractBasePtr AbstractRef::Broaden() const {
-  // always broaden for ref
+AbstractBasePtr AbstractRefTensor::Broaden() const {
+  // Always broaden for ref
   auto abs_tensor = AbstractTensor::Broaden()->cast<AbstractTensorPtr>();
   // Broaden the tensor value and keep the ref_key_value.
-  auto ret = std::make_shared<AbstractRef>(abs_tensor, kAnyValue);
+  auto ret = std::make_shared<AbstractRefTensor>(abs_tensor, ref_key_value());
   return ret;
 }
 
-std::string AbstractRef::ToString() const {
+std::string AbstractRefTensor::ToString() const {
   std::ostringstream buffer;
   MS_EXCEPTION_IF_NULL(ref_key_value_);
   buffer << type_name() << "("
@@ -1242,7 +1242,7 @@ std::string AbstractRef::ToString() const {
   return buffer.str();
 }
 
-AbstractBasePtr AbstractRef::PartialBroaden() const { return Clone(); }
+AbstractBasePtr AbstractRefTensor::PartialBroaden() const { return Clone(); }
 
 bool AbstractNone::operator==(const AbstractNone &) const { return true; }
 

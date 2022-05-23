@@ -71,72 +71,72 @@ using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 using mindspore::validator::Validate;
 namespace {
-void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &res) {
+void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(res);
-  abstract::AbstractBasePtrList args_spec;
+  MS_EXCEPTION_IF_NULL(resource);
+  abstract::AbstractBasePtrList args_abs;
   const auto &parameters = func_graph->parameters();
-  args_spec.reserve(parameters.size());
-  (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
+  args_abs.reserve(parameters.size());
+  (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_abs),
                        [](const AnfNodePtr &p) { return p->abstract(); });
-  res->set_args_spec(args_spec);
+  resource->set_args_abs(args_abs);
 }
 }  // namespace
 
-bool BatchNormTransformPass(const ResourcePtr &res) {
+bool BatchNormTransformPass(const ResourcePtr &resource) {
   // Transform only work in train process;
   auto env_ge = common::GetEnv("MS_GE_TRAIN");
   if (env_ge != "1") {
     MS_LOG(INFO) << "no need transfer batch norm in inference process";
     return true;
   }
-  MS_EXCEPTION_IF_NULL(res);
-  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  opt::irpass::BatchNormTransform(func_graph, res->manager());
+  opt::irpass::BatchNormTransform(func_graph, resource->manager());
   return true;
 }
 
-bool SimplifyDataStructuresPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  FuncGraphPtr func_graph = res->func_graph();
+bool SimplifyDataStructuresPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  (void)opt::SimplifyDataStructures(func_graph, res->manager());
-  UpdateArgsSpec(func_graph, res);
+  (void)opt::SimplifyDataStructures(func_graph, resource->manager());
+  UpdateArgsSpec(func_graph, resource);
   return true;
 }
 
-bool TransformTopGraphPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  if (res->func_graph() == nullptr) {
+bool TransformTopGraphPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  if (resource->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "Transform top graph error.";
   }
-  FuncGraphPtr func_graph = res->func_graph();
+  FuncGraphPtr func_graph = resource->func_graph();
   if (opt::FuncGraphHasTupleInput(func_graph)) {
     opt::GraphTupleParamTransform graph_trans;
-    func_graph = graph_trans(func_graph, res->manager());
-    res->set_func_graph(func_graph);
+    func_graph = graph_trans(func_graph, resource->manager());
+    resource->set_func_graph(func_graph);
     AbstractBasePtrList abs_spec_list;
     auto &params = func_graph->parameters();
     std::transform(params.begin(), params.end(), std::back_inserter(abs_spec_list),
                    [](const AnfNodePtr &node) { return node->abstract(); });
-    res->set_args_spec(abs_spec_list);
+    resource->set_args_abs(abs_spec_list);
   }
   return true;
 }
 
-bool CleanAfterOptAPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  FuncGraphPtr func_graph = res->func_graph();
+bool CleanAfterOptAPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  (void)opt::CleanAfterOptA(func_graph, res->manager());
-  UpdateArgsSpec(func_graph, res);
+  (void)opt::CleanAfterOptA(func_graph, resource->manager());
+  UpdateArgsSpec(func_graph, resource);
   return true;
 }
 
-FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  MS_EXCEPTION_IF_NULL(res->func_graph());
+FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(resource->func_graph());
   opt::OptPassConfig pynative_eliminate = opt::OptPassConfig({
     irpass.pynative_eliminate_,
   });
@@ -152,17 +152,17 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
   OptPassGroupMap map(
     {{"ad_eliminate", pynative_eliminate}, {"ad_inline", inline_opt}, {"ad_switch_simplify", switch_simplify}});
 
-  auto prim_bprop_opt_step_1 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_1", res, map);
-  FuncGraphPtr func_graph = res->func_graph();
+  auto prim_bprop_opt_step_1 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_1", resource, map);
+  FuncGraphPtr func_graph = resource->func_graph();
   WITH(MsProfile::GetProfile()->Step("prim_bprop_opt_step_1"))[&prim_bprop_opt_step_1, &func_graph]() {
     func_graph = prim_bprop_opt_step_1->step(func_graph, true);
   };
   return func_graph;
 }
 
-FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  MS_EXCEPTION_IF_NULL(res->func_graph());
+FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(resource->func_graph());
   opt::OptPassConfig special_op_simplify = opt::OptPassConfig({
     irpass.switch_simplify_,
     irpass.reduce_eliminate_,
@@ -183,24 +183,24 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
                        {"ad_special_op_simplify", special_op_simplify},
                        {"auto_monad_grad", opt::OptPassConfig(re_auto_monadwrapper)}});
 
-  auto prim_bprop_opt_step_2 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_2", res, map);
-  FuncGraphPtr func_graph = res->func_graph();
+  auto prim_bprop_opt_step_2 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_2", resource, map);
+  FuncGraphPtr func_graph = resource->func_graph();
   WITH(MsProfile::GetProfile()->Step("prim_bprop_opt_step_2"))[&prim_bprop_opt_step_2, &func_graph]() {
     func_graph = prim_bprop_opt_step_2->step(func_graph, true);
   };
   return func_graph;
 }
 
-FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  MS_EXCEPTION_IF_NULL(res->func_graph());
-  (void)TransformTopGraphPass(res);
+FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(resource->func_graph());
+  (void)TransformTopGraphPass(resource);
 
-  auto func_graph = res->func_graph();
+  auto func_graph = resource->func_graph();
   // Pynative dynamic shape need add those pass, like convert make_list to make_tuple
   if (func_graph->has_flag(FUNC_GRAPH_FLAG_DYNAMIC_SHAPE)) {
-    (void)OptPassAGroup(res);
-    (void)CleanAfterOptAPass(res);
+    (void)OptPassAGroup(resource);
+    (void)CleanAfterOptAPass(resource);
   }
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig bg_final_opt = opt::OptPassConfig({
@@ -232,8 +232,8 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
     (void)map.emplace_back(std::make_pair("environ_eliminate", environ_eliminate));
   }
 
-  auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", res, map);
-  func_graph = res->func_graph();
+  auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", resource, map);
+  func_graph = resource->func_graph();
   WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
     func_graph = bprop_graph_final_opt->step(func_graph, true);
   };
@@ -591,28 +591,29 @@ OptPassGroupMap GetSparseSoftmaxCrossEntropyWithLogitsSplitPass(const opt::irpas
 
 static mindspore::HashMap<std::string, std::shared_ptr<Optimizer>> g_pass_opts = {};
 
-void InitOpt(const ResourcePtr &res) {
+void InitOpt(const ResourcePtr &resource) {
   if (g_pass_opts.size() == 0) {
     opt::irpass::OptimizeIRPassLib irpass;
-    g_pass_opts["a1a2"] = Optimizer::MakeOptimizer("a1a2", res, GetA1A2(irpass));
-    g_pass_opts["opt_a"] = Optimizer::MakeOptimizer("opt_a", res, GetOptPassesA(irpass));
-    g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", res, GetOptPassesB(irpass), false, true);
+    g_pass_opts["a1a2"] = Optimizer::MakeOptimizer("a1a2", resource, GetA1A2(irpass));
+    g_pass_opts["opt_a"] = Optimizer::MakeOptimizer("opt_a", resource, GetOptPassesA(irpass));
+    g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", resource, GetOptPassesB(irpass), false, true);
     g_pass_opts["opt_after_cconv"] =
-      Optimizer::MakeOptimizer("opt_after_cconv", res, GetOptPassesAfterCconv(irpass), false, true);
+      Optimizer::MakeOptimizer("opt_after_cconv", resource, GetOptPassesAfterCconv(irpass), false, true);
     g_pass_opts["opt_trans_graph"] =
-      Optimizer::MakeOptimizer("opt_trans_graph", res, GetOptPassesTransformGraph(irpass), true, true);
-    g_pass_opts["renormal"] = Optimizer::MakeOptimizer("renormal", res, GetOptPassesC(irpass));
-    g_pass_opts["opt_control"] = Optimizer::MakeOptimizer("opt_control", res, GetControlPhases(irpass), true, false);
+      Optimizer::MakeOptimizer("opt_trans_graph", resource, GetOptPassesTransformGraph(irpass), true, true);
+    g_pass_opts["renormal"] = Optimizer::MakeOptimizer("renormal", resource, GetOptPassesC(irpass));
+    g_pass_opts["opt_control"] =
+      Optimizer::MakeOptimizer("opt_control", resource, GetControlPhases(irpass), true, false);
     g_pass_opts["opt_grad_epilogue"] =
-      Optimizer::MakeOptimizer("opt_grad_epilogue", res, GetOptPynativeGradEpiloguePhases(irpass), true, false);
-    g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", res, GetPreparePhases(irpass));
+      Optimizer::MakeOptimizer("opt_grad_epilogue", resource, GetOptPynativeGradEpiloguePhases(irpass), true, false);
+    g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", resource, GetPreparePhases(irpass));
     g_pass_opts["opt_after_recompute"] =
-      Optimizer::MakeOptimizer("opt_after_recompute", res, GetAfterRecomputePass(irpass));
+      Optimizer::MakeOptimizer("opt_after_recompute", resource, GetAfterRecomputePass(irpass));
     g_pass_opts["sparse_split"] =
-      Optimizer::MakeOptimizer("sparse_spilt", res, GetSparseSoftmaxCrossEntropyWithLogitsSplitPass(irpass));
+      Optimizer::MakeOptimizer("sparse_spilt", resource, GetSparseSoftmaxCrossEntropyWithLogitsSplitPass(irpass));
     g_pass_opts["avg_pool_grad_for_ge"] =
-      Optimizer::MakeOptimizer("avg_pool_grad_for_ge", res, GetAvgPoolGradForGEPass(irpass));
-    g_pass_opts["dropout_for_ge"] = Optimizer::MakeOptimizer("dropout_for_ge", res, GetDropoutForGEPass(irpass));
+      Optimizer::MakeOptimizer("avg_pool_grad_for_ge", resource, GetAvgPoolGradForGEPass(irpass));
+    g_pass_opts["dropout_for_ge"] = Optimizer::MakeOptimizer("dropout_for_ge", resource, GetDropoutForGEPass(irpass));
   }
 }
 }  // namespace
@@ -624,67 +625,67 @@ void ReclaimOptimizer() {
   g_pass_opts.clear();
 }
 
-bool OptPassGroup(const ResourcePtr &res, const std::string &name) {
-  MS_EXCEPTION_IF_NULL(res);
-  if (res->func_graph() == nullptr) {
+bool OptPassGroup(const ResourcePtr &resource, const std::string &name) {
+  MS_EXCEPTION_IF_NULL(resource);
+  if (resource->func_graph() == nullptr) {
     MS_LOG(ERROR) << "Opt passes int64_t error";
     return false;
   }
 
-  FuncGraphPtr func_graph = res->func_graph();
+  FuncGraphPtr func_graph = resource->func_graph();
   MS_LOG(DEBUG) << "Start " << name << " func graph:" << func_graph->ToString() << ", "
                 << func_graph->get_return()->DebugString(true);
-  InitOpt(res);
+  InitOpt(resource);
   if (g_pass_opts.find(name) != g_pass_opts.end()) {
-    res->set_func_graph(g_pass_opts[name]->step(func_graph));
+    resource->set_func_graph(g_pass_opts[name]->step(func_graph));
   }
   // Note: StepParallel may modify the AbstractValue of the parameters of func_graph, but they are not updated to
-  // res->args_spec_ yet. So if any later pass or action want to use that variable, it should be set here.
+  // resource->args_abs_ yet. So if any later pass or action want to use that variable, it should be set here.
   return true;
 }
 
-bool OptPassA1A2(const ResourcePtr &res) { return OptPassGroup(res, "a1a2"); }
-bool OptPassAGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_a"); }
-bool OptPassBGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_b"); }
-bool OptPassAfterCconvGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_after_cconv"); }
-bool OptPassTransformGraphGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_trans_graph"); }
-bool ControlGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_control"); }
-bool PrepareGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_prepare"); }
-bool OptAfterRecomputeGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_after_recompute"); }
-bool SparseSplitPass(const ResourcePtr &res) { return OptPassGroup(res, "sparse_split"); }
-bool AvgPoolGradForGEPass(const ResourcePtr &res) { return OptPassGroup(res, "avg_pool_grad_for_ge"); }
-bool DropoutGradForGEPass(const ResourcePtr &res) { return OptPassGroup(res, "dropout_for_ge"); }
+bool OptPassA1A2(const ResourcePtr &resource) { return OptPassGroup(resource, "a1a2"); }
+bool OptPassAGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_a"); }
+bool OptPassBGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_b"); }
+bool OptPassAfterCconvGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_after_cconv"); }
+bool OptPassTransformGraphGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_trans_graph"); }
+bool ControlGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_control"); }
+bool PrepareGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_prepare"); }
+bool OptAfterRecomputeGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_after_recompute"); }
+bool SparseSplitPass(const ResourcePtr &resource) { return OptPassGroup(resource, "sparse_split"); }
+bool AvgPoolGradForGEPass(const ResourcePtr &resource) { return OptPassGroup(resource, "avg_pool_grad_for_ge"); }
+bool DropoutGradForGEPass(const ResourcePtr &resource) { return OptPassGroup(resource, "dropout_for_ge"); }
 
-bool OptPassRNGroup(const ResourcePtr &res) { return OptPassGroup(res, "renormal"); }
+bool OptPassRNGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "renormal"); }
 
-bool OptPassGradEpilogueGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_grad_epilogue"); }
+bool OptPassGradEpilogueGroup(const ResourcePtr &resource) { return OptPassGroup(resource, "opt_grad_epilogue"); }
 
-bool AddRecomputationPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  opt::InsertRecomputedNodes(res->func_graph());
+bool AddRecomputationPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  opt::InsertRecomputedNodes(resource->func_graph());
   return true;
 }
 
-bool SliceRecomputeActivationPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  opt::SliceRecomputedActivationNodes(res->func_graph());
+bool SliceRecomputeActivationPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  opt::SliceRecomputedActivationNodes(resource->func_graph());
   return true;
 }
 
-bool CommOpAddAttrs(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  opt::CommOpAttrs(res->func_graph());
+bool CommOpAddAttrs(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  opt::CommOpAttrs(resource->func_graph());
   return true;
 }
 
-bool AddCacheEmbeddingPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
+bool AddCacheEmbeddingPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
   if (ps::PSContext::instance()->is_ps_mode()) {
     return true;
   }
 #endif
-  FuncGraphPtr func_graph = res->func_graph();
+  FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
 
   parallel::AddCacheEmbedding(func_graph);
@@ -693,17 +694,17 @@ bool AddCacheEmbeddingPass(const ResourcePtr &res) {
     AbstractBasePtrList args_spec_list;
     std::for_each(params.begin(), params.end(),
                   [&args_spec_list](const AnfNodePtr &node) { args_spec_list.push_back(node->abstract()); });
-    func_graph = pipeline::Renormalize(res, func_graph, args_spec_list);
+    func_graph = pipeline::Renormalize(resource, func_graph, args_spec_list);
   }
   return true;
 }
 
-bool RemoveValueNodeDuplicationsPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  if (res->func_graph() == nullptr) {
+bool RemoveValueNodeDuplicationsPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  if (resource->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "Remove value node duplications error.";
   }
-  auto manager = res->manager();
+  auto manager = resource->manager();
   HashCache hash_cache;
   HashValue hashes;
   // Remove duplicated value nodes across all graphs in manager
@@ -733,58 +734,58 @@ bool RemoveValueNodeDuplicationsPass(const ResourcePtr &res) {
   return true;
 }
 
-bool CconvPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  MS_EXCEPTION_IF_NULL(res->func_graph());
-  FuncGraphPtr func_graph = res->func_graph();
+bool CconvPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(resource->func_graph());
+  FuncGraphPtr func_graph = resource->func_graph();
   FuncGraphPtr new_fg = LiftingClone(func_graph);
-  res->set_func_graph(new_fg);
+  resource->set_func_graph(new_fg);
   return true;
 }
 
-bool PipelineSplitPass(const ResourcePtr &res) { return PipelineSplit(res); }
+bool PipelineSplitPass(const ResourcePtr &resource) { return PipelineSplit(resource); }
 
-bool GeSpecializedPass(const ResourcePtr &res) {
+bool GeSpecializedPass(const ResourcePtr &resource) {
   // valid null ptr
-  MS_EXCEPTION_IF_NULL(res);
-  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   // get phases
   auto ge_specialized_map = GetGeSpecializedPhases();
-  auto ge_specialized_opt = opt::Optimizer::MakeOptimizer("ge_specialized", res, ge_specialized_map, true);
+  auto ge_specialized_opt = opt::Optimizer::MakeOptimizer("ge_specialized", resource, ge_specialized_map, true);
   (void)ge_specialized_opt->step(func_graph, false);
   return true;
 }
 
-bool ValidatePass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
-  MS_EXCEPTION_IF_NULL(res->func_graph());
-  FuncGraphPtr func_graph = res->func_graph();
+bool ValidatePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(resource->func_graph());
+  FuncGraphPtr func_graph = resource->func_graph();
   Validate(func_graph);
   return true;
 }
 
-bool InferenceOptPreparePass(const ResourcePtr &res) {
-  FuncGraphPtr func_graph = res->func_graph();
+bool InferenceOptPreparePass(const ResourcePtr &resource) {
+  FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto prepare_map = GetInferenceOptPreparePhases();
-  auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("inference_prepare", res, prepare_map);
+  auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("inference_prepare", resource, prepare_map);
   (void)infer_opt_prepare->step(func_graph, false);
   return true;
 }
 
-bool PynativeOptPass(const ResourcePtr &res) {
-  FuncGraphPtr func_graph = res->func_graph();
+bool PynativeOptPass(const ResourcePtr &resource) {
+  FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   opt::irpass::OptimizeIRPassLib irpass;
   auto pynative_opt = GetOptPassesPynativeElim(irpass);
-  auto pynative_opt_opt = opt::Optimizer::MakeOptimizer("pynative_opt", res, pynative_opt);
+  auto pynative_opt_opt = opt::Optimizer::MakeOptimizer("pynative_opt", resource, pynative_opt);
   (void)pynative_opt_opt->step(func_graph, false);
   return true;
 }
 
-bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &res) {
-  auto func_graph = res->func_graph();
+bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &resource) {
+  auto func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig ad_related_special_op_eliminate = opt::OptPassConfig({
@@ -793,7 +794,8 @@ bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &res) {
   OptPassGroupMap map({
     {"ad_related_special_op_eliminate", ad_related_special_op_eliminate},
   });
-  auto ad_related_special_op_eliminate_opt = opt::Optimizer::MakeOptimizer("ad_related_special_op_eliminate", res, map);
+  auto ad_related_special_op_eliminate_opt =
+    opt::Optimizer::MakeOptimizer("ad_related_special_op_eliminate", resource, map);
   (void)ad_related_special_op_eliminate_opt->step(func_graph, false);
   return true;
 }
@@ -801,9 +803,9 @@ bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &res) {
 bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(func_graph->manager());
-  auto res = std::make_shared<pipeline::Resource>();
-  res->set_func_graph(func_graph);
-  res->set_manager(func_graph->manager());
+  auto resource = std::make_shared<pipeline::Resource>();
+  resource->set_func_graph(func_graph);
+  resource->set_manager(func_graph->manager());
 
   // opt::irpass::OptimizeIRPassLib is not used here to avoid double free problems in external calls.
   opt::SubstitutionPtr updatestate_useless_node_eliminater =
@@ -828,16 +830,16 @@ bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph) {
     {"auto_monad_eliminator", opt::OptPassConfig(opt::AutoMonadEliminator())},
   });
 
-  auto auto_monad_elim_opt = opt::Optimizer::MakeOptimizer("auto_monad_elim", res, elim_map);
+  auto auto_monad_elim_opt = opt::Optimizer::MakeOptimizer("auto_monad_elim", resource, elim_map);
   (void)auto_monad_elim_opt->step(func_graph, false);
   return true;
 }
 
-bool EnvironConversionPass(const ResourcePtr &res) {
-  MS_EXCEPTION_IF_NULL(res);
+bool EnvironConversionPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
   static const bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
   if (enable_closure) {
-    (void)opt::EnvironConversion(res);
+    (void)opt::EnvironConversion(resource);
   }
   return true;
 }

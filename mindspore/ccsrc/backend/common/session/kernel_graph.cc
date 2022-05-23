@@ -1435,7 +1435,7 @@ void KernelGraph::SetOptimizerFlag() {
       auto param = real_node->cast<ParameterPtr>();
       auto abstract = param->abstract();
       MS_EXCEPTION_IF_NULL(abstract);
-      if (abstract->isa<abstract::AbstractRef>()) {
+      if (abstract->isa<abstract::AbstractRefTensor>()) {
         has_optimizer_ = true;
         (void)updated_parameters_.insert(param);
       }

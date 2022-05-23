@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -88,48 +88,29 @@ def test_grad_first_input_net():
 def test_net_inputs_including_str():
     with pytest.raises(TypeError) as err:
         grad_all_inputs_net(arg_t0, s, arg_l0, w, sl, args_d0, flag_0)
-    assert "The inputs types of the outermost network 'GradNet.construct' support bool, int, float, None, tensor, " \
-           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
+    assert "The inputs types of the outermost network 'GradNet.construct' support bool, int, float, None, Tensor, " \
+           "Parameter, mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
            "and tuple or list containing only these types, and dict whose values are these types, " \
            "but the 1th arg type is <class 'str'>, value is 'ok'" in str(err.value)
 
 
+# Support the Parameter as outermost input.
 def test_outermost_net_pass_parameter():
-    with pytest.raises(TypeError) as err:
-        forward_net(arg_t0, p, arg_l0, w, sl, args_d0, flag_0)
-    assert "The inputs types of the outermost network 'FirstInputTupleNet.construct' " \
-           "support bool, int, float, None, tensor, " \
-           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
-           "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but the 1th arg type is <class 'mindspore.common.parameter.Parameter'>, " \
-           "value is 'Parameter (name=weight, shape=(2, 2), dtype=Float32, requires_grad=True)'" \
-           in str(err.value)
+    forward_net(arg_t0, p, arg_l0, w, sl, args_d0, flag_0)
 
 
+# Support the Parameter as outermost input.
 def test_outermost_net_pass_tuple_including_parameter():
-    with pytest.raises(TypeError) as err:
-        forward_net(arg_t0, z, arg_l0, sl, args_d0, flag_0, (z, w, p))
-    assert "The inputs types of the outermost network 'FirstInputTupleNet.construct' " \
-           "support bool, int, float, None, tensor, " \
-           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
-           "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but the 6th arg type is <class 'tuple'>, value is '(" in str(err.value)
+    forward_net(arg_t0, z, arg_l0, sl, (z, w, p), args_d0, flag_0)
 
 
+# Support the Parameter as outermost input.
 def test_outermost_net_pass_list_including_parameter():
-    with pytest.raises(TypeError) as err:
-        forward_net(arg_t0, z, arg_l0, sl, [z, w, p], args_d0, flag_0)
-    assert "The inputs types of the outermost network 'FirstInputTupleNet.construct' " \
-           "support bool, int, float, None, tensor, " \
-           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
-           "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but the 4th arg type is <class 'list'>, value is '[" in str(err.value)
+    forward_net(arg_t0, z, arg_l0, sl, [z, w, p], args_d0, flag_0)
 
 
+# Support the Parameter as outermost input.
 def test_grad_net_pass_dict_including_parameter():
-    with pytest.raises(TypeError) as err:
-        grad_all_inputs_net(arg_t0, z, arg_l0, {"x": z, "y": w, "z": p}, sl, args_d0, flag_0)
-    assert "The inputs types of the outermost network 'GradNet.construct' support bool, int, float, None, tensor, " \
-           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
-           "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but the 3th arg type is <class 'dict'>, value is '{" in str(err.value)
+    with pytest.raises(RuntimeError) as err:
+        forward_net(arg_t0, z, arg_l0, sl, sl, {"x": z, "y": w, "z": p}, flag_0)
+    assert "Illegal type in the graph: AbstractDictionary" in str(err.value)

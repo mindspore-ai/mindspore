@@ -402,7 +402,7 @@ static ShapeVector GetShapeFromTuple(const py::tuple &tuple) {
   return shape;
 }
 
-REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
+REGISTER_PYBIND_DEFINE(TensorGroup, ([](const py::module *m) {
                          // Define python MetaTensor class.
                          (void)py::class_<MetaTensor, std::shared_ptr<MetaTensor>>(*m, "MetaTensor")
                            .def(py::init<TypePtr, const ShapeVector>(), py::arg("dtype"), py::arg("shape"))

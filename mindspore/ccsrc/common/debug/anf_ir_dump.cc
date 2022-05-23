@@ -62,15 +62,15 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
   }
 
   ValuePtr tensor_value = nullptr;
-  RefKeyPtr ref_key = nullptr;
+  StringImmPtr ref_key = nullptr;
   abstract::AbstractSequencePtr sequence_abs = nullptr;
   auto abstract = node->abstract();
   if (abstract != nullptr) {
     if (abstract->isa<abstract::AbstractTensor>()) {
       tensor_value = abstract->BuildValue();
     }
-    if (abstract->isa<abstract::AbstractRef>()) {
-      ref_key = abstract->cast<abstract::AbstractRefPtr>()->ref_key_value()->cast<RefKeyPtr>();
+    if (abstract->isa<abstract::AbstractRefTensor>()) {
+      ref_key = abstract->cast<abstract::AbstractRefPtr>()->ref_key_value()->cast<StringImmPtr>();
     }
     sequence_abs = dyn_cast<abstract::AbstractSequence>(abstract);
   }
@@ -83,7 +83,7 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
       buffer << ", value=...";
     }
     if (ref_key != nullptr) {
-      buffer << ", ref_key=:" << ref_key->name();
+      buffer << ", ref_key=:" << ref_key->value();
     }
     PrintTupleNodeUsedFlags(buffer, sequence_abs);
     buffer << ">";
@@ -93,7 +93,7 @@ void PrintNodeOutputType(std::ostringstream &buffer, const AnfNodePtr &node) {
       buffer << ", value=...";
     }
     if (ref_key != nullptr) {
-      buffer << ", ref_key=:" << ref_key->name();
+      buffer << ", ref_key=:" << ref_key->value();
     }
     PrintTupleNodeUsedFlags(buffer, sequence_abs);
     buffer << ">";

@@ -177,9 +177,8 @@ bool CheckArgValid(const py::handle &arg) {
   }
 
   return py::isinstance<py::int_>(arg) || py::isinstance<py::float_>(arg) || py::isinstance<py::none>(arg) ||
-         py::isinstance<Number>(arg) ||
-         ((py::isinstance<Tensor>(arg) || py::isinstance<CSRTensor>(arg) || py::isinstance<COOTensor>(arg)) &&
-          !py::hasattr(arg, "__parameter__"));
+         py::isinstance<Number>(arg) || py::isinstance<Tensor>(arg) || py::isinstance<CSRTensor>(arg) ||
+         py::isinstance<COOTensor>(arg);
 }
 
 std::string GetCompileExceptionInfo() {
@@ -268,7 +267,7 @@ void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
     if (!CheckArgValid(args[i])) {
       MS_EXCEPTION(TypeError)
         << "The inputs types of the outermost network " << obj_desc
-        << " support bool, int, float, None, tensor, "
+        << " support bool, int, float, None, Tensor, Parameter, "
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
            "and tuple or list containing only these types, and dict whose values are these types, but the "
         << i << "th arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.\n"
@@ -280,7 +279,7 @@ void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
 py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool enable_tuple_broaden) {
   MS_LOG(DEBUG) << "GenerateArgumentsKey args size:" << args.size();
 
-  abstract::AbstractBasePtrList args_spec;
+  abstract::AbstractBasePtrList args_abs;
   cur_convert_input_.clear();
   std::size_t size = args.size();
   for (std::size_t i = 0; i < size; i++) {
@@ -296,18 +295,18 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool ena
       set_mutable = true;
     }
     AbstractBasePtr ptr = ArgsToAbstract(converted, enable_tuple_broaden, set_mutable);
-    args_spec.push_back(ptr);
+    args_abs.push_back(ptr);
     (void)cur_convert_input_.emplace(args[i].ptr(), ptr);
   }
 
   // If cache matched no need CheckArgsValid
-  auto iter = g_args_cache.find(args_spec);
+  auto iter = g_args_cache.find(args_abs);
   if (iter != g_args_cache.end()) {
     return py::int_(iter->second);
   }
 
   static uint64_t key_counter = 0;
-  g_args_cache[args_spec] = key_counter;
+  g_args_cache[args_abs] = key_counter;
   MS_LOG(INFO) << "Generate a new compile key for new args, key: " << key_counter;
   return py::int_(key_counter++);
 }
@@ -851,8 +850,8 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     resource->SetResult(kBackend, backend_ptr);
   }
 
-  // Get the parameters items and add the value to args_spec.
-  abstract::AbstractBasePtrList args_spec;
+  // Get the parameters items and add the value to args_abs.
+  abstract::AbstractBasePtrList args_abs;
   std::size_t size = args.size();
   for (std::size_t i = 0; i < size; i++) {
     ValuePtr converted = nullptr;
@@ -860,16 +859,16 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
     // So can't use cur_convert_input_ directly.
     auto iter = cur_convert_input_.find(args[i].ptr());
     if (iter != cur_convert_input_.end()) {
-      args_spec.push_back(iter->second);
+      args_abs.push_back(iter->second);
       continue;
     }
     bool succ = parse::ConvertData(args[i], &converted);
     if (!succ) {
       MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
     }
-    args_spec.push_back(ArgsToAbstract(converted, enable_tuple_broaden_));
+    args_abs.push_back(ArgsToAbstract(converted, enable_tuple_broaden_));
   }
-  resource->set_args_spec(args_spec);
+  resource->set_args_abs(args_abs);
   executor_info->arg_list_size = size;
   executor_info->resource = resource;
   info_[phase] = executor_info;

@@ -99,7 +99,7 @@ std::shared_ptr<T> CheckArg(const std::string &op, const AbstractBasePtrList &ar
   return arg;
 }
 
-// check if each element in args_spec is type T, and can be joined.
+// check if each element in args_abs is type T, and can be joined.
 template <typename T>
 void CheckArgsSpec(const AbstractBasePtrList &args_list) {
   for (const auto &arg : args_list) {

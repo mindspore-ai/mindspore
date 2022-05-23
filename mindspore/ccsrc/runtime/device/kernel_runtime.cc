@@ -1405,7 +1405,7 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
       auto param = input_node->cast<ParameterPtr>();
       auto abstract = param->abstract();
       MS_EXCEPTION_IF_NULL(abstract);
-      if (abstract->isa<abstract::AbstractRef>()) {
+      if (abstract->isa<abstract::AbstractRefTensor>()) {
         mem_scheduler->UpdateHighPriorityMem(device_address);
       }
     }

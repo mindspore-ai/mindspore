@@ -175,7 +175,7 @@ AnfNodePtr TransformBatchNorm(const AnfNodePtr &anf_node) {
   auto mean_load_prim = NewValueNode(prim::kPrimLoad);
   auto mean_load_node = fg->NewCNode({mean_load_prim, moving_mean, u_monad});
   MS_EXCEPTION_IF_NULL(mean_load_node);
-  auto mean_ref_abs = dyn_cast<abstract::AbstractRef>(moving_mean->abstract());
+  auto mean_ref_abs = dyn_cast<abstract::AbstractRefTensor>(moving_mean->abstract());
   mean_load_node->set_abstract(mean_ref_abs->CloneAsTensor());
   // process UpdateState1 for moving_mean
   auto mean_update_state_prim = NewValueNode(prim::kPrimUpdateState);
@@ -186,7 +186,7 @@ AnfNodePtr TransformBatchNorm(const AnfNodePtr &anf_node) {
   auto var_load_prim = NewValueNode(prim::kPrimLoad);
   auto var_load_node = fg->NewCNode({var_load_prim, moving_var, mean_update_state_node});
   MS_EXCEPTION_IF_NULL(var_load_node);
-  auto var_ref_abs = dyn_cast<abstract::AbstractRef>(moving_var->abstract());
+  auto var_ref_abs = dyn_cast<abstract::AbstractRefTensor>(moving_var->abstract());
   var_load_node->set_abstract(var_ref_abs->CloneAsTensor());
   // process UpdateState2 for moving_var
   auto var_update_state_prim = NewValueNode(prim::kPrimUpdateState);

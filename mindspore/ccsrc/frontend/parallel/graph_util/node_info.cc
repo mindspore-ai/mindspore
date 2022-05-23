@@ -251,9 +251,9 @@ std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr &node, const 
     return parameters;
   }
 
-  auto ref_key = GetValueNode<RefKeyPtr>(node);
+  auto ref_key = GetValueNode<StringImmPtr>(node);
   MS_EXCEPTION_IF_NULL(ref_key);
-  auto name = ref_key->tag();
+  auto name = ref_key->value();
 
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);

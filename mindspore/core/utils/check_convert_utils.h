@@ -244,9 +244,9 @@ class MS_CORE_API CheckAndConvertUtils {
       MS_EXCEPTION(ValueError) << op << " evaluator arguments list index out of bound, size " << args_spec_list.size()
                                << ", index " << index;
     }
-    auto args_spec = args_spec_list[index];
-    MS_EXCEPTION_IF_NULL(args_spec);
-    auto arg = dyn_cast<T>(args_spec);
+    auto args_abs = args_spec_list[index];
+    MS_EXCEPTION_IF_NULL(args_abs);
+    auto arg = dyn_cast<T>(args_abs);
     if (arg == nullptr) {
       MS_EXCEPTION(TypeError) << "For primitive[" << op << "], the input[" << index << "] should be a "
                               << abstract::ReportNameTraits<T>::name << ", but got "

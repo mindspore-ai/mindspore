@@ -3072,15 +3072,14 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
     (void)std::transform(params.begin(), params.end(), std::back_inserter(inputs),
                          [](AnfNodePtr node) -> AnfNodePtr { return node; });
     auto call_node = func_graph->NewCNodeInOrder(std::move(inputs));
-
+    // Set output as ret
     TraceGuard guard(current_graph->get_return()->debug_info()->location());
     func_graph->set_output(call_node);
   } else {
     // ret = cell_obj(*arg, *kwargs)
     auto call_fn = MakeUnpackCall(func_graph, NewValueNode(cell_ptr), func_graph->parameters());
-
-    TraceGuard guard(current_graph->get_return()->debug_info()->location());
     // Set output as ret
+    TraceGuard guard(current_graph->get_return()->debug_info()->location());
     func_graph->set_output(call_fn);
   }
   return func_graph;

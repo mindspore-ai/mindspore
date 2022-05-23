@@ -174,7 +174,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
               auto resource = std::dynamic_pointer_cast<pipeline::Resource>(resource_);
               if (resource != nullptr) {
                 // StepParallel may replace the AbstractValue of the parameters of func_graph,
-                // So generate the args_spec from parameters.
+                // So generate the args_abs from parameters.
                 abstract::AbstractBasePtrList maybe_new_args_spec;
                 if (is_watch_renormalize_) {
                   if (is_untyped_generated_) {

@@ -1235,17 +1235,17 @@ class MS_CORE_API AbstractEllipsis final : public AbstractBase {
 using AbstractEllipsisPtr = std::shared_ptr<AbstractEllipsis>;
 
 /// \brief Class AbstractRef describes a RefTensor's abstract value.
-class MS_CORE_API AbstractRef final : public AbstractTensor {
+class MS_CORE_API AbstractRefTensor final : public AbstractTensor {
  public:
   /// \brief Constructor of AbstractRef.
   ///
   /// \param[in] ref_key The ref key of tensor.
   /// \param[in] ref_value The tensor.
-  AbstractRef(const AbstractTensorPtr &ref_value, const ValuePtr &ref_key_value);
+  AbstractRefTensor(const AbstractTensorPtr &ref_value, const ValuePtr &ref_key_value);
 
   /// \brief Destructor of AbstractEllipsis.
-  ~AbstractRef() override = default;
-  MS_DECLARE_PARENT(AbstractRef, AbstractTensor)
+  ~AbstractRefTensor() override = default;
+  MS_DECLARE_PARENT(AbstractRefTensor, AbstractTensor)
 
   TypePtr BuildType() const override;
 
@@ -1254,7 +1254,7 @@ class MS_CORE_API AbstractRef final : public AbstractTensor {
   /// \param[in] other The other instance of AbstractTimeOut.
   ///
   /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractRef &other) const;
+  bool operator==(const AbstractRefTensor &other) const;
 
   bool operator==(const AbstractBase &other) const override;
 
@@ -1272,14 +1272,14 @@ class MS_CORE_API AbstractRef final : public AbstractTensor {
   /// \return A pointer to the abstract tensor.
   inline AbstractTensorPtr ref() { return shared_from_base<AbstractTensor>(); }
 
-  /// \brief Get the ref key value.
+  /// \brief Get the ref key value, ref key is string actually.
   ///
   /// \return A point to the RefKey.
   inline ValuePtr ref_key_value() const { return ref_key_value_; }
 
   AbstractBasePtr Broaden() const override;
 
-  virtual AbstractBasePtr Join(const std::shared_ptr<AbstractRef> &other);
+  virtual AbstractBasePtr Join(const std::shared_ptr<AbstractRefTensor> &other);
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
 
   AbstractBasePtr PartialBroaden() const override;
@@ -1288,7 +1288,7 @@ class MS_CORE_API AbstractRef final : public AbstractTensor {
   // ref_key_value is the reference key of AbstractRef, the value can be a string value or kAnyValue
   ValuePtr ref_key_value_;
 };
-using AbstractRefPtr = std::shared_ptr<AbstractRef>;
+using AbstractRefPtr = std::shared_ptr<AbstractRefTensor>;
 
 /// \brief Compute the hash of a list of abstracts.
 ///

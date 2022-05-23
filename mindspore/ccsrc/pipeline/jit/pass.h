@@ -38,21 +38,21 @@ extern std::vector<PassItem> kVmPasses;
 extern std::vector<PassItem> kInlinePasses;
 extern std::vector<PassItem> kPynativePasses;
 
-bool OptPassAGroup(const ResourcePtr &res);
-bool CconvPass(const ResourcePtr &res);
-bool PipelineSplitPass(const ResourcePtr &res);
-bool ValidatePass(const ResourcePtr &res);
-bool GeSpecializedPass(const ResourcePtr &res);
-bool ConvertPrepareAdapt(const ResourcePtr &res);
-bool AddCacheEmbeddingPass(const ResourcePtr &res);
-bool InferenceOptPreparePass(const ResourcePtr &res);
+bool OptPassAGroup(const ResourcePtr &resource);
+bool CconvPass(const ResourcePtr &resource);
+bool PipelineSplitPass(const ResourcePtr &resource);
+bool ValidatePass(const ResourcePtr &resource);
+bool GeSpecializedPass(const ResourcePtr &resource);
+bool ConvertPrepareAdapt(const ResourcePtr &resource);
+bool AddCacheEmbeddingPass(const ResourcePtr &resource);
+bool InferenceOptPreparePass(const ResourcePtr &resource);
 void ReclaimOptimizer();
-bool PynativeOptPass(const ResourcePtr &res);
-bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &res);
+bool PynativeOptPass(const ResourcePtr &resource);
+bool EliminateAdRelatedSpecialOpOptPass(const ResourcePtr &resource);
 bool AutoMonadElimOptPass(const FuncGraphPtr &func_graph);
-FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res);
-FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res);
-FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res);
+FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource);
+FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &resource);
+FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource);
 }  // namespace pipeline
 }  // namespace mindspore
 
