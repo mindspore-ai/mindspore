@@ -702,8 +702,6 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 def _load_dismatch_prefix_params(net, parameter_dict, param_not_load, strict_load):
     """When some net parameter did not load, try to continue loading."""
     prefix_name = ""
-    dict_param_name = ""
-    not_load_param_name = ""
     longest_name = param_not_load[0]
     while prefix_name != longest_name and param_not_load:
         logger.debug("Count: {} parameters has not been loaded, try to continue loading.".format(len(param_not_load)))
@@ -712,15 +710,13 @@ def _load_dismatch_prefix_params(net, parameter_dict, param_not_load, strict_loa
             for dict_name in parameter_dict:
                 if dict_name.endswith(net_param_name):
                     prefix_name = dict_name[:-len(net_param_name)]
-                    dict_param_name = dict_name
-                    not_load_param_name = net_param_name
                     break
             if prefix_name != longest_name:
                 break
 
         if prefix_name != longest_name:
-            logger.warning(f"For 'load_param_into_net', remove parameter {dict_param_name}'s prefix name: "
-                           f"{prefix_name}, continue to load it to net parameter {not_load_param_name}.")
+            logger.warning(f"For 'load_param_into_net', remove parameter prefix name: {prefix_name},"
+                           f" continue to load.")
             for _, param in net.parameters_and_names():
                 new_param_name = prefix_name + param.name
                 if param.name in param_not_load and new_param_name in parameter_dict:
@@ -902,7 +898,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         enc_mode = 'AES-GCM'
         if 'enc_mode' in kwargs.keys():
             enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
-        dataset = kwargs['dataset'] if 'dataset' in kwargs.keys() else None
+        dataset = kwargs.get('dataset')
         _export(net, file_name, file_format, *inputs, enc_key=enc_key, enc_mode=enc_mode, dataset=dataset)
     else:
         _export(net, file_name, file_format, *inputs, **kwargs)
@@ -1081,12 +1077,13 @@ def _save_mindir(net, file_name, *inputs, **kwargs):
 
     graph_id, _ = _executor.compile(net, *inputs, phase=phase_name,
                                     do_convert=False, auto_parallel_mode=net._auto_parallel_mode)
+    # pylint: disable=protected-access
     mindir_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
 
     net_dict = net.parameters_dict()
     model.ParseFromString(mindir_stream)
 
-    if 'dataset' in kwargs.keys() and kwargs.get('dataset') is not None:
+    if kwargs.get('dataset'):
         check_input_data(kwargs['dataset'], data_class=mindspore.dataset.Dataset)
         dataset = kwargs.get('dataset')
         _save_dataset_to_mindir(model, dataset)
