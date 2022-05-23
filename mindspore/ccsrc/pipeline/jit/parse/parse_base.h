@@ -186,11 +186,13 @@ enum SyntaxSupportDef : int {
 };
 
 // Convert python object to ValuePtr.
-bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature = false, const TypePtr &dtype = nullptr);
+bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature = false, const TypePtr &dtype = nullptr,
+                 bool forbid_reuse = false);
 
 // Convert python obj to graph.
 FuncGraphPtr ConvertToFuncGraph(const py::object &obj,
-                                const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
+                                const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD,
+                                bool forbid_reuse = false);
 
 // Parse the python object to graph.
 FuncGraphPtr ParsePythonCode(const py::object &obj,

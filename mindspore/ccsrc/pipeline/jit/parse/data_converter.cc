@@ -373,7 +373,7 @@ ValuePtr ConvertConstantNumpyNumber(const py::object &obj, ResolveTypeDef obj_ty
   return nullptr;
 }
 
-ValuePtr ConvertOtherObj(const py::object &obj) {
+ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
   auto obj_type = data_converter::GetObjType(obj);
   MS_LOG(DEBUG) << "Converting the object(" << ((std::string)py::str(obj)) << ") detail type: " << obj_type << " ";
   if (obj_type == RESOLVE_TYPE_CLASS_TYPE) {
@@ -384,7 +384,7 @@ ValuePtr ConvertOtherObj(const py::object &obj) {
   }
   if (obj_type == RESOLVE_TYPE_FUNCTION || obj_type == RESOLVE_TYPE_METHOD) {
     MS_LOG(DEBUG) << "Convert the obj to func graph, type is " << obj_type;
-    FuncGraphPtr func_graph = ConvertToFuncGraph(obj);
+    FuncGraphPtr func_graph = ConvertToFuncGraph(obj, PYTHON_MOD_GET_PARSE_METHOD, forbid_reuse);
     if (func_graph == nullptr) {
       MS_LOG(ERROR) << "Parse resolve function error.";
       return nullptr;
@@ -544,7 +544,7 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
 }
 }  // namespace
 
-bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature, const TypePtr &dtype) {
+bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature, const TypePtr &dtype, bool forbid_reuse) {
   // Check parameter valid
   if (data == nullptr) {
     MS_LOG(ERROR) << "The value pointer should not be null.";
@@ -561,14 +561,15 @@ bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature, cons
     }
   }
   if (!matched) {
-    converted = ConvertOtherObj(obj);
+    converted = ConvertOtherObj(obj, forbid_reuse);
   }
   *data = converted;
   return converted != nullptr;
 }
 
 // Convert data to graph
-FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python_mod_get_parse_method) {
+FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python_mod_get_parse_method,
+                                bool forbid_reuse) {
   std::vector<std::string> results = data_converter::GetObjKey(obj);
   std::string obj_id = results[0] + python_mod_get_parse_method;
   std::string obj_key = results[1];
@@ -579,8 +580,8 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
     MS_LOG(DEBUG) << "Get the cache data, obj: " << obj_id;
     func_graph = value->cast<FuncGraphPtr>();
     if (!func_graph->dropped()) {
-      bool forbid_reuse = py::hasattr(obj, PYTHON_FUNCTION_FORBID_REUSE);
-      if (forbid_reuse || pipeline::GetJitLevel() == "o0") {
+      bool has_forbid_reuse_attr = py::hasattr(obj, PYTHON_FUNCTION_FORBID_REUSE);
+      if (forbid_reuse || has_forbid_reuse_attr || pipeline::GetJitLevel() == "o0") {
         return BasicClone(func_graph);
       }
       return func_graph;

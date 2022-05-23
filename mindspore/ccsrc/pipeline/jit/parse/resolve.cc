@@ -233,7 +233,10 @@ void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
   BroadenCNodeAbstract(resolved_graph);
 }
 
-bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, AnfNodePtr *const node) {
+bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node) {
+  MS_EXCEPTION_IF_NULL(origin_node);
+  auto func_graph = origin_node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
   AnfNodePtr output = nullptr;
   if (py::hasattr(obj, "__parameter__") && py::isinstance<tensor::MetaTensor>(obj)) {
     auto param = ResolveParameterObj(func_graph, obj);
@@ -249,7 +252,7 @@ bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, 
     args.push_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t it = 0; it < tuple.size(); ++it) {
       AnfNodePtr out = nullptr;
-      bool success = ResolveObjectToNode(func_graph, tuple[it], &out);
+      bool success = ResolveObjectToNode(origin_node, tuple[it], &out);
       if (!success) {
         MS_LOG(ERROR) << "Resolve object to node failed";
         return false;
@@ -259,12 +262,19 @@ bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, 
     output = NewCNode(std::move(args), func_graph);
   } else {
     ValuePtr convert_result = nullptr;
-    bool converted = ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve());
+    // When the cell is set recomputed, it should not use old scope from cache.
+    auto scope = origin_node->scope();
+    bool has_recompute_scope = (scope == nullptr) ? false : scope->name().find(kAttrRecompute) == 0;
+    bool converted =
+      ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve(), nullptr, has_recompute_scope);
     if (!converted) {
       MS_LOG(ERROR) << "Convert data failed";
       return false;
     }
     MS_EXCEPTION_IF_NULL(convert_result);
+    if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
+      UpdateDebugInfo(convert_result->cast<FuncGraphPtr>(), origin_node->scope(), origin_node->debug_info());
+    }
     ConvertLoadedGraph(func_graph, convert_result);
     output = NewValueNode(convert_result);
     if (convert_result->isa<tensor::Tensor>()) {
@@ -347,7 +357,7 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
   MS_EXCEPTION_IF_NULL(node);
   ScopeGuard scope_guard(node->scope());
   AnfNodePtr resolved_node = nullptr;
-  bool success = ResolveObjectToNode(node->func_graph(), obj, &resolved_node);
+  bool success = ResolveObjectToNode(node, obj, &resolved_node);
   if (!success) {
     MS_LOG(EXCEPTION) << "Parse Resolve covert failed.";
   }
