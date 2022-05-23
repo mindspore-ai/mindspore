@@ -742,6 +742,61 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('bitwise_xor')(self, x)
 
+    def tensor_scatter_mul(self, indices, updates):
+        """
+        Creates a new tensor by multiplying the values from the positions in `input_x` indicated by
+        `indices`, with values from `updates`. When divided values are provided for the same
+        index, the result of the update will be to divided these values respectively. Except that
+        the updates are applied on output `Tensor` instead of input `Parameter`.
+
+        The last axis of `indices` is the depth of each index vectors. For each index vector,
+        there must be a corresponding value in `updates`. The shape of `updates` should be
+        equal to the shape of `input_x[indices]`. For more details, see use cases.
+
+        Note:
+            - The arg `input_x` refers to self tensor.
+            - If some values of the `indices` are out of bound, instead of raising an index error,
+              the corresponding `updates` will not be updated to `input_x`.
+            - The operator can't handle division by 0 exceptions, so the user needs to make sure
+              there is no 0 value in `updates`.
+
+        Args:
+            indices (Tensor): The index of input tensor whose data type is int32 or int64.
+                The rank must be at least 2.
+            updates (Tensor): The tensor to update the input tensor, has the same type as input,
+                and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+        Returns:
+            Tensor, has the same shape and type as `input_x`.
+
+        Raises:
+            TypeError: If dtype of `indices` is neither int32 nor int64.
+            ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+            >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
+            >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+            >>> # Next, demonstrate the approximate operation process of this operator:
+            >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
+            >>> # 2, And input_x[0, 0] = -0.1
+            >>> # 3, So input_x[indices] = [-0.1, -0.1]
+            >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
+            >>> # 5, Perform the subtract operation for the first time:
+            >>> #      first_input_x = input_x[0][0] * updates[0] = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
+            >>> # 6, Perform the subtract operation for the second time:
+            >>> #      second_input_x = input_x[0][0] * updates[1] = [[-0.22, 0.3, 3.6], [0.4, 0.5, -3.2]]
+            >>> output = input_x.tensor_scatter_mul(indices, updates)
+            >>> print(output)
+            [[-0.22  0.3   3.6  ]
+             [ 0.4   0.5   -3.2 ]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('tensor_scatter_mul')(self, indices, updates)
+
     def tensor_scatter_div(self, indices, updates):
         """
         Creates a new tensor by dividing the values from the positions in self tensor indicated by
