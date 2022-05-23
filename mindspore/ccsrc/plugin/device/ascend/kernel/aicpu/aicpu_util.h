@@ -87,6 +87,8 @@ constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
 constexpr auto kPriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
 constexpr auto kMaxPoolV1 = "MaxPoolV1";
 constexpr auto kMaxPoolGradV1 = "MaxPoolGradV1";
+constexpr auto kAvgPoolV1 = "AvgPoolV1";
+constexpr auto kAvgPoolGradV1 = "AvgPoolGradV1";
 const std::set<std::string> kCpuKernelOps{kIdentity,     kMaskedSelect,   kMaskedSelectGrad,   kDynamicStitch,
                                           kSearchSorted, kResizeBilinear, kResizeBilinearGrad, kScatterElements};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
@@ -110,7 +112,9 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kStack, "Pack"},
   {kUnstack, "Unpack"},
   {kGather, "GatherV2"},
-  {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"}};
+  {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"},
+  {kAvgPoolV1, "AvgPool"},
+  {kAvgPoolGradV1, "AvgPoolGrad"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number

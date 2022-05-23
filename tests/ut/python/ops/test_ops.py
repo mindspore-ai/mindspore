@@ -55,6 +55,8 @@ from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
 from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.operations.nn_ops import NthElement
 from mindspore.ops.operations.nn_ops import PSROIPooling
+from mindspore.ops.operations.nn_ops import AvgPoolV1
+from mindspore.ops.operations._grad_ops import AvgPoolGradV1
 from mindspore.ops.operations.nn_ops import MaxPoolV1
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix
@@ -1159,6 +1161,18 @@ class NthElementNet(nn.Cell):
         return out
 
 
+class AvgPoolGradV1Net(nn.Cell):
+    def __init__(self):
+        super(AvgPoolGradV1Net, self).__init__()
+        self.avgpool_grad_v1 = AvgPoolGradV1(kernel_size=2, strides=2, pad_mode="VALID")
+        self.to_arr = P.TupleToArray()
+        self.shape = P.Shape()
+
+    def construct(self, orig_input, grad):
+        orig_input_shape = self.to_arr(self.shape(orig_input))
+        return self.avgpool_grad_v1(orig_input_shape, grad)
+
+
 test_case_math_ops = [
     ('Cross', {
         'block': P.Cross(dim=1),
@@ -2117,6 +2131,15 @@ test_case_nn_ops = [
         'block': P.AvgPool(kernel_size=(2, 2), strides=(2, 2), pad_mode="VALID"),
         'desc_inputs': [[100, 3, 28, 28]],
         'desc_bprop': [[100, 3, 14, 14]]}),
+    ('AvgPoolV1', {
+        'block': AvgPoolV1(kernel_size=(2, 2), strides=(2, 2), pad_mode="VALID"),
+        'desc_inputs': [[100, 3, 28, 28]],
+        'desc_bprop': [[100, 3, 14, 14]]}),
+    ('AvgPoolGradV1', {
+        'block': AvgPoolGradV1Net(),
+        'desc_inputs': [[100, 3, 28, 28], [100, 3, 14, 14]],
+        'desc_bprop': [[100, 3, 28, 28]],
+        'skip': ['backward']}),
     ('AvgPool3D_1', {
         'block': P.AvgPool3D(kernel_size=2, strides=2, pad_mode="VALID"),
         'desc_inputs': [[10, 3, 28, 28, 28]],
