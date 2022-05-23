@@ -2654,6 +2654,8 @@ class Tensor(Tensor_):
         r"""
         Gathers slices from a tensor by indices.
         Using given indices to gather slices from a tensor with a specified shape.
+        `input_x` is a target tensor of the element to be collected,
+        The shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions.
         `indices` is an K-dimensional integer tensor. Suppose that it is a (K-1)-dimensional tensor and each element
         of it defines a slice of `input_x`:
 
@@ -2664,8 +2666,6 @@ class Tensor(Tensor_):
         :math:`indices.shape[-1] <= input\_x.rank`.
 
         Args:
-            input_x (Tensor): The target tensor to of the element to be collected.
-                The shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions.
             indices (Tensor): The index tensor that gets the collected elements, with int32 or int64 data type.
 
         Returns:
@@ -3043,7 +3043,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('hardshrink')(lambd)(self)
-
 
     def diag(self):
         r"""
