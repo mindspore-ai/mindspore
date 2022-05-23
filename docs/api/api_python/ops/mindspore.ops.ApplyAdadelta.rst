@@ -3,9 +3,9 @@
 
 .. py:class:: mindspore.ops.ApplyAdadelta
 
-     根据Adadelta算法更新相关参数。
+    根据Adadelta算法更新相关参数。
      
-     Adadelta算法，具体细节可参考论文 `ADADELTA: AN ADAPTIVE LEARNING RATE METHOD <https://arxiv.org/abs/1212.5701>`_ 。
+    Adadelta算法，具体细节可参考论文 `ADADELTA: AN ADAPTIVE LEARNING RATE METHOD <https://arxiv.org/abs/1212.5701>`_ 。
 
     .. math::
         \begin{array}{ll} \\
@@ -41,4 +41,4 @@
     
     - **TypeError** - 如果 `var` 、 `accum` 、 `accum_update` 、 `lr` 、 `rho` 、 `epsilon` 或 `grad` 的数据类型既不是float16也不是float32。
     - **TypeError** - 如果 `accum_update` 、 `lr` 、 `rho` 或 `epsilon` 既不是数值型也不是Tensor。
-    - **RuntimeError** - 如果`var` 、 `accum` 、 `accum_update` 和 `grad` 不支持数据类型转换。
+    - **RuntimeError** - 如果 `var` 、 `accum` 、 `accum_update` 和 `grad` 不支持数据类型转换。

@@ -36,6 +36,6 @@
     **异常：**
 
     - **TypeError** - 如果 `var` 、 `lr` 、 `alpha` 、 `sign_decay` 或 `beta` 的数据类型既不是float16也不是float32。
-    - **TypeError** - 如果 `lr` 、 `alpha`或 `sign_decay` 既不是数值型，也不是Tensor。
+    - **TypeError** - 如果 `lr` 、 `alpha` 或 `sign_decay` 既不是数值型，也不是Tensor。
     - **TypeError** - 如果 `grad` 不是Tensor。
     - **RuntimeError** - 如果不支持参数的 `var` 、 `accum` 和 `grad` 数据类型转换。

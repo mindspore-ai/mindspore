@@ -385,6 +385,31 @@ mindspore.Tensor
 
         与输入的张量具有相同的数据类型的Tensor。
 
+    .. py:method:: gather_nd(input_x, indices)
+
+        按索引从张量中获取切片。
+        使用给定的索引从具有指定形状的张量中搜集切片。
+        `indices` 是一个K维的整数张量，假定它的K-1维张量中的每一个元素是 `input_x` 的切片，那么有：
+
+        .. math::
+            output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
+        
+        `indices` 的最后一维不能超过 `input_x` 的秩：
+        :math:`indices.shape[-1] <= input\_x.rank`。
+
+        **参数：**
+
+        - **input_x** (Tensor) - 待搜集元素的目标张量，它的shape是 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
+        - **indices** (Tensor) - 获取收集元素的索引张量，其数据类型包括：int32，int64。
+
+        **返回：**
+
+        Tensor，具有与入参 `input_x` 相同的数据类型，shape维度为indices_shape[:-1] + input_x_shape[indices_shape[-1]:]。
+
+        **异常：**
+
+        - **ValueError** - 如果 `input_x` 的shape长度小于 `indices` 的最后一个维度。
+
     .. py:method:: ger(x)
 
         计算两个Tensor的外积，即计算此Tensor 和 `x` 的外积。如果此Tensor shape为 :math:`(m,)` ，`x` shape为 :math:`(n,)` ，
@@ -809,31 +834,6 @@ mindspore.Tensor
         - **ValueError** - 如果 `paddings` 的形状不是 (2, M), 其中 M 为 `block_shape` 的长度。
         - **ValueError** - 如果 `block_shape` 的元素不是大于一的整数。
         - **ValueError** - 如果 `paddings` 的元素不是非负的整数。
-
-    .. py:method:: gather_nd(input_x, indices)
-
-        按索引从张量中获取切片。
-        使用给定的索引从具有指定形状的张量中搜集切片。
-        `indices` 是一个K维的整数张量，假定它的K-1维张量中的每一个元素是 `input_x` 的切片，那么有：
-
-        .. math::
-            output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
-        
-        `indices` 的最后一维不能超过 `input_x` 的秩：
-        :math:`indices.shape[-1] <= input\_x.rank`。
-
-        **参数：**
-
-        - **input_x** (Tensor) - 待搜集元素的目标张量，它的shape是 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。
-        - **indices** (Tensor) - 获取收集元素的索引张量，其数据类型包括：int32，int64。
-
-        **返回：**
-
-        Tensor，具有与入参 `input_x` 相同的数据类型，shape维度为indices_shape[:-1] + input_x_shape[indices_shape[-1]:]。
-
-        **异常：**
-
-        - **ValueError** - 如果 `input_x` 的shape长度小于 `indices` 的最后一个维度。
 
     .. py:method:: shape
         :property:
