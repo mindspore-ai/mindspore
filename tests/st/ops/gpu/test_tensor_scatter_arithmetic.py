@@ -17,6 +17,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.ops import vmap
 from mindspore.ops import operations as P
 
 tensor_scatter_func_map = {
@@ -55,6 +56,42 @@ class TestTensorScatterFuncNet(nn.Cell):
         return out
 
 
+class TestTensorScatterNet(nn.Cell):
+    def __init__(self, func_name):
+        super(TestTensorScatterNet, self).__init__()
+        self.scatter_func = tensor_scatter_func_map.get(func_name)()
+
+    def construct(self, input_x, indices, updates):
+        out = self.scatter_func(input_x, indices, updates)
+        return out
+
+
+class DynamicShapeTensorScatterNet(nn.Cell):
+    def __init__(self, func_name, axis=0):
+        super(DynamicShapeTensorScatterNet, self).__init__()
+        self.unique = P.Unique()
+        self.gather = P.Gather()
+        self.tensor_scatter_func = tensor_scatter_func_map.get(func_name)()
+        self.axis = axis
+
+    def construct(self, input_x, scatter_indices, update, indices):
+        unique_indices, _ = self.unique(indices)
+        # Only Dynamic input_x.
+        real_input = self.gather(input_x, unique_indices, self.axis)
+        return real_input, self.tensor_scatter_func(real_input, scatter_indices, update)
+
+
+class VMapNet(nn.Cell):
+    def __init__(self, net, in_axes, out_axes):
+        super(VMapNet, self).__init__()
+        self.net = net
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+
+    def construct(self, input_x, indices, updates):
+        return vmap(self.net, self.in_axes, self.out_axes)(input_x, indices, updates)
+
+
 def tensor_scatter_np_benchmark(np_func, input_x, indices, updates):
     """
     Feature: benchmark to generate result.
@@ -89,3 +126,79 @@ def test_tensor_scatter(func_name, input_data_type, index_data_type):
     out = tensor_scatter_net()
     expected = tensor_scatter_np_benchmark(func_name, arr_input, arr_indices, arr_update)
     np.testing.assert_allclose(out.asnumpy(), expected, rtol=1e-6)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize("func_name", ["mul"])
+def test_scatter_nd_dy_shape(func_name):
+    """
+    Feature: Test TensorScatterOp DyNamicShape.
+    Description: The input shape may need to broadcast.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    np.random.seed(1)
+    input_x = Tensor(np.ones((4, 4, 4)).astype(np.float32))
+    scatter_indices = Tensor(np.array([[0], [2]]).astype(np.int32))
+    updates = Tensor(np.array([[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+                               [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]).astype(np.float32))
+    indices = Tensor(np.array([i for i in range(0, 4)]).astype(np.int32))
+    net = DynamicShapeTensorScatterNet(func_name)
+    real_input_x, ms_result = net(input_x, scatter_indices, updates, indices)
+    np_result = tensor_scatter_np_benchmark(func_name, real_input_x.asnumpy(), scatter_indices.asnumpy(),
+                                            updates.asnumpy())
+    np.testing.assert_allclose(np_result, ms_result.asnumpy(), atol=1e-6, rtol=1e-6)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = DynamicShapeTensorScatterNet(func_name)
+    real_input_x, ms_result = net(input_x, scatter_indices, updates, indices)
+    np_result = tensor_scatter_np_benchmark(func_name, real_input_x.asnumpy(), scatter_indices.asnumpy(),
+                                            updates.asnumpy())
+    np.testing.assert_allclose(np_result, ms_result.asnumpy(), atol=1e-6, rtol=1e-6)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor_scatter_mul_func_indices_vmap():
+    """
+    Feature: test TensorScatterOp vmap.
+    Description: in_axes: (0, 0, None).
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    func_name = 'mul'
+    in_axes = (0, 0, None)
+    out_axes = 0
+    input_x = Tensor(
+        np.array([[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]).astype(np.float32))
+    indices = Tensor(np.array([[[0, 0], [1, 1]], [[0, 0], [1, 1]]]).astype(np.int32))
+    updates = Tensor(np.array([1.0, 2.2]).astype(np.float32))
+    output = VMapNet(TestTensorScatterNet(func_name), in_axes, out_axes)(input_x, indices, updates)
+    benchmark_output = np.array([[[-0.1, 0.3, 3.6], [0.4, 1.1, -3.2]], [[-0.1, 0.3, 3.6], [0.4, 1.1, -3.2]]]).astype(
+        np.float32)
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, atol=1e-6, rtol=1e-6)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_scatter_func_update_vmap():
+    """
+    Feature: test TensorScatterOp vmap.
+    Description: in_axes: (0,  None, 0).
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    func_name = 'mul'
+    in_axes = (0, None, 0)
+    out_axes = 0
+    input_x = Tensor(
+        np.array([[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]).astype(np.float32))
+    indices = Tensor(np.array([[0, 0], [1, 1]]).astype(np.int32))
+    updates = Tensor(np.array([[1.0, 2.2], [0.07, 1.23]]).astype(np.float32))
+    output = VMapNet(TestTensorScatterNet(func_name), in_axes, out_axes)(input_x, indices, updates)
+    benchmark_output = np.array(
+        [[[-0.1, 0.3, 3.6], [0.4, 1.1, -3.2]], [[-0.007, 0.3, 3.6], [0.4, 0.615, -3.2]]]).astype(np.float32)
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, atol=1e-6, rtol=1e-6)
