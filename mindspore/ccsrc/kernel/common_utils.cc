@@ -643,8 +643,6 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
     MS_LOG(EXCEPTION) << "The reduce node [" << cnode->DebugString() << "] is not single input or single output."
                       << trace::DumpSourceLines(cnode);
   }
-  std::vector<int64_t> axis;
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   auto axis_attr = primitive->GetAttr(kAxis);
@@ -658,15 +656,7 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
   } else {
     axis_list = GetValue<std::vector<int64_t>>(axis_attr);
   }
-  for (const auto &elem : axis_list) {
-    if (elem < 0) {
-      (void)axis.emplace_back(input_shape.size() + elem);
-    } else {
-      (void)axis.emplace_back(elem);
-    }
-  }
-  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
-  return axis;
+  return axis_list;
 }
 
 void FillEmptyDims(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,

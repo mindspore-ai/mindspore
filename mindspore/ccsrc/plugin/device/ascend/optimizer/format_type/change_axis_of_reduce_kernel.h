@@ -27,6 +27,9 @@ class ChangeAxisOfReduceKernel : public PatternProcessPass {
   ~ChangeAxisOfReduceKernel() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  static void NormalizeReduceAttrAxis(const CNodePtr &cnode);
 };
 }  // namespace opt
 }  // namespace mindspore
