@@ -319,7 +319,7 @@ Status MS_API GetImageNumChannels(const mindspore::MSTensor &image, int *channel
 /// \param[in] image Tensor of the image.
 /// \param[out] size Size of the image as [height, width].
 /// \return The status code.
-Status MS_API GetImageSize(const mindspore::MSTensor &image, std::vector<uint32_t> &size);  // NOLINT
+Status MS_API GetImageSize(const mindspore::MSTensor &image, std::vector<dsize_t> *size);
 
 /// \brief Flip the input image horizontally.
 class MS_API HorizontalFlip final : public TensorTransform {
@@ -467,6 +467,48 @@ class MS_API Pad final : public TensorTransform {
 
   /// \brief Destructor.
   ~Pad() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Pad the image to a fixed size.
+class MS_API PadToSize final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] size A two element vector representing the target size to pad, in order of [height, width].
+  /// \param[in] offset A two element vector representing the lengths to pad on the top and left,
+  ///    in order of [top, left]. Default: {}, means to pad symmetrically, keeping the original image in center.
+  /// \param[in] fill_value A vector representing the pixel intensity of the borders. Only valid if the
+  ///    padding_mode is BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
+  ///    If 3 values are provided, it is used to fill R, G, B channels respectively. Default: {0}.
+  /// \param[in] padding_mode The method of padding, which can be one of BorderType.kConstant, BorderType.kEdge,
+  ///    BorderType.kReflect or BorderType.kSymmetric. Default: BorderType.kConstant.
+  ///    - BorderType.kConstant, pads with a constant value.
+  ///    - BorderType.kEdge, pads with the last value at the edge of the image.
+  ///    - BorderType.kReflect, pads with reflection of the image omitting the last value on the edge.
+  ///    - BorderType.kSymmetric, pads with reflection of the image repeating the last value on the edge.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto pad_to_size_op = vision::PadToSize({256, 256}, {10, 20}, {255, 255, 255});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, pad_to_size_op},  // operations
+  ///                            {"image"});                   // input columns
+  /// \endcode
+  explicit PadToSize(const std::vector<int32_t> &size, const std::vector<int32_t> &offset = {},
+                     const std::vector<uint8_t> &fill_value = {0}, BorderType padding_mode = BorderType::kConstant);
+
+  /// \brief Destructor.
+  ~PadToSize() = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.

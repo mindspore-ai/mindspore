@@ -28,6 +28,7 @@ add_library(kernels-image OBJECT
     normalize_op.cc
     normalize_pad_op.cc
     pad_op.cc
+    pad_to_size_op.cc
     posterize_op.cc
     random_adjust_sharpness_op.cc
     random_affine_op.cc

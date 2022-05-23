@@ -37,10 +37,6 @@ const int32_t DEFAULT_NUM_WIDTH = 1;
 
 namespace mindspore {
 namespace dataset {
-constexpr size_t kIndexZero = 0;
-constexpr size_t kIndexOne = 1;
-constexpr size_t kIndexTwo = 2;
-
 int GetCVInterpolationMode(InterpolationMode mode) {
   switch (mode) {
     case InterpolationMode::kLinear:
@@ -97,11 +93,11 @@ Status GetConvertShape(ConvertMode convert_mode, const std::shared_ptr<CVTensor>
 }
 
 Status ImageNumChannels(const std::shared_ptr<Tensor> &image, int *channels) {
-  if (image->Rank() < MIN_IMAGE_DIMENSION) {
+  if (image->Rank() < MIN_IMAGE_RANK) {
     RETURN_STATUS_UNEXPECTED(
       "GetImageNumChannels: invalid parameter, image should have at least two dimensions, but got: " +
       std::to_string(image->Rank()));
-  } else if (image->Rank() == MIN_IMAGE_DIMENSION) {
+  } else if (image->Rank() == MIN_IMAGE_RANK) {
     *channels = 1;
   } else {
     *channels = image->shape()[-1];
@@ -109,19 +105,20 @@ Status ImageNumChannels(const std::shared_ptr<Tensor> &image, int *channels) {
   return Status::OK();
 }
 
-Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<uint32_t> &size) {  // NOLINT
-  size = std::vector<uint32_t>(2);
-  if (image->Rank() < MIN_IMAGE_DIMENSION) {
+Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<dsize_t> *size) {
+  RETURN_UNEXPECTED_IF_NULL(size);
+  *size = std::vector<dsize_t>(MIN_IMAGE_RANK);
+  if (image->Rank() < MIN_IMAGE_RANK) {
     RETURN_STATUS_UNEXPECTED("GetImageSize: invalid parameter, image should have at least two dimensions, but got: " +
                              std::to_string(image->Rank()));
-  } else if (image->Rank() == MIN_IMAGE_DIMENSION) {
-    size[0] = image->shape()[0];
-    size[1] = image->shape()[1];
+  } else if (image->Rank() == MIN_IMAGE_RANK) {
+    (*size)[0] = image->shape()[0];
+    (*size)[1] = image->shape()[1];
   } else {
     const int32_t kHeightIndex = -3;
     const int32_t kWidthIndex = -2;
-    size[0] = image->shape()[kHeightIndex];
-    size[1] = image->shape()[kWidthIndex];
+    (*size)[0] = image->shape()[kHeightIndex];
+    (*size)[1] = image->shape()[kWidthIndex];
   }
   return Status::OK();
 }
@@ -217,8 +214,10 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     TensorShape new_shape = TensorShape({output_height, output_width, 3});
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-    imOut.Init(output_width, output_height, input_cv->shape()[2], reinterpret_cast<void *>(buffer), LDataType::UINT8);
-    imIn.Init(input_cv->shape()[1], input_cv->shape()[0], input_cv->shape()[2], input_cv->mat().data, LDataType::UINT8);
+    imOut.Init(output_width, output_height, input_cv->shape()[CHANNEL_INDEX_HWC], reinterpret_cast<void *>(buffer),
+               LDataType::UINT8);
+    imIn.Init(input_cv->shape()[1], input_cv->shape()[0], input_cv->shape()[CHANNEL_INDEX_HWC], input_cv->mat().data,
+              LDataType::UINT8);
     if (ResizeCubic(imIn, imOut, output_width, output_height) == false) {
       RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
     }
@@ -356,17 +355,17 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
         const int k = scanline_ptr[cmyk_pixel + 3];
         int r, g, b;
         if (cinfo->saw_Adobe_marker) {
-          r = (k * c) / 255;
-          g = (k * m) / 255;
-          b = (k * y) / 255;
+          r = (k * c) / MAX_BIT_VALUE;
+          g = (k * m) / MAX_BIT_VALUE;
+          b = (k * y) / MAX_BIT_VALUE;
         } else {
-          r = (255 - c) * (255 - k) / 255;
-          g = (255 - m) * (255 - k) / 255;
-          b = (255 - y) * (255 - k) / 255;
+          r = (MAX_BIT_VALUE - c) * (MAX_BIT_VALUE - k) / MAX_BIT_VALUE;
+          g = (MAX_BIT_VALUE - m) * (MAX_BIT_VALUE - k) / MAX_BIT_VALUE;
+          b = (MAX_BIT_VALUE - y) * (MAX_BIT_VALUE - k) / MAX_BIT_VALUE;
         }
-        buffer[3 * i + 0] = r;
-        buffer[3 * i + 1] = g;
-        buffer[3 * i + 2] = b;
+        buffer[DEFAULT_IMAGE_CHANNELS * i + R_INDEX] = r;
+        buffer[DEFAULT_IMAGE_CHANNELS * i + G_INDEX] = g;
+        buffer[DEFAULT_IMAGE_CHANNELS * i + B_INDEX] = b;
       }
     } else if (num_lines_read > 0) {
       int copy_status = memcpy_s(buffer, buffer_size, scanline_ptr + offset, stride);
@@ -658,13 +657,13 @@ Status MaskWithTensor(const std::shared_ptr<Tensor> &sub_mat, std::shared_ptr<Te
       }
     }
   } else if (image_format == ImageFormat::HW) {
-    if ((*input)->Rank() != MIN_IMAGE_DIMENSION) {
+    if ((*input)->Rank() != MIN_IMAGE_RANK) {
       RETURN_STATUS_UNEXPECTED(
         "CutMixBatch: MaskWithTensor failed: "
         "input shape doesn't match <H,W> format, got shape:" +
         (*input)->shape().ToString());
     }
-    if (sub_mat->Rank() != MIN_IMAGE_DIMENSION) {
+    if (sub_mat->Rank() != MIN_IMAGE_RANK) {
       RETURN_STATUS_UNEXPECTED(
         "CutMixBatch: MaskWithTensor failed: "
         "sub_mat shape doesn't match <H,W> format, got shape:" +
@@ -772,9 +771,10 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
       TensorShape new_shape = TensorShape({target_height, target_width, 3});
       RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
       uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-      imOut.Init(target_width, target_height, input_cv->shape()[2], reinterpret_cast<void *>(buffer), LDataType::UINT8);
-      imIn.Init(input_image->shape()[1], input_image->shape()[0], input_image->shape()[2], input_image->mat().data,
-                LDataType::UINT8);
+      imOut.Init(target_width, target_height, input_cv->shape()[CHANNEL_INDEX_HWC], reinterpret_cast<void *>(buffer),
+                 LDataType::UINT8);
+      imIn.Init(input_image->shape()[1], input_image->shape()[0], input_image->shape()[CHANNEL_INDEX_HWC],
+                input_image->mat().data, LDataType::UINT8);
       if (ResizeCubic(imIn, imOut, target_width, target_height) == false) {
         RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
       }
@@ -817,8 +817,8 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     float fx = 0, fy = 0;
     if (center.empty()) {
       // default to center of image
-      fx = (input_img.cols - 1) / 2.0;
-      fy = (input_img.rows - 1) / 2.0;
+      fx = (input_img.cols - 1) * HALF;
+      fy = (input_img.rows - 1) * HALF;
     } else {
       fx = center[0];
       fy = center[1];
@@ -941,8 +941,8 @@ Status Normalize_caller(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> mean,
                  std::vector<float> std, bool is_hwc) {
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_FLOAT32), output));
-  if (input->Rank() == MIN_IMAGE_DIMENSION) {
-    RETURN_IF_NOT_OK((*output)->ExpandDim(MIN_IMAGE_DIMENSION));
+  if (input->Rank() == MIN_IMAGE_RANK) {
+    RETURN_IF_NOT_OK((*output)->ExpandDim(MIN_IMAGE_RANK));
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED((*output)->Rank() == DEFAULT_IMAGE_RANK,
@@ -971,7 +971,7 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
                                  ", size of mean: " + std::to_string(mean.size()));
   RETURN_IF_NOT_OK(Normalize_caller<float>(input, output, mean, std, is_hwc, false));
 
-  if (input->Rank() == MIN_IMAGE_DIMENSION) {
+  if (input->Rank() == MIN_IMAGE_RANK) {
     (*output)->Squeeze();
   }
   return Status::OK();
@@ -1031,7 +1031,7 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   } else {
     RETURN_IF_NOT_OK(Normalize_caller<float>(input, output, mean_v, std_v, is_hwc, true));
   }
-  if (input->Rank() == MIN_IMAGE_DIMENSION) {
+  if (input->Rank() == MIN_IMAGE_RANK) {
     (*output)->Squeeze();
   }
   return Status::OK();
@@ -1099,7 +1099,7 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
                    const float &gain) {
   try {
     int num_channels = 1;
-    if (input->Rank() < MIN_IMAGE_DIMENSION) {
+    if (input->Rank() < MIN_IMAGE_RANK) {
       RETURN_STATUS_UNEXPECTED("AdjustGamma: input tensor is not in shape of <...,H,W,C> or <H,W>, got shape:" +
                                input->shape().ToString());
     }
@@ -1125,10 +1125,11 @@ Status AdjustGamma(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor>
       std::shared_ptr<CVTensor> output_cv;
       RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
       uchar LUT[256] = {};
+      auto kMaxPixelValue = static_cast<float>(MAX_BIT_VALUE);
       for (int i = 0; i < 256; i++) {
-        float f = i / 255.0;
+        float f = i / kMaxPixelValue;
         f = pow(f, gamma);
-        LUT[i] = static_cast<uchar>(floor(std::min(f * (255.0 + 1 - 1e-3) * gain, 255.0)));
+        LUT[i] = static_cast<uchar>(floor(std::min(f * (kMaxPixelValue + 1.f - 1e-3f) * gain, kMaxPixelValue)));
       }
       if (input_img.channels() == 1) {
         cv::MatIterator_<uchar> it = input_img.begin<uchar>();
@@ -1161,7 +1162,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] AutoContrast: load image failed.");
     }
-    if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_DIMENSION) {
+    if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_RANK) {
       std::string err_msg = "AutoContrast: image rank should be 2 or 3,  but got: " + std::to_string(input_cv->Rank());
       if (input_cv->Rank() == 1) {
         err_msg = err_msg + ", may need to do Decode operation first.";
@@ -1170,8 +1171,8 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
                                std::to_string(input_cv->Rank()));
     }
     // Reshape to extend dimension if rank is 2 for algorithm to work. then reshape output to be of rank 2 like input
-    if (input_cv->Rank() == MIN_IMAGE_DIMENSION) {
-      RETURN_IF_NOT_OK(input_cv->ExpandDim(MIN_IMAGE_DIMENSION));
+    if (input_cv->Rank() == MIN_IMAGE_RANK) {
+      RETURN_IF_NOT_OK(input_cv->ExpandDim(MIN_IMAGE_RANK));
     }
     // Get number of channels and image matrix
     std::size_t num_of_channels = input_cv->shape()[CHANNEL_INDEX_HWC];
@@ -1204,7 +1205,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
       hist.col(0).copyTo(hist_vec);
       // Ignore values in ignore
       for (const auto &item : ignore) hist_vec[item] = 0;
-      int32_t hi = 255;
+      int32_t hi = MAX_BIT_VALUE;
       int32_t lo = 0;
       RETURN_IF_NOT_OK(ComputeUpperAndLowerPercentiles(&hist_vec, cutoff, cutoff, &hi, &lo));
       if (hi <= lo) {
@@ -1212,7 +1213,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
           table.push_back(i);
         }
       } else {
-        const float scale = 255.0 / (hi - lo);
+        const float scale = static_cast<float>(MAX_BIT_VALUE) / (hi - lo);
         const float offset = -1 * lo * scale;
         for (int32_t i = 0; i < 256; i++) {
           int32_t ix = static_cast<int32_t>(i * scale + offset);
@@ -1279,9 +1280,9 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustHue: load image failed.");
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > 2,
-                                 "AdjustHue: image rank should not bigger than:" + std::to_string(2) +
-                                   ", but got: " + std::to_string(input_cv->shape().Size()));
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      input_cv->shape().Size() > MIN_IMAGE_RANK,
+      "AdjustHue: image should have at least two dimensions, but got: " + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || num_channels != DEFAULT_IMAGE_CHANNELS) {
       RETURN_STATUS_UNEXPECTED("AdjustHue: image shape is not <H,W,C> or channel is not 3, but got rank: " +
@@ -1314,12 +1315,12 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] Equalize: load image failed.");
     }
-    if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_DIMENSION) {
+    if (input_cv->Rank() != DEFAULT_IMAGE_RANK && input_cv->Rank() != MIN_IMAGE_RANK) {
       RETURN_STATUS_UNEXPECTED("Equalize: image rank should be 2 or 3,  but got: " + std::to_string(input_cv->Rank()));
     }
     // For greyscale images, extend dimension if rank is 2 and reshape output to be of rank 2.
-    if (input_cv->Rank() == MIN_IMAGE_DIMENSION) {
-      RETURN_IF_NOT_OK(input_cv->ExpandDim(MIN_IMAGE_DIMENSION));
+    if (input_cv->Rank() == MIN_IMAGE_RANK) {
+      RETURN_IF_NOT_OK(input_cv->ExpandDim(MIN_IMAGE_RANK));
     }
     // Get number of channels and image matrix
     std::size_t num_of_channels = input_cv->shape()[CHANNEL_INDEX_HWC];
@@ -1426,11 +1427,11 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
             input_cv->SetItemAt<uint8_t>({x, y}, fill_value_r);
           } else {
             std::vector<dsize_t> index_r =
-              is_hwc ? std::vector<dsize_t>{x, y, kIndexZero} : std::vector<dsize_t>{kIndexZero, x, y};
+              is_hwc ? std::vector<dsize_t>{x, y, R_INDEX} : std::vector<dsize_t>{R_INDEX, x, y};
             std::vector<dsize_t> index_g =
-              is_hwc ? std::vector<dsize_t>{x, y, kIndexOne} : std::vector<dsize_t>{kIndexOne, x, y};
+              is_hwc ? std::vector<dsize_t>{x, y, G_INDEX} : std::vector<dsize_t>{G_INDEX, x, y};
             std::vector<dsize_t> index_b =
-              is_hwc ? std::vector<dsize_t>{x, y, kIndexTwo} : std::vector<dsize_t>{kIndexTwo, x, y};
+              is_hwc ? std::vector<dsize_t>{x, y, B_INDEX} : std::vector<dsize_t>{B_INDEX, x, y};
             input_cv->SetItemAt<uint8_t>(index_r, fill_value_r);
             input_cv->SetItemAt<uint8_t>(index_g, fill_value_g);
             input_cv->SetItemAt<uint8_t>(index_b, fill_value_b);
@@ -1456,7 +1457,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
 
     // validate rank
-    if (input_cv->Rank() == 1 || input_cv->mat().dims > MIN_IMAGE_DIMENSION) {
+    if (input_cv->Rank() == 1 || input_cv->mat().dims > MIN_IMAGE_RANK) {
       std::string err_msg = "Pad: input shape is not <H,W,C> or <H, W>, got rank: " + std::to_string(input_cv->Rank());
       if (input_cv->Rank() == 1) {
         err_msg = err_msg + ", may need to do Decode operation first.";
@@ -1478,7 +1479,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_image, input_cv->Rank(), &output_cv));
     // pad the dimension if shape information is only 2 dimensional, this is grayscale
     if (input_cv->Rank() == DEFAULT_IMAGE_RANK && input_cv->shape()[CHANNEL_INDEX_HWC] == MIN_IMAGE_CHANNELS &&
-        output_cv->Rank() == MIN_IMAGE_DIMENSION)
+        output_cv->Rank() == MIN_IMAGE_RANK)
       RETURN_IF_NOT_OK(output_cv->ExpandDim(CHANNEL_INDEX_HWC));
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
@@ -1810,9 +1811,9 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] ToTensor: load image failed.");
     }
-    if (input_cv->Rank() == MIN_IMAGE_DIMENSION) {
+    if (input_cv->Rank() == MIN_IMAGE_RANK) {
       // If input tensor is 2D, we assume we have HW dimensions
-      RETURN_IF_NOT_OK(input_cv->ExpandDim(MIN_IMAGE_DIMENSION));
+      RETURN_IF_NOT_OK(input_cv->ExpandDim(MIN_IMAGE_RANK));
     }
     CHECK_FAIL_RETURN_UNEXPECTED(
       input_cv->shape().Size() > CHANNEL_INDEX_HWC,
@@ -1832,7 +1833,7 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     RETURN_IF_NOT_OK(
       CVTensor::CreateEmpty(TensorShape{num_channels, height, width}, DataType(DataType::DE_FLOAT32), &output_cv));
     // Rescale tensor by dividing by 255
-    const float kMaxBitValueinFloat = 255.;
+    const float kMaxBitValueinFloat = static_cast<float>(MAX_BIT_VALUE);
     for (int i = 0; i < num_channels; ++i) {
       cv::Mat mat_t;
       cv::extractChannel(input_cv->mat(), mat_t, i);

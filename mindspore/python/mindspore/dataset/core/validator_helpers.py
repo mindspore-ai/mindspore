@@ -292,7 +292,8 @@ def check_non_negative_int32(value, arg_name=""):
     :param arg_name: name of the variable to be validated.
     :return: Exception: when the validation fails, nothing otherwise.
     """
-    check_value(value, [UINT32_MIN, INT32_MAX], arg_name)
+    type_check(value, (int,), arg_name)
+    check_value(value, [0, INT32_MAX], arg_name)
 
 
 def check_float32(value, arg_name=""):
@@ -303,6 +304,7 @@ def check_float32(value, arg_name=""):
     :param arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
+    type_check(value, (float, int), arg_name)
     check_value(value, [FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER], arg_name)
 
 
@@ -314,6 +316,7 @@ def check_float64(value, arg_name=""):
     :param arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
+    type_check(value, (float, int), arg_name)
     check_value(value, [DOUBLE_MIN_INTEGER, DOUBLE_MAX_INTEGER], arg_name)
 
 
@@ -325,6 +328,7 @@ def check_pos_float32(value, arg_name=""):
     :param arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
+    type_check(value, (float, int), arg_name)
     check_value(value, [UINT32_MIN, FLOAT_MAX_INTEGER], arg_name, True)
 
 
@@ -336,6 +340,7 @@ def check_pos_float64(value, arg_name=""):
     :param arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
+    type_check(value, (float, int), arg_name)
     check_value(value, [UINT64_MIN, DOUBLE_MAX_INTEGER], arg_name, True)
 
 
@@ -347,6 +352,7 @@ def check_non_negative_float32(value, arg_name=""):
     :param arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
+    type_check(value, (float, int), arg_name)
     check_value(value, [UINT32_MIN, FLOAT_MAX_INTEGER], arg_name)
 
 
@@ -358,12 +364,13 @@ def check_non_negative_float64(value, arg_name=""):
     :param arg_name: name of the variable to be validated
     :return: Exception: when the validation fails, nothing otherwise.
     """
+    type_check(value, (float, int), arg_name)
     check_value(value, [UINT32_MIN, DOUBLE_MAX_INTEGER], arg_name)
 
 
 def check_float32_not_zero(value, arg_name=""):
     arg_name = pad_arg_name(arg_name)
-    type_check(value, (int,), arg_name)
+    type_check(value, (float, int), arg_name)
     if value < FLOAT_MIN_INTEGER or value > FLOAT_MAX_INTEGER or value == 0:
         raise ValueError(
             "Input {0}is not within the required interval of [-16777216, 0) and (0, 16777216].".format(arg_name))
