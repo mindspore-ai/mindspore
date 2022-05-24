@@ -54,6 +54,8 @@ class SparseAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   int CompareTowIndices(const T &a_indices, const T &b_indices, int64_t a_row, int64_t b_row, const size_t dims);
 
   float thresh_ = 0;
+  size_t row_ = 0;
+  size_t dense_size_ = 0;
   std::vector<TypeId> types_;
   std::vector<KernelTensorPtr> outputs_ = {};
 };

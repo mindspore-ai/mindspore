@@ -51,7 +51,10 @@ bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-
+  auto dense_shape = kernel_ptr->get_a_dense_shape();
+  row_ = LongToSize(dense_shape[0]);
+  dense_size_ = row_ * LongToSize(dense_shape[1]) * GetTypeByte(TypeIdToType(types_[1]));
+  is_need_retrieve_output_shape_ = true;
   for (size_t i = 0; i < kOutputNum; i++) {
     auto dtype = inputs[i]->GetDtype();
     (void)types_.emplace_back(dtype);
@@ -62,7 +65,19 @@ bool SparseAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int SparseAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  return NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret == KRET_UNKNOWN_OUT_SHAPE) {
+    if (input_size_list_.size() != kInputNum) {
+      MS_LOG(ERROR) << "Input size list should be " << kInputNum << ", but got " << input_size_list_.size();
+      return KRET_RESIZE_FAILED;
+    }
+    auto max_indices_out_size =
+      std::min(input_size_list_[kAIndicesIdx] + input_size_list_[kBIndicesIdx], dense_size_ * 2);
+    auto max_value_out_size = std::min(input_size_list_[kAValuesIdx] + input_size_list_[kBValuesIdx], dense_size_);
+    output_size_list_.emplace_back(max_indices_out_size);
+    output_size_list_.emplace_back(max_value_out_size);
+  }
+  return ret;
 }
 
 template <typename T>
@@ -152,11 +167,11 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     auto index_from_input = whole_indices[num].second;
     if (copy_from_a) {
       for (size_t column = 0; column < kNumOfColumn; column++) {
-        sum_indices[num * kNumOfColumn + column] = a_indices[index_from_input + column];
+        sum_indices[num * kNumOfColumn + column] = a_indices[index_from_input * kNumOfColumn + column];
       }
     } else {
       for (size_t column = 0; column < kNumOfColumn; column++) {
-        sum_indices[num * kNumOfColumn + column] = b_indices[index_from_input + column];
+        sum_indices[num * kNumOfColumn + column] = b_indices[index_from_input * kNumOfColumn + column];
       }
     }
     sum_values[num] = whole_values[num];
