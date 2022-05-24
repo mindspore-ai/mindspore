@@ -224,7 +224,7 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   auto axis_node = GetAxisNode(softmax_output_node);
   MS_EXCEPTION_IF_NULL(axis_node);
 
-  static py::object reduce_prim_obj = python_adapter::GetPyFn(kOpsFunctionModelName, "reduce_mean");
+  py::object reduce_prim_obj = python_adapter::GetPyFn(kOpsFunctionModelName, "reduce_mean");
   auto reduce_value_node = GetPrimValueNodeFromPyAdapter(&reduce_prim_obj);
   auto reduce_primitive = GetValueNode<PrimitivePtr>(reduce_value_node);
   std::vector<std::string> input_names = {"x", "axis"};
@@ -267,7 +267,7 @@ CNodePtr CreateMul(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_nod
   auto y_node = CreateValueNode(tensor_y, kNumberTypeFloat32);
   MS_EXCEPTION_IF_NULL(y_node);
 
-  static py::object mul_prim_obj = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_mul");
+  py::object mul_prim_obj = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_mul");
   auto mul_value_node = GetPrimValueNodeFromPyAdapter(&mul_prim_obj);
   auto mul_primitive = GetValueNode<PrimitivePtr>(mul_value_node);
   std::vector<std::string> input_names = {"x", "y"};
@@ -302,7 +302,7 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   auto multiples_node = CreateValueNode(multiples, kNumberTypeInt64);
   MS_EXCEPTION_IF_NULL(multiples_node);
 
-  static py::object tile_prim_obj = python_adapter::GetPyFn(kArrayOpsFunctionModelName, "tile_");
+  py::object tile_prim_obj = python_adapter::GetPyFn(kArrayOpsFunctionModelName, "tile_");
   auto tile_value_node = GetPrimValueNodeFromPyAdapter(&tile_prim_obj);
   auto tile_primitive = GetValueNode<PrimitivePtr>(tile_value_node);
   std::vector<std::string> input_names = {"x", "multiples"};
@@ -341,7 +341,7 @@ CNodePtr CreateRealDiv(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax
   auto y_node = CreateValueNode(y, kNumberTypeFloat32);
   MS_EXCEPTION_IF_NULL(y_node);
 
-  static py::object div_prim_obj = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_div");
+  py::object div_prim_obj = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_div");
   auto div_value_node = GetPrimValueNodeFromPyAdapter(&div_prim_obj);
   auto real_div_primitive = GetValueNode<PrimitivePtr>(div_value_node);
   std::vector<std::string> input_names = {"x", "y"};
@@ -370,7 +370,7 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
   axis_abstract->set_type(kInt64);
   axis_node->set_abstract(axis_abstract);
 
-  static py::object expand_dims_prim_obj = python_adapter::GetPyFn(kArrayOpsFunctionModelName, "expand_dims_");
+  py::object expand_dims_prim_obj = python_adapter::GetPyFn(kArrayOpsFunctionModelName, "expand_dims_");
   auto expand_dims_value_node = GetPrimValueNodeFromPyAdapter(&expand_dims_prim_obj);
   auto expand_dims_primitive = GetValueNode<PrimitivePtr>(expand_dims_value_node);
   std::vector<std::string> input_names = {"x", "axis"};
@@ -487,7 +487,7 @@ CNodePtr HandleTrainWithLossScale(const FuncGraphPtr &fg, const AnfNodePtr &node
     real_div_node = CreateRealDiv(fg, sparse_softmax_node_grad, tile_node);
   }
   auto expand_dims_node = CreateExpandDims(fg, real_div_node);
-  static py::object mul_obj = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_mul");
+  py::object mul_obj = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_mul");
   auto mul_value_node = GetPrimValueNodeFromPyAdapter(&mul_obj);
   auto mul_primitive = GetValueNode<PrimitivePtr>(mul_value_node);
   std::vector<AnfNodePtr> new_mul_inputs = {NewValueNode(mul_primitive), softmax_node_outputs[1], expand_dims_node};
