@@ -29,7 +29,7 @@ class ActorPass {
  public:
   explicit ActorPass(const std::string &name, bool need_run_single_actor = true)
       : name_(name), need_run_single_actor_(need_run_single_actor) {}
-  ~ActorPass() = default;
+  virtual ~ActorPass() = default;
   DISABLE_COPY_AND_ASSIGN(ActorPass);
 
   // The pass running flow: MatchPattern-->Process.
@@ -39,7 +39,7 @@ class ActorPass {
 
  protected:
   virtual bool MatchPattern(const AbstractActor *actor) const { return true; }
-  virtual const AnfNodePtr Process(ActorSet *const actor_set, AbstractActor *const actor = nullptr) = 0;
+  virtual void Process(ActorSet *const actor_set, AbstractActor *const actor) = 0;
 
  private:
   std::string name_;

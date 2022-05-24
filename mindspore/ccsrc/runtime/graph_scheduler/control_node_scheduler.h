@@ -47,8 +47,6 @@ class ControlNodeScheduler {
                                           const HostQueueDSActorPtr &host_queue_ds_actor, const AID &memory_manager_aid,
                                           std::vector<DataSourceActorPtr> *data_source_actors);
 
-  void Optimize(const ControlActorSet *control_actor_set);
-
   // The control flow actor will generate some data in the loop body execution, so need clear on the end of execution.
   void ClearActorData(const ControlActorSet *control_actor_set);
 
@@ -97,10 +95,6 @@ class ControlNodeScheduler {
   void LinkControlArrowByKernelGraphGroup(const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowByAutoMonad(ControlActor *to_actor, const AnfNodePtr &from_node,
                                    const ControlNodeParserPtr &parser);
-
-  // Convert the invalid data arrow to control arrow.
-  void ConvertDataArrowToControlArrow(AbstractActor *const from_actor, AbstractActor *const to_actor,
-                                      const DataArrowPtr &data_arrow, size_t data_arrow_index);
 
   bool IsNoInputActor(const ControlActor *control_actor) const;
 

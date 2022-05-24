@@ -272,6 +272,63 @@ void SchedulerHelper::AddFormalParameterDeviceTensor(ControlActor *const from_ac
   device_tensor->SetNodeIndex(input_node, 0);
 }
 
+void SchedulerHelper::ConvertDataArrowToControlArrow(AbstractActor *const from_actor, AbstractActor *const to_actor,
+                                                     const DataArrowPtr &data_arrow, size_t data_arrow_index) {
+  MS_EXCEPTION_IF_NULL(from_actor);
+  MS_EXCEPTION_IF_NULL(to_actor);
+  MS_EXCEPTION_IF_NULL(data_arrow);
+  MS_EXCEPTION_IF_CHECK_FAIL((data_arrow_index < from_actor->output_data_nodes_.size()), "Index out of range.");
+  auto &need_converted_node = from_actor->output_data_nodes_[data_arrow_index];
+  MS_EXCEPTION_IF_NULL(need_converted_node);
+
+  // Erase the output data arrow in from actor.
+  (void)from_actor->output_data_arrows_.erase(from_actor->output_data_arrows_.begin() + data_arrow_index);
+  (void)from_actor->output_data_nodes_.erase(from_actor->output_data_nodes_.begin() + data_arrow_index);
+
+  // Erase the input data arrow aid in to actor.
+  bool to_actor_erase = false;
+  for (auto iter = to_actor->input_data_arrow_aids_.begin(); iter != to_actor->input_data_arrow_aids_.end(); ++iter) {
+    if (*iter == from_actor->GetAID()) {
+      (void)to_actor->input_data_arrow_aids_.erase(iter);
+      to_actor_erase = true;
+      to_actor->input_datas_num_--;
+      break;
+    }
+  }
+  if (to_actor_erase == false) {
+    MS_LOG(EXCEPTION) << "Erase no input data arrow, from actor:" << from_actor->GetAID().Name()
+                      << ", to actor:" << to_actor->GetAID().Name() << ", data arrow index:" << data_arrow_index;
+  }
+
+  // Recalculate the ref count of converted node.
+  auto device_tensor = AnfAlgo::GetMutableOutputAddr(need_converted_node, data_arrow->from_output_index_, false);
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  size_t old_ref_count = device_tensor->ref_count();
+  // Ref count Initial value is 1.
+  size_t new_ref_count = 1;
+  for (auto &output_data_arrow : from_actor->output_data_arrows_) {
+    MS_EXCEPTION_IF_NULL(output_data_arrow);
+    if (output_data_arrow->from_output_index_ != data_arrow->from_output_index_) {
+      continue;
+    }
+    if ((output_data_arrow->to_op_id_.Name().find(kExitActorNameSuffix) != std::string::npos) ||
+        (output_data_arrow->to_op_id_.Name().find(kOutputActorNameSuffix) != std::string::npos)) {
+      new_ref_count = SIZE_MAX;
+      break;
+    }
+    ++new_ref_count;
+  }
+  device_tensor->set_original_ref_count(new_ref_count);
+  device_tensor->ResetRefCount();
+  MS_LOG(INFO) << "Erase the invalid data arrow, from actor:" << from_actor->GetAID().Name()
+               << ", from index:" << data_arrow->from_output_index_ << ", to actor:" << to_actor->GetAID().Name()
+               << ", to index:" << data_arrow->to_input_index_ << ", old ref count:" << old_ref_count
+               << ", new ref count:" << new_ref_count;
+
+  // Add the control arrow.
+  SchedulerHelper::AddControlArrow(from_actor, to_actor);
+}
+
 namespace {
 bool CheckKernelActorValid(const std::vector<KernelActorPtr> &kernel_actors) {
   for (const auto &kernel_actor : kernel_actors) {

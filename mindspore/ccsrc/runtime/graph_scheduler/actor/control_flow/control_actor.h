@@ -79,6 +79,8 @@ class ControlActor : public MemoryAwareActor {
   // Free memory by the dynamic ref count decremented. It corresponds to the EraseInput.
   void SendMemoryFreeReq(OpContext<DeviceTensor> *const context) override;
 
+  const AnfNodePtr &node() const { return node_; }
+
  protected:
   friend class ControlNodeScheduler;
   friend class SchedulerHelper;
