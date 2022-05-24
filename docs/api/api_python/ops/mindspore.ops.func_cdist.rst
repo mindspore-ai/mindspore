@@ -1,7 +1,7 @@
 mindspore.ops.cdist
 ===================
 
-.. py:function:: mindspore.ops.cdist(x, y, p)
+.. py:function:: mindspore.ops.cdist(x, y, p=2.0)
 
     计算两个tensor的p-范数距离。
 
