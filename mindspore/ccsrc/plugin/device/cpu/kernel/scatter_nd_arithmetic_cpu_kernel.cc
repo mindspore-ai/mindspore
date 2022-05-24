@@ -23,56 +23,9 @@
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "kernel/common_utils.h"
-#include "mindspore/core/ops/scatter_nd_mul.h"
-#include "mindspore/core/ops/scatter_nd_add.h"
-#include "mindspore/core/ops/scatter_nd_sub.h"
-#include "mindspore/core/ops/scatter_nd_div.h"
 
 namespace mindspore {
 namespace kernel {
-bool ScatterNdArithmeticCpuKernelMod::GetAttr(const BaseOperatorPtr &base_operator) {
-  static const mindspore::HashSet<std::string> tensor_scatter_kernel_types{
-    prim::kPrimTensorScatterAdd->name(), prim::kPrimTensorScatterSub->name(), prim::kPrimTensorScatterMax->name(),
-    prim::kPrimTensorScatterMin->name(), prim::kPrimTensorScatterDiv->name(), prim::kPrimTensorScatterMul->name()};
-  if (tensor_scatter_kernel_types.count(kernel_name_) != 0) {
-    use_locking_ = false;
-    is_tensor_scatter_arithmetic_ = true;
-    return true;
-  }
-  // Here, it contains multi operator and use_locking is their common attribute, so just get it by a distribute map.
-  static const mindspore::HashMap<std::string, std::function<bool(const BaseOperatorPtr &base_operator)>>
-    scatter_nd_op_attr_map{
-      {prim::kPrimScatterNdMul->name(),
-       [](const BaseOperatorPtr &base_operator) {
-         auto kernel_ptr = std::make_shared<ops::ScatterNdMul>(base_operator->GetPrim());
-         return kernel_ptr->get_use_locking();
-       }},
-      {prim::kPrimScatterNdDiv->name(),
-       [](const BaseOperatorPtr &base_operator) {
-         auto kernel_ptr = std::make_shared<ops::ScatterNdDiv>(base_operator->GetPrim());
-         return kernel_ptr->get_use_locking();
-       }},
-      {prim::kPrimScatterNdAdd->name(),
-       [](const BaseOperatorPtr &base_operator) {
-         auto kernel_ptr = std::make_shared<ops::ScatterNdAdd>(base_operator->GetPrim());
-         return kernel_ptr->get_use_locking();
-       }},
-      {prim::kPrimScatterNdSub->name(),
-       [](const BaseOperatorPtr &base_operator) {
-         auto kernel_ptr = std::make_shared<ops::ScatterNdSub>(base_operator->GetPrim());
-         return kernel_ptr->get_use_locking();
-       }},
-    };
-  auto op_attr_iter = scatter_nd_op_attr_map.find(kernel_name_);
-  if (op_attr_iter == scatter_nd_op_attr_map.end()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
-    return false;
-  }
-  auto &get_attribute_func = op_attr_iter->second;
-  use_locking_ = get_attribute_func(base_operator);
-  return true;
-}
-
 bool ScatterNdArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs) {
@@ -80,9 +33,11 @@ bool ScatterNdArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-  // Initialize ScatterNdArithmetic attributes.
-  if (!GetAttr(base_operator)) {
-    return false;
+  static const mindspore::HashSet<std::string> tensor_scatter_kernel_types{
+    prim::kPrimTensorScatterAdd->name(), prim::kPrimTensorScatterSub->name(), prim::kPrimTensorScatterMax->name(),
+    prim::kPrimTensorScatterMin->name(), prim::kPrimTensorScatterDiv->name(), prim::kPrimTensorScatterMul->name()};
+  if (tensor_scatter_kernel_types.contains(kernel_name_)) {
+    is_tensor_scatter_arithmetic_ = true;
   }
   return true;
 }
@@ -150,21 +105,15 @@ std::pair<bool, ScatterNdArithmeticCpuKernelMod::ComputeFunc<T>> ScatterNdArithm
     return init_result;
   }
   auto &binary_func = func_iter->second;
-  // If 'use_locking' is set, we use atomic operation to conduct the scatter operation.
-  if (use_locking_) {
-    compute_func = [&binary_func](T *a, size_t a_idx, T *b, size_t b_idx) {
-      auto &atomic_ = reinterpret_cast<std::atomic<T> *>(a)[a_idx];
-      T expect = atomic_.load();
-      T result;
-      do {
-        result = binary_func(expect, b[b_idx]);
-      } while (!atomic_.compare_exchange_weak(expect, result));
-    };
-  } else {
-    compute_func = [&binary_func](T *a, size_t a_idx, T *b, size_t b_idx) {
-      a[a_idx] = binary_func(a[a_idx], b[b_idx]);
-    };
-  }
+  compute_func = [&binary_func](T *a, size_t a_idx, T *b, size_t b_idx) {
+    auto &atomic_ = reinterpret_cast<std::atomic<T> *>(a)[a_idx];
+    T expect = atomic_.load();
+    T result;
+    do {
+      result = binary_func(expect, b[b_idx]);
+    } while (!atomic_.compare_exchange_weak(expect, result));
+  };
+
   init_result.first = true;
   init_result.second = compute_func;
   return init_result;
