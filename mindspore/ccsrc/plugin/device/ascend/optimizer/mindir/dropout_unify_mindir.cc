@@ -160,9 +160,28 @@ CNodePtr CreateDynamicShapeCNode(const FuncGraphPtr &func_graph, const AnfNodePt
   return dynamic_shape;
 }
 
+CNodePtr GetRecomputeDropoutGenMask(const FuncGraphPtr &func_graph, const CNodePtr &dropout) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(dropout);
+  auto recompute_id = GetValue<int64_t>(dropout->GetAttr(kAttrRecomputeId));
+  const auto &node_list = TopoSort(func_graph->get_return());
+  auto find_recompute_genmask = [recompute_id](const AnfNodePtr &node) {
+    if (!node->isa<CNode>() || !IsOneOfPrimitiveCNode(node, {prim::kPrimDropoutGenMask, prim::kPrimDropoutGenMaskV3})) {
+      return false;
+    }
+    auto recompute_id_val = node->cast<CNodePtr>()->GetAttr(kAttrRecomputeId);
+    return recompute_id_val != nullptr && GetValue<int64_t>(recompute_id_val) == recompute_id;
+  };
+  auto recompute_genmask = std::find_if(node_list.begin(), node_list.end(), find_recompute_genmask);
+  if (recompute_genmask == node_list.end()) {
+    MS_LOG(EXCEPTION) << "Can not find DropoutGenMask with recompute id " << recompute_id;
+  }
+  return (*recompute_genmask)->cast<CNodePtr>();
+}
+
 CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePtr &dropout,
                                    const ValueNodePtr &keep_prob_value, const abstract::ShapePtr &input_shape,
-                                   const bool use_v3, const PatternProcessPass &) {
+                                   const bool use_v3) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(dropout);
   MS_EXCEPTION_IF_NULL(input_shape);
@@ -201,6 +220,9 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
   common::AnfAlgo::CopyNodeAttrs(dropout, dropout_gen_mask);
   if (dropout->HasPrimalAttr(kAttrMicro)) {
     dropout_gen_mask->AddPrimalAttr(kAttrMicro, dropout->GetPrimalAttr(kAttrMicro));
+  }
+  if (dropout->HasAttr(kAttrRecomputeId)) {
+    dropout_gen_mask->AddAttr(kAttrRecomputeId, dropout->GetAttr(kAttrRecomputeId));
   }
   return dropout_gen_mask;
 }
@@ -270,8 +292,7 @@ const AnfNodePtr DropoutAndDropoutGradUnifyMindIR::Process(const FuncGraphPtr &f
   auto input_shape = GetDropoutInputShape(dropout_input);
   auto use_v3 = WhetherUseDropoutV3(dropout_cnode, input_shape);
   // CreateDropoutGenMask
-  auto dropout_gen_mask =
-    CreateDropoutGenMaskCNode(func_graph, dropout_cnode, keep_prob_value, input_shape, use_v3, *this);
+  auto dropout_gen_mask = CreateDropoutGenMaskCNode(func_graph, dropout_cnode, keep_prob_value, input_shape, use_v3);
   // CreateDropoutDoMask-forward
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -338,8 +359,12 @@ const AnfNodePtr DropoutUnifyMindIR0::Process(const FuncGraphPtr &func_graph, co
   auto use_v3 = WhetherUseDropoutV3(dropout_cnode, input_shape);
 
   // CreateDropoutGenMask
-  auto dropout_gen_mask =
-    CreateDropoutGenMaskCNode(func_graph, dropout_cnode, keep_prob_value, input_shape, use_v3, *this);
+  CNodePtr dropout_gen_mask;
+  if (dropout_cnode->HasAttr(kAttrRecomputeId)) {
+    dropout_gen_mask = GetRecomputeDropoutGenMask(func_graph, dropout_cnode);
+  } else {
+    dropout_gen_mask = CreateDropoutGenMaskCNode(func_graph, dropout_cnode, keep_prob_value, input_shape, use_v3);
+  }
   // CreateDropoutDoMask
   auto do_mask_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), input_shape);
   auto dropout_do_mask = CreateDropoutDoMaskCNode(
@@ -376,8 +401,12 @@ const AnfNodePtr DropoutUnifyMindIR1::Process(const FuncGraphPtr &func_graph, co
   auto input_shape = GetDropoutInputShape(dropout_input);
   auto use_v3 = WhetherUseDropoutV3(dropout_cnode, input_shape);
   // CreateDropoutGenMask
-  auto dropout_gen_mask =
-    CreateDropoutGenMaskCNode(func_graph, dropout_cnode, keep_prob_value, input_shape, use_v3, *this);
+  CNodePtr dropout_gen_mask;
+  if (dropout_cnode->HasAttr(kAttrRecomputeId)) {
+    dropout_gen_mask = GetRecomputeDropoutGenMask(func_graph, dropout_cnode);
+  } else {
+    dropout_gen_mask = CreateDropoutGenMaskCNode(func_graph, dropout_cnode, keep_prob_value, input_shape, use_v3);
+  }
   // CreateDropoutDoMask
   auto do_mask_abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(inputx_type_id), input_shape);
   auto dropout_do_mask = CreateDropoutDoMaskCNode(

@@ -462,6 +462,7 @@ constexpr auto kAttrDatadumpOriginalNames = "_datadump_original_names";
 constexpr auto kAttrDatadumpIsMultiop = "_datadump_is_multiop";
 constexpr auto kAttrNeedRecordEvent = "need_record_event";
 constexpr auto kAttrStreamId = "stream_id";
+constexpr auto kAttrRecomputeId = "recompute_id";
 constexpr auto kAttrRecordEvent = "record_event";
 constexpr auto kAttrWaitEvent = "wait_event";
 constexpr auto kAttrRecordEventStream = "record_event_stream";
