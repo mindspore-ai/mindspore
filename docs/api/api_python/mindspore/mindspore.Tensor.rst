@@ -542,18 +542,17 @@ mindspore.Tensor
         - **TypeError** - mask不是bool类型的Tensor。
         - **TypeError** - value不是int或float类型。
 
-    .. py:method:: masked_select(x, mask)
+    .. py:method:: masked_select(mask)
 
-        返回一个一维张量，其中的内容是input张量中对应于mask张量中True位置的值。mask的shape与input的shape不需要一样，但必须符合广播规则。
+        返回一个一维张量，其中的内容是此张量中对应于mask张量中True位置的值。mask张量的shape与此张量的shape不需要一样，但必须符合广播规则。
 
         **参数：**
 
-        - **x** (Tensor) - 它的shape是 :math:`(x_1, x_2, ..., x_R)`。
-        - **mask** (Tensor[bool]) - 它的shape是 :math:`(x_1, x_2, ..., x_R)`。
+        - **mask** (Tensor[bool]) - 值为bool类型的张量。
 
         **返回：**
 
-        一个一维张量，类型与input相同。
+        一个一维张量，类型与此张量相同。
 
         **异常：**
 
