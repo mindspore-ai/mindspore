@@ -57,7 +57,7 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
   MS_ASSERT(origin_weight);
 
   if (inputs[1].DataType() == DataType::kNumberTypeFloat16) {
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
     nchw_weight_ = reinterpret_cast<float *>(malloc(inputs[1].ElementNum() * sizeof(float)));
     if (nchw_weight_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";

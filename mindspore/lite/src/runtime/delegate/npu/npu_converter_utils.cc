@@ -19,10 +19,11 @@
 namespace mindspore {
 #define C4NUM 4
 #define C8NUM 8
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
 void Float32ToFloat16(const float *__restrict input, float16_t *__restrict output, int number) {
-  int count = (number & ~(C8NUM - 1));
   int i = 0;
+#ifdef ENABLE_ARM64
+  int count = (number & ~(C8NUM - 1));
   for (; i < count; i += C8NUM) {
     float32x4_t in1 = vld1q_f32(input + i);
     float16x4_t out1 = vcvt_f16_f32(in1);
@@ -31,14 +32,16 @@ void Float32ToFloat16(const float *__restrict input, float16_t *__restrict outpu
     float16x8_t out = vcombine_f16(out1, out2);
     vst1q_f16(output + i, out);
   }
+#endif
   for (; i < number; ++i) {
     output[i] = static_cast<float16_t>(input[i]);
   }
 }
 
 void Float16ToFloat32(const float16_t *__restrict input, float *__restrict output, int number) {
-  int count = number & ~(C8NUM - 1);
   int i = 0;
+#ifdef ENABLE_ARM64
+  int count = number & ~(C8NUM - 1);
   for (; i < count; i += C8NUM) {
     float16x8_t in = vld1q_f16(input + i);
     float16x4_t in1 = vget_low_f16(in);
@@ -48,6 +51,7 @@ void Float16ToFloat32(const float16_t *__restrict input, float *__restrict outpu
     float32x4_t out2 = vcvt_f32_f16(in2);
     vst1q_f32(output + i + C4NUM, out2);
   }
+#endif
   for (; i < number; ++i) {
     output[i] = static_cast<float>(input[i]);
   }
@@ -144,7 +148,7 @@ std::shared_ptr<ge::Tensor> ConverterToNPUTensor(mindspore::MSTensor src, bool i
 
   if (src.Data() != nullptr) {
     if (src.DataType() == DataType::kNumberTypeFloat16) {
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
       auto fp32_data = malloc(src.ElementNum() * sizeof(float));
       if (fp32_data == nullptr) {
         MS_LOG(ERROR) << "malloc failed for fp32 data";

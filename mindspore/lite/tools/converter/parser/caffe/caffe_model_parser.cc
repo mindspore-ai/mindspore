@@ -641,10 +641,13 @@ std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) 
     return layer_name;
   }
   auto layer = caffe_layers_.at(layer_name);
-  if (layer.type() != "Split") {
+  if (layer.type() != "Split" && layer.type() != "Dropout") {
     return layer_name;
   }
-  while (layer.type() == "Split") {
+  if (layer.type() == "Dropout" && layer.bottom(0) == layer.top(0)) {
+    return layer_name;
+  }
+  while (layer.type() == "Split" || layer.type() == "Dropout") {
     string input_name = layer.bottom(0);
     if (caffe_layers_.find(input_name) == caffe_layers_.end()) {
       return input_name;
