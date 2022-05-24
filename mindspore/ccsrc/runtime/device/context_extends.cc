@@ -32,6 +32,7 @@
 #endif
 #ifdef ENABLE_D
 #include "include/transform/graph_ir/df_graph_manager.h"
+#include "debug/data_dump/dump_json_parser.h"
 #endif
 #include "profiler/device/profiling.h"
 
@@ -40,6 +41,10 @@ namespace py = pybind11;
 namespace mindspore {
 namespace context {
 #ifdef ENABLE_D
+namespace {
+constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
+const std::vector<std::string> kGeDumpMode = {"all", "input", "output"};
+}  // namespace
 using mindspore::transform::DfGraphManager;
 #endif
 
@@ -170,12 +175,23 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
   }
 #ifdef ENABLE_D
   (*ge_options)["device_id"] = "0";
-  (*ge_options)["ge.exec.enableDump"] = std::to_string(ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_DUMP));
-  (*ge_options)["ge.exec.dumpPath"] = ms_context_ptr->get_param<std::string>(MS_CTX_SAVE_DUMP_PATH);
-  (*ge_options)["ge.exec.dumpMode"] = "output";
-  MS_LOG(INFO) << "The enable dump state is " << std::to_string(ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_DUMP))
-               << " and save dump path is " << ms_context_ptr->get_param<std::string>(MS_CTX_SAVE_DUMP_PATH) << ".";
-
+  // set up dump options
+  auto dump_env = common::GetEnv(kMindsporeDumpConfig);
+  if (!dump_env.empty()) {
+    auto &dump_parser = DumpJsonParser::GetInstance();
+    dump_parser.Parse();
+    (*ge_options)["ge.exec.enableDump"] = std::to_string(dump_parser.async_dump_enabled());
+    (*ge_options)["ge.exec.dumpPath"] = dump_parser.path();
+    // Parse() make sure that input_output is less than 3.
+    (*ge_options)["ge.exec.dumpMode"] = kGeDumpMode[dump_parser.input_output()];
+    // DumpStep is set to "all" by default
+    if (dump_parser.iteration_string() != "all") {
+      (*ge_options)["ge.exec.dumpStep"] = dump_parser.iteration_string();
+    }
+    MS_LOG(INFO) << "The enable dump state is " << (*ge_options)["ge.exec.enableDump"] << ", save dump path is "
+                 << (*ge_options)["ge.exec.dumpPath"] << ", dump mode is " << kGeDumpMode[dump_parser.input_output()]
+                 << ", dump step is " << dump_parser.iteration_string() << ".";
+  }
   auto profiler_manager = profiler::ProfilerManager::GetInstance();
   if (profiler_manager == nullptr) {
     MS_LOG(EXCEPTION) << "Profiler manager is nullptr";
