@@ -1718,11 +1718,11 @@ def meshgrid(inputs, indexing='xy'):
             case with inputs of length `M`, `N` and `P`, outputs are of shape
             `(N, M, P)` for 'xy' indexing and `(M, N, P)` for 'ij' indexing.
 
-    Outputs:
+    Returns:
         Tensors, A Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
 
     Raises:
-        TypeError: If `indexing` is not a str or `input` is not a tuple.
+        TypeError: If `indexing` is not a str or `inputs` is not a tuple.
         ValueError: If `indexing` is neither 'xy' nor 'ij'.
 
     Supported Platforms:
