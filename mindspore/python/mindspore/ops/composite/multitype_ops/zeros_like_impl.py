@@ -54,20 +54,20 @@ def _zeros_like_func(x):
 
 @zeros_like_leaf.register("Tensor")
 def _zeros_like_tensor(x):
-    """Returns a tensor with the same shape and dtype as x and all elements ars 1."""
+    """Returns a tensor with the same shape and dtype as x and all elements are 0."""
     return F.zeros_like(x)
 
 
 @zeros_like_leaf.register("COOTensor")
 def _zeros_like_coo_tensor(x):
-    """Returns a tensor with the same shape and dtype as x and all elements are 1."""
+    """Returns a tensor with the same shape and dtype as x and all elements are 0."""
     values = F.zeros_like(x.values)
     return F.make_coo_tensor(x.indices, values, x.shape)
 
 
 @zeros_like_leaf.register("CSRTensor")
 def _zeros_like_csr_tensor(x):
-    """Returns a tensor with the same shape and dtype as x and all elements are 1."""
+    """Returns a tensor with the same shape and dtype as x and all elements are 0."""
     values = F.zeros_like(x.values)
     return F.make_csr_tensor(x.indptr, x.indices, values, x.shape)
 

@@ -44,7 +44,7 @@ def _ones_like_scalar(x):
 
 @ones_like_leaf.register("Tensor")
 def _ones_like_tensor(x):
-    """Returns a tensor with the same shape and dtype as x and all elements ars 1."""
+    """Returns a tensor with the same shape and dtype as x and all elements are 1."""
     return P.Fill()(P.DType()(x), P.Shape()(x), 1.0)
 
 

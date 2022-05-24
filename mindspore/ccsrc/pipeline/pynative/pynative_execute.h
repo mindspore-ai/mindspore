@@ -117,6 +117,8 @@ class TopCellInfo {
   std::string &all_op_info() { return all_op_info_; }
   const std::string &grad_operation() const { return grad_operation_; }
   void set_grad_operation(const std::string &grad_operation) { grad_operation_ = grad_operation; }
+  const abstract::AbstractBasePtr &last_output_abs() const { return last_output_abs_; }
+  void set_last_output_abs(const abstract::AbstractBasePtr &last_output_abs) { last_output_abs_ = last_output_abs; }
   mindspore::HashSet<std::string> &sub_cell_list() { return sub_cell_list_; }
   std::set<std::string> &forward_op_output_id() { return forward_op_output_id_; }
   bool IsSubCell(const std::string &cell_id) const;
@@ -159,6 +161,7 @@ class TopCellInfo {
   std::string input_args_id_;
   std::string all_op_info_;
   std::string grad_operation_;
+  abstract::AbstractBasePtr last_output_abs_;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   mindspore::HashSet<std::string> sub_cell_list_;
   // Record `register hook` or `remove hook` function has been called by sub cell
@@ -249,7 +252,7 @@ class GradExecutor {
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const CNodePtr &cnode);
   void DoOpGrad(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const ValuePtr &op_out);
   // Update forward tensors info
-  void UpdateForwardTensorInfoInBpropGraph(const OpExecInfoPtr &op_exec_info, const ValuePtr &op_out);
+  void UpdateForwardTensorInfoInBpropGraph(const string &op_info, const ValuePtr &op_out);
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   py::object CheckGraph(const py::object &cell, const py::args &args);
   void RunGradGraph(py::object *ret, const py::object &cell, const py::object &sens_param, const py::tuple &args);
@@ -281,6 +284,8 @@ class GradExecutor {
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   void NewGraphInner(py::object *ret, const py::object &cell, const py::args &args);
   void EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args);
+  ValuePtr GetSensValueForDynamicShapeOutput(const py::object &out, const AnfNodePtr &node);
+  void UpdateSensValueForDynamicShapeOutput(const py::object &out);
   void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
   std::string GetAlreadyRunCellId(const std::string &cell_id);
   std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args);
@@ -447,7 +452,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool grad_flag() const;
   void set_grad_flag(bool flag);
   void SetDynamicInput(const py::object &cell, const py::args &args);
-  py::object GetDynamicInput(const py::object &actual_input);
+  py::object GetDynamicInput(const py::object &actual_input) const;
   void set_graph_phase(const std::string &graph_phase);
   void set_py_exe_path(const py::object &py_exe_path);
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);
@@ -472,7 +477,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void Sync();
   void SetLazyBuild(bool enable);
   void ExecuteLazyTask();
-  bool IsFirstCell();
+  bool IsFirstCell() const;
 
  private:
   PynativeExecutor() = default;

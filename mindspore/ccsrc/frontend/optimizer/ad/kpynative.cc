@@ -23,6 +23,7 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
+#include "mindspore/core/ops/core_ops.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/anf.h"
@@ -157,8 +158,31 @@ FuncGraphPtr GetOnesLike(const abstract::AbstractBasePtrList &args_spec) {
   return specialized_ones_like_fg;
 }
 
-AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out) {
-  // Build ones_like(out) as dout
+bool ValueHasDynamicShape(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<tensor::Tensor>()) {
+    return value->cast<tensor::TensorPtr>()->base_shape_ptr() != nullptr;
+  } else if (value->isa<ValueSequence>()) {
+    auto value_seq = value->cast<ValueSequencePtr>();
+    return std::any_of(value_seq->value().begin(), value_seq->value().end(),
+                       [](const ValuePtr &elem) { return ValueHasDynamicShape(elem); });
+  } else {
+    return false;
+  }
+}
+
+AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out, const ValuePtr &sens_value) {
+  // Build ones_like(out) as dout, shape is same with out.sens_value its id hold by pynative execute, which can be
+  // replace forward, but out is not.
+  if (ValueHasDynamicShape(out)) {
+    auto value_node = NewValueNode(sens_value);
+    auto value_node_abs = sens_value->ToAbstract()->Broaden();
+    MS_LOG(DEBUG) << "Sens value abstract " << value_node_abs->ToString();
+    value_node->set_abstract(value_node_abs);
+    auto ones_like_value = tape->NewCNode({NewValueNode(prim::kPrimOnesLike), value_node});
+    ones_like_value->set_abstract(value_node_abs);
+    return ones_like_value;
+  }
   abstract::AbstractBasePtrList args_spec{out->ToAbstract()->Broaden()};
   auto ones_like_fg = GetOnesLike(args_spec);
   auto ones_like_value = tape->NewCNode({NewValueNode(ones_like_fg), NewValueNode(out)});
@@ -270,7 +294,7 @@ class KPynativeCellImpl : public KPynativeCell {
                           const FuncGraphPtr &bprop_fg);
   bool KPynativeWithFProp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out,
                           const FuncGraphPtr &fprop_fg) override;
-  void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node) override;
+  void UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, const ValuePtr &sens_out) override;
   // Build a back propagate funcgraph, each cnode in primal funcgraph is replaced by value node or formal cnode, so it
   // can be grad again.
   FuncGraphPtr Finish(const AnfNodePtrList &weights, const std::vector<size_t> &grad_position, bool grad_inputs,
@@ -280,6 +304,7 @@ class KPynativeCellImpl : public KPynativeCell {
   bool need_propagate_stop_gradient_{false};
   // Last cnode of this Cell, may be a primitive op or cell with user defined bprop.
   AnfNodePtr last_node_{nullptr};
+  ValuePtr oneslike_sens_value_{nullptr};
   FuncGraphPtr tape_;
   AnfNodePtrList cell_inputs_;
   // These weights need to calculate gradient.
@@ -446,10 +471,12 @@ bool KPynativeCellImpl::KPynativeWithFProp(const CNodePtr &cnode, const ValuePtr
   return true;
 }
 
-void KPynativeCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node) {
+void KPynativeCellImpl::UpdateOutputNodeOfTopCell(const AnfNodePtr &output_node, const ValuePtr &sens_out) {
   MS_EXCEPTION_IF_NULL(output_node);
+  MS_EXCEPTION_IF_NULL(sens_out);
   MS_LOG(DEBUG) << "Real output node of top cell is " << output_node->DebugString();
   last_node_ = output_node;
+  oneslike_sens_value_ = sens_out;
 
   auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
   if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
@@ -977,7 +1004,7 @@ void KPynativeCellImpl::SetSensAndWeights(const AnfNodePtrList &weights, bool ha
     // Set dout of last node to sens;
     last_node_adjoint_iter->second->AccumulateDout(sens_param);
   } else {
-    auto sens_node = BuildOnesLikeValue(tape_, last_node_adjoint_iter->second->out());
+    auto sens_node = BuildOnesLikeValue(tape_, last_node_adjoint_iter->second->out(), oneslike_sens_value_);
     last_node_adjoint_iter->second->AccumulateDout(sens_node);
   }
   // Add weights parameter
