@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,13 +29,16 @@ GENERATE_GOLDEN = False
 
 def test_compose():
     """
-    Test C++ and Python Compose Op
+    Feature: Compose op
+    Description: Test Compose op in Cpp and Python implementation
+    Expectation: Output is equal to the expected value or correct error is raised as expected when appropriate
     """
     original_seed = config_get_set_seed(0)
 
     def test_config(arr, op_list):
         try:
-            data = ds.NumpySlicesDataset(arr, column_names="col", shuffle=False)
+            data = ds.NumpySlicesDataset(
+                arr, column_names="col", shuffle=False)
             data = data.map(input_columns=["col"], operations=op_list)
             res = []
             for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -45,24 +48,26 @@ def test_compose():
             return str(e)
 
     # Test simple compose with only 1 op, this would generate a warning
-    assert test_config([[1, 0], [3, 4]], transforms.Compose([transforms.Fill(2)])) == [[2, 2], [2, 2]]
+    assert test_config([[1, 0], [3, 4]], transforms.Compose(
+        [transforms.Fill(2)])) == [[2, 2], [2, 2]]
 
     # Test 1 column -> 2 columns -> 1 -> 2 -> 1
     assert test_config([[1, 0]],
                        transforms.Compose(
                            [transforms.Duplicate(), transforms.Concatenate(), transforms.Duplicate(),
                             transforms.Concatenate()])) \
-           == [[1, 0] * 4]
+        == [[1, 0] * 4]
 
     # Test one Python transform followed by a C++ transform. Type after OneHot is a float (mixed use-case)
     assert test_config([1, 0],
                        transforms.Compose([transforms.OneHot(2), transforms.TypeCast(mstype.int32)])) \
-           == [[0, 1], [1, 0]]
+        == [[0, 1], [1, 0]]
 
     # Test exceptions.
     with pytest.raises(TypeError) as error_info:
         transforms.Compose([1, transforms.TypeCast(mstype.int32)])
-    assert "op_list[0] is neither a c_transform op (TensorOperation) nor a callable pyfunc." in str(error_info.value)
+    assert "op_list[0] is neither a c_transform op (TensorOperation) nor a callable pyfunc." in str(
+        error_info.value)
 
     # Test empty op list
     with pytest.raises(ValueError) as error_info:
@@ -70,25 +75,28 @@ def test_compose():
     assert "op_list can not be empty." in str(error_info.value)
 
     # Test Python compose op
-    assert test_config([1, 0], transforms.Compose([transforms.OneHot(2)])) == [[0, 1], [1, 0]]
+    assert test_config([1, 0], transforms.Compose(
+        [transforms.OneHot(2)])) == [[0, 1], [1, 0]]
     assert test_config([1, 0], transforms.Compose([transforms.OneHot(2), (lambda x: x + x)])) == [[0, 2],
                                                                                                   [2, 0]]
 
     # Test nested Python compose op
     assert test_config([1, 0],
                        transforms.Compose([transforms.Compose([transforms.OneHot(2)]), (lambda x: x + x)])) \
-           == [[0, 2], [2, 0]]
+        == [[0, 2], [2, 0]]
 
     # Test passing a list of Python implementations without Compose wrapper
     assert test_config([1, 0],
                        [transforms.Compose([transforms.OneHot(2)]), (lambda x: x + x)]) \
-           == [[0, 2], [2, 0]]
-    assert test_config([1, 0], [transforms.OneHot(2), (lambda x: x + x)]) == [[0, 2], [2, 0]]
+        == [[0, 2], [2, 0]]
+    assert test_config([1, 0], [transforms.OneHot(
+        2), (lambda x: x + x)]) == [[0, 2], [2, 0]]
 
     # Test a non callable function
     with pytest.raises(TypeError) as error_info:
         transforms.Compose([1])
-    assert "op_list[0] is neither a c_transform op (TensorOperation) nor a callable pyfunc." in str(error_info.value)
+    assert "op_list[0] is neither a c_transform op (TensorOperation) nor a callable pyfunc." in str(
+        error_info.value)
 
     # Test empty Python implementation list
     with pytest.raises(ValueError) as error_info:
@@ -107,12 +115,15 @@ def test_compose():
 
 def test_lambdas():
     """
-    Test Multi Column Python Compose Op
+    Feature: Compose op
+    Description: Test multi column Python Compose op
+    Expectation: Output is equal to the expected value
     """
     original_seed = config_get_set_seed(0)
 
     def test_config(arr, input_columns, output_cols, op_list):
-        data = ds.NumpySlicesDataset(arr, column_names=input_columns, shuffle=False)
+        data = ds.NumpySlicesDataset(
+            arr, column_names=input_columns, shuffle=False)
         data = data.map(operations=op_list, input_columns=input_columns, output_columns=output_cols,
                         column_order=output_cols)
         res = []
@@ -123,11 +134,13 @@ def test_lambdas():
 
     arr = ([[1]], [[3]])
 
-    assert test_config(arr, ["col0", "col1"], ["a"], transforms.Compose([(lambda x, y: x)])) == [[1]]
-    assert test_config(arr, ["col0", "col1"], ["a"], transforms.Compose([lambda x, y: x, lambda x: x])) == [[1]]
+    assert test_config(arr, ["col0", "col1"], ["a"],
+                       transforms.Compose([(lambda x, y: x)])) == [[1]]
+    assert test_config(arr, ["col0", "col1"], ["a"], transforms.Compose(
+        [lambda x, y: x, lambda x: x])) == [[1]]
     assert test_config(arr, ["col0", "col1"], ["a", "b"],
                        transforms.Compose([lambda x, y: x, lambda x: (x, x * 2)])) == \
-           [[1], [2]]
+        [[1], [2]]
     assert test_config(arr, ["col0", "col1"], ["a", "b"],
                        [lambda x, y: (x, x + y), lambda x, y: (x, y * 2)]) == [[1], [8]]
 
@@ -137,12 +150,15 @@ def test_lambdas():
 
 def test_c_py_compose_transforms_module():
     """
-    Test combining Python and C++ transforms
+    Feature: Compose op
+    Description: Test combining Cpp and Python transformations
+    Expectation: Output is equal to the expected value
     """
     original_seed = config_get_set_seed(0)
 
     def test_config(arr, input_columns, output_cols, op_list):
-        data = ds.NumpySlicesDataset(arr, column_names=input_columns, shuffle=False)
+        data = ds.NumpySlicesDataset(
+            arr, column_names=input_columns, shuffle=False)
         data = data.map(operations=op_list, input_columns=input_columns, output_columns=output_cols,
                         column_order=output_cols)
         res = []
@@ -154,20 +170,21 @@ def test_c_py_compose_transforms_module():
     arr = [1, 0]
     assert test_config(arr, ["cols"], ["cols"],
                        [transforms.OneHot(2), transforms.Mask(transforms.Relational.EQ, 1)]) == \
-           [[False, True],
-            [True, False]]
+        [[False, True],
+         [True, False]]
     assert test_config(arr, ["cols"], ["cols"],
                        [transforms.OneHot(2), (lambda x: x + x), transforms.Fill(1)]) \
-           == [[1, 1], [1, 1]]
+        == [[1, 1], [1, 1]]
     assert test_config(arr, ["cols"], ["cols"],
                        [transforms.OneHot(2), (lambda x: x + x), transforms.Fill(1), (lambda x: x + x)]) \
-           == [[2, 2], [2, 2]]
+        == [[2, 2], [2, 2]]
     assert test_config([[1, 3]], ["cols"], ["cols"],
                        [transforms.PadEnd([3], -1), (lambda x: x + x)]) \
-           == [[2, 6, -2]]
+        == [[2, 6, -2]]
 
     arr = ([[1]], [[3]])
-    assert test_config(arr, ["col0", "col1"], ["a"], [(lambda x, y: x + y), transforms.PadEnd([2], -1)]) == [[4, -1]]
+    assert test_config(arr, ["col0", "col1"], ["a"], [
+        (lambda x, y: x + y), transforms.PadEnd([2], -1)]) == [[4, -1]]
 
     # Restore configuration
     ds.config.set_seed(original_seed)
@@ -175,7 +192,9 @@ def test_c_py_compose_transforms_module():
 
 def test_c_py_compose_vision_module(plot=False, run_golden=True):
     """
-    Test combining Python and C++ vision transforms
+    Feature: Compose op
+    Description: Test combining Cpp and Python vision transformations
+    Expectation: Output is equal to the expected value
     """
     original_seed = config_get_set_seed(10)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
@@ -196,7 +215,8 @@ def test_c_py_compose_vision_module(plot=False, run_golden=True):
 
         if run_golden:
             # Compare with expected md5 from images
-            save_and_check_md5(data1, file_name, generate_golden=GENERATE_GOLDEN)
+            save_and_check_md5(
+                data1, file_name, generate_golden=GENERATE_GOLDEN)
 
         if plot:
             visualize_list(original_images, transformed_images)
@@ -283,7 +303,9 @@ def test_vision_with_transforms():
 
 def test_compose_with_custom_function():
     """
-    Test Python Compose with custom function
+    Feature: Compose op
+    Description: Test Python Compose op with custom function
+    Expectation: Output is equal to the expected value
     """
 
     def custom_function(x):
@@ -297,7 +319,8 @@ def test_compose_with_custom_function():
         lambda *images: np.stack(images)
     ]
 
-    data = ds.NumpySlicesDataset([[1, 2]], column_names=["col0"], shuffle=False)
+    data = ds.NumpySlicesDataset([[1, 2]], column_names=[
+        "col0"], shuffle=False)
     data = data.map(input_columns=["col0"], operations=op_list)
     #
 

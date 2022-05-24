@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 def test_func_angle_001():
     """
-    Eager Test
+    Feature: Angle
+    Description: Test Angle in eager mode
+    Expectation: Output is equal to the expected value
     """
     arr = np.array([[73.04, -13.00], [57.49, 13.20], [-57.64, 6.51], [-52.25, 30.67], [-30.11, -18.34],
                     [-63.32, 99.33], [95.82, -24.76]], dtype=np.double)
@@ -45,7 +47,9 @@ def test_func_angle_001():
 
 def test_func_angle_002():
     """
-    Pipeline Test
+    Feature: Angle
+    Description: Test Angle in pipeline mode
+    Expectation: Output is equal to the expected value
     """
     np.random.seed(6)
     arr = np.array([[[84.25, -85.92], [-92.23, 23.06], [-7.33, -44.17], [-62.95, -14.73]],
@@ -54,7 +58,8 @@ def test_func_angle_002():
                          [0.3892177, 2.42523905, -0.50034807, -0.33295219]], dtype=np.double)
     label = np.random.sample((2, 4, 1))
     data = (arr, label)
-    dataset = ds.NumpySlicesDataset(data, column_names=["col1", "col2"], shuffle=False)
+    dataset = ds.NumpySlicesDataset(
+        data, column_names=["col1", "col2"], shuffle=False)
     angle_op = a_c_trans.Angle()
     dataset = dataset.map(operations=angle_op, input_columns=["col1"])
     for item1, item2 in zip(dataset.create_dict_iterator(num_epochs=1, output_numpy=True), expected):
@@ -63,13 +68,16 @@ def test_func_angle_002():
 
 def test_func_angle_003():
     """
-    Pipeline Error Test
+    Feature: Angle
+    Description: Test Angle in pipeline mode with invalid input data type
+    Expectation: Error is raised as expected
     """
     np.random.seed(78)
     arr = np.array([["11", "22"], ["33", "44"], ["55", "66"], ["77", "88"]])
     label = np.random.sample((4, 1))
     data = (arr, label)
-    dataset = ds.NumpySlicesDataset(data, column_names=["col1", 'col2'], shuffle=False)
+    dataset = ds.NumpySlicesDataset(
+        data, column_names=["col1", 'col2'], shuffle=False)
     angle_op = a_c_trans.Angle()
     dataset = dataset.map(operations=angle_op, input_columns=["col1"])
     num_itr = 0

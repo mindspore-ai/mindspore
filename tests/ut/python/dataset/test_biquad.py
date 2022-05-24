@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_func_biquad_eager():
-    """ mindspore eager mode normal testcase:biquad op"""
+    """
+    Feature: Biquad op
+    Description: Test Biquad op in eager mode with valid input
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
     # Expect waveform
@@ -45,7 +49,11 @@ def test_func_biquad_eager():
 
 
 def test_func_biquad_pipeline():
-    """ mindspore pipeline mode normal testcase:biquad op"""
+    """
+    Feature: Biquad op
+    Description: Test Biquad op in pipeline mode with valid input
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[3.2, 2.1, 1.3], [6.2, 5.3, 6]], dtype=np.float64)
     # Expect waveform
@@ -54,7 +62,8 @@ def test_func_biquad_pipeline():
     dataset = ds.NumpySlicesDataset(waveform, ["audio"], shuffle=False)
     biquad_op = audio.Biquad(1, 0.02, 0.13, 1, 0.12, 0.3)
     # Filtered waveform by biquad
-    dataset = dataset.map(input_columns=["audio"], operations=biquad_op, num_parallel_workers=8)
+    dataset = dataset.map(
+        input_columns=["audio"], operations=biquad_op, num_parallel_workers=8)
     i = 0
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         count_unequal_element(expect_waveform[i, :],
@@ -63,6 +72,11 @@ def test_func_biquad_pipeline():
 
 
 def test_biquad_invalid_input():
+    """
+    Feature: Biquad op
+    Description: Test Biquad op with invalid input
+    Expectation: Correct error and message are thrown as expected
+    """
     def test_invalid_input(test_name, b0, b1, b2, a0, a1, a2, error, error_msg):
         logger.info("Test Biquad with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:

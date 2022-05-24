@@ -64,7 +64,9 @@ def test_random_choice_c():
 
 def test_random_choice_op(plot=False):
     """
-    Test RandomChoice in python transformations
+    Feature: RandomChoice op
+    Description: Test RandomChoice op in Python implementation
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_choice_op")
     # define map operations
@@ -103,7 +105,9 @@ def test_random_choice_op(plot=False):
 
 def test_random_choice_comp(plot=False):
     """
-    Test RandomChoice and compare with single CenterCrop results
+    Feature: RandomChoice op
+    Description: Test RandomChoice op and compare with single CenterCrop results
+    Expectation: Resulting datasets are expected to be equal
     """
     logger.info("test_random_choice_comp")
     # define map operations
@@ -146,8 +150,9 @@ def test_random_choice_comp(plot=False):
 
 def test_random_choice_exception_random_crop_badinput():
     """
-    Test RandomChoice: hit error in RandomCrop with greater crop size,
-    expected to raise error
+    Feature: RandomChoice op
+    Description: Test RandomChoice op where error in RandomCrop occurs due to greater crop size
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_choice_exception_random_crop_badinput")
     # define map operations

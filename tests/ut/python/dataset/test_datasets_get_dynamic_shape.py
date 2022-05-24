@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ def generator0():
 
 
 def test_get_dynamic_min_max_shapes_0():
+    """
+    Feature: dynamic_min_max_shapes
+    Description: Test dynamic_min_max_shapes with dynamic shape columns
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test dynamic_min_max_shapes with dynamic shape columns.")
 
     dataset = ds.GeneratorDataset(generator0, ["data1", "data2", "data3"])
@@ -47,6 +52,11 @@ def generator1():
 
 
 def test_get_dynamic_min_max_shapes_1():
+    """
+    Feature: dynamic_min_max_shapes
+    Description: Test dynamic_min_max_shapes with dynamic shape column and fix shape column
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test dynamic_min_max_shapes with dynamic shape column and fix shape column.")
 
     dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
@@ -66,6 +76,11 @@ def test_get_dynamic_min_max_shapes_1():
 
 
 def test_get_dynamic_min_max_shapes_2():
+    """
+    Feature: dynamic_min_max_shapes
+    Description: Test dynamic_min_max_shapes with setting all columns to dynamic
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test dynamic_min_max_shapes with setting all columns to dynamic.")
 
     dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
@@ -88,6 +103,11 @@ def generator2():
 
 
 def test_get_dynamic_min_max_shapes_3():
+    """
+    Feature: dynamic_min_max_shapes
+    Description: Test dynamic_min_max_shapes with dynamic shape columns
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test dynamic_min_max_shapes only config dynamic column.")
 
     dataset = ds.GeneratorDataset(generator2, ["data1", "data2"])
@@ -107,6 +127,11 @@ def test_get_dynamic_min_max_shapes_3():
 
 
 def test_get_dynamic_min_max_shapes_4():
+    """
+    Feature: dynamic_min_max_shapes
+    Description: Test dynamic_min_max_shapes with dynamic setting for column with fixed shape
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test dynamic_min_max_shapes with dynamic setting for column with fixed shape.")
 
     dataset = ds.GeneratorDataset(generator2, ["data1", "data2"])
@@ -126,6 +151,11 @@ def test_get_dynamic_min_max_shapes_4():
 
 
 def test_get_dynamic_min_max_shapes_5():
+    """
+    Feature: dynamic_min_max_shapes
+    Description: Test dynamic_min_max_shapes with NumpySlicesDataset
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test dynamic_min_max_shapes with NumpySlicesDataset.")
 
     np_data = [
@@ -150,6 +180,11 @@ def test_get_dynamic_min_max_shapes_5():
 
 
 def test_get_dynamic_min_max_shapes_6():
+    """
+    Feature: dynamic_min_max_shapes
+    Description: Test dynamic_min_max_shapes with unexpected column setting
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test dynamic_min_max_shapes with unexpected column setting.")
 
     dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])

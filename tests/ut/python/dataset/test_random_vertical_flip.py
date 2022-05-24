@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ def v_flip(image):
 
 def test_random_vertical_op(plot=False):
     """
-    Test random_vertical with default probability
+    Feature: RandomVerticalFlip op
+    Description: Test RandomVerticalFlip with default probability
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test random_vertical")
 
@@ -79,7 +81,9 @@ def test_random_vertical_op(plot=False):
 
 def test_random_vertical_valid_prob_c():
     """
-    Test RandomVerticalFlip op with C implementation: valid non-default input, expect to pass
+    Feature: RandomVerticalFlip op
+    Description: Test RandomVerticalFlip op with Cpp implementation using valid non-default input
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_vertical_valid_prob_c")
     original_seed = config_get_set_seed(0)
@@ -102,7 +106,9 @@ def test_random_vertical_valid_prob_c():
 
 def test_random_vertical_valid_prob_py():
     """
-    Test RandomVerticalFlip op with Python implementation: valid non-default input, expect to pass
+    Feature: RandomVerticalFlip op
+    Description: Test RandomVerticalFlip op with Python implementation using valid non-default input
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_vertical_valid_prob_py")
     original_seed = config_get_set_seed(0)
@@ -128,7 +134,9 @@ def test_random_vertical_valid_prob_py():
 
 def test_random_vertical_invalid_prob_c():
     """
-    Test RandomVerticalFlip op in C implementation: invalid input, expect to raise error
+    Feature: RandomVerticalFlip op
+    Description: Test RandomVerticalFlip op with Cpp implementation using invalid input
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_vertical_invalid_prob_c")
 
@@ -147,7 +155,9 @@ def test_random_vertical_invalid_prob_c():
 
 def test_random_vertical_invalid_prob_py():
     """
-    Test RandomVerticalFlip op in Python implementation: invalid input, expect to raise error
+    Feature: RandomVerticalFlip op
+    Description: Test RandomVerticalFlip op with Python implementation using invalid input
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_vertical_invalid_prob_py")
 
@@ -169,7 +179,9 @@ def test_random_vertical_invalid_prob_py():
 
 def test_random_vertical_comp(plot=False):
     """
-    Test test_random_vertical_flip and compare between python and c image augmentation ops
+    Feature: RandomVerticalFlip op
+    Description: Test RandomVerticalFlip and compare between Python and Cpp image augmentation ops
+    Expectation: Image outputs from both implementation are the same
     """
     logger.info("test_random_vertical_comp")
 
@@ -209,7 +221,9 @@ def test_random_vertical_comp(plot=False):
 
 def test_random_vertical_op_1():
     """
-    Test RandomVerticalFlip with different fields.
+    Feature: RandomVerticalFlip op
+    Description: Test RandomVerticalFlip with different fields
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomVerticalFlip with different fields.")
 

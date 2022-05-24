@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ GENERATE_GOLDEN = False
 
 def test_random_resize_op(plot=False):
     """
-    Test random_resize_op
+    Feature: RandomResize op
+    Description: Test RandomResize op basic usage
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test resize")
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -58,7 +60,9 @@ def test_random_resize_op(plot=False):
 
 def test_random_resize_md5():
     """
-    Test RandomResize with md5 check
+    Feature: RandomResize op
+    Description: Test RandomResize op with md5 check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomResize with md5 check")
     original_seed = config_get_set_seed(5)
@@ -80,7 +84,9 @@ def test_random_resize_md5():
 
 def test_random_resize_op_1():
     """
-    Test RandomResize with different fields.
+    Feature: RandomResize op
+    Description: Test RandomResize op with different fields
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomResize with different fields.")
 

@@ -69,7 +69,9 @@ def test_random_apply_c():
 
 def test_random_apply_op(plot=False):
     """
-    Test RandomApply in python transformations
+    Feature: RandomApply op
+    Description: Test RandomApply in Python transformations
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_apply_op")
     # define map operations
@@ -108,7 +110,9 @@ def test_random_apply_op(plot=False):
 
 def test_random_apply_md5():
     """
-    Test RandomApply op with md5 check
+    Feature: RandomApply op
+    Description: Test RandomApply op with md5 check
+    Expectation: Passes the md5 check test
     """
     logger.info("test_random_apply_md5")
     original_seed = config_get_set_seed(10)
@@ -138,8 +142,9 @@ def test_random_apply_md5():
 
 def test_random_apply_exception_random_crop_badinput():
     """
-    Test RandomApply: test invalid input for one of the transform functions,
-    expected to raise error
+    Feature: RandomApply op
+    Description: Test RandomApply with invalid input for one of the transform functions
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_random_apply_exception_random_crop_badinput")
     original_seed = config_get_set_seed(200)

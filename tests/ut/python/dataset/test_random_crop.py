@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_random_crop_op_c(plot=False):
     """
-    Test RandomCrop Op in c transforms
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Cpp implementation
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_op_c")
 
@@ -61,9 +63,12 @@ def test_random_crop_op_c(plot=False):
     if plot:
         visualize_list(image, image_cropped)
 
+
 def test_random_crop_op_py(plot=False):
     """
-    Test RandomCrop op in py transforms
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Python transformations
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_op_py")
     # First dataset
@@ -96,9 +101,12 @@ def test_random_crop_op_py(plot=False):
     if plot:
         visualize_list(original_images, crop_images)
 
+
 def test_random_crop_01_c():
     """
-    Test RandomCrop op with C implementation: size is a single integer, expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Cpp implementation where size is a single integer
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_01_c")
     original_seed = config_get_set_seed(0)
@@ -119,9 +127,12 @@ def test_random_crop_01_c():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_01_py():
     """
-    Test RandomCrop op with transforms: size is a single integer, expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Python implementation where size is a single integer
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_01_py")
     original_seed = config_get_set_seed(0)
@@ -145,9 +156,12 @@ def test_random_crop_01_py():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_02_c():
     """
-    Test RandomCrop op with C implementation: size is a list/tuple with length 2, expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Cpp implementation where size is a list/tuple with length 2
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_02_c")
     original_seed = config_get_set_seed(0)
@@ -168,9 +182,12 @@ def test_random_crop_02_c():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_02_py():
     """
-    Test RandomCrop op with transforms: size is a list/tuple with length 2, expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Python implementation where size is a list/tuple with length 2
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_02_py")
     original_seed = config_get_set_seed(0)
@@ -194,9 +211,12 @@ def test_random_crop_02_py():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_03_c():
     """
-    Test RandomCrop op with C implementation: input image size == crop size, expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Cpp implementation where input image size == crop size
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_03_c")
     original_seed = config_get_set_seed(0)
@@ -217,9 +237,12 @@ def test_random_crop_03_c():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_03_py():
     """
-    Test RandomCrop op with transforms: input image size == crop size, expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Python implementation where input image size == crop size
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_03_py")
     original_seed = config_get_set_seed(0)
@@ -243,9 +266,12 @@ def test_random_crop_03_py():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_04_c():
     """
-    Test RandomCrop op with C implementation: input image size < crop size, expected to fail
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Cpp implementation where input image size < crop size
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_crop_04_c")
 
@@ -262,10 +288,12 @@ def test_random_crop_04_c():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "crop size is bigger than the image dimensions" in str(e)
 
+
 def test_random_crop_04_py():
     """
-    Test RandomCrop op with transforms:
-    input image size < crop size, expected to fail
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Python implementation where input image size < crop size
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_crop_04_py")
 
@@ -285,11 +313,12 @@ def test_random_crop_04_py():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Crop size" in str(e)
 
+
 def test_random_crop_05_c():
     """
-    Test RandomCrop op with C implementation:
-    input image size < crop size but pad_if_needed is enabled,
-    expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Cpp implementation where input image size < crop size, pad_if_needed is enabled
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_05_c")
     original_seed = config_get_set_seed(0)
@@ -310,11 +339,12 @@ def test_random_crop_05_c():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_05_py():
     """
-    Test RandomCrop op with transforms:
-    input image size < crop size but pad_if_needed is enabled,
-    expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Python implementation input image size < crop size, pad_if_needed is enabled
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_05_py")
     original_seed = config_get_set_seed(0)
@@ -338,10 +368,12 @@ def test_random_crop_05_py():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_06_c():
     """
-    Test RandomCrop op with C implementation:
-    invalid size, expected to raise TypeError
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Cpp implementation with invalid size
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_crop_06_c")
 
@@ -357,10 +389,12 @@ def test_random_crop_06_c():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Size should be a single integer" in str(e)
 
+
 def test_random_crop_06_py():
     """
-    Test RandomCrop op with transforms:
-    invalid size, expected to raise TypeError
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Python implementation with invalid size
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_crop_06_py")
 
@@ -379,11 +413,12 @@ def test_random_crop_06_py():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Size should be a single integer" in str(e)
 
+
 def test_random_crop_07_c():
     """
-    Test RandomCrop op with C implementation:
-    padding_mode is Border.CONSTANT and fill_value is 255 (White),
-    expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Cpp implementation with padding_mode is Border.CONSTANT, fill_value is 255
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_07_c")
     original_seed = config_get_set_seed(0)
@@ -404,11 +439,12 @@ def test_random_crop_07_c():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_07_py():
     """
-    Test RandomCrop op with transforms:
-    padding_mode is Border.CONSTANT and fill_value is 255 (White),
-    expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Python implementation with padding_mode is Border.CONSTANT, fill_value is 255
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_07_py")
     original_seed = config_get_set_seed(0)
@@ -432,10 +468,12 @@ def test_random_crop_07_py():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_08_c():
     """
-    Test RandomCrop op with C implementation: padding_mode is Border.EDGE,
-    expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Cpp implementation with padding_mode is Border.EDGE
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_08_c")
     original_seed = config_get_set_seed(0)
@@ -456,10 +494,12 @@ def test_random_crop_08_c():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_08_py():
     """
-    Test RandomCrop op with transforms: padding_mode is Border.EDGE,
-    expected to pass
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op in Python implementation with padding_mode is Border.EDGE
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_08_py")
     original_seed = config_get_set_seed(0)
@@ -483,9 +523,12 @@ def test_random_crop_08_py():
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
+
 def test_random_crop_09():
     """
-    Test RandomCrop op: invalid type of input image format, expected to raise RuntimeError
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op with invalid type of input image format
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_crop_09")
 
@@ -505,9 +548,12 @@ def test_random_crop_09():
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Unexpected error. Pad: input shape is not <H,W,C> or <H, W>, got rank: 3" in str(e)
 
+
 def test_random_crop_comp(plot=False):
     """
-    Test RandomCrop and compare between python and c image augmentation
+    Feature: RandomCrop op
+    Description: Test RandomCrop and compare between Python and Cpp image augmentation
+    Expectation: Resulting datasets from both op are the same as expected
     """
     logger.info("Test RandomCrop with c_transform and py_transform comparison")
     cropped_size = 512
@@ -540,9 +586,12 @@ def test_random_crop_comp(plot=False):
     if plot:
         visualize_list(image_c_cropped, image_py_cropped, visualize_mode=2)
 
+
 def test_random_crop_09_c():
     """
-    Test RandomCrop with different fields.
+    Feature: RandomCrop op
+    Description: Test RandomCrop Op with different fields
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomCrop with different fields.")
 

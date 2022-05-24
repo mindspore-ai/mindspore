@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,9 @@ GENERATE_GOLDEN = False
 
 def test_random_crop_and_resize_callable():
     """
-    Test RandomCropAndResize op is callable
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize is callable
+    Expectation: Passes the shape equality test
     """
     logger.info("test_random_crop_and_resize_callable")
     img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
@@ -53,7 +55,9 @@ def test_random_crop_and_resize_callable():
 
 def test_random_crop_and_resize_op_c(plot=False):
     """
-    Test RandomCropAndResize op in c transforms
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with Cpp implementation
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_and_resize_op_c")
 
@@ -89,7 +93,9 @@ def test_random_crop_and_resize_op_c(plot=False):
 
 def test_random_crop_and_resize_op_py(plot=False):
     """
-    Test RandomCropAndResize op in py transforms
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with Python transformations
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_and_resize_op_py")
     # First dataset
@@ -131,7 +137,9 @@ def test_random_crop_and_resize_op_py(plot=False):
 
 def test_random_crop_and_resize_op_py_ANTIALIAS():
     """
-    Test RandomCropAndResize op in py transforms
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with Python transformations where image interpolation mode is Inter.ANTIALIAS
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_and_resize_op_py_ANTIALIAS")
     # First dataset
@@ -151,7 +159,9 @@ def test_random_crop_and_resize_op_py_ANTIALIAS():
 
 def test_random_crop_and_resize_01():
     """
-    Test RandomCropAndResize with md5 check, expected to pass
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with md5 check
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_and_resize_01")
     original_seed = config_get_set_seed(0)
@@ -186,8 +196,9 @@ def test_random_crop_and_resize_01():
 
 def test_random_crop_and_resize_02():
     """
-    Test RandomCropAndResize with md5 check:Image interpolation mode is Inter.NEAREST,
-    expected to pass
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with md5 check where image interpolation mode is Inter.NEAREST
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_and_resize_02")
     original_seed = config_get_set_seed(0)
@@ -222,7 +233,9 @@ def test_random_crop_and_resize_02():
 
 def test_random_crop_and_resize_03():
     """
-    Test RandomCropAndResize with md5 check: max_attempts is 1, expected to pass
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with md5 check where max_attempts is 1
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_crop_and_resize_03")
     original_seed = config_get_set_seed(0)
@@ -257,8 +270,9 @@ def test_random_crop_and_resize_03():
 
 def test_random_crop_and_resize_04_c():
     """
-    Test RandomCropAndResize with c_tranforms: invalid range of scale (max<min),
-    expected to raise ValueError
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with pp with invalid range of scales (max<min)
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_crop_and_resize_04_c")
 
@@ -277,8 +291,9 @@ def test_random_crop_and_resize_04_c():
 
 def test_random_crop_and_resize_04_py():
     """
-    Test RandomCropAndResize with transforms: invalid range of scale (max<min),
-    expected to raise ValueError
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with Python transformations with invalid range of scales (max<min)
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_crop_and_resize_04_py")
 
@@ -300,8 +315,9 @@ def test_random_crop_and_resize_04_py():
 
 def test_random_crop_and_resize_05_c():
     """
-    Test RandomCropAndResize with C implementation: invalid range of ratio (max<min),
-    expected to raise ValueError
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with pp with invalid range of ratio (max<min)
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_crop_and_resize_05_c")
 
@@ -320,8 +336,9 @@ def test_random_crop_and_resize_05_c():
 
 def test_random_crop_and_resize_05_py():
     """
-    Test RandomCropAndResize with transforms: invalid range of ratio (max<min),
-    expected to raise ValueError
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with Python transformations with invalid range of ratio (max<min)
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_crop_and_resize_05_py")
 
@@ -343,7 +360,9 @@ def test_random_crop_and_resize_05_py():
 
 def test_random_crop_and_resize_comp(plot=False):
     """
-    Test RandomCropAndResize and compare between python and c image augmentation
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize and compare between Python and Cpp image augmentation
+    Expectation: Resulting datasets from both operations are expected to be the same
     """
     logger.info("test_random_crop_and_resize_comp")
 
@@ -380,8 +399,9 @@ def test_random_crop_and_resize_comp(plot=False):
 
 def test_random_crop_and_resize_06():
     """
-    Test RandomCropAndResize with C implementation: invalid values for scale,
-    expected to raise ValueError
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with pp with invalid values for scale
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_crop_and_resize_05_c")
 
@@ -406,7 +426,9 @@ def test_random_crop_and_resize_06():
 
 def test_random_crop_and_resize_07():
     """
-    Test RandomCropAndResize with different fields.
+    Feature: RandomCropAndResize op
+    Description: Test RandomCropAndResize with different fields
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomCropAndResize with different fields.")
 

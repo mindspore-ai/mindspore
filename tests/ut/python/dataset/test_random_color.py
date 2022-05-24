@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ GENERATE_GOLDEN = False
 
 def test_random_color_py(degrees=(0.1, 1.9), plot=False):
     """
-    Test Python RandomColor
+    Feature: RandomColor op
+    Description: Test RandomColor op with Python implementation
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomColor")
 
@@ -92,7 +94,9 @@ def test_random_color_py(degrees=(0.1, 1.9), plot=False):
 
 def test_random_color_c(degrees=(0.1, 1.9), plot=False, run_golden=True):
     """
-    Test Cpp RandomColor
+    Feature: RandomColor op
+    Description: Test RandomColor op with Cpp implementation
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_color_op")
 
@@ -137,7 +141,9 @@ def test_random_color_c(degrees=(0.1, 1.9), plot=False, run_golden=True):
 
 def test_random_color_py_md5():
     """
-    Test Python RandomColor with md5 check
+    Feature: RandomColor op
+    Description: Test RandomColor op with Python implementation with md5 check
+    Expectation: Passes the md5 check test
     """
     logger.info("Test RandomColor with md5 check")
     original_seed = config_get_set_seed(10)
@@ -162,7 +168,9 @@ def test_random_color_py_md5():
 
 def test_compare_random_color_op(degrees=None, plot=False):
     """
-    Compare Random Color op in Python and Cpp
+    Feature: RandomColor op
+    Description: Test RandomColor op and compare between Python and Cpp implementation
+    Expectation: Resulting datasets from both operations are expected to be the same
     """
 
     logger.info("test_random_color_op")
@@ -212,7 +220,9 @@ def test_compare_random_color_op(degrees=None, plot=False):
 
 def test_random_color_c_errors():
     """
-    Test that Cpp RandomColor errors with bad input
+    Feature: RandomColor op
+    Description: Test error cases RandomColor op with Cpp implementation
+    Expectation: Correct error is thrown as expected
     """
     with pytest.raises(TypeError) as error_info:
         vision.RandomColor((12))

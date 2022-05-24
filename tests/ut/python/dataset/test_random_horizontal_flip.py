@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ def h_flip(image):
 
 def test_random_horizontal_op(plot=False):
     """
-    Test RandomHorizontalFlip op
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip with default probability
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_horizontal_op")
 
@@ -81,7 +83,9 @@ def test_random_horizontal_op(plot=False):
 
 def test_random_horizontal_valid_prob_c():
     """
-    Test RandomHorizontalFlip op with C implementation: valid non-default input, expect to pass
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip with Cpp implementation using valid non-default input
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_horizontal_valid_prob_c")
     original_seed = config_get_set_seed(0)
@@ -105,7 +109,9 @@ def test_random_horizontal_valid_prob_c():
 
 def test_random_horizontal_valid_prob_py():
     """
-    Test RandomHorizontalFlip op with transforms: valid non-default input, expect to pass
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip with Python implementation using valid non-default input
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_horizontal_valid_prob_py")
     original_seed = config_get_set_seed(0)
@@ -132,7 +138,9 @@ def test_random_horizontal_valid_prob_py():
 
 def test_random_horizontal_invalid_prob_c():
     """
-    Test RandomHorizontalFlip op in C implementation: invalid input, expect to raise error
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip with Cpp implementation using invalid input
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_horizontal_invalid_prob_c")
 
@@ -154,7 +162,9 @@ def test_random_horizontal_invalid_prob_c():
 
 def test_random_horizontal_invalid_prob_py():
     """
-    Test RandomHorizontalFlip op in transforms: invalid input, expect to raise error
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip with Python implementation using invalid input
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_horizontal_invalid_prob_py")
 
@@ -179,7 +189,9 @@ def test_random_horizontal_invalid_prob_py():
 
 def test_random_horizontal_comp(plot=False):
     """
-    Test test_random_horizontal_flip and compare between python and c image augmentation ops
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip op and compare between Python and Cpp image augmentation ops
+    Expectation: Resulting datasets from the ops are expected to be the same
     """
     logger.info("test_random_horizontal_comp")
     # First dataset
@@ -221,7 +233,9 @@ def test_random_horizontal_comp(plot=False):
 
 def test_random_horizontal_op_1():
     """
-    Test RandomHorizontalFlip with different fields.
+    Feature: RandomHorizontalFlip op
+    Description: Test RandomHorizontalFlip with different fields
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomHorizontalFlip with different fields.")
 

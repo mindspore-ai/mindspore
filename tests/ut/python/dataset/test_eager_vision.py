@@ -23,7 +23,7 @@ from mindspore import log as logger
 def test_eager_decode_c():
     """
     Feature: Decode op
-    Description: Test eager support for Decode C implementation
+    Description: Test eager support for Decode Cpp implementation
     Expectation: Output image size from op is correct
     """
     img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
@@ -37,7 +37,8 @@ def test_eager_decode_c():
     img2 = fp.read()
 
     img2 = vision.Decode()(img2)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img2), img2.shape))
+    logger.info("Image.type: {}, Image.shape: {}".format(
+        type(img2), img2.shape))
     assert img2.shape == (2268, 4032, 3)
 
 
@@ -58,11 +59,17 @@ def test_eager_decode_py():
     img2 = fp.read()
 
     img2 = vision.Decode(to_pil=True)(img2)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img2), img2.size))
+    logger.info("Image.type: {}, Image.shape: {}".format(
+        type(img2), img2.size))
     assert img2.size == (4032, 2268)
 
 
 def test_eager_resize():
+    """
+    Feature: Resize op
+    Description: Test eager support for Resize op
+    Expectation: Output image size from op is correct
+    """
     img = cv2.imread("../data/dataset/apple.jpg")
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
 
@@ -73,6 +80,11 @@ def test_eager_resize():
 
 
 def test_eager_rescale():
+    """
+    Feature: Rescale op
+    Description: Test eager support for Rescale op
+    Expectation: Output image info from op is correct
+    """
     img = cv2.imread("../data/dataset/apple.jpg")
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
     pixel = img[0][0][0]
@@ -121,7 +133,8 @@ def test_eager_normalize_chw():
     img = vision.Normalize(mean=mean_vec, std=std_vec, is_hwc=False)(img)
     pixel_normalized = img[0][0][0]
 
-    assert (pixel / 255 - mean_vec[0]) / std_vec[0] == pytest.approx(pixel_normalized, 0.0001)
+    assert (pixel / 255 - mean_vec[0]) / \
+        std_vec[0] == pytest.approx(pixel_normalized, 0.0001)
 
 
 def test_eager_hwc2chw():
@@ -138,13 +151,14 @@ def test_eager_hwc2chw():
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
     channel_swapped = img.shape
 
-    assert channel == (channel_swapped[1], channel_swapped[2], channel_swapped[0])
+    assert channel == (channel_swapped[1],
+                       channel_swapped[2], channel_swapped[0])
 
 
 def test_eager_pad_c():
     """
     Feature: Pad op
-    Description: Test eager support for Pad C implementation
+    Description: Test eager support for Pad Cpp implementation
     Expectation: Output image size info from op is correct
     """
     img = cv2.imread("../data/dataset/apple.jpg")
@@ -159,7 +173,8 @@ def test_eager_pad_c():
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
     shape_padded = img.shape
 
-    assert shape_padded == (shape_org[0] + 2 * pad, shape_org[1] + 2 * pad, shape_org[2])
+    assert shape_padded == (
+        shape_org[0] + 2 * pad, shape_org[1] + 2 * pad, shape_org[2])
 
 
 def test_eager_pad_py():
@@ -280,7 +295,8 @@ def test_eager_exceptions_normalize():
         _ = vision.Normalize(mean=mean_vec, std=std_vec, is_hwc=False)(img)
         assert False
     except RuntimeError as e:
-        assert "Normalize: number of channels does not match the size of mean and std vectors" in str(e)
+        assert "Normalize: number of channels does not match the size of mean and std vectors" in str(
+            e)
 
 
 def test_eager_exceptions_pad():

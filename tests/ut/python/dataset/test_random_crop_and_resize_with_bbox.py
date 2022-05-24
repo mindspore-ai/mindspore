@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,26 +15,27 @@
 """
 Testing RandomCropAndResizeWithBBox op in DE
 """
-import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.vision.transforms as vision
 
 from mindspore import log as logger
-from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
-    config_get_set_seed, config_get_set_num_parallel_workers, save_and_check_md5
+from util import config_get_set_seed, config_get_set_num_parallel_workers, save_and_check_md5, \
+    helper_perform_ops_bbox, helper_test_visual_bbox, helper_invalid_bounding_box_test
 
 GENERATE_GOLDEN = False
 
 # Updated VOC dataset with correct annotations - DATA_DIR
 DATA_DIR_VOC = "../data/dataset/testVOC2012_2"
 # COCO dataset - DATA_DIR, ANNOTATION_DIR
-DATA_DIR_COCO = ["../data/dataset/testCOCO/train/", "../data/dataset/testCOCO/annotations/train.json"]
+DATA_DIR_COCO = ["../data/dataset/testCOCO/train/",
+                 "../data/dataset/testCOCO/annotations/train.json"]
 
 
 def test_random_resized_crop_with_bbox_op_c(plot_vis=False):
     """
-    Prints images and bboxes side by side with and without RandomResizedCropWithBBox Op applied,
-    tests with MD5 check, expected to pass
+    Feature: RandomResizedCropWithBBox op
+    Description: Prints images and bboxes side by side with and without RandomResizedCropWithBBox Op applied
+    Expectation: Passes the MD5 check test
     """
     logger.info("test_random_resized_crop_with_bbox_op_c")
 
@@ -42,28 +43,21 @@ def test_random_resized_crop_with_bbox_op_c(plot_vis=False):
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
-    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc1 = ds.VOCDataset(
+        DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc2 = ds.VOCDataset(
+        DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
-    test_op = vision.RandomResizedCropWithBBox((256, 512), (0.5, 0.5), (0.5, 0.5))
+    test_op = vision.RandomResizedCropWithBBox(
+        (256, 512), (0.5, 0.5), (0.5, 0.5))
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"])
+    data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
 
     filename = "random_resized_crop_with_bbox_01_c_result.npz"
-    save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5(data_voc2, filename, generate_golden=GENERATE_GOLDEN)
 
-    unaugSamp, augSamp = [], []
-
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                          dataVoc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
-
-    if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp)
+    helper_test_visual_bbox(plot_vis, data_voc1, data_voc2)
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -72,138 +66,119 @@ def test_random_resized_crop_with_bbox_op_c(plot_vis=False):
 
 def test_random_resized_crop_with_bbox_op_coco_c(plot_vis=False):
     """
-    Prints images and bboxes side by side with and without RandomResizedCropWithBBox Op applied,
-    Testing with Coco dataset
+    Feature: RandomResizedCropWithBBox op
+    Description: Prints images and bboxes side by side with and without the Op applied with CocoDataset
+    Expectation: Prints images and bboxes side by side as expected
     """
     logger.info("test_random_resized_crop_with_bbox_op_coco_c")
     # load dataset
-    dataCoco1 = ds.CocoDataset(DATA_DIR_COCO[0], annotation_file=DATA_DIR_COCO[1], task="Detection",
-                               decode=True, shuffle=False)
+    data_coco1 = ds.CocoDataset(DATA_DIR_COCO[0], annotation_file=DATA_DIR_COCO[1], task="Detection",
+                                decode=True, shuffle=False)
 
-    dataCoco2 = ds.CocoDataset(DATA_DIR_COCO[0], annotation_file=DATA_DIR_COCO[1], task="Detection",
-                               decode=True, shuffle=False)
+    data_coco2 = ds.CocoDataset(DATA_DIR_COCO[0], annotation_file=DATA_DIR_COCO[1], task="Detection",
+                                decode=True, shuffle=False)
 
     test_op = vision.RandomResizedCropWithBBox((512, 512), (0.5, 1), (0.5, 1))
 
-    dataCoco2 = dataCoco2.map(operations=[test_op], input_columns=["image", "bbox"],
-                              output_columns=["image", "bbox"],
-                              column_order=["image", "bbox"])
+    data_coco2 = helper_perform_ops_bbox(data_coco2, test_op)
 
-    unaugSamp, augSamp = [], []
-
-    for unAug, Aug in zip(dataCoco1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                          dataCoco2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
-
-    if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp, "bbox")
+    helper_test_visual_bbox(plot_vis, data_coco1, data_coco2)
 
 
 def test_random_resized_crop_with_bbox_op_edge_c(plot_vis=False):
     """
-    Prints images and bboxes side by side with and without RandomResizedCropWithBBox Op applied,
-    tests on dynamically generated edge case, expected to pass
+    Feature: RandomResizedCropWithBBox op
+    Description: Prints images and bboxes side by side with and without the Op applied on edge case
+    Expectation: Passes the dynamically generated edge case
     """
     logger.info("test_random_resized_crop_with_bbox_op_edge_c")
 
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
-    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc1 = ds.VOCDataset(
+        DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc2 = ds.VOCDataset(
+        DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
-    test_op = vision.RandomResizedCropWithBBox((256, 512), (0.5, 0.5), (0.5, 0.5))
+    test_op = vision.RandomResizedCropWithBBox(
+        (256, 512), (0.5, 0.5), (0.5, 0.5))
 
     # maps to convert data into valid edge case data
-    dataVoc1 = dataVoc1.map(
-        operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))],
-        input_columns=["image", "bbox"],
-        output_columns=["image", "bbox"],
-        column_order=["image", "bbox"])
+    data_voc1 = helper_perform_ops_bbox(data_voc1, None, True)
 
     # Test Op added to list of Operations here
-    dataVoc2 = dataVoc2.map(
-        operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)),
-                    test_op], input_columns=["image", "bbox"],
-        output_columns=["image", "bbox"],
-        column_order=["image", "bbox"])
+    data_voc2 = helper_perform_ops_bbox(data_voc2, test_op, True)
 
-    unaugSamp, augSamp = [], []
-
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                          dataVoc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
-
-    if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp)
+    helper_test_visual_bbox(plot_vis, data_voc1, data_voc2)
 
 
 def test_random_resized_crop_with_bbox_op_invalid_c():
     """
-    Tests RandomResizedCropWithBBox on invalid constructor parameters, expected to raise ValueError
+    Feature: RandomResizedCropWithBBox op
+    Description: Test RandomResizedCropWithBBox on invalid constructor parameters (range of scale)
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_resized_crop_with_bbox_op_invalid_c")
 
     # Load dataset, only Augmented Dataset as test will raise ValueError
-    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc2 = ds.VOCDataset(
+        DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     try:
         # If input range of scale is not in the order of (min, max), ValueError will be raised.
-        test_op = vision.RandomResizedCropWithBBox((256, 512), (1, 0.5), (0.5, 0.5))
+        test_op = vision.RandomResizedCropWithBBox(
+            (256, 512), (1, 0.5), (0.5, 0.5))
 
         # map to apply ops
-        dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
-                                output_columns=["image", "bbox"],
-                                column_order=["image", "bbox"])
+        data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
 
-        for _ in dataVoc2.create_dict_iterator(num_epochs=1):
+        for _ in data_voc2.create_dict_iterator(num_epochs=1):
             break
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "scale should be in (min,max) format. Got (max,min)." in str(err)
+        assert "scale should be in (min,max) format. Got (max,min)." in str(
+            err)
 
 
 def test_random_resized_crop_with_bbox_op_invalid2_c():
     """
-     Tests RandomResizedCropWithBBox Op on invalid constructor parameters, expected to raise ValueError
+    Feature: RandomResizedCropWithBBox op
+    Description: Test RandomResizedCropWithBBox on invalid constructor parameters (range of ratio)
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_resized_crop_with_bbox_op_invalid2_c")
     # Load dataset # only loading the to AugDataset as test will fail on this
-    dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc2 = ds.VOCDataset(
+        DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     try:
         # If input range of ratio is not in the order of (min, max), ValueError will be raised.
-        test_op = vision.RandomResizedCropWithBBox((256, 512), (1, 1), (1, 0.5))
+        test_op = vision.RandomResizedCropWithBBox(
+            (256, 512), (1, 1), (1, 0.5))
 
         # map to apply ops
-        dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
-                                output_columns=["image", "bbox"],
-                                column_order=["image", "bbox"])
+        data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
 
-        for _ in dataVoc2.create_dict_iterator(num_epochs=1):
+        for _ in data_voc2.create_dict_iterator(num_epochs=1):
             break
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "ratio should be in (min,max) format. Got (max,min)." in str(err)
+        assert "ratio should be in (min,max) format. Got (max,min)." in str(
+            err)
 
 
 def test_random_resized_crop_with_bbox_op_bad_c():
     """
-    Test RandomCropWithBBox op with invalid bounding boxes, expected to catch multiple errors.
+    Feature: RandomResizedCropWithBBox op
+    Description: Test RandomResizedCropWithBBox op with invalid bounding boxes
+    Expectation: Multiple correct errors are caught as expected
     """
     logger.info("test_random_resized_crop_with_bbox_op_bad_c")
-    test_op = vision.RandomResizedCropWithBBox((256, 512), (0.5, 0.5), (0.5, 0.5))
+    test_op = vision.RandomResizedCropWithBBox(
+        (256, 512), (0.5, 0.5), (0.5, 0.5))
 
-    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
-    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
-    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.NegativeXY, "negative value")
-    data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
+    helper_invalid_bounding_box_test(DATA_DIR_VOC, test_op)
 
 
 if __name__ == "__main__":

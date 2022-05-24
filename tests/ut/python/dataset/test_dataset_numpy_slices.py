@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,11 @@ import mindspore.dataset.vision.transforms as vision
 
 
 def test_numpy_slices_list_1():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if 1D list is sliced successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Slicing a 1D list.")
 
     np_data = [1, 2, 3]
@@ -32,6 +37,11 @@ def test_numpy_slices_list_1():
 
 
 def test_numpy_slices_list_2():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if 2D list is sliced into 1D list successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Slicing a 2D list into 1D list.")
 
     np_data = [[1, 2], [3, 4]]
@@ -42,6 +52,11 @@ def test_numpy_slices_list_2():
 
 
 def test_numpy_slices_list_3():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if first dimension of 2D list is sliced successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Slicing list in the first dimension.")
 
     np_data = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
@@ -52,6 +67,11 @@ def test_numpy_slices_list_3():
 
 
 def test_numpy_slices_numpy():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check NumPy structure data after slicing 2D list
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test NumPy structure data.")
 
     np_data = np.array([[[1, 1], [2, 2]], [[3, 3], [4, 4]]])
@@ -62,6 +82,11 @@ def test_numpy_slices_numpy():
 
 
 def test_numpy_slices_list_append():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check reading data of image list
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test reading data of image list.")
 
     DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -69,7 +94,8 @@ def test_numpy_slices_list_append():
 
     data1 = de.TFRecordDataset(DATA_DIR)
     resize_op = vision.Resize((resize_height, resize_width))
-    data1 = data1.map(operations=[vision.Decode(), resize_op], input_columns=["image"])
+    data1 = data1.map(
+        operations=[vision.Decode(), resize_op], input_columns=["image"])
 
     res = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -82,6 +108,11 @@ def test_numpy_slices_list_append():
 
 
 def test_numpy_slices_dict_1():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if dictionary dataset is sliced successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Dictionary structure data.")
 
     np_data = {"a": [1, 2], "b": [3, 4]}
@@ -94,6 +125,11 @@ def test_numpy_slices_dict_1():
 
 
 def test_numpy_slices_tuple_1():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if tuple dataset is sliced successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test slicing a list of tuple.")
 
     np_data = [([1, 2], [3, 4]), ([11, 12], [13, 14]), ([21, 22], [23, 24])]
@@ -106,6 +142,11 @@ def test_numpy_slices_tuple_1():
 
 
 def test_numpy_slices_tuple_2():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if tuple dataset is sliced successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test slicing a tuple of list.")
 
     np_data = ([1, 2], [3, 4], [5, 6])
@@ -119,11 +160,17 @@ def test_numpy_slices_tuple_2():
 
 
 def test_numpy_slices_tuple_3():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if tuple dataset with different dimension is read successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test reading different dimension of tuple data.")
     features, labels = np.random.sample((5, 2)), np.random.sample((5, 1))
     data = (features, labels)
 
-    ds = de.NumpySlicesDataset(data, column_names=["col1", "col2"], shuffle=False)
+    ds = de.NumpySlicesDataset(
+        data, column_names=["col1", "col2"], shuffle=False)
 
     for i, data in enumerate(ds):
         assert np.equal(data[0].asnumpy(), features[i]).all()
@@ -131,6 +178,11 @@ def test_numpy_slices_tuple_3():
 
 
 def test_numpy_slices_csv_value():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if csv dataset is loaded successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test loading value of csv file.")
     csv_file = "../data/dataset/testNumpySlicesDataset/heart.csv"
 
@@ -139,7 +191,8 @@ def test_numpy_slices_csv_value():
     df.pop("state")
     np_data = (df.values, target.values)
 
-    ds = de.NumpySlicesDataset(np_data, column_names=["col1", "col2"], shuffle=False)
+    ds = de.NumpySlicesDataset(np_data, column_names=[
+        "col1", "col2"], shuffle=False)
 
     for i, data in enumerate(ds):
         assert np.equal(np_data[0][i], data[0].asnumpy()).all()
@@ -147,6 +200,11 @@ def test_numpy_slices_csv_value():
 
 
 def test_numpy_slices_csv_dict():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if csv dataset is loaded as dictionary successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test loading csv file as dict.")
 
     csv_file = "../data/dataset/testNumpySlicesDataset/heart.csv"
@@ -161,9 +219,15 @@ def test_numpy_slices_csv_dict():
 
 
 def test_numpy_slices_num_samplers():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if num_samplers argument works successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test num_samplers.")
 
-    np_data = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
+    np_data = [[1, 2], [3, 4], [5, 6], [7, 8],
+               [9, 10], [11, 12], [13, 14], [15, 16]]
     ds = de.NumpySlicesDataset(np_data, shuffle=False, num_samples=2)
 
     for i, data in enumerate(ds):
@@ -173,10 +237,17 @@ def test_numpy_slices_num_samplers():
 
 
 def test_numpy_slices_distributed_sampler():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if distributed sampler works successfully
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test distributed sampler.")
 
-    np_data = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
-    ds = de.NumpySlicesDataset(np_data, shuffle=False, shard_id=0, num_shards=4)
+    np_data = [[1, 2], [3, 4], [5, 6], [7, 8],
+               [9, 10], [11, 12], [13, 14], [15, 16]]
+    ds = de.NumpySlicesDataset(
+        np_data, shuffle=False, shard_id=0, num_shards=4)
 
     for i, data in enumerate(ds):
         assert np.equal(data[0].asnumpy(), np_data[i * 4]).all()
@@ -185,44 +256,75 @@ def test_numpy_slices_distributed_sampler():
 
 
 def test_numpy_slices_distributed_shard_limit():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if slicing 1D list with shard beyond limit raises error
+    Expectation: Error is raised as expected
+    """
     logger.info("Test Slicing a 1D list.")
 
     np_data = [1, 2, 3]
     num = sys.maxsize
     with pytest.raises(ValueError) as err:
-        de.NumpySlicesDataset(np_data, num_shards=num, shard_id=0, shuffle=False)
-    assert "Input num_shards is not within the required interval of [1, 2147483647]." in str(err.value)
+        de.NumpySlicesDataset(np_data, num_shards=num,
+                              shard_id=0, shuffle=False)
+    assert "Input num_shards is not within the required interval of [1, 2147483647]." in str(
+        err.value)
 
 
 def test_numpy_slices_distributed_zero_shard():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if slicing 1D list with 0 shard raises error
+    Expectation: Error is raised as expected
+    """
     logger.info("Test Slicing a 1D list.")
 
     np_data = [1, 2, 3]
     with pytest.raises(ValueError) as err:
         de.NumpySlicesDataset(np_data, num_shards=0, shard_id=0, shuffle=False)
-    assert "Input num_shards is not within the required interval of [1, 2147483647]." in str(err.value)
+    assert "Input num_shards is not within the required interval of [1, 2147483647]." in str(
+        err.value)
 
 
 def test_numpy_slices_sequential_sampler():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check numpy_slices_dataset with SequentialSampler and repeat
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test numpy_slices_dataset with SequentialSampler and repeat.")
 
-    np_data = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
-    ds = de.NumpySlicesDataset(np_data, sampler=de.SequentialSampler()).repeat(2)
+    np_data = [[1, 2], [3, 4], [5, 6], [7, 8],
+               [9, 10], [11, 12], [13, 14], [15, 16]]
+    ds = de.NumpySlicesDataset(
+        np_data, sampler=de.SequentialSampler()).repeat(2)
 
     for i, data in enumerate(ds):
         assert np.equal(data[0].asnumpy(), np_data[i % 8]).all()
 
 
 def test_numpy_slices_invalid_column_names_type():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if incorrect column_names in input raises error
+    Expectation: Error is raised as expected
+    """
     logger.info("Test incorrect column_names input")
     np_data = [1, 2, 3]
 
     with pytest.raises(TypeError) as err:
         de.NumpySlicesDataset(np_data, column_names=[1], shuffle=False)
-    assert "Argument column_names[0] with value 1 is not of type [<class 'str'>]" in str(err.value)
+    assert "Argument column_names[0] with value 1 is not of type [<class 'str'>]" in str(
+        err.value)
 
 
 def test_numpy_slices_invalid_column_names_string():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if incorrect column_names with string in input raises error
+    Expectation: Error is raised as expected
+    """
     logger.info("Test incorrect column_names input")
     np_data = [1, 2, 3]
 
@@ -232,6 +334,11 @@ def test_numpy_slices_invalid_column_names_string():
 
 
 def test_numpy_slices_invalid_empty_column_names():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if empty column_names in input raises error
+    Expectation: Error is raised as expected
+    """
     logger.info("Test incorrect column_names input")
     np_data = [1, 2, 3]
 
@@ -241,6 +348,11 @@ def test_numpy_slices_invalid_empty_column_names():
 
 
 def test_numpy_slices_invalid_empty_data_column():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if no column_names in input raises error
+    Expectation: Error is raised as expected
+    """
     logger.info("Test incorrect column_names input")
     np_data = []
 
@@ -250,6 +362,11 @@ def test_numpy_slices_invalid_empty_data_column():
 
 
 def test_numpy_slice_empty_output_shape():
+    """
+    Feature: NumpySlicesDataset
+    Description: Check if NumpySlicesDataset produces an empty output_shapes
+    Expectation: The dataset is processed as expected
+    """
     logger.info("running test_numpy_slice_empty_output_shape")
     dataset = de.NumpySlicesDataset([[[1, 2], [3, 4]]], column_names=["col1"])
     dataset = dataset.batch(batch_size=3, drop_remainder=True)

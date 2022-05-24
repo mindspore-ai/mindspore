@@ -63,7 +63,9 @@ def visualize_dataset(images, labels):
 
 def test_usps_content_check():
     """
-    Validate USPSDataset image readings
+    Feature: USPSDataset
+    Description: Test USPSDataset image readings with content check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test USPSDataset Op with content check")
     train_data = ds.USPSDataset(DATA_DIR, "train", num_samples=10, shuffle=False)
@@ -103,7 +105,9 @@ def test_usps_content_check():
 
 def test_usps_basic():
     """
-    Validate USPSDataset
+    Feature: USPSDataset
+    Description: Test USPSDataset basic usage
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test USPSDataset Op")
 
@@ -163,7 +167,9 @@ def test_usps_basic():
 
 def test_usps_exception():
     """
-    Test error cases for USPSDataset
+    Feature: USPSDataset
+    Description: Test error cases for USPSDataset
+    Expectation: Correct error is thrown as expected
     """
     error_msg_3 = "num_shards is specified and currently requires shard_id as well"
     with pytest.raises(RuntimeError, match=error_msg_3):
@@ -228,7 +234,9 @@ def test_usps_exception():
 
 def test_usps_visualize(plot=False):
     """
-    Visualize USPSDataset results
+    Feature: USPSDataset
+    Description: Test USPSDataset visualized results
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test USPSDataset visualization")
 
@@ -269,7 +277,9 @@ def test_usps_visualize(plot=False):
 
 def test_usps_usage():
     """
-    Validate USPSDataset image readings
+    Feature: USPSDataset
+    Description: Test USPSDataset image readings with usage flag
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test USPSDataset usage flag")
 

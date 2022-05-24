@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
 """
 Testing the resize with bounding boxes op in DE
 """
-import numpy as np
 import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
-from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
-    save_and_check_md5
+from util import save_and_check_md5, helper_perform_ops_bbox, helper_test_visual_bbox, helper_invalid_bounding_box_test
 
 GENERATE_GOLDEN = False
 
@@ -33,114 +31,85 @@ DATA_DIR_2 = ["../data/dataset/testCOCO/train/",
 
 def test_resize_with_bbox_op_voc_c(plot_vis=False):
     """
-    Prints images and bboxes side by side with and without ResizeWithBBox Op applied
-    testing with VOC dataset
+    Feature: ResizeWithBBox op
+    Description: Prints images and bboxes side by side with and without ResizeWithBBox Op applied with VOCDataset
+    Expectation: Passes the md5 check test
     """
     logger.info("test_resize_with_bbox_op_voc_c")
 
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc1 = ds.VOCDataset(
+        DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc2 = ds.VOCDataset(
+        DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = vision.ResizeWithBBox(100)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"])
+    data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
 
     filename = "resize_with_bbox_op_01_c_voc_result.npz"
-    save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5(data_voc2, filename, generate_golden=GENERATE_GOLDEN)
 
-    unaugSamp, augSamp = [], []
-
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                          dataVoc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
-
-    if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp)
+    helper_test_visual_bbox(plot_vis, data_voc1, data_voc2)
 
 
 def test_resize_with_bbox_op_coco_c(plot_vis=False):
     """
-    Prints images and bboxes side by side with and without ResizeWithBBox Op applied,
-    tests with MD5 check, expected to pass
-    Testing with COCO dataset
+    Feature: ResizeWithBBox op
+    Description: Prints images and bboxes side by side with and without ResizeWithBBox Op applied with CocoDataset
+    Expectation: Prints images and bboxes side by side
     """
     logger.info("test_resize_with_bbox_op_coco_c")
 
     # Load dataset
-    dataCOCO1 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
-                               decode=True, shuffle=False)
+    data_coco1 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
+                                decode=True, shuffle=False)
 
-    dataCOCO2 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
-                               decode=True, shuffle=False)
+    data_coco2 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
+                                decode=True, shuffle=False)
 
     test_op = vision.ResizeWithBBox(200)
 
     # map to apply ops
 
-    dataCOCO2 = dataCOCO2.map(operations=[test_op], input_columns=["image", "bbox"],
-                              output_columns=["image", "bbox"],
-                              column_order=["image", "bbox"])
+    data_coco2 = helper_perform_ops_bbox(data_coco2, test_op)
 
     filename = "resize_with_bbox_op_01_c_coco_result.npz"
-    save_and_check_md5(dataCOCO2, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5(data_coco2, filename, generate_golden=GENERATE_GOLDEN)
 
-    unaugSamp, augSamp = [], []
-
-    for unAug, Aug in zip(dataCOCO1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                          dataCOCO2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
-
-    if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp, annot_name="bbox")
+    helper_test_visual_bbox(plot_vis, data_coco1, data_coco2)
 
 
 def test_resize_with_bbox_op_edge_c(plot_vis=False):
     """
-    Prints images and bboxes side by side with and without ResizeWithBBox Op applied,
-    applied on dynamically generated edge case, expected to pass. edge case is when bounding
-    box has dimensions as the image itself.
+    Feature: ResizeWithBBox op
+    Description: Prints images and bboxes side by side with and without ResizeWithBBox Op applied on edge case
+    Expectation: Passes the dynamically generated edge case when bounding box has dimensions as the image itself
     """
     logger.info("test_resize_with_bbox_op_edge_c")
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc1 = ds.VOCDataset(
+        DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc2 = ds.VOCDataset(
+        DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
     test_op = vision.ResizeWithBBox(500)
 
     # maps to convert data into valid edge case data
-    dataVoc1 = dataVoc1.map(
-        operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))],
-        input_columns=["image", "bbox"],
-        output_columns=["image", "bbox"],
-        column_order=["image", "bbox"])
+    data_voc1 = helper_perform_ops_bbox(data_voc1, None, True)
 
-    dataVoc2 = dataVoc2.map(
-        operations=[lambda img, bboxes: (img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)),
-                    test_op], input_columns=["image", "bbox"],
-        output_columns=["image", "bbox"],
-        column_order=["image", "bbox"])
+    data_voc2 = helper_perform_ops_bbox(data_voc2, test_op, True)
 
-    unaugSamp, augSamp = [], []
-
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                          dataVoc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
-
-    if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp)
+    helper_test_visual_bbox(plot_vis, data_voc1, data_voc2)
 
 
 def test_resize_with_bbox_op_invalid_c():
     """
-    Test ResizeWithBBox Op on invalid constructor parameters, expected to raise ValueError
+    Feature: ResizeWithBBox op
+    Description: Test ResizeWithBBox Op on invalid constructor parameters
+    Expectation: Error is raised as expected
     """
     logger.info("test_resize_with_bbox_op_invalid_c")
 
@@ -155,24 +124,21 @@ def test_resize_with_bbox_op_invalid_c():
 
 def test_resize_with_bbox_op_bad_c():
     """
-    Tests ResizeWithBBox Op with invalid bounding boxes, expected to catch multiple errors
+    Feature: ResizeWithBBox op
+    Description: Test ResizeWithBBox Op with invalid bounding boxes
+    Expectation: Multiple errors are expected to be caught
     """
     logger.info("test_resize_with_bbox_op_bad_c")
     test_op = vision.ResizeWithBBox((200, 300))
 
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.NegativeXY, "negative value")
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
+    helper_invalid_bounding_box_test(DATA_DIR, test_op)
 
 
 def test_resize_with_bbox_op_params_outside_of_interpolation_dict():
     """
-    Test passing in an invalid key for interpolation
+    Feature: ResizeWithBBox op
+    Description: Test ResizeWithBBox Op by passing an invalid key for interpolation
+    Expectation: Error is raised as expected
     """
     logger.info("test_resize_with_bbox_op_params_outside_of_interpolation_dict")
 

@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ GENERATE_GOLDEN = False
 
 def test_2ops_repeat_shuffle():
     """
-    Test Repeat then Shuffle
+    Feature: 2ops (shuffle, repeat, batch)
+    Description: Test repeat then shuffle
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Repeat then Shuffle")
     # define parameters
@@ -43,7 +45,9 @@ def test_2ops_repeat_shuffle():
 
 def test_2ops_shuffle_repeat():
     """
-    Test Shuffle then Repeat
+    Feature: 2ops (shuffle, repeat, batch)
+    Description: Test shuffle then repeat
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Shuffle then Repeat")
     # define parameters
@@ -63,7 +67,9 @@ def test_2ops_shuffle_repeat():
 
 def test_2ops_repeat_batch():
     """
-    Test Repeat then Batch
+    Feature: 2ops (shuffle, repeat, batch)
+    Description: Test repeat then batch
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Repeat then Batch")
     # define parameters
@@ -81,7 +87,9 @@ def test_2ops_repeat_batch():
 
 def test_2ops_batch_repeat():
     """
-    Test Batch then Repeat
+    Feature: 2ops (shuffle, repeat, batch)
+    Description: Test batch then repeat
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Batch then Repeat")
     # define parameters
@@ -99,7 +107,9 @@ def test_2ops_batch_repeat():
 
 def test_2ops_batch_shuffle():
     """
-    Test Batch then Shuffle
+    Feature: 2ops (shuffle, repeat, batch)
+    Description: Test batch then shuffle
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Batch then Shuffle")
     # define parameters
@@ -119,7 +129,9 @@ def test_2ops_batch_shuffle():
 
 def test_2ops_shuffle_batch():
     """
-    Test Shuffle then Batch
+    Feature: 2ops (shuffle, repeat, batch)
+    Description: Test shuffle then batch
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Shuffle then Batch")
     # define parameters

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,13 +19,17 @@ from mindspore.dataset.utils.browse_dataset import imshow_det_bbox
 
 
 def test_browse_dataset():
-    '''
-    Demo code of visualization on VOC detection dataset.
-    '''
+    """
+    Feature: Browse dataset
+    Description: Demo code of visualization on VOC detection dataset
+    Expectation: Runs successfully
+    """
     # init
     DATA_DIR = "../data/dataset/testVOC2012_2"
-    dataset = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True, num_samples=3)
-    dataset_iter = dataset.create_dict_iterator(output_numpy=True, num_epochs=1)
+    dataset = ds.VOCDataset(DATA_DIR, task="Detection",
+                            usage="train", shuffle=False, decode=True, num_samples=3)
+    dataset_iter = dataset.create_dict_iterator(
+        output_numpy=True, num_epochs=1)
 
     # iter
     for index, data in enumerate(dataset_iter):

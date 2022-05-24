@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_detect_pitch_frequency_eager():
-    """ mindspore eager mode normal testcase:detect_pitch_frequency op"""
+    """
+    Feature: DetectPitchFrequency op
+    Description: Test DetectPitchFrequency op in eager mode with valid input
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[2.716064453125e-03, 6.34765625e-03, 9.246826171875e-03, 1.0894775390625e-02,
                           1.1383056640625e-02, 1.1566162109375e-02, 1.3946533203125e-02, 1.55029296875e-02,
@@ -50,7 +54,11 @@ def test_detect_pitch_frequency_eager():
 
 
 def test_detect_pitch_frequency_pipeline():
-    """ mindspore pipeline mode normal testcase:detect_pitch_frequency op"""
+    """
+    Feature: DetectPitchFrequency op
+    Description: Test DetectPitchFrequency op in pipeline mode with valid input
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[0.716064453125e-03, 5.34765625e-03, 6.246826171875e-03, 2.0894775390625e-02,
                           7.1383056640625e-02], [4.1566162109375e-02, 1.3946533203125e-02, 3.55029296875e-02,
@@ -70,6 +78,11 @@ def test_detect_pitch_frequency_pipeline():
 
 
 def test_detect_pitch_frequency_invalid_input():
+    """
+    Feature: DetectPitchFrequency op
+    Description: Test DetectPitchFrequency op with invalid input
+    Expectation: Correct error and message are thrown as expected
+    """
     def test_invalid_input(test_name, sample_rate, frame_time, win_length, freq_low, freq_high, error, error_msg):
         logger.info(
             "Test DetectPitchFrequency with bad input: {0}".format(test_name))

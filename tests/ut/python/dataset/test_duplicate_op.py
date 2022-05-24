@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,11 @@ def compare(array):
 
 
 def test_duplicate_basics():
+    """
+    Feature: Duplicate op
+    Description: Test Duplicate op basic usage
+    Expectation: Output is equal to the expected output
+    """
     compare([1, 2, 3])
     compare([b"1", b"2", b"3"])
 

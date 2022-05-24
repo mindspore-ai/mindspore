@@ -65,7 +65,9 @@ def visualize_dataset(images, captions):
 
 def test_sbu_content_check():
     """
-    Validate SBUDataset image readings
+    Feature: SBUDataset
+    Description: Test SBUDataset image readings with content check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test SBUDataset Op with content check")
     dataset = ds.SBUDataset(DATA_DIR, decode=True, num_samples=50, shuffle=False)
@@ -81,7 +83,9 @@ def test_sbu_content_check():
 
 def test_sbu_case():
     """
-    Validate SBUDataset cases
+    Feature: SBUDataset
+    Description: Test SBUDataset cases
+    Expectation: The dataset is processed as expected
     """
     dataset = ds.SBUDataset(DATA_DIR, decode=True)
 
@@ -114,7 +118,9 @@ def test_sbu_case():
 
 def test_sbu_basic():
     """
-    Validate SBUDataset
+    Feature: SBUDataset
+    Description: Test SBUDataset basic usage
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test SBUDataset Op")
 
@@ -162,7 +168,9 @@ def test_sbu_basic():
 
 def test_sbu_sequential_sampler():
     """
-    Test SBUDataset with SequentialSampler
+    Feature: SBUDataset
+    Description: Test SBUDataset wtih SequentialSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test SBUDataset Op with SequentialSampler")
     num_samples = 5
@@ -180,7 +188,9 @@ def test_sbu_sequential_sampler():
 
 def test_sbu_exception():
     """
-    Test error cases for SBUDataset
+    Feature: SBUDataset
+    Description: Test error cases for SBUDataset
+    Expectation: Correct error is thrown as expected
     """
     logger.info("Test error cases for SBUDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -250,7 +260,9 @@ def test_sbu_exception():
 
 def test_sbu_visualize(plot=False):
     """
-    Visualize SBUDataset results
+    Feature: SBUDataset
+    Description: Test SBUDataset visualized results
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test SBUDataset visualization")
 
@@ -274,7 +286,9 @@ def test_sbu_visualize(plot=False):
 
 def test_sbu_decode():
     """
-    Validate SBUDataset image readings
+    Feature: SBUDataset
+    Description: Test SBUDataset image readings with decode flag
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test SBUDataset decode flag")
 

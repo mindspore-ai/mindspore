@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ GENERATE_GOLDEN = False
 
 def test_random_crop_decode_resize_op(plot=False):
     """
-    Test RandomCropDecodeResize op
+    Feature: RandomCropDecodeResize op
+    Description: Test RandomCropDecodeResize op basic usgae
+    Expectation: Passes the mse equality check
     """
     logger.info("test_random_decode_resize_op")
 
@@ -62,7 +64,9 @@ def test_random_crop_decode_resize_op(plot=False):
 
 def test_random_crop_decode_resize_md5():
     """
-    Test RandomCropDecodeResize with md5 check
+    Feature: RandomCropDecodeResize op
+    Description: Test RandomCropDecodeResize op with md5 check
+    Expectation: Passes the md5 check test
     """
     logger.info("Test RandomCropDecodeResize with md5 check")
     original_seed = config_get_set_seed(10)

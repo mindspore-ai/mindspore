@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ DATASET_DIR_TASK_JSON = "../data/dataset/testCityscapesData/cityscapes/testTaskJ
 
 def test_cityscapes_basic(plot=False):
     """
-    Validate CityscapesDataset basic read.
+    Feature: CityscapesDataset
+    Description: Test basic read on CityscapesDataset
+    Expectation: The dataset is processed as expected
     """
     task = "color"         # instance semantic polygon color
     quality_mode = "fine"  # fine coarse
@@ -67,7 +69,9 @@ def visualize_dataset(images, labels, task):
 
 def test_cityscapes_polygon():
     """
-    Validate CityscapesDataset with task of polygon.
+    Feature: CityscapesDataset
+    Description: Test CityscapesDataset with task of polygon
+    Expectation: The dataset is processed as expected
     """
     usage = "train"
     quality_mode = "fine"
@@ -86,7 +90,9 @@ def test_cityscapes_polygon():
 
 def test_cityscapes_basic_func():
     """
-    Validate CityscapesDataset with repeat, batch and getter operation.
+    Feature: CityscapesDataset
+    Description: Test CityscapesDataset with repeat, batch, and getter operation
+    Expectation: The dataset is processed as expected
     """
     # case 1: test num_samples
     usage = "train"
@@ -143,7 +149,9 @@ def test_cityscapes_basic_func():
 
 def test_cityscapes_sequential_sampler():
     """
-    Test CityscapesDataset with SequentialSampler.
+    Feature: CityscapesDataset
+    Description: Test CityscapesDataset with SequentialSampler
+    Expectation: The dataset is processed as expected
     """
     task = "color"
     quality_mode = "fine"
@@ -164,7 +172,9 @@ def test_cityscapes_sequential_sampler():
 
 def test_cityscapes_exception():
     """
-    Validate CityscapesDataset with error parameters.
+    Feature: CityscapesDataset
+    Description: Test CityscapesDataset with wrong parameters
+    Expectation: Throw correct error as expected
     """
     task = "color"
     quality_mode = "fine"
@@ -241,7 +251,9 @@ def test_cityscapes_exception():
 
 def test_cityscapes_param():
     """
-    Validate CityscapesDataset with basic parameters like usage, quality_mode and task.
+    Feature: CityscapesDataset
+    Description: Test CityscapesDataset with basic parameters like usage, quality_mode, and task
+    Expectation: The dataset is processed or error is raised as expected
     """
     def test_config(usage="train", quality_mode="fine", task="color"):
         try:

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_func_deemph_biquad_eager():
-    """ mindspore eager mode normal testcase:deemph_biquad op"""
+    """
+    Feature: DeemphBiquad op
+    Description: Test DeemphBiquad op in eager mode with valid input
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float64)
     # Expect waveform
@@ -44,7 +48,11 @@ def test_func_deemph_biquad_eager():
 
 
 def test_func_deemph_biquad_pipeline():
-    """ mindspore pipeline mode normal testcase:deemph_biquad op"""
+    """
+    Feature: DeemphBiquad op
+    Description: Test DeemphBiquad op in pipeline mode with valid input
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[0.2, 0.2, 0.3], [0.4, 0.5, 0.7]], dtype=np.float64)
     # Expect waveform
@@ -53,14 +61,21 @@ def test_func_deemph_biquad_pipeline():
     dataset = ds.NumpySlicesDataset(waveform, ["audio"], shuffle=False)
     deemph_biquad_op = audio.DeemphBiquad(48000)
     # Filtered waveform by deemphbiquad
-    dataset = dataset.map(input_columns=["audio"], operations=deemph_biquad_op, num_parallel_workers=8)
+    dataset = dataset.map(
+        input_columns=["audio"], operations=deemph_biquad_op, num_parallel_workers=8)
     i = 0
     for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        count_unequal_element(expect_waveform[i, :], data['audio'], 0.0001, 0.0001)
+        count_unequal_element(
+            expect_waveform[i, :], data['audio'], 0.0001, 0.0001)
         i += 1
 
 
 def test_invalid_input_all():
+    """
+    Feature: DeemphBiquad op
+    Description: Test DeemphBiquad op with invalid input
+    Expectation: Correct error and message are thrown as expected
+    """
     waveform = np.random.rand(2, 1000)
 
     def test_invalid_input(test_name, sample_rate, error, error_msg):

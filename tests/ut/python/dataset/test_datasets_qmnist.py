@@ -94,7 +94,9 @@ def visualize_dataset(images, labels):
 
 def test_qmnist_content_check():
     """
-    Validate QMnistDataset image readings
+    Feature: QMnistDataset
+    Description: Test QMnistDataset image readings with content check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test QMnistDataset Op with content check")
     for usage in ["train", "test", "nist", "all"]:
@@ -128,7 +130,9 @@ def test_qmnist_content_check():
 
 def test_qmnist_basic():
     """
-    Validate QMnistDataset
+    Feature: QMnistDataset
+    Description: Test QMnistDataset basic usage
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test QMnistDataset Op")
 
@@ -185,7 +189,9 @@ def test_qmnist_basic():
 
 def test_qmnist_pk_sampler():
     """
-    Test QMnistDataset with PKSampler
+    Feature: QMnistDataset
+    Description: Test QMnistDataset with PKSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test QMnistDataset Op with PKSampler")
     golden = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -202,7 +208,9 @@ def test_qmnist_pk_sampler():
 
 def test_qmnist_sequential_sampler():
     """
-    Test QMnistDataset with SequentialSampler
+    Feature: QMnistDataset
+    Description: Test QMnistDataset with SequentialSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test QMnistDataset Op with SequentialSampler")
     num_samples = 10
@@ -221,7 +229,9 @@ def test_qmnist_sequential_sampler():
 
 def test_qmnist_exception():
     """
-    Test error cases for QMnistDataset
+    Feature: QMnistDataset
+    Description: Test error cases for QMnistDataset
+    Expectation: Correct error is thrown as expected
     """
     logger.info("Test error cases for MnistDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -284,7 +294,9 @@ def test_qmnist_exception():
 
 def test_qmnist_visualize(plot=False):
     """
-    Visualize QMnistDataset results
+    Feature: QMnistDataset
+    Description: Test QMnistDataset visualized results
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test QMnistDataset visualization")
 
@@ -308,7 +320,9 @@ def test_qmnist_visualize(plot=False):
 
 def test_qmnist_usage():
     """
-    Validate QMnistDataset image readings
+    Feature: QMnistDataset
+    Description: Test QMnistDataset image readings with usage flag
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test QMnistDataset usage flag")
 

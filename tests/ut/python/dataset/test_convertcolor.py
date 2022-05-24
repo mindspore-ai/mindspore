@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,10 +37,12 @@ def convert_color(ms_convert, cv_convert, plot=False):
     decode_op = c_vision.Decode()
     convertcolor_op = c_vision.ConvertColor(ms_convert)
     dataset1 = dataset1.map(operations=decode_op, input_columns=["image"])
-    dataset1 = dataset1.map(operations=convertcolor_op, input_columns=["image"])
+    dataset1 = dataset1.map(operations=convertcolor_op,
+                            input_columns=["image"])
 
     # Second dataset
-    dataset2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    dataset2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     dataset2 = dataset2.map(operations=decode_op, input_columns=["image"])
 
     num_iter = 0
@@ -61,7 +63,9 @@ def convert_color(ms_convert, cv_convert, plot=False):
 
 def test_convertcolor_pipeline(plot=False):
     """
-    Test ConvertColor of transforms
+    Feature: ConvertColor op
+    Description: Test ConvertColor op in pipeline mode
+    Expectation: Passes the equality test
     """
     logger.info("test_convertcolor_pipeline")
     convert_color(mode.ConvertMode.COLOR_BGR2GRAY, cv2.COLOR_BGR2GRAY, plot)
@@ -71,7 +75,9 @@ def test_convertcolor_pipeline(plot=False):
 
 def test_convertcolor_eager():
     """
-    Test ConvertColor with eager mode
+    Feature: ConvertColor op
+    Description: Test ConvertColor op in eager mode
+    Expectation: Passes the equality test
     """
     logger.info("test_convertcolor")
     img = cv2.imread(IMAGE_FILE)

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd.
+# Copyright 2020-2022 Huawei Technologies Co., Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ DATA_DIR = "../data/dataset/testCelebAData/"
 
 def test_celeba_dataset_label():
     """
-    Test CelebA dataset with labels
+    Feature: CelebADataset
+    Description: Test CelebA dataset with labels
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test CelebA labels")
     data = ds.CelebADataset(DATA_DIR, shuffle=False, decode=True)
@@ -48,7 +50,9 @@ def test_celeba_dataset_label():
 
 def test_celeba_dataset_op():
     """
-    Test CelebA dataset with decode
+    Feature: CelebADataset
+    Description: Test CelebA dataset with decode
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test CelebA with decode")
     data = ds.CelebADataset(DATA_DIR, decode=True, num_shards=1, shard_id=0)
@@ -71,7 +75,9 @@ def test_celeba_dataset_op():
 
 def test_celeba_dataset_ext():
     """
-    Test CelebA dataset with extension
+    Feature: CelebADataset
+    Description: Test CelebA dataset with extension
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test CelebA extension option")
     ext = [".JPEG"]
@@ -95,7 +101,9 @@ def test_celeba_dataset_ext():
 
 def test_celeba_dataset_distribute():
     """
-    Test CelebA dataset with distributed options
+    Feature: CelebADataset
+    Description: Test CelebA dataset with distributed options
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test CelebA with sharding")
     data = ds.CelebADataset(DATA_DIR, decode=True, num_shards=2, shard_id=0)
@@ -111,7 +119,9 @@ def test_celeba_dataset_distribute():
 
 def test_celeba_get_dataset_size():
     """
-    Test CelebA dataset get dataset size
+    Feature: CelebADataset
+    Description: Test CelebA dataset get_dataset_size
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test CelebA get dataset size")
     data = ds.CelebADataset(DATA_DIR, shuffle=False, decode=True)
@@ -133,7 +143,9 @@ def test_celeba_get_dataset_size():
 
 def test_celeba_dataset_exception_file_path():
     """
-    Test CelebA dataset with bad file path
+    Feature: CelebADataset
+    Description: Test CelebA dataset with bad file path
+    Expectation: Error is raised as expected
     """
     logger.info("Test CelebA with bad file path")
     def exception_func(item):
@@ -170,7 +182,9 @@ def test_celeba_dataset_exception_file_path():
 
 def test_celeba_sampler_exception():
     """
-    Test CelebA with bad sampler input
+    Feature: CelebADataset
+    Description: Test CelebA dataset with bad sampler input
+    Expectation: Error is raised as expected
     """
     logger.info("Test CelebA with bad sampler input")
     try:

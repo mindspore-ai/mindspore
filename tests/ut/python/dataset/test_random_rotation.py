@@ -34,7 +34,9 @@ GENERATE_GOLDEN = False
 
 def test_random_rotation_op_c(plot=False):
     """
-    Test RandomRotation in c++ transformations op
+    Feature: RandomRotation op
+    Description: Test RandomRotation in Cpp transformations op
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_rotation_op_c")
 
@@ -70,7 +72,7 @@ def test_random_rotation_op_c(plot=False):
 def test_random_rotation_op_c_area():
     """
     Feature: RandomRotation op
-    Description: Test RandomRotation in C++ transformations op with Interpolation AREA
+    Description: Test RandomRotation in Cpp transformations op with Interpolation AREA
     Expectation: Number of returned data rows is correct
     """
     logger.info("test_random_rotation_op_c_area")
@@ -104,7 +106,9 @@ def test_random_rotation_op_c_area():
 
 def test_random_rotation_op_py(plot=False):
     """
-    Test RandomRotation in python transformations op
+    Feature: RandomRotation op
+    Description: Test RandomRotation in Python transformations op
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_rotation_op_py")
 
@@ -141,7 +145,9 @@ def test_random_rotation_op_py(plot=False):
 
 def test_random_rotation_op_py_ANTIALIAS():
     """
-    Test RandomRotation in python transformations op
+    Feature: RandomRotation op
+    Description: Test RandomRotation in Python transformations op with resample=Inter.ANTIALIAS
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_rotation_op_py_ANTIALIAS")
 
@@ -163,7 +169,9 @@ def test_random_rotation_op_py_ANTIALIAS():
 
 def test_random_rotation_expand():
     """
-    Test RandomRotation op
+    Feature: RandomRotation op
+    Description: Test RandomRotation with expand
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_rotation_op")
 
@@ -184,7 +192,9 @@ def test_random_rotation_expand():
 
 def test_random_rotation_md5():
     """
-    Test RandomRotation with md5 check
+    Feature: RandomRotation op
+    Description: Test RandomRotation with md5 check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomRotation with md5 check")
     original_seed = config_get_set_seed(5)
@@ -225,7 +235,9 @@ def test_random_rotation_md5():
 
 def test_rotation_diff(plot=False):
     """
-    Test RandomRotation op
+    Feature: RandomRotation op
+    Description: Test RandomRotation difference between Python and Cpp transformations op
+    Expectation: Both datasets are processed the same as expected
     """
     logger.info("test_random_rotation_op")
 

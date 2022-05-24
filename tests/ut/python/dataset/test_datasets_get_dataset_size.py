@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ TEXT_DATA_FILE = "../data/dataset/testTextFileDataset/1.txt"
 
 
 def test_imagenet_rawdata_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on ImageFolderDataset
+    Expectation: The dataset is processed as expected
+    """
     ds_total = ds.ImageFolderDataset(IMAGENET_RAWDATA_DIR)
     assert ds_total.get_dataset_size() == 6
 
@@ -51,6 +56,11 @@ def test_imagenet_rawdata_dataset_size():
 
 
 def test_imagenet_tf_file_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on TFRecordDataset
+    Expectation: The dataset is processed as expected
+    """
     ds_total = ds.TFRecordDataset(IMAGENET_TFFILE_DIR)
     assert ds_total.get_dataset_size() == 12
 
@@ -77,6 +87,11 @@ def test_imagenet_tf_file_dataset_size():
 
 
 def test_mnist_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on MnistDataset
+    Expectation: The dataset is processed as expected
+    """
     ds_total = ds.MnistDataset(MNIST_DATA_DIR)
     assert ds_total.get_dataset_size() == 10000
 
@@ -99,6 +114,11 @@ def test_mnist_dataset_size():
 
 
 def test_mind_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on MindDataset
+    Expectation: The dataset is processed as expected
+    """
     dataset = ds.MindDataset(MIND_CV_FILE_NAME + "0")
     assert dataset.get_dataset_size() == 20
 
@@ -107,6 +127,11 @@ def test_mind_dataset_size():
 
 
 def test_manifest_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on ManifestDataset
+    Expectation: The dataset is processed as expected
+    """
     ds_total = ds.ManifestDataset(MANIFEST_DATA_FILE)
     assert ds_total.get_dataset_size() == 4
 
@@ -121,6 +146,11 @@ def test_manifest_dataset_size():
 
 
 def test_cifar10_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on Cifar10Dataset
+    Expectation: The dataset is processed as expected
+    """
     ds_total = ds.Cifar10Dataset(CIFAR10_DATA_DIR)
     assert ds_total.get_dataset_size() == 10000
 
@@ -147,6 +177,11 @@ def test_cifar10_dataset_size():
 
 
 def test_cifar100_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on Cifar100Dataset
+    Expectation: The dataset is processed as expected
+    """
     ds_total = ds.Cifar100Dataset(CIFAR100_DATA_DIR)
     assert ds_total.get_dataset_size() == 10000
 
@@ -167,6 +202,11 @@ def test_cifar100_dataset_size():
 
 
 def test_voc_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on VOCDataset
+    Expectation: The dataset is processed as expected
+    """
     dataset = ds.VOCDataset(VOC_DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
     assert dataset.get_dataset_size() == 10
 
@@ -176,6 +216,11 @@ def test_voc_dataset_size():
 
 
 def test_coco_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on CocoDataset
+    Expectation: The dataset is processed as expected
+    """
     dataset = ds.CocoDataset(COCO_DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection",
                              decode=True, shuffle=False)
     assert dataset.get_dataset_size() == 6
@@ -186,6 +231,11 @@ def test_coco_dataset_size():
 
 
 def test_celeba_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on CelebADataset
+    Expectation: The dataset is processed as expected
+    """
     dataset = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True)
     assert dataset.get_dataset_size() == 4
 
@@ -194,6 +244,11 @@ def test_celeba_dataset_size():
 
 
 def test_clue_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on CLUEDataset
+    Expectation: The dataset is processed as expected
+    """
     dataset = ds.CLUEDataset(CLUE_FILE, task='AFQMC', usage='train', shuffle=False)
     assert dataset.get_dataset_size() == 3
 
@@ -202,6 +257,11 @@ def test_clue_dataset_size():
 
 
 def test_csv_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on CSVDataset
+    Expectation: The dataset is processed as expected
+    """
     dataset = ds.CSVDataset(CSV_FILE, column_defaults=["0", 0, 0.0, "0"], column_names=['1', '2', '3', '4'],
                             shuffle=False)
     assert dataset.get_dataset_size() == 3
@@ -212,6 +272,11 @@ def test_csv_dataset_size():
 
 
 def test_text_file_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on TextFileDataset
+    Expectation: The dataset is processed as expected
+    """
     dataset = ds.TextFileDataset(TEXT_DATA_FILE)
     assert dataset.get_dataset_size() == 3
 
@@ -220,11 +285,21 @@ def test_text_file_dataset_size():
 
 
 def test_padded_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size on PaddedDataset
+    Expectation: The dataset is processed as expected
+    """
     dataset = ds.PaddedDataset([{"data": [1, 2, 3]}, {"data": [1, 0, 1]}])
     assert dataset.get_dataset_size() == 2
 
 
 def test_pipeline_get_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size for TFRecordDataset that is pipelined
+    Expectation: The dataset is processed as expected
+    """
     dataset = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, SCHEMA_FILE, columns_list=["image"], shuffle=False)
     assert dataset.get_dataset_size() == 12
 
@@ -249,6 +324,11 @@ def test_pipeline_get_dataset_size():
 
 
 def test_distributed_get_dataset_size():
+    """
+    Feature: get_dataset_size
+    Description: Test get_dataset_size for MnistDataset with num_samples, num_shards, and shard_id
+    Expectation: The dataset is processed as expected
+    """
     # Test get dataset size when num_samples is less than num_per_shard (10000/4 = 2500)
     dataset1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=2000, num_shards=4, shard_id=0)
     assert dataset1.get_dataset_size() == 2000

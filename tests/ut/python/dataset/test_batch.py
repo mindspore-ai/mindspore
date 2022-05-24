@@ -23,7 +23,9 @@ GENERATE_GOLDEN = False
 
 def test_batch_01():
     """
-    Test batch: batch_size>1, drop_remainder=True, no remainder exists
+    Feature: Batch op
+    Description: Test Batch op with batch_size>1, drop_remainder=True, and no remainder exists
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_01")
     # define parameters
@@ -41,7 +43,9 @@ def test_batch_01():
 
 def test_batch_02():
     """
-    Test batch: batch_size>1, drop_remainder=True, remainder exists
+    Feature: Batch op
+    Description: Test Batch op with batch_size>1, drop_remainder=True, and remainder exists
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_02")
     # define parameters
@@ -59,7 +63,9 @@ def test_batch_02():
 
 def test_batch_03():
     """
-    Test batch: batch_size>1, drop_remainder=False, no remainder exists
+    Feature: Batch op
+    Description: Test Batch op with batch_size>1, drop_remainder=False, and no remainder exists
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_03")
     # define parameters
@@ -77,7 +83,9 @@ def test_batch_03():
 
 def test_batch_04():
     """
-    Test batch: batch_size>1, drop_remainder=False, remainder exists
+    Feature: Batch op
+    Description: Test Batch op with batch_size>1, drop_remainder=False, and remainder exists
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_04")
     # define parameters
@@ -95,7 +103,9 @@ def test_batch_04():
 
 def test_batch_05():
     """
-    Test batch: batch_size=1 (minimum valid size), drop_remainder default
+    Feature: Batch op
+    Description: Test Batch op with batch_size=1 (minimum valid size), drop_remainder default
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_05")
     # define parameters
@@ -112,7 +122,9 @@ def test_batch_05():
 
 def test_batch_06():
     """
-    Test batch: batch_size = number-of-rows-in-dataset, drop_remainder=True, reorder params
+    Feature: Batch op
+    Description: Test Batch op with batch_size = number-of-rows-in-dataset, drop_remainder=True, reorder parameters
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_06")
     # define parameters
@@ -130,7 +142,9 @@ def test_batch_06():
 
 def test_batch_07():
     """
-    Test batch: num_parallel_workers>1, drop_remainder=False, reorder params
+    Feature: Batch op
+    Description: Test Batch op with num_parallel_workers>1, drop_remainder=False, reorder parameters
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_07")
     # define parameters
@@ -150,7 +164,9 @@ def test_batch_07():
 
 def test_batch_08():
     """
-    Test batch: num_parallel_workers=1, drop_remainder default
+    Feature: Batch op
+    Description: Test Batch op with num_parallel_workers=1, drop_remainder default
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_08")
     # define parameters
@@ -168,7 +184,9 @@ def test_batch_08():
 
 def test_batch_09():
     """
-    Test batch: batch_size > number-of-rows-in-dataset, drop_remainder=False
+    Feature: Batch op
+    Description: Test Batch op with batch_size > number-of-rows-in-dataset, drop_remainder=False
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_09")
     # define parameters
@@ -186,7 +204,9 @@ def test_batch_09():
 
 def test_batch_10():
     """
-    Test batch: batch_size > number-of-rows-in-dataset, drop_remainder=True
+    Feature: Batch op
+    Description: Test Batch op with batch_size > number-of-rows-in-dataset, drop_remainder=True
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_10")
     # define parameters
@@ -204,7 +224,9 @@ def test_batch_10():
 
 def test_batch_11():
     """
-    Test batch: batch_size=1 and dataset-size=1
+    Feature: Batch op
+    Description: Test Batch op with batch_size=1 and dataset-size=1
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_11")
     # define parameters
@@ -223,7 +245,9 @@ def test_batch_11():
 
 def test_batch_12():
     """
-    Test batch: batch_size boolean value True, treated as valid value 1
+    Feature: Batch op
+    Description: Test Batch op with batch_size boolean value True, treated as valid value 1
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_batch_12")
     # define parameters
@@ -259,14 +283,17 @@ def test_batch_13():
 
 def test_batch_exception_01():
     """
-    Test batch exception: num_parallel_workers=0
+    Feature: Batch op
+    Description: Test Batch op with num_parallel_workers=0
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_01")
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
     try:
-        data1 = data1.batch(batch_size=2, drop_remainder=True, num_parallel_workers=0)
+        data1 = data1.batch(
+            batch_size=2, drop_remainder=True, num_parallel_workers=0)
         sum([1 for _ in data1])
 
     except Exception as e:
@@ -276,7 +303,9 @@ def test_batch_exception_01():
 
 def test_batch_exception_02():
     """
-    Test batch exception: num_parallel_workers<0
+    Feature: Batch op
+    Description: Test Batch op with num_parallel_workers<0
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_02")
 
@@ -293,7 +322,9 @@ def test_batch_exception_02():
 
 def test_batch_exception_03():
     """
-    Test batch exception: batch_size=0
+    Feature: Batch op
+    Description: Test Batch op with batch_size=0
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_03")
 
@@ -310,7 +341,9 @@ def test_batch_exception_03():
 
 def test_batch_exception_04():
     """
-    Test batch exception: batch_size<0
+    Feature: Batch op
+    Description: Test Batch op with batch_size<0
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_04")
 
@@ -327,7 +360,9 @@ def test_batch_exception_04():
 
 def test_batch_exception_05():
     """
-    Test batch exception: batch_size boolean value False, treated as invalid value 0
+    Feature: Batch op
+    Description: Test Batch op boolean value False, treated as invalid value 0
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_05")
 
@@ -344,7 +379,9 @@ def test_batch_exception_05():
 
 def test_batch_exception_07():
     """
-    Test batch exception: drop_remainder wrong type
+    Feature: Batch op
+    Description: Test Batch op with drop_remainder wrong type
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_07")
 
@@ -361,7 +398,9 @@ def test_batch_exception_07():
 
 def test_batch_exception_08():
     """
-    Test batch exception: num_parallel_workers wrong type
+    Feature: Batch op
+    Description: Test Batch op with num_parallel_workers wrong type
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_08")
 
@@ -378,7 +417,9 @@ def test_batch_exception_08():
 
 def test_batch_exception_09():
     """
-    Test batch exception: Missing mandatory batch_size
+    Feature: Batch op
+    Description: Test Batch op with missing mandatory batch_size
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_09")
 
@@ -395,7 +436,9 @@ def test_batch_exception_09():
 
 def test_batch_exception_10():
     """
-    Test batch exception: num_parallel_workers>>1
+    Feature: Batch op
+    Description: Test Batch op with num_parallel_workers>>1
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_10")
 
@@ -412,7 +455,9 @@ def test_batch_exception_10():
 
 def test_batch_exception_11():
     """
-    Test batch exception: wrong input order, num_parallel_workers wrongly used as drop_remainder
+    Feature: Batch op
+    Description: Test Batch op with wrong input order, num_parallel_workers wrongly used as drop_remainder
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_11")
     # define parameters
@@ -432,7 +477,9 @@ def test_batch_exception_11():
 
 def test_batch_exception_12():
     """
-    Test batch exception: wrong input order, drop_remainder wrongly used as batch_size
+    Feature: Batch op
+    Description: Test Batch op with wrong input order, drop_remainder wrongly used as batch_size
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_12")
     # define parameters
@@ -452,7 +499,9 @@ def test_batch_exception_12():
 
 def test_batch_exception_13():
     """
-    Test batch exception: invalid input parameter
+    Feature: Batch op
+    Description: Test Batch op with invalid input parameter
+    Expectation: Exception is raised as expected
     """
     logger.info("test_batch_exception_13")
     # define parameters
@@ -471,7 +520,9 @@ def test_batch_exception_13():
 
 def test_batch_exception_14():
     """
-    Test per_batch_map and input column name
+    Feature: Batch op
+    Description: Test per_batch_map and input column name
+    Expectation: Error is raised as expected
     """
     logger.info("test_batch_exception_14")
     batch_size = 2
@@ -480,12 +531,15 @@ def test_batch_exception_14():
     try:
         _ = data1.batch(batch_size=batch_size, input_columns=input_columns)
     except ValueError as e:
-        assert "per_batch_map and input_columns need to be passed in together." in str(e)
+        assert "per_batch_map and input_columns need to be passed in together." in str(
+            e)
 
 
 def test_batch_exception_15():
     """
-    Test batch_size = int32 max value + 1
+    Feature: Batch op
+    Description: Test Batch op with batch_size = int32 max value + 1
+    Expectation: Error is raised as expected
     """
     logger.info("test_batch_exception_15")
     batch_size = 2147483647 + 1

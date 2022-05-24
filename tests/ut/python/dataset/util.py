@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import PIL
 # import jsbeautifier
 import mindspore.dataset as ds
 from mindspore import log as logger
+import mindspore.dataset.vision.transforms as vision
 
 # These are list of plot title in different visualize modes
 PLOT_TITLE_DICT = {
@@ -73,11 +74,13 @@ def _compare_to_golden_dict(golden_ref_dir, result_dict, check_pillow_version=Fa
         try:
             np.testing.assert_equal(result_dict, dict(golden_array))
         except AssertionError:
-            logger.warning("Results from Pillow >= 9.0.0 is incompatibale with Pillow < 9.0.0, need more validation.")
+            logger.warning(
+                "Results from Pillow >= 9.0.0 is incompatibale with Pillow < 9.0.0, need more validation.")
     else:
         # Beware: If error, PILLOW version of golden results may be incompatible with current PILLOW version
         np.testing.assert_equal(result_dict, dict(golden_array),
                                 'Items are not equal and problem may be due to PILLOW version incompatibility')
+
 
 def _save_json(filename, parameters, result_dict):
     """
@@ -99,7 +102,8 @@ def save_and_check_dict(data, filename, generate_golden=False):
     num_iter = 0
     result_dict = {}
 
-    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+    # each data is a dictionary
+    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for data_key in list(item.keys()):
             if data_key not in result_dict:
                 result_dict[data_key] = []
@@ -109,7 +113,8 @@ def save_and_check_dict(data, filename, generate_golden=False):
     logger.info("Number of data in ds1: {}".format(num_iter))
 
     cur_dir = os.path.dirname(os.path.realpath(__file__))
-    golden_ref_dir = os.path.join(cur_dir, "../../data/dataset", 'golden', filename)
+    golden_ref_dir = os.path.join(
+        cur_dir, "../../data/dataset", 'golden', filename)
     if generate_golden:
         # Save as the golden result
         _save_golden_dict(cur_dir, golden_ref_dir, result_dict)
@@ -130,18 +135,21 @@ def save_and_check_md5(data, filename, generate_golden=False):
     num_iter = 0
     result_dict = {}
 
-    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+    # each data is a dictionary
+    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         for data_key in list(item.keys()):
             if data_key not in result_dict:
                 result_dict[data_key] = []
             # save the md5 as numpy array
-            result_dict[data_key].append(np.frombuffer(hashlib.md5(item[data_key]).digest(), dtype='<f4'))
+            result_dict.get(data_key).append(np.frombuffer(
+                hashlib.md5(item[data_key]).digest(), dtype='<f4'))
         num_iter += 1
 
     logger.info("Number of data in ds1: {}".format(num_iter))
 
     cur_dir = os.path.dirname(os.path.realpath(__file__))
-    golden_ref_dir = os.path.join(cur_dir, "../../data/dataset", 'golden', filename)
+    golden_ref_dir = os.path.join(
+        cur_dir, "../../data/dataset", 'golden', filename)
     if generate_golden:
         # Save as the golden result
         _save_golden_dict(cur_dir, golden_ref_dir, result_dict)
@@ -157,7 +165,8 @@ def save_and_check_tuple(data, parameters, filename, generate_golden=False):
     num_iter = 0
     result_dict = {}
 
-    for item in data.create_tuple_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+    # each data is a dictionary
+    for item in data.create_tuple_iterator(num_epochs=1, output_numpy=True):
         for data_key, _ in enumerate(item):
             if data_key not in result_dict:
                 result_dict[data_key] = []
@@ -167,7 +176,8 @@ def save_and_check_tuple(data, parameters, filename, generate_golden=False):
     logger.info("Number of data in data1: {}".format(num_iter))
 
     cur_dir = os.path.dirname(os.path.realpath(__file__))
-    golden_ref_dir = os.path.join(cur_dir, "../../data/dataset", 'golden', filename)
+    golden_ref_dir = os.path.join(
+        cur_dir, "../../data/dataset", 'golden', filename)
     if generate_golden:
         # Save as the golden result
         _save_golden(cur_dir, golden_ref_dir, result_dict)
@@ -186,7 +196,8 @@ def config_get_set_seed(seed_new):
     """
     seed_original = ds.config.get_seed()
     ds.config.set_seed(seed_new)
-    logger.info("seed: original = {}  new = {} ".format(seed_original, seed_new))
+    logger.info("seed: original = {}  new = {} ".format(
+        seed_original, seed_new))
     return seed_original
 
 
@@ -327,7 +338,8 @@ def visualize_with_bounding_boxes(orig, aug, annot_name="bbox", plot_rows=3):
     if len(orig) != len(aug) or not orig:
         return
 
-    batch_size = int(len(orig) / plot_rows)  # creates batches of images to plot together
+    # creates batches of images to plot together
+    batch_size = int(len(orig) / plot_rows)
     split_point = batch_size * plot_rows
 
     orig, aug = np.array(orig), np.array(aug)
@@ -336,7 +348,8 @@ def visualize_with_bounding_boxes(orig, aug, annot_name="bbox", plot_rows=3):
         # Create batches of required size and add remainder to last batch
         orig = np.split(orig[:split_point], batch_size) + (
             [orig[split_point:]] if (split_point < orig.shape[0]) else [])  # check to avoid empty arrays being added
-        aug = np.split(aug[:split_point], batch_size) + ([aug[split_point:]] if (split_point < aug.shape[0]) else [])
+        aug = np.split(aug[:split_point], batch_size) + \
+            ([aug[split_point:]] if (split_point < aug.shape[0]) else [])
     else:
         orig = [orig]
         aug = [aug]
@@ -351,7 +364,8 @@ def visualize_with_bounding_boxes(orig, aug, annot_name="bbox", plot_rows=3):
         for x, (data_a, data_b) in enumerate(zip(all_data[0], all_data[1])):
             cur_ix = base_ix + x
             # select plotting axes based on number of image rows on plot - else case when 1 row
-            (ax_a, ax_b) = (axs[x, 0], axs[x, 1]) if (cur_plot > 1) else (axs[0], axs[1])
+            (ax_a, ax_b) = (axs[x, 0], axs[x, 1]) if (
+                cur_plot > 1) else (axs[0], axs[1])
 
             ax_a.imshow(data_a["image"])
             add_bounding_boxes(ax_a, data_a[annot_name])
@@ -361,10 +375,126 @@ def visualize_with_bounding_boxes(orig, aug, annot_name="bbox", plot_rows=3):
             add_bounding_boxes(ax_b, data_b[annot_name])
             ax_b.title.set_text("Augmented" + str(cur_ix + 1))
 
-            logger.info("Original **\n{} : {}".format(str(cur_ix + 1), data_a[annot_name]))
-            logger.info("Augmented **\n{} : {}\n".format(str(cur_ix + 1), data_b[annot_name]))
+            logger.info(
+                "Original **\n{} : {}".format(str(cur_ix + 1), data_a[annot_name]))
+            logger.info(
+                "Augmented **\n{} : {}\n".format(str(cur_ix + 1), data_b[annot_name]))
 
         plt.show()
+
+
+def helper_perform_ops_bbox(data, test_op=None, edge_case=False):
+    """
+    Transform data based on test_op and whether it is an edge_case
+    :param data: original images
+    :param test_op: random operation being tested
+    :param edge_case: boolean whether edge_case is being augmented (note only for bbox data type edge case)
+    :return: transformed data
+    """
+    if edge_case:
+        if test_op:
+            return data.map(
+                operations=[lambda img, bboxes: (
+                    img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype)), test_op],
+                input_columns=["image", "bbox"],
+                output_columns=["image", "bbox"],
+                column_order=["image", "bbox"])
+        return data.map(
+            operations=[lambda img, bboxes: (
+                img, np.array([[0, 0, img.shape[1], img.shape[0]]]).astype(bboxes.dtype))],
+            input_columns=["image", "bbox"],
+            output_columns=["image", "bbox"],
+            column_order=["image", "bbox"])
+
+    if test_op:
+        return data.map(operations=[test_op], input_columns=["image", "bbox"],
+                        output_columns=[
+                            "image", "bbox"],
+                        column_order=["image", "bbox"])
+
+    return data
+
+
+def helper_perform_ops_bbox_edgecase_float(data):
+    """
+    Transform data based an edge_case covering full image with float32
+    :param data: original images
+    :return: transformed data
+    """
+    return data.map(operations=lambda img, bbox: (img, np.array(
+        [[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)),
+                    input_columns=["image", "bbox"],
+                    output_columns=["image", "bbox"],
+                    column_order=["image", "bbox"])
+
+
+def helper_test_visual_bbox(plot_vis, data1, data2):
+    """
+    Create list based of original images and bboxes with and without aug
+    :param plot_vis: boolean based on the test argument
+    :param data1: data without test_op
+    :param data2: data with test_op
+    :return: None
+    """
+    unaug_samp, aug_samp = [], []
+
+    for un_aug, aug in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                           data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        unaug_samp.append(un_aug)
+        aug_samp.append(aug)
+
+    if plot_vis:
+        visualize_with_bounding_boxes(unaug_samp, aug_samp)
+
+
+def helper_random_op_pipeline(data_dir, additional_op=None):
+    """
+    Create an original/transformed images at data_dir based on additional_op
+    :param data_dir: directory of the data
+    :param additional_op: additional operation to be pipelined, if None, then gives original images
+    :return: transformed image
+    """
+    data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+    transforms = [vision.Decode(), vision.Resize(size=[224, 224])]
+    if additional_op:
+        transforms.append(additional_op)
+    ds_transformed = data_set.map(operations=transforms, input_columns="image")
+    ds_transformed = ds_transformed.batch(512)
+
+    for idx, (image, _) in enumerate(ds_transformed):
+        if idx == 0:
+            images_transformed = image.asnumpy()
+        else:
+            images_transformed = np.append(images_transformed,
+                                           image.asnumpy(),
+                                           axis=0)
+
+    return images_transformed
+
+
+def helper_invalid_bounding_box_test(data_dir, test_op):
+    """
+    Helper function for invalid bounding box test by calling check_bad_bbox
+    :param data_dir: directory of the data
+    :param test_op: operation that is being tested
+    :return: None
+    """
+    data = ds.VOCDataset(
+        data_dir, task="Detection", usage="train", shuffle=False, decode=True)
+    check_bad_bbox(data, test_op, InvalidBBoxType.WidthOverflow,
+                   "bounding boxes is out of bounds of the image")
+    data = ds.VOCDataset(
+        data_dir, task="Detection", usage="train", shuffle=False, decode=True)
+    check_bad_bbox(data, test_op, InvalidBBoxType.HeightOverflow,
+                   "bounding boxes is out of bounds of the image")
+    data = ds.VOCDataset(
+        data_dir, task="Detection", usage="train", shuffle=False, decode=True)
+    check_bad_bbox(data, test_op,
+                   InvalidBBoxType.NegativeXY, "negative value")
+    data = ds.VOCDataset(
+        data_dir, task="Detection", usage="train", shuffle=False, decode=True)
+    check_bad_bbox(data, test_op,
+                   InvalidBBoxType.WrongShape, "4 features")
 
 
 class InvalidBBoxType(Enum):

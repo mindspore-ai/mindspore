@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,9 @@ def generator_29():
 
 def test_concat_01():
     """
-    Test concat: test concat 2 datasets that have the same column name and data type
+    Feature: Concat op
+    Description: Test Concat op with 2 datasets that have the same column name and data type
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_01")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -66,7 +68,9 @@ def test_concat_01():
 
 def test_concat_02():
     """
-    Test concat: test concat 2 datasets using concat operation not "+" operation
+    Feature: Concat op
+    Description: Test Concat op with 2 datasets using concat operation not "+" operation
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_02")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -85,7 +89,9 @@ def test_concat_02():
 
 def test_concat_03():
     """
-    Test concat: test concat dataset that has different column
+    Feature: Concat op
+    Description: Test Concat op with dataset that has different column
+    Expectation: Error is raised as expected
     """
     logger.info("test_concat_03")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -103,7 +109,9 @@ def test_concat_03():
 
 def test_concat_04():
     """
-    Test concat: test concat dataset that has different rank
+    Feature: Concat op
+    Description: Test Concat op with dataset that has different rank
+    Expectation: Error is raised as expected
     """
     logger.info("test_concat_04")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -122,7 +130,9 @@ def test_concat_04():
 
 def test_concat_05():
     """
-    Test concat: test concat dataset that has different data type
+    Feature: Concat op
+    Description: Test Concat op with dataset that has different data type
+    Expectation: Error is raised as expected
     """
     logger.info("test_concat_05")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -143,7 +153,9 @@ def test_concat_05():
 
 def test_concat_06():
     """
-    Test concat: test concat multi datasets in one time
+    Feature: Concat op
+    Description: Test Concat op with multiple datasets in one time
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_06")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -163,7 +175,9 @@ def test_concat_06():
 
 def test_concat_07():
     """
-    Test concat: test concat one dataset with multi datasets (datasets list)
+    Feature: Concat op
+    Description: Test Concat op one dataset with multiple datasets (datasets list)
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_07")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -184,7 +198,9 @@ def test_concat_07():
 
 def test_concat_08():
     """
-    Test concat: test concat 2 datasets, and then repeat
+    Feature: Concat op
+    Description: Test Concat op with 2 datasets and then repeat
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_08")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -204,7 +220,9 @@ def test_concat_08():
 
 def test_concat_09():
     """
-    Test concat: test concat 2 datasets, both of them have been repeat before
+    Feature: Concat op
+    Description: Test Concat op with 2 datasets where both of them have been repeat before
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_09")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -226,7 +244,9 @@ def test_concat_09():
 
 def test_concat_10():
     """
-    Test concat: test concat 2 datasets, one of them have repeat before
+    Feature: Concat op
+    Description: Test Concat op with 2 datasets but one of them have repeat before
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_10")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -247,7 +267,9 @@ def test_concat_10():
 
 def test_concat_11():
     """
-    Test concat: test dataset batch then concat
+    Feature: Concat op
+    Description: Test dataset batch then concat
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_11")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -270,7 +292,9 @@ def test_concat_11():
 
 def test_concat_12():
     """
-    Test concat: test dataset concat then shuffle
+    Feature: Concat op
+    Description: Test dataset concat then shuffle
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_12")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -294,7 +318,9 @@ def test_concat_12():
 
 def test_concat_13():
     """
-    Test concat: test dataset batch then shuffle and concat
+    Feature: Concat op
+    Description: Test dataset batch then shuffle and concat
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_13")
     data1 = ds.GeneratorDataset(generator, ["col1"])
@@ -322,7 +348,9 @@ def test_concat_13():
 
 def test_concat_14():
     """
-    Test concat: Testing concat on two different source datasets with different dataset operations.
+    Feature: Concat op
+    Description: Test Concat op on two different source datasets with different dataset operations
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_14")
     data_dir = "../data/dataset/testPK/data"
@@ -356,11 +384,14 @@ def test_concat_14():
 
 def test_concat_15():
     """
-    Test concat: create dataset with different format of dataset file, and then concat
+    Feature: Concat op
+    Description: Create dataset with different format of dataset file, and then concat
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_15")
     data_dir = "../data/dataset/testPK/data"
-    data_dir2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    data_dir2 = [
+        "../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 
     data1 = ds.ImageFolderDataset(data_dir)
     data2 = ds.TFRecordDataset(data_dir2, columns_list=["image"])
@@ -373,11 +404,14 @@ def test_concat_15():
 
 def test_concat_16():
     """
-    Test concat: test get_dataset_size on nested concats
+    Feature: Concat op
+    Description: Test get_dataset_size on nested concats
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_16")
     data_dir = "../data/dataset/testPK/data"
-    data_dir2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    data_dir2 = [
+        "../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 
     data1 = ds.ImageFolderDataset(data_dir)
     data2 = ds.TFRecordDataset(data_dir2, columns_list=["image"])
@@ -397,7 +431,9 @@ def test_concat_16():
 
 def test_concat_17():
     """
-    Test concat: test get_dataset_size on nested concats (with sampler)
+    Feature: Concat op
+    Description: Test get_dataset_size on nested concats (with sampler)
+    Expectation: Output passes the equality test
     """
     logger.info("test_concat_17")
 
@@ -416,7 +452,8 @@ def test_concat_17():
     counter = 0
 
     for i in range(shard_num):
-        distributed_sampler = ds.DistributedSampler(num_shards=shard_num, shard_id=i, shuffle=False, num_samples=None)
+        distributed_sampler = ds.DistributedSampler(
+            num_shards=shard_num, shard_id=i, shuffle=False, num_samples=None)
         data7.use_sampler(distributed_sampler)
         iter_counter = 0
         for _ in data7.create_dict_iterator(num_epochs=1, output_numpy=True):

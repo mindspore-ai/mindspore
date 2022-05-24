@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ GENERATE_GOLDEN = False
 
 def test_random_erasing_op(plot=False):
     """
-    Test RandomErasing and CutOut
+    Feature: RandomErasing op
+    Description: Test RandomErasing and CutOut
+    Expectation: Passes the test
     """
     logger.info("test_random_erasing")
 
@@ -76,7 +78,9 @@ def test_random_erasing_op(plot=False):
 
 def test_random_erasing_md5():
     """
-    Test RandomErasing with md5 check
+    Feature: RandomErasing op
+    Description: Test RandomErasing with md5 check
+    Expectation: Passes the md5 check
     """
     logger.info("Test RandomErasing with md5 check")
     original_seed = config_get_set_seed(5)

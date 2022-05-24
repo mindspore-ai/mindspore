@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import mindspore.dataset.transforms.transforms as data_trans
 
 def test_eager_concatenate():
     """
-    Test Concatenate op is callable
+    Feature: Concatenate op
+    Description: Test eager support for Concatenate op with valid input
+    Expectation: Output is equal to the expected output
     """
     prepend_tensor = np.array([1.4, 2., 3., 4., 4.5], dtype=np.float)
     append_tensor = np.array([9., 10.3, 11., 12.], dtype=np.float)
@@ -35,7 +37,9 @@ def test_eager_concatenate():
 
 def test_eager_fill():
     """
-    Test Fill op is callable
+    Feature: Fill op
+    Description: Test eager support for Fill op with valid input
+    Expectation: Output is equal to the expected output
     """
     fill_op = data_trans.Fill(3)
     expected = np.array([3, 3, 3, 3])
@@ -44,7 +48,9 @@ def test_eager_fill():
 
 def test_eager_mask():
     """
-    Test Mask op is callable
+    Feature: Mask op
+    Description: Test eager support for Mask op with valid input
+    Expectation: Output is equal to the expected output
     """
     mask_op = data_trans.Mask(data_trans.Relational.EQ, 3, mstype.bool_)
     expected = np.array([False, False, True, False, False])
@@ -53,7 +59,9 @@ def test_eager_mask():
 
 def test_eager_pad_end():
     """
-    Test PadEnd op is callable
+    Feature: PadEnd op
+    Description: Test eager support for PadEnd op with valid input
+    Expectation: Output is equal to the expected output
     """
     pad_end_op = data_trans.PadEnd([3], -1)
     expected = np.array([1, 2, -1])
@@ -62,7 +70,9 @@ def test_eager_pad_end():
 
 def test_eager_slice():
     """
-    Test Slice op is callable
+    Feature: Slice op
+    Description: Test eager support for Slice op with valid input
+    Expectation: Output is equal to the expected output
     """
     indexing = [[0], [0, 3]]
     slice_op = data_trans.Slice(*indexing)

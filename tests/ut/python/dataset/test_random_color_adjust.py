@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -116,7 +116,9 @@ def util_test_random_color_adjust_op(brightness=(1, 1), contrast=(1, 1), saturat
 
 def test_random_color_adjust_op_brightness(plot=False):
     """
-    Test RandomColorAdjust op for brightness
+    Feature: RandomColorAdjust op
+    Description: Test RandomColorAdjust op for brightness
+    Expectation: The dataset is processed as expected
     """
 
     logger.info("test_random_color_adjust_op_brightness")
@@ -126,7 +128,9 @@ def test_random_color_adjust_op_brightness(plot=False):
 
 def test_random_color_adjust_op_brightness_error():
     """
-    Test RandomColorAdjust error message with brightness input in case of grayscale image
+    Feature: RandomColorAdjust op
+    Description: Test RandomColorAdjust op for brightness input in case of grayscale image
+    Expectation: Correct error is thrown and error message is printed as expected
     """
 
     logger.info("test_random_color_adjust_op_brightness_error")
@@ -136,7 +140,9 @@ def test_random_color_adjust_op_brightness_error():
 
 def test_random_color_adjust_op_contrast(plot=False):
     """
-    Test RandomColorAdjust op for contrast
+    Feature: RandomColorAdjust op
+    Description: Test RandomColorAdjust op for contrast
+    Expectation: The dataset is processed as expected
     """
 
     logger.info("test_random_color_adjust_op_contrast")
@@ -146,7 +152,9 @@ def test_random_color_adjust_op_contrast(plot=False):
 
 def test_random_color_adjust_op_contrast_error():
     """
-    Test RandomColorAdjust error message with contrast input in case of grayscale image
+    Feature: RandomColorAdjust op
+    Description: Test RandomColorAdjust op for contrast input in case of grayscale image
+    Expectation: Correct error is thrown and error message is printed as expected
     """
 
     logger.info("test_random_color_adjust_op_contrast_error")
@@ -156,7 +164,9 @@ def test_random_color_adjust_op_contrast_error():
 
 def test_random_color_adjust_op_saturation(plot=False):
     """
-    Test RandomColorAdjust op for saturation
+    Feature: RandomColorAdjust op
+    Description: Test RandomColorAdjust op for saturation
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_color_adjust_op_saturation")
 
@@ -165,7 +175,9 @@ def test_random_color_adjust_op_saturation(plot=False):
 
 def test_random_color_adjust_op_saturation_error():
     """
-    Test RandomColorAdjust error message with saturation input in case of grayscale image
+    Feature: RandomColorAdjust op
+    Description: Test RandomColorAdjust op for saturation input in case of grayscale image
+    Expectation: Correct error is thrown and error message is printed as expected
     """
 
     logger.info("test_random_color_adjust_op_saturation_error")
@@ -175,7 +187,9 @@ def test_random_color_adjust_op_saturation_error():
 
 def test_random_color_adjust_op_hue(plot=False):
     """
-    Test RandomColorAdjust op for hue
+    Feature: RandomColorAdjust op
+    Description: Test RandomColorAdjust op for hue
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_color_adjust_op_hue")
 
@@ -184,7 +198,9 @@ def test_random_color_adjust_op_hue(plot=False):
 
 def test_random_color_adjust_op_hue_error():
     """
-    Test RandomColorAdjust error message with hue input in case of grayscale image
+    Feature: RandomColorAdjust op
+    Description: Test RandomColorAdjust op for hue input in case of grayscale image
+    Expectation: Correct error is thrown and error message is printed as expected
     """
 
     logger.info("test_random_color_adjust_op_hue_error")
@@ -194,7 +210,9 @@ def test_random_color_adjust_op_hue_error():
 
 def test_random_color_adjust_md5():
     """
-    Test RandomColorAdjust with md5 check
+    Feature: RandomColorAdjust op
+    Description: Test RandomColorAdjust op with md5 check
+    Expectation: Passes the md5 check test
     """
     logger.info("Test RandomColorAdjust with md5 check")
     original_seed = config_get_set_seed(10)

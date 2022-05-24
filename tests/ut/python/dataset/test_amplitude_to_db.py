@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,13 +48,18 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
     """ Precision calculation formula  """
     if np.any(np.isnan(data_expected)):
-        assert np.allclose(data_me, data_expected, rtol, atol, equal_nan=equal_nan)
+        assert np.allclose(data_me, data_expected, rtol,
+                           atol, equal_nan=equal_nan)
     elif not np.allclose(data_me, data_expected, rtol, atol, equal_nan=equal_nan):
         count_unequal_element(data_expected, data_me, rtol, atol)
 
 
 def test_func_amplitude_to_db_eager():
-    """ mindspore eager mode normal testcase:amplitude_to_db op"""
+    """
+    Feature: AmplitudeToDB op
+    Description: Test AmplitudeToDB op in eager mode with valid input
+    Expectation: Output is equal to the expected output
+    """
 
     logger.info("check amplitude_to_db op output")
     ndarr_in = np.array([[[[-0.2197528, 0.3821656]]],
@@ -80,15 +85,21 @@ def test_func_amplitude_to_db_eager():
 
 
 def test_func_amplitude_to_db_pipeline():
-    """ mindspore pipeline mode normal testcase:amplitude_to_db op"""
+    """
+    Feature: AmplitudeToDB op
+    Description: Test AmplitudeToDB op in pipeline mode with valid input
+    Expectation: Output is equal to the expected output
+    """
 
     logger.info("test AmplitudeToDB op with default value")
     generator = gen([CHANNEL, FREQ, TIME])
 
-    data1 = ds.GeneratorDataset(source=generator, column_names=["multi_dimensional_data"])
+    data1 = ds.GeneratorDataset(source=generator, column_names=[
+        "multi_dimensional_data"])
 
     transforms = [c_audio.AmplitudeToDB()]
-    data1 = data1.map(operations=transforms, input_columns=["multi_dimensional_data"])
+    data1 = data1.map(operations=transforms, input_columns=[
+        "multi_dimensional_data"])
 
     for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         out_put = item["multi_dimensional_data"]
@@ -96,10 +107,16 @@ def test_func_amplitude_to_db_pipeline():
 
 
 def test_amplitude_to_db_invalid_input():
+    """
+    Feature: AmplitudeToDB op
+    Description: Test AmplitudeToDB op with invalid input
+    Expectation: Correct error and message are thrown as expected
+    """
     def test_invalid_input(test_name, stype, ref_value, amin, top_db, error, error_msg):
         logger.info("Test AmplitudeToDB with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:
-            c_audio.AmplitudeToDB(stype=stype, ref_value=ref_value, amin=amin, top_db=top_db)
+            c_audio.AmplitudeToDB(
+                stype=stype, ref_value=ref_value, amin=amin, top_db=top_db)
         assert error_msg in str(error_info.value)
 
     test_invalid_input("invalid stype parameter value", "test", 1.0, 1e-10, 80.0, TypeError,

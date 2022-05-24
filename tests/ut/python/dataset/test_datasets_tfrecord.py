@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,11 @@ GENERATE_GOLDEN = False
 
 
 def test_tfrecord_shape():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset shape
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_shape")
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchemaRank0.json"
     ds1 = ds.TFRecordDataset(FILES, schema_file)
@@ -46,6 +51,11 @@ def test_tfrecord_shape():
 
 
 def test_tfrecord_read_all_dataset():
+    """
+    Feature: TFRecordDataset
+    Description: Test read all TFRecordDataset
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_read_all_dataset")
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchemaNoRow.json"
     ds1 = ds.TFRecordDataset(FILES, schema_file)
@@ -57,6 +67,11 @@ def test_tfrecord_read_all_dataset():
 
 
 def test_tfrecord_num_samples():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with num_samples parameter
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_num_samples")
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema7Rows.json"
     ds1 = ds.TFRecordDataset(FILES, schema_file, num_samples=8)
@@ -68,6 +83,11 @@ def test_tfrecord_num_samples():
 
 
 def test_tfrecord_num_samples2():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with no num_samples parameter
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_num_samples2")
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema7Rows.json"
     ds1 = ds.TFRecordDataset(FILES, schema_file)
@@ -79,6 +99,11 @@ def test_tfrecord_num_samples2():
 
 
 def test_tfrecord_shape2():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset output_shape
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_shape2")
     ds1 = ds.TFRecordDataset(FILES, SCHEMA_FILE)
     ds1 = ds1.batch(2)
@@ -87,6 +112,11 @@ def test_tfrecord_shape2():
 
 
 def test_tfrecord_files_basic():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset files_basic
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_files_basic")
 
     data = ds.TFRecordDataset(FILES, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
@@ -95,6 +125,11 @@ def test_tfrecord_files_basic():
 
 
 def test_tfrecord_no_schema():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with no schema
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_no_schema")
 
     data = ds.TFRecordDataset(FILES, shuffle=ds.Shuffle.FILES)
@@ -103,6 +138,11 @@ def test_tfrecord_no_schema():
 
 
 def test_tfrecord_pad():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with pad bytes10
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_pad")
 
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchemaPadBytes10.json"
@@ -112,6 +152,11 @@ def test_tfrecord_pad():
 
 
 def test_tfrecord_read_files():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset read files
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_read_files")
     pattern = DATASET_ROOT + "/test.data"
     data = ds.TFRecordDataset(pattern, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
@@ -135,6 +180,11 @@ def test_tfrecord_read_files():
 
 
 def test_tfrecord_multi_files():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset multi files
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_multi_files")
     data1 = ds.TFRecordDataset(DATA_FILES2, SCHEMA_FILE2, shuffle=False)
     data1 = data1.repeat(1)
@@ -146,6 +196,11 @@ def test_tfrecord_multi_files():
 
 
 def test_tfrecord_schema():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset schema
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_schema")
     schema = ds.Schema()
     schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
@@ -166,6 +221,11 @@ def test_tfrecord_schema():
 
 
 def test_tfrecord_shuffle():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset shuffle
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_shuffle")
     ds.config.set_seed(1)
     data1 = ds.TFRecordDataset(FILES, schema=SCHEMA_FILE, shuffle=ds.Shuffle.GLOBAL)
@@ -178,6 +238,11 @@ def test_tfrecord_shuffle():
 
 
 def test_tfrecord_shard():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset shard
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_shard")
     tf_files = ["../data/dataset/tf_file_dataset/test1.data", "../data/dataset/tf_file_dataset/test2.data",
                 "../data/dataset/tf_file_dataset/test3.data", "../data/dataset/tf_file_dataset/test4.data"]
@@ -207,6 +272,11 @@ def test_tfrecord_shard():
 
 
 def test_tfrecord_shard_equal_rows():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset shard with equal rows
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_shard_equal_rows")
     tf_files = ["../data/dataset/tf_file_dataset/test1.data", "../data/dataset/tf_file_dataset/test2.data",
                 "../data/dataset/tf_file_dataset/test3.data", "../data/dataset/tf_file_dataset/test4.data"]
@@ -236,6 +306,11 @@ def test_tfrecord_shard_equal_rows():
 
 
 def test_tfrecord_no_schema_columns_list():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with no schema and columns_list
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_no_schema_columns_list")
     data = ds.TFRecordDataset(FILES, shuffle=False, columns_list=["col_sint16"])
     row = data.create_dict_iterator(num_epochs=1, output_numpy=True).__next__()
@@ -247,6 +322,11 @@ def test_tfrecord_no_schema_columns_list():
 
 
 def test_tfrecord_schema_columns_list():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with schema and columns_list
+    Expectation: The dataset is processed as expected
+    """
     logger.info("test_tfrecord_schema_columns_list")
     schema = ds.Schema()
     schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
@@ -267,6 +347,11 @@ def test_tfrecord_schema_columns_list():
 
 
 def test_tfrecord_invalid_files():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with invalid files
+    Expectation: Correct error is thrown as expected
+    """
     logger.info("test_tfrecord_invalid_files")
     valid_file = "../data/dataset/testTFTestAllTypes/test.data"
     invalid_file = "../data/dataset/testTFTestAllTypes/invalidFile.txt"
@@ -295,6 +380,11 @@ def test_tfrecord_invalid_files():
 
 
 def test_tf_wrong_schema():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with wrong schema
+    Expectation: Error is raised as expected
+    """
     logger.info("test_tf_wrong_schema")
     files = ["../data/dataset/test_tf_file_3_images2/train-0000-of-0001.data"]
     schema = ds.Schema()
@@ -313,6 +403,11 @@ def test_tf_wrong_schema():
 
 
 def test_tfrecord_invalid_columns():
+    """
+    Feature: TFRecordDataset
+    Description: Test TFRecordDataset with invalid columns
+    Expectation: Error is raised as expected
+    """
     logger.info("test_tfrecord_columns_list")
     invalid_columns_list = ["not_exist"]
     data = ds.TFRecordDataset(FILES, columns_list=invalid_columns_list)
@@ -322,6 +417,11 @@ def test_tfrecord_invalid_columns():
 
 
 def test_tfrecord_exception():
+    """
+    Feature: TFRecordDataset
+    Description: Test error cases for TFRecordDataset
+    Expectation: Correct error is thrown as expected
+    """
     logger.info("test_tfrecord_exception")
 
     def exception_func(item):
