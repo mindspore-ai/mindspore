@@ -71,6 +71,7 @@ parser.add_argument("--upload_compress_type", type=str, default="NO_COMPRESS",
 parser.add_argument("--upload_sparse_rate", type=float, default=0.5)
 parser.add_argument("--download_compress_type", type=str, default="NO_COMPRESS",
                     choices=["NO_COMPRESS", "QUANT"])
+parser.add_argument("--node_id", type=str, default="")
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -115,6 +116,7 @@ global_iteration_time_window = args.global_iteration_time_window
 upload_compress_type = args.upload_compress_type
 upload_sparse_rate = args.upload_sparse_rate
 download_compress_type = args.download_compress_type
+node_id = args.node_id
 
 if local_server_num == -1:
     local_server_num = server_num
@@ -122,11 +124,12 @@ if local_server_num == -1:
 assert local_server_num <= server_num, "The local server number should not be bigger than total server number."
 
 for i in range(local_server_num):
-    os.environ['MS_NODE_ID'] = str(i)
+    ms_node_id = node_id + str(i)
+    os.environ['MS_NODE_ID'] = ms_node_id
     cmd_server = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && "
-    cmd_server += "rm -rf ${execute_path}/server_" + str(i) + "/ &&"
-    cmd_server += "mkdir ${execute_path}/server_" + str(i) + "/ &&"
-    cmd_server += "cd ${execute_path}/server_" + str(i) + "/ || exit && export GLOG_v=1 &&"
+    cmd_server += "rm -rf ${execute_path}/server_" + ms_node_id + "/ &&"
+    cmd_server += "mkdir ${execute_path}/server_" + ms_node_id + "/ &&"
+    cmd_server += "cd ${execute_path}/server_" + ms_node_id + "/ || exit && export GLOG_v=1 &&"
     cmd_server += "python ${self_path}/../cloud_train.py"
     cmd_server += " --device_target=" + device_target
     cmd_server += " --server_mode=" + server_mode
