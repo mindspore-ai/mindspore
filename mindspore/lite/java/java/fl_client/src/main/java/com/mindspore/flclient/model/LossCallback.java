@@ -55,7 +55,6 @@ public class LossCallback extends Callback {
             logger.severe("cannot find loss tensor");
             return Status.NULLPTR;
         }
-        logger.info("loss name:" + tensor.get().tensorName());
         float loss = tensor.get().getFloatData()[0];
         if (Float.isNaN(loss)) {
             logger.severe("loss is nan");
