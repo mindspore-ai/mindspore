@@ -249,6 +249,50 @@ def get_scatter_add_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.TensorScatterAdd)
+@vmap_rules_getters.register(P.TensorScatterSub)
+@vmap_rules_getters.register(P.TensorScatterMul)
+def get_tensor_scatter_op_vmap_rule(prim, axis_size):
+    """
+    VmapRule for `TensorScatter*` operations, such as `TensorScatterMul`.
+    tensor_scatter_func_map: TensorScatter implementation for recording TensorScatter class operators.
+    """
+    tensor_scatter_func_map = {
+        "TensorScatterAdd": P.TensorScatterAdd,
+        "TensorScatterSub": P.TensorScatterSub,
+        "TensorScatterMul": P.TensorScatterMul,
+    }
+    if isinstance(prim, str):
+        prim_name = prim
+        prim = Primitive(prim)
+    else:
+        prim_name = prim.name
+
+    tensor_scatter_func = tensor_scatter_func_map.get(prim_name)()
+    concat = P.Concat(-1)
+
+    def vmap_rule(input_x_bdim, indices_bdim, updates_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, input_x_bdim, indices_bdim, updates_bdim)
+        if is_all_none:
+            return result
+        input_x, input_x_dim = input_x_bdim
+        indices, indices_dim = indices_bdim
+        updates, updates_dim = updates_bdim
+
+        input_x = _bdim_at_front(input_x, input_x_dim, axis_size)
+        indices = _bdim_at_front(indices, indices_dim, axis_size)
+        updates = _bdim_at_front(updates, updates_dim, axis_size)
+
+        indices_shape = F.shape(indices)
+        prefix_shape, expand_shape = _get_prefix_expand_shape(indices_shape)
+        prefix = P.BroadcastTo(prefix_shape)(F.reshape(mnp.arange(axis_size), expand_shape))
+        indices = concat((prefix, indices))
+        out = tensor_scatter_func(input_x, indices, updates)
+        return out, input_x_dim
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.Fill)
 def get_fill_vmap_rule(prim, axis_size):
     """VmapRule for `Fill` operation."""
