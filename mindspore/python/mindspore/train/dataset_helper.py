@@ -186,7 +186,7 @@ def connect_network_with_dataset(network, dataset_helper):
         raise ValueError("The dataset has been connected to other network, please check the code.")
 
     queue_name = dataset.__transfer_dataset__.queue_name
-    if _dynamic_sink_scenario(dataset, dataset_iter):
+    if _dynamic_sink_scenario(dataset, dataset_iter) and not context.get_context("enable_ge"):
         dataset_types, dataset_shapes = dataset_helper.get_data_info()
         dataset_types = [pytype_to_dtype(x) for x in dataset_types]
 
