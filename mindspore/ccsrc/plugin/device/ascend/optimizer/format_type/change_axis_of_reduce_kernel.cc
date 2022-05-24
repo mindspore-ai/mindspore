@@ -101,6 +101,23 @@ const BaseRef ChangeAxisOfReduceKernel::DefinePattern() const {
   return VectorRef({X, Xs});
 }
 
+void ChangeAxisOfReduceKernel::NormalizeReduceAttrAxis(const CNodePtr &cnode) {
+  std::vector<int64_t> axis;
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
+  auto axis_list = kernel::GetReduceAttrAxis(cnode);
+  if (axis_list.empty()) {
+    return;
+  }
+  for (const auto &elem : axis_list) {
+    if (elem < 0) {
+      axis.emplace_back(input_shape.size() + elem);
+    } else {
+      axis.emplace_back(elem);
+    }
+  }
+  common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis), cnode);
+}
+
 const AnfNodePtr ChangeAxisOfReduceKernel::Process(const FuncGraphPtr &, const AnfNodePtr &node,
                                                    const EquivPtr &) const {
   if (node == nullptr || !node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
@@ -109,6 +126,7 @@ const AnfNodePtr ChangeAxisOfReduceKernel::Process(const FuncGraphPtr &, const A
   if (AnfAlgo::GetOpPattern(node) != kernel::kReducePattern) {
     return nullptr;
   }
+  NormalizeReduceAttrAxis(node->cast<CNodePtr>());
   auto convert_map = kReduceConvertMap.find(AnfAlgo::GetInputFormat(node, 0));
   if (convert_map == kReduceConvertMap.end()) {
     if (common::AnfAlgo::IsDynamicShape(node)) {
