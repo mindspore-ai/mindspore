@@ -117,6 +117,11 @@ class GkUtils {
    * @brief Update func graph manager. Do nothing if the manager is nullptr.
    */
   static void UpdateFuncGraphManager(const FuncGraphManagerPtr &mng, const FuncGraphPtr &func_graph);
+
+  /**
+   * @brief Get op's prim by op name.
+   */
+  static PrimitivePtr GetOpsPrim(const std::string &name);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_UTILS_H_

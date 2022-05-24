@@ -25,10 +25,11 @@
 #include "common/graph_kernel/split_umonad.h"
 #include "common/graph_kernel/substitute_dropout.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/adapter/callback_impl.h"
+#include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
-#include "ops/primitive_c.h"
 
 namespace mindspore::graphkernel {
 ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
@@ -60,10 +61,76 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
   return expander;
 }
 
+bool CanExpandFallback(const AnfNodePtr &node) {
+  if (!node->isa<CNode>()) return false;
+  if (common::AnfAlgo::IsDynamicShape(node) && common::GetEnv("MS_DEV_EXPANDER_FALLBACK_DYNAMIC") != "on") return false;
+  if (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "off") return false;
+  static std::vector<OpWithLevel> expander_fallback_ops_with_level = {
+    {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
+    {kAllTarget, OpLevel_0, prim::kPrimEqualCount},
+    {kAllTarget, OpLevel_0, prim::kPrimSoftsign},
+    {kAllTarget, OpLevel_0, prim::kPrimSquare},
+    {kAllTarget, OpLevel_0, prim::kLambApplyOptimizerAssign},
+    {kAllTarget, OpLevel_0, prim::kLambApplyWeightAssign},
+    {kAllTarget, OpLevel_0, prim::kPrimAdamWeightDecay},
+    {kAllTarget, OpLevel_0, prim::kPrimBiasAdd},
+    {kAllTarget, OpLevel_0, prim::kPrimRelu},
+    {kAllTarget, OpLevel_0, prim::kPrimSigmoid},
+    {kAllTarget, OpLevel_0, prim::kPrimStandardNormal},
+    {kAllTarget, OpLevel_0, prim::kPrimBiasAdd},
+    {kAllTarget, OpLevel_0, prim::kPrimRelu},
+    {kAllTarget, OpLevel_0, prim::kPrimAdam},
+    {kAllTarget, OpLevel_0, prim::kPrimSoftplus},
+    {kAllTarget, OpLevel_0, prim::kPrimSoftplusGrad},
+    // disabled
+    {kAllTarget, OpLevel_1, prim::kPrimAddN},
+    {kAllTarget, OpLevel_1, prim::kPrimErfc},
+    {kAllTarget, OpLevel_1, prim::kPrimExpandDims},
+    {kAllTarget, OpLevel_1, prim::kPrimGeLU},
+    {kAllTarget, OpLevel_1, prim::kPrimGeLUGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimSqrtGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimTile},
+    {kAllTarget, OpLevel_1, prim::kPrimClipByNormNoDivSum},
+    {kAllTarget, OpLevel_1, prim::kSoftmaxGradExt},
+    {kAllTarget, OpLevel_1, prim::kFusedMulAdd},
+    {kAllTarget, OpLevel_1, prim::kPrimBatchMatMul},
+    {kAllTarget, OpLevel_1, prim::kPrimBiasAddGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimDropout},
+    {kAllTarget, OpLevel_1, prim::kPrimDropoutGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimMaximumGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimMinimumGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimLayerNorm},
+    {kAllTarget, OpLevel_1, prim::kPrimLayerNormGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimLogSoftmax},
+    {kAllTarget, OpLevel_1, prim::kPrimLogSoftmaxGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimMatMul},
+    {kAllTarget, OpLevel_1, prim::kPrimReduceMean},
+    {kAllTarget, OpLevel_1, prim::kPrimReluGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimSigmoidGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimSigmoidCrossEntropyWithLogits},
+    {kAllTarget, OpLevel_1, prim::kPrimSigmoidCrossEntropyWithLogitsGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimSlice},
+    {kAllTarget, OpLevel_1, prim::kPrimSoftmax},
+    {kAllTarget, OpLevel_1, prim::kPrimSoftmaxCrossEntropyWithLogits},
+    {kAllTarget, OpLevel_1, prim::kPrimSquaredDifference},
+    {kAllTarget, OpLevel_1, prim::kPrimSqueeze},
+    {kAllTarget, OpLevel_1, prim::kPrimSquareSumAll},
+    {kAllTarget, OpLevel_1, prim::kPrimIdentityMath},
+    {kAllTarget, OpLevel_1, prim::kPrimOnesLike},
+    {kAllTarget, OpLevel_1, prim::kPrimBiasAddGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimMaximumGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimMinimumGrad},
+    {kAllTarget, OpLevel_1, prim::kPrimTanhGrad},
+  };
+  auto op_level = (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "1") ? 1 : 0;
+  auto ops = GkUtils::GetValidOps(expander_fallback_ops_with_level, op_level, {}, {}, {});
+  return std::any_of(ops.begin(), ops.end(),
+                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
+}
+
 FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &kernel_node)> &func) {
-  if (common::AnfAlgo::IsDynamicShape(node)) return nullptr;
-  if (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "off") return nullptr;
-  auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
+  if (!CanExpandFallback(node)) return nullptr;
+  auto expand_fg = GetCNodeFuncGraph(GetExpander(node)->Run(node));
   if (expand_fg != nullptr) {
     auto todos = TopoSort(expand_fg->get_return());
     for (const auto &n : todos) {
@@ -80,13 +147,6 @@ FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(con
   return expand_fg;
 }
 
-PrimitivePtr GetOpsPrim(const std::string &name) {
-  auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-  auto iter = op_primc_fns.find(name);
-  if (iter == op_primc_fns.end()) return nullptr;
-  return iter->second();
-}
-
 void ConvertAttrToInput(const FuncGraphPtr &graph) {
   auto todos = TopoSort(graph->get_return());
   for (const auto &node : todos) {
@@ -98,22 +158,21 @@ void ConvertAttrToInput(const FuncGraphPtr &graph) {
       continue;
     }
     primitive = primitive->Clone();
-    std::set<std::string> attr2input_map = {prim::kPrimCast->name(), prim::kPrimReshape->name(),
-                                            prim::kPrimReduceMax->name(), prim::kPrimReduceSum->name(),
-                                            prim::kPrimTranspose->name()};
+    std::map<std::string, std::set<size_t>> attr2input_map = {{prim::kPrimCast->name(), {1}},
+                                                              {prim::kPrimReshape->name(), {1}},
+                                                              {prim::kPrimReduceMax->name(), {1}},
+                                                              {prim::kPrimReduceSum->name(), {1}},
+                                                              {prim::kPrimTranspose->name(), {1}}};
     if (attr2input_map.count(primitive->name())) {
-      auto op = GetOpsPrim(primitive->name());
-      MS_EXCEPTION_IF_NULL(op);
-      auto input_names = op->GetAttr(kAttrInputNames);
-      primitive->AddAttr(kAttrInputNames, input_names);
-      primitive->AddAttr(kAttrOutputNames, op->GetAttr(kAttrOutputNames));
+      auto input_names = primitive->GetAttr(kAttrInputNames);
       auto cnode = dyn_cast<CNode>(node);
       AnfNodePtrList inputs = cnode->inputs();
       AnfNodePtrList new_inputs{inputs[0]};
       auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
+      auto attrs_map = attr2input_map[primitive->name()];
       size_t j = 1;
       for (size_t i = 0; i < input_names_vec.size(); ++i) {
-        if (primitive->HasAttr(input_names_vec[i])) {
+        if (attrs_map.count(i)) {
           auto value = primitive->GetAttr(input_names_vec[i]);
           auto value_node = std::make_shared<ValueNode>(value);
           value_node->set_abstract(value->ToAbstract());
@@ -198,8 +257,6 @@ FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
     if (expanders::OpDescFactory::Instance().HasOp(op_name)) {
       return DefaultExpander::ExpandToGraph(node);
     }
-    // expander fallback do not use python
-    if (std::dynamic_pointer_cast<CallbackImplWithInferShape>(cb_) != nullptr) return nullptr;
   }
   auto ms_context = MsContext::GetInstance();
   const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);

@@ -50,6 +50,7 @@ void ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
 
 FuncGraphPtr TryExpandCNodeFE(const AnfNodePtr &node) {
 #ifdef ENABLE_AKG
+  if (!graphkernel::CanExpandFallback(node)) return nullptr;
   using graphkernel::InputToAttrDeco;
   auto primitive = GetCNodePrimitive(node);
   if (primitive == nullptr) return nullptr;
