@@ -36,7 +36,7 @@ class ApplyProximalAdagradTEST(nn.Cell):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_apply_proximal_adagrad_op(data_type):
     """
