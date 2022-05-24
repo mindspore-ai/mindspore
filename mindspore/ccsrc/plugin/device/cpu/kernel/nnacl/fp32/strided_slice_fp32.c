@@ -176,6 +176,15 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
 
 void FastStride(const uint8_t *input, uint8_t *output, int split_len, int stride, size_t outer, size_t inner_size,
                 size_t in_offset) {
+  if (stride == 1) {
+    size_t unit = split_len * inner_size;
+    for (size_t i = 0; i < outer; ++i) {
+      memcpy(output, input, unit);
+      output += unit;
+      input += in_offset;
+    }
+    return;
+  }
   for (size_t i = 0; i < outer; ++i) {
     const uint8_t *input_ptr = input + i * in_offset;
     for (int j = 0; j < split_len; ++j) {
