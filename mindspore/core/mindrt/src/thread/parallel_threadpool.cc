@@ -235,6 +235,9 @@ int ParallelThreadPool::CreateParallelThreads(size_t actor_thread_num, size_t al
   tasks_ = new (std::nothrow) ParallelTask[tasks_size]();
   THREAD_ERROR_IF_NULL(tasks_);
   tasks_size_ = tasks_size;
+  if (TaskQueuesInit(all_thread_num) != THREAD_OK) {
+    return THREAD_ERROR;
+  }
   return ThreadPool::CreateThreads<ParallelWorker>(all_thread_num, core_list);
 }
 
