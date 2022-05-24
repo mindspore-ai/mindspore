@@ -235,6 +235,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"std", std::string("std")},                                        // P.ReduceSum
        {"sum", std::string("sum")},                                        // P.ReduceSum
        {"repeat", std::string("repeat")},                                  // C.repeat_elements
+       {"bernoulli", prim::kPrimBernoulli},                                // P.Bernoulli()
        {"cdist", std::string("cdist")},                                    // P.cdist
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
        {"one_hot", std::string("one_hot")},                                // P.OneHot

@@ -3250,6 +3250,50 @@ class Tensor(Tensor_):
                 repeated_subs.append(tensor_operator_registry.get('repeat_elements')(sub, rep, axis))
         return tensor_operator_registry.get('concatenate')(axis)(repeated_subs)
 
+    def bernoulli(self, p=0.5, seed=-1):
+        """
+        Randomly set the elements of output to 0 or 1 with the probability of P which follows the Bernoulli
+        distribution.
+
+        .. math::
+
+            out_{i} ~ Bernoulli(p_{i})
+
+        Args:
+            p (Union[Tensor, float], optional): The shape of p need to be broadcast. The elements of p represent the
+                                                probability of setting 1 for the corresponding broadcast position of
+                                                the current Tensor. Default: 0.5.
+            seed (int, optional): The seed value for random generating. Default: -1.
+
+        Returns:
+            Tensor, with the same shape and type as x.
+
+        Raises:
+            TypeError: If dtype of Tensor is not one of: int8, uint8, int16, int32，int64，bool, float32, float64.
+            TypeError: If dtype of `p` is not one of: float32, float64.
+            TypeError: If dtype of `seed` is not an int.
+            ValueError: If `p` is not in range [0, 1].
+            ValueError: If `seed` is less than 0.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([1, 2, 3], mindspore.int8))
+            >>> output = input_x.bernoulli(p=1.0)
+            >>> print(output)
+            [1, 1, 1]
+            >>> input_p = Tensor(np.array([0.0, 1.0, 1.0], mindspore.float32))
+            >>> output = input_x.bernoulli(input_p)
+            >>> print(output)
+            [0, 1, 1]
+        """
+        self._init_check()
+        validator.check_is_int(seed, 'seed')
+        return tensor_operator_registry.get('bernoulli')(self, p, seed)
+
     def masked_select(self, mask):
         """
         Returns a new 1-D Tensor which indexes the self tensor according to the boolean `mask`.

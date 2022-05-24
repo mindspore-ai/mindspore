@@ -25,7 +25,7 @@ from mindspore.ops.operations import linalg_ops
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting
-from ..operations.math_ops import (BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
+from ..operations.math_ops import (Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
                                    BesselK1e)
 
 
@@ -130,6 +130,32 @@ def get_lerp_vamp_rule(prim, axis_size):
             start, end = broadcast_a_b_shape(start_bdim, end_bdim)
             start, weight = broadcast_a_b_shape(start_bdim, weight_bdim)
         out = prim(start, end, weight)
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(Bernoulli)
+def get_bernoulli_op_vmap_rule(prim, axis_size):
+    """VmapRule for Bernoulli operation."""
+
+    def vmap_rule(x_bdim, p_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, p_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        p, p_dim = p_bdim
+        if F.rank(x):
+            x = _bdim_at_front(x, x_dim, 1)
+
+        if isinstance(p, Tensor) and F.rank(p):
+            p = _bdim_at_front(p, p_dim, 1)
+            x_shape = F.shape(x)
+            p_shape = F.shape(p)
+            p = _handle_broadcasting(p, p_shape, x_shape)
+
+        out = prim(x, p)
         return out, 0
 
     return vmap_rule

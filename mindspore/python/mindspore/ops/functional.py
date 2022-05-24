@@ -965,6 +965,7 @@ tensor_operator_registry.register('tensor_scatter_mul', tensor_scatter_mul)
 tensor_operator_registry.register('tensor_scatter_div', tensor_scatter_div)
 tensor_operator_registry.register('tensor_scatter_sub', P.TensorScatterSub)
 tensor_operator_registry.register('tensor_scatter_add', P.TensorScatterAdd)
+tensor_operator_registry.register('bernoulli', bernoulli)
 tensor_operator_registry.register('lp_norm', lp_norm)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')

@@ -20,7 +20,7 @@ import numpy as np
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
-from ..operations.math_ops import (BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
+from ..operations.math_ops import (Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
                                    BesselK1e)
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
@@ -2412,6 +2412,49 @@ def lerp(start, end, weight):
     return lerp_(start, end, weight)
 
 
+def bernoulli(x, p=0.5, seed=-1):
+    """
+    Randomly set the elements of output to 0 or 1 with the probability of P which follows the Bernoulli distribution.
+
+    .. math::
+
+        out_{i} ~ Bernoulli(p_{i})
+
+    Args:
+        x (Tensor): Tensor of shape :math:`(N,*)` where :math:`*` means, any number of additional dimensions. Data
+                    type must be int8, uint8, int16, int32，int64，bool, float32 or float64。
+        p (Union[Tensor, float], optional): The shape of p need to be broadcast. The elements of p represent the
+                                            probability of setting 1 for the corresponding broadcast position of
+                                            the current Tensor. Default: 0.5.
+        seed (int, optional): The seed value for random generating. Default: -1.
+
+    Returns:
+        Tensor, with the same shape and type as x.
+
+    Raises:
+        TypeError: If `seed` is not an int.
+        TypeError: If dtype of `input` is not one of: int8, uint8, int16, int32，int64，bool, float32, float64.
+        TypeError: If dtype of `input` is not one of: float32, float64.
+        ValueError: If `p` is not in range [0, 1].
+        ValueError: If `seed` is less than 0.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([1, 2, 3], mindspore.int8))
+        >>> output = ops.bernoulli(input_x, p=1.0)
+        >>> print(output)
+        [1, 1, 1]
+        >>> input_p = Tensor(np.array([0.0, 1.0, 1.0], mindspore.float32))
+        >>> output = ops.bernoulli(input_x, input_p)
+        >>> print(output)
+        [0, 1, 1]
+    """
+    bernoulli_ = Bernoulli(seed)
+    return bernoulli_(x, p)
+
+
 def bessel_i1(x):
     r"""
     Computes the Bessel i1 function of x element-wise.
@@ -2687,6 +2730,7 @@ __all__ = [
     'erf',
     'erfc',
     'cdist',
+    'bernoulli',
     'bessel_j0',
     'bessel_j1',
     'bessel_i0',
