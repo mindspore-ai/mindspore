@@ -23,13 +23,17 @@ scatter_div_op_info = TBERegOp("ScatterDiv") \
     .compute_cost(10) \
     .kernel_name("scatter_div") \
     .partial_flag(True) \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .attr("use_locking", "optional", "bool", "all") \
     .input(0, "var", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \
     .input(2, "updates", False, "required", "all") \
     .output(0, "var", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
     .dtype_format(DataType.I8_Default, DataType.I32_Default, DataType.I8_Default, DataType.I8_Default) \
     .dtype_format(DataType.U8_Default, DataType.I32_Default, DataType.U8_Default, DataType.U8_Default) \

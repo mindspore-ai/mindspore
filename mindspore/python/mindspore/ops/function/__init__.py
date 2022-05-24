@@ -67,6 +67,7 @@ from .array_func import (
     tensor_scatter_div,
     scatter_max,
     scatter_min,
+    scatter_div,
     nonzero,
     space_to_batch_nd,
     range,
