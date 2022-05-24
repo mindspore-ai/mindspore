@@ -52,7 +52,6 @@ class ScatterNdArithmeticCpuKernelMod : public NativeCpuKernelMod,
   std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
-  bool GetAttr(const BaseOperatorPtr &base_operator);
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
@@ -65,7 +64,6 @@ class ScatterNdArithmeticCpuKernelMod : public NativeCpuKernelMod,
   template <typename T>
   std::pair<bool, ComputeFunc<T>> InitComputeFunc();
 
-  bool use_locking_{true};
   bool is_tensor_scatter_arithmetic_{false};
   size_t slice_size_{1};
   size_t batch_size_{1};
