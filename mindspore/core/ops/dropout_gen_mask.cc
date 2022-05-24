@@ -46,7 +46,6 @@ ShapeVector CalDynamicOutputShape(const PrimitivePtr &primitive, const ValuePtrL
     }
 
     if (value <= 0) {
-      MS_LOG(EXCEPTION) << "DropOutGenMask product of value must be > 0";
       MS_LOG(EXCEPTION) << "For '" << primitive->name()
                         << "', product of value must be greater than 0, but got: " << value << ".";
     }

@@ -30,7 +30,8 @@ namespace {
 abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', input must be a tensor.";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                            << "', input must be a tensor. But got: " << input_args[0]->BuildShape()->ToString() << ".";
   }
   MS_EXCEPTION_IF_NULL(primitive);
   const uint32_t kInpuDims = 1;
