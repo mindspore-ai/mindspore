@@ -880,8 +880,12 @@ def set_context(**kwargs):
                              f"type {__device_target__}, but got {device}.")
     device = ctx.get_param(ms_ctx_param.device_target)
     for key, value in kwargs.items():
+        if key == 'enable_sparse':
+            logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated, "
+                           "and will be removed in the next version.")
+            continue
         if key in ('enable_auto_mixed_precision', 'enable_dump', 'save_dump_path'):
-            logger.warning(f"For 'context.set_context', '{key}' parameters will be deprecated."
+            logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated. "
                            "For details, please see the interface parameter API comments")
             continue
         if not _check_target_specific_cfgs(device, key):
