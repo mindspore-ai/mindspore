@@ -83,7 +83,7 @@ class DataDistribution {
   CNodePtr cnode_;
   int bin_num_ = 0;
   float interval_ = 0;
-  float real_max_ = FLT_MIN;
+  float real_max_ = -FLT_MAX;
   float real_min_ = FLT_MAX;
   float best_T_ = 0.0f;
   size_t bit_num_ = 0;
