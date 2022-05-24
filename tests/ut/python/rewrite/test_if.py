@@ -214,7 +214,6 @@ def test_resnet_fusion_in_if():
             break
     assert len(stree.get_handler()._nodes) == original_nodes_size + 1
     ConvBnPattern().apply(stree)
-    print(stree.get_code())
     assert len(stree.get_handler()._nodes) == original_nodes_size
     assert not stree.get_node("conv1")
     assert not stree.get_node("new_bn")
@@ -241,7 +240,6 @@ def test_resnet_fusion_cross_if():
             break
     assert len(stree.get_handler()._nodes) == original_nodes_size + 1
     ConvBnPattern().apply(stree)
-    print(stree.get_code())
     assert len(stree.get_handler()._nodes) == original_nodes_size
     assert not stree.get_node("conv1")
     assert stree.get_node("new_bn")

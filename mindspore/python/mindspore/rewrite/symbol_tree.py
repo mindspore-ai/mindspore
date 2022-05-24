@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree class define of Rewrite according to forward function of a network."""
-from typing import Optional, Union, Tuple
+from typing import Optional, Union, Tuple, Any
 import os
 import sys
 import ast
@@ -24,7 +24,7 @@ from mindspore.nn import Cell
 from mindspore import log as logger
 from .node import Node, TreeNode, PASS_THROUGH_METHOD
 from .api.node_type import NodeType
-from .ast_helpers import AstModifier, AstReplacer, StrChecker
+from .ast_helpers import AstModifier, AstReplacer, StrChecker, AstFinder
 from .api.scoped_value import ScopedValue, ValueType
 from .symbol_tree_dumper import SymbolTreeDumper
 from .topological_manager import TopoManager
@@ -68,6 +68,64 @@ class Position:
         if symbol_tree is None or node is None:
             return None
         return Position(symbol_tree, node, before_node)
+
+
+class FieldFinder(AstFinder):
+    """
+    Check whether field exist in specific scope.
+
+    Args:
+        scope (ast.AST): An instance of ast node as search scope.
+    """
+    def __init__(self, scope: ast.AST):
+        super().__init__(scope)
+        self._result = False
+        self._field_name = ""
+
+    def visit_Attribute(self, node: ast.Attribute) -> Any:
+        value = node.value
+        if not isinstance(value, ast.Name):
+            return super(FieldFinder, self).generic_visit(node)
+        if value.id != "self":
+            return super(FieldFinder, self).generic_visit(node)
+        if node.attr == self._field_name:
+            self._result = True
+        return super(FieldFinder, self).generic_visit(node)
+
+    def check(self, field) -> bool:
+        """
+        Check whether `field` exist in scope.
+
+        Args:
+            field (str): A string indicates target field name.
+
+        Returns:
+            A bool indicate whether `field` exist in scope.
+        """
+        self._result = False
+        self._field_name = field
+        self.visit(self._scope)
+        return self._result
+
+
+class IfFixer(ast.NodeTransformer):
+    """
+    Fix ast.If if body is empty while orelse is not empty.
+    """
+
+    def visit_If(self, node: ast.If) -> Any:
+        if not node.body and node.orelse:
+            node.body.append(ast.Pass())
+        return super().generic_visit(node)
+
+    def fix(self, node):
+        """
+        Fix ast.If node in `node` if whose body is empty while whose orelse is not empty.
+
+        Args:
+            node (ast.AST): An ast node to be fixed.
+        """
+        self.generic_visit(node)
 
 
 class SymbolTree(Observer, Observable):
@@ -116,7 +174,36 @@ class SymbolTree(Observer, Observable):
         self._modified = False
         self._node_visitor = None
 
-        self._tmp_file = None
+        self._tmp_file_limits = 20
+        self._tmp_files = []
+
+    def __del__(self):
+        for tmp_file in self._tmp_files:
+            tmp_file.close()
+
+    @staticmethod
+    def _find_consumers_and_providers(nodes: [Node]):
+        """
+        Find consumers and providers for all nodes according to their targets and arguments.
+        """
+        consumers: {ScopedValue: [Node]} = {}
+        providers: {ScopedValue: Node} = {}
+        for node in nodes:
+            for arg in node.get_args():
+                if consumers.get(arg):
+                    consumers[arg].append(node)
+                else:
+                    consumers[arg] = [node]
+            for _, arg in node.get_kwargs():
+                if consumers.get(arg):
+                    consumers[arg].append(node)
+                else:
+                    consumers[arg] = [node]
+            for target in node.get_targets():
+                if providers.get(target) is not None:
+                    raise RuntimeError(f"Target({target}) of node duplicated")
+                providers[target] = node
+        return consumers, providers
 
     @staticmethod
     def _link_nodes_and_find_root(nodes: [Node]) -> Node:
@@ -131,23 +218,7 @@ class SymbolTree(Observer, Observable):
         Returns:
             An instance of Node represents root of input nodes.
         """
-        consumers: {ScopedValue: [Node]} = {}
-        target_dict: {ScopedValue: Node} = {}
-        for node in nodes:
-            for arg in node.get_args():
-                if consumers.get(arg):
-                    consumers[arg].append(node)
-                else:
-                    consumers[arg] = [node]
-            for _, arg in node.get_kwargs():
-                if consumers.get(arg):
-                    consumers[arg].append(node)
-                else:
-                    consumers[arg] = [node]
-            for target in node.get_targets():
-                if target_dict.get(target) is not None:
-                    raise RuntimeError(f"Target({target}) of node duplicated")
-                target_dict[target] = node
+        consumers, providers = SymbolTree._find_consumers_and_providers(nodes)
         # find root node
         root = None
         for node in nodes:
@@ -170,8 +241,9 @@ class SymbolTree(Observer, Observable):
         for node in nodes:
             inputs = []
             for _, arg in node.get_normalized_args().items():
-                node_input: Node = target_dict.get(arg)
-                inputs.append(node_input)
+                node_input: Node = providers.get(arg)
+                if id(node_input) != id(node):
+                    inputs.append(node_input)
             node.set_inputs(inputs)
         return root
 
@@ -835,6 +907,8 @@ class SymbolTree(Observer, Observable):
             if body.name in allow_class_name:
                 bodies.append(body)
         gencode_module = ast.Module(body=bodies)
+        if_fixer = IfFixer()
+        if_fixer.fix(gencode_module)
         code = astunparse.unparse(gencode_module)
         # Restore main-ClassDef
         for replacer in replacers:
@@ -867,6 +941,35 @@ class SymbolTree(Observer, Observable):
                     else:
                         body.names.remove(alias)
 
+    def _filter_out_to_delete_field(self, to_delete_field):
+        """filter out used field from `to_delete_field`"""
+
+        # filter _handler field
+        if to_delete_field.get("_handler"):
+            to_delete_field.pop("_handler")
+        # filter field used in node of construct
+        for node in self._nodes.values():
+            if node.get_node_type() in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree):
+                func: ScopedValue = node.get_func()
+                if func.scope == "self" and to_delete_field.get(func.value):
+                    to_delete_field.pop(func.value)
+            if node.get_node_type() == NodeType.CallMethod and node.get_func() == PASS_THROUGH_METHOD:
+                var_name = node.get_args()[0].value
+                if to_delete_field.get(var_name):
+                    to_delete_field.pop(var_name)
+        # filter field used in test-of-if
+        for body in self._root_ast.body:
+            if not isinstance(body, ast.If):
+                continue
+            test = body.test
+            field_finder = FieldFinder(test)
+            to_delete_to_delete_keys = []
+            for key, _ in to_delete_field.items():
+                if field_finder.check(key):
+                    to_delete_to_delete_keys.append(key)
+            for key in to_delete_to_delete_keys:
+                to_delete_field.pop(key)
+
     def _remove_unused_field(self):
         """remove unused field in __init__ function"""
         to_delete_field = {}
@@ -881,17 +984,7 @@ class SymbolTree(Observer, Observable):
                     to_delete_field[target.attr] = index
                     if len(targets) > 1:
                         multi_targets.append(index)
-        if to_delete_field.get("_handler"):
-            to_delete_field.pop("_handler")
-        for node in self._nodes.values():
-            if node.get_node_type() in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree):
-                func: ScopedValue = node.get_func()
-                if func.scope == "self" and to_delete_field.get(func.value):
-                    to_delete_field.pop(func.value)
-            if node.get_node_type() == NodeType.CallMethod and node.get_func() == PASS_THROUGH_METHOD:
-                var_name = node.get_args()[0].value
-                if to_delete_field.get(var_name):
-                    to_delete_field.pop(var_name)
+        self._filter_out_to_delete_field(to_delete_field)
         for i in range(len(self._init_func_ast.body) - 1, -1, -1):
             if i in to_delete_field.values():
                 if i in multi_targets:
@@ -1084,12 +1177,14 @@ class SymbolTree(Observer, Observable):
             A class handle.
         """
         source = self.get_code()
-        if self._tmp_file:
-            self._tmp_file.close()
-        self._tmp_file = tempfile.NamedTemporaryFile(suffix='.py')
-        self._tmp_file.write(source.encode('utf8'))
-        self._tmp_file.flush()
-        tmp_file_name = self._tmp_file.name
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.py')
+        tmp_file.write(source.encode('utf8'))
+        tmp_file.flush()
+        tmp_file_name = tmp_file.name
+        if len(self._tmp_files) >= self._tmp_file_limits:
+            raise RuntimeError(f"Too many tmp file generated, it may caused by calling get_network method too much "
+                               f"times. Only support open {self._tmp_file_limits} tmp file at most now!")
+        self._tmp_files.append(tmp_file)
         tmp_module_path, tmp_module_file = os.path.split(tmp_file_name)
         tmp_module_name = tmp_module_file[:-3]
         sys.path.append(tmp_module_path)

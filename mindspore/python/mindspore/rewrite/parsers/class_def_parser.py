@@ -170,6 +170,8 @@ class ClassDefParser(Parser):
                 ClassDefParser._remove_empty_ast_in_init_func(body.orelse)
                 if not body.body and not body.orelse:
                     body_index_to_be_deleted.append(body_index)
+                if not body.body and body.orelse:
+                    body.body.append(ast.Pass())
                 continue
             if isinstance(body, ast.For):
                 ClassDefParser._remove_empty_ast_in_init_func(body.body)

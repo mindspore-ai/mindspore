@@ -158,7 +158,6 @@ def test_subtree_net():
 
     net = MainNet()
     stree = SymbolTree.create(net)
-    print(stree.get_code())
     transform(stree)
     for node in stree.nodes():
         print("after transform node name: ", node.get_name(), "; node type: ", node.get_node_type())
@@ -172,8 +171,6 @@ def test_subtree_net():
     inset_subtree2(stree)
     add_relu_in_conv11(stree)
 
-    print(stree.get_code())
-    print(stree.get_handler().get_global_vars().keys())
     net_opt = stree.get_network()
     data_in = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32)
     _cell_graph_executor.compile(net_opt, data_in)
@@ -247,7 +244,6 @@ def test_insert_replace2():
                                               kwargs=node.get_kwargs(), name=node.get_name() + "mod", is_sub_net=True)
             stree.replace(node, [new_node2])
             break
-    print(stree.get_code())
     new_net = stree.get_network()
     data_in = Tensor(np.ones([16, 3, 8, 8]), mindspore.float32)
     _cell_graph_executor.compile(new_net, data_in)
