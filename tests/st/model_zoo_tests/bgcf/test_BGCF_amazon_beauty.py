@@ -47,13 +47,13 @@ def test_BGCF_amazon_beauty():
     print("train process finished.")
 
     log_file = os.path.join(cur_model_path, "log")
-    pattern1 = r"loss ([\d\.\+]+)\,"
+    pattern1 = r"loss: ([\d\.\+]+)\,"
     loss_list = utils.parse_log_file(pattern1, log_file)
     loss_list = loss_list[-5:]
     print("last 5 epoch average loss is", sum(loss_list) / len(loss_list))
     assert sum(loss_list) / len(loss_list) < 6400
 
-    pattern1 = r"cost:([\d\.\+]+)"
+    pattern1 = r"epoch time: ([\d\.\+]+)"
     epoch_time_list = utils.parse_log_file(pattern1, log_file)[1:]
     print("per epoch time:", sum(epoch_time_list) / len(epoch_time_list))
     assert sum(epoch_time_list) / len(epoch_time_list) < 2.2
