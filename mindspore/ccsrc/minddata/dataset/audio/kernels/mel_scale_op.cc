@@ -28,6 +28,10 @@ Status MelScaleOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
   // check input dimension, it should be greater than 0
   RETURN_IF_NOT_OK(ValidateLowRank("MelScale", input, kDefaultAudioDim, "<..., freq, time>"));
 
+  // check input dimension, it should be equal with input n_stft
+  TensorShape input_shape = input->shape();
+  RETURN_IF_NOT_OK(ValidateEqual("MelScale", "n_stft", n_stft_, "freq", static_cast<int>(input_shape[-2])));
+
   // check input type, it should be [int, float, double]
   RETURN_IF_NOT_OK(ValidateTensorNumeric("MelScale", input));
 

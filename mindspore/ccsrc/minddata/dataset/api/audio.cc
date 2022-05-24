@@ -626,7 +626,7 @@ Status MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_ma
   CHECK_FAIL_RETURN_UNEXPECTED(f_max > f_min, "MelscaleFbanks: f_max must be greater than f_min, got: f_min = " +
                                                 std::to_string(f_min) + ", while f_max = " + std::to_string(f_max));
   std::shared_ptr<dataset::Tensor> fb;
-  RETURN_IF_NOT_OK(CreateFbanks(&fb, n_freqs, f_min, f_max, n_mels, sample_rate, norm, mel_type));
+  RETURN_IF_NOT_OK(CreateFbanks<float>(&fb, n_freqs, f_min, f_max, n_mels, sample_rate, norm, mel_type));
   CHECK_FAIL_RETURN_UNEXPECTED(fb->HasData(),
                                "MelscaleFbanks: get an empty tensor with shape " + fb->shape().ToString());
   *output = mindspore::MSTensor(std::make_shared<DETensor>(fb));

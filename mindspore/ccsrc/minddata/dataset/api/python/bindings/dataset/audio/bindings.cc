@@ -31,13 +31,13 @@ PYBIND_REGISTER(CreateDct, 1, ([](py::module *m) {
                 }));
 
 PYBIND_REGISTER(MelscaleFbanks, 1, ([](py::module *m) {
-                  (void)m->def(
-                    "melscale_fbanks", ([](int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
-                                           int32_t sample_rate, NormType norm, MelType mel_type) {
-                      std::shared_ptr<Tensor> fb;
-                      THROW_IF_ERROR(CreateFbanks(&fb, n_freqs, f_min, f_max, n_mels, sample_rate, norm, mel_type));
-                      return fb;
-                    }));
+                  (void)m->def("melscale_fbanks", ([](int32_t n_freqs, float f_min, float f_max, int32_t n_mels,
+                                                      int32_t sample_rate, NormType norm, MelType mel_type) {
+                                 std::shared_ptr<Tensor> fb;
+                                 THROW_IF_ERROR(CreateFbanks<float>(&fb, n_freqs, f_min, f_max, n_mels, sample_rate,
+                                                                    norm, mel_type));
+                                 return fb;
+                               }));
                 }));
 
 PYBIND_REGISTER(MelType, 0, ([](const py::module *m) {
