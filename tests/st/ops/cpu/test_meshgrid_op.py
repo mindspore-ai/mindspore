@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 @pytest.mark.level0
@@ -52,9 +53,20 @@ def test_meshgrid(dtype, indexing):
     assert np.array_equal(output[0].asnumpy(), np_output[0])
     assert np.array_equal(output[1].asnumpy(), np_output[1])
 
+    # test functional interface
+    output = F.meshgrid((Tensor(x), Tensor(y)), indexing)
+    assert np.array_equal(output[0].asnumpy(), np_output[0])
+    assert np.array_equal(output[1].asnumpy(), np_output[1])
+
     z = np.random.uniform(low=0, high=10, size=5).astype(dtype)
     np_output = np.meshgrid(x, y, z, indexing=indexing)
     output = meshgrid((Tensor(x), Tensor(y), Tensor(z)))
+    assert np.array_equal(output[0].asnumpy(), np_output[0])
+    assert np.array_equal(output[1].asnumpy(), np_output[1])
+    assert np.array_equal(output[2].asnumpy(), np_output[2])
+
+    # test functional interface
+    output = F.meshgrid((Tensor(x), Tensor(y), Tensor(z)), indexing)
     assert np.array_equal(output[0].asnumpy(), np_output[0])
     assert np.array_equal(output[1].asnumpy(), np_output[1])
     assert np.array_equal(output[2].asnumpy(), np_output[2])

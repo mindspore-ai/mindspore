@@ -5824,34 +5824,17 @@ class Meshgrid(PrimitiveWithInfer):
     Given N one-dimensional coordinate tensors, returns a tuple outputs of N N-D
     coordinate tensors for evaluating expressions on an N-D grid.
 
-    Args:
-        indexing ('xy', 'ij', optional): Cartesian ('xy', default) or
-            matrix ('ij') indexing of output. In the 2-D case with
-            inputs of length `M` and `N`, the outputs are of shape `(N, M)`
-            for 'xy' indexing and `(M, N)` for 'ij' indexing. In the 3-D
-            case with inputs of length `M`, `N` and `P`, outputs are of shape
-            `(N, M, P)` for 'xy' indexing and `(M, N, P)` for 'ij' indexing.
-
-    Inputs:
-        - **input** (Union[tuple]) - A Tuple of N 1-D Tensor objects.
-          The length of input should be greater than 1. The data type is Number.
-
-    Outputs:
-        Tensors, A Tuple of N N-D Tensor objects. The data type is the same with the Inputs.
-
-    Raises:
-        TypeError: If `indexing` is not a str or `input` is not a tuple.
-        ValueError: If `indexing` is neither 'xy' nor 'ij'.
+    Refer to :func:`mindspore.ops.meshgrid` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
         >>> y = Tensor(np.array([5, 6, 7]).astype(np.int32))
         >>> z = Tensor(np.array([8, 9, 0, 1, 2]).astype(np.int32))
         >>> inputs = (x, y, z)
-        >>> meshgrid = ops.Meshgrid(indexing="xy")
+        >>> meshgrid = ops.Meshgrid(indexing='xy')
         >>> output = meshgrid(inputs)
         >>> print(output)
         (Tensor(shape=[3, 4, 5], dtype=Int32, value=
