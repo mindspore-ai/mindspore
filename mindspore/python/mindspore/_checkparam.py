@@ -491,12 +491,14 @@ class Validator:
                 hit = True
                 break
         if not hit:
+            if addition_error_info is None:
+                addition_error_info = ''
+            type_str = (f"type '{type(type_).__name__}'" if isinstance(type_, (tuple, list)) else str(type_))
             raise TypeError(f"For '{prim_name}', the type of '{arg_name}'"
                             f" must be {'one of ' if len(template_types) > 1 else ''}"
-                            f"{', '.join((str(x) for x in template_types))}, but got {type(type_).__name__}"
-                            f"{'' if addition_error_info is None else f' {addition_error_info}'}. "
-                            f"The supported data types depend on the hardware that"
-                            f" executes the operator, for more details, please refer to the Mindspore official "
+                            f"{', '.join((str(x) for x in template_types))}, but got {type_str}"
+                            f" {addition_error_info}.The supported data types depend on the hardware that"
+                            f" executes the operator, for more details, please refer to the MindSpore official "
                             f"website to get more information about the data type.")
 
     @staticmethod
@@ -593,7 +595,7 @@ class Validator:
             msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
             raise TypeError(f'{msg_prefix} type of \'{arg_name}\' should be {"one of " if num_types > 1 else ""}'
                             f'\'{type_names if num_types > 1 else type_names[0]}\', '
-                            f'but got \'{arg_value}\' with type {type(arg_value).__name__}.')
+                            f'but got \'{arg_value}\' with type \'{type(arg_value).__name__}\'.')
 
         # Notice: bool is subclass of int, so `check_value_type('x', True, [int])` will check fail, and
         #         `check_value_type('x', True, [bool, int])` will check pass
