@@ -103,6 +103,9 @@ constexpr auto kEditDistance = "EditDistance";
 constexpr auto kSparseSegmentMean = "SparseSegmentMean";
 
 // Arrays
+constexpr auto kSegmentMax = "SegmentMax";
+constexpr auto kSegmentSum = "SegmentSum";
+constexpr auto kSegmentMin = "SegmentMin";
 constexpr auto kDynamicShape = "DynamicShape";
 constexpr auto kTensorShape = "TensorShape";
 constexpr auto kStack = "Stack";
@@ -438,6 +441,9 @@ GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTril));
 GVAR_DEF(PrimitivePtr, kPrimEye, std::make_shared<Primitive>(kEye));
 GVAR_DEF(PrimitivePtr, kPrimTriu, std::make_shared<Primitive>(kTriu));
 GVAR_DEF(PrimitivePtr, kPrimMeshgrid, std::make_shared<Primitive>(kMeshgrid));
+GVAR_DEF(PrimitivePtr, kPrimSegmentMax, std::make_shared<Primitive>(kSegmentMax));
+GVAR_DEF(PrimitivePtr, kPrimSegmentMin, std::make_shared<Primitive>(kSegmentMin));
+GVAR_DEF(PrimitivePtr, kPrimSegmentSum, std::make_shared<Primitive>(kSegmentSum));
 
 // image
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));

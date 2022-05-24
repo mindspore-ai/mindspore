@@ -186,3 +186,6 @@ from .dense_to_csr_sparse_matrix import _dense_to_csr_sparse_matrix_aicpu
 from .adjust_saturation import _adjust_saturation_aicpu
 from .grid_sampler_2d import _grid_sampler_2d_aicpu
 from .grid_sampler_2d_grad import _grid_sampler_2d_grad_aicpu
+from .segment_max import _segment_max_aicpu
+from .segment_min import _segment_min_aicpu
+from .segment_sum import _segment_sum_aicpu

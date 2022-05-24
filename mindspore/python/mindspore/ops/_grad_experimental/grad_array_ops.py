@@ -17,6 +17,7 @@
 
 from mindspore import Tensor
 from ...common import dtype as mstype
+from ...numpy.array_ops import where
 from .._grad.grad_math_ops import binop_grad_common
 from .._grad.grad_base import bprop_getters
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
@@ -25,9 +26,31 @@ from ..operations.array_ops import MatrixDiagV3
 from ..operations.array_ops import MatrixDiagPartV3
 from ..operations.array_ops import MatrixSetDiagV3
 from ..operations.array_ops import Triu
+from ..operations.array_ops import SegmentMax
+from ..operations.array_ops import SegmentMin
+from ..operations.array_ops import SegmentSum
 from .. import functional as F
 from .. import operations as P
 from .._utils.utils import is_shape_unknown
+
+
+def _segment_min_or_max_grad(segment_sum_op, input_x, segment_ids, output, dout):
+    """Calculate the gradient of SegmentMax or SegmentMin"""
+    gather = P.Gather()
+    equal = P.Equal()
+    cast = P.Cast()
+    divide = P.Div()
+    input_x_type = F.dtype(input_x)
+    input_x = cast(input_x, mstype.float32)
+    output = cast(output, mstype.float32)
+    dout = cast(dout, mstype.float32)
+    zeros = zeros_like(input_x)
+    gathered_outputs = gather(output, segment_ids, 0)
+    is_selected = equal(input_x, gathered_outputs)
+    num_selected = segment_sum_op(cast(is_selected, F.dtype(dout)), segment_ids)
+    weighted_grads = divide(dout, num_selected)
+    gathered_grads = gather(weighted_grads, segment_ids, 0)
+    return cast(where(is_selected, gathered_grads, zeros), input_x_type), zeros_like(segment_ids)
 
 
 @bprop_getters.register(P.MaskedFill)
@@ -277,5 +300,45 @@ def get_bprop_tril(self):
     def bprop(x, out, dout):
         dx = tril(dout)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(SegmentSum)
+def get_bprop_segment_sum(self):
+    """Generate bprop for SegmentSum"""
+    gather = P.Gather()
+    cast = P.Cast()
+
+    def bprop(input_x, segment_ids, output, dout):
+        dout_type = F.dtype(dout)
+        type_list = [mstype.int8, mstype.int16, mstype.int64, mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
+        if dout_type in type_list:
+            dout = cast(dout, mstype.int32)
+        if dout_type == mstype.float64:
+            dout = cast(dout, mstype.float32)
+        return cast(gather(dout, segment_ids, 0), dout_type), zeros_like(segment_ids)
+
+    return bprop
+
+
+@bprop_getters.register(SegmentMax)
+def get_bprop_segment_max(self):
+    """Generate bprop for SegmentMax"""
+    segment_sum = SegmentSum()
+
+    def bprop(input_x, segment_ids, output, dout):
+        return _segment_min_or_max_grad(segment_sum, input_x, segment_ids, output, dout)
+
+    return bprop
+
+
+@bprop_getters.register(SegmentMin)
+def get_bprop_segment_min(self):
+    """Generate bprop for SegmentMin"""
+    segment_sum = SegmentSum()
+
+    def bprop(input_x, segment_ids, output, dout):
+        return _segment_min_or_max_grad(segment_sum, input_x, segment_ids, output, dout)
 
     return bprop

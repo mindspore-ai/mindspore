@@ -56,6 +56,7 @@ class GatherCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<size_t> output_shape_;
   int64_t axis_{0};
   bool is_dynamic_shape_{false};
+  CNodeWeakPtr node_wpt_;
 };
 }  // namespace kernel
 }  // namespace mindspore

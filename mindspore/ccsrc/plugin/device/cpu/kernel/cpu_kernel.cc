@@ -21,6 +21,7 @@
 #include <cmath>
 #include <map>
 #include <set>
+#include <numeric>
 
 #include "utils/profile.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
@@ -284,6 +285,11 @@ void CPUKernelUtils::ParallelForAutoSearch(const CTask &task, size_t count, Para
   } else {
     ParallelFor(task, count, parallel_search_info->best_block_size);
   }
+}
+
+size_t CPUKernelUtils::CalcElementNum(const std::vector<size_t> &shape) {
+  size_t total = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
+  return total;
 }
 
 ActorThreadPool *GetActorMgrInnerThreadPool() {
