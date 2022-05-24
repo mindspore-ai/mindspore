@@ -51,9 +51,9 @@ class MS_CORE_API PynativeProfiler : public Profiler {
   void Init(const std::string &profileDataPath) override;
   void Stop() override;
   void OpDataProducerBegin(AscendKernelRuntime *runtime_instance_, void *stream, std::thread::id thread_id,
-                           const std::string &op_name);
+                           const std::string &op_name, bool is_dynamic_shape);
   void OpDataProducerEnd() override;
-  void OpDataProducerEnd(std::thread::id thread_id);
+  void OpDataProducerEnd(std::thread::id thread_id, bool is_dynamic_shape);
   void StepProfilingEnable(const bool enable_flag) override;
 
  private:

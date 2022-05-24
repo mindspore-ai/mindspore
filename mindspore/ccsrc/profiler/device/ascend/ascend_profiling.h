@@ -17,8 +17,11 @@
 #define MINDSPORE_CCSRC_PROFILER_DEVICE_ASCEND_PROFILING_H
 #include <string>
 #include <memory>
+#include <map>
 #include "profiler/device/profiling.h"
 #include "acl/acl_prof.h"
+#include "backend/common/session/kernel_graph.h"
+#include "kernel/kernel.h"
 
 namespace mindspore {
 namespace profiler {
@@ -43,6 +46,11 @@ class AscendProfiler : public Profiler {
   void Finalize() const;
   bool IsInitialized() const { return init_flag_; }
   void ReportErrorMessage() const;
+  void GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id, KernelType kernel_type);
+  bool GetNetDynamicShapeStatus() const { return is_dynamic_shape_net_; }
+  void SetNetDynamicShapeStatus() { is_dynamic_shape_net_ = true; }
+  std::map<std::thread::id, uint32_t> last_tid;
+  std::map<std::thread::id, uint32_t> last_streamid;
 
  protected:
   void SaveProfileData() { return; }
@@ -50,6 +58,7 @@ class AscendProfiler : public Profiler {
 
  private:
   static std::shared_ptr<AscendProfiler> ascend_profiler_;
+  bool is_dynamic_shape_net_ = 0;
   std::string profiling_options_;
   uint32_t device_id_ = 0;
   aclprofConfig *acl_config_{nullptr};

@@ -19,6 +19,7 @@
 #include "kernel/kernel.h"
 #include "kernel/ascend_kernel_mod.h"
 #include "include/common/utils/utils.h"
+#include "backend/common/session/kernel_graph.h"
 
 namespace mindspore {
 namespace device {
@@ -118,6 +119,14 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
                  << ", stream id: " << GetStreamId(op_name) << ", task id: " << GetTaskId(op_name)
                  << ", tag: " << point->tag();
   }
+}
+
+void ProfilingReporter::DynamicNodeReport(const CNodePtr &node, uint32_t stream_id, uint32_t task_id,
+                                          KernelType kernel_type) {
+  ReportTask(node, stream_id, task_id, kernel_type);
+  ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_INPUT);
+  ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_OUTPUT);
+  MS_LOG(INFO) << "Profiling report one dynamic node data finish.";
 }
 
 const CNodePtr ProfilingReporter::GetCNode(const std::string &name) const {

@@ -32,7 +32,7 @@ from mindspore.profiler.common.util import get_file_path, fwrite_format
 from mindspore.profiler.common.validator.validate_path import \
     validate_and_normalize_path
 from mindspore.profiler.parser.aicpu_data_parser import DataPreProcessParser
-from mindspore.profiler.parser.framework_parser import FrameworkParser, GpuFrameWorkParser
+from mindspore.profiler.parser.framework_parser import FrameworkParser, GpuFrameWorkParser, DynamicFrameWorkParser
 from mindspore.profiler.parser.hwts_log_parser import HWTSLogParser
 from mindspore.profiler.parser.integrator import Integrator, DeviceTarget
 from mindspore.profiler.parser.integrator import GpuTimelineGenerator, CpuTimelineGenerator, AscendTimelineGenerator
@@ -155,6 +155,9 @@ class Profiler:
         self.start_profile = True
         self._profile_memory = False
         self._stop_time = 0
+        self._ascend_dynamic_status = False
+        self._cpu_dynamic_status = False
+        self._gpu_dynamic_status = False
 
         # Setup and start MindData Profiling
         self._md_profiler = cde.GlobalContext.profiling_manager()
@@ -384,7 +387,7 @@ class Profiler:
             msg = "Do not analyze twice in the profiler."
             raise RuntimeError(msg)
         Profiler._has_analysed = True
-
+        self._cpu_dynamic_status = self._cpu_profiler.dynamic_status()
         _environment_check()
 
         self._cpu_profiler.stop()
@@ -430,6 +433,8 @@ class Profiler:
 
         if GlobalComm.INITED:
             self._rank_size = get_group_size()
+
+        self._ascend_dynamic_status = self._ascend_profiler.dynamic_status()
 
         if self._has_started:
             self.stop()
@@ -562,17 +567,22 @@ class Profiler:
         finally:
             pass
 
+        if self._ascend_dynamic_status and self._profile_communication:
+            raise RuntimeError("The profiler_communication parameter cannot be set on the dynamic shape network.")
+        if self._ascend_dynamic_status and self._profile_memory:
+            raise RuntimeError("The profile_memory parameter cannot be set on the dynamic shape network.")
+
         # analyse step trace info
         points = None
         is_training_mode_flag = False
-
-        try:
-            logger.info("Profiling: analyzing the step trace data.")
-            points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
-        except ProfilerException as err:
-            logger.warning(err.message)
-        finally:
-            pass
+        if not self._ascend_dynamic_status:
+            try:
+                logger.info("Profiling: analyzing the step trace data.")
+                points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
+            except ProfilerException as err:
+                logger.warning(err.message)
+            finally:
+                pass
 
         # analyse timeline info
         try:
@@ -587,12 +597,16 @@ class Profiler:
         self._ascend_graph_hccl_analyse()
 
         # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
-        flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
-                                   self._dev_id, self._rank_id, is_training_mode_flag)
-        logger.info("Profiling: analyzing the operation FLOPs.")
-        flops_parser.execute()
-        logger.info("Profiling: analyzing the parallel strategy.")
+        if not self._ascend_dynamic_status:
+            flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
+                                       self._dev_id, self._rank_id, is_training_mode_flag)
+            logger.info("Profiling: analyzing the operation FLOPs.")
+            flops_parser.execute()
+            logger.info("Profiling: analyzing the parallel strategy.")
         self._analyse_parallel_strategy()
+        if self._ascend_dynamic_status:
+            dynamic_parser = DynamicFrameWorkParser(self._output_path, self._rank_id)
+            dynamic_parser.write_dynamic_shape_data()
 
     @staticmethod
     def _check_output_path(output_path):
@@ -739,6 +753,7 @@ class Profiler:
         """Collect and analyse gpu performance data."""
         self._dev_id = context.get_context("device_id")
         self._rank_size = 1
+        self._gpu_dynamic_status = self._gpu_profiler.dynamic_status()
         if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
             self._dev_id = str(get_rank())
 
@@ -780,7 +795,8 @@ class Profiler:
             logger.warning(err.message)
         finally:
             pass
-
+        if self._gpu_dynamic_status:
+            raise RuntimeError('Dynamic shape network is not supported in GPU platform currently.')
         logger.warning(
             '\nThe GPU supports only the training mode or inference mode, '
             'it does not support train and infer at the same time.'
@@ -813,6 +829,8 @@ class Profiler:
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
             raise RuntimeError('Fail to write timeline data.')
+        if self._cpu_dynamic_status:
+            raise RuntimeError('Dynamic shape network is not supported in CPU platform currently.')
 
     def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True,
                             is_gpu_kernel_async_launch_flag=False):

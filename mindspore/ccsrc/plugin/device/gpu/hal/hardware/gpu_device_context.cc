@@ -217,6 +217,11 @@ DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *const device_ptr, s
 void GPUDeviceContext::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+  if (kernel_graph->is_dynamic_shape()) {
+    profiler_inst->SetNetDynamicShapeStatus();
+  }
   if (!kernel_graph->is_from_single_op()) {
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);

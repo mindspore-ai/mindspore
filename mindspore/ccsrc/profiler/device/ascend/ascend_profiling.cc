@@ -16,6 +16,7 @@
 #include "profiler/device/ascend/ascend_profiling.h"
 #include <map>
 #include <string>
+#include <vector>
 #include "common/util/error_manager/error_manager.h"
 #include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
@@ -24,8 +25,12 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "profiler/device/ascend/parallel_strategy_profiling.h"
 #include <nlohmann/json.hpp>
+#include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
+#include "kernel/kernel.h"
+#include "backend/common/session/kernel_graph.h"
 
 using mindspore::device::ascend::ProfilingManager;
+using mindspore::device::ascend::ProfilingReporter;
 using mindspore::profiler::ascend::MemoryProfiling;
 
 namespace mindspore {
@@ -181,6 +186,29 @@ void AscendProfiler::Finalize() const {
   }
 }
 
+void AscendProfiler::GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id,
+                                           KernelType kernel_type) {
+  uint32_t stream_id;
+  uint32_t task_id;
+  uint32_t rt_model_id = 0;
+  std::vector<CNodePtr> cnode_list;
+  std::vector<uint32_t> stream_ids;
+  std::vector<uint32_t> task_ids;
+  std::thread::id t_id = std::this_thread::get_id();
+  auto rt_ret = rtGetTaskIdAndStreamID(&task_id, &stream_id);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Profiling get task_id and stream_id failed.";
+  }
+  ProfilingReporter reporter(device_id, graph_id, rt_model_id, cnode_list, stream_ids, task_ids);
+  if (task_id <= last_tid[t_id] && stream_id == last_streamid[t_id]) {
+    MS_LOG(INFO) << "No task id is allocated to the node <" << kernel->fullname_with_scope() << ">.";
+  } else {
+    reporter.DynamicNodeReport(kernel, stream_id, task_id, kernel_type);
+  }
+  last_tid[t_id] = task_id;
+  last_streamid[t_id] = stream_id;
+}
+
 REGISTER_PYBIND_DEFINE(AscendProfiler_, ([](const py::module *m) {
                          (void)py::class_<AscendProfiler, std::shared_ptr<AscendProfiler>>(*m, "AscendProfiler")
                            .def_static("get_instance", &AscendProfiler::GetInstance, "AscendProfiler get_instance.")
@@ -188,7 +216,8 @@ REGISTER_PYBIND_DEFINE(AscendProfiler_, ([](const py::module *m) {
                                 py::arg("profiling_options"), "init")
                            .def("start", &AscendProfiler::Start, "start")
                            .def("stop", &AscendProfiler::Stop, "stop")
-                           .def("finalize", &AscendProfiler::Finalize, "finalize");
+                           .def("finalize", &AscendProfiler::Finalize, "finalize")
+                           .def("dynamic_status", &AscendProfiler::GetNetDynamicShapeStatus, "dynamic_status");
                        }));
 }  // namespace ascend
 }  // namespace profiler

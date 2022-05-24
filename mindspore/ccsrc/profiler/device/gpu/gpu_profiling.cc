@@ -790,7 +790,8 @@ REGISTER_PYBIND_DEFINE(GPUProfiler_, ([](const py::module *m) {
                            .def("step_profiling_enable", &GPUProfiler::StepProfilingEnable, py::arg("enable_flag"),
                                 "enable or disable step profiling")
                            .def("sync_enable", &GPUProfiler::SyncEnable, py::arg("enable_flag"),
-                                "enable or disable synchronization profiling");
+                                "enable or disable synchronization profiling")
+                           .def("dynamic_status", &GPUProfiler::GetNetDynamicShapeStatus, "dynamic_status");
                        }));
 }  // namespace gpu
 }  // namespace profiler
