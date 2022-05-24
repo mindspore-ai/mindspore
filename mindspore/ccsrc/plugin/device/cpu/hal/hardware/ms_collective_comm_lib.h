@@ -24,6 +24,7 @@
 #include "plugin/device/cpu/hal/hardware/ms_communication_group.h"
 #include "distributed/cluster/cluster_context.h"
 #include "fl/server/collective_ops_impl.h"
+#include "distributed/cluster/topology/compute_graph_node.h"
 
 namespace mindspore {
 namespace device {
@@ -84,6 +85,9 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   bool QueryUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) const;
 
   ps::core::AbstractNodePtr node_;
+
+  // This compute graph node is maintained by the clusster context and used for metadata synchronization.
+  std::shared_ptr<distributed::cluster::topology::ComputeGraphNode> cgn_;
 };
 }  // namespace cpu
 }  // namespace device

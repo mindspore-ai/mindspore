@@ -43,6 +43,8 @@ class NodeBase {
   // compute graph node.
   virtual bool Finalize(bool force = false) = 0;
 
+  std::string node_id() const { return node_id_; }
+
   size_t rank_id() { return rank_id_; }
 
  protected:

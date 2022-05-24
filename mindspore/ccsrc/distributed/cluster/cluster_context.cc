@@ -129,6 +129,8 @@ bool ClusterContext::IsScheduler() { return node_role_ == kEnvRoleOfScheduler; }
 
 const std::shared_ptr<ps::core::Node> &ClusterContext::node() const { return node_; }
 
+const std::shared_ptr<topology::NodeBase> &ClusterContext::node_base() const { return node_base_; }
+
 const std::string &ClusterContext::node_role() const { return node_role_; }
 
 uint32_t ClusterContext::node_num(const std::string &node_role) {

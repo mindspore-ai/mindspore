@@ -27,8 +27,13 @@ bool TCPClient::Initialize() {
 
     // This message handler is used to accept and maintain the received message from the tcp server.
     tcp_comm_->SetMessageHandler([this](MessageBase *const message) -> MessageBase *const {
-      received_message_ = message;
+      // Wait for the previous received message has been handled.
+      const int sleep_time = 10;
+      while (received_message_ != nullptr) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+      }
       std::unique_lock<std::mutex> lock(mutex_);
+      received_message_ = message;
       wait_msg_cond_.notify_one();
       return NULL_MSG;
     });
