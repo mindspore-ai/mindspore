@@ -62,6 +62,11 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
     DumpDynamicMemPoolDebugInfo();
     DumpDynamicMemPoolStateInfo();
   }
+
+  MS_LOG(DEBUG) << "Alloc memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
+                << ", address:" << device_addr << ", size:" << size << "B, total allocated mem:" << TotalMemStatistics()
+                << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
+                << "B, total idle mem:" << (TotalMemStatistics() - TotalUsedMemStatistics()) << "B.";
   return device_addr;
 }
 
@@ -332,6 +337,11 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr &device_addr) {
   } else {
     CombineMemBuf(mem_block, device_addr, common_mem_);
   }
+
+  MS_LOG(DEBUG) << "Free memory details, name:" << DynamicMemAllocatorDebugInfo::GetDebugInfo().name_
+                << ", address:" << device_addr << ", total allocated mem:" << TotalMemStatistics()
+                << "B, peak used mem:" << UsedMemPeakStatistics() << "B, in used mem:" << TotalUsedMemStatistics()
+                << "B, total idle mem:" << (TotalMemStatistics() - TotalUsedMemStatistics()) << "B.";
 }
 
 void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr &device_addr,
