@@ -5780,57 +5780,17 @@ class BroadcastTo(Primitive):
     """
     Broadcasts input tensor to a given shape.
 
-    Input shape can be broadcast to target shape if for each dimension pair they are either equal or input is one or
-    the target dimension is -1. In case of -1 in target shape, it will be replaced by the input shape's value
-    in that dimension.
-
-    When input shape is broadcast to target shape, it starts with the trailing
-    dimensions. If there is a -1 in the target shape, the -1 cannot be in a leading,
-    non-existing dimension.
-
-    Args:
-        shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
-            where it will be substituted by the input tensor's shape in that position, see example.
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor. The data type should be one of the following types:
-          float16, float32, int32, int8, uint8, bool.
-          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-
-    Outputs:
-        Tensor, with the given `shape` and the same data type as `input_x`.
-
-    Raises:
-        TypeError: If `shape` is not a tuple.
-        ValueError: if the target and input shapes are incompatible, or if a - 1 in the target shape is in an invalid
-                    location.
+    Refer to :func:`mindspore.ops.broadcast_to` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> shape = (2, 3)
-        >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-        >>> broadcast_to = ops.BroadcastTo(shape)
-        >>> output = broadcast_to(input_x)
-        >>> print(output)
-        [[1. 2. 3.]
-         [1. 2. 3.]]
-
-        >>> shape = (-1, 2)
-        >>> input_x = Tensor(np.array([[1], [2]]).astype(np.float32))
-        >>> broadcast_to = ops.BroadcastTo(shape)
-        >>> output = broadcast_to(input_x)
-        >>> print(output)
-        [[1. 1.]
-         [2. 2.]]
     """
 
     @prim_attr_register
     def __init__(self, shape):
         """Initialize BroadcastTo"""
         validator.check_value_type("shape", shape, (tuple), self.name)
-        validator.check("dimension of input_x", len(shape), "", 0, Rel.GT, self.name)
+        validator.check("dimension of x", len(shape), "", 0, Rel.GT, self.name)
         for ix, i in enumerate(shape):
             validator.check_value_type('target shape index -> ' + str(ix), i, [int], self.name)
             validator.check("shape element", i, "shape element min limit", -1, Rel.GE, self.name)

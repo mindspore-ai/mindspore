@@ -1613,8 +1613,12 @@ def enumerate_(x, start=0):
 
 def expand_tensor_as(x, y):
     """Expand tensor"""
-    broadcast_to = P.BroadcastTo(shape_(y))
-    return broadcast_to(x)
+    return P.BroadcastTo(shape_(y))(x)
+
+
+def broadcast_to(x, shape):
+    """Broadcasts tensor to a given shape."""
+    return P.BroadcastTo(shape)(x)
 
 
 def expand_dims(x, axis):

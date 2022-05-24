@@ -1168,47 +1168,77 @@ template CUDA_LIB_EXPORT void BroadcastComplexArith(const std::vector<size_t> &x
 
 // BroadcastTo
 template <typename T>
-__global__ void BroadcastToKernel(const size_t i0, const size_t i1, const size_t i2, const size_t i3, const size_t o0,
-                                  const size_t o1, const size_t o2, const size_t o3, const T *input_addr,
-                                  T *output_addr) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < o0 * o1 * o2 * o3; pos += blockDim.x * gridDim.x) {
-    size_t i = pos / (o1 * o2 * o3) % o0;
-    size_t j = pos / (o2 * o3) % o1;
-    size_t k = pos / o3 % o2;
-    size_t l = pos % o3;
+__global__ void BroadcastToKernel(const size_t i0, const size_t i1, const size_t i2, const size_t i3,
+                                  const size_t i4, const size_t i5, const size_t i6, const size_t i7,
+                                  const size_t o0, const size_t o1, const size_t o2, const size_t o3,
+                                  const size_t o4, const size_t o5, const size_t o6, const size_t o7,
+                                  const T *input_addr, T *output_addr) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < o0 * o1 * o2 * o3 * o4 * o5 * o6 * o7;
+       pos += blockDim.x * gridDim.x) {
+    size_t i = pos / (o1 * o2 * o3 * o4 * o5 * o6 * o7) % o0;
+    size_t j = pos / (o2 * o3 * o4 * o5 * o6 * o7) % o1;
+    size_t k = pos / (o3 * o4 * o5 * o6 * o7) % o2;
+    size_t l = pos / (o4 * o5 * o6 * o7) % o3;
+    size_t m = pos / (o5 * o6 * o7) % o4;
+    size_t n = pos / (o6 * o7) % o5;
+    size_t o = pos / o7 % o6;
+    size_t p = pos % o7;
 
-    size_t input_idx = Index(i, i0) * i1 * i2 * i3 + Index(j, i1) * i2 * i3 + Index(k, i2) * i3 + Index(l, i3);
+    size_t input_idx = Index(i, i0) * i1 * i2 * i3 * i4 * i5 * i6 * i7
+                     + Index(j, i1) * i2 * i3 * i4 * i5 * i6 * i7
+                     + Index(k, i2) * i3 * i4 * i5 * i6 * i7
+                     + Index(l, i3) * i4 * i5 * i6 * i7
+                     + Index(m, i4) * i5 * i6 * i7
+                     + Index(n, i5) * i6 * i7
+                     + Index(o, i6) * i7
+                     + Index(p, i7);
     output_addr[pos] = input_addr[input_idx];
   }
 }
 
 template <typename T>
-void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,
-                 const size_t &o1, const size_t &o2, const size_t &o3, const T *input_addr, T *output_addr,
-                 cudaStream_t stream) {
-  size_t nums = o0 * o1 * o2 * o3;
-  BroadcastToKernel<<<GET_BLOCKS(nums), GET_THREADS, 0, stream>>>(i0, i1, i2, i3, o0, o1, o2, o3, input_addr,
-                                                                  output_addr);
+void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &i4,
+                 const size_t &i5, const size_t &i6, const size_t &i7, const size_t &o0, const size_t &o1,
+                 const size_t &o2, const size_t &o3, const size_t &o4, const size_t &o5, const size_t &o6,
+                 const size_t &o7, const T *input_addr, T *output_addr, cudaStream_t stream) {
+  size_t nums = o0 * o1 * o2 * o3 * o4 * o5 * o6 * o7;
+  BroadcastToKernel<<<GET_BLOCKS(nums), GET_THREADS, 0, stream>>>(i0, i1, i2, i3, i4, i5, i6, i7,
+                                                                  o0, o1, o2, o3, o4, o5, o6, o7,
+                                                                  input_addr, output_addr);
 }
 
 template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
                                           const double *input_addr, double *output_addr, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
                                           const float *input_addr, float *output_addr, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
                                           const half *input_addr, half *output_addr, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
                                           const int16_t *input_addr, int16_t *output_addr, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
                                           const int32_t *input_addr, int32_t *output_addr, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
                                           const int64_t *input_addr, int64_t *output_addr, cudaStream_t stream);
 template CUDA_LIB_EXPORT void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3,
+                                          const size_t &i4, const size_t &i5, const size_t &i6, const size_t &i7,
                                           const size_t &o0, const size_t &o1, const size_t &o2, const size_t &o3,
+                                          const size_t &o4, const size_t &o5, const size_t &o6, const size_t &o7,
                                           const bool *input_addr, bool *output_addr, cudaStream_t stream);
