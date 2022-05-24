@@ -15,11 +15,12 @@
 
 """Operators for function."""
 
-from mindspore.ops.primitive import constexpr
-from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
-from ...common import Tensor
+from mindspore.ops import operations as P
+from mindspore.ops.primitive import constexpr
+
 from ..operations.array_ops import NonZero, MatrixDiagV3
+from ...common import Tensor
 
 eye_ = P.Eye()
 fill_ = P.Fill()
@@ -44,6 +45,7 @@ nonzero_ = NonZero()
 scalar_cast_ = P.ScalarCast()
 tensor_scatter_add_ = P.TensorScatterAdd()
 tensor_scatter_sub_ = P.TensorScatterSub()
+tensor_scatter_mul_ = P.TensorScatterMul()
 tensor_scatter_div_ = P.TensorScatterDiv()
 scalar_to_array_ = P.ScalarToArray()
 scalar_to_tensor_ = P.ScalarToTensor()
@@ -53,6 +55,10 @@ masked_select_ = P.MaskedSelect()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
 ger_ = P.Ger()
 diag_ = P.Diag()
+range_ = P.Range()
+zeros_like_ = P.ZerosLike()
+cast_ = P.Cast()
+tensor_select_ = P.Select()
 
 
 @constexpr
@@ -360,9 +366,6 @@ def tile(input_x, multiples):
     return tile_(input_x, multiples)
 
 
-range_ = P.Range()
-
-
 def range(start, limit, delta):
     r"""
     Creates a sequence of numbers that begins at `start` and extends by increments of
@@ -646,11 +649,6 @@ def reshape(input_x, input_shape):
     return reshape_(input_x, input_shape)
 
 
-zeros_like = P.ZerosLike()
-cast = P.Cast()
-tensor_select = P.Select()
-
-
 @constexpr
 def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
     if isinstance(scalar, int) and tensor_type != mstype.int32:
@@ -742,21 +740,21 @@ def select(cond, x, y):
     if is_x_scalar:
         _check_select_shape_match(y.shape, cond.shape, "y")
         _check_select_type_match(x, y.dtype, "x", "y")
-        input_x = zeros_like(y) + x
+        input_x = zeros_like_(y) + x
         if isinstance(x, int):
-            input_x = cast(input_x, mstype.int32)
+            input_x = cast_(input_x, mstype.int32)
         else:
-            input_x = cast(input_x, mstype.float32)
+            input_x = cast_(input_x, mstype.float32)
 
     if is_y_scalar:
         _check_select_shape_match(x.shape, cond.shape, "x")
         _check_select_type_match(y, x.dtype, "y", "x")
-        input_y = zeros_like(x) + y
+        input_y = zeros_like_(x) + y
         if isinstance(y, int):
-            input_y = cast(input_y, mstype.int32)
+            input_y = cast_(input_y, mstype.int32)
         else:
-            input_y = cast(input_y, mstype.float32)
-    return tensor_select(cond, input_x, input_y)
+            input_y = cast_(input_y, mstype.float32)
+    return tensor_select_(cond, input_x, input_y)
 
 
 def slice(input_x, begin, size):
@@ -1591,13 +1589,13 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
     Returns a batched diagonal tensor with given batched diagonal values.
     """
     if isinstance(k, int) and not isinstance(k, bool):
-        k = cast(k, mstype.int32)
+        k = cast_(k, mstype.int32)
     if isinstance(num_rows, int) and not isinstance(num_rows, bool):
-        num_rows = cast(num_rows, mstype.int32)
+        num_rows = cast_(num_rows, mstype.int32)
     if isinstance(num_cols, int) and not isinstance(num_cols, bool):
-        num_cols = cast(num_cols, mstype.int32)
+        num_cols = cast_(num_cols, mstype.int32)
     if isinstance(padding_value, (float, int)) and not isinstance(padding_value, bool):
-        padding_value = cast(padding_value, x.dtype)
+        padding_value = cast_(padding_value, x.dtype)
     matrix_diag_v3 = MatrixDiagV3(align)
     return matrix_diag_v3(x, k, num_rows, num_cols, padding_value)
 
@@ -1630,6 +1628,61 @@ def scalar_cast(input_x, input_y):
         255
     """
     return scalar_cast_(input_x, input_y)
+
+
+def tensor_scatter_mul(input_x, indices, updates):
+    """
+    Creates a new tensor by multiplying the values from the positions in `input_x` indicated by
+    `indices`, with values from `updates`. When divided values are provided for the same
+    index, the result of the update will be to divided these values respectively. Except that
+    the updates are applied on output `Tensor` instead of input `Parameter`.
+
+    The last axis of `indices` is the depth of each index vectors. For each index vector,
+    there must be a corresponding value in `updates`. The shape of `updates` should be
+    equal to the shape of `input_x[indices]`. For more details, see use cases.
+
+    Note:
+        - If some values of the `indices` are out of bound, instead of raising an index error,
+          the corresponding `updates` will not be updated to `input_x`.
+        - The operator can't handle division by 0 exceptions, so the user needs to make sure
+          there is no 0 value in `updates`.
+
+    Args:
+        input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        indices (Tensor): The index of input tensor whose data type is int32 or int64.
+            The rank must be at least 2.
+        updates (Tensor): The tensor to update the input tensor, has the same type as input,
+            and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+    Returns:
+        Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
+        >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> # Next, demonstrate the approximate operation process of this operator:
+        >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
+        >>> # 2, And input_x[0, 0] = -0.1
+        >>> # 3, So input_x[indices] = [-0.1, -0.1]
+        >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
+        >>> # 5, Perform the subtract operation for the first time:
+        >>> #      first_input_x = input_x[0][0] * updates[0] = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> # 6, Perform the subtract operation for the second time:
+        >>> #      second_input_x = input_x[0][0] * updates[1] = [[-0.22, 0.3, 3.6], [0.4, 0.5, -3.2]]
+        >>> output = ops.tensor_scatter_mul(input_x, indices, updates)
+        >>> print(output)
+        [[-0.22  0.3   3.6  ]
+         [ 0.4   0.5   -3.2 ]]
+    """
+    return tensor_scatter_mul_(input_x, indices, updates)
 
 
 def tensor_scatter_div(input_x, indices, updates):
@@ -1911,6 +1964,7 @@ __all__ = [
     'one_hot',
     'masked_fill',
     'masked_select',
+    'tensor_scatter_mul',
     'tensor_scatter_div',
     'scatter_max',
     'scatter_min',
