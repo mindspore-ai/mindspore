@@ -327,18 +327,21 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
 class OBSMindDataset(GeneratorDataset):
     """
 
-    A source dataset that reads and parses MindRecord dataset which stored in OBS.
+    A source dataset that reads and parses MindRecord dataset which stored in cloud storage
+    such as OBS, Minio or AWS S3.
 
     The columns of generated dataset depend on the source MindRecord files.
 
     Args:
-        dataset_files (list[str]): List of files in OBS to be read and file path is in
-            the format of s3://.
-        server (str): Endpoint for accessing OBS. For example: <https://your-endpoint:9000>.
-        ak (str): Access key ID of OBS.
-        sk (str): Secret key ID of OBS.
-        sync_obs_path (str): OBS dir path used for synchronization, users need to
-            create it on OBS in advance. Path is in the format of s3://.
+        dataset_files (list[str]): List of files in cloud storage to be read and file path is in
+            the format of s3://bucketName/objectKey.
+        server (str): Endpoint for accessing cloud storage.
+            If cloud storage is OBS, the endpoint is the form of <obs.cn-north-4.myhuaweicloud.com>.
+            If cloud storage is Minio, the endpoint is the form of <https://your-endpoint:9000>.
+        ak (str): Access key ID of cloud storage.
+        sk (str): Secret key ID of cloud storage.
+        sync_obs_path (str): Remote dir path used for synchronization, users need to
+            create it on cloud storage in advance. Path is in the format of s3://bucketName/objectKey.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns).
         shuffle (Union[bool, Shuffle level], optional): Perform reshuffling of the data every epoch
             (default=None, performs global shuffle).
@@ -369,7 +372,7 @@ class OBSMindDataset(GeneratorDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - It's necessary to create a synchronization directory on OBS in
+        - It's necessary to create a synchronization directory on cloud storage in
           advance which be defined by parameter: `sync_obs_path` .
         - If training is offline(no cloud), it's recommended to set the
           environment variable `BATCH_JOB_ID`.
@@ -378,11 +381,14 @@ class OBSMindDataset(GeneratorDataset):
           node(server), there is no such restriction.
 
     Examples:
-        >>> dataset_obs_dir = ["s3://path/to/obs_dataset_file_1", "s3://path/to/obs_dataset_file_2"]
-        >>> sync_obs_dir = "s3://sync-dir"
+        >>> # OBS
+        >>> dataset_obs_dir = ["s3://dataset/imagenet21k/mr_imagenet21k_01",
+        ...                    "s3://dataset/imagenet21k/mr_imagenet21k_02"]
+        >>> sync_obs_dir = "s3://work/sync_node"
         >>> num_shards = 8
         >>> shard_id = 0
-        >>> dataset = ds.OBSMindDataset(dataset_obs_dir, "https://your-endpoint:9000", "AK of OBS", "SK of OBS",
+        >>> dataset = ds.OBSMindDataset(dataset_obs_dir, "https://obs.cn-north-4.myhuaweicloud.com",
+        ...                             "AK of OBS", "SK of OBS",
         ...                             sync_obs_dir, shuffle=True, num_shards=num_shards, shard_id=shard_id)
     """
 
