@@ -231,6 +231,12 @@ file(GLOB_RECURSE CORE_PROTO_IN ${CMAKE_SOURCE_DIR}/mindspore/core/proto/*.proto
 ms_protobuf_generate(CORE_PROTO_SRC CORE_PROTO_HDR ${CORE_PROTO_IN})
 list(APPEND MINDSPORE_PROTO_LIST ${CORE_PROTO_SRC})
 
+include_directories("${CMAKE_BINARY_DIR}/runtime/graph_scheduler/actor/rpc")
+file(GLOB_RECURSE RPC_PROTO RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  "runtime/graph_scheduler/actor/rpc/*.proto")
+ms_protobuf_generate(RPC_PROTO_SRCS RPC_PROTO_HDRS ${RPC_PROTO})
+list(APPEND MINDSPORE_PROTO_LIST ${RPC_PROTO_SRCS})
+
 if(MINDSPORE_PROTO_LIST)
     add_library(proto_input STATIC ${MINDSPORE_PROTO_LIST})
     set_target_properties(proto_input PROPERTIES COMPILE_FLAGS "-Wno-unused-variable -Wno-array-bounds")
