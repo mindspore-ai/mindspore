@@ -32,7 +32,7 @@ __global__ void ApplyLambEralyKernel(const size_t size, T *variable, T *m, T *v,
     var_float[i] = variable[i];
     grad_float[i] = gradient[i];
     g_hat_var[i] = (next_mm / sqrt(next_vv + epsilon[0]) + decay[0] * variable[i]);
-    update[i] = next_mm / (sqrt(next_vv) - epsilon[0]);
+    update[i] = next_mm / (sqrt(next_vv) + epsilon[0]);
     update[i] += decay[0] * variable[i];
     m[i] = next_m;
     v[i] = next_v;
@@ -56,7 +56,7 @@ __global__ void ApplyLambEralyKernel(const size_t size, half *variable, half *m,
     var_float[i] = float_var;
     grad_float[i] = float_gradient;
     g_hat_var[i] = next_mm / sqrt(next_vv + epsilon[0]) + float_decay * float_var;
-    update[i] = next_mm / (sqrt(next_vv) - epsilon[0]);
+    update[i] = next_mm / (sqrt(next_vv) + epsilon[0]);
     update[i] += float_decay * float_var;
     m[i] = __float2half(next_m);
     v[i] = __float2half(next_v);
