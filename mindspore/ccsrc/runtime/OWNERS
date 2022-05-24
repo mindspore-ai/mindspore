@@ -10,6 +10,7 @@ approvers:
 - laiyongqiang
 - HulkTang
 - chujinjin
+- caifubi
 
 reviewers:
 - john_tzanakakis
@@ -17,7 +18,6 @@ reviewers:
 - robingrosman
 - yelihua
 - yanghaitao1
-- caifubi
 - lilongfei15
 - wangyue01
 - wenkai_dist
