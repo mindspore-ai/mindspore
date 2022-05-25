@@ -3009,14 +3009,17 @@ class Tensor(Tensor_):
 
     def masked_select(self, mask):
         """
-        Returns a new 1-D Tensor which indexes the self tensor according to the boolean mask.
-        The shapes of the mask tensor and the self tensor don't need to match, but they must be broadcastable.
+        Returns a new 1-D Tensor which indexes the self tensor according to the boolean `mask`.
+        The shapes of the `mask` tensor and the self tensor don't need to match, but they must be broadcastable.
 
         Args:
             mask (Tensor[bool]): The boolean Tensor.
 
         Returns:
             A 1-D Tensor, with the same type as self.
+
+        Raises:
+            TypeError: If `mask` is not a bool Tensor.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
