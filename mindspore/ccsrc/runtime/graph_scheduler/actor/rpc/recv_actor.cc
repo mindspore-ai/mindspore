@@ -60,21 +60,23 @@ bool RecvActor::StartServer() {
   ip_ = server_->GetIP();
   port_ = server_->GetPort();
   std::string server_url = ip_ + ":" + std::to_string(port_);
-  MS_LOG(INFO) << "Start server for recv actor. Server address: " << server_url
-               << ", inter-process edge name: " << inter_process_edge_name_;
 
   // Step 2: Set the message handler of the server.
-  server_->SetMessageHandler(std::bind(&RecvActor::HandleMessage, this, std::placeholders::_1));
+  SetMessageHandler();
 
-  // Step 2: Register the server address to route table. The server should not be connected before this step is done.
-  ActorAddress recv_actor_addresss;
-  recv_actor_addresss.set_actor_id(inter_process_edge_name_);
-  recv_actor_addresss.set_ip(ip_);
-  recv_actor_addresss.set_port(port_);
-  MS_EXCEPTION_IF_NULL(actor_route_table_proxy_);
-  if (!actor_route_table_proxy_->RegisterRoute(inter_process_edge_name_, recv_actor_addresss)) {
-    MS_LOG(EXCEPTION) << "Failed to register route for " << inter_process_edge_name_ << " " << server_url
-                      << " when starting server.";
+  // Step 3: Register the server address to route table. The server should not be connected before this step is done.
+  for (const auto &inter_process_edge_name : inter_process_edge_names_) {
+    MS_LOG(INFO) << "Start server for recv actor. Server address: " << server_url
+                 << ", inter-process edge name: " << inter_process_edge_name;
+    ActorAddress recv_actor_addresss;
+    recv_actor_addresss.set_actor_id(inter_process_edge_name);
+    recv_actor_addresss.set_ip(ip_);
+    recv_actor_addresss.set_port(port_);
+    MS_EXCEPTION_IF_NULL(actor_route_table_proxy_);
+    if (!actor_route_table_proxy_->RegisterRoute(inter_process_edge_name, recv_actor_addresss)) {
+      MS_LOG(EXCEPTION) << "Failed to register route for " << inter_process_edge_name << " " << server_url
+                        << " when starting server.";
+    }
   }
   return true;
 }
@@ -90,7 +92,7 @@ void RecvActor::RunOpInterProcessData(MessageBase *const msg, OpContext<DeviceTe
 
   auto is_run = CheckRunningCondition(context);
   MS_LOG(INFO) << "Actor(" << GetAID().Name() << ") receive the input op inter-process. Edge is "
-               << inter_process_edge_name_ << ". Check running condition:" << is_run;
+               << inter_process_edge_names_ << ". Check running condition:" << is_run;
 
   // Parse the message from remote peer and set to rpc recv kernel.
   auto recv_kernel_mod = dynamic_cast<kernel::RpcKernelMod *>(kernel_info_->MutableKernelMod());
@@ -144,13 +146,17 @@ MessageBase *RecvActor::HandleMessage(MessageBase *const msg) {
   context_cv_.wait(lock, [this] { return is_context_valid_; });
   lock.unlock();
 
-  MS_LOG(INFO) << "Rpc actor recv message for inter-process edge: " << inter_process_edge_name_;
+  MS_LOG(INFO) << "Rpc actor recv message for inter-process edge: " << inter_process_edge_names_;
 
   if (msg == nullptr || op_context_ == nullptr) {
     return distributed::rpc::NULL_MSG;
   }
   ActorDispatcher::Send(GetAID(), &RecvActor::RunOpInterProcessData, msg, op_context_);
   return distributed::rpc::NULL_MSG;
+}
+
+void RecvActor::SetMessageHandler() {
+  server_->SetMessageHandler(std::bind(&RecvActor::HandleMessage, this, std::placeholders::_1));
 }
 }  // namespace runtime
 }  // namespace mindspore

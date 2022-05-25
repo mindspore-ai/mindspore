@@ -71,7 +71,8 @@ void RpcNodeScheduler::Link(const ActorSet *actor_set) {
     auto send_dst_roles = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(rpc_send_kernel, kAttrSendDstRoles);
     std::string send_src_node_name = common::AnfAlgo::GetNodeAttr<std::string>(rpc_send_kernel, kAttrSendSrcNodeName);
     std::string send_dst_node_name = common::AnfAlgo::GetNodeAttr<std::string>(rpc_send_kernel, kAttrSendDstNodeName);
-    std::string edge_name = common::AnfAlgo::GetNodeAttr<std::string>(rpc_send_kernel, kAttrInterProcessEdgeName);
+    std::vector<std::string> edge_names =
+      common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(rpc_send_kernel, kAttrInterProcessEdgeNames);
 
     if (send_dst_ranks.empty() || send_dst_roles.empty()) {
       MS_LOG(EXCEPTION) << "The attributes of send node " << rpc_send_kernel->fullname_with_scope()
@@ -79,7 +80,7 @@ void RpcNodeScheduler::Link(const ActorSet *actor_set) {
                         << ", send_src_node_name: " << send_src_node_name
                         << ", send_dst_node_name: " << send_dst_node_name;
     }
-    send_actor->set_inter_process_edge_name(edge_name);
+    send_actor->set_inter_process_edge_names(edge_names);
     send_actor->SetRouteInfo(send_dst_ranks[0], send_dst_roles[0], send_src_node_name, send_dst_node_name);
   }
   for (auto &recv_actor : recv_actors) {
@@ -90,7 +91,8 @@ void RpcNodeScheduler::Link(const ActorSet *actor_set) {
     auto recv_src_roles = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(rpc_recv_kernel, kAttrRecvSrcRoles);
     std::string recv_src_node_name = common::AnfAlgo::GetNodeAttr<std::string>(rpc_recv_kernel, kAttrRecvSrcNodeName);
     std::string recv_dst_node_name = common::AnfAlgo::GetNodeAttr<std::string>(rpc_recv_kernel, kAttrRecvDstNodeName);
-    std::string edge_name = common::AnfAlgo::GetNodeAttr<std::string>(rpc_recv_kernel, kAttrInterProcessEdgeName);
+    std::vector<std::string> edge_names =
+      common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(rpc_recv_kernel, kAttrInterProcessEdgeNames);
 
     if (recv_src_ranks.empty() || recv_src_roles.empty()) {
       MS_LOG(EXCEPTION) << "The attributes of recv node " << rpc_recv_kernel->fullname_with_scope()
@@ -98,7 +100,7 @@ void RpcNodeScheduler::Link(const ActorSet *actor_set) {
                         << ", recv_src_node_name: " << recv_src_node_name
                         << ", recv_dst_node_name: " << recv_dst_node_name;
     }
-    recv_actor->set_inter_process_edge_name(edge_name);
+    recv_actor->set_inter_process_edge_names(edge_names);
     recv_actor->SetRouteInfo(recv_src_ranks[0], recv_src_roles[0], recv_src_node_name, recv_dst_node_name);
   }
 }

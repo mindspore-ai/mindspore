@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-#include "runtime/graph_scheduler/actor/rpc/rpc_actor.h"
+#include "runtime/graph_scheduler/actor/rpc/mux_recv_actor.h"
 
 namespace mindspore {
 namespace runtime {
-void RpcActor::SetOpcontext(OpContext<DeviceTensor> *const op_context) { op_context_ = op_context; }
+void MuxRecvActor::SetMessageHandler() {
+  MS_EXCEPTION_IF_NULL(server_);
+  server_->SetMessageHandler(std::bind(&MuxRecvActor::HandleMessage, this, std::placeholders::_1));
+}
 
-void RpcActor::set_actor_route_table_proxy(const ActorRouteTableProxyPtr &proxy) { actor_route_table_proxy_ = proxy; }
+MessageBase *MuxRecvActor::HandleMessage(MessageBase *const msg) {
+  if (msg == nullptr) {
+    return distributed::rpc::NULL_MSG;
+  }
 
-void RpcActor::set_inter_process_edge_names(const std::vector<std::string> &edge_names) {
-  inter_process_edge_names_ = edge_names;
+  // Save from actor url.
+  from_actor_aid_ = msg->From();
+
+  ActorDispatcher::Send(GetAID(), &MuxRecvActor::RunOpInterProcessData, msg, op_context_);
+  return distributed::rpc::NULL_MSG;
 }
 }  // namespace runtime
 }  // namespace mindspore

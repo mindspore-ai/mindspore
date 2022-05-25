@@ -34,8 +34,8 @@ class SendActor : public RpcActor {
                      const std::set<size_t> &modifiable_ref_output_indexes)
       : RpcActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
                  modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kSendActor),
-        server_url_(""),
-        client_(nullptr) {}
+        client_(nullptr),
+        server_url_("") {}
   ~SendActor() override;
 
   // Set send actor's destination peer info, in another word, send actor's output.
@@ -49,10 +49,12 @@ class SendActor : public RpcActor {
   // After rpc send kernel is launched, inter-process data should be sent.
   void SendOutput(OpContext<DeviceTensor> *const context) override;
 
- private:
   // Client only supports to send MessageBase, so build MessageBase with data and url.
   std::unique_ptr<MessageBase> BuildRpcMessage(const kernel::AddressPtrList &data_list, const std::string &server_url);
 
+  std::unique_ptr<TCPClient> client_;
+
+ private:
   friend class GraphScheduler;
 
   // This send actor's destination peers' actor ids and route table.
@@ -61,8 +63,6 @@ class SendActor : public RpcActor {
 
   // The url of the peer recv actor's tcp server.
   std::string server_url_;
-
-  std::unique_ptr<TCPClient> client_;
 };
 
 using SendActorPtr = std::shared_ptr<SendActor>;

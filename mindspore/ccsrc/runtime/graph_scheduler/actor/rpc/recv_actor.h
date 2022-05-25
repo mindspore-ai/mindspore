@@ -36,9 +36,9 @@ class RecvActor : public RpcActor {
                      const std::set<size_t> &modifiable_ref_output_indexes)
       : RpcActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
                  modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kRecvActor),
+        server_(nullptr),
         ip_(""),
         port_(0),
-        server_(nullptr),
         is_context_valid_(false) {}
   ~RecvActor() override;
 
@@ -67,6 +67,11 @@ class RecvActor : public RpcActor {
   // Besides erasing input data and input controls when finish actor running, inter-process inputs should be erased.
   void EraseInput(const OpContext<DeviceTensor> *context) override;
 
+  // Set the message handler of the server.
+  virtual void SetMessageHandler();
+
+  std::unique_ptr<TCPServer> server_;
+
  private:
   // The message callback of the tcp server.
   MessageBase *HandleMessage(MessageBase *const msg);
@@ -74,8 +79,6 @@ class RecvActor : public RpcActor {
   // The network address of this recv actor. It's generated automatically by rpc module.
   std::string ip_;
   uint32_t port_;
-
-  std::unique_ptr<TCPServer> server_;
 
   // The variables used to ensure thread-safe of op context visited by recv actor.
   bool is_context_valid_;
