@@ -679,6 +679,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   int max_wait_worker_num = 0;
   auto available_worker = GetMaxWaitWorkerNum(&max_wait_worker_node_id, &max_wait_worker_num);
   if (inputs.size() == 0 || inputs.front().Shape().size() == 0) {
+    predict_task_mutex_.unlock();
     MS_LOG(ERROR) << "inputs is invalid. input size: " << inputs.size();
     return kLiteError;
   }

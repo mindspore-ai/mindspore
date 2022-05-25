@@ -44,7 +44,7 @@ void PredictTaskQueue::PushPredictTask(std::shared_ptr<PredictTask> task, int no
 
 std::shared_ptr<PredictTask> PredictTaskQueue::GetPredictTask(int node_id, ModelWorker *worker) {
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
-  while ((predict_task_.at(node_id).empty() && !predict_task_done_) || (!worker->IsAvailable())) {
+  while ((predict_task_.at(node_id).empty() || (!worker->IsAvailable())) && !predict_task_done_) {
     task_push_cond_.wait(task_lock);
   }
   if (predict_task_done_) {
