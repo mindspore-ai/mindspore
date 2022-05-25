@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TENSOR_SCATTER_ARITHMETIC_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TENSOR_SCATTER_ARITHMETIC_CUH_
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 enum TensorScatterArithmeticFunctionType {
   TENSOR_SCATTER_FUNC_UPDATE = 0,
   TENSOR_SCATTER_FUNC_MIN,
@@ -34,5 +34,5 @@ CUDA_LIB_EXPORT void TensorScatterArithmetic(const enum TensorScatterArithmeticF
                                              S *indices, T *update, T *output, const size_t &block_size,
                                              const size_t &input_size, const size_t &output_size,
                                              const size_t &indices_dim_0, const size_t &indices_dim_1,
-                                             S *indices_stride, S *work_shape, cudaStream_t stream);
+                                             S *indices_stride, S *work_shape, uint32_t device_id, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_TENSOR_SCATTER_ARITHMETIC_CUH_
