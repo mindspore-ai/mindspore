@@ -74,8 +74,11 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const CNodePtr &all_to_all) 
     ShapeVector shape_tmp;
     auto min_shape = common::AnfAlgo::GetOutputMinShape(all_to_all_input, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(all_to_all_input, 0);
-    min_shape[LongToSize(split_dim)] /= split_count;
-    max_shape[LongToSize(split_dim)] /= split_count;
+    if (!min_shape.empty() && !max_shape.empty()) {
+      min_shape[LongToSize(split_dim)] /= split_count;
+      max_shape[LongToSize(split_dim)] /= split_count;
+    }
+
     std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), SizeToLong);
     std::vector<BaseShapePtr> shapes(split_count, std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape));
     common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes, split.get());

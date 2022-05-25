@@ -637,8 +637,10 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
 
     ++input_num_all;
     single_shape[concat_dim] += LongToSize(last_len);
-    max_shape[concat_dim] += (is_dynamic) ? static_cast<int64_t>(last_len) : 0;
-    min_shape[concat_dim] += (is_dynamic) ? static_cast<int64_t>(last_len) : 0;
+    if (!min_shape.empty() && !max_shape.empty()) {
+      max_shape[concat_dim] += (is_dynamic) ? static_cast<int64_t>(last_len) : 0;
+      min_shape[concat_dim] += (is_dynamic) ? static_cast<int64_t>(last_len) : 0;
+    }
   }
 
   std::vector<TypeId> concat_output_dtype = {common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)};
