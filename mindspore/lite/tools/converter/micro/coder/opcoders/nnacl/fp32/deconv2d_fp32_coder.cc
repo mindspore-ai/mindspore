@@ -80,10 +80,8 @@ int DeConvolutionFP32Coder::Resize() {
 int DeConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   int kernel_h = filter_tensor_->Height();
   int kernel_w = filter_tensor_->Width();
-  int in_channel = filter_tensor_->Channel();
-  int out_channel = filter_tensor_->Batch();
-  conv_param_->input_channel_ = in_channel;
-  conv_param_->output_channel_ = out_channel;
+  int in_channel = filter_tensor_->Batch();
+  int out_channel = filter_tensor_->Channel();
 
   if (input_tensors_.size() == kInputSize2) {
     bias_data_size_ = UP_ROUND(out_channel, C4NUM) * sizeof(float);
@@ -133,6 +131,7 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
           {
             "deconvolution_fp32_wrapper.c",
             "common_func.c",
+            "common_func_fp32.c",
             "conv_common_fp32.c",
             "matmul_fp32.c",
             "pack_fp32.c",
@@ -150,6 +149,7 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
               "IndirectGemmInt16to32_8x4.S",
               "MatmulInt8.S",
               "MatmulFp32Opt12x4.S",
+              "PostFuncBiasReluC8.S",
             });
   } else if (target_ == kARM64) {
     Collect(context, {}, {},
@@ -162,6 +162,7 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
               "PreSum4x16Int8Pert.S",
               "IndirectGemmInt16to32_8x4.S",
               "MatmulInt8.S",
+              "PostFuncBiasReluC8.S",
             });
   }
 
