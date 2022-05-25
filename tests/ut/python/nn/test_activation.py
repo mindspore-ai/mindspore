@@ -147,3 +147,24 @@ def test_hard_tanh():
     net = Hardtanh(-1.0, 1.0)
     input_data = Tensor(np.array([[1.6, 0, 0.6], [6, 0, -6]], dtype=np.float32))
     _cell_graph_executor.compile(net, input_data)
+
+
+class NetThreshold(nn.Cell):
+    """Threshold."""
+    def __init__(self, threshold, value):
+        super(NetThreshold, self).__init__()
+        self.threshold = nn.Threshold(threshold, value)
+
+    def construct(self, x):
+        return self.threshold(x)
+
+
+def test_compile_threshold():
+    """
+    Feature: Test Threshold.
+    Description: Test Threshold functional.
+    Expectation: Success.
+    """
+    net = NetThreshold(threshold=0.1, value=1.0)
+    input_data = Tensor(np.array([[0.1, 0.2, 0.3], [0.0, 0.1, 0.2]], dtype=np.float32))
+    _cell_graph_executor.compile(net, input_data)

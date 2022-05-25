@@ -124,7 +124,8 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.Softmax
     mindspore.nn.SoftShrink
     mindspore.nn.Tanh
-    
+    mindspore.nn.Threshold
+
 线性层
 -----------------
 

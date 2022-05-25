@@ -45,6 +45,7 @@ __all__ = ['Softmax',
            'SoftShrink',
            'HShrink',
            'CELU',
+           'Threshold'
            ]
 
 
@@ -1070,6 +1071,61 @@ class HShrink(Cell):
         return self.hshrink(input_x)
 
 
+class Threshold(Cell):
+    r"""Thresholds each element of the input Tensor.
+
+    The formula is defined as follows:
+
+    .. math::
+        y =
+        \begin{cases}
+        x, &\text{ if } x > \text{threshold} \\
+        \text{value}, &\text{ otherwise }
+        \end{cases}
+
+    Args:
+        threshold: The value to threshold at.
+        value: The value to replace with when element is less than threshold.
+
+    Inputs:
+        - **input_x** (Tensor) - The input of Threshold with data type of float16 or float32.
+
+    Outputs:
+        Tensor, the same shape and data type as the input.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Raises:
+        TypeError: If `threshold` is not a float or an int.
+        TypeError: If `value` is not a float or an int.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> m = nn.Threshold(0.1, 20)
+        >>> inputs = mindspore.Tensor([0.1, 0.2, 0.3], mindspore.float32)
+        >>> outputs = m(inputs)
+        [ 20.0     0.2      0.3]
+    """
+
+    def __init__(self, threshold, value):
+        """Initialize Threshold."""
+        super().__init__()
+        validator.check_value_type('threshold', threshold, [float, int], self.cls_name)
+        validator.check_value_type('value', value, [float, int], self.cls_name)
+        self.threshold = threshold
+        self.value = value
+        self.greater = P.Greater()
+        self.fill = P.Fill()
+        self.select = P.Select()
+
+    def construct(self, input_x):
+        cond = self.greater(input_x, self.threshold)
+        value = self.fill(input_x.dtype, input_x.shape, self.value)
+        return self.select(cond, input_x, value)
+
+
 _activation = {
     'softmax': Softmax,
     'logsoftmax': LogSoftmax,
@@ -1089,6 +1145,7 @@ _activation = {
     'logsigmoid': LogSigmoid,
     'softshrink': SoftShrink,
     'hshrink': HShrink,
+    'threshold': Threshold
 }
 
 
