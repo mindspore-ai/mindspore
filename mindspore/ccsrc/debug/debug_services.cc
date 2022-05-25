@@ -99,7 +99,10 @@ void DebugServices::AddWatchpoint(
   std::lock_guard<std::mutex> lg(lock_);
 
   watchpoint_t watchpoint_item;
-  watchpoint_item.id = id;
+  if (id < 0) {
+    MS_LOG(EXCEPTION) << "The watchpoint id should be an integer greater then 0, but got " << id;
+  }
+  watchpoint_item.id = static_cast<unsigned int>(id);
   watchpoint_item.condition.type = static_cast<CONDITION_TYPE>(watch_condition);
   watchpoint_item.condition.parameter = parameter;
   watchpoint_item.check_node_list = check_node_list;
@@ -760,8 +763,8 @@ void DebugServices::SortWatchpointsInfo(std::vector<std::future<void>> *const te
  */
 void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name,
                                       std::string *const tensor_type, std::size_t *const size,
-                                      std::vector<int64_t> *const shape, std::vector<char> **const data_buffer,
-                                      bool *no_mem_to_read, bool is_base_request) {
+                                      std::vector<int64_t> *const shape, char **const data_buffer, bool *no_mem_to_read,
+                                      bool is_base_request) {
   std::ifstream infile;
   std::string file_path = file_name;
   MS_LOG(INFO) << "Reading in file: " << file_path;
@@ -792,8 +795,8 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   header_len_buffer.reset();
   // read in header
   (void)infile.seekg(0, std::ios::beg);
-  auto header_buffer = std::make_unique<std::vector<char>>(header_len_offset + header_len);
-  if (!infile.read(header_buffer->data(), header_len_offset + header_len)) {
+  auto header_buffer = std::make_unique<std::vector<char>>(header_offset + header_len);
+  if (!infile.read(header_buffer->data(), header_offset + header_len)) {
     MS_LOG(ERROR) << "Failed to read header from " << file_path;
     return;
   }
@@ -843,8 +846,8 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
     *no_mem_to_read = true;
   } else {
     (void)infile.seekg(header_len + type_offset);
-    *data_buffer = new std::vector<char>(data_size);
-    if ((*data_buffer) == nullptr || !infile.read((*data_buffer)->data(), data_size)) {
+    *data_buffer = new char[data_size];
+    if ((*data_buffer) == nullptr || !infile.read(*data_buffer, data_size)) {
       MS_LOG(ERROR) << "Unable to get tensor data from npy";
     }
     *size = data_size;
@@ -1452,8 +1455,7 @@ void DebugServices::ReadGraphRunIter(std::string file_path, std::tuple<uint32_t,
 void DebugServices::AddToTensorData(const std::string &backend_name, const std::string &time_stamp,
                                     const std::size_t slot, const unsigned int iteration, const unsigned int device_id,
                                     const unsigned int root_graph_id, const bool is_output, const std::size_t data_size,
-                                    const std::string &type_name, const std::vector<int64_t> &shape,
-                                    std::vector<char> *buffer,
+                                    const std::string &type_name, const std::vector<int64_t> &shape, char *buffer,
                                     std::vector<std::shared_ptr<TensorData>> *const result_list) {
   // call LoadNewTensor to store tensor in internal cache
   auto tensor_data = std::make_shared<TensorData>();
@@ -1465,7 +1467,7 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
   tensor_data->SetRootGraphId(root_graph_id);
   tensor_data->SetIsOutput(is_output);
   if (buffer != nullptr) {
-    tensor_data->SetDataPtr(buffer->data());
+    tensor_data->SetDataPtr(buffer);
   } else {
     tensor_data->SetDataPtr(nullptr);
   }
@@ -1561,7 +1563,7 @@ void DebugServices::ReadFileAndAddToTensor(const bool found, const std::vector<s
   std::string type_name = "";
   size_t data_size = 0;
   std::vector<int64_t> shape;
-  std::vector<char> *buffer = nullptr;
+  char *buffer = nullptr;
   if (found) {
     int index = GetNewestFileIndex(matched_time_stamps);
     if (index >= 0) {
