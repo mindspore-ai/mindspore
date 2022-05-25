@@ -259,24 +259,32 @@ def test_eager_cutout_hwc_cv():
     assert size_cutout == size
 
 
-def test_eager_exceptions():
-    try:
+def test_eager_exceptions_decode():
+    """
+    Feature: Decode op
+    Description: Exception eager support test for Decode
+    Expectation: Error input image is detected
+    """
+    with pytest.raises(TypeError) as error_info:
         img = "../data/dataset/apple.jpg"
-        img = vision.Decode()(img)
-        assert False
-    except TypeError as e:
-        assert "Input should be an encoded image in 1-D NumPy format" in str(e)
+        _ = vision.Decode()(img)
+    assert "Input should be an encoded image in 1-D NumPy format" in str(error_info.value)
 
-    try:
+    with pytest.raises(TypeError) as error_info:
         img = np.array(["a", "b", "c"])
-        img = vision.Decode()(img)
-        assert False
-    except TypeError as e:
-        assert "Input should be an encoded image in 1-D NumPy format" in str(e)
+        _ = vision.Decode()(img)
+    assert "Input should be an encoded image in 1-D NumPy format" in str(error_info.value)
 
+
+def test_eager_exceptions_resize():
+    """
+    Feature: Resize op
+    Description: Exception eager support test for Resize Python implementation
+    Expectation: Error input image is detected
+    """
     try:
         img = cv2.imread("../data/dataset/apple.jpg")
-        img = vision.Resize(size=(-32, 32))(img)
+        _ = vision.Resize(size=(-32, 32))(img)
         assert False
     except ValueError as e:
         assert "not within the required interval" in str(e)
@@ -326,6 +334,7 @@ if __name__ == '__main__':
     test_eager_cutout_hwc_pil()
     test_eager_cutout_chw_pil()
     test_eager_cutout_hwc_cv()
-    test_eager_exceptions()
+    test_eager_exceptions_decode()
+    test_eager_exceptions_resize()
     test_eager_exceptions_normalize()
     test_eager_exceptions_pad()

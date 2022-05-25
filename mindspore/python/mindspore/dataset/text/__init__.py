@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 """
 This module is to support text processing for NLP. It includes two parts:
-transforms and utils. transforms is a high performance
+text transforms and utils. text transforms is a high performance
 NLP text processing module which is developed with ICU4C and cppjieba.
 utils provides some general methods for NLP text processing.
 
@@ -22,7 +22,7 @@ Common imported modules in corresponding API examples are as follows:
 .. code-block::
 
     import mindspore.dataset as ds
-    from mindspore.dataset import text
+    import mindspore.dataset.text as text
 
 Descriptions of common data processing terms are as follows:
 

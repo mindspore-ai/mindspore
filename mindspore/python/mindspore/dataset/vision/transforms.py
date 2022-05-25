@@ -118,7 +118,7 @@ class AdjustGamma(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.AdjustGammaOperation(self.gamma, self.gain)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -240,7 +240,7 @@ class AutoContrast(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.AutoContrastOperation(self.cutoff, self.ignore)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -338,7 +338,7 @@ class CenterCrop(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.CenterCropOperation(self.size)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -583,7 +583,18 @@ class Decode(TensorOperation, PyTensorOperation):
 
     def __call__(self, img):
         """
-        Call method.
+        Call method for input conversion for eager mode with C++ implementation.
+        """
+        if isinstance(img, bytes):
+            img = np.frombuffer(img, np.uint8)
+        elif not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
+            raise TypeError(
+                "Input should be an encoded image in 1-D NumPy format, got {}.".format(type(img)))
+        return super().__call__(img)
+
+    def execute_py(self, img):
+        """
+        Execute method.
 
         Args:
             img (NumPy): Image to be decoded.
@@ -591,15 +602,7 @@ class Decode(TensorOperation, PyTensorOperation):
         Returns:
             img (NumPy, PIL Image), Decoded image.
         """
-        if self.implementation == Implementation.PY:
-            return util.decode(img)
-
-        if isinstance(img, bytes):
-            img = np.frombuffer(img, np.uint8)
-        elif not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
-            raise TypeError(
-                "Input should be an encoded image in 1-D NumPy format, got {}.".format(type(img)))
-        return super().__call__(img)
+        return util.decode(img)
 
     def parse(self):
         return cde.DecodeOperation(True)
@@ -628,7 +631,7 @@ class Equalize(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.EqualizeOperation()
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -660,7 +663,7 @@ class FiveCrop(PyTensorOperation):
 
     Examples:
         >>> import numpy
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True),
         ...                            vision.FiveCrop(size=200),
@@ -678,7 +681,7 @@ class FiveCrop(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -753,7 +756,7 @@ class Grayscale(PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True)),
         ...                            vision.Grayscale(3),
@@ -770,7 +773,7 @@ class Grayscale(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -819,7 +822,7 @@ class HsvToRgb(PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True)),
         ...                            vision.CenterCrop(20),
@@ -837,9 +840,9 @@ class HsvToRgb(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def __call__(self, hsv_imgs):
+    def execute_py(self, hsv_imgs):
         """
-        Call method.
+        Execute method.
 
         Args:
             hsv_imgs (numpy.ndarray): HSV images to be converted.
@@ -876,7 +879,7 @@ class HWC2CHW(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.HwcToChwOperation()
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -912,7 +915,7 @@ class Invert(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.InvertOperation()
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -947,7 +950,7 @@ class LinearTransformation(PyTensorOperation):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> height, width = 32, 32
         >>> dim = 3 * height * width
@@ -970,9 +973,9 @@ class LinearTransformation(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def __call__(self, np_img):
+    def execute_py(self, np_img):
         """
-        Call method.
+        Execute method.
 
         Args:
             np_img (numpy.ndarray): Image in shape of (C, H, W) to be linearly transformed.
@@ -1038,7 +1041,9 @@ class MixUp(PyTensorOperation):
 
     def __call__(self, image, label):
         """
-        Call method.
+        Call method to apply mix up transformation to image and label.
+
+        Note: No execute method for MixUp
 
         Args:
             image (numpy.ndarray): Images to be mixed up.
@@ -1244,7 +1249,7 @@ class Pad(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.PadOperation(self.padding, self.fill_value, self.c_padding_mode)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -1417,7 +1422,7 @@ class RandomAffine(TensorOperation, PyTensorOperation):
         return cde.RandomAffineOperation(self.degrees, self.translate, self.scale, self.shear,
                                          self.c_resample, self.fill_value)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -1515,7 +1520,7 @@ class RandomColor(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomColorOperation(*self.degrees)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -1591,7 +1596,7 @@ class RandomColorAdjust(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomColorAdjustOperation(self.brightness, self.contrast, self.saturation, self.hue)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -1698,7 +1703,7 @@ class RandomCrop(TensorOperation, PyTensorOperation):
         return cde.RandomCropOperation(self.size, self.padding, self.pad_if_needed, self.fill_value,
                                        self.c_padding_mode)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -1950,7 +1955,7 @@ class RandomErasing(PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True)),
         ...                            vision.ToTensor(),
@@ -1971,9 +1976,9 @@ class RandomErasing(PyTensorOperation):
         self.max_attempts = max_attempts
         self.implementation = Implementation.PY
 
-    def __call__(self, np_img):
+    def execute_py(self, np_img):
         """
-        Call method.
+        Execute method.
 
         Args:
             np_img (numpy.ndarray): image in shape of (C, H, W) to be randomly erased.
@@ -2004,7 +2009,7 @@ class RandomGrayscale(PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True)),
         ...                            vision.RandomGrayscale(0.3),
@@ -2020,7 +2025,7 @@ class RandomGrayscale(PyTensorOperation):
         self.prob = prob
         self.implementation = Implementation.PY
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -2071,7 +2076,7 @@ class RandomHorizontalFlip(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomHorizontalFlipOperation(self.prob)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -2176,7 +2181,7 @@ class RandomLighting(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomLightingOperation(self.alpha)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -2215,7 +2220,7 @@ class RandomPerspective(PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True)),
         ...                            vision.RandomPerspective(prob=0.1),
@@ -2233,7 +2238,7 @@ class RandomPerspective(PyTensorOperation):
         self.interpolation = Inter.to_python_type(interpolation)
         self.implementation = Implementation.PY
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -2371,7 +2376,7 @@ class RandomResizedCrop(TensorOperation, PyTensorOperation):
         return cde.RandomResizedCropOperation(self.size, self.scale, self.ratio, self.c_interpolation,
                                               self.max_attempts)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -2626,7 +2631,7 @@ class RandomRotation(TensorOperation, PyTensorOperation):
         return cde.RandomRotationOperation(self.degrees, self.c_resample, self.expand, self.c_center,
                                            self.fill_value)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -2717,7 +2722,7 @@ class RandomSharpness(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomSharpnessOperation(self.degrees)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -2794,7 +2799,7 @@ class RandomVerticalFlip(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.RandomVerticalFlipOperation(self.prob)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -2938,7 +2943,7 @@ class Resize(TensorOperation, PyTensorOperation):
     def parse(self):
         return cde.ResizeOperation(self.c_size, self.c_interpolation)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -3013,7 +3018,7 @@ class RgbToHsv(PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True)),
         ...                            vision.CenterCrop(20),
@@ -3031,9 +3036,9 @@ class RgbToHsv(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def __call__(self, rgb_imgs):
+    def execute_py(self, rgb_imgs):
         """
-        Call method.
+        Execute method.
 
         Args:
             rgb_imgs (numpy.ndarray): RGB images to be converted.
@@ -3298,7 +3303,7 @@ class TenCrop(PyTensorOperation):
 
     Examples:
         >>> import numpy
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True)),
         ...                            vision.TenCrop(size=200),
@@ -3319,7 +3324,7 @@ class TenCrop(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 
@@ -3331,6 +3336,45 @@ class TenCrop(PyTensorOperation):
                 of the original image and top_left, top_right, bottom_left, bottom_right, center of the flipped image.
         """
         return util.ten_crop(img, self.size, self.use_vertical_flip)
+
+
+class ToNumpy(PyTensorOperation):
+    """
+    Convert the PIL input image to NumPy array.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.transforms import Compose
+        >>>
+        >>> # Use ToNumpy to explicitly select C++ implementation of subsequent op
+        >>> transforms_list = Compose([vision.Decode(True),
+        ...                            vision.RandomHorizontalFlip(0.5),
+        ...                            vision.ToNumpy(),
+        ...                            vision.Resize(100, 120)])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.random = False
+        # Use "Implementation.C" to indicate to select C++ implementation for next op in transforms list
+        self.implementation = Implementation.C
+
+    def execute_py(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be converted to numpy.ndarray.
+
+        Returns:
+            Image converted to numpy.ndarray
+        """
+        return np.array(img)
 
 
 class ToPIL(PyTensorOperation):
@@ -3347,7 +3391,7 @@ class ToPIL(PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> # data is already decoded, but not in PIL Image format
         >>> transforms_list = Compose([vision.ToPIL(),
@@ -3363,9 +3407,9 @@ class ToPIL(PyTensorOperation):
         self.random = False
         self.implementation = Implementation.PY
 
-    def __call__(self, img):
+    def execute_py(self, img):
         """
-        Call method.
+        Execute method.
 
         Args:
             img (numpy.ndarray): Decoded numpy.ndarray image to be converted to PIL Image.
@@ -3393,7 +3437,7 @@ class ToTensor(TensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> # create a list of transformations to be applied to the "image" column of each data row
         >>> transforms_list = Compose([vision.Decode(to_pil=True)),
@@ -3413,9 +3457,9 @@ class ToTensor(TensorOperation, PyTensorOperation):
         self.output_type = str(output_type)
         self.random = False
 
-    def __call__(self, img):
+    def execute_py(self, img):
         """
-        Call method.
+        Execute method.
 
         Args:
             img (Union[PIL Image, numpy.ndarray]): PIL Image or numpy.ndarray to be type converted.
@@ -3431,20 +3475,25 @@ class ToTensor(TensorOperation, PyTensorOperation):
 
 class ToType(TypeCast):
     """
-    Convert the input numpy.ndarray image to the desired dtype.
+    Tensor operation to cast to a given MindSpore data type or NumPy data type.
+    Note: This operation is an alias for TypeCast operation.
+
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
-        output_type (numpy.dtype): The desired dtype of the output image, e.g. :class:`numpy.float32`.
+        data_type (mindspore.dtype or numpy.dtype): mindspore.dtype or numpy.dtype (e.g. :class:`numpy.float32`)
+        to be cast to.
 
     Raises:
-        TypeError: If the input image is not of type :class:`numpy.ndarray`.
+        TypeError: If `data_type` is not of MindSpore data type bool, int, float, string or type :class:`numpy.ndarray`.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms_list = Compose([vision.Decode(to_pil=True)),
         ...                            vision.RandomHorizontalFlip(0.5),
@@ -3478,7 +3527,7 @@ class UniformAugment(CompoundOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>>
         >>> transforms = [vision.CenterCrop(64),
         ...               vision.RandomColor(),
@@ -3502,7 +3551,7 @@ class UniformAugment(CompoundOperation):
         operations = self.parse_transforms()
         return cde.UniformAugOperation(operations, self.num_ops)
 
-    def execute_pil(self, img):
+    def execute_py(self, img):
         """
         Execute method.
 

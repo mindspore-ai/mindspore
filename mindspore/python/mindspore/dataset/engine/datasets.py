@@ -75,6 +75,7 @@ from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
 from ..transforms.py_transforms_util import FuncWrapper, Implementation
+from ..vision.transforms import ToNumpy
 
 try:
     context = import_module("mindspore.context")
@@ -3337,11 +3338,11 @@ class MapDataset(UnionBaseDataset):
         operations_fin = []
         for op in operations:
             if hasattr(op, "implementation"):
-                if op.implementation == Implementation.C and not isinstance(op, FuncWrapper):
+                if op.implementation == Implementation.C and not isinstance(op, (FuncWrapper, ToNumpy)):
                     operations_fin.append(op.parse())
                 elif op.implementation == Implementation.PY:
                     operations_fin.append(op)
-                elif isinstance(op, FuncWrapper):
+                elif isinstance(op, (FuncWrapper, ToNumpy)):
                     operations_fin.append(op)
                 else:
                     raise RuntimeError("Wrong implementation")

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 # ==============================================================================
 """
 This module is to support audio augmentations.
-It includes two parts: transforms and utils.
-transforms is a high performance processing module with common audio operations.
+It includes two parts: audio transforms and utils.
+audio transforms is a high performance processing module with common audio operations.
 utils provides some general methods for audio processing.
 
 Common imported modules in corresponding API examples are as follows:
@@ -23,6 +23,13 @@ Common imported modules in corresponding API examples are as follows:
 .. code-block::
 
     import mindspore.dataset as ds
+    import mindspore.dataset.audio as audio
+    from mindspore.dataset.audio import utils
+
+Alternative and equivalent imported audio module is as follows:
+
+.. code-block::
+
     import mindspore.dataset.audio.transforms as audio
 
 Descriptions of common data processing terms are as follows:
@@ -30,5 +37,12 @@ Descriptions of common data processing terms are as follows:
 - TensorOperation, the base class of all data processing operations implemented in C++.
 - AudioTensorOperation, the base class of all audio processing operations. It is a derived class of TensorOperation.
 """
+from .transforms import AllpassBiquad, AmplitudeToDB, Angle, BandBiquad, BandpassBiquad, BandrejectBiquad, BassBiquad, \
+    Biquad, ComplexNorm, ComputeDeltas, Contrast, DBToAmplitude, DCShift, DeemphBiquad, DetectPitchFrequency, Dither, \
+    EqualizerBiquad, Fade, Flanger, FrequencyMasking, Gain, GriffinLim, HighpassBiquad, InverseMelScale, LFilter, \
+    LowpassBiquad, Magphase, MaskAlongAxis, MaskAlongAxisIID, MelScale, MuLawDecoding, MuLawEncoding, Overdrive, \
+    Phaser, PhaseVocoder, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, TimeMasking, TimeStretch, \
+    TrebleBiquad, Vol
 from . import transforms
-from .utils import *
+from .utils import create_dct, melscale_fbanks, BorderType, DensityFunction, FadeShape, GainType, Interpolation, \
+    MelType, Modulation, NormMode, NormType, ScaleType, WindowType

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd.
+# Copyright 2020-2022 Huawei Technologies Co., Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 GENERATE_GOLDEN = False
+
 
 def test_five_crop_op(plot=False):
     """
@@ -66,7 +67,7 @@ def test_five_crop_op(plot=False):
         logger.info("dtype of image_1: {}".format(image_1.dtype))
         logger.info("dtype of image_2: {}".format(image_2.dtype))
         if plot:
-            visualize_list(np.array([image_1]*5), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
+            visualize_list(np.array([image_1] * 5), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
 
         # The output data should be of a 4D tensor shape, a stack of 5 images.
         assert len(image_2.shape) == 4
@@ -75,8 +76,11 @@ def test_five_crop_op(plot=False):
 
 def test_five_crop_error_msg():
     """
-    Test FiveCrop error message.
+    Feature: FiveCrop op
+    Description: Test FiveCrop op when the input image is not in the correct format.
+    Expectation: Invalid input is detected
     """
+
     logger.info("test_five_crop_error_msg")
 
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -91,9 +95,7 @@ def test_five_crop_error_msg():
     with pytest.raises(RuntimeError) as info:
         for _ in data:
             pass
-    error_msg = "TypeError: __call__() takes 2 positional arguments but 6 were given"
-
-    # error msg comes from ToTensor()
+    error_msg = "TypeError: execute_py() takes 2 positional arguments but 6 were given"
     assert error_msg in str(info.value)
 
 

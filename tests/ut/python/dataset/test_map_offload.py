@@ -273,15 +273,37 @@ def test_offload_typecast_op():
     Expectation: Output should be the same with activated or deactivated offload for TypeCast op.
     """
     # Dataset without offload activated.
-    ds_baseline = ds.ImageFolderDataset(DATA_DIR)
+    ds_baseline = ds.ImageFolderDataset(DATA_DIR, num_samples=3)
     ds_baseline = ds_baseline.map(operations=[C.Decode(), C2.TypeCast(mstype.float32)], input_columns="image")
-    ds_baseline = ds_baseline.map(operations=[C2.TypeCast(mstype.int32)], input_columns="label")
+    ds_baseline = ds_baseline.map(operations=[C2.TypeCast("int32")], input_columns="label")
 
     # Dataset with offload activated.
-    ds_offload = ds.ImageFolderDataset(DATA_DIR)
+    ds_offload = ds.ImageFolderDataset(DATA_DIR, num_samples=10)
     ds_offload = ds_offload.map(operations=[C.Decode(), C2.TypeCast(mstype.float32)],
                                 input_columns="image", offload=True)
-    ds_offload = ds_offload.map(operations=[C2.TypeCast(mstype.int32)], input_columns="label", offload=True)
+    ds_offload = ds_offload.map(operations=[C2.TypeCast("int32")], input_columns="label", offload=True)
+
+    for (img_0, _), (img_1, _) in zip(ds_baseline.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                                      ds_offload.create_tuple_iterator(num_epochs=1, output_numpy=True)):
+        np.testing.assert_almost_equal(img_0, img_1, decimal=6)
+
+
+def test_offload_typecast_op_2():
+    """
+    Feature: Test map offload TypeCast op.
+    Description: Test TypeCast op with numpy data type input, and alias ToType
+    Expectation: Output should be the same with activated or deactivated offload for TypeCast op.
+    """
+    # Dataset without offload activated.
+    ds_baseline = ds.ImageFolderDataset(DATA_DIR, num_samples=2)
+    ds_baseline = ds_baseline.map(operations=[C.Decode(), C2.TypeCast(np.float32)], input_columns="image")
+    ds_baseline = ds_baseline.map(operations=[C.ToType(mstype.int32)], input_columns="label")
+
+    # Dataset with offload activated.
+    ds_offload = ds.ImageFolderDataset(DATA_DIR, num_samples=5)
+    ds_offload = ds_offload.map(operations=[C.Decode(), C2.TypeCast(np.float32)],
+                                input_columns="image", offload=True)
+    ds_offload = ds_offload.map(operations=[C.ToType(mstype.int32)], input_columns="label", offload=True)
 
     for (img_0, _), (img_1, _) in zip(ds_baseline.create_tuple_iterator(num_epochs=1, output_numpy=True),
                                       ds_offload.create_tuple_iterator(num_epochs=1, output_numpy=True)):
@@ -383,6 +405,7 @@ if __name__ == "__main__":
     test_offload_normalize_op()
     test_offload_rescale_op()
     test_offload_typecast_op()
+    test_offload_typecast_op_2()
     test_offload_different_column_end_of_pipeline()
     test_offload_not_end_of_pipeline()
     test_offload_dim_check()
