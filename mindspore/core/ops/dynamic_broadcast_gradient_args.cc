@@ -35,9 +35,7 @@ int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &p
     auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->BuildShape())[kShape];
     auto input_size = input_shape.size();
     if (input_size != 1) {
-      MS_EXCEPTION(TypeError) << "For " << prim_name << "', input must be 1-D, but dims is " << input_size;
-      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', input shape must be 1-D, but got: " << input_size
-                               << "-D.";
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input shape must be 1-D, but got: " << input_size << "-D.";
     }
     if (input_shape[0] == abstract::Shape::SHP_ANY) {
       auto max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_arg->BuildShape())[kMaxShape];

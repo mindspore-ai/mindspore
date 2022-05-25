@@ -95,7 +95,9 @@ abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::ve
         }
       }
     } else {
-      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the dtype of input1 must be in [int32, int64].";
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                              << "', the dtype of input1 must be in [int32, int64], but got: "
+                              << input_type_element->type_id() << ".";
     }
     if (shape_m > max_length) {
       MS_EXCEPTION(ValueError)
@@ -128,7 +130,9 @@ TypePtr FillV2InferType(const PrimitivePtr &primitive, const std::vector<Abstrac
     const std::set<TypePtr> input1_valid_types = {kInt32, kInt64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input1 datatype", input1_type, input1_valid_types, prim_name);
   } else {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the dtype of input1 must be in [int32, int64].";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                            << "', the dtype of input1 must be in [int32, int64]. But got: " << input1_type->ToString()
+                            << ".";
   }
   // Check the data type of the second input and infer the data type of the output from the second input
   auto input2 = input_args[kInputIndex1];
@@ -142,7 +146,8 @@ TypePtr FillV2InferType(const PrimitivePtr &primitive, const std::vector<Abstrac
     MS_EXCEPTION(TypeError)
       << "For '" << prim_name
       << "', the dtype of input2 must be in [bool, int8, int16, int32, int64, uint8, uint16, uint32, "
-         "uint64, float16, float32, float64].";
+         "uint64, float16, float32, float64]. But got: "
+      << input2_type->ToString() << ".";
   }
   auto input2_tensor_type = (input2_type->cast<TensorTypePtr>())->element();
 

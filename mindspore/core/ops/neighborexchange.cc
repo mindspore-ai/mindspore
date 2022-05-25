@@ -59,7 +59,7 @@ void CheckAttr(const PrimitivePtr &primitive, const std::string &shape_attr_name
     auto ele = attr_shapes[0]->cast<ValueSequencePtr>();
     if (ele == nullptr) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "',  first element of attr " << shape_attr_name
-                              << " can not be an empty pointer.";
+                              << " is necessary, but missing it.";
     }
   }
   std::vector<int64_t> attr_rank_ids;
@@ -96,7 +96,7 @@ void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<Abst
   MS_EXCEPTION_IF_NULL(recv_type_attr);
   if (!recv_type_attr->isa<Type>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', attr '" << kNeighborExchangeRecvType
-                            << "' must be a mindspore data type.";
+                            << "' must be a mindspore data type. But got: " << recv_type_attr << ".";
   }
   // check group
   auto group_attr = primitive->GetAttr(kGroup);
@@ -104,7 +104,8 @@ void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<Abst
     MS_EXCEPTION_IF_NULL(group_attr);
     (void)GetValue<std::string>(group_attr);
   } catch (const std::exception &) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', attr '" << kGroup << "' must be a str.";
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', attr '" << kGroup
+                            << "' must be a str, but got: " << group_attr << ".";
   }
   // check empty input
   auto send_rank_ids = GetValue<std::vector<int64_t>>(primitive->GetAttr(kSendRankIds));
