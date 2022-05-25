@@ -2735,7 +2735,7 @@ class Tensor(Tensor_):
             indices (Tensor): The index tensor that gets the collected elements, with int32 or int64 data type.
 
         Returns:
-            Tensor, has the same type as input tensor and the shape is:
+            Tensor, has the same type as input tensor and the shape is
             :math:`indices\_shape[:-1] + input\_x\_shape[indices\_shape[-1]:]`.
 
         Raises:

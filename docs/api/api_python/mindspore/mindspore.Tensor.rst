@@ -390,7 +390,7 @@ mindspore.Tensor
         按索引从输入Tensor中获取切片。
         使用给定的索引从具有指定形状的输入Tensor中搜集切片。
         输入Tensor的shape是 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。为了表达方便，
-        将其定义为`input_x`。
+        将其定义为 `input_x` 。
         `indices` 是一个K维的整数张量，假定它的K-1维张量中的每一个元素是输入Tensor的切片，那么有：
 
         .. math::
