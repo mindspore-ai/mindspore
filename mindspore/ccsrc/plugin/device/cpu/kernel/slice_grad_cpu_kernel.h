@@ -59,9 +59,9 @@ class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void ClearVectors();
 
-  void ExpandAllMemberDims(size_t expand_dims = 4);
+  void ExpandAllMemberDims(size_t expand_dims = 8);
 
-  bool CanCopyMemoryOnAxis(size_t dim, size_t max_dim = 4) const;
+  bool CanCopyMemoryOnAxis(size_t dim, size_t max_dim = 8) const;
 
   int SignOfStride(size_t axis) const;
 
