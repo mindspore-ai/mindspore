@@ -1,7 +1,7 @@
-mindspore.ops.ScatterDiv
+mindspore.ops.scatter_div
 =========================
 
-.. py:class:: mindspore.ops.ScatterDiv(use_locking=False)
+.. py:function:: mindspore.ops.scatter_div(input_x, indices, updates)
 
     根据指定更新值和输入索引通过除法运算更新输入数据的值。
 
@@ -14,13 +14,9 @@ mindspore.ops.ScatterDiv
 
     **参数：**
 
-    - **use_locking** (bool) - 是否启用锁保护。默认值：False。
-
-    **输入：**
-
-    - **input_x** (Parameter)- ScatterDiv的输入，任意维度的Parameter。
+    - **input_x** (Parameter) - scatter_div的输入，任意维度的Parameter。
     - **indices** (Tensor) - 指定相除操作的索引，数据类型必须为mindspore.int32或者mindspore.int64。
-    - **updates** (Tensor) - 指定与 `input_x` 相除的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
+    - **updates** (Tensor) - 指定与 `input_x` 取最小值操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
 
     **输出：**
 
@@ -28,7 +24,6 @@ mindspore.ops.ScatterDiv
 
     **异常：**
 
-    - **TypeError** - `use_locking` 不是bool。
     - **TypeError** - `indices` 不是int32或者int64。
     - **ValueError** - `updates` 的shape不等于 `indices.shape + input_x.shape[1:]` 。
     - **RuntimeError** - 当 `input_x` 和 `updates` 类型不一致，需要进行类型转换时，如果 `updates` 不支持转成参数 `input_x` 需要的数据类型，就会报错。
