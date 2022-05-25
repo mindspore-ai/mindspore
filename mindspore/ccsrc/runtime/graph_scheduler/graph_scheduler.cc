@@ -20,6 +20,8 @@
 #include "runtime/graph_scheduler/actor/memory_manager_actor.h"
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
+#include "runtime/graph_scheduler/optimizer/optimizer.h"
+#include "runtime/graph_scheduler/optimizer/invalid_data_arrow_elimination.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "mindrt/src/actor/actormgr.h"
 #include "mindrt/include/async/async.h"
@@ -462,12 +464,13 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   MS_EXCEPTION_IF_NULL(actor_set);
   CacheGraphOutputToActor(graph_compiler_info);
   Link(actor_set.get(), graph_compiler_info);
-  Optimize(actor_set.get());
 
   DumpActor(actor_set.get(), graph_compiler_info);
   if (graph_compiler_info.strategy_ == GraphExecutionStrategy::kPipeline) {
     SchedulerHelper::CheckActorValid(actor_set.get());
   }
+
+  Optimize(actor_set);
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64) && !defined(__APPLE__))
@@ -736,9 +739,13 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
 #endif
 }
 
-void GraphScheduler::Optimize(ActorSet *const actor_set) {
+void GraphScheduler::Optimize(const ActorSetPtr &actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
-  control_node_scheduler_.Optimize(actor_set->control_actors_.get());
+
+  auto optimizer = std::make_shared<ActorSetOptimizer>();
+  MS_EXCEPTION_IF_NULL(optimizer);
+  optimizer->AddPass(std::make_shared<InvalidDataArrowElimination>());
+  optimizer->Optimize(actor_set);
 }
 
 std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const GraphCompilerInfo &graph_compiler_info,

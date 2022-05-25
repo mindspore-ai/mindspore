@@ -24,7 +24,7 @@ namespace runtime {
 void ActorPass::Run(const ActorSetPtr &actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
   if (!need_run_single_actor_) {
-    Process(actor_set.get());
+    Process(actor_set.get(), nullptr);
   } else {
     auto actors = SchedulerHelper::CollectActors(actor_set.get());
     for (const auto &actor : actors) {

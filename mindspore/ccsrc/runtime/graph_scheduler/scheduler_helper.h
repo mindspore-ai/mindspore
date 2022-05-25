@@ -64,6 +64,10 @@ class SchedulerHelper {
   static void AddFormalParameterDeviceTensor(ControlActor *const from_actor, size_t from_index,
                                              const AnfNodePtr &input_node, const KernelGraphPtr &graph);
 
+  // Convert the invalid data arrow to control arrow.
+  static void ConvertDataArrowToControlArrow(AbstractActor *const from_actor, AbstractActor *const to_actor,
+                                             const DataArrowPtr &data_arrow, size_t data_arrow_index);
+
   // Check whether the actor set is valid.
   static void CheckActorValid(const ActorSet *actor_set);
 
