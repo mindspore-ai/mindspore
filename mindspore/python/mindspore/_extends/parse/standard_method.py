@@ -1660,6 +1660,11 @@ def bitwise_xor(x, y):
     return F.bitwise_xor(x, y)
 
 
+def tan(x):
+    """Returns tangent of `x`."""
+    return F.tan(x)
+
+
 def ger(x, y):
     """Ger product of `x1` and `x2`.."""
     return F.ger(x, y)

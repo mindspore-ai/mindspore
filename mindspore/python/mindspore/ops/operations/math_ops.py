@@ -4196,7 +4196,7 @@ class Tan(Primitive):
     Refer to :func:`mindspore.ops.tan` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> tan = ops.Tan()

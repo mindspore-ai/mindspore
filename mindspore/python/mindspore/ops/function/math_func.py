@@ -916,7 +916,7 @@ def tan(x):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([-1.0, 0.0, 1.0]), mindspore.float32)
