@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ScatterNdFunctorKernelMod : public NativeGpuKernelMod {
+class ScatterNdFunctorKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<ScatterNdFunctorKernelMod> {
  public:
   ScatterNdFunctorKernelMod() = default;
   ~ScatterNdFunctorKernelMod() override = default;
@@ -37,7 +37,8 @@ class ScatterNdFunctorKernelMod : public NativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    return kernel_func_(this, inputs, workspace, outputs, cuda_stream);
+    stream_ptr_ = cuda_stream;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -46,15 +47,15 @@ class ScatterNdFunctorKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  std::vector<KernelAttr> GetOpSupport() override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using ScatterNdFunctorFunc =
-    std::function<bool(ScatterNdFunctorKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+                    const std::vector<AddressPtr> &outputs);
 
   ScatterNdFunctorType scatter_nd_functor_type_;
   size_t input_size_{0};
@@ -69,8 +70,7 @@ class ScatterNdFunctorKernelMod : public NativeGpuKernelMod {
   BaseOperatorPtr kernel_ptr_{nullptr};
   std::vector<KernelTensorPtr> outputs_{};
 
-  ScatterNdFunctorFunc kernel_func_{};
-  static std::vector<std::pair<KernelAttr, ScatterNdFunctorFunc>> func_list_;
+  void *stream_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

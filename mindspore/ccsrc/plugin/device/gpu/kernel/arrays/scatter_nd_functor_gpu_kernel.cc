@@ -20,6 +20,7 @@
 #include <functional>
 #include <algorithm>
 #include <utility>
+#include <memory>
 #include <map>
 #include "abstract/utils.h"
 
@@ -32,17 +33,18 @@ static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMa
   {"ScatterNdDiv", SCATTER_ND_FUNC_DIV},       {"ScatterNdMax", SCATTER_ND_FUNC_MAX},
   {"ScatterNdMin", SCATTER_ND_FUNC_MIN},
 };
-}
+}  // namespace
+using KernelRunFunc = ScatterNdFunctorKernelMod::KernelRunFunc;
 template <typename T, typename S>
 bool ScatterNdFunctorKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+                                             const std::vector<AddressPtr> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices = GetDeviceAddress<S>(inputs, kIndex1);
   T *updates = GetDeviceAddress<T>(inputs, kIndex2);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   const size_t indices_len = sizeof(S) * out_strides_.size();
-  S *indices_stride = GetDeviceAddress<S>(workspace, 0);
+  S *indices_stride = GetDeviceAddress<S>(workspace, kIndex0);
 
   // The out_strides_ used to be std::vector<S>, use int as default outside
   if constexpr (std::is_same_v<S, int64_t>) {
@@ -50,21 +52,22 @@ bool ScatterNdFunctorKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
     std::transform(out_strides_.begin(), out_strides_.end(), std::back_inserter(long_out_stride), IntToLong);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(indices_stride, long_out_stride.data(), indices_len, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
       "For '" << kernel_name_ << "', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
   } else {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(indices_stride, out_strides_.data(), indices_len, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
+                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
       "For '" << kernel_name_ << "', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
   }
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr)),
+                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
     "For '" << kernel_name_ << "', cudaMemcpyAsync output failed")
+
   CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride, indices, updates,
-                      output, reinterpret_cast<cudaStream_t>(stream_ptr));
+                      output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
   return true;
 }
 
@@ -75,28 +78,17 @@ bool ScatterNdFunctorKernelMod::Init(const BaseOperatorPtr &base_operator, const
   if (iter == kScatterNdFunctorTypeMap.end()) {
     MS_LOG(EXCEPTION) << "Only support these scatter functors: " << Map2Str(kScatterNdFunctorTypeMap)
                       << " currently, but got " << kernel_name_;
-  } else {
-    scatter_nd_functor_type_ = iter->second;
+    return false;
   }
+  scatter_nd_functor_type_ = iter->second;
 
-  // Getting launch_kernel function.
-  {
-    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-    // Only ScatterNdUpdate support kNumberTypeBool
-    if (scatter_nd_functor_type_ != SCATTER_ND_FUNC_UPDATE &&
-        kernel_attr.GetInputAttr(kIndex0).first == kNumberTypeBool) {
-      is_match = false;
-    }
-    if (!is_match) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
-      return false;
-    }
-    kernel_func_ = func_list_[index].second;
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
   }
 
   return true;
 }
+
 int ScatterNdFunctorKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs,
                                       const std::map<uint32_t, tensor::TensorPtr> &) {
@@ -146,113 +138,41 @@ int ScatterNdFunctorKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   return KRET_OK;
 }
 
-std::vector<KernelAttr> ScatterNdFunctorKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, ScatterNdFunctorFunc> &pair) { return pair.first; });
-  return support_list;
+#define DTYPE_REGISTER(INPUT, INDICES, UPDATES, OUTPUT, T, S)                                           \
+  {                                                                                                     \
+    KernelAttr().AddInputAttr(INPUT).AddInputAttr(INDICES).AddInputAttr(UPDATES).AddOutputAttr(OUTPUT), \
+      &ScatterNdFunctorKernelMod::LaunchKernel<T, S>                                                    \
+  }
+
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ScatterNdFunctorKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
+    // Data type: double
+    DTYPE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64, double, int),
+    DTYPE_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64, double, int64_t),
+    // Data type: float
+    DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, float, int),
+    DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, float, int64_t),
+    // Data type: half
+    DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, half, int),
+    DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, half, int64_t),
+    // Data type: int
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int, int),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int, int64_t),
+    // Data type: int16_t
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt16, int16_t, int),
+    DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int16_t, int64_t),
+    // Data type: uint8_t
+    DTYPE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int),
+    DTYPE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int64_t),
+    // Data type: int8_t
+    DTYPE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int8_t, int),
+    DTYPE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int8_t, int64_t),
+    // Data type: bool, only for scatter_nd_update
+    DTYPE_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, bool, int),
+    DTYPE_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, bool, int64_t),
+  };
+  return func_list;
 }
-
-std::vector<std::pair<KernelAttr, ScatterNdFunctorKernelMod::ScatterNdFunctorFunc>>
-  ScatterNdFunctorKernelMod::func_list_ = {
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddOutputAttr(kNumberTypeFloat64),
-     &ScatterNdFunctorKernelMod::LaunchKernel<double, int>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddOutputAttr(kNumberTypeFloat64),
-     &ScatterNdFunctorKernelMod::LaunchKernel<double, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &ScatterNdFunctorKernelMod::LaunchKernel<float, int>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &ScatterNdFunctorKernelMod::LaunchKernel<float, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &ScatterNdFunctorKernelMod::LaunchKernel<half, int>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &ScatterNdFunctorKernelMod::LaunchKernel<half, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt32),
-     &ScatterNdFunctorKernelMod::LaunchKernel<int, int>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt32),
-     &ScatterNdFunctorKernelMod::LaunchKernel<int, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt16)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt16)
-       .AddOutputAttr(kNumberTypeInt16),
-     &ScatterNdFunctorKernelMod::LaunchKernel<int16_t, int>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt16)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt16)
-       .AddOutputAttr(kNumberTypeInt16),
-     &ScatterNdFunctorKernelMod::LaunchKernel<int16_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeUInt8)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeUInt8)
-       .AddOutputAttr(kNumberTypeUInt8),
-     &ScatterNdFunctorKernelMod::LaunchKernel<uint8_t, int>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeUInt8)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeUInt8)
-       .AddOutputAttr(kNumberTypeUInt8),
-     &ScatterNdFunctorKernelMod::LaunchKernel<uint8_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt8)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt8)
-       .AddOutputAttr(kNumberTypeInt8),
-     &ScatterNdFunctorKernelMod::LaunchKernel<int8_t, int>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt8)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt8)
-       .AddOutputAttr(kNumberTypeInt8),
-     &ScatterNdFunctorKernelMod::LaunchKernel<int8_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeBool)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeBool)
-       .AddOutputAttr(kNumberTypeBool),
-     &ScatterNdFunctorKernelMod::LaunchKernel<bool, int>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeBool)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeBool)
-       .AddOutputAttr(kNumberTypeBool),
-     &ScatterNdFunctorKernelMod::LaunchKernel<bool, int64_t>},
-};
-
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdUpdate, ScatterNdFunctorKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdAdd, ScatterNdFunctorKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdSub, ScatterNdFunctorKernelMod);

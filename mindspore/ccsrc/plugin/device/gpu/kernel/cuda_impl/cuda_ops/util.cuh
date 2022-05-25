@@ -324,6 +324,48 @@ __device__ __forceinline__ unsigned BallotSync(int predicate, unsigned mask = 0x
   return __ballot_sync(mask, predicate);
 }
 
+struct MsAtomicAddFunctor {
+  template <typename T>
+  __device__ __forceinline__ T operator()(T *address, T val) {
+    return MsAtomicAdd(address, val);
+  }
+};
+
+struct MsAtomicSubFunctor {
+  template <typename T>
+  __device__ __forceinline__ T operator()(T *address, T val) {
+    return MsAtomicSub(address, val);
+  }
+};
+
+struct MsAtomicMulFunctor {
+  template <typename T>
+  __device__ __forceinline__ T operator()(T *address, T val) {
+    return MsAtomicMul(address, val);
+  }
+};
+
+struct MsAtomicDivFunctor {
+  template <typename T>
+  __device__ __forceinline__ T operator()(T *address, T val) {
+    return MsAtomicDiv(address, val);
+  }
+};
+
+struct MsAtomicMinFunctor {
+  template <typename T>
+  __device__ __forceinline__ T operator()(T *address, T val) {
+    return MsAtomicMin(address, val);
+  }
+};
+
+struct MsAtomicMaxFunctor {
+  template <typename T>
+  __device__ __forceinline__ T operator()(T *address, T val) {
+    return MsAtomicMax(address, val);
+  }
+};
+
 enum : unsigned { warp_size = 32, log_wap_size = 5 };
 __device__ __forceinline__ unsigned LaneId() { return threadIdx.x & (warp_size - 1); }
 __device__ __forceinline__ unsigned WarpId(const unsigned &tid) { return tid >> log_wap_size; }

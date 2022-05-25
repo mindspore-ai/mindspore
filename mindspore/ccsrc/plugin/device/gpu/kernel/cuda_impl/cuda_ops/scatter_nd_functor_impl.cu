@@ -43,9 +43,10 @@ __global__ void ScatterNdUpdate(const size_t unit_size, const size_t index_depth
   }
 }
 
-template <typename T, typename S>
-__global__ void ScatterNdAdd(const size_t unit_size, const size_t index_depth, const size_t updates_size,
-                             const S *out_strides, const S *indices, const T *updates, T *input) {
+template <typename T, typename S, typename Functor>
+__global__ void ScatterNdBinaryOp(Functor func, const size_t unit_size, const size_t index_depth,
+                                  const size_t updates_size, const S *out_strides, const S *indices, const T *updates,
+                                  T *input) {
   int i, j;
   for (size_t read_index = blockIdx.x * blockDim.x + threadIdx.x; read_index < (updates_size);
        read_index += blockDim.x * gridDim.x) {
@@ -64,137 +65,7 @@ __global__ void ScatterNdAdd(const size_t unit_size, const size_t index_depth, c
     write_index += j;
 
     if (!out_bound) {
-      MsAtomicAdd(&input[write_index], updates[read_index]);
-    }
-  }
-}
-
-template <typename T, typename S>
-__global__ void ScatterNdSub(const size_t unit_size, const size_t index_depth, const size_t updates_size,
-                             const S *out_strides, const S *indices, const T *updates, T *input) {
-  int i, j;
-  for (size_t read_index = blockIdx.x * blockDim.x + threadIdx.x; read_index < (updates_size);
-       read_index += blockDim.x * gridDim.x) {
-    size_t write_index = 0;
-    bool out_bound = false;
-
-    i = read_index / unit_size;
-    j = read_index % unit_size;
-
-    for (size_t k = 0; k < index_depth; k++) {
-      S indices_i = indices[i * index_depth + k];
-      out_bound |= indices_i < 0;
-      write_index += indices_i * out_strides[k] * unit_size;
-    }
-
-    write_index += j;
-
-    if (!out_bound) {
-      MsAtomicSub(&input[write_index], updates[read_index]);
-    }
-  }
-}
-
-template <typename T, typename S>
-__global__ void ScatterNdMul(const size_t unit_size, const size_t index_depth, const size_t updates_size,
-                             const S *out_strides, const S *indices, const T *updates, T *input) {
-  int i, j;
-  for (size_t read_index = blockIdx.x * blockDim.x + threadIdx.x; read_index < (updates_size);
-       read_index += blockDim.x * gridDim.x) {
-    size_t write_index = 0;
-    bool out_bound = false;
-
-    i = read_index / unit_size;
-    j = read_index % unit_size;
-
-    for (size_t k = 0; k < index_depth; k++) {
-      S indices_i = indices[i * index_depth + k];
-      out_bound |= indices_i < 0;
-      write_index += indices_i * out_strides[k] * unit_size;
-    }
-
-    write_index += j;
-
-    if (!out_bound) {
-      MsAtomicMul(&input[write_index], updates[read_index]);
-    }
-  }
-}
-
-template <typename T, typename S>
-__global__ void ScatterNdDiv(const size_t unit_size, const size_t index_depth, const size_t updates_size,
-                             const S *out_strides, const S *indices, const T *updates, T *input) {
-  int i, j;
-  for (size_t read_index = blockIdx.x * blockDim.x + threadIdx.x; read_index < (updates_size);
-       read_index += blockDim.x * gridDim.x) {
-    size_t write_index = 0;
-    bool out_bound = false;
-
-    i = read_index / unit_size;
-    j = read_index % unit_size;
-
-    for (size_t k = 0; k < index_depth; k++) {
-      S indices_i = indices[i * index_depth + k];
-      out_bound |= indices_i < 0;
-      write_index += indices_i * out_strides[k] * unit_size;
-    }
-
-    write_index += j;
-
-    if (!out_bound) {
-      MsAtomicDiv(&input[write_index], updates[read_index]);
-    }
-  }
-}
-
-template <typename T, typename S>
-__global__ void ScatterNdMax(const size_t unit_size, const size_t index_depth, const size_t updates_size,
-                             const S *out_strides, const S *indices, const T *updates, T *input) {
-  int i, j;
-  for (size_t read_index = blockIdx.x * blockDim.x + threadIdx.x; read_index < (updates_size);
-       read_index += blockDim.x * gridDim.x) {
-    size_t write_index = 0;
-    bool out_bound = false;
-
-    i = read_index / unit_size;
-    j = read_index % unit_size;
-
-    for (size_t k = 0; k < index_depth; k++) {
-      S indices_i = indices[i * index_depth + k];
-      out_bound |= indices_i < 0;
-      write_index += indices_i * out_strides[k] * unit_size;
-    }
-
-    write_index += j;
-
-    if (!out_bound) {
-      MsAtomicMax(&input[write_index], updates[read_index]);
-    }
-  }
-}
-
-template <typename T, typename S>
-__global__ void ScatterNdMin(const size_t unit_size, const size_t index_depth, const size_t updates_size,
-                             const S *out_strides, const S *indices, const T *updates, T *input) {
-  int i, j;
-  for (size_t read_index = blockIdx.x * blockDim.x + threadIdx.x; read_index < (updates_size);
-       read_index += blockDim.x * gridDim.x) {
-    size_t write_index = 0;
-    bool out_bound = false;
-
-    i = read_index / unit_size;
-    j = read_index % unit_size;
-
-    for (size_t k = 0; k < index_depth; k++) {
-      S indices_i = indices[i * index_depth + k];
-      out_bound |= indices_i < 0;
-      write_index += indices_i * out_strides[k] * unit_size;
-    }
-
-    write_index += j;
-
-    if (!out_bound) {
-      MsAtomicMin(&input[write_index], updates[read_index]);
+      func(&input[write_index], updates[read_index]);
     }
   }
 }
@@ -202,30 +73,30 @@ __global__ void ScatterNdMin(const size_t unit_size, const size_t index_depth, c
 template <typename T, typename S>
 void CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
                          const size_t &index_depth, const S *out_strides, const S *indices, const T *updates, T *input,
-                         cudaStream_t cuda_stream) {
+                         uint32_t device_id, cudaStream_t cuda_stream) {
   const size_t updates_size = unit_size * num_units;
   switch (func_type) {
     case SCATTER_ND_FUNC_UPDATE:
-      return ScatterNdUpdate<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
+      return ScatterNdUpdate<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
         unit_size, index_depth, updates_size, out_strides, indices, updates, input);
     case SCATTER_ND_FUNC_ADD:
-      return ScatterNdAdd<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
-        unit_size, index_depth, updates_size, out_strides, indices, updates, input);
+      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+        MsAtomicAddFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, updates, input);
     case SCATTER_ND_FUNC_SUB:
-      return ScatterNdSub<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
-        unit_size, index_depth, updates_size, out_strides, indices, updates, input);
+      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+        MsAtomicSubFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, updates, input);
     case SCATTER_ND_FUNC_MUL:
-      return ScatterNdMul<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
-        unit_size, index_depth, updates_size, out_strides, indices, updates, input);
+      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+        MsAtomicMulFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, updates, input);
     case SCATTER_ND_FUNC_DIV:
-      return ScatterNdDiv<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
-        unit_size, index_depth, updates_size, out_strides, indices, updates, input);
+      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+        MsAtomicDivFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, updates, input);
     case SCATTER_ND_FUNC_MAX:
-      return ScatterNdMax<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
-        unit_size, index_depth, updates_size, out_strides, indices, updates, input);
+      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+        MsAtomicMaxFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, updates, input);
     case SCATTER_ND_FUNC_MIN:
-      return ScatterNdMin<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
-        unit_size, index_depth, updates_size, out_strides, indices, updates, input);
+      return ScatterNdBinaryOp<<<CUDA_BLOCKS(device_id, updates_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+        MsAtomicMinFunctor{}, unit_size, index_depth, updates_size, out_strides, indices, updates, input);
     default:
       break;
   }
@@ -236,90 +107,94 @@ template CUDA_LIB_EXPORT void CalScatterNdFunctor<double, int64_t>(enum ScatterN
                                                                    const size_t &index_depth,
                                                                    const int64_t *out_strides, const int64_t *indices,
                                                                    const double *updates, double *input,
-                                                                   cudaStream_t cuda_stream);
+                                                                   uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<double, int32_t>(enum ScatterNdFunctorType func_type,
                                                                    const size_t &unit_size, const size_t &num_units,
                                                                    const size_t &index_depth,
                                                                    const int32_t *out_strides, const int32_t *indices,
                                                                    const double *updates, double *input,
-                                                                   cudaStream_t cuda_stream);
+                                                                   uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<float, int64_t>(enum ScatterNdFunctorType func_type,
                                                                   const size_t &unit_size, const size_t &num_units,
-                                                                  const size_t &index_depth,
-                                                                  const int64_t *out_strides, const int64_t *indices,
-                                                                  const float *updates, float *input,
+                                                                  const size_t &index_depth, const int64_t *out_strides,
+                                                                  const int64_t *indices, const float *updates,
+                                                                  float *input, uint32_t device_id,
                                                                   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<float, int32_t>(enum ScatterNdFunctorType func_type,
                                                                   const size_t &unit_size, const size_t &num_units,
-                                                                  const size_t &index_depth,
-                                                                  const int32_t *out_strides, const int32_t *indices,
-                                                                  const float *updates, float *input,
+                                                                  const size_t &index_depth, const int32_t *out_strides,
+                                                                  const int32_t *indices, const float *updates,
+                                                                  float *input, uint32_t device_id,
                                                                   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<half, int64_t>(enum ScatterNdFunctorType func_type,
                                                                  const size_t &unit_size, const size_t &num_units,
                                                                  const size_t &index_depth, const int64_t *out_strides,
                                                                  const int64_t *indices, const half *updates,
-                                                                 half *input, cudaStream_t cuda_stream);
+                                                                 half *input, uint32_t device_id,
+                                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<half, int32_t>(enum ScatterNdFunctorType func_type,
                                                                  const size_t &unit_size, const size_t &num_units,
                                                                  const size_t &index_depth, const int32_t *out_strides,
                                                                  const int32_t *indices, const half *updates,
-                                                                 half *input, cudaStream_t cuda_stream);
+                                                                 half *input, uint32_t device_id,
+                                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<int32_t, int64_t>(enum ScatterNdFunctorType func_type,
                                                                     const size_t &unit_size, const size_t &num_units,
                                                                     const size_t &index_depth,
                                                                     const int64_t *out_strides, const int64_t *indices,
                                                                     const int32_t *updates, int32_t *input,
-                                                                    cudaStream_t cuda_stream);
+                                                                    uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<int32_t, int32_t>(enum ScatterNdFunctorType func_type,
                                                                     const size_t &unit_size, const size_t &num_units,
                                                                     const size_t &index_depth,
                                                                     const int32_t *out_strides, const int32_t *indices,
                                                                     const int32_t *updates, int32_t *input,
-                                                                    cudaStream_t cuda_stream);
+                                                                    uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<int16_t, int64_t>(enum ScatterNdFunctorType func_type,
                                                                     const size_t &unit_size, const size_t &num_units,
                                                                     const size_t &index_depth,
                                                                     const int64_t *out_strides, const int64_t *indices,
                                                                     const int16_t *updates, int16_t *input,
-                                                                    cudaStream_t cuda_stream);
+                                                                    uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<int16_t, int32_t>(enum ScatterNdFunctorType func_type,
                                                                     const size_t &unit_size, const size_t &num_units,
                                                                     const size_t &index_depth,
                                                                     const int32_t *out_strides, const int32_t *indices,
                                                                     const int16_t *updates, int16_t *input,
-                                                                    cudaStream_t cuda_stream);
+                                                                    uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint8_t, int64_t>(enum ScatterNdFunctorType func_type,
                                                                     const size_t &unit_size, const size_t &num_units,
                                                                     const size_t &index_depth,
                                                                     const int64_t *out_strides, const int64_t *indices,
                                                                     const uint8_t *updates, uint8_t *input,
-                                                                    cudaStream_t cuda_stream);
+                                                                    uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint8_t, int32_t>(enum ScatterNdFunctorType func_type,
                                                                     const size_t &unit_size, const size_t &num_units,
                                                                     const size_t &index_depth,
                                                                     const int32_t *out_strides, const int32_t *indices,
                                                                     const uint8_t *updates, uint8_t *input,
-                                                                    cudaStream_t cuda_stream);
+                                                                    uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<int8_t, int64_t>(enum ScatterNdFunctorType func_type,
                                                                    const size_t &unit_size, const size_t &num_units,
                                                                    const size_t &index_depth,
                                                                    const int64_t *out_strides, const int64_t *indices,
                                                                    const int8_t *updates, int8_t *input,
-                                                                   cudaStream_t cuda_stream);
+                                                                   uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<int8_t, int32_t>(enum ScatterNdFunctorType func_type,
                                                                    const size_t &unit_size, const size_t &num_units,
                                                                    const size_t &index_depth,
                                                                    const int32_t *out_strides, const int32_t *indices,
                                                                    const int8_t *updates, int8_t *input,
-                                                                   cudaStream_t cuda_stream);
+                                                                   uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<bool, int64_t>(enum ScatterNdFunctorType func_type,
                                                                  const size_t &unit_size, const size_t &num_units,
                                                                  const size_t &index_depth, const int64_t *out_strides,
                                                                  const int64_t *indices, const bool *updates,
-                                                                 bool *input, cudaStream_t cuda_stream);
+                                                                 bool *input, uint32_t device_id,
+                                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<bool, int32_t>(enum ScatterNdFunctorType func_type,
                                                                  const size_t &unit_size, const size_t &num_units,
                                                                  const size_t &index_depth, const int32_t *out_strides,
                                                                  const int32_t *indices, const bool *updates,
-                                                                 bool *input, cudaStream_t cuda_stream);
+                                                                 bool *input, uint32_t device_id,
+                                                                 cudaStream_t cuda_stream);

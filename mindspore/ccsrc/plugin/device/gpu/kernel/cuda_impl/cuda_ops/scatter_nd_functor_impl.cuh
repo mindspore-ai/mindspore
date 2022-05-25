@@ -32,6 +32,7 @@ enum ScatterNdFunctorType {
 template <typename T, typename S>
 CUDA_LIB_EXPORT void CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size,
                                          const size_t &num_units, const size_t &index_depth, const S *out_strides,
-                                         const S *indices, const T *updates, T *input, cudaStream_t cuda_stream);
+                                         const S *indices, const T *updates, T *input, uint32_t device_id,
+                                         cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SCATTER_ND_FUNCTOR_IMPL_CUH_
