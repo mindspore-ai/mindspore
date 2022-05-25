@@ -27,7 +27,6 @@ namespace {
 constexpr size_t kSliceGradDynamicInputsNum = 4;
 constexpr size_t kStridedSliceGradDynamicInputsNum = 5;
 constexpr size_t kOutputsNum = 1;
-constexpr size_t kSliceGradDefaultInputShapeSize = 4;
 constexpr size_t kSliceGradMaxInputShapeSize = 8;
 }  // namespace
 
@@ -44,7 +43,7 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  if (input_num == kSliceGradDynamicInputsNum || input_num == kStridedSliceGradDynamicInputsNum) {  // Dynamic Shape
+  if (input_num == kSliceGradDynamicInputsNum || input_num == kStridedSliceGradDynamicInputsNum) {
     return;
   }
   // in the case that begin, end, size, stride are const value.
@@ -79,11 +78,7 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     }
     FormatArgs(false);
   }
-  if (input_shape.size() <= kSliceGradDefaultInputShapeSize) {
-    ExpandAllMemberDims(kSliceGradDefaultInputShapeSize);
-  } else {
-    ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
-  }
+  ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
 
   CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
@@ -121,7 +116,6 @@ void SliceGradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
   }
 }
 
-// init for dynamic shape
 void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &inputs) {
   auto cnode = cnode_ptr_.lock();
   ClearVectors();
@@ -176,11 +170,8 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
     }
     FormatArgs(false);
   }
-  if (output_shape_.size() <= kSliceGradDefaultInputShapeSize) {
-    ExpandAllMemberDims(kSliceGradDefaultInputShapeSize);
-  } else {
-    ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
-  }
+  ExpandAllMemberDims(kSliceGradMaxInputShapeSize);
+
   CPUKernelUtils::GetElementNumEveryDim(input_shape_, &input_element_num_);
   CPUKernelUtils::GetElementNumEveryDim(output_shape_, &output_element_num_);
 }
@@ -225,66 +216,15 @@ bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', output buff memset failed. Error no: " << ret;
     return false;
   }
-  if (output_shape_.size() <= kSliceGradDefaultInputShapeSize) {
-    return SliceGrad4D<T>(inputs, outputs, input_addr, output_addr);
-  } else {
-    return SliceGrad8D<T>(inputs, outputs, input_addr, output_addr);
-  }
-}
-
-template <typename T>
-bool SliceGradCpuKernelMod::SliceGrad4D(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &outputs, T *input_addr, T *output_addr) {
-  bool can_copy_memory[3] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2)};
-  int stride_signs[4] = {SignOfStride(0), SignOfStride(1), SignOfStride(2), SignOfStride(3)};
-  size_t out_start_offset[3] = {IntToSize(begin_[0]) * output_element_num_[0],
-                                IntToSize(begin_[1]) * output_element_num_[1],
-                                IntToSize(begin_[2]) * output_element_num_[2]};
-  size_t out_step_size[3] = {IntToSize(strides_[0]) * output_element_num_[0],
-                             IntToSize(strides_[1]) * output_element_num_[1],
-                             IntToSize(strides_[2]) * output_element_num_[2]};
-  size_t in_n_offset = 0;
-  size_t out_n_offset = out_start_offset[0];
-  size_t input_index = 0;
-  for (int i = begin_[0]; stride_signs[0] * i < stride_signs[0] * end_[0];
-       i += strides_[0], in_n_offset += input_element_num_[0], out_n_offset += out_step_size[0]) {
-    if (can_copy_memory[0]) {
-      CopyDataToOutput<T>(inputs, in_n_offset, outputs, out_n_offset, input_element_num_[0], 0);
-      continue;
-    }
-    size_t in_c_offset = 0;
-    size_t out_c_offset = out_start_offset[1];
-    for (int j = begin_[1]; stride_signs[1] * j < stride_signs[1] * end_[1];
-         j += strides_[1], in_c_offset += input_element_num_[1], out_c_offset += out_step_size[1]) {
-      if (can_copy_memory[1]) {
-        CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset, outputs, out_n_offset + out_c_offset,
-                            input_element_num_[1], 1);
-        continue;
-      }
-      size_t in_h_offset = 0;
-      size_t out_h_offset = out_start_offset[2];
-      for (int k = begin_[2]; stride_signs[2] * k < stride_signs[2] * end_[2];
-           k += strides_[2], in_h_offset += input_element_num_[2], out_h_offset += out_step_size[2]) {
-        if (can_copy_memory[2]) {
-          CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset + in_h_offset, outputs,
-                              out_n_offset + out_c_offset + out_h_offset, input_element_num_[2], 2);
-          continue;
-        }
-        for (int m = begin_[3]; stride_signs[3] * m < stride_signs[3] * end_[3]; m += strides_[3]) {
-          output_addr[out_n_offset + out_c_offset + out_h_offset + IntToSize(m)] = input_addr[input_index++];
-        }
-      }
-    }
-  }
-  return true;
+  return SliceGrad8D<T>(inputs, outputs, input_addr, output_addr);
 }
 
 template <typename T>
 bool SliceGradCpuKernelMod::SliceGrad8D(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &outputs, T *input_addr, T *output_addr) {
-  bool can_copy_memory[7] = {CanCopyMemoryOnAxis(0, 8), CanCopyMemoryOnAxis(1, 8), CanCopyMemoryOnAxis(2, 8),
-                             CanCopyMemoryOnAxis(3, 8), CanCopyMemoryOnAxis(4, 8), CanCopyMemoryOnAxis(5, 8),
-                             CanCopyMemoryOnAxis(6, 8)};
+  bool can_copy_memory[7] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2),
+                             CanCopyMemoryOnAxis(3), CanCopyMemoryOnAxis(4), CanCopyMemoryOnAxis(5),
+                             CanCopyMemoryOnAxis(6)};
   int stride_signs[8] = {SignOfStride(0), SignOfStride(1), SignOfStride(2), SignOfStride(3),
                          SignOfStride(4), SignOfStride(5), SignOfStride(6), SignOfStride(7)};
   size_t out_start_offset[7] = {
