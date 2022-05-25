@@ -29,10 +29,16 @@
 namespace mindspore {
 namespace kernel {
 void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *input_size_list, size_t *size_i) {
-  if (input_json[kJShape].size() == 1 && input_json[kJShape][0] == -2) {
+  size_t kMaxShapeIdx = 1;
+  int64_t kDynShapeValue = -2;
+  if (input_json[kJShape].size() == 1 && input_json[kJShape][0] == kDynShapeValue) {
     auto input_max_shape = input_json[kJRange];
     for (auto &max_shape : input_max_shape) {
-      (*size_i) = SizetMulWithOverflowCheck((*size_i), LongToSize(max_shape[1]));
+      if (max_shape[kMaxShapeIdx] < 0) {
+        (*size_i) = SizetMulWithOverflowCheck((*size_i), 0);
+      } else {
+        (*size_i) = SizetMulWithOverflowCheck((*size_i), LongToSize(max_shape[kMaxShapeIdx]));
+      }
     }
     MS_LOG(INFO) << "Dims is dynamic, change -2 Shape to Max Shape.";
   } else {
@@ -42,7 +48,6 @@ void GetRealInputSize(const nlohmann::json &input_json, std::vector<size_t> *inp
         if (j >= input_max_shape.size()) {
           MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
         }
-        size_t kMaxShapeIdx = 1;
         if (input_max_shape[j][kMaxShapeIdx] == -1) {
           MS_LOG(INFO) << "Change -1 Shape to 1";
           (*size_i) = SizetMulWithOverflowCheck((*size_i), 1);
@@ -82,10 +87,16 @@ void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *inp
 }
 
 void GetRealOutputSize(const nlohmann::json &output_json, std::vector<size_t> *output_size_list, size_t *size_i) {
-  if (output_json[kJShape].size() == 1 && output_json[kJShape][0] == -2) {
+  size_t kMaxShapeIdx = 1;
+  int64_t kDynShapeValue = -2;
+  if (output_json[kJShape].size() == 1 && output_json[kJShape][0] == kDynShapeValue) {
     auto output_max_shape = output_json[kJRange];
     for (auto &max_shape : output_max_shape) {
-      (*size_i) = SizetMulWithOverflowCheck(*size_i, LongToSize(max_shape[1]));
+      if (max_shape[kMaxShapeIdx] < 0) {
+        (*size_i) = SizetMulWithOverflowCheck((*size_i), 0);
+      } else {
+        (*size_i) = SizetMulWithOverflowCheck(*size_i, LongToSize(max_shape[kMaxShapeIdx]));
+      }
     }
     MS_LOG(INFO) << "Dims is dynamic, change -2 Shape to Max Shape.";
   } else {
@@ -95,7 +106,6 @@ void GetRealOutputSize(const nlohmann::json &output_json, std::vector<size_t> *o
         if (j >= output_max_shape.size()) {
           MS_LOG(EXCEPTION) << "Invalid Dynamic Shape Max Shape";
         }
-        size_t kMaxShapeIdx = 1;
         if (output_max_shape[j][kMaxShapeIdx] == -1) {
           MS_LOG(INFO) << "Change -1 Shape to 1";
           (*size_i) = SizetMulWithOverflowCheck((*size_i), 1);
