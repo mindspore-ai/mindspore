@@ -18,7 +18,7 @@ Testing Rotate Python API
 import cv2
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from mindspore.dataset.vision.utils import Inter
 from util import visualize_image, diff_mse

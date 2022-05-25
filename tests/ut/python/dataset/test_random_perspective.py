@@ -17,8 +17,8 @@ Testing RandomPerspective op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
@@ -43,13 +43,13 @@ def test_random_perspective_op(plot=False):
         vision.RandomPerspective(),
         vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
+    transform1 = mindspore.dataset.transforms.Compose(transforms1)
 
     transforms2 = [
         vision.Decode(True),
         vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.Compose(transforms2)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -88,7 +88,7 @@ def skip_test_random_perspective_md5():
         vision.Resize(1450),  # resize to a smaller size to prevent round-off error
         vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
 
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)

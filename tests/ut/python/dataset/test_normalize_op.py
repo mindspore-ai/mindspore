@@ -18,8 +18,8 @@ Testing Normalize op in DE
 import numpy as np
 from PIL import Image
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import diff_mse, save_and_check_md5, visualize_image
 
@@ -60,7 +60,7 @@ def util_test_normalize(mean, std, add_to_pil):
             vision.ToTensor(),
             vision.Normalize(mean, std, False)
         ]
-        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.Compose(transforms)
         # Generate dataset
         data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
         data = data.map(operations=transform, input_columns=["image"])
@@ -77,7 +77,7 @@ def util_test_normalize_grayscale(num_output_channels, mean, std):
         vision.ToTensor(),
         vision.Normalize(mean, std, False)
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=transform, input_columns=["image"])
@@ -134,7 +134,7 @@ def test_normalize_op_chw(plot=False):
         vision.Decode(True),
         vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     normalize_op = vision.Normalize(mean, std, False)
 
     #  First dataset
@@ -422,7 +422,7 @@ def test_normalize_op_comp_chw():
         vision.Decode(True),
         vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     normalize_op = vision.Normalize(mean, std, False)
 
     #  First dataset

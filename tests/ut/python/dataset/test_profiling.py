@@ -21,8 +21,8 @@ import numpy as np
 import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as C
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms as C
+import mindspore.dataset.vision as vision
 import mindspore._c_dataengine as cde
 
 FILES = ["../data/dataset/testTFTestAllTypes/test.data"]

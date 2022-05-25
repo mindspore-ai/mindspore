@@ -20,8 +20,8 @@ import pytest
 import mindspore._c_dataengine as cde
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from mindspore.dataset.core.datatypes import nptype_to_detype
 from util import save_and_check_md5
@@ -48,7 +48,7 @@ def test_to_type_op():
         # Note: Convert the datatype from float32 to int16
         vision.ToType(np.int16)
     ]
-    transform1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
+    transform1 = mindspore.dataset.transforms.Compose(transforms1)
     data1 = data1.map(operations=transform1, input_columns=["image"])
 
     # Second dataset
@@ -57,7 +57,7 @@ def test_to_type_op():
         vision.Decode(True),
         vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.Compose(transforms2)
     data2 = data2.map(operations=transform2, input_columns=["image"])
 
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
@@ -86,7 +86,7 @@ def test_to_type_data_type():
         vision.Decode(True),
         vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
+    transform1 = mindspore.dataset.transforms.Compose(transforms1)
     data1 = data1.map(operations=transform1, input_columns=["image"])
 
     # Second dataset - Convert the datatype from float32 to nptype.int32
@@ -98,7 +98,7 @@ def test_to_type_data_type():
         vision.ToType(data_type=np.int32)
 
     ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.Compose(transforms2)
     data2 = data2.map(operations=transform2, input_columns=["image"])
 
     # Third dataset - Convert the datatype from float32 to mstype.int32
@@ -109,7 +109,7 @@ def test_to_type_data_type():
         # Note: Convert the datatype from float32 to mstype.int32.  Use explicit argument name.
         vision.ToType(data_type=mstype.int32)
     ]
-    transform3 = mindspore.dataset.transforms.transforms.Compose(transforms3)
+    transform3 = mindspore.dataset.transforms.Compose(transforms3)
     data3 = data3.map(operations=transform3, input_columns=["image"])
 
     # Fourth dataset - Use TypeCast op. Convert the datatype from float32 to mstype.int32
@@ -118,9 +118,9 @@ def test_to_type_data_type():
         vision.Decode(True),
         vision.ToTensor(),
         # Note: Convert the datatype from float32 to mstype.int32.  Use TypeCast op and argument name.
-        mindspore.dataset.transforms.transforms.TypeCast(data_type=mstype.int32)
+        mindspore.dataset.transforms.TypeCast(data_type=mstype.int32)
     ]
-    transform4 = mindspore.dataset.transforms.transforms.Compose(transforms4)
+    transform4 = mindspore.dataset.transforms.Compose(transforms4)
     data4 = data4.map(operations=transform4, input_columns=["image"])
 
     for item1, item2, item3, item4 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
@@ -164,7 +164,7 @@ def test_to_type_01():
         # Note: Convert the datatype from float32 to int32
         vision.ToType(np.int32)
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
@@ -188,7 +188,7 @@ def test_to_type_02():
         # Note: Convert to type int
         vision.ToType('int')
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
@@ -211,7 +211,7 @@ def test_to_type_03():
         # Note: No error PIL image input to ToType
         vision.ToType(np.int32)
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     num_iter = 0
@@ -237,7 +237,7 @@ def test_to_type_04():
             # Note: if data_type is not explicitly given
             vision.ToType()
         ]
-        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.Compose(transforms)
         _ = data.map(operations=transform, input_columns=["image"])
     assert "missing" in str(error_info.value)
 
@@ -259,7 +259,7 @@ def test_to_type_05():
             # Note: if data_type is not valid
             vision.ToType('invalid')
         ]
-        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.Compose(transforms)
         _ = data.map(operations=transform, input_columns=["image"])
     assert "data type" in str(error_info.value)
 
@@ -280,7 +280,7 @@ def test_to_type_invalid_arg():
             # Note: if argument name is not correct
             vision.ToType(output_type="int32")
         ]
-        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.Compose(transforms)
         _ = data.map(operations=transform, input_columns=["image"])
     assert "unexpected keyword argument" in str(error_info.value)
 

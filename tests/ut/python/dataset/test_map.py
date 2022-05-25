@@ -20,7 +20,7 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
 from mindspore.dataset.transforms import transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 import mindspore.dataset.vision.py_transforms as py_vision
 
 DATA_DIR = "../data/dataset/testPK/data"

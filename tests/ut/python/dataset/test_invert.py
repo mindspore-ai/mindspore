@@ -18,8 +18,8 @@ Testing Invert op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, diff_mse
 
@@ -56,9 +56,9 @@ def test_invert_py(plot=False):
     # Original Images
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_original = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                           vision.Resize((224, 224)),
-                                                                           vision.ToTensor()])
+    transforms_original = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                                vision.Resize((224, 224)),
+                                                                vision.ToTensor()])
 
     ds_original = data_set.map(operations=transforms_original, input_columns="image")
 
@@ -75,10 +75,10 @@ def test_invert_py(plot=False):
     # Color Inverted Images
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_invert = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                         vision.Resize((224, 224)),
-                                                                         vision.Invert(),
-                                                                         vision.ToTensor()])
+    transforms_invert = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                              vision.Resize((224, 224)),
+                                                              vision.Invert(),
+                                                              vision.ToTensor()])
 
     ds_invert = data_set.map(operations=transforms_invert, input_columns="image")
 
@@ -182,10 +182,10 @@ def test_invert_py_c(plot=False):
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     data_set = data_set.map(operations=[vision.Decode(), vision.Resize((224, 224))], input_columns=["image"])
 
-    transforms_p_invert = mindspore.dataset.transforms.transforms.Compose([lambda img: img.astype(np.uint8),
-                                                                           vision.ToPIL(),
-                                                                           vision.Invert(),
-                                                                           np.array])
+    transforms_p_invert = mindspore.dataset.transforms.Compose([lambda img: img.astype(np.uint8),
+                                                                vision.ToPIL(),
+                                                                vision.Invert(),
+                                                                np.array])
 
     ds_p_invert = data_set.map(operations=transforms_p_invert, input_columns="image")
 
@@ -240,9 +240,9 @@ def test_invert_md5_py():
     # Generate dataset
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_invert = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                         vision.Invert(),
-                                                                         vision.ToTensor()])
+    transforms_invert = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                              vision.Invert(),
+                                                              vision.ToTensor()])
 
     data = data_set.map(operations=transforms_invert, input_columns="image")
     # Compare with expected md5 from images

@@ -24,7 +24,7 @@ from PIL import Image
 from scipy.io import loadmat
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
 DATASET_DIR = "../data/dataset/testCaltech101Data"

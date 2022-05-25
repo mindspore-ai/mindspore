@@ -22,7 +22,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
-import mindspore.dataset.vision.transforms as c_vision
+import mindspore.dataset.vision as c_vision
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]

@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.audio.transforms as audio
+import mindspore.dataset.audio as audio
 
 DATA_DIR_TEDLIUM_RELEASE12 = "../data/dataset/testTedliumData/TEDLIUM_release1"
 DATA_DIR_TEDLIUM_RELEASE3 = "../data/dataset/testTedliumData/TEDLIUM_release3"

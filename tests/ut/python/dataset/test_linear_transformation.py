@@ -17,8 +17,8 @@ Testing LinearTransformation op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import diff_mse, visualize_list, save_and_check_md5
 
@@ -47,7 +47,7 @@ def test_linear_transformation_op(plot=False):
         vision.CenterCrop([height, weight]),
         vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -98,7 +98,7 @@ def test_linear_transformation_md5():
         vision.ToTensor(),
         vision.LinearTransformation(transformation_matrix, mean_vector)
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data1 = data1.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
@@ -128,7 +128,7 @@ def test_linear_transformation_exception_01():
             vision.ToTensor(),
             vision.LinearTransformation(None, mean_vector)
         ]
-        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.Compose(transforms)
         data1 = data1.map(operations=transform, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -157,7 +157,7 @@ def test_linear_transformation_exception_02():
             vision.ToTensor(),
             vision.LinearTransformation(transformation_matrix, None)
         ]
-        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.Compose(transforms)
         data1 = data1.map(operations=transform, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -187,7 +187,7 @@ def test_linear_transformation_exception_03():
             vision.ToTensor(),
             vision.LinearTransformation(transformation_matrix, mean_vector)
         ]
-        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.Compose(transforms)
         data1 = data1.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -217,7 +217,7 @@ def test_linear_transformation_exception_04():
             vision.ToTensor(),
             vision.LinearTransformation(transformation_matrix, mean_vector)
         ]
-        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.Compose(transforms)
         data1 = data1.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))

@@ -18,8 +18,8 @@ Testing RandomCrop op in DE
 import numpy as np
 import pytest
 
-import mindspore.dataset.transforms.transforms as ops
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms as ops
+import mindspore.dataset.vision as vision
 import mindspore.dataset.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore import log as logger

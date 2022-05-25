@@ -18,7 +18,7 @@ Test ToNumpy op in Dataset
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 from util import config_get_set_seed
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]

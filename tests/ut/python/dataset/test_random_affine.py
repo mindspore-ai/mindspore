@@ -17,8 +17,8 @@ Testing RandomAffine op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -43,13 +43,13 @@ def test_random_affine_op(plot=False):
         vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
         vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
+    transform1 = mindspore.dataset.transforms.Compose(transforms1)
 
     transforms2 = [
         vision.Decode(True),
         vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.Compose(transforms2)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -122,7 +122,7 @@ def test_random_affine_md5():
                             scale=(0.9, 1.1), shear=(-10, 10, -5, 5)),
         vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
 
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -203,8 +203,8 @@ def test_random_affine_py_exception_non_pil_images():
     logger.info("test_random_affine_exception_negative_degrees")
     dataset = ds.MnistDataset(MNIST_DATA_DIR, num_samples=3, num_parallel_workers=3)
     try:
-        transform = mindspore.dataset.transforms.transforms.Compose([vision.ToTensor(),
-                                                                     vision.RandomAffine(degrees=(15, 15))])
+        transform = mindspore.dataset.transforms.Compose([vision.ToTensor(),
+                                                          vision.RandomAffine(degrees=(15, 15))])
         dataset = dataset.map(operations=transform, input_columns=["image"], num_parallel_workers=3)
         for _ in dataset.create_dict_iterator(num_epochs=1):
             pass

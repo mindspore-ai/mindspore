@@ -18,7 +18,7 @@ Testing ToTensor op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 
 DATA_DIR = "../data/dataset/testMnistData"
 

@@ -18,8 +18,8 @@ Testing the MixUpBatch op in DE
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.vision.transforms as vision
-import mindspore.dataset.transforms.transforms as data_trans
+import mindspore.dataset.vision as vision
+import mindspore.dataset.transforms as data_trans
 from mindspore import log as logger
 from util import save_and_check_md5, diff_mse, visualize_list, config_get_set_seed, \
     config_get_set_num_parallel_workers

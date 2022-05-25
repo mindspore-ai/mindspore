@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import mindspore.dataset as de
 from mindspore import log as logger
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 
 
 def test_numpy_slices_list_1():

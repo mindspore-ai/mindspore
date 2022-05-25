@@ -21,8 +21,8 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 import mindspore.dataset.vision.py_transforms_util as util
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -138,7 +138,7 @@ def test_rgb_hsv_pipeline():
         vision.Resize([64, 64]),
         vision.ToTensor()
     ]
-    transforms1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
+    transforms1 = mindspore.dataset.transforms.Compose(transforms1)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     ds1 = ds1.map(operations=transforms1, input_columns=["image"])
 
@@ -150,7 +150,7 @@ def test_rgb_hsv_pipeline():
         vision.RgbToHsv(),
         vision.HsvToRgb()
     ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.Compose(transforms2)
     ds2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     ds2 = ds2.map(operations=transform2, input_columns=["image"])
 

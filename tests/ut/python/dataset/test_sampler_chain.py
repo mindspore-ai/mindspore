@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as transforms
+import mindspore.dataset.transforms as transforms
 from mindspore import log as logger
 from util import save_and_check_md5
 

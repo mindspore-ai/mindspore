@@ -18,8 +18,8 @@ Testing HWC2CHW op in DE
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import diff_mse, visualize_list, save_and_check_md5
 
@@ -158,7 +158,7 @@ def test_hwc2chw_comp(plot=False):
     transforms = [
         vision.Decode(True),
         vision.ToTensor()]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     image_c_transposed = []

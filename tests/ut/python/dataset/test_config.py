@@ -22,8 +22,8 @@ import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.engine.iterators as it
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import dataset_equal
 
@@ -291,7 +291,7 @@ def test_deterministic_python_seed():
         vision.RandomCrop([512, 512], [200, 200, 200, 200]),
         vision.ToTensor(),
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data1 = data1.map(operations=transform, input_columns=["image"])
     data1_output = []
     # config.set_seed() calls random.seed()
@@ -343,7 +343,7 @@ def test_deterministic_python_seed_multi_thread():
         vision.RandomCrop([512, 512], [200, 200, 200, 200]),
         vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data1 = data1.map(operations=transform, input_columns=["image"], python_multiprocessing=True)
     data1_output = []
     # config.set_seed() calls random.seed()

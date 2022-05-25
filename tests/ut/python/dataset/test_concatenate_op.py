@@ -20,7 +20,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as data_trans
+import mindspore.dataset.transforms as data_trans
 
 
 def test_concatenate_op_all():

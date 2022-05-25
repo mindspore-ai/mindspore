@@ -16,8 +16,8 @@
 Test RandomSelectSubpolicy op in Dataset
 """
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as ops
-import mindspore.dataset.vision.transforms as visions
+import mindspore.dataset.transforms as ops
+import mindspore.dataset.vision as visions
 from util import config_get_set_seed
 
 

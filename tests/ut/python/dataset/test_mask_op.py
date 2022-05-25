@@ -20,7 +20,7 @@ import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as ops
+import mindspore.dataset.transforms as ops
 
 mstype_to_np_type = {
     mstype.bool_: np.bool,

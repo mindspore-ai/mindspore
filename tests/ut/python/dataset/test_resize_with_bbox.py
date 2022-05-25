@@ -18,7 +18,7 @@ Testing the resize with bounding boxes op in DE
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import save_and_check_md5, helper_perform_ops_bbox, helper_test_visual_bbox, helper_invalid_bounding_box_test
 
