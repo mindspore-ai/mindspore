@@ -469,6 +469,16 @@ void Softsign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t 
 }
 
 template <typename T>
+void Relu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  auto task = [in, out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = std::greater<T>()(in[i], 0) ? in[i] : 0;
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
 void Identity(const T *in, T *out, size_t size) {
   (void)std::copy(in, in + size, out);
 }
@@ -583,7 +593,8 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
                           {prim::kPrimRsqrt->name(), Rsqrt<T>},
                           {prim::kPrimErf->name(), Erf<T>},
                           {prim::kPrimErfc->name(), Erfc<T>},
-                          {prim::kPrimSoftsign->name(), Softsign<T>}};
+                          {prim::kPrimSoftsign->name(), Softsign<T>},
+                          {prim::kPrimRelu->name(), Relu<T>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
@@ -763,7 +774,16 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kSoftsign,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}}};
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
+  {kReLU,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc}}}};
 }  // namespace
 
 bool ArithmeticSelfCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -914,6 +934,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erfc,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErfc); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softsign,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSoftsign); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU,
+                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReLU); });
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Identity, IdentityCpuKernelMod);
 }  // namespace kernel
