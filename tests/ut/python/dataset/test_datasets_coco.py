@@ -29,6 +29,11 @@ INVALID_CATEGORY_ID_FILE = "../data/dataset/testCOCO/annotations/invalid_categor
 
 
 def test_coco_detection():
+    """
+    Feature: CocoDataset
+    Description: Test detection task of CocoDataset
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection",
                            decode=True, shuffle=False, extra_metadata=True)
     data1 = data1.rename("_meta-filename", "filename")
@@ -67,6 +72,11 @@ def test_coco_detection():
 
 
 def test_coco_stuff():
+    """
+    Feature: CocoDataset
+    Description: Test stuff task of CocoDataset
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Stuff",
                            decode=True, shuffle=False, extra_metadata=True)
     data1 = data1.rename("_meta-filename", "filename")
@@ -113,6 +123,11 @@ def test_coco_stuff():
 
 
 def test_coco_keypoint():
+    """
+    Feature: CocoDataset
+    Description: Test keypoint task of CocoDataset
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=KEYPOINT_FILE, task="Keypoint",
                            decode=True, shuffle=False, extra_metadata=True)
     data1 = data1.rename("_meta-filename", "filename")
@@ -145,6 +160,11 @@ def test_coco_keypoint():
 
 
 def test_coco_panoptic():
+    """
+    Feature: CocoDataset
+    Description: Test panoptic task of CocoDataset
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic", decode=True, shuffle=False,
                            extra_metadata=True)
     data1 = data1.rename("_meta-filename", "filename")
@@ -180,8 +200,8 @@ def test_coco_panoptic():
 def test_coco_captioning():
     """
     Feature: CocoDataset
-    Description: test the captioning task of CocoDataset
-    Expectation: the data is processed successfully
+    Description: Test captioning task of CocoDataset
+    Expectation: The dataset is processed successfully
     """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=CAPTIONS_FILE, task="Captioning", decode=True, shuffle=False,
                            extra_metadata=True)
@@ -210,6 +230,11 @@ def test_coco_captioning():
 
 
 def test_coco_meta_column():
+    """
+    Feature: CocoDataset
+    Description: Test number of columns as a result of each task of CocoDataset
+    Expectation: The dataset is processed successfully
+    """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection",
                            decode=True, shuffle=False, extra_metadata=True)
     for item in data1.create_tuple_iterator(num_epochs=1):
@@ -232,6 +257,11 @@ def test_coco_meta_column():
 
 
 def test_coco_detection_classindex():
+    """
+    Feature: CocoDataset
+    Description: Test get_class_indexing from detection task of CocoDataset
+    Expectation: The dataset is processed successfully
+    """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     class_index = data1.get_class_indexing()
     assert class_index == {'person': [1], 'bicycle': [2], 'car': [3], 'cat': [4], 'dog': [5], 'monkey': [6],
@@ -243,6 +273,11 @@ def test_coco_detection_classindex():
 
 
 def test_coco_panootic_classindex():
+    """
+    Feature: CocoDataset
+    Description: Test get_class_indexing from panoptic task of CocoDataset
+    Expectation: The dataset is processed successfully
+    """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=PANOPTIC_FILE, task="Panoptic", decode=True)
     class_index = data1.get_class_indexing()
     assert class_index == {'person': [1, 1], 'bicycle': [2, 1], 'car': [3, 1]}
@@ -253,6 +288,11 @@ def test_coco_panootic_classindex():
 
 
 def test_coco_case_0():
+    """
+    Feature: CocoDataset
+    Description: Test shuffle and batch for CocoDataset
+    Expectation: The dataset is processed successfully
+    """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     data1 = data1.shuffle(10)
     data1 = data1.batch(3, pad_info={})
@@ -263,6 +303,11 @@ def test_coco_case_0():
 
 
 def test_coco_case_1():
+    """
+    Feature: CocoDataset
+    Description: Test detection task from CocoDataset with sizes=[0.5, 0.5] and not randomized
+    Expectation: The dataset is processed successfully
+    """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     sizes = [0.5, 0.5]
     randomize = False
@@ -279,6 +324,11 @@ def test_coco_case_1():
 
 
 def test_coco_case_2():
+    """
+    Feature: CocoDataset
+    Description: Test detection task from CocoDataset using vision
+    Expectation: The dataset is processed successfully
+    """
     data1 = ds.CocoDataset(DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     resize_op = vision.Resize((224, 224))
 
@@ -291,6 +341,11 @@ def test_coco_case_2():
 
 
 def test_coco_case_3():
+    """
+    Feature: CocoDataset
+    Description: Test detection task from CocoDataset using vision
+    Expectation: The dataset is processed successfully
+    """
     data1 = ds.CocoDataset(DATA_DIR_2, annotation_file=ANNOTATION_FILE, task="Detection", decode=True)
     resize_op = vision.Resize((224, 224))
 
@@ -303,6 +358,11 @@ def test_coco_case_3():
 
 
 def test_coco_case_exception():
+    """
+    Feature: CocoDataset
+    Description: Test CocoDataset with some invalid parameters
+    Expectation: Throw correct error as expected
+    """
     try:
         data1 = ds.CocoDataset("path_not_exist/", annotation_file=ANNOTATION_FILE, task="Detection")
         for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):

@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_random_solarize_op(threshold=(10, 150), plot=False, run_golden=True):
     """
-    Test RandomSolarize
+    Feature: RandomSolarize op
+    Description: Test RandomSolarize op on TFRecordDataset
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomSolarize")
 
@@ -74,7 +76,9 @@ def test_random_solarize_op(threshold=(10, 150), plot=False, run_golden=True):
 
 def test_random_solarize_mnist(plot=False, run_golden=True):
     """
-    Test RandomSolarize op with MNIST dataset (Grayscale images)
+    Feature: RandomSolarize op
+    Description: Test RandomSolarize op on MnistDataset (grayscale images)
+    Expectation: The dataset is processed as expected
     """
     original_seed = config_get_set_seed(0)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
@@ -107,7 +111,9 @@ def test_random_solarize_mnist(plot=False, run_golden=True):
 
 def test_random_solarize_errors():
     """
-    Test that RandomSolarize errors with bad input
+    Feature: RandomSolarize op
+    Description: Test RandomSolarize with bad inputs
+    Expectation: Correct error is thrown as expected
     """
     with pytest.raises(ValueError) as error_info:
         vision.RandomSolarize((12, 1))

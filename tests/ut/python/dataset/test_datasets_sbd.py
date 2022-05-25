@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -50,7 +50,9 @@ def visualize_dataset(images, labels, task):
 
 def test_sbd_basic01(plot=False):
     """
-    Validate SBDataset with different usage
+    Feature: SBDataset
+    Description: Test SBDataset with different usage
+    Expectation: The dataset is processed as expected
     """
     task = 'Segmentation'  # Boundaries, Segmentation
     data = ds.SBDataset(DATASET_DIR, task=task, usage='all', shuffle=False, decode=True)
@@ -80,7 +82,9 @@ def test_sbd_basic01(plot=False):
 
 def test_sbd_basic02():
     """
-    Validate SBDataset with repeat and batch operation
+    Feature: SBDataset
+    Description: Test SBDataset with repeat and batch operation
+    Expectation: The dataset is processed as expected
     """
     # Boundaries, Segmentation
     # case 1: test num_samples
@@ -131,7 +135,9 @@ def test_sbd_basic02():
 
 def test_sbd_sequential_sampler():
     """
-    Test SBDataset with SequentialSampler
+    Feature: SBDataset
+    Description: Test SBDataset with SequentialSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test SBDataset Op with SequentialSampler")
     num_samples = 5
@@ -148,7 +154,9 @@ def test_sbd_sequential_sampler():
 
 def test_sbd_exception():
     """
-    Validate SBDataset with error parameters
+    Feature: SBDataset
+    Description: Test error cases for SBDataset
+    Expectation: Correct error is thrown as expected
     """
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
     with pytest.raises(RuntimeError, match=error_msg_1):
@@ -190,7 +198,9 @@ def test_sbd_exception():
 
 def test_sbd_usage():
     """
-    Validate SBDataset image readings
+    Feature: SBDataset
+    Description: Test SBDataset image readings with usage flag
+    Expectation: The dataset is processed as expected
     """
 
     def test_config(usage):

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,6 +36,11 @@ def visualize_dataset(images, labels):
 
 
 def test_flickr30k_dataset_train(plot=False):
+    """
+    Feature: FlickrDataset
+    Description: Test train for FlickrDataset
+    Expectation: The dataset is processed as expected
+    """
     data = ds.FlickrDataset(FLICKR30K_DATASET_DIR, FLICKR30K_ANNOTATION_FILE_1, decode=True)
     count = 0
     images_list = []
@@ -51,6 +56,11 @@ def test_flickr30k_dataset_train(plot=False):
 
 
 def test_flickr30k_dataset_annotation_check():
+    """
+    Feature: FlickrDataset
+    Description: Test annotation for FlickrDataset
+    Expectation: The dataset is processed as expected
+    """
     data = ds.FlickrDataset(FLICKR30K_DATASET_DIR, FLICKR30K_ANNOTATION_FILE_1, decode=True, shuffle=False)
     count = 0
     expect_annotation_arr = [
@@ -78,6 +88,11 @@ def test_flickr30k_dataset_annotation_check():
 
 
 def test_flickr30k_dataset_basic():
+    """
+    Feature: FlickrDataset
+    Description: Test basic parameters and methods of FlickrDataset
+    Expectation: The dataset is processed as expected
+    """
     # case 1: test num_samples
     data1 = ds.FlickrDataset(FLICKR30K_DATASET_DIR, FLICKR30K_ANNOTATION_FILE_2, num_samples=2, decode=True)
     num_iter1 = 0
@@ -123,6 +138,11 @@ def test_flickr30k_dataset_basic():
 
 
 def test_flickr30k_dataset_exception():
+    """
+    Feature: FlickrDataset
+    Description: Test invalid parameters for FlickrDataset
+    Expectation: Correct error is thrown as expected
+    """
     def exception_func(item):
         raise Exception("Error occur!")
 

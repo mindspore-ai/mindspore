@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_func_bandreject_biquad_eager():
-    """ mindspore eager mode normal testcase:bandreject_biquad op"""
+    """
+    Feature: BandrejectBiquad op
+    Description: Test BandrejectBiquad op in eager mode with valid input
+    Expectation: Output is equal to the expected output
+    """
 
     # Original waveform
     waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
@@ -45,7 +49,11 @@ def test_func_bandreject_biquad_eager():
 
 
 def test_func_bandreject_biquad_pipeline():
-    """ mindspore pipeline mode normal testcase:bandreject_biquad op"""
+    """
+    Feature: BandrejectBiquad op
+    Description: Test BandrejectBiquad op in pipeline mode with valid input
+    Expectation: Output is equal to the expected output
+    """
 
     # Original waveform
     waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
@@ -68,6 +76,11 @@ def test_func_bandreject_biquad_pipeline():
 
 
 def test_bandreject_biquad_invalid_input():
+    """
+    Feature: BandrejectBiquad op
+    Description: Test BandrejectBiquad op with invalid input
+    Expectation: Correct error and message are thrown as expected
+    """
     def test_invalid_input(test_name, sample_rate, central_freq, Q, error, error_msg):
         logger.info(
             "Test BandrejectBiquad with bad input: {0}".format(test_name))

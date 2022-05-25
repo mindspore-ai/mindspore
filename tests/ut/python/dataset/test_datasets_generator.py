@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -69,7 +69,9 @@ class DatasetGeneratorMixed:
 
 def test_generator_0():
     """
-    Test 1D Generator
+    Feature: GeneratorDataset
+    Description: Test 1D Generator
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -91,7 +93,9 @@ def generator_md():
 
 def test_generator_1():
     """
-    Test MD Generator
+    Feature: GeneratorDataset
+    Description: Test MD Generator with shape [2, 2]
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test MD Generator : 0 - 63, with shape [2, 2]")
 
@@ -113,7 +117,9 @@ def generator_mc(maxid=64):
 
 def test_generator_2():
     """
-    Test multi column generator
+    Feature: GeneratorDataset
+    Description: Test multi column Generator
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test multi column generator")
 
@@ -131,7 +137,9 @@ def test_generator_2():
 
 def test_generator_3():
     """
-    Test 1D Generator + repeat(4)
+    Feature: GeneratorDataset
+    Description: Test 1D Generator with repeat(4)
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator : 0 - 63 + Repeat(4)")
 
@@ -151,7 +159,9 @@ def test_generator_3():
 
 def test_generator_4():
     """
-    Test fixed size 1D Generator + batch
+    Feature: GeneratorDataset
+    Description: Test fixed size 1D Generator with batch(4)
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator : 0 - 63 + batch(4)")
 
@@ -189,7 +199,9 @@ def type_tester(t):
 
 def test_generator_5():
     """
-    Test 1D Generator on different data type
+    Feature: GeneratorDataset
+    Description: Test 1D Generator on different data types
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator on all data types")
 
@@ -216,7 +228,9 @@ def type_tester_with_type_check(t, c):
 
 def test_generator_6():
     """
-    Test 1D Generator on different data type with type check
+    Feature: GeneratorDataset
+    Description: Test 1D Generator on different data types with type check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator on all data types with type check")
 
@@ -251,7 +265,9 @@ def type_tester_with_type_check_2c(t, c):
 
 def test_generator_7():
     """
-    Test 2 column Generator on different data type with type check
+    Feature: GeneratorDataset
+    Description: Test 2 column Generator on different data type with type check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 2 column Generator on all data types with type check")
 
@@ -266,7 +282,9 @@ def test_generator_7():
 
 def test_generator_8():
     """
-    Test multi column generator with few mapops
+    Feature: GeneratorDataset
+    Description: Test multi column Generator with few mapops
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test multi column generator with mapops to check the order too")
 
@@ -292,7 +310,9 @@ def test_generator_8():
 
 def test_generator_9():
     """
-    Test map column order when len(input_columns) == len(output_columns).
+    Feature: GeneratorDataset
+    Description: Test map column order when len(input_columns) == len(output_columns)
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test map column order when len(input_columns) == len(output_columns).")
 
@@ -323,7 +343,9 @@ def test_generator_9():
 
 def test_generator_10():
     """
-    Test map column order when len(input_columns) != len(output_columns).
+    Feature: GeneratorDataset
+    Description: Test map column order when len(input_columns) != len(output_columns)
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test map column order when len(input_columns) != len(output_columns).")
 
@@ -346,7 +368,9 @@ def test_generator_10():
 
 def test_generator_11():
     """
-    Test map column order when len(input_columns) != len(output_columns).
+    Feature: GeneratorDataset
+    Description: Test map column order len(input_columns) != len(output_columns), column_order drops some columns
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test map column order when len(input_columns) != len(output_columns), "
                 "and column_order drops some columns.")
@@ -370,7 +394,9 @@ def test_generator_11():
 
 def test_generator_12():
     """
-    Test map column order when input_columns and output_columns are None.
+    Feature: GeneratorDataset
+    Description: Test map column order when input_columns and output_columns are None
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test map column order when input_columns and output_columns are None.")
 
@@ -404,7 +430,9 @@ def test_generator_12():
 
 def test_generator_13():
     """
-    Test map column order when input_columns is None.
+    Feature: GeneratorDataset
+    Description: Test map column order when input_columns is None
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test map column order when input_columns is None.")
 
@@ -434,7 +462,9 @@ def test_generator_13():
 
 def test_generator_14():
     """
-    Test 1D Generator MP + CPP sampler
+    Feature: GeneratorDataset
+    Description: Test 1D Generator MP with CPP sampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator MP : 0 - 63")
     # Sometimes there are some ITERATORS left in ITERATORS_LIST when run all UTs together,
@@ -460,7 +490,9 @@ def test_generator_14():
 
 def test_generator_15():
     """
-    Test 1D Generator MP + Python sampler
+    Feature: GeneratorDataset
+    Description: Test 1D Generator MP with Python sampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator MP : 0 - 63")
 
@@ -484,7 +516,9 @@ def test_generator_15():
 
 def test_generator_16():
     """
-    Test multi column generator Mp + CPP sampler
+    Feature: GeneratorDataset
+    Description: Test multi column generator Mp with CPP sampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test multi column generator")
 
@@ -503,7 +537,9 @@ def test_generator_16():
 
 def test_generator_17():
     """
-    Test multi column generator Mp + Python sampler
+    Feature: GeneratorDataset
+    Description: Test multi column generator Mp with CPP sampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test multi column generator")
 
@@ -523,7 +559,9 @@ def test_generator_17():
 
 def test_generator_18():
     """
-    Test multiprocessing flag (same as test 13 with python_multiprocessing=True flag)
+    Feature: GeneratorDataset
+    Description: Test multiprocessing flag (same as test 13 with python_multiprocessing=True flag)
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test map column order when input_columns is None.")
 
@@ -556,7 +594,9 @@ def test_generator_18():
 
 def test_generator_19():
     """
-    Test multiprocessing flag with 2 different large columns
+    Feature: GeneratorDataset
+    Description: Test multiprocessing 2 different large columns
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test map column order when input_columns is None.")
 
@@ -610,7 +650,9 @@ class IterableDataset:
 
 def test_generator_20():
     """
-    Test mappable and unmappable dataset as source for GeneratorDataset.
+    Feature: GeneratorDataset
+    Description: Test mappable and unmappable dataset as source for GeneratorDataset
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test mappable and unmappable dataset as source for GeneratorDataset.")
 
@@ -633,6 +675,11 @@ def test_generator_20():
 
 
 def test_generator_error_1():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset with no data type of the converted NumPy array
+    Expectation: Error is raised as expected
+    """
     def generator_np():
         for i in range(64):
             yield (np.array([{i}]),)
@@ -645,6 +692,11 @@ def test_generator_error_1():
 
 
 def test_generator_error_2():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset with no data type of 1th item of the input
+    Expectation: Error is raised as expected
+    """
     def generator_np():
         for i in range(64):
             yield ({i},)
@@ -657,6 +709,11 @@ def test_generator_error_2():
 
 
 def test_generator_error_3():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset when len(input_columns) != len(output_columns) and column_order is not specified
+    Expectation: Error is raised as expected
+    """
     with pytest.raises(ValueError) as info:
         # apply dataset operations
         data1 = ds.GeneratorDataset(generator_mc(2048), ["label", "image"])
@@ -670,6 +727,11 @@ def test_generator_error_3():
 
 
 def test_generator_error_4():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset when number of columns in map does not match output_columns
+    Expectation: Error is raised as expected
+    """
     with pytest.raises(RuntimeError) as info:
         # apply dataset operations
         data1 = ds.GeneratorDataset(generator_mc(2048), ["label", "image"])
@@ -683,6 +745,11 @@ def test_generator_error_4():
 
 
 def test_generator_sequential_sampler():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset with SequentialSampler
+    Expectation: The dataset is processed as expected
+    """
     source = [(np.array([x]),) for x in range(64)]
     ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler())
     i = 0
@@ -693,6 +760,11 @@ def test_generator_sequential_sampler():
 
 
 def test_generator_random_sampler():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset with random sampler
+    Expectation: The dataset is processed as expected
+    """
     source = [(np.array([x]),) for x in range(64)]
     ds1 = ds.GeneratorDataset(source, ["data"], shuffle=True)
     for _ in ds1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
@@ -700,6 +772,11 @@ def test_generator_random_sampler():
 
 
 def test_generator_distributed_sampler():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset with distributed sampler
+    Expectation: The dataset is processed as expected
+    """
     source = [(np.array([x]),) for x in range(64)]
     for sid in range(8):
         ds1 = ds.GeneratorDataset(source, ["data"], shuffle=False, num_shards=8, shard_id=sid)
@@ -711,6 +788,11 @@ def test_generator_distributed_sampler():
 
 
 def test_generator_num_samples():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset with num_samples parameter
+    Expectation: The dataset is processed as expected
+    """
     source = [(np.array([x]),) for x in range(64)]
     num_samples = 32
     ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(num_samples=num_samples))
@@ -734,6 +816,11 @@ def test_generator_num_samples():
 
 
 def test_generator_num_samples_underflow():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset with underflowed num_samples parameter
+    Expectation: The dataset is processed as expected
+    """
     source = [(np.array([x]),) for x in range(64)]
     num_samples = 256
     ds2 = ds.GeneratorDataset(source, ["data"], sampler=[i for i in range(64)], num_samples=num_samples)
@@ -751,6 +838,11 @@ def test_generator_num_samples_underflow():
 
 
 def type_tester_with_type_check_2c_schema(t, c):
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset with type check 2c
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test with Type {}".format(t.__name__))
 
     schema = ds.Schema()
@@ -771,7 +863,9 @@ def type_tester_with_type_check_2c_schema(t, c):
 
 def test_generator_schema():
     """
-    Test 2 column Generator on different data type with type check with schema input
+    Feature: GeneratorDataset
+    Description: Test 2 column Generator on different data type with type check with schema input
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 2 column Generator on all data types with type check")
 
@@ -786,7 +880,9 @@ def test_generator_schema():
 
 def test_generator_dataset_size_0():
     """
-    Test GeneratorDataset get_dataset_size by iterator method.
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset get_dataset_size by iterator method
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator : 0 - 63 get_dataset_size")
 
@@ -801,7 +897,9 @@ def test_generator_dataset_size_0():
 
 def test_generator_dataset_size_1():
     """
-    Test GeneratorDataset get_dataset_size by __len__ method.
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset get_dataset_size by __len__ method
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test DatasetGenerator get_dataset_size")
 
@@ -818,7 +916,9 @@ def test_generator_dataset_size_1():
 
 def test_generator_dataset_size_2():
     """
-    Test GeneratorDataset + repeat get_dataset_size
+    Feature: GeneratorDataset
+    Description: Test 1D Generator with repeat get_dataset_size
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator + repeat get_dataset_size")
 
@@ -835,7 +935,9 @@ def test_generator_dataset_size_2():
 
 def test_generator_dataset_size_3():
     """
-    Test GeneratorDataset + batch get_dataset_size
+    Feature: GeneratorDataset
+    Description: Test 1D Generator with batch get_dataset_size
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator + batch get_dataset_size")
 
@@ -852,7 +954,9 @@ def test_generator_dataset_size_3():
 
 def test_generator_dataset_size_4():
     """
-    Test GeneratorDataset + num_shards
+    Feature: GeneratorDataset
+    Description: Test 1D Generator with num_shards get_dataset_size
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator : 0 - 63 + num_shards get_dataset_size")
 
@@ -868,7 +972,9 @@ def test_generator_dataset_size_4():
 
 def test_generator_dataset_size_5():
     """
-    Test get_dataset_size after create_dict_iterator
+    Feature: GeneratorDataset
+    Description: Test get_dataset_size after create_dict_iterator
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test get_dataset_size after create_dict_iterator")
 
@@ -884,7 +990,9 @@ def test_generator_dataset_size_5():
 
 def manual_test_generator_keyboard_interrupt():
     """
-    Test keyboard_interrupt
+    Feature: GeneratorDataset
+    Description: Test keyboard_interrupt
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test 1D Generator MP : 0 - 63")
 
@@ -903,7 +1011,9 @@ def manual_test_generator_keyboard_interrupt():
 
 def test_explicit_deepcopy():
     """
-    Test explicit_deepcopy
+    Feature: NumPyDataset
+    Description: Test explicit_deepcopy
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test explicit_deepcopy")
 
@@ -914,7 +1024,9 @@ def test_explicit_deepcopy():
 
 def test_func_generator_dataset_005():
     """
-    generator: class __getitem__
+    Feature: GeneratorDataset
+    Description: Test Generator's class __getitem__
+    Expectation: The dataset is processed as expected
     """
     result = [np.random.randn(242, 242, 242), np.random.randn(42, 24, 442)]
 
@@ -940,9 +1052,9 @@ def test_func_generator_dataset_005():
 
 def test_func_generator_dataset_with_zip_source():
     """
-    Feature: verify the source is zip
-    Description: the source input is zip
-    Expectation: success
+    Feature: Verify the source is zip
+    Description: The source input is zip
+    Expectation: Success
     """
     def synthetic_data(w, b, num_examples):
         """生成 y = Xw + b + 噪声。"""
@@ -976,8 +1088,8 @@ def test_func_generator_dataset_with_zip_source():
 def test_generator_mixed_operator():
     """
     Feature: Test adding computing operator into user defined dataset
-    Description: will decrease num_parallel_worker into 1
-    Expectation: success
+    Description: Will decrease num_parallel_worker into 1
+    Expectation: Success
     """
     logger.info("Test adding computing operator into user defined dataset.")
 
@@ -992,8 +1104,8 @@ def test_generator_mixed_operator():
 def test_generator_single_input_0():
     """
     Feature: Test single int input
-    Description: input int
-    Expectation: success
+    Description: Input int
+    Expectation: Success
     """
     def generator_int():
         for i in range(64):
@@ -1045,8 +1157,8 @@ def test_generator_single_input_0():
 def test_generator_single_input_1():
     """
     Feature: Test single float input
-    Description: input float
-    Expectation: success
+    Description: Input float
+    Expectation: Success
     """
 
     def generator_float():
@@ -1099,8 +1211,8 @@ def test_generator_single_input_1():
 def test_generator_single_input_2():
     """
     Feature: Test single str input
-    Description: input str
-    Expectation: success
+    Description: Input str
+    Expectation: Success
     """
 
     def generator_str():
@@ -1154,8 +1266,8 @@ def test_generator_single_input_2():
 def test_generator_single_input_3():
     """
     Feature: Test single bytes input
-    Description: input bytes
-    Expectation: success
+    Description: Input bytes
+    Expectation: Success
     """
 
     def generator_bytes():
@@ -1209,8 +1321,8 @@ def test_generator_single_input_3():
 def test_generator_single_input_4():
     """
     Feature: Test single Tensor input
-    Description: input Tensor
-    Expectation: success
+    Description: Input Tensor
+    Expectation: Success
     """
 
     def generator_tensor():
@@ -1263,8 +1375,8 @@ def test_generator_single_input_4():
 def test_generator_single_input_5():
     """
     Feature: Test single np.array input
-    Description: input np.array
-    Expectation: success
+    Description: Input np.array
+    Expectation: Success
     """
 
     def generator_np():
@@ -1317,8 +1429,8 @@ def test_generator_single_input_5():
 def test_generator_single_input_6():
     """
     Feature: Test single np.array input whose dtype is object
-    Description: input np.array
-    Expectation: throw exception
+    Description: Input np.array
+    Expectation: Throw exception
     """
     def generator_nested_np():
         for i in range(64):
@@ -1370,8 +1482,8 @@ def test_generator_single_input_6():
 def test_generator_with_single_numpy():
     """
     Feature: Test GeneratorDataset with single numpy and multi columns when use __getitem__
-    Description: single numpy, tuple numpy with single columns and multi columns
-    Expectation: success
+    Description: Single numpy, tuple numpy with single columns and multi columns
+    Expectation: Success
     """
     class get_dataset_generator:
         def __init__(self, value):
@@ -1578,8 +1690,8 @@ def test_generator_with_single_numpy():
 def test_generator_with_single_numpy_with_next():
     """
     Feature: Test GeneratorDataset with single numpy and multi columns when use __next__
-    Description: single numpy, tuple numpy with single columns and multi columns
-    Expectation: success
+    Description: Single numpy, tuple numpy with single columns and multi columns
+    Expectation: Success
     """
     class get_dataset_generator:
         def __init__(self, value):
@@ -1805,8 +1917,8 @@ def test_generator_with_single_numpy_with_next():
 def test_generator_with_single_numpy_with_yield():
     """
     Feature: Test GeneratorDataset with single numpy and multi columns when use yield
-    Description: single numpy, tuple numpy with single columns and multi columns
-    Expectation: success
+    Description: Single numpy, tuple numpy with single columns and multi columns
+    Expectation: Success
     """
     def get_dataset_generator(value):
         for _ in range(20):

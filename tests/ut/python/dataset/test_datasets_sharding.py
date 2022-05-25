@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,11 @@ from mindspore import log as logger
 
 
 def test_imagefolder_shardings(print_res=False):
+    """
+    Feature: Sharding
+    Description: Test ImageFolderDataset sharding
+    Expectation: The dataset is processed as expected
+    """
     image_folder_dir = "../data/dataset/testPK/data"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, class_index, repeat_cnt=1):
@@ -48,7 +53,11 @@ def test_imagefolder_shardings(print_res=False):
 
 
 def test_tfrecord_shardings1(print_res=False):
-    """ Test TFRecordDataset sharding with num_parallel_workers=1 """
+    """
+    Feature: Sharding
+    Description: Test TFRecordDataset sharding with num_parallel_workers=1
+    Expectation: The dataset is processed as expected
+    """
 
     # total 40 rows in dataset
     tf_files = ["../data/dataset/tf_file_dataset/test1.data", "../data/dataset/tf_file_dataset/test2.data",
@@ -86,7 +95,11 @@ def test_tfrecord_shardings1(print_res=False):
 
 
 def test_tfrecord_shardings4(print_res=False):
-    """ Test TFRecordDataset sharding with num_parallel_workers=4 """
+    """
+    Feature: Sharding
+    Description: Test TFRecordDataset sharding with num_parallel_workers=4
+    Expectation: The dataset is processed as expected
+    """
 
     # total 40 rows in dataset
     tf_files = ["../data/dataset/tf_file_dataset/test1.data", "../data/dataset/tf_file_dataset/test2.data",
@@ -134,6 +147,11 @@ def test_tfrecord_shardings4(print_res=False):
 
 
 def test_manifest_shardings(print_res=False):
+    """
+    Feature: Sharding
+    Description: Test ManifestDataset sharding
+    Expectation: The dataset is processed as expected
+    """
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
@@ -159,6 +177,11 @@ def test_manifest_shardings(print_res=False):
 
 
 def test_voc_shardings(print_res=False):
+    """
+    Feature: Sharding
+    Description: Test VOCDataset sharding
+    Expectation: The dataset is processed as expected
+    """
     voc_dir = "../data/dataset/testVOC2012"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
@@ -187,6 +210,11 @@ def test_voc_shardings(print_res=False):
 
 
 def test_cifar10_shardings(print_res=False):
+    """
+    Feature: Sharding
+    Description: Test Cifar10Dataset sharding
+    Expectation: The dataset is processed as expected
+    """
     cifar10_dir = "../data/dataset/testCifar10Data"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
@@ -207,6 +235,11 @@ def test_cifar10_shardings(print_res=False):
 
 
 def test_cifar100_shardings(print_res=False):
+    """
+    Feature: Sharding
+    Description: Test Cifar100Dataset sharding
+    Expectation: The dataset is processed as expected
+    """
     cifar100_dir = "../data/dataset/testCifar100Data"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
@@ -226,6 +259,11 @@ def test_cifar100_shardings(print_res=False):
 
 
 def test_mnist_shardings(print_res=False):
+    """
+    Feature: Sharding
+    Description: Test MnistDataset sharding
+    Expectation: The dataset is processed as expected
+    """
     mnist_dir = "../data/dataset/testMnistData"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):

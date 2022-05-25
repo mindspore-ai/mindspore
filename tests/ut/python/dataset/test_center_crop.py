@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_center_crop_op(height=375, width=375, plot=False):
     """
-    Test CenterCrop
+    Feature: CenterCrop op
+    Description: Test CenterCrop op basic usage
+    Expectation: Runs successfully
     """
     logger.info("Test CenterCrop")
 
@@ -58,12 +60,15 @@ def test_center_crop_op(height=375, width=375, plot=False):
 
 def test_center_crop_md5(height=375, width=375):
     """
-    Test CenterCrop
+    Feature: CenterCrop op
+    Description: Test CenterCrop using md5 check test
+    Expectation: Passes the md5 check test
     """
     logger.info("Test CenterCrop")
 
     # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     decode_op = vision.Decode()
     # 3 images [375, 500] [600, 500] [512, 512]
     center_crop_op = vision.CenterCrop([height, width])
@@ -76,19 +81,23 @@ def test_center_crop_md5(height=375, width=375):
 
 def test_center_crop_comp(height=375, width=375, plot=False):
     """
-    Test CenterCrop between python and c image augmentation
+    Feature: CenterCrop op
+    Description: Test CenterCrop between Python and Cpp image augmentation
+    Expectation: Resulting outputs from both operations are expected to be equal
     """
     logger.info("Test CenterCrop")
 
     # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     decode_op = vision.Decode()
     center_crop_op = vision.CenterCrop([height, width])
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=center_crop_op, input_columns=["image"])
 
     # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     transforms = [
         vision.Decode(True),
         vision.CenterCrop([height, width]),
@@ -113,7 +122,9 @@ def test_center_crop_comp(height=375, width=375, plot=False):
 
 def test_crop_grayscale(height=375, width=375):
     """
-    Test that centercrop works with pad and grayscale images
+    Feature: CenterCrop op
+    Description: Test CenterCrop works with pad and grayscale images
+    Expectation: Runs successfully
     """
 
     # Note: image.transpose performs channel swap to allow py transforms to
@@ -126,7 +137,8 @@ def test_crop_grayscale(height=375, width=375):
     ]
 
     transform = mindspore.dataset.transforms.transforms.Compose(transforms)
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     data1 = data1.map(operations=transform, input_columns=["image"])
 
     # If input is grayscale, the output dimensions should be single channel
@@ -142,7 +154,9 @@ def test_crop_grayscale(height=375, width=375):
 
 def test_center_crop_errors():
     """
-    Test that CenterCropOp errors with bad input
+    Feature: CenterCrop op
+    Description: Test CenterCrop with bad inputs
+    Expectation: Error is raised as expected
     """
     try:
         test_center_crop_op(16777216, 16777216)

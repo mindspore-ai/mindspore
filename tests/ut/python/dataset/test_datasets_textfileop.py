@@ -23,6 +23,11 @@ DATA_ALL_FILE = "../data/dataset/testTextFileDataset/*"
 
 
 def test_textline_dataset_one_file():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with one file
+    Expectation: The dataset is processed as expected
+    """
     data = ds.TextFileDataset(DATA_FILE)
     count = 0
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -32,6 +37,11 @@ def test_textline_dataset_one_file():
 
 
 def test_textline_dataset_all_file():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with all file
+    Expectation: The dataset is processed as expected
+    """
     data = ds.TextFileDataset(DATA_ALL_FILE)
     count = 0
     for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -41,6 +51,11 @@ def test_textline_dataset_all_file():
 
 
 def test_textline_dataset_num_samples_none():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with no parameter for num_samples (None by default)
+    Expectation: The dataset is processed as expected
+    """
     # Do not provide a num_samples argument, so it would be None by default
     data = ds.TextFileDataset(DATA_FILE)
     count = 0
@@ -51,6 +66,11 @@ def test_textline_dataset_num_samples_none():
 
 
 def test_textline_dataset_shuffle_false4():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with no shuffle and num_parallel_workers=4
+    Expectation: The dataset is processed as expected
+    """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(987)
     data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=False)
@@ -68,6 +88,11 @@ def test_textline_dataset_shuffle_false4():
 
 
 def test_textline_dataset_shuffle_false1():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with no shuffle and num_parallel_workers=1
+    Expectation: The dataset is processed as expected
+    """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(987)
     data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=False)
@@ -85,6 +110,11 @@ def test_textline_dataset_shuffle_false1():
 
 
 def test_textline_dataset_shuffle_files4():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with shuffle and num_parallel_workers=4
+    Expectation: The dataset is processed as expected
+    """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(135)
     data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=ds.Shuffle.FILES)
@@ -102,6 +132,11 @@ def test_textline_dataset_shuffle_files4():
 
 
 def test_textline_dataset_shuffle_files1():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with shuffle and num_parallel_workers=1
+    Expectation: The dataset is processed as expected
+    """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(135)
     data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=ds.Shuffle.FILES)
@@ -119,6 +154,11 @@ def test_textline_dataset_shuffle_files1():
 
 
 def test_textline_dataset_shuffle_global4():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with global shuffle and num_parallel_workers=4
+    Expectation: The dataset is processed as expected
+    """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(246)
     data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=ds.Shuffle.GLOBAL)
@@ -136,6 +176,11 @@ def test_textline_dataset_shuffle_global4():
 
 
 def test_textline_dataset_shuffle_global1():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with global shuffle and num_parallel_workers=1
+    Expectation: The dataset is processed as expected
+    """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(246)
     data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=ds.Shuffle.GLOBAL)
@@ -153,6 +198,11 @@ def test_textline_dataset_shuffle_global1():
 
 
 def test_textline_dataset_num_samples():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with num_samples parameter
+    Expectation: The dataset is processed as expected
+    """
     data = ds.TextFileDataset(DATA_FILE, num_samples=2)
     count = 0
     for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -161,6 +211,11 @@ def test_textline_dataset_num_samples():
 
 
 def test_textline_dataset_distribution():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with num_shards and shard_id parameters
+    Expectation: The dataset is processed as expected
+    """
     data = ds.TextFileDataset(DATA_ALL_FILE, num_shards=2, shard_id=1)
     count = 0
     for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -169,6 +224,11 @@ def test_textline_dataset_distribution():
 
 
 def test_textline_dataset_repeat():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset with repeat
+    Expectation: The dataset is processed as expected
+    """
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
     data = data.repeat(3)
     count = 0
@@ -185,8 +245,8 @@ def test_textline_dataset_repeat():
 def test_textline_dataset_output_tensor():
     """
     Feature: Test text dataset output string and construct mindspore.Tensor.
-    Description: set output_numpy=False in create_dict_iterator.
-    Expectation: output tensor successfully
+    Description: Set output_numpy=False in create_dict_iterator.
+    Expectation: Output tensor successfully
     """
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
     expected_text = ["This is a text file.", "Be happy every day.", "Good luck to everyone."]
@@ -221,18 +281,33 @@ def test_textline_dataset_output_tensor():
 
 
 def test_textline_dataset_get_datasetsize():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset get_dataset_size
+    Expectation: The dataset is processed as expected
+    """
     data = ds.TextFileDataset(DATA_FILE)
     size = data.get_dataset_size()
     assert size == 3
 
 
 def test_textline_dataset_to_device():
+    """
+    Feature: TextFileDataset
+    Description: Test TextFileDataset to_device
+    Expectation: The dataset is processed as expected
+    """
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
     data = data.to_device()
     data.send()
 
 
 def test_textline_dataset_exceptions():
+    """
+    Feature: TextFileDataset
+    Description: Test error cases for TextFileDataset
+    Expectation: Correct error is thrown as expected
+    """
     with pytest.raises(ValueError) as error_info:
         _ = ds.TextFileDataset(DATA_FILE, num_samples=-1)
     assert "num_samples exceeds the boundary" in str(error_info.value)

@@ -21,6 +21,11 @@ DATA_DIR = "../data/dataset/testPK/data"
 
 
 def test_imagefolder_basic():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset basic read
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case basic")
     # define parameters
     repeat_count = 1
@@ -41,6 +46,11 @@ def test_imagefolder_basic():
 
 
 def test_imagefolder_numsamples():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with num_samples parameter
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case numSamples")
     # define parameters
     repeat_count = 1
@@ -79,6 +89,11 @@ def test_imagefolder_numsamples():
 
 
 def test_imagefolder_numshards():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with num_shards parameter
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case numShards")
     # define parameters
     repeat_count = 1
@@ -99,6 +114,11 @@ def test_imagefolder_numshards():
 
 
 def test_imagefolder_shardid():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with shard_id parameter
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case withShardID")
     # define parameters
     repeat_count = 1
@@ -119,6 +139,11 @@ def test_imagefolder_shardid():
 
 
 def test_imagefolder_noshuffle():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with no shuffle
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case noShuffle")
     # define parameters
     repeat_count = 1
@@ -139,6 +164,11 @@ def test_imagefolder_noshuffle():
 
 
 def test_imagefolder_extrashuffle():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with extra shuffle
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case extraShuffle")
     # define parameters
     repeat_count = 2
@@ -160,6 +190,11 @@ def test_imagefolder_extrashuffle():
 
 
 def test_imagefolder_classindex():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with class_indexing parameter
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case classIndex")
     # define parameters
     repeat_count = 1
@@ -185,6 +220,11 @@ def test_imagefolder_classindex():
 
 
 def test_imagefolder_negative_classindex():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with negative class_indexing parameter
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case negative classIndex")
     # define parameters
     repeat_count = 1
@@ -210,6 +250,11 @@ def test_imagefolder_negative_classindex():
 
 
 def test_imagefolder_extensions():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with extensions parameter
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case extensions")
     # define parameters
     repeat_count = 1
@@ -231,6 +276,11 @@ def test_imagefolder_extensions():
 
 
 def test_imagefolder_decode():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with decode parameter
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case decode")
     # define parameters
     repeat_count = 1
@@ -252,6 +302,11 @@ def test_imagefolder_decode():
 
 
 def test_sequential_sampler():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with SequentialSampler
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case SequentialSampler")
 
     golden = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -280,6 +335,11 @@ def test_sequential_sampler():
 
 
 def test_random_sampler():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with RandomSampler
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case RandomSampler")
     # define parameters
     repeat_count = 1
@@ -301,6 +361,11 @@ def test_random_sampler():
 
 
 def test_distributed_sampler():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with DistributedSampler
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case DistributedSampler")
     # define parameters
     repeat_count = 1
@@ -322,6 +387,11 @@ def test_distributed_sampler():
 
 
 def test_pk_sampler():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with PKSampler
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case PKSampler")
     # define parameters
     repeat_count = 1
@@ -343,6 +413,11 @@ def test_pk_sampler():
 
 
 def test_subset_random_sampler():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with SubsetRandomSampler
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case SubsetRandomSampler")
     # define parameters
     repeat_count = 1
@@ -365,6 +440,11 @@ def test_subset_random_sampler():
 
 
 def test_weighted_random_sampler():
+    """
+    Feature: ImageFolderDataset
+    Description: Test ImageFolderDataset with WeightedRandomSampler
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case WeightedRandomSampler")
     # define parameters
     repeat_count = 1
@@ -388,7 +468,9 @@ def test_weighted_random_sampler():
 
 def test_weighted_random_sampler_exception():
     """
-    Test error cases for WeightedRandomSampler
+    Feature: ImageFolderDataset
+    Description: Test error cases for ImageFolderDataset with WeightedRandomSampler
+    Expectation: Correct error is thrown as expected
     """
     logger.info("Test error cases for WeightedRandomSampler")
     error_msg_1 = "type of weights element must be number"
@@ -701,6 +783,11 @@ def test_chained_sampler_08():
 
 
 def test_imagefolder_rename():
+    """
+    Feature: ImageFolderDataset
+    Description: Test rename on ImageFolderDataset
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case rename")
     # define parameters
     repeat_count = 1
@@ -733,6 +820,11 @@ def test_imagefolder_rename():
 
 
 def test_imagefolder_zip():
+    """
+    Feature: ImageFolderDataset
+    Description: Test zip on ImageFolderDataset
+    Expectation: The dataset is processed as expected
+    """
     logger.info("Test Case zip")
     # define parameters
     repeat_count = 2
@@ -758,6 +850,11 @@ def test_imagefolder_zip():
 
 
 def test_imagefolder_exception():
+    """
+    Feature: ImageFolderDataset
+    Description: Test error cases on ImageFolderDataset
+    Expectation: Correct error is thrown as expected
+    """
     logger.info("Test imagefolder exception")
 
     def exception_func(item):

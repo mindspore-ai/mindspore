@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,9 +31,12 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 def test_func_dc_shift_eager():
     """
-    Eager Test
+    Feature: DCShift
+    Description: Test DCShift in eager mode
+    Expectation: Output is equal to the expected output
     """
-    arr = np.array([0.60, 0.97, -1.04, -1.26, 0.97, 0.91, 0.48, 0.93, 0.71, 0.61], dtype=np.double)
+    arr = np.array([0.60, 0.97, -1.04, -1.26, 0.97, 0.91,
+                    0.48, 0.93, 0.71, 0.61], dtype=np.double)
     expected = np.array([0.0400, 0.0400, -0.0400, -0.2600, 0.0400, 0.0400, 0.0400, 0.0400, 0.0400, 0.0400],
                         dtype=np.double)
     dcshift_op = a_c_trans.DCShift(1.0, 0.04)
@@ -43,10 +46,14 @@ def test_func_dc_shift_eager():
 
 def test_func_dc_shift_pipeline():
     """
-    Pipeline Test
+    Feature: DCShift
+    Description: Test DCShift in pipeline mode
+    Expectation: Output is equal to the expected output
     """
-    arr = np.array([[1.14, -1.06, 0.94, 0.90], [-1.11, 1.40, -0.33, 1.43]], dtype=np.double)
-    expected = np.array([[0.2300, -0.2600, 0.2300, 0.2300], [-0.3100, 0.2300, 0.4700, 0.2300]], dtype=np.double)
+    arr = np.array([[1.14, -1.06, 0.94, 0.90],
+                    [-1.11, 1.40, -0.33, 1.43]], dtype=np.double)
+    expected = np.array([[0.2300, -0.2600, 0.2300, 0.2300],
+                         [-0.3100, 0.2300, 0.4700, 0.2300]], dtype=np.double)
     dataset = ds.NumpySlicesDataset(arr, column_names=["col1"], shuffle=False)
     dcshift_op = a_c_trans.DCShift(0.8, 0.03)
     dataset = dataset.map(operations=dcshift_op, input_columns=["col1"])
@@ -56,12 +63,15 @@ def test_func_dc_shift_pipeline():
 
 def test_func_dc_shift_pipeline_error():
     """
-    Pipeline Error Test
+    Feature: DCShift
+    Description: Test DCShift in pipeline mode with invalid input
+    Expectation: Correct error and message are thrown as expected
     """
     arr = np.random.uniform(-2, 2, size=(1000)).astype(np.float)
     label = np.random.sample((1000, 1))
     data = (arr, label)
-    dataset = ds.NumpySlicesDataset(data, column_names=["col1", "col2"], shuffle=False)
+    dataset = ds.NumpySlicesDataset(
+        data, column_names=["col1", "col2"], shuffle=False)
     num_itr = 0
     with pytest.raises(ValueError, match=r"Input shift is not within the required interval of \[-2.0, 2.0\]."):
         dcshift_op = a_c_trans.DCShift(2.5, 0.03)

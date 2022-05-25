@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
-from util import visualize_list, visualize_image, diff_mse
+from util import helper_random_op_pipeline, visualize_list, visualize_image, diff_mse
 
 image_file = "../data/dataset/testImageNetData/train/class1/1_1.jpg"
 data_dir = "../data/dataset/testImageNetData/train/"
@@ -28,38 +28,19 @@ data_dir = "../data/dataset/testImageNetData/train/"
 
 def test_random_auto_contrast_pipeline(plot=False):
     """
-    Test RandomAutoContrast pipeline
+    Feature: RandomAutoContrast op
+    Description: Test RandomAutoContrast pipeline
+    Expectation: Passes the test
     """
     logger.info("Test RandomAutoContrast pipeline")
 
     # Original Images
-    data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    transforms_original = [vision.Decode(), vision.Resize(size=[224, 224])]
-    ds_original = data_set.map(operations=transforms_original, input_columns="image")
-    ds_original = ds_original.batch(512)
-
-    for idx, (image, _) in enumerate(ds_original):
-        if idx == 0:
-            images_original = image.asnumpy()
-        else:
-            images_original = np.append(images_original,
-                                        image.asnumpy(),
-                                        axis=0)
+    images_original = helper_random_op_pipeline(data_dir)
 
     # Randomly Automatically Contrasted Images
-    data_set1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    transform_random_auto_contrast = [vision.Decode(),
-                                      vision.Resize(size=[224, 224]),
-                                      vision.RandomAutoContrast(prob=0.6)]
-    ds_random_auto_contrast = data_set1.map(operations=transform_random_auto_contrast, input_columns="image")
-    ds_random_auto_contrast = ds_random_auto_contrast.batch(512)
-    for idx, (image, _) in enumerate(ds_random_auto_contrast):
-        if idx == 0:
-            images_random_auto_contrast = image.asnumpy()
-        else:
-            images_random_auto_contrast = np.append(images_random_auto_contrast,
-                                                    image.asnumpy(),
-                                                    axis=0)
+    images_random_auto_contrast = helper_random_op_pipeline(
+        data_dir, vision.RandomAutoContrast(0.6))
+
     if plot:
         visualize_list(images_original, images_random_auto_contrast)
 
@@ -72,7 +53,9 @@ def test_random_auto_contrast_pipeline(plot=False):
 
 def test_random_auto_contrast_eager():
     """
-    Test RandomAutoContrast eager.
+    Feature: RandomAutoContrast op
+    Description: Test RandomAutoContrast eager
+    Expectation: Passes the test
     """
     img = np.fromfile(image_file, dtype=np.uint8)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
@@ -80,14 +63,17 @@ def test_random_auto_contrast_eager():
     img = vision.Decode()(img)
     img_auto_contrast = vision.AutoContrast(1.0, None)(img)
     img_random_auto_contrast = vision.RandomAutoContrast(1.0, None, 1.0)(img)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img_auto_contrast), img_random_auto_contrast.shape))
+    logger.info("Image.type: {}, Image.shape: {}".format(
+        type(img_auto_contrast), img_random_auto_contrast.shape))
 
     assert img_auto_contrast.all() == img_random_auto_contrast.all()
 
 
 def test_random_auto_contrast_comp(plot=False):
     """
-    Test RandomAutoContrast op compared with AutoContrast op.
+    Feature: RandomAutoContrast op
+    Description: Test RandomAutoContrast op compared with AutoContrast op
+    Expectation: Resulting outputs from both operations are expected to be equal
     """
     random_auto_contrast_op = vision.RandomAutoContrast(prob=1.0)
     auto_contrast_op = vision.AutoContrast()
@@ -107,26 +93,33 @@ def test_random_auto_contrast_comp(plot=False):
     assert mse == 0
     logger.info("mse: {}".format(mse))
     if plot:
-        visualize_image(image, image_random_auto_contrast, mse, image_auto_contrast)
+        visualize_image(image, image_random_auto_contrast,
+                        mse, image_auto_contrast)
 
 
 def test_random_auto_contrast_invalid_prob():
     """
-    Test RandomAutoContrast Op with invalid prob parameter.
+    Feature: RandomAutoContrast op
+    Description: Test RandomAutoContrast with invalid prob parameter
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_auto_contrast_invalid_prob")
     dataset = ds.ImageFolderDataset(data_dir, 1, shuffle=False, decode=True)
     try:
         random_auto_contrast_op = vision.RandomAutoContrast(prob=1.5)
-        dataset = dataset.map(operations=random_auto_contrast_op, input_columns=['image'])
+        dataset = dataset.map(
+            operations=random_auto_contrast_op, input_columns=['image'])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(e)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(
+            e)
 
 
 def test_random_auto_contrast_invalid_ignore():
     """
-    Test RandomAutoContrast Op with invalid ignore parameter.
+    Feature: RandomAutoContrast op
+    Description: Test RandomAutoContrast with invalid ignore parameter
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_auto_contrast_invalid_ignore")
     try:
@@ -135,7 +128,8 @@ def test_random_auto_contrast_invalid_ignore():
                                             vision.Resize((224, 224)),
                                             lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid ignore
-        data_set = data_set.map(operations=vision.RandomAutoContrast(ignore=255.5), input_columns="image")
+        data_set = data_set.map(operations=vision.RandomAutoContrast(
+            ignore=255.5), input_columns="image")
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Argument ignore with value 255.5 is not of type" in str(error)
@@ -144,15 +138,19 @@ def test_random_auto_contrast_invalid_ignore():
         data_set = data_set.map(operations=[vision.Decode(), vision.Resize((224, 224)),
                                             lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid ignore
-        data_set = data_set.map(operations=vision.RandomAutoContrast(ignore=(10, 100)), input_columns="image")
+        data_set = data_set.map(operations=vision.RandomAutoContrast(
+            ignore=(10, 100)), input_columns="image")
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Argument ignore with value (10,100) is not of type" in str(error)
+        assert "Argument ignore with value (10,100) is not of type" in str(
+            error)
 
 
 def test_random_auto_contrast_invalid_cutoff():
     """
-    Test RandomAutoContrast Op with invalid cutoff parameter.
+    Feature: RandomAutoContrast op
+    Description: Test RandomAutoContrast with invalid cutoff parameter
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_auto_contrast_invalid_cutoff")
     try:
@@ -161,27 +159,31 @@ def test_random_auto_contrast_invalid_cutoff():
                                             vision.Resize((224, 224)),
                                             lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid cutoff
-        data_set = data_set.map(operations=vision.RandomAutoContrast(cutoff=-10.0), input_columns="image")
+        data_set = data_set.map(operations=vision.RandomAutoContrast(
+            cutoff=-10.0), input_columns="image")
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Input cutoff is not within the required interval of [0, 50)." in str(error)
+        assert "Input cutoff is not within the required interval of [0, 50)." in str(
+            error)
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
         data_set = data_set.map(operations=[vision.Decode(),
                                             vision.Resize((224, 224)),
                                             lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid cutoff
-        data_set = data_set.map(operations=vision.RandomAutoContrast(cutoff=120.0), input_columns="image")
+        data_set = data_set.map(operations=vision.RandomAutoContrast(
+            cutoff=120.0), input_columns="image")
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Input cutoff is not within the required interval of [0, 50)." in str(error)
+        assert "Input cutoff is not within the required interval of [0, 50)." in str(
+            error)
 
 
 def test_random_auto_contrast_one_channel():
     """
     Feature: RandomAutoContrast
-    Description: test with one channel images
-    Expectation: raise errors as expected
+    Description: Test with one channel images
+    Expectation: Raise errors as expected
     """
     logger.info("test_random_auto_contrast_one_channel")
 
@@ -196,14 +198,15 @@ def test_random_auto_contrast_one_channel():
 
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "image shape is incorrect, expected num of channels is 3." in str(e)
+        assert "image shape is incorrect, expected num of channels is 3." in str(
+            e)
 
 
 def test_random_auto_contrast_four_dim():
     """
     Feature: RandomAutoContrast
-    Description: test with four dimension images
-    Expectation: raise errors as expected
+    Description: Test with four dimension images
+    Expectation: Raise errors as expected
     """
     logger.info("test_random_auto_contrast_four_dim")
 
@@ -224,8 +227,8 @@ def test_random_auto_contrast_four_dim():
 def test_random_auto_contrast_invalid_input():
     """
     Feature: RandomAutoContrast
-    Description: test with images in uint32 type
-    Expectation: raise errors as expected
+    Description: Test with images in uint32 type
+    Expectation: Raise errors as expected
     """
     logger.info("test_random_invert_invalid_input")
 

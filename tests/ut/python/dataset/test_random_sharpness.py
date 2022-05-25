@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ GENERATE_GOLDEN = False
 
 def test_random_sharpness_py(degrees=(0.7, 0.7), plot=False):
     """
-    Test RandomSharpness Python implementation
+    Feature: RandomSharpness op
+    Description: Test RandomSharpness with Python implementation
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomSharpness Python implementation")
 
@@ -91,7 +93,9 @@ def test_random_sharpness_py(degrees=(0.7, 0.7), plot=False):
 
 def test_random_sharpness_py_md5():
     """
-    Test RandomSharpness Python implementation with md5 comparison
+    Feature: RandomSharpness op
+    Description: Test RandomSharpness with Python implementation with md5 comparison
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomSharpness Python implementation with md5 comparison")
     original_seed = config_get_set_seed(5)
@@ -120,7 +124,9 @@ def test_random_sharpness_py_md5():
 
 def test_random_sharpness_c(degrees=(1.6, 1.6), plot=False):
     """
-    Test RandomSharpness cpp op
+    Feature: RandomSharpness op
+    Description: Test RandomSharpness with cpp op
+    Expectation: The dataset is processed as expected
     """
     print(degrees)
     logger.info("Test RandomSharpness cpp op")
@@ -179,7 +185,9 @@ def test_random_sharpness_c(degrees=(1.6, 1.6), plot=False):
 
 def test_random_sharpness_c_md5():
     """
-    Test RandomSharpness cpp op with md5 comparison
+    Feature: RandomSharpness op
+    Description: Test RandomSharpness with cpp op with md5 comparison
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomSharpness cpp op with md5 comparison")
     original_seed = config_get_set_seed(200)
@@ -206,7 +214,9 @@ def test_random_sharpness_c_md5():
 
 def test_random_sharpness_c_py(degrees=(1.0, 1.0), plot=False):
     """
-    Test Random Sharpness C and python Op
+    Feature: RandomSharpness op
+    Description: Test RandomSharpness with C and python Op
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomSharpness C and python Op")
 
@@ -264,7 +274,9 @@ def test_random_sharpness_c_py(degrees=(1.0, 1.0), plot=False):
 
 def test_random_sharpness_one_channel_c(degrees=(1.4, 1.4), plot=False):
     """
-    Test Random Sharpness cpp op with one channel
+    Feature: RandomSharpness op
+    Description: Test RandomSharpness with cpp op with one channel on MnistDataset (grayscale images)
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test RandomSharpness C Op With MNIST Dataset (Grayscale images)")
 
@@ -293,7 +305,9 @@ def test_random_sharpness_one_channel_c(degrees=(1.4, 1.4), plot=False):
 
 def test_random_sharpness_invalid_params():
     """
-    Test RandomSharpness with invalid input parameters.
+    Feature: RandomSharpness op
+    Description: Test RandomSharpness with invalid input parameters
+    Expectation: Correct error is thrown as expected
     """
     logger.info("Test RandomSharpness with invalid input parameters.")
     try:

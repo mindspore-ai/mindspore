@@ -73,7 +73,9 @@ def visualize_dataset(images, labels):
 
 def test_flowers102_content_check():
     """
-    Validate Flowers102Dataset image readings
+    Feature: Flowers102Dataset
+    Description: Test Flowers102Dataset image readings with content check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Flowers102Dataset Op with content check")
     all_data = ds.Flowers102Dataset(DATA_DIR, task="Segmentation", usage="all",
@@ -127,7 +129,9 @@ def test_flowers102_content_check():
 
 def test_flowers102_basic():
     """
-    Validate Flowers102Dataset
+    Feature: Flowers102Dataset
+    Description: Test basic read on Flowers102Dataset
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Flowers102Dataset Op")
 
@@ -183,7 +187,9 @@ def test_flowers102_basic():
 
 def test_flowers102_sequential_sampler():
     """
-    Test Flowers102Dataset with SequentialSampler
+    Feature: Flowers102Dataset
+    Description: Test Flowers102Dataset with SequentialSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Flowers102Dataset Op with SequentialSampler")
     num_samples = 4
@@ -205,7 +211,9 @@ def test_flowers102_sequential_sampler():
 
 def test_flowers102_exception():
     """
-    Test error cases for Flowers102Dataset
+    Feature: Flowers102Dataset
+    Description: Test error cases on Flowers102Dataset
+    Expectation: Correct error is thrown as expected
     """
     logger.info("Test error cases for Flowers102Dataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -267,7 +275,9 @@ def test_flowers102_exception():
 
 def test_flowers102_visualize(plot=False):
     """
-    Visualize Flowers102Dataset results
+    Feature: Flowers102Dataset
+    Description: Test Flowers102Dataset visualization for results
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Flowers102Dataset visualization")
 
@@ -293,7 +303,9 @@ def test_flowers102_visualize(plot=False):
 
 def test_flowers102_usage():
     """
-    Validate Flowers102Dataset usage
+    Feature: Flowers102Dataset
+    Description: Test Flowers102Dataset usage flag
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Flowers102Dataset usage flag")
 
@@ -318,7 +330,9 @@ def test_flowers102_usage():
 
 def test_flowers102_task():
     """
-    Validate Flowers102Dataset task
+    Feature: Flowers102Dataset
+    Description: Test Flowers102Dataset task flag
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Flowers102Dataset task flag")
 

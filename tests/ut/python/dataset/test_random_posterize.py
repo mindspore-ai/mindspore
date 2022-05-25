@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,8 +30,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_random_posterize_op_c(plot=False, run_golden=False):
     """
-    Test RandomPosterize in C transformations (uses assertion on mse as using md5 could have jpeg decoding
-    inconsistencies)
+    Feature: RandomPosterize op
+    Description: Test RandomPosterize in Cpp implementation
+    Expectation: Passes mse assertion (using md5 could have jpeg decoding inconsistencies, so not used)
     """
     logger.info("test_random_posterize_op_c")
 
@@ -81,7 +82,9 @@ def test_random_posterize_op_c(plot=False, run_golden=False):
 
 def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
     """
-    Test RandomPosterize in C transformations with fixed point
+    Feature: RandomPosterize op
+    Description: Test RandomPosterize in Cpp implementation with fixed point
+    Expectation: Passes md5 check
     """
     logger.info("test_random_posterize_op_c")
     original_seed = config_get_set_seed(55)
@@ -124,7 +127,9 @@ def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
 
 def test_random_posterize_default_c_md5(plot=False, run_golden=True):
     """
-    Test RandomPosterize C Op (default params) with md5 comparison
+    Feature: RandomPosterize op
+    Description: Test RandomPosterize C op (default params) with md5 comparison
+    Expectation: Passes md5 comparison check
     """
     logger.info("test_random_posterize_default_c_md5")
     original_seed = config_get_set_seed(5)
@@ -166,7 +171,9 @@ def test_random_posterize_default_c_md5(plot=False, run_golden=True):
 
 def test_random_posterize_exception_bit():
     """
-    Test RandomPosterize: out of range input bits and invalid type
+    Feature: RandomPosterize op
+    Description: Test RandomPosterize with out of range input bits and invalid type
+    Expectation: Correct error is thrown as expected
     """
     logger.info("test_random_posterize_exception_bit")
     # Test max > 8
@@ -204,7 +211,9 @@ def test_random_posterize_exception_bit():
 
 def test_rescale_with_random_posterize():
     """
-    Test RandomPosterize: only support CV_8S/CV_8U
+    Feature: RandomPosterize op
+    Description: Test RandomPosterize rescale (only support CV_8S/CV_8U)
+    Expectation: Error is raised as expected
     """
     logger.info("test_rescale_with_random_posterize")
 

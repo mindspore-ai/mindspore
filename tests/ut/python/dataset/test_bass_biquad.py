@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_func_bass_biquad_eager():
-    """ mindspore eager mode normal testcase:bass_biquad op"""
+    """
+    Feature: BassBiquad op
+    Description: Test BassBiquad op in eager mode with valid input
+    Expectation: Output is equal to the expected output
+    """
 
     # Original waveform
     waveform = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float64)
@@ -44,7 +48,11 @@ def test_func_bass_biquad_eager():
 
 
 def test_func_bass_biquad_pipeline():
-    """ mindspore pipeline mode normal testcase:bass_biquad op"""
+    """
+    Feature: BassBiquad op
+    Description: Test BassBiquad op in pipeline mode with valid input
+    Expectation: Output is equal to the expected output
+    """
 
     # Original waveform
     waveform = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float64)
@@ -66,6 +74,11 @@ def test_func_bass_biquad_pipeline():
 
 
 def test_invalid_invalid_input():
+    """
+    Feature: BassBiquad op
+    Description: Test BassBiquad op with invalid input
+    Expectation: Correct error and message are thrown as expected
+    """
     def test_invalid_input(test_name, sample_rate, gain, central_freq, Q, error, error_msg):
         logger.info("Test BassBiquad with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:

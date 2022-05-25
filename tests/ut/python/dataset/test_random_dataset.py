@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,11 @@ from mindspore import log as logger
 
 # just a basic test with parallel random data op
 def test_randomdataset_basic1():
+    """
+    Feature: RandomDataset op
+    Description: Test RandomDataset basic usage with schema and num_parallel_workers=4
+    Expectation: Passes the equality test
+    """
     logger.info("Test randomdataset basic 1")
 
     schema = ds.Schema()
@@ -42,6 +47,11 @@ def test_randomdataset_basic1():
 
 # Another simple test
 def test_randomdataset_basic2():
+    """
+    Feature: RandomDataset op
+    Description: Test RandomDataset basic usage with schema and num_parallel_workers=1
+    Expectation: Passes the equality test
+    """
     logger.info("Test randomdataset basic 2")
 
     schema = ds.Schema()
@@ -67,6 +77,11 @@ def test_randomdataset_basic2():
 
 # Another simple test
 def test_randomdataset_basic3():
+    """
+    Feature: RandomDataset op
+    Description: Test RandomDataset with randomly created schema
+    Expectation: Passes the equality test
+    """
     logger.info("Test randomdataset basic 3")
 
     # Make up 10 samples, but here even the schema is randomly created

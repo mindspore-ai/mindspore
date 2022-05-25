@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -85,7 +85,9 @@ def visualize_dataset(images, labels):
 
 def test_emnist_content_check():
     """
-    Validate EMnistDataset image readings
+    Feature: EMnistDataset
+    Description: Test EMnistDataset image readings with content check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test EMnistDataset Op with content check")
     # train mnist
@@ -133,7 +135,9 @@ def test_emnist_content_check():
 
 def test_emnist_basic():
     """
-    Validate EMnistDataset
+    Feature: EMnistDataset
+    Description: Test basic read on EMnistDataset
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test EMnistDataset Op")
 
@@ -234,7 +238,9 @@ def test_emnist_basic():
 
 def test_emnist_pk_sampler():
     """
-    Test EMnistDataset with PKSampler
+    Feature: EMnistDataset
+    Description: Test EMnistDataset with PKSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test EMnistDataset Op with PKSampler")
     golden = [0, 0, 0, 1, 1, 1]
@@ -262,7 +268,9 @@ def test_emnist_pk_sampler():
 
 def test_emnist_sequential_sampler():
     """
-    Test EMnistDataset with SequentialSampler
+    Feature: EMnistDataset
+    Description: Test EMnistDataset with SequentialSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test EMnistDataset Op with SequentialSampler")
     num_samples = 10
@@ -296,7 +304,9 @@ def test_emnist_sequential_sampler():
 
 def test_emnist_exception():
     """
-    Test error cases for EMnistDataset
+    Feature: EMnistDataset
+    Description: Test error cases for EMnistDataset
+    Expectation: Throw correct error as expected
     """
     logger.info("Test error cases for EMnistDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -369,7 +379,9 @@ def test_emnist_exception():
 
 def test_emnist_visualize(plot=False):
     """
-    Visualize EMnistDataset results
+    Feature: EMnistDataset
+    Description: Test EMnistDataset visualization for result
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test EMnistDataset visualization")
 
@@ -410,7 +422,9 @@ def test_emnist_visualize(plot=False):
 
 def test_emnist_usage():
     """
-    Validate EMnistDataset image readings
+    Feature: EMnistDataset
+    Description: Test EMnistDataset image readings with usage flag
+    Expectation: The dataset is processed or error is thrown as expected
     """
     logger.info("Test EMnistDataset usage flag")
 
@@ -447,7 +461,9 @@ def test_emnist_usage():
 
 def test_emnist_name():
     """
-    Validate EMnistDataset image readings
+    Feature: EMnistDataset
+    Description: Test EMnistDataset image readings with name flag
+    Expectation: The dataset is processed or error is thrown as expected
     """
     def test_config(name, usage, emnist_path=None):
         emnist_path = DATA_DIR if emnist_path is None else emnist_path

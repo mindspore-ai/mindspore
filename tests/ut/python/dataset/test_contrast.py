@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_func_contrast_eager():
-    """ mindspore eager mode normal testcase:contrast op"""
+    """
+    Feature: Contrast op
+    Description: Test Contrast op in eager mode with valid input
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[1, 2], [3, 4]], dtype=np.float32)
     # Expect waveform
@@ -46,26 +50,38 @@ def test_func_contrast_eager():
 
 
 def test_func_contrast_pipeline():
-    """ mindspore pipeline mode normal testcase:contrast op"""
+    """
+    Feature: Contrast op
+    Description: Test Contrast op in pipeline mode with valid input
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[0.4941969, 0.53911686, 0.4846254], [0.10841596, 0.029320478, 0.52353495],
                          [0.23657, 0.087965, 0.43579]], dtype=np.float64)
     # Expect waveform
     expect_waveform = np.array([[7.032282948493957520e-01, 7.328570485115051270e-01, 6.967759728431701660e-01],
-                                [2.311619222164154053e-01, 6.433061510324478149e-02, 7.226532697677612305e-01],
+                                [2.311619222164154053e-01, 6.433061510324478149e-02,
+                                 7.226532697677612305e-01],
                                 [4.539981484413146973e-01, 1.895205676555633545e-01, 6.622338891029357910e-01]],
                                dtype=np.float64)
     dataset = ds.NumpySlicesDataset(waveform, ["audio"], shuffle=False)
     contrast_op = audio.Contrast()
     # Filtered waveform by contrast
-    dataset = dataset.map(input_columns=["audio"], operations=contrast_op, num_parallel_workers=8)
+    dataset = dataset.map(
+        input_columns=["audio"], operations=contrast_op, num_parallel_workers=8)
     i = 0
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        count_unequal_element(expect_waveform[i, :], item['audio'], 0.0001, 0.0001)
+        count_unequal_element(
+            expect_waveform[i, :], item['audio'], 0.0001, 0.0001)
         i += 1
 
 
 def test_contrast_invalid_input():
+    """
+    Feature: Contrast op
+    Description: Test Contrast op with invalid input
+    Expectation: Correct error and message are thrown as expected
+    """
     def test_invalid_input(test_name, enhancement_amount, error, error_msg):
         logger.info("Test Contrast with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:

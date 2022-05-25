@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,13 @@ import mindspore.dataset.text.transforms as T
 import mindspore.common.dtype as mstype
 from mindspore import log as logger
 
+
 def test_sliding_window():
+    """
+    Feature: SlidingWindow op
+    Description: Test SlidingWindow op basic usage
+    Expectation: Output is equal to the expected output
+    """
     txt = ["Welcome", "to", "Beijing", "!"]
     sliding_window = T.SlidingWindow(width=2)
     txt = sliding_window(txt)
@@ -28,6 +34,11 @@ def test_sliding_window():
 
 
 def test_to_number():
+    """
+    Feature: ToNumber op
+    Description: Test ToNumber op basic usage
+    Expectation: Output is equal to the expected output
+    """
     txt = ["123456"]
     to_number = T.ToNumber(mstype.int32)
     txt = to_number(txt)
@@ -37,6 +48,11 @@ def test_to_number():
 
 
 def test_whitespace_tokenizer():
+    """
+    Feature: WhitespaceTokenizer op
+    Description: Test WhitespaceTokenizer op basic usage
+    Expectation: Output is equal to the expected output
+    """
     txt = "Welcome to Beijing !"
     txt = T.WhitespaceTokenizer()(txt)
     logger.info("Tokenize result: {}".format(txt))
@@ -46,6 +62,11 @@ def test_whitespace_tokenizer():
 
 
 def test_python_tokenizer():
+    """
+    Feature: PythonTokenizer op
+    Description: Test PythonTokenizer op basic usage
+    Expectation: Output is equal to the expected output
+    """
     # whitespace tokenizer
     def my_tokenizer(line):
         words = line.split()

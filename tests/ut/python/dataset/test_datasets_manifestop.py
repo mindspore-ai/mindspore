@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,11 @@ DATA_FILE = "../data/dataset/testManifestData/test.manifest"
 
 
 def test_manifest_dataset_train():
+    """
+    Feature: ManifestDataset
+    Description: Test ManifestDataset for train
+    Expectation: The dataset is processed as expected
+    """
     data = ds.ManifestDataset(DATA_FILE, decode=True)
     count = 0
     cat_count = 0
@@ -40,6 +45,11 @@ def test_manifest_dataset_train():
 
 
 def test_manifest_dataset_eval():
+    """
+    Feature: ManifestDataset
+    Description: Test ManifestDataset for evaluation
+    Expectation: The dataset is processed as expected
+    """
     data = ds.ManifestDataset(DATA_FILE, "eval", decode=True)
     count = 0
     for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -51,6 +61,11 @@ def test_manifest_dataset_eval():
 
 
 def test_manifest_dataset_class_index():
+    """
+    Feature: ManifestDataset
+    Description: Test ManifestDataset with class_indexing parameter
+    Expectation: The dataset is processed as expected
+    """
     class_indexing = {"dog": 11}
     data = ds.ManifestDataset(DATA_FILE, decode=True, class_indexing=class_indexing)
     out_class_indexing = data.get_class_indexing()
@@ -65,6 +80,11 @@ def test_manifest_dataset_class_index():
 
 
 def test_manifest_dataset_get_class_index():
+    """
+    Feature: ManifestDataset
+    Description: Test ManifestDataset get_class_indexing
+    Expectation: The dataset is processed as expected
+    """
     data = ds.ManifestDataset(DATA_FILE, decode=True)
     class_indexing = data.get_class_indexing()
     assert class_indexing == {'cat': 0, 'dog': 1, 'flower': 2}
@@ -79,6 +99,11 @@ def test_manifest_dataset_get_class_index():
 
 
 def test_manifest_dataset_multi_label():
+    """
+    Feature: ManifestDataset
+    Description: Test ManifestDataset with multi labels
+    Expectation: The dataset is processed as expected
+    """
     data = ds.ManifestDataset(DATA_FILE, decode=True, shuffle=False)
     count = 0
     expect_label = [1, 0, 0, [0, 2]]
@@ -101,6 +126,11 @@ def multi_label_hot(x):
 
 
 def test_manifest_dataset_multi_label_onehot():
+    """
+    Feature: ManifestDataset
+    Description: Test ManifestDataset with multi labels in OneHot
+    Expectation: The dataset is processed as expected
+    """
     data = ds.ManifestDataset(DATA_FILE, decode=True, shuffle=False)
     expect_label = [[[0, 1, 0], [1, 0, 0]], [[1, 0, 0], [1, 0, 1]]]
     one_hot_encode = data_trans.OneHot(3)
@@ -115,6 +145,11 @@ def test_manifest_dataset_multi_label_onehot():
 
 
 def test_manifest_dataset_get_num_class():
+    """
+    Feature: ManifestDataset
+    Description: Test ManifestDataset num_classes
+    Expectation: The dataset is processed as expected
+    """
     data = ds.ManifestDataset(DATA_FILE, decode=True, shuffle=False)
     assert data.num_classes() == 3
 
@@ -129,6 +164,11 @@ def test_manifest_dataset_get_num_class():
 
 
 def test_manifest_dataset_exception():
+    """
+    Feature: ManifestDataset
+    Description: Test error cases on ManifestDataset
+    Expectation: Correct error is thrown as expected
+    """
     def exception_func(item):
         raise Exception("Error occur!")
 

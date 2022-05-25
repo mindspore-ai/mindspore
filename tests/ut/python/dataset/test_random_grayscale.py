@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_random_grayscale_valid_prob(plot=False):
     """
-    Test RandomGrayscale Op: valid input, expect to pass
+    Feature: RandomGrayscale op
+    Description: Test RandomGrayscale op with valid input
+    Expectation: Passes the test
     """
     logger.info("test_random_grayscale_valid_prob")
 
@@ -72,7 +74,9 @@ def test_random_grayscale_valid_prob(plot=False):
 
 def test_random_grayscale_input_grayscale_images():
     """
-    Test RandomGrayscale Op: valid parameter with grayscale images as input, expect to pass
+    Feature: RandomGrayscale op
+    Description: Test RandomGrayscale op with valid parameter with grayscale images as input
+    Expectation: Passes the test
     """
     logger.info("test_random_grayscale_input_grayscale_images")
     original_seed = config_get_set_seed(0)
@@ -122,7 +126,9 @@ def test_random_grayscale_input_grayscale_images():
 
 def test_random_grayscale_md5_valid_input():
     """
-    Test RandomGrayscale with md5 comparison: valid parameter, expect to pass
+    Feature: RandomGrayscale op
+    Description: Test RandomGrayscale with md5 comparison and valid parameter
+    Expectation: Passes the md5 comparison test
     """
     logger.info("test_random_grayscale_md5_valid_input")
     original_seed = config_get_set_seed(0)
@@ -150,7 +156,9 @@ def test_random_grayscale_md5_valid_input():
 
 def test_random_grayscale_md5_no_param():
     """
-    Test RandomGrayscale with md5 comparison: no parameter given, expect to pass
+    Feature: RandomGrayscale op
+    Description: Test RandomGrayscale op with no parameter given
+    Expectation: Passes the test
     """
     logger.info("test_random_grayscale_md5_no_param")
     original_seed = config_get_set_seed(0)
@@ -178,7 +186,9 @@ def test_random_grayscale_md5_no_param():
 
 def test_random_grayscale_invalid_param():
     """
-    Test RandomGrayscale: invalid parameter given, expect to raise error
+    Feature: RandomGrayscale op
+    Description: Test RandomGrayscale op with invalid parameter given
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_grayscale_invalid_param")
 

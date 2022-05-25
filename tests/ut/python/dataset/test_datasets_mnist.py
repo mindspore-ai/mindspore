@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,7 +56,9 @@ def visualize_dataset(images, labels):
 
 def test_mnist_content_check():
     """
-    Validate MnistDataset image readings
+    Feature: MnistDataset
+    Description: Test MnistDataset image readings with content check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test MnistDataset Op with content check")
     data1 = ds.MnistDataset(DATA_DIR, num_samples=100, shuffle=False)
@@ -75,7 +77,9 @@ def test_mnist_content_check():
 
 def test_mnist_basic():
     """
-    Validate MnistDataset
+    Feature: MnistDataset
+    Description: Test MnistDataset basic read
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test MnistDataset Op")
 
@@ -128,7 +132,9 @@ def test_mnist_basic():
 
 def test_mnist_pk_sampler():
     """
-    Test MnistDataset with PKSampler
+    Feature: MnistDataset
+    Description: Test MnistDataset with PKSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test MnistDataset Op with PKSampler")
     golden = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4,
@@ -146,7 +152,9 @@ def test_mnist_pk_sampler():
 
 def test_mnist_sequential_sampler():
     """
-    Test MnistDataset with SequentialSampler
+    Feature: MnistDataset
+    Description: Test MnistDataset with SequentialSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test MnistDataset Op with SequentialSampler")
     num_samples = 50
@@ -165,7 +173,9 @@ def test_mnist_sequential_sampler():
 
 def test_mnist_exception():
     """
-    Test error cases for MnistDataset
+    Feature: MnistDataset
+    Description: Test error cases for MnistDataset
+    Expectation: Correct error is thrown as expected
     """
     logger.info("Test error cases for MnistDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -227,7 +237,9 @@ def test_mnist_exception():
 
 def test_mnist_visualize(plot=False):
     """
-    Visualize MnistDataset results
+    Feature: MnistDataset
+    Description: Test MnistDataset visualized results
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test MnistDataset visualization")
 
@@ -251,7 +263,9 @@ def test_mnist_visualize(plot=False):
 
 def test_mnist_usage():
     """
-    Validate MnistDataset image readings
+    Feature: MnistDataset
+    Description: Test MnistDataset image readings with usage flag
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test MnistDataset usage flag")
 

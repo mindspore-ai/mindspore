@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import numpy as np
 import mindspore.dataset as ds
 from mindspore.dataset.vision.transforms import Decode, Resize, RandomInvert, Invert
 from mindspore import log as logger
-from util import visualize_list, visualize_image, diff_mse
+from util import helper_random_op_pipeline, visualize_list, visualize_image, diff_mse
 
 image_file = "../data/dataset/testImageNetData/train/class1/1_1.jpg"
 data_dir = "../data/dataset/testImageNetData/train/"
@@ -28,36 +28,19 @@ data_dir = "../data/dataset/testImageNetData/train/"
 
 def test_random_invert_pipeline(plot=False):
     """
-    Test RandomInvert pipeline
+    Feature: RandomInvert op
+    Description: Test RandomInvert pipeline
+    Expectation: Pipelines execute successfully
     """
     logger.info("Test RandomInvert pipeline")
 
     # Original Images
-    data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    transforms_original = [Decode(), Resize(size=[224, 224])]
-    ds_original = data_set.map(operations=transforms_original, input_columns="image")
-    ds_original = ds_original.batch(512)
-
-    for idx, (image, _) in enumerate(ds_original):
-        if idx == 0:
-            images_original = image.asnumpy()
-        else:
-            images_original = np.append(images_original,
-                                        image.asnumpy(),
-                                        axis=0)
+    images_original = helper_random_op_pipeline(data_dir)
 
     # Randomly Inverted Images
-    data_set1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    transform_random_invert = [Decode(), Resize(size=[224, 224]), RandomInvert(0.6)]
-    ds_random_invert = data_set1.map(operations=transform_random_invert, input_columns="image")
-    ds_random_invert = ds_random_invert.batch(512)
-    for idx, (image, _) in enumerate(ds_random_invert):
-        if idx == 0:
-            images_random_invert = image.asnumpy()
-        else:
-            images_random_invert = np.append(images_random_invert,
-                                             image.asnumpy(),
-                                             axis=0)
+    images_random_invert = helper_random_op_pipeline(
+        data_dir, RandomInvert(0.6))
+
     if plot:
         visualize_list(images_original, images_random_invert)
 
@@ -70,7 +53,9 @@ def test_random_invert_pipeline(plot=False):
 
 def test_random_invert_eager():
     """
-    Test RandomInvert eager.
+    Feature: RandomInvert op
+    Description: Test RandomInvert eager
+    Expectation: The dataset is processed as expected
     """
     img = np.fromfile(image_file, dtype=np.uint8)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
@@ -78,14 +63,17 @@ def test_random_invert_eager():
     img = Decode()(img)
     img_inverted = Invert()(img)
     img_random_inverted = RandomInvert(1.0)(img)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img_random_inverted), img_random_inverted.shape))
+    logger.info("Image.type: {}, Image.shape: {}".format(
+        type(img_random_inverted), img_random_inverted.shape))
 
     assert img_random_inverted.all() == img_inverted.all()
 
 
 def test_random_invert_comp(plot=False):
     """
-    Test RandomInvert op compared with Invert op.
+    Feature: RandomInvert op
+    Description: Test RandomInvert op compared with Invert op
+    Expectation: Resulting processed dataset is the same as expected
     """
     random_invert_op = RandomInvert(prob=1.0)
     invert_op = Invert()
@@ -110,23 +98,27 @@ def test_random_invert_comp(plot=False):
 
 def test_random_invert_invalid_prob():
     """
-    Test invalid prob. prob out of range.
+    Feature: RandomInvert op
+    Description: Test invalid prob where prob is out of range
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_invert_invalid_prob")
     dataset = ds.ImageFolderDataset(data_dir, 1, shuffle=False, decode=True)
     try:
         random_invert_op = RandomInvert(1.5)
-        dataset = dataset.map(operations=random_invert_op, input_columns=['image'])
+        dataset = dataset.map(operations=random_invert_op,
+                              input_columns=['image'])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(e)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(
+            e)
 
 
 def test_random_invert_one_channel():
     """
     Feature: RandomInvert
-    Description: test with one channel images
-    Expectation: raise errors as expected
+    Description: Test with one channel images
+    Expectation: Raise errors as expected
     """
     logger.info("test_random_invert_one_channel")
 
@@ -141,14 +133,15 @@ def test_random_invert_one_channel():
 
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "image shape is incorrect, expected num of channels is 3." in str(e)
+        assert "image shape is incorrect, expected num of channels is 3." in str(
+            e)
 
 
 def test_random_invert_four_dim():
     """
     Feature: RandomInvert
-    Description: test with four dimension images
-    Expectation: raise errors as expected
+    Description: Test with four dimension images
+    Expectation: Raise errors as expected
     """
     logger.info("test_random_invert_four_dim")
 
@@ -169,8 +162,8 @@ def test_random_invert_four_dim():
 def test_random_invert_invalid_input():
     """
     Feature: RandomInvert
-    Description: test with images in uint32 type
-    Expectation: raise errors as expected
+    Description: Test with images in uint32 type
+    Expectation: Raise errors as expected
     """
     logger.info("test_random_invert_invalid_input")
 

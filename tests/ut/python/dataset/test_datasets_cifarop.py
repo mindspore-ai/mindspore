@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,7 +68,9 @@ def visualize_dataset(images, labels):
 
 def test_cifar10_content_check():
     """
-    Validate Cifar10Dataset image readings
+    Feature: Cifar10Dataset
+    Description: Test Cifar10Dataset with content check on image readings
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Cifar10Dataset Op with content check")
     data1 = ds.Cifar10Dataset(DATA_DIR_10, num_samples=100, shuffle=False)
@@ -84,7 +86,9 @@ def test_cifar10_content_check():
 
 def test_cifar10_basic():
     """
-    Validate CIFAR10
+    Feature: Cifar10Dataset
+    Description: Test Cifar10Dataset with some basic arguments and methods
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Cifar10Dataset Op")
 
@@ -144,7 +148,9 @@ def test_cifar10_basic():
 
 def test_cifar10_pk_sampler():
     """
-    Test Cifar10Dataset with PKSampler
+    Feature: Cifar10Dataset
+    Description: Test Cifar10Dataset with PKSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Cifar10Dataset Op with PKSampler")
     golden = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4,
@@ -162,7 +168,9 @@ def test_cifar10_pk_sampler():
 
 def test_cifar10_sequential_sampler():
     """
-    Test Cifar10Dataset with SequentialSampler
+    Feature: Cifar10Dataset
+    Description: Test Cifar10Dataset with SequentialSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Cifar10Dataset Op with SequentialSampler")
     num_samples = 30
@@ -179,7 +187,9 @@ def test_cifar10_sequential_sampler():
 
 def test_cifar10_exception():
     """
-    Test error cases for Cifar10Dataset
+    Feature: Cifar10Dataset
+    Description: Test error cases Cifar10Dataset
+    Expectation: Throw correct error as expected
     """
     logger.info("Test error cases for Cifar10Dataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -219,7 +229,9 @@ def test_cifar10_exception():
 
 def test_cifar10_visualize(plot=False):
     """
-    Visualize Cifar10Dataset results
+    Feature: Cifar10Dataset
+    Description: Test Cifar10Dataset visualization results
+    Expectation: Results are presented as expected
     """
     logger.info("Test Cifar10Dataset visualization")
 
@@ -245,7 +257,9 @@ def test_cifar10_visualize(plot=False):
 
 def test_cifar100_content_check():
     """
-    Validate Cifar100Dataset image readings
+    Feature: Cifar100Dataset
+    Description: Test Cifar100Dataset image readings with content check
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Cifar100Dataset with content check")
     data1 = ds.Cifar100Dataset(DATA_DIR_100, num_samples=100, shuffle=False)
@@ -262,7 +276,9 @@ def test_cifar100_content_check():
 
 def test_cifar100_basic():
     """
-    Test Cifar100Dataset
+    Feature: Cifar100Dataset
+    Description: Test Cifar100Dataset basic arguments and features
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Cifar100Dataset")
 
@@ -312,7 +328,9 @@ def test_cifar100_basic():
 
 def test_cifar100_pk_sampler():
     """
-    Test Cifar100Dataset with PKSampler
+    Feature: Cifar100Dataset
+    Description: Test Cifar100Dataset with PKSampler
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Cifar100Dataset with PKSampler")
     golden = [i for i in range(20)]
@@ -329,7 +347,9 @@ def test_cifar100_pk_sampler():
 
 def test_cifar100_exception():
     """
-    Test error cases for Cifar100Dataset
+    Feature: Cifar100Dataset
+    Description: Test error cases for Cifar100Dataset
+    Expectation: Throw correct error as expected
     """
     logger.info("Test error cases for Cifar100Dataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -369,7 +389,9 @@ def test_cifar100_exception():
 
 def test_cifar100_visualize(plot=False):
     """
-    Visualize Cifar100Dataset results
+    Feature: Cifar100Dataset
+    Description: Test Cifar100Dataset visualization results
+    Expectation: Results are presented as expected
     """
     logger.info("Test Cifar100Dataset visualization")
 
@@ -395,7 +417,9 @@ def test_cifar100_visualize(plot=False):
 
 def test_cifar_usage():
     """
-    test usage of cifar
+    Feature: Cifar100Dataset
+    Description: Test Cifar100Dataset usage flag
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test Cifar100Dataset usage flag")
 
@@ -447,6 +471,11 @@ def test_cifar_usage():
 
 
 def test_cifar_exception_file_path():
+    """
+    Feature: CifarDataset
+    Description: Test Cifar10Dataset and Cifar100Dataset with invalid file path
+    Expectation: Error is raised as expected
+    """
     def exception_func(item):
         raise Exception("Error occur!")
 
@@ -503,7 +532,9 @@ def test_cifar_exception_file_path():
 
 def test_cifar10_pk_sampler_get_dataset_size():
     """
-    Test Cifar10Dataset with PKSampler and get_dataset_size
+    Feature: Cifar10Dataset
+    Description: Test Cifar10Dataset get_dataset_size
+    Expectation: The dataset is processed as expected
     """
     sampler = ds.PKSampler(3)
     data = ds.Cifar10Dataset(DATA_DIR_10, sampler=sampler)
@@ -517,7 +548,9 @@ def test_cifar10_pk_sampler_get_dataset_size():
 
 def test_cifar10_with_chained_sampler_get_dataset_size():
     """
-    Test Cifar10Dataset with PKSampler chained with a SequentialSampler and get_dataset_size
+    Feature: Cifar10Dataset
+    Description: Test Cifar10Dataset with PKSampler chained with a SequentialSampler and get_dataset_size
+    Expectation: The dataset is processed as expected
     """
     sampler = ds.SequentialSampler(start_index=0, num_samples=5)
     child_sampler = ds.PKSampler(4)

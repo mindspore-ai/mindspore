@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ from mindspore import log as logger
 
 def test_fade_linear():
     """
-    Test Fade, fade shape is linear.
+    Feature: Fade
+    Description: Test Fade when fade shape is linear
+    Expectation: The output and the expected output is equal
     """
     logger.info("test fade, fade shape is 'linear'")
 
@@ -33,8 +35,10 @@ def test_fade_linear():
                   9.1553e-05, 9.1553e-05, 9.1553e-05, 9.1553e-05, 9.1553e-05, 6.1035e-05,
                   1.2207e-04, 1.2207e-04, 1.2207e-04, 9.1553e-05, 9.1553e-05, 9.1553e-05,
                   6.1035e-05, 9.1553e-05]]]
-    dataset = ds.NumpySlicesDataset(data=waveform, column_names='audio', shuffle=False)
-    transforms = [audio.Fade(fade_in_len=10, fade_out_len=5, fade_shape=FadeShape.LINEAR)]
+    dataset = ds.NumpySlicesDataset(
+        data=waveform, column_names='audio', shuffle=False)
+    transforms = [audio.Fade(
+        fade_in_len=10, fade_out_len=5, fade_shape=FadeShape.LINEAR)]
     dataset = dataset.map(operations=transforms, input_columns=["audio"])
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -52,14 +56,18 @@ def test_fade_linear():
 
 def test_fade_exponential():
     """
-    Test Fade, fade shape is exponential.
+    Feature: Fade
+    Description: Test Fade when fade shape is exponential
+    Expectation: The output and the expected output is equal
     """
     logger.info("test fade, fade shape is 'exponential'")
 
     waveform = [[[1, 2, 3, 4, 5, 6],
                  [5, 7, 3, 78, 8, 4]]]
-    dataset = ds.NumpySlicesDataset(data=waveform, column_names='audio', shuffle=False)
-    transforms = [audio.Fade(fade_in_len=5, fade_out_len=6, fade_shape=FadeShape.EXPONENTIAL)]
+    dataset = ds.NumpySlicesDataset(
+        data=waveform, column_names='audio', shuffle=False)
+    transforms = [audio.Fade(
+        fade_in_len=5, fade_out_len=6, fade_shape=FadeShape.EXPONENTIAL)]
     dataset = dataset.map(operations=transforms, input_columns=["audio"])
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -72,14 +80,18 @@ def test_fade_exponential():
 
 def test_fade_logarithmic():
     """
-    Test Fade, fade shape is logarithmic.
+    Feature: Fade
+    Description: Test Fade when fade shape is logarithmic
+    Expectation: The output and the expected output is equal
     """
     logger.info("test fade, fade shape is 'logarithmic'")
 
     waveform = [[[0.03424072265625, 0.01476832226565, 0.04995727590625,
                   -0.0205993652375, -0.0356467868775, 0.01290893546875]]]
-    dataset = ds.NumpySlicesDataset(data=waveform, column_names='audio', shuffle=False)
-    transforms = [audio.Fade(fade_in_len=4, fade_out_len=2, fade_shape=FadeShape.LOGARITHMIC)]
+    dataset = ds.NumpySlicesDataset(
+        data=waveform, column_names='audio', shuffle=False)
+    transforms = [audio.Fade(
+        fade_in_len=4, fade_out_len=2, fade_shape=FadeShape.LOGARITHMIC)]
     dataset = dataset.map(operations=transforms, input_columns=["audio"])
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -93,15 +105,19 @@ def test_fade_logarithmic():
 
 def test_fade_quarter_sine():
     """
-    Test Fade, fade shape is quarter_sine.
+    Feature: Fade
+    Description: Test Fade when fade shape is quarter_sine
+    Expectation: The output and the expected output is equal
     """
     logger.info("test fade, fade shape is 'quarter sine'")
 
     waveform = np.array([[[1, 2, 3, 4, 5, 6],
                           [5, 7, 3, 78, 8, 4],
                           [1, 2, 3, 4, 5, 6]]], dtype=np.float64)
-    dataset = ds.NumpySlicesDataset(data=waveform, column_names='audio', shuffle=False)
-    transforms = [audio.Fade(fade_in_len=6, fade_out_len=6, fade_shape=FadeShape.QUARTER_SINE)]
+    dataset = ds.NumpySlicesDataset(
+        data=waveform, column_names='audio', shuffle=False)
+    transforms = [audio.Fade(
+        fade_in_len=6, fade_out_len=6, fade_shape=FadeShape.QUARTER_SINE)]
     dataset = dataset.map(operations=transforms, input_columns=["audio"])
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -115,7 +131,9 @@ def test_fade_quarter_sine():
 
 def test_fade_half_sine():
     """
-    Test Fade, fade shape is half_sine.
+    Feature: Fade
+    Description: Test Fade when fade shape is half_sine
+    Expectation: The output and the expected output is equal
     """
     logger.info("test fade, fade shape is 'half sine'")
 
@@ -123,8 +141,10 @@ def test_fade_half_sine():
                   -0.0205993652343, -0.01049804687500, 0.0129089355468750],
                  [0.04125976562500, 0.060577392578125, 0.0499572753906250,
                   0.01306152343750, -0.019683837890625, -0.018829345703125]]]
-    dataset = ds.NumpySlicesDataset(data=waveform, column_names='audio', shuffle=False)
-    transforms = [audio.Fade(fade_in_len=3, fade_out_len=3, fade_shape=FadeShape.HALF_SINE)]
+    dataset = ds.NumpySlicesDataset(
+        data=waveform, column_names='audio', shuffle=False)
+    transforms = [audio.Fade(
+        fade_in_len=3, fade_out_len=3, fade_shape=FadeShape.HALF_SINE)]
     dataset = dataset.map(operations=transforms, input_columns=["audio"])
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -137,19 +157,23 @@ def test_fade_half_sine():
 
 def test_fade_wrong_arguments():
     """
-    Test Fade with invalid arguments
+    Feature: Fade
+    Description: Test Fade with invalid arguments
+    Expectation: Correct error is thrown as expected
     """
     logger.info("test fade with invalid arguments")
     try:
         _ = audio.Fade(-1, 0)
     except ValueError as e:
         logger.info("Got an exception in Fade: {}".format(str(e)))
-        assert "fade_in_len is not within the required interval of [0, 2147483647]" in str(e)
+        assert "fade_in_len is not within the required interval of [0, 2147483647]" in str(
+            e)
     try:
         _ = audio.Fade(0, -1)
     except ValueError as e:
         logger.info("Got an exception in Fade: {}".format(str(e)))
-        assert "fade_out_len is not within the required interval of [0, 2147483647]" in str(e)
+        assert "fade_out_len is not within the required interval of [0, 2147483647]" in str(
+            e)
     try:
         _ = audio.Fade(fade_shape='123')
     except TypeError as e:
@@ -159,7 +183,9 @@ def test_fade_wrong_arguments():
 
 def test_fade_eager():
     """
-    Test Fade eager.
+    Feature: Fade
+    Description: Test Fade in eager mode
+    Expectation: The output and the expected output is equal
     """
     logger.info("test fade eager")
 

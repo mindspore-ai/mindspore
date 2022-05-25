@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ DATASET_DIR = "../data/dataset/testDIV2KData/div2k"
 
 
 def test_div2k_basic(plot=False):
+    """
+    Feature: DIV2KDataset
+    Description: Test basic read on DIV2KDataset
+    Expectation: The dataset is processed as expected
+    """
     usage = "train"          # train, valid, all
     downgrade = "bicubic"    # bicubic, unknown, mild, difficult, wild
     scale = 2                # 2, 3, 4, 8
@@ -58,6 +63,11 @@ def visualize_dataset(hr_images_list, lr_images_list, flag):
 
 
 def test_div2k_basic_func():
+    """
+    Feature: DIV2KDataset
+    Description: Test basic functions for DIV2KDataset
+    Expectation: The dataset is processed as expected
+    """
     # case 0: test usage equal to `all`
     usage = "all"              # train, valid, all
     downgrade = "bicubic"    # bicubic, unknown, mild, difficult, wild
@@ -122,7 +132,9 @@ def test_div2k_basic_func():
 
 def test_div2k_sequential_sampler():
     """
-    Test DIV2KDataset with SequentialSampler
+    Feature: DIV2KDataset
+    Description: Test DIV2KDataset with SequentialSampler
+    Expectation: The dataset is processed as expected
     """
     usage = "train"          # train, valid, all
     downgrade = "bicubic"    # bicubic, unknown, mild, difficult, wild
@@ -143,6 +155,11 @@ def test_div2k_sequential_sampler():
 
 
 def test_div2k_exception():
+    """
+    Feature: DIV2KDataset
+    Description: Test invalid parameters for DIV2KDataset
+    Expectation: Throw correct error as expected
+    """
     usage = "train"          # train, valid, all
     downgrade = "bicubic"    # bicubic, unknown, mild, difficult, wild
     scale = 2                # 2, 3, 4, 8

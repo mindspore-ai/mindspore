@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ MNIST_DATA_DIR = "../data/dataset/testMnistData"
 
 def test_random_affine_op(plot=False):
     """
-    Test RandomAffine in python transformations
+    Feature: RandomAffine op
+    Description: Test RandomAffine in Python transformations
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_affine_op")
     # define map operations
@@ -70,7 +72,9 @@ def test_random_affine_op(plot=False):
 
 def test_random_affine_op_c(plot=False):
     """
-    Test RandomAffine in C transformations
+    Feature: RandomAffine op
+    Description: Test RandomAffine in Cpp implementation
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_affine_op_c")
     # define map operations
@@ -104,7 +108,9 @@ def test_random_affine_op_c(plot=False):
 
 def test_random_affine_md5():
     """
-    Test RandomAffine with md5 comparison
+    Feature: RandomAffine op
+    Description: Test RandomAffine with md5 comparisons
+    Expectation: Passes md5 comparison test
     """
     logger.info("test_random_affine_md5")
     original_seed = config_get_set_seed(55)
@@ -133,7 +139,9 @@ def test_random_affine_md5():
 
 def test_random_affine_c_md5():
     """
-    Test RandomAffine C Op with md5 comparison
+    Feature: RandomAffine op
+    Description: Test RandomAffine C Op with md5 comparison
+    Expectation: Passes the md5 comparison test
     """
     logger.info("test_random_affine_c_md5")
     original_seed = config_get_set_seed(1)
@@ -160,7 +168,9 @@ def test_random_affine_c_md5():
 
 def test_random_affine_default_c_md5():
     """
-    Test RandomAffine C Op (default params) with md5 comparison
+    Feature: RandomAffine op
+    Description: Test RandomAffine C Op with default parameters with md5 comparison
+    Expectation: Passes the md5 comparison test
     """
     logger.info("test_random_affine_default_c_md5")
     original_seed = config_get_set_seed(1)
@@ -186,7 +196,9 @@ def test_random_affine_default_c_md5():
 
 def test_random_affine_py_exception_non_pil_images():
     """
-    Test RandomAffine: input img is ndarray and not PIL, expected to raise RuntimeError
+    Feature: RandomAffine op
+    Description: Test RandomAffine with input image of ndarray and not PIL
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_affine_exception_negative_degrees")
     dataset = ds.MnistDataset(MNIST_DATA_DIR, num_samples=3, num_parallel_workers=3)
@@ -203,7 +215,9 @@ def test_random_affine_py_exception_non_pil_images():
 
 def test_random_affine_exception_negative_degrees():
     """
-    Test RandomAffine: input degrees in negative, expected to raise ValueError
+    Feature: RandomAffine op
+    Description: Test RandomAffine with input degrees in negative
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_affine_exception_negative_degrees")
     try:
@@ -215,7 +229,9 @@ def test_random_affine_exception_negative_degrees():
 
 def test_random_affine_exception_translation_range():
     """
-    Test RandomAffine: translation value is not in [-1, 1], expected to raise ValueError
+    Feature: RandomAffine op
+    Description: Test RandomAffine where translation value is not in [-1, 1]
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_affine_exception_translation_range")
     try:
@@ -233,7 +249,9 @@ def test_random_affine_exception_translation_range():
 
 def test_random_affine_exception_scale_value():
     """
-    Test RandomAffine: scale is not valid, expected to raise ValueError
+    Feature: RandomAffine op
+    Description: Test RandomAffine where scale is not valid
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_affine_exception_scale_value")
     try:
@@ -251,7 +269,9 @@ def test_random_affine_exception_scale_value():
 
 def test_random_affine_exception_shear_value():
     """
-    Test RandomAffine: shear is a number but is not positive, expected to raise ValueError
+    Feature: RandomAffine op
+    Description: Test RandomAffine where sheer is a number but is not positive
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_affine_exception_shear_value")
     try:
@@ -283,8 +303,9 @@ def test_random_affine_exception_shear_value():
 
 def test_random_affine_exception_degrees_size():
     """
-    Test RandomAffine: degrees is a list or tuple and its length is not 2,
-    expected to raise TypeError
+    Feature: RandomAffine op
+    Description: Test RandomAffine where degrees is a list or tuple and its length is not 2
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_affine_exception_degrees_size")
     try:
@@ -296,8 +317,9 @@ def test_random_affine_exception_degrees_size():
 
 def test_random_affine_exception_translate_size():
     """
-    Test RandomAffine: translate is not list or a tuple of length 2,
-    expected to raise TypeError
+    Feature: RandomAffine op
+    Description: Test RandomAffine where translate is not a list or tuple of length 2
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_affine_exception_translate_size")
     try:
@@ -311,8 +333,9 @@ def test_random_affine_exception_translate_size():
 
 def test_random_affine_exception_scale_size():
     """
-    Test RandomAffine: scale is not a list or tuple of length 2,
-    expected to raise TypeError
+    Feature: RandomAffine op
+    Description: Test RandomAffine where scale is not a list or tuple of length 2
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_affine_exception_scale_size")
     try:
@@ -325,8 +348,9 @@ def test_random_affine_exception_scale_size():
 
 def test_random_affine_exception_shear_size():
     """
-    Test RandomAffine: shear is not a list or tuple of length 2 or 4,
-    expected to raise TypeError
+    Feature: RandomAffine op
+    Description: Test RandomAffine where shear is not a list or tuple of length 2 or 4
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_affine_exception_shear_size")
     try:

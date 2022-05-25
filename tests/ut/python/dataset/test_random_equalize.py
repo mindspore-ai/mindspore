@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ Testing RandomEqualize op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-from mindspore.dataset.vision.transforms import Decode, Resize, RandomEqualize, Equalize
+from mindspore.dataset.vision.transforms import Decode, RandomEqualize, Equalize
 from mindspore import log as logger
-from util import visualize_list, visualize_image, diff_mse
+from util import helper_random_op_pipeline, visualize_list, visualize_image, diff_mse
 
 image_file = "../data/dataset/testImageNetData/train/class1/1_1.jpg"
 data_dir = "../data/dataset/testImageNetData/train/"
@@ -28,36 +28,19 @@ data_dir = "../data/dataset/testImageNetData/train/"
 
 def test_random_equalize_pipeline(plot=False):
     """
-    Test RandomEqualize pipeline
+    Feature: RandomEqualize op
+    Description: Test RandomEqualize pipeline
+    Expectation: Passes the test
     """
     logger.info("Test RandomEqualize pipeline")
 
     # Original Images
-    data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    transforms_original = [Decode(), Resize(size=[224, 224])]
-    ds_original = data_set.map(operations=transforms_original, input_columns="image")
-    ds_original = ds_original.batch(512)
-
-    for idx, (image, _) in enumerate(ds_original):
-        if idx == 0:
-            images_original = image.asnumpy()
-        else:
-            images_original = np.append(images_original,
-                                        image.asnumpy(),
-                                        axis=0)
+    images_original = helper_random_op_pipeline(data_dir)
 
     # Randomly Equalized Images
-    data_set1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    transform_random_equalize = [Decode(), Resize(size=[224, 224]), RandomEqualize(0.6)]
-    ds_random_equalize = data_set1.map(operations=transform_random_equalize, input_columns="image")
-    ds_random_equalize = ds_random_equalize.batch(512)
-    for idx, (image, _) in enumerate(ds_random_equalize):
-        if idx == 0:
-            images_random_equalize = image.asnumpy()
-        else:
-            images_random_equalize = np.append(images_random_equalize,
-                                               image.asnumpy(),
-                                               axis=0)
+    images_random_equalize = helper_random_op_pipeline(
+        data_dir, RandomEqualize(0.6))
+
     if plot:
         visualize_list(images_original, images_random_equalize)
 
@@ -70,7 +53,9 @@ def test_random_equalize_pipeline(plot=False):
 
 def test_random_equalize_eager():
     """
-    Test RandomEqualize eager.
+    Feature: RandomEqualize op
+    Description: Test RandomEqualize eager
+    Expectation: Passes the test
     """
     img = np.fromfile(image_file, dtype=np.uint8)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
@@ -78,14 +63,17 @@ def test_random_equalize_eager():
     img = Decode()(img)
     img_equalized = Equalize()(img)
     img_random_equalized = RandomEqualize(1.0)(img)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img_random_equalized), img_random_equalized.shape))
+    logger.info("Image.type: {}, Image.shape: {}".format(
+        type(img_random_equalized), img_random_equalized.shape))
 
     assert img_random_equalized.all() == img_equalized.all()
 
 
 def test_random_equalize_comp(plot=False):
     """
-    Test RandomEqualize op compared with Equalize op.
+    Feature: RandomEqualize op
+    Description: Test RandomEqualize op with Equalize op
+    Expectation: Resulting outputs from both ops are the same as expected
     """
     random_equalize_op = RandomEqualize(prob=1.0)
     equalize_op = Equalize()
@@ -110,16 +98,20 @@ def test_random_equalize_comp(plot=False):
 
 def test_random_equalize_invalid_prob():
     """
-    Test eager. prob out of range.
+    Feature: RandomEqualize op
+    Description: Test RandomEqualize eager with prob out of range
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_equalize_invalid_prob")
     dataset = ds.ImageFolderDataset(data_dir, 1, shuffle=False, decode=True)
     try:
         random_equalize_op = RandomEqualize(1.5)
-        dataset = dataset.map(operations=random_equalize_op, input_columns=['image'])
+        dataset = dataset.map(
+            operations=random_equalize_op, input_columns=['image'])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(e)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(
+            e)
 
 
 if __name__ == "__main__":

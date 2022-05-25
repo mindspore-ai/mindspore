@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_random_perspective_op(plot=False):
     """
-    Test RandomPerspective in python transformations
+    Feature: RandomPerspective op
+    Description: Test RandomPerspective in Python transformations
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_perspective_op")
     # define map operations
@@ -70,7 +72,9 @@ def test_random_perspective_op(plot=False):
 
 def skip_test_random_perspective_md5():
     """
-    Test RandomPerspective with md5 comparison
+    Feature: RandomPerspective op
+    Description: Test RandomPerspective with md5 comparison
+    Expectation: The dataset is processed as expected
     """
     logger.info("test_random_perspective_md5")
     original_seed = config_get_set_seed(5)
@@ -101,7 +105,9 @@ def skip_test_random_perspective_md5():
 
 def test_random_perspective_exception_distortion_scale_range():
     """
-    Test RandomPerspective: distortion_scale is not in [0, 1], expected to raise ValueError
+    Feature: RandomPerspective op
+    Description: Test RandomPerspective where distortion_scale is not in [0, 1]
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_perspective_exception_distortion_scale_range")
     try:
@@ -113,7 +119,9 @@ def test_random_perspective_exception_distortion_scale_range():
 
 def test_random_perspective_exception_prob_range():
     """
-    Test RandomPerspective: prob is not in [0, 1], expected to raise ValueError
+    Feature: RandomPerspective op
+    Description: Test RandomPerspective where prob is not in [0, 1]
+    Expectation: Error is raised as expected
     """
     logger.info("test_random_perspective_exception_prob_range")
     try:

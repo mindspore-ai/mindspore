@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ DATA_FILE = '../data/dataset/testCSV/1.csv'
 
 def test_csv_dataset_basic():
     """
-    Test CSV with repeat, skip and so on
+    Feature: CSVDataset
+    Description: Test basic read on CSVDataset
+    Expectation: The dataset is processed successfully
     """
     TRAIN_FILE = '../data/dataset/testCSV/1.csv'
 
@@ -40,6 +42,11 @@ def test_csv_dataset_basic():
 
 
 def test_csv_dataset_one_file():
+    """
+    Feature: CSVDataset
+    Description: Test CSVDataset with one file
+    Expectation: The dataset is processed successfully
+    """
     data = ds.CSVDataset(
         DATA_FILE,
         column_defaults=["1", "2", "3", "4"],
@@ -52,6 +59,11 @@ def test_csv_dataset_one_file():
 
 
 def test_csv_dataset_all_file():
+    """
+    Feature: CSVDataset
+    Description: Test CSVDataset with all files
+    Expectation: The dataset is processed successfully
+    """
     APPEND_FILE = '../data/dataset/testCSV/2.csv'
     data = ds.CSVDataset(
         [DATA_FILE, APPEND_FILE],
@@ -65,6 +77,11 @@ def test_csv_dataset_all_file():
 
 
 def test_csv_dataset_num_samples():
+    """
+    Feature: CSVDataset
+    Description: Test num_samples of CSVDataset
+    Expectation: The dataset is processed successfully
+    """
     data = ds.CSVDataset(
         DATA_FILE,
         column_defaults=["1", "2", "3", "4"],
@@ -77,6 +94,11 @@ def test_csv_dataset_num_samples():
 
 
 def test_csv_dataset_distribution():
+    """
+    Feature: CSVDataset
+    Description: Test num_shards and shard_id of CSVDataset
+    Expectation: The dataset is processed successfully
+    """
     TEST_FILE = '../data/dataset/testCSV/1.csv'
     data = ds.CSVDataset(
         TEST_FILE,
@@ -90,6 +112,11 @@ def test_csv_dataset_distribution():
 
 
 def test_csv_dataset_quoted():
+    """
+    Feature: CSVDataset
+    Description: Test CSV with quotes
+    Expectation: The dataset is processed successfully
+    """
     TEST_FILE = '../data/dataset/testCSV/quoted.csv'
     data = ds.CSVDataset(
         TEST_FILE,
@@ -106,6 +133,11 @@ def test_csv_dataset_quoted():
 
 
 def test_csv_dataset_separated():
+    """
+    Feature: CSVDataset
+    Description: Test CSV that is separated
+    Expectation: The dataset is processed successfully
+    """
     TEST_FILE = '../data/dataset/testCSV/separated.csv'
     data = ds.CSVDataset(
         TEST_FILE,
@@ -123,6 +155,11 @@ def test_csv_dataset_separated():
 
 
 def test_csv_dataset_embedded():
+    """
+    Feature: CSVDataset
+    Description: Test embedded CSV
+    Expectation: The dataset is processed successfully
+    """
     TEST_FILE = '../data/dataset/testCSV/embedded.csv'
     data = ds.CSVDataset(
         TEST_FILE,
@@ -139,6 +176,11 @@ def test_csv_dataset_embedded():
 
 
 def test_csv_dataset_chinese():
+    """
+    Feature: CSVDataset
+    Description: Test chinese CSV
+    Expectation: The dataset is processed successfully
+    """
     TEST_FILE = '../data/dataset/testCSV/chinese.csv'
     data = ds.CSVDataset(
         TEST_FILE,
@@ -156,6 +198,11 @@ def test_csv_dataset_chinese():
 
 
 def test_csv_dataset_header():
+    """
+    Feature: CSVDataset
+    Description: Test header of CSV
+    Expectation: The dataset is processed successfully
+    """
     TEST_FILE = '../data/dataset/testCSV/header.csv'
     data = ds.CSVDataset(
         TEST_FILE,
@@ -171,6 +218,11 @@ def test_csv_dataset_header():
 
 
 def test_csv_dataset_number():
+    """
+    Feature: CSVDataset
+    Description: Test CSV with numbers
+    Expectation: The dataset is processed successfully
+    """
     TEST_FILE = '../data/dataset/testCSV/number.csv'
     data = ds.CSVDataset(
         TEST_FILE,
@@ -188,7 +240,9 @@ def test_csv_dataset_number():
 
 def test_csv_dataset_field_delim_none():
     """
-    Test CSV with field_delim=None
+    Feature: CSVDataset
+    Description: Test CSV with field_delim=None
+    Expectation: The dataset is processed successfully
     """
     TRAIN_FILE = '../data/dataset/testCSV/1.csv'
 
@@ -207,6 +261,11 @@ def test_csv_dataset_field_delim_none():
 
 
 def test_csv_dataset_size():
+    """
+    Feature: CSVDataset
+    Description: Test get_dataset_size of CSVDataset
+    Expectation: The dataset is processed successfully
+    """
     TEST_FILE = '../data/dataset/testCSV/size.csv'
     data = ds.CSVDataset(
         TEST_FILE,
@@ -217,6 +276,11 @@ def test_csv_dataset_size():
 
 
 def test_csv_dataset_type_error():
+    """
+    Feature: CSVDataset
+    Description: Test different data type for column_defaults
+    Expectation: Exception is raised as expected
+    """
     TEST_FILE = '../data/dataset/testCSV/exception.csv'
     data = ds.CSVDataset(
         TEST_FILE,
@@ -230,6 +294,11 @@ def test_csv_dataset_type_error():
 
 
 def test_csv_dataset_exception():
+    """
+    Feature: CSVDataset
+    Description: Test invalid parameters for CSVDataset
+    Expectation: Throw correct error as expected
+    """
     TEST_FILE = '../data/dataset/testCSV/exception.csv'
     data = ds.CSVDataset(
         TEST_FILE,
@@ -299,6 +368,11 @@ def test_csv_dataset_exception():
 
 
 def test_csv_dataset_duplicate_columns():
+    """
+    Feature: CSVDataset
+    Description: Test CSVDataset with duplicate column_names
+    Expectation: Error is raised as expected
+    """
     data = ds.CSVDataset(
         DATA_FILE,
         column_defaults=["1", "2", "3", "4"],

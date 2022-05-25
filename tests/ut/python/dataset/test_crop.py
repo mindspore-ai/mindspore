@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ IMAGE_FILE = "../data/dataset/apple.jpg"
 
 def test_crop_pipeline(plot=False):
     """
-    Test Crop of transforms
+    Feature: Crop op
+    Description: Test Crop op in pipeline mode
+    Expectation: Passes the equality test
     """
     logger.info("test_crop_pipeline")
 
@@ -42,7 +44,8 @@ def test_crop_pipeline(plot=False):
     dataset1 = dataset1.map(operations=crop_op, input_columns=["image"])
 
     # Second dataset
-    dataset2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    dataset2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     dataset2 = dataset2.map(operations=decode_op, input_columns=["image"])
 
     num_iter = 0
@@ -63,7 +66,9 @@ def test_crop_pipeline(plot=False):
 
 def test_crop_eager():
     """
-    Test Crop with eager mode
+    Feature: Crop op
+    Description: Test Crop op in eager mode
+    Expectation: Passes the equality test
     """
     logger.info("test_crop_eager")
     img = cv2.imread(IMAGE_FILE)
@@ -76,7 +81,9 @@ def test_crop_eager():
 
 def test_crop_exception():
     """
-    Test Crop with invalid parameters
+    Feature: Crop op
+    Description: Test Crop op with invalid parameters
+    Expectation: Correct error and message are thrown as expected
     """
     logger.info("test_crop_exception")
     try:
@@ -93,7 +100,8 @@ def test_crop_exception():
         _ = c_vision.Crop([0], [28])
     except TypeError as e:
         logger.info("Got an exception in Crop: {}".format(str(e)))
-        assert "Coordinates should be a list/tuple (y, x) of length 2." in str(e)
+        assert "Coordinates should be a list/tuple (y, x) of length 2." in str(
+            e)
     try:
         _ = c_vision.Crop((0, 0), -1)
     except ValueError as e:
@@ -108,7 +116,8 @@ def test_crop_exception():
         _ = c_vision.Crop((0, 0), (0, 10, 20))
     except TypeError as e:
         logger.info("Got an exception in Crop: {}".format(str(e)))
-        assert "Size should be a single integer or a list/tuple (h, w) of length 2." in str(e)
+        assert "Size should be a single integer or a list/tuple (h, w) of length 2." in str(
+            e)
 
 
 if __name__ == "__main__":

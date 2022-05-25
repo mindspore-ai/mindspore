@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,12 +30,17 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_func_allpass_biquad_eager():
-    """ mindspore eager mode normal testcase:allpass_biquad op"""
+    """
+    Feature: AllpassBiquad op
+    Description: Test AllpassBiquad op in eager mode with valid input
+    Expectation: Output is equal to the expected output
+    """
 
     # Original waveform
     waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
     # Expect waveform
-    expect_waveform = np.array([[0.96049707, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=np.float64)
+    expect_waveform = np.array(
+        [[0.96049707, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=np.float64)
     allpass_biquad_op = audio.AllpassBiquad(44100, 200.0, 0.707)
     # Filtered waveform by allpassbiquad
     output = allpass_biquad_op(waveform)
@@ -43,29 +48,42 @@ def test_func_allpass_biquad_eager():
 
 
 def test_func_allpass_biquad_pipeline():
-    """ mindspore pipeline mode normal testcase:allpass_biquad op"""
+    """
+    Feature: AllpassBiquad op
+    Description: Test AllpassBiquad op in pipeline mode with valid input
+    Expectation: Output is equal to the expected output
+    """
 
     # Original waveform
     waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
     # Expect waveform
-    expect_waveform = np.array([[0.96049707, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=np.float64)
+    expect_waveform = np.array(
+        [[0.96049707, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=np.float64)
     label = np.random.sample((2, 1))
     data = (waveform, label)
     dataset = ds.NumpySlicesDataset(data, ["channel", "sample"], shuffle=False)
     allpass_biquad_op = audio.AllpassBiquad(44100, 200.0)
     # Filtered waveform by allpassbiquad
-    dataset = dataset.map(input_columns=["channel"], operations=allpass_biquad_op, num_parallel_workers=8)
+    dataset = dataset.map(
+        input_columns=["channel"], operations=allpass_biquad_op, num_parallel_workers=8)
     i = 0
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        count_unequal_element(expect_waveform[i, :], item['channel'], 0.0001, 0.0001)
+        count_unequal_element(
+            expect_waveform[i, :], item['channel'], 0.0001, 0.0001)
         i += 1
 
 
 def test_invalid_input_all():
+    """
+    Feature: AllpassBiquad op
+    Description: Test AllpassBiquad op with invalid input
+    Expectation: Correct error and message are thrown as expected
+    """
     waveform = np.random.rand(2, 1000)
 
     def test_invalid_input(test_name, sample_rate, central_freq, Q, error, error_msg):
-        logger.info("Test Allpassallpassiquad with bad input: {0}".format(test_name))
+        logger.info(
+            "Test Allpassallpassiquad with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:
             audio.AllpassBiquad(sample_rate, central_freq, Q)(waveform)
         assert error_msg in str(error_info.value)

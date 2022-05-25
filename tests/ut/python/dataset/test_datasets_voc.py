@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,11 @@ TARGET_SHAPE = [680, 680, 680, 680, 642, 607, 561, 596, 612, 680]
 
 
 def test_voc_segmentation():
+    """
+    Feature: VOCDataset
+    Description: Test segmentation task for VOCDataset
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True, extra_metadata=True)
     data1 = data1.rename("_meta-filename", "filename")
     num = 0
@@ -35,6 +40,11 @@ def test_voc_segmentation():
 
 
 def test_voc_detection():
+    """
+    Feature: VOCDataset
+    Description: Test detection task for VOCDataset
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True, extra_metadata=True)
     data1 = data1.rename("_meta-filename", "filename")
     num = 0
@@ -50,6 +60,11 @@ def test_voc_detection():
 
 
 def test_voc_class_index():
+    """
+    Feature: VOCDataset
+    Description: Test VOCDataset with class_indexing parameter
+    Expectation: The dataset is processed as expected
+    """
     class_index = {'car': 0, 'cat': 1, 'train': 5}
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", class_indexing=class_index, decode=True)
     class_index1 = data1.get_class_indexing()
@@ -69,6 +84,11 @@ def test_voc_class_index():
 
 
 def test_voc_get_class_indexing():
+    """
+    Feature: VOCDataset
+    Description: Test VOCDataset get_class_indexing
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", decode=True)
     class_index1 = data1.get_class_indexing()
     assert (class_index1 == {'car': 0, 'cat': 1, 'chair': 2, 'dog': 3, 'person': 4, 'train': 5})
@@ -87,6 +107,11 @@ def test_voc_get_class_indexing():
 
 
 def test_voc_meta_column():
+    """
+    Feature: VOCDataset
+    Description: Test VOCDataset meta column
+    Expectation: The dataset is processed as expected
+    """
     # scenario one: output 2 columns if without rename meta column
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", decode=True, shuffle=False, extra_metadata=True)
     num = 0
@@ -134,6 +159,11 @@ def test_voc_meta_column():
 
 
 def test_case_0():
+    """
+    Feature: VOCDataset
+    Description: Test segmentation task for VOCDataset using Resize Op
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", decode=True)
 
     resize_op = vision.Resize((224, 224))
@@ -152,6 +182,11 @@ def test_case_0():
 
 
 def test_case_1():
+    """
+    Feature: VOCDataset
+    Description: Test detection task for VOCDataset with Resize Op
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", decode=True)
 
     resize_op = vision.Resize((224, 224))
@@ -169,6 +204,11 @@ def test_case_1():
 
 
 def test_case_2():
+    """
+    Feature: VOCDataset
+    Description: Test segmentation task for VOCDataset with sizes=[0.5, 0.5] and not randomized
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", decode=True)
     sizes = [0.5, 0.5]
     randomize = False
@@ -186,6 +226,11 @@ def test_case_2():
 
 
 def test_voc_exception():
+    """
+    Feature: VOCDataset
+    Description: Test error cases for VOCDataset
+    Expectation: Correct error is thrown as expected
+    """
     try:
         data1 = ds.VOCDataset(DATA_DIR, task="InvalidTask", usage="train", decode=True)
         for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -331,6 +376,11 @@ def test_voc_exception():
 
 
 def test_voc_num_classes():
+    """
+    Feature: VOCDataset
+    Description: Test VOCDataset num_classes
+    Expectation: The dataset is processed as expected
+    """
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     assert data1.num_classes() is None
 
