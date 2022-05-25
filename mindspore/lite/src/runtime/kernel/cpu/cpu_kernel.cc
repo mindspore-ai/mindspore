@@ -140,6 +140,7 @@ CPUKernel *CPUKernelRegistry(OpParameter *parameter, const std::vector<lite::Ten
   auto ret = lite_kernel->InitKernel(key);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init cpu kernel failed:  " << parameter->name_;
+    lite_kernel->set_parameter(nullptr);  // Do not free parameter here, free where it was malloced.
     delete lite_kernel;
     lite_kernel = nullptr;
     return nullptr;
