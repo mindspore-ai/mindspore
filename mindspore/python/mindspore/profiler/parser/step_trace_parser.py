@@ -570,10 +570,12 @@ class AscendStepTraceParser(BaseStepTraceParser):
     def _save_step_trace_to_result(self, ts_tracks, skip_step):
         """Save step trace data to result."""
         step_trace = {'reduce': defaultdict(list), 'start': '-'}
+        model_ids = set()
         for ts_track in ts_tracks:
             if ts_track.get('rptType') != STEP_TRACE_RPT_TYPE:
                 continue
             self._construct_step_trace(ts_track, step_trace)
+            model_ids.add(ts_track["modelId"])
 
             if step_trace.get('end'):
                 if not skip_step:
@@ -583,6 +585,10 @@ class AscendStepTraceParser(BaseStepTraceParser):
                 step_trace.clear()
                 step_trace['start'] = start_time
                 step_trace['reduce'] = defaultdict(list)
+
+        if len(model_ids) > 1:
+            log.warning("[profiler] Current model has multiple sub graphs, "
+                        "the segmentation of steps may be inaccurate.")
 
     @staticmethod
     def _list_ts_track_step_traces(ts_track_paths):
