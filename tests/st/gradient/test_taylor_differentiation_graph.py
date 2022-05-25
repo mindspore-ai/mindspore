@@ -102,10 +102,10 @@ def test_jet_single_input_single_output_with_scalar_graph_mode():
     primals = Tensor([2., 2.])
     series = Tensor([[1., 1.], [0., 0.], [0., 0.]])
     net = SingleInputSingleOutputWithScalarNet()
-    expected_primals = np.array([10.328085, 10.328085]).astype(np.float32)
-    expected_series = np.array([[-3.1220534, -3.1220534], [2.943144, 2.943144],
-                                [-4.551988, -4.551988]]).astype(np.float32)
     out_primals, out_series = jet(net, primals, series)
+    expected_primals = np.array([10.328085, 10.328085]).astype(np.float32)
+    expected_series = np.array([[-3.1220534, -3.1220534], [6.0652323, 6.0652323],
+                                [-18.06463, -18.06463]]).astype(np.float32)
     assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
     assert np.allclose(out_primals.asnumpy(), expected_primals, atol=1.e-4)
 

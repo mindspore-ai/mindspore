@@ -165,7 +165,7 @@ def taylor_log(self):
         for k in range(1, series_num + 1):
             for i in range(1, k):
                 tmp = i * inputs[k - i] * series[i] / (factorial[k - i] * factorial[i])
-                series[k] -= tmp
+                series[k] += tmp
             series[k] = (inputs[k] - factorial[k - 1] * series[k]) / inputs[0]
         return series
 
