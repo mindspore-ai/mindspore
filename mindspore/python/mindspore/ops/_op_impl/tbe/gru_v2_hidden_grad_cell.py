@@ -33,15 +33,16 @@ gru_v2_hidden_grad_cell_op_info = TBERegOp("GRUV2HiddenGradCell") \
     .input(5, "reset", False, "required", "all") \
     .input(6, "new", False, "required", "all") \
     .input(7, "hidden_new", False, "required", "all") \
+    .input(8, "seq_mask", False, "optional", "all") \
     .output(0, "dh_preh", False, "required", "all") \
     .output(1, "dgate_h", False, "required", "all") \
     .output(2, "dnt_x", False, "required", "all") \
     .dtype_format(DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
                   DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
-                  DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ) \
+                  DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F16_FracNZ) \
     .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
-                  DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ) \
+                  DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ) \
     .get_op_info()
 
 

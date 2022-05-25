@@ -164,9 +164,9 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   rtArgsEx_t argsInfo = {};
   argsInfo.args = args_.data();
   argsInfo.argsSize = static_cast<uint32_t>(args_.length());
-  ret = rtCpuKernelLaunchWithFlagV2(reinterpret_cast<const void *>(node_so_.c_str()),
-                                    reinterpret_cast<const void *>(node_name_.c_str()), 1, &argsInfo, nullptr, stream_,
-                                    flag);
+  ret =
+    rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(node_so_.c_str()),
+                              reinterpret_cast<const void *>(node_name_.c_str()), 1, &argsInfo, nullptr, stream_, flag);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Aicpu op launch failed!";
     return false;

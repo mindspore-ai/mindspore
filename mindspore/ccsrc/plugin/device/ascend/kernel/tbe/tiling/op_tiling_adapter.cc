@@ -175,7 +175,6 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
     (void)::ge::AttrUtils::SetStr(*(*op_desc), ATOMIC_COMPILE_INFO_KEY, atomic_info_key);
     (void)::ge::AttrUtils::SetStr(*(*op_desc), ATOMIC_COMPILE_INFO_JSON, atomic_compile_info);
   }
-
   // clean output
   if (has_output) {
     vector<int64_t> output_indexs;

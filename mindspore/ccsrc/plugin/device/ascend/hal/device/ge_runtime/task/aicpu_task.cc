@@ -86,11 +86,11 @@ void AicpuTask::Distribute() {
   rtArgsEx_t argsInfo = {};
   argsInfo.args = args_;
   argsInfo.argsSize = args_size;
-  rt_ret = rtCpuKernelLaunchWithFlagV2(reinterpret_cast<const void *>(task_info_->so_name().data()),
-                                       reinterpret_cast<const void *>(task_info_->kernel_name().data()), 1, &argsInfo,
-                                       nullptr, stream_, cpu_flag);
+  rt_ret = rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(task_info_->so_name().data()),
+                                     reinterpret_cast<const void *>(task_info_->kernel_name().data()), 1, &argsInfo,
+                                     nullptr, stream_, cpu_flag);
   if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rt api rtCpuKernelLaunchWithFlagV2 failed, ret: " << rt_ret;
+    MS_LOG(EXCEPTION) << "Call rt api rtCpuKernelLaunchWithFlag failed, ret: " << rt_ret;
   }
 
   MS_LOG(INFO) << "Distribute AicpuTask end.";

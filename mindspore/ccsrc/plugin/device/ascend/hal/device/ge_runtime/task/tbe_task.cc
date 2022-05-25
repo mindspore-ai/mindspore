@@ -92,7 +92,7 @@ void TbeTask::Distribute() {
   rtArgsEx_t args_info = {};
   args_info.args = args_;
   args_info.argsSize = args_size;
-  rt_ret = rtKernelLaunchWithFlagV2(stub_func_, task_info_->block_dim(), &args_info, nullptr, stream_, dump_flag);
+  rt_ret = rtKernelLaunchWithFlag(stub_func_, task_info_->block_dim(), &args_info, nullptr, stream_, dump_flag);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtKernelLaunch failed, ret: " << rt_ret << " mem size " << args_size;
   }

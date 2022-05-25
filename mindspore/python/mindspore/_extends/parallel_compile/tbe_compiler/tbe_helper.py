@@ -214,6 +214,7 @@ def get_options_info(job_content):
     options["deviceId"] = job_content["SocInfo"]["deviceId"]
     options["autoTilingMode"] = job_content["SocInfo"]["autoTilingMode"]
     options["op_impl_mode_list"] = job_content["SocInfo"]["op_impl_mode_list"]
+    options["status_check"] = "false"
     return options
 
 

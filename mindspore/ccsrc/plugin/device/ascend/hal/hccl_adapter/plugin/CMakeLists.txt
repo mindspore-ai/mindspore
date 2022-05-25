@@ -6,10 +6,12 @@ set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/fwkacllib/l
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64)
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/fwkacllib/lib64)
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/fwkacllib/lib64)
+set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/lib64)
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/fwkacllib/lib64/plugin/opskernel)
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/lib64/plugin/opskernel)
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/fwkacllib/lib64/plugin/opskernel)
 set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/fwkacllib/lib64/plugin/opskernel)
+set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/lib64/plugin/opskernel)
 set_target_properties(hccl_plugin PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 
 if(DEFINED ENV{D_LINK_PATH})
@@ -30,18 +32,23 @@ else()
     set(ASCEND_PATH /usr/local/Ascend)
   endif()
   set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
+  set(ASCEND_CANN_RUNTIME_NEW_PATH ${ASCEND_PATH}/latest/lib64)
   set(ASCEND_PLUGIN_PATH ${ASCEND_RUNTIME_PATH}/plugin/opskernel)
+  set(ASCEND_PLUGIN_NEW_PATH ${ASCEND_CANN_RUNTIME_NEW_PATH}/plugin/opskernel)
   set(ASCEND_TOOLKIT_RUNTIME_PATH ${ASCEND_PATH}/ascend-toolkit/latest/fwkacllib/lib64)
   set(ASCEND_TOOLKIT_PLUGIN_PATH ${ASCEND_TOOLKIT_RUNTIME_PATH}/plugin/opskernel)
   set(ASCEND_CANN_RUNTIME_PATH ${ASCEND_PATH}/latest/fwkacllib/lib64)
   set(ASCEND_CANN_PLUGIN_PATH ${ASCEND_CANN_RUNTIME_PATH}/plugin/opskernel)
 endif()
 
-find_library(HCCL hccl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
-find_library(REGISTER register ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
+find_library(HCCL hccl ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH}
+            ${ASCEND_CANN_RUNTIME_NEW_PATH})
+find_library(REGISTER register ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH}
+            ${ASCEND_CANN_RUNTIME_NEW_PATH})
 find_library(HCCL_ADPTER hcom_graph_adaptor ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH}
-            ${ASCEND_CANN_RUNTIME_PATH})
-find_library(HCCL_RA ra ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
+            ${ASCEND_CANN_RUNTIME_PATH}  ${ASCEND_CANN_RUNTIME_NEW_PATH})
+find_library(HCCL_RA ra ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH}
+            ${ASCEND_CANN_RUNTIME_NEW_PATH})
 find_library(HCCL_BUILDER hcom_opskernel_builder ${ASCEND_PLUGIN_PATH} ${ASCEND_TOOLKIT_PLUGIN_PATH}
-            ${ASCEND_CANN_PLUGIN_PATH})
+            ${ASCEND_CANN_PLUGIN_PATH} ${ASCEND_PLUGIN_NEW_PATH})
 target_link_libraries(hccl_plugin -Wl,--no-as-needed ${HCCL} ${HCCL_ADPTER} ${REGISTER} ${HCCL_BUILDER} ${HCCL_RA})

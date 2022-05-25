@@ -21,7 +21,7 @@ import traceback
 from datetime import datetime
 
 from tbe.common.rl_bank.bank_manager import set_current_op_name
-from tbe.common.repository_manager.interface import cann_kb_unload, cann_kb_load
+from tbe.common.repository_manager.interface import cann_kb_finalize, cann_kb_init
 from tbe.common.rl_bank.bank_cfg import LocalLock
 from te.platform.cce_conf import te_set_version
 from te.platform.cce_policy import set_L1_info
@@ -74,32 +74,25 @@ def _tune_init(job: TbeJob):
     return res
 
 
-def _cann_kb_load(job: TbeJob):
+def _cann_kb_init(job: TbeJob):
     """
-    database load
+    database init
     :param job:
     :return:
     """
-    soc_version = job.soc_version
-    core_num = job.core_num
-    op_bank_path = job.op_bank_path
+    sys_config = {"soc_version": job.soc_version, "core_num": job.core_num}
+    load_config = {"op_bank_path": job.op_bank_path}
     kb_type = None
-    res = cann_kb_load(soc_version, core_num, op_bank_path, kb_type)
+    res = cann_kb_init(sys_config, load_config, kb_type)
     return res
 
 
-def _cann_kb_unload(job: TbeJob):
+def _cann_kb_finalize():
     """
-    database unload
-    :param job:
+    database finalize
     :return:
     """
-    if job is None:
-        return 0
-    soc_version = job.soc_version
-    core_num = job.core_num
-    kb_type = None
-    res = cann_kb_unload(soc_version, core_num, kb_type)
+    res = cann_kb_finalize()
     return res
 
 
@@ -258,7 +251,7 @@ def tbe_initialize(job: TbeJob):
     local_lock = LocalLock(lock_file)
     try:
         local_lock.lock()
-        res = _cann_kb_load(job)
+        res = _cann_kb_init(job)
         if res == 1:
             job.error("Cann kb load failed")
         res = _parallel_compilation_init(job)
@@ -668,7 +661,7 @@ def tbe_finalize(auto_tiling_mode, offline_tune, job: TbeJob):
     if "RL" in auto_tiling_mode or offline_tune:
         from schedule_search.rl_online_tune import rl_tune_deinit
         rl_tune_deinit()
-    res = _cann_kb_unload(job)
+    res = _cann_kb_finalize()
     if res == 1:
         job.error("Cann kb unload failed")
         return False
