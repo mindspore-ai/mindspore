@@ -32,7 +32,7 @@ class AssertTEST(nn.Cell):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 def test_assert_op():
     """
     Feature: Assert cpu kernel

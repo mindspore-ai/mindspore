@@ -35,7 +35,7 @@ class CeluTEST(nn.Cell):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
-def test_selu_op(data_type):
+def test_celu_op(data_type):
     """
     Feature: Celu cpu kernel
     Description: test the celu alpha = 1.0.
