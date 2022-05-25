@@ -117,7 +117,7 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
   if (config->support_parallel()) {
     ofs << "  MicroContext *micro_context = (MicroContext *)model_context;\n"
            "  if (micro_context == NULL) {\n"
-           "      return RET_ERROR;"
+           "      return kMSStatusLiteNullptr;"
            "  }\n"
            "  ret = CreateThreadPool(micro_context->thread_num_);\n"
            "  if(ret != RET_OK) {\n"
