@@ -15,9 +15,6 @@
  */
 
 #include "plugin/device/ascend/optimizer/ir_fission/clip_by_norm_fission.h"
-#include <memory>
-#include <vector>
-#include <string>
 #include <algorithm>
 #include "ir/anf.h"
 #include "include/common/utils/anfalgo.h"
@@ -51,11 +48,11 @@ std::vector<int64_t> InferBroadcastShape(std::vector<int64_t> x_shape, std::vect
   }
   for (int64_t i = -length; i < 0; ++i) {
     if (x_shape[LongToSize(x_length + i)] == 1) {
-      (void)broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
+      broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
     } else if (y_shape[LongToSize(y_length + i)] == 1) {
-      (void)broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
+      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
     } else if (x_shape[x_length + i] == y_shape[LongToSize(y_length + i)]) {
-      (void)broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
+      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
     } else if ((x_shape[x_length + i] == abstract::Shape::SHP_ANY) ||
                (y_shape[y_length + i] == abstract::Shape::SHP_ANY)) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', input dynamic shape args is not supported.";
@@ -66,24 +63,36 @@ std::vector<int64_t> InferBroadcastShape(std::vector<int64_t> x_shape, std::vect
   }
   return broadcast_shape;
 }
+}  // namespace
 
-CNodePtr CreateSquareNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_x, const ShapeVector &shape_vec,
-                          const TypeId &x_type_id) {
+AnfNodePtr ClipByNormSplit::CreateCNodeBase(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &inps,
+                                            const std::string &op_name, const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(input_x);
-  std::vector<AnfNodePtr> square_inputs = {NewValueNode(prim::kPrimSquare), input_x};
-  auto square = func_graph->NewCNode(square_inputs);
-  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(x_type_id), shape_vec);
+  std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(std::make_shared<Primitive>(op_name))};
+  for (const auto &inp : inps) {
+    (void)new_node_inputs.emplace_back(inp);
+  }
+  auto new_node = NewCNode(new_node_inputs, func_graph);
+  MS_EXCEPTION_IF_NULL(new_node);
+
+  new_node->set_scope(node->scope());
+  new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+  return new_node;
+}
+
+AnfNodePtr ClipByNormSplit::CreateSquareNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
+                                             const ShapeVector &shape_vec, const TypeId &type_id) const {
+  auto square = CreateCNodeBase(func_graph, {inp}, kSquareOpName, inp);
+  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
   square->set_abstract(abs);
   return square;
 }
 
-CNodePtr CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &square, const AnfNodePtr &clip_by_norm,
-                             const ShapeVector &shape_vec, const TypeId &type_id) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(square);
-  std::vector<AnfNodePtr> reduce_sum_inputs = {NewValueNode(prim::kPrimReduceSum), square};
-  auto reduce_sum = func_graph->NewCNode(reduce_sum_inputs);
+AnfNodePtr ClipByNormSplit::CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &square,
+                                                const AnfNodePtr &clip_by_norm, const ShapeVector &shape_vec,
+                                                const TypeId &type_id) const {
+  auto reduce_sum = CreateCNodeBase(func_graph, {square}, kReduceSumOpName, square);
   // Sync the attribute of `ClipByNorm` to `ReduceSum`
   auto clip_by_norm_prim = common::AnfAlgo::GetCNodePrimitive(clip_by_norm);
   MS_EXCEPTION_IF_NULL(clip_by_norm_prim);
@@ -98,7 +107,7 @@ CNodePtr CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &s
     axis = GetValue<std::vector<int64_t>>(axis_value);
     if (axis.empty()) {  // reduce_sum for all dimensions
       for (size_t i = 0; i < dim; ++i) {
-        axis.emplace_back(i);
+        (void)axis.emplace_back(i);
       }
     }
   } else if (axis_value->isa<Int64Imm>()) {
@@ -123,65 +132,51 @@ CNodePtr CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &s
   return reduce_sum;
 }
 
-CNodePtr CreateSqrtNode(const FuncGraphPtr &func_graph, const AnfNodePtr &reduce_sum, const TypeId &type_id) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(reduce_sum);
-  std::vector<AnfNodePtr> sqrt_inputs = {NewValueNode(prim::kPrimSqrt), reduce_sum};
-  auto sqrt = func_graph->NewCNode(sqrt_inputs);
+AnfNodePtr ClipByNormSplit::CreateSqrtNode(const FuncGraphPtr &func_graph, const AnfNodePtr &reduce_sum,
+                                           const TypeId &type_id) const {
+  auto sqrt = CreateCNodeBase(func_graph, {reduce_sum}, kSqrtOpName, reduce_sum);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), GetOutputInferShape(reduce_sum));
   sqrt->set_abstract(abs);
   return sqrt;
 }
 
-CNodePtr CreateMaxNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x, const AnfNodePtr &y,
-                       const TypeId &dst_type_id) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(y);
-  std::vector<AnfNodePtr> max_inputs = {NewValueNode(prim::kPrimMaximum), x, y};
-  auto max = func_graph->NewCNode(max_inputs);
-
+AnfNodePtr ClipByNormSplit::CreateMaxNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x, const AnfNodePtr &y,
+                                          const TypeId &type_id) const {
+  auto max = CreateCNodeBase(func_graph, {x, y}, kMaximumOpName, y);
   auto x_shape = GetOutputInferShape(x);
   auto y_shape = GetOutputInferShape(y);
   auto output_shape = InferBroadcastShape(x_shape, y_shape, "ClipByNorm", "clip_norm_cast", "l2_norm");
-  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(dst_type_id), output_shape);
+  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), output_shape);
   max->set_abstract(abs);
   return max;
 }
 
-CNodePtr CreateMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x, const AnfNodePtr &clip_norm,
-                       const ShapeVector &shape_vec, const TypeId &type_id) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(clip_norm);
-  MS_EXCEPTION_IF_NULL(x);
-  std::vector<AnfNodePtr> mul_inputs = {NewValueNode(prim::kPrimMul), x, clip_norm};
-  auto mul = func_graph->NewCNode(mul_inputs);
+AnfNodePtr ClipByNormSplit::CreateMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x,
+                                          const AnfNodePtr &clip_norm, const ShapeVector &shape_vec,
+                                          const TypeId &type_id) const {
+  auto mul = CreateCNodeBase(func_graph, {x, clip_norm}, kMulOpName, x);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
   mul->set_abstract(abs);
   return mul;
 }
 
-CNodePtr CreateDivNode(const FuncGraphPtr &func_graph, const AnfNodePtr &dividend, const AnfNodePtr &divisor,
-                       const ShapeVector &shape_vec, const TypeId &dst_type_id) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(dividend);
-  MS_EXCEPTION_IF_NULL(divisor);
-  std::vector<AnfNodePtr> div_inputs = {NewValueNode(prim::kPrimDiv), dividend, divisor};
-  auto div = func_graph->NewCNode(div_inputs);
-  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(dst_type_id), shape_vec);
+AnfNodePtr ClipByNormSplit::CreateDivNode(const FuncGraphPtr &func_graph, const AnfNodePtr &dividend,
+                                          const AnfNodePtr &divisor, const ShapeVector &shape_vec,
+                                          const TypeId &type_id) const {
+  auto div = CreateCNodeBase(func_graph, {dividend, divisor}, kDivOpName, divisor);
+  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
   div->set_abstract(abs);
   return div;
 }
 
-AnfNodePtr CreateCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp, const ShapeVector &shape_vec,
-                          const TypeId &src_type_id, const TypeId &dst_type_id) {
+AnfNodePtr ClipByNormSplit::CreateCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
+                                           const ShapeVector &shape_vec, const TypeId &src_type_id,
+                                           const TypeId &dst_type_id) const {
   if (src_type_id == dst_type_id) {
     return inp;
   }
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(inp);
-  std::vector<AnfNodePtr> cast_inputs = {NewValueNode(prim::kPrimCast), inp};
-  auto cast = func_graph->NewCNode(cast_inputs);
+
+  auto cast = CreateCNodeBase(func_graph, {inp}, kCastOpName, inp);
   if (dst_type_id == kNumberTypeFloat16) {
     common::AnfAlgo::SetNodeAttr(kAttrDstType, kFloat16, cast);
   } else if (dst_type_id == kNumberTypeFloat32) {
@@ -195,7 +190,6 @@ AnfNodePtr CreateCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
   cast->set_abstract(abs);
   return cast;
 }
-}  // namespace
 
 const BaseRef ClipByNormSplit::DefinePattern() const {
   VarPtr seq_xs = std::make_shared<SeqVar>();
@@ -210,9 +204,8 @@ const AnfNodePtr ClipByNormSplit::Process(const FuncGraphPtr &func_graph, const 
   // Get `ClipByNorm` cnode
   auto clip_by_norm = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(clip_by_norm);
-  constexpr size_t clip_by_norm_inp_num = 3;
-  MS_EXCEPTION_IF_CHECK_FAIL(clip_by_norm->size() == clip_by_norm_inp_num,
-                             "The input size of `ClipByNorm` op should be 3.");
+  constexpr size_t clip_by_norm_inp_num = 2;
+  CheckCNodeInputSize(clip_by_norm, clip_by_norm_inp_num);
   // Get input node `x` and `clip_norm`)
   const auto &inp_x = clip_by_norm->input(1);
   constexpr size_t clip_norm_inp_idx = 2;
