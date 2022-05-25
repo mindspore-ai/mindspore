@@ -1,7 +1,7 @@
 mindspore.nn.Threshold
 =============================
 
-.. py:class:: mindspore.nn.Threshold
+.. py:class:: mindspore.nn.Threshold(threshold, value)
 
     Threshold激活函数，按元素计算输出。
 
