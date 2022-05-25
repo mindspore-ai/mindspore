@@ -93,7 +93,7 @@ if [[ "${PACKAGE_TYPE}" == "python" ]]; then
 elif [[ "${PACKAGE_TYPE}" == "cpp" ]]; then
 # using acl tar package, extract tar package here
   rm -rf mindspore_ascend*
-  PACKAGE_NAME_FULL=$(find "${PACKAGE_PATH}" -name "mindspore_ascend*.tar.gz")
+  PACKAGE_NAME_FULL=$(find "${PACKAGE_PATH}" -maxdepth 1 -name "mindspore_ascend*.tar.gz")
   PACKAGE_NAME=${PACKAGE_NAME_FULL##*/}
 
   tar -xzf ${PACKAGE_PATH}/${PACKAGE_NAME}
