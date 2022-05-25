@@ -27,7 +27,7 @@ namespace dataset {
 Status ToTensorOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // Rescale and convert HWC to CHW format
-  return ToTensor(input, output, data_type_);
+  return ToTensor(input, output, output_type_);
 }
 }  // namespace dataset
 }  // namespace mindspore

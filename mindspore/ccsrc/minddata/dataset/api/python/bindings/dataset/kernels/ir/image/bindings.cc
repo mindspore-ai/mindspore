@@ -719,8 +719,8 @@ PYBIND_REGISTER(ToTensorOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<vision::ToTensorOperation, TensorOperation, std::shared_ptr<vision::ToTensorOperation>>(
                       *m, "ToTensorOperation")
-                      .def(py::init([](const std::string &data_type) {
-                        auto totensor = std::make_shared<vision::ToTensorOperation>(data_type);
+                      .def(py::init([](const std::string &output_type) {
+                        auto totensor = std::make_shared<vision::ToTensorOperation>(output_type);
                         THROW_IF_ERROR(totensor->ValidateParams());
                         return totensor;
                       }));

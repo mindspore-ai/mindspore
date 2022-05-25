@@ -28,9 +28,9 @@ namespace mindspore {
 namespace dataset {
 class ToTensorOp : public TensorOp {
  public:
-  explicit ToTensorOp(const DataType &data_type) : data_type_(data_type) {}
+  explicit ToTensorOp(const DataType &output_type) : output_type_(output_type) {}
 
-  explicit ToTensorOp(const std::string &data_type) { data_type_ = DataType(data_type); }
+  explicit ToTensorOp(const std::string &output_type) { output_type_ = DataType(output_type); }
 
   ~ToTensorOp() override = default;
 
@@ -39,7 +39,7 @@ class ToTensorOp : public TensorOp {
   std::string Name() const override { return kToTensorOp; }
 
  private:
-  DataType data_type_;
+  DataType output_type_;
 };
 }  // namespace dataset
 }  // namespace mindspore

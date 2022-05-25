@@ -260,7 +260,9 @@ Status Serdes::ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shar
   for (nlohmann::json item : json_obj) {
     if (item.find("python_module") != item.end()) {
       if (Py_IsInitialized() != 0) {
-        RETURN_IF_NOT_OK(PyFuncOp::from_json(item, result));
+        std::vector<std::shared_ptr<TensorOperation>> tmp_res;
+        RETURN_IF_NOT_OK(PyFuncOp::from_json(item, &tmp_res));
+        output.insert(output.end(), tmp_res.begin(), tmp_res.end());
       } else {
         LOG_AND_RETURN_STATUS_SYNTAX_ERROR(
           "Python module is not initialized or Pyfunction is not supported on this platform.");
@@ -275,9 +277,9 @@ Status Serdes::ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shar
                                    "Invalid data, unsupported operation: " + op_name);
       RETURN_IF_NOT_OK(func_ptr_[op_name](op_params, &operation));
       output.push_back(operation);
-      *result = output;
     }
   }
+  *result = output;
   return Status::OK();
 }
 
@@ -344,6 +346,7 @@ Serdes::InitializeFuncPtr() {
     &(vision::SoftDvppDecodeRandomCropResizeJpegOperation::from_json);
   ops_ptr[vision::kSoftDvppDecodeResizeJpegOperation] = &(vision::SoftDvppDecodeResizeJpegOperation::from_json);
   ops_ptr[vision::kSwapRedBlueOperation] = &(vision::SwapRedBlueOperation::from_json);
+  ops_ptr[vision::kToTensorOperation] = &(vision::ToTensorOperation::from_json);
   ops_ptr[vision::kUniformAugOperation] = &(vision::UniformAugOperation::from_json);
   ops_ptr[vision::kVerticalFlipOperation] = &(vision::VerticalFlipOperation::from_json);
   ops_ptr[transforms::kFillOperation] = &(transforms::FillOperation::from_json);
