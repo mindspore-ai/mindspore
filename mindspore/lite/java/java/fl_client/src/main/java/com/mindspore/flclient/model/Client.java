@@ -17,11 +17,9 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.Graph;
-import com.mindspore.config.DeviceType;
 import com.mindspore.config.MSContext;
 import com.mindspore.config.ModelType;
 import com.mindspore.config.TrainCfg;
-import com.mindspore.flclient.Common;
 import com.mindspore.flclient.LocalFLParameter;
 import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.MSTensor;
@@ -92,7 +90,7 @@ public abstract class Client {
      * Init lite session and inputs buffer.
      *
      * @param modelPath model file path.
-     * @param config session run config.
+     * @param inputShapes input shape of model.
      * @return execute status.
      */
     public Status initSessionAndInputs(String modelPath, int[][] inputShapes) {
@@ -115,14 +113,16 @@ public abstract class Client {
         inputsBuffer.clear();
         if (inputShapes == null) {
             List<MSTensor> inputs = model.getInputs();
-
             for (MSTensor input : inputs) {
                 ByteBuffer inputBuffer = ByteBuffer.allocateDirect((int) input.size());
                 inputBuffer.order(ByteOrder.nativeOrder());
                 inputsBuffer.add(inputBuffer);
+                input.free();
             }
         } else {
-            boolean isSuccess = model.resize(model.getInputs(), inputShapes);
+            List<MSTensor> inputs = model.getInputs();
+            boolean isSuccess = model.resize(inputs, inputShapes);
+            inputs.forEach(MSTensor::free);
             if (!isSuccess) {
                 logger.severe("session resize failed");
                 return Status.FAILED;
@@ -142,6 +142,7 @@ public abstract class Client {
         List<MSTensor> inputs = model.getInputs();
         for (int i = 0; i < inputs.size(); i++) {
             inputs.get(i).setData(inputsBuffer.get(i));
+            inputs.get(i).free();
         }
     }
 
@@ -329,15 +330,22 @@ public abstract class Client {
     }
 
     /**
-     * Get model feature maps.
+     * Get model feature maps with float value.
      *
      * @return model weights.
      */
-    public List<MSTensor> getFeatures() {
-        if (model == null) {
-            return new ArrayList<>();
+    public Map<String, float[]> getFeatureMap() {
+        List<MSTensor> tensors = model.getFeatureMaps();
+        Map<String, float[]> features = new HashMap<>(tensors.size());
+        for (MSTensor mstensor : tensors) {
+            if (mstensor == null) {
+                logger.severe("tensors cannot be null");
+                return new HashMap<>();
+            }
+            features.put(mstensor.tensorName(), mstensor.getFloatData());
+            mstensor.free();
         }
-        return model.getFeatureMaps();
+        return features;
     }
 
     /**
@@ -353,10 +361,20 @@ public abstract class Client {
             return Status.NULLPTR;
         }
 
+        class TensorInfo {
+            TensorInfo(int dataType, int[] dataShape) {
+                this.dataType = dataType;
+                this.dataShape = dataShape;
+            }
+
+            public int dataType;
+            public int[] dataShape;
+        }
         List<MSTensor> modelFeatures = model.getFeatureMaps();
-        HashMap<String, MSTensor> modelFeatureMaps = new HashMap<String, MSTensor>();
+        HashMap<String, TensorInfo> modelFeatureMaps = new HashMap<>();
         for (MSTensor item : modelFeatures) {
-            modelFeatureMaps.put(item.tensorName(), item);
+            modelFeatureMaps.put(item.tensorName(), new TensorInfo(item.getDataType(), item.getShape()));
+            item.free();
         }
 
         List<MSTensor> tensors = new ArrayList<>(featureMaps.size());
@@ -370,15 +388,13 @@ public abstract class Client {
                 logger.severe("Can't get feature for name:" + newFeature.weightFullname());
                 return Status.NULLPTR;
             }
-            MSTensor origin = modelFeatureMaps.get(newFeature.weightFullname());
-            int dataType = origin.getDataType();
-            int[] dataShape = origin.getShape();
-
+            TensorInfo origin = modelFeatureMaps.get(newFeature.weightFullname());
             ByteBuffer by = newFeature.dataAsByteBuffer();
             ByteBuffer newData = ByteBuffer.allocateDirect(by.remaining());
             newData.order(ByteOrder.nativeOrder());
             newData.put(by);
-            MSTensor tensor = MSTensor.createTensor(newFeature.weightFullname(), dataType, dataShape, newData);
+            MSTensor tensor = MSTensor.createTensor(newFeature.weightFullname(),
+                    origin.dataType, origin.dataShape, newData);
             tensors.add(tensor);
         }
         boolean isSuccess = model.updateFeatureMaps(tensors);

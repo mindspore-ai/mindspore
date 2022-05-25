@@ -20,7 +20,6 @@ import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.flclient.model.Client;
 import com.mindspore.flclient.model.ClientManager;
 import com.mindspore.flclient.model.Status;
-import mindspore.schema.ResponseCode;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.prng.SP800SecureRandomBuilder;
@@ -130,46 +129,6 @@ public class Common {
             url = domainName;
         }
         return url;
-    }
-
-    /**
-     * Store weight name of classifier to a list.
-     *
-     * @param classifierWeightName the list to store weight name of classifier.
-     */
-    public static void setClassifierWeightName(List<String> classifierWeightName) {
-        classifierWeightName.add("albert.pooler.weight");
-        classifierWeightName.add("albert.pooler.bias");
-        classifierWeightName.add("classifier.weight");
-        classifierWeightName.add("classifier.bias");
-        LOGGER.info("classifierWeightName size: " + classifierWeightName.size());
-    }
-
-    /**
-     * Store weight name of albert network to a list.
-     *
-     * @param albertWeightName the list to store weight name of albert network.
-     */
-    public static void setAlbertWeightName(List<String> albertWeightName) {
-        albertWeightName.add("albert.encoder.embedding_hidden_mapping_in.weight");
-        albertWeightName.add("albert.encoder.embedding_hidden_mapping_in.bias");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.attention.attention.query.weight");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.attention.attention.query.bias");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.attention.attention.key.weight");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.attention.attention.key.bias");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.attention.attention.value.weight");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.attention.attention.value.bias");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.attention.output.dense.weight");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.attention.output.dense.bias");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.attention.output.layernorm.gamma");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.attention.output.layernorm.beta");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.ffn.weight");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.ffn.bias");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.ffn_output.weight");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.ffn_output.bias");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.full_layer_layer_norm.gamma");
-        albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.full_layer_layer_norm.beta");
-        LOGGER.info("albertWeightName size: " + albertWeightName.size());
     }
 
     /**

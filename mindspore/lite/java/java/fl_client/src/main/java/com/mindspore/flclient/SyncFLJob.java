@@ -27,14 +27,7 @@ import com.mindspore.flclient.model.ClientManager;
 import com.mindspore.flclient.model.RunType;
 import com.mindspore.flclient.model.Status;
 import com.mindspore.flclient.pki.PkiUtil;
-import com.mindspore.config.CpuBindMode;
-import mindspore.schema.ResponseGetModel;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;

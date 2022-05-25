@@ -21,6 +21,7 @@ import com.mindspore.flclient.Common;
 import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.MSTensor;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -50,17 +51,17 @@ public class LossCallback extends Callback {
 
     @Override
     public Status stepEnd() {
-        Optional<MSTensor> tensor = searchOutputsForSize(1);
-        if (!tensor.isPresent()) {
+        Map<String, float[]> outputs = getOutputsBySize(1);
+        if (outputs.isEmpty()) {
             logger.severe("cannot find loss tensor");
             return Status.NULLPTR;
         }
-        logger.info("loss name:" + tensor.get().tensorName());
-        float loss = tensor.get().getFloatData()[0];
-        if (Float.isNaN(loss)) {
+        Map.Entry<String, float[]> first = outputs.entrySet().iterator().next();
+        if (first.getValue().length < 1 || Float.isNaN(first.getValue()[0])) {
             logger.severe("loss is nan");
             return Status.FAILED;
         }
+        float loss = first.getValue()[0];
         logger.info("batch:" + steps + ",loss:" + loss);
         lossSum += loss;
         steps++;
