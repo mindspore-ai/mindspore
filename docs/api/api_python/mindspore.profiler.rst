@@ -1,4 +1,4 @@
-mindspore.profiler
+mindspore.Profiler
 ========================
 
 本模块提供Python API，用于启用MindSpore神经网络性能数据的分析。
