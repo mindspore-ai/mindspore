@@ -1111,9 +1111,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     if (exception_types_map.find(name_id) != exception_types_map.end()) {
       return {NewValueNode(name_id)};
     } else {
-      MS_LOG(EXCEPTION) << "Unsupported exception type: " << name_id
-                        << ". Raise only support some Python standard exception types: "
-                        << SupportedExceptionsToString();
+      MS_LOG(EXCEPTION) << "Unsupported exception type: " << name_id << ".";
     }
   }
 
@@ -1127,9 +1125,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
     if (exception_types_map.find(name_id) != exception_types_map.end()) {
       return ParseException(block, args, name_id);
     } else {
-      MS_LOG(EXCEPTION) << "Unsupported exception type: " << name_id
-                        << ". Raise only support some Python standard exception types: "
-                        << SupportedExceptionsToString();
+      MS_LOG(EXCEPTION) << "Unsupported exception type: " << name_id << ".";
     }
   }
   return {};
