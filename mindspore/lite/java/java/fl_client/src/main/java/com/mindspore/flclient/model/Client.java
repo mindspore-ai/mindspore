@@ -19,6 +19,7 @@ package com.mindspore.flclient.model;
 import com.mindspore.Graph;
 import com.mindspore.config.DeviceType;
 import com.mindspore.config.MSContext;
+import com.mindspore.config.ModelType;
 import com.mindspore.config.TrainCfg;
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.LocalFLParameter;
@@ -99,7 +100,15 @@ public abstract class Client {
             logger.severe("session init failed");
             return Status.FAILED;
         }
-        if (!initSession(modelPath)) {
+
+        MSContext msContext = getMsContext();
+        if (msContext == null) {
+            return Status.FAILED;
+        }
+
+        boolean initModelRet = inputShapes == null ?
+                initTrainModel(modelPath, msContext) : initInferModel(modelPath, msContext);
+        if (!initModelRet) {
             free();
             return Status.FAILED;
         }
@@ -250,29 +259,12 @@ public abstract class Client {
         return Status.SUCCESS;
     }
 
-    private boolean initSession(String modelPath) {
-        if (modelPath == null) {
-            logger.severe("modelPath cannot be empty");
-            return false;
-        }
-        int deviceType = LocalFLParameter.getInstance().getDeviceType();
-        int threadNum = LocalFLParameter.getInstance().getThreadNum();
-        int cpuBindMode = LocalFLParameter.getInstance().getCpuBindMode();
-        boolean enableFp16 = LocalFLParameter.getInstance().isEnableFp16();
-        MSContext msContext = new MSContext();
-        // use default param init context
-        if(!msContext.init(threadNum, cpuBindMode)){
-            logger.severe("Call msContext.init failed, threadNum " + threadNum + ", cpuBindMode " + cpuBindMode);
-            msContext.free();
-            return false;
-        }
-
-        if (!msContext.addDeviceInfo(deviceType, enableFp16, 0)) {
-            logger.severe("Call msContext.addDeviceInfo failed, deviceType " + deviceType + ", enableFp16 " + enableFp16);
-            msContext.free();
-            return false;
-        }
-
+    /**
+     * init train model.
+     *
+     * @return init status.
+     */
+    private boolean initTrainModel(String modelPath, MSContext msContext) {
         TrainCfg trainCfg = new TrainCfg();
         if(!trainCfg.init()){
             logger.severe("Call trainCfg.init failed ...");
@@ -297,6 +289,43 @@ public abstract class Client {
         }
         graph.free();
         return true;
+    }
+
+
+    /**
+     * init infer model.
+     *
+     * @return init status.
+     */
+    private boolean initInferModel(String modelPath, MSContext msContext) {
+        model = new Model();
+        if (!model.build(modelPath, ModelType.MT_MINDIR, msContext)) {
+            // The Jni implement will change msContext & graph to shared_ptr, no need free here
+            logger.severe("Call model.build failed ... ");
+            return false;
+        }
+        return true;
+    }
+
+    private MSContext getMsContext() {
+        int deviceType = LocalFLParameter.getInstance().getDeviceType();
+        int threadNum = LocalFLParameter.getInstance().getThreadNum();
+        int cpuBindMode = LocalFLParameter.getInstance().getCpuBindMode();
+        boolean enableFp16 = LocalFLParameter.getInstance().isEnableFp16();
+        MSContext msContext = new MSContext();
+        // use default param init context
+        if(!msContext.init(threadNum, cpuBindMode)){
+            logger.severe("Call msContext.init failed, threadNum " + threadNum + ", cpuBindMode " + cpuBindMode);
+            msContext.free();
+            return null;
+        }
+
+        if (!msContext.addDeviceInfo(deviceType, enableFp16, 0)) {
+            logger.severe("Call msContext.addDeviceInfo failed, deviceType " + deviceType + ", enableFp16 " + enableFp16);
+            msContext.free();
+            return null;
+        }
+        return msContext;
     }
 
     /**
