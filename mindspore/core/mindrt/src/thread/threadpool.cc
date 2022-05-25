@@ -21,6 +21,7 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
+std::mutex ThreadPool::create_thread_pool_mutex_;
 Worker::~Worker() {
   {
     std::lock_guard<std::mutex> _l(mutex_);
@@ -411,6 +412,7 @@ void ThreadPool::SetMinSpinCount(int spin_count) {
 }
 
 ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<int> &core_list) {
+  std::lock_guard<std::mutex> lock(create_thread_pool_mutex_);
   ThreadPool *pool = new (std::nothrow) ThreadPool();
   if (pool == nullptr) {
     return nullptr;
