@@ -28,8 +28,33 @@ namespace {
 constexpr size_t kSoftmaxInputNum = 1;
 constexpr size_t kDropoutV3InputNum = 2;
 constexpr size_t kSoftmaxDropoutOutputNum = 2;
+constexpr size_t kSoftmaxInputShapeSize = 4;
+constexpr size_t kMaxInputH = 512;
+constexpr size_t kBlock = 32;
 constexpr auto kAttrAxes = "axes";
 constexpr auto kAttrKeepProb = "keep_prob";
+
+bool CheckShapeIsUsePattern(size_t input_h, size_t input_w) {
+  if (input_h == input_w && input_h <= kMaxInputH && input_h % kBlock == 0) {
+    return true;
+  }
+  return false;
+}
+
+bool CheckSoftmax(const CNodePtr &softmax) {
+  if (common::AnfAlgo::GetPrevNodeOutputInferDataType(softmax, 0) != kNumberTypeFloat16) {
+    MS_LOG(DEBUG) << "Softmax's input type is float16, node: " << softmax->fullname_with_scope();
+    return false;
+  }
+
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(softmax, 0);
+  if (input_shape.size() != kSoftmaxInputShapeSize || !CheckShapeIsUsePattern(input_shape[kDim2], input_shape[kDim3])) {
+    MS_LOG(DEBUG) << "Softmax's input shape is not supported, node: " << softmax->fullname_with_scope();
+    return false;
+  }
+
+  return true;
+}
 }  // namespace
 
 const BaseRef SoftmaxDropoutDoMaskV3Fusion::DefinePattern() const {
@@ -46,6 +71,9 @@ const AnfNodePtr SoftmaxDropoutDoMaskV3Fusion::Process(const FuncGraphPtr &graph
   MS_EXCEPTION_IF_NULL(node);
   auto dropout = CheckAnfNodeIfCNodeAndInputSize(node, kDropoutV3InputNum);
   auto softmax = CheckAnfNodeIfCNodeAndInputSize(dropout->input(1), kSoftmaxInputNum);
+  if (!CheckSoftmax(softmax)) {
+    return nullptr;
+  }
 
   // create SoftmaxV2WithDropoutDoMaskV3D
   std::vector<AnfNodePtr> softmax_dropout_inputs = {
