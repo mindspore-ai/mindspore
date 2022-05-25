@@ -19,7 +19,7 @@ mindspore.ops.gather_nd
 
     **返回：**
 
-    Tensor，数据类型与 `input_x` 相同，shape为 `indices_shape[:-1] + x_shape[indices_shape[-1]:]` 。
+    Tensor，数据类型与 `input_x` 相同，shape为 `indices_shape[:-1] + input_x_shape[indices_shape[-1]:]` 。
 
     **异常：**
 
