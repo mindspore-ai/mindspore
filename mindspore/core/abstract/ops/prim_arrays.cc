@@ -222,6 +222,71 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   return std::make_shared<AbstractTuple>(elements);
 }
 
+AbstractBasePtr InferImplUniqueConsecutive(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  // Infer output tensor.
+  auto shape = input->shape();
+  MS_EXCEPTION_IF_NULL(shape);
+  ShapeVector out_shape = {Shape::SHP_ANY};
+  ShapeVector min_shape = {1};
+  ShapeVector max_shape = shape->max_shape();
+  if (max_shape.empty()) {
+    max_shape = shape->shape();
+  }
+  auto out =
+    std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(out_shape, min_shape, max_shape));
+  AbstractBasePtrList elements = {out};
+
+  // Currently we choose the same data type as input for the idx.
+  TypePtr idx_type = kInt32;
+  MS_EXCEPTION_IF_NULL(input->element());
+  MS_EXCEPTION_IF_NULL(input->element()->GetTypeTrack());
+  if (input->element()->GetTypeTrack()->type_id() == TypeId::kNumberTypeInt64) {
+    idx_type = kInt64;
+  }
+  // Check return_idx.
+  auto attr_idx = primitive->GetAttr("return_idx");
+  if (attr_idx == nullptr) {
+    MS_LOG(EXCEPTION) << "The attr(return_idx) of operator(" << op_name << ") not exist";
+  }
+  bool return_idx = GetValue<bool>(attr_idx);
+  if (return_idx) {
+    ShapeVector idx_shape = shape->shape();
+    ShapeVector idx_min_shape = shape->min_shape();
+    if (idx_min_shape.empty()) {
+      idx_min_shape = shape->shape();
+    }
+    ShapeVector idx_max_shape = shape->max_shape();
+    if (idx_max_shape.empty()) {
+      idx_max_shape = shape->shape();
+    }
+    auto idx = std::make_shared<AbstractTensor>(idx_type, idx_shape);
+    idx->set_shape(std::make_shared<Shape>(idx_shape, idx_min_shape, idx_max_shape));
+    (void)elements.emplace_back(idx);
+  } else {
+    ShapeVector idx_shape = {0};
+    (void)elements.emplace_back(std::make_shared<AbstractTensor>(idx_type, idx_shape));
+  }
+
+  // Check return_counts.
+  auto attr_counts = primitive->GetAttr("return_counts");
+  if (attr_counts == nullptr) {
+    MS_LOG(EXCEPTION) << "The attr(attr_counts) of operator(" << op_name << ") not exist";
+  }
+  bool return_counts = GetValue<bool>(attr_counts);
+  if (return_counts) {
+    auto counts = std::make_shared<AbstractTensor>(idx_type, std::make_shared<Shape>(out_shape, min_shape, max_shape));
+    (void)elements.emplace_back(counts);
+  } else {
+    ShapeVector counts_shape = {0};
+    (void)elements.emplace_back(std::make_shared<AbstractTensor>(idx_type, counts_shape));
+  }
+  return std::make_shared<AbstractTuple>(elements);
+}
+
 AbstractBasePtr InferImplPadAndShift(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_spec_list) {
   // inputs: a 1-d Tensor

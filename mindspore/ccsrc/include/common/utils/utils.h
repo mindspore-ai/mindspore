@@ -38,6 +38,7 @@ constexpr auto kSegmentMinOpName = "SegmentMin";
 constexpr auto kSegmentSumOpName = "SegmentSum";
 constexpr auto kConcatOpName = "Concat";
 constexpr auto kUniqueOpName = "Unique";
+constexpr auto kUniqueConsecutiveOpName = "UniqueConsecutive";
 constexpr auto kMaskedSelectOpName = "MaskedSelect";
 constexpr auto kComputeAccidentalHitsOpName = "ComputeAccidentalHits";
 constexpr auto kCTCGreedyDecoderOpName = "CTCGreedyDecoder";
@@ -798,11 +799,11 @@ const std::set<std::string> kHWSpecialFormatSet = {
 const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
 
 const std::set<std::string> kComputeDepend = {
-  kUniqueOpName,           kComputeAccidentalHitsOpName, kSubAndFilterOpName, kPadAndShiftOpName,
-  kCTCGreedyDecoderOpName, kDropoutGenMaskOpName,        kMaskedSelectOpName, kDynamicStitchOpName,
-  kGetNextOpName,          kNonMaxSuppressionV3OpName,   kCoalesceOpName,     kTruncatedNormal,
-  kNonDeterministicInts,   kFractionalAvgPoolGradOpName, kSegmentMaxOpName,   kSegmentMinOpName,
-  kSegmentSumOpName};
+  kUniqueOpName,        kUniqueConsecutiveOpName, kComputeAccidentalHitsOpName, kSubAndFilterOpName,
+  kPadAndShiftOpName,   kCTCGreedyDecoderOpName,  kDropoutGenMaskOpName,        kMaskedSelectOpName,
+  kDynamicStitchOpName, kGetNextOpName,           kNonMaxSuppressionV3OpName,   kCoalesceOpName,
+  kTruncatedNormal,     kNonDeterministicInts,    kFractionalAvgPoolGradOpName, kSegmentMaxOpName,
+  kSegmentMinOpName,    kSegmentSumOpName};
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                             kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};

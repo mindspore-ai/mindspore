@@ -19,6 +19,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
 
+from ..operations.array_ops import UniqueConsecutive
 from ..operations.array_ops import NonZero, MatrixDiagV3
 from ...common import Tensor
 
@@ -460,6 +461,58 @@ def unique(x):
     y, idx = unique_op(x)
     idx = reshape_op(idx, shape_x)
     return y, idx
+
+
+def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
+    """
+    Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.
+
+    Args:
+        x (Tensor): The input tensor.
+        return_idx (bool, optional): Whether to return the indices of the end position of each element in the
+            original input list in the returned unique list. Default: False.
+        return_counts (bool, optional): Whether to return the counts of each unique element. Default: False.
+        axis (int, optional): The dimension to apply unique. If None, the unique of the flattened input is
+            returned. If specified, it must be int32 or int64. Default: None.
+
+    Returns:
+        A tensor or a tuple of tensors containing tensor objects (`output`, `idx`, `counts`). `output` has the
+        same type as `x` and is used to represent the output list of unique scalar elements. If `return_idx` is
+        True, there will be an additional returned tensor, `idx`, which has the same shape as `x` and represents
+        the index of where the element in the original input maps to the position in the output. If `return_counts`
+        is True, there will be an additional returned tensor, `counts`, which represents the number of occurrences
+        for each unique value or tensor.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        RuntimeError: If `axis` is not in the range of :math:`[-ndim, ndim-1]`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import ops
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
+        >>> x = Tensor(np.array([1, 1, 2, 2, 3, 1, 1, 2]), mstype.int32)
+        >>> output, idx, counts = ops.unique_consecutive(x, True, True, None)
+        >>> print(output)
+        [1 2 3 1 2]
+        >>> print(idx)
+        [0 0 1 1 2 3 3 4]
+        >>> print(counts)
+        [2 2 1 2 1]
+    """
+    unique_consecutive_op = UniqueConsecutive(return_idx, return_counts, axis)
+    output, idx, counts = unique_consecutive_op(x)
+    if return_idx and return_counts:
+        return output, idx, counts
+    if return_idx:
+        return output, idx
+    if return_counts:
+        return output, counts
+    return output
 
 
 def ger(x1, x2):
@@ -2010,6 +2063,7 @@ def diag(input_x):
 
 __all__ = [
     'unique',
+    'unique_consecutive',
     'eye',
     'matrix_band_part',
     'fill',

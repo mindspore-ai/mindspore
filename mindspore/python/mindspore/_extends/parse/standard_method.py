@@ -693,6 +693,13 @@ def round(x):  # pylint: disable=redefined-builtin
     return F.round(x)
 
 
+def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
+    """
+    Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.
+    """
+    return F.unique_consecutive(x, return_idx, return_counts, axis)
+
+
 def resize(x, *new_shape):
     """
     Changes shape and size of array in-place.

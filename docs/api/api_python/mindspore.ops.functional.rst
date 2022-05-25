@@ -281,6 +281,7 @@ Array操作
     mindspore.ops.tile
     mindspore.ops.transpose
     mindspore.ops.unique
+    mindspore.ops.unique_consecutive
 
 .. list-table::
    :widths: 50 50

@@ -800,6 +800,42 @@ class Unique(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
+class UniqueConsecutive(Primitive):
+    """
+    Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.
+
+    Refer to :func:`mindspore.ops.unique_consecutive` for more detail.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore.ops.operations.array_ops import UniqueConsecutive
+        >>> x = Tensor(np.array([1, 1, 2, 2, 3, 1, 1, 2]), mstype.int32)
+        >>> unique_consecutive = UniqueConsecutive(True, True, None)
+        >>> output, idx, counts = unique_consecutive(x)
+        >>> print(output)
+        [1 2 3 1 2]
+        >>> print(idx)
+        [0 0 1 1 2 3 3 4]
+        >>> print(counts)
+        [2 2 1 2 1]
+    """
+
+    @prim_attr_register
+    def __init__(self, return_idx=False, return_counts=False, axis=None):
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        validator.check_value_type("return_idx", return_idx, [bool], self.name)
+        validator.check_value_type("return_counts", return_counts, [bool], self.name)
+        validator.check_value_type("axis", axis, [int, type(None)], self.name)
+        self.add_prim_attr("return_idx", return_idx)
+        self.add_prim_attr("return_counts", return_counts)
+        self.add_prim_attr("axis", axis)
+
+
 class Gather(Primitive):
     r"""
     Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
