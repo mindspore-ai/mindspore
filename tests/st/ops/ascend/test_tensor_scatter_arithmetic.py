@@ -18,6 +18,7 @@ import numpy as np
 import mindspore.nn as nn
 import mindspore.ops as ops
 import mindspore.context as context
+from mindspore.ops.functional import vmap
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor, Parameter
 
@@ -30,6 +31,7 @@ op_map = {
 
 func_map = {
     "add": ops.tensor_scatter_add,
+    "sub": ops.tensor_scatter_sub,
 }
 
 np_func_map = {
@@ -153,7 +155,7 @@ def test_tensor_scatter_arithmetic_multi_dims(func, data_type, index_type):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add'])
+@pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_tensor_scatter_arithmetic_function_op(func, data_type, index_type):
@@ -177,7 +179,7 @@ def test_tensor_scatter_arithmetic_function_op(func, data_type, index_type):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add'])
+@pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_tensor_scatter_arithmetic_tensor_op(func, data_type, index_type):
@@ -195,5 +197,39 @@ def test_tensor_scatter_arithmetic_tensor_op(func, data_type, index_type):
 
     if func == 'add':
         output = input_x.tensor_scatter_add(indices, updates)
+    elif func == 'sub':
+        output = input_x.tensor_scatter_sub(indices, updates)
 
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['add', 'sub'])
+@pytest.mark.parametrize('data_type', [mstype.float32])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_tensor_scatter_arithmetic_vmap(func, data_type, index_type):
+    """
+    Feature: TensorScatter* tensor operators.
+    Description: test cases for tensor.tensor_scatter_* api
+    Expectation: the result match numpy implementation.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+    input_x = Tensor(np.random.randn(8, 8, 8, 16), data_type)
+    indices = Tensor(np.random.randint(8, size=(8, 8, 8, 1)), index_type)
+    updates = Tensor(np.random.randn(8, 8, 8, 16), data_type)
+
+    class TensorScatterOp(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.tensor_scatter_op = op_map.get(func)()
+
+        def construct(self, input_x, indices, updates):
+            return self.tensor_scatter_op(input_x, indices, updates)
+
+    net = TensorScatterOp()
+    vmap_net = vmap(vmap(net, in_axes=(0, 0, 0), out_axes=0), in_axes=(0, 0, 0), out_axes=0)
+    vmap_net(input_x, indices, updates)
