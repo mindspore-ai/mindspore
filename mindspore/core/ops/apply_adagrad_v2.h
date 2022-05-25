@@ -28,11 +28,28 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyAdagradV2 = "ApplyAdagradV2";
+/// \brief Updates relevant entries according to the adagradv2 scheme.
+/// Refer to Python API @ref mindspore.ops.ApplyAdagradV2 for more details.
 class MIND_API ApplyAdagradV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyAdagradV2);
   ApplyAdagradV2() : BaseOperator(kNameApplyAdagradV2) { InitIOName({"var", "accum", "lr", "grad"}, {"var", "accum"}); }
+
+  /// \brief Set epsilon, A small value (float) added for numerical stability.
+  void set_epsilon(const float epsilon);
+  /// \brief Get epsilon.
+  ///
+  /// \return epsilon.
+  float get_epsilon() const;
+
+  /// \brief Set update_slots, A bool where if True, accum will be updated. Default: True.
+  void set_update_slots(const bool update_slots);
+  /// \brief Get update_slots.
+  ///
+  /// \return update_slots.
+  bool get_update_slots() const;
 };
+
 abstract::AbstractBasePtr ApplyAdagradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyAdagradV2Ptr = std::shared_ptr<ApplyAdagradV2>;

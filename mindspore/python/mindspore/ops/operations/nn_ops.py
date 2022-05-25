@@ -5702,7 +5702,7 @@ class ApplyAdagradV2(Primitive):
         RuntimeError: If the data type of `var`, `accum` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
