@@ -57,6 +57,11 @@ class Hccl():
 # pylint: disable=unused-argument
 def get_rank_id(group=None):
     hccl = Hccl()
+    if group is not None:
+        group_size = get_rank_size(group)
+        rank = hccl.rank_id
+        if rank >= group_size:
+            return rank % group_size
     return hccl.rank_id
 
 
