@@ -730,18 +730,29 @@ class Dataset:
             Dataset, dataset applied by the function.
 
         Examples:
-            >>> # use NumpySlicesDataset as an example
-            >>> dataset = ds.NumpySlicesDataset([[0, 1], [2, 3]])
+            >>> # 1) flat_map on one column dataset
+            >>> dataset = ds.NumpySlicesDataset([[0, 1], [2, 3]], shuffle=False)
             >>>
-            >>> def flat_map_func(array):
+            >>> def repeat(array):
             ...     # create a NumpySlicesDataset with the array
-            ...     dataset = ds.NumpySlicesDataset(array)
+            ...     data = ds.NumpySlicesDataset(array, shuffle=False)
             ...     # repeat the dataset twice
-            ...     dataset = dataset.repeat(2)
-            ...     return dataset
+            ...     data = data.repeat(2)
+            ...     return data
             >>>
-            >>> dataset = dataset.flat_map(flat_map_func)
-            >>> # [[0, 1], [0, 1], [2, 3], [2, 3]]
+            >>> dataset = dataset.flat_map(repeat)
+            >>> # [0, 1, 0, 1, 2, 3, 2, 3]
+            >>>
+            >>> # 2) flat_map on multi column dataset
+            >>> dataset = ds.NumpySlicesDataset(([[0, 1], [2, 3]], [[0, -1], [-2, -3]]), shuffle=False)
+
+            >>> def plus_and_minus(col1, col2):
+            ...     # apply different methods on columns
+            ...     data = ds.NumpySlicesDataset((col1 + 1, col2 - 1), shuffle=False)
+            ...     return data
+
+            >>> dataset = dataset.flat_map(plus_and_minus)
+            >>> # ([1, 2, 3, 4], [-1, -2, -3, -4])
 
         Raises:
             TypeError: If `func` is not a function.
@@ -752,11 +763,11 @@ class Dataset:
             logger.critical("func must be a function.")
             raise TypeError("func must be a function.")
 
-        for row_data in self.create_tuple_iterator(output_numpy=True):
+        for row_data in self.create_tuple_iterator(num_epochs=1, output_numpy=True):
             if dataset is None:
-                dataset = func(row_data)
+                dataset = func(*row_data)
             else:
-                dataset += func(row_data)
+                dataset += func(*row_data)
 
         if not isinstance(dataset, Dataset):
             logger.critical("flat_map must return a Dataset object.")
@@ -2368,8 +2379,7 @@ def _check_shm_usage(num_worker, queue_size, max_rowsize, num_queues=1):
                     "it's recommended to reduce memory usage by following methods:\n"
                     "1. reduce value of parameter max_rowsize or num_parallel_workers.\n"
                     "2. reduce prefetch size by set_prefetch_size().\n"
-                    "3. disable shared memory by set_enable_shared_mem()."
-                    .format(shm_estimate_usage, shm_available))
+                    "3. disable shared memory by set_enable_shared_mem().".format(shm_estimate_usage, shm_available))
         except FileNotFoundError:
             raise RuntimeError("Expected /dev/shm to exist.")
 
