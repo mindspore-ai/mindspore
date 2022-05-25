@@ -55,7 +55,6 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/storage.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/meta_graph_serializer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/parse_config_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../common/statistic_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/parser_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf_bidirection_gru_cf_fusion.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/unused_node_remove_pass.cc

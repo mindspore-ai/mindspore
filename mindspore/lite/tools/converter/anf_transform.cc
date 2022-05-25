@@ -226,11 +226,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::FullConnectedFusion>());
   fusion_pm->AddPass(std::make_shared<opt::FullconnectedAddFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TensorDotFusion>());
-  // Int8 MatMul Kernel dont support matmul+activation
-  if (config->commonQuantParam.quant_type != schema::QuantType_QUANT_ALL &&
-      config->commonQuantParam.quant_type != schema::QuantType_QUANT_DYNAMIC) {
-    fusion_pm->AddPass(std::make_shared<opt::MatMulActivationFusion>());
-  }
+  fusion_pm->AddPass(std::make_shared<opt::MatMulActivationFusion>());
   optimizer->AddPassManager(fusion_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run op fusion failed.";
