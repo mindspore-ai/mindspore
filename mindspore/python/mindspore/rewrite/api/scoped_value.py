@@ -125,7 +125,7 @@ class ScopedValue:
         Returns:
             An list of instance of `ScopedValue`.
 
-        Raise:
+        Raises:
             RuntimeError: If the length of names is not equal to the length of scopes when scopes are not None.
             TypeError: If `names` is not `list` and name in `names` is not `str`.
             TypeError: If `scopes` is not `list` and scope in `scopes` is not `str`.

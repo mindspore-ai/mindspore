@@ -68,9 +68,10 @@ class Node:
             args (list[ScopedValue]): Indicate input names. Used as args of a call expression of an assign statement in
                 source code. Default is None indicate the `cell` has no args inputs. Rewrite will check and ensure the
                 uniqueness of each arg while node being inserted.
-            kwargs (dict{str: ScopedValue}): Indicate keyword input names. Used as kwargs of a call expression of an
-                assign statement in source code. Default is None indicate the `cell` has no kwargs inputs. Rewrite will
-                check and ensure the uniqueness of each kwarg while node being inserted.
+            kwargs (dict): Type of key must be `str` and type of value must be `ScopedValue`.
+                Indicate keyword input names. Used as kwargs of a call expression of an assign statement in source code.
+                Default is None indicate the `cell` has no kwargs inputs. Rewrite will check and ensure the uniqueness
+                of each kwarg while node being inserted.
             name (str): Indicate the name of node. Used as field name in source code. Default is None. Rewrite will
                 generate name from `targets` when name is None. Rewrite will check and ensure the uniqueness of `name`
                 while node being inserted.
@@ -161,7 +162,7 @@ class Node:
 
         Raises:
             TypeError: If `index` is not a `int` number.
-            TypeError: If the type of `arg` is not in [`ScopedValue`, `str].
+            TypeError: If the type of `arg` is not in [`ScopedValue`, `str`].
         """
         Validator.check_value_type("index", index, [int], "Node")
         Validator.check_value_type("arg", arg, [ScopedValue, str], "Node")
@@ -320,6 +321,9 @@ class Node:
     def get_attribute(self, key: str):
         """
         Get attribute of current node by key.
+
+        Args:
+            key (str): Key of attribute.
 
         Returns:
             A object as attribute.
