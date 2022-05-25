@@ -20,6 +20,25 @@ mindspore.profiler
 
         收集和分析训练的性能数据，支持在训练中和训练后调用。样例如上所示。
 
+    .. py:method:: op_analyse(op_name, device_id)
+
+        获取primitive类型的算子性能数据。
+
+        **参数：**
+
+        - **op_name** (str 或 list) – 表示要查询的primitive算子类型。
+        - **device_id** (int, 可选) – 设备卡号，表示指定解析哪张卡的算子性能数据。在网络训练或者推理时使用，该参数可选。基于离线数据解析使用该接口时，默认值：0。
+
+        **异常：**
+
+        - **TypeError** – op_name参数类型不正确。
+        - **TypeError** – device_id参数类型不正确。
+        - **RuntimeError** – 在Ascend上使用该接口获取性能数据。
+
+        **支持平台：**
+
+        ``GPU`` ``CPU``
+
     .. py:method:: start()
 
         开启Profiler数据采集，可以按条件开启Profiler。

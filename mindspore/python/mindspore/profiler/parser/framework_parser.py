@@ -437,6 +437,7 @@ class GpuFrameWorkParser:
         elif isinstance(self.op_names, list):
             for op_name in self.op_names:
                 self.combine_performance_data(op_name)
+        self.operation_info["device_id"] = self._dev_id
         return json.dumps(self.operation_info)
 
     def get_framework_summary(self):
