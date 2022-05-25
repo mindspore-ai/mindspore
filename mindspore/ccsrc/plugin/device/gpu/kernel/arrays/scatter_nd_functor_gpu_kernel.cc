@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kMinIndiceRank = 2;
 static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMap = {
   {"ScatterNdUpdate", SCATTER_ND_FUNC_UPDATE}, {"ScatterNdAdd", SCATTER_ND_FUNC_ADD},
   {"ScatterNdSub", SCATTER_ND_FUNC_SUB},       {"ScatterNdMul", SCATTER_ND_FUNC_MUL},
@@ -109,6 +110,11 @@ int ScatterNdFunctorKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") ||
                    CHECK_SHAPE_NULL(indices_shape, kernel_name_, "indices") ||
                    CHECK_SHAPE_NULL(updates_shape, kernel_name_, "updates");
+
+  if (indices_shape.size() < kMinIndiceRank) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'indices' must be at least 2, but got "
+                             << indices_shape.size();
+  }
 
   input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies{});
 

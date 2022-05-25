@@ -26,6 +26,9 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+constexpr size_t kMinIndiceRank = 2;
+}  // namespace
 bool ScatterNdArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs) {
@@ -61,6 +64,12 @@ int ScatterNdArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   slice_size_ = last_indices_value;
   batch_size_ = 1;
   inner_size_ = 1;
+
+  if (indices_shape.size() < kMinIndiceRank) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'indices' must be at least 2, but got "
+                             << indices_shape.size();
+  }
+
   for (size_t i = 0; i < update_rank; ++i) {
     if (i <= indices_rank - min_indices_rank) {
       batch_size_ *= LongToSize(indices_shape[i]);
