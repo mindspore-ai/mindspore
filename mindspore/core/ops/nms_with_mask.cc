@@ -64,7 +64,8 @@ abstract::TupleShapePtr NMSWithMaskInferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckValue<size_t>("shape of bboxes", bboxes_shape.size(), kEqual, kBboxesShapeSize,
                                                  op_name);
   if (bboxes_shape[1] != kBboxesShapeIn2ndDimNormal && bboxes_shape[1] != kBboxesShapeIn2ndDimAscendAfterPad) {
-    MS_EXCEPTION(ValueError) << "The 2nd dim in shape of bboxes should equal to 5 or 8, but got " << bboxes_shape[1];
+    MS_EXCEPTION(ValueError) << " For " << op_name
+                             << ", the 2nd dim in shape of bboxes should equal to 5 or 8, but got " << bboxes_shape[1];
   }
 
   // for ascend
@@ -121,8 +122,9 @@ AbstractBasePtr NMSWithMaskInfer(const abstract::AnalysisEnginePtr &, const Prim
     MS_EXCEPTION_IF_NULL(item);
   }
 
-  return abstract::MakeAbstract(NMSWithMaskInferShape(primitive, input_args),
-                                NMSWithMaskInferType(primitive, input_args));
+  auto infer_type = NMSWithMaskInferType(primitive, input_args);
+  auto infer_shape = NMSWithMaskInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(NMSWithMask, prim::kPrimNMSWithMask, NMSWithMaskInfer, nullptr, true);
 }  // namespace ops
