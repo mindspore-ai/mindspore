@@ -323,10 +323,11 @@ void TbeJsonCreator::GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &o
         }
         attr_obj[kJValid] = true;
       } else {
-        MS_LOG(INFO) << "op " << op_name << "'s attr \"" << attr_name << "\" should have a default value.";
+        MS_LOG(DEBUG) << "Op " << op_name << "'s attr \"" << attr_name
+                      << "\" should have a default value, node:" << anf_node->fullname_with_scope();
         if (!op_info->impl_path().empty() && attr_ptr->param_type() == kJParamRequred) {
-          MS_LOG(EXCEPTION) << "Op name: " << op_info->op_name() << " attr: " << attr_name
-                            << " is required, but not set.";
+          MS_LOG(EXCEPTION) << "Op " << op_info->op_name() << "'s attr \"" << attr_name
+                            << "\" is required, but not set, node: " << anf_node->fullname_with_scope();
         } else {
           attr_obj[kJValid] = false;
         }
