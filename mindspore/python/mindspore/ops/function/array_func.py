@@ -1373,7 +1373,8 @@ def gather_nd(input_x, indices):
         indices (Tensor): The index tensor, with int32 or int64 data type.
 
     Returns:
-        Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].
+        Tensor, has the same type as `input_x` and the shape is
+        :math:`indices\_shape[:-1] + input\_x\_shape[indices\_shape[-1]:]`.
 
     Raises:
         ValueError: If length of shape of `input_x` is less than the last dimension of `indices`.

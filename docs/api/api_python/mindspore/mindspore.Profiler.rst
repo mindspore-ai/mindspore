@@ -1,4 +1,4 @@
-mindspore.profiler
+mindspore.Profiler
 ========================
 
 .. py:class:: mindspore.Profiler(**kwargs)
