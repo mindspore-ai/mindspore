@@ -205,6 +205,53 @@ def get_maximum_grad_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(G.MinimumGradGrad)
+def get_minimum_grad_grad_vmap_rule(prim, axis_size):
+    """VmapRule for MinimumGradGrad operations with broadcasting."""
+
+    def vmap_rule(x1_bdim, x2_bdim, dx1_bdim, dx2_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x1_bdim, x2_bdim, dx1_bdim, dx2_bdim)
+        if is_all_none:
+            return result
+
+        x1, x1_dim = x1_bdim
+        x2, x2_dim = x2_bdim
+        dx1, dx1_dim = dx1_bdim
+        dx2, dx2_dim = dx2_bdim
+        x1_shape = F.shape(x1)
+        x2_shape = F.shape(x2)
+        dx1_shape = F.shape(dx1)
+        dx2_shape = F.shape(dx2)
+
+        if x1_dim == x2_dim and x1_shape == x2_shape \
+                and dx1_dim == dx2_dim and dx2_shape == dx1_shape:
+            sopd_x1, sopd_x2, sopd_grad = prim(x1, x2, dx1, dx2)
+            return (sopd_x1, x1_dim), (sopd_x2, x1_dim), (sopd_grad, x1_dim)
+
+        if F.rank(x1):
+            x1 = _bdim_at_front(x1, x1_dim, 1)
+        if F.rank(x2):
+            x2 = _bdim_at_front(x2, x2_dim, 1)
+        if F.rank(dx1):
+            dx1 = _bdim_at_front(dx1, dx2_dim, 1)
+        if F.rank(dx2):
+            dx2 = _bdim_at_front(dx2, dx2_dim, 1)
+        x1_shape = F.shape(x1)
+        x2_shape = F.shape(x2)
+        dx1_shape = F.shape(dx1)
+        dx2_shape = F.shape(dx2)
+        x1 = _handle_broadcasting(x1, x1_shape, x2_shape)
+        x2 = _handle_broadcasting(x2, x2_shape, x1_shape)
+        dx1 = _handle_broadcasting(dx1, dx1_shape, dx2_shape)
+        dx2 = _handle_broadcasting(dx2, dx2_shape, dx1_shape)
+        if F.shape(x1) != F.shape(dx1) or F.shape(x2) != F.shape(dx2):
+            _raise_value_error("The 'x1' 'grad_x1' shape not equal or 'x2' 'grad_x2' shape not equal in vmap case.")
+        sopd_x1, sopd_x2, sopd_grad = prim(x1, x2, dx1, dx2)
+        return (sopd_x1, 0), (sopd_x2, 0), (sopd_grad, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(Bernoulli)
 def get_bernoulli_op_vmap_rule(prim, axis_size):
     """VmapRule for Bernoulli operation."""
