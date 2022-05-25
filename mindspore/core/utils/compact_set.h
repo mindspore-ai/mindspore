@@ -46,6 +46,13 @@ class CompactSet {
     }
   }
 
+  template <class InputIt>
+  void insert(InputIt first, InputIt last) {
+    for (; first != last; ++first) {
+      insert(*first);
+    }
+  }
+
   iterator find(const T &e) { return std::find(data_.begin(), data_.end(), e); }
 
   const_iterator find(const T &e) const { return std::find(data_.begin(), data_.end(), e); }
