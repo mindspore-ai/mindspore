@@ -72,11 +72,19 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " write var `" << var_name << "` with node "
                 << node->DebugString();
-
+  constexpr auto kRecursiveLevel = 2;
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
   static const auto use_fallback = (parser_.support_fallback() != "0");
-
+  // a[::][::] = b will be translated to c = a[::] c[::] = b and the c is a no named variable.
+  if (var_name.empty()) {
+    MS_LOG(DEBUG) << "The node is " << node->DebugString(kRecursiveLevel)
+                  << "added in the isolated list.\nBlock: " << this << "/"
+                  << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
+                  << ", Line: " << trace::GetDebugInfo(node->debug_info(), "", kSourceLineTipDiscard);
+    AddIsolatedNode(node);
+    return;
+  }
   auto [iter, is_new_name] = assigned_vars_.emplace(var_name, std::make_pair(node, false));
   if (!is_new_name) {
     // If a cnode variable with same name already existed but not used,
@@ -90,9 +98,10 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
     auto is_isolated = CanBeIsolatedNode(var_name, hidden_node);
     if (!is_used && is_isolated) {
       MS_EXCEPTION_IF_NULL(hidden_node);
-      MS_LOG(INFO) << "Isolated node found(Hidden), hidden_node: " << hidden_node->DebugString(2) << " is hidden by "
-                   << node->DebugString(2) << " with the same name, var_name: " << var_name << ", block: " << this
-                   << "/" << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
+      MS_LOG(INFO) << "Isolated node found(Hidden), hidden_node: " << hidden_node->DebugString(kRecursiveLevel)
+                   << " is hidden by " << node->DebugString(kRecursiveLevel)
+                   << " with the same name, var_name: " << var_name << ", block: " << this << "/"
+                   << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
                    << ", Line: " << trace::GetDebugInfo(hidden_node->debug_info(), "", kSourceLineTipDiscard);
       AddIsolatedNode(hidden_node);
     }

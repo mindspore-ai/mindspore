@@ -733,3 +733,21 @@ def test_list_slice_negetive_step():
     x = py_func()
     y = ms_func()
     assert x == y
+
+
+def test_list_double_slice_assign_error():
+    """
+    Feature: List assign
+    Description: Test negative step list slice assign
+    Expectation: ValueError
+    """
+    @ms_function
+    def ms_func():
+        a = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        b = [11, 22, 33, 44]
+        a[::2][:3:2] = b
+        return a
+
+    with pytest.raises(ValueError) as err:
+        ms_func()
+    assert "attempt to assign sequence of size 4 to extended slice of size 2" in str(err.value)
