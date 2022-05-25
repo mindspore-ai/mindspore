@@ -14,7 +14,7 @@
 # ============================================================================
 
 """grad impl."""
-from . import grad_array_ops, grad_comm_ops, grad_debug_ops, grad_implementations, \
+from . import grad_array_ops, grad_comm_ops, grad_debug_ops, grad_implementations, grad_clip_ops, \
                grad_math_ops, grad_nn_ops, grad_other_ops, grad_quant_ops, grad_sparse, grad_inner_ops, taylor_rule
 from .grad_base import get_bprop_fn, get_taylor_fprop_fn
 
