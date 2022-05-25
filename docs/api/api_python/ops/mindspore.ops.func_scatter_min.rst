@@ -20,7 +20,7 @@ mindspore.ops.scatter_min
     - **updates** (Tensor) - 指定与 `input_x` 取最小值操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
 
     **输出：**
- 
+
     Tensor，更新后的 `input_x` ，shape和类型与 `input_x` 相同。
 
     **异常：**

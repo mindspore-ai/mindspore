@@ -40,7 +40,7 @@ abstract::ShapePtr ScatterMaxInferShape(const PrimitivePtr &primitive, const std
   }
 
   if (indices_shape_ptr->IsDynamic() || updates_shape_ptr->IsDynamic()) {
-    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+    return input_x_shape_ptr->cast<abstract::ShapePtr>();
   }
 
   std::vector<int64_t> input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_x_shape_ptr)[kShape];
@@ -66,12 +66,11 @@ TypePtr ScatterMaxInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
   auto updates_type_ptr = input_args[kInputIndex2]->BuildType();
   auto prim_name = primitive->name();
-  std::set<TypePtr> type_set = {kInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type_ptr, common_valid_types_with_complex,
-                                                   prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("updates type", updates_type_ptr, common_valid_types_with_complex,
-                                                   prim_name);
+  const std::set<TypePtr> indices_types = {kInt32, kInt64};
+  const std::set<TypePtr> valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, indices_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type_ptr, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("updates type", updates_type_ptr, valid_types, prim_name);
 
   std::map<std::string, TypePtr> type_dict;
   type_dict.emplace("input_x", input_x_type_ptr);

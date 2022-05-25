@@ -107,10 +107,10 @@ def scatter_func_d2_net(func, inputx, indices_1, updates_1, indices_2, updates_2
 class ScatterFuncVmapNet(nn.Cell):
     def __init__(self, func):
         super(ScatterFuncVmapNet, self).__init__()
-        self.scatter_min = func_map.get(func)()
+        self.scatter_func = func_map.get(func)()
 
     def construct(self, inputx, indices, updates):
-        return self.scatter_min(inputx, indices, updates)
+        return self.scatter_func(inputx, indices, updates)
 
 
 class VmapNet(nn.Cell):
@@ -790,13 +790,6 @@ def test_scatter_func_disordered_dynamic_int8():
     ).astype(np.int8)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
-    # max
-    output = scatter_func_d_net("max", inputx, indices, updates)
-    expected = np.array(
-        [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
-    ).astype(np.int8)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -824,13 +817,6 @@ def test_scatter_func_disordered_dynamic_uint8():
     output = scatter_func_d_net("sub", inputx, indices, updates)
     expected = np.array(
         [[138.0, 132.0, 126.0, 120.0], [151.0, 148.0, 145.0, 142.0], [94.0, 88.0, 82.0, 76.0]]
-    ).astype(np.uint8)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # max
-    output = scatter_func_d_net("max", inputx, indices, updates)
-    expected = np.array(
-        [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
     ).astype(np.uint8)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -955,7 +941,7 @@ def test_scatter_func_dynamic_two_inputs():
 @pytest.mark.env_onecard
 def test_scatter_func_indices_vmap():
     """
-    Feature: test scatter_min vmap.
+    Feature: test scatter_func vmap.
     Description: in_axes: (0, 0, None).
     Expectation: the result match with numpy result
     """
@@ -964,8 +950,16 @@ def test_scatter_func_indices_vmap():
     ).astype(np.int32)), name="inputx")
     indices = Tensor(np.array([[[0, 1], [1, 1]], [[0, 1], [0, 1]], [[1, 1], [1, 0]]]).astype(np.int32))
     updates = Tensor(np.array([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]]]).astype(np.int32))
-    output = VmapNet(ScatterFuncVmapNet("min"), inputx, (0, 0, None), 0)(indices, updates)
 
+    # scatter_max
+    output = VmapNet(ScatterFuncVmapNet("max"), inputx, (0, 0, None), 0)(indices, updates)
+    expected = np.array(
+        [[[1, 1, 2], [4, 4, 5]], [[3, 3, 3], [4, 4, 5]], [[4, 4, 4], [3, 4, 5]]]
+    ).astype(np.int32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # scatter_min
+    output = VmapNet(ScatterFuncVmapNet("min"), inputx, (0, 0, None), 0)(indices, updates)
     expected = np.array(
         [[[0, 1, 1], [2, 2, 2]], [[0, 1, 1], [2, 2, 2]], [[0, 1, 2], [1, 1, 1]]]
     ).astype(np.int32)
@@ -977,14 +971,24 @@ def test_scatter_func_indices_vmap():
 @pytest.mark.env_onecard
 def test_scatter_func_updates_vmap():
     """
-    Feature: test scatter_min vmap.
+    Feature: test scatter_func vmap.
     Description: in_axes: (0, None, 0).
     Expectation: the result match with numpy result
     """
     inputx = Parameter(Tensor(np.array([[0.1, 1.0, 2.2], [3.0, 4.3, 5.5]]).astype(np.float32)), name="inputx")
     indices = Tensor(np.array([0, 1]).astype(np.int32))
     updates = Tensor(np.array([[1.0, 0.1], [1.2, 1.3]]).astype(np.float32))
-    output = VmapNet(ScatterFuncVmapNet("min"), inputx, (0, None, 0), 0)(indices, updates)
 
+    # scatter_max
+    output = VmapNet(ScatterFuncVmapNet("max"), inputx, (0, None, 0), 0)(indices, updates)
+    expected = np.array([[1.0, 1.0, 2.2], [3.0, 4.3, 5.5]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # scatter_min
+    output = VmapNet(ScatterFuncVmapNet("min"), inputx, (0, None, 0), 0)(indices, updates)
     expected = np.array([[0.1, 0.1, 2.2], [1.2, 1.3, 5.5]]).astype(np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+if __name__ == "__main__":
+    test_scatter_func_indices_vmap()
+    test_scatter_func_updates_vmap()

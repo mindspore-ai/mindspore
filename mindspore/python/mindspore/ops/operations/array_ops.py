@@ -4216,7 +4216,7 @@ class ScatterMax(_ScatterOpDynamic):
     Using given values to update tensor value through the max operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
-    for each `i, ..., j` in `indices.shape`:
+    for each :math:`i, ..., j` in `indices.shape`:
 
     .. math::
 
@@ -4228,7 +4228,7 @@ class ScatterMax(_ScatterOpDynamic):
     the relatively highest priority data type.
 
     Args:
-        use_locking (bool): Whether to protect the assignment by a lock. Default: True.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -4236,7 +4236,7 @@ class ScatterMax(_ScatterOpDynamic):
         - **indices** (Tensor) - The index to do max operation whose data type must be mindspore.int32 or
           mindspore.int64.
         - **updates** (Tensor) - The tensor that performs the maximum operation with `input_x`,
-          the data type is the same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
+          the data type is the same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
