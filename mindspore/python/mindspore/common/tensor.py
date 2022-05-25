@@ -1058,6 +1058,130 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('matrix_diag')(self, k, num_rows, num_cols, padding_value, align)
 
+    def inv(self):
+        r"""
+        Computes Reciprocal of input tensor element-wise.
+
+        .. math::
+            out_i = \frac{1}{x_{i} }
+
+        Returns:
+            Tensor, has the same type and shape as input shape value.
+
+        Raises:
+            TypeError: If `x` is not a Tensor.
+            TypeError: If dtype of `x` is not one of float16, float32, int32.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore.ops import functional as F
+            >>> x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
+            >>> output = x.inv()
+            >>> print(output)
+            [4.        2.5       3.2258065 1.923077 ]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('inv')(self)
+
+    def invert(self):
+        r"""
+        Flips all bits of input tensor element-wise.
+
+        .. math::
+            out_i = ~x_{i}
+
+        Returns:
+            Tensor, has the same shape as `x`.
+
+        Raises:
+            TypeError: If dtype of `x` is neither int16 nor uint16.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore.ops import functional as F
+            >>> x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
+            >>> output = x.invert()
+            >>> print(output)
+            [-26 -5 -14 -10]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('invert')(self)
+
+    def matrix_band_part(self, lower, upper):
+        r"""
+        Copy a tensor setting everything outside a central band in each innermost matrix to zero.
+
+        Args:
+            lower (int): Number of subdiagonals to keep. It must be int32 or int64.
+                If negative, keep entire lower triangle.
+            upper (int): Number of superdiagonals to keep. It must be int32 or int64.
+                If negative, keep entire upper triangle.
+
+        Returns:
+            Tensor, has the same type and shape as input shape value.
+
+        Raises:
+            TypeError: If dtype of `x` is not one of float16, float32, float64, int32 or int64.
+            TypeError: If dtype of `lower` is not int32 or int64.
+            TypeError: If dtype of `upper` is not int32 or int64.
+            ValueError: If the shape of `x` is not greater than or equal to 2D.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore.ops import functional as F
+            >>> x = Tensor(np.ones([2, 4, 4]).astype(np.float32))
+            >>> output = x.matrix_band_part(2, 1)
+            >>> print(output)
+            [[[1. 1. 0. 0.]
+              [1. 1. 1. 0.]
+              [1. 1. 1. 1.]
+              [0. 1. 1. 1.]]
+
+             [[1. 1. 0. 0.]
+              [1. 1. 1. 0.]
+              [1. 1. 1. 1.]
+              [0. 1. 1. 1.]]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('matrix_band_part')(self, lower, upper)
+
+    def padding(self, pad_dim_size):
+        r"""
+        Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
+
+        Args:
+            pad_dim_size (int): The value of the last dimension of `x` to be extended, which must be positive.
+                Default: 8.
+
+        Returns:
+            Tensor, has the same type and shape as input shape value.
+
+        Raises:
+            TypeError: If `pad_dim_size` is not an int.
+            ValueError: If `pad_dim_size` is less than 1.
+            ValueError: If last dim of `x` is not equal to 1.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore.ops import functional as F
+            >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
+            >>> pad_dim_size = 4
+            >>> output = x.padding(pad_dim_size)
+            >>> print(output)
+            [[ 8.  0.  0.  0.]
+             [10.  0.  0.  0.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('padding')(self, pad_dim_size)
+
     def pow(self, power):
         r"""
         Calculate the power of Tensor.
@@ -2235,7 +2359,6 @@ class Tensor(Tensor_):
                         np.random.seed(slice_index + Tensor.delta_seed)
                         self.init.seed = slice_index + Tensor.delta_seed
                         Tensor.delta_seed += self._device_num
-
 
             def __exit__(self, ptype, value, trace):
                 if self.need_set_seed:
