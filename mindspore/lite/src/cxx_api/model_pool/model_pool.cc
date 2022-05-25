@@ -27,12 +27,8 @@
 
 namespace mindspore {
 namespace {
-constexpr int32_t kNumThreads = 8;
 constexpr int kNumDeviceInfo = 2;
 constexpr int kNumMaxTaskQueueSize = 1000;
-constexpr int kNumBindMode = lite::HIGHER_CPU;
-constexpr int32_t kNumInterOpParallel = 0;
-constexpr bool is_enable_parallel = true;
 int GetCoreNum() {
   int core_num = 1;
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -121,10 +117,6 @@ Status ModelPool::SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Con
 std::shared_ptr<mindspore::Context> ModelPool::GetDefaultContext() {
   MS_LOG(DEBUG) << "use default config.";
   auto context = std::make_shared<Context>();
-  context->SetThreadNum(kNumThreads);
-  context->SetEnableParallel(is_enable_parallel);
-  context->SetInterOpParallelNum(kNumInterOpParallel);
-  context->SetThreadAffinity(kNumBindMode);
   auto &device_list = context->MutableDeviceInfo();
   auto device_info = std::make_shared<CPUDeviceInfo>();
   if (device_info == nullptr) {
@@ -153,7 +145,7 @@ std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<
       MS_LOG(ERROR) << "model pool only support cpu or gpu type.";
       return nullptr;
     }
-    if (device->GetDeviceType() == kGPU) {
+    if (device->GetDeviceType() == kGPU && device_list.size() == kNumDeviceInfo) {
       return context;
     } else if (device->GetDeviceType() == kCPU) {
       auto cpu_context = device->Cast<CPUDeviceInfo>();
@@ -166,6 +158,10 @@ std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<
         MS_LOG(ERROR) << "Invalid thread num " << context->GetThreadNum();
         return nullptr;
       }
+    } else {
+      MS_LOG(ERROR) << "context is invalid; If you want run in GPU, you must set gpu device first, and then set cpu "
+                       "device";
+      return nullptr;
     }
   }
   return context;
