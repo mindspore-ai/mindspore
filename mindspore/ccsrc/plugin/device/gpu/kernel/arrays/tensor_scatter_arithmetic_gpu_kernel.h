@@ -26,22 +26,15 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/tensor_scatter_arithmetic.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "mindspore/core/ops/tensor_scatter_arithmetic.h"
-#include "mindspore/core/ops/tensor_scatter_add.h"
-#include "mindspore/core/ops/tensor_scatter_sub.h"
-#include "mindspore/core/ops/tensor_scatter_div.h"
-#include "mindspore/core/ops/tensor_scatter_mul.h"
-#include "mindspore/core/ops/tensor_scatter_min.h"
-#include "mindspore/core/ops/tensor_scatter_max.h"
-#include "mindspore/core/ops/tensor_scatter_update.h"
-#include "mindspore/ccsrc/kernel/common_utils.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
-class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod {
+class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod,
+                                            public MatchKernelHelper<TensorScatterArithmeticGpuKernelMod> {
  public:
-  TensorScatterArithmeticGpuKernelMod() {}
-  ~TensorScatterArithmeticGpuKernelMod() { FreeResource(); }
+  TensorScatterArithmeticGpuKernelMod() = default;
+  ~TensorScatterArithmeticGpuKernelMod() override { FreeResource(); }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -52,51 +45,43 @@ class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
+    stream_ptr_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  void FreeResource();
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
-  void ResetResource();
-  void InitSizeLists();
-  std::vector<KernelAttr> GetOpSupport() override;
-  bool GetOpTypeAndFuncType(const BaseOperatorPtr &base_operator);
-  void UpdateSize();
-
-  template <typename T, typename S>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using TensorScatterArithmeticFunc =
-    std::function<bool(TensorScatterArithmeticGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::GetOpSupport(); }
 
  private:
+  void FreeResource();
+  bool GetOpType(const BaseOperatorPtr &base_operator);
+  void UpdateSize();
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  using SupportList = std::vector<std::pair<KernelAttr, TensorScatterArithmeticGpuKernelMod::KernelRunFunc>>;
+
   bool memcpy_flag_{false};
-  std::string kernel_name_{};
-  BaseOperatorPtr kernel_ptr_{nullptr};
-  TensorScatterArithmeticFunc kernel_func_;
-  TensorScatterArithmeticFunctionType op_func_type_{TENSOR_SCATTER_FUNC_INVALID_TYPE};
-  static std::vector<std::pair<KernelAttr, TensorScatterArithmeticFunc>> func_list_;
-
-  std::vector<size_t> update_shapes_;
-  std::vector<size_t> indices_shapes_;
-  std::vector<size_t> input_shapes_;
-  std::vector<size_t> output_shapes_;
-  std::vector<size_t> vec_indices_stride_;
-  std::vector<size_t> vec_work_shape_;
-
   size_t input_size_{1};
   size_t update_size_{1};
-  size_t indices_size_{1};
   size_t output_size_{1};
   size_t block_size_{1};
   size_t indices_dim_0_{0};
   size_t indices_dim_1_{0};
-  size_t data_unit_size_{0};    /* sizeof(T) */
-  size_t indices_unit_size_{0}; /* sizeof(S) */
+  size_t data_unit_size_{0};
+  size_t indices_unit_size_{0};
+  TensorScatterArithmeticFunctionType op_func_type_{TENSOR_SCATTER_FUNC_INVALID_TYPE};
+  std::vector<size_t> update_shape_;
+  std::vector<size_t> indices_shape_;
+  std::vector<size_t> input_shape_;
+  std::vector<size_t> output_shape_;
+  std::vector<size_t> vec_indices_stride_;
+  std::vector<size_t> vec_work_shape_;
   void *indices_stride_{nullptr};
   void *work_shape_{nullptr};
+  void *stream_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
