@@ -26,8 +26,11 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
+#include "mindapi/base/type_id.h"
 
 namespace mindspore::lite {
+std::pair<float, float> GetFloatMinMaxValue(const float *data, int size);
+
 template <typename T>
 std::pair<T, T> GetMinMaxValue(const T *data, size_t data_size) {
   MS_ASSERT(data != nullptr);

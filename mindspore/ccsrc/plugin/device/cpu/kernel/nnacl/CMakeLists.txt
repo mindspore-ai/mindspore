@@ -99,7 +99,8 @@ if(PLATFORM_ARM32)
 endif()
 
 if("${X86_64_SIMD}" STREQUAL "sse")
-    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c)
+    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
+            ${NNACL_DIR}/intrinsics/ms_simd_cpu_info.c)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
