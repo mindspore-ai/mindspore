@@ -31,6 +31,7 @@ class CudaCommon {
   size_t share_memory_size() const { return CUDA_SHARED_MEM_PER_BLOCK(device_id_); }
   void set_check_sm(const bool &flag) { GPUdeviceInfo::GetInstance(device_id_)->set_check_sm(flag); }
   bool check_sm() const { return GPUdeviceInfo::GetInstance(device_id_)->check_sm(); }
+  uint32_t get_ctx_device_id() const { return device_id_; }
 
   static CudaCommon &GetInstance();
 
@@ -48,6 +49,7 @@ class CudaCommon {
 #define GET_MAJOR_SM mindspore::device::gpu::CudaCommon::GetInstance().major_sm()
 #define GET_CUDA_CAP mindspore::device::gpu::CudaCommon::GetInstance().cuda_cap()
 #define SHARED_MEM_PER_BLOCK mindspore::device::gpu::CudaCommon::GetInstance().share_memory_size()
+#define GET_CTX_DEVICE_ID mindspore::device::gpu::CudaCommon::GetInstance().get_ctx_device_id()
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

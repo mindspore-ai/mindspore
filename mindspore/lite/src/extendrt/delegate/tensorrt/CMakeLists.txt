@@ -1,6 +1,8 @@
 include_directories(${TENSORRT_PATH}/include)
 include_directories(${CUDA_PATH}/include)
+include_directories(${CUDA_PATH})
 include_directories($(CCSRC_DIR)/plugin/device/cpu/kernel)
+include_directories(${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops)
 
 if(DEFINED ENV{MS_ENABLE_CUDA_DISTRIBUTION})
     set(MS_ENABLE_CUDA_DISTRIBUTION $ENV{MS_ENABLE_CUDA_DISTRIBUTION})
@@ -42,6 +44,7 @@ file(GLOB TENSORRT_RUNTIME_SRC LIST_DIRECTORIES false
     ${CMAKE_CURRENT_SOURCE_DIR}/op/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/cuda_impl/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../runtime/delegate/delegate_utils.cc
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.cc
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache)
@@ -70,6 +73,7 @@ set_target_properties(libcublas PROPERTIES IMPORTED_LOCATION ${CUDA_LIB_PATH}/li
 add_library(tensorrt_kernel_mid OBJECT ${TENSORRT_RUNTIME_SRC})
 
 add_dependencies(tensorrt_kernel_mid fbs_src)
+
 target_link_libraries(
     tensorrt_kernel_mid
     libcudart
@@ -81,10 +85,10 @@ target_link_libraries(
 find_package(CUDA)
 file(GLOB_RECURSE CUDA_KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/cuda_impl/*.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather.cu
 )
 
 set_source_files_properties(${CUDA_KERNEL_SRC} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGES} -std=c++14 -fPIC")
 SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-std=c++14;)
 cuda_add_library(cuda_kernel_mid STATIC ${CUDA_KERNEL_SRC})
-

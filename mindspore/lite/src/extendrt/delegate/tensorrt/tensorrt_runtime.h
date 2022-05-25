@@ -63,12 +63,17 @@ class TensorRTRuntime {
 
   TensorRTAllocator *GetAllocator() { return this->allocator_; }
 
+  void SetDeviceID(uint32_t device_id) { device_id_ = device_id; }
+
+  uint32_t GetDeviceID() { return device_id_; }
+
  private:
   bool is_init_ = false;
   nvinfer1::IBuilder *builder_{nullptr};
   TensorRTLogger logger_;
   TensorRTAllocator *allocator_{nullptr};
   int batch_size_{0};
+  uint32_t device_id_{0};
   RuntimePrecisionMode runtime_percision_mode_{RuntimePrecisionMode::RuntimePrecisionMode_FP32};
 };
 }  // namespace mindspore::lite
