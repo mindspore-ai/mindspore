@@ -21,10 +21,10 @@ namespace ps {
 namespace core {
 bool FileConfiguration::Initialize() {
   if (!CommUtil::IsFileExists(file_path_)) {
-    MS_LOG(WARNING) << "The file path:" << file_path_ << " is not exist.";
+    MS_LOG(WARNING) << "The file:" << file_path_ << " is not exist.";
 
     if (CommUtil::CreateDirectory(file_path_)) {
-      MS_LOG(INFO) << "Create Directory :" << file_path_ << " success.";
+      MS_LOG(INFO) << "Create directory for file:" << file_path_ << " success.";
     }
     return false;
   }
