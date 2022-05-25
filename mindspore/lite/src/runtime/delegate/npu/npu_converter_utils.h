@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 #include <vector>
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
 #include "schema/ops_generated.h"
@@ -69,7 +69,7 @@ enum NPU_PAD_MODE {
   PAD_SAME = 6,
 };
 
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
 void Float32ToFloat16(const float *__restrict input, float16_t *__restrict output, int number);
 
 void Float16ToFloat32(const float16_t *__restrict input, float *__restrict output, int number);
