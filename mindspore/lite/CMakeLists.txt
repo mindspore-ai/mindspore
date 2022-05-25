@@ -586,7 +586,6 @@ if(ENABLE_NEON)
     add_compile_definitions(ENABLE_NEON)
 endif()
 
-
 if(MSLITE_GPU_BACKEND STREQUAL cuda)
     # add_definitions(-DGPU_CUDA)
     add_compile_definitions(SUPPORT_GPU)
@@ -657,6 +656,14 @@ if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_KERNEL_EXECUTOR)
     if(NOT ENABLE_CLOUD_AND_LITE)
         # include(${TOP_DIR}/cmake/external_libs/protobuf.cmake)
         set(MSLITE_DEPS_PROTOBUF on)
+    endif()
+endif()
+
+if(NOT APPLE AND NOT ENABLE_CLOUD_AND_LITE)
+    if(PLATFORM_X86_64 OR MACHINE_LINUX_ARM64)
+        if(NOT ENABLE_CLOUD_AND_LITE)
+            set(MSLITE_DEPS_PYBIND11 on)
+        endif()
     endif()
 endif()
 
