@@ -215,8 +215,8 @@ bool MindirModelLoader::ConvertNodes(const mind_ir::GraphProto &graph_proto, Lit
       return false;
     }
     node->name_ = node_proto.name();
-    node->base_operators_ = this->MakePrimitiveC(node_proto.op_type());
-    auto base_operator = std::any_cast<std::shared_ptr<ops::BaseOperator>>(node->base_operators_);
+    node->base_operator_ = this->MakePrimitiveC(node_proto.op_type());
+    auto base_operator = std::reinterpret_pointer_cast<ops::BaseOperator>(node->base_operator_);
     node->op_type_ = base_operator->GetPrim()->instance_name();
 
     // solve input
@@ -250,7 +250,7 @@ bool MindirModelLoader::ConvertNodes(const mind_ir::GraphProto &graph_proto, Lit
   return true;
 }
 
-std::any MindirModelLoader::MakePrimitiveC(const std::string &node_type) {
+std::shared_ptr<void> MindirModelLoader::MakePrimitiveC(const std::string &node_type) {
   const std::string kOperatorTypeFlag = std::string("REF::");
   const size_t kOpTypeFlagSize = kOperatorTypeFlag.length();
   if (node_type.size() > kOpTypeFlagSize && node_type.substr(0, kOpTypeFlagSize) == kOperatorTypeFlag) {

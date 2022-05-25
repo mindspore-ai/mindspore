@@ -35,10 +35,7 @@ std::shared_ptr<mindspore::kernel::InnerKernel> KernelModUtil::GetInnerKernel(
   if (kernel_mod == nullptr) {
     return nullptr;
   }
-  // auto base_operator = reinterpret_cast<std::shared_ptr<ops::BaseOperator> *>(const_cast<void *>(node->primitive_));
-  // auto base_operator = reinterpret_cast<ops::BaseOperator *>(const_cast<void *>(node->primitive_));
-  auto base_operator = std::any_cast<std::shared_ptr<ops::BaseOperator>>(node->base_operators_);
-  // std::shared_ptr<ops::BaseOperator> base_operator_shared_ptr(base_operator);
+  auto base_operator = std::reinterpret_pointer_cast<ops::BaseOperator>(node->base_operator_);
   return std::make_shared<kernel::InnerKernel>(kernel_mod, base_operator, in_tensors, out_tensors, context);
 }
 }  // namespace mindspore::kernel

@@ -43,7 +43,7 @@ class MindirModelLoader : public ModelLoader {
                     bool is_main_graph = false);
   bool ConvertTensors(const mind_ir::GraphProto &graph_proto, LiteGraph::SubGraph *sub_graph = nullptr,
                       bool is_main_graph = false);
-  std::any MakePrimitiveC(const std::string &node_type);
+  std::shared_ptr<void> MakePrimitiveC(const std::string &node_type);
 
  private:
   MindirModel *model_;
