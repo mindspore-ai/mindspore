@@ -68,7 +68,14 @@ def svd(a, full_matrices=False, compute_uv=True):
         [-0.7695091 -0.6386359]]
     """
     svd_ = linalg_ops.Svd(full_matrices=full_matrices, compute_uv=compute_uv)
-    return svd_(a)
+
+    if compute_uv:
+        return svd_(a)
+
+    s, _, _ = svd_(a)
+    return s
+
+
 
 
 __all__ = ['svd']

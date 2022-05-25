@@ -3099,7 +3099,12 @@ class Tensor(Tensor_):
             [[-0.6386359 0.7695091]
             [-0.7695091 -0.6386359]]
         """
-        return tensor_operator_registry.get("svd")(full_matrices, compute_uv)(self)
+        svd_op = tensor_operator_registry.get("svd")
+        if compute_uv:
+            return svd_op(full_matrices, compute_uv)(self)
+
+        s, _, _ = svd_op(full_matrices, compute_uv)(self)
+        return s
 
     def hardshrink(self, lambd=0.5):
         r"""
