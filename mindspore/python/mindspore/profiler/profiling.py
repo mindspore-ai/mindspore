@@ -183,7 +183,7 @@ class Profiler:
             ``GPU`` ``CPU``
 
         Examples:
-            >>> from mindspore.profiler import Profiler
+            >>> from mindspore import Profiler
             >>>
             ...     # Profiler init.
             ...     profiler = Profiler()
@@ -198,7 +198,7 @@ class Profiler:
             ...     profiler.op_analyse(op_name=["BiasAdd", "Conv2D"])
 
         Examples:
-            >>> from mindspore.profiler import Profiler
+            >>> from mindspore import Profiler
             >>>
             ...     # Profiler init.
             ...     profiler = Profiler(output_path="my_profiler_path")
