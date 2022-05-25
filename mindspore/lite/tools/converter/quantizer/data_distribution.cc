@@ -27,9 +27,12 @@ int DataDistribution::RecordMaxMinValueArray(const std::vector<float> &data) {
   if (data.empty()) {
     return RET_ERROR;
   }
-  auto min_max = GetFloatMinMaxValue(data.data(), data.size());
-  float min_num = min_max.first;
-  float max_num = min_max.second;
+  float min_num = data.at(0);
+  float max_num = data.at(0);
+  for (float val : data) {
+    min_num = std::min(val, min_num);
+    max_num = std::max(val, max_num);
+  }
   real_min_ = std::min(min_num, real_min_);
   real_max_ = std::max(max_num, real_max_);
   if (activation_quant_method_ == REMOVAL_OUTLIER) {
