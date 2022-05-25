@@ -331,6 +331,7 @@ class Dataset:
         self._input_indexs = ()
         self.saved_output_types = None
         self.saved_output_shapes = None
+        self.estimated_output_shapes = None
         self.runtime_context = None
         self.dynamic_setting = [False, None]
         self.saved_min_shapes = None
@@ -1563,9 +1564,11 @@ class Dataset:
             runtime_getter[2].notify_watchdog()
         return self._col_names
 
-    def output_shapes(self):
+    def output_shapes(self, estimate=False):
         """
-        Get the shapes of output data.
+        Get the shapes of output data. If `estimate` is False, will return the shape of first data row.
+        Otherwise, will iterate the whole dataset and return the estimated shape of data row, where dynamic
+        shape marked is marked as -1.
 
         Returns:
             list, list of shapes of each column.
@@ -1574,19 +1577,32 @@ class Dataset:
             >>> # dataset is an instance object of Dataset
             >>> output_shapes = dataset.output_shapes()
         """
-        if self.saved_output_shapes is None:
-            runtime_getter = self._init_tree_getters()
-            # We have a hang problem when two-level pipeline with multiprocessing, we need to extend the life cycle
-            # of runtime_context. We found this hang problem only occur on output_types and output_shapes.
-            self.runtime_context = runtime_getter[1]
-            self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
-            self.saved_output_types = runtime_getter[0].GetOutputTypes()
-            runtime_getter[2].close_pool()
-            runtime_getter[2].notify_watchdog()
-            del self.runtime_context
+        # cache single shape
+        if not estimate and self.saved_output_shapes is not None:
+            return self.saved_output_shapes
+        # cache estimate shape
+        if estimate and self.estimated_output_shapes is not None:
+            return self.estimated_output_shapes
+
+        # if use set_dynamic_column, the `estimate` does not work, but they get the same result
         if self.dynamic_setting[0]:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
-        return self.saved_output_shapes
+            return self.saved_output_shapes
+
+        # We have a hang problem when two-level pipeline with multiprocessing, we need to extend the life cycle
+        # of runtime_context. We found this hang problem only occur on output_types and output_shapes.
+        runtime_getter = self._init_tree_getters()
+        self.runtime_context = runtime_getter[1]
+        output_shapes = runtime_getter[0].GetOutputShapes(estimate)
+        runtime_getter[2].close_pool()
+        runtime_getter[2].notify_watchdog()
+        del self.runtime_context
+
+        if estimate:
+            self.estimated_output_shapes = output_shapes
+        else:
+            self.saved_output_shapes = output_shapes
+        return output_shapes
 
     def output_types(self):
         """
@@ -1604,13 +1620,10 @@ class Dataset:
             # We have a hang problem when two-level pipeline with multiprocessing, we need to extend the life cycle
             # of runtime_context. We found this hang problem only occur on output_types and output_shapes.
             self.runtime_context = runtime_getter[1]
-            self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
             runtime_getter[2].close_pool()
             runtime_getter[2].notify_watchdog()
             del self.runtime_context
-        if self.dynamic_setting[0]:
-            self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
         return self.saved_output_types
 
     def get_dataset_size(self):

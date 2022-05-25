@@ -33,10 +33,11 @@ def test_get_dynamic_min_max_shapes_0():
 
     dataset = ds.GeneratorDataset(generator0, ["data1", "data2", "data3"])
 
-    # config dynamic shape
-    dataset.set_dynamic_columns(columns={"data1": [32, None], "data2": [16, None, None, 3], "data3": [None]})
+    # new api
+    estimate_dynamic_shapes = dataset.output_shapes(estimate=True)
 
-    # get dynamic information
+    # old api
+    dataset.set_dynamic_columns(columns={"data1": [32, None], "data2": [16, None, None, 3], "data3": [None]})
     min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
     dynamic_shapes = dataset.output_shapes()
 
@@ -44,6 +45,7 @@ def test_get_dynamic_min_max_shapes_0():
     np.testing.assert_array_equal(min_shapes, [[32, 1], [16, 1, 1, 3], [1]])
     np.testing.assert_array_equal(max_shapes, [[32, 69], [16, 69, 69, 3], [69]])
     np.testing.assert_array_equal(dynamic_shapes, [[32, -1], [16, -1, -1, 3], [-1]])
+    np.testing.assert_array_equal(dynamic_shapes, estimate_dynamic_shapes)
 
 
 def generator1():
@@ -61,10 +63,11 @@ def test_get_dynamic_min_max_shapes_1():
 
     dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
 
-    # config dynamic shape
-    dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
+    # new api
+    estimate_dynamic_shapes = dataset.output_shapes(estimate=True)
 
-    # get dynamic information
+    # old api
+    dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": []})
     dynamic_shapes = dataset.output_shapes()
     min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
 
@@ -73,6 +76,7 @@ def test_get_dynamic_min_max_shapes_1():
     np.testing.assert_array_equal(min_shapes, [[16, 1, 83], []])
     np.testing.assert_array_equal(max_shapes, [[16, 99, 83], []])
     np.testing.assert_array_equal(dynamic_shapes, [[16, -1, 83], []])
+    np.testing.assert_array_equal(dynamic_shapes, estimate_dynamic_shapes)
 
 
 def test_get_dynamic_min_max_shapes_2():
@@ -112,10 +116,11 @@ def test_get_dynamic_min_max_shapes_3():
 
     dataset = ds.GeneratorDataset(generator2, ["data1", "data2"])
 
-    # only dynamic shape is required to config
-    dataset.set_dynamic_columns(columns={"data1": [16, None, 83]})
+    # new api
+    estimate_dynamic_shapes = dataset.output_shapes(estimate=True)
 
-    # get dynamic information
+    # old api
+    dataset.set_dynamic_columns(columns={"data1": [16, None, 83]})
     dynamic_shapes = dataset.output_shapes()
     min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
 
@@ -124,6 +129,7 @@ def test_get_dynamic_min_max_shapes_3():
     np.testing.assert_array_equal(min_shapes, [[16, 1, 83], [5, 5]])
     np.testing.assert_array_equal(max_shapes, [[16, 99, 83], [5, 5]])
     np.testing.assert_array_equal(dynamic_shapes, [[16, -1, 83], [5, 5]])
+    np.testing.assert_array_equal(dynamic_shapes, estimate_dynamic_shapes)
 
 
 def test_get_dynamic_min_max_shapes_4():
@@ -136,10 +142,11 @@ def test_get_dynamic_min_max_shapes_4():
 
     dataset = ds.GeneratorDataset(generator2, ["data1", "data2"])
 
-    # only dynamic shape is required to config
-    dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": [None, 5]})
+    # new api
+    estimate_dynamic_shapes = dataset.output_shapes(estimate=True)
 
-    # get dynamic information
+    # old api
+    dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": [None, 5]})
     dynamic_shapes = dataset.output_shapes()
     min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
 
@@ -148,6 +155,7 @@ def test_get_dynamic_min_max_shapes_4():
     np.testing.assert_array_equal(min_shapes, [[16, 1, 83], [1, 5]])
     np.testing.assert_array_equal(max_shapes, [[16, 99, 83], [5, 5]])
     np.testing.assert_array_equal(dynamic_shapes, [[16, -1, 83], [-1, 5]])
+    np.testing.assert_array_equal(estimate_dynamic_shapes, [[16, -1, 83], [5, 5]])
 
 
 def test_get_dynamic_min_max_shapes_5():
@@ -166,9 +174,12 @@ def test_get_dynamic_min_max_shapes_5():
     ]
 
     dataset = ds.NumpySlicesDataset(np_data, column_names=["col1"])
-    dataset.set_dynamic_columns(columns={"col1": [2, None]})
 
-    # get dynamic information
+    # new api
+    estimate_dynamic_shapes = dataset.output_shapes(estimate=True)
+
+    # old api
+    dataset.set_dynamic_columns(columns={"col1": [2, None]})
     dynamic_shapes = dataset.output_shapes()
     min_shapes, max_shapes = dataset.dynamic_min_max_shapes()
 
@@ -177,6 +188,7 @@ def test_get_dynamic_min_max_shapes_5():
     np.testing.assert_array_equal(min_shapes, [[2, 1]])
     np.testing.assert_array_equal(max_shapes, [[2, 2]])
     np.testing.assert_array_equal(dynamic_shapes, [[2, -1]])
+    np.testing.assert_array_equal(estimate_dynamic_shapes, [[2, 2]])
 
 
 def test_get_dynamic_min_max_shapes_6():
@@ -225,6 +237,28 @@ def test_get_dynamic_min_max_shapes_6():
     assert "shape [16, None] does not match dataset column [data1] with shape [16, 1, 83]" in str(info.value)
 
 
+def generator3():
+    for i in range(50, 70):
+        if i < 60:
+            yield (np.ones((32, i)), np.zeros((16, i, i, 3)), np.ones((i)))
+        else:
+            yield (np.ones((32)), np.zeros((i, 3)), np.ones((i)))
+
+
+def test_output_shapes_exception():
+    """
+    Feature: output_shapes with new parameter `estimate`
+    Description: When the shapes data row are inconsistent, raise error.
+    Expectation: Raise runtime error to tell user inconsistent shapes.
+    """
+    logger.info("Test dynamic_min_max_shapes with inconsistent shape.")
+
+    with pytest.raises(RuntimeError) as info:
+        dataset = ds.GeneratorDataset(generator3, ["data1", "data2", "data3"])
+        _ = dataset.output_shapes(estimate=True)
+    assert "Inconsistent shapes, expect same shape for each data row" in str(info.value)
+
+
 if __name__ == "__main__":
     test_get_dynamic_min_max_shapes_0()
     test_get_dynamic_min_max_shapes_1()
@@ -233,4 +267,5 @@ if __name__ == "__main__":
     test_get_dynamic_min_max_shapes_4()
     test_get_dynamic_min_max_shapes_5()
     test_get_dynamic_min_max_shapes_6()
+    test_output_shapes_exception()
     

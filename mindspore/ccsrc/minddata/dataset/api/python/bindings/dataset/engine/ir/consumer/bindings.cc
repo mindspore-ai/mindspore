@@ -54,9 +54,9 @@ PYBIND_REGISTER(TreeGetters, 1, ([](const py::module *m) {
                     .def("Init",
                          [](PythonTreeGetters &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
                     .def("GetOutputShapes",
-                         [](PythonTreeGetters &self) {
+                         [](PythonTreeGetters &self, bool estimate) {
                            std::vector<TensorShape> shapes = {};
-                           THROW_IF_ERROR(self.GetOutputShapes(&shapes));
+                           THROW_IF_ERROR(self.GetOutputShapes(&shapes, estimate));
                            return shapesToListOfShape(shapes);
                          })
                     .def("GetOutputTypes",

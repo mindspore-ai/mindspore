@@ -751,7 +751,14 @@ Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &
 }
 #endif
 
-TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false), first_row_obtained_(false) {
+TreeGetters::TreeGetters()
+    : root_(nullptr),
+      dataset_size_(-1),
+      first_row_type_({}),
+      first_row_shape_({}),
+      estimated_row_shape_({}),
+      init_flag_(false),
+      first_row_obtained_(false) {
   tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeGetter);
 }
 
@@ -773,10 +780,47 @@ Status TreeGetters::GetOutputTypes(std::vector<DataType> *types) {
   return Status::OK();
 }
 
-Status TreeGetters::GetOutputShapes(std::vector<TensorShape> *shapes) {
+Status TreeGetters::GetOutputShapes(std::vector<TensorShape> *shapes, bool estimate) {
   RETURN_UNEXPECTED_IF_NULL(shapes);
   RETURN_IF_NOT_OK(GetFirstRowShapeAndType());
   *shapes = first_row_shape_;
+
+  if (estimate) {
+    estimated_row_shape_ = first_row_shape_;
+    TensorRow row;
+    RETURN_IF_NOT_OK(GetRow(&row));
+
+    while (!row.empty()) {
+      std::vector<TensorShape> cur_row_shape;
+      (void)std::transform(row.begin(), row.end(), std::back_inserter(cur_row_shape),
+                           [=](auto &t) { return t->shape(); });
+
+      // calculate dynamic shape
+      CHECK_FAIL_RETURN_SYNTAX_ERROR(cur_row_shape.size() == estimated_row_shape_.size(),
+                                     "Inconsistent shapes, expect same shape for each data row, last data row: " +
+                                       std::to_string(cur_row_shape.size()) +
+                                       ", current data row: " + std::to_string(estimated_row_shape_.size()));
+      size_t shape_size = cur_row_shape.size();
+      std::vector<TensorShape> dynamic_shapes;
+      for (size_t i = 0; i < shape_size; i++) {
+        CHECK_FAIL_RETURN_SYNTAX_ERROR(
+          cur_row_shape[i].Size() == estimated_row_shape_[i].Size(),
+          "Inconsistent shapes, expect same shape for each data row, last data row: " + cur_row_shape[i].ToString() +
+            ", current data row: " + estimated_row_shape_[i].ToString());
+
+        std::vector<dsize_t> vec;
+        for (size_t j = 0; j < estimated_row_shape_[i].Size(); j++) {
+          dsize_t dim = cur_row_shape[i][j] == estimated_row_shape_[i][j] ? cur_row_shape[i][j] : -1;
+          vec.push_back(dim);
+        }
+        dynamic_shapes.emplace_back(TensorShape(vec));
+      }
+      estimated_row_shape_ = dynamic_shapes;
+      RETURN_IF_NOT_OK(GetRow(&row));
+    }
+
+    *shapes = estimated_row_shape_;
+  }
   return Status::OK();
 }
 
