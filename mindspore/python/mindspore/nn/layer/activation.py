@@ -1084,8 +1084,8 @@ class Threshold(Cell):
         \end{cases}
 
     Args:
-        threshold: The value to threshold at.
-        value: The value to replace with when element is less than threshold.
+        threshold (Union[int, float]): The value to threshold at.
+        value (Union[int, float]): The value to replace with when element is less than threshold.
 
     Inputs:
         - **input_x** (Tensor) - The input of Threshold with data type of float16 or float32.
