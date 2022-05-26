@@ -42,8 +42,8 @@ int ConcateTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
   if (axis_ == -1) {
     axis_ = input_nbDims - 1;
   }
-  if (axis_ < 0 || axis_ > input_nbDims || axis_ == input_nbDims && axis_ != schema::PrimitiveType_Stack) {
-    MS_LOG(ERROR) << "concate_op valid axis : " << axis_;
+  if (axis_ < 0 || axis_ > input_nbDims || axis_ == input_nbDims && type_ != schema::PrimitiveType_Stack) {
+    MS_LOG(ERROR) << "concate_op valid axis : " << axis_ << " , input dims : " << input_nbDims;
     return RET_ERROR;
   }
   return RET_OK;
@@ -84,7 +84,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
         MS_LOG(ERROR) << "addShuffle failed for TensorRT.";
         return RET_ERROR;
       }
-      auto shuffer_dims_opt = UnsqueezeDims((*trt_input_tensors)[i].getDimensions(), axis_, 1);
+      auto shuffer_dims_opt = UnsqueezeDims(trt_input_tensors[i]->getDimensions(), axis_, 1);
       if (!shuffer_dims_opt) {
         MS_LOG(ERROR) << "UnsqueezeDims failed.";
         return RET_ERROR;

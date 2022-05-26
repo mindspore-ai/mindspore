@@ -95,7 +95,7 @@ int SplitTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
 
     nvinfer1::ITensor *out_tensor = slice_layer->getOutput(0);
-    if (type_ = schema::PrimitiveType_Unstack) {
+    if (type_ == schema::PrimitiveType_Unstack) {
       auto shuffer_layer = network->addShuffle(*out_tensor);
       auto shuffer_dims_opt = SqueezeDims(out_tensor->getDimensions(), axis_);
       if (!shuffer_dims_opt) {
