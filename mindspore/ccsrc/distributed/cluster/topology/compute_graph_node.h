@@ -72,6 +72,9 @@ class ComputeGraphNode : public NodeBase {
   // The TCP client is used to send messages to meta server node.
   std::unique_ptr<rpc::TCPClient> tcp_client_;
 
+  // The TCP client used to send heartbeat to meta server.
+  std::unique_ptr<rpc::TCPClient> hb_client_;
+
   // Incidate whether this node is authenticated by meta server node.
   std::atomic<bool> authenticated_;
 

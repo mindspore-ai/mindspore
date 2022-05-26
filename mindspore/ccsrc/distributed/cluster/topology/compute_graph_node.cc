@@ -35,6 +35,10 @@ bool ComputeGraphNode::Initialize() {
   MS_EXCEPTION_IF_NULL(tcp_client_);
   RETURN_IF_FALSE_WITH_LOG(tcp_client_->Initialize(), "Failed to create the TCP client.");
 
+  hb_client_ = std::make_unique<rpc::TCPClient>();
+  MS_EXCEPTION_IF_NULL(hb_client_);
+  RETURN_IF_FALSE_WITH_LOG(hb_client_->Initialize(), "Failed to create the heartbeat tcp client.");
+
   // Register itself to meta server node.
   bool success = ReconnectIfNeeded(std::bind(&ComputeGraphNode::Register, this),
                                    "Failed to register and try to reconnect to the meta server.");
@@ -65,22 +69,34 @@ bool ComputeGraphNode::Finalize(bool force) {
   }
 
   // Release the TCP client.
+  const auto &server_url = meta_server_addr_.GetUrl();
   if (tcp_client_ != nullptr) {
-    const auto &server_url = meta_server_addr_.GetUrl();
     tcp_client_->Disconnect(server_url);
     tcp_client_->Finalize();
     tcp_client_.reset();
+  }
+
+  if (hb_client_ != nullptr) {
+    hb_client_->Disconnect(server_url);
+    hb_client_->Finalize();
+    hb_client_.reset();
   }
   return true;
 }
 
 bool ComputeGraphNode::Register() {
-  MS_EXCEPTION_IF_NULL(tcp_client_);
+  MS_EXCEPTION_IF_NULL(hb_client_);
   const auto &server_url = meta_server_addr_.GetUrl();
+  RETURN_IF_FALSE_WITH_LOG(hb_client_->Disconnect(server_url),
+                           "Failed to disconnect from the meta server node url: " << server_url);
+  RETURN_IF_FALSE_WITH_LOG(hb_client_->Connect(server_url),
+                           "Failed to connect to the meta server node url: " << server_url);
+
   RETURN_IF_FALSE_WITH_LOG(tcp_client_->Disconnect(server_url),
                            "Failed to disconnect from the meta server node url: " << server_url);
   RETURN_IF_FALSE_WITH_LOG(tcp_client_->Connect(server_url),
                            "Failed to connect to the meta server node url: " << server_url);
+
   RegistrationMessage reg_msg;
   reg_msg.set_node_id(node_id_);
 
@@ -88,7 +104,7 @@ bool ComputeGraphNode::Register() {
   auto message = CreateMessage(server_url, MessageName::kRegistration, content);
   MS_EXCEPTION_IF_NULL(message);
 
-  MessageBase *response = tcp_client_->ReceiveSync(std::move(message));
+  MessageBase *response = hb_client_->ReceiveSync(std::move(message));
   if (response == nullptr) {
     return false;
   }
@@ -109,7 +125,7 @@ bool ComputeGraphNode::Register() {
 }
 
 bool ComputeGraphNode::Unregister() {
-  MS_EXCEPTION_IF_NULL(tcp_client_);
+  MS_EXCEPTION_IF_NULL(hb_client_);
 
   UnregistrationMessage unreg_msg;
   unreg_msg.set_node_id(node_id_);
@@ -119,7 +135,7 @@ bool ComputeGraphNode::Unregister() {
   MS_EXCEPTION_IF_NULL(message);
 
   const size_t timeout = 6;
-  MessageBase *response = tcp_client_->ReceiveSync(std::move(message), timeout);
+  MessageBase *response = hb_client_->ReceiveSync(std::move(message), timeout);
   if (response == nullptr) {
     return false;
   }
@@ -135,7 +151,7 @@ bool ComputeGraphNode::Unregister() {
 }
 
 bool ComputeGraphNode::Heartbeat() {
-  MS_EXCEPTION_IF_NULL(tcp_client_);
+  MS_EXCEPTION_IF_NULL(hb_client_);
 
   MS_LOG(INFO) << "The heartbeat thread is started.";
   size_t interval = 3;
@@ -150,7 +166,7 @@ bool ComputeGraphNode::Heartbeat() {
     auto message = CreateMessage(server_url, MessageName::kHeartbeat, content);
     MS_EXCEPTION_IF_NULL(message);
 
-    MessageBase *response = tcp_client_->ReceiveSync(std::move(message), timeout);
+    MessageBase *response = hb_client_->ReceiveSync(std::move(message), timeout);
     if (response == nullptr) {
       MS_LOG(ERROR) << "Failed to send heartbeat message to meta server node and try to reconnect to the meta server.";
       while (!Reconnect()) {
@@ -188,14 +204,22 @@ bool ComputeGraphNode::Reconnect() {
   while (tcp_client_->IsConnected(server_url)) {
     tcp_client_->Disconnect(server_url);
   }
+  while (hb_client_->IsConnected(server_url)) {
+    hb_client_->Disconnect(server_url);
+  }
 
   // Reconnect to the meta server node.
-  size_t total_retry = 3;
-  const size_t connect_retry = 3;
+  const size_t retry = 3;
+  size_t total_retry = retry;
+  const size_t connect_retry = retry;
   while (!tcp_client_->IsConnected(server_url) && total_retry-- > 0) {
     tcp_client_->Connect(server_url, connect_retry);
   }
-  return tcp_client_->IsConnected(server_url);
+  total_retry = retry;
+  while (!hb_client_->IsConnected(server_url) && total_retry-- > 0) {
+    hb_client_->Connect(server_url, connect_retry);
+  }
+  return tcp_client_->IsConnected(server_url) && hb_client_->IsConnected(server_url);
 }
 
 bool ComputeGraphNode::SendMessageToMSN(const std::string msg_name, const std::string &msg_body) {
