@@ -207,6 +207,7 @@ class MS_CORE_API ThreadPool {
   int max_spin_count_{kDefaultSpinCount};
   int min_spin_count_{kMinSpinCount};
   float server_cpu_frequence = -1.0f;  // Unit : GHz
+  static std::mutex create_thread_pool_mutex_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_

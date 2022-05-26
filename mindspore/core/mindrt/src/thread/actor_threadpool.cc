@@ -188,6 +188,7 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
 
 ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
                                                    const std::vector<int> &core_list, BindMode bind_mode) {
+  std::lock_guard<std::mutex> lock(create_thread_pool_mutex_);
   ActorThreadPool *pool = new (std::nothrow) ActorThreadPool();
   if (pool == nullptr) {
     return nullptr;
@@ -212,6 +213,7 @@ ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size
 }
 
 ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t thread_num) {
+  std::lock_guard<std::mutex> lock(create_thread_pool_mutex_);
   ActorThreadPool *pool = new (std::nothrow) ActorThreadPool();
   if (pool == nullptr) {
     return nullptr;
