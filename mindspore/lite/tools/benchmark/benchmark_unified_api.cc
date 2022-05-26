@@ -901,15 +901,15 @@ void BenchmarkUnifiedApi::ModelParallelRunnerWarmUp(int index) {
   }
   auto warm_up_start = GetTimeUs();
   auto ret = model_runner_.Predict(in, &output);
+  for (size_t j = 0; j < in.size(); j++) {
+    in[j].SetData(nullptr);
+  }
   if (ret != kSuccess) {
     model_parallel_runner_ret_failed_ = true;
     MS_LOG(ERROR) << "model pool predict failed.";
     return;
   }
   auto warm_up_end = GetTimeUs();
-  for (size_t j = 0; j < in.size(); j++) {
-    in[j].SetData(nullptr);
-  }
   std::cout << "warm up index: " << index << " | time: " << (warm_up_end - warm_up_start) / kFloatMSEC << " ms\n";
 }
 
@@ -931,11 +931,17 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
     if (ret != kSuccess) {
       model_parallel_runner_ret_failed_ = true;
       MS_LOG(ERROR) << "model pool predict failed.";
+      for (auto &item : in) {
+        item.SetData(nullptr);
+      }
       return;
     }
     auto predict_end = GetTimeUs();
     std::cout << "parallel index: " << parallel_idx << " | task index: " << i
               << " | predict time: " << (predict_end - predict_start) / kFloatMSEC << " ms\n";
+    for (size_t j = 0; j < in.size(); j++) {
+      in[j].SetData(nullptr);
+    }
     if (!flags_->benchmark_data_file_.empty()) {
       auto status = CompareOutputForModelPool(&output);
       if (status != RET_OK) {
@@ -943,9 +949,6 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
         MS_LOG(ERROR) << "Compare output error " << status;
         return;
       }
-    }
-    for (size_t j = 0; j < in.size(); j++) {
-      in[j].SetData(nullptr);
     }
   }
 }
@@ -1504,7 +1507,12 @@ BenchmarkUnifiedApi::~BenchmarkUnifiedApi() {
   for (auto &input : all_inputs_data_) {
     for (auto &data : input) {
       if (data != nullptr) {
-        free(data);
+        if (flags_->input_data_list_.empty()) {
+          free(data);
+        } else {
+          auto buf = static_cast<char *>(data);
+          delete[] buf;
+        }
         data = nullptr;
       }
     }
