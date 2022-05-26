@@ -155,7 +155,8 @@ void SetSendNodeAttr(const AnfNodePtr &send_node, const InterProcessOpEdge &inte
 
   common::AnfAlgo::SetNodeAttr(kAttrSendSrcNodeName, MakeValue(src_node_name), send_node);
   common::AnfAlgo::SetNodeAttr(kAttrSendDstNodeName, MakeValue(dst_node_name), send_node);
-  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeName, MakeValue(inter_process_edge.to_string()), send_node);
+  std::vector<std::string> inter_process_edges = {inter_process_edge.to_string()};
+  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeNames, MakeValue(inter_process_edges), send_node);
 
   // Set send node to CPU for now.
   common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), send_node);
@@ -179,7 +180,8 @@ void SetRecvNodeAttr(const AnfNodePtr &recv_node, const InterProcessOpEdge &inte
 
   common::AnfAlgo::SetNodeAttr(kAttrRecvSrcNodeName, MakeValue(src_node_name), recv_node);
   common::AnfAlgo::SetNodeAttr(kAttrRecvDstNodeName, MakeValue(dst_node_name), recv_node);
-  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeName, MakeValue(inter_process_edge.to_string()), recv_node);
+  std::vector<std::string> inter_process_edges = {inter_process_edge.to_string()};
+  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeNames, MakeValue(inter_process_edges), recv_node);
 
   // Set recv node to CPU for now.
   common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(kCPUDevice), recv_node);
@@ -773,13 +775,14 @@ CNodePtr ParameterServerMode::FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_
     }
     abstract_list.emplace_back(send_node->abstract());
     fused_inter_process_edge_name.append(
-      common::AnfAlgo::GetNodeAttr<std::string>(send_node, kAttrInterProcessEdgeName));
+      common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(send_node, kAttrInterProcessEdgeNames).front());
   }
 
   CNodePtr fused_send_node = func_graph_->NewCNode(send_inputs);
   MS_EXCEPTION_IF_NULL(fused_send_node);
   fused_send_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
-  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeName, MakeValue(fused_inter_process_edge_name), fused_send_node);
+  std::vector<std::string> fused_inter_process_edge_names = {fused_inter_process_edge_name};
+  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeNames, MakeValue(fused_inter_process_edge_names), fused_send_node);
   common::AnfAlgo::CopyNodeAttr(kAttrPrimitiveTarget, rpc_send_nodes[0], fused_send_node);
   common::AnfAlgo::CopyNodeAttr(kAttrSendDstRanks, rpc_send_nodes[0], fused_send_node);
   common::AnfAlgo::CopyNodeAttr(kAttrSendDstRoles, rpc_send_nodes[0], fused_send_node);
@@ -805,7 +808,7 @@ CNodePtr ParameterServerMode::FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_
     }
     abstract_list.emplace_back(recv_node->abstract());
     fused_inter_process_edge_name.append(
-      common::AnfAlgo::GetNodeAttr<std::string>(recv_node, kAttrInterProcessEdgeName));
+      common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(recv_node, kAttrInterProcessEdgeNames).front());
   }
   // Add umonad for recv node to update reference.
   ValuePtr monad_value = kUMonad;
@@ -817,7 +820,8 @@ CNodePtr ParameterServerMode::FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_
   CNodePtr fused_recv_node = func_graph_->NewCNode(recv_inputs);
   MS_EXCEPTION_IF_NULL(fused_recv_node);
   fused_recv_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
-  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeName, MakeValue(fused_inter_process_edge_name), fused_recv_node);
+  std::vector<std::string> fused_inter_process_edge_names = {fused_inter_process_edge_name};
+  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeNames, MakeValue(fused_inter_process_edge_names), fused_recv_node);
   common::AnfAlgo::CopyNodeAttr(kAttrPrimitiveTarget, rpc_recv_nodes[0], fused_recv_node);
   common::AnfAlgo::CopyNodeAttr(kAttrRecvSrcRanks, rpc_recv_nodes[0], fused_recv_node);
   common::AnfAlgo::CopyNodeAttr(kAttrRecvSrcRoles, rpc_recv_nodes[0], fused_recv_node);

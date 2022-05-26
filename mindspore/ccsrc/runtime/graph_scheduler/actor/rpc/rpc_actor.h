@@ -65,8 +65,8 @@ class RpcActor : public KernelActor {
   // Set the actor route proxy for rpc actors.
   void set_actor_route_table_proxy(const ActorRouteTableProxyPtr &proxy);
 
-  // Set the inter-process edge name for rpc actor.
-  void set_inter_process_edge_name(const std::string &edge_name);
+  // Set the inter-process edge names for rpc actor.
+  void set_inter_process_edge_names(const std::vector<std::string> &edge_name);
 
   // Set some info which will be used for rpc routing.
   virtual void SetRouteInfo(uint32_t peer_rank, const std::string &peer_role, const std::string &src_node_name,
@@ -76,10 +76,11 @@ class RpcActor : public KernelActor {
   // The op context to run rpc actor inter-process op. Set by method 'SetOpcontext'.
   OpContext<DeviceTensor> *op_context_;
 
-  // The inter-process edge name. It is also used as the actor id for route. It's a string consists of source node name
-  // and destination node name. The format is "source node name"->"destination node name". For each inter-process edge,
-  // this is is unique. Rpc actor with the same inter_process_edge_name_ should not be in the same process.
-  std::string inter_process_edge_name_;
+  // The inter-process edge names. It is also used as the actor id for route. Each edeg name is a string consists of
+  // source node name and destination node name. The format is "source node name"->"destination node name". For each
+  // inter-process edge, this is unique. Rpc actor with the same inter process edge name should not be in the same
+  // process.
+  std::vector<std::string> inter_process_edge_names_;
 
   // The node name of rpc actor's peers. They are not the name of send or recv nodes. Instead, they are the names of the
   // nodes which use send node as output and recv node as input.
