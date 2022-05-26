@@ -156,6 +156,7 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
   const int kPrimitiveOffset = 0;
   const int kEnvironTypeOffset = 1;
   const int kSymbolicKeyOffset = 2;
+  const int kEnvironValueOffset = 3;
   auto mng = resource->manager();
   const auto &all_nodes = mng->all_nodes();
   auto txn = mng->Transact();
@@ -170,12 +171,14 @@ bool EnvironConversion(const pipeline::ResourcePtr &resource) {
     AnfNodePtr transformed_prim_node;
     const auto &type_id = GetValueType(cnode);
     if (type_id == kObjectTypeMonad) {
+      // Eliminate the kPrimEnvironSet node.
       if (IsPrimitiveCNode(node, prim::kPrimEnvironSet)) {
         (void)txn.Replace(cnode, cnode->input(kEnvironTypeOffset));
-        continue;
       } else {
-        MS_LOG(EXCEPTION) << "Should be eliminated, but node: " << cnode->DebugString();
+        // Eliminate the kPrimEnvironGet node.
+        (void)txn.Replace(cnode, cnode->input(kEnvironValueOffset));
       }
+      continue;
     }
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(kPrimitiveOffset));
     MS_EXCEPTION_IF_NULL(prim);

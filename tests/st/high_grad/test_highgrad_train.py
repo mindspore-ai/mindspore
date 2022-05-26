@@ -21,7 +21,8 @@ from mindspore import context, Tensor, Parameter
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops.composite import GradOperation
-from mindspore.common import ParameterTuple
+from mindspore.common import ParameterTuple, dtype
+import mindspore.ops.functional as F
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -113,3 +114,48 @@ def test_high_grad_train():
     train_network.set_train()
     for i in range(epoch):
         train_network(Tensor([x_train[i]]), Tensor([y_train[i]]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_high_grad_environ_eliminate():
+    """
+    Feature: eliminate the environ node.
+    Description: eliminate the environ node in high grad.
+    Expectation: Null.
+    """
+
+    class AutoNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.w = Parameter(Tensor([1], dtype.float32), name='weight')
+
+        def construct(self, x, y):
+            if x <= 0:
+                x = x - x
+                y = y / y
+            elif x > y:
+                x = y / 3
+            elif x > 5:
+                y = x - x
+            elif y > x:
+                y = x + self.w
+            else:
+                x = x - x
+            return x + y
+
+    x = np.array([3], np.float32)
+    y = np.array([4], np.float32)
+    net = AutoNet()
+    out = net(Tensor(x), Tensor(y))
+    print('ms forward: ', out)
+    grad_net = F.grad(net, grad_position=(0, 1))
+    fgrad = grad_net(Tensor(x), Tensor(y))
+    print('ms backward: ', fgrad)
+    sgrad_net = F.grad(grad_net)
+    sgrad = sgrad_net(Tensor(x), Tensor(y))
+    print('second grad: ', sgrad)
