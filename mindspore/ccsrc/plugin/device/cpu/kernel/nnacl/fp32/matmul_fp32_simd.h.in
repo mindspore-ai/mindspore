@@ -59,6 +59,26 @@ static inline int64_t GemmIsNotPackOptimizeCore@SIMD_INSTRUCTION@(int64_t index,
 }
 #endif
 
+static inline int64_t MatVecMulNoPackCore@SIMD_INSTRUCTION@(int64_t oc_index, const float *a, const float *b, float *c, const float *bias,
+  int act_type, int64_t depth, int64_t oc, int64_t col, int64_t inc_flag) {
+  for (int64_t oc_max_size = oc - BLOCK_NUM; oc_index <= oc_max_size; oc_index += BLOCK_NUM) {
+    SIMD_F32 out = (inc_flag & 0x1) == 0 ? SIMD_LD_F32(c + oc_index) : (bias == NULL ? SIMD_MOV_F32(0.0f) : SIMD_LD_F32(bias + oc_index));
+    for (int64_t k = 0; k < depth; ++k) {
+      SIMD_F32 left = SIMD_MOV_F32(a[k]);
+      SIMD_F32 right = SIMD_LD_F32(b + oc_index + k * col);
+      out = SIMD_FMADD_F32(left, right, out);
+    }
+    if ((inc_flag & 0x2) != 0 && act_type != 0) {
+      out = SIMD_MAX_F32(out, SIMD_MOV_F32(0.0f));
+      if (act_type == 0x3) {
+        out = SIMD_MIN_F32(out, SIMD_MOV_F32(6.0f));
+      }
+    }
+    SIMD_ST_F32(c + oc_index, out);
+  }
+  return oc_index;
+}
+
 @SIMD_INSTRUCTION_END@
 #ifdef __cplusplus
 }

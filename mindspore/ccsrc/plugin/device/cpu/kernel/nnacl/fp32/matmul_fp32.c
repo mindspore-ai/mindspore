@@ -1349,6 +1349,43 @@ void GemmIsNotPackOptimize(const float *a, const float *b, float *c, const float
   }
 }
 
+void MatVecMulNoPackFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int64_t depth,
+                         int64_t cur_col, int64_t col) {
+  int inc_flag = 0;
+  int64_t k = 0;
+  for (; k <= depth - C1500NUM; k += C1500NUM) {
+    inc_flag = (k == 0) + (k + C1500NUM == depth ? C2NUM : 0);
+    int64_t oc_index = 0;
+    SIMD_RUN_NO_SCALAR(MatVecMulNoPackCore, oc_index, a, b, c, bias, act_type, C1500NUM, cur_col, col, inc_flag);
+    for (; oc_index < cur_col; ++oc_index) {
+      float dst = (inc_flag & 1) == 0 ? c[oc_index] : (bias == NULL ? 0 : bias[oc_index]);
+      for (int64_t k_index = 0; k_index < k; ++k_index) {
+        dst += a[k_index] * b[oc_index + k_index * col];
+      }
+      if ((inc_flag & 0x2) != 0) {
+        ActCompute(32, 0, C6NUM);
+      }
+      c[oc_index] = dst;
+    }
+    a += k;
+    b += k * col;
+  }
+  if (k == depth) {
+    return;
+  }
+  inc_flag = (k == 0) + C2NUM;
+  int64_t oc_index = 0;
+  SIMD_RUN_NO_SCALAR(MatVecMulNoPackCore, oc_index, a, b, c, bias, act_type, depth - k, cur_col, col, inc_flag);
+  for (; oc_index < cur_col; ++oc_index) {
+    float dst = (inc_flag & 1) == 0 ? c[oc_index] : (bias == NULL ? 0 : bias[oc_index]);
+    for (int64_t k_index = 0; k_index < depth; ++k_index) {
+      dst += a[k_index] * b[oc_index + k_index * col];
+    }
+    ActCompute(32, 0, C6NUM);
+    c[oc_index] = dst;
+  }
+}
+
 #ifdef ENABLE_ARM64
 // act_type must be 0, 1, 2. 0: no_act, 1: relu, 3: relu6.
 void MatMul4x1Kernel(const float *input, const float *weight, float *output, const float *bias, size_t deep,

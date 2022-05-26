@@ -41,6 +41,10 @@ int MatmulFp32AVXCPUKernel::PackMatrixAImplOpt() {
 int MatmulFp32AVXCPUKernel::ParallelRunByBatch(int task_id) const {
   int start_batch = task_id * batch_stride_;
   int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
+  int func_flag{0};
+  if (params_->row_ == 1) {
+    func_flag += (!params_->b_const_ && params_->col_ <= C128NUM) ? C2NUM : C1NUM;
+  }
 
   for (int index = start_batch; index < end_batch; ++index) {
     const float *a = matrix_a_.pack_ptr + a_offset_[index] * params_->row_align_ * params_->deep_;
@@ -48,10 +52,12 @@ int MatmulFp32AVXCPUKernel::ParallelRunByBatch(int task_id) const {
     float *c = output_data_ + index * params_->row_ * col_step_;
 
     auto bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr;
-    if (params_->row_ == 1) {
+    if (func_flag == 0) {
+      MatMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, col_step_, params_->col_align_, params_->row_);
+    } else if (func_flag == C1NUM) {
       MatVecMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, col_step_, params_->col_align_);
     } else {
-      MatMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, col_step_, params_->col_align_, params_->row_);
+      MatVecMulNoPackFp32(a, b, c, bias, params_->act_type_, params_->deep_, col_step_, col_step_);
     }
   }
   return RET_OK;
@@ -92,15 +98,22 @@ int MatmulFp32AVXCPUKernel::ParallelRunByOC(int task_id) const {
   if (compute_oc <= 0) {
     return RET_OK;
   }
+  int func_flag{0};
+  if (params_->row_ == 1) {
+    func_flag += (!params_->b_const_ && params_->col_ <= C128NUM) ? C2NUM : C1NUM;
+  }
+  int b_stride = func_flag == C2NUM ? 1 : params_->deep_;
   for (int i = 0; i < params_->batch; ++i) {
     auto a = matrix_a_.pack_ptr + a_offset_[i] * params_->row_align_ * params_->deep_;
-    auto b = matrix_b_.pack_ptr + b_offset_[i] * params_->deep_ * params_->col_align_ + start_oc * params_->deep_;
+    auto b = matrix_b_.pack_ptr + b_offset_[i] * params_->deep_ * params_->col_align_ + start_oc * b_stride;
     auto c = output_data_ + i * params_->row_ * col_step_ + start_oc;
     auto bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr + start_oc;
-    if (params_->row_ == 1) {
+    if (func_flag == 0) {
+      MatMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, compute_oc, params_->col_align_, params_->row_);
+    } else if (func_flag == C1NUM) {
       MatVecMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, compute_oc, params_->col_align_);
     } else {
-      MatMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, compute_oc, params_->col_align_, params_->row_);
+      MatVecMulNoPackFp32(a, b, c, bias, params_->act_type_, params_->deep_, compute_oc, col_step_);
     }
   }
   return RET_OK;
@@ -116,6 +129,9 @@ bool MatmulFp32AVXCPUKernel::CheckThreadCuttingByRow() {
   if (params_->col_ == 1) {
     row_min_unit_ = C4NUM;
     return true;
+  }
+  if (params_->row_ == 1 && !params_->b_const_ && params_->col_ <= C128NUM) {
+    return false;
   }
   row_min_unit_ = C3NUM;
   if (col_step_ < C16NUM) {
