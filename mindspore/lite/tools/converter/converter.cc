@@ -19,7 +19,7 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include "tools/converter/converter_flags.h"
+#include <algorithm>
 #include "src/common/log_adapter.h"
 #include "tools/common/meta_graph_serializer.h"
 #include "tools/lite_exporter/anf_exporter.h"
@@ -42,43 +42,52 @@
 #include "include/api/model.h"
 #include "tools/mindir_exporter/mindir_serializer.h"
 #include "src/common/primitive_t_utils.h"
+#include "tools/converter/config_parser/acl_option_param_parser.h"
+#include "tools/converter/config_parser/micro_param_parser.h"
+#include "tools/converter/config_parser/preprocess_parser.h"
+#include "tools/converter/config_parser/quant_param_parser.h"
+#include "tools/common/string_util.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore {
+extern "C" {
+void common_log_init();
+}
 namespace lite {
 namespace {
 constexpr size_t kMaxNum1024 = 1024;
-void InitConverterParameters(const converter::Flags &flag, converter::ConverterParameters *converter_parameters) {
-  MS_ASSERT(converter_parameters != nullptr);
-  converter_parameters->fmk = flag.fmk;
-  converter_parameters->model_file = flag.modelFile;
-  converter_parameters->weight_file = flag.weightFile;
-}
+constexpr size_t kPluginPathMaxNum = 10;
+constexpr int kPathLengthUpperLimit = 1024;
+constexpr size_t kEncMaxLen = 16;
+
 FuncGraphPtr ConvertGraph(const api::FuncGraphPtr &func_graph) {
   auto impl = func_graph->impl();
   return std::dynamic_pointer_cast<FuncGraph>(impl);
 }
 }  // namespace
 
-FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
+FuncGraphPtr ConverterImpl::BuildFuncGraph(const std::shared_ptr<ConverterPara> &param) {
   api::FuncGraphPtr func_graph_base = nullptr;
-  if (flag.fmk == converter::FmkType::kFmkTypeMs) {
+  if (param->fmk_type == converter::FmkType::kFmkTypeMs) {
 #ifdef SUPPORT_TRAIN
     kernel::PopulateTrainParameters();
 #endif
     MindsporeImporter ms_import;
-    func_graph_base = api::MakeShared<api::FuncGraph>(ms_import.ImportMindIR(flag));
+    func_graph_base = api::MakeShared<api::FuncGraph>(ms_import.ImportMindIR(param));
   } else {
-    model_parser_ = registry::ModelParserRegistry::GetModelParser(flag.fmk);
+    model_parser_ = registry::ModelParserRegistry::GetModelParser(param->fmk_type);
     if (model_parser_ == nullptr) {
-      MS_LOG(ERROR) << "Unsupported to converter models with fmk: " << flag.fmkIn;
+      MS_LOG(ERROR) << "Unsupported to converter models with fmk: " << param->fmk_type;
       return nullptr;
     }
     converter::ConverterParameters converter_parameters;
-    InitConverterParameters(flag, &converter_parameters);
+    converter_parameters.fmk = param->fmk_type;
+    converter_parameters.model_file = param->model_file;
+    converter_parameters.weight_file = param->weight_file;
     func_graph_base = model_parser_->Parse(converter_parameters);
   }
   if (func_graph_base == nullptr) {
-    MS_LOG(ERROR) << "Get funcGraph failed for fmk: " << flag.fmkIn;
+    MS_LOG(ERROR) << "Get funcGraph failed for fmk: " << param->fmk_type;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NOT_SUPPORT);
     return nullptr;
   }
@@ -94,9 +103,10 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
   return func_graph;
 }
 
-FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag, const void *buf, const size_t &size) {
+FuncGraphPtr ConverterImpl::BuildFuncGraph(const std::shared_ptr<ConverterPara> &param, const void *buf,
+                                           const size_t &size) {
   MindsporeImporter ms_import;
-  FuncGraphPtr func_graph = ms_import.ImportMindIR(flag, buf, size);
+  FuncGraphPtr func_graph = ms_import.ImportMindIR(param, buf, size);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Get funcGraph failed.";
     return nullptr;
@@ -110,39 +120,50 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag, const void 
   return func_graph;
 }
 
-schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag, const void *buf,
-                                       const size_t &size) {
-  if (flag == nullptr || buf == nullptr) {
-    MS_LOG(ERROR) << "Input flag is nullptr";
+schema::MetaGraphT *ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, const void *buf,
+                                           const size_t &size) {
+  if (param == nullptr || buf == nullptr) {
+    MS_LOG(ERROR) << "Input param is nullptr";
     return nullptr;
   }
-  auto graph = BuildFuncGraph(*flag, buf, size);
+  auto graph = BuildFuncGraph(param, buf, size);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Parser/Import model return nullptr";
     return nullptr;
   }
   MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed.");
   // funcgraph_transform
-  graph = funcgraph_transform_->Transform(graph, flag.get());
+  graph = funcgraph_transform_->Transform(graph, param);
   MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "Transform anf graph return nullptr.");
   // export protobuf
-  auto status = MindIRSerialize(flag, graph);
+  auto status = MindIRSerialize(param, graph);
   if (status != RET_OK) {
     MS_LOG(WARNING) << "Export to mindir proto return nullptr.";
   }
-  return TransferFuncGraph(flag, graph);
+  return TransferFuncGraph(param, graph);
 }
 
-schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &flag) {
-  if (flag == nullptr) {
-    MS_LOG(ERROR) << "Input flag is nullptr";
+schema::MetaGraphT *ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param) {
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "Input param is nullptr";
     return nullptr;
+  }
+
+  param->aclModelOptionCfgParam.om_file_path = param->output_file;
+  param->aclModelOptionCfgParam.offline = true;
+
+  if (!param->config_file.empty()) {
+    auto ret = InitConfigFile(param);
+    if (ret != RET_OK) {
+      std::cerr << "Init config file failed." << std::endl;
+      return nullptr;
+    }
   }
 
   // load plugin
   static std::vector<std::shared_ptr<DynamicLibraryLoader>> dl_loaders;
-  if (!flag->pluginsPath.empty()) {
-    for (auto &path : flag->pluginsPath) {
+  if (!param->plugins_path.empty()) {
+    for (auto &path : param->plugins_path) {
       auto dl_loader = std::make_shared<DynamicLibraryLoader>();
       MS_CHECK_TRUE_RET(dl_loader != nullptr, nullptr);
       auto status = dl_loader->Open(path);
@@ -154,7 +175,7 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     }
   }
 
-  auto graph = BuildFuncGraph(*flag);
+  auto graph = BuildFuncGraph(param);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Parser/Import model return nullptr";
     return nullptr;
@@ -162,23 +183,23 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
 
   MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed");
   // funcgraph transform
-  graph = funcgraph_transform_->Transform(graph, flag.get());
+  graph = funcgraph_transform_->Transform(graph, param);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Transform anf graph return nullptr";
     return nullptr;
   }
 
   // export protobuf
-  auto status = MindIRSerialize(flag, graph);
+  auto status = MindIRSerialize(param, graph);
   if (status != RET_OK) {
     MS_LOG(WARNING) << "Export to mindir proto return nullptr.";
   }
 
-  return TransferFuncGraph(flag, graph);
+  return TransferFuncGraph(param, graph);
 }
 
-schema::MetaGraphT *Converter::TransferFuncGraph(const std::unique_ptr<converter::Flags> &flag,
-                                                 FuncGraphPtr func_graph) {
+schema::MetaGraphT *ConverterImpl::TransferFuncGraph(const std::shared_ptr<ConverterPara> &param,
+                                                     FuncGraphPtr func_graph) {
   MS_CHECK_TRUE_MSG(metagraph_transform_ != nullptr, nullptr, "metagraph_transform_ init failed");
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
   if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
@@ -187,7 +208,7 @@ schema::MetaGraphT *Converter::TransferFuncGraph(const std::unique_ptr<converter
 #endif
 
   // protobuf -> flatbuffer
-  auto meta_graph = Export(func_graph, false, false, flag->trainModel);
+  auto meta_graph = Export(func_graph, false, false, param->train_model);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta graph return nullptr";
     return nullptr;
@@ -195,7 +216,7 @@ schema::MetaGraphT *Converter::TransferFuncGraph(const std::unique_ptr<converter
 
   // metagraph compile
   metagraph_transform_->SetGraphDef(meta_graph);
-  auto status = metagraph_transform_->Transform(*flag);
+  auto status = metagraph_transform_->Transform(param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Transform meta graph failed " << status;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -233,8 +254,8 @@ int CheckExistCustomOps(const schema::MetaGraphT *meta_graph, bool *exist_custom
   return RET_OK;
 }
 
-int PreInference(const schema::MetaGraphT &meta_graph, const std::unique_ptr<converter::Flags> &flags) {
-  if (flags->trainModel) {
+int PreInference(const schema::MetaGraphT &meta_graph, bool train_model) {
+  if (train_model) {
     MS_LOG(WARNING) << "train model dont support pre-infer.";
     return RET_OK;
   }
@@ -298,32 +319,213 @@ int PreInference(const schema::MetaGraphT &meta_graph, const std::unique_ptr<con
   return RET_OK;
 }
 
-int RunConverter(int argc, const char **argv) {
-  std::ostringstream oss;
-  auto flags = std::make_unique<converter::Flags>();
-  if (flags == nullptr) {
-    oss.clear();
-    oss << "NEW FLAGS ERROR:" << RET_MEMORY_FAILED << " " << GetErrorInfo(RET_MEMORY_FAILED);
-    MS_LOG(ERROR) << oss.str();
-    std::cout << oss.str() << std::endl;
-    return RET_MEMORY_FAILED;
+int ConverterImpl::InitConfigFile(const std::shared_ptr<ConverterPara> &param) {
+  lite::ConfigFileParser config_parser;
+  auto ret = config_parser.ParseConfigFile(param->config_file);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse config file failed.";
+    return ret;
   }
-  auto status = flags->Init(argc, argv);
-  if (status != RET_OK) {
-    if (status != RET_SUCCESS_EXIT) {
-      oss.clear();
-      oss << "CONVERTER::FLAGS INIT FAILED:" << status << " " << GetErrorInfo(status);
-      MS_LOG(ERROR) << oss.str();
-      std::cout << oss.str() << std::endl;
+  ret = lite::PreprocessParser::ParsePreprocess(config_parser.GetDataPreProcessString(), &param->dataPreProcessParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse preprocess failed.";
+    return ret;
+  }
+  ret = lite::QuantParamParser::ParseCommonQuant(config_parser.GetCommonQuantString(), &param->commonQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse common quant param failed.";
+    return ret;
+  }
+  ret = lite::QuantParamParser::ParseFullQuant(config_parser.GetFullQuantString(), &param->fullQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse full quant param failed.";
+    return ret;
+  }
+  ret = lite::QuantParamParser::ParseMixedBitWeightQuant(config_parser.GetMixedBitWeightQuantString(),
+                                                         &param->mixedBitWeightQuantParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse mixed bit weight quant param failed.";
+    return ret;
+  }
+  ret = InitExtendedIntegrationInfo(param, config_parser);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse extended integration info failed.";
+    return ret;
+  }
+
+  lite::AclOptionParamParser acl_param_parser;
+  ret = acl_param_parser.ParseAclOptionCfg(config_parser.GetAclOptionCfgString(), &param->aclModelOptionCfgParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse acl option param failed.";
+    return ret;
+  }
+  (void)CheckOfflineParallelConfig(param->config_file, &param->parallel_split_config);
+
+  lite::MicroParamParser micro_param_parser;
+  ret = micro_param_parser.ParseMicroParam(config_parser.GetMicroParamString(), &param->microParam);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Parse micro param failed.";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int ConverterImpl::InitExtendedIntegrationInfo(const std::shared_ptr<ConverterPara> &param,
+                                               const lite::ConfigFileParser &config_parser) {
+  auto extended_info = config_parser.GetRegistryInfoString();
+  if (!extended_info.plugin_path.empty()) {
+    const char delimiter = ';';
+    auto relative_path = lite::SplitStringToVector(extended_info.plugin_path, delimiter);
+    if (relative_path.size() > kPluginPathMaxNum) {
+      MS_LOG(ERROR) << "extended plugin library's num is too big, which shouldn't be larger than " << kPluginPathMaxNum;
+      return RET_INPUT_PARAM_INVALID;
     }
-    return status;
+    for (auto &i : relative_path) {
+      param->plugins_path.push_back(lite::RealPath(i.c_str()));
+    }
   }
-  // Load graph
-  MS_LOG(DEBUG) << "start reading model file";
-  Converter cvt;
-  auto meta_graph = cvt.Convert(flags);
+
+  if (!extended_info.disable_fusion.empty()) {
+    if (extended_info.disable_fusion == "on") {
+      param->no_fusion = true;
+    } else if (extended_info.disable_fusion == "off") {
+      param->no_fusion = false;
+    } else {
+      std::cerr << "CONFIG SETTING ILLEGAL: disable_fusion should be on/off" << std::endl;
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
+bool ConverterImpl::CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config) {
+  // device: [device0 device1] ---> {cpu, gpu}
+  // computeRate: [x: y] x >=0 && y >=0 && x/y < 10
+  MS_ASSERT(parallel_split_config != nullptr);
+  std::vector<std::string> config_devices = {"cpu", "gpu", "npu"};
+  auto compute_rate_result = GetStrFromConfigFile(file, kComputeRate);
+  if (compute_rate_result.empty()) {
+    return false;
+  }
+  std::string device0_result = GetStrFromConfigFile(file, kSplitDevice0);
+  if (device0_result.empty()) {
+    return false;
+  }
+  std::string device1_result = GetStrFromConfigFile(file, kSplitDevice1);
+  if (device1_result.empty()) {
+    return false;
+  }
+  bool device0_flag = false;
+  bool device1_flag = false;
+  for (const auto &device : config_devices) {
+    if (device == device0_result) {
+      device0_flag = true;
+    }
+    if (device == device1_result) {
+      device1_flag = true;
+    }
+  }
+  if (!device0_flag || !device1_flag) {
+    return false;
+  }
+  const char delimiter = ';';
+  std::vector<std::string> device_rates = lite::SplitStringToVector(compute_rate_result, delimiter);
+  const char colon = ':';
+  for (const auto &device : device_rates) {
+    std::vector<std::string> rate = lite::SplitStringToVector(device, colon);
+    int64_t compute_rate = 0;
+    try {
+      compute_rate = std::stoi(rate.back());
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Get compute rate failed: " << e.what();
+      return false;
+    }
+    parallel_split_config->parallel_compute_rates_.push_back(compute_rate);
+  }
+  const size_t support_rates_num = 2;
+  if (parallel_split_config->parallel_compute_rates_.size() != support_rates_num) {
+    return false;
+  }
+  int64_t bigger_rate = INT32_MIN;
+  int64_t smaller_rate = INT32_MAX;
+  for (const auto &rate : parallel_split_config->parallel_compute_rates_) {
+    if (rate <= 0 || rate > INT32_MAX) {
+      return false;
+    }
+    bigger_rate = std::max(rate, bigger_rate);
+    smaller_rate = std::min(rate, smaller_rate);
+  }
+  parallel_split_config->parallel_devices_.push_back(device0_result);
+  parallel_split_config->parallel_devices_.push_back(device1_result);
+  // parall_split_type will extend by other user's attr
+  parallel_split_config->parallel_split_type_ = SplitByUserRatio;
+  if (smaller_rate == 0) {
+    MS_LOG(ERROR) << "smaller_rate is zero";
+    return false;
+  }
+  return bigger_rate / smaller_rate <= kMaxSplitRatio;
+}
+
+std::string ConverterImpl::GetStrFromConfigFile(const std::string &file, const std::string &target_key) {
+  std::string res;
+  if (file.empty()) {
+    MS_LOG(ERROR) << "file is nullptr";
+    return res;
+  }
+  auto resolved_path = std::make_unique<char[]>(PATH_MAX);
+  if (resolved_path == nullptr) {
+    MS_LOG(ERROR) << "new resolved_path failed";
+    return "";
+  }
+
+#ifdef _WIN32
+  auto *real_path = _fullpath(resolved_path.get(), file.c_str(), kPathLengthUpperLimit);
+#else
+  char *real_path = realpath(file.c_str(), resolved_path.get());
+#endif
+  if (real_path == nullptr || strlen(real_path) == 0) {
+    MS_LOG(ERROR) << "file path is not valid : " << file;
+    return "";
+  }
+  std::ifstream ifs(resolved_path.get());
+  if (!ifs.good()) {
+    MS_LOG(ERROR) << "file: " << real_path << " is not exist";
+    return res;
+  }
+  if (!ifs.is_open()) {
+    MS_LOG(ERROR) << "file: " << real_path << "open failed";
+    return res;
+  }
+  std::string line;
+  while (std::getline(ifs, line)) {
+    lite::Trim(&line);
+    if (line.empty() || line.at(0) == '#' || line.at(0) == '[') {
+      continue;
+    }
+    auto index = line.find('=');
+    if (index == std::string::npos) {
+      MS_LOG(ERROR) << "the config file is invalid, can not find '=', please check";
+      return "";
+    }
+    auto key = line.substr(0, index);
+    auto value = line.substr(index + 1);
+    lite::Trim(&key);
+    lite::Trim(&value);
+    if (key == target_key) {
+      return value;
+    }
+  }
+  return res;
+}
+
+int RunConverter(const std::shared_ptr<ConverterPara> &param) {
+  mindspore::common_log_init();
+
+  ConverterImpl converter_impl;
+  auto meta_graph = converter_impl.Convert(param);
   NotSupportOp::GetInstance()->PrintOps();
-  status = ReturnCode::GetSingleReturnCode()->status_code();
+  int status = ReturnCode::GetSingleReturnCode()->status_code();
+  std::ostringstream oss;
   if (meta_graph == nullptr) {
     oss.clear();
     oss << "CONVERT RESULT FAILED:" << status << " " << GetErrorInfo(status);
@@ -335,8 +537,8 @@ int RunConverter(int argc, const char **argv) {
   //   save graph to file
   meta_graph->version = Version();
 
-  if (flags->infer) {
-    status = PreInference(*meta_graph, flags);
+  if (param->pre_infer) {
+    status = PreInference(*meta_graph, param->train_model);
     if (status != RET_OK) {
       oss.clear();
       oss << "PRE INFERENCE FAILED:" << status << " " << GetErrorInfo(status);
@@ -347,10 +549,10 @@ int RunConverter(int argc, const char **argv) {
     }
   }
 
-  if (flags->microParam.enable_micro) {
-    status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, flags->outputFile, flags->microParam.codegen_mode,
-                                                     flags->microParam.target, flags->microParam.support_parallel,
-                                                     flags->microParam.debug_mode);
+  if (param->microParam.enable_micro) {
+    status = micro::Coder::MicroSourceCodeGeneration(*meta_graph, param->output_file, param->microParam.codegen_mode,
+                                                     param->microParam.target, param->microParam.support_parallel,
+                                                     param->microParam.debug_mode);
     if (status != RET_OK) {
       delete meta_graph;
       oss.clear();
@@ -360,7 +562,27 @@ int RunConverter(int argc, const char **argv) {
       return status;
     }
   } else {
-    status = MetaGraphSerializer::Save(*meta_graph, flags->outputFile, flags->encKey, flags->keyLen, flags->encMode);
+    unsigned char encKey[kEncMaxLen] = {0};
+    size_t keyLen = 0;
+    if (param->enable_encryption) {
+      if (!param->encrypt_key.empty()) {
+        keyLen = lite::Hex2ByteArray(param->encrypt_key, encKey, kEncMaxLen);
+        if (keyLen != kEncMaxLen) {
+          MS_LOG(ERROR) << "enc_key must expressed in hexadecimal characters "
+                        << " and only support AES-GCM method and the key length is 16.";
+          return RET_INPUT_PARAM_INVALID;
+        }
+      } else {
+        MS_LOG(ERROR) << "If you don't need to use model encryption, please set --encryption=false.";
+        return RET_INPUT_PARAM_INVALID;
+      }
+    }
+    status = MetaGraphSerializer::Save(*meta_graph, param->output_file, encKey, keyLen, param->encrypt_mode);
+    if (memset_s(encKey, kEncMaxLen, 0, kEncMaxLen) != EOK) {
+      MS_LOG(ERROR) << "memset failed.";
+      delete meta_graph;
+      return RET_ERROR;
+    }
     if (status != RET_OK) {
       delete meta_graph;
       oss.clear();
@@ -369,15 +591,6 @@ int RunConverter(int argc, const char **argv) {
       std::cout << oss.str() << std::endl;
       return status;
     }
-  }
-  // clear key
-  flags->dec_key.clear();
-  flags->encKeyStr.clear();
-  status = memset_s(flags->encKey, converter::kEncMaxLen, 0, converter::kEncMaxLen);
-  if (status != EOK) {
-    MS_LOG(ERROR) << "memset failed.";
-    delete meta_graph;
-    return RET_ERROR;
   }
   delete meta_graph;
   oss.clear();

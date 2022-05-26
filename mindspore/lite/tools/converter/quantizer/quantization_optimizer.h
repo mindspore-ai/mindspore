@@ -18,19 +18,20 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZATION_OPTIMIZER_H
 #include <utility>
 #include <map>
+#include <memory>
 #include <vector>
 #include "backend/common/optimizer/pass.h"
-#include "tools/converter/converter_flags.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore::lite::quant {
 class QuantizationOptimizer {
  public:
-  explicit QuantizationOptimizer(converter::Flags *flags) : flags_(flags) {}
+  explicit QuantizationOptimizer(const std::shared_ptr<ConverterPara> &param) : param_(param) {}
   ~QuantizationOptimizer() = default;
   int Run(const FuncGraphPtr &func_graph);
 
  private:
-  converter::Flags *flags_;
+  const std::shared_ptr<ConverterPara> &param_;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZATION_OPTIMIZER_H

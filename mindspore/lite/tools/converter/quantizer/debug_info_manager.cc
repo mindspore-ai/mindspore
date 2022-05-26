@@ -663,11 +663,11 @@ int DebugInfoManager::SaveOutputInfo(const std::string &file_path) {
 
 int DebugInfoManager::StatisticsDataPerRound(
   const std::shared_ptr<mindspore::Model> &origin, const std::shared_ptr<mindspore::Model> &quant,
-  const std::map<std::string, OpParameter *> &op_parameters, const converter::Flags &config,
+  const std::map<std::string, OpParameter *> &op_parameters, const std::shared_ptr<ConverterPara> &param,
   const std::map<std::string, mindspore::schema::Tensor *> &origin_input_tensor_map,
   const std::map<std::string, mindspore::schema::Tensor *> &quant_input_tensor_map, const int &round) {
   int ret;
-  auto data_preprocess = config.dataPreProcessParam;
+  auto data_preprocess = param->dataPreProcessParam;
   for (auto tensor : origin->GetInputs()) {
     if (data_preprocess.calibrate_size > 0) {
       ret = preprocess::PreProcess(data_preprocess, tensor.Name(), round, &tensor);
@@ -681,8 +681,8 @@ int DebugInfoManager::StatisticsDataPerRound(
   }
   std::cout << "Statistics the original data distribution. Round " << round << std::endl;
   auto origin_before_callBack =
-    GetBeforeCallBack(origin_input_tensor_map, op_parameters, true, config.commonQuantParam.debug_mode);
-  auto origin_after_callBack = GetAfterCallBack(op_parameters, true, config.commonQuantParam.debug_mode);
+    GetBeforeCallBack(origin_input_tensor_map, op_parameters, true, param->commonQuantParam.debug_mode);
+  auto origin_after_callBack = GetAfterCallBack(op_parameters, true, param->commonQuantParam.debug_mode);
   auto origin_outputs = origin->GetOutputs();
   auto status = origin->Predict(origin->GetInputs(), &origin_outputs, origin_before_callBack, origin_after_callBack);
   if (status != kSuccess) {
@@ -692,8 +692,8 @@ int DebugInfoManager::StatisticsDataPerRound(
 
   std::cout << "Statistics the quant data distribution. Round " << round << std::endl;
   auto quant_before_callBack =
-    GetBeforeCallBack(quant_input_tensor_map, op_parameters, false, config.commonQuantParam.debug_mode);
-  auto quant_after_callBack = GetAfterCallBack(op_parameters, false, config.commonQuantParam.debug_mode);
+    GetBeforeCallBack(quant_input_tensor_map, op_parameters, false, param->commonQuantParam.debug_mode);
+  auto quant_after_callBack = GetAfterCallBack(op_parameters, false, param->commonQuantParam.debug_mode);
   for (auto &tensor : quant->GetInputs()) {
     auto tensor_data = tensor.MutableData();
     CHECK_NULL_RETURN(tensor_data);
@@ -722,7 +722,7 @@ std::string DebugInfoManager::CreateFilePath(const std::string &dir_path, const 
 int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Model> &origin,
                                              const std::shared_ptr<mindspore::Model> &quant,
                                              const std::map<std::string, OpParameter *> &op_parameters,
-                                             const converter::Flags &config,
+                                             const std::shared_ptr<ConverterPara> &param,
                                              const mindspore::lite::LiteModel &origin_lite_model,
                                              const mindspore::lite::LiteModel &quant_lite_model) {
   auto begin = GetTimeUs();
@@ -732,27 +732,27 @@ int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Mo
     origin_outputs_[tensor.Name()] = tensor;
   }
   int ret;
-  auto data_preprocess = config.dataPreProcessParam;
+  auto data_preprocess = param->dataPreProcessParam;
   // When the calibration data set does not exist, use 1 round of random numbers for comparison
   int rounds = data_preprocess.calibrate_size > 0 ? data_preprocess.calibrate_size : 1;
   for (int round = 0; round < rounds; round++) {
-    ret = StatisticsDataPerRound(origin, quant, op_parameters, config, origin_input_tensor_map, quant_input_tensor_map,
+    ret = StatisticsDataPerRound(origin, quant, op_parameters, param, origin_input_tensor_map, quant_input_tensor_map,
                                  round);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Statistics Data failed for round: " << round;
       FreeBuffer();
       return RET_ERROR;
     }
-    ret = GetClipAndCos(config.commonQuantParam.debug_mode);
+    ret = GetClipAndCos(param->commonQuantParam.debug_mode);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Get clip and cos failed.";
       FreeBuffer();
       return ret;
     }
     GetOutputInfo();
-    if (config.commonQuantParam.debug_mode == quant::DETAIL) {
+    if (param->commonQuantParam.debug_mode == quant::DETAIL) {
       auto file_name = "round_" + std::to_string(round) + ".csv";
-      auto file_path = CreateFilePath(config.commonQuantParam.debug_info_save_path, file_name);
+      auto file_path = CreateFilePath(param->commonQuantParam.debug_info_save_path, file_name);
       ret = SaveInfo(file_path);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Failed to save debug info to " + file_path;
@@ -765,7 +765,7 @@ int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Mo
   }
 
   auto file_name = "quant_param.csv";
-  auto quant_param_save_path = CreateFilePath(config.commonQuantParam.debug_info_save_path, file_name);
+  auto quant_param_save_path = CreateFilePath(param->commonQuantParam.debug_info_save_path, file_name);
   ret = SaveQuantParam(quant_param_save_path);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Failed to save quant param to " + quant_param_save_path;
@@ -773,7 +773,7 @@ int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Mo
   }
 
   file_name = "output_summary.csv";
-  auto output_param_save_path = CreateFilePath(config.commonQuantParam.debug_info_save_path, file_name);
+  auto output_param_save_path = CreateFilePath(param->commonQuantParam.debug_info_save_path, file_name);
   ret = SaveOutputInfo(output_param_save_path);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Failed to save output param to " + output_param_save_path;

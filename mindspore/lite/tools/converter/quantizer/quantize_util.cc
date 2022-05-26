@@ -255,13 +255,13 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
 }
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
-                             const converter::Flags &flags) {
+                             const std::shared_ptr<ConverterPara> &param) {
   int size = 0;
-  return BuildModelByFuncGraph(model, func_graph, flags, &size);
+  return BuildModelByFuncGraph(model, func_graph, param, &size);
 }
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
-                             const converter::Flags &flags, int *size) {
+                             const std::shared_ptr<ConverterPara> &param, int *size) {
   auto meta_graph = Export(func_graph, true, true);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta_graph failed";
@@ -271,7 +271,7 @@ Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, con
   // transform
   GraphDefTransform fb_transform;
   fb_transform.SetGraphDef(meta_graph);
-  auto status = fb_transform.Transform(flags);
+  auto status = fb_transform.Transform(param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "FBTransform model failed";
     delete meta_graph;

@@ -59,7 +59,7 @@ void CloneGraphInputs(const FuncGraphPtr &origin, const FuncGraphPtr &mirror, No
 }
 
 AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const FuncGraphPtr &mirror_graph,
-                                      const converter::Flags *flags) {
+                                      const std::shared_ptr<ConverterPara> &param) {
   MS_ASSERT(cnode != nullptr && mirror_graph != nullptr);
   if (index >= cnode->size()) {
     MS_LOG(ERROR) << "input index out of range.";
@@ -92,9 +92,9 @@ AnfNodePtr CloneParameterAndValueNode(const CNodePtr &cnode, size_t index, const
   DataInfo data_info;
   STATUS status;
   if (utils::isa<Parameter>(node)) {
-    status = FetchDataFromParameterNode(cnode, index, flags->fmk, &data_info, true);
+    status = FetchDataFromParameterNode(cnode, index, param->fmk_type, &data_info, true);
   } else if (utils::isa<ValueNode>(node)) {
-    status = FetchDataFromValueNode(cnode, index, flags->fmk, flags->trainModel, &data_info, true);
+    status = FetchDataFromValueNode(cnode, index, param->fmk_type, param->train_model, &data_info, true);
   } else {
     status = RET_ERROR;
   }
@@ -152,10 +152,10 @@ PrimitivePtr ClonePrimitive(const CNodePtr &cnode) {
 }
 }  // namespace
 
-FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *flags,
+FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const std::shared_ptr<ConverterPara> &param,
                             std::map<FuncGraphPtr, FuncGraphPtr> *cloned_func_graph) {
   MS_ASSERT(graph != nullptr);
-  MS_ASSERT(flags != nullptr);
+  MS_ASSERT(param != nullptr);
   MS_ASSERT(cloned_func_graph != nullptr);
   auto cloned_func_graph_iter = cloned_func_graph->find(graph);
   if (cloned_func_graph_iter != cloned_func_graph->end()) {
@@ -196,10 +196,10 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
       if (mirror_input == nullptr) {
         if (IsValueNode<FuncGraph>(origin_input)) {
           auto sub_func_graph = GetValueNode<FuncGraphPtr>(origin_input);
-          auto mirror_sub_graph = CloneFuncGraph(sub_func_graph, flags, cloned_func_graph);
+          auto mirror_sub_graph = CloneFuncGraph(sub_func_graph, param, cloned_func_graph);
           mirror_input = NewValueNode(mirror_sub_graph);
         } else {
-          mirror_input = CloneParameterAndValueNode(cnode, i, mirror_graph, flags);
+          mirror_input = CloneParameterAndValueNode(cnode, i, mirror_graph, param);
         }
         if (mirror_input == nullptr) {
           MS_LOG(ERROR) << "node input cannot be found.";
@@ -226,11 +226,11 @@ FuncGraphPtr CloneFuncGraph(const FuncGraphPtr &graph, const converter::Flags *f
   return mirror_graph;
 }
 
-STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
+STATUS ExportModel(const FuncGraphPtr &graph, const std::shared_ptr<ConverterPara> &param) {
   CHECK_NULL_RETURN(graph);
-  CHECK_NULL_RETURN(flags);
+  CHECK_NULL_RETURN(param);
   std::map<FuncGraphPtr, FuncGraphPtr> cloned_func_graph;
-  auto mirror_graph = CloneFuncGraph(graph, flags, &cloned_func_graph);
+  auto mirror_graph = CloneFuncGraph(graph, param, &cloned_func_graph);
   if (mirror_graph == nullptr) {
     MS_LOG(ERROR) << "Clone funcGraph failed.";
     return RET_ERROR;
@@ -253,8 +253,8 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
   CHECK_NULL_RETURN(optimizer);
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
   CHECK_NULL_RETURN(graph_pm);
-  if (flags->fmk == converter::kFmkTypeTflite || flags->fmk == converter::kFmkTypeTf ||
-      flags->fmk == converter::kFmkTypeOnnx) {
+  if (param->fmk_type == converter::kFmkTypeTflite || param->fmk_type == converter::kFmkTypeTf ||
+      param->fmk_type == converter::kFmkTypeOnnx) {
     graph_pm->AddPass(std::make_shared<opt::ControlFlowPass>());
   }
   optimizer->AddPassManager(graph_pm);
@@ -274,7 +274,7 @@ STATUS ExportModel(const FuncGraphPtr &graph, const converter::Flags *flags) {
     return RET_ERROR;
   }
   metagraph_transform->SetGraphDef(meta_graph);
-  auto status = metagraph_transform->Transform(*flags);
+  auto status = metagraph_transform->Transform(param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Transform meta graph failed " << status;
     delete meta_graph;

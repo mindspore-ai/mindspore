@@ -23,8 +23,8 @@
 #include "ir/primitive.h"
 #include "ir/func_graph.h"
 #include "src/common/utils.h"
-#include "tools/converter/converter_flags.h"
 #include "nnacl/op_base.h"
+#include "include/registry/converter_context.h"
 
 namespace mindspore {
 namespace lite {

@@ -37,7 +37,7 @@ int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
       continue;
     }
     auto op_name = cnode->fullname_with_scope();
-    if (flags_.commonQuantParam.skip_quant_node.find(op_name) != flags_.commonQuantParam.skip_quant_node.end()) {
+    if (param_->commonQuantParam.skip_quant_node.find(op_name) != param_->commonQuantParam.skip_quant_node.end()) {
       MS_LOG(INFO) << op_name << " is skip dynamic quant.";
       continue;
     }
@@ -95,9 +95,9 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
       MS_LOG(INFO) << "This op " << cnode->fullname_with_scope() << " can not quant weight";
       continue;
     }
-    auto quant_strategy = std::make_unique<QuantStrategy>(flags_.commonQuantParam.min_quant_weight_size,
-                                                          flags_.commonQuantParam.min_quant_weight_channel,
-                                                          flags_.commonQuantParam.skip_quant_node);
+    auto quant_strategy = std::make_unique<QuantStrategy>(param_->commonQuantParam.min_quant_weight_size,
+                                                          param_->commonQuantParam.min_quant_weight_channel,
+                                                          param_->commonQuantParam.skip_quant_node);
     CHECK_NULL_RETURN(quant_strategy);
     int preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
     if (!quant_strategy->CanTensorQuantized(cnode, input, preferred_dim)) {
@@ -114,15 +114,15 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
     }
     auto status = RET_ERROR;
     if (is_mixed_bit_) {
-      status = MixedBitQuantFilter(parameter, tensor_info, primitive, flags_.commonQuantParam.quant_type,
+      status = MixedBitQuantFilter(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
                                    WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1,
                                    preferred_dim, symmetric);
     } else if (type_id_ == kNumberTypeInt8) {
-      status =
-        FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, flags_.commonQuantParam.quant_type, q_max, q_min,
-                                    bit_num_, tmp_weight_quant_type, type_id_, idx - 1, preferred_dim, symmetric);
+      status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
+                                           q_max, q_min, bit_num_, tmp_weight_quant_type, type_id_, idx - 1,
+                                           preferred_dim, symmetric);
     } else if (type_id_ == kNumberTypeInt16) {
-      status = FixedBitQuantFilter<int16_t>(parameter, tensor_info, primitive, flags_.commonQuantParam.quant_type,
+      status = FixedBitQuantFilter<int16_t>(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
                                             q_max, q_min, bit_num_, tmp_weight_quant_type, type_id_, idx - 1,
                                             preferred_dim, symmetric);
     }

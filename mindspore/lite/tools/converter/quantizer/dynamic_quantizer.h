@@ -41,8 +41,8 @@
 namespace mindspore::lite::quant {
 class DynamicQuantizer : public Quantizer {
  public:
-  explicit DynamicQuantizer(const converter::Flags &flags) : Quantizer(flags) {
-    bit_num_ = flags.commonQuantParam.bit_num;
+  explicit DynamicQuantizer(const std::shared_ptr<ConverterPara> &param) : Quantizer(param) {
+    bit_num_ = param->commonQuantParam.bit_num;
   }
   ~DynamicQuantizer() = default;
 

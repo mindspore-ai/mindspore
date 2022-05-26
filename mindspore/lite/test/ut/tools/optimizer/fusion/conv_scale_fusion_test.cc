@@ -187,7 +187,7 @@ TEST_F(ConvScaleFusionTest, TestConvScaleNode) {
   auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, true);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph);
+  auto new_graph = anf_transform->Transform(func_graph, nullptr);
   ASSERT_NE(nullptr, new_graph);
   auto new_meta_graph = lite::Export(new_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
@@ -198,7 +198,7 @@ TEST_F(ConvScaleFusionTest, TestDeptiwiseConvScaleNode) {
   auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, false);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph);
+  auto new_graph = anf_transform->Transform(func_graph, nullptr);
   ASSERT_NE(nullptr, new_graph);
   auto new_meta_graph = lite::Export(new_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);

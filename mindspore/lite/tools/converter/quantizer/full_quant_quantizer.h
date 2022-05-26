@@ -39,8 +39,8 @@
 namespace mindspore::lite::quant {
 class FullQuantQuantizer : public Quantizer {
  public:
-  explicit FullQuantQuantizer(const converter::Flags &flags) : Quantizer(flags) {
-    bit_num_ = flags.commonQuantParam.bit_num;
+  explicit FullQuantQuantizer(const std::shared_ptr<ConverterPara> &param) : Quantizer(param) {
+    bit_num_ = param_->commonQuantParam.bit_num;
   }
 
   ~FullQuantQuantizer() override;

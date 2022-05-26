@@ -41,12 +41,12 @@
 namespace mindspore::lite::quant {
 class WeightQuantizer : public Quantizer {
  public:
-  explicit WeightQuantizer(const converter::Flags &flags) : Quantizer(flags) {
-    bit_num_ = flags.commonQuantParam.bit_num;
+  explicit WeightQuantizer(const std::shared_ptr<ConverterPara> &param) : Quantizer(param) {
+    bit_num_ = param_->commonQuantParam.bit_num;
     if (bit_num_ == 0) {
       type_id_ = kNumberTypeInt16;
       is_mixed_bit_ = true;
-      mixed_bit_init_scale_ = flags.mixedBitWeightQuantParam.init_scale;
+      mixed_bit_init_scale_ = param_->mixedBitWeightQuantParam.init_scale;
     }
     // parse param for fixed bit quant.
     if (!is_mixed_bit_) {

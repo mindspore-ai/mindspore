@@ -23,7 +23,6 @@
 #include "tools/converter/quantizer/quantizer.h"
 #include "schema/inner/model_generated.h"
 #include "tools/common/meta_graph_serializer.h"
-#include "tools/converter/converter_flags.h"
 
 namespace mindspore {
 namespace lite {
@@ -35,7 +34,7 @@ class GraphDefTransform {
  public:
   GraphDefTransform();
   virtual ~GraphDefTransform();
-  virtual int Transform(const converter::Flags &ctx);
+  virtual int Transform(const std::shared_ptr<ConverterPara> &param);
   void SetGraphDef(schema::MetaGraphT *dst_def);
 
  protected:

@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;
 using mindspore::schema::QuantType;

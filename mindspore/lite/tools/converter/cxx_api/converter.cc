@@ -16,6 +16,7 @@
 #include "include/converter.h"
 #include "include/api/data_type.h"
 #include "tools/converter/cxx_api/converter_para.h"
+#include "tools/converter/converter_context.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
@@ -65,6 +66,9 @@ bool Converter::GetWeightFp16() const {
 
 void Converter::SetInputShape(const std::map<std::string, std::vector<int64_t>> &input_shape) {
   if (data_ != nullptr) {
+    for (auto &it : input_shape) {
+      lite::ConverterInnerContext::GetInstance()->UpdateGraphInputTensorShape(it.first, it.second);
+    }
     data_->input_shape = input_shape;
   }
 }

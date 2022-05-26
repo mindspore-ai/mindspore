@@ -44,12 +44,12 @@ MinMax ParameterOptimizer::GetFineTuneRange(std::vector<float> *candidate_scales
   return min_max;
 }
 
-int ParameterOptimizer::CloneFuncGraph(const FuncGraphPtr &func_graph, converter::Flags *flags,
+int ParameterOptimizer::CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                                        FuncGraphPtr *func_graph_bak) {
   CHECK_NULL_RETURN(func_graph_bak);
-  CHECK_NULL_RETURN(flags);
+  CHECK_NULL_RETURN(param);
   std::map<FuncGraphPtr, FuncGraphPtr> cloned_func_graph;
-  *func_graph_bak = lite::CloneFuncGraph(func_graph, flags, &cloned_func_graph);
+  *func_graph_bak = lite::CloneFuncGraph(func_graph, param, &cloned_func_graph);
   CHECK_NULL_RETURN(*func_graph_bak);
   static auto root_func_manager = Manage(*func_graph_bak);
   std::set<FuncGraphPtr> all_func_graphs = {};
@@ -60,11 +60,12 @@ int ParameterOptimizer::CloneFuncGraph(const FuncGraphPtr &func_graph, converter
   return RET_OK;
 }
 
-int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags,
+int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph,
+                                                  const std::shared_ptr<ConverterPara> &param,
                                                   std::shared_ptr<mindspore::Model> origin_model, int origin_model_size,
-                                                  const InferenceParam &param, double *init_scale,
+                                                  const InferenceParam &infer_param, double *init_scale,
                                                   std::vector<float> *candidate_scales, bool is_run_all) {
-  CHECK_NULL_RETURN(flags);
+  CHECK_NULL_RETURN(param);
   CHECK_NULL_RETURN(origin_model);
   CHECK_NULL_RETURN(init_scale);
   CHECK_NULL_RETURN(candidate_scales);
@@ -75,18 +76,18 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
   float best_compress_cos_sim = 0.0f;
   int best_compress_model_size = 0;
   size_t over_error_count = 0;
-  for (size_t round = 0; round < param.rounds; round++) {
-    auto scale = param.start_scale + round * param.step;
-    flags->commonQuantParam.quant_type = schema::QuantType_QUANT_WEIGHT;
+  for (size_t round = 0; round < infer_param.rounds; round++) {
+    auto scale = infer_param.start_scale + round * infer_param.step;
+    param->commonQuantParam.quant_type = schema::QuantType_QUANT_WEIGHT;
     FuncGraphPtr func_graph_bak;
-    auto ret = CloneFuncGraph(func_graph, flags, &func_graph_bak);
+    auto ret = CloneFuncGraph(func_graph, param, &func_graph_bak);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Clone FuncGraph failed.";
       return ret;
     }
 
     // quant
-    auto quantizer = std::make_unique<quant::WeightQuantizer>(*flags);
+    auto quantizer = std::make_unique<quant::WeightQuantizer>(param);
     CHECK_NULL_RETURN(quantizer);
     auto status = quantizer->DoQuantize(func_graph_bak, scale);
     if (status != RET_OK) {
@@ -98,7 +99,7 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
     int weight_quant_size;
     auto weight_quant_model = std::make_shared<mindspore::Model>();
     CHECK_NULL_RETURN(weight_quant_model);
-    auto build_status = BuildModelByFuncGraph(weight_quant_model, func_graph_bak, *flags, &weight_quant_size);
+    auto build_status = BuildModelByFuncGraph(weight_quant_model, func_graph_bak, param, &weight_quant_size);
     if (build_status != kSuccess) {
       MS_LOG(WARNING) << "build model failed!";
       continue;
@@ -155,28 +156,29 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
   return RET_OK;
 }
 
-int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags,
+int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph,
+                                             const std::shared_ptr<ConverterPara> &param,
                                              std::shared_ptr<mindspore::Model> origin_model, int *origin_model_size) {
-  CHECK_NULL_RETURN(flags);
+  CHECK_NULL_RETURN(param);
   CHECK_NULL_RETURN(origin_model);
   CHECK_NULL_RETURN(origin_model_size);
   FuncGraphPtr func_graph_bak;
-  auto ret = CloneFuncGraph(func_graph, flags, &func_graph_bak);
+  auto ret = CloneFuncGraph(func_graph, param, &func_graph_bak);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Clone FuncGraph failed.";
     return RET_ERROR;
   }
-  flags->commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
+  param->commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   *origin_model_size = 0;
-  auto status = BuildModelByFuncGraph(origin_model, func_graph_bak, *flags, origin_model_size);
+  auto status = BuildModelByFuncGraph(origin_model, func_graph_bak, param, origin_model_size);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "build model failed!";
     return RET_ERROR;
   }
   auto origin_inputs = origin_model->GetInputs();
   for (auto input : origin_inputs) {
-    if (flags->dataPreProcessParam.calibrate_size > 0) {
-      ret = preprocess::PreProcess(flags->dataPreProcessParam, input.Name(), 0, &input);
+    if (param->dataPreProcessParam.calibrate_size > 0) {
+      ret = preprocess::PreProcess(param->dataPreProcessParam, input.Name(), 0, &input);
     } else {
       ret = GenerateRandomData(&input);
     }
@@ -195,16 +197,16 @@ int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph, con
   return RET_OK;
 }
 
-int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, converter::Flags *flags,
+int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                                            double *init_scale) {
-  CHECK_NULL_RETURN(flags);
+  CHECK_NULL_RETURN(param);
   CHECK_NULL_RETURN(init_scale);
 
   double default_init_scale = *init_scale;
 
   auto origin_model = std::make_shared<mindspore::Model>();
   int origin_model_size;
-  auto ret = OriginModelInference(func_graph, flags, origin_model, &origin_model_size);
+  auto ret = OriginModelInference(func_graph, param, origin_model, &origin_model_size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Origin Model Inference failed.";
     return ret;
@@ -215,14 +217,14 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
   float step = 0.005f;
   std::vector<float> candidate_scales;
 
-  InferenceParam param{};
-  param.rounds = giant_rounds;
-  param.start_scale = start_scale;
-  param.step = step;
-  param.thread_num = flags->commonQuantParam.thread_num;
+  InferenceParam infer_param{};
+  infer_param.rounds = giant_rounds;
+  infer_param.start_scale = start_scale;
+  infer_param.step = step;
+  infer_param.thread_num = param->commonQuantParam.thread_num;
 
   std::cout << "==========Search with giant step==============\n";
-  ret = WeightQuantModelInference(func_graph, flags, origin_model, origin_model_size, param, init_scale,
+  ret = WeightQuantModelInference(func_graph, param, origin_model, origin_model_size, infer_param, init_scale,
                                   &candidate_scales, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Weight quant graph inference failed.";
@@ -240,12 +242,12 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
   const int baby_step_rounds = 25;
   step = (min_max.max - min_max.min) / baby_step_rounds;
 
-  param.rounds = baby_step_rounds;
-  param.start_scale = start_scale;
-  param.step = step;
-  param.thread_num = flags->commonQuantParam.thread_num;
+  infer_param.rounds = baby_step_rounds;
+  infer_param.start_scale = start_scale;
+  infer_param.step = step;
+  infer_param.thread_num = param->commonQuantParam.thread_num;
   std::cout << "==========Search with baby step==============\n";
-  ret = WeightQuantModelInference(func_graph, flags, origin_model, origin_model_size, param, init_scale,
+  ret = WeightQuantModelInference(func_graph, param, origin_model, origin_model_size, infer_param, init_scale,
                                   &candidate_scales, true);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Weight quant graph inference failed.";

@@ -28,7 +28,6 @@
 #include "src/runtime/infer_manager.h"
 #include "src/common/primitive_t_utils.h"
 #include "tools/common/node_util.h"
-#include "tools/converter/converter_flags.h"
 #include "src/common/string_utils.h"
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"

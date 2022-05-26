@@ -17,19 +17,18 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_FUSION_MATMUL_ACTIVATION_FUSION_H_
 #define MINDSPORE_LITE_SRC_PASS_FUSION_MATMUL_ACTIVATION_FUSION_H_
 
+#include <memory>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
 #include "tools/converter/converter_context.h"
-#include "tools/converter/converter_flags.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore {
 namespace opt {
 class MatMulActivationFusion : public PatternProcessPass {
  public:
-  explicit MatMulActivationFusion(const converter::Flags &ctx, bool multigraph = true)
-      : PatternProcessPass("MatMulActivationFusion", multigraph) {
-    ctx_ = ctx;
-  }
+  explicit MatMulActivationFusion(const std::shared_ptr<ConverterPara> &param, bool multigraph = true)
+      : PatternProcessPass("MatMulActivationFusion", multigraph), param_(param) {}
   ~MatMulActivationFusion() = default;
 
  private:
@@ -37,7 +36,7 @@ class MatMulActivationFusion : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
-  converter::Flags ctx_;
+  const std::shared_ptr<ConverterPara> param_;
 };
 }  // namespace opt
 }  // namespace mindspore

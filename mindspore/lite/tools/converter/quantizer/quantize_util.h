@@ -18,9 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_
 
 #ifndef _MSC_VER
-
 #include <dirent.h>
-
 #endif
 
 #include <sys/stat.h>
@@ -54,6 +52,7 @@
 #include "src/common/file_utils.h"
 #include "src/common/quant_utils.h"
 #include "include/api/model.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore::lite::quant {
 enum WeightQuantType {
@@ -188,10 +187,10 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
 std::string NodePrimitiveType(const CNodePtr &cnode);
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
-                             const converter::Flags &flags);
+                             const std::shared_ptr<mindspore::ConverterPara> &param);
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
-                             const converter::Flags &flags, int *size);
+                             const std::shared_ptr<mindspore::ConverterPara> &param, int *size);
 
 mindspore::lite::Tensor *MSTensorToLiteTensor(const mindspore::MSTensor &tensor);
 

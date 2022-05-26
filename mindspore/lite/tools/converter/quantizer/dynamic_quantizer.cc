@@ -22,9 +22,9 @@
 namespace mindspore::lite::quant {
 int DynamicQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   // Dynamic dont support filters.
-  flags_.commonQuantParam.min_quant_weight_channel = 0;
-  flags_.commonQuantParam.min_quant_weight_size = 0;
-  auto quantizer = WeightQuantizer(flags_);
+  param_->commonQuantParam.min_quant_weight_channel = 0;
+  param_->commonQuantParam.min_quant_weight_size = 0;
+  auto quantizer = WeightQuantizer(param_);
   const std::set<PrimitivePtr> support_weight_quant_nodes = {prim::kPrimMatMulFusion, prim::kPrimGather};
   const std::set<PrimitivePtr> symmetric_nodes = {prim::kPrimMatMulFusion};
   auto ret = quantizer.WeightQuant(func_graph, support_weight_quant_nodes, {}, symmetric_nodes);
@@ -36,7 +36,7 @@ int DynamicQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   const std::set<PrimitivePtr> support_dynamic_quant_ops = {
     prim::kPrimMatMulFusion,
   };
-  ret = manager.InsertDynamicQuantNode(func_graph, support_dynamic_quant_ops, flags_.commonQuantParam.skip_quant_node);
+  ret = manager.InsertDynamicQuantNode(func_graph, support_dynamic_quant_ops, param_->commonQuantParam.skip_quant_node);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Insert dynamic quant failed.";
     return ret;

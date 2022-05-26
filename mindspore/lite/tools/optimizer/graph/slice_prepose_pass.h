@@ -20,10 +20,10 @@
 #include <memory>
 #include <utility>
 #include <string>
-#include "tools/converter/converter_flags.h"
 #include "backend/common/optimizer/pass.h"
 #include "include/errorcode.h"
 #include "mindspore/core/ir/manager.h"
+#include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore::opt {

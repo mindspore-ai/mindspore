@@ -21,7 +21,6 @@
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "ops/fusion/activation.h"
-#include "tools/converter/converter_flags.h"
 
 namespace mindspore {
 class MatMulActivationFusionInoutTest : public FusionInoutTest {
@@ -29,10 +28,7 @@ class MatMulActivationFusionInoutTest : public FusionInoutTest {
   MatMulActivationFusionInoutTest() = default;
 
  protected:
-  void InitPass() override {
-    converter::Flags ctx;
-    this->pass_ = std::make_shared<opt::MatMulActivationFusion>(ctx);
-  }
+  void InitPass() override { this->pass_ = std::make_shared<opt::MatMulActivationFusion>(nullptr); }
 
   void InitGraph() override {
     this->graph_ = std::make_shared<FuncGraph>();

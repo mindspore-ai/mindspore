@@ -93,12 +93,12 @@ int MindIRSerializer::RemoveQuantParameterHolder(FuncGraphPtr func_graph) {
   return RET_OK;
 }
 
-int MindIRSerializer::Save(const std::unique_ptr<converter::Flags> &flag, const FuncGraphPtr &func_graph) {
+int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "func_graph is nullptr.";
     return RET_NULL_PTR;
   }
-  auto output_file = flag->outputFile;
+  auto output_file = param->output_file;
   auto ret = ParserPath(output_file);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "parse path failed.";
@@ -403,13 +403,13 @@ int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const st
 }
 #endif
 
-int MindIRSerialize(const std::unique_ptr<converter::Flags> &flag, const FuncGraphPtr &func_graph) {
+int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
 #ifndef ENABLE_CLOUD_AND_LITE
-  if (!flag->export_mindir) {
+  if (!param->export_mindir) {
     return RET_OK;
   }
   mindspore::lite::MindIRSerializer serializer;
-  return serializer.Save(flag, func_graph);
+  return serializer.Save(param, func_graph);
 #else
   MS_LOG(INFO) << "No need to serialize mindir when load model online.";
   return RET_OK;

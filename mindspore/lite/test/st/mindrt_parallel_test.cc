@@ -24,6 +24,7 @@
 #include "src/runtime/lite_session.h"
 #include "src/runtime/kernel_exec.h"
 #include "src/common/file_utils.h"
+#include "include/converter.h"
 
 namespace mindspore {
 class MindrtParallelTest : public mindspore::CommonTest {
@@ -96,12 +97,12 @@ int CheckRuntime1(lite::LiteSession *session) {
 }
 
 TEST_F(MindrtParallelTest, offline1) {
-  const char *converter_argv[] = {"./converter", "--fmk=TFLITE",
-                                  "--modelFile=./mindrtParallel/mindrt_parallel_model.tflite",
-                                  "--outputFile=./mindrtParallel/mindrt_parallel_model_split",
-                                  "--configFile=./mindrtParallel/mindrt_parallel_model.config"};
-  int converter_ret = mindspore::lite::RunConverter(5, converter_argv);
-  ASSERT_EQ(converter_ret, lite::RET_OK);
+  mindspore::Converter converter(converter::kFmkTypeTflite, "./mindrtParallel/mindrt_parallel_model.tflite",
+                                 "./mindrtParallel/mindrt_parallel_model_split");
+  converter.SetConfigFile("./mindrtParallel/mindrt_parallel_model.config");
+
+  auto status = converter.Convert();
+  ASSERT_EQ(status, kSuccess);
 
   size_t size = 0;
   char *graph_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model_split.ms", &size);
@@ -135,11 +136,12 @@ TEST_F(MindrtParallelTest, offline1) {
 }
 
 TEST_F(MindrtParallelTest, runtime1) {
-  const char *converter_argv[] = {"./converter", "--fmk=TFLITE",
-                                  "--modelFile=./mindrtParallel/mindrt_parallel_model.tflite",
-                                  "--outputFile=./mindrtParallel/mindrt_parallel_model"};
-  int converter_ret = mindspore::lite::RunConverter(4, converter_argv);
-  ASSERT_EQ(converter_ret, lite::RET_OK);
+  mindspore::Converter converter(converter::kFmkTypeTflite, "./mindrtParallel/mindrt_parallel_model.tflite",
+                                 "./mindrtParallel/mindrt_parallel_model");
+  converter.SetConfigFile("./mindrtParallel/mindrt_parallel_model.config");
+
+  auto status = converter.Convert();
+  ASSERT_EQ(status, kSuccess);
 
   size_t size = 0;
   char *graph_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model.ms", &size);

@@ -101,9 +101,9 @@ STATUS PreProcForOnnx(const FuncGraphPtr &func_graph) {
 }
 }  // namespace
 
-AclPassImpl::AclPassImpl(const converter::Flags &config)
-    : fmk_type_(config.fmk),
-      user_options_cfg_(std::move(config.aclModelOptionCfgParam)),
+AclPassImpl::AclPassImpl(const std::shared_ptr<ConverterPara> &param)
+    : fmk_type_(param->fmk_type),
+      user_options_cfg_(std::move(param->aclModelOptionCfgParam)),
       om_parameter_(nullptr),
       custom_node_(nullptr) {}
 

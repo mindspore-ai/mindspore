@@ -23,7 +23,7 @@ STATUS SetUnusedQuantParamToDefaultPass::Run(schema::MetaGraphT *graph) {
   for (auto &tensor : graph->allTensors) {
     bool has_quant_param = false;
     for (auto &quant_param : tensor->quantParams) {
-      if (ctx_.fullQuantParam.target_device != quant::NVGPU) {
+      if (param_->fullQuantParam.target_device != quant::NVGPU) {
         quant_param->min = 0.0;
         quant_param->max = 0.0;
       }

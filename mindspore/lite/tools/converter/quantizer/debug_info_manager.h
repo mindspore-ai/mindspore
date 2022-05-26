@@ -87,7 +87,8 @@ class DebugInfoManager {
  public:
   int CompareOriginWithQuant(const std::shared_ptr<mindspore::Model> &origin,
                              const std::shared_ptr<mindspore::Model> &quant,
-                             const std::map<std::string, OpParameter *> &op_parameters, const converter::Flags &config,
+                             const std::map<std::string, OpParameter *> &op_parameters,
+                             const std::shared_ptr<ConverterPara> &param,
                              const mindspore::lite::LiteModel &origin_lite_model,
                              const mindspore::lite::LiteModel &quant_lite_model);
 
@@ -158,7 +159,8 @@ class DebugInfoManager {
 
   int StatisticsDataPerRound(const std::shared_ptr<mindspore::Model> &origin,
                              const std::shared_ptr<mindspore::Model> &quant,
-                             const std::map<std::string, OpParameter *> &op_parameters, const converter::Flags &config,
+                             const std::map<std::string, OpParameter *> &op_parameters,
+                             const std::shared_ptr<ConverterPara> &param,
                              const std::map<string, schema::Tensor *> &origin_input_tensor_map,
                              const std::map<string, schema::Tensor *> &quant_input_tensor_map, const int &round);
 
