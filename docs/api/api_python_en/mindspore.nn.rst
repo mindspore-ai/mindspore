@@ -135,6 +135,7 @@ Linear Layer
     :template: classtemplate.rst
 
     mindspore.nn.Dense
+    mindspore.nn.BiDense
 
 Dropout Layer
 -------------
