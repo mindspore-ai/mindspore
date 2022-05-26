@@ -30,7 +30,6 @@
 #include <utility>
 #include <vector>
 #include <iostream>
-#include "nlohmann/json.hpp"
 #include "ir/dtype.h"
 #include "ir/func_graph.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
@@ -44,6 +43,7 @@ namespace kernel {
 constexpr int32_t MAX_ERROR_LEN = 1024;
 constexpr int32_t PROCESS_NUM = 16;
 constexpr int32_t TIME_OUT = 300;
+constexpr auto kLogLevel = "log_level";
 
 #define ACQUIRE_LOCK LockMng lock(fd_, __func__, __LINE__)
 
@@ -542,6 +542,7 @@ bool AkgKernelBuilder::AkgOpParallelBuild(const std::vector<JsonNodePair> &build
     return true;
   }
 
+  build_attrs_[kLogLevel] = "ERROR";
   if (!ParallelBuild(new_build_args)) {
     return false;
   }
@@ -653,14 +654,13 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
 
 std::string AkgKernelBuilder::CollectBuildAttrs() {
   auto &flags = graphkernel::GraphKernelFlags::GetInstance();
-  nlohmann::json attrs;
   if (flags.online_tuning > 0) {
-    attrs["online_tuning"] = flags.online_tuning;
+    build_attrs_["online_tuning"] = flags.online_tuning;
   }
   if (!flags.repository_path.empty()) {
-    attrs["repository_path"] = flags.repository_path;
+    build_attrs_["repository_path"] = flags.repository_path;
   }
-  return attrs.empty() ? "" : attrs.dump();
+  return build_attrs_.empty() ? "" : build_attrs_.dump();
 }
 }  // namespace kernel
 }  // namespace mindspore

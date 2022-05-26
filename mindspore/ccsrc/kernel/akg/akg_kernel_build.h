@@ -22,6 +22,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include "nlohmann/json.hpp"
 #include "ir/anf.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/kernel_build_client.h"
@@ -57,6 +58,7 @@ class AkgKernelBuilder {
   bool AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args);
 
   std::vector<JsonNodePair> repeat_nodes_;
+  nlohmann::json build_attrs_;
   std::string CollectBuildAttrs();
 };
 
