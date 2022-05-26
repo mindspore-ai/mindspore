@@ -632,7 +632,7 @@ TypePtr CheckAndConvertUtils::CheckTensorSubClass(const string &type_name, const
   }
   if (is_mix) {
     for (const auto &item : template_types) {
-      buffer << " " << item->ToString() << "],";
+      buffer << " " << item->ToString() << ",";
     }
   }
   buffer << "}, but got " << type->ToString();

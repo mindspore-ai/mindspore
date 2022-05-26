@@ -674,12 +674,13 @@ EvalResultPtr ShardEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList 
 namespace {
 AbstractBasePtr ReduceDim(int *axis, const AbstractBasePtr &orig_abs, int *axis_size) {
   if (!orig_abs->isa<abstract::AbstractTensor>()) {
-    MS_LOG(EXCEPTION) << "ValueError: orig_abs should be AbstractTensor, but got a " << orig_abs->ToString() << ".";
+    MS_LOG(EXCEPTION) << "The orig_abs should be AbstractTensor when axis is " << *axis << ", but got a "
+                      << orig_abs->ToString() << ".";
   }
   ShapeVector orig_shape = dyn_cast<abstract::Shape>(orig_abs->BuildShape())->shape();
   int shape_len = SizeToInt(orig_shape.size());
   if (*axis < -shape_len || *axis >= shape_len) {
-    MS_LOG(EXCEPTION) << "ValueError: The axis: " << *axis << " in 'in_axes' is out of bounds for array of dimension ["
+    MS_LOG(EXCEPTION) << "The axis: " << *axis << " in 'in_axes' is out of bounds for array of dimension ["
                       << -shape_len << "," << shape_len << ").";
   }
   *axis = *axis < 0 ? shape_len + *axis : *axis;
@@ -744,7 +745,7 @@ AbstractBasePtr ExtendDim(int *axis, const AbstractBasePtr &orig_abs, int axis_s
   }
   int shape_len = SizeToInt(orig_shape.size() + 1);
   if (*axis < -shape_len || *axis >= shape_len) {
-    MS_LOG(EXCEPTION) << "ValueError: The axis: " << *axis << " in 'out_axes' is out of bounds for array of dimension ["
+    MS_LOG(EXCEPTION) << "The axis: " << *axis << " in 'out_axes' is out of bounds for array of dimension ["
                       << -shape_len << "," << shape_len << ").";
   }
   *axis = *axis < 0 ? shape_len + *axis : *axis;
