@@ -48,11 +48,16 @@ dnnl::reduction::desc ReductionCpuKernelMod::GetReductionDesc(const dnnl::memory
 
 bool ReductionCpuKernelMod::GetReductionAttr(const BaseOperatorPtr &base_operator) {
   if (kernel_name_ != ops::kNameLpNorm) {
-    MS_LOG(ERROR) << "For 'LpNorm' kernel name get failed, but got " << kernel_name_;
+    MS_LOG(ERROR) << "For 'LpNorm', it's kernel name get failed, but got " << kernel_name_;
     return false;
   }
   auto kernel_ptr = std::make_shared<ops::LpNorm>(base_operator->GetPrim());
-  p_ = LongToFloat(kernel_ptr->get_p());
+  int64_t p = kernel_ptr->get_p();
+  if (p == 0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's op attribute 'p' equals to zero, which is invalid.";
+    return false;
+  }
+  p_ = LongToFloat(p);
   epsilon_ = kernel_ptr->get_epsilon();
   return true;
 }
@@ -61,17 +66,16 @@ bool ReductionCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' it got empty inputs or outputs, which is invalid.";
     return false;
   }
   if (!GetReductionAttr(base_operator)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got GetReductionAttr failed.";
     return false;
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' it does not support this kernel type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
@@ -81,8 +85,7 @@ bool ReductionCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int ReductionCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   std::vector<size_t> input_shape_;
@@ -105,7 +108,7 @@ int ReductionCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   primitive_ = CreatePrimitive<dnnl::reduction>(prim_desc);
   AddArgument(DNNL_ARG_SRC, src_desc);
   AddArgument(DNNL_ARG_DST, dst_desc);
-  return ret;
+  return KRET_OK;
 }
 
 template <typename T>
