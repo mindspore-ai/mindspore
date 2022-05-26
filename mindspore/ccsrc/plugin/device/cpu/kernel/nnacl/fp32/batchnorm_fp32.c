@@ -19,18 +19,21 @@
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/batchnorm_fp32_avx512.h"
+#endif
 
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdBatchNormFp32CoreCalc(block_size, block_num, unit_input, mean, variance, param, unit_output, c)        \
-  for (int block_max_size = param->channel_ - block_num + 1; c < block_max_size; c += block_num) {                 \
-    MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, unit_input + c);                                        \
-    MS_FLOAT_32xN(block_num) mean_ = MS_LD_F32(block_size, mean + c);                                              \
-    MS_FLOAT_32xN(block_num) variance_ = MS_LD_F32(block_size, variance + c);                                      \
-    MS_FLOAT_32xN(block_num) variance_sqrt =                                                                       \
-      MS_SQRT_F32(block_size, MS_ADD_F32(block_size, variance_, MS_MOVN_F32(block_size, param->epsilon_)));        \
-    MS_FLOAT_32xN(block_num) output = MS_DIV_F32(block_size, MS_SUB_F32(block_size, input, mean_), variance_sqrt); \
-    MS_ST_F32(block_size, unit_output + c, output);                                                                \
-  }
+#ifdef ENABLE_AVX
+#include "nnacl/avx/batchnorm_fp32_avx.h"
+#endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/sse/batchnorm_fp32_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/batchnorm_fp32_neon.h"
+#endif
 
 void BatchNormFp32(const float *input, const float *mean, const float *variance, const BatchNormParameter *param,
                    int task_id, float *output) {
@@ -40,38 +43,24 @@ void BatchNormFp32(const float *input, const float *mean, const float *variance,
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
-  int cur_offset = completed_units * param->channel_;
+  int channel = param->channel_;
+  int cur_offset = completed_units * channel;
+  float epsilon = param->epsilon_;
 
   for (int i = 0; i < cur_unit; i++) {
     const float *unit_input = input + cur_offset;
     float *unit_output = output + cur_offset;
     int c = 0;
 
-    MS_SIMD_RUN_NO_SCALAR(SimdBatchNormFp32CoreCalc, unit_input, mean, variance, param, unit_output, c);
+    SIMD_RUN_NO_SCALAR(BatchNormFp32, c, unit_input, mean, variance, channel, epsilon, unit_output);
 
-    for (; c < param->channel_; c++) {
-      float variance_sqrt = sqrtf(variance[c] + param->epsilon_);
+    for (; c < channel; c++) {
+      float variance_sqrt = sqrtf(variance[c] + epsilon);
       unit_output[c] = (unit_input[c] - mean[c]) / variance_sqrt;
     }
-    cur_offset += param->channel_;
+    cur_offset += channel;
   }
 }
-
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdFusedBatchNormFp32CoreCalc(block_size, block_num, unit_input, scale, mean, offset, variance, param,      \
-                                       unit_output, c)                                                               \
-  for (int block_max_size = param->channel_ - block_num + 1; c < block_max_size; c += block_num) {                   \
-    MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, unit_input + c);                                          \
-    MS_FLOAT_32xN(block_num) scale_ = MS_LD_F32(block_size, scale + c);                                              \
-    MS_FLOAT_32xN(block_num) offset_ = MS_LD_F32(block_size, offset + c);                                            \
-    MS_FLOAT_32xN(block_num) mean_ = MS_LD_F32(block_size, mean + c);                                                \
-    MS_FLOAT_32xN(block_num) variance_ = MS_LD_F32(block_size, variance + c);                                        \
-    MS_FLOAT_32xN(block_num) variance_sqrt =                                                                         \
-      MS_SQRT_F32(block_size, MS_ADD_F32(block_size, variance_, MS_MOVN_F32(block_size, param->epsilon_)));          \
-    MS_FLOAT_32xN(block_num) norm_val = MS_DIV_F32(block_size, MS_SUB_F32(block_size, input, mean_), variance_sqrt); \
-    MS_FLOAT_32xN(block_num) output = MS_ADD_F32(block_size, MS_MUL_F32(block_size, norm_val, scale_), offset_);     \
-    MS_ST_F32(block_size, unit_output + c, output);                                                                  \
-  }
 
 void FusedBatchNormFp32(const float *input, const float *scale, const float *offset, const float *mean,
                         const float *variance, const BatchNormParameter *param, int task_id, float *output) {
@@ -81,22 +70,23 @@ void FusedBatchNormFp32(const float *input, const float *scale, const float *off
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
-  int cur_offset = completed_units * param->channel_;
+  int channel = param->channel_;
+  float epsilon = param->epsilon_;
+  int cur_offset = completed_units * channel;
 
   for (int i = 0; i < cur_unit; i++) {
     const float *unit_input = input + cur_offset;
     float *unit_output = output + cur_offset;
     int c = 0;
 
-    MS_SIMD_RUN_NO_SCALAR(SimdFusedBatchNormFp32CoreCalc, unit_input, scale, mean, offset, variance, param, unit_output,
-                          c);
+    SIMD_RUN_NO_SCALAR(FusedBatchNormFp32, c, unit_input, scale, offset, mean, variance, channel, epsilon, unit_output);
 
-    for (; c < param->channel_; c++) {
-      float variance_sqrt = sqrtf(variance[c] + param->epsilon_);
+    for (; c < channel; c++) {
+      float variance_sqrt = sqrtf(variance[c] + epsilon);
       float norm_val = (unit_input[c] - mean[c]) / variance_sqrt;
       unit_output[c] = norm_val * scale[c] + offset[c];
     }
-    cur_offset += param->channel_;
+    cur_offset += channel;
   }
 }
 
