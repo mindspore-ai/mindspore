@@ -745,21 +745,20 @@ class Tensor(Tensor_):
 
     def tensor_scatter_mul(self, indices, updates):
         """
-        Creates a new tensor by multiplying the values from the positions in `input_x` indicated by
+        Creates a new tensor by multiplying the values from the positions in self tensor indicated by
         `indices`, with values from `updates`. When divided values are provided for the same
         index, the result of the update will be to divided these values respectively. Except that
         the updates are applied on output `Tensor` instead of input `Parameter`.
+        The arg `input_x` refers to self tensor.
 
         The last axis of `indices` is the depth of each index vectors. For each index vector,
         there must be a corresponding value in `updates`. The shape of `updates` should be
         equal to the shape of `input_x[indices]`. For more details, see use cases.
 
         Note:
-            - The arg `input_x` refers to self tensor.
-            - If some values of the `indices` are out of bound, instead of raising an index error,
-              the corresponding `updates` will not be updated to `input_x`.
-            - The operator can't handle division by 0 exceptions, so the user needs to make sure
-              there is no 0 value in `updates`.
+            - If some values of the `indices` are out of bound, CPU backend will raise an index error.
+              GPU backend will not raise and index error
+              and the corresponding `updates` will not be updated to self tensor.
 
         Args:
             indices (Tensor): The index of input tensor whose data type is int32 or int64.
@@ -767,12 +766,13 @@ class Tensor(Tensor_):
             updates (Tensor): The tensor to update the input tensor, has the same type as input,
                 and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
+
         Returns:
-            Tensor, has the same shape and type as `input_x`.
+            Tensor, has the same shape and type as self tensor.
 
         Raises:
             TypeError: If dtype of `indices` is neither int32 nor int64.
-            ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+            ValueError: If length of shape of self tensor is less than the last dimension of shape of `indices`.
 
         Supported Platforms:
             ``GPU`` ``CPU``
@@ -786,9 +786,9 @@ class Tensor(Tensor_):
             >>> # 2, And input_x[0, 0] = -0.1
             >>> # 3, So input_x[indices] = [-0.1, -0.1]
             >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
-            >>> # 5, Perform the subtract operation for the first time:
+            >>> # 5, Perform the multiply operation for the first time:
             >>> #      first_input_x = input_x[0][0] * updates[0] = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
-            >>> # 6, Perform the subtract operation for the second time:
+            >>> # 6, Perform the multiply operation for the second time:
             >>> #      second_input_x = input_x[0][0] * updates[1] = [[-0.22, 0.3, 3.6], [0.4, 0.5, -3.2]]
             >>> output = input_x.tensor_scatter_mul(indices, updates)
             >>> print(output)
@@ -2201,7 +2201,6 @@ class Tensor(Tensor_):
                         np.random.seed(slice_index + Tensor.delta_seed)
                         self.init.seed = slice_index + Tensor.delta_seed
                         Tensor.delta_seed += self._device_num
-
 
             def __exit__(self, ptype, value, trace):
                 if self.need_set_seed:

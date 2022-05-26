@@ -1776,10 +1776,9 @@ def tensor_scatter_mul(input_x, indices, updates):
     equal to the shape of `input_x[indices]`. For more details, see use cases.
 
     Note:
-        - If some values of the `indices` are out of bound, instead of raising an index error,
-          the corresponding `updates` will not be updated to `input_x`.
-        - The operator can't handle division by 0 exceptions, so the user needs to make sure
-          there is no 0 value in `updates`.
+        - If some values of the `indices` are out of bound, CPU backend will raise an index error.
+          GPU backend will not raise and index error
+          and the corresponding `updates` will not be updated to `input_x`.
 
     Args:
         input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -1807,9 +1806,9 @@ def tensor_scatter_mul(input_x, indices, updates):
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
         >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
-        >>> # 5, Perform the subtract operation for the first time:
+        >>> # 5, Perform the multiply operation for the first time:
         >>> #      first_input_x = input_x[0][0] * updates[0] = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
-        >>> # 6, Perform the subtract operation for the second time:
+        >>> # 6, Perform the multiply operation for the second time:
         >>> #      second_input_x = input_x[0][0] * updates[1] = [[-0.22, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> output = ops.tensor_scatter_mul(input_x, indices, updates)
         >>> print(output)
