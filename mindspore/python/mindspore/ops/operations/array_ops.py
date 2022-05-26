@@ -7340,7 +7340,7 @@ class LowerBound(Primitive):
         ValueError: If the first dimension of the shape of `sorted_x` is not equal to that of `values`.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> import mindspore
@@ -7392,7 +7392,7 @@ class UpperBound(Primitive):
         ValueError: If the number of rows of `sorted_x` is not consistent with that of `values`.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> import mindspore
