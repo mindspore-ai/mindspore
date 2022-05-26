@@ -1,5 +1,5 @@
 mindspore.ops.fills
-==================
+===================
 
 .. py:function:: mindspore.ops.fills(x, value)
 
@@ -12,7 +12,7 @@ mindspore.ops.fills
 
     **返回：**
 
-    Tensor，与输入数据`x`具有相同的shape和type。
+    Tensor，与输入数据 `x` 具有相同的shape和type。
 
     **异常：**
 
