@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BASE_H_
 #define MINDSPORE_CCSRC_PIPELINE_PYNATIVE_BASE_H_
 
-#include <vector>
 #include <utility>
+#include <vector>
 #include <string>
 #include <memory>
 #include <set>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "pybind11/pytypes.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "pipeline/jit/parse/parse.h"
@@ -35,31 +34,43 @@ namespace mindspore {
 namespace pynative {
 namespace py = pybind11;
 
-enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
-struct OpExecInfo {
-  bool is_nop_prim = false;
-  bool is_dynamic_shape = false;
-  bool is_mixed_precision_cast = false;
-  size_t next_input_index = 0;
-  std::string op_name;
-  std::string op_info;
-  std::string next_op_name;
-  PrimitivePyPtr py_primitive;
-  AbstractBasePtr abstract;
-  py::list op_inputs;
-  // dynamic shape
+struct BaseOpRunInfo {
   bool has_dynamic_input = false;
   bool has_dynamic_output = false;
+  bool is_mixed_precision_cast = false;
+  bool lazy_build = false;
+  std::string op_name;
+  std::string next_op_name;
+  std::string graph_info;
+  std::string device_target = "Unknown";
+#if defined(__APPLE__)
+  int next_input_index = 0;
+#else
+  size_t next_input_index = 0;
+#endif
+  std::vector<tensor::TensorPtr> input_tensor;
+  std::vector<int64_t> input_mask;
+  AbstractBasePtr abstract;
+};
+
+struct FrontendOpRunInfo {
+  BaseOpRunInfo base_op_run_info;
+  bool run_in_vm = false;
+  bool lazy_build = false;
+  bool is_nop_prim = false;
+  bool output_get_by_infer_value = false;
+  int mix_type{0};
+  PrimitivePyPtr op_prim;
+  std::string op_info;
   // Tensor id with Shape info
   mindspore::HashMap<std::string, abstract::ShapePtr> id_with_dynamic_shape;
   // Tensor input and with its value
   std::vector<std::pair<size_t, ValuePtr>> index_with_value;
-  std::vector<tensor::TensorPtr> input_tensors;
-  py::dict op_attrs;
-  std::vector<int64_t> inputs_mask;
-  bool lazy_build = false;
+  std::vector<AbstractBasePtr> input_abs;
+  std::vector<ValuePtr> input_value;
+  py::list op_inputs;
 };
-using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
+using FrontendOpRunInfoPtr = std::shared_ptr<FrontendOpRunInfo>;
 }  // namespace pynative
 }  // namespace mindspore
 

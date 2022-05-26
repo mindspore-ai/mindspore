@@ -118,7 +118,7 @@ class RunOpTask : public Task {
     input_tensors_ = nullptr;
   }
   void Run() override;
-  OpRunInfo *op_run_info_{nullptr};
+  BackendOpRunInfoPtr op_run_info_{nullptr};
   GraphInfo graph_info_;
   std::vector<tensor::TensorPtr> *input_tensors_{nullptr};
   VectorRef outputs_;
@@ -167,7 +167,7 @@ class BACKEND_EXPORT Executor {
                 VectorRef *outputs);
   void RunGraphAsync(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                      VectorRef *outputs);
-  void RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
+  void RunOp(const SessionPtr &session, const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
              std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
              const std::vector<int64_t> &tensors_mask);
   void RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,

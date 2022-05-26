@@ -324,7 +324,7 @@ bool NeedDiscardTensorProperties(const std::string &op_device_target,
 }
 
 ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor,
-                                     const OpRunInfo &op_run_info, int64_t tensor_mask) {
+                                     const BackendOpRunInfoPtr &op_run_info, int64_t tensor_mask) {
   MS_EXCEPTION_IF_NULL(graph);
   auto param = graph->NewParameter();
   MS_EXCEPTION_IF_NULL(param);
@@ -336,7 +336,7 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensor->device_address());
-  if (NeedDiscardTensorProperties(op_run_info.device_target, device_address)) {
+  if (NeedDiscardTensorProperties(op_run_info->base_op_run_info.device_target, device_address)) {
     kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
     TypeId param_init_data_type = common::AnfAlgo::IsParameterWeight(param) ? kTypeUnknown : input_tensor->data_type();
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{param_init_data_type});
@@ -1398,9 +1398,9 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
   *graph_info = buf.str();
 }
 
-OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
-                                           const InputTensorInfo &tensor_info,
-                                           GraphOutputInfo *graph_output_info) const {
+BackendOpRunInfoPtr SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
+                                                     const InputTensorInfo &tensor_info,
+                                                     GraphOutputInfo *const graph_output_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   auto primitive = common::AnfAlgo::GetCNodePrimitive(cnode);
   const auto &abstract = cnode->abstract();
@@ -1416,22 +1416,19 @@ OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInf
                 [cnode](const std::pair<KernelWithIndex, std::vector<std::vector<size_t>>> &output_index) {
                   return output_index.first.first == cnode;
                 });
-  OpRunInfo op_run_info = {.is_infer = false,
-                           .is_gradient_out = is_gradient_out,
-                           .op_name = primitive->name(),
-                           .primitive = primitive.get(),
-                           .abstract = abstract,
-                           .input_is_dynamic_shape = common::AnfAlgo::IsNodeInputDynamicShape(cnode),
-                           .output_is_dynamic_shape = shape->IsDynamic(),
-                           .is_auto_mixed_precision = false,
-                           .lazy_build = !shape->IsDynamic(),
-                           .next_op_name = std::string(),
-                           .next_input_index = 0,
-                           .graph_info = graph_info,
-                           .tensor_mask = tensor_info.input_tensors_mask,
-                           .input_tensors = tensor_info.input_tensors,
-                           .device_target = GetOpRunDeviceTarget(primitive)};
-  return op_run_info;
+  pynative::BaseOpRunInfo base_op_run_info = {.has_dynamic_input = common::AnfAlgo::IsNodeInputDynamicShape(cnode),
+                                              .has_dynamic_output = shape->IsDynamic(),
+                                              .is_mixed_precision_cast = false,
+                                              .lazy_build = !shape->IsDynamic(),
+                                              .op_name = primitive->name(),
+                                              .next_op_name = std::string(),
+                                              .graph_info = graph_info,
+                                              .device_target = GetOpRunDeviceTarget(primitive),
+                                              .next_input_index = 0,
+                                              .input_tensor = tensor_info.input_tensors,
+                                              .input_mask = tensor_info.input_tensors_mask,
+                                              .abstract = abstract};
+  return std::make_shared<BackendOpRunInfo>(base_op_run_info, primitive.get(), false, is_gradient_out);
 }
 
 void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
@@ -1974,14 +1971,14 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
 }
 
 void SessionBasic::UpdateOutputAbstract(const std::shared_ptr<KernelGraph> &kernel_graph,
-                                        OpRunInfo *op_run_info) const {
+                                        const BackendOpRunInfoPtr &op_run_info) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(op_run_info);
   const auto &kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (common::AnfAlgo::GetCNodeName(kernel) == op_run_info->op_name) {
-      op_run_info->abstract = kernel->abstract();
+    if (common::AnfAlgo::GetCNodeName(kernel) == op_run_info->base_op_run_info.op_name) {
+      op_run_info->base_op_run_info.abstract = kernel->abstract();
     }
   }
 }
@@ -2486,7 +2483,7 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
   graph->set_output(g_output);
 }
 
-std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInfo &op_run_info,
+std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const BackendOpRunInfoPtr &op_run_info,
                                                                   const std::vector<tensor::TensorPtr> &input_tensors,
                                                                   const std::vector<int64_t> &tensors_mask,
                                                                   bool is_ascend) {
@@ -2495,7 +2492,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   graph_sum_++;
   std::vector<AnfNodePtr> inputs;
   // set input[0]
-  auto op_prim = op_run_info.primitive;
+  auto op_prim = op_run_info->op_prim;
   MS_EXCEPTION_IF_NULL(op_prim);
   // Decoupling of frontend PrimitivePy and backend Primitive
   inputs.push_back(std::make_shared<ValueNode>(std::make_shared<Primitive>(*op_prim)));
@@ -2520,13 +2517,16 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   auto cnode = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
   // set abstract,which include inferred shapes and types
-  cnode->set_abstract(op_run_info.abstract);
+  cnode->set_abstract(op_run_info->base_op_run_info.abstract);
   // get output dynamic shape info
-  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(op_run_info.input_is_dynamic_shape), cnode);
-  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(op_run_info.output_is_dynamic_shape), cnode);
-  if (op_run_info.is_auto_mixed_precision) {
-    common::AnfAlgo::SetNodeAttr(kAttrPynativeNextOpName, MakeValue(op_run_info.next_op_name), cnode);
-    common::AnfAlgo::SetNodeAttr(kAttrPynativeNextIndex, MakeValue(op_run_info.next_input_index), cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(op_run_info->base_op_run_info.has_dynamic_input),
+                               cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(op_run_info->base_op_run_info.has_dynamic_output),
+                               cnode);
+  if (op_run_info->base_op_run_info.is_mixed_precision_cast) {
+    common::AnfAlgo::SetNodeAttr(kAttrPynativeNextOpName, MakeValue(op_run_info->base_op_run_info.next_op_name), cnode);
+    common::AnfAlgo::SetNodeAttr(kAttrPynativeNextIndex, MakeValue(op_run_info->base_op_run_info.next_input_index),
+                                 cnode);
   }
   // set execution order
   std::vector<CNodePtr> exe_order = {cnode};
@@ -2590,11 +2590,11 @@ void SessionBasic::BuildGraph(GraphId graph_id) {
   executor_->BuildGraph(shared_from_this(), graph_id);
 }
 
-void SessionBasic::RunOp(OpRunInfo *op_run_info, VectorRef *outputs) {
+void SessionBasic::RunOp(const BackendOpRunInfoPtr &op_run_info, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
   MS_EXCEPTION_IF_NULL(op_run_info);
-  executor_->RunOp(shared_from_this(), op_run_info, op_run_info->graph_info, &op_run_info->input_tensors, outputs,
-                   op_run_info->tensor_mask);
+  executor_->RunOp(shared_from_this(), op_run_info, op_run_info->base_op_run_info.graph_info,
+                   &op_run_info->base_op_run_info.input_tensor, outputs, op_run_info->base_op_run_info.input_mask);
 }
 
 void SessionBasic::RunOpsInGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
@@ -2671,10 +2671,10 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     // Get OpRunInfo and GraphInfo
     GraphInfo graph_info;
     GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info);
-    OpRunInfo run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, &graph_output_info);
+    BackendOpRunInfoPtr run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, &graph_output_info);
 
     // Build and run current single op
-    RunOpImplOrigin(graph_info, &run_info, &input_tensor_info.input_tensors, &op_outputs,
+    RunOpImplOrigin(graph_info, run_info, &input_tensor_info.input_tensors, &op_outputs,
                     input_tensor_info.input_tensors_mask);
     graph_output_info.graph_output_tensors.clear();
     // Handle inputs and outputs of current op

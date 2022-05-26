@@ -654,12 +654,13 @@ void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const
   }
 }
 
-KernelGraphPtr GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+KernelGraphPtr GPUSession::BuildOpImpl(const BackendOpRunInfoPtr &op_run_info, const GraphInfo &graph_info,
                                        const std::vector<tensor::TensorPtr> &input_tensors,
                                        const std::vector<int64_t> &tensors_mask) {
   // Check if the graph cache exists.
   auto it = run_op_graphs_.find(graph_info);
-  if (it != run_op_graphs_.end() && kOpCacheBlackList.find(op_run_info.op_name) == kOpCacheBlackList.end()) {
+  if (it != run_op_graphs_.end() &&
+      kOpCacheBlackList.find(op_run_info->base_op_run_info.op_name) == kOpCacheBlackList.end()) {
     return it->second;
   }
 
@@ -679,19 +680,19 @@ KernelGraphPtr GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const Graph
   return kernel_graph;
 }
 
-void GPUSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+void GPUSession::RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                                  std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                                  const std::vector<int64_t> &tensors_mask) {
   RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
 }
 
-void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+void GPUSession::RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                            std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                            const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(op_run_info);
   ProcessInputTensorsForHeterogeneous("GPU", *input_tensors);
-  const auto &kernel_graph = BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
+  const auto &kernel_graph = BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
   // wait for allreduce
   for (auto &tensor : *input_tensors) {
@@ -713,11 +714,11 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
   UpdateOutputs(kernel_graph, outputs, *input_tensors, &tensor_to_node);
   // update output abstract of dynamic op to op_run_info
-  if (op_run_info->output_is_dynamic_shape) {
+  if (op_run_info->base_op_run_info.has_dynamic_output) {
     UpdateOutputAbstract(kernel_graph, op_run_info);
   }
   RunOpClearMemory(kernel_graph.get());
-  if (kOpCacheBlackList.find(op_run_info->op_name) != kOpCacheBlackList.end()) {
+  if (kOpCacheBlackList.find(op_run_info->base_op_run_info.op_name) != kOpCacheBlackList.end()) {
     run_op_graphs_.erase(graph_info);
   }
 }

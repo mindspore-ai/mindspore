@@ -364,7 +364,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   }
   // Run in pynative mode, when @ms_function is used.
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    auto pynative_exec = pynative::PynativeExecutor::GetInstance();
+    auto pynative_exec = pynative::PyNativeExecutor::GetInstance();
     auto grad_exec = pynative_exec->grad_executor();
     if (grad_exec->eliminate_forward()) {
       PynativeDFunctor::ReplaceEquivdout(k_app, cnode_morph);

@@ -38,7 +38,6 @@
 
 namespace mindspore {
 namespace compile {
-using OpRunInfo = session::OpRunInfo;
 using GraphOutputInfo = session::GraphOutputInfo;
 using DeviceContext = device::DeviceContext;
 using ActorInfo = runtime::ActorInfo;
@@ -114,7 +113,7 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   // Run Graph in the graph mode.
   void RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs);
   // Run single op in the PyNative mode.
-  void RunOp(OpRunInfo *op_run_info, VectorRef *outputs);
+  void RunOp(const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
 #ifdef ENABLE_DEBUGGER
   void SetDebuggerInit();
 #endif
@@ -156,8 +155,8 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
 
   // Construct the GraphCompilerInfo by the compilation results of graph, used in PyNative mode.
   std::unique_ptr<GraphCompilerInfo> ConstructGraphCompilerInfo(const ActorInfo &actor_info,
-                                                                const std::vector<int64_t> *tensors_mask,
-                                                                const std::vector<tensor::TensorPtr> *input_tensors,
+                                                                const std::vector<int64_t> &tensors_mask,
+                                                                const std::vector<TensorPtr> &input_tensors,
                                                                 bool need_erase);
 
   void ParseControlNodes(const GraphCompilerInfo &graph_compile_info);
@@ -170,12 +169,12 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   void BatchBuildCallback();
 
   // Run op or dispatch  build task and run task.
-  void RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph_compiler_info, OpRunInfo *op_run_info,
-                 VectorRef *outputs);
+  void RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph_compiler_info,
+                 const session::BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
 
   // Dispatch task and execute the task in another thread.
   void DispatchOpTask(bool single_op_cache_hit, VectorRef *outputs, GraphCompilerInfo *graph_compiler_info,
-                      OpRunInfo *op_run_info);
+                      const session::BackendOpRunInfoPtr &op_run_info);
 
   void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
                            const VectorRef &args, VectorRef *outputs);

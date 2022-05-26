@@ -34,6 +34,8 @@
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
 #include "runtime/device/bucket.h"
+#include "pipeline/pynative/base.h"
+
 #if defined(ENABLE_DEBUGGER) && !defined(_WIN32) && !defined(_WIN64)
 #include "debug/debugger/debugger.h"
 #endif
@@ -58,27 +60,21 @@ using CallBackFunc = uint32_t (*)(uint32_t graph_id,
 using AnyList = std::vector<Any>;
 using AnyListPtr = std::shared_ptr<AnyList>;
 
-struct OpRunInfo {
+struct BackendOpRunInfo {
+  BackendOpRunInfo() = default;
+  ~BackendOpRunInfo() = default;
+  BackendOpRunInfo(pynative::BaseOpRunInfo base_op_run_info, Primitive *prim, bool is_infer, bool is_gradient_out)
+      : base_op_run_info(std::move(base_op_run_info)),
+        op_prim(prim),
+        is_infer(is_infer),
+        is_gradient_out(is_gradient_out) {}
+
+  pynative::BaseOpRunInfo base_op_run_info;
+  Primitive *op_prim;
   bool is_infer = false;
   bool is_gradient_out = false;
-  std::string op_name;
-  Primitive *primitive;
-  AbstractBasePtr abstract;
-  bool input_is_dynamic_shape = false;
-  bool output_is_dynamic_shape = false;
-  bool is_auto_mixed_precision = false;
-  bool lazy_build = false;
-  std::string next_op_name;
-#if defined(__APPLE__)
-  int next_input_index = 0;
-#else
-  size_t next_input_index = 0;
-#endif
-  std::string graph_info;
-  std::vector<int64_t> tensor_mask;
-  std::vector<tensor::TensorPtr> input_tensors;
-  std::string device_target = "Unknown";
 };
+using BackendOpRunInfoPtr = std::shared_ptr<BackendOpRunInfo>;
 
 struct InputTensorInfo {
   std::vector<tensor::TensorPtr> input_tensors;
@@ -117,7 +113,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   void BuildGraph(GraphId graphId);
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   void RunGraphAsync(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
-  void RunOp(OpRunInfo *, VectorRef *outputs);
+  void RunOp(const BackendOpRunInfoPtr &op_run_info, VectorRef *outputs);
   void RunOpsInGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
 
 #ifndef ENABLE_SECURITY
@@ -160,7 +156,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   KernelGraphPtr GetGraph(GraphId graph_id) const;
   void ClearGraph();
   // create a single run op graph
-  std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
+  std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const BackendOpRunInfoPtr &op_run_info,
                                                       const std::vector<tensor::TensorPtr> &input_tensors,
                                                       const std::vector<int64_t> &tensors_mask, bool is_ascend = false);
   void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask,
@@ -256,15 +252,16 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   virtual void ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) { MS_EXCEPTION_IF_NULL(kernel_graph); }
 
   void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
-  virtual KernelGraphPtr BuildOpImpl(const OpRunInfo & /* op_run_info */, const GraphInfo & /* graph_info */,
+
+  virtual KernelGraphPtr BuildOpImpl(const BackendOpRunInfoPtr & /* op_run_info */, const GraphInfo & /* graph_info */,
                                      const std::vector<tensor::TensorPtr> & /* input_tensors */,
                                      const std::vector<int64_t> & /* tensors_mask */) {
     return nullptr;
   }
-  virtual void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+  virtual void RunOpImpl(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                          std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                          const std::vector<int64_t> &tensors_mask) {}
-  virtual void RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
+  virtual void RunOpImplOrigin(const GraphInfo &graph_info, const BackendOpRunInfoPtr &op_run_info,
                                std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                                const std::vector<int64_t> &tensors_mask) {}
   void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
@@ -302,7 +299,8 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
                      const std::vector<tensor::TensorPtr> &input_tensors,
                      std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) const;
-  void UpdateOutputAbstract(const std::shared_ptr<KernelGraph> &kernel_graph, OpRunInfo *op_run_info) const;
+  void UpdateOutputAbstract(const std::shared_ptr<KernelGraph> &kernel_graph,
+                            const BackendOpRunInfoPtr &op_run_info) const;
 #ifndef ENABLE_SECURITY
   void Summary(KernelGraph *graph);
 #endif
@@ -311,8 +309,10 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
   // Generate graph info for a single op graph
   void GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info, GraphInfo *graph_info) const;
-  OpRunInfo GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info, const InputTensorInfo &tensor_info,
-                               GraphOutputInfo *graph_output_info) const;
+
+  BackendOpRunInfoPtr GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
+                                         const InputTensorInfo &tensor_info,
+                                         GraphOutputInfo *const graph_output_info) const;
   tensor::TensorPtr GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index) const;
   tensor::TensorPtr GetParameterOutputTensor(const AnfNodePtr &node,
                                              const std::map<AnfNodePtr, size_t> &parameter_index,
