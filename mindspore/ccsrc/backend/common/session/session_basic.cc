@@ -2085,6 +2085,17 @@ void SessionBasic::RegisterSummaryCallBackFunc(const CallBackFunc &callback) {
   summary_callback_ = callback;
 }
 
+void SessionBasic::SetSummaryNodesForAllGraphs(KernelGraph *graph, std::vector<KernelGraphPtr> all_graphs) {
+  MS_LOG(DEBUG) << "Set summary nodes for all graphs start.";
+  MS_EXCEPTION_IF_NULL(graph);
+  auto summary_nodes = graph->summary_nodes();
+  std::map<std::string, std::pair<AnfNodePtr, int>> summary;
+  summary.insert(summary_nodes.begin(), summary_nodes.end());
+  RecurseSetSummaryNodes(graph, all_graphs, &summary);
+  graph->set_summary_nodes(summary);
+  MS_LOG(INFO) << "The total summary nodes is: " << summary.size();
+}
+
 void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary Start";
   MS_EXCEPTION_IF_NULL(graph);
@@ -2115,6 +2126,19 @@ void SessionBasic::SetSummaryNodes(KernelGraph *graph) {
   }
   graph->set_summary_nodes(summary);
   MS_LOG(DEBUG) << "Update summary end size: " << summary.size();
+}
+
+void SessionBasic::RecurseSetSummaryNodes(KernelGraph *graph, std::vector<KernelGraphPtr> all_graphs,
+                                          std::map<std::string, std::pair<AnfNodePtr, int>> *summary) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(summary);
+  for (auto &child_graph : all_graphs) {
+    MS_EXCEPTION_IF_NULL(child_graph);
+    SetSummaryNodes(child_graph.get());
+    auto child_graph_summary = child_graph->summary_nodes();
+    summary->insert(child_graph_summary.begin(), child_graph_summary.end());
+  }
+  graph->set_summary_nodes(*summary);
 }
 
 void SessionBasic::Summary(KernelGraph *graph) {

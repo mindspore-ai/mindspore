@@ -492,6 +492,9 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
 
   auto graph_id = CompileGraphImpl(root_graph, device_context);
 
+  // Set summary nodes for all graphs.
+  session_->SetSummaryNodesForAllGraphs(root_graph.get(), all_graphs);
+
   // dump all graphs.
   // for ascend mindRT.
   session_->DumpGraphs(all_graphs);

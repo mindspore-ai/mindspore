@@ -274,6 +274,9 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
                                const std::map<KernelWithIndex, size_t> &cnode_refcount) {}
 #ifndef ENABLE_SECURITY
   virtual void SetSummaryNodes(KernelGraph *graph);
+  void SetSummaryNodesForAllGraphs(KernelGraph *graph, std::vector<KernelGraphPtr> all_graphs);
+  void RecurseSetSummaryNodes(KernelGraph *graph, std::vector<KernelGraphPtr> all_graphs,
+                              std::map<std::string, std::pair<AnfNodePtr, int>> *summary);
 #endif
 
   void LoadInputs(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs_const) {
