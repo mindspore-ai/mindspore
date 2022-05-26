@@ -20,7 +20,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 
 
 DATASET_DIR = "../data/dataset/testCityscapesData/cityscapes"

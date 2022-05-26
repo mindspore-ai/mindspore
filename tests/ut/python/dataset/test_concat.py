@@ -16,8 +16,8 @@ import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as C
-import mindspore.dataset.vision.transforms as F
+import mindspore.dataset.transforms as C
+import mindspore.dataset.vision as F
 from mindspore import log as logger
 
 

@@ -18,8 +18,8 @@ Testing Equalize op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import visualize_list, visualize_one_channel_dataset, diff_mse, save_and_check_md5
 
@@ -57,9 +57,9 @@ def test_equalize_py(plot=False):
     # Original Images
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_original = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                           vision.Resize((224, 224)),
-                                                                           vision.ToTensor()])
+    transforms_original = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                                vision.Resize((224, 224)),
+                                                                vision.ToTensor()])
 
     ds_original = data_set.map(operations=transforms_original, input_columns="image")
 
@@ -76,10 +76,10 @@ def test_equalize_py(plot=False):
             # Color Equalized Images
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_equalize = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                           vision.Resize((224, 224)),
-                                                                           vision.Equalize(),
-                                                                           vision.ToTensor()])
+    transforms_equalize = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                                vision.Resize((224, 224)),
+                                                                vision.Equalize(),
+                                                                vision.ToTensor()])
 
     ds_equalize = data_set.map(operations=transforms_equalize, input_columns="image")
 
@@ -183,10 +183,10 @@ def test_equalize_py_c(plot=False):
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     data_set = data_set.map(operations=[vision.Decode(), vision.Resize((224, 224))], input_columns=["image"])
 
-    transforms_p_equalize = mindspore.dataset.transforms.transforms.Compose([lambda img: img.astype(np.uint8),
-                                                                             vision.ToPIL(),
-                                                                             vision.Equalize(),
-                                                                             np.array])
+    transforms_p_equalize = mindspore.dataset.transforms.Compose([lambda img: img.astype(np.uint8),
+                                                                  vision.ToPIL(),
+                                                                  vision.Equalize(),
+                                                                  np.array])
 
     ds_p_equalize = data_set.map(operations=transforms_p_equalize, input_columns="image")
 
@@ -271,9 +271,9 @@ def test_equalize_md5_py():
 
     # First dataset
     data1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-    transforms = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                  vision.Equalize(),
-                                                                  vision.ToTensor()])
+    transforms = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                       vision.Equalize(),
+                                                       vision.ToTensor()])
 
     data1 = data1.map(operations=transforms, input_columns="image")
     # Compare with expected md5 from images

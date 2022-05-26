@@ -21,8 +21,8 @@ import random
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms as transforms
+import mindspore.dataset.vision as vision
 
 MNIST_DATA_DIR = "../data/dataset/testMnistData"
 DATA_DIR = "../data/dataset/testPK/data"

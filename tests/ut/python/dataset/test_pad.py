@@ -18,8 +18,8 @@ Testing Pad op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import diff_mse, save_and_check_md5
 
@@ -51,7 +51,7 @@ def test_pad_op():
         vision.Pad(100),
         vision.ToTensor(),
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
@@ -106,7 +106,7 @@ def test_pad_grayscale():
         (lambda image: (image.transpose(1, 2, 0) * 255).astype(np.uint8))
     ]
 
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data1 = data1.map(operations=transform, input_columns=["image"])
 
@@ -161,7 +161,7 @@ def test_pad_md5():
         vision.Pad(150),
         vision.ToTensor(),
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(pytrans)
+    transform = mindspore.dataset.transforms.Compose(pytrans)
     data2 = data2.map(operations=transform, input_columns=["image"])
     # Compare with expected md5 from images
     filename1 = "pad_01_c_result.npz"

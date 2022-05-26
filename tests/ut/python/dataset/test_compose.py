@@ -19,8 +19,8 @@ import numpy as np
 import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms as transforms
+import mindspore.dataset.vision as vision
 
 from util import visualize_list, save_and_check_md5, config_get_set_seed, config_get_set_num_parallel_workers
 

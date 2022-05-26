@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as ops
+import mindspore.dataset.transforms as ops
 
 
 # Extensive testing of PadEnd is already done in batch with Pad test cases

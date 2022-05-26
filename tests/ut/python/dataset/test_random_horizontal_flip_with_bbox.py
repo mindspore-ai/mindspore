@@ -17,7 +17,7 @@ Testing the random horizontal flip with bounding boxes op in DE
 """
 import mindspore.log as logger
 import mindspore.dataset as ds
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 from util import InvalidBBoxType, check_bad_bbox, \
     config_get_set_seed, config_get_set_num_parallel_workers, save_and_check_md5, \
     helper_perform_ops_bbox, helper_test_visual_bbox, helper_perform_ops_bbox_edgecase_float

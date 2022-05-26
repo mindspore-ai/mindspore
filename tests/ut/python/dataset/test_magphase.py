@@ -18,7 +18,7 @@ Testing Magphase Python API
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.audio.transforms as audio
+import mindspore.dataset.audio as audio
 from mindspore import log as logger
 
 

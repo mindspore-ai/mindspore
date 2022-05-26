@@ -20,7 +20,7 @@ import pytest
 
 import mindspore.dataset as ds
 from mindspore import log as logger
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 
 DATASET_DIR = "../data/dataset/testSBData/sbd"
 

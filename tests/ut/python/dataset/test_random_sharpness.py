@@ -17,8 +17,8 @@ Testing RandomSharpness op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import visualize_list, visualize_one_channel_dataset, diff_mse, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -40,9 +40,9 @@ def test_random_sharpness_py(degrees=(0.7, 0.7), plot=False):
     # Original Images
     data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_original = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                           vision.Resize((224, 224)),
-                                                                           vision.ToTensor()])
+    transforms_original = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                                vision.Resize((224, 224)),
+                                                                vision.ToTensor()])
 
     ds_original = data.map(operations=transforms_original, input_columns="image")
 
@@ -63,10 +63,10 @@ def test_random_sharpness_py(degrees=(0.7, 0.7), plot=False):
     if degrees is not None:
         py_op = vision.RandomSharpness(degrees)
 
-    transforms_random_sharpness = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                                   vision.Resize((224, 224)),
-                                                                                   py_op,
-                                                                                   vision.ToTensor()])
+    transforms_random_sharpness = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                                        vision.Resize((224, 224)),
+                                                                        py_op,
+                                                                        vision.ToTensor()])
 
     ds_random_sharpness = data.map(operations=transforms_random_sharpness, input_columns="image")
 
@@ -107,7 +107,7 @@ def test_random_sharpness_py_md5():
         vision.RandomSharpness((20.0, 25.0)),
         vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
 
     #  Generate dataset
     data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
@@ -227,9 +227,9 @@ def test_random_sharpness_c_py(degrees=(1.0, 1.0), plot=False):
     python_op = vision.RandomSharpness(degrees)
     c_op = vision.RandomSharpness(degrees)
 
-    transforms_op = mindspore.dataset.transforms.transforms.Compose([lambda img: vision.ToPIL()(img.astype(np.uint8)),
-                                                                     python_op,
-                                                                     np.array])
+    transforms_op = mindspore.dataset.transforms.Compose([lambda img: vision.ToPIL()(img.astype(np.uint8)),
+                                                          python_op,
+                                                          np.array])
 
     ds_random_sharpness_py = data.map(operations=transforms_op, input_columns="image")
 

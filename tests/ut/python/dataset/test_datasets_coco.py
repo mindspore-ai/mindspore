@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 
 DATA_DIR = "../data/dataset/testCOCO/train/"
 DATA_DIR_2 = "../data/dataset/testCOCO/train"

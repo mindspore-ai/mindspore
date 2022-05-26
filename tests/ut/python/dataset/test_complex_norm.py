@@ -19,7 +19,7 @@ import numpy as np
 from numpy import random
 
 import mindspore.dataset as ds
-import mindspore.dataset.audio.transforms as audio
+import mindspore.dataset.audio as audio
 from mindspore import log as logger
 
 

@@ -17,8 +17,8 @@ Testing the random vertical flip op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as ops
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms as ops
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import save_and_check_md5, visualize_list, visualize_image, diff_mse, \
     config_get_set_seed, config_get_set_num_parallel_workers

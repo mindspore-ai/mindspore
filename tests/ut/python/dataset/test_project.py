@@ -17,7 +17,7 @@ import numpy as np
 from util import save_and_check_tuple
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as C
+import mindspore.dataset.transforms as C
 from mindspore.common import dtype as mstype
 
 DATA_DIR_TF = ["../data/dataset/testTFTestAllTypes/test.data"]

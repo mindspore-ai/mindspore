@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.audio.transforms as atf
+import mindspore.dataset.audio as atf
 from mindspore import log as logger
 
 CHANNEL = 1

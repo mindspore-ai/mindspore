@@ -16,8 +16,8 @@
 Testing RandomResize op in DE
 """
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as ops
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms as ops
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, diff_mse, \
     config_get_set_seed, config_get_set_num_parallel_workers

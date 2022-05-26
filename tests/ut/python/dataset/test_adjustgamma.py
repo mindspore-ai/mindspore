@@ -20,8 +20,8 @@ from numpy.testing import assert_allclose
 import PIL
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
@@ -157,7 +157,7 @@ def test_adjust_gamma_invalid_gamma_param_py():
         "Test AdjustGamma Python implementation with invalid ignore parameter")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.transforms.Compose([
+        trans = mindspore.dataset.transforms.Compose([
             vision.Decode(True),
             vision.Resize((224, 224)),
             vision.AdjustGamma(gamma=-10.0),
@@ -169,7 +169,7 @@ def test_adjust_gamma_invalid_gamma_param_py():
         assert "Input is not within the required interval of " in str(error)
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.transforms.Compose([
+        trans = mindspore.dataset.transforms.Compose([
             vision.Decode(True),
             vision.Resize((224, 224)),
             vision.AdjustGamma(gamma=[1, 2]),
@@ -214,7 +214,7 @@ def test_adjust_gamma_invalid_gain_param_py():
         "Test AdjustGamma Python implementation with invalid gain parameter")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.transforms.Compose([
+        trans = mindspore.dataset.transforms.Compose([
             vision.Decode(True),
             vision.Resize((224, 224)),
             vision.AdjustGamma(gamma=10.0, gain=[1, 10]),
@@ -235,7 +235,7 @@ def test_adjust_gamma_pipeline_c():
     """
     # First dataset
     transforms1 = [vision.Decode(), vision.Resize([64, 64])]
-    transforms1 = mindspore.dataset.transforms.transforms.Compose(
+    transforms1 = mindspore.dataset.transforms.Compose(
         transforms1)
     ds1 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
@@ -249,7 +249,7 @@ def test_adjust_gamma_pipeline_c():
         vision.Resize([64, 64]),
         vision.AdjustGamma(1.0, 1.0)
     ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(
+    transform2 = mindspore.dataset.transforms.Compose(
         transforms2)
     ds2 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
@@ -279,7 +279,7 @@ def test_adjust_gamma_pipeline_py():
     # First dataset
     transforms1 = [vision.Decode(True), vision.Resize(
         [64, 64]), vision.ToTensor()]
-    transforms1 = mindspore.dataset.transforms.transforms.Compose(
+    transforms1 = mindspore.dataset.transforms.Compose(
         transforms1)
     ds1 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
@@ -294,7 +294,7 @@ def test_adjust_gamma_pipeline_py():
         vision.AdjustGamma(1.0, 1.0),
         vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(
+    transform2 = mindspore.dataset.transforms.Compose(
         transforms2)
     ds2 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
@@ -324,7 +324,7 @@ def test_adjust_gamma_pipeline_py_gray():
     # First dataset
     transforms1_list = [vision.Decode(True), vision.Resize(
         [60, 60]), vision.Grayscale(), vision.ToTensor()]
-    transforms1 = mindspore.dataset.transforms.transforms.Compose(
+    transforms1 = mindspore.dataset.transforms.Compose(
         transforms1_list)
     ds1 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
@@ -340,7 +340,7 @@ def test_adjust_gamma_pipeline_py_gray():
         vision.AdjustGamma(1.0, 1.0),
         vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(
+    transform2 = mindspore.dataset.transforms.Compose(
         transforms2_list)
     ds2 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,

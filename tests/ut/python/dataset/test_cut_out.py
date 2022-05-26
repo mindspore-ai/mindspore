@@ -18,8 +18,8 @@ Testing CutOut op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import visualize_image, visualize_list, diff_mse, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -44,7 +44,7 @@ def test_cut_out_op(plot=False):
         vision.ToTensor(),
         vision.RandomErasing(value='random')
     ]
-    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.Compose(transforms_1)
     data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
@@ -91,7 +91,7 @@ def test_cut_out_op_multicut(plot=False):
         vision.Decode(True),
         vision.ToTensor(),
     ]
-    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.Compose(transforms_1)
     data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
@@ -147,7 +147,7 @@ def test_cut_out_md5():
         vision.ToTensor(),
         vision.CutOut(100, is_hwc=False)
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
@@ -177,7 +177,7 @@ def test_cut_out_comp_hwc(plot=False):
         vision.ToTensor(),
         vision.CutOut(250, is_hwc=False)
     ]
-    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.Compose(transforms_1)
     data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
@@ -227,7 +227,7 @@ def test_cut_out_comp_chw():
         vision.HWC2CHW(),
         vision.CutOut(200, is_hwc=False)
     ]
-    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.Compose(transforms_1)
     data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset

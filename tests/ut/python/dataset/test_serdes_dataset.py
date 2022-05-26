@@ -26,8 +26,8 @@ from util import config_get_set_num_parallel_workers, config_get_set_seed
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms as transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from mindspore.dataset.vision import Inter
 

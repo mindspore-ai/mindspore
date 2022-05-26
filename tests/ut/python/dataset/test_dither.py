@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.audio.transforms as audio
+import mindspore.dataset.audio as audio
 from mindspore import log as logger
 from mindspore.dataset.audio.utils import DensityFunction
 from util import visualize_audio, diff_mse

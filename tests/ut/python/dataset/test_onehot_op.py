@@ -18,8 +18,8 @@ Testing the OneHot Op
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as data_trans
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms as data_trans
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import dataset_equal_with_function
 

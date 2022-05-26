@@ -19,8 +19,8 @@ import numpy as np
 import cv2
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
 from util import visualize_image, visualize_list, diff_mse, save_and_check_md5, \
@@ -115,15 +115,15 @@ def test_random_rotation_op_py(plot=False):
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     # use [90, 90] to force rotate 90 degrees, expand is set to be True to match output size
-    transform1 = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                  vision.RandomRotation((90, 90), expand=True),
-                                                                  vision.ToTensor()])
+    transform1 = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                       vision.RandomRotation((90, 90), expand=True),
+                                                       vision.ToTensor()])
     data1 = data1.map(operations=transform1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    transform2 = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                  vision.ToTensor()])
+    transform2 = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                       vision.ToTensor()])
     data2 = data2.map(operations=transform2, input_columns=["image"])
 
     num_iter = 0
@@ -154,11 +154,11 @@ def test_random_rotation_op_py_ANTIALIAS():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     # use [90, 90] to force rotate 90 degrees, expand is set to be True to match output size
-    transform1 = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                  vision.RandomRotation((90, 90),
-                                                                                        expand=True,
-                                                                                        resample=Inter.ANTIALIAS),
-                                                                  vision.ToTensor()])
+    transform1 = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                       vision.RandomRotation((90, 90),
+                                                                             expand=True,
+                                                                             resample=Inter.ANTIALIAS),
+                                                       vision.ToTensor()])
     data1 = data1.map(operations=transform1, input_columns=["image"])
 
     num_iter = 0
@@ -213,13 +213,13 @@ def test_random_rotation_md5():
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-    transform2 = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                  vision.RandomRotation((0, 90),
-                                                                                        expand=True,
-                                                                                        resample=Inter.BILINEAR,
-                                                                                        center=(50, 50),
-                                                                                        fill_value=150),
-                                                                  vision.ToTensor()])
+    transform2 = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                       vision.RandomRotation((0, 90),
+                                                                             expand=True,
+                                                                             resample=Inter.BILINEAR,
+                                                                             center=(50, 50),
+                                                                             fill_value=150),
+                                                       vision.ToTensor()])
     data2 = data2.map(operations=transform2, input_columns=["image"])
 
     # Compare with expected md5 from images
@@ -258,7 +258,7 @@ def test_rotation_diff(plot=False):
         vision.RandomRotation((45, 45)),
         vision.ToTensor(),
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(operations=transform, input_columns=["image"])
 

@@ -17,8 +17,8 @@ import pytest
 
 import mindspore.dataset as ds
 import mindspore.common.dtype as mstype
-import mindspore.dataset.vision.transforms as C
-import mindspore.dataset.transforms.transforms as C2
+import mindspore.dataset.vision as C
+import mindspore.dataset.transforms as C2
 
 
 DATA_DIR = "../data/dataset/testPK/data"

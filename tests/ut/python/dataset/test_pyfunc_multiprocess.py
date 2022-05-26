@@ -18,8 +18,8 @@ Test Python Multiprocessing with Python functions/ops
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms as transforms
+import mindspore.dataset.vision as vision
 from util import visualize_list
 
 MNIST_DATA_DIR = "../data/dataset/testMnistData"

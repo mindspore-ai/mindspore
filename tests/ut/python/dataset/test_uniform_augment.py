@@ -18,8 +18,8 @@ Testing UniformAugment in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import visualize_list, diff_mse
 
@@ -54,9 +54,9 @@ def test_uniform_augment(plot=False, num_ops=2):
     # Original Images
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_original = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                           vision.Resize((224, 224)),
-                                                                           vision.ToTensor()])
+    transforms_original = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                                vision.Resize((224, 224)),
+                                                                vision.ToTensor()])
 
     ds_original = data_set.map(operations=transforms_original, input_columns="image")
 
@@ -81,11 +81,11 @@ def test_uniform_augment(plot=False, num_ops=2):
                       vision.Equalize()]
 
     transforms_ua = \
-        mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                         vision.Resize((224, 224)),
-                                                         vision.UniformAugment(transforms=transform_list,
-                                                                               num_ops=num_ops),
-                                                         vision.ToTensor()])
+        mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                              vision.Resize((224, 224)),
+                                              vision.UniformAugment(transforms=transform_list,
+                                                                    num_ops=num_ops),
+                                              vision.ToTensor()])
 
     ds_ua = data_set.map(operations=transforms_ua, input_columns="image")
 

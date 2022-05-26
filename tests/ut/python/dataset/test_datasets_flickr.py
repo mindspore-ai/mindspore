@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
 FLICKR30K_DATASET_DIR = "../data/dataset/testFlickrData/flickr30k/flickr30k-images"

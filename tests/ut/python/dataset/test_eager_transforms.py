@@ -18,7 +18,7 @@ Eager Tests for Transform Tensor ops
 
 import numpy as np
 import mindspore.common.dtype as mstype
-import mindspore.dataset.transforms.transforms as data_trans
+import mindspore.dataset.transforms as data_trans
 
 
 def test_eager_concatenate():

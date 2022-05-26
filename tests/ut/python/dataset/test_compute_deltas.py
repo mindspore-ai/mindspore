@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.audio.transforms as c_audio
+import mindspore.dataset.audio as c_audio
 from mindspore import log as logger
 from mindspore.dataset.audio.utils import BorderType
 

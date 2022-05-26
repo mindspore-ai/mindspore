@@ -17,8 +17,8 @@ Testing AutoContrast op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import visualize_list, visualize_one_channel_dataset, diff_mse, save_and_check_md5
 
@@ -39,10 +39,9 @@ def test_auto_contrast_py(plot=False):
     # Original Images
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_original = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                           vision.Resize(
-                                                                               (224, 224)),
-                                                                           vision.ToTensor()])
+    transforms_original = mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                                vision.Resize((224, 224)),
+                                                                vision.ToTensor()])
 
     ds_original = data_set.map(
         operations=transforms_original, input_columns="image")
@@ -62,12 +61,10 @@ def test_auto_contrast_py(plot=False):
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_auto_contrast = \
-        mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                         vision.Resize(
-                                                             (224, 224)),
-                                                         vision.AutoContrast(
-                                                             cutoff=10.0, ignore=[10, 20]),
-                                                         vision.ToTensor()])
+        mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                              vision.Resize((224, 224)),
+                                              vision.AutoContrast(cutoff=10.0, ignore=[10, 20]),
+                                              vision.ToTensor()])
 
     ds_auto_contrast = data_set.map(
         operations=transforms_auto_contrast, input_columns="image")
@@ -112,9 +109,9 @@ def test_auto_contrast_c(plot=False):
     ), vision.Resize((224, 224))], input_columns=["image"])
     python_op = vision.AutoContrast(cutoff=10.0, ignore=[10, 20])
     c_op = vision.AutoContrast(cutoff=10.0, ignore=[10, 20])
-    transforms_op = mindspore.dataset.transforms.transforms.Compose([lambda img: vision.ToPIL()(img.astype(np.uint8)),
-                                                                     python_op,
-                                                                     np.array])
+    transforms_op = mindspore.dataset.transforms.Compose([lambda img: vision.ToPIL()(img.astype(np.uint8)),
+                                                          python_op,
+                                                          np.array])
 
     ds_auto_contrast_py = data_set.map(
         operations=transforms_op, input_columns="image")
@@ -178,7 +175,7 @@ def test_auto_contrast_one_channel_c(plot=False):
     python_op = vision.AutoContrast()
     c_op = vision.AutoContrast()
     # not using vision.ToTensor() since it converts to floats
-    transforms_op = mindspore.dataset.transforms.transforms.Compose(
+    transforms_op = mindspore.dataset.transforms.Compose(
         [lambda img: (np.array(img)[:, :, 0]).astype(np.uint8),
          vision.ToPIL(),
          python_op,
@@ -335,24 +332,20 @@ def test_auto_contrast_invalid_ignore_param_py():
         "Test AutoContrast Python implementation with invalid ignore parameter")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data_set = data_set.map(operations=[mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                                             vision.Resize(
-                                                                                                 (224, 224)),
-                                                                                             vision.AutoContrast(
-                                                                                                 ignore=255.5),
-                                                                                             vision.ToTensor()])],
+        data_set = data_set.map(operations=[mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                                                  vision.Resize((224, 224)),
+                                                                                  vision.AutoContrast(ignore=255.5),
+                                                                                  vision.ToTensor()])],
                                 input_columns=["image"])
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Argument ignore with value 255.5 is not of type" in str(error)
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data_set = data_set.map(operations=[mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                                             vision.Resize(
-                                                                                                 (224, 224)),
-                                                                                             vision.AutoContrast(
-                                                                                                 ignore=(10, 100)),
-                                                                                             vision.ToTensor()])],
+        data_set = data_set.map(operations=[mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                                                  vision.Resize((224, 224)),
+                                                                                  vision.AutoContrast(ignore=(10, 100)),
+                                                                                  vision.ToTensor()])],
                                 input_columns=["image"])
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
@@ -370,12 +363,10 @@ def test_auto_contrast_invalid_cutoff_param_py():
         "Test AutoContrast Python implementation with invalid cutoff parameter")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data_set = data_set.map(operations=[mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                                             vision.Resize(
-                                                                                                 (224, 224)),
-                                                                                             vision.AutoContrast(
-                                                                                                 cutoff=-10.0),
-                                                                                             vision.ToTensor()])],
+        data_set = data_set.map(operations=[mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                                                  vision.Resize((224, 224)),
+                                                                                  vision.AutoContrast(cutoff=-10.0),
+                                                                                  vision.ToTensor()])],
                                 input_columns=["image"])
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
@@ -384,12 +375,10 @@ def test_auto_contrast_invalid_cutoff_param_py():
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
         data_set = data_set.map(
-            operations=[mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
-                                                                         vision.Resize(
-                                                                             (224, 224)),
-                                                                         vision.AutoContrast(
-                                                                             cutoff=120.0),
-                                                                         vision.ToTensor()])],
+            operations=[mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                                              vision.Resize((224, 224)),
+                                                              vision.AutoContrast(cutoff=120.0),
+                                                              vision.ToTensor()])],
             input_columns=["image"])
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))

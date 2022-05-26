@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.audio.transforms as a_c_trans
+import mindspore.dataset.audio as a_c_trans
 
 
 def count_unequal_element(data_expected, data_me, rtol, atol):

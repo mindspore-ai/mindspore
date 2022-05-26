@@ -18,7 +18,7 @@ Testing RandomEqualize op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-from mindspore.dataset.vision.transforms import Decode, RandomEqualize, Equalize
+from mindspore.dataset.vision import Decode, RandomEqualize, Equalize
 from mindspore import log as logger
 from util import helper_random_op_pipeline, visualize_list, visualize_image, diff_mse
 

@@ -18,8 +18,8 @@ Testing RandomErasing op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import diff_mse, visualize_image, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -45,7 +45,7 @@ def test_random_erasing_op(plot=False):
         vision.ToTensor(),
         vision.RandomErasing(value='random')
     ]
-    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.Compose(transforms_1)
     data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
@@ -55,7 +55,7 @@ def test_random_erasing_op(plot=False):
         vision.ToTensor(),
         vision.CutOut(80, is_hwc=False)
     ]
-    transform_2 = mindspore.dataset.transforms.transforms.Compose(transforms_2)
+    transform_2 = mindspore.dataset.transforms.Compose(transforms_2)
     data2 = data2.map(operations=transform_2, input_columns=["image"])
 
     num_iter = 0
@@ -93,7 +93,7 @@ def test_random_erasing_md5():
         vision.ToTensor(),
         vision.RandomErasing(value='random')
     ]
-    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.Compose(transforms_1)
     data = data.map(operations=transform_1, input_columns=["image"])
     # Compare with expected md5 from images
     filename = "random_erasing_01_result.npz"

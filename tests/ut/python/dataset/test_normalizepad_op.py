@@ -17,8 +17,8 @@ Testing Normalize op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.vision.transforms as vision
+import mindspore.dataset.transforms
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import diff_mse, visualize_image
 
@@ -92,7 +92,7 @@ def test_normalizepad_op_chw(plot=False):
         vision.Decode(True),
         vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     normalizepad_op = vision.NormalizePad(mean, std, is_hwc=False)
 
     #  First dataset
@@ -104,7 +104,7 @@ def test_normalizepad_op_chw(plot=False):
         vision.Decode(True),
         vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.Compose(transforms2)
 
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -139,7 +139,7 @@ def test_normalizepad_op_comp_chw():
         vision.Decode(True),
         vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.Compose(transforms)
     normalizepad_op = vision.NormalizePad(mean, std, is_hwc=False)
 
     #  First dataset
