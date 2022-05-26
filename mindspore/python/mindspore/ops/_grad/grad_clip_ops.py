@@ -45,7 +45,7 @@ def get_bprop_clip_by_norm(self):
     def bprop(x, clip_norm, out, dout):
         cast_x = cast_op(x, mstype.float32)
         cast_clip_norm = cast_op(clip_norm, mstype.float32)
-        square_out = square_op(x)
+        square_out = square_op(cast_x)
         reduce_sum_out = reduce_sum_op(square_out, reduce_sum_axis)
         sqrt_out = sqrt_op(reduce_sum_out)
         max_out = max_op(cast_clip_norm, sqrt_out)
@@ -59,9 +59,9 @@ def get_bprop_clip_by_norm(self):
         mul_bc_y = mul_op(cast_x, div_dout_x)
         mul_dout_x, mul_dout_y = binop_grad_common(cast_x, cast_clip_norm, mul_bc_x, mul_bc_y)
         # grad for max operation
-        max_dout_x, max_dout_y = max_grad_op(sqrt_out, cast_clip_norm, div_dout_y)
+        max_dout_x, max_dout_y = max_grad_op(cast_clip_norm, sqrt_out, div_dout_y)
         # grad for sqrt operation
-        sqrt_dout_x = sqrt_grad_op(sqrt_out, max_dout_x)
+        sqrt_dout_x = sqrt_grad_op(sqrt_out, max_dout_y)
         # grad for reduce_sum operation
         reduce_sum_dout_x = _sum_grad(square_out, reduce_sum_axis, sqrt_dout_x)
         # grad for square operation
@@ -70,7 +70,7 @@ def get_bprop_clip_by_norm(self):
         square_dout_x = mul_op(fill_op(type_op(temp_out), shape_op(cast_x), temp_num), temp_out)
         # grad for cast operation
         x_dout = cast_op((mul_dout_x + square_dout_x), type_op(x))
-        clip_norm_dout = cast_op((mul_dout_y + max_dout_y), type_op(clip_norm))
+        clip_norm_dout = cast_op((mul_dout_y + max_dout_x), type_op(clip_norm))
         return x_dout, clip_norm_dout
 
     return bprop

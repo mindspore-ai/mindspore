@@ -17,6 +17,9 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_IR_FISSION_CLIP_BY_NORM_FISSION_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_IR_FISSION_CLIP_BY_NORM_FISSION_H_
 
+#include <memory>
+#include <vector>
+#include <string>
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pattern_engine.h"
 
@@ -30,6 +33,24 @@ class ClipByNormSplit : public PatternProcessPass {
   ~ClipByNormSplit() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  AnfNodePtr CreateCNodeBase(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &inps,
+                             const std::string &op_name, const AnfNodePtr &node) const;
+  AnfNodePtr CreateCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp, const ShapeVector &shape_vec,
+                            const TypeId &src_type_id, const TypeId &dst_type_id) const;
+  AnfNodePtr CreateSquareNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp, const ShapeVector &shape_vec,
+                              const TypeId &type_id) const;
+  AnfNodePtr CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &square,
+                                 const AnfNodePtr &clip_by_norm, const ShapeVector &shape_vec,
+                                 const TypeId &type_id) const;
+  AnfNodePtr CreateSqrtNode(const FuncGraphPtr &func_graph, const AnfNodePtr &reduce_sum, const TypeId &type_id) const;
+  AnfNodePtr CreateMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x, const AnfNodePtr &clip_norm,
+                           const ShapeVector &shape_vec, const TypeId &type_id) const;
+  AnfNodePtr CreateMaxNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x, const AnfNodePtr &y,
+                           const TypeId &type_id) const;
+  AnfNodePtr CreateDivNode(const FuncGraphPtr &func_graph, const AnfNodePtr &dividend, const AnfNodePtr &divisor,
+                           const ShapeVector &shape_vec, const TypeId &type_id) const;
 };
 }  // namespace opt
 }  // namespace mindspore
