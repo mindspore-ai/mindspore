@@ -124,7 +124,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
           for (size_t branching_strategy = 0; branching_strategy < numFittingTypes; branching_strategy++) {
             std::shared_ptr<SomasSolverCore> pSolver =
               std::make_shared<SomasSolverCore>(vecTensorsMap[sol], pConstraints, sol);
-            pSolver->SetAlgorithmStrategy(AlgorithmType(algorithm));
+            pSolver->SetAlgorithmStrategy(AlgorithmType(algorithm_strategy));
             pSolver->SetSortingStrategy(SortingType(sort_strategy));
             pSolver->SetFittingStrategy(FittingType(branching_strategy));
             pSolver->SetAllStrategies(false);
