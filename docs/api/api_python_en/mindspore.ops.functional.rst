@@ -463,3 +463,4 @@ Other Operators
     mindspore.ops.tensor_dot
     mindspore.ops.uniform
     mindspore.ops.vjp
+    mindspore.ops.vmap
