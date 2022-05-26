@@ -48,6 +48,7 @@ HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${FLATBUFFERS}
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema
 -I${MINDSPORE_HOME}/mindspore/lite/build/schema/inner
+-I${MINDSPORE_HOME}/mindspore/lite/build/src
 -I${MINDSPORE_HOME}/mindspore/ccsrc/plugin/device/cpu/kernel
 -I${MINDSPORE_HOME}/mindspore/ccsrc/minddata/dataset"
 
@@ -226,7 +227,7 @@ getCommonFile() {
   all_files=("${src_files[@]}" "${regist_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
     "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"
     "${cxx_api_files[@]}"
-  ) 
+  )
   getFilesFromArr "${all_files[*]}"
   getFilesFromArr "${all_files_h[*]}"
   # shellcheck disable=SC2068
@@ -234,7 +235,7 @@ getCommonFile() {
     file=$(echo ${file} | awk -F '/' '{print $NF}')
     echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
   done
-  
+
   all_files_train=("${all_files[@]}" "${train_files[@]}" "${others_train_files[@]}"
   )
   all_files_train_h=("${all_files_h[@]}" "${train_files_h[@]}"

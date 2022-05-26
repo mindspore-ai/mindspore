@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,22 @@
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/errorcode.h"
-#include "nnacl/fp32/activation_fp32_simd.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/activation_fp32_avx512.h"
+#endif
+
+#ifdef ENABLE_AVX
+#include "nnacl/avx/activation_fp32_avx.h"
+#endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/sse/activation_fp32_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/activation_fp32_neon.h"
+#endif
 
 int Fp32Relu(const float *src, int length, float *dst) {
   int i = 0;
