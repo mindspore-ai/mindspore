@@ -140,12 +140,12 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
         )
 
-set(MODEL_LOADER_FRAMEWORK_SRC
-        ${MODEL_LOADER_FRAMEWORK_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/model_loader.cc
-)
+# set(MODEL_LOADER_FRAMEWORK_SRC
+#         ${MODEL_LOADER_FRAMEWORK_SRC}
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/model_loader.cc
+# )
 
-if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+# if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 # add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
 # remove_definitions(-DBUILD_LITE_INFERENCE)
 
@@ -155,32 +155,37 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 # # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wno-error=return-type")
 # # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wno-error=return-type")
 
-set(MINDIR_MODEL_SRC
-        ${MINDIR_MODEL_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_convertor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_loader.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_util.cc
-        )
+# set(MINDIR_MODEL_SRC
+#         ${MINDIR_MODEL_SRC}
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model.cc
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_util.cc
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_convertor.cc
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_loader.cc
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_util.cc
+#         )
 
-set(MINDIR_KERNEL_SRC
-        ${MINDIR_KERNEL_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/inner_kernel.cc)
+# set(MINDIR_KERNEL_SRC
+#         ${MINDIR_KERNEL_SRC}
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/inner_kernel.cc)
 
 # set(LITE_SRC
 #         ${LITE_SRC}
 #         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/less_test_kernel_mod.cc
 #         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_mock.cc)
 
-set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-        ${MINDIR_MODEL_SRC}
-        ${MINDIR_KERNEL_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/less_test_kernel_mod.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_mock.cc)
+# set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
+#         ${MINDIR_MODEL_SRC}
+#         ${MINDIR_KERNEL_SRC}
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/less_test_kernel_mod.cc
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_mock.cc)
 
 add_subdirectory(extendrt)
-endif()
+# else()
+# set(MODEL_LOADER_FRAMEWORK_SRC
+#         ${MODEL_LOADER_FRAMEWORK_SRC}
+#         ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/model_loader.cc
+# )
+# endif()
 
 set(LITE_SRC
         ${LITE_SRC}
@@ -463,13 +468,16 @@ if(MSVC)
     set_target_properties(mindspore-lite_static PROPERTIES PREFIX lib)
 endif()
 
-if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-target_link_libraries(mindspore-lite cpu_kernel_mid nnacl_mid cpu_ops_mid mindspore_core mindspore::protobuf)
-target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid mindspore_core mindspore::protobuf)
-else()
+# if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+# target_link_libraries(mindspore-lite cpu_kernel_mid nnacl_mid cpu_ops_mid mindspore_core mindspore::protobuf)
+# target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid mindspore_core mindspore::protobuf)
+# else()
 target_link_libraries(mindspore-lite cpu_kernel_mid nnacl_mid cpu_ops_mid)
 target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)
-endif()
+# endif()
+
+target_link_libraries(mindspore-lite mindspore-extendrt)
+target_link_libraries(mindspore-lite_static mindspore-extendrt)
 
 if(SUPPORT_TRAIN)
     target_link_libraries(mindspore-lite train_cpu_kernel_mid)

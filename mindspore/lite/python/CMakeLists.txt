@@ -16,13 +16,6 @@ if(Python3_FOUND)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../core/)
 
-    if(NOT ENABLE_CLOUD_AND_LITE)
-      if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
-        include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/utils.cmake)
-        include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/pybind11.cmake)
-      endif()
-    endif()
-
     file(GLOB_RECURSE PY_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
     pybind11_add_module(_c_lite_wrapper NO_EXTRAS ${PY_SRC_LIST})
 
