@@ -424,8 +424,7 @@ int ArithmeticFP32Coder::BroadcastRun(const std::string &input0, const std::stri
 int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
   int element_num = output_tensor_->ElementsNum();
   int stride = UP_DIV(element_num, thread_num_);
-  // int count = MSMIN(stride, element_num - stride * kDefaultTaskId);
-  int count = output_tensor_->ElementsNum();
+  int count = element_num;
   if (count <= 0) {
     return RET_OK;
   }

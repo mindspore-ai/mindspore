@@ -27,10 +27,6 @@ namespace mindspore::lite::micro::nnacl {
 int ActivationFP32Coder::DoCode(CoderContext *const context) {
   // attribute
   auto *activation_parameter = reinterpret_cast<ActivationParameter *>(parameter_);
-  // int length = input_tensor_->ElementsNum();
-  // MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
-  // int stride = UP_DIV(length, thread_num_);
-  // int count = MSMIN(stride, length - stride * kDefaultTaskId);
   int count = input_tensor_->ElementsNum();
   Collect(context,
           {
