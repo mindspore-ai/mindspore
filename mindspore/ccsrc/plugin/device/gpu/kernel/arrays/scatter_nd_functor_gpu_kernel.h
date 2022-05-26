@@ -27,10 +27,10 @@
 
 namespace mindspore {
 namespace kernel {
-class ScatterNdFunctorKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<ScatterNdFunctorKernelMod> {
+class ScatterNdFunctorGPUKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<ScatterNdFunctorGPUKernelMod> {
  public:
-  ScatterNdFunctorKernelMod() = default;
-  ~ScatterNdFunctorKernelMod() override = default;
+  ScatterNdFunctorGPUKernelMod() = default;
+  ~ScatterNdFunctorGPUKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override {

@@ -138,6 +138,30 @@ template CUDA_LIB_EXPORT void CalScatterNdFunctor<half, int32_t>(enum ScatterNdF
                                                                  const int32_t *indices, const half *updates,
                                                                  half *input, uint32_t device_id,
                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalScatterNdFunctor<int64_t, int64_t>(enum ScatterNdFunctorType func_type,
+                                                                    const size_t &unit_size, const size_t &num_units,
+                                                                    const size_t &index_depth,
+                                                                    const int64_t *out_strides, const int64_t *indices,
+                                                                    const int64_t *updates, int64_t *input,
+                                                                    uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalScatterNdFunctor<int64_t, int32_t>(enum ScatterNdFunctorType func_type,
+                                                                    const size_t &unit_size, const size_t &num_units,
+                                                                    const size_t &index_depth,
+                                                                    const int32_t *out_strides, const int32_t *indices,
+                                                                    const int64_t *updates, int64_t *input,
+                                                                    uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint64_t, int64_t>(enum ScatterNdFunctorType func_type,
+                                                                     const size_t &unit_size, const size_t &num_units,
+                                                                     const size_t &index_depth,
+                                                                     const int64_t *out_strides, const int64_t *indices,
+                                                                     const uint64_t *updates, uint64_t *input,
+                                                                     uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint64_t, int32_t>(enum ScatterNdFunctorType func_type,
+                                                                     const size_t &unit_size, const size_t &num_units,
+                                                                     const size_t &index_depth,
+                                                                     const int32_t *out_strides, const int32_t *indices,
+                                                                     const uint64_t *updates, uint64_t *input,
+                                                                     uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<int32_t, int64_t>(enum ScatterNdFunctorType func_type,
                                                                     const size_t &unit_size, const size_t &num_units,
                                                                     const size_t &index_depth,
