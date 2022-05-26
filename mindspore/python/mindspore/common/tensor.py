@@ -975,7 +975,7 @@ class Tensor(Tensor_):
             epsilon (float): A value added to the denominator for numerical stability. Default: 1e-12.
 
         Returns:
-            Tensor, has the same dtype as input tensor, which shape depends on the args axis.
+            Tensor, has the same dtype as self tensor, which shape depends on the args axis.
             For example, if the size of input is (2, 3, 4), axis is [0, 1], Outputs' shape will be (4,).
 
         Raises:
@@ -984,15 +984,16 @@ class Tensor(Tensor_):
             TypeError: If `axis` is not an int, a tuple or a list.
             TypeError: If `axis` is a tuple or a list, but the element of `axis` is not an int.
             TypeError: If `keep_dims` is not a bool.
-            ValueError: If the element of `axis` is out of the range [-len(input.shape), len(input.shape)).
-            ValueError: If the length of shape of `axis` is bigger than the length of shape of input tensor.
+            ValueError: If the element of `axis` is out of the range [-len(input.shape), len(input_x.shape)).
+                input_x refers to self tensor.
+            ValueError: If the length of shape of `axis` is bigger than the length of shape of self tensor.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
-            >>> output = input_x.lp_norm(2, [0, 1])
+            >>> output = input_x.lp_norm([0, 1], p=2)
             >>> print(output)
             [ 9.165152 10.954452]
         """
@@ -2235,7 +2236,6 @@ class Tensor(Tensor_):
                         np.random.seed(slice_index + Tensor.delta_seed)
                         self.init.seed = slice_index + Tensor.delta_seed
                         Tensor.delta_seed += self._device_num
-
 
             def __exit__(self, ptype, value, trace):
                 if self.need_set_seed:

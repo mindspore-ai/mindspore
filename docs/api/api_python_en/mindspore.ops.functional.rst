@@ -150,6 +150,12 @@ Element-by-Element Operations
 
 Reduction Operators
 ^^^^^^^^^^^^^^^^^^^
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.lp_norm
 
 .. list-table::
    :widths: 50 50
