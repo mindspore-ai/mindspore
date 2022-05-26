@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "utils/custom_aot_extra.h"
 
 namespace mindspore {
 namespace kernel {
@@ -34,6 +35,9 @@ class CustomAOTCpuKernelMod : public DeprecatedNativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override;
 
  protected:
+  void InitSizeLists();
+  void SetKernelAttr(const CNodePtr &kernel_node);
+
   std::vector<std::vector<int64_t>> shape_list_;
   std::vector<int> ndims_;
   std::vector<std::string> type_list_;
@@ -46,7 +50,10 @@ class CustomAOTCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::string file_path_;
   std::string func_name_;
   void *handle_;
+  int (*init_func_)(int *, int64_t **, const char **, AotExtra *);
   int (*aot_func_)(int, void **, int *, int64_t **, const char **, void *, void *);
+
+  AotExtraImpl attrs_;
 };
 }  // namespace kernel
 }  // namespace mindspore

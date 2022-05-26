@@ -25,6 +25,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "kernel/common_utils.h"
+#include "utils/custom_aot_extra.h"
 #include "utils/file_utils.h"
 
 namespace mindspore {
@@ -36,9 +37,11 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (handle_ != nullptr) {
       dlclose(handle_);
     }
+
+    attrs_.DestructKernelData();
   }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     std::vector<void *> params;
 
@@ -48,7 +51,9 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     for (size_t i = 0; i < num_output_; i++) {
       params.push_back(GetDeviceAddress<void>(outputs, i));
     }
-
+    for (size_t i = 0; i < attrs_.WorkSpace().size(); i++) {
+      params.push_back(GetDeviceAddress<void>(workspace, i));
+    }
     if (!handle_) {
       handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
       if (!handle_) {
@@ -75,7 +80,8 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       if (nparam == 0) {
         ret = aot_func_(0, nullptr, nullptr, nullptr, nullptr, stream_ptr, nullptr);
       } else {
-        ret = aot_func_(nparam, &params[0], &ndims_[0], &shapes_[0], &type_pointer_list_[0], stream_ptr, nullptr);
+        ret = aot_func_(nparam, &params[0], &ndims_[0], &shapes_[0], &type_pointer_list_[0], stream_ptr,
+                        reinterpret_cast<void *>(&attrs_));
       }
     } catch (const std::exception &e) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, operator failed when executing user defined file "
@@ -146,6 +152,39 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
                    [](auto &str) { return str.c_str(); });
 
+    attrs_.SetKernelNode(kernel_node);
+
+    if (!handle_) {
+      handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
+      if (!handle_) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "' on CPU, dlopen file '" << file_path_
+                      << "' should be successful, but error occurs! Error message is: " << dlerror();
+        return false;
+      }
+    }
+    init_func_ = reinterpret_cast<std::add_pointer<int(int *, int64_t **, const char **, AotExtra *)>::type>(
+      dlsym(handle_, (func_name_ + "Init").c_str()));
+    if (init_func_ != nullptr) {
+      // Init func exist in the custom aot file
+      // Call this init func to set custom op attrs
+      int ret = 0;
+      try {
+        ret = init_func_(&ndims_[0], &shapes_[0], &type_pointer_list_[0], (&attrs_));
+      } catch (const std::exception &e) {
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "' on GPU, operator failed when executing user defined file "
+                      << file_path_ << "! "
+                      << "Error message is " << e.what();
+        return false;
+      }
+
+      if (ret != 0) {
+        MS_LOG(EXCEPTION) << "Return value from GPU AOT kernel(" << file_path_ << ")'s function(" << func_name_
+                          << ") is " << ret << ". "
+                          << "Any return value not equal to 0 will be treated as user defined error code and we will "
+                             "terminate execution. If termination is not your purpose, please set return value to 0.";
+      }
+    }
+
     InitSizeLists();
     return true;
   }
@@ -165,6 +204,9 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       this_size *= GetDtypeNbyte(type_list_[i]);
       output_size_list_.push_back(this_size);
     }
+
+    workspace_size_list_.clear();
+    workspace_size_list_ = attrs_.WorkSpace();
   }
 
  private:
@@ -173,6 +215,7 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   std::string file_path_;
   std::string func_name_;
   void *handle_;
+  int (*init_func_)(int *, int64_t **, const char **, AotExtra *);
   int (*aot_func_)(int, void **, int *, int64_t **, const char **, void *, void *);
 
   std::vector<std::vector<int64_t>> shape_list_;
@@ -181,6 +224,8 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   std::vector<int64_t *> shapes_;
   std::vector<const char *> type_pointer_list_;
+
+  AotExtraImpl attrs_;
 };
 }  // namespace kernel
 }  // namespace mindspore
