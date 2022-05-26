@@ -27,6 +27,7 @@ from .array_func import (unique, eye, matrix_band_part, fill, fill_, tile, size,
                          tensor_scatter_mul, unique_consecutive,
                          tensor_scatter_div, scatter_max, scatter_min, nonzero, space_to_batch_nd, range, select,
                          one_hot, matrix_diag, diag, masked_select, meshgrid)
+from .array_func import fills
 from .parameter_func import assign, assign_add, assign_sub, index_add
 from .math_func import (addn, absolute, abs, tensor_add, add, neg_tensor, neg, tensor_lt, less, tensor_le, le, lerp,
                         lp_norm, round, tensor_gt, gt, tensor_ge, ge, tensor_sub, sub, tensor_mul, mul, tensor_div, div,
@@ -40,7 +41,6 @@ from .math_func import (addn, absolute, abs, tensor_add, add, neg_tensor, neg, t
 from .nn_func import (fast_gelu, hardshrink)
 from .linalg_func import svd
 from .clip_func import (clip_by_norm)
-
 
 __all__ = []
 __all__.extend(array_func.__all__)

@@ -538,6 +538,7 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
 
 TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name, const TypePtr &type,
                                                    const std::set<TypePtr> &check_list, const std::string &prim_name) {
+  // note that the return type might be different from input type
   MS_EXCEPTION_IF_NULL(type);
   if (!type->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input argument[" << type_name
