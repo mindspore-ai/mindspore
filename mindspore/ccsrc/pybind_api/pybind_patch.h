@@ -20,6 +20,18 @@ namespace pybind11 {
 PYBIND11_RUNTIME_EXCEPTION(attribute_error, PyExc_AttributeError)
 PYBIND11_RUNTIME_EXCEPTION(name_error, PyExc_NameError)
 PYBIND11_RUNTIME_EXCEPTION(assertion_error, PyExc_AssertionError)
+PYBIND11_RUNTIME_EXCEPTION(base_exception, PyExc_BaseException)
+PYBIND11_RUNTIME_EXCEPTION(keyboard_interrupt, PyExc_KeyboardInterrupt)
+PYBIND11_RUNTIME_EXCEPTION(overflow_error, PyExc_OverflowError)
+PYBIND11_RUNTIME_EXCEPTION(zero_division_error, PyExc_ZeroDivisionError)
+PYBIND11_RUNTIME_EXCEPTION(environment_error, PyExc_EnvironmentError)
+PYBIND11_RUNTIME_EXCEPTION(io_error, PyExc_IOError)
+PYBIND11_RUNTIME_EXCEPTION(os_error, PyExc_OSError)
+PYBIND11_RUNTIME_EXCEPTION(memory_error, PyExc_MemoryError)
+PYBIND11_RUNTIME_EXCEPTION(unbound_local_error, PyExc_UnboundLocalError)
+PYBIND11_RUNTIME_EXCEPTION(not_implemented_error, PyExc_NotImplementedError)
+PYBIND11_RUNTIME_EXCEPTION(indentation_error, PyExc_IndentationError)
+PYBIND11_RUNTIME_EXCEPTION(runtime_warning, PyExc_RuntimeWarning)
 }  // namespace pybind11
 
 #endif  // PYBIND_API_PYBIND_PATCH_H_

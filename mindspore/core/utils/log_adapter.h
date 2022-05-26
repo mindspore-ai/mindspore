@@ -58,13 +58,8 @@ enum ExceptionType {
   ArgumentError,
   NotSupportError,
   NotExistsError,
-  AlreadyExistsError,
-  UnavailableError,
   DeviceProcessError,
   AbortedError,
-  TimeOutError,
-  ResourceUnavailable,
-  NoPermissionError,
   IndexError,
   ValueError,
   TypeError,
@@ -90,19 +85,7 @@ enum ExceptionType {
   RuntimeWarning,
 };
 
-static inline std::map<std::string, ExceptionType> exception_types_map = {{"NoExceptionType", NoExceptionType},
-                                                                          {"UnknownError", UnknownError},
-                                                                          {"ArgumentError", ArgumentError},
-                                                                          {"NotSupportError", NotSupportError},
-                                                                          {"NotExistsError", NotExistsError},
-                                                                          {"AlreadyExistsError", AlreadyExistsError},
-                                                                          {"UnavailableError", UnavailableError},
-                                                                          {"DeviceProcessError", DeviceProcessError},
-                                                                          {"AbortedError", AbortedError},
-                                                                          {"TimeOutError", TimeOutError},
-                                                                          {"ResourceUnavailable", ResourceUnavailable},
-                                                                          {"NoPermissionError", NoPermissionError},
-                                                                          {"IndexError", IndexError},
+static inline std::map<std::string, ExceptionType> exception_types_map = {{"IndexError", IndexError},
                                                                           {"ValueError", ValueError},
                                                                           {"TypeError", TypeError},
                                                                           {"KeyError", KeyError},
@@ -118,13 +101,26 @@ static inline std::map<std::string, ExceptionType> exception_types_map = {{"NoEx
                                                                           {"EnvironmentError", EnvironmentError},
                                                                           {"IOError", IOError},
                                                                           {"OSError", OSError},
-                                                                          {"ImportError", ImportError},
                                                                           {"MemoryError", MemoryError},
                                                                           {"UnboundLocalError", UnboundLocalError},
                                                                           {"RuntimeError", RuntimeError},
                                                                           {"NotImplementedError", NotImplementedError},
                                                                           {"IndentationError", IndentationError},
                                                                           {"RuntimeWarning", RuntimeWarning}};
+
+static inline std::string SupportedExceptionsToString() {
+  std::ostringstream oss;
+  size_t index = 0;
+  for (auto iter = exception_types_map.begin(); iter != exception_types_map.end(); ++iter) {
+    oss << iter->first;
+    if (index != exception_types_map.size() - 1) {
+      oss << ", ";
+    }
+    ++index;
+  }
+  oss << ". ";
+  return oss.str();
+}
 
 struct LocationInfo {
   LocationInfo(const char *file, int line, const char *func) : file_(file), line_(line), func_(func) {}
