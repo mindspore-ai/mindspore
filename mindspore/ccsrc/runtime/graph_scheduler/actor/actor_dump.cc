@@ -92,10 +92,12 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
   if (actor->internal_parameters().size() > 0) {
     ofs << "\t\tinternal_parameters:" << actor->internal_parameters().size() << "\n ";
     for (auto &internal_parameter_iter : actor->internal_parameters()) {
-      auto internal_parameter = internal_parameter_iter.second.lock();
-      MS_EXCEPTION_IF_NULL(internal_parameter);
-      ofs << "\t\t\toutput_index:" << internal_parameter_iter.first
-          << "\tinternal_parameter:" << internal_parameter->DebugString() << "\n";
+      for (auto &internal_parameter_weakptr : internal_parameter_iter.second) {
+        auto internal_parameter = internal_parameter_weakptr.lock();
+        MS_EXCEPTION_IF_NULL(internal_parameter);
+        ofs << "\t\t\toutput_index:" << internal_parameter_iter.first
+            << "\tinternal_parameter:" << internal_parameter->DebugString() << "\n";
+      }
     }
   }
 }
