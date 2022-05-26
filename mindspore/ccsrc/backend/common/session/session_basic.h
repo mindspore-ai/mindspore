@@ -341,6 +341,8 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   void InitAllBucket(const KernelGraphPtr &graph, const device::DeviceContext *device_context = nullptr);
   void AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor);
   void ClearAllBucket(const GraphId &graph_id);
+  void DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
+                          device::DeviceContext *device_context);
   std::vector<uint32_t> GetAllReduceSplitIndex();
   virtual std::string GetCommWorldGroup() { return std::string(); }
   void DumpGraphs(const std::vector<KernelGraphPtr> &graphs);
@@ -349,8 +351,11 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   void GetBatchElements(const AnfNodePtr &kernel_node) const;
   void InitPsWorker(const KernelGraphPtr &kernel_graph);
 #endif
+  // TODO(caifubi): refactor and remove bucket.
   std::map<uint32_t, std::vector<std::shared_ptr<device::Bucket>>> bucket_map_;
   std::map<uint32_t, uint32_t> free_bucket_id_map_;
+  // Bucket for the entire actor_set.
+  HashMap<std::string, std::shared_ptr<device::Bucket>> actor_set_to_bucket_;
   mindspore::HashMap<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   mindspore::HashMap<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
   mindspore::HashMap<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;

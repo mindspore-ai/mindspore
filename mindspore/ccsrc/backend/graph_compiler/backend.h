@@ -182,8 +182,8 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   void RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
                           const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs);
 
-  void RunGraphIntergated(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
-                          const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs);
+  void RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
+                        const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs);
 
   void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs);
 
@@ -219,8 +219,6 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   void CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode = device::RunMode::kUnknown);
   void ProcessNotSupportCnode(const FuncGraphPtr &func_graph, const device::DeviceType &old_target,
                               const device::DeviceType &new_target);
-  // TODO(caifubi): Remove this flag when Ascend backend is ok.
-  bool pynative_run_in_graph_{false};
 };
 using MindRTBackendPtr = std::shared_ptr<compile::MindRTBackend>;
 }  // namespace compile

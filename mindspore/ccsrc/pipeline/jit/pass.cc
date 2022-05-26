@@ -198,8 +198,10 @@ FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &resource) {
   (void)TransformTopGraphPass(resource);
 
   auto func_graph = resource->func_graph();
-  // Pynative dynamic shape need add those pass, like convert make_list to make_tuple
-  if (func_graph->has_flag(FUNC_GRAPH_FLAG_DYNAMIC_SHAPE)) {
+  // PyNative dynamic shape need add those pass, like convert make_list to make_tuple.
+  // Cannot execute those pass due to performance reasons if the graph is a dynamic structure graph.
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (func_graph->has_flag(FUNC_GRAPH_FLAG_DYNAMIC_SHAPE) || !func_graph->has_flag(kFlagIsDynamicStructure)) {
     (void)OptPassAGroup(resource);
     (void)CleanAfterOptAPass(resource);
   }

@@ -2759,6 +2759,7 @@ std::vector<uint32_t> GenerateBucketSizeList(const KernelGraphPtr &graph, const 
         }
       }
     }
+    MS_LOG(INFO) << "auto parallel remove_number " << remove_number;
     return {grads_count - remove_number};
   }
 
@@ -2853,6 +2854,41 @@ void SessionBasic::InitAllBucket(const KernelGraphPtr &graph, const device::Devi
     MS_LOG(EXCEPTION) << "Duplicate free_bucket_id_map_ graph key:" << graph->graph_id();
   }
   MS_LOG(INFO) << "Status record: end init all bucket. graph id: " << graph->graph_id();
+}
+
+void SessionBasic::DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
+                                      device::DeviceContext *device_context) {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  if (parallel_mode != parallel::kDataParallel && parallel_mode != parallel::kSemiAutoParallel &&
+      parallel_mode != parallel::kAutoParallel) {
+    MS_LOG(DEBUG) << "No need to do AllReduce";
+    return;
+  }
+
+  MS_EXCEPTION_IF_NULL(device_context);
+  std::shared_ptr<device::Bucket> bucket;
+  auto iter = actor_set_to_bucket_.find(actor_info);
+  if (iter == actor_set_to_bucket_.end()) {
+    static size_t bucket_id = 0;
+    bucket = device_context->CreateBucket(bucket_id++, outputs.size());
+    actor_set_to_bucket_[actor_info] = bucket;
+  } else {
+    bucket = iter->second;
+  }
+
+  MS_EXCEPTION_IF_NULL(bucket);
+  for (auto &output : outputs) {
+    bucket->AddGradTensor(output);
+  }
+  if (bucket->full()) {
+    bucket->Launch();
+  } else {
+    MS_LOG(EXCEPTION) << "Do AllReduce for " << actor_info << " failed, grad size " << outputs.size() << " bucket size "
+                      << bucket->bucket_size() << " not equal";
+  }
+  bucket->Release();
 }
 
 void SessionBasic::AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor) {

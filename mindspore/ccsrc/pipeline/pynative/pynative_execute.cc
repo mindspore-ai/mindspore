@@ -3574,9 +3574,6 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
   // Get bprop graph of top cell
   auto bprop_graph = GetBpropGraph(grad, cell, w_args, p_args, size, args);
   MS_EXCEPTION_IF_NULL(bprop_graph);
-  if (top_cell()->is_dynamic_structure()) {
-    bprop_graph->set_flag(kFlagIsDynamicStructure, true);
-  }
   bprop_graph->set_flag(kFlagIsPynativeBpropGraph, true);
   resource->set_func_graph(bprop_graph);
   auto manager = resource->manager();
@@ -3795,6 +3792,9 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   // Dynamic shape graph need add some other pass
   if (top_cell()->dynamic_shape()) {
     bprop_graph->set_flag(FUNC_GRAPH_FLAG_DYNAMIC_SHAPE, true);
+  }
+  if (top_cell()->is_dynamic_structure()) {
+    bprop_graph->set_flag(kFlagIsDynamicStructure, true);
   }
   // Do opt for final bprop graph
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();

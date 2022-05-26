@@ -273,7 +273,8 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<ChangeAxisOfReduceKernel>());
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
+      !kernel_graph->has_flag(kFlagPyNativeRunInGraph)) {
     data_layout_pm->AddPass(std::make_shared<RunOpInsertTransData>());
   } else {
     data_layout_pm->AddPass(std::make_shared<MergeCastToOp>());
