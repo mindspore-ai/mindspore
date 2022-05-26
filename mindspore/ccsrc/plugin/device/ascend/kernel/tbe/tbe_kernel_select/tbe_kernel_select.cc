@@ -148,10 +148,12 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
   node_name_ = common::AnfAlgo::GetCNodeName(cnode_ptr_);
   full_name_ = cnode_ptr_->fullname_with_scope();
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(node_name_, cnode_ptr_);
+  // if op pattern is FormatAgnostic, can't use select cache
+  bool skip_cache = (op_info_ptr->op_pattern() == kFormatAgnosticPattern);
 
   auto kernel_hash_name = GetKernelHashName();
   auto iter = select_cache_.find(kernel_hash_name);
-  if (iter != select_cache_.end()) {
+  if (iter != select_cache_.end() && !skip_cache) {
     for (auto &cache_info : iter->second) {
       auto builder = KernelBuildInfo::KernelBuildInfoBuilder(cache_info);
       kernel_info_list_->emplace_back(builder.Build());
