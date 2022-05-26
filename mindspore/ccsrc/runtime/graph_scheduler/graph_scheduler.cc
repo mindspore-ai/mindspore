@@ -1134,7 +1134,10 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
   // Foreach the execution order to link the actors.
   for (const auto &kernel : execution_order) {
     MS_EXCEPTION_IF_NULL(kernel);
+    MS_LOG(DEBUG) << "Graph " << graph->graph_id() << " execution order node: " << kernel->fullname_with_scope();
     if (common::AnfAlgo::IsCommunicationOp(kernel)) {
+      MS_LOG(DEBUG) << "Graph " << graph->graph_id()
+                    << " execution order communication node: " << kernel->fullname_with_scope();
       (void)communication_nodes->emplace_back(kernel);
     }
     if (IsSkippedKernelActor(kernel) || (!IsKernelActor(kernel, graph_compiler_info.strategy_))) {
