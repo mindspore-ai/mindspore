@@ -56,8 +56,8 @@
 #define SIMD_LD_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_LD)
 
 // load 4 (float/int) data
-#define SIMD_LDX4_F32 MS_SIMD_INSTRUCTION_F32(MS_LDX4)
-#define SIMD_LDX4_EPI32 MS_SIMD_INSTRUCTION_EPI32(MS_LDX4)
+#define SIMD_LDX4_F32 MS_SIMD_INSTRUCTION(MS_LOAD, X4_F32)
+#define SIMD_LDX4_EPI32 MS_SIMD_INSTRUCTION(MS_LOAD, X4_EPI32)
 
 // stored (float/int) data
 #define SIMD_ST_F32 MS_SIMD_INSTRUCTION_F32(MS_ST)
@@ -199,6 +199,13 @@
     SIMD_RUN_AVX(function, index, __VA_ARGS__);    \
     SIMD_RUN_SSE(function, index, __VA_ARGS__);    \
     SIMD_RUN_NEON(function, index, __VA_ARGS__);   \
+  } while (0)
+
+#define SIMD_RUN_X86_NO_SCALAR(function, index, ...) \
+  do {                                               \
+    SIMD_RUN_AVX512(function, index, __VA_ARGS__);   \
+    SIMD_RUN_AVX(function, index, __VA_ARGS__);      \
+    SIMD_RUN_SSE(function, index, __VA_ARGS__);      \
   } while (0)
 
 #define SIMD512_BLOCK16 32  // SIMD : 512 = 16 x 32
