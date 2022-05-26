@@ -566,3 +566,52 @@ def get_gather_nd_vmap_rule(prim, axis_size):
         return (out, 0)
 
     return vmap_rule
+
+
+@vmap_rules_getters.register(P.Meshgrid)
+def get_meshgrid_vmap_rule(prim, axis_size):
+    """VmapRule for `P.Meshgrid` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+    indexing = prim.indexing
+
+    def vmap_rule(*inputs_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, *inputs_bdim)
+        if is_all_none:
+            return result
+
+        if not isinstance(inputs_bdim, (tuple)):
+            _raise_value_error("The inputs of P.Meshgrid is not tuple.")
+        args = inputs_bdim[0]
+        if len(args) <= 1:
+            _raise_value_error(
+                "The input number of P.Meshgrid must be greater than 1.")
+
+        output_shape = []
+        for each_arg in args:
+            x, bdim = each_arg
+            if bdim is None:
+                _raise_value_error(
+                    "For Meshgrid vmap, the axis of each input must be same.")
+            x = _bdim_at_front(x, bdim, axis_size)
+            if F.rank(x) != 2:
+                _raise_value_error(
+                    "Each input of Meshgrid must be 1D, but got {}.".format(F.rank(x) - 1))
+            output_shape.append(F.shape(x)[-1])
+        output_shape.insert(0, axis_size)
+
+        if indexing == "xy":
+            output_shape[1], output_shape[2] = output_shape[2], output_shape[1]
+
+        shape = tuple(output_shape)
+        vals_out_tuple = ()
+        for each_arg in args:
+            x, bdim = each_arg
+            x = _bdim_at_front(x, bdim, axis_size)
+            x = _handle_broadcasting(x, F.shape(x), output_shape)
+            output = P.BroadcastTo(shape)(x)
+            vals_out_tuple = vals_out_tuple + ((output, 0),)
+
+        return vals_out_tuple
+
+    return vmap_rule
