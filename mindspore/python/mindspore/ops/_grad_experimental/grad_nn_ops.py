@@ -50,6 +50,7 @@ from ..operations.image_ops import ResizeLinear1D
 from ..operations.nn_ops import MaxPool3DWithArgmax
 from ..operations.nn_ops import FractionalMaxPoolWithFixedKsize
 from ..operations._grad_ops import FractionalMaxPoolGradWithFixedKsize
+from ..operations.nn_ops import AdaptiveAvgPool3D
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -244,6 +245,20 @@ def get_bprop_nth_element(self):
         dout = expand_dims(dout, -1)
         num_select = expand_dims(reduce_sum(indicators, -1), -1)
         return divide(indicators, num_select) * dout, None
+
+    return bprop
+
+
+@bprop_getters.register(AdaptiveAvgPool3D)
+def get_bprop_adaptiveavgpool3d(self):
+    """Grad definition for `AdaptiveAvgPool3D` operation."""
+    grad = G.AdaptiveAvgPool3DGrad()
+
+    def bprop(x, out, dout):
+        get_x_shape = P.TensorShape()
+        x_shape = get_x_shape(x).astype(mstype.int32)
+        dx = grad(dout, x_shape)
+        return (dx,)
 
     return bprop
 
