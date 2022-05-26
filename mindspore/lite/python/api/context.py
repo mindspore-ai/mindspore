@@ -36,24 +36,33 @@ class Context:
 
     Raises:
         TypeError: type of input parameters are invalid.
+        ValueError: value of input parameters are invalid.
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> context = mslite.Context(thread_num=1, thread_affinity_core_list=[1,2], enable_parallel=False)
-        >>> context.append_device_info(mslite.CPUDeviceInfo())
+        >>> context = mslite.Context(thread_num=1, thread_afffinity_mode=1, thread_affinity_core_list=[1, 2], \
+        ...                          enable_parallel=False)
+        >>> print(context)
+        thread_num: 1, thread_affinity_mode: 1, thread_affinity_core_list: [1, 2], enable_parallel: False, \
+        device_list: 0, .
     """
 
-    def __init__(self, thread_num=2, thread_affinity_mode=1, thread_affinity_core_list=None, enable_parallel=False):
-        check_isinstance("thread_num", thread_num, int)
-        check_isinstance("thread_affinity_mode", thread_affinity_mode, int)
+    def __init__(self, thread_num=None, thread_affinity_mode=None, thread_affinity_core_list=None, \
+                 enable_parallel=False):
+        if thread_num is not None:
+            check_isinstance("thread_num", thread_num, int)
+            if thread_num < 0:
+                raise ValueError(f"Context's init failed, thread_num must be positive.")
+        if thread_affinity_mode is not None:
+            check_isinstance("thread_affinity_mode", thread_affinity_mode, int)
         check_list_of_element("thread_affinity_core_list", thread_affinity_core_list, int, enable_none=True)
         check_isinstance("enable_parallel", enable_parallel, bool)
-        if thread_num < 0:
-            raise ValueError(f"Context's init failed! thread_num must be positive.")
         core_list = [] if thread_affinity_core_list is None else thread_affinity_core_list
         self._context = _c_lite_wrapper.ContextBind()
-        self._context.set_thread_num(thread_num)
-        self._context.set_thread_affinity_mode(thread_affinity_mode)
+        if thread_num is not None:
+            self._context.set_thread_num(thread_num)
+        if thread_affinity_mode is not None:
+            self._context.set_thread_affinity_mode(thread_affinity_mode)
         self._context.set_thread_affinity_core_list(core_list)
         self._context.set_enable_parallel(enable_parallel)
 
@@ -62,7 +71,7 @@ class Context:
               f"thread_affinity_mode: {self._context.get_thread_affinity_mode()}, " \
               f"thread_affinity_core_list: {self._context.get_thread_affinity_core_list()}, " \
               f"enable_parallel: {self._context.get_enable_parallel()}, " \
-              f"device_list: {self._context.get_device_list()}"
+              f"device_list: {self._context.get_device_list()}."
         return res
 
     def append_device_info(self, device_info):
@@ -79,6 +88,9 @@ class Context:
             >>> import mindspore_lite as mslite
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
+            >>> print(context)
+            thread_num: 2, thread_affinity_mode: 0, thread_affinity_core_list: [], enable_parallel: False, \
+            device_list: 0, .
         """
         if not isinstance(device_info, DeviceInfo):
             raise TypeError("device_info must be CPUDeviceInfo, GPUDeviceInfo or AscendDeviceInfo, but got {}.".format(
@@ -107,7 +119,11 @@ class CPUDeviceInfo(DeviceInfo):
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> device_info = mslite.CPUDeviceInfo()
+        >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=True)
+        >>> print(cpu_device_info)
+        device_type: DeviceType.kCPU, enable_fp16: True.
+        >>> context = mslite.Context()
+        >>> context.append_device_info(cpu_device_info)
     """
 
     def __init__(self, enable_fp16=False):
@@ -132,17 +148,27 @@ class GPUDeviceInfo(DeviceInfo):
 
     Raises:
         TypeError: type of input parameters are invalid.
+        ValueError: value of input parameters are invalid.
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> device_info = mslite.GPUDeviceInfo(enable_fp16=True)
+        >>> gpu_device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=False)
+        >>> print(gpu_device_info)
+        device_type: DeviceType.kGPU, device_id: 1, enable_fp16: False.
+        >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
+        >>> context = mslite.Context()
+        >>> context.append_device_info(mslite.CPUDeviceInfo(gpu_device_info))
+        >>> context.append_device_info(mslite.CPUDeviceInfo(cpu_device_info))
+        >>> print(context)
+        thread_num: 2, thread_affinity_mode: 0, thread_affinity_core_list: [], enable_parallel: False, \
+        device_list: 1, 0, .
     """
 
     def __init__(self, device_id=0, enable_fp16=False):
         super(GPUDeviceInfo, self).__init__()
         check_isinstance("device_id", device_id, int)
         if device_id < 0:
-            raise ValueError(f"GPUDeviceInfo's init failed! device_id must be positive.")
+            raise ValueError(f"GPUDeviceInfo's init failed, device_id must be positive.")
         check_isinstance("enable_fp16", enable_fp16, bool)
         self._device_info = _c_lite_wrapper.GPUDeviceInfoBind()
         self._device_info.set_device_id(device_id)
@@ -162,7 +188,11 @@ class GPUDeviceInfo(DeviceInfo):
             int, the rank id of the context.
 
         Examples:
-            >>> rank_id = context.get_rank_id()
+            >>> import mindspore_lite as mslite
+            >>> device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=True)
+            >>> rank_id = device_info.get_rank_id()
+            >>> print(rank_id)
+            1
         """
         return self._device_info.get_rank_id()
 
@@ -174,7 +204,11 @@ class GPUDeviceInfo(DeviceInfo):
             int, the group size of the context.
 
         Examples:
-            >>> group_size = context.get_group_size()
+            >>> import mindspore_lite as mslite
+            >>> device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=True)
+            >>> group_size = device_info.get_group_size()
+            >>> print(group_size)
+            1
         """
         return self._device_info.get_group_size()
 
@@ -200,10 +234,24 @@ class AscendDeviceInfo(DeviceInfo):
 
     Raises:
         TypeError: type of input parameters are invalid.
+        ValueError: value of input parameters are invalid.
+        RuntimeError: file path does not exist
+
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> device_info = mslite.AscendDeviceInfo(input_format="NHWC")
+        >>> ascend_device_info = mslite.AscendDeviceInfo(device_id=0, input_format="NCHW", \
+        ...                      input_shape={1: [1, 3, 28, 28]}, precision_mode="force_fp16", \
+        ...                      op_select_impl_mode="high_performance", dynamic_batch_size=None, \
+        ...                      dynamic_image_size="", fusion_switch_config_path="", insert_op_cfg_path="")
+        >>> print(ascend_device_info)
+        >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
+        >>> context = mslite.Context()
+        >>> context.append_device_info(mslite.CPUDeviceInfo(gpu_device_info))
+        >>> context.append_device_info(mslite.CPUDeviceInfo(ascend_device_info))
+        >>> print(context)
+        thread_num: 2, thread_affinity_mode: 0, thread_affinity_core_list: [], enable_parallel: False, \
+        device_list: 3, 0, .
     """
 
     def __init__(self, device_id=0, input_format=None, input_shape=None, precision_mode="force_fp16",
@@ -220,13 +268,13 @@ class AscendDeviceInfo(DeviceInfo):
         check_isinstance("fusion_switch_config_path", fusion_switch_config_path, str)
         check_isinstance("insert_op_cfg_path", insert_op_cfg_path, str)
         if device_id < 0:
-            raise ValueError(f"AscendDeviceInfo's init failed! device_id must be positive.")
+            raise ValueError(f"AscendDeviceInfo's init failed, device_id must be positive.")
         if fusion_switch_config_path != "":
             if not os.path.exists(fusion_switch_config_path):
-                raise RuntimeError(f"AscendDeviceInfo's init failed! fusion_switch_config_path is not exist!")
+                raise RuntimeError(f"AscendDeviceInfo's init failed, fusion_switch_config_path does not exist!")
         if insert_op_cfg_path != "":
             if not os.path.exists(insert_op_cfg_path):
-                raise RuntimeError(f"AscendDeviceInfo's init failed! insert_op_cfg_path is not exist!")
+                raise RuntimeError(f"AscendDeviceInfo's init failed, insert_op_cfg_path does not exist!")
         input_format_list = "" if input_format is None else input_format
         input_shape_list = {} if input_shape is None else input_shape
         batch_size_list = [] if dynamic_batch_size is None else dynamic_batch_size
