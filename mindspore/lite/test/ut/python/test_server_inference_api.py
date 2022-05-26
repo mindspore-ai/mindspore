@@ -76,7 +76,7 @@ def test_model_parallel_runner_init_02():
         context = mslite.Context()
         context.append_device_info(cpu_device_info)
         model_parallel_runner = mslite.ModelParallelRunner()
-        model_parallel_runner.init(model_path="test.ms", runner_config=context)
+        model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=context)
     assert "runner_config must be RunnerConfig" in str(raise_info.value)
 
 

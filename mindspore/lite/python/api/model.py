@@ -364,14 +364,18 @@ class RunnerConfig:
         workers num: 4, context: 0, .
     """
 
-    def __init__(self, context, workers_num):
-        check_isinstance("context", context, Context)
-        check_isinstance("workers_num", workers_num, int)
-        if workers_num < 0:
-            raise ValueError(f"RunnerConfig's init failed! workers_num must be positive.")
+    def __init__(self, context=None, workers_num=None):
+        if context is not None:
+            check_isinstance("context", context, Context)
+        if workers_num is not None:
+            check_isinstance("workers_num", workers_num, int)
+            if workers_num < 0:
+                raise ValueError(f"RunnerConfig's init failed! workers_num must be positive.")
         self._runner_config = _c_lite_wrapper.RunnerConfigBind()
-        self._runner_config.set_workers_num(workers_num)
-        self._runner_config.set_context(context._context)
+        if context is not None:
+            self._runner_config.set_context(context._context)
+        if workers_num is not None:
+            self._runner_config.set_workers_num(workers_num)
 
     def __str__(self):
         res = f"workers num: {self._runner_config.get_workers_num()}, " \
@@ -401,7 +405,7 @@ class ModelParallelRunner:
     def __str__(self):
         return f"model_path: {self.model_path_}."
 
-    def init(self, model_path, runner_config):
+    def init(self, model_path, runner_config=None):
         """
         build a model parallel runner from model path so that it can run on a device.
 
@@ -424,12 +428,15 @@ class ModelParallelRunner:
             model_path: mobilenetv2.ms.
         """
         check_isinstance("model_path", model_path, str)
-        check_isinstance("runner_config", runner_config, RunnerConfig)
         if model_path != "":
             if not os.path.exists(model_path):
                 raise RuntimeError(f"ModelParallelRunner's init failed, model_path does not exist!")
         self.model_path_ = model_path
-        ret = self._model.init(self.model_path_, runner_config._runner_config)
+        if runner_config is not None:
+            check_isinstance("runner_config", runner_config, RunnerConfig)
+            ret = self._model.init(self.model_path_, runner_config._runner_config)
+        else:
+            ret = self._model.init(self.model_path_)
         if not ret.IsOk():
             raise RuntimeError(f"ModelParallelRunner's init failed! Error is {ret.ToString()}")
 
