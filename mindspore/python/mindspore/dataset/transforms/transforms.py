@@ -554,7 +554,7 @@ class OneHot(TensorOperation):
 
     Raises:
         TypeError: `num_classes` is not of type int.
-        TypeError: `smoothing_rate` is not of type float.
+        TypeError: `smoothing_rate` is not of type float or int.
         ValueError: `smoothing_rate` is not in range [0.0, 1.0].
         RuntimeError: Input tensor is not of type int.
         RuntimeError: Input tensor is not a 1-D tensor.

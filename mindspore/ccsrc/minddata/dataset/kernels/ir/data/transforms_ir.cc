@@ -168,7 +168,7 @@ Status OneHotOperation::ValidateParams() {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (smoothing_rate_ < 0 || smoothing_rate_ > 1) {
-    std::string err_msg = "OneHot: Smoothing rate must be between 0 and 1, but got: " + std::to_string(num_classes_);
+    std::string err_msg = "OneHot: Smoothing rate must be between 0 and 1, but got: " + std::to_string(smoothing_rate_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();

@@ -106,7 +106,7 @@ Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
       } else if (input->type() == DataType::DE_UINT64) {
         RETURN_IF_NOT_OK(OneHotEncodingImpl<uint64_t>(input, &out, num_classes, i, smoothing_rate));
       } else {
-        RETURN_STATUS_UNEXPECTED("OneHot: OneHot only support input of int type, but got:" + input->type().ToString());
+        RETURN_STATUS_UNEXPECTED("OneHot: OneHot only supports input of int type, but got:" + input->type().ToString());
       }
     }
     out->Squeeze();

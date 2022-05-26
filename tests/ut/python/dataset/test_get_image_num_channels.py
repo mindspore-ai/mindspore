@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+"""
+Test MindData vision utility get_image_num_channels
+"""
 import numpy as np
 import pytest
 from PIL import Image
 
-import mindspore.dataset.vision.utils as vision
-import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset.vision.utils as vision_utils
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
 
@@ -30,8 +32,8 @@ def test_get_image_num_channels_output_array():
     """
     expect_output = 3
     img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
-    input_array = C.Decode()(img)
-    output = vision.get_image_num_channels(input_array)
+    input_array = vision.Decode()(img)
+    output = vision_utils.get_image_num_channels(input_array)
     assert expect_output == output
 
 
@@ -44,7 +46,7 @@ def test_get_image_num_channels_output_img():
     testdata = "../data/dataset/apple.jpg"
     img = Image.open(testdata)
     expect_channel = 3
-    output_channel = vision.get_image_num_channels(img)
+    output_channel = vision_utils.get_image_num_channels(img)
     assert expect_channel == output_channel
 
 
@@ -58,7 +60,7 @@ def test_get_image_num_channels_invalid_input():
     def test_invalid_input(test_name, image, error, error_msg):
         logger.info("Test get_image_num_channels with wrong params: {0}".format(test_name))
         with pytest.raises(error) as error_info:
-            vision.get_image_num_channels(image)
+            vision_utils.get_image_num_channels(image)
         assert error_msg in str(error_info.value)
 
     invalid_input = 1

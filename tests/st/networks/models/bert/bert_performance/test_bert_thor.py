@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn.optim import thor
 from mindspore.train.model import Model
 from mindspore.train.train_thor import ConvertModelUtils
-import mindspore.dataset.transforms.c_transforms as C
+import mindspore.dataset.transforms as C
 
 from tests.models.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepCell
 from tests.models.official.nlp.bert.src.utils import get_bert_thor_lr, get_bert_thor_damping

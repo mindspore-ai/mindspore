@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ from mindspore import dataset as ds
 from mindspore import nn, Tensor, context
 from mindspore.nn.metrics import Accuracy
 from mindspore.nn.optim import Momentum
-from mindspore.dataset.transforms import c_transforms as C
-from mindspore.dataset.vision import c_transforms as CV
+from mindspore.dataset.transforms import transforms as C
+from mindspore.dataset.vision import transforms as CV
 from mindspore.dataset.vision import Inter
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import TruncatedNormal

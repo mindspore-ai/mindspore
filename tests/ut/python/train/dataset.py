@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@ import os
 
 from mindspore import dataset as ds
 from mindspore.common import dtype as mstype
-from mindspore.dataset.transforms import c_transforms as C
+import mindspore.dataset.transforms as C
 from mindspore.dataset.vision import Inter
-from mindspore.dataset.vision import c_transforms as CV
+import mindspore.dataset.vision as CV
 from mindspore import nn, Tensor
 from mindspore.common.initializer import Normal
 from mindspore.ops import operations as P
+
 
 def create_mnist_dataset(mode='train', num_samples=2, batch_size=2):
     """create dataset for train or test"""

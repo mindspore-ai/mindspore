@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,9 +24,8 @@ import mindspore.nn as nn
 from mindspore.common.initializer import TruncatedNormal
 from mindspore import Tensor
 import mindspore.dataset as ds
-import mindspore.dataset.vision.py_transforms as PV
-import mindspore.dataset.transforms.py_transforms as PT
-import mindspore.dataset.transforms.c_transforms as tC
+import mindspore.dataset.vision as vision
+import mindspore.dataset.transforms as transforms
 from mindspore.train.serialization import save_checkpoint
 from mindspore.train.callback import Callback, FederatedLearningManager
 from mindspore.nn.metrics import Accuracy
@@ -252,16 +251,16 @@ def create_dataset_from_folder(data_path, img_size, batch_size=32, repeat_size=1
     resize_height, resize_width = img_size[0], img_size[1]
 
     transform = [
-        PV.Decode(),
-        PV.Grayscale(1),
-        PV.Resize(size=(resize_height, resize_width)),
-        PV.Grayscale(3),
-        PV.ToTensor()
+        vision.Decode(True),
+        vision.Grayscale(1),
+        vision.Resize(size=(resize_height, resize_width)),
+        vision.Grayscale(3),
+        vision.ToTensor()
     ]
-    compose = PT.Compose(transform)
+    compose = transforms.Compose(transform)
 
     # apply map operations on images
-    mnist_ds = mnist_ds.map(input_columns="label", operations=tC.TypeCast(mindspore.int32))
+    mnist_ds = mnist_ds.map(input_columns="label", operations=transforms.TypeCast(mindspore.int32))
     mnist_ds = mnist_ds.map(input_columns="image", operations=compose)
 
     # apply DatasetOps

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,8 +23,9 @@ from numpy import random
 import cv2
 import mmcv
 import mindspore.dataset as de
-import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset.vision as C
 from mindspore.mindrecord import FileWriter
+
 
 def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
     """Calculate the ious between each bbox of bboxes1 and bboxes2.

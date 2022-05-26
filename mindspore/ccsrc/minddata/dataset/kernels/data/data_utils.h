@@ -38,15 +38,11 @@ namespace dataset {
 //               then it will fail.
 // @param output: Tensor. The shape of the output tensor is <input_shape, numClasses>
 //                and the type is same as input.
-// @param num_classes: Number of classes to.
+// @param num_classes: Number of classes in dataset.
+// @param smoothing_rate: Adjustable hyperparameter for label smoothing level.
 Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
                       double smoothing_rate = 0);
 
-Status OneHotEncodingUnsigned(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                              dsize_t num_classes, int64_t index);
-
-Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
-                            int64_t index);
 template <typename T>
 Status OneHotEncodingImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
                           int64_t index, double smoothing_rate);

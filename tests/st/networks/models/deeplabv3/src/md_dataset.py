@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the License);
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 import numpy as np
 from PIL import Image
 import mindspore.dataset as de
-import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset.vision as C
 
 from .ei_dataset import HwVocRawDataset
 from .utils import custom_transforms as tr
