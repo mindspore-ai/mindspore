@@ -1089,6 +1089,7 @@ AnfNodePtr Parser::ParseSuper(const FunctionBlockPtr &block, const py::list &arg
 void Parser::ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes) {
   for (size_t i = 0; i < args.size(); ++i) {
     AnfNodePtr node = ParseExprNode(block, args[i]);
+    node = HandleInterpret(block, node, args[i]);
     (void)str_nodes->emplace_back(node);
   }
 }
@@ -2350,6 +2351,7 @@ AnfNodePtr Parser::ParseJoinedStr(const FunctionBlockPtr &block, const py::objec
   std::vector<AnfNodePtr> value_nodes{NewValueNode(prim::kPrimMakeTuple)};
   for (size_t i = 0; i < py_values.size(); ++i) {
     AnfNodePtr str_value = ParseExprNode(block, py_values[i]);
+    str_value = HandleInterpret(block, str_value, py_values[i]);
     (void)value_nodes.emplace_back(str_value);
   }
   auto func_graph = block->func_graph();

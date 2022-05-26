@@ -286,7 +286,7 @@ def test_raise_11():
         net = RaiseNet()
         res = net(11)
         print("res:", res)
-    assert "The input can not be 11." in str(raise_info_11.value)
+    assert "('The input can not be ', 11, '.')" in str(raise_info_11.value)
 
 
 @pytest.mark.level0
@@ -535,3 +535,248 @@ def test_raise_21():
         net = RaiseNet()
         res = net(1)
         print("res:", res)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_tensor_1():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = Tensor([1])
+            raise AssertionError(x)
+
+    with pytest.raises(RuntimeError) as raise_info_tensor_1:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "Currently only supports raise in constant scenarios." in str(raise_info_tensor_1.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_tensor_2():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            raise AssertionError(Tensor(1))
+
+    with pytest.raises(RuntimeError) as raise_info_tensor_2:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "Currently only supports raise in constant scenarios." in str(raise_info_tensor_2.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_list():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = [1, 2, 3, 4]
+            raise ValueError(x)
+
+    with pytest.raises(ValueError) as raise_info_list:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "[1, 2, 3, 4]" in str(raise_info_list.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_tuple():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = (1, 2, 3, 4)
+            raise ValueError(x)
+
+    with pytest.raises(ValueError) as raise_info_tuple:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "(1, 2, 3, 4)" in str(raise_info_tuple.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_string_tuple():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = (1, 2, 3, 4)
+            raise ValueError("test_string_tuple", x)
+
+    with pytest.raises(ValueError) as raise_info_string_tuple:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "'test_string_tuple', (1, 2, 3, 4)" in str(raise_info_string_tuple.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_string_list():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = [1, 2, 3, 4]
+            raise ValueError("test_string_list", x)
+
+    with pytest.raises(ValueError) as raise_info_string_list:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "'test_string_list', [1, 2, 3, 4]" in str(raise_info_string_list.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_float():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = 1.1
+            raise ValueError(x)
+
+    with pytest.raises(ValueError) as raise_info_float:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "1.100000" in str(raise_info_float.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_nested_list():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = [1, 2.0]
+            y = [x, x]
+            raise ValueError(x, y)
+
+    with pytest.raises(ValueError) as raise_info_nested_list:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "([1, 2.000000], [[1, 2.000000], [1, 2.000000]])" in str(raise_info_nested_list.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_nested_tuple():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = (1, 2.0)
+            y = (x, x)
+            raise ValueError(x, y)
+
+    with pytest.raises(ValueError) as raise_info_nested_tuple:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "((1, 2.000000), ((1, 2.000000), (1, 2.000000)))" in str(raise_info_nested_tuple.value)
+
+
+@pytest.mark.skip(reason='Not support dict yet')
+def test_raise_dict():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = {'a': 1, 'b': 2}
+            raise ValueError(x)
+
+    with pytest.raises(ValueError) as raise_info_dict:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "{'a': 1, 'b': 2}" in str(raise_info_dict.value)
+
+
+@pytest.mark.skip(reason='Not support Tensor in Joined string yet')
+def test_raise_joinedstr_tensor():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise.
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            raise RuntimeError(f"The input should not be {Tensor([1])}.")
+
+    with pytest.raises(RuntimeError) as raise_info_joinedstr_tensor:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "The input should not be [1]" in str(raise_info_joinedstr_tensor.value)
