@@ -235,7 +235,7 @@ class ExecutionTree {
   // but for distribute scenario, this rank_id come from _get_global_rank() in python
   int32_t rank_id_;
   bool numa_enable_;
-  void *handle_;
+  std::shared_ptr<void> handle_;
 #endif
 };
 }  // namespace dataset

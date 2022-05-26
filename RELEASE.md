@@ -980,7 +980,7 @@ Contributions of any kind are welcome!
 
 #### DataSet
 
-- [STABLE] If the libnuma library is installed in the environment, you can run `export DATASET_ENABLE_NUMA=True` to configure NUMA binding. In multi-card training scenarios, the training data processing speed can be improved, thereby improving the network training efficiency.
+- [STABLE] If the libnuma library is installed in the environment, you can run `export DATASET_ENABLE_NUMA=True` or `export MS_ENABLE_NUMA=True` to configure NUMA binding. In multi-card training scenarios, the training data processing speed can be improved, thereby improving the network training efficiency.
 - [STABLE] Unify API Tensor structure of Training/Inference interfaces in C++ SDK.
 - [STABLE] Optimize duplicated Decode in data preprocess using cache, improve preprocess efficiency.
 - [STABLE] Support eager mode to run data augmentation in Python & C++.

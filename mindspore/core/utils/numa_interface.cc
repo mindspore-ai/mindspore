@@ -13,11 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/util/numa_interface.h"
+#include "utils/numa_interface.h"
 #include <dlfcn.h>
+#include <memory>
+#include <mutex>
+#include "utils/log_adapter.h"
+
+#define RETURN_STATUS_UNEXPECTED(_e)                                \
+  do {                                                              \
+    return Status(StatusCode::kCoreFailed, __LINE__, __FILE__, _e); \
+  } while (false)
 
 namespace mindspore {
-namespace dataset {
+namespace {
+struct bitmask {
+  uint64_t size;
+  uint64_t *maskp;
+};
+
+std::weak_ptr<void> g_numa_lib_handle;
+std::mutex g_numa_lib_handle_mutex;
+}  // namespace
+
 inline void *LoadLibrary(const char *name) {
   if (name == nullptr) {
     return nullptr;
@@ -45,9 +62,16 @@ void ReleaseLibrary(void *handle) {
   }
 }
 
-void *GetNumaAdapterHandle() {
+std::shared_ptr<void> GetNumaAdapterHandle() {
+  std::lock_guard<std::mutex> lock(g_numa_lib_handle_mutex);
+  auto shared = g_numa_lib_handle.lock();
+  if (shared != nullptr) {
+    return shared;
+  }
   void *handle = LoadLibrary("libnuma.so");
-  return handle;
+  shared = std::shared_ptr<void>(handle, ReleaseLibrary);
+  g_numa_lib_handle = shared;
+  return shared;
 }
 
 Status NumaBind(void *handle, const int32_t &rank_id) {
@@ -100,5 +124,4 @@ Status NumaBind(void *handle, const int32_t &rank_id) {
   }
   return Status::OK();
 }
-}  // namespace dataset
 }  // namespace mindspore
