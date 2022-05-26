@@ -88,12 +88,12 @@ def test_model_parallel_runner_init_03():
         runner_config = mslite.RunnerConfig(context, 4)
         model_parallel_runner = mslite.ModelParallelRunner()
         model_parallel_runner.init(model_path="test.ms", runner_config=runner_config)
-    assert "model_path is not exist" in str(raise_info.value)
+    assert "model_path does not exist" in str(raise_info.value)
 
 
 def test_model_parallel_runner_init_04():
     with pytest.raises(RuntimeError) as raise_info:
-        context = mslite.context.Context()
+        context = mslite.Context()
         runner_config = mslite.model.RunnerConfig(context, 4)
         model_parallel_runner = mslite.model.ModelParallelRunner()
         model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=runner_config)

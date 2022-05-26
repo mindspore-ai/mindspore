@@ -194,7 +194,7 @@ def test_ascend_device_info_21():
 def test_ascend_device_info_22():
     with pytest.raises(RuntimeError) as raise_info:
         device_info = mslite.AscendDeviceInfo(fusion_switch_config_path="fusion_switch.cfg")
-    assert "fusion_switch_config_path is not exist" in str(raise_info.value)
+    assert "fusion_switch_config_path does not exist" in str(raise_info.value)
 
 
 def test_ascend_device_info_23():
@@ -206,79 +206,84 @@ def test_ascend_device_info_23():
 def test_ascend_device_info_24():
     with pytest.raises(RuntimeError) as raise_info:
         device_info = mslite.AscendDeviceInfo(insert_op_cfg_path="insert_op.cfg")
-    assert "insert_op_cfg_path is not exist" in str(raise_info.value)
+    assert "insert_op_cfg_path does not exist" in str(raise_info.value)
 
 
 # ============================ Context ============================
 def test_context_01():
+    context = mslite.Context()
+    assert "thread_num:" in str(context)
+
+
+def test_context_02():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context(thread_num="1")
     assert "thread_num must be int" in str(raise_info.value)
 
 
-def test_context_02():
+def test_context_03():
     with pytest.raises(ValueError) as raise_info:
         context = mslite.Context(thread_num=-1)
     assert "thread_num must be positive" in str(raise_info.value)
 
 
-def test_context_03():
+def test_context_04():
     context = mslite.Context(thread_num=4)
     assert "thread_num: 4" in str(context)
 
 
-def test_context_04():
+def test_context_05():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context(thread_affinity_mode="1")
     assert "thread_affinity_mode must be int" in str(raise_info.value)
 
 
-def test_context_05():
+def test_context_06():
     context = mslite.Context(thread_affinity_mode=2)
     assert "thread_affinity_mode: 2" in str(context)
 
 
-def test_context_06():
+def test_context_07():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context(thread_affinity_core_list=2)
     assert "thread_affinity_core_list must be list" in str(raise_info.value)
 
 
-def test_context_07():
+def test_context_08():
     context = mslite.Context(thread_affinity_core_list=[2])
     assert "thread_affinity_core_list: [2]" in str(context)
 
 
-def test_context_08():
+def test_context_09():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context(thread_affinity_core_list=["1", "0"])
     assert "thread_affinity_core_list element must be int" in str(raise_info.value)
 
 
-def test_context_09():
+def test_context_10():
     context = mslite.Context(thread_affinity_core_list=[1, 0])
     assert "thread_affinity_core_list: [1, 0]" in str(context)
 
 
-def test_context_10():
+def test_context_11():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context(enable_parallel=1)
     assert "enable_parallel must be bool" in str(raise_info.value)
 
 
-def test_context_11():
+def test_context_12():
     context = mslite.Context(enable_parallel=True)
     assert "enable_parallel: True" in str(context)
 
 
-def test_context_12():
+def test_context_13():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context()
         context.append_device_info("CPUDeviceInfo")
     assert "device_info must be CPUDeviceInfo, GPUDeviceInfo or AscendDeviceInfo" in str(raise_info.value)
 
 
-def test_context_13():
+def test_context_14():
     gpu_device_info = mslite.GPUDeviceInfo()
     cpu_device_info = mslite.CPUDeviceInfo()
     context = mslite.Context()
@@ -433,7 +438,7 @@ def test_model_build_04():
         context = mslite.Context()
         model = mslite.Model()
         model.build_from_file(model_path="test.ms", model_type=mslite.ModelType.MINDIR_LITE, context=context)
-    assert "model_path is not exist" in str(raise_info.value)
+    assert "model_path does not exist" in str(raise_info.value)
 
 
 def get_model():
@@ -489,7 +494,7 @@ def test_model_resize_06():
         model = get_model()
         inputs = model.get_inputs()
         model.resize(inputs, [[1, 112, 112, 3], [1, 112, 112, 3]])
-    assert "inputs's size does not match dims's size" in str(raise_info.value)
+    assert "inputs' size does not match dims's size" in str(raise_info.value)
 
 
 def test_model_resize_07():
@@ -497,7 +502,7 @@ def test_model_resize_07():
         model = get_model()
         inputs = model.get_inputs()
         model.resize(inputs, [[1, 112, 112]])
-    assert "one of inputs's size does not match one of dims's size" in str(raise_info.value)
+    assert "one of inputs' size does not match one of dims's size" in str(raise_info.value)
 
 
 def test_model_resize_08():
@@ -569,6 +574,7 @@ def test_model_predict_07():
     input_tensor.set_data_type(inputs[0].get_data_type())
     input_tensor.set_shape(inputs[0].get_shape())
     input_tensor.set_format(inputs[0].get_format())
+    input_tensor.set_tensor_name(inputs[0].get_tensor_name())
     in_data = np.arange(1 * 224 * 224 * 3, dtype=np.float32).reshape((1, 224, 224, 3))
     input_tensor.set_data_from_numpy(in_data)
     outputs = model.get_outputs()

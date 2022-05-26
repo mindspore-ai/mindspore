@@ -81,6 +81,10 @@ class Tensor:
     Examples:
         >>> import mindspore_lite as mslite
         >>> tensor = mslite.Tensor()
+        >>> tensor.set_data_type(mslite.DataType.FLOAT32)
+        >>> print(tensor)
+        tensor_name: , data_type: DataType.FLOAT32, shape: [], format: Format.NCHW, \
+        element_num: 1, data_size: 0.
     """
 
     def __init__(self, tensor=None):
@@ -103,6 +107,7 @@ class Tensor:
             TypeError: type of input parameters are invalid.
 
         Examples:
+            >>> import mindspore_lite as mslite
             >>> tensor = mslite.Tensor()
             >>> tensor.set_tensor_name("tensor0")
         """
@@ -118,7 +123,12 @@ class Tensor:
             str, the name of the tensor.
 
         Examples:
-            >>> name = tensor.get_tensor_name()
+            >>> import mindspore_lite as mslite
+            >>> tensor = mslite.Tensor()
+            >>> tensor.set_tensor_name("tensor0")
+            >>> tensor_name = tensor.get_tensor_name()
+            >>> print(tenser_name)
+            tensor0
         """
         return self._tensor.get_tensor_name()
 
@@ -133,6 +143,7 @@ class Tensor:
             TypeError: type of input parameters are invalid.
 
         Examples:
+            >>> import mindspore_lite as mslite
             >>> tensor = mslite.Tensor()
             >>> tensor.set_data_type(mslite.DataType.FLOAT32)
         """
@@ -164,7 +175,12 @@ class Tensor:
             DataType, the data type of the tensor.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> tensor = mslite.Tensor()
+            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
             >>> data_type = tensor.get_data_type()
+            >>> print(data_type)
+            DataType.FLOAT32
         """
         data_type_map = {
             _c_lite_wrapper.DataType.kTypeUnknown: DataType.UNKNOWN,
@@ -195,6 +211,7 @@ class Tensor:
             TypeError: type of input parameters are invalid.
 
         Examples:
+            >>> import mindspore_lite as mslite
             >>> tensor = mslite.Tensor()
             >>> tensor.set_shape([1, 112, 112, 3])
         """
@@ -213,7 +230,12 @@ class Tensor:
             list[int], the shape of the tensor.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> tensor = mslite.Tensor()
+            >>> tensor.set_shape([1, 112, 112, 3])
             >>> shape = tensor.get_shape()
+            >>> print(shape)
+            [1, 112, 112, 3]
         """
         return self._tensor.get_shape()
 
@@ -228,6 +250,7 @@ class Tensor:
             TypeError: type of input parameters are invalid.
 
         Examples:
+            >>> import mindspore_lite as mslite
             >>> tensor = mslite.Tensor()
             >>> tensor.set_format(mslite.Format.NHWC)
         """
@@ -262,7 +285,12 @@ class Tensor:
             Format, the format of the tensor.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> tensor = mslite.Tensor()
+            >>> tensor.set_format(mslite.Format.NHWC)
             >>> tensor_format = tensor.get_format()
+            >>> print(tensor_format)
+            Format,NHWC
         """
         format_map = {
             _c_lite_wrapper.Format.NCHW: Format.NCHW,
@@ -293,19 +321,29 @@ class Tensor:
             int, the element num of the tensor data.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> tensor = mslite.Tensor()
             >>> num = tensor.get_element_num()
+            >>> print(num)
+            1
         """
         return self._tensor.get_element_num()
 
     def get_data_size(self):
         """
-        Get the data size of the tensor.
+        Get the data size of the tensor. data_size = element_num * data_type
 
         Returns:
             int, the data size of the tensor data.
 
         Examples:
+            >>> # data_size is related to data_type
+            >>> import mindspore_lite as mslite
+            >>> tensor = mslite.Tensor()
+            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
             >>> size = tensor.get_data_size()
+            >>> print(size)
+            4
         """
         return self._tensor.get_data_size()
 
@@ -320,7 +358,21 @@ class Tensor:
             TypeError: type of input parameters are invalid.
 
         Examples:
-            >>> in_data = numpy.fromfile("mnist.tflite.ms.bin", dtype=np.float32)
+            >>> # data is from file
+            >>> import mindspore_lite as mslite
+            >>> import numpy ad np
+            >>> tensor = mslite.Tensor()
+            >>> tensor.set_shape([1, 224, 224, 3])
+            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
+            >>> in_data = np.fromfile("mobilenetv2.ms.bin", dtype=np.float32)
+            >>> tensor.set_data_from_numpy(in_data)
+            >>> # data is numpy arrange
+            >>> import mindspore_lite as mslite
+            >>> import numpy ad np
+            >>> tensor = mslite.Tensor()
+            >>> tensor.set_shape([1, 2, 2, 3])
+            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
+            >>> in_data = np.arrange(1 * 2 * 2 * 3, dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
         """
         if not isinstance(numpy_obj, numpy.ndarray):
@@ -356,7 +408,19 @@ class Tensor:
             numpy.ndarray, the numpy object from tensor data.
 
         Examples:
+            >>> import mindspore_lite as mslite
+            >>> import numpy ad np
+            >>> tensor = mslite.Tensor()
+            >>> tensor.set_shape([1, 2, 2, 3])
+            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
+            >>> in_data = np.arrange(1 * 2 * 2 * 3, dtype=np.float32)
+            >>> tensor.set_data_from_numpy(in_data)
             >>> data = tensor.get_data_to_numpy()
+            >>> print(data)
+            [[[[ 0.  1.  2.]
+               [ 3.  4.  5.]]
+              [[ 6.  7.  8.]
+               [ 9. 10. 11.]]]]
         """
         return self._tensor.get_data_to_numpy()
 
@@ -365,6 +429,6 @@ class Tensor:
               f"data_type: {self.get_data_type()}, " \
               f"shape: {self.get_shape()}, " \
               f"format: {self.get_format()}, " \
-              f"element_num, {self.get_element_num()}, " \
-              f"data_size, {self.get_data_size()}."
+              f"element_num: {self.get_element_num()}, " \
+              f"data_size: {self.get_data_size()}."
         return res
