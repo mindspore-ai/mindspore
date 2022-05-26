@@ -71,6 +71,7 @@ from .array_func import (
     scatter_max,
     scatter_min,
     scatter_div,
+    scatter_update,
     nonzero,
     space_to_batch_nd,
     range,

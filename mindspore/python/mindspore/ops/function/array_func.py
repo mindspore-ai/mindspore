@@ -1301,6 +1301,59 @@ def scatter_nd(indices, updates, shape):
     return scatter_nd_(indices, updates, shape)
 
 
+def scatter_update(input_x, indices, updates, use_locking=True):
+    r"""
+    Updates tensor values by using input indices and value.
+
+    Using given values to update tensor value, along with the input indices.
+
+    for each `i, ..., j` in `indices.shape`:
+
+    .. math::
+
+        \text{input_x}[\text{indices}[i, ..., j], :] = \text{updates}[i, ..., j, :]
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    Args:
+        input_x (Parameter) - The target tensor, with data type of Parameter.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        indices (Tensor) - The index of input tensor. With int32 or int64 data type.
+          If there are duplicates in indices, the order for updating is undefined.
+        updates (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and updates.shape = indices.shape + input_x.shape[1:].
+        use_locking (bool): Whether to protect the assignment by a lock. Default: True.
+
+    Returns:
+        Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `indices` is not an int32 or an int64.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
+        >>> input_x = mindspore.Parameter(Tensor(np_x, mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
+        >>> np_updates = np.array([[2.0, 1.2, 1.0], [3.0, 1.2, 1.0]])
+        >>> updates = Tensor(np_updates, mindspore.float32)
+        >>> op = ops.scatter_update()
+        >>> output = op(input_x, indices, updates)
+        >>> print(output)
+        [[2. 1.2  1.]
+         [3. 1.2  1.]]
+    """
+    scatter_update_inner = P.ScatterUpdate(use_locking)
+    return scatter_update_inner(input_x, indices, updates)
+
+
 def scatter_nd_add(input_x, indices, updates, use_locking=False):
     r"""
     Applies sparse addition to individual values or slices in a tensor.
@@ -2632,6 +2685,7 @@ __all__ = [
     'scatter_max',
     'scatter_min',
     'scatter_div',
+    'scatter_update',
     'select',
     'nonzero',
     'matrix_diag',

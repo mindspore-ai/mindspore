@@ -29,9 +29,9 @@ serializable_bprop_ops = [P.ReLU, P.Identity, inner.Range, P.OnesLike, P.ZerosLi
                           P.LinSpace, P.DropoutGenMask, P.OneHot, P.Assign, P.IOU, P.BNTrainingReduce, P.Equal,
                           P.NotEqual, P.Greater, P.GreaterEqual, P.Less, P.LessEqual, P.LogicalAnd, P.LogicalOr,
                           P.ReduceAll, P.ReduceAny, P.DropoutDoMask, P.DType, P.Shape, P.DynamicShape, P.Rank,
-                          P.Select, P.ScatterMax, P.ScatterMin, G.ReluGrad, _constants.kTupleGetItem, P.FloorDiv,
-                          P.TruncateDiv, P.Minimum, P.Maximum, P.IsNan, P.IsInf, P.ReLUV2, "Depend", "stop_gradient",
-                          "Switch", "UpdateState", "Load"]
+                          P.Select, P.ScatterMax, P.ScatterMin, P.ScatterUpdate, G.ReluGrad, _constants.kTupleGetItem,
+                          P.FloorDiv, P.TruncateDiv, P.Minimum, P.Maximum, P.IsNan, P.IsInf, P.ReLUV2, "Depend",
+                          "stop_gradient", "Switch", "UpdateState", "Load"]
 
 
 def run_generate():
