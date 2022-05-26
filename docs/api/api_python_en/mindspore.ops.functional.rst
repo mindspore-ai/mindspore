@@ -268,6 +268,7 @@ Array Operation
     mindspore.ops.gather_nd
     mindspore.ops.one_hot
     mindspore.ops.masked_select
+    mindspore.ops.matrix_diag
     mindspore.ops.meshgrid
     mindspore.ops.nonzero
     mindspore.ops.range
