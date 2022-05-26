@@ -66,7 +66,9 @@ abstract::ShapePtr ClipByNormInferShape(const PrimitivePtr &primitive,
   // Check whether clip_norm shape is valid
   if (clip_norm_shape != x_shape) {
     const auto broadcast_shape = CalBroadCastShape(x_shape, clip_norm_shape, kNameClipByNorm, "input_x", "clip_norm");
-    if (broadcast_shape != x_shape) {
+    bool clip_norm_shape_all_ones =
+      std::all_of(clip_norm_shape.begin(), clip_norm_shape.end(), [](const int64_t &v) { return v == 1; });
+    if (broadcast_shape != x_shape && !clip_norm_shape_all_ones) {
       MS_EXCEPTION(ValueError) << "The shape of `clip_norm` only support `()`、`(1)` or a shape can be broadcast to "
                                   "input `x` shape, but got input `x` shape: "
                                << x_shape << ", `clip_norm` shape: " << clip_norm_shape;
@@ -119,7 +121,12 @@ AbstractBasePtr ClipByNormInfer(const abstract::AnalysisEnginePtr &, const Primi
   }
   auto infer_type = ClipByNormInferType(primitive, input_args_abs);
   auto infer_shape = ClipByNormInferShape(primitive, input_args_abs);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  auto abs = abstract::MakeAbstract(infer_shape, infer_type);
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractScalar>()) {
+    return std::make_shared<abstract::AbstractTensor>(abs);
+  }
+  return abs;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ClipByNorm, prim::kPrimClipByNorm, ClipByNormInfer, nullptr, true);
 }  // namespace ops
