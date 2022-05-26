@@ -1,5 +1,5 @@
 mindspore.ops.fills
-==================
+===================
 
 .. py:function:: mindspore.ops.fills(x, value)
 
@@ -8,7 +8,7 @@ mindspore.ops.fills
     **参数：**
 
     - **x** (Tensor) - 输入Tensor，用来指定输出Tensor的shape和type。数据类型为int8，int16，int32，float16，float32。
-    - **value** (Union(int, float, Tensor)) - 用来填充输出Tensor的值。数据类型为int，float或0-维Tensor。
+    - **value** (Union(int, float, Tensor)) - 用来填充输出Tensor的值。数据类型为int，float或0维Tensor。
 
     **返回：**
 
