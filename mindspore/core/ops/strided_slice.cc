@@ -255,9 +255,8 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
   return infer_shape;
 }
 
-std::vector<int64_t> DynamicComputeInferShape(const PrimitivePtr &primitive, const std::vector<int64_t> &begin_v,
-                                              const std::vector<int64_t> &end_v, const std::vector<int64_t> &strides_v,
-                                              const std::vector<int64_t> &x_shape, const size_t slice_len) {
+ShapeMap DynamicComputeInferShape(const PrimitivePtr &primitive, const std::vector<int64_t> &x_shape,
+                                  const size_t slice_len, const std::vector<int64_t> &max_shape) {
   // currently not support mask
   std::vector<int64_t> begin_pos;
   std::vector<int64_t> end_pos;
@@ -271,13 +270,30 @@ std::vector<int64_t> DynamicComputeInferShape(const PrimitivePtr &primitive, con
   int64_t start;
   int64_t finish;
   int64_t strides;
+  ShapeMap shape_map;
   std::vector<int64_t> infer_shape;
+  std::vector<int64_t> infer_min_shape;
+  std::vector<int64_t> infer_max_shape;
   size_t x_rank = x_shape.size();
   while (i < x_rank || j < slice_len) {
     int64_t slicing_length = -1;
     int64_t x_dim_size = x_shape[i];
     if (x_dim_size == 1) {
       slicing_length = 1;
+    }
+    if (j < slice_len) {
+      if (j < new_axis_pos.size() && new_axis_pos[j] == 1) {
+        infer_shape.push_back(1);
+        infer_min_shape.push_back(1);
+        infer_max_shape.push_back(1);
+        j += 1;
+        continue;
+      }
+      if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
+        j += 1;
+        i += 1;
+        continue;
+      }
     }
     if (j >= slice_len && x_dim_size > 0) {
       start = 0;
@@ -288,10 +304,17 @@ std::vector<int64_t> DynamicComputeInferShape(const PrimitivePtr &primitive, con
       }
     }
     infer_shape.push_back(slicing_length);
+    if (max_shape.size() != 0) {
+      infer_min_shape.push_back(1);
+      infer_max_shape.push_back(max_shape[i]);
+    }
     i += 1;
     j += 1;
   }
-  return infer_shape;
+  shape_map[kShape] = infer_shape;
+  shape_map[kMinShape] = infer_min_shape;
+  shape_map[kMaxShape] = infer_max_shape;
+  return shape_map;
 }
 
 bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string &arg_name, ShapeVector *slice_value,
@@ -368,29 +391,17 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   }
   if (!slice_dynamic) {
     ret_in_shape = ComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape);
-    bool has_zero_shape = std::any_of(ret_in_shape.begin(), ret_in_shape.end(), [](int64_t i) { return i == 0; });
-    if (has_zero_shape) {
-      MS_LOG(EXCEPTION) << "'StridedSlice' doesn't support zero shape, but got out shape: " << ret_in_shape << ".";
-    }
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
-  ret_in_shape = DynamicComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape, begin_len);
+  auto ret_shape_map = DynamicComputeInferShape(primitive, x_shape, begin_len, max_shape);
+  ret_in_shape = ret_shape_map[kShape];
+  auto ret_min_shape = ret_shape_map[kMinShape];
+  auto ret_max_shape = ret_shape_map[kMaxShape];
 
   if (x_is_dyn && (max_shape.empty() || min_shape.empty())) {
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
 
-  ShapeVector ret_min_shape(x_shape.size(), 1);
-  ShapeVector ret_max_shape = x_shape;
-  for (size_t i = 0; i < ret_in_shape.size(); i++) {
-    if (ret_in_shape[i] > 0) {
-      ret_min_shape[i] = ret_in_shape[i];
-      ret_max_shape[i] = ret_in_shape[i];
-    } else {
-      ret_min_shape[i] = min_shape[i];
-      ret_max_shape[i] = max_shape[i];
-    }
-  }
   return std::make_shared<abstract::Shape>(ret_in_shape, ret_min_shape, ret_max_shape);
 }
 

@@ -2356,12 +2356,11 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
             output_max_shape = list(num_segments['max_value'])
             output_min_shape = list(num_segments['min_value'])
         else:
-            if isinstance(num_segments_type, type(mstype.tensor)):
-                raise ValueError(f"For '{self.name}', the dtype of 'num_segments' only support int type "
-                                 f"when it is not a dynamic value, but got type of 'num_segments': "
-                                 f"{num_segments_type}.")
             output_max_shape = [num_segments_v]
             output_min_shape = [num_segments_v]
+            if num_segments_v is None:
+                output_max_shape = []
+                output_min_shape = []
         if 'max_shape' in x and 'min_shape' in x:
             max_output_incoming = x['max_shape']
             min_output_incoming = x['min_shape']
@@ -3671,14 +3670,20 @@ class StridedSlice(PrimitiveWithInfer):
                     'min_shape': tuple(ret_min_shape)}
 
         if None in (begin_v['value'], end_v['value'], strides_v['value']) or (-1 in x_shape):
-            ret_shape = self._compute_dynamic_slicing_shape(x_shape, begin_len)
-
+            ret_shape, ret_min_shape, ret_max_shape = \
+                self._compute_dynamic_slicing_shape(x_shape, begin_len, max_shape)
             rets = {'shape': ret_shape,
                     'dtype': x['dtype'],
                     'value': None}
-            if -1 in x_shape and (max_shape is None or min_shape is None):
-                return rets
-            return self._compute_max_min_shape(rets, x_shape, max_shape, min_shape, ret_shape)
+
+            if max_shape is not None and min_shape is not None:
+                rets['min_shape'] = ret_min_shape
+                rets['max_shape'] = ret_max_shape
+
+            if -1 not in x_shape:
+                return self._compute_max_min_shape(rets, x_shape, ret_shape)
+
+            return rets
 
         ret_shape = self._compute_slicing_shape(x_shape, begin_v['value'], end_v['value'], strides_v['value'])
         if all(ret_shape):
@@ -3712,7 +3717,7 @@ class StridedSlice(PrimitiveWithInfer):
                 'dtype': x['dtype'],
                 'value': value}
 
-    def _compute_max_min_shape(self, rets, x_shape, max_shape, min_shape, ret_shape):
+    def _compute_max_min_shape(self, rets, x_shape, ret_shape):
         """compute max/min shape"""
         ret_min_shape = [1] * len(x_shape)
         ret_max_shape = x_shape
@@ -3720,12 +3725,8 @@ class StridedSlice(PrimitiveWithInfer):
             if val > 0:
                 ret_min_shape[i] = val
                 ret_max_shape[i] = val
-            elif -1 in x_shape:
-                ret_min_shape[i] = min_shape[i]
-                ret_max_shape[i] = max_shape[i]
         rets['max_shape'] = ret_max_shape
         rets['min_shape'] = ret_min_shape
-
         return rets
 
     def _compute_slicing_shape(self, x_shape, begin_v, end_v, strides_v):
@@ -3812,17 +3813,31 @@ class StridedSlice(PrimitiveWithInfer):
                 j += 1
         return ret_shape
 
-    def _compute_dynamic_slicing_shape(self, x_shape, slice_len):
+    def _compute_dynamic_slicing_shape(self, x_shape, slice_len, max_shape):
         """Computes the shape of the slicing for dynamic shape, mask is currently not supported."""
         x_rank = len(x_shape)
-        if self.begin_mask != 0 or self.end_mask != 0 or self.ellipsis_mask or self.new_axis_mask != 0 \
-                or self.shrink_axis_mask != 0:
-            raise ValueError("Mask is currently not supported if 'begin', 'end' or 'strides' is not a constant.")
+        new_axis_pos = bin(self.new_axis_mask)[-1:1:-1]
+        shrink_axis_pos = bin(self.shrink_axis_mask)[-1:1:-1]
+        if self.ellipsis_mask:
+            raise ValueError("Ellipsis Mask is currently not supported.")
         ret_shape = []
+        ret_min_shape = []
+        ret_max_shape = []
         i, j = 0, 0
         while i < x_rank or j < slice_len:
             slicing_length = -1 if x_shape[i] != 1 else 1
-            if j >= slice_len:
+            if j < slice_len:
+                if j < len(new_axis_pos) and new_axis_pos[j] == '1':
+                    ret_shape.append(1)
+                    ret_min_shape.append(1)
+                    ret_max_shape.append(1)
+                    j += 1
+                    continue
+                if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
+                    j += 1
+                    i += 1
+                    continue
+            else:
                 if i >= len(x_shape):
                     raise ValueError(f"For 'StridedSlice', the index must be less than or equal to "
                                      f"the dimension of 'input_x', but got the dimension of 'input_x': {len(x_shape)} "
@@ -3831,9 +3846,12 @@ class StridedSlice(PrimitiveWithInfer):
                 if end > 0:
                     slicing_length = _compute_slicing_length(begin, end, stride, x_shape, i)
             ret_shape.append(slicing_length)
+            if max_shape is not None:
+                ret_min_shape.append(1)
+                ret_max_shape.append(max_shape[i])
             i += 1
             j += 1
-        return ret_shape
+        return ret_shape, ret_min_shape, ret_max_shape
 
 
 class Diag(PrimitiveWithInfer):
@@ -6673,6 +6691,9 @@ class _TensorScatterOp(PrimitiveWithInfer):
         return input_x_dtype
 
     def _check_shape(self, expect, real):
+        """check shape"""
+        if -2 in expect or -2 in real:
+            return True
         if len(expect) != len(real):
             return False
         for a, b in zip(expect, real):

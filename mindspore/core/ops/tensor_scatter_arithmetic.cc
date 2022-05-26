@@ -35,6 +35,25 @@
 namespace mindspore {
 namespace ops {
 namespace {
+bool CheckShape(const std::vector<int64_t> &updates_shape, const std::vector<int64_t> &check_shape) {
+  if (std::find(updates_shape.begin(), updates_shape.end(), -2) != updates_shape.end() ||
+      std::find(check_shape.begin(), check_shape.end(), -2) != check_shape.end()) {
+    return true;
+  }
+  if (updates_shape.size() != check_shape.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < updates_shape.size(); ++i) {
+    if (updates_shape[i] == -1 || check_shape[i] == -1) {
+      continue;
+    }
+    if (updates_shape[i] != check_shape[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 abstract::ShapePtr TensorScatterArithmeticInferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
@@ -64,7 +83,7 @@ abstract::ShapePtr TensorScatterArithmeticInferShape(const PrimitivePtr &primiti
                              << " and the dimension of 'input_x': " << input_x_shape.size();
   }
   indices_shape.insert(indices_shape.end(), input_x_shape.begin() + last_dim, input_x_shape.end());
-  if (updates_shape != indices_shape) {
+  if (CheckShape(updates_shape, indices_shape) == false) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", "
                              << "updates_shape = indices_shape[:-1] + x_shape[indices_shape[-1]:], but got x_shape: "
                              << input_x_shape_ptr->ToString() << ", indices_shape: " << indices_shape_ptr->ToString()

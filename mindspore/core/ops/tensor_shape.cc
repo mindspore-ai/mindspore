@@ -43,7 +43,9 @@ abstract::AbstractBasePtr TensorShapeInfer(const abstract::AnalysisEnginePtr &, 
     auto min_value = MakeValue(input->shape()->min_shape());
     auto max_value = MakeValue(input->shape()->max_shape());
     auto abs_tensor = std::make_shared<abstract::AbstractTensor>(elem, std::make_shared<abstract::Shape>(tensor_shp));
-    abs_tensor->set_value_range(min_value, max_value);
+    if (!input->shape()->min_shape().empty() && !input->shape()->max_shape().empty()) {
+      abs_tensor->set_value_range(min_value, max_value);
+    }
     return abs_tensor;
   }
   auto shp_buf_size = sizeof(int64_t) * shape.size();

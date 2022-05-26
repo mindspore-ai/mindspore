@@ -34,8 +34,12 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
   abstract::AbstractTensorPtr params =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
-  bool ind_dyn = (!indices->shape()->min_shape().empty() && !indices->shape()->max_shape().empty());
-  bool param_dyn = (!params->shape()->min_shape().empty() && !params->shape()->max_shape().empty());
+  bool ind_has_m_shape = (!indices->shape()->min_shape().empty() && !indices->shape()->max_shape().empty());
+  bool param_has_m_shape = (!params->shape()->min_shape().empty() && !params->shape()->max_shape().empty());
+  bool ind_dyn =
+    std::any_of(indices->shape()->shape().begin(), indices->shape()->shape().end(), [](int64_t s) { return s < 0; });
+  bool param_dyn =
+    std::any_of(params->shape()->shape().begin(), params->shape()->shape().end(), [](int64_t s) { return s < 0; });
   int64_t axis_val = 0;
   // 3rd input is a Tensor when Gather is a dynamic shape operator
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
@@ -59,10 +63,10 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
   auto params_rank = static_cast<int64_t>(params_shp.size());
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis_val, kIncludeLeft, {-params_rank, params_rank}, op_name);
   // either inputs or both can be dynamic and computation requires min/max shapes for both
-  ShapeVector param_shp_min = (param_dyn) ? params->shape()->min_shape() : params->shape()->shape();
-  ShapeVector param_shp_max = (param_dyn) ? params->shape()->max_shape() : params->shape()->shape();
-  ShapeVector indices_shp_min = (ind_dyn) ? indices->shape()->min_shape() : indices->shape()->shape();
-  ShapeVector indices_shp_max = (ind_dyn) ? indices->shape()->max_shape() : indices->shape()->shape();
+  ShapeVector param_shp_min = (param_has_m_shape) ? params->shape()->min_shape() : params->shape()->shape();
+  ShapeVector param_shp_max = (param_has_m_shape) ? params->shape()->max_shape() : params->shape()->shape();
+  ShapeVector indices_shp_min = (ind_has_m_shape) ? indices->shape()->min_shape() : indices->shape()->shape();
+  ShapeVector indices_shp_max = (ind_has_m_shape) ? indices->shape()->max_shape() : indices->shape()->shape();
   // check axis_val within interval: [0, params_rank)
   if (!(-params_rank <= axis_val) || !(axis_val < params_rank)) {
     MS_LOG(EXCEPTION) << "For 'Gather', axis value must be within range [" << -params_rank << ", " << params_rank
@@ -79,7 +83,7 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
     return out_vec;
   };
   ShapeVector out_shape = calc_shape(indices_shp, params_shp);
-  if (ind_dyn || param_dyn) {
+  if ((ind_dyn || param_dyn) && ind_dyn == ind_has_m_shape && param_dyn == param_has_m_shape) {
     ShapeVector min_shape = calc_shape(indices_shp_min, param_shp_min);
     ShapeVector max_shape = calc_shape(indices_shp_max, param_shp_max);
     return std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);

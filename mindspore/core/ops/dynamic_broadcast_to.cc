@@ -49,18 +49,13 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
     std::vector<int64_t> real_shape;
     std::vector<int64_t> max_shape;
     std::vector<int64_t> min_shape;
-    if (y_shape->IsDynamic()) {
+    auto min_value = input_y->cast<abstract::AbstractTensorPtr>()->get_min_value();
+    auto max_value = input_y->cast<abstract::AbstractTensorPtr>()->get_max_value();
+    if (y_shape->IsDynamic() || !min_value || !max_value) {
       // max shape unknown
       output_shape.push_back(-2);
     } else {
       auto out_dims = LongToSize(y_shape->shape()[0]);
-      auto min_value = input_y->cast<abstract::AbstractTensorPtr>()->get_min_value();
-      auto max_value = input_y->cast<abstract::AbstractTensorPtr>()->get_max_value();
-      if (!min_value || !max_value) {
-        MS_EXCEPTION(ValueError)
-          << "For 'BroadcastTo', inputs['shape'] min or max value can not be empty. But got min: " << min_value
-          << "max: " << max_value << ".";
-      }
       min_shape = GetValue<std::vector<int64_t>>(min_value);
       max_shape = GetValue<std::vector<int64_t>>(max_value);
       if (min_shape.size() != out_dims || max_shape.size() != out_dims) {

@@ -70,11 +70,17 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
   if (x_shape_ptr->IsDynamic()) {
     auto element0_max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kMaxShape];
     auto element0_min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kMinShape];
+    if (element0_max_shape.empty() || element0_min_shape.empty()) {
+      return std::make_shared<abstract::Shape>(ret_shape);
+    }
     auto ret_max_shape = element0_max_shape;
     auto ret_min_shape = element0_min_shape;
     for (size_t i = 1; i < elements.size(); ++i) {
       auto elementi_max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kMaxShape];
       auto elementi_min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kMinShape];
+      if (elementi_max_shape.empty() || elementi_min_shape.empty()) {
+        return std::make_shared<abstract::Shape>(ret_shape);
+      }
       ret_max_shape[axis] += elementi_max_shape[axis];
       ret_min_shape[axis] += elementi_min_shape[axis];
     }
