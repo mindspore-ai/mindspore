@@ -3,7 +3,7 @@
     具有两层线性层的多层感知器，并在最终输出上使用Dropout。第一个线性层将输入维度从hidden_size投影到ffn_hidden_size，并在中间应用激活层。第二个线性层将该维度从ffn_hidden_size投影到hidden_size。配置parallel_config之后，
     第一个线性层的权重将在输入维度上被分片，第二个线性层在输出维度上进行切分。总体过程如下
 
-    .. math:
+    .. math::
         Dropout((xW_1+b_1)W_2 + b_2))
 
     其中 :math:`W_1, W_2, b_1` 和 :math:`b_2` 为可训练参数。
