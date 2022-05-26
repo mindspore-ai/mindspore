@@ -120,7 +120,7 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
   GetNHNCTransposeFunc();
   if (!NHNCTransposeFunc_.empty()) {
     code.CodeFunction(NHNCTransposeFunc_, input_tensor_, output_tensor_, nhnc_param_[0], nhnc_param_[1],
-                      nhnc_param_[kTwo], kDefaultTaskId, thread_num_);
+                      nhnc_param_[kTwo], kDefaultTaskId, 1);
     context->AppendCode(code.str());
     return RET_OK;
   }
