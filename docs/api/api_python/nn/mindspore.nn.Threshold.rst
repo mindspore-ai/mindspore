@@ -1,7 +1,7 @@
 mindspore.nn.Threshold
 =============================
 
-.. py:class:: mindspore.nn.Threshold
+.. py:class:: mindspore.nn.Threshold(threshold, value)
 
     Threshold激活函数，按元素计算输出。
 
@@ -16,8 +16,8 @@ mindspore.nn.Threshold
 
     **参数：**
 
-    **threshold** (`Union[int, float]`) – Threshold的阈值。
-    **value** (`Union[int, float]`) – 输入Tensor中element小于阈值时的填充值。
+    - **threshold** (`Union[int, float]`) – Threshold的阈值。
+    - **value** (`Union[int, float]`) – 输入Tensor中element小于阈值时的填充值。
 
     **输入：**
 
