@@ -654,7 +654,7 @@ class SideEffectFinder {
     if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem)) {
       return TraceTupleGetItemEffectInfo(cnode, tuple_indexes);
     }
-    // Trace primitive propagating side effect from its input, such as Depend, Identity, etc.
+    // Trace primitive propagating side effect from its input, such as Depend, etc.
     int input_index = GetSideEffectPropagate(prim);
     if (input_index > 0 && input_index < static_cast<int>(cnode->size())) {
       return TraceTupleEffectInfo(cnode->input(static_cast<size_t>(input_index)), tuple_indexes);

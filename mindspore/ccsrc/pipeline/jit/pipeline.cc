@@ -1158,7 +1158,7 @@ void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef 
   std::vector<AnfNodePtr> graph_params = graph->parameters();
   std::size_t graph_params_size = graph_params.size();
   if ((*arg_list).size() != graph_params_size) {
-    // maybe some default parameter
+    // Maybe some default parameter
     for (std::size_t i = (*arg_list).size(); i < graph_params_size; i++) {
       MS_EXCEPTION_IF_NULL(graph_params[i]);
       auto param_ptr = (graph_params[i])->cast<ParameterPtr>();
@@ -1194,7 +1194,6 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
 #ifdef ENABLE_DEBUGGER
   TerminateDebugger();
 #endif
-  std::size_t size = args.size();
   if (!py::isinstance<py::str>(phase_obj)) {
     MS_LOG(EXCEPTION) << "Run failed, phase input is not a str";
   }
@@ -1224,8 +1223,8 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   }
   auto &execute_info = iter->second;
   MS_EXCEPTION_IF_NULL(execute_info);
-  if (size > execute_info->arg_list_size) {
-    MS_LOG(WARNING) << "The arg num : size = " << size << ". full_arg_size = " << execute_info->arg_list_size;
+  if (args.size() > execute_info->arg_list_size) {
+    MS_LOG(WARNING) << "The args size: " << args.size() << ", full_arg_size: " << execute_info->arg_list_size;
   }
   ProcessVmArg(args, phase, &execute_info->arg_list);
   // Start to run phase.

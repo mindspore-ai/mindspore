@@ -260,6 +260,8 @@ bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, A
       }
       args.push_back(out);
     }
+    // The ParameterTuple will not be added in order list,
+    // since we don't want to deal with its RefTensor elements during auto_monad procedure.
     output = NewCNode(std::move(args), func_graph);
   } else {
     ValuePtr convert_result = nullptr;

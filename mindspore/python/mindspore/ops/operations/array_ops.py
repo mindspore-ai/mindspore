@@ -6399,13 +6399,9 @@ class Identity(Primitive):
         [1 2 3 4]
     """
 
-    # Side effect is identity with input.
-    side_effect_propagate = 1
-
     @prim_attr_register
     def __init__(self):
-        """Initialize identity"""
-        self.add_prim_attr('side_effect_propagate', 1)
+        pass
 
 
 class Range(PrimitiveWithCheck):

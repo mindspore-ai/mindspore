@@ -1225,7 +1225,7 @@ AbstractBasePtr AbstractRefTensor::Broaden() const {
   // Always broaden for ref
   auto abs_tensor = AbstractTensor::Broaden()->cast<AbstractTensorPtr>();
   // Broaden the tensor value and keep the ref_key_value.
-  auto ret = std::make_shared<AbstractRefTensor>(abs_tensor, ref_key_value());
+  auto ret = std::make_shared<AbstractRefTensor>(abs_tensor, kAnyValue);
   return ret;
 }
 

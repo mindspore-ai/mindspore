@@ -560,16 +560,6 @@ namespace {
 abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
   FuncGraphPtr func_graph = resource->func_graph();
   abstract::AbstractBasePtrList args_abs = resource->args_abs();
-  // Check if any Parameter object used as construct()/ms_function arguments.
-  std::set<std::string> args_abs_parameters;
-  for (auto const &abs : args_abs) {
-    auto abs_ref = dyn_cast<abstract::AbstractRefTensor>(abs);
-    if (abs_ref != nullptr) {
-      auto ref_key = dyn_cast<StringImm>(abs_ref->ref_key_value());
-      MS_EXCEPTION_IF_NULL(ref_key);
-      args_abs_parameters.emplace(ref_key->value());
-    }
-  }
 
   // Parallel checking.
   auto context = parallel::ParallelContext::GetInstance();
@@ -586,13 +576,6 @@ abstract::AbstractBasePtrList GetArgsAbs(const ResourcePtr &resource) {
       MS_EXCEPTION_IF_NULL(value);
       auto abs_value = value->ToAbstract()->cast<abstract::AbstractTensorPtr>();
       auto ref_key = std::make_shared<RefKey>(param_node->name());
-      if (args_abs_parameters.find(ref_key->value()) != args_abs_parameters.end()) {
-        MS_LOG(EXCEPTION) << "Should not use the Parameter as construct()/ms_function parameter and free variable"
-                          << "(Including using class member by self.xxx) at the same time. The Parameter object is '"
-                          << ref_key->value() << "'.\n\n"
-                          << "To visit them simultaneously may cause an unexpected result,"
-                          << " you'd better remove one of the two usage modes.";
-      }
       auto abs_ref = std::make_shared<abstract::AbstractRefTensor>(abs_value, ref_key);
       context->ParallelParameterContextRestoreShape(func_graph, param_node, abs_ref);
       args_abs.push_back(abs_ref);
