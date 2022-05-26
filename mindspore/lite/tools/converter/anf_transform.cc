@@ -226,7 +226,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::FullConnectedFusion>());
   fusion_pm->AddPass(std::make_shared<opt::FullconnectedAddFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TensorDotFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::MatMulActivationFusion>());
+  fusion_pm->AddPass(std::make_shared<opt::MatMulActivationFusion>(*config));
   optimizer->AddPassManager(fusion_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run op fusion failed.";

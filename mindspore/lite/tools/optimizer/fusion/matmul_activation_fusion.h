@@ -20,17 +20,24 @@
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
 #include "tools/converter/converter_context.h"
+#include "tools/converter/converter_flags.h"
 
 namespace mindspore {
 namespace opt {
 class MatMulActivationFusion : public PatternProcessPass {
  public:
-  explicit MatMulActivationFusion(bool multigraph = true) : PatternProcessPass("MatMulActivationFusion", multigraph) {}
+  explicit MatMulActivationFusion(const converter::Flags &ctx, bool multigraph = true)
+      : PatternProcessPass("MatMulActivationFusion", multigraph) {
+    ctx_ = ctx;
+  }
   ~MatMulActivationFusion() = default;
 
  private:
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  converter::Flags ctx_;
 };
 }  // namespace opt
 }  // namespace mindspore
