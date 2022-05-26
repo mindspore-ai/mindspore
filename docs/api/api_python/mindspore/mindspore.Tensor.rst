@@ -569,6 +569,33 @@ mindspore.Tensor
         - **ValueError** - 如果 `end` 的维度信息无法相互广播到当前Tensor。
         - **ValueError** - 如果 `weight` 为Tensor且 `weight` 的维度信息无法广播到当前Tensor。
 
+    .. py:method:: lp_norm(axis, p=2, keep_dims=False, epsilon=1e-12)
+
+        返回给定Tensor的矩阵范数或向量范数。
+
+        .. math::
+            output = sum(abs(input)**p)**(1/p)
+
+        **参数：**
+
+        - **axis** (Union[int, list, tuple]) - 指定要计算范数的输入维度。
+        - **p** (int) - 范数的值。默认值：2。
+        - **keep_dims** (bool) - 输出Tensor是否保留原有的维度。默认值：False。
+
+        **返回：**
+
+        Tensor，其数据类型与当前Tensor相同，其维度信息取决于 `axis` 轴以及参数 `keep_dims` 。例如如果输入的大小为 `(2,3,4)` 轴为 `[0,1]` ，输出的维度为 `(4，)` 。
+
+        **异常：**
+
+        - **TypeError** - 当前Tensor的数据类型不是float16或者float32。
+        - **TypeError** - `axis` 不是int，tuple或者list。
+        - **TypeError** - `p` 不是int。
+        - **TypeError** - `axis` 是tuple或者list但其元素不是int。
+        - **TypeError** - `keep_dims` 不是bool。
+        - **ValueError** - `axis` 的元素超出范围 `[-len(input_x.shape, len(input_x.shape)]` ，其中 `input_x` 指当前Tensor。
+        - **ValueError** - `axis` 的维度rank大于当前Tensor的维度rank。
+
     .. py:method:: masked_fill(mask, value)
 
         根据mask矩阵，将值为True对应位置填充为value值。mask矩阵的shape必须与原Tensor相同。

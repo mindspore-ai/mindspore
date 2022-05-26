@@ -2250,7 +2250,7 @@ def logaddexp(x1, x2):
     log_op = P.Log()
     exp_op = P.Exp()
 
-    y = log_op(exp_op(x1)+exp_op(x2))
+    y = log_op(exp_op(x1) + exp_op(x2))
     return y
 
 
@@ -2570,12 +2570,12 @@ def lp_norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
 
     Examples:
         >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
-        >>> output = ops.lp_norm(input_x, 2, [0, 1])
+        >>> output = ops.lp_norm(input_x, [0, 1], p=2)
         >>> print(output)
         [ 9.165152 10.954452]
     """
-    lp_norm_ = P.LpNorm(axis, p, keep_dims, epsilon)
-    return lp_norm_(input_x)
+    lp_norm_inner = P.LpNorm(axis, p, keep_dims, epsilon)
+    return lp_norm_inner(input_x)
 
 
 __all__ = [
