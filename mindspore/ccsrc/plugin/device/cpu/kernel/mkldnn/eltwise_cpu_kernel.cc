@@ -36,9 +36,7 @@ struct DescParam {
 
 dnnl::eltwise_forward::desc EltWiseCpuKernelMod::GetForwardEltwiseDesc(const dnnl::memory::desc src_desc) {
   static const std::unordered_map<std::string, DescParam> eltwise_op_desc_map{
-    {prim::kPrimRelu->name(), DescParam{dnnl::algorithm::eltwise_relu}},
     {prim::kPrimRelu6->name(), DescParam{dnnl::algorithm::eltwise_clip, 0.0f, 6.0f}},
-    {prim::kPrimAbs->name(), DescParam{dnnl::algorithm::eltwise_abs}},
     {prim::kPrimExp->name(), DescParam{dnnl::algorithm::eltwise_exp}},
     {prim::kPrimLog->name(), DescParam{dnnl::algorithm::eltwise_log}},
     {prim::kPrimSigmoid->name(), DescParam{dnnl::algorithm::eltwise_logistic}},
@@ -142,9 +140,6 @@ std::map<std::string, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::Elt
     {kElu,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
-    {kReLU,
-     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-       &EltWiseCpuKernelMod::LaunchKernel}}},
     {kReLU6,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
@@ -171,8 +166,6 @@ std::map<std::string, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::Elt
        &EltWiseCpuKernelMod::LaunchKernel}}}};
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Elu, []() { return std::make_shared<EltWiseCpuKernelMod>(kElu); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU,
-                                 []() { return std::make_shared<EltWiseCpuKernelMod>(kReLU); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU6,
                                  []() { return std::make_shared<EltWiseCpuKernelMod>(kReLU6); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Exp, []() { return std::make_shared<EltWiseCpuKernelMod>(kExp); });
