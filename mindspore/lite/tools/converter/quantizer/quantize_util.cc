@@ -62,9 +62,9 @@ int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const s
   const constexpr double quanted_bias_abs_limit = 0.5 * INT32_MAX;
   MS_CHECK_TRUE_MSG(quant_param_holder->get_input_quant_params().size() > 1, RET_ERROR, "invalid access.");
   auto weight_quant_params = quant_param_holder->get_input_quant_params().at(1);
-  auto shape_size = quant_datas->size();
-  if (bias_scales.size() == shape_size) {
-    for (size_t i = 0; i < shape_size; i++) {
+  auto quant_parameter_size = quant_datas->size();
+  if (bias_scales.size() == quant_parameter_size) {
+    for (size_t i = 0; i < quant_parameter_size; i++) {
       bias_scale_tmp = bias_scales[i];
       if (fabs(bias_scale_tmp) <= 0.0f) {
         MS_LOG(ERROR) << "divisor 'bias_scale_tmp' cannot be 0.";
@@ -91,7 +91,7 @@ int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const s
     // for fc, per tensor quant
     bias_scale_tmp = quant_params->front().scale;
     float max_raw_data = 0.0f;
-    for (size_t i = 0; i < shape_size; i++) {
+    for (size_t i = 0; i < quant_parameter_size; i++) {
       if (std::abs(raw_datas[i]) > max_raw_data) {
         max_raw_data = std::abs(raw_datas[i]);
       }
@@ -113,7 +113,7 @@ int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const s
       quant_params->front().scale = bias_scale_tmp;
       MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
     }
-    for (size_t i = 0; i < shape_size; i++) {
+    for (size_t i = 0; i < quant_parameter_size; i++) {
       auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
       quant_datas->at(i) = quant_data;
     }
@@ -472,7 +472,7 @@ int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<in
   if (primitive->name() == ops::kNameMatMulFusion) {
     return GetMatMulPreferredDim(primitive, input_index, dims);
   } else if (primitive->name() == ops::kNameConv2dTransposeFusion) {
-    return 0;
+    return GetDeConvPreferredDim(primitive, dims);
   } else if (primitive->name() == ops::kNameGather) {
     return GetGatherPreferredDim(cnode);
   }

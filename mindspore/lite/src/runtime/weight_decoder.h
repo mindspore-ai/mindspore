@@ -56,7 +56,7 @@ class WeightDecoder {
     if (op_parameter->type_ == schema::PrimitiveType_MatMulFusion) {
       return GetMatMulPreferredDim(op_parameter, index, dims);
     } else if (op_parameter->type_ == schema::PrimitiveType_Conv2dTransposeFusion) {
-      return 0;
+      return GetDeConvPreferredDim(op_parameter, dims);
     } else if (op_parameter->type_ == schema::PrimitiveType_Gather) {
       return GetGatherPreferredDim(op_parameter, in_tensors);
     }

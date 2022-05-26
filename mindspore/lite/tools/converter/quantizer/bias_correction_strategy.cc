@@ -644,6 +644,9 @@ int BiasCorrectionStrategy::DoBiasCorrection(const FuncGraphPtr &quant_func_grap
     case NVGPU:
       status = DoNVGPUBiasCorrection(quant_func_graph);
       break;
+    case DSP:
+      status = DoCPUBiasCorrection(quant_func_graph);
+      break;
     default:
       MS_LOG(ERROR) << "Unsupported target device " << this->flags_.fullQuantParam.target_device
                     << " for bias correction.";

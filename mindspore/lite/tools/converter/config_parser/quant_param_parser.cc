@@ -19,6 +19,7 @@
 #include "src/common/log_adapter.h"
 #include "mindspore/lite/tools/common/string_util.h"
 #include "include/errorcode.h"
+
 namespace mindspore {
 namespace lite {
 namespace {
@@ -184,8 +185,11 @@ int QuantParamParser::ParseTargetDevice(const std::string &target_device_str, qu
   } else if (target_device_str == "NVGPU") {
     (*target_device) = quant::NVGPU;
     return RET_OK;
+  } else if (target_device_str == "DSP") {
+    (*target_device) = quant::DSP;
+    return RET_OK;
   } else {
-    MS_LOG(ERROR) << "INPUT ILLEGAL: target_device must be KIRIN or NVGPU.";
+    MS_LOG(ERROR) << "INPUT ILLEGAL: target_device must be KIRIN, NVGPU or DSP.";
     return RET_INPUT_PARAM_INVALID;
   }
 }

@@ -460,6 +460,20 @@ void FullQuantQuantizer::InitNvGpuConfig() {
   flags_.fullQuantParam.bias_correction = false;
 }
 
+void FullQuantQuantizer::InitDSPConfig() {
+  activation_quant_data_type_ = kNumberTypeInt8;
+  activation_target_data_type_ = kNumberTypeInt8;
+  weight_data_type_ = kNumberTypeInt8;
+  activation_symmetric_ = false;
+  weight_channel_symmetric_ = true;
+  weight_layer_symmetric_ = false;
+  // support all layers
+  support_int8_ops_ = {};
+  skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
+  per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
+  support_activation_ = {};
+}
+
 void FullQuantQuantizer::InitQMinMax() {
   MS_ASSERT(activation_quant_data_type_ == kNumberTypeInt8 || activation_quant_data_type_ == kNumberTypeUInt8);
   if (activation_quant_data_type_ == kNumberTypeInt8) {
@@ -518,6 +532,9 @@ int FullQuantQuantizer::InitDeviceConfig(const FuncGraphPtr &func_graph) {
       break;
     case NVGPU:
       InitNvGpuConfig();
+      break;
+    case DSP:
+      InitDSPConfig();
       break;
     default:
       MS_LOG(ERROR) << " Unsupported device " << flags_.fullQuantParam.target_device;

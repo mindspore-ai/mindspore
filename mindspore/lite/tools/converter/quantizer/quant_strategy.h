@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_STRATEGY_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_STRATEGY_H
+
 #include <cstddef>
 #include <utility>
 #include <set>
@@ -37,7 +38,9 @@ class QuantStrategy {
   bool CanOpFullQuantized(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_int8_ops,
                           const std::set<PrimitivePtr> &skip_check_dtype_ops,
                           const std::set<mindspore::ActivationType> &support_activation);
+
   bool CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &input_node, int preferred_dim);
+
   bool IsSkipOp(const std::string &skip_node_name);
 
  private:
