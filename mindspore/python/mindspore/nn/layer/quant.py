@@ -1014,8 +1014,7 @@ class Conv2dBnFoldQuant(Cell):
         # initialize fake ops
         self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=channel_axis,
-                                                     num_channels=out_channels,
-                                                     quant_dtype=quant_dtype)
+                                                     num_channels=out_channels)
         self.batchnorm_fold = BatchNormFoldCell(epsilon=eps, momentum=momentum, freeze_bn=freeze_bn)
         self.correct_mul = Q.CorrectionMul(channel_axis)
         if context.get_context('device_target') == "Ascend":
@@ -1030,6 +1029,33 @@ class Conv2dBnFoldQuant(Cell):
         self.step = Parameter(initializer('normal', [1], dtype=mstype.int32), name='step', requires_grad=False)
         self.one = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
+
+    @classmethod
+    def from_float(cls, convbn: Conv2dBnAct, quant_config: QuantConfig):
+        """A class method to create `Conv2dBnFoldQuantOneConv` from a `Conv2dBnAct`"""
+
+        kwargs = {'in_channels': convbn.conv.in_channels,
+                  'out_channels': convbn.conv.out_channels,
+                  'kernel_size': convbn.conv.kernel_size,
+                  'stride': convbn.conv.stride,
+                  'pad_mode': convbn.conv.pad_mode,
+                  'padding': convbn.conv.padding,
+                  'dilation': convbn.conv.dilation,
+                  'group': convbn.conv.group,
+                  'has_bias': convbn.conv.has_bias,
+                  'bias_init': convbn.conv.bias_init,
+                  'weight_init': convbn.conv.weight_init,
+                  'quant_config': quant_config,
+                  'fake': True,
+                  }
+        if hasattr(convbn, 'batchnorm'):
+            kwargs['eps'] = convbn.batchnorm.eps
+            kwargs['momentum'] = convbn.batchnorm.momentum
+            kwargs['beta_init'] = convbn.batchnorm.beta_init
+            kwargs['gamma_init'] = convbn.batchnorm.gamma_init
+            kwargs['mean_init'] = convbn.batchnorm.moving_mean_init
+            kwargs['var_init'] = convbn.batchnorm.moving_var_init
+        return cls(**kwargs)
 
     def extend_repr(self):
         """Display instance object as string."""
