@@ -273,6 +273,12 @@ bool Iteration::EnableServerInstance(std::string *result) {
 
   // End enabling server instance.
   is_instance_being_updated_ = false;
+  if (server_node_->rank_id() == kLeaderServerRank) {
+    MS_ERROR_IF_NULL_W_RET_VAL(server_recovery_, false);
+    if (!server_recovery_->Save(iteration_num_, instance_state_)) {
+      MS_LOG(WARNING) << "Save recovery data failed.";
+    }
+  }
   return true;
 }
 
