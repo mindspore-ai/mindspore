@@ -17,8 +17,10 @@
 
 from mindspore.ops import operations as P
 
-
 fast_gelu_ = P.FastGeLU()
+softsign_ = P.Softsign()
+
+
 def fast_gelu(x):
     r"""
     Fast Gaussian Error Linear Units activation function.
@@ -91,8 +93,42 @@ def hardshrink(x, lambd=0.5):
     return hshrink_op(x)
 
 
+def softsign(x):
+    r"""
+    Softsign activation function.
+
+    The function is shown as follows:
+
+    .. math::
+        \text{SoftSign}(x) = \frac{x}{1 + |x|}
+
+    Args:
+        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+            additional dimensions, with float16 or float32 data type.
+
+    Outputs:
+        Tensor, with the same type and shape as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
+        >>> output = F.softsign(x)
+        >>> print(output)
+        [ 0.        -0.5         0.6666667  0.9677419 -0.9677419]
+    """
+    return softsign_(x)
+
+
 __all__ = [
     'fast_gelu',
-    'hardshrink'
+    'hardshrink',
+    'softsign'
 ]
 __all__.sort()

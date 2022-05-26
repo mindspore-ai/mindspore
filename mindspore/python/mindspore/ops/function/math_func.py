@@ -82,6 +82,7 @@ atan2_ = P.Atan2()
 bitwise_and_ = P.BitwiseAnd()
 bitwise_or_ = P.BitwiseOr()
 bitwise_xor_ = P.BitwiseXor()
+inv_ = P.math_ops.Inv()
 invert_ = P.Invert()
 erf_ = P.Erf()
 erfc_ = P.Erfc()
@@ -1372,12 +1373,41 @@ def bitwise_xor(x, y):
     return bitwise_xor_(x, y)
 
 
+def inv(x):
+    r"""
+    Computes Reciprocal of input tensor element-wise.
+
+    .. math::
+        out_i = \frac{1}{x_{i} }
+
+    Args:
+        x (Tensor): Tensor of any dimension. Must be one of the following types: float16, float32 or int32.
+
+    Returns:
+        Tensor, has the same type and shape as input shape value.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not one of float16, float32, int32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
+        >>> output = F.inv(x)
+        >>> print(output)
+        [4.        2.5       3.2258065 1.923077 ]
+    """
+    return inv_(x)
+
+
 def invert(x):
     r"""
     Flips all bits of input tensor element-wise.
 
     .. math::
-
         out_i = ~x_{i}
 
     Args:
@@ -1391,11 +1421,12 @@ def invert(x):
         TypeError: If dtype of `x` is neither int16 nor uint16.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops import functional as F
         >>> x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
-        >>> output = ops.invert(x)
+        >>> output = F.invert(x)
         >>> print(output)
         [-26 -5 -14 -10]
     """
@@ -2532,6 +2563,7 @@ def deg2rad(x):
         out = x * math.pi / 180.0
     return out
 
+
 #####################################
 # Reduction Operation Functions.
 #####################################
@@ -2649,6 +2681,7 @@ __all__ = [
     'bitwise_and',
     'bitwise_or',
     'bitwise_xor',
+    'inv',
     'invert',
     'erf',
     'erfc',

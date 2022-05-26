@@ -706,27 +706,26 @@ class Softsign(Cell):
     Softsign is defined as:
 
     .. math::
-
         \text{SoftSign}(x) = \frac{x}{1 + |x|}
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+        - **x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions, with float16 or float32 data type.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_x`.
+        Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
+        >>> x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
         >>> softsign = nn.Softsign()
-        >>> output = softsign(input_x)
+        >>> output = softsign(x)
         >>> print(output)
         [ 0.        -0.5         0.6666667  0.9677419 -0.9677419]
     """

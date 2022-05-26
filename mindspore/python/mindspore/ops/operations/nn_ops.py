@@ -429,29 +429,15 @@ class Softsign(Primitive):
     r"""
     Softsign activation function.
 
-    The function is shown as follows:
-
-    .. math::
-
-        \text{SoftSign}(x) = \frac{x}{1 + |x|}
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+    Refer to :func:`mindspore.ops.softsign` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops.operations.nn_ops import Softsign
         >>> input_x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
-        >>> softsign = ops.Softsign()
+        >>> softsign = Softsign()
         >>> output = softsign(input_x)
         >>> print(output)
         [ 0.        -0.5         0.6666667  0.9677419 -0.9677419]
@@ -9565,7 +9551,6 @@ class PSROIPooling(Primitive):
 
     @prim_attr_register
     def __init__(self, spatial_scale, group_size, output_dim):
-
         """Initialize PSROIPooling"""
         validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
         validator.check_value_type("group_size", group_size, [int], self.name)

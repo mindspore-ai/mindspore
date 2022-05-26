@@ -4780,25 +4780,14 @@ class Inv(Primitive):
     r"""
     Computes Reciprocal of input tensor element-wise.
 
-    .. math::
-
-        out_i = \frac{1}{x_{i} }
-
-    Inputs:
-        - **x** (Tensor) - Tensor of any dimension. Must be one of the following types: float16, float32 or int32.
-
-    Outputs:
-        Tensor, has the same shape and data type as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not one of float16, float32, int32.
+    Refer to :func:`mindspore.ops.inv` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> inv = ops.Inv()
+        >>> from mindspore.ops.operations.math_ops import Inv
+        >>> inv = Inv()
         >>> x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
         >>> output = inv(x)
         >>> print(output)
@@ -4814,13 +4803,14 @@ class Invert(Primitive):
     r"""
     Flips all bits of input tensor element-wise.
 
-    Refer to :func:`mindspore.ops.invert` for more detail.
+    Refer to :func:`mindspore.ops.invert` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> invert = ops.Invert()
+        >>> from mindspore.ops.operations.math_ops import Invert
+        >>> invert = Invert()
         >>> x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
         >>> output = invert(x)
         >>> print(output)

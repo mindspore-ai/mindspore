@@ -123,12 +123,12 @@ def matrix_band_part(x, lower, upper):
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
     Args:
-        - **x** (Tensor) - Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
-          The data type must be float16, float32, float64, int32 or int64.
-        - **lower** (int) - Number of subdiagonals to keep. It must be int32 or int64.
-          If negative, keep entire lower triangle.
-        - **upper** (int) - Number of superdiagonals to keep. It must be int32 or int64.
-          If negative, keep entire upper triangle.
+        x (Tensor): Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
+            The data type must be float16, float32, float64, int32 or int64.
+        lower (int): Number of subdiagonals to keep. It must be int32 or int64.
+            If negative, keep entire lower triangle.
+        upper (int): Number of superdiagonals to keep. It must be int32 or int64.
+            If negative, keep entire upper triangle.
 
     Returns:
         Tensor, has the same type and shape as input shape value.
@@ -144,8 +144,8 @@ def matrix_band_part(x, lower, upper):
 
     Examples:
         >>> from mindspore.ops import functional as F
-        >>> x = np.ones([2, 4, 4]).astype(np.float32)
-        >>> output = F.matrix_band_part(Tensor(x), 2, 1)
+        >>> x = Tensor(np.ones([2, 4, 4]).astype(np.float32))
+        >>> output = F.matrix_band_part(x, 2, 1)
         >>> print(output)
         [[[1. 1. 0. 0.]
           [1. 1. 1. 0.]
@@ -158,6 +158,39 @@ def matrix_band_part(x, lower, upper):
           [0. 1. 1. 1.]]]
     """
     return matrix_band_part_(x, lower, upper)
+
+
+def padding(x, pad_dim_size=8):
+    r"""
+    Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
+
+    Args:
+        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The rank of `x` must be at least 2.
+            The last dimension of `x` must be 1. The data type is Number.
+        pad_dim_size (int): The value of the last dimension of `x` to be extended, which must be positive. Default: 8.
+
+    Returns:
+        Tensor, has the same type and shape as input shape value.
+
+    Raises:
+        TypeError: If `pad_dim_size` is not an int.
+        ValueError: If `pad_dim_size` is less than 1.
+        ValueError: If last dim of `x` is not equal to 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
+        >>> pad_dim_size = 4
+        >>> output = F.padding(x, pad_dim_size)
+        >>> print(output)
+        [[ 8.  0.  0.  0.]
+         [10.  0.  0.  0.]]
+    """
+    padding_ = P.array_ops.Padding(pad_dim_size)
+    return padding_(x)
 
 
 def one_hot(indices, depth, on_value, off_value, axis=-1):
@@ -2113,6 +2146,7 @@ __all__ = [
     'unique_consecutive',
     'eye',
     'matrix_band_part',
+    'padding',
     'fill',
     'fill_',
     'fills',

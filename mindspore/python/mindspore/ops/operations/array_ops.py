@@ -968,28 +968,16 @@ class Padding(Primitive):
     """
     Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
 
-    Args:
-        pad_dim_size (int): The value of the last dimension of `x` to be extended, which must be positive. Default: 8.
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The rank of `x` must be at least 2.
-          The last dimension of `x` must be 1. The data type is Number.
-
-    Outputs:
-        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
-
-    Raises:
-        TypeError: If `pad_dim_size` is not an int.
-        ValueError: If `pad_dim_size` is less than 1.
-        ValueError: If last dim of `x` is not equal to 1.
+    Refer to :func:`mindspore.ops.padding` for more details.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops.operations.array_ops import Padding
         >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
         >>> pad_dim_size = 4
-        >>> output = ops.Padding(pad_dim_size)(x)
+        >>> output = Padding(pad_dim_size)(x)
         >>> print(output)
         [[ 8.  0.  0.  0.]
          [10.  0.  0.  0.]]
@@ -1435,7 +1423,7 @@ class MatrixBandPart(Primitive):
     r"""
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
-    Refer to :func:`mindspore.ops.matrix_band_part` for more detail.
+    Refer to :func:`mindspore.ops.matrix_band_part` for more details.
 
     Supported Platforms:
         ``GPU`` ``CPU``
