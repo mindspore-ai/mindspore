@@ -21,7 +21,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error, \
-    _handle_broadcasting, get_unsupported_dynamic_vmap_rule
+    _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis
 from ..operations.array_ops import Fills
 from ..operations.array_ops import UniqueConsecutive
 
@@ -537,6 +537,48 @@ def get_ger_vmap_rule(prim, axis_size):
         x2 = _bdim_at_front(x2, x2_dim, axis_size)
         out = prim(x1, x2)
         return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.GatherD)
+def get_gatherd_vmap_rule(prim, axis_size):
+    """VmapRule for GatherD operations."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(x_bdim, dim_bdim, index_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dim_bdim, index_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        dim_value, axis_dim = dim_bdim
+        index, index_dim = index_bdim
+
+        # `dim` will be a Tensor in dynamic shape case, do not support its vamp.
+        if axis_dim is not None:
+            _raise_value_error("The source axis of `dim` in `GatherD` must be None, "
+                               "but got {}.".format(axis_dim))
+        if not isinstance(dim_value, int):
+            _raise_value_error("The `dim` in `GatherD` must be a const, but got {}.".format(dim_value))
+
+        out_dim = index_dim
+
+        # Broadcast if needed.
+        if x_dim is None:
+            x = _broadcast_by_axis(x, index_dim, axis_size)
+        elif index_dim is None:
+            index = _broadcast_by_axis(index, x_dim, axis_size)
+            out_dim = x_dim
+        elif x_dim != index_dim:
+            mnp.moveaxis(x, x_dim, index_dim)
+
+        # Adapt `dim` to vmap case.
+        dim_value = dim_value + 1 if dim_value >= out_dim else dim_value
+
+        out = prim(x, dim_value, index)
+        return (out, out_dim)
 
     return vmap_rule
 

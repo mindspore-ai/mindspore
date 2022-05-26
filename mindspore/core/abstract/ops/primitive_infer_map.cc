@@ -69,6 +69,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kUnsortedSegmentMax = prim::kPrimUnsortedSegmentMax->name();
   static const auto &kGather = prim::kPrimGather->name();
   static const auto &kGatherV2 = prim::kPrimGatherV2->name();
+  static const auto &kGatherD = prim::kPrimGatherD->name();
   static const auto &kSparseGatherV2 = prim::kPrimSparseGatherV2->name();
   static const auto &kRange = prim::kPrimRange->name();
   static const auto &kRangeV2 = prim::kPrimRangeV2->name();
@@ -101,6 +102,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kMatrixSetDiagV3, ShapeSet{2}},
                                                         {kGather, ShapeSet{2}},
                                                         {kGatherV2, ShapeSet{2}},
+                                                        {kGatherD, ShapeSet{1}},
                                                         {kSparseGatherV2, ShapeSet{2}},
                                                         {kRange, ShapeSet{0, 1, 2}},
                                                         {kRangeV2, ShapeSet{0, 1, 2}},
