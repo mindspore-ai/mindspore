@@ -24,10 +24,12 @@
 #include <utility>
 
 #include "runtime/graph_scheduler/actor/actor_common.h"
-#include "runtime/graph_scheduler/actor/rpc/send_actor.h"
-#include "runtime/graph_scheduler/actor/rpc/recv_actor.h"
 #include "ir/anf.h"
 #include "backend/common/session/kernel_graph.h"
+#include "distributed/cluster/cluster_context.h"
+#include "distributed/rpc/tcp/tcp_client.h"
+#include "distributed/rpc/tcp/tcp_server.h"
+#include "utils/hash_map.h"
 
 // Note: After the code in ps/ps_cache are removed into runtime/addons/embedding_cache/,
 // the follow include file and using declaration of ps will be removed.
@@ -46,6 +48,20 @@ using mindspore::ps::PsDataPrefetch;
 
 namespace mindspore {
 namespace runtime {
+using kernel::Address;
+using kernel::AddressPtr;
+using kernel::AddressPtrList;
+
+class Sender;
+class Receiver;
+using SenderPtr = std::shared_ptr<Sender>;
+using ReceiverPtr = std::shared_ptr<Receiver>;
+using SendRecvPair = std::pair<SenderPtr, ReceiverPtr>;
+using SendRecvPairList = std::vector<SendRecvPair>;
+
+using distributed::cluster::ActorRouteTableProxy;
+using distributed::cluster::ActorRouteTableProxyPtr;
+
 // The EmbeddingCachePrefetchActor is used to cache large embedding table scenarios. The cache level is: Device
 // Cache->Local Host Cache->Remote Cache. This Actor is used to perform Local and Device Cache hit analysis and cache
 // prefetching (the feature weights corresponding to the ids of subsequent batches are assigned in advance Prefetching
@@ -59,8 +75,8 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   ~EmbeddingCachePrefetchActor() override = default;
 
   // Initialize embedding cache prefetch actor.
-  // 1. Build and Link rpc actors between local cache and remote cache.
-  // 2. Build network connection of rpc actors.
+  // 1. Build and Link rpc operators between local cache and remote cache.
+  // 2. Build network connection of rpc operators.
   void Initialize();
 
   // Perform local cache hit analysis, prefetch the feature vector corresponding to the next batch into the cache.
@@ -131,9 +147,10 @@ class EmbeddingCachePrefetchActor : public ActorBase {
                             const int *indices_addr, float *output_addr);
 
   // Lookup embedding from Remote and get embeddings via RPC.
-  bool PullEembeddingsFromRemote(const int *ids, size_t ids_num, std::vector<float> *outputs);
+  bool PullEembeddingsFromRemote(int32_t param_key, const int *ids, size_t ids_num, std::vector<float> *outputs);
   // Push the local embedding cache that requires evict to the remote.
-  bool PushEmbeddingsToRemote(const int *ids, size_t ids_num, const float *embeddings, size_t embeddings_len);
+  bool PushEmbeddingsToRemote(int32_t param_key, const int *ids, size_t ids_num, const float *embeddings,
+                              size_t embeddings_len);
 
   // Get the id range of each server's embedding table slice.
   void GetRemoteEmbeddingSliceBound();
@@ -149,20 +166,24 @@ class EmbeddingCachePrefetchActor : public ActorBase {
                                  std::vector<std::vector<float>> *slice_embeddings_list);
 
   // Send content to remote, such as ids or embeddings.
-  bool SendToRemote(size_t server_rank_id, const void *keys, size_t keys_len, const void *values = nullptr,
-                    size_t values_len = 0);
+  // The parameter 'cache_operation' is cache operation name such as LookupEmbeddingCache and UpdateEmbeddingCache.
+  bool SendToRemote(const std::string &cache_operation, int32_t param_key, size_t server_rank_id, size_t embedding_dim,
+                    const void *keys, size_t keys_len, const void *values = nullptr, size_t values_len = 0);
   // Wait response of remote and get return result.
-  bool WaitRespFromRemote(size_t server_rank_id, std::vector<float> *outputs);
+  // The parameter 'cache_operation' is cache operation name such as LookupEmbeddingCache and UpdateEmbeddingCache.
+  std::unique_ptr<std::vector<char>> ReceiveFromRemote(const std::string &cache_operation, int32_t param_key,
+                                                       size_t server_rank_id);
   // Retrieve embeddings by input ids order.
   bool RetrieveEmbeddings(const int *ids, size_t ids_num, const std::vector<std::vector<int>> &slice_ids_list,
-                          const std::vector<std::vector<float>> &slice_embeddings_list, std::vector<float> *outputs);
+                          const std::vector<std::unique_ptr<std::vector<char>>> &slice_embeddings_list,
+                          std::vector<float> *outputs);
 
-  // The cache prefetch phase may involve RPC communication with the server, implemented through Send Actor and
-  // Recv Actor.
-  // Build rpc actors.
-  void BuildRpcActors();
-  // Link rpc actors by inter-process arrows.
-  void LinkRpcActors();
+  // The cache prefetch phase may involve RPC communication with the server, implemented through Sender and
+  // Receiver.
+  // Build rpc operators.
+  void BuildRpcOperators();
+  // Link rpc operators and build network connection.
+  void LinkRpcOperators();
 
   // Build a CNode of embedding cache look up kernel(operator name: 'Gather'), which is used to look up local device
   // embedding cache.
@@ -185,11 +206,10 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   bool UpdateDeviceCache(void *indices, void *update_value, size_t indices_num, size_t cache_size,
                          size_t embedding_size, void *embedding_cache);
 
-  // Record Send Actor and Recv Actor.
-  // Key: Inter process edge(Parameter name), Value: Send Actor.
-  std::map<std::string, SendActorPtr> send_actors_;
-  // Key: Inter process edge(Parameter name), Value: Recv Actor.
-  std::map<std::string, RecvActorPtr> recv_actors_;
+  // Record sender and receiver pairs for different cache operation, server and parameter key.
+  // key: cache operation(such as LookupEmbeddingCache and UpdateEmbeddingCache)
+  // value: sender and receiver pairs for this kind of cache operation.
+  mindspore::HashMap<std::string, std::vector<SendRecvPairList>> rpc_operators_;
 
   // The device interface.
   device::DeviceContext *device_context_;
@@ -262,6 +282,106 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Whether local host cache prefetching process needs to wait the computed graph finish current step when there is not
   // enough free memory space in the cache.
   bool host_cache_need_wait_graph_{false};
+};
+
+// RpcOperator is used to do rpc with other processes in distributed execution.
+// RpcOperator use inter process edge to identify paired rpc operators uniquely.
+class RpcOperator {
+ public:
+  RpcOperator() : inter_process_edge_(""), route_table_proxy_(nullptr) {}
+  ~RpcOperator() = default;
+
+  // Set the inter-process edge name for rpc operators.
+  void set_inter_process_edge_name(const std::string &edge_name) { inter_process_edge_ = edge_name; }
+
+  // Set the route table proxy for rpc operators.
+  void set_actor_route_table_proxy(const ActorRouteTableProxyPtr &route_table_proxy) {
+    route_table_proxy_ = route_table_proxy;
+  }
+
+ protected:
+  // Unique edge name between rpc operator, format:
+  // src role + src rank id -> dst role + dst rank id + embedding cache operation + parameter key.
+  std::string inter_process_edge_;
+
+  // Route table proxy for buildding network connection between nodes like workers and server.
+  ActorRouteTableProxyPtr route_table_proxy_;
+};
+
+// Sender is used to send data to other process.
+class Sender : public RpcOperator {
+ public:
+  explicit Sender(const ReceiverPtr &receiver) : server_url_(""), client_(nullptr), receiver_(receiver) {}
+  ~Sender();
+
+  // Send buffer to peer.
+  bool Send(const std::vector<ShapeVector> &shapes, const std::vector<TypeId> data_types,
+            const AddressPtrList &data_list) const;
+
+  // Lookup peer receiver's route and build network connection.
+  bool ConnectServer();
+
+ private:
+  // Build the MessageBase include dynamic shape protobuf, which will be sent to peer receiver.
+  // The message format is as below:
+  // |--------22 bytes-------|-------sizeof(size_t)-------|-dynamic shape PB data size-| real data size |
+  // |RPC_DYNAMIC_SHAPE_DATA | dynamic shape PB data size |---dynamic shape PB data----|---real data----|
+  // The message.from (from url) must be set.
+  std::unique_ptr<MessageBase> BuildRpcMessage(const std::vector<ShapeVector> &shapes,
+                                               const std::vector<TypeId> data_types, const AddressPtrList &data_list,
+                                               const std::string &from_url, const std::string &to_url) const;
+
+  // The url of the peer receiver's tcp server.
+  std::string server_url_;
+
+  std::unique_ptr<TCPClient> client_;
+
+  // The sender and the receiver are used in pairs. The information sent by the sender contains the url of the
+  // corresponding receiver, so a reference to the receiver is maintained in the sender.
+  ReceiverPtr receiver_;
+};
+
+// Receiver is used to receive data from other process.
+class Receiver : public RpcOperator {
+ public:
+  Receiver() : ip_(""), port_(0), server_(nullptr), received_buffer_(nullptr), received_msg_(false) {}
+  ~Receiver();
+
+  // Receive message from the peer sender, this interface is a synchronous interface and will wait for the message
+  // until the timeout period is reached.
+  std::unique_ptr<std::vector<char>> Receive();
+
+  // Start receiver server and register this server address to route table in scheduler by proxy.
+  bool StartServer();
+
+  // Get the url of this receiver, format: ip:port.
+  std::string get_url() const { return ip_ + ":" + std::to_string(port_); }
+
+ private:
+  // The message callback of the tcp server.
+  MessageBase *HandleMessage(MessageBase *const msg);
+
+  // Parse the dynamic shape protobuf message. The format is as below:
+  // |--------22 bytes-------|-------sizeof(size_t)-------|-dynamic shape PB data size-| real data size |
+  // |RPC_DYNAMIC_SHAPE_DATA | dynamic shape PB data size |---dynamic shape PB data----|---real data----|
+  // The output parameter 'data' contains real data addr and size.
+  bool ParseDynamicShapeData(const char *msg_body, size_t msg_len, std::pair<const void *, size_t> *data) const;
+
+  // The network address of this receiver. It's generated automatically by rpc module.
+  std::string ip_;
+  uint32_t port_;
+
+  std::unique_ptr<TCPServer> server_;
+
+  // The buffer used save received content of message.
+  std::unique_ptr<std::vector<char>> received_buffer_;
+
+  // The flag indicates whether receive message successfully.
+  std::atomic_bool received_msg_;
+
+  // The interface 'Receive' is a synchronous, use condition variable to block thread and wait for the message.
+  std::condition_variable received_msg_cv_;
+  std::mutex received_msg_mtx_;
 };
 
 using EmbeddingCachePrefetchActorPtr = std::shared_ptr<EmbeddingCachePrefetchActor>;
