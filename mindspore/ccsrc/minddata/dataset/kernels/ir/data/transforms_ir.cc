@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,22 +159,28 @@ std::shared_ptr<TensorOp> MaskOperation::Build() { return std::make_shared<MaskO
 #endif
 
 // OneHotOperation
-OneHotOperation::OneHotOperation(int32_t num_classes) : num_classes_(num_classes) {}
+OneHotOperation::OneHotOperation(int32_t num_classes, double smoothing_rate)
+    : num_classes_(num_classes), smoothing_rate_(smoothing_rate) {}
 
 Status OneHotOperation::ValidateParams() {
   if (num_classes_ <= 0) {
     std::string err_msg = "OneHot: Number of classes must be greater than 0, but got: " + std::to_string(num_classes_);
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-
+  if (smoothing_rate_ < 0 || smoothing_rate_ > 1) {
+    std::string err_msg = "OneHot: Smoothing rate must be between 0 and 1, but got: " + std::to_string(num_classes_);
+    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 
-std::shared_ptr<TensorOp> OneHotOperation::Build() { return std::make_shared<OneHotOp>(num_classes_); }
+std::shared_ptr<TensorOp> OneHotOperation::Build() { return std::make_shared<OneHotOp>(num_classes_, smoothing_rate_); }
 
 Status OneHotOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["num_classes"] = num_classes_;
+  args["smoothing_rate"] = smoothing_rate_;
+
   *out_json = args;
   return Status::OK();
 }
@@ -182,7 +188,8 @@ Status OneHotOperation::to_json(nlohmann::json *out_json) {
 Status OneHotOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "num_classes", kOneHotOperation));
   int32_t num_classes = op_params["num_classes"];
-  *operation = std::make_shared<transforms::OneHotOperation>(num_classes);
+  double smoothing_rate = op_params["smoothing_rate"];
+  *operation = std::make_shared<transforms::OneHotOperation>(num_classes, smoothing_rate);
   return Status::OK();
 }
 

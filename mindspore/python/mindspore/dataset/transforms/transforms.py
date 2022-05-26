@@ -30,7 +30,7 @@ import mindspore.dataset.transforms.py_transforms as py_transforms
 import mindspore.dataset.vision.c_transforms as c_vision
 from . import py_transforms_util as util
 from .py_transforms_util import Implementation, FuncWrapper
-from .validators import check_fill_value, check_slice_option, check_slice_op, check_num_classes, check_compose_call, \
+from .validators import check_fill_value, check_slice_option, check_slice_op, check_one_hot_op, check_compose_call, \
     check_mask_op_new, check_pad_end, check_concat_type, check_random_transform_ops, check_plugin
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..vision.py_transforms_util import is_pil
@@ -150,6 +150,7 @@ class CompoundOperation(TensorOperation, PyTensorOperation, ABC):
     """
     Compound Tensor Operations class
     """
+
     def __init__(self, transforms):
         super(CompoundOperation, self).__init__()
         self.transforms = []
@@ -548,10 +549,13 @@ class OneHot(TensorOperation):
     Args:
         num_classes (int): Number of classes of objects in dataset.
             It should be larger than the largest label number in the dataset.
-
+        smoothing_rate (float, optional): Adjustable hyperparameter for label smoothing level.
+            (Default=0.0 means no smoothing is applied.)
 
     Raises:
         TypeError: `num_classes` is not of type int.
+        TypeError: `smoothing_rate` is not of type float.
+        ValueError: `smoothing_rate` is not in range [0.0, 1.0].
         RuntimeError: Input tensor is not of type int.
         RuntimeError: Input tensor is not a 1-D tensor.
 
@@ -564,14 +568,15 @@ class OneHot(TensorOperation):
         >>> mnist_dataset = mnist_dataset.map(operations=onehot_op, input_columns=["label"])
     """
 
-    @check_num_classes
-    def __init__(self, num_classes):
+    @check_one_hot_op
+    def __init__(self, num_classes, smoothing_rate=0.0):
         super().__init__()
         self.num_classes = num_classes
         self.random = False
+        self.smoothing_rate = smoothing_rate
 
     def parse(self):
-        return cde.OneHotOperation(self.num_classes)
+        return cde.OneHotOperation(self.num_classes, self.smoothing_rate)
 
 
 class PadEnd(TensorOperation):

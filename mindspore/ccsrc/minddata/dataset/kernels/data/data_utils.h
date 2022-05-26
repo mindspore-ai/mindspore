@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,17 @@ namespace dataset {
 // @param output: Tensor. The shape of the output tensor is <input_shape, numClasses>
 //                and the type is same as input.
 // @param num_classes: Number of classes to.
-Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes);
+Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
+                      double smoothing_rate = 0);
 
 Status OneHotEncodingUnsigned(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
                               dsize_t num_classes, int64_t index);
 
 Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
                             int64_t index);
+template <typename T>
+Status OneHotEncodingImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
+                          int64_t index, double smoothing_rate);
 
 // Returns a tensor of shape input filled with the passed fill_value
 // @param input  Tensor

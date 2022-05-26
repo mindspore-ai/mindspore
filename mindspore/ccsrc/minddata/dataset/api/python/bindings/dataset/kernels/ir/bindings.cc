@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,8 +125,8 @@ PYBIND_REGISTER(
   OneHotOperation, 1, ([](const py::module *m) {
     (void)py::class_<transforms::OneHotOperation, TensorOperation, std::shared_ptr<transforms::OneHotOperation>>(
       *m, "OneHotOperation")
-      .def(py::init([](int32_t num_classes) {
-        auto one_hot = std::make_shared<transforms::OneHotOperation>(num_classes);
+      .def(py::init([](int32_t num_classes, double smoothing_rate) {
+        auto one_hot = std::make_shared<transforms::OneHotOperation>(num_classes, smoothing_rate);
         THROW_IF_ERROR(one_hot->ValidateParams());
         return one_hot;
       }));
