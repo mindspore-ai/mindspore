@@ -45,6 +45,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :template: classtemplate.rst
 
     mindspore.ops.fast_gelu
+    mindspore.ops.hardshrink
     mindspore.ops.tanh
 
 数学运算算子
@@ -266,6 +267,7 @@ Array操作
     mindspore.ops.gather_d
     mindspore.ops.gather_nd
     mindspore.ops.masked_select
+    mindspore.ops.meshgrid
     mindspore.ops.nonzero
     mindspore.ops.one_hot
     mindspore.ops.range

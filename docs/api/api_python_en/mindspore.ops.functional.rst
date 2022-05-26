@@ -45,6 +45,7 @@ Activation Functions
     :template: classtemplate.rst
 
     mindspore.ops.fast_gelu
+    mindspore.ops.hardshrink
     mindspore.ops.tanh
 
 Mathematical Operators
@@ -267,6 +268,7 @@ Array Operation
     mindspore.ops.gather_nd
     mindspore.ops.one_hot
     mindspore.ops.masked_select
+    mindspore.ops.meshgrid
     mindspore.ops.nonzero
     mindspore.ops.range
     mindspore.ops.rank
