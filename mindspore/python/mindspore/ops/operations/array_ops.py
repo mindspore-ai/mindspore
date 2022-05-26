@@ -6998,10 +6998,10 @@ class TensorScatterMul(_TensorScatterOp):
         >>> # 2, And input_x[0, 0] = -0.1
         >>> # 3, So input_x[indices] = [-0.1, -0.1]
         >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
-        >>> op = ops.TensorScatterSub()
-        >>> # 5, Perform the subtract operation for the first time:
+        >>> op = ops.TensorScatterMul()
+        >>> # 5, Perform the multiply operation for the first time:
         >>> #      first_input_x = input_x[0][0] * updates[0] = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
-        >>> # 6, Perform the subtract operation for the second time:
+        >>> # 6, Perform the multiply operation for the second time:
         >>> #      second_input_x = input_x[0][0] * updates[1] = [[-0.22, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> output = op(input_x, indices, updates)
         >>> print(output)
