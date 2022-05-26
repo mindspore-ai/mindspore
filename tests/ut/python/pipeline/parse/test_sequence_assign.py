@@ -751,3 +751,26 @@ def test_list_double_slice_assign_error():
     with pytest.raises(ValueError) as err:
         ms_func()
     assert "attempt to assign sequence of size 4 to extended slice of size 2" in str(err.value)
+
+
+def test_list_slice_only_with_step():
+    """
+    Feature: List assign
+    Description: Test negative step list slice assign
+    Expectation: ValueError
+    """
+
+    @ms_function
+    def ms_func():
+        a = [1, 2, 3, 4]
+        b = [11, 22]
+        a[::2] = b
+        return a
+
+    def py_func():
+        a = [1, 2, 3, 4]
+        b = [11, 22]
+        a[::2] = b
+        return tuple(a)
+
+    assert ms_func() == py_func()

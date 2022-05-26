@@ -1358,14 +1358,10 @@ FuncGraphPtr ListSliceSetItem::BuildFuncGraph(int64_t start_index, int64_t stop_
 
 void ListSliceSetItem::CheckAssignRange(int64_t start_index, int64_t stop_index, int64_t step_value) {
   if (step_value != kStepDefault) {
-    int64_t start_include = 1;
-    if (step_value == -1) {
-      start_include = 0;
-    }
-    auto assign_size = ((stop_index - start_index - 1) / step_value) + start_include;
-    if (step_value < 0) {
-      assign_size = ((stop_index - start_index) / step_value) + start_include;
-    }
+    auto range = stop_index - start_index;
+    int include_start = (range % step_value) == 0 ? 0 : 1;
+    auto assign_size = (range / step_value) + include_start;
+    assign_size = assign_size > 0 ? assign_size : 0;
     if (assign_size != SizeToLong(value_list_->size())) {
       MS_EXCEPTION(ValueError) << "attempt to assign sequence of size " << value_list_->size()
                                << " to extended slice of size " << assign_size;
