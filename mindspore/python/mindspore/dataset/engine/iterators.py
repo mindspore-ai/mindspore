@@ -165,7 +165,7 @@ class Iterator:
         Get names of the columns in the dataset
         """
         if self._col_names is None:
-            self._getters()
+            self._col_names = self.__ori_dataset.get_col_names()
         return self._col_names
 
     def _reset(self, step):
