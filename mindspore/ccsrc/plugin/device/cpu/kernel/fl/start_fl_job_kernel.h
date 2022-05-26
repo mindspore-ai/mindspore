@@ -23,6 +23,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "fl/worker/fl_worker.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace kernel {
@@ -106,10 +107,14 @@ class StartFLJobKernelMod : public NativeCpuKernelMod {
     MS_EXCEPTION_IF_NULL(fbb);
     auto fbs_fl_name = fbb->CreateString(fl_name_);
     auto fbs_fl_id = fbb->CreateString(fl_id_);
+    auto time = ps::core::CommUtil::GetNowTime();
+    MS_LOG(INFO) << "now time: " << time.time_str_mill;
+    auto fbs_timestamp = fbb->CreateString(std::to_string(time.time_stamp));
     schema::RequestFLJobBuilder req_fl_job_builder(*(fbb.get()));
     req_fl_job_builder.add_fl_name(fbs_fl_name);
     req_fl_job_builder.add_fl_id(fbs_fl_id);
     req_fl_job_builder.add_data_size(data_size_);
+    req_fl_job_builder.add_timestamp(fbs_timestamp);
     auto req_fl_job = req_fl_job_builder.Finish();
     fbb->Finish(req_fl_job);
     return true;
