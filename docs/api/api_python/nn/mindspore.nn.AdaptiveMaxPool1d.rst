@@ -17,7 +17,7 @@ mindspore.nn.AdaptiveMaxPool1d
 
     **输入：**
 
-    - **x** (Tensor) - shape为 :math:`(N, C_{in}, L_{in})` 的Tensor，数据类型为float16，float32或float64。
+    - **x** (Tensor) - shape为 :math:`(N, C_{in}, L_{in})` 的Tensor，数据类型为float16或float32。
 
     **输出：**
 
@@ -25,7 +25,7 @@ mindspore.nn.AdaptiveMaxPool1d
 
     **异常：**
 
-    - **TypeError** - `x` 不是float16或float32或float64。
+    - **TypeError** - `x` 不是float16或float32。
     - **TypeError** - `output_size` 不是int。
     - **ValueError** - `output_size` 小于1。
     - **ValueError** -  `x` 的最后一个维度小于 `output_size`。
