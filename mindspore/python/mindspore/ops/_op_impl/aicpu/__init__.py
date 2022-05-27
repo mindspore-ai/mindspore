@@ -189,3 +189,4 @@ from .grid_sampler_2d_grad import _grid_sampler_2d_grad_aicpu
 from .segment_max import _segment_max_aicpu
 from .segment_min import _segment_min_aicpu
 from .segment_sum import _segment_sum_aicpu
+from .scatter_nd_max import _scatter_nd_max_aicpu
