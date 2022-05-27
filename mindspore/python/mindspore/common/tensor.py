@@ -4724,6 +4724,56 @@ class Tensor(Tensor_):
         validator.check_bool(sorted, 'sorted')
         return tensor_operator_registry.get("top_k")(sorted)(self, k)
 
+    def median(self, global_median=False, axis=0, keep_dims=False):
+        r"""
+        Computes the median of input tensor.
+
+        .. warning::
+            When attr `global_median` is True, the second output Tensor value is meaningless.
+
+        Args:
+            global_median (bool): Whether the output tensor is the global median of all input tensor elements or not.
+                Default: False.
+            axis (int): The dimension need to reduce. Default: 0.
+            keepdim (bool): Whether the output tensor need to retain `axis` dimension or not. Default: False.
+
+        Outputs:
+              Not exist when global_median is True.
+
+        Returns:
+            y (Tensor) - Has the same dtype as the self Tensor.
+                If `keep_dims` is true, the output tensors have the same dimension as the self Tensor except in
+                dimension `axis` which are of size 1. Otherwise, the outputs tensor have 1 fewer dimension than input.
+            indices (Tensor) - Has the same shape as the `y`, but dtype is int64.
+                Not exist when global_median is True.
+
+        Raises:
+            TypeError: If dtype of self Tensor is not one of the following: int16, int32, int64, float32, double.
+            TypeError: If `global_median` is not a bool.
+            TypeError: If `axis` is not a int.
+            TypeError: If `keep_dims` is not a bool.
+            ValueError: If `axis` is not in range of [-len(`self.shape`), len(`self.shape`) - 1).
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> # case 1 : common median compute
+            >>> x = Tensor(np.array([[0.57, 0.11, 0.21],[0.38, 0.50, 0.57], [0.36, 0.16, 0.44]]).astype(np.float32))
+            >>> y = x.median(global_median=False, axis=0, keep_dims=False)
+            >>> print(y)
+            (Tensor(shape=[3], dtype=Float32, value=[0.38, 0.16, 0.44]),
+             Tensor(shape=[3], dtype=Int64, value=[1, 2, 2]))
+            >>> # case 2 : global median compute
+            >>> x = Tensor(np.array([1, 7, 6],[5, 1, 3],[9, 17, 1]), mindspore.int32)
+            >>> y = x.median(global_median=True)
+            >>> print(y)
+            (Tensor(shape=[1], dtype=Int32, value=[5]), Tensor(shape=[1], dtype=Int64, value=[1]))
+        """
+        self._init_check()
+        validator.check_axis_in_range(axis, self.ndim)
+        return tensor_operator_registry.get('median')(global_median, axis, keep_dims)(self)
+
 
 class RowTensor(RowTensor_):
     """

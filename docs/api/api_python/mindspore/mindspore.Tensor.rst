@@ -83,6 +83,7 @@ mindspore.Tensor
     mindspore.Tensor.matrix_determinant
     mindspore.Tensor.max
     mindspore.Tensor.mean
+    mindspore.Tensor.median
     mindspore.Tensor.min
     mindspore.Tensor.narrow
     mindspore.Tensor.nbytes

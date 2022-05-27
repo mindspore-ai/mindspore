@@ -32,6 +32,7 @@ from . import operations as P
 from .operations import _grad_ops
 from .operations import _csr_ops
 from .operations import linalg_ops
+from .operations.math_ops import Median
 from .operations.array_ops import UniqueConsecutive
 from .operations.nn_ops import AdaptiveMaxPool2D
 from .function.sparse_func import sparse_add
@@ -404,6 +405,7 @@ tensor_operator_registry.register('split', P.Split)
 tensor_operator_registry.register('erf', P.Erf)
 tensor_operator_registry.register('erfc', P.Erfc)
 tensor_operator_registry.register('standard_normal', P.StandardNormal)
+tensor_operator_registry.register('median', Median)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)

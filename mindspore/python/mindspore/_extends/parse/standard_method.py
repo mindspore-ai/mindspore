@@ -28,6 +28,7 @@ from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add,
 from ...ops.composite.base import _append, _insert, _pop
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
+from ...ops.operations.math_ops import Median
 from ...ops.operations._inner_ops import Format
 from ...ops.operations import _csr_ops
 from ...ops.primitive import constexpr
@@ -630,6 +631,19 @@ def argmin(x, axis=None):
         axis = check_axis_in_range_const(axis, F.rank(x))
     # P.Argmin is currently not supported
     return P.Argmax(axis)(F.neg_tensor(x))
+
+
+def median(x, global_median, axis=0, keep_dims=False):
+    r"""
+    Computes the median of input tensor.
+
+    .. warning::
+        When attr `global_median` is True, the second output Tensor value is meaningless.
+
+    """
+    check_axis_in_range_const(axis, x.ndim)
+    median_ = Median(global_median, axis, keep_dims)
+    return median_(x)
 
 
 def cumsum(x, axis=None, dtype=None):

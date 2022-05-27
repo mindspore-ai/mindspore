@@ -6328,7 +6328,7 @@ class Median(Primitive):
         ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1 : common median compute

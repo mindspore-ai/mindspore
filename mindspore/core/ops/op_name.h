@@ -87,6 +87,7 @@ constexpr auto kFreqUpperLimit = "freq_upper_limit";
 constexpr auto kFreezeBn = "freeze_bn";
 constexpr auto kGateOrder = "gate_order";
 constexpr auto kGlobal = "global";
+constexpr auto kGlobalMedian = "global_median";
 constexpr auto kGrad = "grad";
 constexpr auto kIsGrad = "is_grad";
 constexpr auto kGradientScale = "gradient_scale";

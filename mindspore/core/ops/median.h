@@ -34,6 +34,26 @@ class MIND_API Median : public BaseOperator {
   MIND_API_BASE_MEMBER(Median);
   /// \brief Constructor.
   Median() : BaseOperator(kNameMedian) { InitIOName({"x"}, {"y", "indices"}); }
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Median for the inputs.
+  void Init(const bool global_median = false, const int64_t axis = 0, const bool keep_dims = false);
+  /// \brief Set global_median.
+  void set_global_median(const bool global_median);
+  /// \brief Set keep_dims.
+  void set_keep_dims(const bool keep_dims);
+  /// \brief Set axis.
+  void set_axis(const int64_t &axis);
+  /// \brief Get global_median.
+  ///
+  /// \return global_median.
+  bool get_global_median() const;
+  /// \brief Get keep_dims.
+  ///
+  /// \return keep_dims.
+  bool get_keep_dims() const;
+  /// \brief Get axis.
+  ///
+  /// \return axis.
+  int64_t get_axis() const;
 };
 
 abstract::AbstractBasePtr MedianInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

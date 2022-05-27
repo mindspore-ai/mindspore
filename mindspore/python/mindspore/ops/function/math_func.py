@@ -42,6 +42,7 @@ from ..operations.math_ops import (
     BesselK1,
     BesselK1e,
     MatrixSolve,
+    Median,
     Orgqr,
     Renorm,
     Hypot,
@@ -3053,6 +3054,53 @@ def minimum(x, y):
     return minimum_(x, y)
 
 
+def median(x, global_median=False, axis=0, keep_dims=False):
+    r"""
+    Computes the median of input tensor.
+
+    .. warning::
+        When attr `global_median` is True, the second output Tensor value is meaningless.
+
+    Args:
+        x (Tensor) - The first input is a tensor whose data type is number.
+        global_median (bool) - Whether the output tensor is the global median of all input tensor elements or not.
+          Default: False.
+        axis (int) - The dimension need to reduce. Default: 0.
+        keep_dims (bool) - Whether the output tensor need to retain `axis` dimension or not. Default: False.
+
+    Returns:
+        y (Tensor) - Has the same dtype as the `x`. If `global_median` is true, the `y` has only one
+          element. If `keep_dims` is true, the `y` has the same shape as the `x` except the shape of `y` in dimension
+          `axis` is size 1. Otherwise, the `y` lacks `axis` dimension than input.
+        indices (Tensor) - Has the same shape as the `y`, but dtype is int64.
+
+    Raises:
+        TypeError: If dtype of `x` is not one of the following: int16, int32, int64, float32, double.
+        TypeError: If input `x` is not a Tensor.
+        TypeError: If `global_median` is not a bool.
+        TypeError: If `axis` is not a int.
+        TypeError: If `keep_dims` is not a bool.
+        ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> # case 1 : common median compute
+        >>> x = Tensor(np.array([[0.57, 0.11, 0.21],[0.38, 0.50, 0.57], [0.36, 0.16, 0.44]]).astype(np.float32))
+        >>> y = ops.median(x, global_median=False, axis=0, keep_dims=False)
+        >>> print(y)
+        (Tensor(shape=[3], dtype=Float32, value=[0.38, 0.16, 0.44]), Tensor(shape=[3], dtype=Int64, value=[1, 2, 2]))
+        >>> # case 2 : global median compute
+        >>> x = Tensor(np.array([1, 7, 6],[5, 1, 3],[9, 17, 1]), mindspore.int32)
+        >>> y = ops.median(x, global_median=True)
+        >>> print(y)
+        (Tensor(shape=[1], dtype=Int32, value=[5]), Tensor(shape=[1], dtype=Int64, value=[1]))
+    """
+    median_ = Median(global_median, axis, keep_dims)
+    return median_(x)
+
+
 def orgqr(x, tau):
     r"""
     Computes the first :math:`N` columns of a product of Householder matrices. Take the case of input without batch
@@ -5379,6 +5427,7 @@ __all__ = [
     'same_type_shape',
     'maximum',
     'minimum',
+    'median',
     'floor',
     'logical_not',
     'logical_or',
