@@ -800,10 +800,10 @@ class SymbolTree(Observer, Observable):
         prev_node: Node = old_node.get_prev()
         if prev_node is None and next_node is None:
             raise RuntimeError("Try replacing a isolated node: ", old_node)
-        if next_node is None:
-            position = self.after(prev_node)
-        else:
+        if prev_node is None:
             position = self.before(next_node)
+        else:
+            position = self.after(prev_node)
         # insert node first, because targets of new_node is determined after insert
         new_tree_root = SymbolTree._link_nodes_and_find_root(new_nodes)
         new_node = self._insert_tree(position, new_tree_root)
