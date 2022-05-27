@@ -32,6 +32,7 @@ enum TargetDevice {
   CPU,
   KIRIN,
   NVGPU,
+  DSP,
 };
 
 enum DebugMode {

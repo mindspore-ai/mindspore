@@ -15,6 +15,7 @@
  */
 
 #define USE_DEPRECATED_API
+
 #include "tools/converter/quantizer/quant_strategy.h"
 #include <set>
 #include "tools/converter/quantizer/quantize_util.h"
@@ -87,8 +88,7 @@ bool QuantStrategy::CanOpFullQuantized(const CNodePtr &cnode, const std::set<Pri
     return false;
   }
   auto type = NodePrimitiveType(cnode);
-  auto is_support_node = CheckNodeInSet(cnode, support_int8_ops);
-  if (!is_support_node) {
+  if (!support_int8_ops.empty() && !CheckNodeInSet(cnode, support_int8_ops)) {
     MS_LOG(WARNING) << "node:" << cnode->fullname_with_scope() << " type:" << type << " will not quantify.";
     return false;
   }

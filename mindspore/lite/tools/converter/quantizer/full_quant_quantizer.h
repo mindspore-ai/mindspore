@@ -81,6 +81,8 @@ class FullQuantQuantizer : public Quantizer {
 
   void InitKirinConfig();
 
+  void InitDSPConfig();
+
   int MarkQuantNode(const FuncGraphPtr &func_graph);
 
   int QuantWithKL();

@@ -223,10 +223,24 @@ int ConvolutionBaseCPUKernel::CheckResizeValid() {
 }
 
 int ConvolutionBaseCPUKernel::SetIfPerChannel() {
+  if (in_tensors_.size() < kInputSize1) {
+    MS_LOG(ERROR) << "filter tensor not exist.";
+    return RET_ERROR;
+  }
   auto filter_tensor = in_tensors_.at(kWeightIndex);
-  CHECK_NULL_RETURN(filter_tensor);
+  if (!filter_tensor->IsConst()) {
+    MS_LOG(WARNING) << "filter tensor is not const.";
+    return RET_OK;
+  }
   auto input_channel = filter_tensor->Channel();
   auto output_channel = filter_tensor->Batch();
+  if (this->op_parameter_->type_ == schema::PrimitiveType_Conv2dTransposeFusion) {
+    auto parameter = reinterpret_cast<const ConvParameter *>(this->op_parameter_);
+    if (parameter->input_channel_ != parameter->group_ || parameter->output_channel_ != parameter->group_) {
+      input_channel = filter_tensor->Batch();
+      output_channel = filter_tensor->Channel();
+    }
+  }
 
   uint8_t per_channel = 0b0;
   if (conv_quant_arg_->input_arg_num_ != kPerTensor) {
