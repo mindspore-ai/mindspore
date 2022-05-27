@@ -941,8 +941,8 @@ AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrLis
       return ret_backend->second.infer_shape_impl_(nullptr, prim, infer_spec_list);
     }
   }
-  MS_LOG(EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()
-                    << " primitive type:" << prim->type_name();
+  MS_LOG(EXCEPTION) << "Get infer shape function failed, the operator is not support dynamic shape yet, primitive name:"
+                    << prim->name() << " primitive type:" << prim->type_name();
 }
 
 kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list) {
