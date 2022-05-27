@@ -174,6 +174,8 @@ def _not_require_collective_comm_lib():
         # Environment variable PARALLEL_EXCUTE is set by test case and
         # will be removed after Parameter Server training switches to MindRT.
         return os.getenv("PARALLEL_EXCUTE") != "ms_ps" and (_is_role_sched() or _is_role_pserver())
+    if device_target == "CPU":
+        return _is_role_sched()
     return False
 
 
