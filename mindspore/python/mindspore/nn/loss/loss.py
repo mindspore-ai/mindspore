@@ -1504,13 +1504,13 @@ class HuberLoss(LossBase):
             delta * (|x_n - y_n| - 0.5 * delta), & \text{otherwise. }
         \end{cases}
 
-    where :math:`N` is the batch size. If `reduction` is not 'none', then:
+    where :math:`N` is the batch size. If `reduction` is not "none", then:
 
     .. math::
         \ell(x, y) =
         \begin{cases}
-            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+            \operatorname{mean}(L), & \text{if reduction} = \text{"mean";}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{"sum".}
         \end{cases}
 
     Args:
@@ -1521,27 +1521,30 @@ class HuberLoss(LossBase):
             The value must be positive. Default: 1.0.
 
     Inputs:
-        - **logits** (Tensor) - Input logits with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be float16 or float32.
-        - **labels** (Tensor) - Ground truth label with shape :math:`(N, *)`, same dtype as `logits`.
-          It supports the shape of `logits` is different from the shape of `labels` and they should be
-          broadcasted to each other.
+        - **logits** (Tensor) - Predicted value, Tensor of any dimension. The data type must be float16 or float32.
+        - **labels** (Tensor) - Target value, same dtype and shape as the `logits` in common cases.
+          However, it supports the shape of `logits` is different from the shape of `labels`
+          and they should be broadcasted to each other.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
+        Tensor or Scalar, if `reduction` is "none", return a Tensor with same shape and dtype as `logits`.
         Otherwise, a scalar value will be returned.
 
     Raises:
         TypeError: If data type of `logits` or `labels` is neither float16 nor float32.
+        TypeError: If data type of `logits` or `labels` are not the same.
         TypeError: If dtype of `delta` is neither float nor int.
         ValueError: If `delta` is less than or equal to 0.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `reduction` is not one of "none", "mean", "sum".
         ValueError: If `logits` and `labels` have different shapes and cannot be broadcasted to each other.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> # Case 1: logits.shape = labels.shape = (3,)
         >>> loss = nn.HuberLoss()
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -1550,7 +1553,7 @@ class HuberLoss(LossBase):
         >>> print(output)
         0.16666667
         >>> # Case 2: logits.shape = (3,), labels.shape = (2, 3)
-        >>> loss = nn.HuberLoss(reduction='none')
+        >>> loss = nn.HuberLoss(reduction="none")
         >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
         >>> output = loss(logits, labels)
