@@ -2507,7 +2507,7 @@ class FractionalMaxPoolGrad(Primitive):
     """Computes gradients for FractionalMaxPool operation."""
 
     @prim_attr_register
-    def  __init__(self, overlapping=False):
+    def __init__(self, overlapping=False):
         self.init_prim_io_names(inputs=["orig_input", "orig_output", "out_backprop",
                                         "row_pooling_sequence", "col_pooling_sequence"],
                                 outputs=["y"])
@@ -2556,7 +2556,6 @@ class PSROIPoolingGrad(Primitive):
         self.add_prim_attr('spatial_scale', self.spatial_scale)
         self.add_prim_attr('group_size', self.group_size)
         self.add_prim_attr('output_dim', self.output_dim)
-
 
 
 class TraceGrad(Primitive):
@@ -2622,6 +2621,70 @@ class IgammaGradA(Primitive):
     def __init__(self):
         """Initialize IgammaGradA"""
         self.init_prim_io_names(inputs=['a', 'x'], outputs=['z'])
+
+
+class DeformableOffsetsGrad(Primitive):
+    r"""
+    Computes gradients of DeformableOffsets operation.
+    Args:
+        strides (tuple[int, int ,int ,int]): A tuple of 4 integers. The stride of sliding windows for height
+            and width for H/W dimension.
+        pads (tuple[int, int ,int ,int]): A tuple of 4 integers.Padding added to H/W dimension of the input.The number
+            of pixels to add to each (top, bottom, left,right) side of the input
+        kernel_size (tuple[int, int]): Kernel size, a tuple of 2 integers.
+        dilations (tuple[int, int, int, int]): A tuple of 4 integers. The dilation factor for each dimension of
+            input. Default:(1, 1, 1, 1)
+        data_format (str): An optional string from:"NCHW", "NHWC".Specify the data format of the input x. Default:
+            "NCHW".
+        deformable_groups (int): Specify the C-axis grouping number of input x. Default: 1.
+        modulated (bool): Specify version of DeformableOffsetsGrad, true means v2, false means v1. Default: true.
+
+    Inputs:
+        - **grad** (Tensor) - The input grad tensor. With float16 or float32 data type.
+        - **x** (Tensor) - The input `x` of DeformableOffsets with data type of float16 or float32.
+        - **offsets** (Tensor) - The input 'offsets' of DeformableOffsets with data type of float16 or float32.
+
+    Outputs:
+        - **grad_x** (Tensor) - The output grad of input `x`. With same dtype and shape of input `x`.
+        - ""grad_offsets** (Tensor) - The output grad of input `offsets`. With same dtype and shape of input `offsets`.
+
+    Supported Platforms:
+        ``Ascend````GPU````CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 strides,
+                 pads,
+                 kernel_size,
+                 dilations=(1, 1, 1, 1),
+                 data_format="NCHW",
+                 deformable_groups=1,
+                 modulated=True):
+        """Initialize DeformableOffsetsGrad"""
+        self.init_prim_io_names(inputs=['out_backprop', 'input', 'offsets'], outputs=['out_grad'])
+
+        self.strides = _check_positive_int_or_tuple('strides', strides, self.name, allow_four=True, ret_four=True)
+        self.add_prim_attr('strides', self.strides)
+
+        self.pads = pads
+        self.add_prim_attr('pads', self.pads)
+
+        self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name, allow_four=True,
+                                                        ret_four=False)
+        self.add_prim_attr('ksize', self.kernel_size)
+
+        self.dilations = _check_positive_int_or_tuple('dilations', dilations, self.name, allow_four=True, ret_four=True)
+        self.add_prim_attr('dilations', dilations)
+
+        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        self.add_prim_attr('data_format', self.data_format)
+
+        self.deformable_groups = validator.check_positive_int(deformable_groups, 'deformable_groups', self.name)
+        self.add_prim_attr('deformable_groups', self.deformable_groups)
+
+        self.modulated = validator.check_bool(modulated, 'modulated', self.name)
+        self.add_prim_attr('modulated', self.modulated)
 
 
 class GridSampler2DGrad(Primitive):
