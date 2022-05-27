@@ -57,8 +57,8 @@ def gen(shape):
 def test_mask_along_axis_eager_random_input():
     """
     Feature: MaskAlongAxis
-    Description: mindspore eager mode normal testcase with random input tensor
-    Expectation: the returned result is as expected
+    Description: Mindspore eager mode normal testcase with random input tensor
+    Expectation: The returned result is as expected
     """
     logger.info("test Mask_Along_axis op")
     spectrogram = next(gen((CHANNEL, FREQ, TIME)))[0]
@@ -73,8 +73,8 @@ def test_mask_along_axis_eager_random_input():
 def test_mask_along_axis_eager_precision():
     """
     Feature: MaskAlongAxis
-    Description: mindspore eager mode checking precision
-    Expectation: the returned result is as expected
+    Description: Mindspore eager mode checking precision
+    Expectation: The returned result is as expected
     """
     logger.info("test MaskAlongAxis op, checking precision")
     spectrogram_0 = np.array([[[-0.0635, -0.6903],
@@ -110,8 +110,8 @@ def test_mask_along_axis_eager_precision():
 def test_mask_along_axis_pipeline():
     """
     Feature: MaskAlongAxis
-    Description: mindspore pipeline mode normal testcase
-    Expectation: the returned result is as expected
+    Description: Mindspore pipeline mode normal testcase
+    Expectation: The returned result is as expected
     """
     logger.info("test MaskAlongAxis op, pipeline")
 
@@ -134,8 +134,8 @@ def test_mask_along_axis_pipeline():
 def test_mask_along_axis_invalid_input():
     """
     Feature: MaskAlongAxis
-    Description: mindspore eager mode with invalid input tensor
-    Expectation: throw correct error and message
+    Description: Mindspore eager mode with invalid input tensor
+    Expectation: Throw correct error and message
     """
     def test_invalid_param(test_name, mask_start, mask_width, mask_value, axis, error, error_msg):
         """

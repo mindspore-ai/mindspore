@@ -38,7 +38,9 @@ def check(project_columns):
 
 def test_iterator_create_tuple_numpy():
     """
-    Test creating tuple iterator with output NumPy
+    Feature: Iterator
+    Description: Test creating tuple Iterator with output NumPy
+    Expectation: Output is equal to the expected output
     """
     check(COLUMNS)
     check(COLUMNS[0:1])
@@ -49,7 +51,9 @@ def test_iterator_create_tuple_numpy():
 
 def test_iterator_create_dict_mstensor():
     """
-    Test creating dict iterator with output MSTensor
+    Feature: Iterator
+    Description: Test creating dict Iterator with output MSTensor
+    Expectation: Output is equal to the expected output
     """
     def generator():
         for i in range(64):
@@ -69,7 +73,9 @@ def test_iterator_create_dict_mstensor():
 
 def test_iterator_create_tuple_mstensor():
     """
-    Test creating tuple iterator with output MSTensor
+    Feature: Iterator
+    Description: Test creating tuple Iterator with output MSTensor
+    Expectation: Output is equal to the expected output
     """
     def generator():
         for i in range(64):
@@ -89,6 +95,11 @@ def test_iterator_create_tuple_mstensor():
 
 
 def test_iterator_weak_ref():
+    """
+    Feature: Iterator
+    Description: Test __del__ on existing tuple Iterator
+    Expectation: Output is equal to the expected output or correct error is raised when expected
+    """
     ITERATORS_LIST.clear()
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
     itr1 = data.create_tuple_iterator(num_epochs=1)
@@ -125,6 +136,11 @@ def test_iterator_weak_ref():
     _cleanup()
 
 def test_iterator_exception():
+    """
+    Feature: Iterator
+    Description: Test Iterator with invalid input
+    Expectation: Correct error is raised as expected
+    """
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
     try:
         _ = data.create_dict_iterator(num_epochs=1, output_numpy="123")
@@ -167,9 +183,9 @@ class MyDict(dict):
 
 def test_tree_copy():
     """
-    Feature: Iterators
+    Feature: Iterator
     Description: Test copying the tree with a pyfunc that cannot be pickled
-    Expectation: ids of iterator data are different than pre-iterator data
+    Expectation: Ids of iterator data are different than pre-iterator data
     """
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=COLUMNS)
     data1 = data.map(operations=[MyDict()])

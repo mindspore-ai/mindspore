@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,9 +35,9 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 def test_spectral_centroid_pipeline():
     """
-    Feature: mindspore pipeline mode normal testcase: spectral_centroid op.
-    Description: input audio signal to test pipeline.
-    Expectation: success.
+    Feature: Mindspore pipeline mode normal testcase: spectral_centroid op.
+    Description: Input audio signal to test pipeline.
+    Expectation: Success.
     """
     logger.info("test_spectral_centroid_pipeline")
 
@@ -54,9 +54,9 @@ def test_spectral_centroid_pipeline():
 
 def test_spectral_centroid_eager():
     """
-    Feature: mindspore eager mode normal testcase: spectral_centroid op.
-    Description: input audio signal to test eager.
-    Expectation: success.
+    Feature: Mindspore eager mode normal testcase: spectral_centroid op.
+    Description: Input audio signal to test eager.
+    Expectation: Success.
     """
     logger.info("test_spectral_centroid_eager")
     wav = np.array([[1.2, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5.5, 6.5]])
@@ -69,9 +69,9 @@ def test_spectral_centroid_eager():
 
 def test_spectral_centroid_param():
     """
-    Feature: test spectral_centroid invalid parameter.
-    Description: test some invalid parameters.
-    Expectation: success.
+    Feature: Test spectral_centroid invalid parameter.
+    Description: Test some invalid parameters.
+    Expectation: Success.
     """
     try:
         _ = audio.SpectralCentroid(sample_rate=-1)

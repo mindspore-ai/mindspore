@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ IMAGE_SHAPE = [2268, 642, 2268]
 def test_func_kitti_dataset_basic():
     """
     Feature: KITTI
-    Description: test basic function of KITTI with default parament
-    Expectation: the dataset is as expected
+    Description: Test basic function of KITTI with default parament
+    Expectation: The dataset is as expected
     """
     repeat_count = 2
 
@@ -64,8 +64,8 @@ def test_func_kitti_dataset_basic():
 def test_kitti_usage_train():
     """
     Feature: KITTI
-    Description: test basic usage "train" of KITTI
-    Expectation: the dataset is as expected
+    Description: Test basic usage "train" of KITTI
+    Expectation: The dataset is as expected
     """
     data1 = ds.KITTIDataset(DATA_DIR, usage="train")
     num = 0
@@ -81,8 +81,8 @@ def test_kitti_usage_train():
 def test_kitti_usage_test():
     """
     Feature: KITTI
-    Description: test basic usage "test" of KITTI
-    Expectation: the dataset is as expected
+    Description: Test basic usage "test" of KITTI
+    Expectation: The dataset is as expected
     """
     data1 = ds.KITTIDataset(
         DATA_DIR, usage="test", shuffle=False, decode=True, num_samples=3)
@@ -96,8 +96,8 @@ def test_kitti_usage_test():
 def test_kitti_case():
     """
     Feature: KITTI
-    Description: test basic usage of KITTI
-    Expectation: the dataset is as expected
+    Description: Test basic usage of KITTI
+    Expectation: The dataset is as expected
     """
     data1 = ds.KITTIDataset(DATA_DIR,
                             usage="train", decode=True, num_samples=3)
@@ -116,8 +116,8 @@ def test_kitti_case():
 def test_func_kitti_dataset_numsamples_num_parallel_workers():
     """
     Feature: KITTI
-    Description: test numsamples and num_parallel_workers of KITTI
-    Expectation: the dataset is as expected
+    Description: Test numsamples and num_parallel_workers of KITTI
+    Expectation: The dataset is as expected
     """
     # define parameters.
     repeat_count = 2
@@ -158,8 +158,8 @@ def test_func_kitti_dataset_numsamples_num_parallel_workers():
 def test_func_kitti_dataset_extrashuffle():
     """
     Feature: KITTI
-    Description: test extrashuffle of KITTI
-    Expectation: the dataset is as expected
+    Description: Test extrashuffle of KITTI
+    Expectation: The dataset is as expected
     """
     # define parameters.
     repeat_count = 2
@@ -180,8 +180,8 @@ def test_func_kitti_dataset_extrashuffle():
 def test_func_kitti_dataset_no_para():
     """
     Feature: KITTI
-    Description: test no para of KITTI
-    Expectation: throw exception correctly
+    Description: Test no para of KITTI
+    Expectation: Throw exception correctly
     """
     with pytest.raises(TypeError, match="missing a required argument: 'dataset_dir'"):
         dataset = ds.KITTIDataset()
@@ -194,8 +194,8 @@ def test_func_kitti_dataset_no_para():
 def test_func_kitti_dataset_distributed_sampler():
     """
     Feature: KITTI
-    Description: test DistributedSampler of KITTI
-    Expectation: throw exception correctly
+    Description: Test DistributedSampler of KITTI
+    Expectation: Throw exception correctly
     """
     # define parameters.
     repeat_count = 2
@@ -216,8 +216,8 @@ def test_func_kitti_dataset_distributed_sampler():
 def test_func_kitti_dataset_decode():
     """
     Feature: KITTI
-    Description: test decode of KITTI
-    Expectation: throw exception correctly
+    Description: Test decode of KITTI
+    Expectation: Throw exception correctly
     """
     # define parameters.
     repeat_count = 2
@@ -239,8 +239,8 @@ def test_func_kitti_dataset_decode():
 def test_kitti_numshards():
     """
     Feature: KITTI
-    Description: test numShards of KITTI
-    Expectation: throw exception correctly
+    Description: Test numShards of KITTI
+    Expectation: Throw exception correctly
     """
     # define parameters.
     repeat_count = 2
@@ -260,8 +260,8 @@ def test_kitti_numshards():
 def test_func_kitti_dataset_more_para():
     """
     Feature: KITTI
-    Description: test more para of KITTI
-    Expectation: throw exception correctly
+    Description: Test more para of KITTI
+    Expectation: Throw exception correctly
     """
     with pytest.raises(TypeError, match="got an unexpected keyword argument 'more_para'"):
         dataset = ds.KITTIDataset(DATA_DIR, usage="train", num_samples=6, num_parallel_workers=None,
@@ -276,8 +276,8 @@ def test_func_kitti_dataset_more_para():
 def test_kitti_exception():
     """
     Feature: KITTI
-    Description: test error cases of KITTI
-    Expectation: throw exception correctly
+    Description: Test error cases of KITTI
+    Expectation: Throw exception correctly
     """
     logger.info("Test error cases for KITTIDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"

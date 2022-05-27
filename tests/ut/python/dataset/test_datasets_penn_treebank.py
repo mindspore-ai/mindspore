@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ FILE_DIR = '../data/dataset/testPennTreebank'
 def test_penn_treebank_dataset_one_file():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.PennTreebankDataset(FILE_DIR, usage='test')
     count = 0
@@ -38,8 +38,8 @@ def test_penn_treebank_dataset_one_file():
 def test_penn_treebank_dataset_train():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.PennTreebankDataset(FILE_DIR, usage='train')
     count = 0
@@ -52,8 +52,8 @@ def test_penn_treebank_dataset_train():
 def test_penn_treebank_dataset_valid():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.PennTreebankDataset(FILE_DIR, usage='valid')
     count = 0
@@ -66,8 +66,8 @@ def test_penn_treebank_dataset_valid():
 def test_penn_treebank_dataset_all_file():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.PennTreebankDataset(FILE_DIR, usage='all')
     count = 0
@@ -80,8 +80,8 @@ def test_penn_treebank_dataset_all_file():
 def test_penn_treebank_dataset_num_samples_none():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data with no num_samples input.
-    Expectation: the data is processed successfully.
+    Description: Read data with no num_samples input.
+    Expectation: The data is processed successfully.
     """
     # Do not provide a num_samples argument, so it would be None by default
     data = ds.PennTreebankDataset(FILE_DIR, usage='all')
@@ -95,8 +95,8 @@ def test_penn_treebank_dataset_num_samples_none():
 def test_penn_treebank_dataset_shuffle_false4():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file with shulle is false.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shulle is false.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(987)
@@ -124,8 +124,8 @@ def test_penn_treebank_dataset_shuffle_false4():
 def test_penn_treebank_dataset_shuffle_false1():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file with shulle is false.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shulle is false.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(987)
@@ -153,8 +153,8 @@ def test_penn_treebank_dataset_shuffle_false1():
 def test_penn_treebank_dataset_shuffle_files4():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file with shulle is files.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shulle is files.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(135)
@@ -182,8 +182,8 @@ def test_penn_treebank_dataset_shuffle_files4():
 def test_penn_treebank_dataset_shuffle_files1():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file with shulle is files.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shulle is files.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(135)
@@ -211,8 +211,8 @@ def test_penn_treebank_dataset_shuffle_files1():
 def test_penn_treebank_dataset_shuffle_global4():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file with shulle is global.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shulle is global.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(246)
@@ -240,8 +240,8 @@ def test_penn_treebank_dataset_shuffle_global4():
 def test_penn_treebank_dataset_shuffle_global1():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file with shulle is global.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shulle is global.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(246)
@@ -270,7 +270,7 @@ def test_penn_treebank_dataset_num_samples():
     """
     Feature: Test PennTreebank Dataset.
     Description: Test num_samples.
-    Expectation: the data is processed successfully.
+    Expectation: The data is processed successfully.
     """
     data = ds.PennTreebankDataset(FILE_DIR, usage='all', num_samples=2)
     count = 0
@@ -282,8 +282,8 @@ def test_penn_treebank_dataset_num_samples():
 def test_penn_treebank_dataset_distribution():
     """
     Feature: Test PennTreebank Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.PennTreebankDataset(FILE_DIR, usage='all', num_shards=2, shard_id=1)
     count = 0
@@ -296,7 +296,7 @@ def test_penn_treebank_dataset_repeat():
     """
     Feature: Test PennTreebank Dataset.
     Description: Test repeat.
-    Expectation: the data is processed successfully.
+    Expectation: The data is processed successfully.
     """
     data = ds.PennTreebankDataset(FILE_DIR, usage='test', shuffle=False)
     data = data.repeat(3)
@@ -321,7 +321,7 @@ def test_penn_treebank_dataset_get_datasetsize():
     """
     Feature: Test PennTreebank Dataset.
     Description: Test get_datasetsize.
-    Expectation: the data is processed successfully.
+    Expectation: The data is processed successfully.
     """
     data = ds.PennTreebankDataset(FILE_DIR, usage='test')
     size = data.get_dataset_size()
@@ -332,7 +332,7 @@ def test_penn_treebank_dataset_to_device():
     """
     Feature: Test PennTreebank Dataset.
     Description: Test to_device.
-    Expectation: the data is processed successfully.
+    Expectation: The data is processed successfully.
     """
     data = ds.PennTreebankDataset(FILE_DIR, usage='test')
     data = data.to_device()

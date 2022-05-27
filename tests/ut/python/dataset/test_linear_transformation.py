@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_linear_transformation_op(plot=False):
     """
-    Test LinearTransformation op: verify if images transform correctly
+    Feature: LinearTransformation op
+    Description: Test LinearTransformation op by verifying if images transform correctly
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_linear_transformation_01")
 
@@ -78,8 +80,9 @@ def test_linear_transformation_op(plot=False):
 
 def test_linear_transformation_md5():
     """
-    Test LinearTransformation op: valid params (transformation_matrix, mean_vector)
-    Expected to pass
+    Feature: LinearTransformation op
+    Description: Test LinearTransformation op with valid params (transformation_matrix, mean_vector) with md5 check
+    Expectation: Pass the md5 check test
     """
     logger.info("test_linear_transformation_md5")
 
@@ -108,8 +111,9 @@ def test_linear_transformation_md5():
 
 def test_linear_transformation_exception_01():
     """
-    Test LinearTransformation op: transformation_matrix is not provided
-    Expected to raise ValueError
+    Feature: LinearTransformation op
+    Description: Test LinearTransformation op when transformation_matrix is not provided
+    Expectation: Error is raised as expected
     """
     logger.info("test_linear_transformation_exception_01")
 
@@ -137,8 +141,9 @@ def test_linear_transformation_exception_01():
 
 def test_linear_transformation_exception_02():
     """
-    Test LinearTransformation op: mean_vector is not provided
-    Expected to raise ValueError
+    Feature: LinearTransformation op
+    Description: Test LinearTransformation op when mean_vector is not provided
+    Expectation: Error is raised as expected
     """
     logger.info("test_linear_transformation_exception_02")
 
@@ -166,8 +171,9 @@ def test_linear_transformation_exception_02():
 
 def test_linear_transformation_exception_03():
     """
-    Test LinearTransformation op: transformation_matrix is not a square matrix
-    Expected to raise ValueError
+    Feature: LinearTransformation op
+    Description: Test LinearTransformation op when transformation_matrix is not a square matrix
+    Expectation: Error is raised as expected
     """
     logger.info("test_linear_transformation_exception_03")
 
@@ -196,8 +202,9 @@ def test_linear_transformation_exception_03():
 
 def test_linear_transformation_exception_04():
     """
-    Test LinearTransformation op: mean_vector does not match dimension of transformation_matrix
-    Expected to raise ValueError
+    Feature: LinearTransformation op
+    Description: Test LinearTransformation op when mean_vector does not match dimension of transformation_matrix
+    Expectation: Error is raised as expected
     """
     logger.info("test_linear_transformation_exception_04")
 

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ DATA_DIR = '../data/dataset/testUDPOSDataset/'
 
 def test_udpos_dataset_one_file():
     """
-    Feature: Test UDPOS Dataset.
-    Description: read one file
-    Expectation: throw number of data in a file
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with one file using test usage
+    Expectation: Output is equal to the expected output
     """
     data = ds.UDPOSDataset(DATA_DIR, usage="test", shuffle=False)
     count = 0
@@ -37,9 +37,9 @@ def test_udpos_dataset_one_file():
 
 def test_udpos_dataset_all_file():
     """
-    Feature: Test UDPOS Dataset.
-    Description: read all file
-    Expectation: throw number of data in all file
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with all usage
+    Expectation: Output is equal to the expected output
     """
     data = ds.UDPOSDataset(DATA_DIR, usage="all", shuffle=False)
     count = 0
@@ -51,9 +51,9 @@ def test_udpos_dataset_all_file():
 
 def test_udpos_dataset_shuffle_false_four_parallel():
     """
-    Feature: Test UDPOS Dataset.
-    Description: set up four parallel
-    Expectation: throw data
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with no shuffle and num_parallel_workers=4
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(987)
@@ -79,9 +79,9 @@ def test_udpos_dataset_shuffle_false_four_parallel():
 
 def test_udpos_dataset_shuffle_false_one_parallel():
     """
-    Feature: Test UDPOS Dataset.
-    Description: no parallelism set
-    Expectation: throw data
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with no shuffle and num_parallel_workers=1
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(987)
@@ -107,9 +107,9 @@ def test_udpos_dataset_shuffle_false_one_parallel():
 
 def test_udpos_dataset_shuffle_files_four_parallel():
     """
-    Feature: Test UDPOS Dataset.
-    Description: set four parallel and file Disorder
-    Expectation: throw data
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with shuffle and num_parallel_workers=4
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(135)
@@ -135,9 +135,9 @@ def test_udpos_dataset_shuffle_files_four_parallel():
 
 def test_udpos_dataset_shuffle_files_one_parallel():
     """
-    Feature: Test UDPOS Dataset.
-    Description: set no parallelism and file Disorder
-    Expectation: throw data
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with shuffle and num_parallel_workers=1
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(135)
@@ -163,9 +163,9 @@ def test_udpos_dataset_shuffle_files_one_parallel():
 
 def test_udpos_dataset_shuffle_global_four_parallel():
     """
-    Feature: Test UDPOS Dataset.
-    Description: set four parallel and all Disorder
-    Expectation: throw data
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with shuffle global and num_parallel_workers=4
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(246)
@@ -191,9 +191,9 @@ def test_udpos_dataset_shuffle_global_four_parallel():
 
 def test_udpos_dataset_shuffle_global_one_parallel():
     """
-    Feature: Test UDPOS Dataset.
-    Description: set no parallelism and all Disorder
-    Expectation: throw data
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with shuffle global and num_parallel_workers=1
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(246)
@@ -219,9 +219,9 @@ def test_udpos_dataset_shuffle_global_one_parallel():
 
 def test_udpos_dataset_num_samples():
     """
-    Feature: Test UDPOS Dataset.
-    Description: read one file
-    Expectation: throw number of  file
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with num_samples
+    Expectation: Output is equal to the expected output
     """
     data = ds.UDPOSDataset(DATA_DIR, usage="test", shuffle=False, num_samples=2)
     count = 0
@@ -232,9 +232,9 @@ def test_udpos_dataset_num_samples():
 
 def test_udpos_dataset_distribution():
     """
-    Feature: Test UDPOS Dataset.
-    Description: read one file
-    Expectation: throw number of file
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with num_shards and shard_id parameters
+    Expectation: Output is equal to the expected output
     """
     data = ds.UDPOSDataset(DATA_DIR, usage="test", shuffle=False, num_shards=2, shard_id=1)
     count = 0
@@ -245,9 +245,9 @@ def test_udpos_dataset_distribution():
 
 def test_udpos_dataset_repeat():
     """
-    Feature: Test UDPOS Dataset.
-    Description: repeat read data
-    Expectation: throw data
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with repeat op
+    Expectation: Output is equal to the expected output
     """
     data = ds.UDPOSDataset(DATA_DIR, usage="test", shuffle=False)
     data = data.repeat(3)
@@ -266,9 +266,9 @@ def test_udpos_dataset_repeat():
 
 def test_udpos_dataset_get_datasetsize():
     """
-    Feature: Test UDPOS Dataset.
-    Description: repeat read data
-    Expectation: throw data
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset get_dataset_size
+    Expectation: Output is equal to the expected output
     """
     data = ds.UDPOSDataset(DATA_DIR, usage="test", shuffle=False)
     size = data.get_dataset_size()
@@ -277,9 +277,9 @@ def test_udpos_dataset_get_datasetsize():
 
 def test_udpos_dataset_to_device():
     """
-    Feature: Test UDPOS Dataset.
-    Description: transfer data from CPU to other devices
-    Expectation: send
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset to_device
+    Expectation: Runs successfully
     """
     data = ds.UDPOSDataset(DATA_DIR, usage="test", shuffle=False)
     data = data.to_device()
@@ -288,9 +288,9 @@ def test_udpos_dataset_to_device():
 
 def test_udpos_dataset_exceptions():
     """
-    Feature: Test UDPOS Dataset.
-    Description: send error when error occur
-    Expectation: send error
+    Feature: UDPOSDataset
+    Description: Test UDPOSDataset with invalid inputs
+    Expectation: Correct error is raised as expected
     """
     with pytest.raises(ValueError) as error_info:
         _ = ds.UDPOSDataset(DATA_DIR, usage="test", num_samples=-1)

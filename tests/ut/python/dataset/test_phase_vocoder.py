@@ -48,8 +48,8 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 def test_phase_vocoder_compare():
     """
     Feature: PhaseVocoder
-    Description: mindspore eager mode checking precision
-    Expectation: the returned result is as expected
+    Description: Mindspore eager mode checking precision
+    Expectation: The returned result is as expected
     """
     indata_0 = np.array([[[[0.43189, 2.3049924],
                            [-0.01202229, 0.9176453],
@@ -91,8 +91,8 @@ def test_phase_vocoder_compare():
 def test_phase_vocoder_eager():
     """
     Feature: PhaseVocoder
-    Description: mindspore eager mode with normal testcase
-    Expectation: the returned result is as expected
+    Description: Mindspore eager mode with normal testcase
+    Expectation: The returned result is as expected
     """
     logger.info("test PhaseVocoder op in eager mode")
     stft = next(gen([10, 10, 10, 2]))[0]
@@ -103,8 +103,8 @@ def test_phase_vocoder_eager():
 def test_phase_vocoder_pipeline():
     """
     Feature: PhaseVocoder
-    Description: mindspore pipeline mode with normal testcase
-    Expectation: the returned result is as expected
+    Description: Mindspore pipeline mode with normal testcase
+    Expectation: The returned result is as expected
     """
     logger.info("test PhaseVocoder op in pipeline mode")
 
@@ -122,8 +122,8 @@ def test_phase_vocoder_pipeline():
 def test_phase_vocoder_invalid_input():
     """
     Feature: PhaseVocoder
-    Description: mindspore eager mode with invalid input
-    Expectation: the returned result is as expected
+    Description: Mindspore eager mode with invalid input
+    Expectation: The returned result is as expected
     """
     def test_invalid_param(test_name, rate, phase_advance, error, error_msg):
         logger.info("Test PhaseVocoder with wrong params: {0}".format(test_name))

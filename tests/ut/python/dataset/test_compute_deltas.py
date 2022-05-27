@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,9 +55,9 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 
 def test_compute_deltas_eager():
     """
-    Feature: test the basic function in eager mode.
-    Description: mindspore eager mode normal testcase:compute_deltas op.
-    Expectation: compile done without error.
+    Feature: Test the basic function in eager mode.
+    Description: Mindspore eager mode normal testcase:compute_deltas op.
+    Expectation: Compile done without error.
     """
 
     logger.info("check compute_deltas op output")
@@ -85,9 +85,9 @@ def test_compute_deltas_eager():
 
 def test_compute_deltas_pipeline():
     """
-    Feature: test the basic function in pipeline mode.
-    Description: mindspore pipeline mode normal testcase:compute_deltas op.
-    Expectation: compile done without error.
+    Feature: Test the basic function in pipeline mode.
+    Description: Mindspore pipeline mode normal testcase:compute_deltas op.
+    Expectation: Compile done without error.
     """
 
     logger.info("test ComputeDeltas op with default value")
@@ -107,9 +107,9 @@ def test_compute_deltas_pipeline():
 
 def test_compute_deltas_invalid_input():
     """
-    Feature: test the validate function with invalid parameters.
-    Description: mindspore invalid parameters testcase:compute_deltas op.
-    Expectation: compile done without error.
+    Feature: Test the validate function with invalid parameters.
+    Description: Mindspore invalid parameters testcase:compute_deltas op.
+    Expectation: Compile done without error.
     """
     def test_invalid_input(test_name, win_length, pad_mode, error, error_msg):
         logger.info("Test ComputeDeltas with bad input: {0}".format(test_name))

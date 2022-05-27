@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ FILE_DIR = '../data/dataset/testAGNews'
 def test_ag_news_dataset_basic():
     """
     Feature: Test AG News Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     buffer = []
     data = ds.AGNewsDataset(FILE_DIR, usage='all', shuffle=False)
@@ -35,8 +35,8 @@ def test_ag_news_dataset_basic():
 def test_ag_news_dataset_one_file():
     """
     Feature: Test AG News Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.AGNewsDataset(FILE_DIR, usage='test', shuffle=False)
     buffer = []
@@ -48,8 +48,8 @@ def test_ag_news_dataset_one_file():
 def test_ag_news_dataset_all_file():
     """
     Feature: Test AG News Dataset(usage=all).
-    Description: read train data and test data.
-    Expectation: the data is processed successfully.
+    Description: Read train data and test data.
+    Expectation: The data is processed successfully.
     """
     buffer = []
     data = ds.AGNewsDataset(FILE_DIR, usage='all', shuffle=False)
@@ -61,8 +61,8 @@ def test_ag_news_dataset_all_file():
 def test_ag_news_dataset_num_samples():
     """
     Feature: Test AG News Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.AGNewsDataset(FILE_DIR, usage='all', num_samples=4, shuffle=False)
     count = 0
@@ -74,8 +74,8 @@ def test_ag_news_dataset_num_samples():
 def test_ag_news_dataset_distribution():
     """
     Feature: Test AG News Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.AGNewsDataset(FILE_DIR, usage='test', shuffle=False, num_shards=2, shard_id=0)
     count = 0
@@ -87,8 +87,8 @@ def test_ag_news_dataset_distribution():
 def test_ag_news_dataset_quoted():
     """
     Feature: Test get the AG News Dataset.
-    Description: read AGNewsDataset data and get data.
-    Expectation: the data is processed successfully.
+    Description: Read AGNewsDataset data and get data.
+    Expectation: The data is processed successfully.
     """
     data = ds.AGNewsDataset(FILE_DIR, usage='test', shuffle=False)
     buffer = []
@@ -108,8 +108,8 @@ def test_ag_news_dataset_quoted():
 def test_ag_news_dataset_size():
     """
     Feature: Test Getters.
-    Description: test get_dataset_size of AG News dataset.
-    Expectation: the data is processed successfully.
+    Description: Test get_dataset_size of AG News dataset.
+    Expectation: The data is processed successfully.
     """
     data = ds.AGNewsDataset(FILE_DIR, usage='test', shuffle=False)
     assert data.get_dataset_size() == 2
@@ -118,8 +118,8 @@ def test_ag_news_dataset_size():
 def test_ag_news_dataset_exception():
     """
     Feature: Error Test.
-    Description: test the wrong input.
-    Expectation: unable to read in data.
+    Description: Test the wrong input.
+    Expectation: Unable to read in data.
     """
     def exception_func(item):
         raise Exception("Error occur!")

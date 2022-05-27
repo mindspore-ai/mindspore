@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ from mindspore import log as logger
 
 def test_magphase_pipeline():
     """
-    Test magphase (pipeline).
+    Feature: Magphase
+    Description: Test Magphase in pipeline mode
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test Magphase pipeline.")
 
@@ -45,7 +47,9 @@ def test_magphase_pipeline():
 
 def test_magphase_eager():
     """
-    Test magphase (eager).
+    Feature: Magphase
+    Description: Test Magphase in eager mode
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test Magphase eager.")
 
@@ -62,7 +66,9 @@ def test_magphase_eager():
 
 def test_magphase_exception():
     """
-    Test magphase not callable.
+    Feature: Magphase
+    Description: Test Magphase with invalid input
+    Expectation: Correct error is raised as expected
     """
     logger.info("Test Magphase not callable.")
 

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 def test_create_dct_none():
     """
     Feature: CreateDct
-    Description: test CreateDct in eager mode
-    Expectation: the returned result is as expected
+    Description: Test CreateDct in eager mode
+    Expectation: The returned result is as expected
     """
     expect = np.array([[2.00000000, 1.84775901],
                        [2.00000000, 0.76536685],
@@ -47,8 +47,8 @@ def test_create_dct_none():
 def test_create_dct_ortho():
     """
     Feature: CreateDct
-    Description: test CreateDct in eager mode
-    Expectation: the returned result is as expected
+    Description: Test CreateDct in eager mode
+    Expectation: The returned result is as expected
     """
     output = create_dct(1, 3, NormMode.ORTHO)
     expect = np.array([[0.57735026],
@@ -61,7 +61,7 @@ def test_createdct_invalid_input():
     """
     Feature: CreateDct
     Description: Error detection
-    Expectation: return error
+    Expectation: Return error
     """
     def test_invalid_input(test_name, n_mfcc, n_mels, norm, error, error_msg):
         logger.info("Test CreateDct with bad input: {0}".format(test_name))

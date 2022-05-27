@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ INDEX_FILE = "../data/dataset/test_flat_map/image_index.txt"
 def test_flat_map_basic():
     """
     Feature: flat_map
-    Description: test basic usage
-    Expectation: the result is as expected
+    Description: Test basic usage
+    Expectation: The result is as expected
     """
     def flat_map_func(x):
         data_dir = x.item().decode('utf8')
@@ -44,8 +44,8 @@ def test_flat_map_basic():
 def test_flat_map_chain_call():
     """
     Feature: flat_map
-    Description: test chain call
-    Expectation: the result is as expected
+    Description: Test chain call
+    Expectation: The result is as expected
     """
     def flat_map_func_1(x):
         data_dir = x.item().decode('utf8')
@@ -71,8 +71,8 @@ def test_flat_map_chain_call():
 def test_flat_map_one_column():
     """
     Feature: flat_map
-    Description: test with one column dataset
-    Expectation: the result is as expected
+    Description: Test with one column dataset
+    Expectation: The result is as expected
     """
     dataset = ds.NumpySlicesDataset([[0, 1], [2, 3]], shuffle=False)
 
@@ -107,8 +107,8 @@ def test_flat_map_one_column():
 def test_flat_map_multi_column():
     """
     Feature: flat_map
-    Description: test with multi column dataset
-    Expectation: the result is as expected
+    Description: Test with multi column dataset
+    Expectation: The result is as expected
     """
     dataset = ds.NumpySlicesDataset(([[0, 1], [2, 3]], [[0, -1], [-2, -3]]), column_names=["col1", "col2"],
                                     shuffle=False)

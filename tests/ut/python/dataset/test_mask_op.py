@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,6 +63,11 @@ def mask_compare(array, op, constant, dtype=mstype.bool_):
 
 
 def test_mask_int_comparison():
+    """
+    Feature: Mask op
+    Description: Test Mask op with int data type for the array and the constant
+    Expectation: Output is equal to the expected output
+    """
     for k in mstype_to_np_type:
         if k == mstype.string:
             continue
@@ -75,6 +80,11 @@ def test_mask_int_comparison():
 
 
 def test_mask_float_comparison():
+    """
+    Feature: Mask op
+    Description: Test Mask op with float data type for the array and int data type for the constant
+    Expectation: Output is equal to the expected output
+    """
     for k in mstype_to_np_type:
         if k == mstype.string:
             continue
@@ -87,6 +97,11 @@ def test_mask_float_comparison():
 
 
 def test_mask_float_comparison2():
+    """
+    Feature: Mask op
+    Description: Test Mask op with int data type for the array and float data type for the constant
+    Expectation: Output is equal to the expected output
+    """
     for k in mstype_to_np_type:
         if k == mstype.string:
             continue
@@ -99,6 +114,11 @@ def test_mask_float_comparison2():
 
 
 def test_mask_string_comparison():
+    """
+    Feature: Mask op
+    Description: Test Mask op with string data type for the array and the constant
+    Expectation: Output is equal to the expected output
+    """
     for k in mstype_to_np_type:
         if k == mstype.string:
             continue
@@ -111,6 +131,11 @@ def test_mask_string_comparison():
 
 
 def test_mask_exceptions_str():
+    """
+    Feature: Mask op
+    Description: Test Mask op with invalid input
+    Expectation: Correct error is raised as expected
+    """
     with pytest.raises(RuntimeError) as info:
         mask_compare([1, 2, 3, 4, 5], ops.Relational.EQ, "3.5")
     assert "input datatype does not match the value datatype" in str(info.value)

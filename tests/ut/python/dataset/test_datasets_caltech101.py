@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -106,8 +106,8 @@ def visualize_dataset(images, labels):
 def test_caltech101_content_check():
     """
     Feature: Caltech101Dataset
-    Description: check if the image data of caltech101 dataset is read correctly
-    Expectation: the data is processed successfully
+    Description: Check if the image data of caltech101 dataset is read correctly
+    Expectation: The data is processed successfully
     """
     logger.info("Test Caltech101Dataset Op with content check")
     all_data = ds.Caltech101Dataset(DATASET_DIR, target_type="annotation", num_samples=4, shuffle=False, decode=True)
@@ -133,8 +133,8 @@ def test_caltech101_content_check():
 def test_caltech101_basic():
     """
     Feature: Caltech101Dataset
-    Description: basic test of Caltech101Dataset
-    Expectation: the data is processed successfully
+    Description: Basic test of Caltech101Dataset
+    Expectation: The data is processed successfully
     """
     logger.info("Test Caltech101Dataset Op")
 
@@ -202,8 +202,8 @@ def test_caltech101_basic():
 def test_caltech101_target_type():
     """
     Feature: Caltech101Dataset
-    Description: test Caltech101Dataset with target_type
-    Expectation: the data is processed successfully
+    Description: Test Caltech101Dataset with target_type
+    Expectation: The data is processed successfully
     """
     logger.info("Test Caltech101Dataset Op with target_type")
     all_data_1 = ds.Caltech101Dataset(DATASET_DIR, target_type="annotation", shuffle=False)
@@ -236,8 +236,8 @@ def test_caltech101_target_type():
 def test_caltech101_sequential_sampler():
     """
     Feature: Caltech101Dataset
-    Description: test Caltech101Dataset with SequentialSampler
-    Expectation: the data is processed successfully
+    Description: Test Caltech101Dataset with SequentialSampler
+    Expectation: The data is processed successfully
     """
     logger.info("Test Caltech101Dataset Op with SequentialSampler")
     num_samples = 4
@@ -258,8 +258,8 @@ def test_caltech101_sequential_sampler():
 def test_caltech101_exception():
     """
     Feature: Caltech101Dataset
-    Description: test error cases for Caltech101Dataset
-    Expectation: throw correct error and message
+    Description: Test error cases for Caltech101Dataset
+    Expectation: Throw correct error and message
     """
     logger.info("Test error cases for Caltech101Dataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -316,8 +316,8 @@ def test_caltech101_exception():
 def test_caltech101_visualize(plot=False):
     """
     Feature: Caltech101Dataset
-    Description: visualize Caltech101Dataset results
-    Expectation: the data is processed successfully
+    Description: Visualize Caltech101Dataset results
+    Expectation: The data is processed successfully
     """
     logger.info("Test Caltech101Dataset visualization")
 

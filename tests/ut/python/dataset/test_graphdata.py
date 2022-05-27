@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ SOCIAL_DATA_FILE = "../data/mindrecord/testGraphData/sns"
 
 def test_graphdata_getfullneighbor():
     """
-    Test get all neighbors
+    Feature: GraphData
+    Description: Test GraphData get_all_neighbors
+    Expectation: Output's shape is equal to the expected output's shape
     """
     logger.info('test get all neighbors.\n')
     g = ds.GraphData(DATASET_FILE, 2)
@@ -40,7 +42,9 @@ def test_graphdata_getfullneighbor():
 
 def test_graphdata_getallneighbors_special_format():
     """
-    Test get all neighbors with special format
+    Feature: GraphData
+    Description: Test GraphData get_all_neighbors with special format
+    Expectation: Output's shape is equal to the expected output's shape
     """
     logger.info('test get all neighbors with special format.\n')
     g = ds.GraphData(DATASET_FILE, 2)
@@ -57,7 +61,9 @@ def test_graphdata_getallneighbors_special_format():
 
 def test_graphdata_getnodefeature_input_check():
     """
-    Test get node feature input check
+    Feature: GraphData
+    Description: Test GraphData get_node_feature input check
+    Expectation: Error is raised as expected
     """
     logger.info('test getnodefeature input check.\n')
     g = ds.GraphData(DATASET_FILE)
@@ -108,7 +114,9 @@ def test_graphdata_getnodefeature_input_check():
 
 def test_graphdata_getsampledneighbors():
     """
-    Test sampled neighbors
+    Feature: GraphData
+    Description: Test GraphData get_sampled_neighbors
+    Expectation: Output's shape is equal to the expected output's shape
     """
     logger.info('test get sampled neighbors.\n')
     g = ds.GraphData(DATASET_FILE, 1)
@@ -125,7 +133,9 @@ def test_graphdata_getsampledneighbors():
 
 def test_graphdata_getnegsampledneighbors():
     """
-    Test neg sampled neighbors
+    Feature: GraphData
+    Description: Test GraphData get_neg_sampled_neighbors
+    Expectation: Output's shape is equal to the expected output's shape
     """
     logger.info('test get negative sampled neighbors.\n')
     g = ds.GraphData(DATASET_FILE, 2)
@@ -137,7 +147,9 @@ def test_graphdata_getnegsampledneighbors():
 
 def test_graphdata_graphinfo():
     """
-    Test graph info
+    Feature: GraphData
+    Description: Test GraphData graph_info
+    Expectation: Output is equal to the expected output
     """
     logger.info('test graph info.\n')
     g = ds.GraphData(DATASET_FILE, 2)
@@ -198,7 +210,9 @@ class GNNGraphDataset():
 
 def test_graphdata_generatordataset():
     """
-    Test generator dataset
+    Feature: GraphData
+    Description: Test GraphData with GeneratorDataset
+    Expectation: Output is equal to the expected output
     """
     logger.info('test generator dataset.\n')
 
@@ -227,7 +241,9 @@ def test_graphdata_generatordataset():
 
 def test_graphdata_randomwalkdefault():
     """
-    Test random walk defaults
+    Feature: GraphData
+    Description: Test GraphData random_walk with default step hyper parameters and default_node parameter
+    Expectation: Output's shape is equal to the expected output's shape
     """
     logger.info('test randomwalk with default parameters.\n')
     g = ds.GraphData(SOCIAL_DATA_FILE, 1)
@@ -241,7 +257,9 @@ def test_graphdata_randomwalkdefault():
 
 def test_graphdata_randomwalk():
     """
-    Test random walk
+    Feature: GraphData
+    Description: Test GraphData random_walk with given parameters
+    Expectation: Output's shape is equal to the expected output's shape
     """
     logger.info('test random walk with given parameters.\n')
     g = ds.GraphData(SOCIAL_DATA_FILE, 1)
@@ -255,7 +273,9 @@ def test_graphdata_randomwalk():
 
 def test_graphdata_getedgefeature():
     """
-    Test get edge feature
+    Feature: GraphData
+    Description: Test GraphData get_edge_feature
+    Expectation: Output's shape is equal to the expected output's shape
     """
     logger.info('test get_edge_feature.\n')
     g = ds.GraphData(DATASET_FILE)
@@ -267,7 +287,9 @@ def test_graphdata_getedgefeature():
 
 def test_graphdata_getedgefeature_invalidcase():
     """
-    Test get edge feature with invalid edge id, 0 should be returned for those invalid edge id in correct index
+    Feature: GraphData
+    Description: Test GraphData get_edge_feature with invalid edge id
+    Expectation: Should return 0 for those invalid edge id in correct index
     """
     logger.info('test get_edge_feature.\n')
     g = ds.GraphData(DATASET_FILE)
@@ -282,7 +304,9 @@ def test_graphdata_getedgefeature_invalidcase():
 
 def test_graphdata_getnodefeature_invalidcase():
     """
-    Test get node feature with invalid node id, 0 should be returned for those invalid node id in correct index
+    Feature: GraphData
+    Description: Test GraphData get_node_feature with invalid node id
+    Expectation: Should return 0 for those invalid node id in correct index
     """
     logger.info('test get_node_feature.\n')
     g = ds.GraphData(DATASET_FILE)
@@ -297,7 +321,9 @@ def test_graphdata_getnodefeature_invalidcase():
 
 def test_graphdata_getedgesfromnodes():
     """
-    Test get edges from nodes
+    Feature: GraphData
+    Description: Test GraphData get_edges_from_nodes
+    Expectation: Output is equal to the expected output
     """
     logger.info('test get_edges_from_nodes\n')
     g = ds.GraphData(DATASET_FILE)

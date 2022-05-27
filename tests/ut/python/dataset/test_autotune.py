@@ -190,8 +190,8 @@ class TestAutotuneWithProfiler:
     def test_autotune_simple_pipeline():
         """
         Feature: Autotuning
-        Description: test simple pipeline of autotune - Generator -> Shuffle -> Batch
-        Expectation: pipeline runs successfully
+        Description: Test simple pipeline of autotune - Generator -> Shuffle -> Batch
+        Expectation: Pipeline runs successfully
         """
         ds.config.set_enable_autotune(True)
 

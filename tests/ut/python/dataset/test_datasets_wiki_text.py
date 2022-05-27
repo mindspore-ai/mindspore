@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ FILE_DIR = '../data/dataset/testWikiText'
 def test_wiki_text_dataset_test():
     """
     Feature: Test WikiText Dataset.
-    Description: read test data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read test data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.WikiTextDataset(FILE_DIR, usage='test', shuffle=False)
     count = 0
@@ -41,8 +41,8 @@ def test_wiki_text_dataset_test():
 def test_wiki_text_dataset_train():
     """
     Feature: Test WikiText Dataset.
-    Description: read train data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read train data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.WikiTextDataset(FILE_DIR, usage='train', shuffle=False)
     count = 0
@@ -58,8 +58,8 @@ def test_wiki_text_dataset_train():
 def test_wiki_text_dataset_valid():
     """
     Feature: Test WikiText Dataset.
-    Description: read valid data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read valid data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.WikiTextDataset(FILE_DIR, usage='valid', shuffle=False)
     count = 0
@@ -75,8 +75,8 @@ def test_wiki_text_dataset_valid():
 def test_wiki_text_dataset_all_file():
     """
     Feature: Test WikiText Dataset.
-    Description: read data from all files.
-    Expectation: the data is processed successfully.
+    Description: Read data from all files.
+    Expectation: The data is processed successfully.
     """
     data = ds.WikiTextDataset(FILE_DIR, usage='all')
     count = 0
@@ -89,8 +89,8 @@ def test_wiki_text_dataset_all_file():
 def test_wiki_text_dataset_num_samples_none():
     """
     Feature: Test WikiText Dataset.
-    Description: read data with no num_samples input.
-    Expectation: the data is processed successfully.
+    Description: Read data with no num_samples input.
+    Expectation: The data is processed successfully.
     """
     # Do not provide a num_samples argument, so it would be None by default, which means all samples are read.
     data = ds.WikiTextDataset(FILE_DIR, usage='all')
@@ -104,8 +104,8 @@ def test_wiki_text_dataset_num_samples_none():
 def test_wiki_text_dataset_shuffle_false_and_workers_4():
     """
     Feature: Test WikiText Dataset.
-    Description: read data from a single file with shuffle is False and num_parallel_workers=4.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shuffle is False and num_parallel_workers=4.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(987)
@@ -134,7 +134,7 @@ def test_wiki_text_dataset_shuffle_false_and_workers_1():
     """
     Feature: Test WikiText Dataset.
     Description: Read data from a single file with shuffle is False and num_parallel_workers is 1.
-    Expectation: the data is processed successfully.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(987)
@@ -162,8 +162,8 @@ def test_wiki_text_dataset_shuffle_false_and_workers_1():
 def test_wiki_text_dataset_shuffle_files_and_workers_4():
     """
     Feature: Test WikiText Dataset.
-    Description: read data from a single file with shuffle is files and num_parallel_workers is 4.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shuffle is files and num_parallel_workers is 4.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(135)
@@ -191,8 +191,8 @@ def test_wiki_text_dataset_shuffle_files_and_workers_4():
 def test_wiki_text_dataset_shuffle_files_and_workers_1():
     """
     Feature: Test WikiText Dataset.
-    Description: read data from a single file with shuffle is files and num_parallel_workers is 1.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shuffle is files and num_parallel_workers is 1.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(135)
@@ -220,8 +220,8 @@ def test_wiki_text_dataset_shuffle_files_and_workers_1():
 def test_wiki_text_dataset_shuffle_global4():
     """
     Feature: Test WikiText Dataset.
-    Description: read data from a single file with shuffle is global.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shuffle is global.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(246)
@@ -249,8 +249,8 @@ def test_wiki_text_dataset_shuffle_global4():
 def test_wiki_text_dataset_shuffle_global1():
     """
     Feature: Test WikiText Dataset.
-    Description: read data from a single file with shuffle is global.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file with shuffle is global.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(246)
@@ -279,7 +279,7 @@ def test_wiki_text_dataset_num_samples():
     """
     Feature: Test WikiText Dataset.
     Description: Test num_samples.
-    Expectation: the data is processed successfully.
+    Expectation: The data is processed successfully.
     """
     data = ds.WikiTextDataset(FILE_DIR, usage='all', num_samples=2)
     count = 0
@@ -291,8 +291,8 @@ def test_wiki_text_dataset_num_samples():
 def test_wiki_text_dataset_distribution():
     """
     Feature: Test WikiText Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     data = ds.WikiTextDataset(FILE_DIR, usage='all', num_shards=2, shard_id=1)
     count = 0
@@ -305,7 +305,7 @@ def test_wiki_text_dataset_repeat():
     """
     Feature: Test WikiText Dataset.
     Description: Test repeat.
-    Expectation: the data is processed successfully.
+    Expectation: The data is processed successfully.
     """
     data = ds.WikiTextDataset(FILE_DIR, usage='test', shuffle=False)
     data = data.repeat(3)
@@ -330,7 +330,7 @@ def test_wiki_text_dataset_get_datasetsize():
     """
     Feature: Test WikiText Dataset.
     Description: Test get_datasetsize.
-    Expectation: the data is processed successfully.
+    Expectation: The data is processed successfully.
     """
     data = ds.WikiTextDataset(FILE_DIR, usage='test')
     size = data.get_dataset_size()
@@ -341,7 +341,7 @@ def test_wiki_text_dataset_to_device():
     """
     Feature: Test WikiText Dataset.
     Description: Test to_device.
-    Expectation: the data is processed successfully.
+    Expectation: The data is processed successfully.
     """
     data = ds.WikiTextDataset(FILE_DIR, usage='test')
     data = data.to_device()

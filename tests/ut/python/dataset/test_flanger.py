@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_flanger_eager_sinusoidal_linear_float64():
-    """ mindspore eager mode normal testcase:flanger op"""
+    """
+    Feature: Flanger op
+    Description: Test Flanger op in eager mode under normal test case with float64
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float64)
     # Expect waveform
@@ -45,7 +49,11 @@ def test_flanger_eager_sinusoidal_linear_float64():
 
 
 def test_flanger_eager_triangular_linear_float32():
-    """ mindspore eager mode normal testcase:flanger op"""
+    """
+    Feature: Flanger op
+    Description: Test Flanger op in eager mode under normal test case with float32
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[-1.2, 2, -3.6], [1, 2.4, 3.7]], dtype=np.float32)
     # Expect waveform
@@ -58,7 +66,11 @@ def test_flanger_eager_triangular_linear_float32():
 
 
 def test_flanger_eager_triangular_linear_int():
-    """ mindspore eager mode normal testcase:flanger op"""
+    """
+    Feature: Flanger op
+    Description: Test Flanger op in eager mode under normal test case with int
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[-2, -3, 0], [2, 2, 3]], dtype=np.int)
     # Expect waveform
@@ -71,7 +83,11 @@ def test_flanger_eager_triangular_linear_int():
 
 
 def test_flanger_shape_221():
-    """ mindspore eager mode normal testcase:flanger op"""
+    """
+    Feature: Flanger op
+    Description: Test Flanger op in eager mode under normal test case with shape of 2 * 2 * 1
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[[1], [1.1]], [[0.9], [0.6]]], dtype=np.float64)
     # Expect waveform
@@ -88,7 +104,11 @@ def test_flanger_shape_221():
 
 
 def test_flanger_shape_11211():
-    """ mindspore eager mode normal testcase:flanger op"""
+    """
+    Feature: Flanger op
+    Description: Test Flanger op in eager mode under normal test case with shape of 1 * 1 * 2 * 1 * 1
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[[[[0.44]], [[0.55]]]]], dtype=np.float64)
     # Expect waveform
@@ -101,7 +121,11 @@ def test_flanger_shape_11211():
 
 
 def test_flanger_pipeline():
-    """ mindspore pipeline mode normal testcase:flanger op"""
+    """
+    Feature: Flanger op
+    Description: Test Flanger op in pipeline mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[[1.1, 1.2, 1.3], [1.4, 1.5, 1.6]]], dtype=np.float64)
     # Expect waveform
@@ -121,6 +145,11 @@ def test_flanger_pipeline():
 
 
 def test_invalid_flanger_input():
+    """
+    Feature: Flanger op
+    Description: Test Flanger op with invalid input
+    Expectation: Error is raised as expected
+    """
     def test_invalid_input(test_name, sample_rate, delay, depth, regen, width, speed, phase, modulation, interpolation,
                            error, error_msg):
         logger.info("Test Flanger with bad input: {0}".format(test_name))

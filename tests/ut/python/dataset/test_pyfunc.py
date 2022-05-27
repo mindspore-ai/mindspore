@@ -394,8 +394,8 @@ def test_func_with_yield_manifest_dataset_01():
 def test_func_mixed_with_ops():
     """
     Feature: Test adding computing operator into user defined python function
-    Description: will decrease num_parallel_worker into 1
-    Expectation: success
+    Description: Will decrease num_parallel_worker to 1
+    Expectation: Success
     """
 
     def generator_func():

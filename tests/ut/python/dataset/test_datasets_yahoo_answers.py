@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ DATA_DIR = '../data/dataset/testYahooAnswers/'
 def test_yahoo_answers_dataset_basic():
     """
     Feature: YahooAnswersDataset.
-    Description: read data from train file.
-    Expectation: the data is processed successfully.
+    Description: Read data from train file.
+    Expectation: The data is processed successfully.
     """
 
     buffer = []
@@ -36,8 +36,8 @@ def test_yahoo_answers_dataset_basic():
 def test_yahoo_answers_dataset_quoted():
     """
     Feature: YahooAnswersDataset.
-    Description: read the data and compare it to expectations.
-    Expectation: the data is processed successfully.
+    Description: Read the data and compare it to expectations.
+    Expectation: The data is processed successfully.
     """
 
     data = ds.YahooAnswersDataset(DATA_DIR, usage="test", shuffle=False)
@@ -55,8 +55,8 @@ def test_yahoo_answers_dataset_quoted():
 def test_yahoo_answers_dataset_usage():
     """
     Feature: YahooAnswersDataset.
-    Description: read all files with usage all.
-    Expectation: the data is processed successfully.
+    Description: Read all files with usage all.
+    Expectation: The data is processed successfully.
     """
 
     buffer = []
@@ -69,8 +69,8 @@ def test_yahoo_answers_dataset_usage():
 def test_yahoo_answers_dataset_get_datasetsize():
     """
     Feature: YahooAnswersDataset.
-    Description: test get_dataset_size function.
-    Expectation: the data is processed successfully.
+    Description: Test get_dataset_size function.
+    Expectation: The data is processed successfully.
     """
 
     data = ds.YahooAnswersDataset(DATA_DIR, usage="test", shuffle=False)
@@ -81,8 +81,8 @@ def test_yahoo_answers_dataset_get_datasetsize():
 def test_yahoo_answers_dataset_distribution():
     """
     Feature: YahooAnswersDataset.
-    Description: test in a distributed state.
-    Expectation: the data is processed successfully.
+    Description: Test in a distributed state.
+    Expectation: The data is processed successfully.
     """
 
     data = ds.YahooAnswersDataset(DATA_DIR, usage="test", shuffle=False, num_shards=2, shard_id=0)
@@ -95,8 +95,8 @@ def test_yahoo_answers_dataset_distribution():
 def test_yahoo_answers_dataset_num_samples():
     """
     Feature: YahooAnswersDataset.
-    Description: test num_samples parameter.
-    Expectation: the data is processed successfully.
+    Description: Test num_samples parameter.
+    Expectation: The data is processed successfully.
     """
 
     data = ds.YahooAnswersDataset(DATA_DIR, usage="test", shuffle=False, num_samples=2)
@@ -109,7 +109,7 @@ def test_yahoo_answers_dataset_num_samples():
 def test_yahoo_answers_dataset_exception():
     """
     Feature: YahooAnswersDataset.
-    Description: test the wrong input.
+    Description: Test the wrong input.
     Expectation: Unable to read data properly.
     """
 

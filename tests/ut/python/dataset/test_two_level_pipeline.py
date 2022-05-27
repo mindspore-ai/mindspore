@@ -79,8 +79,8 @@ def test_minddtaset_generatordataset_01(add_and_remove_cv_file):
 def test_minddtaset_generatordataset_exception_01(add_and_remove_cv_file):
     """
     Feature: Test basic two level pipeline.
-    Description: invalid column name in MindDataset
-    Expectation: throw expected exception.
+    Description: Invalid column name in MindDataset
+    Expectation: Throw expected exception.
     """
     err_columns_list = ["data", "filename", "label"]
     num_readers = 1

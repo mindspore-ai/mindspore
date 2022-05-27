@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ WRONG_DIR = "../data/dataset/notExist"
 def test_caltech256_basic():
     """
     Feature: Caltech256Dataset
-    Description: basic test of Caltech256Dataset
-    Expectation: the data is processed successfully
+    Description: Basic test of Caltech256Dataset
+    Expectation: The data is processed successfully
     """
     logger.info("Test Caltech256Dataset Op")
 
@@ -92,8 +92,8 @@ def test_caltech256_basic():
 def test_caltech256_decode():
     """
     Feature: Caltech256Dataset
-    Description: validate Caltech256Dataset with decode
-    Expectation: the data is processed successfully
+    Description: Validate Caltech256Dataset with decode
+    Expectation: The data is processed successfully
     """
     logger.info("Validate Caltech256Dataset with decode")
     # define parameters
@@ -117,8 +117,8 @@ def test_caltech256_decode():
 def test_caltech256_sequential_sampler():
     """
     Feature: Caltech256Dataset
-    Description: test Caltech256Dataset with SequentialSampler
-    Expectation: the data is processed successfully
+    Description: Test Caltech256Dataset with SequentialSampler
+    Expectation: The data is processed successfully
     """
     logger.info("Test Caltech256Dataset Op with SequentialSampler")
     num_samples = 4
@@ -139,8 +139,8 @@ def test_caltech256_sequential_sampler():
 def test_caltech256_random_sampler():
     """
     Feature: Caltech256Dataset
-    Description: test Caltech256Dataset with RandomSampler
-    Expectation: the data is processed successfully
+    Description: Test Caltech256Dataset with RandomSampler
+    Expectation: The data is processed successfully
     """
     logger.info("Test Caltech256Dataset Op with RandomSampler")
     # define parameters
@@ -166,8 +166,8 @@ def test_caltech256_random_sampler():
 def test_caltech256_exception():
     """
     Feature: Caltech256Dataset
-    Description: test error cases for Caltech256Dataset
-    Expectation: throw correct error and message
+    Description: Test error cases for Caltech256Dataset
+    Expectation: Throw correct error and message
     """
     logger.info("Test error cases for Caltech256Dataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"

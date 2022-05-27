@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ IMAGE_FILE = "../data/dataset/apple.jpg"
 
 def test_horizontal_flip_pipeline(plot=False):
     """
-    Test HorizontalFlip of C implementation
+    Feature: HorizontalFlip
+    Description: Test HorizontalFlip in pipeline mode with Cpp implementation
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_horizontal_flip_pipeline")
 
@@ -63,7 +65,9 @@ def test_horizontal_flip_pipeline(plot=False):
 
 def test_horizontal_flip_eager():
     """
-    Test HorizontalFlip with eager mode
+    Feature: HorizontalFlip
+    Description: Test HorizontalFlip in eager mode
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_horizontal_flip_eager")
     img = cv2.imread(IMAGE_FILE)

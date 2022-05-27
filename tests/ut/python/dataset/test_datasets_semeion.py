@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ def test_semeion_content_check():
     """
     Feature: SemeionDataset
     Description: Check content of each sample
-    Expectation: correct content
+    Expectation: Correct content
     """
     data1 = ds.SemeionDataset(DATA_DIR_SEMEION, num_samples=10, shuffle=False)
     images, labels = load_semeion(DATA_DIR_SEMEION)
@@ -70,7 +70,7 @@ def test_semeion_content_check():
 def test_semeion_basic():
     """
     Feature: SemeionDataset
-    Description: use different data to test the functions of different versions
+    Description: Use different data to test the functions of different versions
     Expectation: all samples(10)
                 num_samples
                         set   5
@@ -115,8 +115,8 @@ def test_semeion_basic():
 def test_semeion_sequential_sampler():
     """
     Feature: SemeionDataset
-    Description: test semeion sequential sampler
-    Expectation: correct data
+    Description: Test semeion sequential sampler
+    Expectation: Correct data
     """
     num_samples = 4
     sampler = ds.SequentialSampler(num_samples=num_samples)
@@ -134,8 +134,8 @@ def test_semeion_sequential_sampler():
 def test_semeion_exceptions():
     """
     Feature: SemeionDataset
-    Description: error test
-    Expectation: throw error
+    Description: Error test
+    Expectation: Throw error
     """
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
     with pytest.raises(RuntimeError, match=error_msg_1):
@@ -169,8 +169,8 @@ def test_semeion_exceptions():
 def test_semeion_visualize(plot=False):
     """
     Feature: SemeionDataset
-    Description: visualize SemeionDataset results
-    Expectation: visualization
+    Description: Visualize SemeionDataset results
+    Expectation: Visualization
     """
     data1 = ds.SemeionDataset(DATA_DIR_SEMEION, num_samples=10, shuffle=False)
     num_iter = 0
@@ -193,8 +193,8 @@ def test_semeion_visualize(plot=False):
 def test_semeion_exception_file_path():
     """
     Feature: SemeionDataset
-    Description: error test
-    Expectation: throw error
+    Description: Error test
+    Expectation: Throw error
     """
     def exception_func(item):
         raise Exception("Error occur!")

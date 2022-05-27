@@ -26,8 +26,8 @@ DATA_DIR = ["s3://dataset/imagenet0", "s3://dataset/imagenet1"]
 def test_obs_mindrecord_exception():
     """
     Feature: Test OBSMindDataset.
-    Description: invalid input.
-    Expectation: raise exception.
+    Description: Invalid input.
+    Expectation: Raise exception.
     """
 
     logger.info("Test error cases for MnistDataset")

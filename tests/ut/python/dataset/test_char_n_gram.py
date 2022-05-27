@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,9 +47,9 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 def test_char_n_gram_all_to_vectors_params_eager():
     """
     Feature: CharNGram
-    Description: test with all parameters which include `unk_init`
+    Description: Test with all parameters which include `unk_init`
         and `lower_case_backup` in function ToVectors in eager mode
-    Expectation: output is equal to the expected value
+    Expectation: Output is equal to the expected value
     """
     char_n_gram = text.CharNGram.from_file(DATASET_ROOT_PATH + "char_n_gram_20.txt", max_vectors=18)
     unk_init = (-np.ones(5)).tolist()
@@ -70,8 +70,8 @@ def test_char_n_gram_all_to_vectors_params_eager():
 def test_char_n_gram_build_from_file():
     """
     Feature: CharNGram
-    Description: test with only default parameter
-    Expectation: output is equal to the expected value
+    Description: Test with only default parameter
+    Expectation: Output is equal to the expected value
     """
     char_n_gram = text.CharNGram.from_file(DATASET_ROOT_PATH + "char_n_gram_20.txt")
     to_vectors = text.ToVectors(char_n_gram)
@@ -94,8 +94,8 @@ def test_char_n_gram_build_from_file():
 def test_char_n_gram_all_build_from_file_params():
     """
     Feature: CharNGram
-    Description: test with all parameters which include `path` and `max_vector` in function BuildFromFile
-    Expectation: output is equal to the expected value
+    Description: Test with all parameters which include `path` and `max_vector` in function BuildFromFile
+    Expectation: Output is equal to the expected value
     """
     char_n_gram = text.CharNGram.from_file(DATASET_ROOT_PATH + "char_n_gram_20.txt", max_vectors=100)
     to_vectors = text.ToVectors(char_n_gram)
@@ -118,8 +118,8 @@ def test_char_n_gram_all_build_from_file_params():
 def test_char_n_gram_all_build_from_file_params_eager():
     """
     Feature: CharNGram
-    Description: test with all parameters which include `path` and `max_vector` in function BuildFromFile in eager mode
-    Expectation: output is equal to the expected value
+    Description: Test with all parameters which include `path` and `max_vector` in function BuildFromFile in eager mode
+    Expectation: Output is equal to the expected value
     """
     char_n_gram = text.CharNGram.from_file(DATASET_ROOT_PATH + "char_n_gram_20.txt", max_vectors=18)
     to_vectors = T.ToVectors(char_n_gram)
@@ -139,8 +139,8 @@ def test_char_n_gram_all_build_from_file_params_eager():
 def test_char_n_gram_build_from_file_eager():
     """
     Feature: CharNGram
-    Description: test with only default parameter in eager mode
-    Expectation: output is equal to the expected value
+    Description: Test with only default parameter in eager mode
+    Expectation: Output is equal to the expected value
     """
     char_n_gram = text.CharNGram.from_file(DATASET_ROOT_PATH + "char_n_gram_20.txt")
     to_vectors = T.ToVectors(char_n_gram)
@@ -160,7 +160,7 @@ def test_char_n_gram_build_from_file_eager():
 def test_char_n_gram_invalid_input():
     """
     Feature: CharNGram
-    Description: test the validate function with invalid parameters.
+    Description: Test the validate function with invalid parameters.
     Expectation: Verification of correct error message for invalid input.
     """
     def test_invalid_input(test_name, file_path, error, error_msg, max_vectors=None,

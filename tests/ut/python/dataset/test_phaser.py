@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 def test_phaser_eager():
     """
     Feature: Phaser
-    Description: test Phaser in eager mode
-    Expectation: the results are as expected
+    Description: Test Phaser in eager mode
+    Expectation: The results are as expected
     """
     # Original waveform
     waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
@@ -50,8 +50,8 @@ def test_phaser_eager():
 def test_phaser_pipeline():
     """
     Feature: Phaser
-    Description: test Phaser in pipline mode
-    Expectation: the results are as expected
+    Description: Test Phaser in pipline mode
+    Expectation: The results are as expected
     """
     # Original waveform
     waveform = np.array([[0.1, 1.2, 5.3], [0.4, 5.5, 1.6]], dtype=np.float32)
@@ -74,8 +74,8 @@ def test_phaser_pipeline():
 def test_phaser_invalid_input():
     """
     Feature: Phaser
-    Description: test invalid parameter of Phaser
-    Expectation: catch exceptions correctly
+    Description: Test invalid parameter of Phaser
+    Expectation: Catch exceptions correctly
     """
     def test_invalid_input(test_name, sample_rate, gain_in, gain_out, delay_ms, decay, mod_speed, sinusoidal, error,
                            error_msg):

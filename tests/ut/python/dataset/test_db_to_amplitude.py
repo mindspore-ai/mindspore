@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 def test_db_to_amplitude_eager():
     """
     Feature: DBToAmplitude
-    Description: test DBToAmplitude in eager mode
-    Expectation: the data is processed successfully
+    Description: Test DBToAmplitude in eager mode
+    Expectation: The data is processed successfully
     """
     logger.info("mindspore eager mode normal testcase:DBToAmplitude op")
 
@@ -52,8 +52,8 @@ def test_db_to_amplitude_eager():
 def test_db_to_amplitude_pipeline():
     """
     Feature: DBToAmplitude
-    Description: test DBToAmplitude in pipeline mode
-    Expectation: the data is processed successfully
+    Description: Test DBToAmplitude in pipeline mode
+    Expectation: The data is processed successfully
     """
     logger.info("mindspore pipeline mode normal testcase:DBToAmplitude op")
 
@@ -76,8 +76,8 @@ def test_db_to_amplitude_pipeline():
 def test_db_to_amplitude_invalid_input():
     """
     Feature: DBToAmplitude
-    Description: test param check of DBToAmplitude
-    Expectation: throw correct error and message
+    Description: Test param check of DBToAmplitude
+    Expectation: Throw correct error and message
     """
     logger.info("mindspore eager mode invalid input testcase:filter_wikipedia_xml op")
 

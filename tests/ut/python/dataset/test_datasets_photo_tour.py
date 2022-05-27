@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ LEN = 100
 def load_photo_tour_dataset(path, name):
     """
     Feature: load_photo_tour_dataset.
-    Description: load photo tour.
-    Expectation: get data of photo tour dataset.
+    Description: Load photo tour.
+    Expectation: Get data of photo tour dataset.
     """
     def pil2array(img: Image.Image):
         """
@@ -80,8 +80,8 @@ def load_photo_tour_dataset(path, name):
 def visualize_dataset(images1, images2, matches):
     """
     Feature: visualize_dataset.
-    Description: visualize photo tour dataset.
-    Expectation: plot images.
+    Description: Visualize photo tour dataset.
+    Expectation: Plot images.
     """
     num_samples = len(images1)
     for i in range(num_samples):
@@ -99,8 +99,8 @@ def visualize_dataset(images1, images2, matches):
 def test_photo_tour_content_check():
     """
     Feature: test_photo_tour_content_check.
-    Description: validate PhotoTourDataset image readings.
-    Expectation: get correct number of data and correct content.
+    Description: Validate PhotoTourDataset image readings.
+    Expectation: Get correct number of data and correct content.
     """
     logger.info("Test PhotoTourDataset Op with content check")
     data1 = ds.PhotoTourDataset(DATA_DIR, NAME, 'test', num_samples=10, shuffle=False)
@@ -119,8 +119,8 @@ def test_photo_tour_content_check():
 def test_photo_tour_basic():
     """
     Feature: test_photo_tour_basic.
-    Description: test basic usage of PhotoTourDataset.
-    Expectation: get correct number of data.
+    Description: Test basic usage of PhotoTourDataset.
+    Expectation: Get correct number of data.
     """
     logger.info("Test PhotoTourDataset Op")
 
@@ -178,8 +178,8 @@ def test_photo_tour_basic():
 def test_photo_tour_pk_sampler():
     """
     Feature: test_photo_tour_pk_sampler.
-    Description: test usage of PhotoTourDataset with PKSampler.
-    Expectation: get correct number of data.
+    Description: Test usage of PhotoTourDataset with PKSampler.
+    Expectation: Get correct number of data.
     """
     logger.info("Test PhotoTourDataset Op with PKSampler")
     golden = [0, 0, 0, 1, 1, 1]
@@ -197,8 +197,8 @@ def test_photo_tour_pk_sampler():
 def test_photo_tour_sequential_sampler():
     """
     Feature: test_photo_tour_sequential_sampler.
-    Description: test usage of PhotoTourDataset with SequentialSampler.
-    Expectation: get correct number of data.
+    Description: Test usage of PhotoTourDataset with SequentialSampler.
+    Expectation: Get correct number of data.
     """
     logger.info("Test PhotoTourDataset Op with SequentialSampler")
     num_samples = 5
@@ -218,8 +218,8 @@ def test_photo_tour_sequential_sampler():
 def test_photo_tour_exception():
     """
     Feature: test_photo_tour_exception.
-    Description: test error cases for PhotoTourDataset.
-    Expectation: raise exception.
+    Description: Test error cases for PhotoTourDataset.
+    Expectation: Raise exception.
     """
     logger.info("Test error cases for PhotoTourDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -262,8 +262,8 @@ def test_photo_tour_exception():
 def test_photo_tour_visualize(plot=False):
     """
     Feature: test_photo_tour_visualize.
-    Description: visualize PhotoTourDataset results.
-    Expectation: get correct number of data and plot them.
+    Description: Visualize PhotoTourDataset results.
+    Expectation: Get correct number of data and plot them.
     """
     logger.info("Test PhotoTourDataset visualization")
 
@@ -293,8 +293,8 @@ def test_photo_tour_visualize(plot=False):
 def test_photo_tour_usage():
     """
     Feature: test_photo_tour_usage.
-    Description: validate PhotoTourDataset image readings.
-    Expectation: get correct number of data.
+    Description: Validate PhotoTourDataset image readings.
+    Expectation: Get correct number of data.
     """
     logger.info("Test PhotoTourDataset usage flag")
 

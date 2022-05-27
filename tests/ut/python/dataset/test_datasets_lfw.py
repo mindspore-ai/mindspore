@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ DATA_DIR = "../data/dataset/testLFW"
 def test_lfw_basic():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case basic")
     # define parameters.
@@ -50,8 +50,8 @@ def test_lfw_basic():
 def test_lfw_task():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case basic")
     # define parameters.
@@ -77,8 +77,8 @@ def test_lfw_task():
 def test_lfw_usage():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case basic")
     # define parameters.
@@ -103,8 +103,8 @@ def test_lfw_usage():
 def test_lfw_image_set():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case basic")
     # define parameters.
@@ -129,8 +129,8 @@ def test_lfw_image_set():
 def test_lfw_num_samples():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case numSamples")
     # define parameters.
@@ -175,8 +175,8 @@ def test_lfw_num_samples():
 def test_lfw_num_shards():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case numShards")
     # define parameters.
@@ -200,8 +200,8 @@ def test_lfw_num_shards():
 def test_lfw_shard_id():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case withShardID")
     # define parameters.
@@ -225,8 +225,8 @@ def test_lfw_shard_id():
 def test_lfw_no_shuffle():
     """
     Feature: LFW
-    Description: test dataset of LFW
-    Expectation: the dataset is as expected
+    Description: Test dataset of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case noShuffle")
     # define parameters.
@@ -251,8 +251,8 @@ def test_lfw_no_shuffle():
 def test_lfw_decode():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case decode")
     # define parameters.
@@ -277,8 +277,8 @@ def test_lfw_decode():
 def test_sequential_sampler():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case SequentialSampler")
     # define parameters.
@@ -302,8 +302,8 @@ def test_sequential_sampler():
 def test_random_and_sequentialchained_sampler():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case Chained Sampler - Random and Sequential, with repeat")
 
@@ -336,8 +336,8 @@ def test_random_and_sequentialchained_sampler():
 def test_lfw_rename():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case rename")
     # define parameters.
@@ -375,8 +375,8 @@ def test_lfw_rename():
 def test_lfw_zip():
     """
     Feature: LFW
-    Description: test basic usage of LFW
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LFW
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case zip")
     # define parameters.
@@ -407,8 +407,8 @@ def test_lfw_zip():
 def test_lfw_exception():
     """
     Feature: LFW
-    Description: test error cases of LFW
-    Expectation: throw exception correctly
+    Description: Test error cases of LFW
+    Expectation: Throw exception correctly
     """
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
     with pytest.raises(RuntimeError, match=error_msg_1):

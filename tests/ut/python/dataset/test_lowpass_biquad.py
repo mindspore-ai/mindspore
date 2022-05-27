@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_lowpass_biquad_eager():
-    """ mindspore eager mode normal testcase:lowpass_biquad op"""
+    """
+    Feature: LowpassBiquad
+    Description: Test LowpassBiquad op in eager mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[0.8236, 0.2049, 0.3335], [0.5933, 0.9911, 0.2482],
                          [0.3007, 0.9054, 0.7598], [0.5394, 0.2842, 0.5634], [0.6363, 0.2226, 0.2288]])
@@ -49,7 +53,11 @@ def test_lowpass_biquad_eager():
 
 
 def test_lowpass_biquad_pipeline():
-    """ mindspore pipeline mode normal testcase:lowpass_biquad op"""
+    """
+    Feature: LowpassBiquad op
+    Description: Test LowpassBiquad op in pipeline mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[3.5, 3.2, 2.5, 7.1], [5.5, 0.3, 4.9, 5.0],
                          [1.3, 7.4, 7.1, 3.8], [3.4, 3.3, 3.7, 1.1]])
@@ -70,7 +78,9 @@ def test_lowpass_biquad_pipeline():
 
 def test_lowpass_biquad_invalid_input():
     """
-    Test invalid input of LowpassBiquad
+    Feature: LowpassBiquad op
+    Description: Test LowpassBiquad op with invalid input
+    Expectation: Correct error is raised as expected
     """
     def test_invalid_input(test_name, sample_rate, cutoff_freq, Q, error, error_msg):
         logger.info("Test LowpassBiquad with bad input: {0}".format(test_name))

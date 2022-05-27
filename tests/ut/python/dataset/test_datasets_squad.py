@@ -23,8 +23,8 @@ DATASET_DIR_V2 = '../data/dataset/testSQuAD/SQuAD2'
 def test_squad_basic():
     """
     Feature: SQuADDataset.
-    Description: test SQuADDataset with repeat, skip and so on.
-    Expectation: the data is processed successfully.
+    Description: Test SQuADDataset with repeat, skip and so on.
+    Expectation: The data is processed successfully.
     """
     data = ds.SQuADDataset(DATASET_DIR_V1, usage='train', shuffle=False)
 
@@ -43,8 +43,8 @@ def test_squad_basic():
 def test_squad_num_shards():
     """
     Feature: SQuADDataset.
-    Description: test num_shards param of SQuAD dataset.
-    Expectation: the data is processed successfully.
+    Description: Test num_shards param of SQuAD dataset.
+    Expectation: The data is processed successfully.
     """
     data = ds.SQuADDataset(DATASET_DIR_V1, usage='train',
                            num_shards=3, shard_id=2)
@@ -59,8 +59,8 @@ def test_squad_num_shards():
 def test_squad_num_samples():
     """
     Feature: SQuADDataset.
-    Description: test num_samples param of SQuAD dataset.
-    Expectation: the data is processed successfully.
+    Description: Test num_samples param of SQuAD dataset.
+    Expectation: The data is processed successfully.
     """
     data = ds.SQuADDataset(DATASET_DIR_V1, usage='train', num_samples=2)
     count = 0
@@ -72,8 +72,8 @@ def test_squad_num_samples():
 def test_squad_dataset_get_datasetsize():
     """
     Feature: SQuADDataset.
-    Description: test get_dataset_size of SQuAD dataset.
-    Expectation: the data is processed successfully.
+    Description: Test get_dataset_size of SQuAD dataset.
+    Expectation: The data is processed successfully.
     """
     data = ds.SQuADDataset(DATASET_DIR_V1, usage='train')
     size = data.get_dataset_size()
@@ -83,8 +83,8 @@ def test_squad_dataset_get_datasetsize():
 def test_squad_version1():
     """
     Feature: SQuADDataset.
-    Description: test SQuAD 1.1 for train, dev and all.
-    Expectation: the data is processed successfully.
+    Description: Test SQuAD 1.1 for train, dev and all.
+    Expectation: The data is processed successfully.
     """
     # train
     data = ds.SQuADDataset(DATASET_DIR_V1, usage='train', shuffle=False)
@@ -122,8 +122,8 @@ def test_squad_version1():
 def test_squad_version2():
     """
     Feature: SQuADDataset.
-    Description: test SQuAD2.0 for train, dev and all.
-    Expectation: the data is processed successfully.
+    Description: Test SQuAD2.0 for train, dev and all.
+    Expectation: The data is processed successfully.
     """
 
     # train
@@ -165,8 +165,8 @@ def test_squad_version2():
 def test_squad_to_device():
     """
     Feature: SQuADDataset.
-    Description: test SQuAD with to_device.
-    Expectation: the data is processed successfully.
+    Description: Test SQuAD with to_device.
+    Expectation: The data is processed successfully.
     """
     data = ds.SQuADDataset(DATASET_DIR_V1, usage='train', shuffle=False)
     data = data.to_device()
@@ -176,8 +176,8 @@ def test_squad_to_device():
 def test_squad_invalid_dir():
     """
     Feature: SQuADDataset.
-    Description: test SQuAD with invalid dir.
-    Expectation: throw correct error and message.
+    Description: Test SQuAD with invalid dir.
+    Expectation: Throw correct error and message.
     """
     invalid_dataset_dir = '../data/dataset/invalid_dir'
     with pytest.raises(ValueError) as info:
@@ -190,8 +190,8 @@ def test_squad_invalid_dir():
 def test_squad_exception():
     """
     Feature: SQuADDataset.
-    Description: test file info in err msg when exception occur of SQuAD dataset.
-    Expectation: unable to read in data.
+    Description: Test file info in err msg when exception occur of SQuAD dataset.
+    Expectation: Unable to read in data.
     """
 
     def exception_func(item):

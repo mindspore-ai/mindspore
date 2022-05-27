@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ def visualize_dataset(images, labels):
 def test_fake_image_basic():
     """
     Feature: FakeImage
-    Description: test basic usage of FakeImage
-    Expectation: the dataset is as expected
+    Description: Test basic usage of FakeImage
+    Expectation: The dataset is as expected
     """
     logger.info("Test FakeImageDataset Op")
 
@@ -100,8 +100,8 @@ def test_fake_image_basic():
 def test_fake_image_pk_sampler():
     """
     Feature: FakeImage
-    Description: test FakeImageDataset with PKSamplere
-    Expectation: the results are as expected
+    Description: Test FakeImageDataset with PKSamplere
+    Expectation: The results are as expected
     """
     logger.info("Test FakeImageDataset Op with PKSampler")
     golden = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9]
@@ -120,8 +120,8 @@ def test_fake_image_pk_sampler():
 def test_fake_image_sequential_sampler():
     """
     Feature: FakeImage
-    Description: test FakeImageDataset with SequentialSampler
-    Expectation: the results are as expected
+    Description: Test FakeImageDataset with SequentialSampler
+    Expectation: The results are as expected
     """
     logger.info("Test FakeImageDataset Op with SequentialSampler")
     num_samples = 50
@@ -144,8 +144,8 @@ def test_fake_image_sequential_sampler():
 def test_fake_image_exception():
     """
     Feature: FakeImage
-    Description: test error cases for FakeImageDataset
-    Expectation: throw exception correctly
+    Description: Test error cases for FakeImageDataset
+    Expectation: Throw exception correctly
     """
     logger.info("Test error cases for FakeImageDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -193,8 +193,8 @@ def test_fake_image_exception():
 def test_fake_image_visualize(plot=False):
     """
     Feature: FakeImage
-    Description: test FakeImageDataset visualized results
-    Expectation: get correct dataset of FakeImage
+    Description: Test FakeImageDataset visualized results
+    Expectation: Get correct dataset of FakeImage
     """
     logger.info("Test FakeImageDataset visualization")
 
@@ -219,8 +219,8 @@ def test_fake_image_visualize(plot=False):
 def test_fake_image_num_images():
     """
     Feature: FakeImage
-    Description: test FakeImageDataset with num images
-    Expectation: throw exception correctly or get correct dataset
+    Description: Test FakeImageDataset with num images
+    Expectation: Throw exception correctly or get correct dataset
     """
     logger.info("Test FakeImageDataset num_images flag")
 
@@ -244,8 +244,8 @@ def test_fake_image_num_images():
 def test_fake_image_image_size():
     """
     Feature: FakeImage
-    Description: test FakeImageDataset with image size
-    Expectation: throw exception correctly or get correct dataset
+    Description: Test FakeImageDataset with image size
+    Expectation: Throw exception correctly or get correct dataset
     """
     logger.info("Test FakeImageDataset image_size flag")
 
@@ -270,8 +270,8 @@ def test_fake_image_image_size():
 def test_fake_image_num_classes():
     """
     Feature: FakeImage
-    Description: test FakeImageDataset with num classes
-    Expectation: throw exception correctly or get correct dataset
+    Description: Test FakeImageDataset with num classes
+    Expectation: Throw exception correctly or get correct dataset
     """
     logger.info("Test FakeImageDataset num_classes flag")
 
