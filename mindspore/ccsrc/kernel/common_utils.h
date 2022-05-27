@@ -315,13 +315,16 @@ inline std::map<uint32_t, tensor::TensorPtr> GetKernelDepends(const CNodePtr &cn
 template <typename Derived>
 class MatchKernelHelper {
  public:
+  MatchKernelHelper() = default;
+  virtual ~MatchKernelHelper() = default;
+
   using KernelRunFunc = std::function<bool(Derived *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &)>;
   virtual const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const = 0;
 
  protected:
-  std::vector<KernelAttr> GetOpSupport() {
-    auto &func_list = static_cast<Derived *>(this)->GetFuncList();
+  std::vector<KernelAttr> OpSupport() const {
+    auto &func_list = static_cast<const Derived *>(this)->GetFuncList();
     std::vector<KernelAttr> support_list;
     (void)std::transform(func_list.begin(), func_list.end(), std::back_inserter(support_list),
                          [](const std::pair<KernelAttr, KernelRunFunc> &pair) { return pair.first; });
@@ -332,7 +335,7 @@ class MatchKernelHelper {
     auto kernel_name = base_operator->name();
     auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
     auto &func_list = static_cast<Derived *>(this)->GetFuncList();
-    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+    auto [is_match, index] = MatchKernelAttr(kernel_attr, OpSupport());
     if (!is_match) {
       MS_LOG(ERROR) << "The kernel '" << kernel_name << "' does not support this kernel data type: " << kernel_attr;
       return false;
