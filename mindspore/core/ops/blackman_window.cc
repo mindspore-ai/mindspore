@@ -20,7 +20,6 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "ops/primitive_c.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
@@ -50,9 +49,13 @@ abstract::ShapePtr BlackmanWindowInferShape(const PrimitivePtr &primitive,
     auto window_length_shape = window_length_shape_map[kShape];
 
     if (window_length_shape.size() != 0) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', the dim of window_length must be 0, but got: " << window_length_shape.size()
-                               << ".";
+      if (window_length_shape[0] == 0) {
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input window_length can not be empty.";
+      } else {
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                 << "', the dim of window_length must be 0, but got: " << window_length_shape.size()
+                                 << ".";
+      }
     }
 
     std::vector<int64_t> out_shape;
@@ -73,6 +76,16 @@ abstract::ShapePtr BlackmanWindowInferShape(const PrimitivePtr &primitive,
                                << max_length << "], but got: " << window_length_value << ".";
     }
   } else {
+    auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+    auto x_size = x_shape.size();
+    if (x_size != 0) {
+      if (x_shape[0] == 0) {
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input window_length can not be empty.";
+      } else {
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                 << "', the dim of window_length must be 0, but got: " << x_size << ".";
+      }
+    }
     std::vector<int64_t> out_shape = {abstract::Shape::SHP_ANY};
     std::vector<int64_t> infer_shape_min = {0};
     std::vector<int64_t> infer_shape_max = {max_length};
@@ -93,6 +106,12 @@ TypePtr BlackmanWindowInferType(const PrimitivePtr &prim, const std::vector<Abst
   return infer_type;
 }
 }  // namespace
+
+void BlackmanWindow::Init(const bool periodic) { set_periodic(periodic); }
+
+void BlackmanWindow::set_periodic(const bool periodic) { (void)this->AddAttr(kPeriodic, api::MakeValue(periodic)); }
+
+bool BlackmanWindow::get_periodic() const { return GetValue<bool>(GetAttr(kPeriodic)); }
 
 AbstractBasePtr BlackmanWindowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
