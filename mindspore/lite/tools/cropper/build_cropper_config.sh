@@ -57,7 +57,7 @@ getDeep() {
   map_files=$(gcc -MM ${2} ${DEFINE_STR} ${HEADER_LOCATION})
   # first is *.o second is *.cc
   array_deep=()
-  while IFS='' read -r line; do array_deep+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build' | egrep -v ${REMOVE_LISTS_STR})
+  while IFS='' read -r line; do array_deep+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h|core/utils' | egrep -v ${REMOVE_LISTS_STR})
   # shellcheck disable=SC2068
   for array_deep_file in ${array_deep[@]}; do
     # only add existing files
@@ -95,7 +95,7 @@ getOpsFile() {
       map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
       # first is *.o second is *.cc
       array_file=()
-      while IFS='' read -r line; do array_file+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build' | egrep -v ${REMOVE_LISTS_STR})
+      while IFS='' read -r line; do array_file+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h|core/utils' | egrep -v ${REMOVE_LISTS_STR})
       # shellcheck disable=SC2068
       for array_file in ${array_file[@]}; do
         # only add existing files
@@ -127,16 +127,16 @@ getFilesFromArr() {
     map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
     # first is *.o second is *.cc
     # shellcheck disable=SC2207
-    array_runtime=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -v "flatbuffers" | egrep -v ${REMOVE_LISTS_STR}))
+    array_runtime=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | egrep -v 'flatbuffers|build|third_party|type_id.h' | egrep -v ${REMOVE_LISTS_STR}))
     # only add existing files
     for array_runtime_file in "${array_runtime[@]}"; do
       if [[ -e ${array_runtime_file%h*}cc && ! ${all_files[*]} =~ ${array_runtime_file%h*}cc ]]; then
         all_files=("${all_files[@]}" "${array_runtime_file%h*}cc")
-        getDeep "CommonFile" ${array_runtime_file%h*}cc "common" $2 &
+        getDeep "CommonFile" ${array_runtime_file%h*}cc "common" $2
       fi
       if [[ -e ${array_runtime_file%h*}c && ! ${all_files[*]} =~ ${array_runtime_file%h*}c ]]; then
         all_files=("${all_files[@]}" "${array_runtime_file%h*}c")
-        getDeep "CommonFile" ${array_runtime_file%h*}c "common" $2 &
+        getDeep "CommonFile" ${array_runtime_file%h*}c "common" $2
       fi
     done
   done
@@ -154,9 +154,9 @@ getCommonFile() {
   while IFS='' read -r line; do common_files_h+=("$line"); done < <(ls mindspore/lite/src/common/*.h)
   runtime_files_h=()
   while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls mindspore/lite/src/runtime/*.h)
-  train_files_h=()
-  while IFS='' read -r line; do train_files_h+=("$line"); done < <(ls mindspore/lite/include/train/*.h)
-  while IFS='' read -r line; do train_files_h+=("$line"); done < <(ls mindspore/lite/src/train/*.h)
+  mindrt_files_h=()
+  while IFS='' read -r line; do mindrt_files_h+=("$line"); done < <(ls mindspore/core/mindrt/src/actor/*.h)
+  while IFS='' read -r line; do mindrt_files_h+=("$line"); done < <(ls mindspore/core/mindrt/src/thread/*.h)
   others_files_h=(
     mindspore/lite/src/runtime/infer_manager.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/infer_register.h
@@ -171,9 +171,17 @@ getCommonFile() {
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/infer.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/errorcode.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/common_func.h
+    mindspore/lite/experimental/src/exec_env_utils.h
+    mindspore/lite/src/expression/ops_utils.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c_utils.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensorlist_c_utils.h
+    mindspore/core/utils/log_adapter.h
+    mindspore/core/ir/api_tensor_impl.h
+    mindspore/lite/src/runtime/cxx_api/tensor/tensor_impl.h
   )
   all_files_h=("${include_h[@]}" "${regist_include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}"
-               "${runtime_files_h[@]}" "${others_files_h[@]}"
+               "${runtime_files_h[@]}" "${others_files_h[@]}" "${mindrt_files_h[@]}"
   )
 
   # concat regx
@@ -214,7 +222,28 @@ getCommonFile() {
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/shape_fusion_infer.c
     mindspore/lite/src/runtime/kernel/cpu/fp32/shape_fusion_fp32.cc
     mindspore/core/utils/status.cc
+    mindspore/core/utils/log_adapter.cc
+    mindspore/lite/experimental/src/exec_env_utils.cc
+    mindspore/lite/src/expression/ops_utils.cc
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c_utils.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensorlist_c_utils.c
   )
+  all_files=("${src_files[@]}" "${regist_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
+    "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"
+    "${cxx_api_files[@]}"
+  )
+  getFilesFromArr "${all_files[*]}" &
+  getFilesFromArr "${all_files_h[*]}" &
+  wait
+  # shellcheck disable=SC2068
+  for file in ${all_files[@]}; do
+    file=$(echo ${file} | awk -F '/' '{print $NF}')
+    echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
+    echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}
+  done
+}
+
+getTrainCommonFile() {
   # save train files
   train_files=()
   while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/train/*.cc)
@@ -224,29 +253,16 @@ getCommonFile() {
   others_train_files=(
     mindspore/lite/tools/common/storage.cc
   )
-  all_files=("${src_files[@]}" "${regist_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
-    "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"
-    "${cxx_api_files[@]}"
+  all_files_train=("${train_files[@]}" "${others_train_files[@]}")
+  train_files_h=()
+  while IFS='' read -r line; do train_files_h+=("$line"); done < <(ls mindspore/lite/include/train/*.h)
+  while IFS='' read -r line; do train_files_h+=("$line"); done < <(ls mindspore/lite/src/train/*.h)
+  all_files_train_h=("${train_files_h[@]}"
   )
-  getFilesFromArr "${all_files[*]}"
-  getFilesFromArr "${all_files_h[*]}"
-  # shellcheck disable=SC2068
-  for file in ${all_files[@]}; do
-    file=$(echo ${file} | awk -F '/' '{print $NF}')
-    echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
-  done
-
-  all_files_train=("${all_files[@]}" "${train_files[@]}" "${others_train_files[@]}"
-  )
-  all_files_train_h=("${all_files_h[@]}" "${train_files_h[@]}"
-  )
-  REMOVE_LISTS_STR="${all_files_train_h[0]}"
-  # shellcheck disable=SC2068
-  for val in ${all_files_train_h[@]:1}; do
-    REMOVE_LISTS_STR="$REMOVE_LISTS_STR|$val"
-  done
-  getFilesFromArr "${all_files_train[*]}" "train_source"
-  getFilesFromArr "${all_files_train_h[*]}" "train_source"
+  getFilesFromArr "${all_files_train[*]}"  "train_source" &
+  getFilesFromArr "${all_files_train_h[*]}"  "train_source" &
+  wait
+  sleep 0.5
   # shellcheck disable=SC2068
   for file in ${all_files_train[@]}; do
     file=$(echo ${file} | awk -F '/' '{print $NF}')
@@ -301,8 +317,7 @@ generateOpsList() {
 echo "Start getting all file associations."
 generateOpsList
 getCommonFile
-wait
-sleep 1
+getTrainCommonFile
 # get src/common/ops
 getOpsFile "REG_POPULATE\(PrimitiveType_" "mindspore/lite/src/common/ops/populate" "prototype" &
 getOpsFile "REG_INFER\(.*?, PrimType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer" "prototype" &
@@ -313,12 +328,10 @@ getOpsFile "REG_KERNEL\(.*?, kNumberTypeInt8, PrimitiveType_" "mindspore/lite/sr
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeInt32, PrimitiveType_" "mindspore/lite/src/runtime/kernel/cpu" "kNumberTypeInt32" &
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeBool, PrimitiveType_" "mindspore/lite/src/runtime/kernel/cpu" "kNumberTypeInt32" &
 wait
-sleep 1
+sleep 0.5
 # remove duplicate files
 sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | uniq >${CPU_MAPPING_OUTPUT_FILE}
 chmod 444 ${CPU_MAPPING_OUTPUT_FILE}
-
-sleep 1
 # remove duplicate files
 sort ${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP} | uniq >${CPU_TRAIN_MAPPING_OUTPUT_FILE}
 chmod 444 ${CPU_TRAIN_MAPPING_OUTPUT_FILE}
@@ -344,7 +357,7 @@ getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_"
 getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeInt8, PrimitiveType_" "mindspore/lite/src/runtime/kernel/opencl/kernel" "kNumberTypeInt8" &
 getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeInt32, PrimitiveType_" "mindspore/lite/src/runtime/kernel/opencl/kernel" "kNumberTypeInt32" &
 getOpsFileWithNoDeepSearch "REG_KERNEL\(.*?, kNumberTypeBool, PrimitiveType_" "mindspore/lite/src/runtime/kernel/opencl/kernel" "kNumberTypeInt32" &
-sleep 1
+sleep 0.5
 wait
 sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | uniq >${GPU_MAPPING_OUTPUT_FILE}
 chmod 444 ${GPU_MAPPING_OUTPUT_FILE}
@@ -361,7 +374,6 @@ for file in ${npu_files[@]}; do
   echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
 done
 
-sleep 1
 sort ${MAPPING_OUTPUT_FILE_NAME_TMP} | uniq >${NPU_MAPPING_OUTPUT_FILE}
 chmod 444 ${NPU_MAPPING_OUTPUT_FILE}
 

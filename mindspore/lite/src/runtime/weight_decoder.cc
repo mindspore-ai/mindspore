@@ -471,6 +471,7 @@ int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tens
       MS_LOG(DEBUG) << "Dequant tensor failed";
       return RET_ERROR;
     }
+    tensor->ClearQuantParam();
   }
   return RET_OK;
 #else

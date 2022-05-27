@@ -166,6 +166,12 @@ class DebugInfoManager {
 
   std::string CreateFilePath(const std::string &dir_path, const std::string &file_name);
 
+  std::vector<LiteQuantParam> ConvertTensorsQuantParam(const mindspore::schema::Tensor *src_tensor);
+
+  void AddQuantParamExtend(const mindspore::lite::LiteGraph::Node *node, const mindspore::schema::Tensor *tensor);
+
+  void CollectQuantParam(const mindspore::lite::LiteModel &quant_lite_model);
+
   template <typename T>
   void GetStatByTensor(const T *tensor_data, size_t element_num, QuantDebugInfo *infos) {
     MS_ASSERT(infos != nullptr);
@@ -196,8 +202,6 @@ class DebugInfoManager {
   std::vector<QuantParamExtend> quant_params_;
   std::vector<std::vector<QuantDebugInfo>> output_infos_;
   std::map<std::string, MSTensor> origin_outputs_;
-  // Mark whether to save quantization parameters. only save 1 round.
-  bool save_flag_ = true;
 };
 }  // namespace mindspore::lite
 

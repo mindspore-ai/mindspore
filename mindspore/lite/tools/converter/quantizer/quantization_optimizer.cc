@@ -156,7 +156,8 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterP
                  const std::shared_ptr<mindspore::Model> &origin_model, mindspore::lite::LiteModel *origin_lite_model) {
   auto quant_model = std::make_shared<mindspore::Model>();
   CHECK_NULL_RETURN(quant_model);
-  auto ret = BuildModelByFuncGraph(quant_model, old_graph, param);
+  int size = 0;
+  auto ret = BuildModelByFuncGraph(quant_model, old_graph, param, &size);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Build model failed";
     return RET_ERROR;
@@ -215,7 +216,8 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<C
     param->commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
     origin = std::make_shared<mindspore::Model>();
     CHECK_NULL_RETURN(origin);
-    auto ret = BuildModelByFuncGraph(origin, old_graph, param);
+    int size = 0;
+    auto ret = BuildModelByFuncGraph(origin, old_graph, param, &size);
     param->commonQuantParam.quant_type = quant_type;
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Build model failed";

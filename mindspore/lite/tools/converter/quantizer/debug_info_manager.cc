@@ -33,6 +33,57 @@ namespace mindspore::lite {
 namespace {
 constexpr int kNumUsPerMs = 1000;
 }  // namespace
+std::vector<LiteQuantParam> DebugInfoManager::ConvertTensorsQuantParam(const mindspore::schema::Tensor *src_tensor) {
+  MS_ASSERT(src_tensor != nullptr);
+  auto quant_params = src_tensor->quantParams();
+  std::vector<LiteQuantParam> lite_quant_params;
+  if (quant_params != nullptr) {
+    for (size_t j = 0; j < quant_params->size(); j++) {
+      auto quant_param = quant_params->Get(j);
+      LiteQuantParam quant_arg{};
+      if (quant_param == nullptr) {
+        quant_arg.inited = false;
+      } else {
+        quant_arg.inited = true;
+        quant_arg.bitNum = quant_param->numBits();
+        quant_arg.scale = quant_param->scale();
+        quant_arg.zeroPoint = quant_param->zeroPoint();
+        quant_arg.var_corr = quant_param->varCorr();
+        quant_arg.mean_corr = quant_param->meanCorr();
+        quant_arg.roundType = quant_param->roundType();
+        quant_arg.multiplier = quant_param->multiplier();
+        quant_arg.dstDtype = quant_param->dstDtype();
+        quant_arg.min = quant_param->min();
+        quant_arg.max = quant_param->max();
+      }
+      lite_quant_params.push_back(quant_arg);
+    }
+  }
+  return lite_quant_params;
+}
+
+void DebugInfoManager::AddQuantParamExtend(const mindspore::lite::LiteGraph::Node *node,
+                                           const mindspore::schema::Tensor *tensor) {
+  auto q_param = ConvertTensorsQuantParam(tensor);
+  if (!q_param.empty()) {
+    QuantParamExtend quant_param_extend;
+    quant_param_extend.quant_params = q_param;
+    quant_param_extend.node_name = node->name_;
+    quant_param_extend.tensor_name = tensor->name()->str();
+    quant_param_extend.node_type = schema::EnumNamePrimitiveType(static_cast<PrimitiveType>(node->node_type_));
+    std::vector<int> dims;
+    int element_num = 1;
+    for (size_t j = 0; j < tensor->dims()->size(); j++) {
+      auto dim = tensor->dims()->data()[j];
+      dims.push_back(dim);
+      element_num *= dim;
+    }
+    quant_param_extend.dims = dims;
+    quant_param_extend.element_num = element_num;
+    quant_params_.push_back(quant_param_extend);
+  }
+}
+
 std::string DebugInfoManager::ParseInOutTensorToString(InOutFlag in_out_flag) {
   switch (in_out_flag) {
     case INPUT:
@@ -375,7 +426,7 @@ int DebugInfoManager::GetConstTensor(const std::map<std::string, mindspore::sche
   }
   new_tensor->set_data_type(static_cast<TypeId>(iter->second->dataType()));
   new_tensor->set_shape(tensor->shape());
-  new_tensor->set_quant_params(tensor->quant_params());
+  new_tensor->set_quant_params(ConvertTensorsQuantParam(iter->second));
   new_tensor->set_tensor_name(tensor->tensor_name());
   new_tensor->set_category(static_cast<mindspore::lite::Tensor *>(tensor)->category());
   new_tensor->set_format(tensor->format());
@@ -433,16 +484,6 @@ MSKernelCallBack DebugInfoManager::GetQuantBeforeCallBack(
     for (size_t i = 0; i < inputs.size(); ++i) {
       auto tensor = inputs.at(i);
       auto lite_tensor = quant::MSTensorToLiteTensor(tensor);
-      if (save_flag_ && !tensor.QuantParams().empty()) {
-        QuantParamExtend quant_param;
-        quant_param.node_name = call_param.node_name;
-        quant_param.node_type = call_param.node_type;
-        quant_param.quant_params = lite_tensor->quant_params();
-        quant_param.tensor_name = lite_tensor->tensor_name();
-        quant_param.element_num = lite_tensor->ElementsNum();
-        quant_param.dims = lite_tensor->shape();
-        quant_params_.push_back(quant_param);
-      }
       if (debug_mode == quant::FAST && (origin_outputs_.find(tensor.Name()) == origin_outputs_.end())) {
         continue;
       }
@@ -496,16 +537,6 @@ MSKernelCallBack DebugInfoManager::GetAfterCallBack(const std::map<std::string, 
       for (size_t i = 0; i < outputs.size(); ++i) {
         auto tensor = outputs.at(i);
         auto lite_tensor = quant::MSTensorToLiteTensor(tensor);
-        if (save_flag_ && !tensor.QuantParams().empty()) {
-          QuantParamExtend quant_param;
-          quant_param.node_name = call_param.node_name;
-          quant_param.node_type = call_param.node_type;
-          quant_param.quant_params = lite_tensor->quant_params();
-          quant_param.tensor_name = lite_tensor->tensor_name();
-          quant_param.element_num = lite_tensor->ElementsNum();
-          quant_param.dims = lite_tensor->shape();
-          quant_params_.push_back(quant_param);
-        }
         // subgraph isolation by appending "_duplicate" to output tensor
         std::string delimiter = "_duplicate";
         std::vector<std::string> tensor_names = SplitStringToVector(tensor.Name(), delimiter);
@@ -523,7 +554,10 @@ MSKernelCallBack DebugInfoManager::GetAfterCallBack(const std::map<std::string, 
       // all outputs are same dtype.
       for (size_t i = 0; i < outputs.size(); ++i) {
         auto tensor = outputs.at(i);
-        if (debug_mode == quant::FAST && (origin_outputs_.find(tensor.Name()) == origin_outputs_.end())) {
+        // subgraph isolation by appending "_duplicate" to output tensor
+        std::string delimiter = "_duplicate";
+        std::vector<std::string> tensor_names = SplitStringToVector(tensor.Name(), delimiter);
+        if (debug_mode == quant::FAST && (origin_outputs_.find(tensor_names[0]) == origin_outputs_.end())) {
           continue;
         }
         MS_LOG(INFO) << " Get output " << tensor.Name() << " statistics info.";
@@ -627,7 +661,10 @@ int DebugInfoManager::GetClipAndCos(const quant::DebugMode &debug_mode) {
 int DebugInfoManager::GetOutputInfo() {
   std::vector<QuantDebugInfo> output_info;
   for (auto iter = compared_info_.begin(); iter != compared_info_.end(); ++iter) {
-    if (origin_outputs_.find(iter->tensor_name) != origin_outputs_.end() && iter->primary_key.in_out_flag == OUTPUT) {
+    // subgraph isolation by appending "_duplicate" to output tensor
+    std::string delimiter = "_duplicate";
+    std::vector<std::string> tensor_names = SplitStringToVector(iter->tensor_name, delimiter);
+    if (origin_outputs_.find(tensor_names[0]) != origin_outputs_.end() && iter->primary_key.in_out_flag == OUTPUT) {
       MS_LOG(INFO) << "output tensor name: " << iter->tensor_name << " data_type_flag: " << iter->data_type_flag;
       output_info.push_back(*iter);
     }
@@ -713,6 +750,19 @@ int DebugInfoManager::StatisticsDataPerRound(
   return RET_OK;
 }
 
+void DebugInfoManager::CollectQuantParam(const mindspore::lite::LiteModel &quant_lite_model) {
+  for (auto &node : quant_lite_model.graph_.all_nodes_) {
+    for (auto &index : node->input_indices_) {
+      auto tensor = quant_lite_model.graph_.all_tensors_[index];
+      AddQuantParamExtend(node, tensor);
+    }
+    for (auto &index : node->output_indices_) {
+      auto tensor = quant_lite_model.graph_.all_tensors_[index];
+      AddQuantParamExtend(node, tensor);
+    }
+  }
+}
+
 std::string DebugInfoManager::CreateFilePath(const std::string &dir_path, const std::string &file_name) {
   auto real_path = RealPath(dir_path.c_str());
   std::string file_path = real_path + FILE_SEPARATOR + file_name;
@@ -726,12 +776,20 @@ int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Mo
                                              const mindspore::lite::LiteModel &origin_lite_model,
                                              const mindspore::lite::LiteModel &quant_lite_model) {
   auto begin = GetTimeUs();
+  CollectQuantParam(quant_lite_model);
+  std::string file_name = "quant_param.csv";
+  auto quant_param_save_path = CreateFilePath(param->commonQuantParam.debug_info_save_path, file_name);
+  auto ret = SaveQuantParam(quant_param_save_path);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Failed to save quant param to " + quant_param_save_path;
+    return ret;
+  }
+
   auto origin_input_tensor_map = ParseInputTensors(origin_lite_model);
   auto quant_input_tensor_map = ParseInputTensors(quant_lite_model);
   for (auto &tensor : origin->GetOutputs()) {
     origin_outputs_[tensor.Name()] = tensor;
   }
-  int ret;
   auto data_preprocess = param->dataPreProcessParam;
   // When the calibration data set does not exist, use 1 round of random numbers for comparison
   int rounds = data_preprocess.calibrate_size > 0 ? data_preprocess.calibrate_size : 1;
@@ -751,7 +809,7 @@ int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Mo
     }
     GetOutputInfo();
     if (param->commonQuantParam.debug_mode == quant::DETAIL) {
-      auto file_name = "round_" + std::to_string(round) + ".csv";
+      file_name = "round_" + std::to_string(round) + ".csv";
       auto file_path = CreateFilePath(param->commonQuantParam.debug_info_save_path, file_name);
       ret = SaveInfo(file_path);
       if (ret != RET_OK) {
@@ -761,15 +819,6 @@ int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Mo
       }
     }
     FreeBuffer();
-    save_flag_ = false;
-  }
-
-  auto file_name = "quant_param.csv";
-  auto quant_param_save_path = CreateFilePath(param->commonQuantParam.debug_info_save_path, file_name);
-  ret = SaveQuantParam(quant_param_save_path);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Failed to save quant param to " + quant_param_save_path;
-    return ret;
   }
 
   file_name = "output_summary.csv";

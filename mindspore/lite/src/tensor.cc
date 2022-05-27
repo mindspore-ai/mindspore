@@ -462,6 +462,11 @@ void Tensor::DecRefCount() {
 
 void Tensor::AddQuantParam(const LiteQuantParam &quant_param) { this->quant_params_.push_back(quant_param); }
 
+void Tensor::ClearQuantParam() {
+  this->quant_params().clear();
+  std::vector<LiteQuantParam>().swap(quant_params_);
+}
+
 std::vector<LiteQuantParam> Tensor::quant_params() const { return this->quant_params_; }
 
 void Tensor::set_quant_params(const std::vector<LiteQuantParam> quant_params) { this->quant_params_ = quant_params; }
