@@ -19,33 +19,21 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/pooling_fp32_avx512.h"
+#endif
 
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdFp32AvgPoolingBatchCoreCalc(block_size, block_num, src_plane_ptr, channel, dst_plane_ptr, ci,   \
-                                        real_win_h_start, real_win_h_end, real_win_w_start, real_win_w_end, \
-                                        in_h_index, in_w, in_w_index)                                       \
-  do {                                                                                                      \
-    MS_FLOAT_32xN(block_num) min_val_##block_num = MS_MOVN_F32(block_size, minf);                           \
-    MS_FLOAT_32xN(block_num) max_val_##block_num = MS_MOVN_F32(block_size, maxf);                           \
-    for (int block_max_size = channel - block_num + 1; ci < block_max_size; ci += block_num) {              \
-      const float *src_c_ptr = src_plane_ptr + ci;                                                          \
-      float *dst_c_ptr = dst_plane_ptr + ci;                                                                \
-      MS_FLOAT_32xN(block_num) tmp_avg = MS_MOVN_F32(block_size, 0.0f);                                     \
-      int real_count = 0;                                                                                   \
-      for (int h = real_win_h_start; h < real_win_h_end; h++) {                                             \
-        for (int w = real_win_w_start; w < real_win_w_end; w++) {                                           \
-          const float *src_win_ptr = src_c_ptr + ((in_h_index + h) * in_w + in_w_index + w) * channel;      \
-          tmp_avg = MS_ADD_F32(block_size, tmp_avg, MS_LD_F32(block_size, src_win_ptr));                    \
-          ++real_count;                                                                                     \
-        }                                                                                                   \
-      }                                                                                                     \
-      MS_CHECK_TRUE_RET(real_count != 0, NNACL_ERR);                                                        \
-      tmp_avg = MS_DIV_F32(block_size, tmp_avg, MS_MOVN_F32(block_size, real_count));                       \
-      tmp_avg = MS_MAX_F32(block_size, tmp_avg, min_val_##block_num);                                       \
-      tmp_avg = MS_MIN_F32(block_size, tmp_avg, max_val_##block_num);                                       \
-      MS_ST_F32(block_size, dst_c_ptr, tmp_avg);                                                            \
-    }                                                                                                       \
-  } while (0)
+#ifdef ENABLE_AVX
+#include "nnacl/avx/pooling_fp32_avx.h"
+#endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/sse/pooling_fp32_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/pooling_fp32_neon.h"
+#endif
 
 int AvgPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param, int task_id,
                     float minf, float maxf) {
@@ -76,9 +64,10 @@ int AvgPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParam
       int real_win_w_end = MSMIN(win_w, in_w - in_w_index);
       int ci = 0;
 
-      MS_SIMD_RUN_NO_SCALAR(SimdFp32AvgPoolingBatchCoreCalc, src_plane_ptr, channel, dst_plane_ptr, ci,
-                            real_win_h_start, real_win_h_end, real_win_w_start, real_win_w_end, in_h_index, in_w,
-                            in_w_index);
+      MS_CHECK_TRUE_RET(real_win_h_end > real_win_h_start, NNACL_ERR);
+      MS_CHECK_TRUE_RET(real_win_w_end > real_win_w_start, NNACL_ERR);
+      SIMD_RUN_NO_SCALAR(AvgPoolingBatch, ci, src_plane_ptr, channel, dst_plane_ptr, real_win_h_start, real_win_h_end,
+                         real_win_w_start, real_win_w_end, in_h_index, in_w, in_w_index, minf, maxf);
 
       for (; ci < channel; ci++) {
         const float *src_c_ptr = src_plane_ptr + ci;
@@ -360,29 +349,6 @@ int AvgPoolingFromNC4HW4ToNHWC(const float *input_ptr, float *output_ptr, const 
   return NNACL_OK;
 }
 
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdFp32MaxPoolingBatchCoreCalc(block_size, block_num, src_plane_ptr, channel, dst_plane_ptr, ci,   \
-                                        real_win_h_start, real_win_h_end, real_win_w_start, real_win_w_end, \
-                                        in_h_index, in_w, in_w_index)                                       \
-  do {                                                                                                      \
-    MS_FLOAT_32xN(block_num) min_val_##block_num = MS_MOVN_F32(block_size, minf);                           \
-    MS_FLOAT_32xN(block_num) max_val_##block_num = MS_MOVN_F32(block_size, maxf);                           \
-    for (int block_max_size = channel - block_num + 1; ci < block_max_size; ci += block_num) {              \
-      const float *src_c_ptr = src_plane_ptr + ci;                                                          \
-      float *dst_c_ptr = dst_plane_ptr + ci;                                                                \
-      MS_FLOAT_32xN(block_num) tmp_max = MS_MOVN_F32(block_size, -FLT_MAX);                                 \
-      for (int kh = real_win_h_start; kh < real_win_h_end; kh++) {                                          \
-        for (int kw = real_win_w_start; kw < real_win_w_end; kw++) {                                        \
-          const float *src_win_ptr = src_c_ptr + ((in_h_index + kh) * in_w + in_w_index + kw) * channel;    \
-          tmp_max = MS_MAX_F32(block_size, tmp_max, MS_LD_F32(block_size, src_win_ptr));                    \
-        }                                                                                                   \
-      }                                                                                                     \
-      tmp_max = MS_MAX_F32(block_size, tmp_max, min_val_##block_num);                                       \
-      tmp_max = MS_MIN_F32(block_size, tmp_max, max_val_##block_num);                                       \
-      MS_ST_F32(block_size, dst_c_ptr, tmp_max);                                                            \
-    }                                                                                                       \
-  } while (0)
-
 int MaxPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param, int task_id,
                     float minf, float maxf) {
   int in_w = pooling_param->input_w_, in_h = pooling_param->input_h_;
@@ -412,9 +378,8 @@ int MaxPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParam
       int real_win_w_end = MSMIN(win_w, in_w - in_w_index);
       int ci = 0;
 
-      MS_SIMD_RUN_NO_SCALAR(SimdFp32MaxPoolingBatchCoreCalc, src_plane_ptr, channel, dst_plane_ptr, ci,
-                            real_win_h_start, real_win_h_end, real_win_w_start, real_win_w_end, in_h_index, in_w,
-                            in_w_index);
+      SIMD_RUN_NO_SCALAR(MaxPoolingBatch, ci, src_plane_ptr, channel, dst_plane_ptr, real_win_h_start, real_win_h_end,
+                         real_win_w_start, real_win_w_end, in_h_index, in_w, in_w_index, minf, maxf);
 
       for (; ci < channel; ci++) {
         float *dst_c_ptr = dst_plane_ptr + ci;
