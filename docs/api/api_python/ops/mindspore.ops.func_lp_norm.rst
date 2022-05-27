@@ -14,6 +14,7 @@ mindspore.ops.lp_norm
     - **axis** (Union[int, list, tuple]) - 指定要计算范数的输入维度。
     - **p** (int) - 范数的值。默认值：2。
     - **keep_dims** (bool) - 输出Tensor是否保留原有的维度。默认值：False。
+    - **epsilon** (float) - 用于保持数据稳定性的常量。默认值：1e-12。
 
     **返回：**
 
@@ -27,5 +28,6 @@ mindspore.ops.lp_norm
     - **TypeError** - `p` 不是int。
     - **TypeError** - `axis` 是tuple或者list但其元素不是int。
     - **TypeError** - `keep_dims` 不是bool。
+    - **TypeError** - `epsilon` 不是float。
     - **ValueError** - `axis` 的元素超出范围 `[-len(input_x.shape, len(input_x.shape)]` ，其中 `input_x` 指当前Tensor 。
     - **ValueError** - `axis` 的维度rank大于当前Tensor的维度rank。
