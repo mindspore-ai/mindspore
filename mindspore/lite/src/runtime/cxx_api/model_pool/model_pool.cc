@@ -27,12 +27,8 @@
 
 namespace mindspore {
 namespace {
-constexpr int32_t kNumThreads = 8;
 constexpr int kNumDeviceInfo = 2;
 constexpr int kNumMaxTaskQueueSize = 1000;
-constexpr int kNumBindMode = lite::HIGHER_CPU;
-constexpr int32_t kNumInterOpParallel = 4;
-constexpr bool is_enable_parallel = true;
 int GetCoreNum() {
   int core_num = 1;
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -121,10 +117,6 @@ Status ModelPool::SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Con
 std::shared_ptr<mindspore::Context> ModelPool::GetDefaultContext() {
   MS_LOG(DEBUG) << "use default config.";
   auto context = std::make_shared<Context>();
-  context->SetThreadNum(kNumThreads);
-  context->SetEnableParallel(is_enable_parallel);
-  context->SetInterOpParallelNum(kNumInterOpParallel);
-  context->SetThreadAffinity(kNumBindMode);
   auto &device_list = context->MutableDeviceInfo();
   auto device_info = std::make_shared<CPUDeviceInfo>();
   if (device_info == nullptr) {
@@ -153,7 +145,7 @@ std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<
       MS_LOG(ERROR) << "model pool only support cpu or gpu type.";
       return nullptr;
     }
-    if (device->GetDeviceType() == kGPU) {
+    if (device->GetDeviceType() == kGPU && device_list.size() == kNumDeviceInfo) {
       return context;
     } else if (device->GetDeviceType() == kCPU) {
       auto cpu_context = device->Cast<CPUDeviceInfo>();
@@ -166,6 +158,10 @@ std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<
         MS_LOG(ERROR) << "Invalid thread num " << context->GetThreadNum();
         return nullptr;
       }
+    } else {
+      MS_LOG(ERROR) << "context is invalid; If you want run in GPU, you must set gpu device first, and then set cpu "
+                       "device";
+      return nullptr;
     }
   }
   return context;
@@ -373,10 +369,15 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "create PredictTaskQueue failed, predict task queue is nullptr.";
     return kLiteNullptr;
   }
+  Status status;
   if (use_numa_bind_mode_) {
-    predict_task_queue_->SetTaskQueueNum(used_numa_node_num_);
+    status = predict_task_queue_->InitTaskQueue(used_numa_node_num_, kNumMaxTaskQueueSize);
   } else {
-    predict_task_queue_->SetTaskQueueNum(1);
+    status = predict_task_queue_->InitTaskQueue(1, kNumMaxTaskQueueSize);
+  }
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "predict task queue init failed, status=" << status;
+    return kLiteError;
   }
   // read model by path and init packed weight by buffer
   size_t size = 0;
@@ -406,11 +407,11 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
     worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
                                              model_pool_config[i], predict_task_queue_, &create_worker_success_));
-    all_model_worker_.push_back(model_worker);
+    all_model_worker_.insert(std::make_pair(model_worker, task_queue_id));
   }
-  for (size_t i = 0; i < workers_num_; i++) {
-    auto work = all_model_worker_[i];
-    work->WaitCreateWorkerDone();
+  for (auto &item : all_model_worker_) {
+    auto &worker = item.first;
+    worker->WaitCreateWorkerDone();
     if (!create_worker_success_) {
       MS_LOG(ERROR) << "init failed.";
       return kLiteError;
@@ -425,11 +426,20 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     delete[] graph_buf;
     graph_buf = nullptr;
   }
+  tasks_ = new (std::nothrow) PredictTask[kNumMaxTaskQueueSize]();
+  if (tasks_ == nullptr) {
+    MS_LOG(ERROR) << "new task failed.";
+    return kLiteNullptr;
+  }
+  for (size_t i = 0; i < kNumMaxTaskQueueSize; i++) {
+    free_tasks_id_.insert(i);
+  }
   return kSuccess;
 }
 
 Status ModelPool::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
-  for (auto &worker : all_model_worker_) {
+  for (auto &item : all_model_worker_) {
+    auto &worker = item.first;
     auto status = worker->UpdateConfig(section, config);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model pool update config failed, status=" << status;
@@ -538,9 +548,9 @@ Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *output
     }
     size_t all_data_size = 0;
     size_t all_batch_size = 0;
-    std::vector<size_t> per_bacth_data_size;
+    std::vector<size_t> per_batch_data_size;
     for (size_t batch = 0; batch < outputs->size(); batch++) {
-      per_bacth_data_size.push_back(all_data_size);
+      per_batch_data_size.push_back(all_data_size);
       all_data_size += outputs->at(batch).at(i).DataSize();
       all_batch_size += outputs->at(batch).at(i).Shape().front();
     }
@@ -568,7 +578,7 @@ Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *output
         MS_LOG(ERROR) << "output data is nullptr.";
         return kLiteError;
       }
-      memcpy(reinterpret_cast<float *>(all_out_data) + per_bacth_data_size[j] / sizeof(float),
+      memcpy(reinterpret_cast<float *>(all_out_data) + per_batch_data_size[j] / sizeof(float),
              reinterpret_cast<float *>(out_data), outputs->at(j)[i].DataSize());
     }
     auto new_tensor = mindspore::MSTensor::CreateTensor(outputs->at(0)[i].Name(), outputs->at(0)[i].DataType(),
@@ -617,8 +627,12 @@ std::shared_ptr<ModelWorker> ModelPool::GetMaxWaitWorkerNum(int *max_wait_worker
     }
   }
   if (*max_wait_worker_num > 0 && !use_split_batch_) {
-    for (auto &worker : all_model_worker_) {
+    for (auto &item : all_model_worker_) {
+      auto &worker = item.first;
+      auto numa_id = item.second;
       if (worker->IsAvailable()) {
+        *max_wait_worker_num = predict_task_queue_->GetWaitModelNum(numa_id);
+        *max_wait_worker_node_id = numa_id;
         return worker;
       }
     }
@@ -630,7 +644,6 @@ Status ModelPool::PredictBySplitBatch(const std::vector<MSTensor> &inputs, std::
                                       const MSKernelCallBack &before, const MSKernelCallBack &after,
                                       int max_wait_worker_node_id) {
   size_t batch_split_num = predict_task_queue_->GetWaitModelNum(max_wait_worker_node_id);
-  predict_task_queue_->DecreaseWaitModelNum(batch_split_num, max_wait_worker_node_id);
   std::vector<std::vector<MSTensor>> new_inputs;
   std::vector<std::vector<MSTensor>> new_outputs;
   auto status = SplitInputTensorByBatch(inputs, &new_inputs, batch_split_num);
@@ -644,19 +657,21 @@ Status ModelPool::PredictBySplitBatch(const std::vector<MSTensor> &inputs, std::
     return kLiteError;
   }
 
-  std::vector<std::shared_ptr<PredictTask>> tasks;
+  std::vector<PredictTask *> tasks;
+  tasks.reserve(batch_split_num);
+  std::vector<size_t> tasks_id(batch_split_num);
   for (size_t i = 0; i < batch_split_num; i++) {
-    auto predict_task = std::make_shared<PredictTask>(&new_inputs[i], &new_outputs.at(i), before, after);
-    if (predict_task == nullptr) {
-      MS_LOG(ERROR) << "predict task is nullptr.";
+    auto task = CreatePredictTask(new_inputs[i], &new_outputs[i], before, after, &tasks_id[i]);
+    if (task == nullptr) {
       return kLiteNullptr;
     }
-    predict_task_queue_->PushPredictTask(predict_task, max_wait_worker_node_id);
-    tasks.push_back(predict_task);
+    predict_task_queue_->PushPredictTask(task, max_wait_worker_node_id);
+    tasks.push_back(task);
   }
   predict_task_mutex_.unlock();
   for (size_t i = 0; i < batch_split_num; i++) {
-    predict_task_queue_->WaitUntilPredictActive(tasks[i]);
+    predict_task_queue_->WaitUntilPredictActive(tasks[i], max_wait_worker_node_id);
+    UpdateFreeTaskId(tasks_id[i]);
   }
   status = ConcatPredictOutput(&new_outputs, outputs, max_wait_worker_node_id);
   if (status != kSuccess) {
@@ -668,8 +683,31 @@ Status ModelPool::PredictBySplitBatch(const std::vector<MSTensor> &inputs, std::
     MS_LOG(ERROR) << "free split tensor failed.";
     return kLiteError;
   }
-  predict_task_queue_->IncreaseWaitModelNum(batch_split_num, max_wait_worker_node_id);
   return kSuccess;
+}
+
+PredictTask *ModelPool::CreatePredictTask(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                                          const MSKernelCallBack &before, const MSKernelCallBack &after,
+                                          size_t *task_id) {
+  std::lock_guard<std::mutex> lock(task_id_mutex_);
+  if (!free_tasks_id_.empty()) {
+    auto item = free_tasks_id_.begin();
+    *task_id = *item;
+    free_tasks_id_.erase(item);
+    PredictTask *task = &tasks_[*item];
+    task->inputs = &inputs;
+    task->outputs = outputs;
+    task->before = before;
+    task->after = after;
+    return task;
+  } else {
+    return nullptr;
+  }
+}
+
+void ModelPool::UpdateFreeTaskId(size_t id) {
+  std::lock_guard<std::mutex> lock(task_id_mutex_);
+  free_tasks_id_.insert(id);
 }
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
@@ -684,8 +722,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     return kLiteError;
   }
   auto batch = inputs[0].Shape()[0];
-  if (use_split_batch_ && predict_task_queue_->GetTaskNum(max_wait_worker_node_id) == 0 && max_wait_worker_num > 1 &&
-      batch >= max_wait_worker_num) {
+  if (use_split_batch_ && max_wait_worker_num > 1 && batch >= max_wait_worker_num) {
     // split batch
     auto status = PredictBySplitBatch(inputs, outputs, before, after, max_wait_worker_node_id);
     if (status != kSuccess) {
@@ -695,6 +732,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     }
     return kSuccess;
   } else if (available_worker != nullptr) {
+    predict_task_queue_->DecreaseWaitModelNum(1, max_wait_worker_node_id);
     // dispatch tasks directly to workers
     predict_task_mutex_.unlock();
     auto ret = available_worker->Predict(inputs, outputs, before, after);
@@ -702,25 +740,21 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       MS_LOG(ERROR) << "direct predict failed.";
       return kLiteError;
     }
+    predict_task_queue_->IncreaseWaitModelNum(1, max_wait_worker_node_id);
     return kSuccess;
   } else {
     // do predict
-    if (predict_task_queue_->GetTaskNum(max_wait_worker_node_id) > kNumMaxTaskQueueSize) {
+    size_t task_id;
+    auto task = CreatePredictTask(inputs, outputs, before, after, &task_id);
+    if (task == nullptr) {
       MS_LOG(ERROR) << "The number of waiting tasks in the queue exceeds the limit, ret=" << kLiteServiceDeny;
       predict_task_mutex_.unlock();
       return kLiteServiceDeny;
     }
-    predict_task_queue_->DecreaseWaitModelNum(1, max_wait_worker_node_id);
-    auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
-    if (predict_task == nullptr) {
-      MS_LOG(ERROR) << "predict_task is nullptr.";
-      predict_task_mutex_.unlock();
-      return kLiteNullptr;
-    }
-    predict_task_queue_->PushPredictTask(predict_task, max_wait_worker_node_id);
+    predict_task_queue_->PushPredictTask(task, max_wait_worker_node_id);
     predict_task_mutex_.unlock();
-    predict_task_queue_->WaitUntilPredictActive(predict_task);
-    predict_task_queue_->IncreaseWaitModelNum(1, max_wait_worker_node_id);
+    predict_task_queue_->WaitUntilPredictActive(task, max_wait_worker_node_id);
+    UpdateFreeTaskId(task_id);
   }
   return kSuccess;
 }
@@ -728,6 +762,10 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
 ModelPool::~ModelPool() {
   if (predict_task_queue_ != nullptr) {
     predict_task_queue_->SetPredictTaskDone();
+  }
+  if (tasks_ != nullptr) {
+    delete[] tasks_;
+    tasks_ = nullptr;
   }
   for (auto &th : worker_thread_vec_) {
     if (th.joinable()) {

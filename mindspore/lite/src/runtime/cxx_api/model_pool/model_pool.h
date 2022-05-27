@@ -22,6 +22,7 @@
 #include <string>
 #include <queue>
 #include <map>
+#include <set>
 #include "src/runtime/dynamic_mem_allocator.h"
 #include "include/api/status.h"
 #include "include/api/context.h"
@@ -79,6 +80,11 @@ class ModelPool {
                              const MSKernelCallBack &before, const MSKernelCallBack &after,
                              int max_wait_worker_node_id);
 
+  PredictTask *CreatePredictTask(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                                 const MSKernelCallBack &before, const MSKernelCallBack &after, size_t *task_id);
+
+  void UpdateFreeTaskId(size_t id);
+
   std::vector<std::thread> worker_thread_vec_;
   std::vector<MSTensor> model_pool_inputs_;
   std::vector<MSTensor> model_pool_outputs_;
@@ -91,8 +97,11 @@ class ModelPool {
   std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
   std::unordered_map<int, std::shared_ptr<Allocator>> numa_allocator_;
   bool use_split_batch_ = false;
-  std::vector<std::shared_ptr<ModelWorker>> all_model_worker_;
+  std::unordered_map<std::shared_ptr<ModelWorker>, int> all_model_worker_;
   bool create_worker_success_ = true;
+  PredictTask *tasks_ = nullptr;
+  std::mutex task_id_mutex_;
+  std::set<size_t> free_tasks_id_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_

@@ -15,48 +15,89 @@
  */
 
 #include "src/runtime/cxx_api/model_pool/predict_task_queue.h"
+#include "src/common/log.h"
 namespace mindspore {
+PredictTaskQueue::~PredictTaskQueue() {
+  if (predict_task_ != nullptr) {
+    delete[] predict_task_;
+    predict_task_ = nullptr;
+  }
+}
+
 void PredictTaskQueue::SetPredictTaskDone() {
   predict_task_done_ = true;
   task_push_cond_.notify_all();
 }
 
-void PredictTaskQueue::SetTaskQueueNum(int num) {
-  predict_task_.resize(num);
+Status PredictTaskQueue::InitTaskQueue(size_t num, size_t max_queue_size) {
+  if (num == 0) {
+    MS_LOG(ERROR) << "task queue size should greater than 0";
+    return kLiteError;
+  }
+#ifdef USE_HQUEUE
+  predict_task_ = new (std::nothrow) HQueue<PredictTask>[num]();
+  if (predict_task_ == nullptr) {
+    MS_LOG(ERROR) << "new predict task failed.";
+    return kLiteNullptr;
+  }
+  for (size_t i = 0; i < num; i++) {
+    if (!predict_task_[i].Init(max_queue_size + 1)) {
+      MS_LOG(ERROR) << "HQueue init failed.";
+      return kLiteError;
+    }
+  }
+#else
+  predict_task_ = new (std::nothrow) std::queue<PredictTask *>[num]();
+  if (predict_task_ == nullptr) {
+    MS_LOG(ERROR) << "new predict task failed.";
+    return kLiteNullptr;
+  }
+#endif
   waite_worker_num_.resize(num, 0);
+  return kSuccess;
 }
 
-void PredictTaskQueue::WaitUntilPredictActive(const std::shared_ptr<PredictTask> &task) {
+void PredictTaskQueue::WaitUntilPredictActive(PredictTask *task, int node_id) {
+  waite_worker_num_.at(node_id) += 1;
   std::unique_lock<std::mutex> result_lock(task->task_done_mutex);
   while (!task->ready) {
     task->task_done_condition.wait(result_lock);
   }
+  task->ready = false;
   return;
 }
 
-void PredictTaskQueue::ActiveTask(const std::shared_ptr<PredictTask> &task) { task->task_done_condition.notify_one(); }
+void PredictTaskQueue::ActiveTask(PredictTask *task) { task->task_done_condition.notify_one(); }
 
-void PredictTaskQueue::PushPredictTask(std::shared_ptr<PredictTask> task, int node_id) {
+void PredictTaskQueue::PushPredictTask(PredictTask *task, int node_id) {
+  waite_worker_num_.at(node_id) -= 1;
+#ifdef USE_HQUEUE
+  while (!predict_task_[node_id].Enqueue(task)) {
+  }
+#else
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
-  predict_task_.at(node_id).push(task);
+  predict_task_[node_id].push(task);
+#endif
   task_push_cond_.notify_all();
 }
 
-std::shared_ptr<PredictTask> PredictTaskQueue::GetPredictTask(int node_id, ModelWorker *worker) {
+PredictTask *PredictTaskQueue::GetPredictTask(int node_id, ModelWorker *worker) {
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
-  while ((predict_task_.at(node_id).empty() || (!worker->IsAvailable())) && !predict_task_done_) {
+#ifdef USE_HQUEUE
+  while ((predict_task_[node_id].Empty() || (!worker->IsAvailable())) && (!predict_task_done_)) {
+    task_push_cond_.wait(task_lock);
+  }
+  return predict_task_[node_id].Dequeue();
+#else
+  while ((predict_task_[node_id].empty() || (!worker->IsAvailable())) && (!predict_task_done_)) {
     task_push_cond_.wait(task_lock);
   }
   if (predict_task_done_) {
     return nullptr;
   }
-  auto predict_task = predict_task_.at(node_id).front();
-  predict_task_.at(node_id).pop();
+  auto predict_task = predict_task_[node_id].front();
+  predict_task_[node_id].pop();
   return predict_task;
-}
-
-int PredictTaskQueue::GetTaskNum(int node_id) {
-  std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
-  return predict_task_.at(node_id).size();
+#endif
 }
 }  // namespace mindspore

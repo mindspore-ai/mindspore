@@ -24,17 +24,21 @@
 #include "include/api/types.h"
 #include "include/api/status.h"
 #include "src/runtime/cxx_api/model_pool/model_worker.h"
+#include "thread/hqueue.h"
+#ifndef USE_HQUEUE
+#define USE_HQUEUE
+#endif
 namespace mindspore {
 class ModelWorker;
 struct PredictTask {
-  PredictTask(const std::vector<MSTensor> *in, std::vector<MSTensor> *out, MSKernelCallBack before,
-              MSKernelCallBack after, bool ready = false)
+  PredictTask(const std::vector<MSTensor> *in = nullptr, std::vector<MSTensor> *out = nullptr,
+              MSKernelCallBack before = nullptr, MSKernelCallBack after = nullptr, bool ready = false)
       : inputs(in), outputs(out), before(before), after(after), ready(ready) {}
   const std::vector<MSTensor> *inputs;
   std::vector<MSTensor> *outputs;
   MSKernelCallBack before;
   MSKernelCallBack after;
-  bool ready;
+  std::atomic_bool ready;
   std::condition_variable task_done_condition;
   std::mutex task_done_mutex;
 };
@@ -42,15 +46,14 @@ struct PredictTask {
 class PredictTaskQueue {
  public:
   PredictTaskQueue() = default;
-  ~PredictTaskQueue() = default;
+  ~PredictTaskQueue();
 
-  void PushPredictTask(std::shared_ptr<PredictTask> task, int node_id);
-  void WaitUntilPredictActive(const std::shared_ptr<PredictTask> &task);
-  std::shared_ptr<PredictTask> GetPredictTask(int node_id, ModelWorker *worker);
-  void ActiveTask(const std::shared_ptr<PredictTask> &task);
+  void PushPredictTask(PredictTask *task, int node_id);
+  void WaitUntilPredictActive(PredictTask *task, int node_id);
+  PredictTask *GetPredictTask(int node_id, ModelWorker *worker);
+  void ActiveTask(PredictTask *task);
   void ActiveTaskQueue() { task_push_cond_.notify_all(); }
-  int GetTaskNum(int node_id);
-  void SetTaskQueueNum(int num);
+  Status InitTaskQueue(size_t num, size_t max_queue_size);
 
   bool IsPredictTaskDone() const { return predict_task_done_; }
   void SetPredictTaskDone();
@@ -59,7 +62,12 @@ class PredictTaskQueue {
   void IncreaseWaitModelNum(int num, int node_id) { waite_worker_num_.at(node_id) += num; }
 
  private:
-  std::vector<std::queue<std::shared_ptr<PredictTask>>> predict_task_;
+  // use an array to save predict tasks, different numa nodes correspond to different arrays
+#ifdef USE_HQUEUE
+  HQueue<PredictTask> *predict_task_;
+#else
+  std::queue<PredictTask *> *predict_task_;
+#endif
   std::vector<int> waite_worker_num_;
   std::mutex mtx_predict_task_;
   std::condition_variable task_pop_cond_;
