@@ -16,10 +16,7 @@
 #ifndef MINDSPORE_LITE_INCLUDE_MODEL_H_
 #define MINDSPORE_LITE_INCLUDE_MODEL_H_
 
-#ifdef ENABLE_CLOUD_FUSION_INFERENCE
-#include <any>
-#endif
-
+#include <memory>
 #include "include/lite_utils.h"
 
 namespace mindspore::lite {
@@ -33,9 +30,7 @@ struct MS_API LiteGraph {
     String op_type_;
     int node_type_;
     const void *primitive_ = nullptr;
-#ifdef ENABLE_CLOUD_FUSION_INFERENCE
-    std::any base_operators_ = nullptr;
-#endif
+    std::shared_ptr<void> base_operator_ = nullptr;
     Uint32Vector input_indices_;
     Uint32Vector output_indices_;
     int quant_type_;
