@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifdef RUNTIME_CONVERT
 #include <vector>
 #include "src/runtime/runtime_convert.h"
 #include "tools/common/string_util.h"
 #include "include/version.h"
 #include "tools/converter/converter.h"
-#include "tools/converter/converter_flags.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore::lite {
 char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size,
@@ -29,13 +28,16 @@ char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size
     MS_LOG(ERROR) << "Invalid input model buffer.";
     return nullptr;
   }
-
-  auto flag = std::make_unique<converter::Flags>();
-  flag->fmk = converter::kFmkTypeMs;
-  flag->inputDataType = kTypeUnknown;
-  flag->outputDataType = kTypeUnknown;
-  flag->saveFP16 = false;
-  flag->trainModel = false;
+  auto param = std::make_shared<ConverterPara>();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "New ConverterPara failed";
+    return nullptr;
+  }
+  param->fmk_type = converter::kFmkTypeMs;
+  param->input_data_type = DataType::kTypeUnknown;
+  param->output_data_type = DataType::kTypeUnknown;
+  param->weight_fp16 = false;
+  param->train_model = false;
 
   auto device_list = context->MutableDeviceInfo();
   for (auto &device : device_list) {
@@ -48,29 +50,29 @@ char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size
           int32_t val;
           if (ConvertIntNum(item, &val)) {
             size_t tmp_val = static_cast<size_t>(val);
-            flag->aclModelOptionCfgParam.dynamic_batch_size.push_back(tmp_val);
+            param->aclModelOptionCfgParam.dynamic_batch_size.push_back(tmp_val);
           }
         }
       }
-      flag->aclModelOptionCfgParam.offline = false;
-      flag->aclModelOptionCfgParam.device_id = ascend_info->GetDeviceID();
-      flag->aclModelOptionCfgParam.output_type = ascend_info->GetOutputType();
-      flag->aclModelOptionCfgParam.input_shape_map = ascend_info->GetInputShapeMap();
-      flag->aclModelOptionCfgParam.input_format = ascend_info->GetInputFormat();
-      flag->aclModelOptionCfgParam.input_shape = ascend_info->GetInputShape();
-      flag->aclModelOptionCfgParam.precision_mode = ascend_info->GetPrecisionMode();
-      flag->aclModelOptionCfgParam.op_select_impl_mode = ascend_info->GetOpSelectImplMode();
-      flag->aclModelOptionCfgParam.fusion_switch_config_file_path = ascend_info->GetFusionSwitchConfigPath();
-      flag->aclModelOptionCfgParam.buffer_optimize = ascend_info->GetBufferOptimizeMode();
-      flag->aclModelOptionCfgParam.insert_op_config_file_path = ascend_info->GetInsertOpConfigPath();
-      flag->aclModelOptionCfgParam.dynamic_image_size = ascend_info->GetDynamicImageSize();
+      param->aclModelOptionCfgParam.offline = false;
+      param->aclModelOptionCfgParam.device_id = ascend_info->GetDeviceID();
+      param->aclModelOptionCfgParam.output_type = ascend_info->GetOutputType();
+      param->aclModelOptionCfgParam.input_shape_map = ascend_info->GetInputShapeMap();
+      param->aclModelOptionCfgParam.input_format = ascend_info->GetInputFormat();
+      param->aclModelOptionCfgParam.input_shape = ascend_info->GetInputShape();
+      param->aclModelOptionCfgParam.precision_mode = ascend_info->GetPrecisionMode();
+      param->aclModelOptionCfgParam.op_select_impl_mode = ascend_info->GetOpSelectImplMode();
+      param->aclModelOptionCfgParam.fusion_switch_config_file_path = ascend_info->GetFusionSwitchConfigPath();
+      param->aclModelOptionCfgParam.buffer_optimize = ascend_info->GetBufferOptimizeMode();
+      param->aclModelOptionCfgParam.insert_op_config_file_path = ascend_info->GetInsertOpConfigPath();
+      param->aclModelOptionCfgParam.dynamic_image_size = ascend_info->GetDynamicImageSize();
     } else {
       continue;
     }
   }
 
-  Converter cvt;
-  auto meta_graph = cvt.Convert(flag, model_buf, buf_size);
+  ConverterImpl cvt;
+  auto meta_graph = cvt.Convert(param, model_buf, buf_size);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Convert failed.";
     return nullptr;
@@ -90,16 +92,20 @@ char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size
 }
 
 char *RuntimeConvert(const std::string &file_path, size_t *size) {
-  auto flag = std::make_unique<converter::Flags>();
-  flag->fmk = converter::kFmkTypeMs;
-  flag->modelFile = file_path;
-  flag->inputDataType = kTypeUnknown;
-  flag->outputDataType = kTypeUnknown;
-  flag->saveFP16 = false;
-  flag->trainModel = false;
+  auto param = std::make_shared<ConverterPara>();
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "New ConverterPara failed";
+    return nullptr;
+  }
+  param->fmk_type = converter::kFmkTypeMs;
+  param->model_file = file_path;
+  param->input_data_type = DataType::kTypeUnknown;
+  param->output_data_type = DataType::kTypeUnknown;
+  param->weight_fp16 = false;
+  param->train_model = false;
 
-  Converter cvt;
-  auto meta_graph = cvt.Convert(flag);
+  ConverterImpl cvt;
+  auto meta_graph = cvt.Convert(param);
   MS_LOG(ERROR) << "Convert failed.";
   if (meta_graph == nullptr) {
     return nullptr;
