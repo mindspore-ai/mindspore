@@ -1306,15 +1306,17 @@ void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo *kernel_info, 
   }
 }
 
-void AnfRuntimeAlgorithm::UpdateInternalParameterShape(const std::map<size_t, AnfNodeWeakPtr> &internal_parameters,
-                                                       const CNodePtr &cnode) {
+void AnfRuntimeAlgorithm::UpdateInternalParameterShape(
+  const std::map<size_t, std::vector<AnfNodeWeakPtr>> &internal_parameters, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   for (auto &internal_parameter_iter : internal_parameters) {
-    auto internal_parameter = internal_parameter_iter.second.lock();
-    MS_EXCEPTION_IF_NULL(internal_parameter);
-    common::AnfAlgo::SetOutputInferTypeAndShape(
-      {common::AnfAlgo::GetOutputInferDataType(cnode, internal_parameter_iter.first)},
-      {common::AnfAlgo::GetOutputInferShape(cnode, internal_parameter_iter.first)}, internal_parameter.get());
+    for (auto &internal_parameter_weakptr : internal_parameter_iter.second) {
+      auto internal_parameter = internal_parameter_weakptr.lock();
+      MS_EXCEPTION_IF_NULL(internal_parameter);
+      common::AnfAlgo::SetOutputInferTypeAndShape(
+        {common::AnfAlgo::GetOutputInferDataType(cnode, internal_parameter_iter.first)},
+        {common::AnfAlgo::GetOutputInferShape(cnode, internal_parameter_iter.first)}, internal_parameter.get());
+    }
   }
 }
 }  // namespace session

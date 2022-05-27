@@ -1265,7 +1265,14 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
       dynamic_shape_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
     }
     MS_EXCEPTION_IF_NULL(dynamic_shape_actor);
-    dynamic_shape_actor->internal_parameters_[real_from_kernel_with_output_idx.second] = internal_parameter;
+    auto &internal_parameters = dynamic_shape_actor->internal_parameters_[real_from_kernel_with_output_idx.second];
+    auto repeat_it = std::find_if(internal_parameters.begin(), internal_parameters.end(),
+                                  [&internal_parameter](const AnfNodeWeakPtr &internal_parameter_weakptr) {
+                                    return internal_parameter == internal_parameter_weakptr.lock();
+                                  });
+    if (repeat_it == internal_parameters.end()) {
+      (void)internal_parameters.emplace_back(internal_parameter);
+    }
   }
 
   if (kKernelTypeToLinkFunc.count(kernel_type) == 0) {
