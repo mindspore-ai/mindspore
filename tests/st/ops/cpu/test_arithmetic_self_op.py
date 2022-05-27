@@ -19,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -243,6 +244,36 @@ def test_inv(shape, dtype, tol):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_inv_vmap(mode):
+    """
+    Feature: test inv vmap feature.
+    Description: test inv vmap feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([[0.25, 0.4, 0.31, 0.52], [0.5, 0.12, 0.31, 0.58]], dtype=np.float32))
+    # Case 1
+    output = F.vmap(F.inv, 0, 0)(x)
+    expect_output = np.array([[4., 2.5, 3.2258065, 1.923077], [2., 8.333334, 3.2258065, 1.724138]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 2
+    output = F.vmap(F.inv, 1, 0)(x)
+    expect_output = np.array([[4., 2.], [2.5, 8.333334], [3.2258065, 3.2258065], [1.923077, 1.724138]],
+                             dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 3
+    output = F.vmap(F.inv, 0, 1)(x)
+    expect_output = np.array([[4., 2.], [2.5, 8.333334], [3.2258065, 3.2258065], [1.923077, 1.724138]],
+                             dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype', [np.int16, np.uint16])
 def test_invert(shape, dtype):
@@ -256,6 +287,34 @@ def test_invert(shape, dtype):
     input_x = (np.random.randn(*shape) * prop).astype(dtype)
     output = invert(Tensor(input_x))
     expect_output = np.invert(input_x)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_invert_vmap(mode):
+    """
+    Feature: test invert vmap feature.
+    Description: test invert vmap feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([[25, 4, 13, 9], [2, -1, 0, -5]], dtype=np.int16))
+    # Case 1
+    output = F.vmap(F.invert, 0, 0)(x)
+    expect_output = np.array([[-26, -5, -14, -10], [-3, 0, -1, 4]], dtype=np.int16)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 2
+    output = F.vmap(F.invert, 1, 0)(x)
+    expect_output = np.array([[-26, -3], [-5, 0], [-14, -1], [-10, 4]], dtype=np.int16)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 3
+    output = F.vmap(F.invert, 0, 1)(x)
+    expect_output = np.array([[-26, -3], [-5, 0], [-14, -1], [-10, 4]], dtype=np.int16)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
@@ -278,6 +337,43 @@ def test_softsign(shape, dtype, tol):
     diff = output.asnumpy() - expect_output
     error = np.ones(shape=expect_output.shape) * tol
     assert np.all(np.abs(diff) < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_softsign_vmap(mode):
+    """
+    Feature: test softsign vmap feature.
+    Description: test softsign vmap feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([[0, -1, 2, 30, -30], [2, -1, 0, -5, 50]], dtype=np.float32))
+    # Case 1
+    output = F.vmap(F.softsign, 0, 0)(x)
+    expect_output = np.array([[0., -0.5, 0.6666667, 0.9677419, -0.9677419],
+                              [0.6666667, -0.5, 0., -0.8333333, 0.98039216]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 2
+    output = F.vmap(F.softsign, 1, 0)(x)
+    expect_output = np.array([[0., 0.6666667],
+                              [-0.5, -0.5],
+                              [0.6666667, 0.],
+                              [0.9677419, -0.8333333],
+                              [-0.9677419, 0.98039216]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 3
+    output = F.vmap(F.softsign, 0, 1)(x)
+    expect_output = np.array([[0., 0.6666667],
+                              [-0.5, -0.5],
+                              [0.6666667, 0.],
+                              [0.9677419, -0.8333333],
+                              [-0.9677419, 0.98039216]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
 @pytest.mark.level0

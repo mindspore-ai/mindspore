@@ -74,11 +74,32 @@ template CUDA_LIB_EXPORT void CalTranspose<float>(const size_t size, const float
 template CUDA_LIB_EXPORT void CalTranspose<half>(const size_t size, const half *input, const size_t *input_shape,
                                                  const size_t *input_axis, const size_t shape_size, half *output,
                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalTranspose<int64_t>(const size_t size, const int64_t *input, const size_t *input_shape,
+                                                    const size_t *input_axis, const size_t shape_size, int64_t *output,
+                                                    cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalTranspose<int>(const size_t size, const int *input, const size_t *input_shape,
                                                 const size_t *input_axis, const size_t shape_size, int *output,
                                                 cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalTranspose<int64_t>(const size_t size, const int64_t *input, const size_t *input_shape,
-                                                    const size_t *input_axis, const size_t shape_size, int64_t *output,
+template CUDA_LIB_EXPORT void CalTranspose<int16_t>(const size_t size, const int16_t *input, const size_t *input_shape,
+                                                    const size_t *input_axis, const size_t shape_size, int16_t *output,
+                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalTranspose<int8_t>(const size_t size, const int8_t *input, const size_t *input_shape,
+                                                   const size_t *input_axis, const size_t shape_size, int8_t *output,
+                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalTranspose<uint64_t>(const size_t size, const uint64_t *input,
+                                                     const size_t *input_shape, const size_t *input_axis,
+                                                     const size_t shape_size, uint64_t *output,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalTranspose<uint32_t>(const size_t size, const uint32_t *input,
+                                                     const size_t *input_shape, const size_t *input_axis,
+                                                     const size_t shape_size, uint32_t *output,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalTranspose<uint16_t>(const size_t size, const uint16_t *input,
+                                                     const size_t *input_shape, const size_t *input_axis,
+                                                     const size_t shape_size, uint16_t *output,
+                                                     cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalTranspose<uint8_t>(const size_t size, const uint8_t *input, const size_t *input_shape,
+                                                    const size_t *input_axis, const size_t shape_size, uint8_t *output,
                                                     cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalTranspose<Complex<float>>(const size_t size, const Complex<float> *input,
                                                            const size_t *input_shape, const size_t *input_axis,

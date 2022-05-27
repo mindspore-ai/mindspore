@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 class MishNet(nn.Cell):
@@ -83,3 +84,67 @@ def test_mish_grad(mode, dtype, tol):
     grad = MishGradNet(net)
     output = grad(x, dy)
     assert np.allclose(output[0].asnumpy(), expect, atol=tol, rtol=tol, equal_nan=True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_mish_grad_vmap(mode):
+    """
+    Feature: test mish_grad vmap feature.
+    Description: test mish_grad vmap feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([[[[1.7641, 0.4002, 0.9787],
+                           [2.2409, 1.8676, -0.9773]],
+                          [[0.9501, -0.1514, -0.1032],
+                           [0.4106, 0.1440, 1.4543]]],
+                         [[[0.7610, 0.1217, 0.4439],
+                           [0.3337, 1.4941, -0.2052]],
+                          [[0.3131, -0.8541, -2.5530],
+                           [0.6536, 0.8644, -0.7422]]]]).astype(np.float32))
+    dout = Tensor(np.array([[[[2.2698, -1.4544, 0.0458],
+                              [-0.1872, 1.5328, 1.4694]],
+                             [[0.1549, 0.3782, -0.8878],
+                              [-1.9808, -0.3479, 0.1563]]],
+                            [[[1.2303, 1.2024, -0.3873],
+                              [-0.3023, -1.0486, -1.4200]],
+                             [[-1.7063, 1.9508, -0.5097],
+                              [-0.4381, -1.2528, 0.7775]]]]).astype(np.float32))
+    # Case 1
+    output = F.vmap(MishGradNet(MishNet()), (0, 0), 0)(x, dout)
+    expect_output = np.array([[[[2.4551497, -1.2175097, 0.0478603],
+                                [-0.1975334, 1.6502883, 0.09884691]],
+                               [[0.16096735, 0.19009684, -0.47376704],
+                                [-1.6688112, -0.24026634, 0.17010784]]],
+                              [[[1.2171272, 0.81384104, -0.33282074],
+                                [-0.24231759, -1.1413976, -0.6648671]],
+                               [[-1.3482722, 0.22441024, 0.05531986],
+                                [-0.41696107, -1.2767013, 0.1277946]]]]).astype(np.float32)
+    assert np.allclose(output[0].asnumpy(), expect_output, atol=1e-4, rtol=1e-4, equal_nan=True)
+
+    # # Case 2
+    output = F.vmap(MishGradNet(MishNet()), (0, 1), 0)(x, dout)
+    expect_output = np.array([[[[2.4551497, -1.2175097, 0.0478603],
+                                [-0.1975334, 1.6502883, 0.09884691]],
+                               [[1.2784901, 0.6043692, -0.20667942],
+                                [-0.2546858, -0.724183, -1.5454454]]],
+                              [[[0.15324152, 0.2559836, -0.7629183],
+                                [-1.5877694, -0.378688, 0.0731822]],
+                               [[-1.3482722, 0.22441024, 0.05531986],
+                                [-0.41696107, -1.2767013, 0.1277946]]]]).astype(np.float32)
+    assert np.allclose(output[0].asnumpy(), expect_output, atol=1e-4, rtol=1e-4, equal_nan=True)
+
+    # # Case 3
+    output = F.vmap(MishGradNet(MishNet()), (0, 0), 1)(x, dout)
+    expect_output = np.array([[[[2.4551497, -1.2175097, 0.0478603],
+                                [-0.1975334, 1.6502883, 0.09884691]],
+                               [[1.2171272, 0.81384104, -0.33282074],
+                                [-0.24231759, -1.1413976, -0.6648671]]],
+                              [[[0.16096735, 0.19009684, -0.47376704],
+                                [-1.6688112, -0.24026634, 0.17010784]],
+                               [[-1.3482722, 0.22441024, 0.05531986],
+                                [-0.41696107, -1.2767013, 0.1277946]]]]).astype(np.float32)
+    assert np.allclose(output[0].asnumpy(), expect_output, atol=1e-4, rtol=1e-4, equal_nan=True)

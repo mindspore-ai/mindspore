@@ -19,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 class Net(nn.Cell):
@@ -52,3 +53,59 @@ def test_padding(mode, shape, dtype, pad_dim_size):
     pad_width.append((0, pad_dim_size - 1))
     expect = np.pad(x, tuple(pad_width), 'constant', constant_values=0)
     np.testing.assert_array_almost_equal(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_padding_vmap(mode):
+    """
+    Feature: test padding vmap feature.
+    Description: test padding vmap feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor(np.array([[[-270.0144],
+                          [19.09283],
+                          [43.96024],
+                          [257.01694]],
+                         [[-104.56876],
+                          [42.85809],
+                          [-123.558815],
+                          [54.194077]]], dtype=np.float32))
+    # Case 1
+    output = F.vmap(Net(4), 0, 0)(x)
+    expect_output = np.array([[[-270.0144, 0, 0, 0],
+                               [19.09283, 0, 0, 0],
+                               [43.96024, 0, 0, 0],
+                               [257.01694, 0, 0, 0]],
+                              [[-104.56876, 0, 0, 0],
+                               [42.85809, 0, 0, 0],
+                               [-123.558815, 0, 0, 0],
+                               [54.194077, 0, 0, 0]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 2
+    output = F.vmap(Net(4), 0, 1)(x)
+    expect_output = np.array([[[-270.0144, 0., 0., 0.],
+                               [-104.56876, 0., 0., 0.]],
+                              [[19.09283, 0., 0., 0.],
+                               [42.85809, 0., 0., 0.]],
+                              [[43.96024, 0., 0., 0.],
+                               [-123.558815, 0., 0., 0.]],
+                              [[257.01694, 0., 0., 0.],
+                               [54.194077, 0., 0., 0.]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # # Case 3
+    output = F.vmap(Net(4), 1, 0)(x)
+    expect_output = np.array([[[-270.0144, 0., 0., 0.],
+                               [-104.56876, 0., 0., 0.]],
+                              [[19.09283, 0., 0., 0.],
+                               [42.85809, 0., 0., 0.]],
+                              [[43.96024, 0., 0., 0.],
+                               [-123.558815, 0., 0., 0.]],
+                              [[257.01694, 0., 0., 0.],
+                               [54.194077, 0., 0., 0.]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)

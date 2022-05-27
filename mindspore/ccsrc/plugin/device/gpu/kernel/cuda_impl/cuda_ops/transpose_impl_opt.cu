@@ -275,14 +275,44 @@ template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<half>(const size_t size, con
                                                           const size_t *input_axis, const size_t *d_input_shape,
                                                           const size_t *d_input_axis, half *d_output,
                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<int>(const size_t size, const size_t shape_size, const int *d_input,
-                                                         const size_t *input_shape, const size_t *input_axis,
-                                                         const size_t *d_input_shape, const size_t *d_input_axis,
-                                                         int *d_output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<int64_t>(const size_t size, const size_t shape_size,
                                                              const int64_t *d_input, const size_t *input_shape,
                                                              const size_t *input_axis, const size_t *d_input_shape,
                                                              const size_t *d_input_axis, int64_t *d_output,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<int>(const size_t size, const size_t shape_size, const int *d_input,
+                                                         const size_t *input_shape, const size_t *input_axis,
+                                                         const size_t *d_input_shape, const size_t *d_input_axis,
+                                                         int *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<int16_t>(const size_t size, const size_t shape_size,
+                                                             const int16_t *d_input, const size_t *input_shape,
+                                                             const size_t *input_axis, const size_t *d_input_shape,
+                                                             const size_t *d_input_axis, int16_t *d_output,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<int8_t>(const size_t size, const size_t shape_size,
+                                                            const int8_t *d_input, const size_t *input_shape,
+                                                            const size_t *input_axis, const size_t *d_input_shape,
+                                                            const size_t *d_input_axis, int8_t *d_output,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<uint64_t>(const size_t size, const size_t shape_size,
+                                                              const uint64_t *d_input, const size_t *input_shape,
+                                                              const size_t *input_axis, const size_t *d_input_shape,
+                                                              const size_t *d_input_axis, uint64_t *d_output,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<uint32_t>(const size_t size, const size_t shape_size,
+                                                              const uint32_t *d_input, const size_t *input_shape,
+                                                              const size_t *input_axis, const size_t *d_input_shape,
+                                                              const size_t *d_input_axis, uint32_t *d_output,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<uint16_t>(const size_t size, const size_t shape_size,
+                                                              const uint16_t *d_input, const size_t *input_shape,
+                                                              const size_t *input_axis, const size_t *d_input_shape,
+                                                              const size_t *d_input_axis, uint16_t *d_output,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<uint8_t>(const size_t size, const size_t shape_size,
+                                                             const uint8_t *d_input, const size_t *input_shape,
+                                                             const size_t *input_axis, const size_t *d_input_shape,
+                                                             const size_t *d_input_axis, uint8_t *d_output,
                                                              cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<bool>(const size_t size, const size_t shape_size,
@@ -305,12 +335,42 @@ template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<half>(const size_t size, con
                                                           const size_t *input_axis, const size_t *d_input_shape,
                                                           const size_t *d_input_axis, half *d_output,
                                                           cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<int>(const size_t size, const size_t shape_size, const int *d_input,
-                                                         const size_t *input_shape, const size_t *input_axis,
-                                                         const size_t *d_input_shape, const size_t *d_input_axis,
-                                                         int *d_output, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<int64_t>(const size_t size, const size_t shape_size,
                                                              const int64_t *d_input, const size_t *input_shape,
                                                              const size_t *input_axis, const size_t *d_input_shape,
                                                              const size_t *d_input_axis, int64_t *d_output,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<int>(const size_t size, const size_t shape_size, const int *d_input,
+                                                         const size_t *input_shape, const size_t *input_axis,
+                                                         const size_t *d_input_shape, const size_t *d_input_axis,
+                                                         int *d_output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<int16_t>(const size_t size, const size_t shape_size,
+                                                             const int16_t *d_input, const size_t *input_shape,
+                                                             const size_t *input_axis, const size_t *d_input_shape,
+                                                             const size_t *d_input_axis, int16_t *d_output,
+                                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<int8_t>(const size_t size, const size_t shape_size,
+                                                            const int8_t *d_input, const size_t *input_shape,
+                                                            const size_t *input_axis, const size_t *d_input_shape,
+                                                            const size_t *d_input_axis, int8_t *d_output,
+                                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<uint64_t>(const size_t size, const size_t shape_size,
+                                                              const uint64_t *d_input, const size_t *input_shape,
+                                                              const size_t *input_axis, const size_t *d_input_shape,
+                                                              const size_t *d_input_axis, uint64_t *d_output,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<uint32_t>(const size_t size, const size_t shape_size,
+                                                              const uint32_t *d_input, const size_t *input_shape,
+                                                              const size_t *input_axis, const size_t *d_input_shape,
+                                                              const size_t *d_input_axis, uint32_t *d_output,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<uint16_t>(const size_t size, const size_t shape_size,
+                                                              const uint16_t *d_input, const size_t *input_shape,
+                                                              const size_t *input_axis, const size_t *d_input_shape,
+                                                              const size_t *d_input_axis, uint16_t *d_output,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<uint8_t>(const size_t size, const size_t shape_size,
+                                                             const uint8_t *d_input, const size_t *input_shape,
+                                                             const size_t *input_axis, const size_t *d_input_shape,
+                                                             const size_t *d_input_axis, uint8_t *d_output,
                                                              cudaStream_t cuda_stream);

@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 class NetInv(nn.Cell):
@@ -53,3 +54,33 @@ def test_inv(mode, shape, dtype, tol):
     diff = output.asnumpy() - expect_output
     error = np.ones(shape=expect_output.shape) * tol
     assert np.all(np.abs(diff) < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_inv_vmap(mode):
+    """
+    Feature: test inv vmap feature.
+    Description: test inv vmap feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor(np.array([[0.25, 0.4, 0.31, 0.52], [0.5, 0.12, 0.31, 0.58]], dtype=np.float32))
+    # Case 1
+    output = F.vmap(F.inv, 0, 0)(x)
+    expect_output = np.array([[4., 2.5, 3.2258065, 1.923077], [2., 8.333334, 3.2258065, 1.724138]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 2
+    output = F.vmap(F.inv, 1, 0)(x)
+    expect_output = np.array([[4., 2.], [2.5, 8.333334], [3.2258065, 3.2258065], [1.923077, 1.724138]],
+                             dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 3
+    output = F.vmap(F.inv, 0, 1)(x)
+    expect_output = np.array([[4., 2.], [2.5, 8.333334], [3.2258065, 3.2258065], [1.923077, 1.724138]],
+                             dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)

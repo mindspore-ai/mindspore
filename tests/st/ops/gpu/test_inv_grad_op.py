@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import functional as F
 
 
 class NetInvGrad(nn.Cell):
@@ -90,15 +91,54 @@ def test_inv_grad_int(mode, dtype):
     Expectation: the result match to numpy
     """
     context.set_context(mode=mode, device_target="GPU")
-    y = Tensor(np.array([[[[-1, 1, 5],
-                           [5, 3, 6],
-                           [3, 2, -1]]]]).astype(dtype))
-    dy = Tensor(np.array([[[[29, 1, -2],
-                            [2, -1, 2],
-                            [3, 1, 12]]]]).astype(dtype))
-    expect = np.array([[[[-29, -1, 50],
-                         [-50, 9, -72],
-                         [-27, -4, -12]]]]).astype(dtype)
+    y = Tensor(np.array([[-1, 1, 5],
+                         [5, 3, 6],
+                         [3, 2, -1]]).astype(dtype))
+    dy = Tensor(np.array([[29, 1, -2],
+                          [2, -1, 2],
+                          [3, 1, 12]]).astype(dtype))
+    expect = np.array([[-29, -1, 50],
+                       [-50, 9, -72],
+                       [-27, -4, -12]]).astype(dtype)
     net = NetInvGrad()
     output = net(y, dy)
     np.testing.assert_array_almost_equal(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_inv_grad_vmap(mode):
+    """
+    Feature: test inv_grad vmap feature.
+    Description: test inv_grad vmap feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    y = Tensor(np.array([[-1, 1, 12],
+                         [5, 34, 6],
+                         [10, 2, -1]]).astype(np.float32))
+    dout = Tensor(np.array([[29, 1, 55],
+                            [2.2, 63, 2],
+                            [3, 3, 12]]).astype(np.float32))
+    # Case 1
+    output = F.vmap(NetInvGrad(), (0, 0), 0)(y, dout)
+    expect_output = np.array([[-29, -1, -7920],
+                              [-55, -72828, -72],
+                              [-300, -12, -12]]).astype(np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 2
+    output = F.vmap(NetInvGrad(), (0, 1), 0)(y, dout)
+    expect_output = np.array([[-29, -2.2, -432],
+                              [-25, -72828, -108],
+                              [-5500, -8, -12]]).astype(np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 3
+    output = F.vmap(NetInvGrad(), (0, 0), 1)(y, dout)
+    expect_output = np.array([[-29, -55, -300],
+                              [-1, -72828, -12],
+                              [-7920, -72, -12]]).astype(np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
