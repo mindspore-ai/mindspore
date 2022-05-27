@@ -18,12 +18,16 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include "abstract/utils.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/anfalgo.h"
 
 namespace mindspore::graphkernel {
 constexpr auto USER_NUM = 2;
 constexpr auto REAL_NODE_START_POS = 2;
 constexpr auto UMONAD_POS = 1;
+constexpr int64_t DEFAULT_NBYTES = 8;
+constexpr int64_t BYTES_LIMITATION = 4294967296;  // 4G
 namespace {
 std::pair<AnfNodePtr, AnfNodePtr> IsTargetUpdateState(const AnfNodePtr &node, const PrimitivePtr &opt_prim,
                                                       const FuncGraphManagerPtr &mng) {
@@ -75,8 +79,8 @@ bool CanParallel(const mindspore::HashSet<AnfNodePtr> &opts_set, const FuncGraph
   return true;
 }
 
-void DoParallel(const std::vector<std::pair<AnfNodePtr, AnfNodePtr>> &updatestate_opts, const FuncGraphManagerPtr &mng,
-                const AnfNodePtr &first_updatestate) {
+AnfNodePtr DoParallel(const std::vector<std::pair<AnfNodePtr, AnfNodePtr>> &updatestate_opts,
+                      const FuncGraphManagerPtr &mng, const AnfNodePtr &first_updatestate) {
   std::vector<AnfNodePtr> additional_inputs;
   for (size_t i = 0; i < updatestate_opts.size(); i++) {
     auto opt_cnode = updatestate_opts[i].second->cast<CNodePtr>();
@@ -92,6 +96,28 @@ void DoParallel(const std::vector<std::pair<AnfNodePtr, AnfNodePtr>> &updatestat
   std::vector<AnfNodePtr> final_inputs = last_updatestate->inputs();
   (void)final_inputs.insert(final_inputs.end(), additional_inputs.begin(), additional_inputs.end());
   last_updatestate->set_inputs(final_inputs);
+  return last_updatestate;
+}
+
+int64_t MemoryCost(const CNodePtr &cnode) {
+  int64_t total = 0;
+  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    if (cnode->input(i)->isa<CNode>()) {
+      auto shape = common::AnfAlgo::GetOutputInferShape(cnode->input(i), 0);
+      int64_t input_memory = 1;
+      if (!shape.empty()) {
+        std::for_each(shape.begin(), shape.end(), [&input_memory](size_t n) { input_memory *= SizeToLong(n); });
+        auto type_size = SizeToLong(abstract::TypeIdSize(common::AnfAlgo::GetOutputInferDataType(cnode->input(i), 0)));
+        if (type_size != 0) {
+          input_memory *= type_size;
+        } else {
+          input_memory *= DEFAULT_NBYTES;
+        }
+        total += input_memory;
+      }
+    }
+  }
+  return total;
 }
 }  // namespace
 
@@ -124,7 +150,24 @@ bool ParallelOptimizer::Run(const FuncGraphPtr &func_graph) {
           updatestate_opts.begin(), updatestate_opts.end(),
           [&opts_set](const std::pair<AnfNodePtr, AnfNodePtr> &p) { (void)opts_set.insert(p.second); });
         if (opts_set.size() > 1 && CanParallel(opts_set, mng)) {
-          DoParallel(updatestate_opts, mng, node);
+          std::vector<std::pair<AnfNodePtr, AnfNodePtr>> parallel_candidates;
+          auto first_updatestate = node;
+          int64_t total_mem = 0;
+          size_t last_index = 0;
+          for (size_t i = 0; i < updatestate_opts.size(); i++) {
+            int64_t cur_mem = MemoryCost(updatestate_opts[i].second->cast<CNodePtr>());
+            if (total_mem > 0 && ((i - last_index) >= max_parallel_num_ || total_mem + cur_mem > BYTES_LIMITATION)) {
+              first_updatestate = DoParallel(parallel_candidates, mng, first_updatestate);
+              parallel_candidates.clear();
+              total_mem = 0;
+              last_index = i;
+            }
+            total_mem += cur_mem;
+            parallel_candidates.push_back(updatestate_opts[i]);
+          }
+          if (!parallel_candidates.empty()) {
+            (void)DoParallel(parallel_candidates, mng, first_updatestate);
+          }
           changed = true;
         }
       }
