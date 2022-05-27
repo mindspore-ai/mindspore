@@ -20,7 +20,7 @@
 
     **输入：**
 
-    - **var**（Parameter）- 要更新的变量，任意维度，其数据类型为float32或float16。如果 `var` 的数据类型为float16，则所有输入的数据类型必须与 `var` 相同。
+    - **var** (Parameter) - 要更新的变量，任意维度，其数据类型为float32或float16。如果 `var` 的数据类型为float16，则所有输入的数据类型必须与 `var` 相同。
     - **m** (Parameter) - 要更新的变量，shape和数据类型与 `var` 相同。
     - **lr** (Union[Number, Tensor]) - 学习率，应该是Scalar或Tensor，数据类型为float32或float16。
     - **logbase** (Union[Number, Tensor]) - 应该是Scalar或Tensor，数据类型为float32或float16。

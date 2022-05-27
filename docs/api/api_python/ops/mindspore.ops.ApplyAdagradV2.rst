@@ -27,7 +27,7 @@
 
     **输入：**
 
-    - **var**（Parameter）- 要更新的变量。为任意维度，其数据类型为float16或float32。
+    - **var** (Parameter) - 要更新的变量。为任意维度，其数据类型为float16或float32。
     - **accum** (Parameter) - 要更新的累积。shape和数据类型必须与 `var` 相同。
     - **lr** (Union[Number, Tensor]) - 学习率，必须是float或具有float16或float32数据类型的Scalar的Tensor。
     - **grad** (Tensor) - 梯度，为一个Tensor。shape和数据类型必须与 `var` 相同。
