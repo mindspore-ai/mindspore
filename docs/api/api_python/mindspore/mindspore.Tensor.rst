@@ -1158,7 +1158,7 @@ mindspore.Tensor
         **参数：**
 
         - **indices** (Tensor) - 该Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
-        - **updates** (Tensor) - 指定与当前Tensor相加操作的Tensor，其数据类型与输入相同。updates.shape应等于 `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]`， 其中`input_x` 代指当前Tensor本身。
+        - **updates** (Tensor) - 指定与当前Tensor相加操作的Tensor，其数据类型与输入相同。updates.shape应等于 `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]`， 其中 `input_x` 代指当前Tensor本身。
 
         **返回：**
 
