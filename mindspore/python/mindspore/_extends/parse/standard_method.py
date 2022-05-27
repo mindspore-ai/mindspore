@@ -2190,3 +2190,11 @@ def gather_nd(input_x, indices):
     Refer to :func:`mindspore.ops.gather_nd` for more detail.
     """
     return F.gather_nd(input_x, indices)
+
+
+def pdist(x, p=2.0):
+    r"""
+    Computes the p-norm distance between each pair of row vectors in the input.
+    Refer to :func:`mindspore.ops.pdist` for more detail.
+    """
+    return F.pdist(x, p=p)

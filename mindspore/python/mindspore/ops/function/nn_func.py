@@ -16,6 +16,7 @@
 """Defines nn operators with functional form."""
 
 from mindspore.ops import operations as P
+from mindspore.ops.operations import nn_ops as NN
 
 fast_gelu_ = P.FastGeLU()
 softsign_ = P.Softsign()
@@ -126,9 +127,49 @@ def softsign(x):
     return softsign_(x)
 
 
+def pdist(x, p=2.0):
+    r"""
+    Computes the p-norm distance between each pair of row vectors in the input. If `x` is a 2D Tensor of
+    shape :math:`(N, M)`, then `output` must be a 1D Tensor of shape :math:`(N * (N - 1) / 2,)`. If `x` id a
+    Tensor of shape :math:`(*B, N, M)`, then `output` must be a Tensor of shape :math:`(*B, N * (N - 1) / 2)`.
+
+    .. math::
+        y[n] = \sqrt[p]{{\mid x_{i} - x_{j} \mid}^p}
+
+    where :math:`x_{i}, x_{j}` are two different row vectors in the input.
+
+    Args:
+        x (Tensor) - Input tensor of shape :math:`(*B, N, M)`. *B: batch size, one-dim or multi-dim.
+        dtype: float16, float32, float64.
+        p (float): p value for the p norm distance to calculate between each vector pair ∈[0,∞]. Default: 2.0.
+
+    Returns:
+        Tensor, has the same dtype as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is float16, float32 or float64.
+        TypeError: If `p` is not a float.
+        ValueError: If `p` is a negative float.
+        ValueError: If dimension of `x` is less than 2.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]]).astype(np.float32))
+        >>> y = ops.pdist(x, p=2.0)
+        >>> print(y)
+        [1.4142135 2.828427 1.4142135]
+    """
+    pdist_ = NN.Pdist(p=p)
+    return pdist_(x)
+
+
 __all__ = [
     'fast_gelu',
     'hardshrink',
-    'softsign'
+    'softsign',
+    'pdist',
 ]
 __all__.sort()

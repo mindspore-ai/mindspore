@@ -36,6 +36,16 @@ The functional operators are initialized Primitives and can be used directly as 
 Neural Network Layer Operators
 ------------------------------
 
+Neural Network
+^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.pdist
+
 Activation Functions
 ^^^^^^^^^^^^^^^^^^^^
 

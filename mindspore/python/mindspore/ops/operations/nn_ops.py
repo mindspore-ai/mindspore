@@ -9632,3 +9632,18 @@ class GridSampler2D(Primitive):
         validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
         validator.check_bool(align_corners, 'align_corners', self.name)
         self.init_prim_io_names(inputs=['input', 'grid'], outputs=['output'])
+
+
+class Pdist(Primitive):
+    r"""
+    Computes the p-norm distance between each pair of row vectors in the input.
+    Refer to :func:`mindspore.ops.pdist` for more detail.
+    """
+
+    @prim_attr_register
+    def __init__(self, p=2.0):
+        """Initialize Pdist"""
+        validator.check_value_type("p", p, [float], self.name)
+        if p < 0:
+            raise ValueError('Pdist p must be a non-negative value, but got `{p}`.')
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
