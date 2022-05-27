@@ -426,6 +426,16 @@ class Deg2radNet(nn.Cell):
         return self.deg2rad(x)
 
 
+class IsRealFunc(nn.Cell):
+    def __init__(self):
+        super(IsRealFunc, self).__init__()
+        self.isreal = ops.isreal
+
+    def construct(self, x):
+        y = self.isreal(x)
+        return y
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -499,6 +509,10 @@ test_case_math_ops = [
         'block': Deg2radNet(),
         'desc_inputs': [Tensor(np.array([[90.0, -90.0], [180.0, -180.0], [270.0, -270.0]], np.float32))],
         'desc_bprop': [Tensor(np.array([[90.0, -90.0], [180.0, -180.0], [270.0, -270.0]], np.float32))],
+    }),
+    ('IsReal', {
+        'block': IsRealFunc(),
+        'desc_inputs': [Tensor([1, 1+1j, 2+0j])],
     }),
 ]
 

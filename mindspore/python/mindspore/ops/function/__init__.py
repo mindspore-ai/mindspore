@@ -174,6 +174,7 @@ from .math_func import (
     bessel_k1e,
     exp2,
     deg2rad,
+    isreal,
 )
 from .nn_func import (
     fast_gelu,
