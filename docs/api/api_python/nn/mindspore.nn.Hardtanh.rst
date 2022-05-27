@@ -8,7 +8,7 @@ mindspore.nn.Hardtanh
     按元素计算Hardtanh函数。Hardtanh函数定义为：
 
     .. math::
-        \text{HardTanh}(x) = \begin{cases}
+        \text{Hardtanh}(x) = \begin{cases}
             1, & \text{ if } x > 1; \\
             -1, & \text{ if } x < -1; \\
             x, & \text{ otherwise. }
@@ -23,15 +23,16 @@ mindspore.nn.Hardtanh
 
     **输入：**
     
-    - **x** (Tensor) - 任意维度的Tensor，数据类型为float16或float32。shape是 :math:`(N,*)` ， :math:`*` 表示任意的附加维度数。
+    - **x** (Tensor) - 数据类型为float16或float32的Tensor。在CPU和Ascend平台上支持0-7维。在GPU平台上支持0-4维。
 
     **输出：**
     
     Tensor，数据类型和shape与 `x` 的相同。
 
     **异常：**
-    
-    **TypeError** - `x` 的数据类型既不是float16也不是float32。
-    **TypeError** - `min_val` 的数据类型既不是int也不是float。
-    **TypeError** - `max_val` 的数据类型既不是int也不是float。
-    **ValueError** - `max_val` 小于 `min_val` 。
+
+    - **TypeError** - `x` 不是Tensor.
+    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+    - **TypeError** - `min_val` 的数据类型既不是int也不是float。
+    - **TypeError** - `max_val` 的数据类型既不是int也不是float。
+    - **ValueError** - `max_val` 小于 `min_val` 。

@@ -453,12 +453,12 @@ def _dtype_check(x_dtype, prim_name):
 
 class Hardtanh(Cell):
     r"""
-    HardTanh activation function.
+    Hardtanh activation function.
 
-    Applies the HardTanh function element-wise. The activation function is defined as:
+    Applies the Hardtanh function element-wise. The activation function is defined as:
 
     .. math::
-        \text{HardTanh}(x) = \begin{cases}
+        \text{Hardtanh}(x) = \begin{cases}
             1, & \text{ if } x > 1; \\
             -1, & \text{ if } x < -1; \\
             x, & \text{ otherwise. }
@@ -471,13 +471,14 @@ class Hardtanh(Cell):
         max_val (Union[int, float]): Maximum value of the linear region range. Default: 1.0.
 
     Inputs:
-        - **x** (Tensor) - The input of Hardtanh with data type of float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **x** (Tensor) - Input Tensor with data type of float16 or float32.
+          On CPU and Ascend support dimension 0-7D. On GPU support dimension 0-4D.
 
     Outputs:
-        Tensor, which has the same type as `x`.
+        Tensor, with the same dtype and shape as `x`.
 
     Raises:
+        TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
         TypeError: If dtype of `min_val` is neither float nor int.
         TypeError: If dtype of `max_val` is neither float nor int.
@@ -487,6 +488,9 @@ class Hardtanh(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hardtanh = nn.Hardtanh(min_val=-1.0, max_val=1.0)
         >>> output = hardtanh(x)
@@ -510,6 +514,8 @@ class Hardtanh(Cell):
         self.squeeze = P.Squeeze(0)
 
     def construct(self, x):
+        if not isinstance(x, Tensor):
+            raise TypeError("'x' must be a Tensor")
         _dtype_check(self.dtype(x), self.cls_name)
         # min_val and max_val are scalars, if x is 0d, x is also a scalar.
         # However, ops.Maximum does not support input two scalar.
