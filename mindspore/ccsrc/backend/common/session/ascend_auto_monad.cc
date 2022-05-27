@@ -199,7 +199,7 @@ bool IsCompatible(const abstract::AbstractBasePtr &a1, const abstract::AbstractB
   if (CheckTensorAndScalar(a1, a2) || CheckTensorAndScalar(a2, a1)) {
     return true;
   }
-  // Check AbstractTensor and AbstractRef.
+  // Check AbstractTensor and AbstractRefTensor.
   auto type1 = a1->BuildType();
   auto type2 = a2->BuildType();
   if (type1 != type2 && *type1 != *type2) {

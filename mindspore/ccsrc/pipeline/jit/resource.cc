@@ -418,7 +418,7 @@ void Resource::CacheFuncGraph() const {
 
 void Resource::Clean() {
   // AbstractTensor->elements() will be saved in AbstractBasePtrList
-  args_spec_.clear();
+  args_abs_.clear();
   source_input_ = py::none();
   // Context with AbstractBasePtrList may be saved in GraphEvaluator
   // some Evaluator like ResolveEvaluator may save Python object in cache,

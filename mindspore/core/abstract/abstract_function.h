@@ -452,10 +452,10 @@ class MS_CORE_API VirtualAbstractClosure final : public AbstractFuncAtom {
 
   /// \brief Constructor of VirtualAbstractClosure.
   ///
-  /// \param[in] args_spec The abstract value of argument to the function.
+  /// \param[in] args_abs The abstract value of argument to the function.
   /// \param[in] output_spec The abstract value of output.
-  VirtualAbstractClosure(const AbstractBasePtr &args_spec, const AbstractBasePtr &output_spec)
-      : args_spec_list_({args_spec}), output_(output_spec) {}
+  VirtualAbstractClosure(const AbstractBasePtr &args_abs, const AbstractBasePtr &output_spec)
+      : args_spec_list_({args_abs}), output_(output_spec) {}
 
   /// \brief Destructor of VirtualAbstractClosure.
   ~VirtualAbstractClosure() override = default;

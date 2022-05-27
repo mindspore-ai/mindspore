@@ -86,5 +86,5 @@ def test_sit_parser_input_parameter():
     y = Parameter(y, name="y")
     grad = GradOperation(get_all=True, get_by_list=False, sens_param=False)
 
-    with pytest.raises(TypeError):
-        grad(tensor_add)(x, y)
+    # Support the Parameter as outermost input.
+    grad(tensor_add)(x, y)

@@ -77,8 +77,8 @@ class Resource : public ResourceBase {
   FuncGraphPtr optimize_graph() const { return optimize_graph_; }
   void set_optimize_graph(const FuncGraphPtr &optimize_graph) { optimize_graph_ = optimize_graph; }
 
-  const abstract::AbstractBasePtrList &args_spec() const { return args_spec_; }
-  void set_args_spec(const abstract::AbstractBasePtrList &args_spec) { args_spec_ = args_spec; }
+  const abstract::AbstractBasePtrList &args_abs() const { return args_abs_; }
+  void set_args_abs(const abstract::AbstractBasePtrList &args_abs) { args_abs_ = args_abs; }
 
   void set_vm_loop(const bool &flag, const int64_t size) {
     vm_loop_flag_ = flag;
@@ -106,7 +106,7 @@ class Resource : public ResourceBase {
   abstract::AnalysisEnginePtr engine_;
   FuncGraphPtr func_graph_;
   FuncGraphPtr optimize_graph_;
-  abstract::AbstractBasePtrList args_spec_;
+  abstract::AbstractBasePtrList args_abs_;
   // The source obj to compile, usually a `Cell` or `ms_function` decorated function.
   py::object source_input_;
   bool is_cleaned_;

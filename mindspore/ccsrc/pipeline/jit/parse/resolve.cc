@@ -123,6 +123,7 @@ std::string GetPyObjId(const py::object &obj) {
   }
   return out.cast<std::string>();
 }
+
 // If any mixed precision flag add a cast node after the parameter node.
 // argument obj should be python Parameter object
 // it will be converted to Parameter node here

@@ -167,7 +167,7 @@ AnalysisContextPtr AnalysisContext::SpecializeKey() const {
   (void)std::transform(args_spec_list_.begin(), args_spec_list_.end(), std::back_inserter(args_broad_shp),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
-                         if (arg->isa<AbstractRef>()) {
+                         if (arg->isa<AbstractRefTensor>()) {
                            MS_LOG(DEBUG) << "refkey broaden";
                            return arg->Broaden();
                          }

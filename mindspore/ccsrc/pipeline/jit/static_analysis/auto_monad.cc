@@ -106,7 +106,7 @@ bool HasAbstractRef(const AnfNodePtr &node) {
     return false;
   }
   auto &abs = node->abstract();
-  return (abs != nullptr) && abs->isa<abstract::AbstractRef>();
+  return (abs != nullptr) && abs->isa<abstract::AbstractRefTensor>();
 }
 
 // Gets ref inputs and its indexes from a cnode.
@@ -1339,7 +1339,7 @@ class AutoMonadConverter {
   void HandleLoad(const CNodePtr &cnode, bool update_state) {
     MS_EXCEPTION_IF_NULL(cnode);
     auto value = GetValueNode(cnode->input(0));
-    if (value && value->isa<Primitive>()) {
+    if (value != nullptr && value->isa<Primitive>()) {
       // For primitive calls that use Ref as input, insert Loads before them.
       InsertLoads(cnode, update_state);
     } else {
@@ -1416,7 +1416,7 @@ class AutoMonadConverter {
     std::string target = GetCNodeTarget(cnode);
     load_cnode->set_user_data(primitive_target, std::make_shared<std::string>(target));
     // Set load_cnode abstract to Tensor according the input Ref[Tensor].
-    auto ref_abs = dyn_cast<abstract::AbstractRef>(ref->abstract());
+    auto ref_abs = dyn_cast<abstract::AbstractRefTensor>(ref->abstract());
     MS_EXCEPTION_IF_NULL(ref_abs);
     load_cnode->set_abstract(ref_abs->CloneAsTensor());
     return load_cnode;

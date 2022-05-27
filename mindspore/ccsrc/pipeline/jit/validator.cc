@@ -36,7 +36,7 @@ using mindspore::abstract::AbstractError;
 using mindspore::abstract::AbstractFunction;
 using mindspore::abstract::AbstractJTagged;
 using mindspore::abstract::AbstractList;
-using mindspore::abstract::AbstractRef;
+using mindspore::abstract::AbstractRefTensor;
 using mindspore::abstract::AbstractRowTensor;
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
@@ -121,7 +121,7 @@ void ValidateAbstract(const AnfNodePtr &node) {
   bool is_legal_abstract =
     abstract->isa<AbstractType>() || abstract->isa<AbstractFunction>() || abstract->isa<AbstractTuple>() ||
     abstract->isa<AbstractList>() || abstract->isa<AbstractTensor>() || abstract->isa<AbstractRowTensor>() ||
-    abstract->isa<AbstractCOOTensor>() || abstract->isa<AbstractCSRTensor>() || abstract->isa<AbstractRef>() ||
+    abstract->isa<AbstractCOOTensor>() || abstract->isa<AbstractCSRTensor>() || abstract->isa<AbstractRefTensor>() ||
     abstract->isa<abstract::AbstractNone>() || abstract->isa<abstract::AbstractMonad>();
   if (is_legal_abstract) {
     return;

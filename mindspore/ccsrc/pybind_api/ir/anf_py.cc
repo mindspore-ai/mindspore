@@ -19,7 +19,7 @@
 #include "include/common/pybind_api/api_register.h"
 
 namespace mindspore {
-// Define python 'RefKey' class.
+// Define python 'CNode' class.
 REGISTER_PYBIND_DEFINE(CNode, ([](const pybind11::module *m) {
                          (void)py::class_<CNode, CNodePtr>(*m, "CNode")
                            .def("expanded_str", (std::string(CNode::*)(int32_t) const) & CNode::DebugString,

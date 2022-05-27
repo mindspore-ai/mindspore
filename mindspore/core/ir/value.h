@@ -380,7 +380,7 @@ class MS_CORE_API ValueDictionary : public Value {
 using ValueDictionaryPtr = std::shared_ptr<ValueDictionary>;
 
 /// \brief StringImm defines a Value class whose type is String.
-class MS_CORE_API StringImm final : public Value {
+class MS_CORE_API StringImm : public Value {
  public:
   /// \brief Constructor of StringImm.
   ///
@@ -396,7 +396,7 @@ class MS_CORE_API StringImm final : public Value {
   /// \brief Get the value of StringImm object.
   ///
   /// \return The value of StringImm object.
-  const std::string &value() const { return str_; }
+  virtual const std::string &value() const { return str_; }
   /// \brief Check whether the input is the current StringImm object.
   ///
   /// \param[in] other Define a Value object.
@@ -432,35 +432,20 @@ using StringImmPtr = std::shared_ptr<StringImm>;
 IMM_TRAITS(StringImmPtr, std::string)
 IMM_TRAITS(StringImmPtr, const char *)
 
-/// \brief RefKey defines a Named class whose type is Ref.
-class MS_CORE_API RefKey : public Named {
+/// \brief RefKey defines a class whose real type is String.
+/// \brief Notice: RefKey is keep for compatible only, we use RefKey just as StringImm.
+class MS_CORE_API RefKey : public StringImm {
  public:
   /// \brief Constructor of RefKey.
   ///
-  /// \param[in] tag Define the name of RefKey object.
-  explicit RefKey(const std::string &tag) : Named(tag) {}
+  /// \param[in] str Define the string value of RefKey object.
+  explicit RefKey(const std::string &str) : StringImm(str) {}
   /// \brief Destructor of RefKey.
   ~RefKey() override = default;
-  MS_DECLARE_PARENT(RefKey, Named)
-  /// \brief Get the name of RefKey object.
-  ///
-  /// \return The name of RefKey object.
-  const std::string &tag() const { return name(); }
-  /// \brief Get abstract of the RefKey object.
-  ///
-  /// \return The abstract of the RefKey object.
-  abstract::AbstractBasePtr ToAbstract() override;
-  /// \brief Show the RefKey object.
-  ///
-  /// \return The description of the RefKey object.
-  std::string ToString() const override { return "RefKey[" + name() + "]"; }
-  /// \brief Show the RefKey object DumpText.
-  ///
-  /// \return The description of the RefKey object.
-  std::string DumpText() const override {
-    std::ostringstream oss;
-    oss << "RefKey[\"" << name() << "\"]";
-    return oss.str();
+  MS_DECLARE_PARENT(RefKey, StringImm)
+
+  abstract::AbstractBasePtr ToAbstract() override {
+    MS_LOG(EXCEPTION) << "RefKey can't be converted to abstract, ref_key: " << ToString();
   }
 };
 using RefKeyPtr = std::shared_ptr<RefKey>;

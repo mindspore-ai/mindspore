@@ -414,7 +414,7 @@ abstract::AbstractTensorPtr MSANFModelParser::GetAbsTensorFromTensorProto(const 
   auto tensor_info = std::make_shared<abstract::AbstractTensor>(TypeIdToType(iter->second), tensor_shape);
   if (tensor_proto.has_ref_key()) {
     auto ref_key = std::make_shared<RefKey>(tensor_proto.ref_key());
-    auto abs_ref = std::make_shared<abstract::AbstractRef>(tensor_info, ref_key);
+    auto abs_ref = std::make_shared<abstract::AbstractRefTensor>(tensor_info, ref_key);
     return abs_ref;
   }
   return tensor_info;
@@ -547,10 +547,10 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
       auto parameters = top_graph_->parameters();
       for (auto parameter : parameters) {
         auto parameter_abs = parameter->abstract();
-        if (parameter_abs->isa<abstract::AbstractRef>()) {
+        if (parameter_abs->isa<abstract::AbstractRefTensor>()) {
           auto parameter_abs_value = parameter_abs->cast<abstract::AbstractRefPtr>()->ref_key_value();
-          auto ref_key_value = parameter_abs_value->cast<RefKeyPtr>();
-          if (ref_key_value != nullptr && ref_key_value->name() == tensor_proto.ref_key()) {
+          auto ref_key_value = parameter_abs_value->cast<StringImmPtr>();
+          if (ref_key_value != nullptr && ref_key_value->value() == tensor_proto.ref_key()) {
             node->set_default_param(parameter->cast<ParameterPtr>()->default_param());
             break;
           }

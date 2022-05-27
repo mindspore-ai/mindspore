@@ -232,7 +232,7 @@ class COMMON_EXPORT AnfAlgo {
   static inline bool HasAbstractRef(const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     auto &abs = node->abstract();
-    return (abs != nullptr) && abs->isa<abstract::AbstractRef>();
+    return (abs != nullptr) && abs->isa<abstract::AbstractRefTensor>();
   }
 
   // Get the real output node and indexes of get item, make tuple, depend, load.

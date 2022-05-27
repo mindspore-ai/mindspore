@@ -1069,7 +1069,7 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
       return stub;
     }
     MS_LOG(EXCEPTION) << "The type of argument in TupleAdd operator should be tuple, but the first argument is "
-                      << args_spec_list[0]->ToString() << ", the second argument is" << args_spec_list[1]->ToString();
+                      << args_spec_list[0]->ToString() << ", the second argument is " << args_spec_list[1]->ToString();
   }
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();

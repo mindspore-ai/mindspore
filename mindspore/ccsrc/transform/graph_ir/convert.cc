@@ -353,9 +353,9 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors, std
           // #endif
         }
       } else if (IsValueNode<RefKey>(it)) {
-        auto refkey = GetValueNode<RefKeyPtr>(it);
+        auto refkey = GetValueNode<StringImmPtr>(it);
         MS_EXCEPTION_IF_NULL(refkey);
-        auto name = refkey->tag();
+        auto name = refkey->value();
         auto iter = vars_.find(name);  // get corresponding variable op
         if (iter != vars_.end()) {
           op_cache_[it.get()] = iter->second;

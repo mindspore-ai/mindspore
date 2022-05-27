@@ -1528,7 +1528,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       MS_EXCEPTION_IF_NULL(param);
       ifEmbedIsWeight = param->has_default();
     }
-    auto refkey = ref_abs->ref_key_value()->cast<RefKeyPtr>();
+    auto refkey = ref_abs->ref_key_value()->cast<StringImmPtr>();
     if (refkey == nullptr || !ifEmbedIsWeight) {
       auto ret = std::make_shared<AbstractScalar>(type);
       auto ref_value = ref_abs->ref();
@@ -1536,7 +1536,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       return std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
     }
 
-    std::string name = refkey->tag();
+    std::string name = refkey->value();
     MS_EXCEPTION_IF_NULL(node_conf->node());
     if (node_conf->node()->func_graph() == nullptr) {
       MS_LOG(EXCEPTION) << "Should not evaluate a ValueNode, node: " << node_conf->node()->DebugString();

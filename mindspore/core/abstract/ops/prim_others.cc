@@ -133,7 +133,7 @@ AbstractBasePtr InferImplEnvironGet(const AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(expected);
   (void)expected->Join(default_value);
   // If expected is AbstractRef, return it's AbstractTensor as Value type other than Reference type.
-  if (expected->isa<AbstractRef>()) {
+  if (expected->isa<AbstractRefTensor>()) {
     const auto &abs_ref = expected->cast<AbstractRefPtr>();
     MS_EXCEPTION_IF_NULL(abs_ref);
     return abs_ref->CloneAsTensor();
@@ -934,7 +934,7 @@ AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &pri
                               const AbstractBasePtrList &args_spec_list) {
   // Inputs: Ref/Tensor, universal
   CheckArgsSize(primitive->name(), args_spec_list, 2);
-  auto ref_abs = dyn_cast<abstract::AbstractRef>(args_spec_list[0]);
+  auto ref_abs = dyn_cast<abstract::AbstractRefTensor>(args_spec_list[0]);
   if (ref_abs != nullptr) {
     // Return tensor value if input is Ref.
     return ref_abs->CloneAsTensor();

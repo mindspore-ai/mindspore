@@ -193,7 +193,7 @@ class OrderEnforcer {
 
   bool IsRef(const AnfNodePtr &node) {
     auto &abs = node->abstract();
-    return abs != nullptr && abs->isa<abstract::AbstractRef>();
+    return abs != nullptr && abs->isa<abstract::AbstractRefTensor>();
   }
 
   bool IsSpecialPrimitive(const AnfNodePtr &node) const {
@@ -413,11 +413,11 @@ class OrderEnforcer {
     if (abs_ref == nullptr) {
       return "";
     }
-    auto ref_key = abs_ref->ref_key_value()->cast<RefKeyPtr>();
+    auto ref_key = abs_ref->ref_key_value()->cast<StringImmPtr>();
     if (ref_key == nullptr) {
       return "";
     }
-    return ref_key->name();
+    return ref_key->value();
   }
 
   std::vector<CNodePtr> GetAllLoads(const AnfNodePtrList &check_nodes) {
@@ -457,7 +457,7 @@ class OrderEnforcer {
         (void)need_insert_loads.emplace_back(loads[0]);
       }
     }
-    // Add call node will output is a AbstractRef and ref_key is kAnyValue.
+    // Add call node will output is a AbstractRefTensor and ref_key is kAnyValue.
     for (const auto &call_lode : call_lodes) {
       if (std::find(need_insert_loads.begin(), need_insert_loads.end(), call_lode) == need_insert_loads.end()) {
         need_insert_loads.push_back(call_lode);

@@ -72,34 +72,34 @@ FuncGraphPtr ZerosLikePrimOptPass(const pipeline::ResourcePtr &res) {
   return func_graph;
 }
 
-FuncGraphPtr GetZerosLike(const abstract::AbstractBasePtrList &args_spec) {
+FuncGraphPtr GetZerosLike(const abstract::AbstractBasePtrList &args_abs) {
   if (zeros_like_ops == nullptr) {
     zeros_like_ops = prim::GetPythonOps("zeros_like");
   }
-  auto iter = zeros_like_funcgraph_cache.find(args_spec);
+  auto iter = zeros_like_funcgraph_cache.find(args_abs);
   if (iter != zeros_like_funcgraph_cache.end()) {
-    MS_LOG(DEBUG) << "Cache hit for zeros_like: " << mindspore::ToString(args_spec);
+    MS_LOG(DEBUG) << "Cache hit for zeros_like: " << mindspore::ToString(args_abs);
     return BasicClone(iter->second);
   }
   if (!zeros_like_ops->isa<MetaFuncGraph>()) {
     MS_LOG(EXCEPTION) << "zeros_like is not a MetaFuncGraph";
   }
   auto zeros_like = zeros_like_ops->cast<MetaFuncGraphPtr>();
-  auto zeros_like_fg = zeros_like->GenerateFuncGraph(args_spec);
+  auto zeros_like_fg = zeros_like->GenerateFuncGraph(args_abs);
   MS_EXCEPTION_IF_NULL(zeros_like_fg);
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
-  auto specialized_zeros_like_fg = pipeline::Renormalize(resource, zeros_like_fg, args_spec);
+  auto specialized_zeros_like_fg = pipeline::Renormalize(resource, zeros_like_fg, args_abs);
   MS_EXCEPTION_IF_NULL(specialized_zeros_like_fg);
   auto opted_zeros_like_fg = ZerosLikePrimOptPass(resource);
   MS_EXCEPTION_IF_NULL(opted_zeros_like_fg);
   auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   if (enable_grad_cache) {
-    zeros_like_funcgraph_cache[args_spec] = BasicClone(opted_zeros_like_fg);
+    zeros_like_funcgraph_cache[args_abs] = BasicClone(opted_zeros_like_fg);
   }
   return opted_zeros_like_fg;
 }
 
-FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_spec) {
+FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_abs) {
   if (add_ops == nullptr) {
     add_ops = prim::GetPythonOps("hyper_add");
   }
@@ -107,18 +107,18 @@ FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_spec) {
     MS_LOG(EXCEPTION) << "add is not a MetaFuncGraph";
   }
   auto add = add_ops->cast<MetaFuncGraphPtr>();
-  auto add_fg = add->GenerateFuncGraph(args_spec);
+  auto add_fg = add->GenerateFuncGraph(args_abs);
   MS_EXCEPTION_IF_NULL(add_fg);
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
-  auto specialized_add_fg = pipeline::Renormalize(resource, add_fg, args_spec);
+  auto specialized_add_fg = pipeline::Renormalize(resource, add_fg, args_abs);
   MS_EXCEPTION_IF_NULL(specialized_add_fg);
   return specialized_add_fg;
 }
 
 AnfNodePtr BuildZerosLikeNode(const FuncGraphPtr &tape, const AnfNodePtr &node) {
   // Build zeros_like(node) as dout
-  abstract::AbstractBasePtrList args_spec{node->abstract()->Broaden()};
-  auto zeros_like_fg = GetZerosLike(args_spec);
+  abstract::AbstractBasePtrList args_abs{node->abstract()->Broaden()};
+  auto zeros_like_fg = GetZerosLike(args_abs);
   auto zeros_like_node = tape->NewCNode({NewValueNode(zeros_like_fg), node});
   zeros_like_node->set_abstract(zeros_like_fg->output()->abstract());
   return zeros_like_node;
@@ -126,34 +126,34 @@ AnfNodePtr BuildZerosLikeNode(const FuncGraphPtr &tape, const AnfNodePtr &node) 
 
 AnfNodePtr BuildZerosLikeValue(const FuncGraphPtr &tape, const ValuePtr &out) {
   // Build zeros_like(out) as dout
-  abstract::AbstractBasePtrList args_spec{out->ToAbstract()->Broaden()};
-  auto zeros_like_fg = GetZerosLike(args_spec);
+  abstract::AbstractBasePtrList args_abs{out->ToAbstract()->Broaden()};
+  auto zeros_like_fg = GetZerosLike(args_abs);
   auto zeros_like_value = tape->NewCNode({NewValueNode(zeros_like_fg), NewValueNode(out)});
   zeros_like_value->set_abstract(zeros_like_fg->output()->abstract());
   return zeros_like_value;
 }
 
-FuncGraphPtr GetOnesLike(const abstract::AbstractBasePtrList &args_spec) {
+FuncGraphPtr GetOnesLike(const abstract::AbstractBasePtrList &args_abs) {
   if (ones_like_ops == nullptr) {
     ones_like_ops = prim::GetPythonOps("ones_like");
   }
-  auto iter = ones_like_funcgraph_cache.find(args_spec);
+  auto iter = ones_like_funcgraph_cache.find(args_abs);
   if (iter != ones_like_funcgraph_cache.end()) {
-    MS_LOG(DEBUG) << "Cache hit for ones_like: " << mindspore::ToString(args_spec);
+    MS_LOG(DEBUG) << "Cache hit for ones_like: " << mindspore::ToString(args_abs);
     return BasicClone(iter->second);
   }
   if (!ones_like_ops->isa<MetaFuncGraph>()) {
     MS_LOG(EXCEPTION) << "ones_like is not a MetaFuncGraph";
   }
   auto ones_like = ones_like_ops->cast<MetaFuncGraphPtr>();
-  auto ones_like_fg = ones_like->GenerateFuncGraph(args_spec);
+  auto ones_like_fg = ones_like->GenerateFuncGraph(args_abs);
   MS_EXCEPTION_IF_NULL(ones_like_fg);
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
-  auto specialized_ones_like_fg = pipeline::Renormalize(resource, ones_like_fg, args_spec);
+  auto specialized_ones_like_fg = pipeline::Renormalize(resource, ones_like_fg, args_abs);
   MS_EXCEPTION_IF_NULL(specialized_ones_like_fg);
   auto enable_grad_cache = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
   if (enable_grad_cache) {
-    ones_like_funcgraph_cache[args_spec] = BasicClone(specialized_ones_like_fg);
+    ones_like_funcgraph_cache[args_abs] = BasicClone(specialized_ones_like_fg);
   }
   return specialized_ones_like_fg;
 }
@@ -183,8 +183,8 @@ AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out, con
     ones_like_value->set_abstract(value_node_abs);
     return ones_like_value;
   }
-  abstract::AbstractBasePtrList args_spec{out->ToAbstract()->Broaden()};
-  auto ones_like_fg = GetOnesLike(args_spec);
+  abstract::AbstractBasePtrList args_abs{out->ToAbstract()->Broaden()};
+  auto ones_like_fg = GetOnesLike(args_abs);
   auto ones_like_value = tape->NewCNode({NewValueNode(ones_like_fg), NewValueNode(out)});
   ones_like_value->set_abstract(ones_like_fg->output()->abstract());
   return ones_like_value;
@@ -241,8 +241,8 @@ class PynativeAdjoint {
     if (dout_ != nullptr) {
       MS_LOG(DEBUG) << "Update dout " << dout_->ToString() << " with dout_factor " << dout_factor->ToString();
       auto arg = out_->ToAbstract()->Broaden();
-      abstract::AbstractBasePtrList args_spec{arg, arg};
-      auto add_fg = GetHyperAdd(args_spec);
+      abstract::AbstractBasePtrList args_abs{arg, arg};
+      auto add_fg = GetHyperAdd(args_abs);
       MS_EXCEPTION_IF_NULL(add_fg);
       dout_ = tape_->NewCNode({NewValueNode(add_fg), dout_, dout_factor});
       dout_->set_abstract(add_fg->output()->abstract());
