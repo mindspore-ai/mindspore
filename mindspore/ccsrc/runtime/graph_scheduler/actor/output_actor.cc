@@ -79,7 +79,8 @@ void OutputActor::FreeOutputNodeMem() {
   for (size_t i = 0; i < output_nodes_.size(); ++i) {
     auto &output_node = output_nodes_[i].first;
     auto &output_device_tensor = output_device_tensors_[i];
-    if ((output_node == nullptr) || (output_device_tensor == nullptr)) {
+    // The output_device_tensor may be repeated.
+    if ((output_node == nullptr) || (output_device_tensor == nullptr) || (output_device_tensor->GetPtr() == nullptr)) {
       return;
     }
     if (!IsOutputAddressPersisted(output_device_tensor, output_node)) {
@@ -103,8 +104,8 @@ void OutputActor::ClearOutputCache() {
 
 void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
-
   ++current_count_;
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op control and current count:" << current_count_;
 
   // Trigger disaster recovery and return empty output.
   if (RecoveryContext::GetInstance()->enable_recovery() && CollectiveManager::instance()->need_reinit()) {
@@ -145,6 +146,8 @@ void OutputActor::RunOpControl(AID *const, OpContext<DeviceTensor> *const contex
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
 
+  // Maybe the output node is the dynamic shape, need free the output node address to alloc new address by the new shape
+  // and size in the next step running.
   FreeOutputNodeMem();
 
   // Send control arrow to trigger next step running.
@@ -158,6 +161,8 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
   MS_EXCEPTION_IF_NULL(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name()
+                << ") receive the input op data and output position:" << input_data->index_;
 
   auto output_position = IntToSize(input_data->index_);
   if (output_position >= outputs_.size()) {
