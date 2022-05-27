@@ -138,6 +138,26 @@ void Async(const AID &aid, void (T::*method)(Args0...), Args1 &&... args) {
   Async(aid, method, std::move(tuple));
 }
 
+template <typename T, typename... Args0, typename... Args1>
+void Async(const AID &aid, const std::shared_ptr<ActorMgr> &mgr, void (T::*method)(Args0...),
+           std::tuple<Args1...> &&tuple) {
+  std::function<void(ActorBase *)> handler = [method, tuple](ActorBase *actor) {
+    MINDRT_ASSERT(actor != nullptr);
+    T *t = static_cast<T *>(actor);
+    MINDRT_ASSERT(t != nullptr);
+    Apply(t, method, tuple);
+  };
+  auto msg = std::unique_ptr<MessageBase>(new (std::nothrow) MessageAsync(std::move(handler)));
+  MINDRT_OOM_EXIT(msg);
+  (void)mgr->Send(aid, std::move(msg));
+}
+
+template <typename T, typename... Args0, typename... Args1>
+void Async(const AID &aid, const std::shared_ptr<ActorMgr> &mgr, void (T::*method)(Args0...), Args1 &&... args) {
+  auto tuple = std::make_tuple(std::forward<Args1>(args)...);
+  Async(aid, mgr, method, std::move(tuple));
+}
+
 // return future
 template <typename R, typename T>
 Future<R> Async(const AID &aid, Future<R> (T::*method)()) {
@@ -151,7 +171,8 @@ Future<R> Async(const AID &aid, Future<R> (T::*method)()) {
     MINDRT_ASSERT(t != nullptr);
     promise->Associate((t->*method)());
   };
-  std::unique_ptr<MessageBase> msg(new (std::nothrow) MessageAsync(std::move(handler)));
+
+  auto msg = std::unique_ptr<MessageBase>(new (std::nothrow) MessageAsync(std::move(handler)));
   MINDRT_OOM_EXIT(msg);
   (void)ActorMgr::GetActorMgrRef()->Send(aid, std::move(msg));
   return future;

@@ -247,8 +247,14 @@ AID ActorMgr::Spawn(const ActorReference &actor, bool shareThread) {
 
   if (shareThread) {
     auto mailbox = std::make_unique<NonblockingMailBox>();
-    auto hook = std::unique_ptr<std::function<void()>>(
-      new std::function<void()>([actor]() { ActorMgr::GetActorMgrRef()->SetActorReady(actor); }));
+    auto hook = std::make_unique<std::function<void()>>([actor]() {
+      auto actor_mgr = actor->get_actor_mgr();
+      if (actor_mgr != nullptr) {
+        actor_mgr->SetActorReady(actor);
+      } else {
+        ActorMgr::GetActorMgrRef()->SetActorReady(actor);
+      }
+    });
     // the mailbox has this hook, the hook holds the actor reference, the actor has the mailbox. this is a cycle which
     // will leads to memory leak. in order to fix this issue, we should explicitly free the mailbox when terminate the
     // actor

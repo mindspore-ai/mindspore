@@ -83,6 +83,9 @@ class MS_CORE_API ActorBase {
   // Judge if actor running by the received message number, the default is true.
   virtual bool IsActive(int msg_num) { return true; }
 
+  inline void set_actor_mgr(const std::shared_ptr<ActorMgr> &mgr) { actor_mgr_ = mgr; }
+  inline std::shared_ptr<ActorMgr> get_actor_mgr() const { return actor_mgr_; }
+
  protected:
   using ActorFunction = std::function<void(const std::unique_ptr<MessageBase> &msg)>;
 
@@ -211,6 +214,7 @@ class MS_CORE_API ActorBase {
   uint32_t recordNextPoint = 0;
 
   ActorThreadPool *pool_{nullptr};
+  std::shared_ptr<ActorMgr> actor_mgr_;
 };
 using ActorReference = std::shared_ptr<ActorBase>;
 };  // namespace mindspore

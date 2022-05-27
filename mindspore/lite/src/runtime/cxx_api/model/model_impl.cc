@@ -385,12 +385,8 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
     }
-    auto tensor = MSTensor(impl);
-    if (tensor == nullptr) {
-      MS_LOG(ERROR) << "Create tensor failed.";
-      return empty;
-    }
-    res[i] = tensor;
+
+    res[i] = MSTensor(impl);
   }
   return res;
 }
