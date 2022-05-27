@@ -56,9 +56,21 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
       return x_shape_ptr->cast<abstract::ShapePtr>();
     }
   }
+  if (num_segments_value <= 0) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', num_segments value must be greater than 0, but got: " << num_segments_value << ".";
+  }
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto ids_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+
+  for (auto ids_shape_value : ids_shape) {
+    if (ids_shape_value < 0) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name
+                              << "', segment_ids value must be non-negtive tensor, but got: " << ids_shape_value << ".";
+    }
+  }
+
   if (x_shape.size() < ids_shape.size()) {
     MS_LOG(ERROR) << "For " << prim_name << ", invalid input_args and segment_ids shape size";
     return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
@@ -84,8 +96,34 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+
+  /* check segment_ids */
+  auto ids_ptr = input_args[kInputIndex1]->BuildType();
+  MS_EXCEPTION_IF_NULL(ids_ptr);
+  if (!ids_ptr->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', segment_ids must be a tensor, but got: " << ids_ptr->ToString() << ".";
+  }
+  std::set<TypePtr> ids_type_set = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("segment_ids type", ids_ptr, ids_type_set, prim_name);
+
+  /* check num_segments */
+  auto num_ptr = input_args[kInputIndex1]->BuildType();
+  MS_EXCEPTION_IF_NULL(num_ptr);
+  if (!num_ptr->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', num_segments must be a tensor, but got: " << num_ptr->ToString() << ".";
+  }
+  std::set<TypePtr> num_type_set = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("num_segments type", num_ptr, num_type_set, prim_name);
+
+  /* check input_x */
   auto in_type_ptr = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(in_type_ptr);
+  if (!in_type_ptr->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << in_type_ptr->ToString()
+                            << ".";
+  }
   std::set<TypePtr> in_type_set = {kFloat16, kFloat32, kInt32};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", in_type_ptr, in_type_set, prim_name);
 }
