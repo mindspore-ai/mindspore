@@ -3167,7 +3167,6 @@ class AdaptiveMaxPool3DGrad(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize AdaptiveMaxPool3DGrad"""
-        self.add_prim_attr("cust_aicpu", self.name)
 
 
 class TraceGrad(Primitive):
@@ -3567,6 +3566,48 @@ class ResizeBicubicGrad(Primitive):
         return {'shape': out_shape,
                 'dtype': original_image_dtype,
                 'value': None}
+
+
+class SparseSliceGrad(Primitive):
+    r"""
+    Computes gradients for SparseSlice operation.
+
+    Inputs:
+        - **backprop_val_grad** (Tensor) - A 1D Tensor.
+          The shape should be :math:`(n,)`.
+        - **indices** (Tensor) - A 2D Tensor of type int64. The indices of the SparseTensor.
+          Support int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+        - **start** (Tensor) - A 1D Tensor of type int64, represents the start of the indices.
+        - **new_indices** (Tensor) - A 2D Tensor of type int64. The indices of the SparseTensor.
+          Support int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+
+    Outputs:
+        - *y_grad_val: A Tensor. Has the same type as "backprop_val_grad".
+
+    Raises:
+        TypeError: If the dtype of `indices`, `start`, `new_indices` are not int64.
+        ValueError: If `indices`, `new_indices` are not 2-D tensor.
+        ValueError: If `backprop_val_grad`, `start` is not a 1-D tensor.
+        ValueError: If the number of `backprop_val_grad` is not corresponding to the number of `new_indices`.
+
+    Supported Platforms:
+
+    Examples:
+        >>> backprop_val_grad = Tensor([4, 2, 3])
+        >>> indices = Tensor([[0, 0], [0, 2], [1, 2], [1, 3], [2, 3], [2, 4]], dtype=ms.int64)
+        >>> values = Tensor([1, 2, 3, 4])
+        >>> start = Tensor([0, 0], dtype=ms.int64)
+        >>> new_indices = Tensor([0, 2], [1, 2], [1, 3], dtype=ms.int64)
+        >>> grad = SparseSliceGrad()
+        >>> output = grad(backprop_val_grad, indices, start, new_indices)
+        >>> print(output)
+        [0, 4, 2, 3, 0, 0]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSliceGrad."""
+        self.init_prim_io_names(inputs=['backprop_val_grad', 'indices', 'start', 'new_indices'], outputs=['y_grad'])
 
 
 class FractionalMaxPoolGradWithFixedKsize(Primitive):

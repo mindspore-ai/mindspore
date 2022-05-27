@@ -26,7 +26,7 @@ namespace ops {
 namespace {
 constexpr auto kNameAdaptiveMaxPool3DGrad = "AdaptiveMaxPool3DGrad";
 
-bool IsDynamic(const ShapeVector &shape) {
+bool AdaptiveMaxPool3DGradIsDynamic(const ShapeVector &shape) {
   if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
     return true;
   }
@@ -47,7 +47,7 @@ abstract::ShapePtr AdaptiveMaxPool3DGradInferShape(const PrimitivePtr &primitive
   CheckAndConvertUtils::CheckInRange("x_dim", x_dims, kIncludeBoth, {4, 5}, kNameAdaptiveMaxPool3DGrad);
   CheckAndConvertUtils::CheckInteger("input_grad_dims", input_grad_dims, kEqual, x_dims, kNameAdaptiveMaxPool3DGrad);
   auto argmax_shape = argmax_shape_ptr->shape();
-  if (!IsDynamic(argmax_shape)) {
+  if (!AdaptiveMaxPool3DGradIsDynamic(argmax_shape)) {
     const int64_t argmax_dim = SizeToLong(argmax_shape.size());
     CheckAndConvertUtils::CheckInRange("argmax_dim", argmax_dim, kIncludeBoth, {4, 5}, kNameAdaptiveMaxPool3DGrad);
     CheckAndConvertUtils::CheckInteger("argmax_dim", argmax_dim, kEqual, x_dims, kNameAdaptiveMaxPool3DGrad);

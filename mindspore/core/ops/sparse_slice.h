@@ -34,10 +34,8 @@ class MIND_API SparseSlice : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSlice);
   /// \brief Constructor.
-  SparseSlice() : BaseOperator(kNameSparseSlice) { 
-    InitIOName(
-      {"indices", "values", "shape", "start", "size"}, 
-      {"y_indices", "y_values", "y_shape"}); 
+  SparseSlice() : BaseOperator(kNameSparseSlice) {
+    InitIOName({"indices", "values", "shape", "start", "size"}, {"y_indices", "y_values", "y_shape"});
   }
   void Init() {}
 };

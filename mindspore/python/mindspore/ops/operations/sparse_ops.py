@@ -276,7 +276,7 @@ class SparseToDense(PrimitiveWithInfer):
 
     def __infer__(self, indices, values, sparse_shape):
         validator.check_tensor_dtype_valid('indices', indices['dtype'], [
-                                           mstype.int32, mstype.int64], self.name)
+            mstype.int32, mstype.int64], self.name)
         validator.check_tensor_dtype_valid(
             'values', values['dtype'], mstype.number_type + (mstype.bool_,), self.name)
         indices_shape = indices['shape']
@@ -471,7 +471,7 @@ class SparseTensorDenseMatmul(Primitive):
 
     def __infer__(self, indices, values, sparse_shape, dense):
         validator.check_tensor_dtype_valid('indices', indices['dtype'], [
-                                           mstype.int32, mstype.int64], self.name)
+            mstype.int32, mstype.int64], self.name)
         valid_types = (mstype.float16, mstype.float32,
                        mstype.float64, mstype.int32, mstype.int64)
         args = {'values': values['dtype'], 'dense': dense['dtype']}
@@ -701,7 +701,7 @@ class DenseToDenseSetOperation(Primitive):
     def __init__(self, set_operation="a-b", validate_indices=True):
         """Initialize DenseToDenseSetOperation."""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=[
-                                'y_indices', 'y_values', 'y_shape'])
+            'y_indices', 'y_values', 'y_shape'])
         validator.check_value_type(
             "set_operation", set_operation, [str], self.name)
         validator.check_value_type(
@@ -1960,4 +1960,4 @@ class SparseReshape(Primitive):
     def __init__(self):
         """Initialize SparseReshape."""
         self.init_prim_io_names(inputs=['indices', 'shape', 'new_shape'], outputs=[
-                                'y_indices', 'y_shape'])
+            'y_indices', 'y_shape'])

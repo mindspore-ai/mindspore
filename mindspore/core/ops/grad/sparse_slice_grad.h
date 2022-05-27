@@ -32,10 +32,8 @@ class MIND_API SparseSliceGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSliceGrad);
 
-  SparseSliceGrad() : BaseOperator(kNameSparseSliceGrad) { 
-    InitIOName(
-      {"backprop_val_grad", "indices", "start", "new_indices"}, 
-      {"y_grad"}); 
+  SparseSliceGrad() : BaseOperator(kNameSparseSliceGrad) {
+    InitIOName({"backprop_val_grad", "indices", "start", "new_indices"}, {"y_grad"});
   }
   void Init() {}
 };
@@ -45,4 +43,3 @@ AbstractBasePtr SparseSliceGradInfer(const abstract::AnalysisEnginePtr &, const 
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_OPS_SPARSE_SLICE_GRAD_H_
-
