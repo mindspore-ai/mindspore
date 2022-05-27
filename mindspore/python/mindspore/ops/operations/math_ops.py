@@ -5135,7 +5135,7 @@ class Erfinv(Primitive):
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
-class Conj(PrimitiveWithInfer):
+class Conj(Primitive):
     """
     Returns a tensor of complex numbers that are the complex conjugate of each element in input.
     The complex numbers in input must be of the form a + bj, where a is the real part and b is the imaginary part.
@@ -5155,7 +5155,7 @@ class Conj(PrimitiveWithInfer):
        TypeError: If the input is not a Tensor.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
