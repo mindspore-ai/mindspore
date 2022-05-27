@@ -394,6 +394,27 @@ def test_offload_random_sharpness_op():
         break
 
 
+def test_offload_with_dict_itr():
+    """
+    Feature: Test offload
+    Description: Test map offload with pyfuncs and dict iterator
+    Expectation: Test passes without hangs
+    """
+    dataset = ds.ImageFolderDataset(DATA_DIR, shuffle=False, decode=False, num_samples=3)
+    dataset = dataset.map(operations=[lambda x: x], input_columns="image", python_multiprocessing=False,
+                          num_parallel_workers=1)
+
+    type_cast_op = C2.TypeCast(mstype.int32)
+    dataset = dataset.map(operations=type_cast_op, input_columns="label", offload=True, python_multiprocessing=False,
+                          num_parallel_workers=1)
+    # the test is passing with no hangs when num_epochs is not set
+    num = 0
+    for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        num += 1
+
+    assert num == 3
+
+
 if __name__ == "__main__":
     test_offload()
     test_auto_offload()
@@ -410,3 +431,4 @@ if __name__ == "__main__":
     test_offload_not_end_of_pipeline()
     test_offload_dim_check()
     test_offload_random_sharpness_op()
+    test_offload_with_dict_itr()
