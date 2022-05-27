@@ -79,8 +79,7 @@ std::vector<uint8_t> TrainExport::CreateData(const lite::Tensor *tensor) {
 
 bool TrainExport::NeedQuantization(const lite::Tensor *t, const int tensor_quant_type) {
   return ((quant_type_ == QT_WEIGHT && t->shape().size() > 1) ||
-          ((quant_type_ == QT_DEFAULT) && (t->quant_params().size() > 0) &&
-           (tensor_quant_type == schema::QuantType_QUANT_WEIGHT)));
+          ((quant_type_ == QT_DEFAULT) && (tensor_quant_type == schema::QuantType_QUANT_WEIGHT)));
 }
 
 schema::QuantType TrainExport::GetNodeQuantType(const mindspore::kernel::KernelExec *kernel) {

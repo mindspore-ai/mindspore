@@ -313,7 +313,8 @@ int BiasCorrectionStrategy::Int8Inference(const MSKernelCallBack &before_call_ba
     MS_LOG(ERROR) << "New model failed.";
     return RET_ERROR;
   }
-  auto ret = BuildModelByFuncGraph(int8_model, quant_func_graph, param_);
+  int size = 0;
+  auto ret = BuildModelByFuncGraph(int8_model, quant_func_graph, param_, &size);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Build error.";
     return RET_ERROR;

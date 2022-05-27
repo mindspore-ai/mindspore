@@ -164,6 +164,8 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void AddQuantParam(const LiteQuantParam &quant_param);
 
+  void ClearQuantParam();
+
   std::vector<LiteQuantParam> quant_params() const override;
 
   void set_quant_params(std::vector<LiteQuantParam>) override;

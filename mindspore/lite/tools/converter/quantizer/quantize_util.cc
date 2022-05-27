@@ -23,6 +23,7 @@
 #include <vector>
 #include <set>
 #include <functional>
+#include "tools/common/graph_util.h"
 #include "include/version.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
@@ -36,7 +37,6 @@
 #include "securec/include/securec.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
-#include "tools/optimizer/common/format_utils.h"
 #include "ops/op_utils.h"
 
 using std::string;
@@ -255,12 +255,6 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
 }
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
-                             const std::shared_ptr<ConverterPara> &param) {
-  int size = 0;
-  return BuildModelByFuncGraph(model, func_graph, param, &size);
-}
-
-Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
                              const std::shared_ptr<ConverterPara> &param, int *size) {
   auto meta_graph = Export(func_graph, true, true);
   if (meta_graph == nullptr) {
@@ -278,6 +272,14 @@ Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, con
     return kLiteError;
   }
   meta_graph->version = Version();
+
+  status = UpdateGraphOutputName(meta_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "UpdateGraphOutputName failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    delete meta_graph;
+    return kLiteError;
+  }
 
   flatbuffers::FlatBufferBuilder builder(kMaxNum1024);
   auto offset = schema::MetaGraph::Pack(builder, meta_graph);

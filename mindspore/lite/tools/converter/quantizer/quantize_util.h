@@ -53,6 +53,7 @@
 #include "src/common/quant_utils.h"
 #include "include/api/model.h"
 #include "tools/converter/cxx_api/converter_para.h"
+#include "tools/common/string_util.h"
 
 namespace mindspore::lite::quant {
 enum WeightQuantType {
@@ -66,14 +67,10 @@ constexpr size_t k10Bit = 10;
 constexpr size_t k16Bit = 16;
 constexpr size_t k32Bit = 32;
 constexpr size_t kMaxNum1024 = 1024;
-constexpr float kPercentBase = 100.0;
 constexpr size_t kMillisecondsBase = 10;
 constexpr float kDelta = 0.1;
 constexpr float kRatio = 10.0;
-constexpr int kPercent = 10;
 constexpr int kCpuBindMode = 1;
-constexpr int kAnfWeightIndex = 2;
-constexpr int kAnfBiasIndex = 3;
 
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
@@ -185,9 +182,6 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
 }
 
 std::string NodePrimitiveType(const CNodePtr &cnode);
-
-Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
-                             const std::shared_ptr<mindspore::ConverterPara> &param);
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
                              const std::shared_ptr<mindspore::ConverterPara> &param, int *size);

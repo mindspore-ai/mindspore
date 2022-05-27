@@ -543,8 +543,8 @@ int FullQuantQuantizer::InitDeviceConfig(const FuncGraphPtr &func_graph) {
   }
   InitQMinMax();
   calibrator_ = std::make_shared<Calibrator>(this->bit_num_, activation_q_max_, activation_q_min_,
-                                             param_->fullQuantParam.activation_quant_method,
-                                             param_->dataPreProcessParam, activation_symmetric_);
+                                             this->param_->fullQuantParam.activation_quant_method,
+                                             this->param_->dataPreProcessParam, activation_symmetric_);
   MSLITE_CHECK_PTR(calibrator_);
   quant_strategy_ = std::make_unique<QuantStrategy>(param_->commonQuantParam.min_quant_weight_size,
                                                     param_->commonQuantParam.min_quant_weight_channel,
@@ -628,7 +628,8 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "New model failed.";
     return RET_ERROR;
   }
-  auto ret = BuildModelByFuncGraph(fp32_ms_model_, func_graph, param_);
+  int size = 0;
+  auto ret = BuildModelByFuncGraph(fp32_ms_model_, func_graph, param_, &size);
   if (ret != mindspore::kSuccess) {
     MS_LOG(ERROR) << "Build model failed.";
     return RET_ERROR;
@@ -666,7 +667,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     }
   }
 
-  if (param_->fullQuantParam.bias_correction) {
+  if (this->param_->fullQuantParam.bias_correction) {
     MS_LOG(INFO) << "do bias correction";
     BiasCorrectionStrategy strategy(param_, calibrator_, quant_strategy_, fp32_ms_model_, activation_q_min_,
                                     activation_q_max_);

@@ -24,7 +24,6 @@
 #include "tools/common/meta_graph_utils.h"
 #include "schema/inner/model_generated.h"
 #include "tools/common/tensor_util.h"
-#include "tools/converter/quantizer/bitpacking.h"
 #include "tools/common/node_util.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
