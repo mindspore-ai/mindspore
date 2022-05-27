@@ -529,7 +529,7 @@ class Mish(PrimitiveWithInfer):
         Tensor, with the same type and shape as the `x`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU`` 
 
     Raises:
         TypeError: If dtype of `x` is neither float16 nor float32.
