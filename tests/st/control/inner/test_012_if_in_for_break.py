@@ -49,7 +49,7 @@ class BackwardNet(nn.Cell):
         return grads
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -64,7 +64,7 @@ def test_forward():
     assert graph_out == Tensor(np.array(9), mstype.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

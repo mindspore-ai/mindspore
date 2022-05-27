@@ -24,7 +24,7 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -85,7 +85,7 @@ def test_for_after_for_in_for_01():
     assert graph_backward_res == (Tensor([0], mstype.int32), Tensor([1], mstype.int32))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

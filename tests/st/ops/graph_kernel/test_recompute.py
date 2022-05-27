@@ -182,7 +182,7 @@ def test_gpu_5():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_basic3(Net5)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -190,7 +190,7 @@ def test_ascend_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_basic1(Net1)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -198,7 +198,7 @@ def test_ascend_2():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_basic2(Net2)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -206,7 +206,7 @@ def test_ascend_3():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_basic2(Net3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -214,7 +214,7 @@ def test_ascend_4():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_basic1(Net4)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

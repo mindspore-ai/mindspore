@@ -53,7 +53,7 @@ def lamb_apply_weight_assign():
     assert np.allclose(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

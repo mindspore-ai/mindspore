@@ -48,7 +48,7 @@ def test_tile(shape, dtype, multiples):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -610,7 +610,7 @@ def onp_where(condition, x, y):
     return onp.where(condition, x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -890,7 +890,7 @@ def onp_broadcast_to(x):
     return a, b
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1592,7 +1592,7 @@ def test_piecewise():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

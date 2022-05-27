@@ -270,7 +270,7 @@ class ControlOneIfOneParaOneAddn(Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -626,7 +626,7 @@ class HighGrad(Cell):
         return self.final_grad(*inputs)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -675,7 +675,7 @@ class SideEffectControlFlowAssignDependWhileNet(Cell):
         return grad_out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

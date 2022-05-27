@@ -296,7 +296,7 @@ def test_if_by_if_by_if():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -329,7 +329,7 @@ def test_mixed_while_if():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

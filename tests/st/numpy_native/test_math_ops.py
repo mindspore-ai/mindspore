@@ -830,7 +830,7 @@ def onp_logaddexp(x1, x2):
     return onp.logaddexp(x1, x2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -957,7 +957,7 @@ def onp_clip(x):
     return a, b, c, d, e, f
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1129,7 +1129,7 @@ def onp_remainder(x, y):
     return onp.remainder(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1764,7 +1764,7 @@ def test_cov():
     match_all_arrays(mnp_res, onp_res, error=1e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1806,7 +1806,7 @@ def onp_lcm(x, y):
     return onp.lcm(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2082,7 +2082,7 @@ def test_argmin():
         match_res(mnp.argmin, onp.argmin, x, axis=i)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

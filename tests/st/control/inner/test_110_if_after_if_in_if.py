@@ -141,7 +141,7 @@ def control_flow_if_after_if_in_if(input_net, x, expect1, expect2):
     assert graph_backward_res == expect2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -176,7 +176,7 @@ def test_if_after_if_in_if_02():
     control_flow_if_after_if_in_if(IfAfterIfInIfNet2, x, expect1, expect2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -187,7 +187,7 @@ def test_if_after_if_in_if_02_ascend():
     control_flow_if_after_if_in_if(IfAfterIfInIfNet2, x, expect1, expect2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

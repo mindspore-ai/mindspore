@@ -322,7 +322,7 @@ def resnet50(num_classes):
     return ResNet(ResidualBlock, [3, 4, 6, 3], num_classes)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

@@ -36,7 +36,7 @@ def ConvBnReLU(x):
 
     return x
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -66,7 +66,7 @@ class CellConvBnReLU(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -123,7 +123,7 @@ class CellCallSingleCell(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -178,7 +178,7 @@ class CallSameFunc(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -208,7 +208,7 @@ def test_call_same_func():
     assert np.allclose(grad_second[1][3].asnumpy(), -84.6, 0.1, 0.1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

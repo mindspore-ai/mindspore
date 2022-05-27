@@ -308,7 +308,7 @@ def test_print_assign_if():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -408,7 +408,7 @@ def test_assign_read_after_write():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -639,7 +639,7 @@ def _check_shape(shape):
         raise ValueError(f"Invalid shape {shape}")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -669,7 +669,7 @@ def test_constexpr_check():
         print(out)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -854,7 +854,7 @@ def test_assign_while_if():
     np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -920,7 +920,7 @@ def test_assign_return_true():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -957,7 +957,7 @@ def test_unpack_call():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -996,7 +996,7 @@ def test_tuple_of_tuple():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1025,7 +1025,7 @@ def test_write_read_write():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1410,7 +1410,7 @@ def test_if_cast():
     np.testing.assert_array_equal(r1.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1437,7 +1437,7 @@ def test_while_forward():
     assert np.allclose(output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -1477,7 +1477,7 @@ def test_multi_add_assign():
     np.testing.assert_array_equal(outputs, expects)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

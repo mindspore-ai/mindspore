@@ -23,7 +23,7 @@ from mindspore.common.tensor import Tensor
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

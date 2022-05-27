@@ -22,7 +22,7 @@ from mindspore.common.parameter import Parameter
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -70,7 +70,7 @@ def test_for_after_if_in_if():
     assert graph_backward_res == (Tensor(55, mstype.int32),)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

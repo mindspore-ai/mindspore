@@ -108,7 +108,7 @@ class GradWrapWithLoss(Cell):
         return gout[0]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -127,7 +127,7 @@ def test_grad_values_and_infer_shape():
     assert out_shape == (64, 10), 'output shape should be (64, 10)'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
