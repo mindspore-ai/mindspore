@@ -33,10 +33,15 @@ namespace mindspore {
 // OpActor data route.
 struct DataArrow {
   DataArrow(int from_output_index, const AID &to_op_id, int to_input_index)
-      : from_output_index_(from_output_index), to_op_id_(to_op_id), to_input_index_(to_input_index) {}
+      : from_output_index_(from_output_index),
+        to_op_id_(to_op_id),
+        to_input_index_(to_input_index),
+        is_batch_arrow_{false} {}
   int from_output_index_;
   AID to_op_id_;
   int to_input_index_;
+  // Indicates whether to send data routes in batches to increase the sending performance.
+  bool is_batch_arrow_;
 };
 using DataArrowPtr = std::shared_ptr<DataArrow>;
 
