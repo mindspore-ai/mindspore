@@ -81,6 +81,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kNonDeterministicInts = prim::kPrimNonDeterministicInts->name();
   static const auto &kSliceGrad = prim::kPrimSliceGrad->name();
   static const auto &kReshape = prim::kPrimReshape->name();
+  static const auto &kScatterNd = prim::kPrimScatterNd->name();
   static const auto &kTruncatedNormal = prim::kPrimTruncatedNormal->name();
   static const auto &kFillV2 = prim::kPrimFillV2->name();
   static const auto &kFractionalAvgPoolGrad = prim::kPrimFractionalAvgPoolGrad->name();
@@ -116,6 +117,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
                                                         {kTile, ShapeSet{1}},
                                                         {kReshape, ShapeSet{1}},
+                                                        {kScatterNd, ShapeSet{2}},
                                                         {kSlice, ShapeSet{1, 2}},
                                                         {kSliceGrad, ShapeSet{2, 3}},
                                                         {kFillV2, ShapeSet{0}},
