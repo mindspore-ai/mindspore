@@ -1001,6 +1001,7 @@ class Tensor(Tensor_):
             TypeError: If `axis` is not an int, a tuple or a list.
             TypeError: If `axis` is a tuple or a list, but the element of `axis` is not an int.
             TypeError: If `keep_dims` is not a bool.
+            TypeError: If `epsilon` is not a float.
             ValueError: If the element of `axis` is out of the range [-len(input.shape), len(input_x.shape)).
                 input_x refers to self tensor.
             ValueError: If the length of shape of `axis` is bigger than the length of shape of self tensor.
