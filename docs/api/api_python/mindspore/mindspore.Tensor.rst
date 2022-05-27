@@ -735,8 +735,7 @@ mindspore.Tensor
         - **depth** (int) - 输入的Scalar，定义one-hot的深度。
         - **on_value** (Tensor) - 在输入Tensor的值表示的位置索引处，用来填充输出的值。数据类型为float16或float32。
         - **off_value** (Tensor) - 在除了输入Tensor的值表示的位置索引处之外的位置，用来填充输出的值。数据类型与 `on_value` 的相同。
-        - **axis** (int) - 指定one-hot的计算维度。例如，如果 输入索引Tensor的shape为 :math:`(N, C)` ，`axis` 为-1，
-                           则输出shape为 :math:`(N, C, D)` ，如果 `axis` 为0，则输出shape为 :math:`(D, N, C)` 。默认值：-1。
+        - **axis** (int) - 指定one-hot的计算维度。例如，如果 输入索引Tensor的shape为 :math:`(N, C)` ，`axis` 为-1，则输出shape为 :math:`(N, C, D)` ，如果 `axis` 为0，则输出shape为 :math:`(D, N, C)` 。默认值：-1。
 
         **返回：**
 
@@ -745,7 +744,9 @@ mindspore.Tensor
         **异常：**
 
         - **TypeError** - `axis` 或 `depth` 不是int。
-        - **ValueError** - `axis` 不在[-1，ndim]范围内。
+        - **TypeError** - `self` 的数据类型既不是uint8，也不是int32或者int64。
+        - **TypeError** - `self`、`on_value` 或 `off_value` 不是Tensor。
+        - **ValueError** - `axis` 不在[-1, ndim]范围内。
         - **ValueError** - `depth` 小于0。
 
     .. py:method:: pow(power)
