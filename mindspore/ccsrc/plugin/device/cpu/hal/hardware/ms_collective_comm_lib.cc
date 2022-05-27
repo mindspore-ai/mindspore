@@ -200,11 +200,8 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
 
   // Create the group info which contains the unique id and send it to the meta server.
   std::string group_info_key = kGroupInfoPrefix + group_name;
-  nlohmann::json group_info;
-  group_info[kGroupName] = group_name;
-  group_info[kUniqueId] = std::string(static_cast<char *>(const_cast<void *>(root_info)), root_info_size);
-
-  if (!cgn_->PutMetadata(group_info_key, group_info.dump())) {
+  auto unique_id = std::string(static_cast<char *>(const_cast<void *>(root_info)), root_info_size);
+  if (!cgn_->PutMetadata(group_info_key, unique_id)) {
     MS_LOG(ERROR) << "Failed to send unique id to meta server.";
     return false;
   }
@@ -235,13 +232,7 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
   }
 
   std::string group_info_key = kGroupInfoPrefix + group_name;
-  auto retval = cgn_->GetMetadata(group_info_key);
-  nlohmann::json group_info = nlohmann::json::parse(retval);
-  if (!group_info.contains(kUniqueId)) {
-    MS_LOG(ERROR) << "Failed to parse group info: " << retval;
-  }
-
-  std::string unique_id = group_info.at(kUniqueId).get<std::string>();
+  auto unique_id = cgn_->GetMetadata(group_info_key);
   auto ret = memcpy_s(root_info, root_info_size, unique_id.data(), unique_id.length());
   if (ret != EOK) {
     MS_LOG(WARNING) << "The memcpy_s error, errorno(" << ret << ")";
