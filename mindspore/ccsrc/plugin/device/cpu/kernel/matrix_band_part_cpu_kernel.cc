@@ -22,6 +22,9 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+using KernelRunFunc = MatrixBandPartCpuKernelMod::KernelRunFunc;
+}  // namespace
 bool MatrixBandPartCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
@@ -127,9 +130,8 @@ bool MatrixBandPartCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   return true;
 }
 
-const std::vector<std::pair<KernelAttr, MatrixBandPartCpuKernelMod::KernelRunFunc>>
-  &MatrixBandPartCpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, MatrixBandPartCpuKernelMod::KernelRunFunc>> func_list = {
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &MatrixBandPartCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     {KernelAttr()
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)

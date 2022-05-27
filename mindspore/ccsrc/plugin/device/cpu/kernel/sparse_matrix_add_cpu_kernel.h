@@ -29,7 +29,7 @@ class SparseMatirxAddCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
   SparseMatirxAddCpuKernelMod() = default;
   ~SparseMatirxAddCpuKernelMod() override = default;
 
-  bool Init(const BaseOperatorPtr &base_operater, const std::vector<KernelTensorPtr> &inputs,
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

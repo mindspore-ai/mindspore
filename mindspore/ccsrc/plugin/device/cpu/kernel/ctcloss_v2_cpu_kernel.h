@@ -19,8 +19,8 @@
 
 #include <memory>
 #include <vector>
-#include <utility>
 #include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -51,9 +51,9 @@ class CTCLossV2CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
 
  private:
   template <typename S>
-  inline S GetBlankPaddedTarget(const S *target, int i) {
+  inline S GetBlankPaddedTarget(const S *target, int i) const {
     if (i % 2 == 0) {
-      return blank_;
+      return static_cast<S>(blank_);
     } else {
       return target[i / 2];
     }
@@ -63,7 +63,7 @@ class CTCLossV2CpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   std::vector<S> IndexProcessing(const S *input_lengths, const S *target_lengths);
 
   template <typename T, typename S>
-  T DoReduce(T *neg_log_likelihood, const S *target_lengths);
+  T DoReduce(T *neg_log_likelihood, const S *target_lengths) const;
 
   enum ReductionType { None, Mean, Sum };
 

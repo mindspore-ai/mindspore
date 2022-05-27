@@ -53,7 +53,7 @@ class LerpCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Ler
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
   size_t output_size_{1};
   std::vector<size_t> start_shape_;

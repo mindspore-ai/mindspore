@@ -22,10 +22,12 @@
 #include "utils/ms_utils.h"
 
 namespace mindspore::kernel {
+namespace {
 constexpr auto kFastGeLUGrad = "FastGeLUGrad";
 constexpr const size_t kFastGeluGradInputsNum = 2;
 constexpr const size_t kFastGeluGradOutputsNum = 1;
-
+using KernelRunFunc = FastGeLUGradCpuKernelMod::KernelRunFunc;
+}  // namespace
 template <typename T>
 bool FastGeLUGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<AddressPtr> &,
@@ -56,9 +58,8 @@ bool FastGeLUGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   return true;
 }
 
-const std::vector<std::pair<KernelAttr, FastGeLUGradCpuKernelMod::KernelRunFunc>>
-  &FastGeLUGradCpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, FastGeLUGradCpuKernelMod::KernelRunFunc>> func_list = {
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &FastGeLUGradCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      &FastGeLUGradCpuKernelMod::LaunchKernel<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),

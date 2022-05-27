@@ -21,6 +21,7 @@ namespace kernel {
 namespace {
 constexpr size_t kUnsortedSegmentArithInputsNum = 2;
 constexpr size_t kUnsortedSegmentArithOutputsNum = 1;
+using KernelRunFunc = UnsortedSegmentArithmeticCpuKernelMod::KernelRunFunc;
 }  // namespace
 #define UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(T_DT, S_DT, T, S)       \
   KernelAttr().AddInputAttr(T_DT).AddInputAttr(S_DT).AddOutputAttr(T_DT), \
@@ -113,9 +114,8 @@ int UnsortedSegmentArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_op
   return KRET_OK;
 }
 
-const std::vector<std::pair<KernelAttr, UnsortedSegmentArithmeticCpuKernelMod::KernelRunFunc>>
-  &UnsortedSegmentArithmeticCpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, UnsortedSegmentArithmeticCpuKernelMod::KernelRunFunc>> func_list = {
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &UnsortedSegmentArithmeticCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     {UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t)},
     {UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t)},
     {UNSORTED_SEGNMENT_ARITHMETIC_CPU_REGISTER(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t)},

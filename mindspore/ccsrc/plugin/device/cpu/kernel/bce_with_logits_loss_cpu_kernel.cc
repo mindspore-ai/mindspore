@@ -26,6 +26,9 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+using KernelRunFunc = BCEWithLogitsLossCpuKernelMod::KernelRunFunc;
+}  // namespace
 bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
@@ -179,9 +182,8 @@ void BCEWithLogitsLossCpuKernelMod::ResetResource() noexcept {
   workspace_size_list_.clear();
 }
 
-const std::vector<std::pair<KernelAttr, BCEWithLogitsLossCpuKernelMod::KernelRunFunc>>
-  &BCEWithLogitsLossCpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, BCEWithLogitsLossCpuKernelMod::KernelRunFunc>> func_list = {
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &BCEWithLogitsLossCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeFloat16)

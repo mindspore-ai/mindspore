@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/ctcloss_v2_cpu_kernel.h"
+#include <utility>
 #include <string>
 #include <limits>
 #include <algorithm>
@@ -84,7 +85,7 @@ int CTCLossV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   workspace_size_list_.clear();
   if (reduction_ != None) {
     const size_t value_size = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-    workspace_size_list_ = {batch_ * value_size};
+    workspace_size_list_ = {LongToSize(batch_) * value_size};
   }
 
   return KRET_OK;
@@ -92,20 +93,20 @@ int CTCLossV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 
 template <typename S>
 std::vector<S> CTCLossV2CpuKernelMod::IndexProcessing(const S *input_lengths, const S *target_lengths) {
-  std::vector<S> target_offsets(batch_);
+  std::vector<S> target_offsets(LongToSize(batch_));
   if (padded_targets) {
     const auto target_length = target_shape_[kIndex1];
-    for (int i = 0; i < batch_; ++i) {
+    for (size_t i = 0; i < LongToSize(batch_); ++i) {
       if (target_lengths[i] < 0 || target_lengths[i] > target_length) {
         MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the target_lengths[" << i
                                  << "] = " << target_lengths[i]
                                  << " is negative or larger than target.shape[1] = " << target_length << ".";
       }
-      target_offsets[i] = target_length * i;
+      target_offsets[i] = target_length * SizeToLong(i);
     }
   } else {
     S current = 0;
-    for (int i = 0; i < batch_; ++i) {
+    for (size_t i = 0; i < LongToSize(batch_); ++i) {
       target_offsets[i] = current;
       current += target_lengths[i];
     }
@@ -116,7 +117,7 @@ std::vector<S> CTCLossV2CpuKernelMod::IndexProcessing(const S *input_lengths, co
     }
   }
 
-  for (int64_t b = 0; b < batch_; ++b) {
+  for (size_t b = 0; b < LongToSize(batch_); ++b) {
     const auto input_length = input_lengths[b];
     const auto target_length = target_lengths[b];
     if (input_length > time_series_) {
@@ -169,13 +170,13 @@ bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
                batched_log_alpha_offset, &log_alpha_it, neg_log_likelihood](size_t start, size_t end) {
     for (size_t b = start; b < end; b++) {
       const auto input_length = input_lengths[b];
-      const auto target_length = target_lengths[b];
+      const auto padded_target_length = 2 * target_lengths[b] + 1;
       const auto current_target = targets + target_offsets[b];
-      T *log_alpha = batched_log_alpha + batched_log_alpha_offset * b;
+      T *log_alpha = batched_log_alpha + batched_log_alpha_offset * SizeToLong(b);
       log_alpha[log_alpha_it(0, 0)] = probs[probs_it(0, b, blank_)];
       log_alpha[log_alpha_it(0, 1)] = probs[probs_it(0, b, current_target[0])];
       for (int64_t t = 1; t < input_length; ++t) {
-        for (int64_t i = 0; i < 2 * target_length + 1; ++i) {
+        for (int64_t i = 0; i < padded_target_length; ++i) {
           S target = GetBlankPaddedTarget(current_target, i);
           T alpha = log_alpha[log_alpha_it(t - 1, i)];
           if (i - 1 >= 0) {
@@ -187,16 +188,16 @@ bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
           log_alpha[log_alpha_it(t, i)] = alpha + probs[probs_it(t, b, target)];
         }
       }
-      if (target_length != 0) {
-        neg_log_likelihood[b] = -log_sum_exp(log_alpha[log_alpha_it(input_length - 1, 2 * target_length)],
-                                             log_alpha[log_alpha_it(input_length - 1, 2 * target_length - 1)]);
+      if (padded_target_length != 0) {
+        neg_log_likelihood[b] = -log_sum_exp(log_alpha[log_alpha_it(input_length - 1, padded_target_length - 1)],
+                                             log_alpha[log_alpha_it(input_length - 1, padded_target_length - 2)]);
       } else {
         neg_log_likelihood[b] = -log_alpha[log_alpha_it(input_length - 1, 0)];
       }
     }
   };
 
-  ParallelLaunchAutoSearch(task, batch_, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, LongToSize(batch_), this, &parallel_search_info_);
 
   if (reduction_ != None) {
     auto reduced_result = reinterpret_cast<T *>(outputs[kIndex0]->addr);
@@ -207,7 +208,7 @@ bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
 }
 
 template <typename T, typename S>
-T CTCLossV2CpuKernelMod::DoReduce(T *neg_log_likelihood, const S *target_lengths) {
+T CTCLossV2CpuKernelMod::DoReduce(T *neg_log_likelihood, const S *target_lengths) const {
   if (reduction_ == Mean) {
     for (int b = 0; b < batch_; ++b) {
       neg_log_likelihood[b] = neg_log_likelihood[b] / target_lengths[b];
