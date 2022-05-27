@@ -298,6 +298,8 @@ from .layer_norm_grad import _layer_norm_grad_tbe
 from .layer_norm_x_backprop_ds import _layer_norm_x_backprop_ds_tbe
 from .layer_norm_x_backprop_v2 import _layer_norm_x_backprop_v2_tbe
 from .layer_norm_x_backprop_v2_ds import _layer_norm_x_backprop_v2_ds_tbe
+from .kl_div_loss import _kl_div_loss_tbe
+from .kl_div_loss_ds import _kl_div_loss_ds_tbe
 from .l2_loss import _l2_loss_tbe
 from .l2_loss_ds import _l2_loss_ds_tbe
 from .l2_normalize import _l2_normalize_tbe
