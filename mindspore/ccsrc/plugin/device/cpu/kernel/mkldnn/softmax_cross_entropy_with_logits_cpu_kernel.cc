@@ -63,18 +63,21 @@ void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kerne
 }
 
 void SoftmaxCrossEntropyWithLogitsCpuKernelMod::ForwardPostExecute(const float *logits, const float *labels,
-                                                                   float *output1, float *output2) const {
+                                                                   float *output1, float *output2) {
   float epsilon = std::numeric_limits<float>::min();
-  for (size_t i = 0; i < batch_size_; ++i) {
-    output1[i] = 0;
-    float loss = 0.0;
-    for (size_t j = 0; j < class_num_; ++j) {
-      float logit = logf(logits[i * class_num_ + j] <= 0.0 ? epsilon : logits[i * class_num_ + j]);
-      output2[i * class_num_ + j] = logits[i * class_num_ + j] - labels[i * class_num_ + j];
-      loss += labels[i * class_num_ + j] * logit;
+  auto task = [this, logits, labels, output1, output2, epsilon](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      output1[i] = 0;
+      float loss = 0.0;
+      for (size_t j = 0; j < class_num_; ++j) {
+        float logit = logf(logits[i * class_num_ + j] <= 0.0 ? epsilon : logits[i * class_num_ + j]);
+        output2[i * class_num_ + j] = logits[i * class_num_ + j] - labels[i * class_num_ + j];
+        loss += labels[i * class_num_ + j] * logit;
+      }
+      output1[i] = -loss;
     }
-    output1[i] = -loss;
-  }
+  };
+  ParallelLaunchAutoSearch(task, batch_size_, this, &parallel_search_info_);
 }
 
 bool SoftmaxCrossEntropyWithLogitsCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

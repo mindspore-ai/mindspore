@@ -45,7 +45,7 @@ class SoftmaxCrossEntropyWithLogitsCpuKernelMod : public DeprecatedMKLCpuKernelM
   }
 
  private:
-  void ForwardPostExecute(const float *logits, const float *labels, float *output1, float *output2) const;
+  void ForwardPostExecute(const float *logits, const float *labels, float *output1, float *output2);
   size_t class_num_{0};
   size_t batch_size_{0};
 };
