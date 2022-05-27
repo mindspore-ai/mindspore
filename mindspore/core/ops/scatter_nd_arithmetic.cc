@@ -23,6 +23,7 @@
 #include "ops/scatter_nd_min.h"
 #include <map>
 #include <string>
+#include <sstream>
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -48,31 +49,37 @@ abstract::ShapePtr ScatterNdArithmeticInferShape(const PrimitivePtr &primitive,
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
   auto updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(updates_shape_ptr)[kShape];
 
-  const int64_t input_x_size = input_x_shape.size();
-  const int64_t indices_size = indices_shape.size();
-  const int64_t updates_size = updates_shape.size();
+  const int64_t input_x_size = SizeToLong(input_x_shape.size());
+  const int64_t indices_size = SizeToLong(indices_shape.size());
+  const int64_t updates_size = SizeToLong(updates_shape.size());
   const int64_t last_dim = indices_shape.back();
 
   CheckAndConvertUtils::CheckValue("the value of last dimension of 'indices'", last_dim, kLessEqual,
                                    "the dimension of 'input_x'", input_x_size, prim_name);
 
-  CheckAndConvertUtils::CheckValue<size_t>("dimension of 'indices'", indices_size, kGreaterEqual, 1, prim_name);
-  CheckAndConvertUtils::CheckValue<size_t>("dimension of 'updates'", updates_size, kGreaterEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'indices'", indices_size, kGreaterEqual, 1, prim_name);
+  CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'updates'", updates_size, kGreaterEqual, 1, prim_name);
 
   CheckAndConvertUtils::CheckValue("len(updates.shape)'", updates_size, kEqual,
                                    "len(indices.shape) - 1 + len(input_x.shape) - indices.shape[-1]",
                                    indices_size - 1 + input_x_size - last_dim, prim_name);
 
+  std::stringstream value_ss, match_value_ss;
   for (int i = 0; i < indices_size - 1; ++i) {
-    CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dimension of indices", indices_shape[i], kEqual,
-                                              std::to_string(i) + "th dimension of updates", updates_shape[i],
-                                              prim_name);
+    value_ss.clear();
+    match_value_ss.clear();
+    value_ss << i << "th dimension of indices";
+    match_value_ss << i << "th dimension of updates";
+    CheckAndConvertUtils::CheckValue<int64_t>(value_ss.str(), indices_shape[i], kEqual, match_value_ss.str(),
+                                              updates_shape[i], prim_name);
   }
-  for (int i = indices_size - 1; i < updates_size; ++i) {
-    CheckAndConvertUtils::CheckValue<int64_t>(
-      std::to_string(i) + "th dimension of updates", updates_shape[i], kEqual,
-      std::to_string(i - (indices_size - 1) + last_dim) + "th dimension of input_x.shape[indices.shape[-1]:]",
-      input_x_shape[i - (indices_size - 1) + last_dim], prim_name);
+  for (int64_t i = indices_size - 1; i < updates_size; ++i) {
+    value_ss.clear();
+    match_value_ss.clear();
+    value_ss << i << "th dimension of updates";
+    match_value_ss << (i - (indices_size - 1) + last_dim) << "th dimension of input_x.shape[indices.shape[-1]:]";
+    CheckAndConvertUtils::CheckValue<int64_t>(value_ss.str(), updates_shape[i], kEqual, match_value_ss.str(),
+                                              input_x_shape[i - (indices_size - 1) + last_dim], prim_name);
   }
   auto output_shape = input_x_shape_ptr->cast<abstract::ShapePtr>();
   return output_shape;
