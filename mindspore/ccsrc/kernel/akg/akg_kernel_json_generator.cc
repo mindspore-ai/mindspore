@@ -35,6 +35,7 @@ using kernel::OpImplyType;
 using kernel::OpInfo;
 using kernel::OpIOInfo;
 namespace {
+constexpr int kCurrentInfoVersion = 1;
 constexpr auto kAttrParallelDimInfoSize = 2;
 constexpr auto kDebugStrDepth = 2;
 
@@ -712,8 +713,13 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
     MS_LOG(ERROR) << "Op[" << anf_node->fullname_with_scope() << "] create single kernel json failed.";
     return false;
   }
-  auto process_target = GetProcessorByTarget();
-  (*kernel_json)[kJsonKeyProcess] = process_target;
+  if (dump_option_.get_target_info) {
+    TargetInfoSetter::Set(kernel_json);
+  }
+  (*kernel_json)[kJsonKeyProcess] = GetProcessorByTarget();
+  (*kernel_json)[kJsonKeyVersion] = kCurrentInfoVersion;
+
+  // gen hash id with the above info.
   size_t hash_id = std::hash<std::string>()(kernel_json->dump());
   kernel_name_ = op_name + "_";
   (void)kernel_name_.append(std::to_string(hash_id));
@@ -721,9 +727,6 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
   (*kernel_json)[kJsonKeyComposite] = false;
-  if (dump_option_.get_compute_capability) {
-    (*kernel_json)[kJsonKeyComputeCapability] = ComputeCapability::Get();
-  }
 
   GetIOSize(*kernel_json, &input_size_list_, &output_size_list_);
 
@@ -759,6 +762,28 @@ void AkgKernelJsonGenerator::GenStitchJson(const std::vector<AnfNodePtr> &anf_no
   }
 }
 
+void AkgKernelJsonGenerator::GenKernelName(const FuncGraphPtr &fg, size_t hash_id, nlohmann::json *kernel_json) {
+  MS_EXCEPTION_IF_NULL(fg);
+  // the final kernel name has a hash_id, and may has a "_more" suffix.
+  // total len is up to about 105, file name (with ".info") is up to 110.
+  constexpr size_t name_len_limited = 80;
+  kernel_name_ = "Fused_";
+  auto attr_val = fg->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
+  std::string ops_name = (attr_val != nullptr) ? GetValue<std::string>(attr_val) : all_ops_name_;
+  if (ops_name.size() > name_len_limited) {
+    (*kernel_json)[kJsonKeyOpFullName] = kernel_name_ + ops_name;
+    auto suffix_pos = ops_name.find_last_of("_");
+    if (suffix_pos != std::string::npos && ops_name.size() - suffix_pos < name_len_limited) {
+      ops_name =
+        ops_name.substr(0, name_len_limited - (ops_name.size() - suffix_pos)) + "_more" + ops_name.substr(suffix_pos);
+    } else {
+      ops_name = ops_name.substr(0, name_len_limited) + "_more";
+    }
+  }
+  (void)kernel_name_.append(ops_name).append("_");
+  (void)kernel_name_.append(std::to_string(hash_id));
+}
+
 bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
                                               const std::vector<AnfNodePtr> &input_list,
                                               const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json) {
@@ -789,41 +814,25 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
 
   // Add parallel fusion information.
   GenParallelJson(anf_nodes, input_list, output_list, node_json_map, kernel_json);
+  GenStitchJson(anf_nodes, &node_json_map, kernel_json);
+  if (dump_option_.get_target_info) {
+    TargetInfoSetter::Set(kernel_json);
+  }
+  (*kernel_json)[kJsonKeyProcess] = GetProcessorByTarget();
+  (*kernel_json)[kJsonKeyVersion] = kCurrentInfoVersion;
 
-  auto process_target = GetProcessorByTarget();
-  (*kernel_json)[kJsonKeyProcess] = process_target;
+  // gen hash id with the above info.
   size_t hash_id = std::hash<std::string>()(kernel_json->dump());
-  kernel_name_ = "Fused_";
   auto fg = anf_nodes[0]->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
-  auto attr_val = fg->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
-  constexpr size_t name_len_limited = 80;
-  std::string ops_name = all_ops_name_;
-  if (attr_val != nullptr) {
-    ops_name = GetValue<std::string>(attr_val);
-  }
-  if (ops_name.size() > name_len_limited) {
-    (*kernel_json)[kJsonKeyOpFullName] = kernel_name_ + ops_name;
-    auto suffix_pos = ops_name.find_last_of("_");
-    if (suffix_pos != std::string::npos && ops_name.size() - suffix_pos < name_len_limited) {
-      ops_name =
-        ops_name.substr(0, name_len_limited - (ops_name.size() - suffix_pos)) + "_more" + ops_name.substr(suffix_pos);
-    } else {
-      ops_name = ops_name.substr(0, name_len_limited) + "_more";
-    }
-  }
-  static_cast<void>(kernel_name_.append(ops_name).append("_"));
-  static_cast<void>(kernel_name_.append(std::to_string(hash_id)));
+  GenKernelName(fg, hash_id, kernel_json);
+
   (*kernel_json)[kJsonKeyId] = 0;  // unused key
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
   (*kernel_json)[kJsonKeyComposite] = true;
   (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString();
-  if (dump_option_.get_compute_capability) {
-    (*kernel_json)[kJsonKeyComputeCapability] = ComputeCapability::Get();
-  }
 
-  GenStitchJson(anf_nodes, &node_json_map, kernel_json);
   GetIOSize(*kernel_json, &input_size_list_, &output_size_list_);
 
   return true;
@@ -1078,30 +1087,74 @@ bool AkgKernelJsonGenerator::CollectFusedJsonWithSingleKernel(const CNodePtr &c_
   return CollectFusedJson(node_list, input_list, output_list, &kernel_json_);
 }
 
-void ComputeCapability::GetComputeCapability() {
+namespace {
 #ifdef ENABLE_GPU
-  if (Callback::Instance()->GetTargetFromContext() != kGPUDevice) {
-    this->compute_capability_ = "Unknown";
-    return;
-  }
-  int a, b;
+bool GetGpuInfo(nlohmann::json *target_info) {
+  int a, b, sm_count;
   auto ret = cuDeviceGetAttribute(&a, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
   if (ret != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(ret, &msg);
-    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, error message: " << msg;
-    return;
+    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR fail, cuda message: " << msg;
+    return false;
   }
   ret = cuDeviceGetAttribute(&b, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
   if (ret != CUDA_SUCCESS) {
     const char *msg = nullptr;
     cuGetErrorName(ret, &msg);
-    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR fail, error message: " << msg;
+    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR fail, cuda message: " << msg;
+    return false;
+  }
+  (*target_info)[kJsonKeyComputeCapability] = std::to_string(a) + "." + std::to_string(b);
+
+  ret = cuDeviceGetAttribute(&sm_count, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, 0);
+  if (ret != CUDA_SUCCESS) {
+    const char *msg = nullptr;
+    cuGetErrorName(ret, &msg);
+    MS_LOG(WARNING) << "Get CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT fail, cuda message: " << msg;
+    return false;
+  }
+  (*target_info)[kJsonKeySmCount] = sm_count;
+  return true;
+}
+#endif
+
+bool GetCpuInfo(nlohmann::json *target_info) {
+  (*target_info)[kJsonKeySystem] = "linux";
+#if defined(ENABLE_ARM) || defined(ENABLE_ARM64)
+  (*target_info)[kJsonKeyArch] = "arm";
+  (*target_info)[kJsonKeyFeature] = "neon";
+#else
+  (*target_info)[kJsonKeyArch] = "x86";
+#ifdef ENABLE_AVX512
+  (*target_info)[kJsonKeyFeature] = "avx512";
+#elif defined(ENABLE_AVX)
+  (*target_info)[kJsonKeyFeature] = "avx";
+#else
+  (*target_info)[kJsonKeyFeature] = "sse";
+#endif
+#endif
+  return true;
+}
+}  // namespace
+
+void TargetInfoSetter::GetTargetInfo() {
+  auto target = Callback::Instance()->GetTargetFromContext();
+#ifdef ENABLE_GPU
+  if (target == kGPUDevice) {
+    has_info_ = GetGpuInfo(&target_info_);
     return;
   }
-  this->compute_capability_ = std::to_string(a) + "." + std::to_string(b);
-#else
-  this->compute_capability_ = "Unknown";
 #endif
+  if (target == kCPUDevice) {
+    has_info_ = GetCpuInfo(&target_info_);
+    return;
+  }
+}
+
+void TargetInfoSetter::SetTargetInfo(nlohmann::json *kernel_info) const {
+  if (has_info_) {
+    (*kernel_info)[kJsonKeyTargetInfo] = target_info_;
+  }
 }
 }  // namespace mindspore::graphkernel

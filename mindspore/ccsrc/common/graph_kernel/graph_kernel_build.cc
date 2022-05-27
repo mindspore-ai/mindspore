@@ -193,7 +193,7 @@ kernel::JsonNodePair GraphKernelBuild::CollectNode(const AnfNodePtr &node) const
   AnfNodePtrList output_list;
   kernel::GetValidKernelNodes(sub_func_graph, &node_list, &input_list, &output_list);
   DumpOption option;
-  option.get_compute_capability = true;
+  option.get_target_info = true;
   AkgKernelJsonGenerator akg_kernel_json_generator(option);
   if (!akg_kernel_json_generator.CollectFusedJson(node_list, input_list, output_list)) {
     MS_EXCEPTION(UnknownError) << "Collect op info file failed. op[" << node->fullname_with_scope() << "].";

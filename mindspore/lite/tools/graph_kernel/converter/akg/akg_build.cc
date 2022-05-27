@@ -185,7 +185,7 @@ bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
   std::string kernels_name = "";
   for (const auto &node : node_list) {
     graphkernel::DumpOption option;
-    option.get_compute_capability = true;
+    option.get_target_info = true;
     graphkernel::AkgKernelJsonGenerator akg_kernel_json_generator(option);
     auto fg = GetCNodeFuncGraph(node);
     MS_EXCEPTION_IF_NULL(fg);
