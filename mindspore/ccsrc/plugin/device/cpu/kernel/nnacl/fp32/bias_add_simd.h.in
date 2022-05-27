@@ -1,0 +1,57 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_NNACL_FP32_BIAS_ADD_@SIMD_INSTRUCTION@_H_
+#define MINDSPORE_NNACL_FP32_BIAS_ADD_@SIMD_INSTRUCTION@_H_
+
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#include "nnacl/intrinsics/ms_simd_@SIMD_INSTRUCTION_LOWER@_instructions.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+@SIMD_INSTRUCTION_BEGIN@
+
+static inline int BiasAddByInnerCore@SIMD_INSTRUCTION@(int index, const float *input, const float *bias, float *output,
+                                                       int64_t num) {
+  for (int block_max_size = num - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 vin0 = SIMD_LD_F32(input + index);
+    SIMD_F32 vin1 = SIMD_LD_F32(bias + index);
+    SIMD_F32 vout = SIMD_ADD_F32(vin0, vin1);
+    SIMD_ST_F32(output + index, vout);
+  }
+  return index;
+}
+
+static inline int BiasAddByBatchCore@SIMD_INSTRUCTION@(int index, const float *input, const float *bias, float *output1,
+                                                       float *output2, float *output3, float *output4, int64_t num) {
+  for (int block_max_size = num - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_LDX4_F32(input_data, input + index, num);
+    SIMD_F32 bias_data = SIMD_LD_F32(bias + index);
+    SIMD_ST_F32(output1 + index, SIMD_ADD_F32(input_data1, bias_data));
+    SIMD_ST_F32(output2 + index, SIMD_ADD_F32(input_data2, bias_data));
+    SIMD_ST_F32(output3 + index, SIMD_ADD_F32(input_data3, bias_data));
+    SIMD_ST_F32(output4 + index, SIMD_ADD_F32(input_data4, bias_data));
+  }
+  return index;
+}
+
+@SIMD_INSTRUCTION_END@
+#ifdef __cplusplus
+};
+#endif
+
+#endif  // MINDSPORE_NNACL_FP32_BIAS_ADD_SIMD_H_

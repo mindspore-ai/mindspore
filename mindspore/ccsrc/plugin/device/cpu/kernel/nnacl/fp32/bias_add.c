@@ -17,36 +17,31 @@
 #include "nnacl/fp32/bias_add.h"
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/bias_add_avx512.h"
+#endif
 
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdBiasAddByInnerCoreCalc(block_size, block_num, input, bias, output, num, index)     \
-  for (int block_max_size = num - block_num + 1; index < block_max_size; index += block_num) { \
-    MS_FLOAT_32xN(block_num) vin0 = MS_LD_F32(block_size, input + index);                      \
-    MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, bias + index);                       \
-    MS_FLOAT_32xN(block_num) vout = MS_ADD_F32(block_size, vin0, vin1);                        \
-    MS_ST_F32(block_size, output + index, vout);                                               \
-  }
+#ifdef ENABLE_AVX
+#include "nnacl/avx/bias_add_avx.h"
+#endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/sse/bias_add_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/bias_add_neon.h"
+#endif
 
 void BiasAddByInnerCore(const float *input, const float *bias, float *output, int64_t num) {
   int64_t index = 0;
 
-  MS_SIMD_RUN_NO_SCALAR(SimdBiasAddByInnerCoreCalc, input, bias, output, num, index);
+  SIMD_RUN_NO_SCALAR(BiasAddByInnerCore, index, input, bias, output, num);
 
   for (; index < num; ++index) {
     output[index] = input[index] + bias[index];
   }
 }
-
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdBiasAddByBatchCoreCalc(block_size, block_num, input, bias, output, num, index)     \
-  for (int block_max_size = num - block_num + 1; index < block_max_size; index += block_num) { \
-    MS_LDX4_F32(block_size, input_data, input + index, num);                                   \
-    MS_FLOAT_32xN(block_num) bias_data = MS_LD_F32(block_size, bias + index);                  \
-    MS_ST_F32(block_size, output1 + index, MS_ADD_F32(block_size, input_data1, bias_data));    \
-    MS_ST_F32(block_size, output2 + index, MS_ADD_F32(block_size, input_data2, bias_data));    \
-    MS_ST_F32(block_size, output3 + index, MS_ADD_F32(block_size, input_data3, bias_data));    \
-    MS_ST_F32(block_size, output4 + index, MS_ADD_F32(block_size, input_data4, bias_data));    \
-  }
 
 void BiasAddByBatchCore(const float *input, const float *bias, float *output, int64_t num) {
   float *output1 = output;
@@ -55,7 +50,7 @@ void BiasAddByBatchCore(const float *input, const float *bias, float *output, in
   float *output4 = output + num * 3;
   int64_t index = 0;
 
-  MS_SIMD_RUN_NO_SCALAR(SimdBiasAddByBatchCoreCalc, input, bias, output, num, index);
+  SIMD_RUN_NO_SCALAR(BiasAddByBatchCore, index, input, bias, output1, output2, output3, output4, num);
 
   const float *input_data1 = input;
   const float *input_data2 = input + num;
