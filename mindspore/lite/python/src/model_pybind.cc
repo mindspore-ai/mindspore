@@ -61,18 +61,16 @@ void ModelPyBind(const py::module &m) {
 
   py::class_<Model, std::shared_ptr<Model>>(m, "ModelBind")
     .def(py::init<>())
-    .def(
-      "build_from_buff",
-      static_cast<Status (Model::*)(const void *, size_t, ModelType, const std::shared_ptr<Context> &)>(&Model::Build))
-    .def(
-      "build_from_file",
-      static_cast<Status (Model::*)(const std::string &, ModelType, const std::shared_ptr<Context> &)>(&Model::Build))
+    .def("build_from_buff",
+         py::overload_cast<const void *, size_t, ModelType, const std::shared_ptr<Context> &>(&Model::Build))
+    .def("build_from_file",
+         py::overload_cast<const std::string &, ModelType, const std::shared_ptr<Context> &>(&Model::Build))
     .def("build_from_file_with_decrypt",
-         static_cast<Status (Model::*)(const std::string &, ModelType, const std::shared_ptr<Context> &, const Key &,
-                                       const std::string &, const std::string &)>(&Model::Build))
+         py::overload_cast<const std::string &, ModelType, const std::shared_ptr<Context> &, const Key &,
+                           const std::string &, const std::string &>(&Model::Build))
     .def("resize", &Model::Resize)
-    .def("predict", static_cast<Status (Model::*)(const std::vector<MSTensor> &, std::vector<MSTensor> *,
-                                                  const MSKernelCallBack &, const MSKernelCallBack &)>(&Model::Predict))
+    .def("predict", py::overload_cast<const std::vector<MSTensor> &, std::vector<MSTensor> *, const MSKernelCallBack &,
+                                      const MSKernelCallBack &>(&Model::Predict))
     .def("get_inputs", &Model::GetInputs)
     .def("get_outputs", &Model::GetOutputs)
     .def("get_input_by_tensor_name",

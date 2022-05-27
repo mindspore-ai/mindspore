@@ -113,3 +113,41 @@ echo 'Runtime config file test'
 echo 'run c api ut test'
 ./lite-test --gtest_filter="TensorCTest.*"
 ./lite-test --gtest_filter="ContextCTest.*"
+
+echo "lite Python API ut test"
+mindspore_lite_whl=`ls ${CUR_DIR}/../../../output/*.whl`
+if [ ! -f "${mindspore_lite_whl}" ]; then
+  echo -e "\e[31mPython-API Whl not found, so lite Python API ut test will not be run. \e[0m"
+else
+  export PYTHONPATH=${CUR_DIR}/../build/package/:${PYTHONPATH}
+
+  # prepare model and inputdata for Python-API ut test
+  if [ ! -e mobilenetv2.ms ]; then
+    MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
+    wget -c -O mobilenetv2.ms --no-check-certificate ${MODEL_DOWNLOAD_URL}
+  fi
+
+  if [ ! -e mobilenetv2.ms.bin ]; then
+    BIN_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz"
+    wget -c --no-check-certificate ${BIN_DOWNLOAD_URL}
+    tar -zxf mobilenetv2.tar.gz
+    cp mobilenetv2/*.ms.bin ./mobilenetv2.ms.bin
+    rm -rf mobilenetv2.tar.gz mobilenetv2/
+  fi
+
+  # run Python-API ut test
+  pytest ${CUR_DIR}/ut/python/test_inference_api.py -s
+  RET=$?
+  if [ ${RET} -ne 0 ]; then
+      exit ${RET}
+  fi
+
+  # run CPU Python-API st test
+  echo "run CPU Python API st test"
+  pytest ${CUR_DIR}/st/python/test_inference.py::test_cpu_inference_01 -s
+  RET=$?
+  if [ ${RET} -ne 0 ]; then
+      exit ${RET}
+  fi
+fi
+
