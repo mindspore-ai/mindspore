@@ -28,8 +28,8 @@ DATA_DIR = "../data/dataset/testCMUArcticData"
 def test_cmu_arctic_basic():
     """
     Feature: CMUArcticDataset
-    Description: test basic name of CMUArctic
-    Expectation: the dataset is as expected
+    Description: Test basic name of CMUArctic
+    Expectation: The dataset is as expected
     """
     logger.info("Test CMUArcticDataset Op")
 
@@ -76,8 +76,8 @@ def test_cmu_arctic_basic():
 def test_cmu_arctic_distribute_sampler():
     """
     Feature: CMUArcticDataset
-    Description: test CMUArctic dataset with DistributedSampler
-    Expectation: the results are as expected
+    Description: Test CMUArctic dataset with DistributedSampler
+    Expectation: The results are as expected
     """
     logger.info("Test CMUArctic with sharding")
 
@@ -103,8 +103,8 @@ def test_cmu_arctic_distribute_sampler():
 def test_cmu_arctic_exception():
     """
     Feature: CMUArcticDataset
-    Description: test error cases for CMUArcticDataset
-    Expectation: the results are as expected
+    Description: Test error cases for CMUArcticDataset
+    Expectation: The results are as expected
     """
     logger.info("Test error cases for CMUArcticDataset")
 
@@ -158,8 +158,8 @@ def test_cmu_arctic_exception():
 def test_cmu_arctic_sequential_sampler():
     """
     Feature: CMUArcticDataset
-    Description: test CMUArcticDataset with SequentialSampler
-    Expectation: the results are as expected
+    Description: Test CMUArcticDataset with SequentialSampler
+    Expectation: The results are as expected
     """
     logger.info("Test CMUArcticDataset Op with SequentialSampler")
 
@@ -199,8 +199,8 @@ def test_cmu_arctic_sequential_sampler():
 def test_cmu_arctic_name():
     """
     Feature: CMUArcticDataset
-    Description: test CMUArcticDataset name
-    Expectation: the results are as expected
+    Description: Test CMUArcticDataset name
+    Expectation: The results are as expected
     """
     logger.info("Test CMUArcticDataset name")
 

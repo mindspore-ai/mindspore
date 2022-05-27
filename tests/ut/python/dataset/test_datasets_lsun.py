@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ DATA_DIR = "../data/dataset/testLSUN"
 def test_lsun_basic():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case basic")
     # define parameters
@@ -53,8 +53,8 @@ def test_lsun_basic():
 def test_lsun_num_samples():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case num_samples")
     # define parameters
@@ -97,8 +97,8 @@ def test_lsun_num_samples():
 def test_lsun_num_shards():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case numShards")
     # define parameters
@@ -122,8 +122,8 @@ def test_lsun_num_shards():
 def test_lsun_shard_id():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case withShardID")
     # define parameters
@@ -147,8 +147,8 @@ def test_lsun_shard_id():
 def test_lsun_no_shuffle():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case noShuffle")
     # define parameters
@@ -173,8 +173,8 @@ def test_lsun_no_shuffle():
 def test_lsun_extra_shuffle():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case extra_shuffle")
     # define parameters
@@ -199,8 +199,8 @@ def test_lsun_extra_shuffle():
 def test_lsun_decode():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case decode")
     # define parameters
@@ -225,8 +225,8 @@ def test_lsun_decode():
 def test_sequential_sampler():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case SequentialSampler")
     # define parameters
@@ -250,8 +250,8 @@ def test_sequential_sampler():
 def test_random_sampler():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case RandomSampler")
     # define parameters
@@ -276,8 +276,8 @@ def test_random_sampler():
 def test_distributed_sampler():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case DistributedSampler")
     # define parameters
@@ -302,8 +302,8 @@ def test_distributed_sampler():
 def test_pk_sampler():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case PKSampler")
     # define parameters
@@ -328,8 +328,8 @@ def test_pk_sampler():
 def test_chained_sampler():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case Chained Sampler - Random and Sequential, with repeat")
 
@@ -362,8 +362,8 @@ def test_chained_sampler():
 def test_lsun_test_dataset():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case usage")
     # apply dataset operations
@@ -383,8 +383,8 @@ def test_lsun_test_dataset():
 def test_lsun_valid_dataset():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case usage")
     # apply dataset operations
@@ -404,8 +404,8 @@ def test_lsun_valid_dataset():
 def test_lsun_train_dataset():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case usage")
     # apply dataset operations
@@ -425,8 +425,8 @@ def test_lsun_train_dataset():
 def test_lsun_all_dataset():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case usage")
     # apply dataset operations
@@ -446,8 +446,8 @@ def test_lsun_all_dataset():
 def test_lsun_classes():
     """
     Feature: LSUN
-    Description: test classes of LSUN
-    Expectation: the dataset is as expected
+    Description: Test classes of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case usage")
     # apply dataset operations
@@ -467,8 +467,8 @@ def test_lsun_classes():
 def test_lsun_zip():
     """
     Feature: LSUN
-    Description: test basic usage of LSUN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LSUN
+    Expectation: The dataset is as expected
     """
     logger.info("Test Case zip")
     # define parameters
@@ -498,8 +498,8 @@ def test_lsun_zip():
 def test_lsun_exception():
     """
     Feature: LSUN
-    Description:  test error cases for LSUN
-    Expectation: throw exception correctly
+    Description: Test error cases for LSUN
+    Expectation: Throw exception correctly
     """
     logger.info("Test lsun exception")
 
@@ -544,8 +544,8 @@ def test_lsun_exception():
 def test_lsun_exception_map():
     """
     Feature: LSUN
-    Description:  test error cases for LSUN
-    Expectation: throw exception correctly
+    Description: Test error cases for LSUN
+    Expectation: Throw exception correctly
     """
     logger.info("Test lsun exception map")
     def exception_func(item):

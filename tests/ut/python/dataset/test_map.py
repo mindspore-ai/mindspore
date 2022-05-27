@@ -28,9 +28,9 @@ DATA_DIR = "../data/dataset/testPK/data"
 
 def test_map_c_transform_exception():
     """
-    Feature: test c error op def
-    Description: op defined like vision.HWC2CHW
-    Expectation: success
+    Feature: Test Cpp error op def
+    Description: Op defined like vision.HWC2CHW
+    Expectation: Success
     """
     data_set = ds.ImageFolderDataset(DATA_DIR, num_parallel_workers=1, shuffle=True)
 
@@ -83,9 +83,9 @@ def test_map_c_transform_exception():
 
 def test_map_py_transform_exception():
     """
-    Feature: test python error op def
-    Description: op defined like vision.RandomHorizontalFlip
-    Expectation: success
+    Feature: Test Python error op def
+    Description: Op defined like vision.RandomHorizontalFlip
+    Expectation: Success
     """
     data_set = ds.ImageFolderDataset(DATA_DIR, num_parallel_workers=1, shuffle=True)
 
@@ -150,8 +150,8 @@ def test_map_text_and_data_transforms():
 def test_map_with_exact_log():
     """
     Feature: Map op
-    Description: python operation just print once log
-    Expectation: raise exact error info
+    Description: Python operation just print once log
+    Expectation: Raise exact error info
     """
     class GetDatasetGenerator:
         def __init__(self):

@@ -33,8 +33,8 @@ def get_ratio(mat):
 def test_inverse_mel_scale_pipeline():
     """
     Feature: InverseMelScale
-    Description: test InverseMelScale cpp op in pipeline
-    Expectation: equal results from Mindspore and benchmark
+    Description: Test InverseMelScale cpp op in pipeline
+    Expectation: Equal results from Mindspore and benchmark
     """
     in_data = np.load(DATA_DIR + "inverse_mel_scale_8x40.npy")[np.newaxis, :]
     out_expect = np.load(DATA_DIR + 'inverse_mel_scale_20x40_out.npy')[np.newaxis, :]
@@ -76,8 +76,8 @@ def test_inverse_mel_scale_pipeline():
 def test_inverse_mel_scale_pipeline_invalid_param():
     """
     Feature: InverseMelScale
-    Description: test InverseMelScale with invalid input parameters
-    Expectation: throw ValueError or TypeError
+    Description: Test InverseMelScale with invalid input parameters
+    Expectation: Throw correct error and message
     """
     logger.info("test InverseMelScale op with default values")
     in_data = np.load(DATA_DIR + "inverse_mel_scale_32x81.npy")[np.newaxis, :]
@@ -136,8 +136,8 @@ def test_inverse_mel_scale_pipeline_invalid_param():
 def test_inverse_mel_scale_eager():
     """
     Feature: InverseMelScale
-    Description: test InverseMelScale cpp op with eager mode
-    Expectation: equal results from Mindspore and benchmark
+    Description: Test InverseMelScale cpp op with eager mode
+    Expectation: Equal results from Mindspore and benchmark
     """
     spectrogram = np.load(DATA_DIR + 'inverse_mel_scale_32x81.npy')
     out_ms = c_audio.InverseMelScale(n_stft=80, n_mels=32)(spectrogram)

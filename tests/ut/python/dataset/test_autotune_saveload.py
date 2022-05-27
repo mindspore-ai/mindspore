@@ -57,7 +57,7 @@ class TestAutotuneSaveLoad:
         """
         Feature: Autotuning
         Description: Test save final config with GeneratorDataset pipeline: Generator -> Shuffle -> Batch
-        Expectation: pipeline runs successfully
+        Expectation: Pipeline runs successfully
         """
         original_autotune = ds.config.get_enable_autotune()
         ds.config.set_enable_autotune(True, str(tmp_path / "test_autotune_generator_atfinal"))
@@ -115,7 +115,7 @@ class TestAutotuneSaveLoad:
         """
         Feature: Autotuning
         Description: Test save final config with Mnist pipeline: Mnist -> Batch -> Map
-        Expectation: pipeline runs successfully
+        Expectation: Pipeline runs successfully
         """
         original_autotune = ds.config.get_enable_autotune()
         ds.config.set_enable_autotune(True, str(tmp_path / "test_autotune_mnist_pipeline_atfinal"))

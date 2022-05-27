@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ DATA_DIR = '../data/dataset/testCoNLL2000Dataset'
 
 def test_conll2000_dataset_one_file():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with test usage
+    Expectation: Output is equal to the expected output
     """
     data = ds.CoNLL2000Dataset(DATA_DIR, usage="test", shuffle=False)
     count = 0
@@ -37,9 +37,9 @@ def test_conll2000_dataset_one_file():
 
 def test_conll2000_dataset_all_file():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with all usage
+    Expectation: Output is equal to the expected output
     """
     data = ds.CoNLL2000Dataset(DATA_DIR, usage="all", shuffle=False)
     count = 0
@@ -51,9 +51,9 @@ def test_conll2000_dataset_all_file():
 
 def test_conll2000_dataset_num_samples_none():
     """
-    Feature: CoNLL2000ChunkingDataset
-    Description: test param check of CoNLL2000ChunkingDataset
-    Expectation: throw correct error and message
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with no num_samples (None by default)
+    Expectation: Output is equal to the expected output
     """
     # Do not provide a num_samples argument, so it would be None by default
     data = ds.CoNLL2000Dataset(DATA_DIR, usage="test", shuffle=False)
@@ -66,9 +66,9 @@ def test_conll2000_dataset_num_samples_none():
 
 def test_conll2000_dataset_shuffle_false_num_parallel_workers_4():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with no shuffle and num_parallel_workers=4
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(987)
@@ -93,9 +93,9 @@ def test_conll2000_dataset_shuffle_false_num_parallel_workers_4():
 
 def test_conll2000_dataset_shuffle_false_num_parallel_workers_1():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with no shuffle and num_parallel_workers=1
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(987)
@@ -120,9 +120,9 @@ def test_conll2000_dataset_shuffle_false_num_parallel_workers_1():
 
 def test_conll2000_dataset_shuffle_files_num_parallel_workers_4():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with shuffle and num_parallel_workers=4
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(135)
@@ -147,9 +147,9 @@ def test_conll2000_dataset_shuffle_files_num_parallel_workers_4():
 
 def test_conll2000_dataset_shuffle_files_num_parallel_workers_1():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with shuffle and num_parallel_workers=1
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(135)
@@ -174,9 +174,9 @@ def test_conll2000_dataset_shuffle_files_num_parallel_workers_1():
 
 def test_conll2000_dataset_shuffle_global_num_parallel_workers_4():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with shuffle global and num_parallel_workers=4
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     original_seed = config_get_set_seed(246)
@@ -201,9 +201,9 @@ def test_conll2000_dataset_shuffle_global_num_parallel_workers_4():
 
 def test_conll2000_dataset_shuffle_global_num_parallel_workers_1():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with shuffle global and num_parallel_workers=1
+    Expectation: Output is equal to the expected output
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(246)
@@ -228,9 +228,9 @@ def test_conll2000_dataset_shuffle_global_num_parallel_workers_1():
 
 def test_conll2000_dataset_num_samples():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with num_samples
+    Expectation: Output is equal to the expected output
     """
     data = ds.CoNLL2000Dataset(DATA_DIR, usage="test", shuffle=False, num_samples=2)
     count = 0
@@ -241,9 +241,9 @@ def test_conll2000_dataset_num_samples():
 
 def test_conll2000_dataset_distribution():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with num_shards and shard_id parameters
+    Expectation: Output is equal to the expected output
     """
     data = ds.CoNLL2000Dataset(DATA_DIR, usage="test", shuffle=False, num_shards=2, shard_id=1)
     count = 0
@@ -254,9 +254,9 @@ def test_conll2000_dataset_distribution():
 
 def test_conll2000_dataset_repeat():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with repeat op
+    Expectation: Output is equal to the expected output
     """
     data = ds.CoNLL2000Dataset(DATA_DIR, usage="test", shuffle=False)
     data = data.repeat(3)
@@ -278,9 +278,9 @@ def test_conll2000_dataset_repeat():
 
 def test_conll2000_dataset_get_datasetsize():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset get_dataset_size
+    Expectation: Output is equal to the expected output
     """
     data = ds.CoNLL2000Dataset(DATA_DIR, usage="test", shuffle=False)
     size = data.get_dataset_size()
@@ -289,9 +289,9 @@ def test_conll2000_dataset_get_datasetsize():
 
 def test_conll2000_dataset_to_device():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset to_device
+    Expectation: Runs successfully
     """
     data = ds.CoNLL2000Dataset(DATA_DIR, usage="test", shuffle=False)
     data = data.to_device()
@@ -300,9 +300,9 @@ def test_conll2000_dataset_to_device():
 
 def test_conll2000_dataset_exceptions():
     """
-    Feature: CoNLL2000ChunkingDataset.
-    Description: test param check of CoNLL2000ChunkingDataset.
-    Expectation: throw correct error and message.
+    Feature: CoNLL2000Dataset
+    Description: Test CoNLL2000Dataset with invalid inputs
+    Expectation: Correct error is raised as expected
     """
     with pytest.raises(ValueError) as error_info:
         _ = ds.CoNLL2000Dataset(DATA_DIR, usage="test", num_samples=-1)

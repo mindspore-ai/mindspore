@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ DATA_DIR = "../data/dataset/testLJSpeechData/"
 def test_lj_speech_basic():
     """
     Feature: LJSpeechDataset
-    Description: basic test of LJSpeechDataset
-    Expectation: the data is processed successfully
+    Description: Basic test of LJSpeechDataset
+    Expectation: The data is processed successfully
     """
     logger.info("Test LJSpeechDataset Op")
 
@@ -59,8 +59,8 @@ def test_lj_speech_basic():
 def test_lj_speech_sequential_sampler():
     """
     Feature: LJSpeechDataset
-    Description: test LJSpeechDataset with SequentialSampler
-    Expectation: the data is processed successfully
+    Description: Test LJSpeechDataset with SequentialSampler
+    Expectation: The data is processed successfully
     """
     logger.info("Test LJSpeechDataset Op with SequentialSampler")
     num_samples = 3
@@ -81,8 +81,8 @@ def test_lj_speech_sequential_sampler():
 def test_lj_speech_exception():
     """
     Feature: LJSpeechDataset
-    Description: test error cases for LJSpeechDataset
-    Expectation: throw correct error and message
+    Description: Test error cases for LJSpeechDataset
+    Expectation: Throw correct error and message
     """
     logger.info("Test error cases for LJSpeechDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"

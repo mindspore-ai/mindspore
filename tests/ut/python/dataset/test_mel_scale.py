@@ -56,8 +56,8 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 def test_mel_scale_pipeline():
     """
     Feature: MelScale
-    Description: test MelScale cpp op in pipeline
-    Expectation: equal results from Mindspore and benchmark
+    Description: Test MelScale Cpp op in pipeline mode
+    Expectation: Equal results from Mindspore and benchmark
     """
     in_data = np.array([[[[-0.34207549691200256, -2.0971477031707764, -0.9462487101554871],
                           [1.2536851167678833, -1.3225716352462769, -0.06942684203386307],
@@ -85,8 +85,8 @@ def test_mel_scale_pipeline():
 def test_mel_scale_pipeline_invalid_param():
     """
     Feature: MelScale
-    Description: test MelScale with invalid input parameters
-    Expectation: throw ValueError or TypeError
+    Description: Test MelScale with invalid input parameters
+    Expectation: Throw correct error and message
     """
     logger.info("test MelScale op with default values")
     generator = gen([CHANNEL, FREQ, TIME])
@@ -127,8 +127,8 @@ def test_mel_scale_pipeline_invalid_param():
 def test_mel_scale_eager():
     """
     Feature: MelScale
-    Description: test MelScale cpp op with eage mode
-    Expectation: equal results from Mindspore and benchmark
+    Description: Test MelScale Cpp op with eager mode
+    Expectation: Equal results from Mindspore and benchmark
     """
     spectrogram = np.array([[[-0.7010437250137329, 1.1184569597244263, -1.4936821460723877],
                              [0.4603022038936615, -0.556514322757721, 0.8629537224769592]],

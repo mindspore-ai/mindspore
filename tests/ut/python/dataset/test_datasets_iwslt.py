@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ DATA_IWSLT2017_DIR = '../data/dataset/testIWSLT/IWSLT2017'
 def test_iwslt2016_dataset_basic():
     """
     Feature: Test IWSLT2016 Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     buffer = []
     data = ds.IWSLT2016Dataset(DATA_IWSLT2016_DIR, usage='train', language_pair=["de", "en"], shuffle=False)
@@ -36,8 +36,8 @@ def test_iwslt2016_dataset_basic():
 def test_iwslt2016_dataset_quoted():
     """
     Feature: Test get the IWSLT2016 Dataset.
-    Description: read IWSLT2016 data and get data.
-    Expectation: the data is processed successfully.
+    Description: Read IWSLT2016 data and get data.
+    Expectation: The data is processed successfully.
     """
     data = ds.IWSLT2016Dataset(DATA_IWSLT2016_DIR, usage='train', language_pair=["de", "en"], shuffle=False)
     buffer = []
@@ -53,8 +53,8 @@ def test_iwslt2016_dataset_quoted():
 def test_iwslt2016_dataset_usage_all():
     """
     Feature: Test IWSLT2016 Dataset (usage=all).
-    Description: read train data and test data.
-    Expectation: the data is processed successfully.
+    Description: Read train data and test data.
+    Expectation: The data is processed successfully.
     """
     buffer = []
     data = ds.IWSLT2016Dataset(DATA_IWSLT2016_DIR, usage='all', language_pair=["de", "en"], valid_set='tst2013',
@@ -67,8 +67,8 @@ def test_iwslt2016_dataset_usage_all():
 def test_iwslt2016_dataset_get_datasetsize():
     """
     Feature: Test Getters.
-    Description: test get_dataset_size of IWSLT2016 dataset.
-    Expectation: the data is processed successfully.
+    Description: Test get_dataset_size of IWSLT2016 dataset.
+    Expectation: The data is processed successfully.
     """
     data = ds.IWSLT2016Dataset(DATA_IWSLT2016_DIR, usage='train', language_pair=["de", "en"], shuffle=False)
     size = data.get_dataset_size()
@@ -78,8 +78,8 @@ def test_iwslt2016_dataset_get_datasetsize():
 def test_iwslt2016_dataset_distribution():
     """
     Feature: Test IWSLT2016Dataset in distribution.
-    Description: test in a distributed state.
-    Expectation: the data is processed successfully.
+    Description: Test in a distributed state.
+    Expectation: The data is processed successfully.
     """
     data = ds.IWSLT2016Dataset(DATA_IWSLT2016_DIR, usage='train', language_pair=["de", "en"], shuffle=False,
                                num_shards=2, shard_id=0)
@@ -92,8 +92,8 @@ def test_iwslt2016_dataset_distribution():
 def test_iwslt2016_dataset_num_samples():
     """
     Feature: Test IWSLT2016 Dataset (num_samples=2).
-    Description: test get num_samples.
-    Expectation: the data is processed successfully.
+    Description: Test get num_samples.
+    Expectation: The data is processed successfully.
     """
     data = ds.IWSLT2016Dataset(DATA_IWSLT2016_DIR, usage='train', language_pair=["de", "en"], shuffle=False,
                                num_samples=2)
@@ -106,8 +106,8 @@ def test_iwslt2016_dataset_num_samples():
 def test_iwslt2016_dataset_exception():
     """
     Feature: Error Test.
-    Description: test the wrong input.
-    Expectation: unable to read in data.
+    Description: Test the wrong input.
+    Expectation: Unable to read in data.
     """
     def exception_func(item):
         raise Exception("Error occur!")
@@ -134,8 +134,8 @@ def test_iwslt2016_dataset_exception():
 def test_iwslt2017_dataset_basic():
     """
     Feature: Test IWSLT2017 Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     buffer = []
     data = ds.IWSLT2017Dataset(DATA_IWSLT2017_DIR, usage='train', language_pair=["de", "en"], shuffle=False)
@@ -149,8 +149,8 @@ def test_iwslt2017_dataset_basic():
 def test_iwslt2017_dataset_quoted():
     """
     Feature: Test get the IWSLT2017 Dataset.
-    Description: read IWSLT2017 data and get data.
-    Expectation: the data is processed successfully.
+    Description: Read IWSLT2017 data and get data.
+    Expectation: The data is processed successfully.
     """
     data = ds.IWSLT2017Dataset(DATA_IWSLT2017_DIR, usage='train', language_pair=["de", "en"], shuffle=False)
     buffer = []
@@ -166,8 +166,8 @@ def test_iwslt2017_dataset_quoted():
 def test_iwslt2017_dataset_usage_all():
     """
     Feature: Test IWSLT2017 Dataset(usage=all).
-    Description: read train data and test data.
-    Expectation: the data is processed successfully.
+    Description: Read train data and test data.
+    Expectation: The data is processed successfully.
     """
     buffer = []
     data = ds.IWSLT2017Dataset(DATA_IWSLT2017_DIR, usage='all', language_pair=["de", "en"], shuffle=False)
@@ -179,8 +179,8 @@ def test_iwslt2017_dataset_usage_all():
 def test_iwslt2017_dataset_get_datasetsize():
     """
     Feature: Test Getters.
-    Description: test get_dataset_size of IWSLT2017 dataset.
-    Expectation: the data is processed successfully.
+    Description: Test get_dataset_size of IWSLT2017 dataset.
+    Expectation: The data is processed successfully.
     """
     data = ds.IWSLT2017Dataset(DATA_IWSLT2017_DIR, usage='train', language_pair=["de", "en"], shuffle=False)
     size = data.get_dataset_size()
@@ -190,8 +190,8 @@ def test_iwslt2017_dataset_get_datasetsize():
 def test_iwslt2017_dataset_distribution():
     """
     Feature: Test IWSLT2017Dataset in distribution.
-    Description: test in a distributed state.
-    Expectation: the data is processed successfully.
+    Description: Test in a distributed state.
+    Expectation: The data is processed successfully.
     """
     data = ds.IWSLT2017Dataset(DATA_IWSLT2017_DIR, usage='train', language_pair=["de", "en"], shuffle=False,
                                num_shards=2, shard_id=0)
@@ -204,8 +204,8 @@ def test_iwslt2017_dataset_distribution():
 def test_iwslt2017_dataset_num_samples():
     """
     Feature: Test IWSLT2017 Dataset (num_samples=2).
-    Description: test get num_samples.
-    Expectation: the data is processed successfully.
+    Description: Test get num_samples.
+    Expectation: The data is processed successfully.
     """
     data = ds.IWSLT2017Dataset(DATA_IWSLT2017_DIR, usage='train', language_pair=["de", "en"], shuffle=False,
                                num_samples=2)
@@ -218,8 +218,8 @@ def test_iwslt2017_dataset_num_samples():
 def test_iwslt2017_dataset_exception():
     """
     Feature: Error Test.
-    Description: test the wrong input.
-    Expectation: unable to read in data.
+    Description: Test the wrong input.
+    Expectation: Unable to read in data.
     """
     def exception_func(item):
         raise Exception("Error occur!")

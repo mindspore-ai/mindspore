@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ WRONG_DIR = "../data/dataset/testMnistData"
 def load_mat(mode, path):
     """
     Feature: load_mat.
-    Description: load .mat file.
-    Expectation: get .mat of svhn dataset.
+    Description: Load .mat file.
+    Expectation: Get .mat of svhn dataset.
     """
     filename = mode + "_32x32.mat"
     mat_data = loadmat(os.path.realpath(os.path.join(path, filename)))
@@ -46,8 +46,8 @@ def load_mat(mode, path):
 def load_svhn(path, usage):
     """
     Feature: load_svhn.
-    Description: load svhn.
-    Expectation: get data of svhn dataset.
+    Description: Load svhn.
+    Expectation: Get data of svhn dataset.
     """
     assert usage in ["train", "test", "extra", "all"]
 
@@ -67,8 +67,8 @@ def load_svhn(path, usage):
 def visualize_dataset(images, labels):
     """
     Feature: visualize_dataset.
-    Description: visualize svhn dataset.
-    Expectation: plot images.
+    Description: Visualize svhn dataset.
+    Expectation: Plot images.
     """
     num_samples = len(images)
     for i in range(num_samples):
@@ -81,8 +81,8 @@ def visualize_dataset(images, labels):
 def test_svhn_content_check():
     """
     Feature: test_svhn_content_check.
-    Description: validate SVHNDataset image readings.
-    Expectation: get correct number of data and correct content.
+    Description: Validate SVHNDataset image readings.
+    Expectation: Get correct number of data and correct content.
     """
     logger.info("Test SVHNDataset Op with content check")
     train_data = ds.SVHNDataset(DATA_DIR, "train", num_samples=2, shuffle=False)
@@ -129,8 +129,8 @@ def test_svhn_content_check():
 def test_svhn_basic():
     """
     Feature: test_svhn_basic.
-    Description: test basic usage of SVHNDataset.
-    Expectation: get correct number of data.
+    Description: Test basic usage of SVHNDataset.
+    Expectation: Get correct number of data.
     """
     logger.info("Test SVHNDataset Op")
 
@@ -222,8 +222,8 @@ def test_svhn_basic():
 def test_svhn_sequential_sampler():
     """
     Feature: test_svhn_sequential_sampler.
-    Description: test usage of SVHNDataset with SequentialSampler.
-    Expectation: get correct number of data.
+    Description: Test usage of SVHNDataset with SequentialSampler.
+    Expectation: Get correct number of data.
     """
     logger.info("Test SVHNDataset Op with SequentialSampler")
     num_samples = 2
@@ -244,8 +244,8 @@ def test_svhn_sequential_sampler():
 def test_svhn_exception():
     """
     Feature: test_svhn_exception.
-    Description: test error cases for SVHNDataset.
-    Expectation: raise exception.
+    Description: Test error cases for SVHNDataset.
+    Expectation: Raise exception.
     """
     logger.info("Test error cases for SVHNDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -294,8 +294,8 @@ def test_svhn_exception():
 def test_svhn_visualize(plot=False):
     """
     Feature: test_svhn_visualize.
-    Description: visualize SVHNDataset results.
-    Expectation: get correct number of data and plot them.
+    Description: Visualize SVHNDataset results.
+    Expectation: Get correct number of data and plot them.
     """
     logger.info("Test SVHNDataset visualization")
 
@@ -320,8 +320,8 @@ def test_svhn_visualize(plot=False):
 def test_svhn_usage():
     """
     Feature: test_svhn_usage.
-    Description: validate SVHNDataset image readings.
-    Expectation: get correct number of data.
+    Description: Validate SVHNDataset image readings.
+    Expectation: Get correct number of data.
     """
     logger.info("Test SVHNDataset usage flag")
 

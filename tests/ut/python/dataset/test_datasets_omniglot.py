@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ DATA_DIR = "../data/dataset/testOmniglot"
 def test_omniglot_basic():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case basic")
     # define parameters.
@@ -56,8 +56,8 @@ def test_omniglot_basic():
 def test_omniglot_num_samples():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case numSamples")
     # define parameters.
@@ -101,8 +101,8 @@ def test_omniglot_num_samples():
 def test_omniglot_num_shards():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case numShards")
     # define parameters.
@@ -126,8 +126,8 @@ def test_omniglot_num_shards():
 def test_omniglot_shard_id():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case withShardID")
     # define parameters.
@@ -151,8 +151,8 @@ def test_omniglot_shard_id():
 def test_omniglot_no_shuffle():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case noShuffle")
     # define parameters.
@@ -179,8 +179,8 @@ def test_omniglot_no_shuffle():
 def test_omniglot_extra_shuffle():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case extraShuffle")
     # define parameters.
@@ -210,8 +210,8 @@ def test_omniglot_extra_shuffle():
 def test_omniglot_decode():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case decode")
     # define parameters.
@@ -233,8 +233,8 @@ def test_omniglot_decode():
 def test_sequential_sampler():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case SequentialSampler")
     # define parameters.
@@ -261,8 +261,8 @@ def test_sequential_sampler():
 def test_random_sampler():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case RandomSampler")
     # define parameters.
@@ -292,8 +292,8 @@ def test_random_sampler():
 def test_distributed_sampler():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case DistributedSampler")
     # define parameters.
@@ -318,8 +318,8 @@ def test_distributed_sampler():
 def test_pk_sampler():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case PKSampler")
     # define parameters.
@@ -341,8 +341,8 @@ def test_pk_sampler():
 def test_chained_sampler():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info(
         "Test Case Chained Sampler - Random and Sequential, with repeat")
@@ -373,8 +373,8 @@ def test_chained_sampler():
 def test_omniglot_evaluation():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case usage")
     # apply dataset operations.
@@ -391,8 +391,8 @@ def test_omniglot_evaluation():
 def test_omniglot_zip():
     """
     Feature: load_omniglot.
-    Description: load OmniglotDataset.
-    Expectation: get data of OmniglotDataset.
+    Description: Load OmniglotDataset.
+    Expectation: Get data of OmniglotDataset.
     """
     logger.info("Test Case zip")
     # define parameters.
@@ -420,8 +420,8 @@ def test_omniglot_zip():
 def test_omniglot_exception():
     """
     Feature: test_omniglot_exception.
-    Description: test error cases for OmniglotDataset.
-    Expectation: raise exception.
+    Description: Test error cases for OmniglotDataset.
+    Expectation: Raise exception.
     """
     logger.info("Test omniglot exception")
 

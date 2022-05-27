@@ -27,8 +27,8 @@ DATA_DIR = "../data/dataset/testGTZANData"
 def test_gtzan_basic():
     """
     Feature: GTZANDataset
-    Description: test basic usage of GTZAN
-    Expectation: the dataset is as expected
+    Description: Test basic usage of GTZAN
+    Expectation: The dataset is as expected
     """
     logger.info("Test GTZANDataset Op")
 
@@ -75,8 +75,8 @@ def test_gtzan_basic():
 def test_gtzan_distribute_sampler():
     """
     Feature: GTZANDataset
-    Description: test GTZAN dataset with DistributedSampler
-    Expectation: the results are as expected
+    Description: Test GTZAN dataset with DistributedSampler
+    Expectation: The results are as expected
     """
     logger.info("Test GTZAN with DistributedSampler")
 
@@ -106,8 +106,8 @@ def test_gtzan_distribute_sampler():
 def test_gtzan_exception():
     """
     Feature: GTZANDataset
-    Description: test error cases for GTZANDataset
-    Expectation: the results are as expected
+    Description: Test error cases for GTZANDataset
+    Expectation: The results are as expected
     """
     logger.info("Test error cases for GTZANDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -162,8 +162,8 @@ def test_gtzan_exception():
 def test_gtzan_sequential_sampler():
     """
     Feature: GTZANDataset
-    Description: test GTZANDataset with SequentialSampler
-    Expectation: the results are as expected
+    Description: Test GTZANDataset with SequentialSampler
+    Expectation: The results are as expected
     """
     logger.info("Test GTZANDataset Op with SequentialSampler")
     num_samples = 2
@@ -184,8 +184,8 @@ def test_gtzan_sequential_sampler():
 def test_gtzan_usage():
     """
     Feature: GTZANDataset
-    Description: test GTZANDataset usage
-    Expectation: the results are as expected
+    Description: Test GTZANDataset usage
+    Expectation: The results are as expected
     """
     logger.info("Test GTZANDataset usage")
 

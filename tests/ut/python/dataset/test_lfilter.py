@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_func_lfilter_eager():
-    """ mindspore eager mode normal testcase:deemph_biquad op"""
+    """
+    Feature: LFilter op
+    Description: Test LFilter op in eager mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float64)
     # Expect waveform
@@ -46,7 +50,11 @@ def test_func_lfilter_eager():
 
 
 def test_func_lfilter_pipeline():
-    """ mindspore pipeline mode normal testcase:lfilter op"""
+    """
+    Feature: LFilter op
+    Description: Test LFilter op in pipeline mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
 
     # Original waveform
     waveform = np.array([[0.1, 0.2, 0.3, 0.4], [0.4, 0.5, 0.6, 0.7]], dtype=np.float64)
@@ -67,6 +75,11 @@ def test_func_lfilter_pipeline():
 
 
 def test_invalid_input_all():
+    """
+    Feature: LFilter op
+    Description: Test LFilter op with invalid input
+    Expectation: Correct error is raised as expected
+    """
     waveform = np.random.rand(2, 1000)
 
     def test_invalid_input(test_name, a_coeffs, b_coeffs, clamp, error, error_msg):

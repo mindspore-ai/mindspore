@@ -136,9 +136,9 @@ def run_reset_error(data, num_epochs: int, failure_point: int):
 
 def test_reset_np():
     """
-    Feature: dataset recovery
+    Feature: Dataset recovery
     Description: Simple test of data pipeline reset feature on a pipeline with NumpySlicesDataset as a leaf node
-    Expectation: same datasets after reset
+    Expectation: Same datasets after reset
     """
     dataset_size = 50
     num_epochs = 3
@@ -151,9 +151,9 @@ def test_reset_np():
 
 def test_reset_cifar1():
     """
-    Feature: dataset recovery
+    Feature: Dataset recovery
     Description: Simple test of data pipeline reset feature on a pipeline with Cifar100Dataset as a leaf node (1)
-    Expectation: same datasets after reset
+    Expectation: Same datasets after reset
     """
     dataset_size = 30
     num_epochs = 2
@@ -166,9 +166,9 @@ def test_reset_cifar1():
 
 def test_reset_cifar2():
     """
-    Feature: dataset recovery
+    Feature: Dataset recovery
     Description: Simple test of data pipeline reset feature on a pipeline with Cifar100Dataset as a leaf node (2)
-    Expectation: same datasets after reset
+    Expectation: Same datasets after reset
     """
     dataset_size = 30
     num_epochs = 3
@@ -181,9 +181,9 @@ def test_reset_cifar2():
 
 def test_reset_imagenet():
     """
-    Feature: dataset recovery
+    Feature: Dataset recovery
     Description: Simple test of data pipeline reset feature on a pipeline with ImageFolderDataset as a leaf node
-    Expectation: same datasets after reset
+    Expectation: Same datasets after reset
     """
     dataset_size = 3
     num_epochs = 4
@@ -196,9 +196,9 @@ def test_reset_imagenet():
 
 def test_reset_mindrecord(add_and_remove_cv_file):  # pylint: disable=unused-argument, redefined-outer-name
     """
-    Feature: dataset recovery
+    Feature: Dataset recovery
     Description: Simple test of data pipeline reset feature on a pipeline with MindDataset as a leaf node
-    Expectation: same datasets after reset
+    Expectation: Same datasets after reset
     """
     dataset_size = 10
     num_epochs = 3
@@ -211,9 +211,9 @@ def test_reset_mindrecord(add_and_remove_cv_file):  # pylint: disable=unused-arg
 
 def test_reset_np_error():
     """
-    Feature: dataset recovery
+    Feature: Dataset recovery
     Description: Simple test of data pipeline reset feature for error cases (step is negative, or larger than expected)
-    Expectation: failures are detected properly and correct error message is produced
+    Expectation: Failures are detected properly and correct error message is produced
     """
     dataset_size = 100
     num_epochs = 3

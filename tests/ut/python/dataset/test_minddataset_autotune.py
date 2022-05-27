@@ -28,8 +28,8 @@ from util_minddataset import add_and_remove_cv_file
 def test_autotune_simple_pipeline_mindrecord(add_and_remove_cv_file):
     """
     Feature: Autotuning
-    Description: test simple pipeline of autotune - MindDataset -> Map -> Batch -> Repeat
-    Expectation: pipeline runs successfully
+    Description: Test simple pipeline of autotune - MindDataset -> Map -> Batch -> Repeat
+    Expectation: Pipeline runs successfully
     """
     ds.config.set_enable_autotune(True)
 

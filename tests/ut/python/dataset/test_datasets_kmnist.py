@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ DATA_DIR = "../data/dataset/testMnistData"
 def load_kmnist(path):
     """
     Feature: load_kmnist.
-    Description: load KMnistDataset.
-    Expectation: get data of KMnistDataset.
+    Description: Load KMnistDataset.
+    Expectation: Get data of KMnistDataset.
     """
     labels_path = os.path.realpath(os.path.join(path, 't10k-labels-idx1-ubyte'))
     images_path = os.path.realpath(os.path.join(path, 't10k-images-idx3-ubyte'))
@@ -50,8 +50,8 @@ def load_kmnist(path):
 def visualize_dataset(images, labels):
     """
     Feature: visualize_dataset.
-    Description: visualize KMnistDataset.
-    Expectation: plot images.
+    Description: Visualize KMnistDataset.
+    Expectation: Plot images.
     """
     num_samples = len(images)
     for i in range(num_samples):
@@ -64,8 +64,8 @@ def visualize_dataset(images, labels):
 def test_kmnist_content_check():
     """
     Feature: test_kmnist_content_check.
-    Description: validate KMnistDataset image readings.
-    Expectation: get correct value.
+    Description: Validate KMnistDataset image readings.
+    Expectation: Get correct value.
     """
     logger.info("Test KMnistDataset Op with content check")
     data1 = ds.KMnistDataset(DATA_DIR, num_samples=100, shuffle=False)
@@ -85,8 +85,8 @@ def test_kmnist_content_check():
 def test_kmnist_basic():
     """
     Feature: test_kmnist_basic.
-    Description: test basic usage of KMnistDataset.
-    Expectation: get correct data.
+    Description: Test basic usage of KMnistDataset.
+    Expectation: Get correct data.
     """
     logger.info("Test KMnistDataset Op")
 
@@ -152,8 +152,8 @@ def test_kmnist_basic():
 def test_kmnist_pk_sampler():
     """
     Feature: test_kmnist_pk_sampler.
-    Description: test usage of KMnistDataset with PKSampler.
-    Expectation: get correct data.
+    Description: Test usage of KMnistDataset with PKSampler.
+    Expectation: Get correct data.
     """
     logger.info("Test KMnistDataset Op with PKSampler")
     golden = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4,
@@ -172,8 +172,8 @@ def test_kmnist_pk_sampler():
 def test_kmnist_sequential_sampler():
     """
     Feature: test_kmnist_sequential_sampler.
-    Description: test usage of KMnistDataset with SequentialSampler.
-    Expectation: get correct data.
+    Description: Test usage of KMnistDataset with SequentialSampler.
+    Expectation: Get correct data.
     """
     logger.info("Test KMnistDataset Op with SequentialSampler")
     num_samples = 50
@@ -193,8 +193,8 @@ def test_kmnist_sequential_sampler():
 def test_kmnist_exception():
     """
     Feature: test_kmnist_exception.
-    Description: test error cases for KMnistDataset.
-    Expectation: raise exception.
+    Description: Test error cases for KMnistDataset.
+    Expectation: Raise exception.
     """
     logger.info("Test error cases for KMnistDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -258,8 +258,8 @@ def test_kmnist_exception():
 def test_kmnist_visualize(plot=False):
     """
     Feature: test_kmnist_visualize.
-    Description: visualize KMnistDataset results.
-    Expectation: get correct data and plot them.
+    Description: Visualize KMnistDataset results.
+    Expectation: Get correct data and plot them.
     """
     logger.info("Test KMnistDataset visualization")
 
@@ -284,8 +284,8 @@ def test_kmnist_visualize(plot=False):
 def test_kmnist_usage():
     """
     Feature: test_kmnist_usage.
-    Description: validate KMnistDataset image readings.
-    Expectation: get correct data.
+    Description: Validate KMnistDataset image readings.
+    Expectation: Get correct data.
     """
     logger.info("Test KMnistDataset usage flag")
 

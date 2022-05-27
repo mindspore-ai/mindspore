@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ GENERATE_GOLDEN = False
 def test_random_lighting_py(alpha=1, plot=False):
     """
     Feature: RandomLighting
-    Description: test RandomLighting Python implementation
-    Expectation: equal results
+    Description: Test RandomLighting Python implementation
+    Expectation: Equal results
     """
     logger.info("Test RandomLighting Python implementation")
 
@@ -95,8 +95,8 @@ def test_random_lighting_py(alpha=1, plot=False):
 def test_random_lighting_py_md5():
     """
     Feature: RandomLighting
-    Description: test RandomLighting Python implementation with md5 comparison
-    Expectation: same MD5
+    Description: Test RandomLighting Python implementation with md5 comparison
+    Expectation: Same MD5
     """
     logger.info("Test RandomLighting Python implementation with md5 comparison")
     original_seed = config_get_set_seed(140)
@@ -127,8 +127,8 @@ def test_random_lighting_py_md5():
 def test_random_lighting_c(alpha=1, plot=False):
     """
     Feature: RandomLighting
-    Description: test RandomLighting cpp op
-    Expectation: equal results from Mindspore and benchmark
+    Description: Test RandomLighting cpp op
+    Expectation: Equal results from Mindspore and benchmark
     """
     logger.info("Test RandomLighting cpp op")
     # Original Images
@@ -182,8 +182,8 @@ def test_random_lighting_c(alpha=1, plot=False):
 def test_random_lighting_c_py(alpha=1, plot=False):
     """
     Feature: RandomLighting
-    Description: test Random Lighting Cpp and Python Op
-    Expectation: equal results from Cpp and Python
+    Description: Test Random Lighting Cpp and Python Op
+    Expectation: Equal results from Cpp and Python
     """
     logger.info("Test RandomLighting Cpp and python Op")
 
@@ -242,8 +242,8 @@ def test_random_lighting_c_py(alpha=1, plot=False):
 def test_random_lighting_invalid_params():
     """
     Feature: RandomLighting
-    Description: test RandomLighting with invalid input parameters
-    Expectation: throw ValueError or TypeError
+    Description: Test RandomLighting with invalid input parameters
+    Expectation: Throw correct error and message
     """
     logger.info("Test RandomLighting with invalid input parameters.")
     with pytest.raises(ValueError) as error_info:

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,11 @@ import mindspore.dataset.text as text
 
 
 def test_demo_basic_from_dataset():
-    """ this is a tutorial on how from_dataset should be used in a normal use case"""
+    """
+    Feature: from_dataset
+    Description: Test from_dataset basic usage demonstration
+    Expectation: Output is equal to the expected output
+    """
     data = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
     vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None,
                                     special_tokens=["<pad>", "<unk>"],
@@ -34,7 +38,11 @@ def test_demo_basic_from_dataset():
 
 
 def test_demo_basic_from_dataset_with_tokenizer():
-    """ this is a tutorial on how from_dataset should be used in a normal use case with tokenizer"""
+    """
+    Feature: from_dataset
+    Description: Test from_dataset basic usage with tokenizer demonstration
+    Expectation: Output is equal to the expected output
+    """
     data = ds.TextFileDataset("../data/dataset/testTokenizerData/1.txt", shuffle=False)
     data = data.map(operations=text.UnicodeCharTokenizer(), input_columns=["text"])
     vocab = text.Vocab.from_dataset(data, None, freq_range=None, top_k=None, special_tokens=["<pad>", "<unk>"],
@@ -48,7 +56,11 @@ def test_demo_basic_from_dataset_with_tokenizer():
 
 
 def test_from_dataset():
-    """ test build vocab with generator dataset """
+    """
+    Feature: from_dataset
+    Description: Test build vocab with generator dataset
+    Expectation: Output is equal to the expected output
+    """
 
     def gen_corpus():
         # key: word, value: number of occurrences, reason for using letters is so their order is apparent
@@ -92,7 +104,11 @@ def test_from_dataset():
 
 
 def test_from_dataset_special_token():
-    """ test build vocab with generator dataset """
+    """
+    Feature: from_dataset
+    Description: Test build vocab with generator dataset and special token
+    Expectation: Output is equal to the expected output
+    """
 
     def gen_corpus():
         # key: word, value: number of occurrences, reason for using letters is so their order is apparent
@@ -121,7 +137,11 @@ def test_from_dataset_special_token():
 
 
 def test_from_dataset_exceptions():
-    """ test various exceptions during that are checked in validator """
+    """
+    Feature: from_dataset
+    Description: Test various exceptions that are checked in validator
+    Expectation: Correct error is raised as expected
+    """
 
     def test_config(columns, freq_range, top_k, s):
         try:

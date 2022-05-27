@@ -25,8 +25,8 @@ from mindspore import log as logger
 def test_get_image_size_output_array():
     """
     Feature: get_image_num_channels array(after Decode array.shape is HWC)
-    Description: test get_image_num_channels
-    Expectation: the returned result is as expected
+    Description: Test get_image_num_channels
+    Expectation: The returned result is as expected
     """
     expect = [2268, 4032]
     img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
@@ -38,8 +38,8 @@ def test_get_image_size_output_array():
 def test_get_image_num_size_output_img():
     """
     Feature: get_image_num_channels img(Image.size is [H, W])
-    Description: test get_image_num_channels
-    Expectation: the returned result is as expected
+    Description: Test get_image_num_channels
+    Expectation: The returned result is as expected
     """
     expect = [2268, 4032]
     img = Image.open("../data/dataset/apple.jpg")
@@ -50,8 +50,8 @@ def test_get_image_num_size_output_img():
 def test_get_image_num_channels_invalid_input():
     """
     Feature: get_image_num_channels
-    Description: test get_image_num_channels invalid input
-    Expectation: the returned result is as expected
+    Description: Test get_image_num_channels invalid input
+    Expectation: Correct error is raised as expected
     """
 
     def test_invalid_input(test_name, image, error, error_msg):

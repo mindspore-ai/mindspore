@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ from mindspore import log as logger
 def test_mu_law_encoding():
     """
     Feature: MuLawEncoding
-    Description: test MuLawEncoding in pipeline mode
-    Expectation: the data is processed successfully
+    Description: Test MuLawEncoding in pipeline mode
+    Expectation: The data is processed successfully
     """
     logger.info("Test MuLawEncoding.")
 
@@ -50,8 +50,8 @@ def test_mu_law_encoding():
 def test_mu_law_encoding_eager():
     """
     Feature: MuLawEncoding
-    Description: test MuLawEncoding in eager mode
-    Expectation: the data is processed successfully
+    Description: Test MuLawEncoding in eager mode
+    Expectation: The data is processed successfully
     """
     logger.info("Test MuLawEncoding callable.")
 
@@ -67,8 +67,8 @@ def test_mu_law_encoding_eager():
 def test_mu_law_encoding_uncallable():
     """
     Feature: MuLawEncoding
-    Description: test param check of MuLawEncoding
-    Expectation: throw correct error and message
+    Description: Test param check of MuLawEncoding
+    Expectation: Throw correct error and message
     """
     logger.info("Test MuLawEncoding not callable.")
 
@@ -85,8 +85,8 @@ def test_mu_law_encoding_uncallable():
 def test_mu_law_encoding_and_decoding():
     """
     Feature: MuLawEncoding and MuLawDecoding
-    Description: test MuLawEncoding and MuLawDecoding in eager mode
-    Expectation: the data is processed successfully
+    Description: Test MuLawEncoding and MuLawDecoding in eager mode
+    Expectation: The data is processed successfully
     """
     logger.info("Test MuLawEncoding and MuLawDecoding callable.")
 

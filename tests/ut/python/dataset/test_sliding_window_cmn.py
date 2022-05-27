@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 def test_sliding_window_cmn_eager():
     """
-    Feature: test the basic function in eager mode.
-    Description: mindspore eager mode normal testcase:sliding_window_cmn op.
-    Expectation: compile done without error.
+    Feature: Test the basic function in eager mode.
+    Description: Mindspore eager mode normal testcase:sliding_window_cmn op.
+    Expectation: Compile done without error.
     """
     # Original waveform
     waveform_1 = np.array([[[0.0000, 0.1000, 0.2000],
@@ -84,9 +84,9 @@ def test_sliding_window_cmn_eager():
 
 def test_sliding_window_cmn_pipeline():
     """
-    Feature: test the basic function in pipeline mode.
-    Description: mindspore pipeline mode normal testcase:sliding_window_cmn op.
-    Expectation: compile done without error.
+    Feature: Test the basic function in pipeline mode.
+    Description: Mindspore pipeline mode normal testcase:sliding_window_cmn op.
+    Expectation: Compile done without error.
     """
     # Original waveform
     waveform = np.array([[[3.2, 2.1, 1.3], [6.2, 5.3, 6]]], dtype=np.float64)
@@ -106,9 +106,9 @@ def test_sliding_window_cmn_pipeline():
 
 def test_sliding_window_cmn_invalid_input():
     """
-    Feature: test the validate function with invalid parameters.
-    Description: mindspore invalid parameters testcase:sliding_window_cmn op.
-    Expectation: compile done without error.
+    Feature: Test the validate function with invalid parameters.
+    Description: Mindspore invalid parameters testcase:sliding_window_cmn op.
+    Expectation: Compile done without error.
     """
     def test_invalid_input(test_name, cmn_window, min_cmn_window, center, norm_vars, error, error_msg):
         logger.info("Test SlidingWindowCmn with bad input: {0}".format(test_name))

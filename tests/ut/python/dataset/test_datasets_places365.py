@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ DATA_DIR = "../data/dataset/testPlaces365Data"
 def load_places365(path):
     """
     Feature: load_places365.
-    Description: load places365.
-    Expectation: get data of places365 dataset.
+    Description: Load places365.
+    Expectation: Get data of places365 dataset.
     """
     images_path = os.path.realpath(os.path.join(path, 'val_256'))
     labels_path = os.path.realpath(os.path.join(path, 'places365_val.txt'))
@@ -51,8 +51,8 @@ def load_places365(path):
 def visualize_dataset(images, labels):
     """
     Feature: visualize_dataset.
-    Description: visualize places365 dataset.
-    Expectation: plot images.
+    Description: Visualize places365 dataset.
+    Expectation: Plot images.
     """
     num_samples = len(images)
     for i in range(num_samples):
@@ -65,8 +65,8 @@ def visualize_dataset(images, labels):
 def test_places365_content_check():
     """
     Feature: test_places365_content_check.
-    Description: validate Places365Dataset image readings.
-    Expectation: get correct number of data and correct content.
+    Description: Validate Places365Dataset image readings.
+    Expectation: Get correct number of data and correct content.
     """
     logger.info("Test Places365Dataset Op with content check")
     sampler = ds.SequentialSampler(num_samples=4)
@@ -88,8 +88,8 @@ def test_places365_content_check():
 def test_places365_basic():
     """
     Feature: test_places365_basic.
-    Description: test basic usage of Places365Dataset.
-    Expectation: get correct number of data.
+    Description: Test basic usage of Places365Dataset.
+    Expectation: Get correct number of data.
     """
     logger.info("Test places365Dataset Op")
 
@@ -142,8 +142,8 @@ def test_places365_basic():
 def test_places365_pk_sampler():
     """
     Feature: test_places365_pk_sampler.
-    Description: test usage of Places365Dataset with PKSampler.
-    Expectation: get correct number of data.
+    Description: Test usage of Places365Dataset with PKSampler.
+    Expectation: Get correct number of data.
     """
     logger.info("Test Places365Dataset Op with PKSampler")
 
@@ -162,8 +162,8 @@ def test_places365_pk_sampler():
 def test_places365_sequential_sampler():
     """
     Feature: test_places365_sequential_sampler.
-    Description: test usage of Places365Dataset with SequentialSampler.
-    Expectation: get correct number of data.
+    Description: Test usage of Places365Dataset with SequentialSampler.
+    Expectation: Get correct number of data.
     """
     logger.info("Test Places365Dataset Op with SequentialSampler")
     num_samples = 4
@@ -183,8 +183,8 @@ def test_places365_sequential_sampler():
 def test_places365_exception():
     """
     Feature: test_places365_exception.
-    Description: test error cases for Places365Dataset.
-    Expectation: raise exception.
+    Description: Test error cases for Places365Dataset.
+    Expectation: Raise exception.
     """
     logger.info("Test error cases for Places365Dataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -228,8 +228,8 @@ def test_places365_exception():
 def test_places365_visualize(plot=False):
     """
     Feature: test_places365_visualize.
-    Description: visualize Places365Dataset results.
-    Expectation: get correct number of data and plot them.
+    Description: Visualize Places365Dataset results.
+    Expectation: Get correct number of data and plot them.
     """
     logger.info("Test Places365Dataset visualization")
 
@@ -254,8 +254,8 @@ def test_places365_visualize(plot=False):
 def test_places365_usage():
     """
     Feature: test_places365_usage.
-    Description: validate Places365Dataset image readings.
-    Expectation: get correct number of data.
+    Description: Validate Places365Dataset image readings.
+    Expectation: Get correct number of data.
     """
     logger.info("Test Places365Dataset usage flag")
 

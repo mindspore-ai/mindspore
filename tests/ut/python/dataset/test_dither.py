@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 def test_dither_eager_noise_shaping_false():
     """
     Feature: Dither
-    Description: test Dither in eager mode
-    Expectation: the result is as expected
+    Description: Test Dither in eager mode
+    Expectation: The result is as expected
     """
     logger.info("test Dither in eager mode")
 
@@ -55,8 +55,8 @@ def test_dither_eager_noise_shaping_false():
 def test_dither_eager_noise_shaping_true():
     """
     Feature: Dither
-    Description: test Dither in eager mode
-    Expectation: the result is as expected
+    Description: Test Dither in eager mode
+    Expectation: The result is as expected
     """
     logger.info("test Dither in eager mode")
 
@@ -75,8 +75,8 @@ def test_dither_eager_noise_shaping_true():
 def test_dither_pipeline(plot=False):
     """
     Feature: Dither
-    Description: test Dither in pipeline mode
-    Expectation: the result is as expected
+    Description: Test Dither in pipeline mode
+    Expectation: The result is as expected
     """
     logger.info("test Dither in pipeline mode")
 
@@ -133,8 +133,8 @@ def test_dither_pipeline(plot=False):
 def test_invalid_dither_input():
     """
     Feature: Dither
-    Description: test param check of Dither
-    Expectation: throw correct error and message
+    Description: Test param check of Dither
+    Expectation: Throw correct error and message
     """
     logger.info("test param check of Dither")
 

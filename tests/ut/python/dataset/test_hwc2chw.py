@@ -64,7 +64,7 @@ def test_hwc2chw_multi_channels():
     """
     Feature: Test HWC2CHW feature
     Description: The input is a HWC format array with 5 channels
-    Expectation: success
+    Expectation: Success
     """
     logger.info("Test HWC2CHW with data of 5 channels")
 
@@ -141,7 +141,7 @@ def test_hwc2chw_md5():
 def test_hwc2chw_comp(plot=False):
     """
     Feature: HWC2CHW op
-    Description: Test HWC2CHW between Python and C image augmentation
+    Description: Test HWC2CHW between Python and Cpp image augmentation
     Expectation: Image augmentations should be almost the same with mse < 0.001
     """
     logger.info("Test HWC2CHW with C and Python image augmentation comparison")

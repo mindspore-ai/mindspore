@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -346,9 +346,9 @@ def test_mindrecord_exception():
 
 def test_shuffle_with_num_samples_exception():
     """
-    Feature: shuffle files or shuffle samples of each file
-    Description: set Shuffle.FILES or Shuffle.INFILE and num_samples
-    Expectation: exception occurred
+    Feature: Shuffle files or shuffle samples of each file
+    Description: Set Shuffle.FILES or Shuffle.INFILE and num_samples
+    Expectation: Exception occurred
     """
     MIND_DIR = "../data/mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0"
     with pytest.raises(ValueError, match="'Shuffle.FILES' or 'Shuffle.INFILE' and 'num_samples' "
@@ -362,9 +362,9 @@ def test_shuffle_with_num_samples_exception():
 
 def test_rename_exception_01():
     """
-    Feature: rename mindrecord file
-    Description: dataset that contains single mindrecord file
-    Expectation: exception occurred
+    Feature: Rename mindrecord file
+    Description: Dataset that contains single mindrecord file
+    Expectation: Exception occurred
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
@@ -394,9 +394,9 @@ def test_rename_exception_01():
 
 def test_rename_exception_02():
     """
-    Feature: rename mindrecord meta file
-    Description: dataset that contains single mindrecord file
-    Expectation: exception occurred
+    Feature: Rename mindrecord meta file
+    Description: Dataset that contains single mindrecord file
+    Expectation: Exception occurred
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
@@ -424,9 +424,9 @@ def test_rename_exception_02():
 
 def test_rename_exception_03():
     """
-    Feature: rename both mindrecord file and meta file
-    Description: dataset that contains single mindrecord file
-    Expectation: exception occurred
+    Feature: Rename both mindrecord file and meta file
+    Description: Dataset that contains single mindrecord file
+    Expectation: Exception occurred
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
@@ -457,9 +457,9 @@ def test_rename_exception_03():
 
 def test_rename_exception_04():
     """
-    Feature: rename current mindrecord file
-    Description: dataset that contains multiple mindrecord files
-    Expectation: exception occurred
+    Feature: Rename current mindrecord file
+    Description: Dataset that contains multiple mindrecord files
+    Expectation: Exception occurred
     """
     ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(ori_file_name, 4)
@@ -496,9 +496,9 @@ def test_rename_exception_04():
 
 def test_rename_exception_05():
     """
-    Feature: rename other mindrecord file
-    Description: dataset that contains multiple mindrecord files
-    Expectation: exception occurred
+    Feature: Rename other mindrecord file
+    Description: Dataset that contains multiple mindrecord files
+    Expectation: Exception occurred
     """
     ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(ori_file_name, 4)
@@ -536,9 +536,9 @@ def test_rename_exception_05():
 
 def test_rename_exception_06():
     """
-    Feature: rename current meta file
-    Description: dataset that contains multiple mindrecord files
-    Expectation: exception occurred
+    Feature: Rename current meta file
+    Description: Dataset that contains multiple mindrecord files
+    Expectation: Exception occurred
     """
     ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(ori_file_name, 4)
@@ -573,9 +573,9 @@ def test_rename_exception_06():
 
 def test_rename_exception_07():
     """
-    Feature: rename other meta file
-    Description: dataset that contains multiple mindrecord files
-    Expectation: exception occurred
+    Feature: Rename other meta file
+    Description: Dataset that contains multiple mindrecord files
+    Expectation: Exception occurred
     """
     ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(ori_file_name, 4)
@@ -611,9 +611,9 @@ def test_rename_exception_07():
 
 def test_rename_exception_08():
     """
-    Feature: rename both current mindrecord file and meta file
-    Description: dataset that contains multiple mindrecord files
-    Expectation: exception occurred
+    Feature: Rename both current mindrecord file and meta file
+    Description: Dataset that contains multiple mindrecord files
+    Expectation: Exception occurred
     """
     ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(ori_file_name, 4)
@@ -652,9 +652,9 @@ def test_rename_exception_08():
 
 def test_rename_exception_09():
     """
-    Feature: rename both other mindrecord file and meta file
-    Description: dataset that contains multiple mindrecord files
-    Expectation: exception occurred
+    Feature: Rename both other mindrecord file and meta file
+    Description: Dataset that contains multiple mindrecord files
+    Expectation: Exception occurred
     """
     ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(ori_file_name, 4)

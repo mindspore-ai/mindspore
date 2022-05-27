@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ WRONG_DIR = "../data/dataset/testMnistData"
 def loadfile(path_to_data, path_to_labels=None):
     """
     Feature: loadfile.
-    Description: parse stl10 file.
-    Expectation: get image and label of stl10 dataset.
+    Description: Parse stl10 file.
+    Expectation: Get image and label of stl10 dataset.
     """
     labels = None
     if path_to_labels:
@@ -51,8 +51,8 @@ def loadfile(path_to_data, path_to_labels=None):
 def load_stl10(path, usage):
     """
     Feature: load_stl10.
-    Description: load stl10.
-    Expectation: get data of stl10 dataset.
+    Description: Load stl10.
+    Expectation: Get data of stl10 dataset.
     """
     assert usage in ["train", "test", "unlabeled", "train+unlabeled", "all"]
 
@@ -109,8 +109,8 @@ def load_stl10(path, usage):
 def visualize_dataset(images, labels):
     """
     Feature: visualize_dataset.
-    Description: visualize stl10 dataset.
-    Expectation: plot images.
+    Description: Visualize stl10 dataset.
+    Expectation: Plot images.
     """
     num_samples = len(images)
     for i in range(num_samples):
@@ -123,8 +123,8 @@ def visualize_dataset(images, labels):
 def test_stl10_content_check():
     """
     Feature: test_stl10_content_check.
-    Description: validate STL10ataset image readings.
-    Expectation: get correct number of data and correct content.
+    Description: Validate STL10ataset image readings.
+    Expectation: Get correct number of data and correct content.
     """
     logger.info("Test STL10Dataset Op with content check")
     # 1. train data.
@@ -186,8 +186,8 @@ def test_stl10_content_check():
 def test_stl10_basic():
     """
     Feature: test_stl10_basic.
-    Description: test basic usage of STL10Dataset.
-    Expectation: get correct number of data.
+    Description: Test basic usage of STL10Dataset.
+    Expectation: Get correct number of data.
     """
     logger.info("Test STL10Dataset Op")
 
@@ -242,8 +242,8 @@ def test_stl10_basic():
 def test_stl10_sequential_sampler():
     """
     Feature: test_stl10_sequential_sampler.
-    Description: test usage of STL10Dataset with SequentialSampler.
-    Expectation: get correct number of data.
+    Description: Test usage of STL10Dataset with SequentialSampler.
+    Expectation: Get correct number of data.
     """
     logger.info("Test STL10Dataset Op with SequentialSampler")
     num_samples = 2
@@ -264,8 +264,8 @@ def test_stl10_sequential_sampler():
 def test_stl10_exception():
     """
     Feature: test_stl10_exception.
-    Description: test error cases for STL10Dataset.
-    Expectation: raise exception.
+    Description: Test error cases for STL10Dataset.
+    Expectation: Raise exception.
     """
     logger.info("Test error cases for STL10Dataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -328,8 +328,8 @@ def test_stl10_exception():
 def test_stl10_visualize(plot=False):
     """
     Feature: test_stl10_visualize.
-    Description: visualize STL10Dataset results.
-    Expectation: get correct number of data and plot them.
+    Description: Visualize STL10Dataset results.
+    Expectation: Get correct number of data and plot them.
     """
     logger.info("Test STL10Dataset visualization")
     all_data = ds.STL10Dataset(DATA_DIR, "all", num_samples=2, shuffle=False)
@@ -353,8 +353,8 @@ def test_stl10_visualize(plot=False):
 def test_stl10_usage():
     """
     Feature: test_stl10_usage.
-    Description: validate STL10Dataset image readings.
-    Expectation: get correct number of data.
+    Description: Validate STL10Dataset image readings.
+    Expectation: Get correct number of data.
     """
     logger.info("Test STL10Dataset usage flag")
 

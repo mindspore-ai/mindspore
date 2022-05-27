@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,9 +37,9 @@ def remove_file(file_name):
 
 def test_case_00():
     """
-    Feature: save op
-    Description: all bin data
-    Expectation: generated mindrecord file
+    Feature: Save op
+    Description: All bin data
+    Expectation: Generated mindrecord file
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data = [{"image1": bytes("image1 bytes abc", encoding='UTF-8'),
@@ -165,9 +165,9 @@ def test_case_00():
 
 def test_case_02():  # muti-bytes
     """
-    Feature: save op
-    Description: multiple byte fields
-    Expectation: generated mindrecord file
+    Feature: Save op
+    Description: Multiple byte fields
+    Expectation: Generated mindrecord file
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data = [{"file_name": "001.jpg", "label": 43,
@@ -321,9 +321,9 @@ def generator_1d():
 
 def test_case_03():
     """
-    Feature: save op
+    Feature: Save op
     Description: 1D numpy array
-    Expectation: generated mindrecord file
+    Expectation: Generated mindrecord file
     """
     file_name_auto = './'
     file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -396,9 +396,9 @@ def test_case_04():
 
 def test_case_05():
     """
-    Feature: save op
+    Feature: Save op
     Description: Exception Test
-    Expectation: exception
+    Expectation: Exception
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
 
@@ -410,9 +410,9 @@ def test_case_05():
 
 def test_case_06():
     """
-    Feature: save op
+    Feature: Save op
     Description: Exception Test
-    Expectation: exception
+    Expectation: Exception
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     d1 = ds.GeneratorDataset(generator_1d, ["data"], shuffle=False)
@@ -434,9 +434,9 @@ def cast_name(key):
 
 def test_case_07():
     """
-    Feature: save op
-    Description: save tfrecord files
-    Expectation: generated mindrecord file
+    Feature: Save op
+    Description: Save tfrecord files
+    Expectation: Generated mindrecord file
     """
     file_name_auto = './'
     file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -491,9 +491,9 @@ def generator_dynamic_2d_1():
 
 def test_case_08():
     """
-    Feature: save op
-    Description: save dynamic 1D numpy array
-    Expectation: generated mindrecord file
+    Feature: Save op
+    Description: Save dynamic 1D numpy array
+    Expectation: Generated mindrecord file
     """
     file_name_auto = './'
     file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -520,9 +520,9 @@ def test_case_08():
 
 def test_case_09():
     """
-    Feature: save op
-    Description: save dynamic 2D numpy array
-    Expectation: generated mindrecord file
+    Feature: Save op
+    Description: Save dynamic 2D numpy array
+    Expectation: Generated mindrecord file
     """
     file_name_auto = './'
     file_name_auto += os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -549,8 +549,8 @@ def test_case_09():
 
 def test_case_10():
     """
-    Feature: save op
-    Description: save 2D Tensor of different shape
+    Feature: Save op
+    Description: Save 2D Tensor of different shape
     Expectation: Exception
     """
     file_name_auto = './'

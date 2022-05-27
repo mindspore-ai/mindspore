@@ -27,8 +27,8 @@ DATA_DIR = "../data/dataset/testLibriTTSData"
 def test_libri_tts_basic():
     """
     Feature: LibriTTSDataset
-    Description: test basic usage of LibriTTS
-    Expectation: the dataset is as expected
+    Description: Test basic usage of LibriTTS
+    Expectation: The dataset is as expected
     """
     logger.info("Test LibriTTSDataset Op")
 
@@ -75,8 +75,8 @@ def test_libri_tts_basic():
 def test_libri_tts_distribute_sampler():
     """
     Feature: LibriTTSDataset
-    Description: test LibriTTS dataset with DisributeSampler
-    Expectation: the results are as expected
+    Description: Test LibriTTS dataset with DisributeSampler
+    Expectation: The results are as expected
     """
     logger.info("Test LibriTTS with sharding")
 
@@ -105,8 +105,8 @@ def test_libri_tts_distribute_sampler():
 def test_libri_tts_exception():
     """
     Feature: LibriTTSDataset
-    Description: test error cases for LibriTTSDataset
-    Expectation: the results are as expected
+    Description: Test error cases for LibriTTSDataset
+    Expectation: The results are as expected
     """
     logger.info("Test error cases for LibriTTSDataset")
 
@@ -160,8 +160,8 @@ def test_libri_tts_exception():
 def test_libri_tts_sequential_sampler():
     """
     Feature: LibriTTSDataset
-    Description: test LibriTTSDataset with SequentialSampler
-    Expectation: the results are as expected
+    Description: Test LibriTTSDataset with SequentialSampler
+    Expectation: The results are as expected
     """
     logger.info("Test LibriTTSDataset Op with SequentialSampler")
 
@@ -197,8 +197,8 @@ def test_libri_tts_sequential_sampler():
 def test_libri_tts_usage():
     """
     Feature: LibriTTSDataset
-    Description: test LibriTTSDataset usage
-    Expectation: the results are as expected
+    Description: Test LibriTTSDataset usage
+    Expectation: The results are as expected
     """
     logger.info("Test LibriTTSDataset usage")
 

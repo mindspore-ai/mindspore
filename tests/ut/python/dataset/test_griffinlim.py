@@ -46,8 +46,8 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 def test_griffin_lim_pipeline():
     """
     Feature: GriffinLim
-    Description: test GriffinLim cpp op in pipeline
-    Expectation: equal results from Mindspore and benchmark
+    Description: Test GriffinLim cpp op in pipeline
+    Expectation: Equal results from Mindspore and benchmark
     """
     # <101, 6>
     in_data = np.load(DATA_DIR + "griffinlim_101x6.npy")[np.newaxis, :]
@@ -83,8 +83,8 @@ def test_griffin_lim_pipeline():
 def test_griffin_lim_pipeline_invalid_param_range():
     """
     Feature: GriffinLim
-    Description: test GriffinLim with invalid input parameters
-    Expectation: throw ValueError
+    Description: Test GriffinLim with invalid input parameters
+    Expectation: Throw correct error and message
     """
     logger.info("test GriffinLim op with default values")
     in_data = np.load(DATA_DIR + "griffinlim_151x8.npy")[np.newaxis, :]
@@ -146,8 +146,8 @@ def test_griffin_lim_pipeline_invalid_param_range():
 def test_griffin_lim_pipeline_invalid_param_constraint():
     """
     Feature: GriffinLim
-    Description: test GriffinLim with invalid input parameters
-    Expectation: throw RuntimeError
+    Description: Test GriffinLim with invalid input parameters
+    Expectation: Throw RuntimeError
     """
     logger.info("test GriffinLim op with default values")
     in_data = np.load(DATA_DIR + "griffinlim_151x8.npy")[np.newaxis, :]
@@ -181,8 +181,8 @@ def test_griffin_lim_pipeline_invalid_param_constraint():
 def test_griffin_lim_pipeline_invalid_param_type():
     """
     Feature: GriffinLim
-    Description: test GriffinLim with invalid input parameters
-    Expectation: throw TypeError
+    Description: Test GriffinLim with invalid input parameters
+    Expectation: Throw correct error and message
     """
     logger.info("test GriffinLim op with default values")
     in_data = np.load(DATA_DIR + "griffinlim_151x8.npy")[np.newaxis, :]
@@ -217,8 +217,8 @@ def test_griffin_lim_pipeline_invalid_param_type():
 def test_griffin_lim_eager():
     """
     Feature: GriffinLim
-    Description: test GriffinLim cpp op with eager mode
-    Expectation: equal results from Mindspore and benchmark
+    Description: Test GriffinLim cpp op with eager mode
+    Expectation: Equal results from Mindspore and benchmark
     """
     # <freq, time>
     spectrogram = np.load(DATA_DIR + "griffinlim_101x6.npy").astype(np.float64)

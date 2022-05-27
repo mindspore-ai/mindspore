@@ -118,8 +118,8 @@ def test_wider_face_usage():
 def test_wider_face_sequential_sampler():
     """
     Feature: WIDERFace dataset
-    Description: test SequentialSampler
-    Expectation: get correct number of data
+    Description: Test SequentialSampler
+    Expectation: Get correct number of data
     """
     num_samples = 1
     sampler = ds.SequentialSampler(num_samples=num_samples)

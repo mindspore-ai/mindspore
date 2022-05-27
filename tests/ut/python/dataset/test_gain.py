@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 def test_gain_eager():
     """
     Feature: Gain
-    Description: test Gain in eager mode
-    Expectation: the data is processed successfully
+    Description: Test Gain in eager mode
+    Expectation: The data is processed successfully
     """
     logger.info("test Gain in eager mode")
 
@@ -52,8 +52,8 @@ def test_gain_eager():
 def test_gain_pipeline():
     """
     Feature: Gain
-    Description: test Gain in pipeline mode
-    Expectation: the data is processed successfully
+    Description: Test Gain in pipeline mode
+    Expectation: The data is processed successfully
     """
     logger.info("test Gain in pipeline mode")
 
@@ -75,8 +75,8 @@ def test_gain_pipeline():
 def test_gain_invalid_input():
     """
     Feature: Gain
-    Description: test param check of Gain
-    Expectation: throw correct error and message
+    Description: Test param check of Gain
+    Expectation: Throw correct error and message
     """
     logger.info("test param check of Gain")
 

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,22 +18,33 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 
 # Generate 2 rows of data (1, 2)
+
+
 def generator_1to2():
     for i in np.array([1, 2]):
         yield (np.array(i),)
 
 # Generate 3 rows of data (10, 11, 12)
+
+
 def generator_10to12():
     for i in np.array([10, 11, 12]):
         yield (np.array(i),)
 
 # Generate 3 rows of data (22, 23, 24)
+
+
 def generator_22to24():
     for i in np.array([22, 23, 24]):
         yield (np.array(i),)
 
-def test_simple_repeat():
 
+def test_simple_repeat():
+    """
+    Feature: GeneratorDataset
+    Description: Test GeneratorDataset with a simple repeat (Generator -> Repeat)
+    Expectation: Output is equal to the expected output
+    """
     # Since number of epoch is 1, the GeneratorPass logic will not add the reset logic.
     logger.info("test_simple_repeat")
     # apply dataset operations
@@ -49,9 +60,12 @@ def test_simple_repeat():
 
     np.testing.assert_array_equal(output, golden)
 
+
 def test_generator_reset_1():
     """
-    Test (Generator -> Repeat) + (Generator -> Repeat) + (Generator -> Repeat)
+    Feature: GeneratorDataset
+    Description: Test (Generator -> Repeat) + (Generator -> Repeat) + (Generator -> Repeat)
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_generator_reset_1")
     # apply dataset operations
@@ -75,9 +89,12 @@ def test_generator_reset_1():
 
     np.testing.assert_array_equal(output, golden)
 
+
 def test_generator_reset_2():
     """
-    Test ((Generator -> Repeat) + (Generator -> Repeat) -> Repeat) + (Generator)
+    Feature: GeneratorDataset
+    Description: Test ((Generator -> Repeat) + (Generator -> Repeat) -> Repeat) + (Generator)
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_generator_reset_2")
     # apply dataset operations
@@ -101,9 +118,12 @@ def test_generator_reset_2():
 
     np.testing.assert_array_equal(output, golden)
 
+
 def test_generator_reset_3():
     """
-    Test (Generator -> Repeat -> Repeat) + ((Generator -> Repeat) + (Generator)) -> Repeat) -> EpochCtrl
+    Feature: GeneratorDataset
+    Description: Test (Generator -> Repeat -> Repeat) + ((Generator -> Repeat) + (Generator)) -> Repeat) -> EpochCtrl
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_generator_reset_3")
     # apply dataset operations
@@ -136,9 +156,12 @@ def test_generator_reset_3():
 
     itr.stop()
 
+
 def test_generator_reset_4():
     """
-    Test Generator -> Repeat -> Repeat
+    Feature: GeneratorDataset
+    Description: Test Generator -> Repeat -> Repeat
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_generator_reset_4")
     # apply dataset operations
@@ -153,9 +176,12 @@ def test_generator_reset_4():
 
     np.testing.assert_array_equal(output, golden)
 
+
 def test_generator_reset_5():
     """
-    Test Generator -> Repeat -> Repeat -> EpochCtrl
+    Feature: GeneratorDataset
+    Description: Test Generator -> Repeat -> Repeat -> EpochCtrl
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_generator_reset_5")
     # apply dataset operations
@@ -176,9 +202,12 @@ def test_generator_reset_5():
 
     itr.stop()
 
+
 def test_generator_reset_6():
     """
-    Test Generator -> Repeat -> Repeat -> EpochCtrl
+    Feature: GeneratorDataset
+    Description: Test Generator -> Repeat -> Repeat -> EpochCtrl without itr.stop()
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_generator_reset_6")
     # apply dataset operations

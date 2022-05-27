@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ SIMPLE_VOCAB_FILE = "../data/dataset/testVocab/simple_vocab_list.txt"
 def test_get_vocab():
     """
     Feature: Python text.Vocab class
-    Description: test vocab() method of text.Vocab
-    Expectation: success.
+    Description: Test vocab() method of text.Vocab
+    Expectation: Success.
     """
     logger.info("test tokens_to_ids")
     vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
@@ -42,8 +42,8 @@ def test_get_vocab():
 def test_vocab_tokens_to_ids():
     """
     Feature: Python text.Vocab class
-    Description: test tokens_to_ids() method of text.Vocab
-    Expectation: success.
+    Description: Test tokens_to_ids() method of text.Vocab
+    Expectation: Success.
     """
     logger.info("test tokens_to_ids")
     vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
@@ -70,8 +70,8 @@ def test_vocab_tokens_to_ids():
 def test_vocab_ids_to_tokens():
     """
     Feature: Python text.Vocab class
-    Description: test ids_to_tokens() method of text.Vocab
-    Expectation: success.
+    Description: Test ids_to_tokens() method of text.Vocab
+    Expectation: Success.
     """
     logger.info("test ids_to_tokens")
     vocab = text.Vocab.from_list(["w1", "w2", "w3"], special_tokens=["<unk>"], special_first=True)
@@ -98,8 +98,8 @@ def test_vocab_ids_to_tokens():
 def test_vocab_exception():
     """
     Feature: Python text.Vocab class
-    Description: test exceptions of text.Vocab
-    Expectation: raise RuntimeError when vocab is not initialized, raise TypeError when input is wrong.
+    Description: Test exceptions of text.Vocab
+    Expectation: Raise RuntimeError when vocab is not initialized, raise TypeError when input is wrong.
     """
     vocab = text.Vocab()
     with pytest.raises(RuntimeError):

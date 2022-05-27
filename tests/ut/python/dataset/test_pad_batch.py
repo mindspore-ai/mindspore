@@ -195,7 +195,7 @@ def test_pad_via_map():
     """
     Feature: Batch Padding
     Description: Compare results for pad_batch versus numpy.pad
-    Expectation: pad_batch and numpy.pad results are the same
+    Expectation: Pad_batch and numpy.pad results are the same
     """
     res_from_map = pad_map_config()
     res_from_batch = pad_batch_config()

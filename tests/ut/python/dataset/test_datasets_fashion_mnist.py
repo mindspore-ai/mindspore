@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ DATA_DIR = "../data/dataset/testMnistData"
 def load_fashion_mnist(path):
     """
     Feature: load_fashion_mnist.
-    Description: load FashionMnistDataset.
-    Expectation: get data of FashionMnistDataset.
+    Description: Load FashionMnistDataset.
+    Expectation: Get data of FashionMnistDataset.
     """
     labels_path = os.path.realpath(os.path.join(path, 't10k-labels-idx1-ubyte'))
     images_path = os.path.realpath(os.path.join(path, 't10k-images-idx3-ubyte'))
@@ -50,8 +50,8 @@ def load_fashion_mnist(path):
 def visualize_dataset(images, labels):
     """
     Feature: visualize_dataset.
-    Description: visualize FashionMnistDataset.
-    Expectation: plot images.
+    Description: Visualize FashionMnistDataset.
+    Expectation: Plot images.
     """
     num_samples = len(images)
     for i in range(num_samples):
@@ -64,8 +64,8 @@ def visualize_dataset(images, labels):
 def test_fashion_mnist_content_check():
     """
     Feature: test_fashion_mnist_content_check.
-    Description: validate FashionMnistDataset image readings.
-    Expectation: get correct value.
+    Description: Validate FashionMnistDataset image readings.
+    Expectation: Get correct value.
     """
     logger.info("Test FashionMnistDataset Op with content check")
     data1 = ds.FashionMnistDataset(DATA_DIR, num_samples=100, shuffle=False)
@@ -85,8 +85,8 @@ def test_fashion_mnist_content_check():
 def test_fashion_mnist_basic():
     """
     Feature: test_fashion_mnist_basic.
-    Description: test basic usage of FashionMnistDataset.
-    Expectation: get correct data.
+    Description: Test basic usage of FashionMnistDataset.
+    Expectation: Get correct data.
     """
     logger.info("Test FashionMnistDataset Op")
 
@@ -144,8 +144,8 @@ def test_fashion_mnist_basic():
 def test_fashion_mnist_pk_sampler():
     """
     Feature: test_fashion_mnist_pk_sampler.
-    Description: test usage of FashionMnistDataset with PKSampler.
-    Expectation: get correct data.
+    Description: Test usage of FashionMnistDataset with PKSampler.
+    Expectation: Get correct data.
     """
     logger.info("Test FashionMnistDataset Op with PKSampler")
     golden = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4,
@@ -164,8 +164,8 @@ def test_fashion_mnist_pk_sampler():
 def test_fashion_mnist_sequential_sampler():
     """
     Feature: test_fashion_mnist_sequential_sampler.
-    Description: test usage of FashionMnistDataset with SequentialSampler.
-    Expectation: get correct data.
+    Description: Test usage of FashionMnistDataset with SequentialSampler.
+    Expectation: Get correct data.
     """
     logger.info("Test FashionMnistDataset Op with SequentialSampler")
     num_samples = 50
@@ -185,8 +185,8 @@ def test_fashion_mnist_sequential_sampler():
 def test_fashion_mnist_exception():
     """
     Feature: test_fashion_mnist_exception.
-    Description: test error cases for FashionMnistDataset.
-    Expectation: raise exception.
+    Description: Test error cases for FashionMnistDataset.
+    Expectation: Raise exception.
     """
     logger.info("Test error cases for FashionMnistDataset")
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
@@ -250,8 +250,8 @@ def test_fashion_mnist_exception():
 def test_fashion_mnist_visualize(plot=False):
     """
     Feature: test_fashion_mnist_visualize.
-    Description: visualize FashionMnistDataset results.
-    Expectation: get correct data and plot them.
+    Description: Visualize FashionMnistDataset results.
+    Expectation: Get correct data and plot them.
     """
     logger.info("Test FashionMnistDataset visualization")
 
@@ -276,8 +276,8 @@ def test_fashion_mnist_visualize(plot=False):
 def test_fashion_mnist_usage():
     """
     Feature: test_fashion_mnist_usage.
-    Description: validate FashionMnistDataset image readings.
-    Expectation: get correct data.
+    Description: Validate FashionMnistDataset image readings.
+    Expectation: Get correct data.
     """
     logger.info("Test FashionMnistDataset usage flag")
 

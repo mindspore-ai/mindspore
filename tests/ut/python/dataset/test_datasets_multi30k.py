@@ -26,8 +26,8 @@ DATA_ALL_FILE = '../data/dataset/testMulti30kDataset'
 def test_data_file_multi30k_text():
     """
     Feature: Test Multi30k Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(987)
@@ -49,8 +49,8 @@ def test_data_file_multi30k_text():
 def test_data_file_multi30k_translation():
     """
     Feature: Test Multi30k Dataset.
-    Description: read data from a single file.
-    Expectation: the data is processed successfully.
+    Description: Read data from a single file.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(987)
@@ -72,8 +72,8 @@ def test_data_file_multi30k_translation():
 def test_all_file_multi30k():
     """
     Feature: Test Multi30k Dataset.
-    Description: read data from all file.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file.
+    Expectation: The data is processed successfully.
     """
     dataset = ds.Multi30kDataset(DATA_ALL_FILE)
     count = 0
@@ -86,8 +86,8 @@ def test_all_file_multi30k():
 def test_dataset_num_samples_none():
     """
     Feature: Test Multi30k Dataset(num_samples = default).
-    Description: test get num_samples.
-    Expectation: the data is processed successfully.
+    Description: Test get num_samples.
+    Expectation: The data is processed successfully.
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(987)
@@ -114,8 +114,8 @@ def test_dataset_num_samples_none():
 def test_num_shards_multi30k():
     """
     Feature: Test Multi30k Dataset(num_shards = 3).
-    Description: test get num_samples.
-    Expectation: the data is processed successfully.
+    Description: Test get num_samples.
+    Expectation: The data is processed successfully.
     """
     dataset = ds.Multi30kDataset(DATA_ALL_FILE, usage='train', num_shards=3, shard_id=1)
     count = 0
@@ -128,8 +128,8 @@ def test_num_shards_multi30k():
 def test_multi30k_dataset_num_samples():
     """
     Feature: Test Multi30k Dataset(num_samples = 2).
-    Description: test get num_samples.
-    Expectation: the data is processed successfully.
+    Description: Test get num_samples.
+    Expectation: The data is processed successfully.
     """
     dataset = ds.Multi30kDataset(DATA_ALL_FILE, usage="test", num_samples=2)
     count = 0
@@ -141,8 +141,8 @@ def test_multi30k_dataset_num_samples():
 def test_multi30k_dataset_shuffle_files():
     """
     Feature: Test Multi30k Dataset.
-    Description: test get all files.
-    Expectation: the data is processed successfully.
+    Description: Test get all files.
+    Expectation: The data is processed successfully.
     """
     dataset = ds.Multi30kDataset(DATA_ALL_FILE, shuffle=True)
     count = 0
@@ -154,8 +154,8 @@ def test_multi30k_dataset_shuffle_files():
 def test_multi30k_dataset_shuffle_false():
     """
     Feature: Test Multi30k Dataset (shuffle = false).
-    Description: test get all files.
-    Expectation: the data is processed successfully.
+    Description: Test get all files.
+    Expectation: The data is processed successfully.
     """
     dataset = ds.Multi30kDataset(DATA_ALL_FILE, shuffle=False)
     count = 0
@@ -167,8 +167,8 @@ def test_multi30k_dataset_shuffle_false():
 def test_multi30k_dataset_repeat():
     """
     Feature: Test Multi30k in distribution (repeat 3 times).
-    Description: test in a distributed state.
-    Expectation: the data is processed successfully.
+    Description: Test in a distributed state.
+    Expectation: The data is processed successfully.
     """
     dataset = ds.Multi30kDataset(DATA_ALL_FILE, usage='train')
     dataset = dataset.repeat(3)
@@ -181,8 +181,8 @@ def test_multi30k_dataset_repeat():
 def test_multi30k_dataset_get_datasetsize():
     """
     Feature: Test Getters.
-    Description: test get_dataset_size of Multi30k dataset.
-    Expectation: the data is processed successfully.
+    Description: Test get_dataset_size of Multi30k dataset.
+    Expectation: The data is processed successfully.
     """
     dataset = ds.Multi30kDataset(DATA_ALL_FILE)
     size = dataset.get_dataset_size()
@@ -216,8 +216,8 @@ def test_multi30k_dataset_exceptions():
 def test_multi30k_dataset_en_pipeline():
     """
     Feature: Multi30kDataset
-    Description: test Multi30kDataset in pipeline mode
-    Expectation: the data is processed successfully
+    Description: Test Multi30kDataset in pipeline mode
+    Expectation: The data is processed successfully
     """
     expected = ["this is the first english sentence in train.",
                 "this is the second english sentence in train.",
@@ -235,8 +235,8 @@ def test_multi30k_dataset_en_pipeline():
 def test_multi30k_dataset_de_pipeline():
     """
     Feature: Multi30kDataset
-    Description: test Multi30kDataset in pipeline mode
-    Expectation: the data is processed successfully
+    Description: Test Multi30kDataset in pipeline mode
+    Expectation: The data is processed successfully
     """
     expected = ["this is the first germany sentence in train.",
                 "this is the second germany sentence in train.",

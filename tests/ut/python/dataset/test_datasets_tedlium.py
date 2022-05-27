@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ NO_SPH_DIR_TEDLIUM12 = "../data/dataset/testTedliumData/else"
 def test_tedlium_basic():
     """
     Feature: TedliumDataset
-    Description: use different data to test the functions of different versions
+    Description: Use different data to test the functions of different versions
     Expectation: num_samples
                         set     1   2   4
                         get     1   2   4
@@ -95,7 +95,7 @@ def test_tedlium_content_check():
     """
     Feature: TedliumDataset
     Description: Check content of the first sample
-    Expectation: correct content
+    Expectation: Correct content
     """
     data1 = ds.TedliumDataset(DATA_DIR_TEDLIUM_RELEASE12, RELEASE1, num_samples=1, shuffle=False)
     data3 = ds.TedliumDataset(DATA_DIR_TEDLIUM_RELEASE3, RELEASE3, num_samples=1, shuffle=False)
@@ -140,8 +140,8 @@ def test_tedlium_content_check():
 def test_tedlium_exceptions():
     """
     Feature: TedliumDataset
-    Description: send error when error occur
-    Expectation: send error
+    Description: Send error when error occur
+    Expectation: Send error
     """
     error_msg_1 = "sampler and shuffle cannot be specified at the same time"
     with pytest.raises(RuntimeError, match=error_msg_1):
@@ -181,8 +181,8 @@ def test_tedlium_exceptions():
 def test_tedlium_exception_file_path():
     """
     Feature: TedliumDataset
-    Description: error test
-    Expectation: throw error
+    Description: Error test
+    Expectation: Throw error
     """
     def exception_func(item):
         raise Exception("Error occur!")
@@ -251,8 +251,8 @@ def test_tedlium_exception_file_path():
 def test_tedlium_extensions():
     """
     Feature: TedliumDataset
-    Description: test extensions of tedlium
-    Expectation: extensions
+    Description: Test extensions of tedlium
+    Expectation: Extensions
                     set     invalid data
                     get     throw error
     """
@@ -268,8 +268,8 @@ def test_tedlium_extensions():
 def test_tedlium_release():
     """
     Feature: TedliumDataset
-    Description: test release of tedlium
-    Expectation: release
+    Description: Test release of tedlium
+    Expectation: Release
                     set     invalid data
                     get     throw error
     """
@@ -289,8 +289,8 @@ def test_tedlium_release():
 def test_tedlium_sequential_sampler():
     """
     Feature: TedliumDataset
-    Description: test tedlium sequential sampler
-    Expectation: correct data
+    Description: Test tedlium sequential sampler
+    Expectation: Correct data
     """
     num_samples = 3
     sampler = ds.SequentialSampler(num_samples=num_samples)
@@ -308,7 +308,7 @@ def test_tedlium_sequential_sampler():
 def test_tedlium_sampler_get_dataset_size():
     """
     Feature: TedliumDataset
-    Description: test TedliumDataset with SequentialSampler and get_dataset_size
+    Description: Test TedliumDataset with SequentialSampler and get_dataset_size
     Expectation: num_samples
                     set 5
                     get 5
@@ -326,8 +326,8 @@ def test_tedlium_sampler_get_dataset_size():
 def test_tedlium_usage():
     """
     Feature: TedliumDataset
-    Description: test usage of tedlium
-    Expectation: usage
+    Description: Test usage of tedlium
+    Expectation: Usage
                     set     valid data      invalid data
                     get     correct data    throw error
     """
@@ -357,7 +357,7 @@ def test_tedlium_usage():
 def test_tedlium_with_chained_sampler_get_dataset_size():
     """
     Feature: TedliumDataset
-    Description: test TedliumDataset with RandomSampler chained with a SequentialSampler and get_dataset_size
+    Description: Test TedliumDataset with RandomSampler chained with a SequentialSampler and get_dataset_size
     Expectation: num_samples
                     set 2
                     get 2

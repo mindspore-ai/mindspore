@@ -58,8 +58,8 @@ def gen(shape):
 def test_mask_along_axis_iid_eager():
     """
     Feature: MaskAlongAxisIID
-    Description: mindspore eager mode with normal testcase
-    Expectation: the returned result is as expected
+    Description: Mindspore eager mode with normal testcase
+    Expectation: The returned result is as expected
     """
     logger.info("test MaskAlongAxisIID op, eager")
     spectrogram_01 = next(gen((BATCH, CHANNEL, FREQ, TIME)))[0]
@@ -75,8 +75,8 @@ def test_mask_along_axis_iid_eager():
 def test_mask_along_axis_iid_pipeline():
     """
     Feature: MaskAlongAxisIID
-    Description: mindspore pipeline mode with normal testcase
-    Expectation: the returned result is as expected
+    Description: Mindspore pipeline mode with normal testcase
+    Expectation: The returned result is as expected
     """
     logger.info("test MaskAlongAxisIID op, pipeline")
 
@@ -94,8 +94,8 @@ def test_mask_along_axis_iid_pipeline():
 def test_mask_along_axis_iid_invalid_input():
     """
     Feature: MaskAlongAxisIID
-    Description: mindspore eager mode with invalid input
-    Expectation: the returned result is as expected
+    Description: Mindspore eager mode with invalid input
+    Expectation: The returned result is as expected
     """
     def test_invalid_param(test_name, mask_param, mask_value, axis, error, error_msg):
         """

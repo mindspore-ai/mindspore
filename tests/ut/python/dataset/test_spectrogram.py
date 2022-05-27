@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 def test_spectrogram_pipeline():
     """
-    Feature: mindspore pipeline mode normal testcase: spectrogram op.
-    Description: input audio signal to test pipeline.
-    Expectation: success.
+    Feature: Mindspore pipeline mode normal testcase: spectrogram op.
+    Description: Input audio signal to test pipeline.
+    Expectation: Success.
     """
     logger.info("test_spectrogram_pipeline")
 
@@ -63,9 +63,9 @@ def test_spectrogram_pipeline():
 
 def test_spectrogram_eager():
     """
-    Feature: mindspore eager mode normal testcase: spectrogram op.
-    Description: input audio signal to test eager.
-    Expectation: success.
+    Feature: Mindspore eager mode normal testcase: spectrogram op.
+    Description: Input audio signal to test eager.
+    Expectation: Success.
     """
     logger.info("test_spectrogram_eager")
     wav = np.array([[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]])
@@ -86,9 +86,9 @@ def test_spectrogram_eager():
 
 def test_spectrogram_window_hamming_padmode_constant():
     """
-    Feature: test spectrogram parameter: window, pad_mode.
-    Description: test parameter.
-    Expectation: success.
+    Feature: Test spectrogram parameter: window, pad_mode.
+    Description: Test parameter.
+    Expectation: Success.
     """
     logger.info("test_spectrogram_window_hamming_padmode_constant")
     wav = np.array([[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]])
@@ -109,9 +109,9 @@ def test_spectrogram_window_hamming_padmode_constant():
 
 def test_spectrogram_nfft_10_window_bartlett_padmode_edge():
     """
-    Feature: test spectrogram parameter: n_fft, window, pad_mode.
-    Description: test parameter.
-    Expectation: success.
+    Feature: Test spectrogram parameter: n_fft, window, pad_mode.
+    Description: Test parameter.
+    Expectation: Success.
     """
     logger.info("test_spectrogram_nfft_10_window_bartlett_padmode_edge")
     wav = np.array([[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]])
@@ -134,9 +134,9 @@ def test_spectrogram_nfft_10_window_bartlett_padmode_edge():
 
 def test_spectrogram_onsided_false():
     """
-    Feature: test spectrogram parameter: onesided.
-    Description: test parameter.
-    Expectation: success.
+    Feature: Test spectrogram parameter: onesided.
+    Description: Test parameter.
+    Expectation: Success.
     """
     logger.info("test_spectrogram_onsided_false")
     wav = np.array([[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]])
@@ -167,9 +167,9 @@ def test_spectrogram_onsided_false():
 
 def test_spectrogram_power_0():
     """
-    Feature: test spectrogram parameter: power.
-    Description: test parameter.
-    Expectation: success.
+    Feature: Test spectrogram parameter: power.
+    Description: Test parameter.
+    Expectation: Success.
     """
     logger.info("test_spectrogram_power_0")
     wav = np.array([[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]])
@@ -220,9 +220,9 @@ def test_spectrogram_power_0():
 
 def test_spectrogram_center_false():
     """
-    Feature: test spectrogram parameter: center.
-    Description: test parameter.
-    Expectation: success.
+    Feature: Test spectrogram parameter: center.
+    Description: Test parameter.
+    Expectation: Success.
     """
     logger.info("test_spectrogram_center_false")
     wav = np.array([[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]])
@@ -243,9 +243,9 @@ def test_spectrogram_center_false():
 
 def test_spectrogram_normalized_true():
     """
-    Feature: test spectrogram parameter: normalized.
-    Description: test parameter.
-    Expectation: success.
+    Feature: Test spectrogram parameter: normalized.
+    Description: Test parameter.
+    Expectation: Success.
     """
     logger.info("test_spectrogram_normalized_true")
     wav = np.array([[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]])
@@ -266,9 +266,9 @@ def test_spectrogram_normalized_true():
 
 def test_spectrogram_inputrank_3():
     """
-    Feature: test spectrogram parameter: input rank.
-    Description: test input rank.
-    Expectation: success.
+    Feature: Test spectrogram parameter: input rank.
+    Description: Test input rank.
+    Expectation: Success.
     """
     logger.info("test_spectrogram_inputrank_3")
     wav = np.array([[[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1]],
@@ -289,9 +289,9 @@ def test_spectrogram_inputrank_3():
 
 def test_spectrogram_winlength_7():
     """
-    Feature: test spectrogram parameter: win_length.
-    Description: test parameter.
-    Expectation: success.
+    Feature: Test spectrogram parameter: win_length.
+    Description: Test parameter.
+    Expectation: Success.
     """
     logger.info("test_spectrogram_winlength_7")
     wav = np.array([[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]])
@@ -316,9 +316,9 @@ def test_spectrogram_winlength_7():
 
 def test_spectrogram_param():
     """
-    Feature: test spectrogram invalid parameter.
-    Description: test some invalid parameters.
-    Expectation: success.
+    Feature: Test spectrogram invalid parameter.
+    Description: Test some invalid parameters.
+    Expectation: Success.
     """
     try:
         _ = audio.Spectrogram(n_fft=-1)

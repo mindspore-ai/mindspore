@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ DATA_DIR = "../data/dataset/testIMDBDataset"
 def test_imdb_basic():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case basic")
     # define parameters
@@ -60,8 +60,8 @@ def test_imdb_basic():
 def test_imdb_test():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from test file.
-    Expectation: the data is processed successfully.
+    Description: Read data from test file.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case test")
     # define parameters
@@ -97,8 +97,8 @@ def test_imdb_test():
 def test_imdb_train():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from train file.
-    Expectation: the data is processed successfully.
+    Description: Read data from train file.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case train")
     # define parameters
@@ -134,8 +134,8 @@ def test_imdb_train():
 def test_imdb_num_samples():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with num_samples=10 and num_parallel_workers=2.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with num_samples=10 and num_parallel_workers=2.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case numSamples")
     # define parameters
@@ -182,8 +182,8 @@ def test_imdb_num_samples():
 def test_imdb_num_shards():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with num_shards=2 and shard_id=1.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with num_shards=2 and shard_id=1.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case numShards")
     # define parameters
@@ -212,8 +212,8 @@ def test_imdb_num_shards():
 def test_imdb_shard_id():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with num_shards=4 and shard_id=1.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with num_shards=4 and shard_id=1.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case withShardID")
     # define parameters
@@ -242,8 +242,8 @@ def test_imdb_shard_id():
 def test_imdb_no_shuffle():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with shuffle=False.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with shuffle=False.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case noShuffle")
     # define parameters
@@ -272,8 +272,8 @@ def test_imdb_no_shuffle():
 def test_imdb_true_shuffle():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with shuffle=True.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with shuffle=True.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case extraShuffle")
     # define parameters
@@ -302,8 +302,8 @@ def test_imdb_true_shuffle():
 def test_random_sampler():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with sampler=ds.RandomSampler().
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with sampler=ds.RandomSampler().
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case RandomSampler")
     # define parameters
@@ -333,8 +333,8 @@ def test_random_sampler():
 def test_distributed_sampler():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with sampler=ds.DistributedSampler().
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with sampler=ds.DistributedSampler().
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case DistributedSampler")
     # define parameters
@@ -364,8 +364,8 @@ def test_distributed_sampler():
 def test_pk_sampler():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with sampler=ds.PKSampler().
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with sampler=ds.PKSampler().
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case PKSampler")
     # define parameters
@@ -395,8 +395,8 @@ def test_pk_sampler():
 def test_subset_random_sampler():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with sampler=ds.SubsetRandomSampler().
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with sampler=ds.SubsetRandomSampler().
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case SubsetRandomSampler")
     # define parameters
@@ -427,8 +427,8 @@ def test_subset_random_sampler():
 def test_weighted_random_sampler():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with sampler=ds.WeightedRandomSampler().
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with sampler=ds.WeightedRandomSampler().
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case WeightedRandomSampler")
     # define parameters
@@ -459,8 +459,8 @@ def test_weighted_random_sampler():
 def test_weighted_random_sampler_exception():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with random sampler exception.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with random sampler exception.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test error cases for WeightedRandomSampler")
     error_msg_1 = "type of weights element must be number"
@@ -495,8 +495,8 @@ def test_weighted_random_sampler_exception():
 def test_chained_sampler_with_random_sequential_repeat():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with Random and Sequential, with repeat.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with Random and Sequential, with repeat.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case Chained Sampler - Random and Sequential, with repeat")
 
@@ -529,8 +529,8 @@ def test_chained_sampler_with_random_sequential_repeat():
 def test_chained_sampler_with_distribute_random_batch_then_repeat():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with Distributed and Random, with batch then repeat.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with Distributed and Random, with batch then repeat.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case Chained Sampler - Distributed and Random, with batch then repeat")
 
@@ -566,8 +566,8 @@ def test_chained_sampler_with_distribute_random_batch_then_repeat():
 def test_chained_sampler_with_weighted_random_pk_sampler():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with WeightedRandom and PKSampler.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with WeightedRandom and PKSampler.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case Chained Sampler - WeightedRandom and PKSampler")
 
@@ -601,8 +601,8 @@ def test_chained_sampler_with_weighted_random_pk_sampler():
 def test_imdb_rename():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with rename.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with rename.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case rename")
     # define parameters
@@ -638,8 +638,8 @@ def test_imdb_rename():
 def test_imdb_zip():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with zip.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with zip.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test Case zip")
     # define parameters
@@ -668,8 +668,8 @@ def test_imdb_zip():
 def test_imdb_exception():
     """
     Feature: Test IMDB Dataset.
-    Description: read data from all file with exception.
-    Expectation: the data is processed successfully.
+    Description: Read data from all file with exception.
+    Expectation: The data is processed successfully.
     """
     logger.info("Test imdb exception")
 

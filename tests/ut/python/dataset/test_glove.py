@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ DATASET_ROOT_PATH = "../data/dataset/testGloVe/"
 def test_glove_all_build_from_file_params():
     """
     Feature: GloVe
-    Description: test with all parameters which include `path` and `max_vector` in function BuildFromFile
-    Expectation: output is equal to the expected value
+    Description: Test with all parameters which include `path` and `max_vector` in function BuildFromFile
+    Expectation: Output is equal to the expected value
     """
     vectors = text.GloVe.from_file(DATASET_ROOT_PATH + "glove.6B.test.txt", max_vectors=100)
     to_vectors = text.ToVectors(vectors)
@@ -51,8 +51,8 @@ def test_glove_all_build_from_file_params():
 def test_glove_all_build_from_file_params_eager():
     """
     Feature: GloVe
-    Description: test with all parameters which include `path` and `max_vector` in function BuildFromFile in eager mode
-    Expectation: output is equal to the expected value
+    Description: Test with all parameters which include `path` and `max_vector` in function BuildFromFile in eager mode
+    Expectation: Output is equal to the expected value
     """
     vectors = text.GloVe.from_file(DATASET_ROOT_PATH + "glove.6B.test.txt", max_vectors=4)
     to_vectors = T.ToVectors(vectors)
@@ -84,9 +84,9 @@ def test_glove_all_build_from_file_params_eager():
 def test_glove_all_to_vectors_params_eager():
     """
     Feature: GloVe
-    Description: test with all parameters which include `unk_init` and `lower_case_backup` in function ToVectors
+    Description: Test with all parameters which include `unk_init` and `lower_case_backup` in function ToVectors
         in eager mode
-    Expectation: output is equal to the expected value
+    Expectation: Output is equal to the expected value
     """
     vectors = text.GloVe.from_file(DATASET_ROOT_PATH + "glove.6B.test.txt", max_vectors=4)
     my_unk = [-1, -1, -1, -1, -1, -1]
@@ -119,8 +119,8 @@ def test_glove_all_to_vectors_params_eager():
 def test_glove_build_from_file():
     """
     Feature: GloVe
-    Description: test with only default parameter
-    Expectation: output is equal to the expected value
+    Description: Test with only default parameter
+    Expectation: Output is equal to the expected value
     """
     vectors = text.GloVe.from_file(DATASET_ROOT_PATH + "glove.6B.test.txt")
     to_vectors = text.ToVectors(vectors)
@@ -143,8 +143,8 @@ def test_glove_build_from_file():
 def test_glove_build_from_file_eager():
     """
     Feature: GloVe
-    Description: test with only default parameter in eager mode
-    Expectation: output is equal to the expected value
+    Description: Test with only default parameter in eager mode
+    Expectation: Output is equal to the expected value
     """
     vectors = text.GloVe.from_file(DATASET_ROOT_PATH + "glove.6B.test.txt")
     to_vectors = T.ToVectors(vectors)
@@ -176,8 +176,8 @@ def test_glove_build_from_file_eager():
 def test_glove_invalid_input():
     """
     Feature: GloVe
-    Description: test the validate function with invalid parameters
-    Expectation: output is equal to the expected error
+    Description: Test the validate function with invalid parameters
+    Expectation: Output is equal to the expected error
     """
     def test_invalid_input(test_name, file_path, error, error_msg, max_vectors=None, unk_init=None,
                            lower_case_backup=False, token="ok"):

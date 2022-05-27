@@ -24,8 +24,8 @@ DATA_FILE = "../data/dataset/testEnWik9Dataset"
 def test_enwik9_total_rows_dataset_num_samples_none():
     """
     Feature: EnWik9Dataset
-    Description: test the function while param num_samples = 0
-    Expectation: the number of samples is 13
+    Description: Test the function while param num_samples = 0
+    Expectation: The number of samples is 13
     """
     # Do not provide a num_samples argument, so it would be None by default.
     data = ds.EnWik9Dataset(DATA_FILE)
@@ -39,8 +39,8 @@ def test_enwik9_total_rows_dataset_num_samples_none():
 def test_enwik9_total_rows_dataset_shuffle_false_parallel_worker_two():
     """
     Feature: EnWik9Dataset
-    Description: test the function while param shuffle = False
-    Expectation: the samples is ordered
+    Description: Test the function while param shuffle = False
+    Expectation: The samples is ordered
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(2)
     original_seed = config_get_set_seed(987)
@@ -72,8 +72,8 @@ def test_enwik9_total_rows_dataset_shuffle_false_parallel_worker_two():
 def test_enwik9_total_rows_dataset_shuffle_false_parallel_worker_one():
     """
     Feature: EnWik9Dataset
-    Description: test the function while param shuffle = False
-    Expectation: the samples is ordered
+    Description: Test the function while param shuffle = False
+    Expectation: The samples is ordered
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(987)
@@ -105,8 +105,8 @@ def test_enwik9_total_rows_dataset_shuffle_false_parallel_worker_one():
 def test_enwik9_total_rows_dataset_shuffle_true_parallel_worker_two():
     """
     Feature: EnWik9Dataset
-    Description: test the function while param shuffle = True
-    Expectation: the samples is disorder
+    Description: Test the function while param shuffle = True
+    Expectation: The samples is disorder
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(2)
     original_seed = config_get_set_seed(135)
@@ -138,8 +138,8 @@ def test_enwik9_total_rows_dataset_shuffle_true_parallel_worker_two():
 def test_enwik9_total_rows_dataset_shuffle_true_parallel_worker_one():
     """
     Feature: EnWik9Dataset
-    Description: test the function while param shuffle = True
-    Expectation: the samples is disorder
+    Description: Test the function while param shuffle = True
+    Expectation: The samples is disorder
     """
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     original_seed = config_get_set_seed(135)
@@ -171,8 +171,8 @@ def test_enwik9_total_rows_dataset_shuffle_true_parallel_worker_one():
 def test_enwik9_dataset_num_samples():
     """
     Feature: EnWik9Dataset
-    Description: test param num_samples, while it = 2
-    Expectation: the number of samples = 2
+    Description: Test param num_samples, while it = 2
+    Expectation: The number of samples = 2
     """
     data = ds.EnWik9Dataset(DATA_FILE, num_samples=2)
     count = 0
@@ -184,7 +184,7 @@ def test_enwik9_dataset_num_samples():
 def test_enwik9_dataset_distribution():
     """
     Feature: EnWik9Dataset
-    Description: test distribution of the dataset
+    Description: Test distribution of the dataset
     Expectation: count = 7
     """
     data = ds.EnWik9Dataset(DATA_FILE, num_shards=2, shard_id=1)
@@ -197,7 +197,7 @@ def test_enwik9_dataset_distribution():
 def test_enwik9_total_rows_dataset_repeat():
     """
     Feature: EnWik9Dataset
-    Description: test the function whie the samples are repeat
+    Description: Test the function whie the samples are repeat
     Expectation: count = 26
     """
     data = ds.EnWik9Dataset(DATA_FILE, shuffle=False)
@@ -239,7 +239,7 @@ def test_enwik9_total_rows_dataset_repeat():
 def test_enwik9_total_rows_dataset_get_datasetsize():
     """
     Feature: EnWik9Dataset
-    Description: test the function, get_dataset_size()
+    Description: Test the function, get_dataset_size()
     Expectation: size = 13
     """
     data = ds.EnWik9Dataset(DATA_FILE)
@@ -250,7 +250,7 @@ def test_enwik9_total_rows_dataset_get_datasetsize():
 def test_enwik9_total_rows_dataset_to_device():
     """
     Feature: EnWik9Dataset
-    Description: test the function, to_device()
+    Description: Test the function, to_device()
     Expectation: size = 13
     """
     data = ds.EnWik9Dataset(DATA_FILE, shuffle=False)
@@ -261,8 +261,8 @@ def test_enwik9_total_rows_dataset_to_device():
 def test_enwik9_dataset_exceptions():
     """
     Feature: EnWik9Dataset
-    Description: test the errors which appear possibly
-    Expectation: the errors are expected correctly
+    Description: Test the errors which appear possibly
+    Expectation: The errors are expected correctly
     """
     with pytest.raises(ValueError) as error_info:
         _ = ds.EnWik9Dataset("does/not/exist/")

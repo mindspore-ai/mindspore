@@ -30,8 +30,8 @@ def count_unequal_element(data_expected, data_me):
 def test_filter_wikipedia_xml_eager():
     """
     Feature: FilterWikipediaXML
-    Description: test FilterWikipediaXML in eager mode
-    Expectation: the data is processed successfully
+    Description: Test FilterWikipediaXML in eager mode
+    Expectation: The data is processed successfully
     """
     logger.info("test FilterWikipediaXML in eager mode")
 
@@ -47,8 +47,8 @@ def test_filter_wikipedia_xml_eager():
 def test_filter_wikipedia_xml_pipeline():
     """
     Feature: FilterWikipediaXML
-    Description: test FilterWikipediaXML in pipeline mode
-    Expectation: the data is processed successfully
+    Description: Test FilterWikipediaXML in pipeline mode
+    Expectation: The data is processed successfully
     """
     logger.info("test FilterWikipediaXML in pipeline mode")
 

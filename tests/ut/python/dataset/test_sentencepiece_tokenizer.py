@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ DATA_FILE = "../data/dataset/testTokenizerData/sentencepiece_tokenizer.txt"
 def test_sentence_piece_tokenizer_callable():
     """
     Feature: SentencePieceTokenizer
-    Description: test SentencePieceTokenizer with eager mode
-    Expectation: output is equal to the expected value
+    Description: Test SentencePieceTokenizer with eager mode
+    Expectation: Output is equal to the expected value
     """
     vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 100, 0.9995, SentencePieceModel.UNIGRAM, {})
     tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
@@ -37,8 +37,8 @@ def test_sentence_piece_tokenizer_callable():
 def test_from_vocab_to_str_unigram():
     """
     Feature: SentencePieceTokenizer
-    Description: test SentencePieceTokenizer with UNIGRAM model
-    Expectation: output is equal to the expected value
+    Description: Test SentencePieceTokenizer with UNIGRAM model
+    Expectation: Output is equal to the expected value
     """
     vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 100, 0.9995, SentencePieceModel.UNIGRAM, {})
     tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
@@ -54,8 +54,8 @@ def test_from_vocab_to_str_unigram():
 def test_from_vocab_to_str_bpe():
     """
     Feature: SentencePieceTokenizer
-    Description: test SentencePieceTokenizer with BPE model
-    Expectation: output is equal to the expected value
+    Description: Test SentencePieceTokenizer with BPE model
+    Expectation: Output is equal to the expected value
     """
     vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 100, 0.9995, SentencePieceModel.BPE, {})
     tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
@@ -72,8 +72,8 @@ def test_from_vocab_to_str_bpe():
 def test_from_vocab_to_str_char():
     """
     Feature: SentencePieceTokenizer
-    Description: test SentencePieceTokenizer with CHAR model
-    Expectation: output is equal to the expected value
+    Description: Test SentencePieceTokenizer with CHAR model
+    Expectation: Output is equal to the expected value
     """
     vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 100, 0.9995, SentencePieceModel.CHAR, {})
     tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
@@ -90,8 +90,8 @@ def test_from_vocab_to_str_char():
 def test_from_vocab_to_str_word():
     """
     Feature: SentencePieceTokenizer
-    Description: test SentencePieceTokenizer with WORD model
-    Expectation: output is equal to the expected value
+    Description: Test SentencePieceTokenizer with WORD model
+    Expectation: Output is equal to the expected value
     """
     vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 100, 0.9995, SentencePieceModel.WORD, {})
     tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
@@ -107,8 +107,8 @@ def test_from_vocab_to_str_word():
 def test_from_vocab_to_int():
     """
     Feature: SentencePieceTokenizer
-    Description: test SentencePieceTokenizer with out_type equal to int
-    Expectation: output is equal to the expected value
+    Description: Test SentencePieceTokenizer with out_type equal to int
+    Expectation: Output is equal to the expected value
     """
     vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 100, 0.9995, SentencePieceModel.UNIGRAM, {})
     tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.INT)
@@ -124,8 +124,8 @@ def test_from_vocab_to_int():
 def test_from_file_to_str():
     """
     Feature: SentencePieceTokenizer
-    Description: test SentencePieceTokenizer with out_type equal to string
-    Expectation: output is equal to the expected value
+    Description: Test SentencePieceTokenizer with out_type equal to string
+    Expectation: Output is equal to the expected value
     """
     vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 100, 0.9995, SentencePieceModel.UNIGRAM, {})
     text.SentencePieceVocab.save_model(vocab, "./", "m.model")
@@ -142,8 +142,8 @@ def test_from_file_to_str():
 def test_from_file_to_int():
     """
     Feature: SentencePieceTokenizer
-    Description: test SentencePieceTokenizer while loading vocab model from file
-    Expectation: output is equal to the expected value
+    Description: Test SentencePieceTokenizer while loading vocab model from file
+    Expectation: Output is equal to the expected value
     """
     vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 100, 0.9995, SentencePieceModel.UNIGRAM, {})
     text.SentencePieceVocab.save_model(vocab, "./", "m.model")
@@ -160,8 +160,8 @@ def test_from_file_to_int():
 def test_build_from_dataset():
     """
     Feature: SentencePieceTokenizer
-    Description: test SentencePieceTokenizer while loading vocab model from dataset
-    Expectation: output is equal to the expected value
+    Description: Test SentencePieceTokenizer while loading vocab model from dataset
+    Expectation: Output is equal to the expected value
     """
     data = ds.TextFileDataset(VOCAB_FILE, shuffle=False)
     vocab = text.SentencePieceVocab.from_dataset(data, ["text"], 100, 0.9995, SentencePieceModel.UNIGRAM, {})
@@ -207,8 +207,8 @@ def concat_test(dataset):
 def test_with_zip_concat():
     """
     Feature: SentencePieceTokenizer
-    Description: test SentencePieceTokenizer with zip and concat operations
-    Expectation: output is equal to the expected value
+    Description: Test SentencePieceTokenizer with zip and concat operations
+    Expectation: Output is equal to the expected value
     """
     data = ds.TextFileDataset(VOCAB_FILE, shuffle=False)
     vocab = text.SentencePieceVocab.from_dataset(data, ["text"], 100, 0.9995, SentencePieceModel.UNIGRAM, {})
