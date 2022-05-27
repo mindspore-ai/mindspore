@@ -906,6 +906,23 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('broadcast_to')(x.shape)(self)
 
+
+    def tan(self):
+        """
+        Computes tangent of `x` element-wise.
+        Refer to :func:`mindspore.ops.tan` for more detail.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor([-1.0, 0.0, 1.0]).astype("float32")
+            >>> output = a.tan()
+            >>> print(output)
+            [-1.5574081 0. 1.5574081]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('tan')()(self)
+
+
     def abs(self):
         """
         Return absolute value element-wisely.
