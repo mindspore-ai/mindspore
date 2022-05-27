@@ -120,7 +120,7 @@ int32_t CheckParamater(std::pair<bool, std::string> rlt, uint32_t i) {
     return dpFail;
   }
 
-  if (IsDirectory(rlt.second)) {
+  if (IsDirectory_s(rlt.second)) {
     API_LOGE("It is a directory, not file path. index = %u", i);
     return dpFail;
   }

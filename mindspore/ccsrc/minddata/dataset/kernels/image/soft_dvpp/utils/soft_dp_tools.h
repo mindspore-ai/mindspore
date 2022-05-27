@@ -57,6 +57,6 @@ T TruncatedFunc(T num, T min, T max) {
 
 std::pair<bool, std::string> GetRealpath(const std::string &path);
 
-bool IsDirectory(const std::string &path);
+bool IsDirectory_s(const std::string &path);
 
 #endif  // SOFT_DP_TOOLS_H

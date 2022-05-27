@@ -190,6 +190,20 @@ enum class MS_API InterpolationMode {
   kCubicPil = 4           ///< Interpolation method is bicubic interpolation like implemented in pillow.
 };
 
+/// \brief Possible formats for Vdec output image.
+enum class MS_API VdecOutputFormat {
+  kYuvSemiplanar420 = 1,  ///< Output image with PIXEL_FORMAT_YUV_SEMIPLANAR_420.
+  kYvuSemiplanar420 = 2,  ///< Output image with PIXEL_FORMAT_YVU_SEMIPLANAR_420.
+};
+
+/// \brief Possible formats for Vdec input video.
+enum class MS_API VdecStreamFormat {
+  kH265MainLevel = 0,  ///< Input video with H265_MAIN_LEVEL
+  kH264BaselineLevel,  ///< Input video with H264_BASELINE_LEVEL
+  kH264MainLevel,      ///< Input video with H264_MAIN_LEVEL
+  kH264HighLevel       ///< Input video with H264_HIGH_LEVEL
+};
+
 /// \brief Possible tokenize modes for JiebaTokenizer.
 enum class MS_API JiebaMode {
   kMix = 0,  ///< Tokenize with MPSegment algorithm.
@@ -289,6 +303,11 @@ inline void MS_API BitClear(uint32_t *bits, uint32_t bitMask) {
   }
   *bits &= (~bitMask);
 }
+
+constexpr uint32_t kFrameWidthMax = 4096;
+constexpr uint32_t kFrameHeightMax = 4096;
+constexpr uint32_t kFrameWidthMin = 128;
+constexpr uint32_t kFrameHeightMin = 128;
 
 constexpr int64_t kDeMaxDim = std::numeric_limits<int64_t>::max();
 constexpr int32_t kDeMaxRank = std::numeric_limits<int32_t>::max();
