@@ -57,6 +57,7 @@ class ReductionCpuKernelMod : public MKLCpuKernelMod {
   ReductionFunc kernel_func_;
   float p_{2.0};
   float epsilon_{1e-12};
+  std::vector<int64_t> axis_;
   static std::vector<std::pair<KernelAttr, ReductionFunc>> func_list_;
 };
 }  // namespace kernel

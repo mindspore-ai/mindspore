@@ -59,6 +59,7 @@ bool ReductionCpuKernelMod::GetReductionAttr(const BaseOperatorPtr &base_operato
   }
   p_ = LongToFloat(p);
   epsilon_ = kernel_ptr->get_epsilon();
+  axis_ = kernel_ptr->get_axis();
   return true;
 }
 
@@ -89,20 +90,17 @@ int ReductionCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     return ret;
   }
   std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
-  // For Reduction kernel required at least 4d data shape, extend it to 4d.
-  while (input_shape_.size() < kIndex4) {
-    input_shape_.insert(input_shape_.begin(), 1);
-  }
-  while (output_shape_.size() < kIndex4) {
-    output_shape_.insert(output_shape_.begin(), 1);
+  // For Reduction kernel, mkl required keep_dims is True.
+  // So we should recover output_shape from input_shape.
+  // axis_'s validation has been check in core/ops/lp_norm.cc, just using it.
+  std::vector<size_t> mkl_output_shape = input_shape_;
+  for (const auto &dim : axis_) {
+    mkl_output_shape[dim] = 1;
   }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(input_shape_);
-  dnnl::memory::desc dst_desc = GetDefaultMemDesc(output_shape_);
+  dnnl::memory::desc dst_desc = GetDefaultMemDesc(mkl_output_shape);
   auto desc = GetReductionDesc(src_desc, dst_desc);
   auto prim_desc = CreateDesc<dnnl::reduction::primitive_desc>(desc, engine_);
   primitive_ = CreatePrimitive<dnnl::reduction>(prim_desc);
@@ -114,8 +112,12 @@ int ReductionCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 template <typename T>
 bool ReductionCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                          const std::vector<kernel::AddressPtr> &outputs) {
-  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  auto input = GetDeviceAddress<T>(inputs, kIndex0);
+  auto output = GetDeviceAddress<T>(outputs, kIndex0);
+  auto output_size = outputs.at(kIndex0)->size;
+  if (memset_s(output, output_size, 0, output_size) != EOK) {
+    MS_LOG(EXCEPTION) << "ReductionCpuKernelMod failed to run memset_s func to reset output.";
+  }
   SetArgumentHandle(DNNL_ARG_SRC, input);
   SetArgumentHandle(DNNL_ARG_DST, output);
   ExecutePrimitive();

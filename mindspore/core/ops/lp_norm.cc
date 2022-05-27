@@ -51,6 +51,7 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
         axis[i] += input_rank;
       }
     }
+    constexpr int64_t place_holder = INT64_MAX;
     for (size_t i = 0; i < axis.size(); ++i) {
       auto temp = axis;
       auto idx = std::find(temp.begin(), temp.end(), axis[i]);
@@ -61,14 +62,15 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
                                  << "', the element of the axis must be different, but got axis: " << axis << ".";
       }
       if (keep_dims == false) {
-        output_shape[axis[i]] = -1;
+        // Here, we need a place holder for infer shape, but dynamic shape using -1, so just change to INT64_MAX.
+        output_shape[axis[i]] = place_holder;
       } else {
         output_shape[axis[i]] = 1;
       }
     }
     if (keep_dims == false) {
       for (std::vector<int64_t>::iterator iter = output_shape.begin(); iter != output_shape.end(); ++iter) {
-        if (*iter == -1) {
+        if (*iter == place_holder) {
           iter = output_shape.erase(iter);
           iter -= 1;
         }

@@ -21,6 +21,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from mindspore.common import Tensor
 from mindspore.ops.operations.math_ops import Lerp
+from mindspore.ops.operations.math_ops import LpNorm
 from mindspore.ops.operations import linalg_ops
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
@@ -215,7 +216,8 @@ def get_broadcast_to_vmap_rule(prim, axis_size):
 @constexpr
 def _get_reduce_batch_axis(axis, x_dim, x_ndim):
     """get batch_axis for reduce* operation."""
-    if not isinstance(axis, tuple):
+    # For axis, it's value in Union[int, list, tuple]
+    if isinstance(axis, int):
         axis = (axis,)
 
     batch_axis = ()
@@ -348,6 +350,30 @@ def get_svd_vmap_rule(prim, axis_size):
         if compute_uv:
             return (s, 0), (u, 0), (v, 0)
         return (s, 0), (u, None), (v, None)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(LpNorm)
+def get_lp_norm_vmap_rule(prim, axis_size):
+    """VmapRule for 'LpNorm' operation."""
+    axis = prim.axis
+    p = prim.p
+    keep_dims = prim.keep_dims
+    epsilon = prim.epsilon
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x_ndim = F.rank(x)
+        # LpNorm is a reduction class op, so just reuse the common function.
+        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
+        lp_norm_op = LpNorm(batch_axis, p, keep_dims, epsilon)
+        out = lp_norm_op(x)
+        out_dim = _get_reduce_out_dim(keep_dims, x_dim, x_ndim, batch_axis)
+        return out, out_dim
 
     return vmap_rule
 
