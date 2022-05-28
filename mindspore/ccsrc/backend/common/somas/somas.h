@@ -36,6 +36,21 @@
 
 namespace mindspore {
 namespace somas {
+union DestinationUnion {
+  size_t id;
+  size_t index;
+  DestinationUnion() : index(0) {}
+};
+
+struct TensorConflictInfo {
+  size_t tensor_id_;
+  size_t src_node_id_;
+  size_t destination_num;
+  DestinationUnion l;
+  DestinationUnion r;
+  TensorConflictInfo(size_t tensor_id, size_t src_node_id)
+      : tensor_id_(tensor_id), src_node_id_(src_node_id), destination_num(0) {}
+};
 class Somas {
  public:
   // Constructors/Destructors
@@ -66,8 +81,9 @@ class Somas {
   std::string hash_id_;
   // Maps
   mindspore::HashMap<size_t, SomasTensorPtr> tensors_map_;
-  std::map<void *, std::vector<SomasNodePtr>> nodes_map_;
-  std::map<void *, vector<SomasParameterPtr>> parameters_map_;
+  mindspore::HashMap<void *, std::vector<SomasNodePtr>> nodes_map_;
+  mindspore::HashMap<void *, vector<SomasParameterPtr>> parameters_map_;
+  mindspore::HashMap<size_t, SomasNodePtr> nodes_id_map_;
 
   // Vectors
   std::vector<SomasNodePtr> nodes_list_;
@@ -142,12 +158,14 @@ class Somas {
   SomasParameterPtr CreateSomasParameter(const AnfNodePtr &node, size_t index);
   void InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel);
   void InitAtomicCleanInputs(bool is_all_nop_node, const CNodePtr &kernel);
-  void ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &calc_tensor,
-                                 const std::vector<SomasTensorPtr> &all_tensors_list,
+  void ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &target_tensor,
+                                 const std::vector<TensorConflictInfo> &tensor_conflict_info,
+                                 const std::vector<size_t> &destination_node_list,
                                  const vector<DynamicBitSet> &nodes_dependency,
                                  std::vector<DynamicBitSet> *tensor_relation) const;
-  void ComputeMultiTensorConflicts(const std::vector<SomasTensorPtr> &calc_tensors_list,
-                                   const std::vector<SomasTensorPtr> &all_tensors_list,
+  void ComputeMultiTensorConflicts(const std::vector<SomasTensorPtr> &target_tensors_list,
+                                   const std::vector<TensorConflictInfo> &tensor_conflict_info,
+                                   const std::vector<size_t> &destination_node_list,
                                    const vector<DynamicBitSet> &nodes_dependency,
                                    std::vector<DynamicBitSet> *tensor_relation) const;
   void UpdateTensorDestinations();
@@ -169,6 +187,12 @@ class Somas {
   bool LoadSomasCache(const session::KernelGraph *graph);
   SomasStreamPtr GetSomasStream(size_t stream_id) const;
   SomasNodePtr GetSomasNode(size_t node_id) const;
+  static void BuildConflictInfo(const std::shared_ptr<SomasTensor> &tensor, TensorConflictInfo *tensor_conflict_info,
+                                std::vector<size_t> *destination_node_list);
+  static bool CheckIsDependency(const TensorConflictInfo &tensor_conflict_info, const size_t &src_node_id,
+                                const vector<DynamicBitSet> &nodes_dependency,
+                                const std::vector<size_t> &destination_node_list);
+  void ProcessSemiLifeLongTensor();
 };
 
 using SomasPtr = std::shared_ptr<Somas>;
