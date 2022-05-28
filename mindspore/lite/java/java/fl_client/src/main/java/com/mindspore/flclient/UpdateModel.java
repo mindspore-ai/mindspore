@@ -151,8 +151,7 @@ public class UpdateModel {
             retCode = ResponseCode.RequestError;
             throw new IllegalArgumentException();
         }
-        List<MSTensor> features = client.getFeatures();
-        Map<String, float[]> trainedMap = CommonUtils.convertTensorToFeatures(features);
+        Map<String, float[]> trainedMap = client.getFeatureMap();
         LOGGER.info("[updateModel] ===========free session=============");
         Common.freeSession();
         if (trainedMap.isEmpty()) {

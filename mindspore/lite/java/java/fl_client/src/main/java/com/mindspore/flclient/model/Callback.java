@@ -21,6 +21,7 @@ import com.mindspore.flclient.Common;
 import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.MSTensor;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,6 +48,14 @@ public abstract class Callback {
         this.model = model;
     }
 
+    /**
+     * searchOutputsForSize MSTensor need call MSTensor.free to recycle memory
+     * this function is Deprecated, now you can use getOutputsBySize instead.
+     *
+     * @param size
+     * @return
+     */
+    @Deprecated
     protected Optional<MSTensor> searchOutputsForSize(int size) {
         if (model == null) {
             logger.severe("trainSession cannot be null");
@@ -64,6 +73,24 @@ public abstract class Callback {
         }
         logger.severe("can not find output the tensor,element num is " + size);
         return Optional.empty();
+    }
+
+    protected Map<String, float[]> getOutputsBySize(int size) {
+        if (model == null) {
+            throw new RuntimeException("model cannot be null");
+        }
+        HashMap<String, float[]> mapOutputs = new HashMap<>();
+        List<MSTensor> outputs = model.getOutputs();
+        for (MSTensor tensor : outputs) {
+            if (tensor == null) {
+                logger.severe("tensor cannot be null");
+            }
+            if (tensor.elementsNum() == size) {
+                mapOutputs.put(tensor.tensorName(), tensor.getFloatData());
+            }
+            tensor.free();
+        }
+        return mapOutputs;
     }
 
     /**

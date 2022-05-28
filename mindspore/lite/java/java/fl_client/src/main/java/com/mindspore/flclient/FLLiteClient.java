@@ -39,7 +39,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.ArrayList;
 
@@ -449,15 +448,13 @@ public class FLLiteClient {
     }
 
     public Map<String, float[]> getFeatureMap() {
-        Map<String, float[]> featureMap = new HashMap<>();
         status = Common.initSession(flParameter.getTrainModelPath());
         if (status == FLClientStatus.FAILED) {
             Common.freeSession();
             retCode = ResponseCode.RequestError;
             return new HashMap<>();
         }
-        List<MSTensor> features = client.getFeatures();
-        featureMap = CommonUtils.convertTensorToFeatures(features);
+        Map<String, float[]>  featureMap = client.getFeatureMap();
         Common.freeSession();
         return featureMap;
     }

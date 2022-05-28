@@ -1,7 +1,7 @@
 package com.mindspore.flclient;
 
-import mockit.Mock;
-import mockit.MockUp;
+import com.mindspore.flclient.model.Callback;
+import mockit.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**   
  * Read test cases from case define file, just run the specified case.
@@ -29,7 +30,7 @@ public class FLFrameSingleCaseRun {
         if (utBasePath == null || utBasePath.isEmpty()) {
             utBasePath = projectPath;
         }
-        String caseFilePath = utBasePath + "/test_case/fl_frame_ut_case.json";
+        String caseFilePath = utBasePath + "/test_case/fl_frame_ut_case_infer.json";
         FLFrameTestCaseParser caseParser = new FLFrameTestCaseParser(caseFilePath);
         testCases = caseParser.Parser();
 
@@ -55,7 +56,16 @@ public class FLFrameSingleCaseRun {
                 return;
             }
         };
-        FLFrameTestCase flTestCase = (FLFrameTestCase) testCases.get(0)[1];
+
+        FLFrameTestCase flTestCase = null;
+        for(Object[] arrObj : testCases){
+            String caseName = (String) arrObj[0];
+            if(caseName.equals("New_Frame_Tag_Infer")){
+                flTestCase = (FLFrameTestCase)arrObj[1];
+            }
+        }
+        assertNotEquals(flTestCase, null);
+
         if (System.getenv("MS_CATCH_MSG") != null) {
             FLCommunication.setMsgDumpFlg(true);
             FLCommunication.setMsgDumpPath(utBasePath + "/test_data/" + flTestCase.getFlName());
@@ -65,7 +75,8 @@ public class FLFrameSingleCaseRun {
         flTestCase.getRealPath(utBasePath);
         webServer.setCaseRes(flTestCase.getHttpRes());
 
+        FLParameter.getInstance().setIflJobResultCallback(new FLUTResultCheck(flTestCase.getResultCode(), new int[0]));
+
         SyncFLJob.main(flTestCase.getParams());
-        assertEquals(sleepCallTimes, 0);
     }
 }

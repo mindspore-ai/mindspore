@@ -23,6 +23,7 @@ import com.mindspore.MSTensor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -86,11 +87,13 @@ public class PredictCallback extends Callback {
 
     @Override
     public Status stepEnd() {
-        Optional<MSTensor> outputTensor = searchOutputsForSize(batchSize * numOfClass);
-        if (!outputTensor.isPresent()) {
+        Map<String, float[]> outputs = getOutputsBySize(batchSize * numOfClass);
+        if (outputs.isEmpty()) {
+            LOGGER.severe("cannot find loss tensor");
             return Status.FAILED;
         }
-        float[] scores = outputTensor.get().getFloatData();
+        Map.Entry<String, float[]> first = outputs.entrySet().iterator().next();
+        float[] scores = first.getValue();
         for (int b = 0; b < batchSize; b++) {
             int predictIdx = getMaxScoreIndex(scores, numOfClass * b, numOfClass * b + numOfClass);
             predictResults.add(predictIdx);

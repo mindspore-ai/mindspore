@@ -483,7 +483,7 @@ std::vector<MSTensor> ModelImpl::GetFeatureMaps() const {
     MS_LOG(ERROR) << "No optimizer parameters avelibale.";
     return empty;
   }
-  std::vector<MSTensor> res = LiteTensorsToMSTensors(params, false);
+  std::vector<MSTensor> res = LiteTensorsToMSTensors(params, true);
   return res;
 }
 
