@@ -321,16 +321,9 @@ struct GlogLogDirRegister {
         return;
       }
       const char *rank_id = std::getenv("RANK_ID");
-      const char *gpu_rank_id = std::getenv("OMPI_COMM_WORLD_RANK");
       std::string rank = "0";
-      bool both_exist = false;
-      if (rank_id != nullptr && gpu_rank_id == nullptr) {
+      if (rank_id != nullptr) {
         rank = std::string(rank_id);
-      } else if (rank_id == nullptr && gpu_rank_id != nullptr) {
-        rank = std::string(gpu_rank_id);
-      } else if (rank_id != nullptr && gpu_rank_id != nullptr) {
-        rank = std::string(rank_id);
-        both_exist = true;
       }
       log_dir_str += "/rank_" + rank + "/logs/";
       auto real_log_dir_str = Common::CreatePrefixPath(log_dir_str, true);
@@ -339,10 +332,6 @@ struct GlogLogDirRegister {
       if (!real_log_dir_str.has_value()) {
         MS_LOG(ERROR) << "The path of log files, which set by 'GLOG_log_dir', is invalid.";
         exit(EXIT_FAILURE);
-      }
-      if (both_exist) {
-        MS_LOG(WARNING) << "Environment variables RANK_ID and OMPI_COMM_WORLD_RANK both exist, we will use RANK_ID to "
-                           "get rank id by default.";
       }
     }
   }

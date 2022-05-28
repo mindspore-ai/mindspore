@@ -15,7 +15,6 @@
 """
 log module
 """
-import warnings
 import sys
 import os
 import re
@@ -26,6 +25,7 @@ from logging.handlers import RotatingFileHandler
 import traceback
 import threading
 import platform
+
 if platform.system() != "Windows":
     import fcntl
 
@@ -286,7 +286,6 @@ def _check_directory_by_regular(target, reg=None, flag=re.ASCII, prim_name=None)
 
 
 def _make_directory(path: str):
-
     """Make directory."""
     if path is None or not isinstance(path, str) or path.strip() == "":
         raise TypeError("Input path '{}' is invalid type".format(path))
@@ -308,7 +307,6 @@ def _make_directory(path: str):
 
 
 def _verify_config(kwargs):
-
     """
     Verify log configurations.
 
@@ -478,15 +476,9 @@ def _get_stack_info(frame):
 def _get_rank_id():
     """Get rank id."""
     rank_id = os.getenv('RANK_ID')
-    gpu_rank_id = os.getenv('OMPI_COMM_WORLD_RANK')
     rank = '0'
-    if rank_id and gpu_rank_id:
-        warnings.warn("Environment variables RANK_ID and OMPI_COMM_WORLD_RANK both exist,"
-                      "we will use RANK_ID to get rank id by default.")
     if rank_id:
         rank = rank_id
-    elif gpu_rank_id:
-        rank = gpu_rank_id
     return rank
 
 
@@ -625,4 +617,5 @@ class _LogActionOnce:
             if hasattr(self.logger, 'warning'):
                 self.logger.warning = _old_
             return res
+
         return wrapper
