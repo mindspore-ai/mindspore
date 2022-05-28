@@ -22,7 +22,7 @@ mindspore.ops.CumProd
 
     **输出：**
 
-        Tensor，shape和数据类型与 `x` 相同。
+    Tensor，shape和数据类型与 `x` 相同。
 
     **异常：**
 
