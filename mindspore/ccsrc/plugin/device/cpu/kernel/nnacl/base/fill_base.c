@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,21 @@
 
 #include "nnacl/base/fill_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/fill_base_avx512.h"
+#endif
 
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdFillFp32CoreCalc(block_size, block_num, output, size, data, index)                  \
-  for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
-    MS_ST_F32(block_size, output + index, MS_MOVN_F32(block_size, data));                       \
-  }
+#ifdef ENABLE_AVX
+#include "nnacl/avx/fill_base_avx.h"
+#endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/sse/fill_base_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/fill_base_neon.h"
+#endif
 
 int FillFp32(float *output, int size, float data) {
   if (output == NULL) {
@@ -30,19 +39,13 @@ int FillFp32(float *output, int size, float data) {
 
   int index = 0;
 
-  MS_SIMD_RUN_NO_SCALAR(SimdFillFp32CoreCalc, output, size, data, index);
+  SIMD_RUN_NO_SCALAR(FillFp32, index, output, size, data);
 
   for (; index < size; ++index) {
     output[index] = data;
   }
   return NNACL_OK;
 }
-
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdFillInt32CoreCalc(block_size, block_num, output, size, data, index)                 \
-  for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
-    MS_ST_EPI32(block_size, output + index, MS_MOVN_EPI32(block_size, data));                   \
-  }
 
 int FillInt32(int *output, int size, int data) {
   if (output == NULL) {
@@ -51,7 +54,7 @@ int FillInt32(int *output, int size, int data) {
 
   int index = 0;
 
-  MS_SIMD_RUN_NO_SCALAR(SimdFillInt32CoreCalc, output, size, data, index);
+  SIMD_RUN_NO_SCALAR(FillInt32, index, output, size, data);
 
   for (; index < size; ++index) {
     output[index] = data;

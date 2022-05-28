@@ -165,6 +165,10 @@
 #define SIMD_CMPGT_F32 MS_SIMD_INSTRUCTION_F32(MS_CMPGT)
 #define SIMD_BLEND_F32 MS_SIMD_INSTRUCTION_F32(MS_BLEND)
 
+// int32/float mutual conversion
+#define SIMD_EPI32_TO_F32 MS_SIMD_INSTRUCTION(MS, _INT32_TO_FLOAT32)
+#define SIMD_F32_TO_EPI32 MS_SIMD_INSTRUCTION(MS, _FLOAT32_TO_INT32)
+
 // enable avx512
 #if defined(ENABLE_AVX512)
 #define SIMD_RUN_AVX512(function, index, ...) index = function##AVX512(index, __VA_ARGS__)
