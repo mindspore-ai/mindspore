@@ -30,6 +30,14 @@ mindspore.Tensor
 
         Tensor。
 
+    .. py:method:: tan()
+
+        返回每个元素的正切值。
+
+        **返回：**
+
+        Tensor。
+
     .. py:method:: all(axis=(), keep_dims=False)
 
         检查在指定轴上所有元素是否均为True。
