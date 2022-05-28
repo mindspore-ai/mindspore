@@ -631,6 +631,39 @@ mindspore.Tensor
 
         - **TypeError** - `mask` 不是bool类型的Tensor。
 
+    .. py:method:: matrix_diag(k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_LEFT")
+
+        返回一个具有给定批量对角线值的输出Tensor。
+
+        **参数：**
+
+        - **k** (Union[int, Tensor], optional) - int32类型的Tensor。对角线偏移。正值表示超对角线，0表示主对角线，负值表示次对角线。k可以是单个整数（对于单个对角线）或一对整数，指定矩阵带的上界和下界，且k[0]不得大于k[1]。该值必须在必须在（-num_rows，num_cols）中。默认值：0。
+        - **num_rows** (Union[int, Tensor], optional) - int32类型的单值Tensor，表示输出Tensor的行数。若该值为-1，则表示输出Tensor的最内层矩阵是一个方阵，实际行数将由其他输入推导。默认值：-1。
+        - **num_cols** (Union[int, Tensor], optional) - int32类型的单值Tensor，表示输出Tensor的列数。若该值为-1，则表示输出Tensor的最内层矩阵是一个方阵，实际列数将由其他输入推导。默认值：-1。
+        - **padding_value** (Union[int, float, Tensor], optional) - 单值Tensor，与 `x` 相同的数据类型。表示填充对角线带外区域的数值，默认值：0。
+        - **align** (str, optional) - 一个字符串，指定超对角线和次对角线的对齐方式。可选字符串有：RIGHT_LEFT、"LEFT_RIGHT"、"LEFT_LEFT"、"RIGHT_RIGHT"。例如，"RIGHT_LEFT"表示将超对角线与右侧对齐（左侧填充行），将次对角线与左侧对齐（右侧填充行）。默认值："RIGHT_LEFT"。
+
+        **返回：**
+
+        一个Tensor，与当前Tensor的类型相同。
+        设当前Tensor有r维 `(I， J， ...， M， N)` 。当只给出一条对角线（k是整数或k[0]==k[1]）时，输出Tensor的维度是r + 1，具有形状 `(I，J，…，M，num_rows，num_cols)` 。否则，输出Tensor的维度是r，具有形状 `(I，J，…，num_rows，num_cols)` 。
+
+        **异常：**
+
+        - **TypeError** - 当前Tensor与 `padding_value` 数据类型不同。
+        - **TypeError** - `k` 、 `num_rows` 、 `num_cols` 数据类型不为int32。
+        - **ValueError** - `k` 的维度不为0。
+        - **ValueError** - `padding_value` 、 `num_rows` 、 `num_cols` 的维度不为0。
+        - **ValueError** - `k` 的维度不为0或1。
+        - **ValueError** - `k` 的大小不为1或2。
+        - **ValueError** - `k` 的取值不在 (-num_rows, num_cols) 范围内。
+        - **ValueError** - 当k[0] != k[1]时，k[1]小于k[0]。
+        - **ValueError** - 当k为整数或k[0] == k[1]时， 当前Tensor的维度小于1。
+        - **ValueError** - 当k[0] != k[1]时，当前Tensor的维度小于2。
+        - **ValueError** - 当k[0] != k[1]时，self.shape[-2]不等于k[1] - k[0] + 1。
+        - **ValueError** - `num_rows` 和 `num_cols` 与 当前Tensor的维度和 `k` 的值不匹配。
+        - **ValueError** - `align` 取值不在合法值集合内。
+
     .. py:method:: max(axis=None, keepdims=False, initial=None, where=True)
 
         返回Tensor的最大值或轴方向上的最大值。
