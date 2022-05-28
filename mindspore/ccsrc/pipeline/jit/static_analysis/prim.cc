@@ -2053,7 +2053,9 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     std::string exception_type = GetScalarStringValue(args_spec_list[0]);
     auto iter = exception_types_map.find(exception_type);
     if (iter == exception_types_map.end()) {
-      MS_LOG(EXCEPTION) << "Unsupported exception type: " << exception_type << ".";
+      MS_LOG(EXCEPTION) << "Unsupported exception type: " << exception_type
+                        << ". Raise only support some Python standard exception types: "
+                        << SupportedExceptionsToString();
     }
     ExceptionType type = iter->second;
     if (args_spec_list.size() == 1) {

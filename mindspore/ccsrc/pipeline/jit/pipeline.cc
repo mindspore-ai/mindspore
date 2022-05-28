@@ -961,6 +961,45 @@ bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &arg
   } catch (const py::assertion_error &ex) {
     ReleaseResource(phase);
     throw py::assertion_error(ex);
+  } catch (const py::base_exception &ex) {
+    ReleaseResource(phase);
+    throw py::base_exception(ex);
+  } catch (const py::keyboard_interrupt &ex) {
+    ReleaseResource(phase);
+    throw py::keyboard_interrupt(ex);
+  } catch (const py::stop_iteration &ex) {
+    ReleaseResource(phase);
+    throw py::stop_iteration(ex);
+  } catch (const py::overflow_error &ex) {
+    ReleaseResource(phase);
+    throw py::overflow_error(ex);
+  } catch (const py::zero_division_error &ex) {
+    ReleaseResource(phase);
+    throw py::zero_division_error(ex);
+  } catch (const py::environment_error &ex) {
+    ReleaseResource(phase);
+    throw py::environment_error(ex);
+  } catch (const py::io_error &ex) {
+    ReleaseResource(phase);
+    throw py::io_error(ex);
+  } catch (const py::os_error &ex) {
+    ReleaseResource(phase);
+    throw py::os_error(ex);
+  } catch (const py::memory_error &ex) {
+    ReleaseResource(phase);
+    throw py::memory_error(ex);
+  } catch (const py::unbound_local_error &ex) {
+    ReleaseResource(phase);
+    throw py::unbound_local_error(ex);
+  } catch (const py::not_implemented_error &ex) {
+    ReleaseResource(phase);
+    throw py::not_implemented_error(ex);
+  } catch (const py::indentation_error &ex) {
+    ReleaseResource(phase);
+    throw py::indentation_error(ex);
+  } catch (const py::runtime_warning &ex) {
+    ReleaseResource(phase);
+    throw py::runtime_warning(ex);
   } catch (const std::exception &ex) {
     ReleaseResource(phase);
     // re-throw this exception to Python interpreter to handle it

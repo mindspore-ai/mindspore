@@ -51,6 +51,45 @@ class PyExceptionInitializer {
     if (exception_type == AssertionError) {
       throw py::assertion_error(str);
     }
+    if (exception_type == BaseException) {
+      throw py::base_exception(str);
+    }
+    if (exception_type == KeyboardInterrupt) {
+      throw py::keyboard_interrupt(str);
+    }
+    if (exception_type == StopIteration) {
+      throw py::stop_iteration(str);
+    }
+    if (exception_type == OverflowError) {
+      throw py::overflow_error(str);
+    }
+    if (exception_type == ZeroDivisionError) {
+      throw py::zero_division_error(str);
+    }
+    if (exception_type == EnvironmentError) {
+      throw py::environment_error(str);
+    }
+    if (exception_type == IOError) {
+      throw py::io_error(str);
+    }
+    if (exception_type == OSError) {
+      throw py::os_error(str);
+    }
+    if (exception_type == MemoryError) {
+      throw py::memory_error(str);
+    }
+    if (exception_type == UnboundLocalError) {
+      throw py::unbound_local_error(str);
+    }
+    if (exception_type == NotImplementedError) {
+      throw py::not_implemented_error(str);
+    }
+    if (exception_type == IndentationError) {
+      throw py::indentation_error(str);
+    }
+    if (exception_type == RuntimeWarning) {
+      throw py::runtime_warning(str);
+    }
     py::pybind11_fail(str);
   }
 };
