@@ -370,20 +370,24 @@ def get_fills_vmap_rule(prim, axis_size):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, value_bdim)
         if is_all_none:
             return result
-        x, x_dim = x_bdim
-        value, value_dim = value_bdim
+        x, x_batch_dim = x_bdim
+        value, value_batch_dim = value_bdim
         out_type = x.dtype
         out_shape = x.shape
         value = cast_op(value, out_type)
-        if value_dim is None:
+        if value_batch_dim is None:
             out = P.BroadcastTo(out_shape)(value)
-            return out, x_dim
-        value = _bdim_at_front(value, value_dim, axis_size)
-        if x_dim is None:
+            return out, x_batch_dim
+        value_rank = F.rank(value)
+        if value_rank != 1 or value_batch_dim != 0:
+            _raise_value_error("The `value` in `F.fills` only accept scalar or 0-dims tensor, thus the value only "
+                               "can be rank: 1 with source axis: 0 in vmap scope, but got value rank: "
+                               "{} with source axis: {}.".format(value_rank, value_batch_dim))
+        if x_batch_dim is None:
             value = F.reshape(value, (axis_size,) + (1,) * len(out_shape))
             out = P.BroadcastTo((axis_size,) + out_shape)(value)
         else:
-            x = _bdim_at_front(x, x_dim, axis_size)
+            x = _bdim_at_front(x, x_batch_dim, axis_size)
             out_shape = x.shape
             value = F.reshape(value, (axis_size,) + (1,) * (len(out_shape) - 1))
             out = P.BroadcastTo(out_shape)(value)
