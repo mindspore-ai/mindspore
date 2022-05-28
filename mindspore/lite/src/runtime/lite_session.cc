@@ -1706,6 +1706,20 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
   return RET_OK;
 }
 
+std::string lite::LiteSession::ParseWeightPath() {
+  std::string weight_path = "";
+  if (config_info_ != nullptr) {
+    auto ms_weight = config_info_->find(kWeight);
+    if (ms_weight != config_info_->end()) {
+      auto ms_weight_iter = ms_weight->second;
+      if (ms_weight_iter.find(kWeightPath) != ms_weight_iter.end()) {
+        weight_path = ms_weight_iter[kWeightPath];
+      }
+    }
+  }
+  return weight_path;
+}
+
 int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore::ModelType model_type,
                                                 const size_t &buf_size,
                                                 const std::shared_ptr<mindspore::Context> &ms_context) {
@@ -1716,7 +1730,8 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     MS_LOG(ERROR) << "Invalid model_buf";
     return RET_ERROR;
   }
-  auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true, model_type);
+  auto weight_path = ParseWeightPath();
+  auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true, model_type, weight_path);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
@@ -1743,7 +1758,7 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
     MS_LOG(ERROR) << "Read model file failed";
     return RET_ERROR;
   }
-  auto *model = lite::ImportFromBuffer(model_buf, model_size, true, model_type);
+  auto *model = lite::ImportFromBuffer(model_buf, model_size, true, model_type, model_path);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
@@ -1768,7 +1783,7 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
     MS_LOG(ERROR) << "Read model file failed";
     return RET_ERROR;
   }
-  auto *model = lite::ImportFromBuffer(model_buf, model_size, true, model_type);
+  auto *model = lite::ImportFromBuffer(model_buf, model_size, true, model_type, model_path);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     delete[] model_buf;

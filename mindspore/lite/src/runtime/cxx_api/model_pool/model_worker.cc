@@ -83,6 +83,11 @@ Status ModelWorker::ResizeInit() {
   std::vector<std::vector<int64_t>> new_input_shape;
   for (size_t input_idx = 0; input_idx < inputs.size(); input_idx++) {
     new_input_shape.push_back(inputs[input_idx].Shape());
+    for (size_t i = 1; i < new_input_shape.size(); i++) {
+      if (new_input_shape[input_idx][i] == -1) {
+        return kSuccess;
+      }
+    }
     if (new_input_shape[input_idx][0] == -1) {
       // only support resize for batch dim
       new_input_shape[input_idx][0] = kNumInitBatch;

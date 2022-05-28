@@ -504,7 +504,8 @@ bool LiteModel::CheckQuantAllInit(
 
 Model *ImportFromPath(const char *model_path) { return LiteImportFromPath(model_path); }
 
-Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf, mindspore::ModelType model_type) {
+Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf, mindspore::ModelType model_type,
+                        const std::string &path) {
   auto model_loader = mindspore::infer::ModelLoaderRegistry::GetInstance()->GetModelLoader(model_type);
   if (model_loader != nullptr) {
     MS_LOG(INFO) << "import model from model loader";
@@ -516,7 +517,7 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf, minds
   }
 
   MS_LOG(INFO) << "import model from lite model";
-  auto *model = new (std::nothrow) LiteModel();
+  auto *model = new (std::nothrow) LiteModel(path);
   if (model == nullptr) {
     MS_LOG(ERROR) << "new model fail!";
     return nullptr;
