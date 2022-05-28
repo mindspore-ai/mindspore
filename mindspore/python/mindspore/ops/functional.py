@@ -699,47 +699,57 @@ vmap_instance = _Vmap()
 
 def vmap(fn, in_axes=0, out_axes=0):
     r"""
-    Vectorizing map (vmap) is a higher-order function to map `fn` over argument axes, which is pioneered by Jax.
-    Vmap allows users to map functions along the array axis, it removes the restriction of batch dimension on the
-    operator, and provides a more convenient and unified operator expression, moreover, it allows users to composite
-    with other functional modules such as `grad`, to improve the development efficiency. In addition, the vectorizing
-    map does not execute loops outside the function,but sinks loops into the primitive operations of the function
-    for better performance. When combined with `Graph Kernel Fusion`, operational efficiency would further improved.
+    Vectorizing map (vmap) is a kind of higher-order function to map `fn` along the parameter axes.
+
+    Vmap is pioneered by Jax and it removes the restriction of batch dimension on the operator, and provides a
+    more convenient and unified operator expression. Moreover, it allows users to composite with other functional
+    modules such as :func:`mindspore.ops.grad`, to improve the development efficiency. In addition, the vectorizing
+    map does not execute loops outside the function, but sinks loops into the primitive operations of the function
+    for better performance. When combined with `Graph Kernel Fusion`, operational efficiency would be further improved.
 
     .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
+        This is an experimental prototype that is subject to change and/or delete.
 
     Note:
-        1. The power of Vmap comes from the implementation of VmapRules of primitives. Although we have designed a
-        generalized rule, we do not guarantee that it can work well for all operators, please use at your own risk.
-        If you want to achieve a better performance, please refer to the tutorial to implement the specific VmapRule
-        for the custom operator, which won't take too much time.
+        1. The power of vmap comes from the implementation of VmapRules of primitives. Although we have designed a
+        generalized rule for user custom operators, we can not guarantee that it works well for all operators,
+        please be aware the risk of use. If you want to achieve a better performance, please refer to the tutorial to
+        implement the specific VmapRule for the custom operator, which won't take too much time.
         2. When calling the random number generation methods within the scope of vmap, the same random number is
-        generated among vector elements each time. If you expect each vector branch to use different random numbers,
+        generated among vector functions each time. If you expect each vector branch to use different random numbers,
         you need to generate batch random numbers externally in advance and then transfer them to vmap.
 
     Args:
-        fn (Function or Cell): Function to be mapped over batch axes, which takes at least one argument and returns
-            one or more Tensors or the type of data supported by the MindSpore Tensor.
-        in_axes (int or nested structure): Specifies which dimensions (axes) of the inputs should be mapped over.
-            If `in_axes` is an integer, all arguments of `fn` are mapped over according to this axis. If `in_axes`
-            is a tuple or list, which composed of integers or Nones and the length should equal to the number of
+        fn (Union[Cell, Function]): Function to be mapped along the parameter axes, which takes at least one argument
+            and returns one or more Tensors or the type of data supported by the MindSpore Tensor.
+        in_axes (Union[int, list, tuple]): Specifies which dimensions (axes) of the inputs should be mapped over.
+            If `in_axes` is an integer, all arguments of `fn` are mapped over according to this axis index. If `in_axes`
+            is a tuple or list, which only composed of integers or Nones and the length should equal to the number of
             positional arguments to `fn`, indicates which axis to map for each corresponding positional argument.
-            Note that, axis integers must be in range [-ndim, ndim) for each argument, where `ndim` is the number
-            of dimensions of the corresponding argument. `None` indicationg not to map any axis, at least one
-            positional argument must have `in_axes` not None. The sizes of the mapped axes (`axis_size`) for all
-            arguments must all be equal. Default: 0.
-        out_axes (int or nested structure): Specifies where the mapped dimensions (axes) should appear in the outputs.
-            If `out_axes` is an integer, all outputs of `fn` are specified according to this axis. If `out_axes`
-            is a tuple or list, which composed of integers or Nones and the length also should equal to the number of
-            outputs of `fn`. Note that, axis integers must be in range [-ndim, ndim) for each output, where `ndim` is
-            the number of dimensions of the output returned by `vmap`-ed function. All outputs with a non-None mapped
-            axis must have a non-None `out_axes` specification, and if outputs with none mapped axis specifies a
-            non-None `out_axes`, the result is broadcast across the mapped axis. Default: 0.
+            Note that, axis integers must be in range :math:`[-ndim, ndim)` for each argument, where `ndim` is the
+            number of dimensions of the corresponding argument.  None means not mapping along any axis. Also the
+            mapping axis index of the `in_axes` must have at least one positional parameter not None. The sizes of
+            the mapped axes (`axis_size`) for all arguments must be equal. Default: 0.
+        out_axes (Union[int, list, tuple]): Specifies where the mapped dimensions (axes) should appear in the
+            outputs. If `out_axes` is an integer, all outputs of `fn` are specified according to this axis. If
+            `out_axes` is a tuple or list, which only composed of integers or Nones. And its length also should be equal
+            to the number of outputs of `fn`. Note that, axis integers must be in range :math:`[-ndim, ndim)` for each
+            output, where `ndim` is the dimension of the output of the `vmap`-mapped function. All outputs with a
+            non-None mapped axis must specify a non-None `out_axes`, and if outputs with None mapped axis specifies
+            a non-None `out_axes`, the result broadcasts across the mapped axis. Default: 0.
 
     Returns:
-        Vectorized/Batched version function of `fn`. The arguments and outputs of this function correspond to those of
-        'fn', but it adds a extra batch dimension at positions specified by `in_axes` and `out_axes`.
+        Function, returns the Vectorized/Batched version function of `fn`. The arguments and outputs of this function
+        correspond to those of `fn`, but it adds an extra batch dimension at positions specified by `in_axes` and
+        `out_axes`.
+
+    Raises:
+        RuntimeError: If base elements in `in_axes` or `out_axes` are not a None or an integer.
+            If the all base elements in `in_axes` or `out_axes` are None.
+            If `in_axes` is not single integer, and the length of `in_axes` is not equal to the arguments sizes.
+            If `out_axes` is not single integer, and the length of `out_axes` is not equal to the outputs sizes.
+            If the `axis_size` of each arguments in the scope of `vmap` are not equal.
+            If the axis in `in_axes` or `out_axes` is out of bounds.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
