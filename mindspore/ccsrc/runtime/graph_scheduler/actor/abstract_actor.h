@@ -52,6 +52,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
   void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
   // The actor run when receive the input control.
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
+  // The actor run when receive the batch input data.
+  void RunBatchOpData(std::vector<OpData<DeviceTensor> *> *const batch_input_data,
+                      OpContext<DeviceTensor> *const context);
 
   // Get the position of node in the actor.
   virtual size_t FetchNodePosition(const AnfNodePtr &node) const { return 0; }
@@ -66,6 +69,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
   const std::vector<AID> &input_data_arrow_aids() const { return input_data_arrow_aids_; }
   const std::vector<AID> &input_control_arrow_aids() const { return input_control_arrow_aids_; }
   const std::map<size_t, std::vector<AnfNodeWeakPtr>> &internal_parameters() const { return internal_parameters_; }
+  const mindspore::HashMap<std::string, std::vector<DataArrowPtr>> &batch_output_data_arrows() const {
+    return batch_output_data_arrows_;
+  }
 
  protected:
   friend class GraphScheduler;
@@ -80,6 +86,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // Erase input data and input controls when finish actor running.
   virtual void EraseInput(const OpContext<DeviceTensor> *context);
 
+  // Add the data to the member output_data_ and batch_output_data_.
+  void AddOutputData(OpDataUniquePtr<DeviceTensor> &&data, const DataArrowPtr &data_arrow);
   // Update the output data before send output data.
   virtual void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
                                 const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) {}
@@ -101,6 +109,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // Bool which is the second of pair, indicating whether the output data destination is stack actor, and the output
   // data cannot be reused.
   std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, bool>> output_data_;
+  // Used to send batch data in the message which RunBatchOpData needs, the key is the actor name of destination actor.
+  mindspore::HashMap<std::string, std::vector<OpData<DeviceTensor> *>> batch_output_data_;
+  mindspore::HashMap<std::string, std::vector<DataArrowPtr>> batch_output_data_arrows_;
+
   // When there is recursion in the graph, the actor will send data to the same stack actor multiple times. Since
   // messages are sent asynchronously between actors, there will be multiple messages that remain unprocessed in
   // the channel. In order to prevent old data from being overwritten, it is necessary to allocate a new op data,

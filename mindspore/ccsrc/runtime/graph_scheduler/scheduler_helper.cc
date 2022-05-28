@@ -329,6 +329,27 @@ void SchedulerHelper::ConvertDataArrowToControlArrow(AbstractActor *const from_a
   SchedulerHelper::AddControlArrow(from_actor, to_actor);
 }
 
+void SchedulerHelper::FuseDataArrowsToBatchDataArrow(AbstractActor *const actor) {
+  MS_EXCEPTION_IF_NULL(actor);
+  // Count the number of the same destination actor.
+  mindspore::HashMap<std::string, size_t> to_actor_count;
+  for (const auto &data_arrow : actor->output_data_arrows()) {
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    ++(to_actor_count[data_arrow->to_op_id_.Name()]);
+  }
+
+  // Sign and add the batch data arrow.
+  for (auto &data_arrow : actor->output_data_arrows()) {
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    auto &to_op_name = data_arrow->to_op_id_.Name();
+    // The output data cannot be reused whose destination is stack actor, and cannot to be fused.
+    if ((to_actor_count[to_op_name] > 1) && (to_op_name.find(kStackActorNameSuffix) == std::string::npos)) {
+      data_arrow->is_batch_arrow_ = true;
+      (void)actor->batch_output_data_arrows_[to_op_name].emplace_back(data_arrow);
+    }
+  }
+}
+
 namespace {
 bool CheckKernelActorValid(const std::vector<KernelActorPtr> &kernel_actors) {
   for (const auto &kernel_actor : kernel_actors) {

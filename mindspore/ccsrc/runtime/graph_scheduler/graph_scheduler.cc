@@ -22,6 +22,7 @@
 #include "runtime/graph_scheduler/actor/recorder_actor.h"
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
 #include "runtime/graph_scheduler/optimizer/invalid_data_arrow_elimination.h"
+#include "runtime/graph_scheduler/optimizer/batch_data_arrow_fusion.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "mindrt/src/actor/actormgr.h"
 #include "mindrt/include/async/async.h"
@@ -745,6 +746,7 @@ void GraphScheduler::Optimize(const ActorSetPtr &actor_set) {
   auto optimizer = std::make_shared<ActorSetOptimizer>();
   MS_EXCEPTION_IF_NULL(optimizer);
   optimizer->AddPass(std::make_shared<InvalidDataArrowElimination>());
+  optimizer->AddPass(std::make_shared<BatchDataArrowFusion>());
   optimizer->Optimize(actor_set);
 }
 

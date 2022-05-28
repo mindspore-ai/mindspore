@@ -27,8 +27,88 @@ std::string GetSplitName(const std::string &name) {
   return name;
 }
 
+void DumpBaseInputInfo(const AbstractActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  // Dump device tensor store.
+  if (actor->device_tensor_store_keys().size() > 0) {
+    ofs << "\t\tdevice_tensor_store_keys:" << actor->device_tensor_store_keys().size() << "\n ";
+    for (const auto &device_tensor_store_key : actor->device_tensor_store_keys()) {
+      MS_EXCEPTION_IF_NULL(device_tensor_store_key.second);
+      ofs << "\t\t\tto_input_index:" << device_tensor_store_key.first
+          << "\tfrom_node_name:" << device_tensor_store_key.second->fullname_with_scope() << "\n";
+    }
+  }
+
+  // Dump input data arrow.
+  if (actor->input_data_arrow_aids().size() > 0) {
+    ofs << "\t\tinput_data_arrow_actors:" << actor->input_data_arrow_aids().size() << "\n ";
+    for (const auto &input_data_arrow_aid : actor->input_data_arrow_aids()) {
+      ofs << "\t\t\tfrom_actor_name:" << input_data_arrow_aid.Name() << "\n";
+    }
+  }
+
+  // Dump input control arrow.
+  if (actor->input_control_arrow_aids().size() > 0) {
+    ofs << "\t\tinput_control_arrow_actors:" << actor->input_control_arrow_aids().size() << "\n ";
+    for (const auto &input_control_arrow_aid : actor->input_control_arrow_aids()) {
+      ofs << "\t\t\tfrom_actor_name:" << input_control_arrow_aid.Name() << "\n";
+    }
+  }
+}
+
+void DumpBaseOutputInfo(const AbstractActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  // Dump batch output data arrow.
+  size_t batch_output_data_size = 0;
+  if (actor->batch_output_data_arrows().size() > 0) {
+    ofs << "\t\tbatch_output_data_arrows:" << actor->batch_output_data_arrows().size() << "\n ";
+    for (const auto &batch_output_data_arrow : actor->batch_output_data_arrows()) {
+      batch_output_data_size += batch_output_data_arrow.second.size();
+      ofs << "\t\t\tbatch_to_actor_name:" << batch_output_data_arrow.first
+          << "\tbatch_size:" << batch_output_data_arrow.second.size() << "\n";
+      for (const auto &data_arrow : batch_output_data_arrow.second) {
+        MS_EXCEPTION_IF_NULL(data_arrow);
+        ofs << "\t\t\t\tfrom_output_index:" << data_arrow->from_output_index_
+            << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
+            << "\tis_batch_arrow:" << data_arrow->is_batch_arrow_ << "\n";
+      }
+    }
+  }
+
+  // Dump output data arrow.
+  if (actor->output_data_arrows().size() != actor->output_data_nodes().size()) {
+    MS_LOG(EXCEPTION) << "The size of output data arrows is not equal to the output nodes, arrow num:"
+                      << actor->output_data_arrows().size() << " node num:" << actor->output_data_nodes().size()
+                      << " for actor:" << actor->GetAID().Name();
+  }
+  if (actor->output_data_arrows().size() > 0) {
+    ofs << "\t\toutput_data_arrows:" << actor->output_data_arrows().size() - batch_output_data_size << "\n ";
+    for (size_t i = 0; i < actor->output_data_arrows().size(); ++i) {
+      auto data_arrow = actor->output_data_arrows()[i];
+      auto output_node = actor->output_data_nodes()[i];
+      MS_EXCEPTION_IF_NULL(data_arrow);
+      if (!data_arrow->is_batch_arrow_) {
+        std::string node_name = (output_node != nullptr) ? GetSplitName(output_node->fullname_with_scope()) : "";
+        ofs << "\t\t\tfrom_output_node:" << node_name << "\tfrom_output_index:" << data_arrow->from_output_index_
+            << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
+            << "\tis_batch_arrow:" << data_arrow->is_batch_arrow_ << "\n";
+      }
+    }
+  }
+
+  // Dump output control arrow.
+  const auto &output_control_arrows = actor->output_control_arrows();
+  if (output_control_arrows.size() > 0) {
+    ofs << "\t\toutput_control_arrows:" << output_control_arrows.size() << "\n ";
+    for (const auto &aid : output_control_arrows) {
+      ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
+    }
+  }
+}
+
 void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
+  // Dump device context.
   if (actor->device_contexts().size() > 0) {
     ofs << "\t\tdevice_contexts:" << actor->device_contexts().size() << "\n ";
     for (const auto &device_context : actor->device_contexts()) {
@@ -40,55 +120,10 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
     }
   }
 
-  if (actor->device_tensor_store_keys().size() > 0) {
-    ofs << "\t\tdevice_tensor_store_keys:" << actor->device_tensor_store_keys().size() << "\n ";
-    for (const auto &device_tensor_store_key : actor->device_tensor_store_keys()) {
-      MS_EXCEPTION_IF_NULL(device_tensor_store_key.second);
-      ofs << "\t\t\tto_input_index:" << device_tensor_store_key.first
-          << "\tfrom_node_name:" << device_tensor_store_key.second->fullname_with_scope() << "\n";
-    }
-  }
+  DumpBaseInputInfo(actor, ofs);
+  DumpBaseOutputInfo(actor, ofs);
 
-  if (actor->input_data_arrow_aids().size() > 0) {
-    ofs << "\t\tinput_data_arrow_actors:" << actor->input_data_arrow_aids().size() << "\n ";
-    for (const auto &input_data_arrow_aid : actor->input_data_arrow_aids()) {
-      ofs << "\t\t\tfrom_actor_name:" << input_data_arrow_aid.Name() << "\n";
-    }
-  }
-
-  if (actor->input_control_arrow_aids().size() > 0) {
-    ofs << "\t\tinput_control_arrow_actors:" << actor->input_control_arrow_aids().size() << "\n ";
-    for (const auto &input_control_arrow_aid : actor->input_control_arrow_aids()) {
-      ofs << "\t\t\tfrom_actor_name:" << input_control_arrow_aid.Name() << "\n";
-    }
-  }
-
-  if (actor->output_data_arrows().size() != actor->output_data_nodes().size()) {
-    MS_LOG(EXCEPTION) << "The size of output data arrows is not equal to the output nodes, arrow num:"
-                      << actor->output_data_arrows().size() << " node num:" << actor->output_data_nodes().size()
-                      << " for actor:" << actor->GetAID().Name();
-  }
-  if (actor->output_data_arrows().size() > 0) {
-    ofs << "\t\toutput_data_arrows:" << actor->output_data_arrows().size() << "\n ";
-    for (size_t i = 0; i < actor->output_data_arrows().size(); ++i) {
-      auto data_arrow = actor->output_data_arrows()[i];
-      auto output_node = actor->output_data_nodes()[i];
-      MS_EXCEPTION_IF_NULL(data_arrow);
-      std::string node_name = (output_node != nullptr) ? GetSplitName(output_node->fullname_with_scope()) : "";
-      ofs << "\t\t\tfrom_output_node:" << node_name << "\tfrom_output_index:" << data_arrow->from_output_index_
-          << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
-          << "\n";
-    }
-  }
-
-  const auto &output_control_arrows = actor->output_control_arrows();
-  if (output_control_arrows.size() > 0) {
-    ofs << "\t\toutput_control_arrows:" << output_control_arrows.size() << "\n ";
-    for (const auto &aid : output_control_arrows) {
-      ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
-    }
-  }
-
+  // Dump internal parameters.
   if (actor->internal_parameters().size() > 0) {
     ofs << "\t\tinternal_parameters:" << actor->internal_parameters().size() << "\n ";
     for (auto &internal_parameter_iter : actor->internal_parameters()) {
