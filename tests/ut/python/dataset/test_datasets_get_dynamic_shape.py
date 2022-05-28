@@ -258,6 +258,10 @@ def test_output_shapes_exception():
         _ = dataset.output_shapes(estimate=True)
     assert "Inconsistent shapes, expect same shape for each data row" in str(info.value)
 
+    with pytest.raises(TypeError) as info:
+        dataset = ds.GeneratorDataset(generator3, ["data1", "data2", "data3"])
+        _ = dataset.output_shapes(estimate=1)
+
 
 if __name__ == "__main__":
     test_get_dynamic_min_max_shapes_0()
