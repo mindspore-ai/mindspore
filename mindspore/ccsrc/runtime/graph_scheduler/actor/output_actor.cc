@@ -277,7 +277,8 @@ void OutputActor::UpdateOutputDeviceAddress() {
                           << "B.";
       }
       if (!tensor_device_address->SyncDeviceToDevice(device_tensor)) {
-        MS_LOG(EXCEPTION) << "Sync device to device failed, device type: " << tensor_device_address->GetDeviceType();
+        MS_LOG(EXCEPTION) << "Sync device to device failed, device type: " << tensor_device_address->GetDeviceType()
+                          << ", output node: " << output_node->fullname_with_scope();
       }
     } else {
       // Move the device ptr from device_tensor to tensor_device_address.
