@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PRIORITY_REPLAY_BUFFER_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PRIORITY_REPLAY_BUFFER_CPU_KERNEL_H_
-#include <stdlib.h>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <vector>
@@ -38,7 +38,7 @@ class PriorityReplayBufferCreateCpuKernel : public DeprecatedNativeCpuKernelMod 
 
   // Execute kernel.
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
+              const std::vector<AddressPtr> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -60,8 +60,8 @@ class PriorityReplayBufferPushCpuKernel : public DeprecatedNativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node);
 
   // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override;
 
  private:
   int64_t handle_{-1};
@@ -78,7 +78,7 @@ class PriorityReplayBufferSampleCpuKernel : public DeprecatedNativeCpuKernelMod 
 
   // Execute kernel.
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
+              const std::vector<AddressPtr> &outputs) override;
 
  private:
   int64_t handle_{-1};
@@ -96,8 +96,8 @@ class PriorityReplayBufferUpdateCpuKernel : public DeprecatedNativeCpuKernelMod 
   void InitKernel(const CNodePtr &kernel_node);
 
   // Execute kernel.
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -123,7 +123,7 @@ class PriorityReplayBufferDestroyCpuKernel : public DeprecatedNativeCpuKernelMod
 
   // Execute kernel.
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
+              const std::vector<AddressPtr> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {

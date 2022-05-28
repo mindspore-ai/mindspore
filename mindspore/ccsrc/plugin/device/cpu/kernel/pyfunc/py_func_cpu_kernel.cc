@@ -143,7 +143,7 @@ void ArrayToRawMemory(const py::array &array, const AddressPtr &address) {
   } else {
     // Transform numpy array to row major buffer.
     Py_buffer pybuf;
-    if (PyObject_GetBuffer(array.ptr(), &pybuf, PyBUF_ANY_CONTIGUOUS)) {
+    if (PyObject_GetBuffer(array.ptr(), &pybuf, PyBUF_ANY_CONTIGUOUS) != 0) {
       MS_LOG(EXCEPTION) << "Failed to get buffer from the input!";
     }
 

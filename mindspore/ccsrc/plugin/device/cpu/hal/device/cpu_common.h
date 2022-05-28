@@ -25,7 +25,7 @@ namespace cpu {
 #define CHECK_RET_WITH_EXCEPT(expression, status, message) \
   {                                                        \
     auto ret = (expression);                               \
-    if (ret != status) {                                   \
+    if (ret != (status)) {                                 \
       MS_LOG(EXCEPTION) << message;                        \
     }                                                      \
   }
