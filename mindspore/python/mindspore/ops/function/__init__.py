@@ -134,6 +134,7 @@ from .math_func import (
     maximum,
     logaddexp,
     logaddexp2,
+    mv,
     inv,
     invert,
     minimum,
