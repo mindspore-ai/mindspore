@@ -749,7 +749,7 @@ class Tensor(Tensor_):
         `indices`, with values from `updates`. When divided values are provided for the same
         index, the result of the update will be to divided these values respectively. Except that
         the updates are applied on output `Tensor` instead of input `Parameter`.
-        The arg `input_x` refers to self tensor.
+        The variable `input_x` refers to self tensor.
 
         The last axis of `indices` is the depth of each index vectors. For each index vector,
         there must be a corresponding value in `updates`. The shape of `updates` should be
@@ -765,7 +765,6 @@ class Tensor(Tensor_):
                 The rank must be at least 2.
             updates (Tensor): The tensor to update the input tensor, has the same type as input,
                 and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
-
 
         Returns:
             Tensor, has the same shape and type as self tensor.
@@ -807,7 +806,8 @@ class Tensor(Tensor_):
 
         The last axis of `indices` is the depth of each index vectors. For each index vector,
         there must be a corresponding value in `updates`. The shape of `updates` should be
-        equal to the shape of `input_x[indices]`. For more details, see use cases.
+        equal to the shape of `input_x[indices]`, the variable `input_x` refers to self tensor.
+        For more details, see use cases.
 
         Note:
             - If some values of the `indices` are out of bound, instead of raising an index error,
@@ -1002,7 +1002,7 @@ class Tensor(Tensor_):
             TypeError: If `axis` is a tuple or a list, but the element of `axis` is not an int.
             TypeError: If `keep_dims` is not a bool.
             TypeError: If `epsilon` is not a float.
-            ValueError: If the element of `axis` is out of the range [-len(input.shape), len(input_x.shape)).
+            ValueError: If the element of `axis` is out of the range [-len(input_x.shape), len(input_x.shape)).
                 input_x refers to self tensor.
             ValueError: If the length of shape of `axis` is bigger than the length of shape of self tensor.
 
@@ -2123,7 +2123,7 @@ class Tensor(Tensor_):
 
         Note:
             If some values of the `indices` are out of bound, instead of raising an index error,
-            the corresponding `updates` will not be updated to `input_x`.
+            the corresponding `updates` will not be updated to `input_x`, the variable `input_x` refers to self tensor.
 
         Args:
             indices (Tensor): The index of input tensor whose data type is int32 or int64.
@@ -2964,7 +2964,7 @@ class Tensor(Tensor_):
         Gathers slices from a input tensor by indices.
         Using given indices to gather slices from a input tensor with a specified shape.
         input tensor's shape is :math:`(N,*)` where :math:`*` means any number of additional dimensions. For convenience
-        define it as `input_x`.
+        define it as `input_x`, the variable `input_x` refers to input tensor.
         `indices` is an K-dimensional integer tensor. Suppose that it is a (K-1)-dimensional tensor and each element
         of it defines a slice of input tensor:
 

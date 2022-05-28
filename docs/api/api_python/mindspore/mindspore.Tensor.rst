@@ -410,8 +410,7 @@ mindspore.Tensor
 
         按索引从输入Tensor中获取切片。
         使用给定的索引从具有指定形状的输入Tensor中搜集切片。
-        输入Tensor的shape是 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。为了表达方便，
-        将其定义为 `input_x` 。
+        输入Tensor的shape是 :math:`(N,*)` ，其中 :math:`*` 表示任意数量的附加维度。下文中的 `input_x` 代指输入Tensor本身。
         `indices` 是一个K维的整数张量，假定它的K-1维张量中的每一个元素是输入Tensor的切片，那么有：
 
         .. math::
@@ -1120,7 +1119,7 @@ mindspore.Tensor
         根据指定的更新值和输入索引，通过相加运算更新本Tensor的值。当同一索引有不同值时，更新的结果将是所有值的总和。
 
         .. note::
-            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到 `input_x` ，而不是抛出索引错误。
+            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到当前Tensor ，而不是抛出索引错误。
 
         **参数：**
 
@@ -1140,10 +1139,10 @@ mindspore.Tensor
 
         根据指定的更新值和输入索引，通过减法进行运算，将结果赋值到输出Tensor中。当同一索引有不同值时，更新的结果将是所有值的总和。此操作几乎等同于使用 :class:`mindspore.ops.ScatterNdSub` ，只是更新后的结果是通过算子output返回，而不是直接原地更新input。
 
-        `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。`updates` 的shape应该等于 `input_x[indices]` 的shape。有关更多详细信息，请参见使用用例。
+        `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。`updates` 的shape应该等于 `input_x[indices]` 的shape，其中 `input_x` 指当前Tensor。有关更多详细信息，请参见使用用例。
 
         .. note::
-            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到 `input_x` ，而不是抛出索引错误。
+            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到当前Tensor，而不是抛出索引错误。
 
         **参数：**
 
@@ -1164,13 +1163,13 @@ mindspore.Tensor
         根据指定的索引, 通过除法进行计算, 将输出赋值到输出Tensor中。
 
         .. note::
-            - 如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新为 `input_x` ，而不是抛出索引错误。
+            - 如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新为当前Tensor，而不是抛出索引错误。
             - 算子无法处理除0异常, 用户需保证 `updates` 中没有0值。
 
         **参数：**
 
         - **indices** (Tensor) - 该Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
-        - **updates** (Tensor) - 指定与 `input_x` 相加操作的Tensor，其数据类型与输入相同。updates.shape应等于indices.shape[:-1] + input_x.shape[indices.shape[-1]:]。
+        - **updates** (Tensor) - 指定与当前Tensor相加操作的Tensor，其数据类型与输入相同。updates.shape应等于indices.shape[:-1] + input_x.shape[indices.shape[-1]:]，其中 `input_x` 指当前Tensor。
 
         **返回：**
 
