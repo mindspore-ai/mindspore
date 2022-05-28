@@ -24,7 +24,8 @@ void TensorsQueue::CreateTensorsQueue() {
   // One element means [tensor1, tensor2].
   std::vector<int64_t> element_size_list;
   for (auto shape : shapes_) {
-    int64_t item_size = std::accumulate(shape.begin(), shape.end(), GetTypeByte(dtype_), std::multiplies<int64_t>());
+    int64_t item_size =
+      std::accumulate(shape.begin(), shape.end(), SizeToLong(GetTypeByte(dtype_)), std::multiplies<int64_t>());
     element_size_list.push_back(item_size);
   }
   // Create the elements in TensorsQueue when construct.
@@ -32,8 +33,8 @@ void TensorsQueue::CreateTensorsQueue() {
     mindspore::kernel::AddressPtrList element_addrs;
     for (auto element_size : element_size_list) {
       kernel::AddressPtr create_dev = std::make_shared<kernel::Address>();
-      create_dev->addr = AllocateMemory(element_size);
-      create_dev->size = element_size;
+      create_dev->addr = AllocateMemory(LongToSize(element_size));
+      create_dev->size = LongToSize(element_size);
       element_addrs.push_back(create_dev);
       MS_LOG(DEBUG) << "Create  " << element_size << "bytes for " << name_;
     }
@@ -43,16 +44,17 @@ void TensorsQueue::CreateTensorsQueue() {
                 << elements_num_;
 }
 
-void TensorsQueue::CopyTensor(const mindspore::kernel::AddressPtr &dst, const mindspore::kernel::AddressPtr &src) {
+void TensorsQueue::CopyTensor(const mindspore::kernel::AddressPtr &, const mindspore::kernel::AddressPtr &) {
   MS_LOG(EXCEPTION) << "This should be overridden by subclass !";
 }
-void TensorsQueue::CopyTensor(const mindspore::kernel::AddressPtr &dst, const mindspore::kernel::AddressPtr &src,
-                              void *stream) {
+void TensorsQueue::CopyTensor(const mindspore::kernel::AddressPtr &, const mindspore::kernel::AddressPtr &, void *) {
   MS_LOG(EXCEPTION) << "This should be overridden by subclass !";
 }
 
-size_t TensorsQueue::AvailableSize() { return (rear_ > front_) ? (rear_ - front_) : (size_ - front_ + rear_); }
-bool TensorsQueue::IsFull() { return (rear_ + 1) % size_ == front_; }
+size_t TensorsQueue::AvailableSize() {
+  return (rear_ > front_) ? (rear_ - front_) : (LongToSize(size_) - front_ + rear_);
+}
+bool TensorsQueue::IsFull() { return (rear_ + IntToSize(1)) % LongToSize(size_) == front_; }
 bool TensorsQueue::IsEmpty() { return front_ == rear_; }
 
 bool TensorsQueue::Put(const mindspore::kernel::AddressPtrList &dev_addr) {
@@ -65,9 +67,9 @@ bool TensorsQueue::Put(const mindspore::kernel::AddressPtrList &dev_addr) {
   // We can get a effect like a circle queue and reuse the addrs.
   mindspore::kernel::AddressPtrList element = tensors_q[rear_];
   for (int64_t i = 0; i < elements_num_; i++) {
-    CopyTensor(element[i], dev_addr[i + 1]);
+    CopyTensor(element[LongToSize(i)], dev_addr[LongToSize(i) + IntToSize(1)]);
   }
-  rear_ = (rear_ + 1) % size_;
+  rear_ = (rear_ + 1) % LongToSize(size_);
   MS_LOG(DEBUG) << "Put an element into  " << name_ << ", now the avliable q size is [" << AvailableSize() << "/"
                 << size_ << "]";
   return true;
@@ -80,9 +82,9 @@ bool TensorsQueue::Put(const mindspore::kernel::AddressPtrList &dev_addr, void *
   }
   mindspore::kernel::AddressPtrList element = tensors_q[rear_];
   for (int64_t i = 0; i < elements_num_; i++) {
-    CopyTensor(element[i], dev_addr[i + 1], stream);
+    CopyTensor(element[LongToSize(i)], dev_addr[LongToSize(i) + IntToSize(1)], stream);
   }
-  rear_ = (rear_ + 1) % size_;
+  rear_ = (rear_ + IntToSize(1)) % LongToSize(size_);
   MS_LOG(DEBUG) << "Put an element into  " << name_ << ", now the avliable q size is [" << AvailableSize() << "/"
                 << size_ << "]";
   return true;
@@ -97,10 +99,10 @@ bool TensorsQueue::Get(const mindspore::kernel::AddressPtrList &dev_addr, const 
   }
   mindspore::kernel::AddressPtrList element = tensors_q[front_];
   for (int64_t i = 0; i < elements_num_; i++) {
-    CopyTensor(dev_addr[i], element[i], stream);
+    CopyTensor(dev_addr[LongToSize(i)], element[LongToSize(i)], stream);
   }
   if (pop_after_get) {
-    front_ = (front_ + 1) % size_;
+    front_ = (front_ + IntToSize(1)) % LongToSize(size_);
   }
   MS_LOG(DEBUG) << "Get an element from  " << name_ << ", pop_after_get is " << pop_after_get
                 << ", now the avliable q size is[" << AvailableSize() << " / " << size_ << "] ";
@@ -114,10 +116,10 @@ bool TensorsQueue::Get(const mindspore::kernel::AddressPtrList &dev_addr, const 
   }
   mindspore::kernel::AddressPtrList element = tensors_q.front();
   for (int64_t i = 0; i < elements_num_; i++) {
-    CopyTensor(dev_addr[i], element[i]);
+    CopyTensor(dev_addr[LongToSize(i)], element[LongToSize(i)]);
   }
   if (pop_after_get) {
-    front_ = (front_ + 1) % size_;
+    front_ = (front_ + IntToSize(1)) % LongToSize(size_);
   }
   MS_LOG(DEBUG) << "Get an element from  " << name_ << ", pop_after_get is " << pop_after_get
                 << ", now the avliable q size is[" << AvailableSize() << " / " << size_ << "] ";
@@ -142,7 +144,7 @@ void TensorsQueue::Free() {
         FreeMemory(static_cast<DeviceMemPtr>(addr->addr));
       }
     }
-    front_ = (front_ + 1) % size_;
+    front_ = (front_ + IntToSize(1)) % LongToSize(size_);
   }
   MS_LOG(DEBUG) << "Free the TensorsQueue's memory for " << name_;
 }

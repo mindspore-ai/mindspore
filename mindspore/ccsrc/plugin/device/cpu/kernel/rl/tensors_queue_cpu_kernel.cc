@@ -69,7 +69,7 @@ bool TensorsQueueCreateCpuKernelMod::Launch(const std::vector<AddressPtr> &, con
 }
 
 // Put one element into a TensorsQueue
-TensorsQueuePutCpuKernelMod::TensorsQueuePutCpuKernelMod() : elements_num_(0) {}
+TensorsQueuePutCpuKernelMod::TensorsQueuePutCpuKernelMod() {}
 
 void TensorsQueuePutCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -131,7 +131,7 @@ void TensorsQueueGetCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   for (int64_t i = 0; i < elements_num_; i++) {
     size_t value_size = GetTypeByte(type);
-    for (auto x : shapes[i]) {
+    for (auto x : shapes[LongToSize(i)]) {
       value_size *= LongToSize(x);
     }
     output_size_list_.push_back(value_size);
@@ -214,7 +214,7 @@ void TensorsQueueCloseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool TensorsQueueCloseCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+                                           const std::vector<AddressPtr> &) {
   auto handle_addr = GetDeviceAddress<int64_t>(inputs, 0);
   MS_ERROR_IF_NULL(handle_addr);
   auto tensors_q =

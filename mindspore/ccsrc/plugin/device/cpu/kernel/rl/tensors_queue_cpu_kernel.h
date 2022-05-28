@@ -29,8 +29,8 @@ class TensorsQueueCreateCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueCreateCpuKernelMod();
   ~TensorsQueueCreateCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
  protected:
@@ -52,8 +52,8 @@ class TensorsQueuePutCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueuePutCpuKernelMod();
   ~TensorsQueuePutCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
  protected:
@@ -63,8 +63,8 @@ class TensorsQueuePutCpuKernelMod : public TensorsQueueCPUBaseMod {
   }
 
  private:
-  int64_t elements_num_;
-  TypeId type_;
+  int64_t elements_num_ = 0;
+  TypeId type_ = kTypeUnknown;
 };
 
 class TensorsQueueGetCpuKernelMod : public TensorsQueueCPUBaseMod {
@@ -72,8 +72,8 @@ class TensorsQueueGetCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueGetCpuKernelMod();
   ~TensorsQueueGetCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
  protected:
@@ -92,8 +92,8 @@ class TensorsQueueClearCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueClearCpuKernelMod();
   ~TensorsQueueClearCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
  protected:
@@ -109,8 +109,8 @@ class TensorsQueueCloseCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueCloseCpuKernelMod();
   ~TensorsQueueCloseCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
  protected:
@@ -126,8 +126,8 @@ class TensorsQueueSizeCpuKernelMod : public TensorsQueueCPUBaseMod {
   TensorsQueueSizeCpuKernelMod();
   ~TensorsQueueSizeCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
  protected:

@@ -42,6 +42,8 @@ class TensorArrayMgr {
 
   TensorArrayMgr(const TensorArrayMgr &) = delete;
   TensorArrayMgr(const TensorArrayMgr &&) = delete;
+  TensorArrayMgr &operator=(const TensorArrayMgr &&) = delete;
+  TensorArrayMgr operator=(const TensorArrayMgr &) = delete;
 
   void AddTensorArray(const int64_t handle, const TensorArrayPtr &ta) {
     MS_LOG(DEBUG) << "Add a TensorArray to map, handle is " << handle;
@@ -51,7 +53,7 @@ class TensorArrayMgr {
   }
 
   TensorArrayPtr GetTensorArray(const int64_t handle) {
-    if (!tensors_map_.count(handle)) {
+    if (tensors_map_.count(handle) == 0) {
       MS_LOG(EXCEPTION) << "Error handle [" << handle << "] to get tensorarray";
     } else {
       MS_LOG(DEBUG) << "Get TensorArray succeed, handle is " << handle;
@@ -60,7 +62,7 @@ class TensorArrayMgr {
   }
 
   bool EraseTensorArray(const int64_t handle) {
-    if (tensors_map_.count(handle)) {
+    if (tensors_map_.count(handle) == 1) {
       MS_LOG(DEBUG) << "Erase tensorarray from map, handle number is " << handle;
       (void)tensors_map_.erase(handle);
       return true;
@@ -92,16 +94,18 @@ class TensorsQueueMgr {
 
   TensorsQueueMgr(const TensorsQueueMgr &) = delete;
   TensorsQueueMgr(const TensorsQueueMgr &&) = delete;
+  TensorsQueueMgr &operator=(const TensorsQueueMgr &&) = delete;
+  TensorsQueueMgr operator=(const TensorsQueueMgr &) = delete;
 
   void AddTensorsQueue(const int64_t handle, const TensorsQueuePtr &tq) {
     MS_LOG(DEBUG) << "Add a TensorsQueue to map, handle is " << handle;
-    tensorsqueue_map_.emplace(std::make_pair(handle, tq));
+    (void)tensorsqueue_map_.emplace(std::make_pair(handle, tq));
     // Increase handle count when added a TensorsQueue.
     tensors_queue_handle_count += 1;
   }
 
   TensorsQueuePtr GetTensorsQueue(const int64_t handle) {
-    if (!tensorsqueue_map_.count(handle)) {
+    if (tensorsqueue_map_.count(handle) == 0) {
       MS_LOG(EXCEPTION) << "Error handle [" << handle << "] to get TensorsQueue";
     } else {
       MS_LOG(DEBUG) << "Get TensorsQueue succeed, handle is " << handle;
@@ -110,9 +114,9 @@ class TensorsQueueMgr {
   }
 
   bool EraseTensorsQueue(const int64_t handle) {
-    if (tensorsqueue_map_.count(handle)) {
+    if (tensorsqueue_map_.count(handle) == 1) {
       MS_LOG(DEBUG) << "Erase TensorsQueue from map, handle number is " << handle;
-      tensorsqueue_map_.erase(handle);
+      (void)tensorsqueue_map_.erase(handle);
       return true;
     } else {
       MS_LOG(ERROR) << "Erase TensorsQueue failed, no such handle " << handle;

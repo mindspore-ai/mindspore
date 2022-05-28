@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,9 @@ bool TensorArray::Write(const int64_t index, const mindspore::kernel::AddressPtr
     valid_size_++;
   } else {
     MS_LOG(DEBUG) << "Reuse tensors in position " << index << ", tensors size is " << tensors_.size();
-    if (LongToSize(index) == valid_size_) valid_size_++;
+    if (LongToSize(index) == valid_size_) {
+      valid_size_++;
+    }
   }
   return true;
 }

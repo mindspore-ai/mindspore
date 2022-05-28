@@ -29,8 +29,8 @@ class TensorArrayWriteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   TensorArrayWriteCpuKernelMod();
   ~TensorArrayWriteCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
  protected:

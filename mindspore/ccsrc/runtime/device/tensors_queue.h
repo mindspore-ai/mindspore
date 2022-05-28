@@ -44,8 +44,8 @@ class TensorsQueue {
   virtual void ClearMemory(void *addr, const size_t size) = 0;
 
   // When memory operations are involved, we need to determine whether to use streams according to the device.
-  virtual bool Put(const mindspore::kernel::AddressPtrList &dev_value);
-  virtual bool Put(const mindspore::kernel::AddressPtrList &dev_value, void *stream);
+  virtual bool Put(const mindspore::kernel::AddressPtrList &dev_addr);
+  virtual bool Put(const mindspore::kernel::AddressPtrList &dev_addr, void *stream);
   virtual void CopyTensor(const mindspore::kernel::AddressPtr &dst, const mindspore::kernel::AddressPtr &src);
   virtual void CopyTensor(const mindspore::kernel::AddressPtr &dst, const mindspore::kernel::AddressPtr &src,
                           void *stream);

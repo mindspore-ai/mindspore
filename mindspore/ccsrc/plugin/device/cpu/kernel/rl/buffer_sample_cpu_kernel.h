@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RL_BUFFER_SAMPLE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RL_BUFFER_SAMPLE_CPU_KERNEL_H_
-#include <stdlib.h>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <vector>
