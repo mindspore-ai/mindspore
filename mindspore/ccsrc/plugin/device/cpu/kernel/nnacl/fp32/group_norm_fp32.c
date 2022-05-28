@@ -20,29 +20,24 @@
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/group_norm_fp32_avx512.h"
+#endif
+
+#ifdef ENABLE_AVX
+#include "nnacl/avx/group_norm_fp32_avx.h"
+#endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/sse/group_norm_fp32_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/group_norm_fp32_neon.h"
+#endif
 
 static void GroupNormFp32MeanVar(const float *input, float *run_mean, float *run_var, int completed_group,
                                  int cur_groups, const GroupNormParameter *param);
-
-#define SimdFusedGroupNormFp32DoWork(block_size, block_num, mean, v_sqrt, scale, offset, unit_input, unit_output, u) \
-  do {                                                                                                               \
-    MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, unit_input + u);                                          \
-    MS_FLOAT_32xN(block_num) norm_val = MS_DIV_F32(block_size, MS_SUB_F32(block_size, input, mean), v_sqrt);         \
-    MS_FLOAT_32xN(block_num) output = MS_ADD_F32(block_size, MS_MUL_F32(block_size, norm_val, scale), offset);       \
-    MS_ST_F32(block_size, unit_output + u, output);                                                                  \
-  } while (0)
-
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdFusedGroupNormFp32CoreCalc(block_size, block_num, unit_input, s, m, o, var_sqrt, param, unit_output, u) \
-  do {                                                                                                              \
-    MS_FLOAT_32xN(block_num) mean = MS_MOVN_F32(block_size, m);                                                     \
-    MS_FLOAT_32xN(block_num) v_sqrt = MS_MOVN_F32(block_size, var_sqrt);                                            \
-    MS_FLOAT_32xN(block_num) scale = MS_MOVN_F32(block_size, s);                                                    \
-    MS_FLOAT_32xN(block_num) offset = MS_MOVN_F32(block_size, o);                                                   \
-    for (int block_max_size = param->unit_ - block_num + 1; u < block_max_size; u += block_num) {                   \
-      SimdFusedGroupNormFp32DoWork(block_size, block_num, mean, v_sqrt, scale, offset, unit_input, unit_output, u); \
-    }                                                                                                               \
-  } while (0)
 
 int GroupNormFp32(const float *input, const float *scale, const float *offset, float *mean, float *variance,
                   const GroupNormParameter *param, int task_id, float *output) {
@@ -76,8 +71,7 @@ int GroupNormFp32(const float *input, const float *scale, const float *offset, f
         float s = scale[c_offset + c];
         float o = offset[c_offset + c];
         int u = 0;
-        MS_SIMD_RUN_NO_SCALAR(SimdFusedGroupNormFp32CoreCalc, unit_input, s, m, o, variance_sqrt, param, unit_output,
-                              u);
+        SIMD_RUN_NO_SCALAR(GroupNormFp32, u, unit_input, s, o, m, variance_sqrt, param->unit_, unit_output);
         for (; u < param->unit_; u++) {
           float norm_val = (unit_input[u] - m) / variance_sqrt;
           unit_output[u] = norm_val * s + o;
@@ -120,7 +114,7 @@ static void GroupNormFp32MeanVar(const float *input, float *run_mean, float *run
     for (int c = 0; c < num_of_ch_per_group; c++) {
       const float *in = input + (num_of_ch_per_group * g_idx + c) * param->unit_;
       int i = 0;
-      MS_SIMD_RUN_NO_SCALAR(SimdReduceSum, in, i, sum);
+      SIMD_RUN_NO_SCALAR(GroupNormReduceSum, i, in, &sum, param->unit_);
       for (; i < param->unit_; i++) {
         sum += in[i];
       }
@@ -136,7 +130,7 @@ static void GroupNormFp32MeanVar(const float *input, float *run_mean, float *run
     for (int c = 0; c < num_of_ch_per_group; c++) {
       const float *in = input + (num_of_ch_per_group * g_idx + c) * param->unit_;
       int i = 0;
-      MS_SIMD_RUN_NO_SCALAR(SimdReduceVar, in, run_mean[g_idx], i, var);
+      SIMD_RUN_NO_SCALAR(GroupNormReduceVar, i, in, run_mean[g_idx], &var, param->unit_);
       for (; i < param->unit_; i++) {
         var += (in[i] - run_mean[g_idx]) * (in[i] - run_mean[g_idx]);
       }
