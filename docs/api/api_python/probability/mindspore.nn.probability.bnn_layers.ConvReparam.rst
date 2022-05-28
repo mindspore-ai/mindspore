@@ -16,11 +16,11 @@ mindspore.nn.probability.bnn_layers.ConvReparam
 
     - **pad_mode** (str) – 指定填充模式。可选值是"same"、"valid"和"pad"。默认值："same"。
 
-        same：采用补全方式。输出高度和宽度将与输入相同。将在水平和垂直方向上计算填充的总数，并尽可能均匀地分布在顶部和底部、左侧和右侧。否则，最后的额外填充将从底部和右侧完成。如果设置了此模式，则 padding 必须为0。
+      - same：采用补全方式。输出高度和宽度将与输入相同。将在水平和垂直方向上计算填充的总数，并尽可能均匀地分布在顶部和底部、左侧和右侧。否则，最后的额外填充将从底部和右侧完成。如果设置了此模式，则 padding 必须为0。
 
-        valid：采用丢弃的方式。输出的可能最大高度和宽度将不带 padding 返回。多余的像素将被丢弃。如果设置了此模式，则 padding 必须为0。
+      - valid：采用丢弃的方式。输出的可能最大高度和宽度将不带 padding 返回。多余的像素将被丢弃。如果设置了此模式，则 padding 必须为0。
 
-        pad：输入两侧的隐式 padding。 padding 的值将被填充到输入 Tensor 边界。 padding 必须大于或等于0。
+      - pad：输入两侧的隐式 padding。 padding 的值将被填充到输入 Tensor 边界。 padding 必须大于或等于0。
 
     - **padding** (Union[int, tuple[int]]) – 输入两侧的隐式 padding 。默认值：0。
     - **dilation** (Union[int, tuple[int]]) – 数据类型是 int 或2个 int 的元组。该参数指定空洞卷积的空洞率。如果设置为k>1， 将有k−1每个采样位置跳过的像素。它的值必须大于或等于1，并受输入的高度和宽度限制。默认值：1。

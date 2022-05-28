@@ -1,5 +1,5 @@
 mindspore.nn.BiDense
-===================
+====================
 
 .. py:class:: mindspore.nn.BiDense(in1_channels, in2_channels, out_channels, weight_init=None, bias_init=None, has_bias=True)
 

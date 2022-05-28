@@ -31,6 +31,7 @@ mindspore.ops.ApplyProximalAdagrad
     **输出：**
     
     包含两个Tensor的Tuple，已被更新的参数。
+    
     - **var** (Tensor) - 与输入 `var` 的shape与数据类型相同。
     - **accum** (Tensor) - 与输入 `var` 的shape与数据类型相同。
 

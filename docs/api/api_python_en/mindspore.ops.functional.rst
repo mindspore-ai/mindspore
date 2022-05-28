@@ -161,7 +161,7 @@ Element-by-Element Operations
 
 Reduction Operators
 ^^^^^^^^^^^^^^^^^^^
-.. mscnplatformautosummary::
+.. msplatformautosummary::
     :toctree: ops
     :nosignatures:
     :template: classtemplate.rst

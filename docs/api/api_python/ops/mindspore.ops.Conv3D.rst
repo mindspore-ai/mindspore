@@ -32,13 +32,13 @@ mindspore.ops.Conv3D
     - **stride** (Union[int, tuple[int]]) - 数据类型为int或由三个int值所组成的Tuple。当 `stride` 为int时表示在深度、高度和宽度方向的移动步长均为该值。当 `stride` 为三个int值所组成的Tuple时，三个int值分别表示在深度、高度和宽度方向的移动步长。默认值：1。
     - **pad_mode** (str) - 指定填充模式。可选值为"same"、"valid"、"pad"。默认值："valid"。
 
-            - same: 输出的深度、高度和宽度分别与对应输入整除 `stride` 后的值相同。
-              同一维度的padding将被尽可能均匀填充在两侧，额外的padding将被填充在尾侧。
-              若设置该模式， `pad` 的值必须为0。
+      - same: 输出的深度、高度和宽度分别与对应输入整除 `stride` 后的值相同。
+        同一维度的padding将被尽可能均匀填充在两侧，额外的padding将被填充在尾侧。
+        若设置该模式， `pad` 的值必须为0。
 
-            - valid: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `pad` 的值必须为0。
+      - valid: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `pad` 的值必须为0。
 
-            - pad: 在输入深度、高度和宽度各维度两侧进行自动填充。如果设置此模式， `pad` 的值必须大于或等于0。
+      - pad: 在输入深度、高度和宽度各维度两侧进行自动填充。如果设置此模式， `pad` 的值必须大于或等于0。
 
     - **pad** (Union(int, tuple[int])) - 在输入各维度两侧的填充长度。如果 `pad` 是一个整数，则前部、后部、顶部，底部，左边和右边的填充都等于 `pad` 。如果 `pad` 是6个整数的Tuple，则前部、后部、顶部、底部、左边和右边的填充分别等于填充 `pad[0]` 、 `pad[1]` 、 `pad[2]` 、 `pad[3]` 、 `pad[4]` 和 `pad[5]` 。默认值：0。
     - **dilation** (Union[int, tuple[int]]) - 三维卷积核膨胀尺寸。数据类型为int或三个整数的Tuple :math:`(dilation_d, dilation_h, dilation_w)` 。目前在深度维度仅支持取值为1。若 :math:`k > 1` ，则kernel间隔 `k` 个元素取样。取值大于等于1且小于对应的高度或宽度大小。默认值: 1。
@@ -48,8 +48,7 @@ mindspore.ops.Conv3D
     **输入：**
 
     - **x** (Tensor) - shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。目前数据类型仅支持float16和float32。
-    - **weight** (Tensor) - 若kernel shape为 :math:`(k_d, K_h, K_w)` ，则weight shape应为
-          :math:`(C_{out}, C_{in}/groups, k_d, K_h, K_w)` 。目前数据类型仅支持float16和float32。
+    - **weight** (Tensor) - 若kernel shape为 :math:`(k_d, K_h, K_w)` ，则weight shape应为 :math:`(C_{out}, C_{in}/groups, k_d, K_h, K_w)` 。目前数据类型仅支持float16和float32。
     - **bias** (Tensor) - shape为 :math:`C_{in}` 的Tensor。目前仅支持None。默认值：None。
 
     **输出：**
