@@ -466,6 +466,7 @@ Other Operators
     mindspore.ops.batch_dot
     mindspore.ops.clip_by_global_norm
     mindspore.ops.clip_by_value
+    mindspore.ops.clip_by_norm
     mindspore.ops.core
     mindspore.ops.count_nonzero
     mindspore.ops.cummin

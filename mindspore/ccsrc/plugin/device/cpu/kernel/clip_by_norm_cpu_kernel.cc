@@ -263,7 +263,7 @@ void ClipByNormCpuKernelMod::L2NormLaunch(T *x_addr, float *l2_norm_output_addr,
         denominator += (temp * temp);
         iter.GenNextPos();
       }
-      denominator = denominator > epsilon_ ? denominator : epsilon_;
+      denominator = (denominator > epsilon_) ? denominator : epsilon_;
       l2_norm_output_addr[i] = sqrt(denominator);
     }
   };
@@ -274,6 +274,10 @@ template <typename T>
 void ClipByNormCpuKernelMod::DivLaunch(T *x_addr, float *l2_norm_output_addr, float *div_output_addr,
                                        size_t div_output_size) {
   // Run div calculation
+  if (x_shape_.empty()) {  // The input x is a scalar tensor
+    div_output_addr[0] = static_cast<float>(x_addr[0]) / l2_norm_output_addr[0];
+    return;
+  }
   BroadcastIterator broadcast_base_iter(x_shape_, l2_norm_output_shape_, x_shape_);
   auto task = [this, &broadcast_base_iter, &x_addr, &l2_norm_output_addr, &div_output_addr](size_t start, size_t end) {
     auto iter = broadcast_base_iter;
@@ -282,6 +286,7 @@ void ClipByNormCpuKernelMod::DivLaunch(T *x_addr, float *l2_norm_output_addr, fl
       float zero = static_cast<float>(0);
       float dividend = static_cast<float>(x_addr[iter.GetInputPosA()]);
       float divisor = l2_norm_output_addr[iter.GetInputPosB()];
+      iter.GenNextPos();
       if (divisor == zero) {
         if (dividend == zero) {
           div_output_addr[i] = std::numeric_limits<float>::quiet_NaN();
@@ -296,7 +301,6 @@ void ClipByNormCpuKernelMod::DivLaunch(T *x_addr, float *l2_norm_output_addr, fl
         continue;
       }
       div_output_addr[i] = dividend / divisor;
-      iter.GenNextPos();
     }
   };
   ParallelLaunchAutoSearch(task, div_output_size / sizeof(float), this, &parallel_search_info_);
@@ -305,6 +309,12 @@ void ClipByNormCpuKernelMod::DivLaunch(T *x_addr, float *l2_norm_output_addr, fl
 template <typename T, typename S>
 void ClipByNormCpuKernelMod::ClipNormMulAndCmpLaunch(T *x_addr, float *div_output_addr, S *clip_norm_addr,
                                                      float *output_addr, size_t output_size) {
+  if (x_shape_.empty()) {  // The input x is a scalar tensor
+    float mul_output = div_output_addr[0] * static_cast<float>(clip_norm_addr[0]);
+    float x = static_cast<float>(x_addr[0]);
+    output_addr[0] = (mul_output * mul_output) > (x * x) ? x : mul_output;
+    return;
+  }
   BroadcastIterator broadcast_base_iter(x_shape_, clip_norm_shape_, output_shape_);
   auto task = [this, &broadcast_base_iter, &x_addr, &clip_norm_addr, &div_output_addr, &output_addr](size_t start,
                                                                                                      size_t end) {
@@ -315,7 +325,7 @@ void ClipByNormCpuKernelMod::ClipNormMulAndCmpLaunch(T *x_addr, float *div_outpu
       float clip_norm = static_cast<float>(clip_norm_addr[iter.GetInputPosB()]);
       float mul_output = clip_norm * div_out;
       float x = static_cast<float>(x_addr[iter.GetInputPosA()]);
-      output_addr[i] = mul_output * mul_output > x * x ? x : mul_output;
+      output_addr[i] = (mul_output * mul_output) > (x * x) ? x : mul_output;
       iter.GenNextPos();
     }
   };
