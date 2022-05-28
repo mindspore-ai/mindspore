@@ -150,6 +150,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   void Atan2(const T *input1, const T *input2, T *out);
   void SquaredDifference(const T *input1, const T *input2, T *out);
   void Xdivy(const T *input1, const T *input2, T *out);
+  void Xlogy(const T *input1, const T *input2, T *out);
   void SquaredDifferenceComplex(const T *input1, const T *input2, T *out);
   void DivComplex(const T *input1, const T *input2, T *out);
   void XdivyComplex(const T *input1, const T *input2, T *out);
@@ -193,7 +194,8 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
                                {prim::kPrimAtan2->name(), &ArithmeticCpuTypeFunc<T>::Atan2},
                                {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDiv},
                                {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifference},
-                               {prim::kPrimXdivy->name(), &ArithmeticCpuTypeFunc<T>::Xdivy}};
+                               {prim::kPrimXdivy->name(), &ArithmeticCpuTypeFunc<T>::Xdivy},
+                               {prim::kPrimXlogy->name(), &ArithmeticCpuTypeFunc<T>::Xlogy}};
     } else {
       dtype_desc = "complex data";
       arithmeticMathFuncMap = {
@@ -695,6 +697,27 @@ void ArithmeticCpuTypeFunc<T>::XdivyComplex(const T *input1, const T *input2, T 
 }
 
 template <typename T>
+void ArithmeticCpuTypeFunc<T>::Xlogy(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
+    for (size_t i = start; i < end; i++) {
+      auto x1 = input1[iter.GetInputPosA()];
+      auto x2 = input2[iter.GetInputPosB()];
+      auto logx2 = log(x2);
+      iter.GenNextPos();
+      if constexpr (std::is_same_v<T, bool>) {
+        out[i] = static_cast<T>(x1 && logx2);
+      } else {
+        out[i] = static_cast<T>(x1 * logx2);
+      }
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+}
+
+template <typename T>
 void ArithmeticCpuTypeFunc<T>::Atan2(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
@@ -925,6 +948,13 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      SpecializeArithFunc<complex128>}}},
+  {prim::kPrimXlogy->name(),
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeArithFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeArithFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeArithFunc<float16>}}},
   {prim::kPrimAtan2->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeArithFunc<float>},
@@ -988,6 +1018,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, SquaredDifference, []() {
 });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Xdivy,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimXdivy->name()); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Xlogy,
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimXlogy->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atan2,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimAtan2->name()); });
 }  // namespace kernel

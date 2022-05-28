@@ -3150,9 +3150,11 @@ class Xlogy(Primitive):
 
     Raises:
         TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
+        TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64].
+        ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)

@@ -41,7 +41,7 @@ TypePtr XlogyInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   (void)abstract::CheckDtypeSame(prim_name, x, y);
   auto input_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type);
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
+  const std::set<TypePtr> valid_types = {kFloat32, kFloat16, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("y", input_type, valid_types, prim_name);
   return input_type;
