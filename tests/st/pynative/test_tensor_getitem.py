@@ -651,7 +651,7 @@ class TensorSetItemByTensorsWithTensor(Cell):
         return ret
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1231,7 +1231,7 @@ def test_tensor_slice_reduce_out_of_bounds_positive():
            "but got 'shrink_axis_mask': 7, 'strides[0]': 1, 'begin[0]': 6." in str(ex.value)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

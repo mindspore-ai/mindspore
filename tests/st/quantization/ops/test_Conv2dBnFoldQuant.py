@@ -49,7 +49,7 @@ def test_conv2d_bn_fold_quant():
     diff = out_loss.asnumpy() - expect_loss
     assert np.all(abs(diff) < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

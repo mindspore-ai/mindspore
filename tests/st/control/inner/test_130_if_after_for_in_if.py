@@ -22,7 +22,7 @@ from mindspore.common.parameter import Parameter
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -72,7 +72,7 @@ class Net(nn.Cell):
         return x1, x2, x3, x4, x5
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

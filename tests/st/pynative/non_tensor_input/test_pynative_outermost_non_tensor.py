@@ -62,7 +62,7 @@ arg_l0 = [[x, x], [[x, y], {"x": x, "y": y, "z": z, "p": p}]]
 args_d0 = {"x": x, "y": y, "u": u}
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

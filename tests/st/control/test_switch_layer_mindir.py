@@ -38,7 +38,7 @@ class CaseNet(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -65,7 +65,7 @@ def test_mindir_switch_layer():
 
 
 @pytest.mark.skip(reason="depend on export")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -84,7 +84,7 @@ def test_mindir_export():
 
 
 @pytest.mark.skip(reason="depend on export")
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

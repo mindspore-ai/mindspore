@@ -34,7 +34,7 @@ class Net(nn.Cell):
         return self.map_uniform(x, self.per_group_size, self.group_num)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

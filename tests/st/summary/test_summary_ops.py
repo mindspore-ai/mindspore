@@ -89,7 +89,7 @@ class TestSummaryOps:
         if os.path.exists(cls.base_summary_dir):
             shutil.rmtree(cls.base_summary_dir)
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_x86_ascend_training
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.platform_x86_gpu_training

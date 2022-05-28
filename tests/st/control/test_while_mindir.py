@@ -30,7 +30,7 @@ class SingleWhileNet(nn.Cell):
         return y
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -94,7 +94,7 @@ class SingleWhileInlineNet(nn.Cell):
         return y
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -112,7 +112,7 @@ def test_single_while_inline_export():
     assert os.path.exists(mindir_name)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training

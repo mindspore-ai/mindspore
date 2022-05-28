@@ -50,7 +50,7 @@ def test_bias_add_grad(shape, dtype):
         atol = 1.e-3
     assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -53,14 +53,14 @@ def assign_add():
     assert np.allclose(o1.asnumpy(), e1.asnumpy())
     assert np.allclose(o2.asnumpy(), e2.asnumpy())
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_assign_add_gpu():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     assign_add()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

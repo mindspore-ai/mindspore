@@ -60,7 +60,7 @@ def test_batchmatmul():
     output_np = output.asnumpy().copy()
     assert np.allclose(expect_np, output_np, 6.e-4, 6.e-4)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -68,7 +68,7 @@ def test_matmul_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_matmul()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

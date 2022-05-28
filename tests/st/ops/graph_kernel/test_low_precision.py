@@ -101,7 +101,7 @@ def test_gpu_case_2():
     context.set_context(graph_kernel_flags="--enable_low_precision=true")
     test_case_2()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -110,7 +110,7 @@ def test_ascend_case_1():
     context.set_context(graph_kernel_flags="--enable_low_precision=true --disable_pass=highlevelopt2.atomic_clean")
     test_case_1()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

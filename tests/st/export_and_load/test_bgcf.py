@@ -191,7 +191,7 @@ class ForwardBGCF(nn.Cell):
                                                        items, i_neighs, i_gnew_neighs, 1)
         return user_rep, item_rep
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard

@@ -170,7 +170,7 @@ def test_if_in_if():
     control_flow_if_in_if(IfInIfNet, x, expect1, expect2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -182,7 +182,7 @@ def test_if_in_if_01():
     control_flow_if_in_if(IfInIfNet1, x, expect1, expect2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -194,7 +194,7 @@ def test_if_in_if_02():
     control_flow_if_in_if(IfInIfNet2, x, expect1, expect2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -206,7 +206,7 @@ def test_if_in_if_03():
     control_flow_if_in_if(IfInIfNet3, x, expect1, expect2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

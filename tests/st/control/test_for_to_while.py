@@ -22,7 +22,7 @@ from mindspore.common import dtype as mstype
 grad_all = C.GradOperation(get_all=True)
 
 # Although we don't transform for to while any more, we keep this test case.
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

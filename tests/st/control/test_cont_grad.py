@@ -73,7 +73,7 @@ def test_while_grad():
     assert np.allclose(graph_output[2].asnumpy(), expect_two, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -110,7 +110,7 @@ def test_while_with_const_param_grad():
     assert np.allclose(graph_output[1].asnumpy(), expect_two, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -180,7 +180,7 @@ def test_while_with_param_forward():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -256,7 +256,7 @@ def test_while_with_param_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -344,7 +344,7 @@ def test_while_opt_endless():
     assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -379,7 +379,7 @@ def test_no_while_call():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -425,7 +425,7 @@ def test_while_with_param_grad_with_const_branch():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -519,7 +519,7 @@ def test_for_while_with_param_grad_basic():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -564,7 +564,7 @@ def test_for_while_with_param_grad_normal():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -648,7 +648,7 @@ def test_while_with_param_basic_grad_mul():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -789,7 +789,7 @@ def test_while_if_with_param_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -829,7 +829,7 @@ def test_while_with_param_grad_not_enter_while():
     assert np.allclose(graph_output[0].asnumpy(), 1, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -866,7 +866,7 @@ def test_with_param_if_by_if_forward():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -911,7 +911,7 @@ def test_with_param_if_by_if_grad_inputs():
     assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -954,7 +954,7 @@ def test_with_param_if_by_if_grad_parameter():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -1080,7 +1080,7 @@ def test_if_by_if_forward():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -1149,7 +1149,7 @@ def test_if_by_if_forward_control_tuple_switch():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

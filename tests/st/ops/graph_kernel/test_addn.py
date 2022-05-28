@@ -50,7 +50,7 @@ def test_basic():
     assert np.allclose(expect, output, 1.e-4, 1.e-7)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_basic_gpu():
@@ -58,7 +58,7 @@ def test_basic_gpu():
     test_basic()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -328,7 +328,7 @@ def test_arange():
     match_array(actual, expected, error=6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -595,7 +595,7 @@ def onp_trace(arr):
     return onp.trace(arr, offset=4, axis1=1, axis2=2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -626,7 +626,7 @@ def onp_meshgrid(*xi):
     return a, b, c, d
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -763,7 +763,7 @@ def test_vander():
         match_all_arrays(mnp_vander, onp_vander, error=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -884,7 +884,7 @@ def test_tril_indices_from():
     match_all_arrays(mnp_res, onp_res)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1050,7 +1050,7 @@ def test_empty_like_exception():
         mnp.empty_like([[1, 2, 3], [4, 5]])
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training

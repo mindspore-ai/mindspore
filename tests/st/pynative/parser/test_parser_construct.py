@@ -71,7 +71,7 @@ def test_parser_construct():
     assert np.allclose(input_np_x, grad_me.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
