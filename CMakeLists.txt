@@ -3,7 +3,7 @@ project(MindSpore)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.3.0)
-        message(FATAL_ERROR "GCC version ${CMAKE_CXX_COMPILER_VERSION} must not be less than 7.3.0")
+        message(FATAL_ERROR "GCC version must be 7.3.0 and above, but found ${CMAKE_CXX_COMPILER_VERSION}")
     elseif(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.4.0)
         message(WARNING "GCC version ${CMAKE_CXX_COMPILER_VERSION} is greater than 9.4.0, may cause unknown problems.")
     endif()
@@ -11,6 +11,8 @@ endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/options.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/check_requirements.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/ascend_variables.cmake)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     if(NOT ENABLE_GLIBCXX)
