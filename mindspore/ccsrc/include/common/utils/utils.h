@@ -368,6 +368,7 @@ constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
 constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
 constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
 constexpr auto kPriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
+constexpr auto kNonZeroOpName = "NonZero";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";
@@ -805,11 +806,13 @@ const std::set<std::string> kHWSpecialFormatSet = {
 const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
 
 const std::set<std::string> kComputeDepend = {
-  kUniqueOpName,        kUniqueConsecutiveOpName, kComputeAccidentalHitsOpName, kSubAndFilterOpName,
-  kPadAndShiftOpName,   kCTCGreedyDecoderOpName,  kDropoutGenMaskOpName,        kMaskedSelectOpName,
-  kDynamicStitchOpName, kGetNextOpName,           kNonMaxSuppressionV3OpName,   kCoalesceOpName,
-  kTruncatedNormal,     kNonDeterministicInts,    kFractionalAvgPoolGradOpName, kSegmentMaxOpName,
-  kSegmentMinOpName,    kSegmentSumOpName};
+  kUniqueOpName,         kUniqueConsecutiveOpName,   kComputeAccidentalHitsOpName,
+  kSubAndFilterOpName,   kPadAndShiftOpName,         kCTCGreedyDecoderOpName,
+  kDropoutGenMaskOpName, kMaskedSelectOpName,        kDynamicStitchOpName,
+  kGetNextOpName,        kNonMaxSuppressionV3OpName, kCoalesceOpName,
+  kTruncatedNormal,      kNonDeterministicInts,      kFractionalAvgPoolGradOpName,
+  kSegmentMaxOpName,     kSegmentMinOpName,          kSegmentSumOpName,
+  kNonZeroOpName};
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
                                             kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};

@@ -7580,7 +7580,7 @@ class NonZero(Primitive):
     Refer to :func:`mindspore.ops.nonzero` for more detail.
 
     Supported Platforms:
-       ``GPU``
+       ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
