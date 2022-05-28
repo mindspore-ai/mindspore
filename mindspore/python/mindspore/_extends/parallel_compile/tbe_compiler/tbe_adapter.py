@@ -390,6 +390,7 @@ def _pre_build_compute_op_info(compute_op, job):
     set_L1_info("op_L1_space", l1_size)
     _normalize_module_name(op_module_name, py_module_path)
     unknown_shape = compute_op["unknown_shape"]
+    is_dynamic_impl = compute_op["is_dynamic_impl"]
     int64_mode = compute_op["int64mode"]
     res = check_op_impl_mode(op_module_name, op_func_name)
     op_impl_mode = job.content["SocInfo"]["op_impl_mode"]
@@ -403,7 +404,7 @@ def _pre_build_compute_op_info(compute_op, job):
     options = get_options_info(job.content)
     dispatch_prebuild_task(job.source_id, job.id, l1_size, op_module_name, op_full_name,
                            op_type, op_func_name, unknown_shape,
-                           (inputs, outputs, attrs, options), int64_mode, unknown_shape,
+                           (inputs, outputs, attrs, options), int64_mode, is_dynamic_impl,
                            None, job.pass_list)
 
 
@@ -466,13 +467,14 @@ def build_single_pre_op(job: TbeJob):
     op_func_name = compute_op_info["func_name"]
     _normalize_module_name(op_module_name, py_module_path)
     unknown_shape = compute_op_info["unknown_shape"]
+    is_dynamic_impl = compute_op_info["is_dynamic_impl"]
     int64_mode = compute_op_info["int64mode"]
     op_pattern = compute_op_info["pattern"]
     options = get_options_info(job.content)
     fuzz_build_info = get_fuzz_build_info(job.content)
     dispatch_single_op_compile_task(job.source_id, job.id, l1_size, op_module_name, op_name, op_type, op_func_name,
                                     op_kernel_name, unknown_shape, (inputs, outputs, attrs, options), int64_mode,
-                                    None, None, unknown_shape, op_pattern,
+                                    None, None, is_dynamic_impl, op_pattern,
                                     json.dumps(fuzz_build_info), None, job.pass_list)
     return True
 

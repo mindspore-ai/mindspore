@@ -379,10 +379,14 @@ void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::
     python_module_path = kPyPath;
   }
 
+  auto dynamic_compile_static = op_info_ptr->dynamic_compile_static();
+  auto is_dynamic = op_info_ptr->dynamic_shape() && tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node);
+  auto is_dynamic_impl = is_dynamic || dynamic_compile_static;
   auto iter = tbe::opTypeAdapter.find(op_name);
   (*compute_json)[kJType] = (iter != tbe::opTypeAdapter.end()) ? iter->second : op_name;
   (*compute_json)[kJPyModulePath] = python_module_path;
-  (*compute_json)[kJDynamicCompileStatic] = op_info_ptr->dynamic_compile_static();
+  (*compute_json)[kJDynamicCompileStatic] = dynamic_compile_static;
+  (*compute_json)[kJIsDynamicImpl] = is_dynamic_impl;
   (*compute_json)[kJInt64Mode] = false;
   (*compute_json)[kJName] = cnode->fullname_with_scope();
   (*compute_json)[kJPattern] = kernel::GetFusionNameByType(AnfAlgo::GetFusionType(cnode));
