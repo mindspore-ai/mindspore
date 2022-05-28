@@ -45,8 +45,9 @@ Examples:
 import numbers
 import numpy as np
 from PIL import Image
-import mindspore._c_dataengine as cde
 
+from mindspore import log as logger
+import mindspore._c_dataengine as cde
 from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
 from .validators import check_prob, check_crop, check_center_crop, check_resize_interpolation, \
     check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
@@ -58,7 +59,7 @@ from .validators import check_prob, check_crop, check_center_crop, check_resize_
     check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_adjust_gamma
 
 
-class ImageTensorOperation():
+class ImageTensorOperation:
     """
     Base class of Image Tensor Ops
     """
@@ -140,6 +141,9 @@ def parse_padding(padding):
     if isinstance(padding, numbers.Number):
         padding = [padding] * 4
     if len(padding) == 2:
+        logger.warning("The behaviour when padding is a sequence of length 2 will change from padding left/top "
+                       "with the first value and right/bottom with the second to left/right with the first and "
+                       "top/bottom with the second in the future.")
         left = top = padding[0]
         right = bottom = padding[1]
         padding = (left, top, right, bottom,)
@@ -893,6 +897,11 @@ class Pad(ImageTensorOperation):
 
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
               value of edge.
+
+    Note:
+        The behaviour when padding is a sequence of length 2 will change from padding left/top with
+        the first value and right/bottom with the second to left/right with the first and top/bottom with
+        the second in the future.
 
     Raises:
         TypeError: If `padding` is not of type int or Sequence[int].

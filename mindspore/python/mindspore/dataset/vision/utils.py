@@ -20,6 +20,7 @@ import numbers
 import numpy as np
 from PIL import Image
 
+from mindspore import log as logger
 import mindspore._c_dataengine as cde
 
 
@@ -319,6 +320,9 @@ def parse_padding(padding):
     if isinstance(padding, numbers.Number):
         padding = [padding] * 4
     if len(padding) == 2:
+        logger.warning("The behaviour when padding is a sequence of length 2 will change from padding left/top "
+                       "with the first value and right/bottom with the second to left/right with the first and "
+                       "top/bottom with the second in the future.")
         left = top = padding[0]
         right = bottom = padding[1]
         padding = (left, top, right, bottom,)

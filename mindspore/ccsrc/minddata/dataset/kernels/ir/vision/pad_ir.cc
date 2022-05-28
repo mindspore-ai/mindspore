@@ -68,6 +68,9 @@ std::shared_ptr<TensorOp> PadOperation::Build() {
       pad_bottom = padding_[dimension_zero];
       break;
     case size_two:
+      MS_LOG(WARNING) << "The behaviour when padding is a sequence of length 2 will change from padding left/top with "
+                         "the first value and right/bottom with the second to left/right with the first and top/bottom "
+                         "with the second in the future.";
       pad_left = padding_[dimension_zero];
       pad_top = padding_[dimension_zero];
       pad_right = padding_[dimension_one];
