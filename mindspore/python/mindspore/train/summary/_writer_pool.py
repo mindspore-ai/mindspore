@@ -112,15 +112,15 @@ class WriterPool(ctx.Process):
                     if action == 'WRITE':
                         deq.append(pool.apply_async(_pack_data, (data, time.time())))
                     elif action == 'FLUSH':
+                        # Make sure all async data is written before flush.
+                        self._write_data_in_deq(deq)
                         self._flush()
                     elif action == 'END':
                         break
                 except queue.Empty:
                     continue
 
-            for result in deq:
-                for plugin, data in result.get():
-                    self._write(plugin, data)
+            self._write_data_in_deq(deq)
 
             self._close()
 
@@ -197,3 +197,9 @@ class WriterPool(ctx.Process):
             is_exit = True
 
         return is_exit
+
+    def _write_data_in_deq(self, deq):
+        """Write the data in deq."""
+        while deq:
+            for plugin, data in deq.popleft().get():
+                self._write(plugin, data)
