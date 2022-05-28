@@ -789,6 +789,29 @@ mindspore.Tensor
         - **ValueError** - `axis` 不在[-1, ndim]范围内。
         - **ValueError** - `depth` 小于0。
 
+    .. py:method:: pdist(p=2.0)
+
+        计算此Tensor中每对行向量之间的p-范数距离。如果此Tensor的shape为 :math:`(N, M)`，那么输出就是一个shape为 :math:`(N * (N - 1) / 2,)` 的Tensor。
+        如果此Tensor的shape为 :math:`(*B, N, M)`，那么输出就是一个shape为 :math:`(*B, N * (N - 1) / 2)` 的Tensor。其中 :math:`*B` 表示批处理大小，可以是多维度。
+
+        .. math::
+                y[n] = \sqrt[p]{{\mid x_{i} - x_{j} \mid}^p}
+
+        **参数：**
+
+        - **p** (float) - p-范数距离的p值，:math:`p∈[0，∞]`。默认值:2.0。
+
+        **返回：**
+
+        Tensor，类型与 `self` 一致。
+
+        **异常：**
+
+        - **TypeError** -  `self` 的数据类型不是float16，float32，float64。
+        - **TypeError** - `p` 不是float。
+        - **ValueError** - `p` 是负数。
+        - **ValueError** - `self` 的维度小于2。
+
     .. py:method:: pow(power)
 
         计算Tensor中每个元素的 `power` 次幂。
@@ -1301,18 +1324,3 @@ mindspore.Tensor
 
         Tensor，具有与入参 `shape` 相同的维度。
     
-     .. py:method:: pdist(p=2.0)
-
-        计算输入中每对行向量之间的p-范数距离。
-
-        .. math::
-                y[n] = \sqrt[p]{{\mid x_{i} - x_{j} \mid}^p}
-
-        **参数：**
-
-        - **p** (float) - P -范数距离的P值，P∈[0，∞]。默认值:2.0。
-
-        **返回：**
-
-        Tensor，类型与 `x` 一致。
-

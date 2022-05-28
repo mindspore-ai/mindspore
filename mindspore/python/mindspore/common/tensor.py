@@ -3446,13 +3446,14 @@ class Tensor(Tensor_):
         where :math:`x_{i}, x_{j}` are two different row vectors in the input.
 
         Args:
-            p (float): p value for the p norm distance to calculate between each vector pair ∈[0,∞]. Default: 2.0.
+            p (float): p value for the p-norm distance to calculate between each vector pair.
+                       :math:`p∈[0,∞]`. Default: 2.0.
 
         Returns:
-            Tensor, has the same dtype as self.
+            Tensor, has the same dtype as `self`.
 
         Raises:
-            TypeError: If dtype of Tensor is float16, float32 or float64.
+            TypeError: If dtype of Tensor is not float16, float32 or float64.
             TypeError: If `p` is not a float.
             ValueError: If `p` is a negative float.
             ValueError: If dimension of Tensor is less than 2.
