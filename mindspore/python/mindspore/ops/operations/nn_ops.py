@@ -494,6 +494,46 @@ class ReLU(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
+class ReLUV3(Primitive):
+    r"""
+    Computes ReLUV3 (Rectified Linear Unit activation function) of input tensors element-wise.
+
+    It returns max(x, 0) element-wise. Specially, the neurons with the negative output
+    will be suppressed and the active neurons will stay the same.
+
+    .. math::
+
+        ReLUV3(x) = (x)^+ = max(0, x)
+
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, data type is
+          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+
+    Outputs:
+        Tensor of shape :math:`(N, *)`, with the same type and shape as the `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> relu_v3 = ops.ReLUV3()
+        >>> output = relu_v3(input_x)
+        >>> print(output)
+        [[0. 4. 0.]
+         [2. 0. 9.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ReLUV3"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+
 class Mish(PrimitiveWithInfer):
     r"""
     Computes MISH(A Self Regularized Non-Monotonic Neural Activation Function) of input tensors element-wise.

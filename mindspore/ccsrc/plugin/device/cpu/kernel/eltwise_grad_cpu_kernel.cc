@@ -80,13 +80,15 @@ class EltWiseGradCpuTypeFunc : public CpuKernelFunc {
 
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
-  if constexpr (!std::is_same<T, float>::value) {
-    MS_LOG(EXCEPTION) << "For 'ReLUGrad', the dtype of input must be float.";
-  }
-
-  int ret = ::ReluGrad(input1 + start, input2 + start, end - start, out + start);
-  if (ret == NNACL_ERR) {
-    MS_LOG(EXCEPTION) << "For 'ReLUGrad', execute failed. Error no: " << ret;
+  if constexpr (std::is_same<T, float>::value) {
+    int ret = ::ReluGrad(input1 + start, input2 + start, end - start, out + start);
+    if (ret == NNACL_ERR) {
+      MS_LOG(EXCEPTION) << "For 'ReLUGrad', execute failed. Error no: " << ret;
+    }
+  } else {
+    for (size_t i = start; i < end; i++) {
+      out[i] = (input2[i] > T(0)) ? input1[i] : static_cast<T>(0);
+    }
   }
 }
 
@@ -111,6 +113,7 @@ void EltWiseGradCpuTypeFunc<T>::AbsGrad(const T *input1, const T *input2, T *out
     }
   } else {
     for (size_t i = start; i < end; i++) {
+      // cppcheck-suppress unsignedLessThanZero
       out[i] = (input1[i] < 0) ? -input2[i] : ((input1[i] > 0) ? input2[i] : 0);
     }
   }
@@ -346,9 +349,20 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, c
               {prim::kPrimAsinhGrad->name(), &EltWiseGradCpuTypeFunc<T>::AsinhGrad},
               {prim::kPrimInvGrad->name(), &EltWiseGradCpuTypeFunc<T>::InvGrad},
               {prim::kPrimAcoshGrad->name(), &EltWiseGradCpuTypeFunc<T>::AcoshGrad},
-              {prim::kPrimAbsGrad->name(), &EltWiseGradCpuTypeFunc<T>::AbsGrad}};
+              {prim::kPrimAbsGrad->name(), &EltWiseGradCpuTypeFunc<T>::AbsGrad},
+              {prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "For 'EltWiseGrad', it does not support " << kernel_name_ << " with double as input.";
+    }
+    compute_func_ = elt_map.at(kernel_name_);
+    return;
+  }
+  if constexpr (std::is_same_v<T, float16>) {
+    static const std::map<std::string,
+                          std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad}};
+    if (elt_map.find(kernel_name_) == elt_map.end()) {
+      MS_LOG(EXCEPTION) << "EltWiseGradCpu does not support " << kernel_name_ << " with float as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
     return;
@@ -370,23 +384,36 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, c
               {prim::kPrimInvGrad->name(), &EltWiseGradCpuTypeFunc<T>::InvGrad},
               {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad},
               {prim::kPrimAcoshGrad->name(), &EltWiseGradCpuTypeFunc<T>::AcoshGrad},
-              {prim::kPrimSoftplusGrad->name(), &EltWiseGradCpuTypeFunc<T>::SoftplusGrad}};
+              {prim::kPrimSoftplusGrad->name(), &EltWiseGradCpuTypeFunc<T>::SoftplusGrad},
+              {prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "For 'EltWiseGrad', it does not support " << kernel_name_ << " with float as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
     return;
   }
-  if constexpr ((std::is_same_v<T, int>) || (std::is_same_v<T, int8_t>)) {
+  if constexpr ((std::is_same_v<T, int>) || (std::is_same_v<T, int8_t>) || (std::is_same_v<T, int16_t>) ||
+                (std::is_same_v<T, int64_t>)) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
       elt_map{{prim::kPrimAbsGrad->name(), &EltWiseGradCpuTypeFunc<T>::AbsGrad},
               {prim::kPrimInvGrad->name(), &EltWiseGradCpuTypeFunc<T>::InvGrad},
-              {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad}};
+              {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad},
+              {prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "For 'EltWiseGrad', it does not support " << kernel_name_ << " with int as input.";
     }
     compute_func_ = elt_map.at(kernel_name_);
+  }
+  if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>)) {
+    static const std::map<std::string,
+                          std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
+      elt_map{{prim::kPrimReluGrad->name(), &EltWiseGradCpuTypeFunc<T>::ReluGrad}};
+    if (elt_map.find(kernel_name_) == elt_map.end()) {
+      MS_LOG(EXCEPTION) << "EltWiseGradCpu does not support " << kernel_name_ << " with uint as input.";
+    }
+    compute_func_ = elt_map.at(kernel_name_);
+    return;
   }
   if constexpr ((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>)) {
     static const std::map<std::string,
@@ -422,8 +449,24 @@ std::shared_ptr<CpuKernelFunc> SpecializeEltWiseGradFunc() {
 using FuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> kernel_attr_list_map = {
   {kReluGrad,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &SpecializeEltWiseGradFunc<float>}}},
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &SpecializeEltWiseGradFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     &SpecializeEltWiseGradFunc<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     &SpecializeEltWiseGradFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &SpecializeEltWiseGradFunc<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     &SpecializeEltWiseGradFunc<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     &SpecializeEltWiseGradFunc<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     &SpecializeEltWiseGradFunc<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &SpecializeEltWiseGradFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &SpecializeEltWiseGradFunc<double>}}},
   {kReLU6Grad,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &SpecializeEltWiseGradFunc<float>}}},

@@ -144,6 +144,8 @@ from .upper_bound import _upper_bound_aicpu
 from .zeros_like import _zeros_like_aicpu
 from .ones_like import _ones_like_aicpu
 from .concat import _concat_aicpu
+from .relu_v3 import _relu_v3_aicpu
+from .relu_grad_v3 import _relu_grad_v3_aicpu
 from .grid_sampler_3d import _grid_sampler_3d_aicpu
 from .atanh import _atanh_aicpu
 from .grid_sampler_3d_grad import _grid_sampler_3d_grad_aicpu
