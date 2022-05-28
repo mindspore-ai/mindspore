@@ -43,29 +43,14 @@ class LpNormGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void InitWorkSpaceSizeList() {
-    // The workspace for device input shape.
-    const size_t device_input_shape_size = input_shape_.size() * sizeof(size_t);
-    // The workspace for device output shape.
-    const size_t device_output_shape_size = output_shape_.size() * sizeof(size_t);
-    // The workspace for device output axis.
-    const size_t device_axis_shape_size = output_axis_.size() * sizeof(size_t);
-    // The workspace for device output stride.
-    const size_t device_output_stride_size = output_stride_.size() * sizeof(size_t);
-    workspace_size_list_.clear();
-    workspace_size_list_ = {device_input_shape_size, device_output_shape_size, device_axis_shape_size,
-                            device_output_stride_size};
-  }
-
+  void InitWorkSpaceSizeList();
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
@@ -75,7 +60,7 @@ class LpNormGpuKernelMod : public NativeGpuKernelMod {
 
   bool GetLpNormAttr(const BaseOperatorPtr &base_operator);
 
-  size_t unit_size_{1};
+  TypeId data_type_{kNumberTypeFloat32};
   float p_{2.0};
   float epsilon_{1e-12};
   std::vector<int64_t> axis_;

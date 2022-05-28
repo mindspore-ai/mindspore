@@ -36,13 +36,32 @@ bool LpNormGpuKernelMod::GetLpNormAttr(const BaseOperatorPtr &base_operator) {
   auto kernel_ptr = std::make_shared<ops::LpNorm>(base_operator->GetPrim());
 
   axis_ = kernel_ptr->get_axis();
-  p_ = static_cast<float>(kernel_ptr->get_p());
-  if (p_ == 0.0f) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's op attribute 'p' equals to zero is invalid.";
+  int64_t p = kernel_ptr->get_p();
+  if (p == 0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's op attribute 'p' equals to zero, which is invalid.";
     return false;
   }
+  p_ = LongToFloat(p);
   epsilon_ = kernel_ptr->get_epsilon();
   return true;
+}
+
+void LpNormGpuKernelMod::InitWorkSpaceSizeList() {
+  // The workspace for device input shape.
+  const size_t device_input_shape_size = input_shape_.size() * sizeof(size_t);
+  // The workspace for device output axis.
+  const size_t device_axis_shape_size = output_axis_.size() * sizeof(size_t);
+  // The workspace for device output stride.
+  const size_t device_output_stride_size = output_stride_.size() * sizeof(size_t);
+
+  workspace_size_list_.clear();
+  workspace_size_list_ = {device_input_shape_size, device_axis_shape_size, device_output_stride_size};
+  // If in half, ms need high precision, so malloc device middle output.
+  if (data_type_ == kNumberTypeFloat16) {
+    constexpr auto high_precision_unit = 2;
+    const size_t device_middle_output = output_elements_ * sizeof(half) * high_precision_unit;
+    workspace_size_list_.emplace_back(device_middle_output);
+  }
 }
 
 bool LpNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -64,17 +83,16 @@ bool LpNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 
 int LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+                               const std::map<uint32_t, tensor::TensorPtr> &) {
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-
+  data_type_ = inputs.at(kIndex0)->GetDtype();
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
-  is_null_input_ = (input_elements_ == 0);
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input shape");
   if (is_null_input_) {
     return KRET_OK;
   }
@@ -115,33 +133,27 @@ bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   auto device_input_shape = reinterpret_cast<size_t *>(workspace.at(kIndex0)->addr);
   auto device_axis_output = reinterpret_cast<size_t *>(workspace.at(kIndex1)->addr);
   auto device_output_stride = reinterpret_cast<size_t *>(workspace.at(kIndex2)->addr);
+
   auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(device_input_shape, &input_shape_[0], input_shape_.size() * sizeof(size_t), cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    cudaMemcpyAsync(device_input_shape, input_shape_.data(), input_shape_.size() * sizeof(size_t),
+                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "LpNormGpuKernelMod cudaMemcpyAsync input_shape_ failed");
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(device_axis_output, &output_axis_[0], output_axis_.size() * sizeof(size_t), cudaMemcpyHostToDevice,
-                    reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    cudaMemcpyAsync(device_axis_output, output_axis_.data(), output_axis_.size() * sizeof(size_t),
+                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "LpNormGpuKernelMod cudaMemcpyAsync output_axis_ failed");
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(device_output_stride, &output_stride_[0], output_stride_.size() * sizeof(size_t),
+    cudaMemcpyAsync(device_output_stride, output_stride_.data(), output_stride_.size() * sizeof(size_t),
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "LpNormGpuKernelMod cudaMemcpyAsync output_shape_ failed");
 
   // The workspace for device output high precision.
   if constexpr (std::is_same_v<T, half>) {
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_)),
-                                       "cudaStremSynchronize failed");
-    constexpr auto high_precision_unit = 2;
-    size_t device_output_stride_size = output_elements_ * unit_size_ * high_precision_unit;
-    auto middle_output = reinterpret_cast<float *>(
-      device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(device_output_stride_size));
-    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(middle_output, 0, device_output_stride_size),
-                                      "LpNormGpuKernelMod failed  to set cuda memory to zeros.");
+    auto middle_output = reinterpret_cast<float *>(workspace.at(kIndex3)->addr);
     CalLpNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axis_output, device_output_stride,
               output_axis_.size(), output_elements_, p_, epsilon_, middle_output, output, device_id_,
               reinterpret_cast<cudaStream_t>(cuda_stream_));
