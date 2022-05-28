@@ -1976,7 +1976,7 @@ class SliceGrad(PrimitiveWithInfer):
                 validator.check(f'dy_shape[{i}]', dy_shape[i], f'x_shape[{i}]', x_shape[i], Rel.LE, self.name)
                 validator.check(f'dy_shape[{i}]', dy_shape[i], f'size_shape[{i}]', size_value[i], Rel.EQ, self.name)
 
-        if 'max_shape' in x:
+        if 'max_shape' in x and 'min_shape' in x:
             max_shape = x['max_shape']
             min_shape = x['min_shape']
         else:

@@ -55,15 +55,19 @@ abstract::ShapePtr IOUInferShape(const PrimitivePtr &primitive, const std::vecto
   ret_shape.push_back(y_shp[0]);
   ret_shape.push_back(x_shp[0]);
   if (y_shape_ptr->IsDynamic()) {
-    ret_min_shape.push_back(y_min_shape[0]);
-    ret_max_shape.push_back(y_max_shape[0]);
+    if (!y_min_shape.empty() && !y_max_shape.empty()) {
+      ret_min_shape.push_back(y_min_shape[0]);
+      ret_max_shape.push_back(y_max_shape[0]);
+    }
   } else {
     ret_min_shape.push_back(y_shp[0]);
     ret_max_shape.push_back(y_shp[0]);
   }
   if (x_shape_ptr->IsDynamic()) {
-    ret_min_shape.push_back(x_min_shape[0]);
-    ret_max_shape.push_back(x_max_shape[0]);
+    if (!x_min_shape.empty() && !x_max_shape.empty()) {
+      ret_min_shape.push_back(x_min_shape[0]);
+      ret_max_shape.push_back(x_max_shape[0]);
+    }
   } else {
     ret_min_shape.push_back(x_shp[0]);
     ret_max_shape.push_back(x_shp[0]);

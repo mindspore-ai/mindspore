@@ -2708,7 +2708,7 @@ class Concat(PrimitiveWithInfer):
         out = {'shape': ret_shp,
                'dtype': x_type[0],
                'value': value}
-        if -1 in x_shp[0]:
+        if 'max_shape' in input_x and 'min_shape' in input_x:
             x_min_shp = input_x['min_shape']
             ret_min_shp = x_min_shp[0].copy()
             ret_min_shp[axis] = 0
@@ -2810,14 +2810,16 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
 
     out = {}
     if -1 in out_shape:
-        x_min_shp = value['min_shape']
-        ret_min_shp = x_min_shp[0].copy()
-        ret_min_shp.insert(axis, n)
-        out['min_shape'] = ret_min_shp
-        x_max_shp = value['max_shape']
-        ret_max_shp = x_max_shp[0].copy()
-        ret_max_shp.insert(axis, n)
-        out['max_shape'] = ret_max_shp
+        if 'min_shape' in value:
+            x_min_shp = value['min_shape']
+            ret_min_shp = x_min_shp[0].copy()
+            ret_min_shp.insert(axis, n)
+            out['min_shape'] = ret_min_shp
+        if 'max_shape' in value:
+            x_max_shp = value['max_shape']
+            ret_max_shp = x_max_shp[0].copy()
+            ret_max_shp.insert(axis, n)
+            out['max_shape'] = ret_max_shp
         out_shape.insert(axis, n)
         out['shape'] = out_shape
         return out
@@ -3077,7 +3079,7 @@ class Slice(PrimitiveWithInfer):
         x_shp_len = len(x_shape)
         begin_v, size_v = begin['value'], size['value']
 
-        if 'max_shape' in x:
+        if 'max_shape' in x and 'min_shape' in x:
             max_shape = x['max_shape']
             min_shape = x['min_shape']
         else:
