@@ -38,7 +38,7 @@ def compare_row(row1, row2):
 def test_make_row():
     """
     Feature: Test RowTensor Constructor in Graph and PyNative.
-    Description: Test RowTensor(indices, values, shape) and RowTensor(COOTensor)
+    Description: Test RowTensor(indices, values, shape) and RowTensor(RowTensor)
     Expectation: Success.
     """
     indices = Tensor([0, 1], dtype=mstype.int32)
@@ -59,10 +59,10 @@ def test_make_row():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_coo_tensor_with_control_if():
+def test_row_tensor_with_control_if():
     """
-    Feature: Test COOTensor in if.
-    Description: Test COOTensor computation in while loop.
+    Feature: Test RowTensor in if.
+    Description: Test RowTensor computation in while loop.
     Expectation: Success.
     """
     class RowTensorValuesDouble(nn.Cell):

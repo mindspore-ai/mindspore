@@ -433,5 +433,31 @@ TEST_F(TestTensor, TensorSetShapeDataTest) {
   ASSERT_EQ(2, tensor.DataSize());
   ASSERT_EQ(nullptr, tensor.data().const_data());
 }
+
+/// Feature: SparseTensor
+/// Description: test AbstractSparseTensor/SparseTensorType API.
+/// Expectation: AbstractSparseTensor/SparseTensorType work as expected.
+TEST_F(TestTensor, SparseTensor) {
+  AbstractBasePtrList abs_list;
+  ShapeVector indices_shape{4, 2};
+  ShapeVector values_shape{4};
+  abs_list.emplace_back(std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeInt32), indices_shape));
+  abs_list.emplace_back(std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeFloat32), values_shape));
+  AbstractBasePtrList shape_list;
+  shape_list.emplace_back(std::make_shared<abstract::AbstractScalar>(5));
+  shape_list.emplace_back(std::make_shared<abstract::AbstractScalar>(5));
+  abs_list.emplace_back(std::make_shared<abstract::AbstractTuple>(shape_list));
+  auto abs_sparse_tensor = std::make_shared<abstract::AbstractSparseTensor>(abs_list);
+  ASSERT_EQ(abs_sparse_tensor->elements().size(), abs_list.size());
+  ASSERT_TRUE(abs_sparse_tensor->BuildType()->isa<SparseTensorType>());
+  ASSERT_TRUE(abs_sparse_tensor->shape()->isa<abstract::AbstractTuple>());
+  ASSERT_TRUE(abs_sparse_tensor->elements()[0]->isa<abstract::AbstractTensor>());
+  ASSERT_TRUE(abs_sparse_tensor->elements()[1]->isa<abstract::AbstractTensor>());
+
+  // SparseTensorType
+  TypePtr sparse_tensor_type = std::make_shared<SparseTensorType>(TypeIdToType(kNumberTypeFloat32));
+  ASSERT_TRUE(sparse_tensor_type->isa<SparseTensorType>());
+  ASSERT_EQ(sparse_tensor_type->cast<SparseTensorTypePtr>()->element()->type_id(), kNumberTypeFloat32);
+}
 }  // namespace tensor
 }  // namespace mindspore

@@ -193,8 +193,7 @@ void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr 
   // Save MakeTuple cnode abstract by its own abstract when MakeTuple have an abstract of
   // AbstractCSRTensor/AbstractCOOTensor that can not be inferred by its Infer Functions.
   if (prim->name() == prim::kPrimMakeTuple->name()) {
-    if (node->abstract() != nullptr && (node->abstract()->isa<abstract::AbstractCSRTensor>() ||
-                                        node->abstract()->isa<abstract::AbstractCOOTensor>())) {
+    if (node->abstract() != nullptr && (node->abstract()->isa<abstract::AbstractSparseTensor>())) {
       MS_LOG(INFO) << "Save MakeTuple cnode abstract by its own abstract : " << node->abstract()->ToString();
       SaveNodeInferResult(node, node->abstract());
       return;

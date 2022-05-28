@@ -3907,7 +3907,7 @@ class RowTensor(RowTensor_):
         self.init_finished = False
         # Directly init a RowTensor from another RowTensor
         if row_tensor is not None:
-            if not isinstance(row_tensor, (RowTensor, RowTensor)):
+            if not isinstance(row_tensor, (RowTensor, RowTensor_)):
                 raise TypeError(f"Expect input `row_tensor` to be a RowTensor, but got {type(row_tensor)}")
             if not (indices is None and values is None and shape is None):
                 raise TypeError("If input `row_tensor` is provided, `indices`, `values`, `shapes` should all be `None`")

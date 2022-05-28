@@ -905,11 +905,6 @@ class MS_CORE_API AbstractTuple : public AbstractSequence {
 
   bool operator==(const AbstractBase &other) const override;
 
-  template <typename T>
-  const T GetAbsPtrAt(size_t index) const;
-  /// \brief If any element is a tuple, get every element shape in it.
-  BaseShapePtrList ElementsShapeTupleRecursive() const;
-
  protected:
   ValuePtr RealBuildValue() const override { return ElementsBuildValue<ValueTuple>(); }
 };
@@ -1323,6 +1318,30 @@ struct AbstractBasePtrListEqual {
   }
 };
 
+class MS_CORE_API AbstractSparseTensor : public AbstractTuple {
+ public:
+  explicit AbstractSparseTensor(AbstractBasePtrList &&elements,
+                                const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
+      : AbstractTuple(std::move(elements), tuple_nodes) {}
+
+  explicit AbstractSparseTensor(const AbstractBasePtrList &elements,
+                                const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
+      : AbstractTuple(elements, tuple_nodes) {}
+
+  ~AbstractSparseTensor() override = default;
+  MS_DECLARE_PARENT(AbstractSparseTensor, AbstractTuple)
+
+  template <typename T>
+  const T GetAbsPtrAt(size_t index) const;
+  /// \brief If any element is a tuple, get every element shape in it.
+  BaseShapePtrList ElementsShapeTupleRecursive() const;
+  TypePtr BuildType() const override;
+  BaseShapePtr BuildShape() const override { return std::make_shared<TupleShape>(ElementsShapeTupleRecursive()); }
+  const TypeId GetTypeIdAt(size_t index) const;
+  const AbstractTuplePtr shape() const;
+};
+using AbstractSparseTensorPtr = std::shared_ptr<AbstractSparseTensor>;
+
 /// \brief Class AbstractRowTensor describes a RowTensor's abstract value.
 class MS_CORE_API AbstractRowTensor final : public AbstractUndetermined {
  public:
@@ -1394,68 +1413,58 @@ class MS_CORE_API AbstractRowTensor final : public AbstractUndetermined {
 };
 
 // COOTensor is a Tuple with fixed number of elements and specific meaning of each position.
-class MS_CORE_API AbstractCOOTensor : public AbstractTuple {
+class MS_CORE_API AbstractCOOTensor : public AbstractSparseTensor {
  public:
   explicit AbstractCOOTensor(AbstractBasePtrList &&elements,
                              const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractTuple(std::move(elements), tuple_nodes) {}
+      : AbstractSparseTensor(std::move(elements), tuple_nodes) {}
 
   explicit AbstractCOOTensor(const AbstractBasePtrList &elements,
                              const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractTuple(elements, tuple_nodes) {}
+      : AbstractSparseTensor(elements, tuple_nodes) {}
 
   ~AbstractCOOTensor() override = default;
-  MS_DECLARE_PARENT(AbstractCOOTensor, AbstractTuple)
+  MS_DECLARE_PARENT(AbstractCOOTensor, AbstractSparseTensor)
 
   const AbstractTensorPtr indices() const;
   const AbstractTensorPtr values() const;
-  const AbstractTuplePtr shape() const;
 
-  BaseShapePtr BuildShape() const override { return std::make_shared<TupleShape>(ElementsShapeTupleRecursive()); }
-  const TypeId GetTypeIdAt(size_t index) const;
   TypePtr BuildType() const override;
   AbstractBasePtr Clone() const override;
   AbstractBasePtr Broaden() const override;
   std::string ToString() const override;
 
- public:
   static constexpr size_t kIndicesIdx = 0;
   static constexpr size_t kValuesIdx = 1;
-  static constexpr size_t kShapeIdx = 2;
 };
 using AbstractCOOTensorPtr = std::shared_ptr<AbstractCOOTensor>;
 
 // CSRTensor is a Tuple with fixed number of elements and specific meaning of each position.
-class MS_CORE_API AbstractCSRTensor : public AbstractTuple {
+class MS_CORE_API AbstractCSRTensor : public AbstractSparseTensor {
  public:
   explicit AbstractCSRTensor(AbstractBasePtrList &&elements,
                              const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractTuple(std::move(elements), tuple_nodes) {}
+      : AbstractSparseTensor(std::move(elements), tuple_nodes) {}
 
   explicit AbstractCSRTensor(const AbstractBasePtrList &elements,
                              const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
-      : AbstractTuple(elements, tuple_nodes) {}
+      : AbstractSparseTensor(elements, tuple_nodes) {}
 
   ~AbstractCSRTensor() override = default;
-  MS_DECLARE_PARENT(AbstractCSRTensor, AbstractTuple)
+  MS_DECLARE_PARENT(AbstractCSRTensor, AbstractSparseTensor)
 
   const AbstractTensorPtr indptr() const;
   const AbstractTensorPtr indices() const;
   const AbstractTensorPtr values() const;
-  const AbstractTuplePtr shape() const;
 
-  const TypeId GetTypeIdAt(size_t index) const;
-  BaseShapePtr BuildShape() const override { return std::make_shared<TupleShape>(ElementsShapeTupleRecursive()); };
   TypePtr BuildType() const override;
   AbstractBasePtr Clone() const override;
   AbstractBasePtr Broaden() const override;
   std::string ToString() const override;
 
- public:
   static constexpr size_t kIndptrIdx = 0;
   static constexpr size_t kIndicesIdx = 1;
   static constexpr size_t kValuesIdx = 2;
-  static constexpr size_t kShapeIdx = 3;
 };
 using AbstractCSRTensorPtr = std::shared_ptr<AbstractCSRTensor>;
 

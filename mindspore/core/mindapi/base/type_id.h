@@ -98,6 +98,7 @@ enum TypeId : int {
   // in order to keep fit with the type of existing model on the lite side.
   kSparseTypeBegin = kMonadTypeEnd,
   kObjectTypeCSRTensorType,
+  kObjectTypeSparseTensorType,
   kSparseTypeEnd
 };
 }  // namespace mindspore

@@ -30,8 +30,7 @@
 
 namespace mindspore {
 namespace common {
-using abstract::AbstractCOOTensor;
-using abstract::AbstractCSRTensor;
+using abstract::AbstractSparseTensor;
 using abstract::AbstractTensor;
 using abstract::AbstractTuple;
 
@@ -878,7 +877,7 @@ bool AnfAlgo::IsTupleOutput(const AnfNodePtr &anf) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(type);
-  return type->isa<Tuple>() || type->isa<CSRTensorType>() || type->isa<COOTensorType>();
+  return type->isa<Tuple>() || type->isa<SparseTensorType>();
 }
 
 AnfNodePtr AnfAlgo::GetInputNode(const CNodePtr &node, size_t index) {
@@ -1658,22 +1657,20 @@ template <typename T>
 bool AnfAlgo::CheckAbsType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->abstract());
-  return node->abstract()->isa<T>();
+  return node->abstract()->cast<T>() != nullptr;
 }
 
 bool AnfAlgo::CheckAbsSparseTensor(const AnfNodePtr &node) {
-  return CheckAbsType<AbstractCSRTensor>(node) || CheckAbsType<AbstractCOOTensor>(node);
+  return CheckAbsType<abstract::AbstractSparseTensorPtr>(node);
 }
 
 bool AnfAlgo::CheckAbsSparseTensor(const abstract::AbstractBasePtr &abs) {
-  return abs->isa<AbstractCSRTensor>() || abs->isa<AbstractCOOTensor>();
+  return abs->cast<abstract::AbstractSparseTensorPtr>() != nullptr;
 }
 
 TypeId AnfAlgo::GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx) {
-  if (CheckAbsType<AbstractCSRTensor>(node)) {
-    return node->abstract()->cast<abstract::AbstractCSRTensorPtr>()->GetTypeIdAt(idx);
-  } else if (CheckAbsType<AbstractCOOTensor>(node)) {
-    return node->abstract()->cast<abstract::AbstractCOOTensorPtr>()->GetTypeIdAt(idx);
+  if (CheckAbsType<abstract::AbstractSparseTensorPtr>(node)) {
+    return node->abstract()->cast<abstract::AbstractSparseTensorPtr>()->GetTypeIdAt(idx);
   }
   MS_LOG_WARNING << "Expect AbstractCSRTensor or AbstractCOOTensor, but got " << node->abstract()->ToString();
   return kTypeUnknown;
