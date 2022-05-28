@@ -23,6 +23,7 @@ from .parsers.arguments_parser import g_arguments_parser
 from .parsers.assign_parser import g_assign_parser
 from .parsers.if_parser import g_if_parser
 from .parsers.return_parser import g_return_parser
+from .parsers.for_parser import g_for_parser
 from .api.scoped_value import ScopedValue, ValueType
 from .api.symbol_tree import SymbolTree
 from .api.node import Node

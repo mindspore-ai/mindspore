@@ -54,6 +54,8 @@ class SymbolTreeBuilder:
         3. Use merged ast.Module as module of main-network and sub-network.
         """
 
+        if sub_stree.get_ori_cls_name() == "SequentialCell":
+            SymbolTreeBuilder._erase_unused_func_of_sequentialcell(sub_stree.get_class_ast())
         father_mod = main_tree.get_module_ast()
         sub_mod = sub_stree.get_module_ast()
         SymbolTreeBuilder._merge_import_of_module(father_mod, sub_mod)
@@ -121,6 +123,12 @@ class SymbolTreeBuilder:
         first_class = classes_in_main[0]
         for clazz in classes_in_sub:
             AstModifier.insert_class_into_module(main_mod, clazz, first_class, True)
+
+    @staticmethod
+    def _erase_unused_func_of_sequentialcell(ast_class: ast.ClassDef):
+        func_names = ("__getitem__", "__setitem__", "__delitem__", "__len__", "append")
+        for name in func_names:
+            AstModifier.erase_func_from_class_by_name(ast_class, name)
 
     def _merge_module_of_subtrees(self):
         """
