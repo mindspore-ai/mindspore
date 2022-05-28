@@ -37,5 +37,5 @@ message HeartbeatMessage {
 
 message MetadataMessage {
   string name = 1;
-  string value = 2;
+  bytes value = 2;
 }
