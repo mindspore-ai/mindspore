@@ -36,6 +36,7 @@ from .operations import _csr_ops
 from .operations import linalg_ops
 from .operations.array_ops import UniqueConsecutive
 from .operations import nn_ops as NN
+from .operations.nn_ops import AdaptiveMaxPool2D
 from .composite import _Grad, Shard, _Vmap, _TaylorOperation
 from .._c_expression import security
 
@@ -966,5 +967,6 @@ tensor_operator_registry.register('tensor_scatter_div', tensor_scatter_div)
 tensor_operator_registry.register('tensor_scatter_sub', P.TensorScatterSub)
 tensor_operator_registry.register('tensor_scatter_add', P.TensorScatterAdd)
 tensor_operator_registry.register('lp_norm', lp_norm)
+tensor_operator_registry.register('adaptive_max_pool2d', AdaptiveMaxPool2D)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')

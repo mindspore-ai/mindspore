@@ -187,6 +187,7 @@ constexpr auto kMish = "Mish";
 constexpr auto kLRN = "LRN";
 constexpr auto kGridSampler2D = "GridSampler2D";
 constexpr auto kGridSampler2DGrad = "GridSampler2DGrad";
+constexpr auto kAdaptiveMaxPool2D = "AdaptiveMaxPool2D";
 
 // CSRTensor
 constexpr auto kMakeCSRTensor = "MakeCSRTensor";
@@ -509,6 +510,7 @@ GVAR_DEF(PrimitivePtr, kPrimAvgPoolGradVm, std::make_shared<Primitive>("AvgPoolG
 GVAR_DEF(PrimitivePtr, kPrimAvgPoolGradGe, std::make_shared<Primitive>("AvgPoolGradGe"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPoolV1, std::make_shared<Primitive>("AvgPoolV1"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPoolGradV1, std::make_shared<Primitive>("AvgPoolGradV1"));
+GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool2D, std::make_shared<Primitive>(kAdaptiveMaxPool2D));
 GVAR_DEF(PrimitivePtr, kPrimFusedSparseAdam, std::make_shared<Primitive>("FusedSparseAdam"));
 GVAR_DEF(PrimitivePtr, kPrimFusedBatchNorm, std::make_shared<Primitive>("FusedBatchNorm"));
 GVAR_DEF(PrimitivePtr, kPrimConv2D, std::make_shared<Primitive>("Conv2D"));
