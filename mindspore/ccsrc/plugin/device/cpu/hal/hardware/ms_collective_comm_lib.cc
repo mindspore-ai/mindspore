@@ -200,8 +200,7 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
 
   // Create the group info which contains the unique id and send it to the meta server.
   std::string group_info_key = kGroupInfoPrefix + group_name;
-  auto unique_id = std::string(static_cast<char *>(const_cast<void *>(root_info)), root_info_size);
-  if (!cgn_->PutMetadata(group_info_key, unique_id)) {
+  if (!cgn_->PutMetadata(group_info_key, root_info, root_info_size)) {
     MS_LOG(ERROR) << "Failed to send unique id to meta server.";
     return false;
   }
