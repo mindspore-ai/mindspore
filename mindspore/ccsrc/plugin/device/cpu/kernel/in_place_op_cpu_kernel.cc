@@ -15,26 +15,25 @@
  */
 
 #include "plugin/device/cpu/kernel/in_place_op_cpu_kernel.h"
-#include <map>
-#include <unordered_map>
 #include <memory>
 #include <string>
 #include <algorithm>
+#include "mindspore/core/ops/inplace_add.h"
+#include "mindspore/core/ops/inplace_sub.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr auto kIndices = "indices";
 struct Add {
   template <typename T>
-  inline T operator()(const T &lhs, const T &rhs) {
+  inline T operator()(const T &lhs, const T &rhs) const {
     return lhs + rhs;
   }
 };
 
 struct Sub {
   template <typename T>
-  inline T operator()(const T &lhs, const T &rhs) {
+  inline T operator()(const T &lhs, const T &rhs) const {
     return lhs - rhs;
   }
 };
@@ -43,17 +42,20 @@ class InplaceOpCpuTypeFunc : public DeprecatedCpuKernelFunc {
  public:
   ~InplaceOpCpuTypeFunc() override = default;
   explicit InplaceOpCpuTypeFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs) {
+                                const std::vector<KernelTensorPtr> &) {
     MS_EXCEPTION_IF_NULL(base_operator);
     kernel_name_ = base_operator->GetPrim()->name();
     auto x_shape = inputs.at(0)->GetShapeVector();
     auto v_shape = inputs.at(1)->GetShapeVector();
 
-    auto value_ptr = base_operator->GetAttr(kIndices);
-    if (value_ptr->isa<mindspore::api::ValueSequence>()) {
-      indices_ = GetValue<std::vector<int64_t>>(value_ptr);
+    if (kernel_name_ == ops::kNameInplaceAdd) {
+      auto kernel_ptr = std::make_shared<ops::InplaceAdd>(base_operator->GetPrim());
+      indices_ = kernel_ptr->get_indices();
+    } else if (kernel_name_ == ops::kNameInplaceSub) {
+      auto kernel_ptr = std::make_shared<ops::InplaceSub>(base_operator->GetPrim());
+      indices_ = kernel_ptr->get_indices();
     } else {
-      indices_ = {GetValue<int64_t>(value_ptr)};
+      MS_LOG(EXCEPTION) << "InplaceOp cpu does not support " << kernel_name_;
     }
 
     // x_shape_.size() == v_shape.size() is checked at front end
@@ -70,16 +72,16 @@ class InplaceOpCpuTypeFunc : public DeprecatedCpuKernelFunc {
   }
 
   template <typename Op>
-  void InplaceOp(T *input1, const T *input2, T *out) {
-    size_t band_size = band_size_;
+  void InplaceOp(const T *input1, const T *input2, T *out) {
+    const int64_t band_size = band_size_;
     const int64_t *indices = indices_.data();
     auto task = [band_size, indices, input1, input2, out](size_t start, size_t end) {
       while (start < end) {
-        size_t v_row = start / band_size;
-        size_t x_row = LongToSize(indices[v_row]);
+        const int64_t v_row = SizeToLong(start) / band_size;
+        const int64_t x_row = indices[v_row];
 
-        size_t offset = start % band_size;
-        size_t up_bound = ((v_row + 1) * band_size > end) ? end % band_size : band_size;
+        size_t offset = SizeToLong(start) % band_size;
+        size_t up_bound = (LongToSize((v_row + 1) * band_size) > end) ? end % band_size : band_size;
 
         size_t x_offset = x_row * band_size;
         size_t v_offset = v_row * band_size;
@@ -97,7 +99,10 @@ class InplaceOpCpuTypeFunc : public DeprecatedCpuKernelFunc {
     auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
     const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
     auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-    memcpy_s(output, outputs[0]->size, input1, inputs[0]->size);
+    if (memcpy_s(output, outputs[0]->size, input1, inputs[0]->size) != EOK) {
+      MS_LOG(ERROR) << "Function memcpy_s failed in 'InplaceOp'.";
+      return false;
+    }
     compute_func_(this, input1, input2, output);
     return true;
   }
@@ -116,11 +121,11 @@ class InplaceOpCpuTypeFunc : public DeprecatedCpuKernelFunc {
   }
 
   std::string kernel_name_;
-  size_t band_size_{1};
-  size_t output_size_{1};
+  int64_t band_size_{1};
+  int64_t output_size_{1};
   std::vector<int64_t> indices_;
 
-  using TypeComputeFunc = std::function<void(InplaceOpCpuTypeFunc *, T *in_x, const T *in_y, T *out)>;
+  using TypeComputeFunc = std::function<void(InplaceOpCpuTypeFunc *, const T *in_x, const T *in_y, T *out)>;
   TypeComputeFunc compute_func_{nullptr};
 };
 
@@ -133,8 +138,9 @@ std::shared_ptr<DeprecatedCpuKernelFunc> InplaceOpCpuFunc(const BaseOperatorPtr 
 using InplaceOpCpuFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>(
   const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
   const std::vector<KernelTensorPtr> &outputs)>;
-static std::map<std::string, std::vector<std::pair<KernelAttr, InplaceOpCpuFuncCreator>>> kernel_attr_list = {
-  {prim::kPrimInplaceAdd->name(),
+using OpFuncList = std::vector<std::pair<KernelAttr, InplaceOpCpuFuncCreator>>;
+static const mindspore::HashMap<std::string, OpFuncList> kernel_attr_list = {
+  {ops::kNameInplaceAdd,
    {
      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
       InplaceOpCpuFunc<int32_t>},
@@ -143,7 +149,7 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, InplaceOpCpuFuncC
      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
       InplaceOpCpuFunc<float16>},
    }},
-  {prim::kPrimInplaceSub->name(),
+  {ops::kNameInplaceSub,
    {
      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
       InplaceOpCpuFunc<int32_t>},
@@ -168,7 +174,7 @@ bool InPlaceOpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(EXCEPTION) << "InplaceOp does not support this kernel data type: " << kernel_attr;
   }
 
-  func_obj_ = kernel_attr_list[kernel_name_][index].second(base_operator, inputs, outputs);
+  func_obj_ = kernel_attr_list.at(kernel_name_)[index].second(base_operator, inputs, outputs);
   return true;
 }
 

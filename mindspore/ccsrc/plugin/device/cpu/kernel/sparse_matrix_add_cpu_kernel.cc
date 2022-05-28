@@ -23,6 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
 constexpr size_t kMatrixDims = 2;
 constexpr size_t kInputNum = 8;
 constexpr size_t kOutputNum = 3;
@@ -37,6 +38,8 @@ constexpr size_t kBetaIdx = 7;
 constexpr size_t kOutIndptr = 0;
 constexpr size_t kOutIndices = 1;
 constexpr size_t kOutValue = 2;
+using KernelRunFunc = SparseMatirxAddCpuKernelMod::KernelRunFunc;
+}  // namespace
 bool SparseMatirxAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs) {
   outputs_ = outputs;
@@ -186,9 +189,8 @@ bool SparseMatirxAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
       &SparseMatirxAddCpuKernelMod::LaunchKernel<index_type, value_type>                            \
   }
 
-const std::vector<std::pair<KernelAttr, SparseMatirxAddCpuKernelMod::KernelRunFunc>>
-  &SparseMatirxAddCpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, SparseMatirxAddCpuKernelMod::KernelRunFunc>> func_list = {
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseMatirxAddCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     // float values
     CPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeFloat32, int16_t, float),
     CPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat32, int, float),

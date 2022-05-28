@@ -22,11 +22,13 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
 constexpr size_t PADDING_SHAPE_1 = 2;
 constexpr size_t kSpaceToBatchNDInputsNum = 1;
 constexpr size_t kSpaceToBatchNDOutputsNum = 1;
 constexpr char kKernelName[] = "SpaceToBatchND";
-
+using KernelRunFunc = SpaceToBatchNDCpuKernelMod::KernelRunFunc;
+}  // namespace
 void SpaceToBatchNDCpuKernelMod::CheckParam() {
   for (size_t i = 0; i < block_rank_; i++) {
     if (block_size_[i] < 1) {
@@ -162,9 +164,8 @@ int SpaceToBatchNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   return KRET_OK;
 }
 
-const std::vector<std::pair<KernelAttr, SpaceToBatchNDCpuKernelMod::KernelRunFunc>>
-  &SpaceToBatchNDCpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, SpaceToBatchNDCpuKernelMod::KernelRunFunc>> func_list = {
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SpaceToBatchNDCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
      &SpaceToBatchNDCpuKernelMod::LaunchKernel<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
