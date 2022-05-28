@@ -432,7 +432,7 @@ class Softsign(Primitive):
     Refer to :func:`mindspore.ops.softsign` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.nn_ops import Softsign

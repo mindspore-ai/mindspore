@@ -3353,7 +3353,7 @@ class EqualCount(PrimitiveWithInfer):
         ValueError: If shape of `x` is not equal to shape of `y`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
