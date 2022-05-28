@@ -18,36 +18,78 @@
 #include "include/cuda_fp16.h"
 
 template <typename T>
-__global__ void CompAndCastKernel(const size_t size, const T *x, const T *temp_output_addr, float *output_addr) {
+__global__ void AbsKernel(const size_t size, const T *in, T *out) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    output_addr[i] = temp_output_addr[i] * temp_output_addr[i] > x[i] * x[i] ? x[i] : temp_output_addr[i];
+    out[i] = (in[i] >= 0) ? in[i] : -in[i];
   }
 }
 
 template <>
-__global__ void CompAndCastKernel(const size_t size, const half *x, const half *temp_output_addr, float *output_addr) {
+__global__ void AbsKernel(const size_t size, const float *in, float *out) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    output_addr[i] =
-      temp_output_addr[i] * temp_output_addr[i] > x[i] * x[i] ? __half2float(x[i]) : __half2float(temp_output_addr[i]);
+    out[i] = fabs(in[i]);
   }
 }
 
 template <>
-__global__ void CompAndCastKernel(const size_t size, const float *x, const float *temp_output_addr,
-                                  float *output_addr) {
+__global__ void AbsKernel(const size_t size, const half *in, half *out) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    output_addr[i] = temp_output_addr[i] * temp_output_addr[i] > x[i] * x[i] ? x[i] : temp_output_addr[i];
+    float zero = 0;
+    out[i] = (in[i] >= __float2half(zero)) ? in[i] : -in[i];
   }
 }
 
 template <typename T>
-void CompAndCastOp(const size_t size, const T *x, const T *temp_output_addr, float *output_addr,
-                   cudaStream_t cuda_stream) {
-  CompAndCastKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, x, temp_output_addr, output_addr);
+__global__ void CompKernel(const size_t size, const T *x, const T *temp_output_addr, float *output_addr) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    if (temp_output_addr[i] * x[i] >= 0) {
+      output_addr[i] = (temp_output_addr[i] * temp_output_addr[i]) > (x[i] * x[i]) ? x[i] : temp_output_addr[i];
+    } else {
+      output_addr[i] = temp_output_addr[i];
+    }
+  }
 }
 
-template CUDA_LIB_EXPORT void CompAndCastOp<float>(const size_t size, const float *x, const float *temp_output_addr,
-                                                   float *output_addr, cudaStream_t cuda_stream);
+template <>
+__global__ void CompKernel(const size_t size, const half *x, const half *temp_output_addr, float *output_addr) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    float zero = 0;
+    if (temp_output_addr[i] * x[i] >= __float2half(zero)) {
+      output_addr[i] = (temp_output_addr[i] * temp_output_addr[i]) > (x[i] * x[i]) ? __half2float(x[i])
+                                                                                   : __half2float(temp_output_addr[i]);
+    } else {
+      output_addr[i] = __half2float(temp_output_addr[i]);
+    }
+  }
+}
 
-template CUDA_LIB_EXPORT void CompAndCastOp<half>(const size_t size, const half *x, const half *temp_output_addr,
-                                                  float *output_addr, cudaStream_t cuda_stream);
+template <>
+__global__ void CompKernel(const size_t size, const float *x, const float *temp_output_addr, float *output_addr) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
+    if (temp_output_addr[i] * x[i] >= 0) {
+      output_addr[i] = (temp_output_addr[i] * temp_output_addr[i]) > (x[i] * x[i]) ? x[i] : temp_output_addr[i];
+    } else {
+      output_addr[i] = temp_output_addr[i];
+    }
+  }
+}
+
+template <typename T>
+void AbsOp(const size_t size, const T *in, T *out, cudaStream_t cuda_stream) {
+  AbsKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, in, out);
+}
+
+template CUDA_LIB_EXPORT void AbsOp<float>(const size_t size, const float *in, float *out, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void AbsOp<half>(const size_t size, const half *in, half *out, cudaStream_t cuda_stream);
+
+template <typename T>
+void CompOp(const size_t size, const T *x, const T *temp_output_addr, float *output_addr, cudaStream_t cuda_stream) {
+  CompKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, x, temp_output_addr, output_addr);
+}
+
+template CUDA_LIB_EXPORT void CompOp<float>(const size_t size, const float *x, const float *temp_output_addr,
+                                            float *output_addr, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CompOp<half>(const size_t size, const half *x, const half *temp_output_addr,
+                                           float *output_addr, cudaStream_t cuda_stream);

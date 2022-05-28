@@ -312,7 +312,11 @@ void ClipByNormCpuKernelMod::ClipNormMulAndCmpLaunch(T *x_addr, float *div_outpu
   if (x_shape_.empty()) {  // The input x is a scalar tensor
     float mul_output = div_output_addr[0] * static_cast<float>(clip_norm_addr[0]);
     float x = static_cast<float>(x_addr[0]);
-    output_addr[0] = (mul_output * mul_output) > (x * x) ? x : mul_output;
+    if (x * mul_output >= 0) {
+      output_addr[0] = (mul_output * mul_output) > (x * x) ? x : mul_output;
+    } else {
+      output_addr[0] = mul_output;
+    }
     return;
   }
   BroadcastIterator broadcast_base_iter(x_shape_, clip_norm_shape_, output_shape_);
@@ -325,7 +329,11 @@ void ClipByNormCpuKernelMod::ClipNormMulAndCmpLaunch(T *x_addr, float *div_outpu
       float clip_norm = static_cast<float>(clip_norm_addr[iter.GetInputPosB()]);
       float mul_output = clip_norm * div_out;
       float x = static_cast<float>(x_addr[iter.GetInputPosA()]);
-      output_addr[i] = (mul_output * mul_output) > (x * x) ? x : mul_output;
+      if (x * mul_output >= 0) {
+        output_addr[i] = (mul_output * mul_output) > (x * x) ? x : mul_output;
+      } else {
+        output_addr[i] = mul_output;
+      }
       iter.GenNextPos();
     }
   };

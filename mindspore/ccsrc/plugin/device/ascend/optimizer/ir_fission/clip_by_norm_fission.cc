@@ -214,23 +214,26 @@ const AnfNodePtr ClipByNormSplit::Process(const FuncGraphPtr &func_graph, const 
   TypeId dst_type_id = kNumberTypeFloat32;
   auto shape_vec = GetOutputInferShape(clip_by_norm);
   auto x_type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(clip_by_norm, 0);
-  // Create `op1 = cast(x)` to float32 data type
-  auto x_cast = CreateCastNode(func_graph, inp_x, shape_vec, x_type_id, dst_type_id);
-  // Create `op2 = square(op1)` op
-  auto square = CreateSquareNode(func_graph, x_cast, shape_vec, dst_type_id);
-  // Create 'op3 = reduce_sum(op2)' op
-  auto reduce_sum = CreateReduceSumNode(func_graph, square, clip_by_norm, shape_vec, dst_type_id);
+  // Create `op1 = square(x)` op
+  auto square = CreateSquareNode(func_graph, inp_x, shape_vec, x_type_id);
+  // Create 'op2 = reduce_sum(op1)' op
+  auto reduce_sum = CreateReduceSumNode(func_graph, square, clip_by_norm, shape_vec, x_type_id);
+  // Create `op3 = cast(op2)` to float32 data type
+  auto reduce_sum_cast =
+    CreateCastNode(func_graph, reduce_sum, GetOutputInferShape(reduce_sum), x_type_id, dst_type_id);
   // Create 'op4 = sqrt(op3)' op
-  auto sqrt = CreateSqrtNode(func_graph, reduce_sum, dst_type_id);
-  // Create 'op5 = cast(clip_norm)' to float32 data type.
+  auto sqrt = CreateSqrtNode(func_graph, reduce_sum_cast, dst_type_id);
+  // Create 'op5 = x * clip_norm' op
+  auto mul = CreateMulNode(func_graph, inp_x, inp_clip_norm, shape_vec, x_type_id);
+  // Create 'op6 = cast(clip_norm)' to float32 data type.
   auto clip_norm_cast = CreateCastNode(func_graph, inp_clip_norm, GetOutputInferShape(inp_clip_norm),
                                        common::AnfAlgo::GetOutputInferDataType(inp_clip_norm, 0), dst_type_id);
-  // Create 'op6 = x * op5' op
-  auto mul = CreateMulNode(func_graph, x_cast, clip_norm_cast, shape_vec, dst_type_id);
-  // Create `op7 = max(op5, op4)` op
+  // Create `op7 = max(op6, op4)` op
   auto max = CreateMaxNode(func_graph, clip_norm_cast, sqrt, dst_type_id);
-  // Create 'op8 = op6 / op7' op
-  auto div = CreateDivNode(func_graph, mul, max, shape_vec, dst_type_id);
+  // Create 'op8 = cast(op5)' to float32 data type.
+  auto mul_cast = CreateCastNode(func_graph, mul, shape_vec, x_type_id, dst_type_id);
+  // Create 'op9 = op8 / op7' op
+  auto div = CreateDivNode(func_graph, mul_cast, max, shape_vec, dst_type_id);
   return div;
 }
 }  // namespace opt

@@ -132,12 +132,7 @@ bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &input
   Cast(x_size_ / sizeof(T), x_addr, x_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   // Launch `cudnnReduceTensorNorm2` operator to achieve `L2_norm` calculation, keep_dims = true.
   if (all_match_) {
-    MS_LOG(DEBUG) << "The corresponding dimension of the `input_x` and `l2_norm_output` are all matched, running "
-                     "device to device copy.";
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(l2norm_output_addr, x_float_addr, (x_size_ / sizeof(T)) * sizeof(float), cudaMemcpyDeviceToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr)),
-      kernel_name_ + " running cudaMemcpyAsync failed.");
+    AbsOp(x_size_ / sizeof(T), x_float_addr, l2norm_output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
     constexpr float alpha = 1.0;
     constexpr float beta = 0.0;
@@ -165,8 +160,8 @@ bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &input
                  clip_norm_mul_output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   }
   // Running compare between `input_x` and `upper output` and cast final output to float type.
-  CompAndCastOp(output_size_ / sizeof(float), x_float_addr, clip_norm_mul_output_addr, output_addr,
-                reinterpret_cast<cudaStream_t>(stream_ptr));
+  CompOp(output_size_ / sizeof(float), x_float_addr, clip_norm_mul_output_addr, output_addr,
+         reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
 
