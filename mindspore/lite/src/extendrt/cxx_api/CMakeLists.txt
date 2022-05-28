@@ -85,7 +85,7 @@ if(BUILD_LITE)
             ${ACL_REMOVE_SRC})
 endif()
 
-add_library(mindspore_shared_lib_obj OBJECT ${MSLIB_SRC})
+add_library(mindspore_infer_shared_lib_obj OBJECT ${MSLIB_SRC})
 # add_library(mindspore_shared_lib SHARED $<TARGET_OBJECTS:mindspore_shared_lib_obj>)
 # if(BUILD_LITE)
 #     target_link_libraries(mindspore_shared_lib PRIVATE $<TARGET_OBJECTS:_mindspore_transform_graph_ir_obj>)
