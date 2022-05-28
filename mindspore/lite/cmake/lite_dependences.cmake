@@ -51,3 +51,8 @@ if(MSLITE_DEPS_PYBIND11)
         endif()
     endif()
 endif()
+
+if(MSLITE_DEPS_OPENSSL)
+    include(${TOP_DIR}/cmake/external_libs/openssl.cmake)
+    add_compile_definitions(ENABLE_OPENSSL)
+endif()

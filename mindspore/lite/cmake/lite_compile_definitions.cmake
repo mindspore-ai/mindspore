@@ -1,0 +1,45 @@
+add_compile_definitions(BUILD_LITE)
+
+if(ENABLE_CLOUD_AND_LITE)
+    remove_definitions(-DUSE_GLOG)
+    add_compile_definitions(ENABLE_CLOUD_AND_LITE)
+endif()
+
+add_definitions(-DVERSION_STR=\"${VERSION_STR}\")
+
+if(MACHINE_LINUX_ARM64)
+    add_compile_definitions(MACHINE_LINUX_ARM64)
+    add_compile_definitions(LINUX_RUNTIME)
+endif()
+if(PLATFORM_X86_64)
+    add_compile_definitions(LINUX_RUNTIME)
+endif()
+if(TOOLCHAIN_NAME STREQUAL "himix200")
+    add_compile_definitions(SUPPORT_NNIE)
+elseif(TOOLCHAIN_NAME STREQUAL "himix100")
+    add_compile_definitions(SUPPORT_NNIE)
+elseif(TOOLCHAIN_NAME STREQUAL "mix210")
+    add_compile_definitions(SUPPORT_34XX)
+elseif(TOOLCHAIN_NAME STREQUAL "ohos-lite")
+    SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
+endif()
+
+if(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE)
+    add_compile_definitions(DYNAMIC_THREAD_DISTRIBUTE)
+endif()
+
+if(MSLITE_ENABLE_BFC_MEMORY)
+    add_compile_definitions(BFC_MEMORY)
+endif()
+
+if(MSLITE_ENABLE_PARALLEL_INFERENCE)
+    add_compile_definitions(PARALLEL_INFERENCE)
+endif()
+
+if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
+    add_compile_definitions(SHARING_MODEL_WEIGHT)
+endif()
+
+if(MSLITE_ENABLE_CONVERTER)
+    add_compile_definitions(ENABLE_CONVERTER)
+endif()

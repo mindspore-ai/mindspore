@@ -15,9 +15,11 @@ add_compile_definitions(MINDIR_EXPORT_TENSOR_LAYOUT_CLIP)
 add_compile_definitions(COMMON_DLL)
 
 if(NOT ENABLE_CLOUD_AND_LITE)
-    set(MINDIR_EXPORT_DIR ${CCSRC_DIR}/transform/express_ir)
-    add_subdirectory(${MINDIR_EXPORT_DIR} mindir_exporter)
-    add_dependencies(_mindspore_transform_express_ir_obj mindir_proto_mid)
+#     if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        set(MINDIR_EXPORT_DIR ${CCSRC_DIR}/transform/express_ir)
+        add_subdirectory(${MINDIR_EXPORT_DIR} mindir_exporter)
+        add_dependencies(_mindspore_transform_express_ir_obj mindir_proto_mid)
+#     endif()
 endif()
 
 add_library(mindir_serializer_mid OBJECT
