@@ -651,6 +651,23 @@ def get_space_to_batch_nd_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.BatchToSpaceND)
+def get_batch_to_space_nd_vmap_rule(prim, axis_size):
+    """VmapRule for `BatchToSpaceND`."""
+
+    def vmap_rule(input_xdim):
+        is_all_none, result = vmap_general_preprocess(prim, input_xdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = input_xdim
+        x_trans = mnp.moveaxis(x, x_dim, 1)
+        out = prim(x_trans)
+        return (out, 1)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.GatherNd)
 def get_gather_nd_vmap_rule(prim, axis_size):
     """VmapRule for GatherND operations."""

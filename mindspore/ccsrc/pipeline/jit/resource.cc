@@ -221,6 +221,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"resize", std::string("resize")},                                  // P.Reshape()
        {"select", std::string("select")},                                  // P.Select()
        {"space_to_batch_nd", std::string("space_to_batch_nd")},            // P.SpaceToBatchND
+       {"batch_to_space_nd", std::string("batch_to_space_nd")},            // P.BatchToSpaceND
        {"choose", std::string("choose")},                                  // P.Select()
        {"diagonal", std::string("diagonal")},                              // P.Eye()
        {"matrix_diag", std::string("matrix_diag")},                        // matrix_diag()

@@ -74,6 +74,7 @@ from .array_func import (
     scatter_update,
     nonzero,
     space_to_batch_nd,
+    batch_to_space_nd,
     range,
     select,
     one_hot,

@@ -35,15 +35,13 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_min_shape = shape_map[kMinShape];
   auto input_max_shape = shape_map[kMaxShape];
-  const int64_t x_rank = 4;
-  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
   auto out_shape = x_shape;
 
   int64_t block_shape_prod = 1;
-  size_t offset = 2;
   auto block_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr(kBlockShape));
   auto crops = GetValue<std::vector<std::vector<int64_t>>>(primitive->GetAttr(kCrops));
   size_t size = block_shape.size();
+  size_t offset = x_shape.size() - size;
   for (size_t i = 0; i < size; i++) {
     block_shape_prod = block_shape_prod * block_shape[i];
     auto x_block_prod = out_shape[i + offset] * block_shape[i];
@@ -64,7 +62,6 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
   auto output_min_shape = input_min_shape;
   auto output_max_shape = input_max_shape;
   for (size_t i = 0; i < size; i++) {
-    block_shape_prod = block_shape_prod * block_shape[i];
     auto x_block_prod_min = output_min_shape[i + offset] * block_shape[i];
     auto x_block_prod_max = output_max_shape[i + offset] * block_shape[i];
     auto crops_sum = crops[i][0] + crops[i][1];
