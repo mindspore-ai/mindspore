@@ -36,19 +36,20 @@ class MessageBase {
     KTERMINATE,
   };
 
-  explicit MessageBase(Type eType = Type::KMSG) : from(), name(), type(eType) {}
+  explicit MessageBase(Type eType = Type::KMSG) : from(), name(), data(nullptr), size(0), type(eType) {}
 
-  explicit MessageBase(const std::string &sName, Type eType = Type::KMSG) : from(), name(sName), type(eType) {}
+  explicit MessageBase(const std::string &sName, Type eType = Type::KMSG)
+      : from(), name(sName), data(nullptr), size(0), type(eType) {}
 
   explicit MessageBase(const AID &aFrom, const AID &aTo, Type eType = Type::KMSG)
-      : from(aFrom), to(aTo), name(), body(), type(eType) {}
+      : from(aFrom), to(aTo), name(), body(), data(nullptr), size(0), type(eType) {}
 
   explicit MessageBase(const AID &aFrom, const AID &aTo, const std::string &sName, Type eType = Type::KMSG)
-      : from(aFrom), to(aTo), name(sName), body(), type(eType) {}
+      : from(aFrom), to(aTo), name(sName), body(), data(nullptr), size(0), type(eType) {}
 
   explicit MessageBase(const AID &aFrom, const AID &aTo, const std::string &sName, std::string &&sBody,
                        Type eType = Type::KMSG)
-      : from(aFrom), to(aTo), name(sName), body(std::move(sBody)), type(eType) {}
+      : from(aFrom), to(aTo), name(sName), body(std::move(sBody)), data(nullptr), size(0), type(eType) {}
 
   virtual ~MessageBase() {}
 
@@ -78,6 +79,11 @@ class MessageBase {
   AID to;
   std::string name;
   std::string body;
+
+  // The raw bytes of data to be sent and the length of data.
+  void *data;
+  size_t size;
+
   Type type;
 };
 }  // namespace mindspore
