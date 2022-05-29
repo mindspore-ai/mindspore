@@ -6462,15 +6462,19 @@ class RangeV2(Primitive):
 
 class MaskedFill(Primitive):
     """
-    Fills elements of self tensor with value where mask is True.
+    Fills elements with value where mask is True.
 
-    The shapes of `input` and `mask` need to be the same or broadcast.
+    The shapes of `input` and `mask` need to be the same or broadcast. If `value` is a Tensor of shape :math:`(*B)`,
+    then the first few shape of `input` and `mask` must be :math:`*B`, which means a batch dimension input.
+
+    Note:
+        In Ascend, batch dimension input is not supported. Specifically, `value` is required to be equal to be a
+        0-dimensional tensor or a float number.
 
     Inputs:
         - **input** (Tensor) - The source tensor whose data type is one of float16, float32, int8, int32.
         - **mask** (Tensor[bool]) - The boolean mask.
-        - **value** (Union[float, Tensor]) – The value to fill in with, which only supports
-          a 0-dimensional tensor or a float number.
+        - **value** (Union[float, Tensor]) – The value to fill in with, which dtype is the same as `input`.
 
     Outputs:
         Tensor, has the same type and shape as `input`.
@@ -6484,7 +6488,7 @@ class MaskedFill(Primitive):
         ValueError: If the shapes of `input` and `mask` could not be broadcast.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)

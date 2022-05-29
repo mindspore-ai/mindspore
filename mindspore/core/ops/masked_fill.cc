@@ -38,13 +38,13 @@ abstract::ShapePtr MaskedFillInferShape(const PrimitivePtr &primitive, const std
   auto value_shape = value_shape_map[kShape];
   auto broadcast_shape = CalBroadCastShape(input_shape, mask_shape, op_name, "input", "mask");
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    if (value_shape.size() != 0) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << op_name
-        << "', 'value' only supports a 0-dimensional value tensor or a float number, but got tensor with "
-        << value_shape.size() << " dimension(s).";
+    for (size_t i = 0; i < value_shape.size(); i++) {
+      if (value_shape[i] != broadcast_shape[i]) {
+        MS_EXCEPTION(ValueError) << "For '" << op_name << "', the " << i
+                                 << "th index of value shape should be equal to " << broadcast_shape[i] << ", but got "
+                                 << value_shape[i];
+      }
     }
-    broadcast_shape = CalBroadCastShape(broadcast_shape, value_shape, op_name);
   }
   return std::make_shared<abstract::Shape>(broadcast_shape);
 }

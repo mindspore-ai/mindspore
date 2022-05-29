@@ -624,3 +624,24 @@ def get_meshgrid_vmap_rule(prim, axis_size):
         return vals_out_tuple
 
     return vmap_rule
+
+
+@vmap_rules_getters.register(P.MaskedFill)
+def get_masked_fill_vmap_rule(prim, axis_size):
+    """VmapRule for `MaskedFill` operation."""
+
+    def vmap_rule(input_bdim, mask_bdim, value_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, input_bdim, mask_bdim, value_bdim)
+        if is_all_none:
+            return result
+
+        input_x, x_dim = input_bdim
+        mask, mask_dim = mask_bdim
+        value, value_dim = value_bdim
+        input_x = _bdim_at_front(input_x, x_dim, axis_size)
+        mask = _bdim_at_front(mask, mask_dim, axis_size)
+        value = _bdim_at_front(value, value_dim, axis_size)
+        out = prim(input_x, mask, value)
+        return (out, 0)
+
+    return vmap_rule
