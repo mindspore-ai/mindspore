@@ -231,9 +231,7 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
     return false;
   }
 
-  std::string group_info_key = kGroupInfoPrefix + group_name;
-  auto unique_id = cgn_->GetMetadata(group_info_key);
-  auto ret = memcpy_s(root_info, root_info_size, unique_id.data(), unique_id.length());
+  auto ret = memcpy_s(root_info, root_info_size, resp_msg.unique_id().data(), resp_msg.unique_id().length());
   if (ret != EOK) {
     MS_LOG(WARNING) << "The memcpy_s error, errorno(" << ret << ")";
     return false;
