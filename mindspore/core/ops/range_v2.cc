@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 #define IsSameType(source_type, cmp_type) (cmp_type->equal(source_type))
-#define IsAnyValue(value_ptr) (value_ptr->isa<AnyValue>())
+#define IsNoneOrAnyValue(value_ptr) ((value_ptr->isa<None>()) || (value_ptr->isa<AnyValue>()))
 constexpr auto op_name = "RangeV2";
 
 template <typename T>
@@ -79,7 +79,7 @@ abstract::ShapePtr RangeV2CheckAndInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(limit_value);
   MS_EXCEPTION_IF_NULL(delta_value);
 
-  bool is_compile = (IsAnyValue(start_value) && IsAnyValue(limit_value) && IsAnyValue(delta_value));
+  bool is_compile = (IsNoneOrAnyValue(start_value) && IsNoneOrAnyValue(limit_value) && IsNoneOrAnyValue(delta_value));
   // not in compile, need inferShape
   if (!is_compile) {
     auto dtype = CheckAndConvertUtils::GetTensorInputType(op_name, input_args, kInputIndex0);
