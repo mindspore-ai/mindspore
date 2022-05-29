@@ -85,6 +85,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kSegmentMax = prim::kPrimSegmentMax->name();
   static const auto &kSegmentMin = prim::kPrimSegmentMin->name();
   static const auto &kSegmentSum = prim::kPrimSegmentSum->name();
+  static const auto &kBlackmanWindow = prim::kPrimBlackmanWindow->name();
   // Common dynamic shape depends.
   static const PrimShapeDependMap dynamic_shape_depends{{kSegmentMax, ShapeSet{1}},
                                                         {kSegmentMin, ShapeSet{1}},
@@ -120,7 +121,8 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kTruncatedNormal, ShapeSet{0}},
                                                         {kRaggedRange, ShapeSet{0, 1, 2}},
                                                         {kTransposeNOD, ShapeSet{1}},
-                                                        {kSparseSegmentMean, ShapeSet{2}}};
+                                                        {kSparseSegmentMean, ShapeSet{2}},
+                                                        {kBlackmanWindow, ShapeSet{0}}};
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
