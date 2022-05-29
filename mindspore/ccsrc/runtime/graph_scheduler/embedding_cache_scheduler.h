@@ -34,10 +34,14 @@ class EmbeddingCacheScheduler {
   // Build and initialize embedding cache prefetch actor and save it by embedding_cache_prefetch_actor_.
   void Initialize();
 
-  // Schedule, Initialize and Run embedding cache prefetch actor.
+  // 1. Build network connection between local and remote cache for embedding cache prefetch actor.
+  // 2. Schedule and Run embedding cache prefetch actor.
   // Since the embedding cache prefetch actor is spinning, and the actor is not in the actor set, start the actor in the
   // Schedule interface.
   void Schedule() const;
+
+  // Synchronize latest embedding table in local cache to remote.
+  void SyncEmbeddingTable() const;
 
   // Finalize embedding cache prefetch actor.
   void Finalize();
@@ -45,6 +49,9 @@ class EmbeddingCacheScheduler {
  private:
   // Embedding cache prefetch actor.
   EmbeddingCachePrefetchActorPtr embedding_cache_prefetch_actor_;
+
+  // The flag indicates whether the EmbeddingCacheScheduler is initialized.
+  bool initialized_{false};
 };
 }  // namespace runtime
 }  // namespace mindspore

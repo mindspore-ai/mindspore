@@ -123,6 +123,46 @@ int64_t GetCacheOpsServiceId(const std::string &cache_operation, int32_t param_k
   int64_t id = SizeToLong(distributed::kEmbeddingCacheOps.size()) * IntToLong(param_key) + iter->second;
   return id;
 }
+
+// Async copy host memory to device.
+bool MemcpyHostToDeviceAsync(void *dst, const void *src, size_t size, const DeviceContext *device_context,
+                             size_t stream_id) {
+  MS_ERROR_IF_NULL(dst);
+  MS_ERROR_IF_NULL(src);
+  MS_ERROR_IF_NULL(device_context);
+
+  void *device_ptr = dst;
+  const void *host_ptr = src;
+
+  auto device_address =
+    device_context->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT, kTypeUnknown, ShapeVector());
+  MS_ERROR_IF_NULL(device_address);
+  RETURN_IF_FALSE_WITH_LOG(
+    device_address->AsyncHostToDevice({}, size, kTypeUnknown, host_ptr, device_context->GetStream(stream_id)),
+    "Async memcpy host to device failed.");
+
+  return true;
+}
+
+// Async copy device memory to host.
+bool MemcpyDeviceToHostAsync(void *dst, const void *src, size_t size, const DeviceContext *device_context,
+                             size_t stream_id) {
+  MS_ERROR_IF_NULL(dst);
+  MS_ERROR_IF_NULL(src);
+  MS_ERROR_IF_NULL(device_context);
+
+  void *device_ptr = const_cast<void *>(src);
+  void *host_ptr = dst;
+
+  auto device_address =
+    device_context->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT, kTypeUnknown, ShapeVector());
+  MS_ERROR_IF_NULL(device_address);
+  RETURN_IF_FALSE_WITH_LOG(
+    device_address->AsyncDeviceToHost({}, size, kTypeUnknown, host_ptr, device_context->GetStream(stream_id)),
+    "Async memcpy device to host failed.");
+
+  return true;
+}
 }  // namespace
 
 void EmbeddingCachePrefetchActor::Initialize() {
@@ -130,6 +170,12 @@ void EmbeddingCachePrefetchActor::Initialize() {
   if (!device_context_->CreateStream(&stream_id_)) {
     MS_LOG(EXCEPTION) << "Create stream failed.";
   }
+
+  BuildEmbeddingCacheLookupKernel();
+  BuildEmbeddingCacheUpdateKernel();
+
+  BuildRpcOperators();
+  LinkRpcOperators();
 }
 
 void EmbeddingCachePrefetchActor::Finalize() {
@@ -695,9 +741,20 @@ bool EmbeddingCachePrefetchActor::PushCacheFromDeviceToLocalHost(const HashTable
   auto swap_out_data = std::make_unique<float[]>(swap_indices_size * embedding_size);
 
   RETURN_IF_FALSE_WITH_LOG(
+    MemcpyHostToDeviceAsync(embedding_device_cache_->hash_swap_index_addr_, device_cache_device_to_host_index,
+                            swap_indices_size * sizeof(int), device_context_, stream_id_),
+    "Memcpy host to device asynchronously failed.");
+
+  RETURN_IF_FALSE_WITH_LOG(
     LookupDeviceCache(embedding_device_cache_->hash_swap_index_addr_, hash_table_addr, swap_indices_size,
                       cache_vocab_size, embedding_size, embedding_device_cache_->hash_swap_value_addr_),
     "Lookup device cache failed.");
+
+  RETURN_IF_FALSE_WITH_LOG(
+    MemcpyDeviceToHostAsync(swap_out_data.get(), embedding_device_cache_->hash_swap_value_addr_,
+                            swap_indices_size * embedding_size * sizeof(float), device_context_, stream_id_),
+    "Memcpy device to host asynchronously failed.");
+
   MS_ERROR_IF_NULL(device_context_);
   RETURN_IF_FALSE_WITH_LOG(device_context_->SyncStream(stream_id_), "Synchronize stream failed.");
   RETURN_IF_FALSE_WITH_LOG(
@@ -758,6 +815,15 @@ bool EmbeddingCachePrefetchActor::PullCacheFromLocalHostToDevice(const HashTable
   RETURN_IF_FALSE_WITH_LOG(LookupLocalHostCache(embedding_size, swap_indices_size, host_hash_table_addr,
                                                 host_cache_host_to_device_index, swap_out_data.get()),
                            "Lookup local host cache failed.");
+
+  RETURN_IF_FALSE_WITH_LOG(
+    MemcpyHostToDeviceAsync(embedding_device_cache_->hash_swap_value_addr_, swap_out_data.get(),
+                            swap_indices_size * embedding_size * sizeof(float), device_context_, stream_id_),
+    "Memcpy host to device asynchronously failed.");
+  RETURN_IF_FALSE_WITH_LOG(
+    MemcpyHostToDeviceAsync(embedding_device_cache_->hash_swap_index_addr_, device_cache_host_to_device_index,
+                            swap_indices_size * sizeof(int), device_context_, stream_id_),
+    "Memcpy host to device asynchronously failed.");
 
   RETURN_IF_FALSE_WITH_LOG(
     UpdateDeviceCache(embedding_device_cache_->hash_swap_index_addr_, embedding_device_cache_->hash_swap_value_addr_,
@@ -1058,6 +1124,8 @@ bool EmbeddingCachePrefetchActor::PartitionIdsAndEmbeddings(const int *ids, size
 bool EmbeddingCachePrefetchActor::SendToRemote(const std::string &cache_operation, int32_t param_key,
                                                size_t server_rank_id, size_t embedding_dim, const void *keys,
                                                size_t keys_len, const void *values, size_t values_len) {
+  MS_ERROR_IF_NULL(keys);
+  MS_ERROR_IF_NULL(values);
   // Find sender corresponding to cache operation and parameter key.
   auto iter = rpc_operators_.find(cache_operation);
   if (iter == rpc_operators_.end()) {
