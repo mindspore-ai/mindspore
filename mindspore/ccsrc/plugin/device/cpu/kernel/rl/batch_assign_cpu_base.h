@@ -17,11 +17,8 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KEREL_RL_BATCH_ASSIGN_CPU_BASE_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KEREL_RL_BATCH_ASSIGN_CPU_BASE_H_
 
-#include <string>
-#include <vector>
 #include <shared_mutex>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {

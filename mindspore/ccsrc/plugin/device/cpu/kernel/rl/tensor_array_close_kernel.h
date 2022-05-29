@@ -17,7 +17,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RL_TENSOR_ARRAY_CLOSE_KERNEL_H_
 
 #include <vector>
-#include <string>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -28,8 +27,8 @@ class TensorArrayCloseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   TensorArrayCloseCpuKernelMod();
   ~TensorArrayCloseCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
  protected:

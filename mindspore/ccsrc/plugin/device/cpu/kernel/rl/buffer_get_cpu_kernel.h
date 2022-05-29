@@ -56,7 +56,9 @@ class BufferGetCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     auto head_addr = GetDeviceAddress<int>(inputs, element_nums_ + 1);
     auto index_addr = GetDeviceAddress<int>(inputs, element_nums_ + kSecondInputIndex);
     int index = index_addr[0];
-    if (index_addr[0] < 0) index += count_addr[0];
+    if (index_addr[0] < 0) {
+      index += count_addr[0];
+    }
     if (!(index >= 0 && index < count_addr[0])) {
       MS_LOG(ERROR) << "The index " << index_addr[0] << " is out of range:[ " << -1 * count_addr[0] << ", "
                     << count_addr[0] << ").";

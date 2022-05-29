@@ -15,6 +15,7 @@
  */
 #include "plugin/device/cpu/kernel/rl/batch_assign_cpu_kernel.h"
 #include <memory>
+#include <functional>
 #include "kernel/common_utils.h"
 namespace mindspore {
 namespace kernel {
@@ -33,11 +34,9 @@ void BatchAssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   // Each list has the same elements number, shape series， type series.
   for (size_t i = 0; i < elements_num_; i++) {
     auto type = AnfAlgo::GetInputDeviceDataType(kernel_node, i);
-    size_t element_size = GetTypeByte(TypeIdToType(type));
     auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-    for (auto x : shape) {
-      element_size *= LongToSize(x);
-    }
+    auto element_size =
+      std::accumulate(shape.begin(), shape.end(), GetTypeByte(TypeIdToType(type)), std::multiplies<size_t>());
     input_size_list_.push_back(element_size);
   }
   // Set input size for another input list.
