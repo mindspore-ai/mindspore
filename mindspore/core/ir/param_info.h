@@ -45,6 +45,11 @@ class ParamInfo {
   bool init_in_server() const { return init_in_server_; }
   void set_init_in_server(bool init_in_server) { init_in_server_ = init_in_server; }
 
+  // Get the unique key of parameter.
+  int32_t key() const { return key_; }
+  // Set the unique key of parameter.
+  void set_key(int32_t key) { key_ = key; }
+
   bool layerwise_parallel() const { return layerwise_parallel_; }
   void set_layerwise_parallel(bool layerwise_parallel) { layerwise_parallel_ = layerwise_parallel; }
 
@@ -120,6 +125,8 @@ class ParamInfo {
   ParameterPtr parameter_{nullptr};
   bool requires_aggr_{true};
   std::vector<int64_t> parameter_shape_;
+  // Used to identify the same Parameter for Worker and Server in the embedding cache scenario.
+  int32_t key_{-1};
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_PARAM_INFO_H_
