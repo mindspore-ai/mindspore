@@ -907,7 +907,7 @@ class ReduceMin(_Reduce):
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
+          Only constant value is allowed. Must be in the range [-rank( `x`), rank( `x` )).
 
     Outputs:
         Tensor, has the same dtype as the `x`.
@@ -1029,7 +1029,7 @@ class ReduceProd(_Reduce):
         - **x** (Tensor[Number]) - The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-          Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
+          Only constant value is allowed. Must be in the range [-rank( `x` ), rank( `x` )).
 
     Outputs:
         Tensor, has the same dtype as the `x`.

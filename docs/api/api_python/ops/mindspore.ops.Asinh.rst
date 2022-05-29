@@ -5,8 +5,7 @@ mindspore.ops.Asinh
 
     逐元素计算输入Tensor的反双曲正弦值。
 
-    .. math::
-        out_i = \sinh^{-1}(x_i)
+    更多细节请参考 :func:`mindspore.ops.asinh` 。
 
     **输入：**
 

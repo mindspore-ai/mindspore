@@ -1,5 +1,5 @@
 mindspore.ops.SpaceToBatchND
-=============================
+============================
 
 .. py:class:: mindspore.ops.SpaceToBatchND(block_shape, paddings)
 
@@ -14,7 +14,8 @@ mindspore.ops.SpaceToBatchND
     **参数：**
 
     - **block_shape** (list[int], tuple[int], int) - 块形状描述空间维度为分割的个数。如果 `block_shape` 为list或者tuple，其长度 `M` 为空间维度的长度。如果 `block_shape` 为整数，那么所有空间维度分割的个数均为 `block_shape` 。在Ascend后端 `M` 必须为2。
-    - **paddings** (tuple, list) - 空间维度的填充大小。
+    - **paddings** (tuple, list) - 空间维度的填充大小。包含M个List，每一个List包含2个整形值，且各值须大于0。 `paddings[i]` 为对空间维度 `i` 的填充，对应输入Tensor的维度 `i+offset` ， `offset` 为空间维度在输入Tensor维度中的偏移量。 
+      对空间维度i， `input_shape[i+offset]+paddings[i][0]+paddings[i][1]` 必须能被 `block_shape[i]` 整除。
 
     **输入：**
 

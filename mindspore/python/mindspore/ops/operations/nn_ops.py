@@ -7383,15 +7383,17 @@ class DynamicGRUV2(PrimitiveWithInfer):
         - **x** (Tensor) - Current words.
           Tensor of shape :math:`(\text{num_step}, \text{batch_size}, \text{input_size})`.
           The data type must be float16.
-        - **weight_input** (Tensor) - Input-hidden weight.
+        - **weight_input** (Tensor) - Input-hidden weight :math:`W_{\{ir,iz,in\}}`.
           Tensor of shape :math:`(\text{input_size}, 3 \times \text{hidden_size})`.
           The data type must be float16.
-        - **weight_hidden** (Tensor) - Hidden-hidden weight.
+        - **weight_hidden** (Tensor) - Hidden-hidden weight :math:`W_{\{hr,hz,hn\}}`.
           Tensor of shape :math:`(\text{hidden_size}, 3 \times \text{hidden_size})`.
           The data type must be float16.
-        - **bias_input** (Tensor) - Input-hidden bias. Tensor of shape :math:`(3 \times \text{hidden_size})`, or None.
+        - **bias_input** (Tensor) - Input-hidden bias :math:`b_{\{ir,iz,in\}}`.
+          Tensor of shape :math:`(3 \times \text{hidden_size})`, or None.
           Has the same data type with input `init_h`.
-        - **bias_hidden** (Tensor) - Hidden-hidden bias. Tensor of shape :math:`(3 \times \text{hidden_size})`,
+        - **bias_hidden** (Tensor) - Hidden-hidden bias :math:`b_{\{hr,hz,hn\}}`.
+          Tensor of shape :math:`(3 \times \text{hidden_size})`,
           or None. Has the same data type with input `init_h`.
         - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(\text{batch_size})`.
           Only `None` is currently supported.
