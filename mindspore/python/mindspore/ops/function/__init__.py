@@ -128,6 +128,7 @@ from .math_func import (
     tensor_mod,
     floor_mod,
     floormod,
+    lcm,
     tensor_exp,
     exp,
     tensor_expm1,

@@ -1177,6 +1177,43 @@ class CumProd(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
 
 
+class Lcm(Primitive):
+    """
+    Computes least common multiplier of input tensors element-wise.
+    The shape of two inputs should be broadcastable, and data type of them should be
+    one of: int32, int64
+
+    Inputs:
+        - **x1** (Tensor) - The first input tensor.
+        - **x2** (Tensor) - The second input tensor.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is one
+        with higher digits in the two inputs.
+
+    Raises:
+        TypeError: If data type `x1` or `x2` is not int32 or int64.
+        ValueError: If shape of two inputs are not broadcastable.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([7, 8, 9]))
+        >>> x2 = Tensor(np.array([14, 6, 12]))
+        >>> lcm_ = ops.Lcm()
+        >>> y = lcm_(x1, x2)
+        >>> print(y)
+        [14 24 36]
+    """
+
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
+
+
 class Cdist(Primitive):
     """
     Computes batched the p-norm distance between each pair of the two collections of row vectors.
