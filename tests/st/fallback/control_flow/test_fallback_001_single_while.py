@@ -246,7 +246,6 @@ def test_single_while_numpy():
     assert (res.asnumpy() == [1, 1, 3, 4, 5]).all()
 
 
-@pytest.mark.skip(reason='Not support variable in graph fallback feature yet')
 def test_single_while_builtin_function_abs_tensor():
     """
     Feature: JIT Fallback
@@ -314,7 +313,6 @@ def test_single_while_builtin_function_abs():
     assert res_y == 3
 
 
-@pytest.mark.skip(reason='Not support variable in graph fallback feature yet')
 def test_single_while_builtin_function_max_tensor():
     """
     Feature: JIT Fallback
