@@ -35,7 +35,10 @@ class MIND_API Triu : public BaseOperator {
   /// \brief Constructor.
   Triu() : BaseOperator(kNameTriu) { InitIOName({"x"}, {"y"}); }
   /// \brief Init.
-  void Init() {}
+  void Init(const int diagonal = 0);
+  /// \brief Set diagonal.
+  void set_diagonal(const int diagonal);
+  int get_diagonal() const;
 };
 abstract::AbstractBasePtr TriuInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<abstract::AbstractBasePtr> &input_args);

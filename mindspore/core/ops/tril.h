@@ -32,6 +32,11 @@ class MIND_API Tril : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Tril);
   Tril() : BaseOperator(kNameTril) { InitIOName({"x"}, {"y"}); }
+  /// \brief Init.
+  void Init(const int64_t diagonal = 0);
+  /// \brief Set diagonal.
+  void set_diagonal(const int64_t diagonal);
+  int64_t get_diagonal() const;
 };
 
 abstract::AbstractBasePtr TrilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

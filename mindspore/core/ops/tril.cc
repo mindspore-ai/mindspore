@@ -32,9 +32,14 @@ abstract::ShapePtr TrilInferShape(const PrimitivePtr &primitive, const std::vect
   auto prim_name = primitive->name();
 
   const int64_t kShapeSize = 2;
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto x_shape = shape_map[kShape];
+  auto min_shape = shape_map[kMinShape];
+  auto max_shape = shape_map[kMaxShape];
   (void)CheckAndConvertUtils::CheckInteger("x's rank", x_shape.size(), kGreaterEqual, kShapeSize, prim_name);
-
+  if (min_shape.size() != 0 && max_shape.size() != 0) {
+    return std::make_shared<abstract::Shape>(x_shape, min_shape, max_shape);
+  }
   return std::make_shared<abstract::Shape>(x_shape);
 }
 
@@ -50,6 +55,12 @@ TypePtr TrilInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   return x_type;
 }
 }  // namespace
+
+void Tril::Init(const int64_t diagonal) { set_diagonal(diagonal); }
+
+void Tril::set_diagonal(const int64_t diagonal) { (void)this->AddAttr(kDiagonal, api::MakeValue(diagonal)); }
+
+int64_t Tril::get_diagonal() const { return GetValue<int64_t>(GetAttr(kDiagonal)); }
 
 AbstractBasePtr TrilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {

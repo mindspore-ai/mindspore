@@ -4585,13 +4585,13 @@ class Triu(Primitive):
         ValueError: If length of shape of x is less than 1.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...              [ 5,  6,  7,  8],
-        ...              [10, 11, 12, 13],
-        ...              [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> triu = P.Triu()
         >>> result = triu(x)
         >>> print(result)
@@ -4600,9 +4600,9 @@ class Triu(Primitive):
          [ 0  0 12 13]
          [ 0  0  0 17]]
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...              [ 5,  6,  7,  8],
-        ...              [10, 11, 12, 13],
-        ...              [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> triu = P.Triu(diagonal=1)
         >>> result = triu(x)
         >>> print(result)
@@ -4611,9 +4611,9 @@ class Triu(Primitive):
          [ 0  0  0 13]
          [ 0  0  0  0]]
         >>> x = Tensor(np.array([[ 1,  2,  3,  4],
-        ...               [ 5,  6,  7,  8],
-        ...               [10, 11, 12, 13],
-        ...               [14, 15, 16, 17]]))
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
         >>> triu = P.Triu(diagonal=-1)
         >>> result = triu(x)
         >>> print(result)
@@ -4625,7 +4625,7 @@ class Triu(Primitive):
 
     @prim_attr_register
     def __init__(self, diagonal=0):
-        """Initialize Stack"""
+        """Initialize Triu"""
         validator.check_value_type("diagonal", diagonal, [int], self.name)
         self.diagonal = diagonal
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
@@ -7574,14 +7574,42 @@ class Tril(Primitive):
         ValueError: If the rank of `x` is less than 2.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
-        >>> tril = ops.Tril()
-        >>> output = tril(Tensor(np.array([[-13.5383, 2.5474, ], [-5.7496, -3.4548]]), mindspore.float32))
-        >>> print(output)
-        [[ -13.5383  0.    ]
-         [  -5.7496 -3.4548]]
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
+        >>> tril = P.Tril()
+        >>> result = tril(x)
+        >>> print(result)
+        [[ 1  0  0  0]
+         [ 5  6  0  0]
+         [10 11 12  0]
+         [14 15 16 17]]
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
+        >>> tril = P.Tril(diagonal=1)
+        >>> result = tril(x)
+        >>> print(result)
+        [[ 1  2  0  0]
+         [ 5  6  7  0]
+         [10 11 12 13]
+         [14 15 16 17]]
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...                      [ 5,  6,  7,  8],
+        ...                      [10, 11, 12, 13],
+        ...                      [14, 15, 16, 17]]))
+        >>> tril = P.Tril(diagonal=-1)
+        >>> result = tril(x)
+        >>> print(result)
+        [[ 0  0  0  0]
+         [ 5  0  0  0]
+         [10 11  0  0]
+         [14 15 16  0]]
     """
 
     @prim_attr_register
