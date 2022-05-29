@@ -15,11 +15,44 @@
  */
 
 #include "plugin/device/cpu/kernel/rpc/rpc_recv_kernel.h"
+#include <map>
 #include <utility>
 #include <algorithm>
 
 namespace mindspore {
 namespace kernel {
+int RpcRecvKernelMod::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  // Reassign the memory size of recv kernel's inputs.
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto int64_shape = inputs[i]->GetShapeVector();
+    std::vector<size_t> size_t_shape = {};
+    if (AnfUtils::IsShapeDynamic(int64_shape)) {
+      MS_LOG(EXCEPTION) << "The recv kernel's input " << i << " shape inferred is still dynamic:" << int64_shape;
+    }
+    std::transform(int64_shape.begin(), int64_shape.end(), std::back_inserter(size_t_shape), LongToSize);
+
+    int64_t size = 1;
+    GetShapeSize(size_t_shape, TypeIdToType(inputs[i]->GetDtype()), &size);
+    input_size_list_[i] = LongToSize(size);
+  }
+  // Reassign the memory size of recv kernel's outputs.
+  for (size_t i = 0; i < outputs.size(); i++) {
+    auto int64_shape = outputs[i]->GetShapeVector();
+    std::vector<size_t> size_t_shape;
+    if (AnfUtils::IsShapeDynamic(int64_shape)) {
+      MS_LOG(EXCEPTION) << "The recv kernel's output " << i << " shape inferred is still dynamic:" << int64_shape;
+    }
+    std::transform(int64_shape.begin(), int64_shape.end(), std::back_inserter(size_t_shape), LongToSize);
+
+    int64_t size = 1;
+    GetShapeSize(size_t_shape, TypeIdToType(outputs[i]->GetDtype()), &size);
+    output_size_list_[i] = LongToSize(size);
+  }
+  return 0;
+}
+
 std::vector<KernelAttr> RpcRecvKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddAllOutInRef(true)};
   return support_list;

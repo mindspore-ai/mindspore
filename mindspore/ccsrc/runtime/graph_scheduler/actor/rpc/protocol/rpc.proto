@@ -19,5 +19,5 @@ package mindspore.runtime.rpc;
 
 message DynamicShapeMessage {
   repeated int64 shape_vector = 1;
-  uint32 element_size = 2;
+  int32 type_id = 2;
 }

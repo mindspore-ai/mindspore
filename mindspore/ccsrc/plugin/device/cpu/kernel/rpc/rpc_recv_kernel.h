@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RPC_RPC_RECV_KERNEL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RPC_RPC_RECV_KERNEL_H_
 
+#include <map>
 #include <vector>
 #include <utility>
 #include "plugin/device/cpu/kernel/rpc/rpc_kernel.h"
@@ -38,14 +39,28 @@ class RpcRecvKernelMod : public RpcKernelMod {
     }
 
     MS_EXCEPTION_IF_NULL(remote_input_);
-    size_t offset = 0;
-    for (size_t i = 0; i < inputs.size(); i++) {
-      MS_EXCEPTION_IF_NULL(inputs[i]->addr);
-      int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, remote_input_->Body().data() + offset, inputs[i]->size);
-      if (ret != 0) {
-        MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
+    if (is_dynamic_shape_) {
+      if (real_data_offset_.empty()) {
+        MS_LOG(EXCEPTION) << "Dynamic shape data must have data offsets.";
       }
-      offset += inputs[i]->size;
+      for (size_t i = 0; i < inputs.size(); i++) {
+        MS_EXCEPTION_IF_NULL(inputs[i]->addr);
+        int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, remote_input_->Body().data() + real_data_offset_[i],
+                           inputs[i]->size);
+        if (ret != 0) {
+          MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
+        }
+      }
+    } else {
+      size_t offset = 0;
+      for (size_t i = 0; i < inputs.size(); i++) {
+        MS_EXCEPTION_IF_NULL(inputs[i]->addr);
+        int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, remote_input_->Body().data() + offset, inputs[i]->size);
+        if (ret != 0) {
+          MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
+        }
+        offset += inputs[i]->size;
+      }
     }
 
     // Pay attention that the remote_input_ is a pointer of MessageBase which is allocated as heap memory by rpc module.
@@ -60,7 +75,15 @@ class RpcRecvKernelMod : public RpcKernelMod {
     if (HasAbstractUMonad(input0) || HasAbstractIOMonad(input0)) {
       recv_monad_ = true;
     }
+    is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_node);
   }
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
+  void set_real_data_offset(const std::vector<size_t> &real_data_offset) { real_data_offset_ = real_data_offset; }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -68,6 +91,12 @@ class RpcRecvKernelMod : public RpcKernelMod {
  private:
   // Whether this RpcRecv node receives a monda data.
   bool recv_monad_;
+
+  // When this kernel receives dynamic shape data, the data must be parsed by offset set by RecvActor.
+  std::vector<size_t> real_data_offset_;
+
+  // Whether this kernel receives dynamic shape data.
+  bool is_dynamic_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

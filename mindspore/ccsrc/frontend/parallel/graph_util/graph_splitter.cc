@@ -63,6 +63,7 @@ ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_
     fake_tensor = std::make_shared<tensor::Tensor>(origin_abstract->element()->BuildType()->type_id(),
                                                    origin_abstract->shape()->shape());
     MS_EXCEPTION_IF_NULL(fake_tensor);
+    fake_tensor->set_base_shape(origin_abstract->shape()->Clone());
   } else {
     fake_tensor = std::make_shared<tensor::Tensor>(1.0);
     MS_EXCEPTION_IF_NULL(fake_tensor);

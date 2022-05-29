@@ -117,6 +117,7 @@ class MS_CORE_API AnfUtils {
                                       const AnfNodePtr &initop);
   static AnfNodePtr GetCustomInferopNode(const AnfNodePtr &base_cnode);
   static mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> &GetRealInputNodes(const CNodePtr &cnode);
+  static std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape);
 };
 
 //

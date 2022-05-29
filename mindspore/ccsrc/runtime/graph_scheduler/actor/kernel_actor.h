@@ -59,9 +59,9 @@ class KernelActor : public DebugAwareActor {
               const std::set<size_t> &modifiable_ref_output_indexes,
               const KernelTransformType &type = KernelTransformType::kKernelActor)
       : DebugAwareActor(name, type, recorder_aid, memory_manager_aid, debug_aid),
-        kernel_info_(nullptr),
         kernel_(kernel),
         is_dynamic_shape_(false),
+        kernel_info_(nullptr),
         real_input_num_(0),
         strategy_(strategy),
         modifiable_ref_input_indexes_(modifiable_ref_input_indexes),
@@ -91,6 +91,9 @@ class KernelActor : public DebugAwareActor {
   void Run(OpContext<DeviceTensor> *const context) override;
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
+  // The info of kernel.
+  CNodePtr kernel_;
+  bool is_dynamic_shape_;
   KernelInfo *kernel_info_;
   // The kernel launch info is fetched by the device tensors.
   KernelLaunchInfo launch_info_;
@@ -114,10 +117,6 @@ class KernelActor : public DebugAwareActor {
   void PostLaunchKernel(OpContext<DeviceTensor> *const context);
   // Back refresh the dynamic device tensor stores that have been triggered copy.
   void RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const context);
-
-  // The info of kernel.
-  CNodePtr kernel_;
-  bool is_dynamic_shape_;
 
   // The real input number of kernel launch.
   size_t real_input_num_;

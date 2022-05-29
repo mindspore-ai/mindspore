@@ -26,6 +26,7 @@
 #include "distributed/cluster/cluster_context.h"
 #include "distributed/rpc/tcp/tcp_client.h"
 #include "distributed/rpc/tcp/tcp_server.h"
+#include "proto/rpc.pb.h"
 
 namespace mindspore {
 namespace runtime {
@@ -39,6 +40,9 @@ using ps::core::ActorAddress;
 
 // The inter-process edge mark between two nodes.
 constexpr char kInterProcessEdgeMark[] = "->";
+
+// The magic header of the rpc data which indicates this message contains dynamic shape data.
+constexpr char kRpcDynamicShapeData[] = "RPC_DYNAMIC_SHAPE_DATA";
 
 // RpcActor is used to do rpc with other processes in distributed execution.
 // Besides data arrows and controlling arrows, RpcActor also has inter-process arrows which is in charge of remote

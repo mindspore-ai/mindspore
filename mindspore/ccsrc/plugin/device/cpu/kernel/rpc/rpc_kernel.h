@@ -36,8 +36,9 @@ class RpcKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override { return; }
 
-  // Set remote data as input.
+  // Set and get remote data as input.
   void SetRemoteInput(MessageBase *const msg) { remote_input_ = msg; }
+  MessageBase *GetRemoteInput() { return remote_input_; }
 
  protected:
   MessageBase *remote_input_;
