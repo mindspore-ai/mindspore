@@ -2402,7 +2402,7 @@ class Log1p(Primitive):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
