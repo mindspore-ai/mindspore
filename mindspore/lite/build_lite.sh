@@ -130,10 +130,6 @@ build_lite_jni_and_jar() {
       gradle wrapper --gradle-version 6.6.1 --distribution-type all
       gradle_command=${LITE_JAVA_PATH}/java/gradlew
     fi
-    # build java common
-    ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/common
-    ${gradle_command} build -p ${LITE_JAVA_PATH}/java/common
-    cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/${NATIVE_PATH_ARCH}/libs/
 
     # build java fl_client
     if [[ "X$is_train" = "Xon" ]]; then
@@ -570,9 +566,6 @@ build_aar() {
       gradle wrapper --gradle-version 6.6.1 --distribution-type all
       gradle_command=${LITE_JAVA_PATH}/java/gradlew
     fi
-    # build common module
-    ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/common
-    ${gradle_command} build -p ${LITE_JAVA_PATH}/java/common
     # build new java api module
     ${gradle_command} clean -p ${LITE_JAVA_PATH}/
     ${gradle_command} build -p ${LITE_JAVA_PATH}/ -x test
@@ -598,8 +591,8 @@ build_aar() {
         rm -rf ${LITE_JAVA_PATH}/java/fl_client/.gradle ${LITE_JAVA_PATH}/java/fl_client/src/main/java/mindspore
     fi
 
-    cp ${LITE_JAVA_PATH}/java/common/build/libs/mindspore-lite-java-common.jar ${LITE_JAVA_PATH}/java/app/libs
     cp ${LITE_JAVA_PATH}/build/libs/mindspore-lite-java.jar ${LITE_JAVA_PATH}/java/app/libs
+    # build aar
     ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/app
     ${gradle_command} assembleRelease  -p ${LITE_JAVA_PATH}/java/app
 

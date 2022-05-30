@@ -8,6 +8,4 @@
  */
 
 include ':app'
-include ':common'
-include ':linux_x86'
 rootProject.name = 'mindspore-lite-aar'
