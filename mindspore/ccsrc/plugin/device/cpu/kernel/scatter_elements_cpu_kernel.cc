@@ -89,7 +89,7 @@ int ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   for (size_t i = 0; i < input_dims_; ++i) {
     if (axis_ != static_cast<int64_t>(i) && input_shape[i] < indices_shape_[i]) {
       MS_LOG(ERROR) << "For '" << kernel_name_
-                    << "', the indices dims should be less than input dims, but got indice dim is: "
+                    << "', the indices dims should be less than input dims, but got indices dim is: "
                     << indices_shape_[i] << " at axis: " << i << ", while input dim is:" << input_shape[i];
       return KRET_RESIZE_FAILED;
     }
@@ -99,58 +99,46 @@ int ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   indices_total_num_ =
     std::accumulate(indices_shape_.begin(), indices_shape_.end(), size_t(1), std::multiplies<size_t>());
-  adjusted_indices_.resize(indices_total_num_);
 
-  output_stride_.resize(input_dims_);
-  output_stride_.back() = 1;
-  for (int i = static_cast<int>(input_dims_ - 2); i >= 0; --i) {
-    output_stride_[i] = input_shape[i + 1] * output_stride_[i + 1];
+  // calculate indices_stride
+  indices_stride_.resize(input_dims_, 1);
+  for (size_t i = input_dims_ - 1; i > 0; --i) {
+    indices_stride_[i - 1] = indices_stride_[i] * indices_shape_[i];
   }
-  output_dim_index_.resize(input_dims_);
-  output_dim_index_.assign(input_dims_, 0);
+
+  // calculate output_stride
+  output_stride_.resize(input_dims_, 1);
+  for (size_t i = input_dims_ - 1; i > 0; --i) {
+    output_stride_[i - 1] = output_stride_[i] * input_shape[i];
+  }
   return KRET_OK;
-}
-
-size_t ScatterElementsCpuKernelMod::ComputeOutputOffset(const int64_t &index) {
-  size_t output_offset = 0;
-  for (size_t i = 0; i < input_dims_; ++i) {
-    if (static_cast<int64_t>(i) == axis_) {
-      output_offset += index * output_stride_[i];
-    } else {
-      output_offset += output_dim_index_[i] * output_stride_[i];
-    }
-  }
-  return output_offset;
-}
-
-void ScatterElementsCpuKernelMod::UpdateOutputDimIndex() {
-  for (int i = static_cast<int>(input_dims_ - 1); i >= 0; --i) {
-    auto cur = ++output_dim_index_[i];
-    if (static_cast<int64_t>(cur) < indices_shape_[i]) {
-      break;
-    }
-    output_dim_index_[i] = 0;
-  }
-  return;
 }
 
 template <typename T, typename S, typename ReductionT>
 bool ScatterElementsCpuKernelMod::Scatter(const ReductionT &reduction_func, T *output, const S *indices,
                                           const T *updates) {
-  for (size_t i = 0; i < indices_total_num_; ++i) {
-    int64_t index = static_cast<int64_t>(indices[i]);
-    if (index >= input_axis_size_ || index < -input_axis_size_) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', index: " << index << " is expected to be within bounds ["
-                    << -input_axis_size_ << ", " << input_axis_size_ << ")";
-      return false;
+  auto task = [reduction_func, output, indices, updates, this](size_t start, size_t end) {
+    for (size_t index = start; index < end; index++) {
+      int remain = index;
+      int output_offset = 0;
+      for (size_t i = 0; i < this->input_dims_; ++i) {
+        int output_dim_index = remain / this->indices_stride_[i];
+        remain %= this->indices_stride_[i];
+        if (i == static_cast<size_t>(this->axis_)) {
+          output_dim_index = *(indices + index);
+          if (output_dim_index >= this->input_axis_size_ || output_dim_index < -this->input_axis_size_) {
+            return;
+          }
+          if (output_dim_index < 0) {
+            output_dim_index += this->input_axis_size_;
+          }
+        }
+        output_offset += this->output_stride_[i] * output_dim_index;
+      }
+      reduction_func(output + output_offset, *(updates + index));
     }
-    if (index < 0) {
-      index += input_axis_size_;
-    }
-    auto output_offset = ComputeOutputOffset(index);
-    reduction_func(output + output_offset, *(updates + i));
-    UpdateOutputDimIndex();
-  }
+  };
+  ParallelLaunchAutoSearch(task, indices_total_num_, this, &parallel_search_info_, pool_);
   return true;
 }
 

@@ -46,7 +46,7 @@ bool ReLUV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
       output[i] = p ? v : static_cast<T>(0);
     }
   };
-  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_, pool_);
   return true;
 }
 
