@@ -113,6 +113,12 @@ bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
                                            const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBroadcastToOutputsNum, kernel_name_);
   CheckArgs();
+
+  if (std::find(input_shape_.begin(), input_shape_.end(), 0) != input_shape_.end() &&
+      std::find(output_shape_.begin(), output_shape_.end(), 0) != output_shape_.end()) {
+    return true;
+  }
+
   const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   int status = static_cast<int>(NNACL_OK);
