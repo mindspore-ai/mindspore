@@ -48,6 +48,8 @@ class ComputeGraphNode : public NodeBase {
 
   // Write and read user defined metadata to the meta server node.
   bool PutMetadata(const std::string &name, const std::string &value);
+  bool PutMetadata(const std::string &name, const void *value, const size_t &size);
+
   std::string GetMetadata(const std::string &name, uint32_t timeout = 5);
 
  private:

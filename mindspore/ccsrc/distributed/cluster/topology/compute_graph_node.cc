@@ -256,6 +256,13 @@ bool ComputeGraphNode::PutMetadata(const std::string &name, const std::string &v
   return SendMessageToMSN(std::to_string(static_cast<int>(MessageName::kWriteMetadata)), metadata.SerializeAsString());
 }
 
+bool ComputeGraphNode::PutMetadata(const std::string &name, const void *value, const size_t &size) {
+  MetadataMessage metadata;
+  metadata.set_name(name);
+  metadata.set_value(value, size);
+  return SendMessageToMSN(std::to_string(static_cast<int>(MessageName::kWriteMetadata)), metadata.SerializeAsString());
+}
+
 std::string ComputeGraphNode::GetMetadata(const std::string &name, uint32_t timeout) {
   MetadataMessage metadata;
   metadata.set_name(name);
