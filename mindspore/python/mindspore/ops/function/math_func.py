@@ -34,6 +34,14 @@ def _make_tensor(val, dtype):
     return Tensor(val, dtype)
 
 
+@constexpr
+def get_x_shape(x_shape):
+    s = 1
+    for i in x_shape:
+        s = s * i
+    return (s,)
+
+
 #####################################
 # Public Operation Functions.
 #####################################
@@ -2371,6 +2379,56 @@ def logaddexp2(x1, x2):
     return log_op(add_exp) / log_op(tensor_2)
 
 
+def mv(mat, vec):
+    """
+    Multiplies matrix `mat` and vector `vec`.
+
+    If mat is a :math:`(N, M)` tensor, vec is a 1-D tensor of size :math:`M`, out will be 1-D of size :math:`N`.
+
+    Args:
+        mat (Tensor): Input matrix of the tensor. The shape of the tensor is :math:`(N, M)`.
+        vec (Tensor): Input vector of the tensor. The shape of the tensor is :math:`(M,)`.
+
+    Outputs:
+        Tensor, the shape of the output tensor is :math:`(N,)`.
+
+    Raises:
+        TypeError: If `mat`, `vec` is not a Tensor.
+        ValueError: If `mat` is not a 2-D Tensor.
+            If `vec` is not a 1-D Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> mat = Tensor(np.array([[3., 4.], [1., 6.], [1., 3.]]).astype(np.float32))
+        >>> vec = Tensor(np.array([1., 2.]).astype(np.float32))
+        >>> output = mv(mat, vec)
+        >>> print(output)
+        [11. 13. 7.]
+    """
+
+    matmul_op = P.MatMul()
+    reshape_op = P.Reshape()
+
+    if not isinstance(mat, (Tensor, Tensor_)):
+        raise TypeError("The input mat must be Tensor.")
+    if not isinstance(vec, (Tensor, Tensor_)):
+        raise TypeError("The input vec must be Tensor.")
+    if len(mat.shape) != 2:
+        raise ValueError("The input mat must be 2-D Tensor.")
+    if len(vec.shape) != 1:
+        raise ValueError("The input vec must be 1-D Tensor.")
+
+    length_vec = get_x_shape(vec.shape)
+    vec = reshape_op(vec, (length_vec[0], 1))
+
+    out = matmul_op(mat, vec)
+    out = out.T
+    out = out[0]
+    return out
+
+
 def cdist(x, y, p=2.0):
     """
     Computes batched the p-norm distance between each pair of the two collections of row vectors.
@@ -2711,6 +2769,7 @@ __all__ = [
     'lp_norm',
     'tensor_gt',
     'logaddexp',
+    'mv',
     'gt',
     'tensor_ge',
     'ge',

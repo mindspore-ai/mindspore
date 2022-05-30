@@ -407,6 +407,15 @@ class LogAddExp2Func(nn.Cell):
         return y
 
 
+class MvFunc(nn.Cell):
+    def __init__(self):
+        super(MvFunc, self).__init__()
+        self.mv = ops.mv
+
+    def construct(self, mat, vec):
+        return self.mv(mat, vec)
+
+
 class Exp2Func(nn.Cell):
     def __init__(self):
         super(Exp2Func, self).__init__()
@@ -500,6 +509,13 @@ test_case_math_ops = [
         'block': LogAddExpFunc(),
         'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
         'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
+    }),
+    ('Mv', {
+        'block': MvFunc(),
+        'desc_inputs': [Tensor(np.array([[3., 4.], [1., 6.], [1., 3.]])),
+                        Tensor(np.array([1., 2.]))],
+        'desc_bprop': [Tensor(np.array([[3., 4.], [1., 6.], [1., 3.]])),
+                       Tensor(np.array([1., 2.]))],
     }),
     ('Exp2', {
         'block': Exp2Func(),
