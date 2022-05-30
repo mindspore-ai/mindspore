@@ -42,10 +42,16 @@ DE_PY_BORDER_TYPE = {Border.CONSTANT: 'constant',
                      Border.REFLECT: 'reflect',
                      Border.SYMMETRIC: 'symmetric'}
 
-DE_PY_INTER_MODE = {Inter.NEAREST: Image.NEAREST,
-                    Inter.ANTIALIAS: Image.ANTIALIAS,
-                    Inter.LINEAR: Image.LINEAR,
-                    Inter.CUBIC: Image.CUBIC}
+if Image.__version__ >= "9.1.0":
+    DE_PY_INTER_MODE = {Inter.NEAREST: Image.Resampling.NEAREST,
+                        Inter.ANTIALIAS: Image.Resampling.LANCZOS,
+                        Inter.LINEAR: Image.Resampling.BILINEAR,
+                        Inter.CUBIC: Image.Resampling.BICUBIC}
+else:
+    DE_PY_INTER_MODE = {Inter.NEAREST: Image.NEAREST,
+                        Inter.ANTIALIAS: Image.ANTIALIAS,
+                        Inter.LINEAR: Image.LINEAR,
+                        Inter.CUBIC: Image.CUBIC}
 
 
 class AdjustGamma(py_transforms.PyTensorOperation):
