@@ -467,9 +467,10 @@ bool AscendDeviceAddress::SyncDeviceToDeviceWithDiffFormatType(const DeviceSync 
   BindDevice();
   auto host_shape = src_device_address->host_shape();
   if (host_shape.empty()) {
-    MS_LOG(ERROR) << "host shape is empty, please check whether the host shape of source device address"
-                  << src_device_address << " is set.";
-    return false;
+    MS_LOG(WARNING) << "Host shape of source device address is empty, emplace back shape [1],  device address size: "
+                    << src_device_address->GetSize()
+                    << ", device address type: " << TypeIdLabel(src_device_address->type_id());
+    host_shape.emplace_back(1);
   }
   auto host_tensor = std::make_shared<tensor::Tensor>(src_device_address->type_id(), host_shape);
   auto host_tensor_size = LongToSize(host_tensor->data().nbytes());
