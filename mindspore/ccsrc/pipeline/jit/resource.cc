@@ -244,6 +244,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"unique_consecutive", std::string("unique_consecutive")},          // UniqueConsecutive()
        {"diag", std::string("diag")},                                      // P.Diag()
        {"pdist", std::string("pdist")},                                    // F.pdist()
+       {"adaptive_max_pool2d", std::string("adaptive_max_pool2d")},        // P.AdaptiveMaxPool2D
      }},
     {kObjectTypeRowTensorType,
      {

@@ -80,6 +80,7 @@ from .array_func import (
     masked_select,
     meshgrid,
     fills,
+    adaptive_max_pool2d,
 )
 from .parameter_func import (
     assign,

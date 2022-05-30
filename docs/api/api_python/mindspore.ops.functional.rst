@@ -279,6 +279,7 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.adaptive_max_pool2d
     mindspore.ops.diag
     mindspore.ops.expand_dims
     mindspore.ops.gather

@@ -22,6 +22,7 @@ from mindspore.ops.primitive import constexpr
 from ..operations.array_ops import UniqueConsecutive
 from ..operations.array_ops import NonZero, MatrixDiagV3
 from ..operations.array_ops import Fills
+from ..operations.nn_ops import AdaptiveMaxPool2D
 from ...common import Tensor
 
 eye_ = P.Eye()
@@ -2130,6 +2131,88 @@ def meshgrid(inputs, indexing='xy'):
     return meshgrid_op(inputs)
 
 
+def adaptive_max_pool2d(input_x, output_size, return_indices=False):
+    r"""
+    adaptive_max_pool2d operation.
+
+    This operator applies a 2D adaptive max pooling to an input signal composed of multiple input planes.
+    That is, for any input size, the size of the specified output is H x W.
+    The number of output features is equal to the number of input planes.
+
+    The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
+    H is the feature height, and W is the feature width.
+
+    .. math::
+
+        \begin{align}
+        h_{start} &= floor(i * H_{in} / H_{out})\\
+        h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\
+        w_{start} &= floor(j * W_{in} / W_{out})\\
+        w_{end} &= ceil((j + 1) * W_{in} / W_{out})\\
+        Output(i,j) &= {\max Input[h_{start}:h_{end}, w_{start}:w_{end}]}
+        \end{align}
+
+    Args:
+        input_x (Tensor) - The input of adaptive_max_pool2d, which is a 3D or 4D tensor,
+          with float16, float32 or float64 data type.
+
+        output_size (Union[int, tuple]): The target output size is H x W.
+            ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
+            which means the output size is the same as the input.
+
+        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
+            Default: False.
+
+    Returns:
+        Tensor, with the same type as the `input_x`.
+
+        Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
+
+    Raises:
+        ValueError: If `output_size` is not int or tuole.
+        ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
+        TypeError: If `input_x` is not a tensor.
+        TypeError: If `return_indices` is not a bool.
+        TypeError: If dtype of `input_x` is not float16, float32 or float64.
+        ValueError: If the dimension of `input_x` is not NCHW or CHW.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> # case 1: output_size=(None, 2)
+        >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
+        >>> output = F.adaptive_max_pool2d(input_x, (None, 2))
+        >>> print(output)
+        [[[2. 3.]
+          [5. 6.]
+          [8. 9.]]
+         [[2. 3.]
+          [5. 6.]
+          [8. 9.]]
+         [[2. 3.]
+          [5. 6.]
+          [8. 9.]]]
+        >>> # case 2: output_size=2
+        >>> output = F.adaptive_max_pool2d(input_x, 2)
+        >>> print(output)
+        [[[5. 6.]
+          [8. 9.]]
+         [[5. 6.]
+          [8. 9.]]
+         [[5. 6.]
+          [8. 9.]]]
+        >>> # case 3: output_size=(1, 2)
+        >>> output = F.adaptive_max_pool2d(input_x, (1, 2))
+        >>> print(output)
+        [[[8. 9.]]
+         [[8. 9.]]
+         [[8. 9.]]]
+    """
+    return AdaptiveMaxPool2D(output_size, return_indices)(input_x)
+
 ##############################
 # Type Conversion Functions.
 ##############################
@@ -2508,6 +2591,7 @@ __all__ = [
     'nonzero',
     'matrix_diag',
     'diag',
-    'meshgrid'
+    'meshgrid',
+    'adaptive_max_pool2d'
 ]
 __all__.sort()
