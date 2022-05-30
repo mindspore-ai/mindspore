@@ -184,8 +184,6 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   FuncGraphPtr GenerateGraph(const AbstractBasePtrList &args_spec_list);
   void set_is_generate(bool generated) { is_generated_ = generated; }
   bool is_generated() const { return is_generated_; }
-  void set_is_bprop(bool is_brop) { is_bprop_ = is_brop; }
-  bool is_bprop() const { return is_bprop_; }
 
   mindspore::HashMap<std::string, ValuePtr> &attrs() { return attrs_; }
   void set_attrs(const mindspore::HashMap<std::string, ValuePtr> &attrs) {
@@ -193,7 +191,7 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
       attrs_[attr.first] = attr.second;
     }
   }
-  bool has_flag(const std::string &key);
+  bool has_flag(const std::string &key) const;
   void set_flag(const std::string &key, bool flag) { attrs_[key] = MakeValue(flag); }
   void erase_flag(const std::string &key) { (void)attrs_.erase(key); }
 
@@ -425,9 +423,6 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   size_t hyper_param_count_;
   // Argument input list for the graph used to generate this graph.
   bool is_generated_;
-
-  bool is_bprop_;
-
   // CNode that calls 'return' primitive.
   // We use shared pointer to manage it.
   CNodePtr return_;

@@ -161,12 +161,10 @@ void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, cons
     }
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     if (output_address != nullptr && output_address->GetDeviceType() == device_context->GetDeviceType()) {
-      // The input of PyNative bprop graph is ValueNode.
-      // Setting the address to the ValueNode will lead to memory leak.
-      if (!graph->is_bprop()) {
-        AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
-                               value_node.get());
-      }
+      // We need to set tensor->device_address to ValueNode even if the tensor is a forward_output tensor
+      // in PyNative Bprop graph. ValueNode device_address is necessary for GraphSchedule::Transform.
+      AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
+                             value_node.get());
       continue;
     }
 
@@ -369,18 +367,6 @@ void SetSummaryNodesRefCount(const KernelGraph *graph) {
   }
 }
 
-void UpdateRefCountForGraphOutput(const std::vector<KernelWithIndex> &output_with_index) {
-  for (const auto &item_with_index : output_with_index) {
-    if (!AnfAlgo::OutputAddrExist(item_with_index.first, item_with_index.second, false)) {
-      continue;
-    }
-    auto device_address = AnfAlgo::GetMutableOutputAddr(item_with_index.first, item_with_index.second, false);
-    MS_EXCEPTION_IF_NULL(device_address);
-    device_address->set_original_ref_count(SIZE_MAX);
-    device_address->ResetRefCount();
-  }
-}
-
 void SetGraphInputNodeActualAbstract(const session::OpRunInfo &op_run_info, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   if (!op_run_info.output_is_dynamic_shape && !op_run_info.input_is_dynamic_shape) {
@@ -446,11 +432,13 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
     MS_EXCEPTION_IF_NULL(session_);
     // Graph kernel does not support pynative mode now, print a warning here.
     graphkernel::GraphKernelFlags::GetInstance().CheckSupport();
-    session_->InitAllBucket(graph, device_context);
     graph_id = graph->graph_id();
   } else {
     graph_id = CompileGraphImpl(graph, device_context);
   }
+  session_->InitAllBucket(graph, device_context);
+
+  graph->set_front_outputs(outputs);
 
   session_->DumpGraphs({graph});
 
@@ -559,7 +547,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
 
   MS_EXCEPTION_IF_NULL(session_);
-  session_->InitAllBucket(graph, device_context);
   SetSummaryNodesRefCount(graph.get());
 #ifdef ENABLE_DUMP_IR
   // Dump .pb graph after graph optimization.
@@ -629,7 +616,6 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
     (void)outputs_with_index.emplace_back(common::AnfAlgo::VisitKernelWithReturnType(node, 0, false));
   }
 
-  UpdateRefCountForGraphOutput(outputs_with_index);
   AnfAlgo::UpdateGraphValidRefPair(graph);
   return graph->graph_id();
 }

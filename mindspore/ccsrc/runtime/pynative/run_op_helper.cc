@@ -105,7 +105,6 @@ void UpdateInputNodeDeviceAddress(const std::vector<AnfNodePtr> &input_nodes,
       input_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
       node_address->set_from_persistent_mem(input_tensor->is_parameter());
       node_address->SetNodeIndex(input_node, 0);
-      UpdateRefCount(node_address.get(), true);
     }
 
     // The DeviceType and format of DeviceAddress is always the same after UpdateInputTensor
@@ -174,7 +173,6 @@ void CopyValueNodeTensorToDevice(const ValueNodePtr &node, const device::DeviceC
       return;
     }
     tensor->set_device_address(node_address);
-    UpdateRefCount(node_address.get(), true);
     CopyTensorDataToDevice(tensor, node, device_context);
   }
 }

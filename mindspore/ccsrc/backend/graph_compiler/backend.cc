@@ -37,6 +37,7 @@
 #include "runtime/hardware/device_context_manager.h"
 #include "runtime/graph_scheduler/graph_compiler.h"
 #include "runtime/pynative/run_op_helper.h"
+#include "runtime/pynative/graph_adapter.h"
 #include "distributed/recovery/recovery_context.h"
 #include "include/common/utils/scoped_long_running.h"
 #ifdef ENABLE_D
@@ -440,6 +441,7 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
   SetDebuggerInit();
 #endif
   runtime::GraphScheduler::GetInstance().Initialize();
+  pynative_run_in_graph_ = device_context->GetDeviceType() != device::DeviceType::kAscend;
 }
 
 void MindRTBackend::ProcessNotSupportCnode(const FuncGraphPtr &func_graph,
@@ -889,6 +891,74 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
   input_tensor->push_back(tensor_input);
 }
 
+void MindRTBackend::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, FuncGraph *root_graph) {
+  bool need_contruct_output = !(distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
+                                distributed::recovery::RecoveryContext::GetInstance()->need_reset());
+  if (need_contruct_output) {
+    // Update device address for output node of graph.
+    // Summary processing will use the output device address, so must be after the summary processing.
+    actor_set->output_actor_->UpdateOutputDeviceAddress();
+
+    // Fetch outputs.
+    MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
+    auto &output_tensors = actor_set->output_actor_->outputs();
+    if (!output_tensors.empty()) {
+      size_t output_position = 0;
+      ConstructOutputs(root_graph->output(), output_tensors, &output_position, outputs);
+    }
+  }
+}
+
+void MindRTBackend::RunGraphIntergated(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
+                                       const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
+  WaitTaskFinish();
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
+  auto graphs = graph_compiler_info.graphs_;
+  auto &op_executor = runtime::OpExecutor::GetInstance();
+  op_executor.Register([this]() { BatchBuildCallback(); });
+  for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
+    const auto &graph = graphs[graph_index];
+    MS_EXCEPTION_IF_NULL(graph);
+    // TODO(caifubi): Update parameter format for Ascend
+    if (!graph->has_flag(kFlagGraphCompiled)) {
+      graph_compiler_->CompileGraphImpl(graph, graph_compiler_info.device_contexts_.front());
+      graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, graph->front_outputs());
+      // Clear front outputs
+      graph->set_front_outputs({});
+      // Transform graph to actor DAG, and schedule the actor DAG.
+      const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(graph_compiler_info);
+      runtime::GraphScheduler::GetInstance().Schedule(actor_set);
+      pynative::GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(graph);
+      pynative::GraphAdapter::GenerateRefCountForBpropValueNode(graph);
+      graph->set_flag(kFlagGraphCompiled, true);
+    }
+    pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graph);
+  }
+
+  // Run actor DAG.
+  mindspore::ScopedLongRunning long_running;
+  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
+  MS_EXCEPTION_IF_NULL(actor_set);
+  runtime::GraphScheduler::GetInstance().Run(actor_set, graph_compiler_info.device_contexts_, inputs);
+
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
+  graph_compiler_->Summary(graph_compiler_info.graphs_);
+
+  ConstructOutputs(actor_set, outputs, root_graph_);
+  // Clear bucket resources every step
+  for (auto &graph : graphs) {
+    if (graph->has_flag(kFlagIsPynativeBpropGraph)) {
+      graph_compiler_->AddGradAddrToBucket(graph->graph_id(), actor_set->output_actor_->outputs());
+      graph_compiler_->ClearAllBucket(graph->graph_id());
+    }
+  }
+
+  runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
+  // Close abstract_lock for dynamic_shape
+  AnfUtils::CloseAbstractLock();
+  MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
+}
+
 void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
                                        const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
   WaitTaskFinish();
@@ -941,16 +1011,40 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
       graph_compiler_->RecoverGraphOutput(kernel, op_outputs, cnode_ref_count, &op_output_map, &graph_output_info);
 
       // Save grad node to Bucket
-      if (graph->is_bprop() && (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) && !kernel->is_parallel()) {
+      if (graph->has_flag(kFlagIsPynativeBpropGraph) && (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) &&
+          !kernel->is_parallel()) {
         graph_compiler_->AddGradAddrToBucket(graph->graph_id(), graph_output_info.graph_output_tensors);
       }
     }
     WaitTaskFinish();
     // Clear bucket resources every step
-    if (graph->is_bprop()) {
+    if (graph->has_flag(kFlagIsPynativeBpropGraph)) {
       graph_compiler_->ClearAllBucket(graph->graph_id());
     }
   }
+}
+
+void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
+                                        const std::vector<std::vector<tensor::TensorPtr>> &input_tensors,
+                                        VectorRef *outputs) {
+  bool contain_cut_graph = std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
+                                       [](const KernelGraphPtr &graph) { return graph->has_flag(kFlagsIsCutGraph); });
+  if (contain_cut_graph) {
+    // Python API will be called in cut_graph, so we cannot release gil here.
+    RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
+  } else {
+    // Release python gil.
+    mindspore::ScopedLongRunning long_running;
+    bool is_dynamic_shape = std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
+                                        [](const KernelGraphPtr &graph) { return graph->is_dynamic_shape(); });
+    // TODO(caifubi): PyNative dynamic shape not support run in graph now.
+    if (pynative_run_in_graph_ && !is_dynamic_shape && !root_graph_->has_flag(kFlagIsDynamicStructure)) {
+      RunGraphIntergated(actor_info, graph_compiler_info, input_tensors, outputs);
+    } else {
+      RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
+    }
+  }
+  MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 
 void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args, VectorRef *outputs) {
@@ -1013,16 +1107,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   MS_EXCEPTION_IF_NULL(outputs);
   // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
   if (real_execution_mode_ == kPynativeMode) {
-    bool is_cut_graph = std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
-                                    [](const KernelGraphPtr &graph) { return graph->has_flag(kFlagsIsCutGraph); });
-    if (is_cut_graph) {
-      RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
-    } else {
-      // Release python gil.
-      mindspore::ScopedLongRunning long_running;
-      RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
-    }
-    MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
+    RunGraphByCondition(actor_info, graph_compiler_info, input_tensors, outputs);
     return;
   }
 
@@ -1036,21 +1121,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);
 
-  bool need_contruct_output = !(distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
-                                distributed::recovery::RecoveryContext::GetInstance()->need_reset());
-  if (need_contruct_output) {
-    // Update device address for output node of graph.
-    // Summary processing will use the output device address, so must be after the summary processing.
-    actor_set->output_actor_->UpdateOutputDeviceAddress();
-
-    // Fetch outputs.
-    MS_EXCEPTION_IF_NULL(actor_set->output_actor_);
-    auto &output_tensors = actor_set->output_actor_->outputs();
-    if (output_tensors.size() > 0) {
-      size_t output_position = 0;
-      ConstructOutputs(root_graph_->output(), output_tensors, &output_position, outputs);
-    }
-  }
+  ConstructOutputs(actor_set, outputs, root_graph_);
 
   runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
   // Close abstract_lock for dynamic_shape

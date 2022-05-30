@@ -115,6 +115,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     first_step_ = graph.first_step_;
     has_optimizer_ = graph.has_optimizer_;
     is_dynamic_shape_ = graph.is_dynamic_shape_;
+    front_outputs_ = graph.front_outputs_;
   }
 
   ~KernelGraph() override;
@@ -445,6 +446,9 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     return iter->second;
   }
 
+  AnfNodePtrList front_outputs() const { return front_outputs_; }
+  void set_front_outputs(const AnfNodePtrList &outputs) { front_outputs_ = outputs; }
+
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
@@ -494,6 +498,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes_;
   // parameters that will be updated when graph is executed
   mindspore::HashSet<ParameterPtr> updated_parameters_;
+
   // graph needn't execute
   bool executable_{false};
   // exist summary node in graph
@@ -515,6 +520,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   CNodePtr start_label_;
   CNodePtr end_goto_;
 
+  AnfNodePtrList front_outputs_;
   // Internal parameter is not the origin parameter of func graph, it is the output of previous kernel graph which is
   // related to the input of this kernel graph. The first of unordered map is the input of this kernel graph, the second
   // of unordered map is front node corresponding to the output of previous kernel graph.
