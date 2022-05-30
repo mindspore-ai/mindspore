@@ -20,6 +20,7 @@
 #include <iterator>
 #include <memory>
 #include <numeric>
+#include <random>
 #include <set>
 
 #include "backend/common/somas/somas_node.h"
@@ -48,6 +49,8 @@ namespace somas {
 constexpr auto kGapSize = 512;
 constexpr auto kRetryIntervalSeconds = 500;
 constexpr size_t kRefNodeTensorNum = 2;
+constexpr auto kOnlyOneDestinationNode = 1;
+constexpr auto kOnlyTwoDestinationNode = 2;
 
 constexpr auto kGraphId = "graph_id";
 constexpr auto kHashId = "hash_id";
@@ -419,6 +422,14 @@ void Somas::InitSomasStreamAndNode(const session::KernelGraph *graph) {
     auto &nodes = nodes_map_[key];
     nodes.push_back(node);
     node_index++;
+  }
+
+  // make nodes_id map
+  for (const auto &node : nodes_list_) {
+    if (nodes_id_map_.find(node->GetId()) != nodes_id_map_.end()) {
+      MS_LOG(EXCEPTION) << "Duplicate node id [" << node->GetId() << "]";
+    }
+    nodes_id_map_[node->GetId()] = node;
   }
 }
 
@@ -1012,6 +1023,26 @@ void Somas::GenContiguousList(const session::KernelGraph *graph) {
   }
 }
 
+void Somas::BuildConflictInfo(const std::shared_ptr<SomasTensor> &tensor, TensorConflictInfo *tensor_conflict_info,
+                              std::vector<size_t> *destination_node_list) {
+  const auto &consumer_list = tensor->consumer_list_;
+  tensor_conflict_info->destination_num = consumer_list.size();
+
+  //  the destination_node size of most nodes is small.
+  //  in order to have better spatial locality in the loop, when the destination_num is 1 or 2,
+  //  the destination node is directly stored in the structure.
+  if (tensor_conflict_info->destination_num == kOnlyOneDestinationNode) {
+    tensor_conflict_info->l.id = consumer_list.back();
+  } else if (tensor_conflict_info->destination_num == kOnlyTwoDestinationNode) {
+    tensor_conflict_info->l.id = consumer_list.at(0);
+    tensor_conflict_info->r.id = consumer_list.at(1);
+  } else {
+    tensor_conflict_info->l.index = destination_node_list->size();
+    destination_node_list->insert(destination_node_list->end(), consumer_list.begin(), consumer_list.end());
+    tensor_conflict_info->r.index = destination_node_list->size();
+  }
+}
+
 void Somas::ComputeConflictPairs() {
   if (tensors_list_.empty()) {
     MS_LOG(INFO) << "No Tensor for Conflict computing";
@@ -1047,16 +1078,33 @@ void Somas::ComputeConflictPairs() {
     reuse_matrix_.emplace_back(count);
   }
 
-  if (tensors_list_.size() < kParallelComputeSizeThreshold) {
-    ComputeMultiTensorConflicts(tensors_list_, tensors_list_, nodes_dependency, &reuse_matrix_);
+  std::vector<TensorConflictInfo> tensor_conflict_info_list;
+  std::vector<size_t> destination_node_list;
+  std::vector<SomasTensorPtr> candidate_tensor_list;
+  for (const auto &calc_tensor : tensors_list_) {
+    MS_EXCEPTION_IF_NULL(calc_tensor);
+    // If the life cycle of the tensor is global, or the tensor does not need to allocate memory, it is not reused
+    if (calc_tensor->IsLifelong() || calc_tensor->GetAlignedSize() == 0) {
+      continue;
+    }
+    candidate_tensor_list.emplace_back(calc_tensor);
+    tensor_conflict_info_list.emplace_back(calc_tensor->GetId(), calc_tensor->GetSourceNodeId());
+    BuildConflictInfo(calc_tensor, &tensor_conflict_info_list.back(), &destination_node_list);
+  }
+  std::shuffle(candidate_tensor_list.begin(), candidate_tensor_list.end(), std::mt19937(std::random_device()()));
+
+  if (candidate_tensor_list.size() < kParallelComputeSizeThreshold) {
+    ComputeMultiTensorConflicts(candidate_tensor_list, tensor_conflict_info_list, destination_node_list,
+                                nodes_dependency, &reuse_matrix_);
   } else {
-    MS_LOG(INFO) << "Tensor Num " << tensors_list_.size() << " is larger than " << kParallelComputeSizeThreshold;
+    MS_LOG(INFO) << "Candidate Tensor Num " << candidate_tensor_list.size() << " is larger than "
+                 << kParallelComputeSizeThreshold;
     MS_LOG(INFO) << "Enter Multi-Thread Mode...";
     size_t process_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
     MS_LOG(INFO) << "Threads Num is " << process_num;
 
     int64_t start_index = 0;
-    int64_t total_size = tensors_list_.size();
+    int64_t total_size = candidate_tensor_list.size();
     int64_t job_size = total_size / process_num;
     if (job_size == 0) {
       job_size = total_size;
@@ -1064,9 +1112,11 @@ void Somas::ComputeConflictPairs() {
     std::vector<common::Task> tasks;
     while (start_index < total_size) {
       int64_t end_index = (start_index + job_size) > total_size ? total_size : start_index + job_size;
-      auto jobs = std::vector<SomasTensorPtr>(tensors_list_.begin() + start_index, tensors_list_.begin() + end_index);
-      auto task = [this, jobs, &nodes_dependency]() {
-        this->ComputeMultiTensorConflicts(jobs, tensors_list_, nodes_dependency, &reuse_matrix_);
+      auto jobs = std::vector<SomasTensorPtr>(candidate_tensor_list.begin() + start_index,
+                                              candidate_tensor_list.begin() + end_index);
+      auto task = [this, jobs, &tensor_conflict_info_list, &destination_node_list, &nodes_dependency]() {
+        this->ComputeMultiTensorConflicts(jobs, tensor_conflict_info_list, destination_node_list, nodes_dependency,
+                                          &reuse_matrix_);
         return common::SUCCESS;
       };
       tasks.emplace_back(task);
@@ -1075,10 +1125,33 @@ void Somas::ComputeConflictPairs() {
 
     common::ThreadPool::GetInstance().SyncRun(tasks);
   }
+
+  ProcessSemiLifeLongTensor();
+
   MS_LOG(INFO) << "End Tensor Relation Computing";
   auto end_conflict = std::chrono::system_clock::now();
   MS_LOG(INFO) << "End Conflict Computing (Bitset Model)(time taken "
                << std::chrono::duration_cast<std::chrono::milliseconds>(end_conflict - start_conflict).count() << "ms)";
+}
+
+void Somas::ProcessSemiLifeLongTensor() {
+  for (const auto &calc_tensor : tensors_list_) {
+    // if the tensor is semi-life long start, it can't reuse with tensor with smaller id.
+    // if the tensor is semi-life long end, it can't reuse with tensor with larger id.
+    if (!calc_tensor->IsSemiLifelongStart() && !calc_tensor->IsSemiLifelongEnd()) {
+      continue;
+    }
+    for (const auto &target_tensor : tensors_list_) {
+      if (calc_tensor == target_tensor) {
+        continue;
+      }
+      if ((calc_tensor->IsSemiLifelongStart() && target_tensor->GetId() < calc_tensor->GetId()) ||
+          (calc_tensor->IsSemiLifelongEnd() && target_tensor->GetId() > calc_tensor->GetId())) {
+        reuse_matrix_[calc_tensor->GetId()].SetBitFalse(target_tensor->GetId());
+        reuse_matrix_[target_tensor->GetId()].SetBitFalse(calc_tensor->GetId());
+      }
+    }
+  }
 }
 
 void Somas::UpdateTensorDestinations() {
@@ -1126,86 +1199,97 @@ void Somas::UpdateTensorDestinations() {
     }
   }
 
+  mindspore::HashMap<size_t, size_t> stream_max_destination_node;
   // Loop to compute max destinations in each stream
   for (const auto &tensor : tensors_list_) {
     MS_EXCEPTION_IF_NULL(tensor);
+    stream_max_destination_node.clear();
     for (const auto &node_id : tensor->destination_nodes_) {
       auto node = GetSomasNode(node_id);
       MS_EXCEPTION_IF_NULL(node);
-      if (node_id > tensor->stream_max_destination_node_[node->GetStreamId()]) {
-        tensor->stream_max_destination_node_[node_id] = node_id;
+      if (node_id > stream_max_destination_node[node->GetStreamId()]) {
+        stream_max_destination_node[node->GetStreamId()] = node_id;
       }
+    }
+    for (const auto &dst_map : stream_max_destination_node) {
+      tensor->consumer_list_.emplace_back(dst_map.second);
     }
   }
 }
 
-void Somas::ComputeMultiTensorConflicts(const std::vector<SomasTensorPtr> &calc_tensors_list,
-                                        const std::vector<SomasTensorPtr> &all_tensors_list,
+void Somas::ComputeMultiTensorConflicts(const std::vector<SomasTensorPtr> &target_tensors_list,
+                                        const std::vector<TensorConflictInfo> &tensor_conflict_info_list,
+                                        const std::vector<size_t> &destination_node_list,
                                         const vector<DynamicBitSet> &nodes_dependency,
                                         std::vector<DynamicBitSet> *tensor_relation) const {
   auto start = std::chrono::system_clock::now();
-  MS_LOG(INFO) << "Start Computing Conflicts Pairs, tensors list size is " << calc_tensors_list.size();
-  for (size_t i = 0; i < calc_tensors_list.size(); i++) {
-    auto calc_tensor = calc_tensors_list[i];
-    MS_EXCEPTION_IF_NULL(calc_tensor);
-    if (calc_tensor->IsLifelong() || calc_tensor->IsSemiLifelongEnd() || calc_tensor->IsRefOverlap() ||
-        calc_tensor->GetAlignedSize() == 0) {
-      continue;
-    }
-
-    ComputeOneTensorConflicts(calc_tensor, all_tensors_list, nodes_dependency, tensor_relation);
+  MS_LOG(INFO) << "Start Computing Conflicts Pairs, tensors list size is " << target_tensors_list.size();
+  for (const auto &target_tensor : target_tensors_list) {
+    MS_EXCEPTION_IF_NULL(target_tensor);
+    ComputeOneTensorConflicts(target_tensor, tensor_conflict_info_list, destination_node_list, nodes_dependency,
+                              tensor_relation);
   }
   auto end = std::chrono::system_clock::now();
   MS_LOG(INFO) << "End Computing Conflicts Pairs (time taken "
                << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms)";
 }
 
-void Somas::ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &calc_tensor,
-                                      const std::vector<SomasTensorPtr> &all_tensors_list,
-                                      const vector<DynamicBitSet> &nodes_dependency,
-                                      std::vector<DynamicBitSet> *tensor_relation) const {
-  MS_EXCEPTION_IF_NULL(calc_tensor);
-  for (size_t j = 0; j < all_tensors_list.size(); j++) {
-    auto target_tensor = all_tensors_list[j];
-    MS_EXCEPTION_IF_NULL(target_tensor);
-    if (calc_tensor == target_tensor || target_tensor->IsLifelong() || target_tensor->IsSemiLifelongStart() ||
-        target_tensor->IsRefOverlap() || target_tensor->GetAlignedSize() == 0) {
-      continue;
+bool Somas::CheckIsDependency(const TensorConflictInfo &tensor_conflict_info, const size_t &src_node_id,
+                              const vector<DynamicBitSet> &nodes_dependency,
+                              const std::vector<size_t> &destination_node_list) {
+  // check calc_tensor's all consumers is target_tensor's source node's dependency or not
+  if (tensor_conflict_info.destination_num == kOnlyOneDestinationNode) {
+    // calc_tensor's consumer is not in target_tensor's source node's dependency, not sure this consumer is done or
+    // not when target_tensor produced
+    // calc_tensor is target_tensor's source node's input, can't reuse
+    if (!nodes_dependency[src_node_id].IsBitTrue(tensor_conflict_info.l.id) ||
+        src_node_id == tensor_conflict_info.l.id) {
+      return false;
     }
-    size_t calc_src_node_id = calc_tensor->GetSourceNodeId();
-    size_t target_src_node_id = target_tensor->GetSourceNodeId();
-    if (calc_src_node_id == target_src_node_id) {
-      continue;
+  } else if (tensor_conflict_info.destination_num == kOnlyTwoDestinationNode) {
+    if (!nodes_dependency[src_node_id].IsBitTrue(tensor_conflict_info.l.id) ||
+        !nodes_dependency[src_node_id].IsBitTrue(tensor_conflict_info.r.id) ||
+        src_node_id == tensor_conflict_info.l.id || src_node_id == tensor_conflict_info.r.id) {
+      return false;
     }
-    if ((*tensor_relation)[calc_tensor->GetId()].IsBitTrue(target_tensor->GetId()) ||
-        (*tensor_relation)[target_tensor->GetId()].IsBitTrue(calc_tensor->GetId())) {
-      continue;
-    }
-
-    bool reuse = true;
-    // check calc_tensor's all consumers is target_tensor's source node's dependency or not
-    for (const auto &dst_map : calc_tensor->stream_max_destination_node_) {
-      const auto &dst_node_id = dst_map.second;
-      if (nodes_dependency[target_src_node_id].IsBitTrue(dst_node_id) == false) {
-        // calc_tensor's consumer is not in target_tensor's source node's dependency, not sure this consumer is done or
-        // not when target_tensor produced
-        reuse = false;
-        break;
-      } else if (target_src_node_id == dst_node_id) {
-        // calc_tensor is target_tensor's source node's input, can't reuse
-        reuse = false;
-        break;
-      } else {
-        // calc_tensor's consumer is in target_tensor's source node's dependency, this consumer is done when
-        // target_tensor produced
-        reuse = true;
+  } else {
+    for (size_t i = tensor_conflict_info.l.index; i < tensor_conflict_info.r.index; i++) {
+      const auto &dst_node_id = destination_node_list[i];
+      if (!nodes_dependency[src_node_id].IsBitTrue(dst_node_id) || src_node_id == dst_node_id) {
+        return false;
       }
     }
+  }
+  // calc_tensor's consumer is in target_tensor's source node's dependency, this consumer is done when
+  // target_tensor produced
+  return true;
+}
 
-    if (reuse) {
+void Somas::ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &target_tensor,
+                                      const std::vector<TensorConflictInfo> &tensor_conflict_info_list,
+                                      const std::vector<size_t> &destination_node_list,
+                                      const vector<DynamicBitSet> &nodes_dependency,
+                                      std::vector<DynamicBitSet> *tensor_relation) const {
+  MS_EXCEPTION_IF_NULL(target_tensor);
+  auto target_tensor_id = target_tensor->GetId();
+  auto target_src_node_id = target_tensor->GetSourceNodeId();
+
+  std::vector<size_t> target_destination_node_list;
+  TensorConflictInfo target_info(target_tensor->GetId(), target_tensor->GetSourceNodeId());
+  BuildConflictInfo(target_tensor, &target_info, &target_destination_node_list);
+
+  //  the conflict info of per calc_tensor
+  for (const auto &tensor_conflict_info : tensor_conflict_info_list) {
+    if (tensor_conflict_info.tensor_id_ == target_tensor_id ||
+        tensor_conflict_info.src_node_id_ == target_src_node_id) {
+      continue;
+    }
+
+    if (CheckIsDependency(tensor_conflict_info, target_src_node_id, nodes_dependency, destination_node_list) ||
+        CheckIsDependency(target_info, tensor_conflict_info.src_node_id_, nodes_dependency,
+                          target_destination_node_list)) {
       // calc_tensor and target_tensor have dependencies so they can reuse each other
-      (*tensor_relation)[calc_tensor->GetId()].SetBitTrue(target_tensor->GetId());
-      (*tensor_relation)[target_tensor->GetId()].SetBitTrue(calc_tensor->GetId());
+      (*tensor_relation)[target_tensor_id].SetBitTrue(tensor_conflict_info.tensor_id_);
     }
   }
 }
@@ -1901,12 +1985,11 @@ SomasStreamPtr Somas::GetSomasStream(size_t stream_id) const {
 
 using SomasNodePtr = std::shared_ptr<SomasNode>;
 SomasNodePtr Somas::GetSomasNode(size_t node_id) const {
-  auto it = std::find_if(nodes_list_.begin(), nodes_list_.end(),
-                         [node_id](const SomasNodePtr &node) { return node->GetId() == node_id; });
-  if (it != nodes_list_.end()) {
-    return *(it);
-  } else {
+  auto it = nodes_id_map_.find(node_id);
+  if (it == nodes_id_map_.end()) {
     return nullptr;
+  } else {
+    return it->second;
   }
 }
 

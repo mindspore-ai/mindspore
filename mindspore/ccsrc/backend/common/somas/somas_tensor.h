@@ -69,7 +69,7 @@ class SomasTensor {
   size_t offset_{0};
 
   std::set<size_t> destination_nodes_;
-  mindspore::HashMap<size_t, size_t> stream_max_destination_node_;
+  vector<size_t> consumer_list_;
 
   // Constructors/Destructors
   explicit SomasTensor(size_t id, size_t source_node_id, size_t source_stream_id, size_t real_size,
