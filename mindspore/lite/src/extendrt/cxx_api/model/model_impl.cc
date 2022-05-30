@@ -17,31 +17,37 @@
 #include "cxx_api/dlutils.h"
 
 namespace mindspore {
-Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
-  MS_EXCEPTION_IF_NULL(outputs);
-  if (graph_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid data, graph_ is null.";
-    return kMCFailed;
-  }
-
-  if (graph_cell_ == nullptr) {
-    MS_LOG(WARNING) << "Model has not been built, it will be built with default options";
-    Status ret = Build();
-    if (ret != kSuccess) {
-      MS_LOG(ERROR) << "Build model failed.";
-      return ret;
-    }
-  }
-
-  MS_EXCEPTION_IF_NULL(graph_cell_);
-  Status ret = graph_cell_->Run(inputs, outputs);
+Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
+                        const std::shared_ptr<Context> &model_context) {
+  graph_ = std::make_shared<Graph>();
+  auto ret = Serialization::Load(model_data, data_size, model_type, graph_.get());
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "Run graph failed.";
     return ret;
   }
-
+  session_ = InferSession::CreateSession(model_context);
+  return session_->CompileGraph(graph_->graph_data_);
+}
+Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
+                        const std::shared_ptr<Context> &model_context) {
+  graph_ = std::make_shared<Graph>();
+  auto ret = Serialization::Load(model_path, model_type, graph_.get());
+  if (ret != kSuccess) {
+    return ret;
+  }
+  session_ = InferSession::CreateSession(model_context);
+  return session_->CompileGraph(graph_->graph_data_);
+}
+Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;
 }
+
+std::vector<MSTensor> ModelImpl::GetInputs() { return std::vector<MSTensor>(); }
+std::vector<MSTensor> ModelImpl::GetOutputs() { return std::vector<MSTensor>(); }
+MSTensor ModelImpl::GetInputByTensorName(const std::string &name) { return MSTensor(); }
+std::vector<std::string> ModelImpl::GetOutputTensorNames() { return std::vector<std::string>(); }
+MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) { return MSTensor(); }
+
+Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) { return kSuccess; }
 
 bool ModelImpl::HasPreprocess() { return graph_->graph_data_->GetPreprocess().empty() ? false : true; }
 

@@ -42,5 +42,5 @@ bool Graph::operator==(std::nullptr_t) const { return graph_data_ == nullptr; }
 
 bool Graph::operator!=(std::nullptr_t) const { return graph_data_ != nullptr; }
 
-ModelType Graph::ModelType() const { return kMindIR; }
+ModelType Graph::ModelType() const { return kMindIR_Lite; }
 }  // namespace mindspore

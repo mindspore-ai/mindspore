@@ -27,54 +27,33 @@
 #include "cxx_api/graph/graph_data.h"
 #include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
-
+#include "extendrt/infer_session.h"
 namespace mindspore {
 class ModelImpl {
  public:
-  ModelImpl() = default;
-  virtual ~ModelImpl() = default;
+  ModelImpl() : graph_(nullptr), session_(nullptr), context_(nullptr) {}
+  ~ModelImpl() = default;
 
-  virtual Status Build() = 0;
-  virtual Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) = 0;
-
-  virtual Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
-
-  virtual Status PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs,
-                                       std::vector<MSTensor> *outputs);
-
-  virtual std::vector<MSTensor> GetInputs() = 0;
-  virtual std::vector<MSTensor> GetOutputs() = 0;
-
-  virtual bool CheckDeviceSupport(mindspore::DeviceType device_type) = 0;
-  virtual bool CheckModelSupport(enum ModelType model_type) = 0;
-
-  virtual Status Preprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs);
-
-  virtual bool HasPreprocess();
-
- protected:
-  FuncGraphPtr GetFuncGraph() const {
-    if (graph_->ModelType() != ModelType::kMindIR) {
-      return nullptr;
-    }
-
-    auto graph_data = graph_->graph_data_;
-    MS_EXCEPTION_IF_NULL(graph_data);
-    return graph_data->GetFuncGraph();
-  }
-
-  std::shared_ptr<Graph> graph_ = nullptr;
-  std::shared_ptr<GraphCell> graph_cell_ = nullptr;
-  std::shared_ptr<Context> model_context_ = nullptr;
+  Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context);
+  Status Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context);
+  Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
+  bool HasPreprocess();
+  Status Preprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs);
+  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
+  Status Predict();
+  std::vector<MSTensor> GetInputs();
+  std::vector<MSTensor> GetOutputs();
+  MSTensor GetInputByTensorName(const std::string &name);
+  std::vector<std::string> GetOutputTensorNames();
+  MSTensor GetOutputByTensorName(const std::string &name);
 
  private:
   friend class Model;
-  void SetGraph(const std::shared_ptr<Graph> &graph) { graph_ = graph; }
-  void SetContext(const std::shared_ptr<Context> &model_context) {
-    if (model_context != nullptr) {
-      model_context_ = std::make_shared<Context>(*model_context);
-    }
-  }
+  friend class Serialization;
+  std::shared_ptr<Graph> graph_ = nullptr;
+  std::shared_ptr<InferSession> session_ = nullptr;
+  std::shared_ptr<Context> context_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_IMPL_H_

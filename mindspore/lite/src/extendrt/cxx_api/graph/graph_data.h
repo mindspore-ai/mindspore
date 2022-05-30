@@ -15,7 +15,6 @@
  */
 #ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_GRAPH_DATA_H_
 #define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_GRAPH_DATA_H_
-
 #include <string>
 #include <vector>
 #include <map>
