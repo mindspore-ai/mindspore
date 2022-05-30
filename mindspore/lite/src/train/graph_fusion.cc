@@ -15,6 +15,9 @@
  */
 
 #include "src/train/graph_fusion.h"
+#include <vector>
+#include <algorithm>
+#include <memory>
 #include "tools/converter/optimizer.h"
 #include "tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"

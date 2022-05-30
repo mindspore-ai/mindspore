@@ -16,6 +16,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/matmul_fp32_arm64.h"
+#include <vector>
 #include "src/runtime/kernel/cpu/fp32/matmul_fp32_base.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
