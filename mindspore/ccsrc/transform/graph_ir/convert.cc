@@ -2409,6 +2409,32 @@ void DfGraphConvertor::ConvertReshape(const CNodePtr node) {
   op_cache_[node.get()] = op;
 }
 
+void DfGraphConvertor::ConvertAllReduce(const CNodePtr node) {
+  MS_LOG(INFO) << "Add AllReduce fusion_id";
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+  auto op = adpt->generate(node);
+  MS_EXCEPTION_IF_NULL(op);
+  // get shape form attr
+  auto value_node = node->input(0)->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(value_node->value());
+  auto primitive = value_node->value()->cast<PrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto fusion_value = primitive->GetAttr("fusion");
+  auto fusion = GetValue<int64_t>(fusion_value);
+  int64_t fusion_id = -1;
+
+  if (fusion != 0 && fusion != 1) {
+    fusion_id = fusion;
+  }
+
+  (void)op->SetAttr("fusion_id", fusion_id);
+  op_cache_[node.get()] = op;
+}
+
 void DfGraphConvertor::ConvertConv2D(const CNodePtr node) {
   MS_EXCEPTION_IF_NULL(node);
   OpAdapterPtr adpt = FindAdapter(node, training_);
@@ -2427,6 +2453,29 @@ void DfGraphConvertor::ConvertConv2D(const CNodePtr node) {
     std::string pad_mode = GetValue<std::string>(value);
     (void)op->SetAttr("padding", pad_mode);
   }
+  op_cache_[node.get()] = op;
+}
+
+void DfGraphConvertor::ConvertOCRRecPreHandle(const CNodePtr node) {
+  MS_LOG(INFO) << "Add OCRRecognitionPreHandle _op_max_shape attr";
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+  auto op = adpt->generate(node);
+  MS_EXCEPTION_IF_NULL(op);
+  // get shape form attr
+  auto value_node = node->input(0)->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(value_node->value());
+  auto primitive = value_node->value()->cast<PrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto value = primitive->GetAttr("_op_max_shape");
+  if (value == nullptr) {
+    return;
+  }
+  auto op_max_shape = GetValue<std::string>(value);
+  (void)op->SetAttr("_op_max_shape", op_max_shape);
   op_cache_[node.get()] = op;
 }
 
@@ -2665,10 +2714,20 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
     return true;
   }
 
+  if (name == prim::kPrimOCRRecognitionPreHandle->name()) {
+    ConvertOCRRecPreHandle(node);
+    return true;
+  }
+
   // Add attr pad mode to Conv2D
   if (name == prim::kPrimConv2D->name() || name == prim::kPrimDepthwiseConv2dNative->name() ||
       name == kNameConv2DBackpropInputV2) {
     ConvertConv2D(node);
+    return true;
+  }
+
+  if (name == prim::kPrimAllReduce->name()) {
+    ConvertAllReduce(node);
     return true;
   }
 
@@ -2685,6 +2744,22 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
   }
 
   return true;
+}
+
+void CheckAndAddScopeAttrInt(const OperatorPtr op, const PrimitivePtr primitive, const std::string &attr_name) {
+  auto attr_value = primitive->GetAttr(attr_name);
+  if (attr_value != nullptr) {
+    auto value = GetValue<int64_t>(attr_value);
+    (void)op->SetAttr(attr_name, value);
+  }
+}
+
+void CheckAndAddScopeAttrString(const OperatorPtr op, const PrimitivePtr primitive, const std::string &attr_name) {
+  auto attr_value = primitive->GetAttr(attr_name);
+  if (attr_value != nullptr) {
+    auto value = GetValue<std::string>(attr_value);
+    (void)op->SetAttr(attr_name, value);
+  }
 }
 
 OperatorPtr DfGraphConvertor::ConvertCNode(const CNodePtr node) {
@@ -2716,6 +2791,15 @@ OperatorPtr DfGraphConvertor::ConvertCNode(const CNodePtr node) {
 
   // set attribute for primitive
   (void)adpt->setAttr(op, node);
+  MS_LOG(INFO) << "begin to set attr for subgraph multi dims";
+  auto value_node = node->input(0)->cast<ValueNodePtr>();
+  if (value_node != nullptr && value_node->value()->cast<PrimitivePtr>() != nullptr) {
+    auto primitive = value_node->value()->cast<PrimitivePtr>();
+    CheckAndAddScopeAttrInt(op, primitive, "_subgraph_multi_dims_index");
+    CheckAndAddScopeAttrString(op, primitive, "_subgraph_multi_dims_input_dims");
+    CheckAndAddScopeAttrString(op, primitive, "_subgraph_multi_dims_input_shape");
+  }
+  MS_LOG(INFO) << "set attr for subgraph multi dims end";
 
   // add into cache
   (void)op_cache_.emplace(node.get(), op);

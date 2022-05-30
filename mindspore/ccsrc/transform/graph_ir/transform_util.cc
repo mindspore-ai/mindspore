@@ -21,6 +21,9 @@
 #include "securec/include/securec.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/utils.h"
+#ifndef ENABLE_LITE_ACL
+#include "include/common/utils/python_adapter.h"
+#endif
 
 namespace mindspore {
 namespace transform {
@@ -53,7 +56,8 @@ static std::map<MeDataType, GeDataType> datatype_trans_map = {
   {MeDataType::kNumberTypeInt16, GeDataType::DT_INT16},     {MeDataType::kNumberTypeInt32, GeDataType::DT_INT32},
   {MeDataType::kNumberTypeInt64, GeDataType::DT_INT64},     {MeDataType::kNumberTypeUInt8, GeDataType::DT_UINT8},
   {MeDataType::kNumberTypeUInt16, GeDataType::DT_UINT16},   {MeDataType::kNumberTypeUInt32, GeDataType::DT_UINT32},
-  {MeDataType::kNumberTypeUInt64, GeDataType::DT_UINT64},   {MeDataType::kNumberTypeBool, GeDataType::DT_BOOL}};
+  {MeDataType::kNumberTypeUInt64, GeDataType::DT_UINT64},   {MeDataType::kNumberTypeBool, GeDataType::DT_BOOL},
+  {MeDataType::kObjectTypeString, GeDataType::DT_STRING}};
 
 GeDataType TransformUtil::ConvertDataType(const MeDataType &type) {
   MS_LOG(DEBUG) << "Convert me data type: " << TypeIdLabel(type) << " to ge data type";
@@ -175,10 +179,74 @@ std::vector<GeTensorPtr> TransformUtil::ConvertInputTensors(const std::vector<Me
   return ge_tensors;
 }
 
+#ifndef ENABLE_LITE_ACL
+GeTensorPtr ConvertStringTensor(const MeTensorPtr &tensor, const std::string &format) {
+  auto desc = TransformUtil::GetGeTensorDesc(tensor->shape_c(), tensor->data_type(), format);
+  if (desc == nullptr) {
+    MS_LOG(ERROR) << "Failed to get Tensor Desc";
+    return nullptr;
+  }
+  GeTensorPtr tensor_ptr = nullptr;
+  auto data_buff_size = tensor->data().nbytes();
+
+  auto py_array = python_adapter::PyAdapterCallback::TensorToNumpy(*tensor);
+  auto buf = py_array.request();
+  auto data_ptr = static_cast<char *>(tensor->data().data());
+  size_t single_char_offset = 4;
+
+  if (buf.format.back() == 'w') {
+    auto max_length = buf.format.substr(0, buf.format.length() - 1);
+    auto string_max_length = LongToSize(std::stol(max_length));
+    if (string_max_length == 0) {
+      MS_LOG(ERROR) << "Failed to get Tensor Desc. Please check string length";
+      return nullptr;
+    }
+    size_t elements_num = (data_buff_size / single_char_offset) / string_max_length;
+    std::vector<std::string> string_vector;
+    for (size_t i = 0; i < elements_num; i++) {
+      char *string_element = new char[string_max_length];
+      size_t string_length = 0;
+      for (size_t j = 0; j < string_max_length; j++) {
+        char char_element = data_ptr[i * string_max_length * single_char_offset + single_char_offset * j];
+        if (static_cast<int>(char_element) == 0) {
+          break;
+        } else {
+          string_element[j] = char_element;
+          string_length += 1;
+        }
+      }
+      std::string string_to_add(string_element, string_length);
+      string_vector.emplace_back(string_to_add);
+    }
+    tensor_ptr = make_shared<GeTensor>(*desc);
+    tensor_ptr->SetData(string_vector);
+  } else {
+    auto string_length = LongToSize(std::stol(buf.format.substr(0, buf.format.length() - 1)));
+    if (string_length == 0) {
+      MS_LOG(ERROR) << "Failed to get Tensor Desc. Please check string length";
+      return nullptr;
+    }
+    char *string_element = new char[string_length];
+    for (size_t i = 0; i < string_length; i++) {
+      string_element[i] = data_ptr[i];
+    }
+    std::string string_to_add(string_element, string_length);
+    tensor_ptr = make_shared<GeTensor>(*desc);
+    tensor_ptr->SetData(string_to_add);
+  }
+  return tensor_ptr;
+}
+#endif
 GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::string &format) {
   // get tensor data type size
   MS_EXCEPTION_IF_NULL(tensor);
-  size_t type_size = GetDataTypeSize(tensor->data_type());
+  auto me_data_type = tensor->data_type();
+#ifndef ENABLE_LITE_ACL
+  if (me_data_type == mindspore::kObjectTypeString) {
+    return ConvertStringTensor(tensor, format);
+  }
+#endif
+  size_t type_size = GetDataTypeSize(me_data_type);
   if (type_size == kErrorSize) {
     MS_LOG(ERROR) << "The Me Tensor data type size is wrong, type size is: " << type_size;
     return nullptr;

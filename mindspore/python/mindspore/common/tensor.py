@@ -17,6 +17,7 @@ import numbers
 
 import numpy as np
 from mindspore.communication.management import get_rank, get_group_size
+from mindspore import context
 
 from mindspore import log as logger
 from . import dtype as mstype
@@ -137,10 +138,13 @@ class Tensor(Tensor_):
                 valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
                                 np.float16, np.float32, np.float64, np.bool_, np.str_, np.complex64, np.complex128)
                 if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes and \
-                        input_data.dtype.kind != 'U':  # Support dtype np.str_
+                        input_data.dtype.kind != 'U' and input_data.dtype.kind != 'S':  # Support dtype np.str_
                     raise TypeError(f"For Tensor, the input_data is a numpy array, "
                                     f"but it's data type: {input_data.dtype} is not in supported list: "
                                     f"{list(i.__name__ for i in valid_dtypes)}.")
+                if isinstance(input_data, np.ndarray) and input_data.dtype.kind == "S" and \
+                        input_data.shape and context.get_context("enable_ge"):
+                    raise TypeError("For binary string input in GE mode, the shape of the data must be ()")
                 if isinstance(input_data, (tuple, list)) and np.array(input_data).dtype not in valid_dtypes:
                     raise TypeError(
                         f"For Tensor, the input_data is {input_data} that contain unsupported element.")

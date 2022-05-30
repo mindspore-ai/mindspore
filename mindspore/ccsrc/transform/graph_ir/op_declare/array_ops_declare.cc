@@ -51,6 +51,13 @@ ATTR_MAP(Shape) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Shape) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Shape, kNameShape, ADPT_DESC(Shape))
 
+// GetShape
+INPUT_MAP(GetShape) = EMPTY_INPUT_MAP;
+DYN_INPUT_MAP(GetShape) = {{1, DYN_INPUT_DESC(x)}};
+ATTR_MAP(GetShape) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(GetShape) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(GetShape, kNameGetShape, ADPT_DESC(GetShape));
+
 // Reshape
 INPUT_MAP(Reshape) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(shape)}};
 ATTR_MAP(Reshape) = EMPTY_ATTR_MAP;

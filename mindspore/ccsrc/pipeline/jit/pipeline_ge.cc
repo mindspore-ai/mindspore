@@ -83,6 +83,13 @@ Status CreateSessionAndGraphRunner(bool is_training = true) {
     }
 
     options["ge.enablePrintOpPass"] = "0";
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    auto auto_tune_mode = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
+    if (!auto_tune_mode.empty() && auto_tune_mode != "NO_TUNE") {
+      options["ge.autoTuneMode"] = auto_tune_mode;
+      MS_LOG(INFO) << "ge.autoTuneMode has set to " << auto_tune_mode;
+    }
     sess = transform::NewSession(options);
     transform::SetGeSession(sess);
   }
@@ -343,6 +350,10 @@ py::object ExtractGeneralCnodeRet(const AbstractBasePtr &cnode_data, const py::t
     return data[(*count)++];
   }
 
+  if (cnode_data->isa<AbstractScalar>()) {
+    return data[(*count)++];
+  }
+
   if (!cnode_data->isa<AbstractTuple>()) {
     MS_LOG(EXCEPTION) << "The output of operator in the final anf graph could "
                       << "only be a tensor or a tuple of tensor, but got " << cnode_data->BuildValue()->ToString()
@@ -409,6 +420,7 @@ void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me
   if (cnode_data->isa<AbstractScalar>()) {
     TypeId me_type = cnode_data->BuildType()->type_id();
     me_types->emplace_back(me_type);
+    return;
   }
   auto abstract_tuple = cnode_data->cast<AbstractTuplePtr>();
   MS_EXCEPTION_IF_NULL(abstract_tuple);

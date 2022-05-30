@@ -174,6 +174,8 @@ class DfGraphConvertor {
   void ConvertTile(const FuncGraphPtr anf_graph);
   AnfNodePtr CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const;
   void ConvertReshape(const CNodePtr node);
+  void ConvertAllReduce(const CNodePtr node);
+  void ConvertOCRRecPreHandle(const CNodePtr node);
   void ConvertConv2D(const CNodePtr node);
   std::vector<int64_t> CastToInt(const ValuePtr &value);
   bool CheckCNode(const std::string &name, const CNodePtr node);

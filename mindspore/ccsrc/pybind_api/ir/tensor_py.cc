@@ -88,7 +88,7 @@ static TypeId GetDataType(const py::buffer_info &buf) {
     }
   } else if (buf.format.size() >= 2) {
     // Support np.str_ dtype, format: {x}w. {x} is a number that means the maximum length of the string items.
-    if (buf.format.back() == 'w') {
+    if (buf.format.back() == 'w' || buf.format.back() == 's') {
       return TypeId::kObjectTypeString;
     } else if (buf.format == "Zf") {
       return TypeId::kNumberTypeComplex64;
