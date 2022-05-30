@@ -4918,22 +4918,6 @@ class LinSpace(PrimitiveWithInfer):
     def __init__(self):
         """Initialize LinSpace"""
 
-    def __infer__(self, start, stop, num):
-        args = {"start": start['dtype'], "stop": start['dtype']}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32,), self.name)
-        start_shape = start['shape']
-        stop_shape = stop['shape']
-        validator.check_equal_int(len(start_shape), 0, "rank of start_shape", self.name)
-        validator.check_equal_int(len(stop_shape), 0, "rank of stop_shape", self.name)
-        num_v = num['value']
-        validator.check_value_type('num', num_v, [int], self.name)
-        validator.check_positive_int(num_v, "num", self.name)
-        out_shape = [num_v]
-        out = {'shape': out_shape,
-               'dtype': start['dtype'],
-               'value': None}
-        return out
-
 
 class MatrixInverse(Primitive):
     """
