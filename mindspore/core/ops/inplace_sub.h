@@ -41,7 +41,7 @@ class MIND_API InplaceSub : public BaseOperator {
   /// \brief Get indices.
   ///
   /// \return indices.
-  std::vector<int64_t> get_indices();
+  std::vector<int64_t> get_indices() const;
 };
 
 abstract::AbstractBasePtr InplaceSubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
