@@ -26,10 +26,10 @@ mindspore.ops.KLDivLoss
     :math:`\ell(x, target)` 为 `output` 。
 
 	.. note::
-        目前Ascend平台不支持设置 `reduction` 为 "mean"。
-        目前Ascend平台不支持数据类型float64。
-        目前GPU平台不支持设置 `reduction` 为 "batchmean"。
-        仅当 `reduction` 设置为"batchmean"时输出才符合该数学公式。
+        - 目前Ascend平台不支持设置 `reduction` 为 "mean"。
+        - 目前Ascend平台不支持数据类型float64。
+        - 目前GPU平台不支持设置 `reduction` 为 "batchmean"。
+        - 仅当 `reduction` 设置为"batchmean"时输出才符合该数学公式。
 
 
     **参数：**
