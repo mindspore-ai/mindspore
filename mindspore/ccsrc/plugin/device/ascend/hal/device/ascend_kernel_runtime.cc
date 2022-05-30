@@ -1075,6 +1075,10 @@ bool AscendKernelRuntime::SyncStream() {
 
 bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) {
   SetCurrentContext();
+  if (size == 0) {
+    MS_LOG(DEBUG) << "rtMemcpyAsync size is 0, copy kind:" << kind;
+    return true;
+  }
   if (stream_ == nullptr) {
     MS_LOG(ERROR) << "MemcpyAsync failed. stream_ is nullptr";
     return false;
@@ -1090,10 +1094,6 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
   }
   if (src == nullptr) {
     MS_LOG(ERROR) << "rtMemcpyAsync src ptr is null, copy kind:" << kind;
-    return false;
-  }
-  if (size == 0) {
-    MS_LOG(ERROR) << "rtMemcpyAsync size is 0, copy kind:" << kind;
     return false;
   }
   // cppcheck-suppress unreadVariable
