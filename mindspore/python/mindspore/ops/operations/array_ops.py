@@ -4734,14 +4734,14 @@ class ScatterMul(_ScatterOp):
     """
 
 
-class ScatterDiv(_ScatterOp):
+class ScatterDiv(_ScatterOpDynamic):
     r"""
     Updates the value of the input tensor through the divide operation.
 
     Using given values to update tensor value through the div operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
-    for each `i, ..., j` in `indices.shape`:
+    for each :math:`i, ..., j` in `indices.shape`:
 
     .. math::
 
@@ -4757,17 +4757,18 @@ class ScatterDiv(_ScatterOp):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
+        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
+          mindspore.int64.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
+          the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
+        TypeError: If `indices` is not an int32 or an int64.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
 

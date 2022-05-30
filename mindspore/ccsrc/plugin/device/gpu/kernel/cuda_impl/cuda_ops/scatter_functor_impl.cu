@@ -83,7 +83,7 @@ __global__ void ScatterMinKernel(S size_limit, const size_t inner_size, const si
       continue;
     }
     const size_t current_pos = indices[index] * inner_size + offset;
-    input[current_pos] = updates[pos] < input[current_pos] ? updates[pos] : input[current_pos];
+    MsAtomicMin(&input[current_pos], updates[pos]);
   }
 }
 

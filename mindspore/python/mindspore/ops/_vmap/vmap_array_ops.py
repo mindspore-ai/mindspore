@@ -225,8 +225,11 @@ def get_select_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ScatterAdd)
 @vmap_rules_getters.register(P.ScatterMin)
 @vmap_rules_getters.register(P.ScatterMax)
+@vmap_rules_getters.register(P.ScatterDiv)
 @vmap_rules_getters.register(P.ScatterNdAdd)
 @vmap_rules_getters.register(P.ScatterNdSub)
+@vmap_rules_getters.register(P.ScatterNdMin)
+@vmap_rules_getters.register(P.ScatterNdDiv)
 def get_scatter_add_vmap_rule(prim, axis_size):
     """
     VmapRule for `Scatter*` operations, such as `ScatterAdd`, `ScatterNdAdd`, `ScatterMin` and `ScatterMax`.
@@ -238,10 +241,13 @@ def get_scatter_add_vmap_rule(prim, axis_size):
         "ScatterAdd": P.ScatterNdAdd,
         "ScatterMin": P.ScatterNdMin,
         "ScatterMax": P.ScatterNdMax,
+        "ScatterDiv": P.ScatterNdDiv,
         "ScatterNdAdd": P.ScatterNdAdd,
         "ScatterNdSub": P.ScatterNdSub,
+        "ScatterNdMin": P.ScatterNdMin,
+        "ScatterNdDiv": P.ScatterNdDiv,
     }
-    sactter_func_list = ["ScatterAdd", "ScatterMin", "ScatterMax"]
+    sactter_func_list = ["ScatterAdd", "ScatterMin", "ScatterMax", "ScatterDiv"]
     if isinstance(prim, str):
         prim_name = prim
         prim = Primitive(prim)

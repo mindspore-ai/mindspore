@@ -40,6 +40,7 @@ expand_dims_ = P.ExpandDims()
 transpose_ = P.Transpose()
 scatter_max_ = P.ScatterMax()
 scatter_min_ = P.ScatterMin()
+scatter_div_ = P.ScatterDiv()
 scatter_nd_ = P.ScatterNd()
 gather_ = P.Gather()
 gather_d_ = P.GatherD()
@@ -1058,7 +1059,7 @@ def scatter_max(input_x, indices, updates):
 
 
 def scatter_min(input_x, indices, updates):
-    """
+    r"""
     Updates the value of the input tensor through the minimum operation.
 
     Using given values to update tensor value through the min operation, along with the input indices.
@@ -1109,6 +1110,92 @@ def scatter_min(input_x, indices, updates):
          [0. 0. 0.]]
     """
     return scatter_min_(input_x, indices, updates)
+
+
+def scatter_div(input_x, indices, updates):
+    r"""
+    Updates the value of the input tensor through the divide operation.
+
+    Using given values to update tensor value through the div operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    for each :math:`i, ..., j` in `indices.shape`:
+
+    .. math::
+
+        \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{/}= \text{updates}[i, ..., j, :]
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
+
+    Args:
+        input_x (Parameter): The target tensor, with data type of Parameter.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        indices (Tensor): The index to do min operation whose data type must be mindspore.int32 or
+          mindspore.int64.
+        updates (Tensor): The tensor doing the min operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
+
+    Outputs:
+        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `indices` is not an int32 or an int64.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
+        >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
+        >>> scatter_div = ops.ScatterDiv()
+        >>> output = scatter_div(input_x, indices, updates)
+        >>> print(output)
+        [[3. 3. 3.]
+         [1. 1. 1.]]
+        >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
+        >>> input_x = Parameter(Tensor(np.array([[105.0, 105.0, 105.0],
+        ...                                      [315.0, 315.0, 315.0]]), mindspore.float32), name="x")
+        >>> # for indices = [[0, 1], [1, 1]]
+        >>> # step 1: [0, 1]
+        >>> # input_x[0] = [105.0, 105.0, 105.0] / [1.0, 1.0, 1.0] = [105.0, 105.0, 105.0]
+        >>> # input_x[1] = [315.0, 315.0, 315.0] / [3.0, 3.0, 3.0] = [105.0, 105.0, 105.0]
+        >>> # step 2: [1, 1]
+        >>> # input_x[1] = [105.0, 105.0, 105.0] / [5.0, 5.0, 5.0] = [21.0, 21.0, 21.0]
+        >>> # input_x[1] = [21.0, 21.0, 21.0] / [7.0, 7.0, 7.0] = [3.0, 3.0, 3.0]
+        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
+        ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mindspore.float32)
+        >>> scatter_div = ops.ScatterDiv()
+        >>> output = scatter_div(input_x, indices, updates)
+        >>> print(output)
+        [[105. 105. 105.]
+         [  3.   3.   3.]]
+        >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
+        >>> input_x = Parameter(Tensor(np.array([[105.0, 105.0, 105.0],
+        ...                                      [315.0, 315.0, 315.0]]), mindspore.float32), name="x")
+        >>> # for indices = [[1, 0], [1, 1]]
+        >>> # step 1: [1, 0]
+        >>> # input_x[0] = [105.0, 105.0, 105.0] / [3.0, 3.0, 3.0] = [35.0, 35.0, 35.0]
+        >>> # input_x[1] = [315.0, 315.0, 315.0] / [1.0, 1.0, 1.0] = [315.0, 315.0, 315.0]
+        >>> # step 2: [1, 1]
+        >>> # input_x[1] = [315.0, 315.0, 315.0] / [5.0, 5.0, 5.0] = [63.0 63.0 63.0]
+        >>> # input_x[1] = [63.0 63.0 63.0] / [7.0, 7.0, 7.0] = [9.0, 9.0, 9.0]
+        >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
+        ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mindspore.float32)
+        >>> scatter_div = ops.ScatterDiv()
+        >>> output = scatter_div(input_x, indices, updates)
+        >>> print(output)
+        [[35. 35. 35.]
+         [ 9.  9.  9.]]
+    """
+    return scatter_div_(input_x, indices, updates)
 
 
 def scatter_nd(indices, updates, shape):
@@ -2416,6 +2503,7 @@ __all__ = [
     'tensor_scatter_div',
     'scatter_max',
     'scatter_min',
+    'scatter_div',
     'select',
     'nonzero',
     'matrix_diag',
