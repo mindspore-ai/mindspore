@@ -294,5 +294,7 @@ MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Sub, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, TruncateDiv, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, TruncateMod, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Complex, BroadcastOpGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Xdivy, BroadcastOpGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Xlogy, BroadcastOpGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

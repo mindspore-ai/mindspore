@@ -55,6 +55,7 @@ enum BroadcastOpType {
   BROADCAST_TYPE_BITWISEXOR = 29,
   BROADCAST_TYPE_MULNONAN = 30,
   BROADCAST_TYPE_INVALID = 0xffffffff,
+  BROADCAST_TYPE_XLOGY = 31,
 };
 
 template <typename T>
