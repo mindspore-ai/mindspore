@@ -1782,6 +1782,13 @@ def tan(x):
     return F.tan(x)
 
 
+def cosh(x):
+    """
+    Computes hyperbolic cosine of `x` element-wise.
+    """
+    return F.cosh(x)
+
+
 def ger(x, y):
     """Ger product of `x1` and `x2`.."""
     return F.ger(x, y)

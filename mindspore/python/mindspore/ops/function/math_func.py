@@ -1076,7 +1076,7 @@ def cosh(x):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)

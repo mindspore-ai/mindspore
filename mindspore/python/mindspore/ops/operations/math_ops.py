@@ -3174,7 +3174,7 @@ class Cosh(Primitive):
     Refer to :func:`mindspore.ops.cosh` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> cosh = ops.Cosh()

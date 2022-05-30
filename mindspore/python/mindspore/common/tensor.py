@@ -923,6 +923,22 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('tan')()(self)
 
 
+    def cosh(self):
+        """
+        Computes hyperbolic cosine of `x` element-wise.
+        Refer to :func:`mindspore.ops.cosh` for more detail.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+            >>> output = a.cosh()
+            >>> print(output)
+            [1.0289385 1.364684 1.048436 1.0040528]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('cosh')()(self)
+
+
     def abs(self):
         """
         Return absolute value element-wisely.
