@@ -43,6 +43,8 @@
 #include "ops/grad/slice_grad.h"
 #include "ops/lstm.h"
 #include "ops/stack.h"
+#include "ops/rpc_recv.h"
+#include "ops/rpc_send.h"
 
 namespace mindspore {
 namespace abstract {
@@ -339,6 +341,8 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimTensorMove, R{InferImplTensorMove, nullptr, true}},
     {prim::kPrimLstm, R{ops::LstmInfer, nullptr, true}},
     {prim::kPrimStack, R{ops::StackInfer, nullptr, true}},
+    {prim::kPrimRpcRecv, R{ops::RpcRecvInfer, nullptr, true}},
+    {prim::kPrimRpcSend, R{ops::RpcSendInfer, nullptr, true}},
   };
   return prim_backend_eval_implement_map;
 }
