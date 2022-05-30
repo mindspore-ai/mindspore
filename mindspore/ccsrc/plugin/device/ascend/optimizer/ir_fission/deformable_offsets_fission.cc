@@ -23,8 +23,8 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kAxisH = 3;
-constexpr size_t kAxisW = 2;
+constexpr size_t kAxisH = 2;
+constexpr size_t kAxisW = 3;
 constexpr size_t kAxisC = 1;
 constexpr size_t kDeformableOffsetsInputNum = 3;
 constexpr size_t kChannel = 3;
@@ -114,6 +114,7 @@ const AnfNodePtr DeformableOffsetsFission::Process(const FuncGraphPtr &func_grap
   new_cnode->set_abstract(deformable_offsets_cnode->abstract());
   new_cnode->set_scope(deformable_offsets_cnode->scope());
   common::AnfAlgo::CopyNodeAttrs(deformable_offsets_cnode, new_cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrDataFormat, MakeValue("NHWC"), new_cnode);
   if (kernel_graph != nullptr) {
     kernel_graph->AddValueNodeToGraph(assist_const);
     MS_LOG(INFO) << "Add assist tensor for DeformableOffsets op success.";
