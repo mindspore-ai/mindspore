@@ -22,19 +22,25 @@ class LambdaCallback(Callback):
     Callback for creating simple, custom callbacks.
 
     This callback is constructed with anonymous functions that will be called
-    at the appropriate time (during `mindspore.Model.{train | eval}`). Note that
+    at the appropriate time (during `mindspore.Model.{train | eval | fit}`). Note that
     each stage of callbacks expects one positional arguments: `run_context`.
 
     Note:
         This is an experimental interface that is subject to change or deletion.
 
     Args:
-        epoch_begin (Function): called at the beginning of every epoch.
-        epoch_end (Function): called at the end of every epoch.
-        step_begin (Function): called at the beginning of every batch.
-        step_end (Function): called at the end of every batch.
-        begin (Function): called at the beginning of model train/eval.
-        end (Function): called at the end of model train/eval.
+        on_train_epoch_begin (Function): called at each train epoch begin.
+        on_train_epoch_end (Function): called at each train epoch end.
+        on_train_step_begin (Function):  called at each train step begin.
+        on_train_step_end (Function): called at each train step end.
+        on_train_begin (Function): called at the beginning of model train.
+        on_train_end (Function): called at the end of model train.
+        on_eval_epoch_begin (Function): called at eval epoch begin.
+        on_eval_epoch_end (Function): called at eval epoch end.
+        on_eval_step_begin (Function): called at each eval step begin.
+        on_eval_step_end (Function): called at each eval step end.
+        on_eval_begin (Function): called at the beginning of model eval.
+        on_eval_end (Function): called at the end of model eval.
 
     Examples:
         >>> import numpy as np
@@ -46,19 +52,28 @@ class LambdaCallback(Callback):
         >>> net = nn.Dense(10, 5)
         >>> crit = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> opt = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-        >>> lambda_callback = LambdaCallback(epoch_end=
+        >>> lambda_callback = LambdaCallback(on_train_epoch_end=
         ... lambda run_context: print("loss: ", run_context.original_args().net_outputs))
         >>> model = Model(network=net, optimizer=opt, loss_fn=crit, metrics={"recall"})
         >>> model.train(2, train_dataset, callbacks=[lambda_callback])
         loss: 1.6127687
         loss: 1.6106578
     """
-    def __init__(self, epoch_begin=None, epoch_end=None, step_begin=None,
-                 step_end=None, begin=None, end=None):
+    def __init__(self, on_train_epoch_begin=None, on_train_epoch_end=None, on_train_step_begin=None,
+                 on_train_step_end=None, on_train_begin=None, on_train_end=None,
+                 on_eval_epoch_begin=None, on_eval_epoch_end=None, on_eval_step_begin=None,
+                 on_eval_step_end=None, on_eval_begin=None, on_eval_end=None):
         super(LambdaCallback, self).__init__()
-        self.epoch_begin = epoch_begin if epoch_begin else lambda run_context: None
-        self.epoch_end = epoch_end if epoch_end else lambda run_context: None
-        self.step_begin = step_begin if step_begin else lambda run_context: None
-        self.step_end = step_end if step_end else lambda run_context: None
-        self.begin = begin if begin else lambda run_context: None
-        self.end = end if end else lambda run_context: None
+        self.on_train_epoch_begin = on_train_epoch_begin if on_train_epoch_begin else lambda run_context: None
+        self.on_train_epoch_end = on_train_epoch_end if on_train_epoch_end else lambda run_context: None
+        self.on_train_step_begin = on_train_step_begin if on_train_step_begin else lambda run_context: None
+        self.on_train_step_end = on_train_step_end if on_train_step_end else lambda run_context: None
+        self.on_train_begin = on_train_begin if on_train_begin else lambda run_context: None
+        self.on_train_end = on_train_end if on_train_end else lambda run_context: None
+
+        self.on_eval_epoch_begin = on_eval_epoch_begin if on_eval_epoch_begin else lambda run_context: None
+        self.on_eval_epoch_end = on_eval_epoch_end if on_eval_epoch_end else lambda run_context: None
+        self.on_eval_step_begin = on_eval_step_begin if on_eval_step_begin else lambda run_context: None
+        self.on_eval_step_end = on_eval_step_end if on_eval_step_end else lambda run_context: None
+        self.on_eval_begin = on_eval_begin if on_eval_begin else lambda run_context: None
+        self.on_eval_end = on_eval_end if on_eval_end else lambda run_context: None

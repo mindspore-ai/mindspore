@@ -21,7 +21,7 @@ from ._callback import Callback
 
 class History(Callback):
     """
-    Records the network outputs information into a `History` object.
+    Records the network outputs and metrics information into a `History` object.
 
     The network outputs information will be the loss value if not custimizing the train network or eval network;
     if the custimized network returns a `Tensor` or `numpy.ndarray`, the mean value of network output
@@ -29,7 +29,7 @@ class History(Callback):
     outputs will be recorded.
 
     Note:
-        Normally used in `mindspore.Model.train`.
+        Normally used in `mindspore.Model.train` or `mindspore.Model.fit`.
 
     Examples:
         >>> import numpy as np
@@ -65,7 +65,7 @@ class History(Callback):
 
     def epoch_end(self, run_context):
         """
-        Records the first element of network outputs at the end of epoch.
+        Records the first element of network outputs and metrics information at the end of epoch.
 
         Args:
             run_context (RunContext): Context of the `mindspore.Model.{train | eval}`.  For more details,

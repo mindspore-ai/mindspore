@@ -513,13 +513,13 @@ def test_lambda():
 
     run_context = RunContext(cb_params)
     lambda_cb = LambdaCallback(
-        epoch_end=lambda run_context: print("loss result: ", run_context.original_args().net_outputs))
+        on_train_epoch_end=lambda run_context: print("loss result: ", run_context.original_args().net_outputs))
 
     callbacks = [lambda_cb]
     with _CallbackManager(callbacks) as callbacklist:
-        callbacklist.begin(run_context)
-        callbacklist.epoch_begin(run_context)
-        callbacklist.step_begin(run_context)
-        callbacklist.step_end(run_context)
-        callbacklist.epoch_end(run_context)
-        callbacklist.end(run_context)
+        callbacklist.on_train_begin(run_context)
+        callbacklist.on_train_epoch_begin(run_context)
+        callbacklist.on_train_step_begin(run_context)
+        callbacklist.on_train_step_end(run_context)
+        callbacklist.on_train_epoch_end(run_context)
+        callbacklist.on_train_end(run_context)
