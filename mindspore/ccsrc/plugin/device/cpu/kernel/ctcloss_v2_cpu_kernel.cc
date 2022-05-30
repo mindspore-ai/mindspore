@@ -188,7 +188,7 @@ bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
           log_alpha[log_alpha_it(t, i)] = alpha + probs[probs_it(t, b, target)];
         }
       }
-      if (padded_target_length != 0) {
+      if (padded_target_length > 1) {
         neg_log_likelihood[b] = -log_sum_exp(log_alpha[log_alpha_it(input_length - 1, padded_target_length - 1)],
                                              log_alpha[log_alpha_it(input_length - 1, padded_target_length - 2)]);
       } else {
