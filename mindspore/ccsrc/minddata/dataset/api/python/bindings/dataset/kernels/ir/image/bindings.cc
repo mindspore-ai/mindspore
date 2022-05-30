@@ -39,6 +39,7 @@
 #include "minddata/dataset/kernels/ir/vision/normalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
+#include "minddata/dataset/kernels/ir/vision/pad_to_size_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_auto_contrast_ir.h"
@@ -227,8 +228,8 @@ PYBIND_REGISTER(GetImageNumChannels, 1, ([](py::module *m) {
 
 PYBIND_REGISTER(GetImageSize, 1, ([](py::module *m) {
                   (void)m->def("get_image_size", ([](const std::shared_ptr<Tensor> &image) {
-                                 auto size = std::vector<uint32_t>(2);
-                                 THROW_IF_ERROR(ImageSize(image, size));
+                                 auto size = std::vector<dsize_t>(2);
+                                 THROW_IF_ERROR(ImageSize(image, &size));
                                  py::list size_list;
                                  size_list.append(size[0]);
                                  size_list.append(size[1]);
@@ -311,6 +312,18 @@ PYBIND_REGISTER(PadOperation, 1, ([](const py::module *m) {
                       return pad;
                     }));
                 }));
+
+PYBIND_REGISTER(
+  PadToSizeOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::PadToSizeOperation, TensorOperation, std::shared_ptr<vision::PadToSizeOperation>>(
+      *m, "PadToSizeOperation")
+      .def(py::init([](const std::vector<int32_t> &size, const std::vector<int32_t> &offset,
+                       const std::vector<uint8_t> &fill_value, BorderType padding_mode) {
+        auto pad_to_size = std::make_shared<vision::PadToSizeOperation>(size, offset, fill_value, padding_mode);
+        THROW_IF_ERROR(pad_to_size->ValidateParams());
+        return pad_to_size;
+      }));
+  }));
 
 PYBIND_REGISTER(RandomAdjustSharpnessOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomAdjustSharpnessOperation, TensorOperation,

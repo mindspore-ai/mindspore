@@ -70,7 +70,7 @@ from .validators import check_adjust_gamma, check_alpha, check_auto_contrast, ch
     check_random_adjust_sharpness, check_auto_augment, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_random_solarize, \
     check_soft_dvpp_decode_random_crop_resize_jpeg, FLOAT_MAX_INTEGER, \
-    check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches
+    check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_pad_to_size
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import TensorOperation, PyTensorOperation, CompoundOperation, TypeCast
@@ -1246,7 +1246,6 @@ class Pad(TensorOperation, PyTensorOperation):
             fill_value = tuple([fill_value] * 3)
         self.padding = padding
         self.fill_value = fill_value
-        self.padding_mode = padding_mode
         self.random = False
         self.c_padding_mode = Border.to_c_type(padding_mode)
         self.pil_padding_mode = Border.to_python_type(padding_mode)
@@ -1265,6 +1264,64 @@ class Pad(TensorOperation, PyTensorOperation):
             PIL Image, padded image.
         """
         return util.pad(img, self.padding, self.fill_value, self.pil_padding_mode)
+
+
+class PadToSize(TensorOperation):
+    """
+    Pad the image to a fixed size.
+
+    Args:
+        size (Union[int, Sequence[int, int]]): The target size to pad.
+            If int is provided, pad the image to [size, size].
+            If Sequence[int, int] is provided, it should be in order of [height, width].
+        offset (Union[int, Sequence[int, int]], optional): The lengths to pad on the top and left.
+            If int is provided, pad both top and left borders with this value.
+            If Sequence[int, int] is provided, is should be in order of [top, left].
+            Default: None, means to pad symmetrically, keeping the original image in center.
+        fill_value (Union[int, tuple[int, int, int]], optional): Pixel value used to pad the borders,
+            only valid when `padding_mode` is Border.CONSTANT.
+            If int is provided, it will be used for all RGB channels.
+            If tuple[int, int, int] is provided, it will be used for R, G, B channels respectively. Default: 0.
+        padding_mode (Border, optional): Method of padding. It can be Border.CONSTANT, Border.EDGE, Border.REFLECT
+            or Border.SYMMETRIC. Default: Border.CONSTANT. Default: Border.CONSTANT.
+
+            - Border.CONSTANT, pads with a constant value.
+            - Border.EDGE, pads with the last value at the edge of the image.
+            - Border.REFLECT, pads with reflection of the image omitting the last value on the edge.
+            - Border.SYMMETRIC, pads with reflection of the image repeating the last value on the edge.
+
+    Raises:
+        TypeError: If `size` is not of type int or Sequence[int, int].
+        TypeError: If `offset` is not of type int or Sequence[int, int].
+        TypeError: If `fill_value` is not of type int or tuple[int, int, int].
+        TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
+        ValueError: If `size` is not positive.
+        ValueError: If `offset` is negative.
+        ValueError: If `fill_value` is not in range of [0, 255].
+        RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> transforms_list = [vision.Decode(), vision.PadToSize([256, 256])]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_pad_to_size
+    def __init__(self, size, offset=None, fill_value=0, padding_mode=Border.CONSTANT):
+        super().__init__()
+        self.size = [size, size] if isinstance(size, int) else size
+        if offset is None:
+            self.offset = []
+        else:
+            self.offset = [offset, offset] if isinstance(offset, int) else offset
+        self.fill_value = tuple([fill_value] * 3) if isinstance(fill_value, int) else fill_value
+        self.padding_mode = Border.to_c_type(padding_mode)
+
+    def parse(self):
+        return cde.PadToSizeOperation(self.size, self.offset, self.fill_value, self.padding_mode)
 
 
 class RandomAdjustSharpness(TensorOperation):

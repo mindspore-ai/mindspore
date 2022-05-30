@@ -22,7 +22,8 @@ from mindspore._c_dataengine import TensorOp, TensorOperation
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER, \
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
     parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, \
-    check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32
+    check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32, check_non_negative_int32, \
+    check_pos_int32
 from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
 
 
@@ -596,6 +597,40 @@ def check_pad(method):
     def new_method(self, *args, **kwargs):
         [padding, fill_value, padding_mode], _ = parse_user_args(method, *args, **kwargs)
         check_padding(padding)
+        check_fill_value(fill_value)
+        type_check(padding_mode, (Border,), "padding_mode")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_pad_to_size(method):
+    """Wrapper method to check the parameters of PadToSize."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [size, offset, fill_value, padding_mode], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(size, (int, list, tuple), "size")
+        if isinstance(size, int):
+            check_positive(size, "size")
+        else:
+            if len(size) != 2:
+                raise ValueError("The size must be a sequence of length 2.")
+            for i, value in enumerate(size):
+                check_pos_int32(value, "size{0}".format(i))
+
+        if offset is not None:
+            type_check(offset, (int, list, tuple), "offset")
+            if isinstance(offset, int):
+                check_non_negative_int32(offset, "offset")
+            else:
+                if len(offset) not in [0, 2]:
+                    raise ValueError("The offset must be empty or a sequence of length 2.")
+                for i, value in enumerate(offset):
+                    check_non_negative_int32(offset[i], "offset{0}".format(i))
+
         check_fill_value(fill_value)
         type_check(padding_mode, (Border,), "padding_mode")
 

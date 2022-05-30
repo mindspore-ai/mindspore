@@ -1251,25 +1251,25 @@ TEST_F(MindDataTestPipeline, TestConvertColorSuccess3) {
 }
 
 TEST_F(MindDataTestPipeline, TestConvertColorFail) {
-    MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorFail.";
-    // Create an ImageFolder Dataset
-    std::string folder_path = datasets_root_path_ + "/testPK/data/";
-    std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
-    EXPECT_NE(ds, nullptr);
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorFail.";
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
+  EXPECT_NE(ds, nullptr);
 
-    ConvertMode error_convert_mode = static_cast<ConvertMode>(50);
+  ConvertMode error_convert_mode = static_cast<ConvertMode>(50);
 
-    // Create objects for the tensor ops
-    std::shared_ptr<TensorTransform> resize_op(new vision::Resize({500, 1000}));
-    std::shared_ptr<TensorTransform> convert(new mindspore::dataset::vision::ConvertColor(error_convert_mode));
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({500, 1000}));
+  std::shared_ptr<TensorTransform> convert(new mindspore::dataset::vision::ConvertColor(error_convert_mode));
 
-    ds = ds->Map({resize_op, convert});
-    EXPECT_NE(ds, nullptr);
+  ds = ds->Map({resize_op, convert});
+  EXPECT_NE(ds, nullptr);
 
-    // Create an iterator over the result of the above dataset
-    // This will trigger the creation of the Execution Tree and launch it.
-    std::shared_ptr<Iterator> iter = ds->CreateIterator();
-    EXPECT_EQ(iter, nullptr);
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
 }
 
 /// Feature: AutoAugment
@@ -1316,8 +1316,8 @@ TEST_F(MindDataTestPipeline, TestAutoAugmentInvalidFillValue) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
   EXPECT_NE(ds, nullptr);
 
-  auto auto_augment_op = vision::AutoAugment(AutoAugmentPolicy::kImageNet,
-                                             InterpolationMode::kNearestNeighbour, {20, 20});
+  auto auto_augment_op =
+    vision::AutoAugment(AutoAugmentPolicy::kImageNet, InterpolationMode::kNearestNeighbour, {20, 20});
 
   ds = ds->Map({auto_augment_op});
   EXPECT_NE(ds, nullptr);
@@ -1364,11 +1364,11 @@ TEST_F(MindDataTestPipeline, TestGetImageSizePipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetImageSizePipeline.";
 
   std::shared_ptr<Tensor> input_tensor;
-  std::vector<float> input_vector = {3, 4, 2, 5, 1, 34, 4, 5, 2, 5, 7, 3, 12, 1, 5, 6, 3 ,2};
+  std::vector<float> input_vector = {3, 4, 2, 5, 1, 34, 4, 5, 2, 5, 7, 3, 12, 1, 5, 6, 3, 2};
   ASSERT_OK(Tensor::CreateFromVector(input_vector, TensorShape({3, 2, 3}), &input_tensor));
-  auto size = std::vector<uint32_t>(2);
-  ASSERT_OK(ImageSize(input_tensor, size));
-  std::vector<uint32_t> expected = {3, 2};
+  auto size = std::vector<dsize_t>(2);
+  ASSERT_OK(ImageSize(input_tensor, &size));
+  std::vector<dsize_t> expected = {3, 2};
 
   ASSERT_EQ(size, expected);
 }
@@ -1382,6 +1382,114 @@ TEST_F(MindDataTestPipeline, TestGetImageSizeInValidInput) {
   std::shared_ptr<Tensor> input_tensor;
   std::vector<int> input_vector = {3, 4, 2, 5, 1, 3, 4, 5, 2, 5, 7, 3};
   ASSERT_OK(Tensor::CreateFromVector(input_vector, TensorShape({12}), &input_tensor));
-  auto size = std::vector<uint32_t>(2);
-  ASSERT_FALSE(ImageSize(input_tensor, size));
+  auto size = std::vector<dsize_t>(2);
+  ASSERT_FALSE(ImageSize(input_tensor, &size));
+}
+
+/// Feature: PadToSize
+/// Description: test default usage
+/// Expectation: samples processed successfully
+TEST_F(MindDataTestPipeline, TestPadToSize) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadToSize.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  auto pad_to_size = vision::PadToSize({256, 256}, {}, {0}, BorderType::kSymmetric);
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({pad_to_size});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: PadToSize
+/// Description: test parameter check
+/// Expectation: error logs are as expected
+TEST_F(MindDataTestPipeline, TestPadToSizeInvalid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadToSizeInvalid.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  auto invalid_size_shape = vision::PadToSize({});
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({invalid_size_shape});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: Invalid size shape
+  EXPECT_EQ(iter, nullptr);
+
+  // Create objects for the tensor ops
+  auto invalid_size_value = vision::PadToSize({0, 0});
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({invalid_size_value});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  iter = ds->CreateIterator();
+  // Expect failure: Invalid size value
+  EXPECT_EQ(iter, nullptr);
+
+  // Create objects for the tensor ops
+  auto invalid_offset_shape = vision::PadToSize({256, 256}, {0, 1, 2});
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({invalid_offset_shape});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  iter = ds->CreateIterator();
+  // Expect failure: Invalid offset shape
+  EXPECT_EQ(iter, nullptr);
+
+  // Create objects for the tensor ops
+  auto invalid_offset_value = vision::PadToSize({256, 256}, {-1, 0});
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({invalid_offset_value});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  iter = ds->CreateIterator();
+  // Expect failure: Invalid offset value
+  EXPECT_EQ(iter, nullptr);
 }

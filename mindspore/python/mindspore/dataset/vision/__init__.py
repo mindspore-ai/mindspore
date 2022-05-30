@@ -45,15 +45,15 @@ Descriptions of common data processing terms are as follows:
 from . import c_transforms
 from . import py_transforms
 from . import transforms
-from .transforms import not_random, AutoAugment, AutoContrast, BoundingBoxAugment, CenterCrop, ConvertColor, Crop, \
-    CutMixBatch, CutOut, Decode, Equalize, FiveCrop, GaussianBlur, Grayscale, HorizontalFlip, HsvToRgb, HWC2CHW, \
-    Invert, LinearTransformation, MixUpBatch, MixUp, NormalizePad, Normalize, Pad, RandomAdjustSharpness, \
-    RandomAffine, RandomAutoContrast, RandomColorAdjust, RandomColor, RandomCropDecodeResize, RandomCrop, \
-    RandomCropWithBBox, RandomEqualize, RandomErasing, RandomGrayscale, RandomHorizontalFlip, \
+from .transforms import not_random, AdjustGamma, AutoAugment, AutoContrast, BoundingBoxAugment, CenterCrop, \
+    ConvertColor, Crop, CutMixBatch, CutOut, Decode, Equalize, FiveCrop, GaussianBlur, Grayscale, HorizontalFlip, \
+    HsvToRgb, HWC2CHW, Invert, LinearTransformation, MixUpBatch, MixUp, NormalizePad, Normalize, Pad, PadToSize, \
+    RandomAdjustSharpness, RandomAffine, RandomAutoContrast, RandomColorAdjust, RandomColor, RandomCropDecodeResize, \
+    RandomCrop, RandomCropWithBBox, RandomEqualize, RandomErasing, RandomGrayscale, RandomHorizontalFlip, \
     RandomHorizontalFlipWithBBox, RandomInvert, RandomLighting, RandomPerspective, RandomPosterize, RandomResizedCrop, \
     RandomResizedCropWithBBox, RandomResize, RandomResizeWithBBox, RandomRotation, RandomSelectSubpolicy, \
     RandomSharpness, RandomSolarize, RandomVerticalFlip, RandomVerticalFlipWithBBox, Rescale, Resize, ResizeWithBBox, \
     RgbToHsv, Rotate, SlicePatches, SoftDvppDecodeRandomCropResizeJpeg, SoftDvppDecodeResizeJpeg, TenCrop, ToNumpy, \
-    ToPIL, ToTensor, ToType, UniformAugment, VerticalFlip, AdjustGamma
+    ToPIL, ToTensor, ToType, UniformAugment, VerticalFlip
 from .utils import Inter, Border, ConvertMode, ImageBatchFormat, SliceMode, AutoAugmentPolicy, get_image_num_channels, \
     get_image_size

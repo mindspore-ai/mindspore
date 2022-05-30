@@ -40,11 +40,16 @@
 #define CHANNEL_INDEX_HWC 2       // images are hwc, so index 2 represents number of channels
 #define CHANNEL_INDEX_CHW 0       // images are chw, so index 0 represents number of channels
 #define DEFAULT_IMAGE_CHANNELS 3  // images are 3 channels in general
+#define MIN_IMAGE_RANK 2          // images have at least 2 dimensions
 #define DEFAULT_IMAGE_RANK 3      // images are hwc channels in general
 #define MAX_BIT_VALUE 255         // max bit value after decode is 256
 #define MIN_IMAGE_CHANNELS 1      // image ops support minimum of 1 channel
 #define MAX_IMAGE_CHANNELS 4      // image ops support maximum of 4 channel
-#define MIN_IMAGE_DIMENSION 2     // images are at least 2 dimensional
+#define HALF 0.5                  // to get the half of a value
+#define R_INDEX 0                 // index of red channel in RGB format
+#define G_INDEX 1                 // index of green channel in RGB format
+#define B_INDEX 2                 // index of blue channel in RGB format
+
 namespace mindspore {
 namespace dataset {
 void JpegErrorExitCustom(j_common_ptr cinfo);
@@ -75,7 +80,7 @@ Status ImageNumChannels(const std::shared_ptr<Tensor> &image, int *channels);
 /// \param[in] image Tensor of the image.
 /// \param[out] size Size of the image as [height, width].
 /// \return The status code.
-Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<uint32_t> &size);  // NOLINT
+Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<dsize_t> *size);
 
 /// \brief Returns the check result of tensor rank and tensor shape
 /// \param[in] tensor: The input tensor need to check

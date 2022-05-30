@@ -80,6 +80,7 @@ constexpr char kMixUpBatchOp[] = "MixUpBatchOp";
 constexpr char kNormalizeOp[] = "NormalizeOp";
 constexpr char kNormalizePadOp[] = "NormalizePadOp";
 constexpr char kPadOp[] = "PadOp";
+constexpr char kPadToSizeOp[] = "PadToSizeOp";
 constexpr char kRandomAdjustSharpnessOp[] = "RandomAdjustSharpnessOp";
 constexpr char kRandomAffineOp[] = "RandomAffineOp";
 constexpr char kRandomAutoContrastOp[] = "RandomAutoContrastOp";

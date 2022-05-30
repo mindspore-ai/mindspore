@@ -40,6 +40,7 @@
 #include "minddata/dataset/kernels/ir/vision/normalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
+#include "minddata/dataset/kernels/ir/vision/pad_to_size_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_auto_contrast_ir.h"
@@ -421,7 +422,8 @@ Status GetImageNumChannels(const mindspore::MSTensor &image, int *channels) {
 }
 
 // GetImageSize Function.
-Status GetImageSize(const mindspore::MSTensor &image, std::vector<uint32_t> &size) {  // NOLINT
+Status GetImageSize(const mindspore::MSTensor &image, std::vector<dsize_t> *size) {
+  RETURN_UNEXPECTED_IF_NULL(size);
   std::shared_ptr<Tensor> input;
   Status rc = Tensor::CreateFromMSTensor(image, &input);
   if (rc.IsError()) {
@@ -516,6 +518,25 @@ Pad::Pad(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_v
 
 std::shared_ptr<TensorOperation> Pad::Parse() {
   return std::make_shared<PadOperation>(data_->padding_, data_->fill_value_, data_->padding_mode_);
+}
+
+// PadToSize Transform Operation.
+struct PadToSize::Data {
+  Data(const std::vector<int32_t> &size, const std::vector<int32_t> &offset, const std::vector<uint8_t> &fill_value,
+       BorderType padding_mode)
+      : size_(size), offset_(offset), fill_value_(fill_value), padding_mode_(padding_mode) {}
+  std::vector<int32_t> size_;
+  std::vector<int32_t> offset_;
+  std::vector<uint8_t> fill_value_;
+  BorderType padding_mode_;
+};
+
+PadToSize::PadToSize(const std::vector<int32_t> &size, const std::vector<int32_t> &offset,
+                     const std::vector<uint8_t> &fill_value, BorderType padding_mode)
+    : data_(std::make_shared<Data>(size, offset, fill_value, padding_mode)) {}
+
+std::shared_ptr<TensorOperation> PadToSize::Parse() {
+  return std::make_shared<PadToSizeOperation>(data_->size_, data_->offset_, data_->fill_value_, data_->padding_mode_);
 }
 
 // RandomAdjustSharpness Transform Operation.
