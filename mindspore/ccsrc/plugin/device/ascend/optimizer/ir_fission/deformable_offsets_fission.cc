@@ -22,10 +22,13 @@
 
 namespace mindspore {
 namespace opt {
-constexpr size_t kAxisH = 1;
+namespace {
+constexpr size_t kAxisH = 3;
 constexpr size_t kAxisW = 2;
-constexpr size_t kAxisC = 3;
+constexpr size_t kAxisC = 1;
 constexpr size_t kDeformableOffsetsInputNum = 3;
+constexpr size_t kChannel = 3;
+}  // namespace
 
 ValueNodePtr DeformableOffsetsFission::CreateHelperNode(
   const FuncGraphPtr &func_graph, const AnfNodePtr &node, const std::vector<size_t> &offset_shape,
@@ -39,7 +42,7 @@ ValueNodePtr DeformableOffsetsFission::CreateHelperNode(
   int64_t stride_w = strides[axis_w];
   int64_t dilation_h = dilations[axis_h];
   int64_t dilation_w = dilations[axis_w];
-  size_t group = offset_shape[axis_c] / (axis_c * K_H * K_W);
+  size_t group = offset_shape[axis_c] / (kChannel * K_H * K_W);
   int64_t pad_top = pads[0];
   int64_t pad_left = pads[axis_w];
   int64_t h_index;
@@ -57,10 +60,10 @@ ValueNodePtr DeformableOffsetsFission::CreateHelperNode(
       for (size_t g = 0; g < group; ++g) {
         for (int64_t k_h = 0; k_h < K_H; ++k_h) {
           for (int64_t k_w = 0; k_w < K_W; ++k_w) {
-            w_index = static_cast<int64_t>(h * W_OUT * axis_c * group * K_H * K_W + w * axis_c * group * K_H * K_W +
-                                           0 * group * K_H * K_W + g * K_H * K_W + k_h * K_W + K_W);
-            h_index = static_cast<int64_t>(h * W_OUT * axis_c * group * K_H * K_W + w * axis_c * group * K_H * K_W +
-                                           1 * group * K_H * K_W + g * K_H * K_W + k_h * K_W + K_W);
+            w_index = static_cast<int64_t>(h * W_OUT * kChannel * group * K_H * K_W + w * kChannel * group * K_H * K_W +
+                                           0 * group * K_H * K_W + g * K_H * K_W + k_h * K_W + k_w);
+            h_index = static_cast<int64_t>(h * W_OUT * kChannel * group * K_H * K_W + w * kChannel * group * K_H * K_W +
+                                           1 * group * K_H * K_W + g * K_H * K_W + k_h * K_W + k_w);
             float w_val = static_cast<float>(w * stride_w - pad_left + k_w * dilation_w);
             float h_val = static_cast<float>(h * stride_h - pad_top + k_h * dilation_h);
             tensor_data[w_index] = w_val;
