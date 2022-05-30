@@ -1,7 +1,7 @@
 mindspore.ms_function
 =====================
 
-.. py:function:: mindspore.ms_function(fn=None, obj=None, input_signature=None, hash_args=None)
+.. py:function:: mindspore.ms_function(fn=None, input_signature=None, hash_args=None)
 
     将Python函数编译为一张可调用的MindSpore图。
 
@@ -10,7 +10,6 @@ mindspore.ms_function
     **参数：**
 
     - **fn**  (Function) - 要编译成图的Python函数。默认值：None。
-    - **obj**  (Object) - 用于区分编译后函数的Python对象。默认值：None。
     - **input_signature** (Tensor) - 用于表示输入参数的Tensor。Tensor的shape和dtype将作为函数的输入shape和dtype。默认值：None。
     - **hash_args**  (Union[Object, List or Tuple of Objects]) - `fn` 里面用到的自由变量，比如外部函数或类对象，再次调用时若 `hash_args` 出现变化会触发重新编译。默认值：None。
 

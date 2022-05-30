@@ -837,11 +837,14 @@ class Shard(Shard_):
             return self.shard_fn
         shard_ = Shard()
 
-        @ms_function(obj=fn)
-        def after_shard(*args):
-            return shard_(fn, in_strategy, out_strategy, device, level)(*args)
+        def shard_fn(*args):
+            args = (fn,) + args
+            @ms_function(hash_args=fn)
+            def after_shard(*args):
+                return shard_(fn, in_strategy, out_strategy, device, level)(*args)
+            return after_shard(*args)
 
-        self.shard_fn = after_shard
+        self.shard_fn = shard_fn
         self.fn = fn
         self.in_strategy = in_strategy
         self.out_strategy = out_strategy
