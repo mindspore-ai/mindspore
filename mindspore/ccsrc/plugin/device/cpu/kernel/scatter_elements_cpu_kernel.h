@@ -60,10 +60,6 @@ class ScatterElementsCpuKernelMod : public NativeCpuKernelMod {
   template <typename T, typename S, typename ReductionT>
   bool Scatter(const ReductionT &reduction_func, T *output, const S *indices, const T *updates);
 
-  size_t ComputeOutputOffset(const int64_t &index);
-
-  void UpdateOutputDimIndex();
-
  private:
   using ScatterElementsLaunchFunc =
     std::function<bool(ScatterElementsCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
@@ -79,8 +75,7 @@ class ScatterElementsCpuKernelMod : public NativeCpuKernelMod {
   int64_t axis_{0};
   std::vector<int64_t> indices_shape_{};
   std::vector<size_t> output_stride_{};
-  std::vector<size_t> output_dim_index_{};
-  std::vector<int64_t> adjusted_indices_{};
+  std::vector<size_t> indices_stride_{};
   std::string kernel_name_;
   bool update_input_ = true;
 };

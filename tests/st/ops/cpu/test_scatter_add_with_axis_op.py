@@ -77,7 +77,7 @@ def test_scatter_add_with_axis(dtype, index_dtype, axis):
     Expectation: Ans is same as expected.
     """
     x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=dtype))
-    indices = Tensor(np.array([[1, -1, 2], [0, 2, 1]], dtype=index_dtype))
+    indices = Tensor(np.array([[-1, 0, 1], [0, 1, 2]], dtype=index_dtype))
     update = Tensor(np.array([[1, 2, 2], [4, 5, 8]], dtype=dtype))
 
     ms_output = TestScatterAddWithAxis(x, indices, update, axis)()
