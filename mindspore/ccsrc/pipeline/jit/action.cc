@@ -47,7 +47,6 @@
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/py_pass_manager.h"
-#include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "backend/graph_compiler/transform.h"
@@ -536,24 +535,6 @@ bool InferenceOptPrepareAction(const ResourcePtr &resource) {
     MS_LOG(EXCEPTION) << "InferenceOptPrepare error, graph is null.";
   }
   return InferenceOptPreparePass(resource);
-}
-
-bool EliminateUnusedParameterAction(const ResourcePtr &resource) {
-  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") != "0");
-  static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
-  if (!transform_tail_call_to_parallel_call && !transform_for_half_unroll_call) {
-    return true;
-  }
-  MS_EXCEPTION_IF_NULL(resource);
-  FuncGraphPtr func_graph = resource->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto parameter_eliminator = opt::irpass::ParameterEliminator();
-  if (transform_for_half_unroll_call) {
-    parameter_eliminator.set_eliminate_only_returned_parameter(true);
-  }
-  bool changed = parameter_eliminator(func_graph, nullptr);
-  MS_LOG(DEBUG) << "Eliminate parameter, changed: " << changed;
-  return true;
 }
 
 namespace {
@@ -1426,8 +1407,6 @@ static std::vector<ActionItem> CommonPipeline() {
   }
 
   (void)actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
-  // Eliminate unused parameters before renormalize.
-  (void)actions.emplace_back(std::make_pair("elininate_unused_parameter", EliminateUnusedParameterAction));
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
   // Auto-monad for side-effects handling.
