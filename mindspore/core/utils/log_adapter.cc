@@ -606,15 +606,12 @@ MS_CORE_API void common_log_init(void) {
 #endif
     } else {
       FLAGS_logtostderr = false;
-      // Set log dir from GLOG_log_dir with RANK_ID or OMPI_COMM_WORLD_RANK.
+      // Set log dir from GLOG_log_dir with RANK_ID
 #ifndef BUILD_LITE_INFERENCE
       const std::string rank_id = mindspore::GetEnv("RANK_ID");
-      const std::string gpu_rank_id = mindspore::GetEnv("OMPI_COMM_WORLD_RANK");
       std::string rank = "0";
-      if ((!rank_id.empty() && gpu_rank_id.empty()) || (!rank_id.empty() && !gpu_rank_id.empty())) {
+      if (!rank_id.empty()) {
         rank = rank_id;
-      } else if (rank_id.empty() && !gpu_rank_id.empty()) {
-        rank = gpu_rank_id;
       }
       FLAGS_log_dir = mindspore::GetEnv("GLOG_log_dir") + "/rank_" + rank + "/logs";
 #else
