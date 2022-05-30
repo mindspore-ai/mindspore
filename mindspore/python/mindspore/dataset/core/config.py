@@ -641,14 +641,13 @@ def set_enable_shared_mem(enable):
         >>> # Enable shared memory feature to improve the performance of Python multiprocessing.
         >>> ds.config.set_enable_shared_mem(True)
     """
-    # For Windows and MacOS we forbid shared mem function temporarily
-    if platform.system().lower() in {"windows", "darwin"}:
-        logger.warning("For Windows and MacOS we forbid shared mem function temporarily.")
-        return
-
     if not isinstance(enable, bool):
         raise TypeError("enable must be of type bool.")
     if enable:
+        # For Windows and MacOS we forbid shared mem function temporarily
+        if platform.system().lower() in {"windows", "darwin"}:
+            logger.warning("For Windows and MacOS we forbid shared mem function temporarily.")
+            return
         logger.warning("The shared memory is on, multiprocessing performance will be improved. "
                        "Note: the required shared memory can't exceeds 80% of the available shared memory.")
     _config.set_enable_shared_mem(enable)

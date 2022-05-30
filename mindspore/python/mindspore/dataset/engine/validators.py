@@ -1524,6 +1524,20 @@ def check_rename(method):
     return new_method
 
 
+def check_output_shape(method):
+    """check the input arguments of output_shape."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+        estimate = param_dict.get('estimate')
+        type_check(estimate, (bool,), "estimate")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_project(method):
     """check the input arguments of project."""
 

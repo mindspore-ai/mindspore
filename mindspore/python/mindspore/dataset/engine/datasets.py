@@ -66,7 +66,7 @@ from .iterators import DictIterator, TupleIterator, DummyIterator, check_iterato
     ITERATORS_LIST, _unset_iterator_cleanup
 from .queue import _SharedQueue
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
-    check_rename, check_device_send, check_take, check_project, \
+    check_rename, check_device_send, check_take, check_output_shape, check_project, \
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
     check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, deprecated
 from ..core.config import get_callback_timeout, _init_device_info, get_enable_shared_mem, get_num_parallel_workers, \
@@ -1576,17 +1576,27 @@ class Dataset:
             runtime_getter[2].notify_watchdog()
         return self._col_names
 
+    @check_output_shape
     def output_shapes(self, estimate=False):
         """
-        Get the shapes of output data. If `estimate` is False, will return the shape of first data row.
-        Otherwise, will iterate the whole dataset and return the estimated shape of data row, where dynamic
-        shape marked is marked as -1.
+        Get the shapes of output data.
+
+        Args:
+            estimate (bool): If `estimate` is False, will return the shapes of first data row.
+                Otherwise, will iterate the whole dataset and return the estimated shapes of data row,
+                where dynamic shape is marked as -1 (used in dynamic data shapes scenario).
 
         Returns:
             list, list of shapes of each column.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
+            >>> import numpy as np
+            >>>
+            >>> def generator1():
+            ...     for i in range(1, 100):
+            ...         yield np.ones((16, i, 83)), np.array(i)
+            >>>
+            >>> dataset = ds.GeneratorDataset(generator1, ["data1", "data2"])
             >>> output_shapes = dataset.output_shapes()
         """
         # cache single shape
