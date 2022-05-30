@@ -21,6 +21,7 @@
 #include <map>
 #include <chrono>
 #include <string>
+#include <vector>
 
 namespace mindspore {
 namespace distributed {
@@ -36,6 +37,14 @@ constexpr char kEnvRoleOfWorker[] = "MS_WORKER";
 constexpr char kEnvRoleOfScheduler[] = "MS_SCHED";
 const std::set<std::string> kValidRoleName = {kEnvRoleOfServer, kEnvRoleOfPServer, kEnvRoleOfWorker,
                                               kEnvRoleOfScheduler};
+
+// Used in parameter server embedding cache scenarios to identify the same Parameter between Worker and Server.
+constexpr char kParameterKey[] = "parameter_key";
+// Embedding cache lookup operation.
+constexpr char kLookupEmbeddingCache[] = "LookupEmbeddingCache";
+// Embedding cache update operation.
+constexpr char kUpdateEmbeddingCache[] = "UpdateEmbeddingCache";
+const std::vector<std::string> kEmbeddingCacheOps = {kLookupEmbeddingCache, kUpdateEmbeddingCache};
 
 // The distributed execution mode enum.
 enum class DistExecutionMode { kPSMode = 0, kInvalidMode };

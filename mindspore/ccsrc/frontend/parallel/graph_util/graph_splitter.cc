@@ -1045,6 +1045,13 @@ OperatorLabel GraphSplitter::GetSplitLabel(const AnfNodePtr &node) {
       std::string ms_role = GetValue<std::string>(prim->GetAttr(distributed::kOpLabelRole));
       return {rank_id, ms_role};
     }
+  } else {
+    // Get label for call node, 'call' node hasn't primitive to save attrs, so get attrs of 'call' from cnode.
+    if (cnode->HasAttr(distributed::kOpLabelRankId) && cnode->HasAttr(distributed::kOpLabelRole)) {
+      uint32_t rank_id = static_cast<uint32_t>(GetValue<int64_t>(cnode->GetAttr(distributed::kOpLabelRankId)));
+      std::string ms_role = GetValue<std::string>(cnode->GetAttr(distributed::kOpLabelRole));
+      return {rank_id, ms_role};
+    }
   }
   return default_label_;
 }
