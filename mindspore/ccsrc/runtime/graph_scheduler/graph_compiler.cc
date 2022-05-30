@@ -393,6 +393,90 @@ GraphCompilerInfo::~GraphCompilerInfo() {
   GraphScheduler::GetInstance().Clear(name_, graphs_, origin_parameters_order_, control_node_parser_);
 }
 
+namespace {
+// Fetch the real input of the nop node recursively.
+AnfNodePtr FetchRealNodeByNopNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!common::AnfAlgo::IsNopNode(node)) {
+    return node;
+  }
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  const auto &inputs = cnode->inputs();
+  if (inputs.size() <= 1) {
+    MS_LOG(EXCEPTION) << "Invalid cnode:" << cnode->DebugString();
+  }
+  return FetchRealNodeByNopNode(inputs[1]);
+}
+
+// Recursively delete the nodes in the eliminate nodes list in the graph, check node records
+// the nodes that have been checked during the recursive process.
+void EliminateNodesFromGraph(CNode *node, const std::set<AnfNodePtr> &eliminate_nodes,
+                             std::set<CNode *> *checked_nodes) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(checked_nodes);
+
+  if (checked_nodes->find(node) != checked_nodes->end()) {
+    return;
+  }
+
+  checked_nodes->emplace(node);
+  const auto &inputs = node->inputs();
+  std::vector<AnfNodePtr> new_inputs;
+  for (auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (!input->isa<CNode>()) {
+      new_inputs.emplace_back(input);
+      continue;
+    }
+
+    if (eliminate_nodes.find(input) == eliminate_nodes.end()) {
+      new_inputs.emplace_back(input);
+    } else {
+      // If input is an eliminate node, replace it by its real input.
+      const auto &real_input = FetchRealNodeByNopNode(input);
+      MS_EXCEPTION_IF_NULL(real_input);
+      new_inputs.emplace_back(real_input);
+    }
+    const auto &cnode = input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    EliminateNodesFromGraph(cnode.get(), eliminate_nodes, checked_nodes);
+  }
+  node->set_inputs(new_inputs);
+}
+}  // namespace
+
+void EliminateNopNode(KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  std::vector<CNodePtr> new_execution_order;
+  std::set<AnfNodePtr> nop_nodes;
+
+  // Skip the graph mode or dynamic shape.
+  if (graph->is_graph_run_mode() || graph->is_dynamic_shape()) {
+    return;
+  }
+
+  const auto &graph_outputs = graph->graph_output_map();
+  // Collect all the nopnodes that can be eliminated.
+  for (const auto &cnode : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    // Nopnode as graph output cannot be eliminated.
+    if ((!common::AnfAlgo::IsNopNode(cnode)) || (graph_outputs.find({cnode, 0}) != graph_outputs.end())) {
+      new_execution_order.emplace_back(cnode);
+      continue;
+    }
+
+    MS_LOG(DEBUG) << "Eliminate node:" << cnode->DebugString();
+    nop_nodes.emplace(cnode);
+  }
+
+  std::set<CNode *> checked_nodes;
+  MS_EXCEPTION_IF_NULL(graph->return_node());
+  EliminateNodesFromGraph(graph->return_node().get(), nop_nodes, &checked_nodes);
+  graph->set_execution_order(new_execution_order);
+}
+
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                     const DeviceContext *device_context, device::RunMode run_mode,
                                     bool run_in_pynative) {
@@ -457,9 +541,13 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   for (auto &node : graph->execution_order()) {
     if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
       graph->set_flag(kFlagsIsCutGraph, true);
-      break;
     }
   }
+
+  if (!run_in_pynative) {
+    EliminateNopNode(graph.get());
+  }
+
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
   return graph_id;
 }
