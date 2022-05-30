@@ -25,24 +25,16 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-struct ReductionDescParam {
-  dnnl::algorithm algorithm{dnnl::algorithm::undef};
-  float p_{2.0f};
-  float epsilon_{0.0f};
-};
-}  // namespace
-
 dnnl::reduction::desc ReductionCpuKernelMod::GetReductionDesc(const dnnl::memory::desc &src_desc,
                                                               const dnnl::memory::desc &dst_desc) {
-  static const std::map<std::string, ReductionDescParam> reduction_op_desc_map{
-    {prim::kPrimLpNorm->name(), ReductionDescParam{dnnl::algorithm::reduction_norm_lp_sum, p_, epsilon_}}};
+  static const mindspore::HashMap<std::string, dnnl::algorithm> reduction_op_desc_map{
+    {prim::kPrimLpNorm->name(), dnnl::algorithm::reduction_norm_lp_sum},
+  };
   const auto desc_pair = reduction_op_desc_map.find(kernel_name_);
   if (desc_pair == reduction_op_desc_map.end()) {
     MS_LOG(EXCEPTION) << "ReductionCpuKernelMod does not support " << kernel_name_;
   }
-  auto desc = CreateDesc<dnnl::reduction::desc>(desc_pair->second.algorithm, src_desc, dst_desc, desc_pair->second.p_,
-                                                desc_pair->second.epsilon_);
+  auto desc = CreateDesc<dnnl::reduction::desc>(desc_pair->second, src_desc, dst_desc, p_, epsilon_);
   return desc;
 }
 
@@ -53,10 +45,7 @@ bool ReductionCpuKernelMod::GetReductionAttr(const BaseOperatorPtr &base_operato
   }
   auto kernel_ptr = std::make_shared<ops::LpNorm>(base_operator->GetPrim());
   int64_t p = kernel_ptr->get_p();
-  if (p == 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's op attribute 'p' equals to zero, which is invalid.";
-    return false;
-  }
+  is_p_zero_ = (p == 0);
   p_ = LongToFloat(p);
   epsilon_ = kernel_ptr->get_epsilon();
   axis_ = kernel_ptr->get_axis();
@@ -89,14 +78,26 @@ int ReductionCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  std::vector<size_t> input_shape_;
+  // For Scalar Tensor, input shape is empty.
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  is_scalar_input_ = input_shape.empty();
+  if (is_scalar_input_ || is_p_zero_) {
+    return KRET_OK;
+  }
+  is_scalar_input_ = false;
+  std::vector<size_t> input_shape_;
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   // For Reduction kernel, mkl required keep_dims is True.
   // So we should recover output_shape from input_shape.
   // axis_'s validation has been check in core/ops/lp_norm.cc, just using it.
+  std::vector<size_t> axis;
+  int64_t input_rank = SizeToLong(input_shape_.size());
+  (void)std::transform(axis_.begin(), axis_.end(), std::back_inserter(axis), [&input_rank](const int64_t &dim) {
+    return dim < 0 ? LongToSize(dim + input_rank) : LongToSize(dim);
+  });
+
   std::vector<size_t> mkl_output_shape = input_shape_;
-  for (const auto &dim : axis_) {
+  for (const auto &dim : axis) {
     mkl_output_shape[dim] = 1;
   }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(input_shape_);
@@ -114,9 +115,22 @@ bool ReductionCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
                                          const std::vector<kernel::AddressPtr> &outputs) {
   auto input = GetDeviceAddress<T>(inputs, kIndex0);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
+  auto template_one = static_cast<T>(1);
+  if (is_scalar_input_) {
+    *output = is_p_zero_ ? template_one : input[0];
+    return true;
+  }
   auto output_size = outputs.at(kIndex0)->size;
+  auto input_size = inputs.at(kIndex0)->size;
   if (memset_s(output, output_size, 0, output_size) != EOK) {
     MS_LOG(EXCEPTION) << "ReductionCpuKernelMod failed to run memset_s func to reset output.";
+  }
+  // If p equal to zero, we reset output to one and sum it, which means (x)^0 == (1)^1.
+  // This is an abnormal scenario, it's performance will be a little slow, but acceptable.
+  if (is_p_zero_) {
+    auto one_sum = static_cast<T>(input_size / output_size);
+    std::fill(output, output + output_size / sizeof(T), one_sum);
+    return true;
   }
   SetArgumentHandle(DNNL_ARG_SRC, input);
   SetArgumentHandle(DNNL_ARG_DST, output);

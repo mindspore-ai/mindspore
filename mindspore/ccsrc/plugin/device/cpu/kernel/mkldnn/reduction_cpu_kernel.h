@@ -55,6 +55,8 @@ class ReductionCpuKernelMod : public MKLCpuKernelMod {
   dnnl::reduction::desc GetReductionDesc(const dnnl::memory::desc &src_desc, const dnnl::memory::desc &dst_desc);
 
   ReductionFunc kernel_func_;
+  bool is_p_zero_{false};
+  bool is_scalar_input_{false};
   float p_{2.0};
   float epsilon_{1e-12};
   std::vector<int64_t> axis_;
