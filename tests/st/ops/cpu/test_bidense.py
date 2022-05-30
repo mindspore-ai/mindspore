@@ -65,3 +65,20 @@ def test_net_nd():
     output = net(Tensor(x1), Tensor(x2))
     print(output.asnumpy())
     assert output.shape == (128, 4, 40)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_1d():
+    """
+    Feature: Assert BiDense output shape for 1-dimensional input
+    Description: test the output.shape == (40,).
+    Expectation: match the shape.
+    """
+    x1 = np.random.randn(20).astype(np.float32)
+    x2 = np.random.randn(30).astype(np.float32)
+    net = Net()
+    output = net(Tensor(x1), Tensor(x2))
+    print(output.asnumpy())
+    assert output.shape == (40,)

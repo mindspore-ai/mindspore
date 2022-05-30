@@ -8,7 +8,7 @@ mindspore.nn.BiDense
     公式如下：
 
     .. math::
-        \text{outputs} = \text{X_{1}}^{T} * \text{kernel} * \text{X_{2}} + \text{bias},
+        \text{outputs} = X_{1}^{T} * \text{kernel} * X_{2} + \text{bias},
 
     其中  :math:`X_{1}` 是第一个输入Tensor，:math:`X_{2}` 是第二个输入Tensor，:math:`\text{kernel}` 是一个权重矩阵，其数据类型与 :math:`X` 相同， :math:`\text{bias}` 是一个偏置向量，其数据类型与 :math:`X` 相同（仅当has_bias为True时）。
 
