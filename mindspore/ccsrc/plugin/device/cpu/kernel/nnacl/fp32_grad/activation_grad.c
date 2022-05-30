@@ -48,9 +48,9 @@ int Relu6Grad(const float *src0, const float *src1, size_t length, float *dst) {
   for (; i < length - C4NUM; i += C4NUM) {
     float32x4_t src1_4 = vld1q_f32(src1 + i);
     float32x4_t src0_4 = vld1q_f32(src0 + i);
-    float32x4_t max_4 = vmaxq_f32(src1_4, zero_4);
-    float32x4_t min_max_4 = vminq_f32(max_4, six_4);
-    uint32x4_t mask_4 = vceqq_f32(min_max_4, src1_4);
+    uint32x4_t gt_4 = vcgtq_f32(src1_4, zero_4);
+    uint32x4_t le_4 = vcleq_f32(src1_4, six_4);
+    uint32x4_t mask_4 = vandq_u32(gt_4, le_4);
     float32x4_t dst_4 = vbslq_f32(mask_4, src0_4, zero_4);
     vst1q_f32(dst + i, dst_4);
   }
