@@ -2119,6 +2119,46 @@ def isnan(x):
     return isnan_(x)
 
 
+def isreal(x):
+    """
+    Returns a new tensor with boolean elements representing whether each element of `x` is real-valued.
+    All real value types are considered real numbers.
+    A complex value is considered real when its imaginary part is 0.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Outputs:
+        Tensor, has the same shape of input, and the dtype is bool.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import ops
+        >>> x = Tensor([1, 1+1j, 2+0j], mstype.complex64)
+        >>> output = ops.isreal(x)
+        >>> print(output)
+        [ True False  True]
+    """
+
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("the input x must be Tensor!")
+
+    # Note: Integral and Floating tensor values are always real
+    ones_op = P.Ones()
+    real_dtype = mstype.int_type + mstype.uint_type + mstype.float_type + (mstype.bool_,)
+    if x.dtype in real_dtype:
+        return ones_op(x.shape, mstype.bool_)
+
+    imag_op = P.Imag()
+    return imag_op(x) == 0
+
+
 def same_type_shape(input_x, input_y):
     """
     Checks whether the data type and shape of two tensors are the same.
@@ -2655,6 +2695,7 @@ __all__ = [
     'ne',
     'isfinite',
     'isnan',
+    'isreal',
     'log',
     'log_matrix_determinant',
     'matrix_determinant',
