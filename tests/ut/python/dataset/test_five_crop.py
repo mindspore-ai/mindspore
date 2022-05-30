@@ -31,7 +31,9 @@ GENERATE_GOLDEN = False
 
 def test_five_crop_op(plot=False):
     """
-    Test FiveCrop
+    Feature: FiveCrop op
+    Description: Test FiveCrop op basic usage
+    Expectation: Output is the same as expected output
     """
     logger.info("test_five_crop")
 
@@ -101,7 +103,9 @@ def test_five_crop_error_msg():
 
 def test_five_crop_md5():
     """
-    Test FiveCrop with md5 check
+    Feature: FiveCrop op
+    Description: Test FiveCrop op with md5 check
+    Expectation: Passes the md5 check test
     """
     logger.info("test_five_crop_md5")
 

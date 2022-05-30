@@ -27,7 +27,7 @@ BATCH_SIZE = 2
 
 def test_offload():
     """
-    Feature: test map offload flag.
+    Feature: Test map offload flag.
     Description: Input is image dataset.
     Expectation: Output should be same with activated or deactivated offload.
     """
@@ -159,7 +159,7 @@ def test_offload_column_mapping():
 
 def test_offload_concat_dataset_1():
     """
-    Feature: test map offload flag for concatenated dataset.
+    Feature: Test map offload flag for concatenated dataset.
     Description: Input is image dataset.
     Expectation: Should raise RuntimeError.
     """
@@ -185,7 +185,7 @@ def test_offload_concat_dataset_1():
 
 def test_offload_concat_dataset_2():
     """
-    Feature: test map offload flag for concatenated dataset.
+    Feature: Test map offload flag for concatenated dataset.
     Description: Input is image dataset.
     Expectation: Should raise RuntimeError.
     """
@@ -210,7 +210,7 @@ def test_offload_concat_dataset_2():
 
 def test_offload_normalize_op():
     """
-    Feature: test map offload Normalize op.
+    Feature: Test map offload Normalize op.
     Description: Input is image dataset.
     Expectation: Output should be same with activated or deactivated offload for Normalize op.
     """
@@ -239,7 +239,7 @@ def test_offload_normalize_op():
 
 def test_offload_rescale_op():
     """
-    Feature: test map offload Rescale op.
+    Feature: Test map offload Rescale op.
     Description: Input is image dataset.
     Expectation: Output should be same with activated or deactivated offload for Rescale op.
     """
@@ -268,7 +268,7 @@ def test_offload_rescale_op():
 
 def test_offload_typecast_op():
     """
-    Feature: test map offload TypeCast op.
+    Feature: Test map offload TypeCast op.
     Description: Input is image dataset.
     Expectation: Output should be the same with activated or deactivated offload for TypeCast op.
     """
@@ -352,7 +352,7 @@ def test_offload_not_end_of_pipeline():
 
 def test_offload_dim_check():
     """
-    Feature: test input has the required number of dimensions for offload operation.
+    Feature: Test input has the required number of dimensions for offload operation.
     Description: Input is image dataset.
     Expectation: Should raise ValueError.
     """
@@ -369,7 +369,7 @@ def test_offload_dim_check():
 
 def test_offload_random_sharpness_op():
     """
-    Feature: test map offload RandomSharpness op.
+    Feature: Test map offload RandomSharpness op.
     Description: Input is image dataset.
     Expectation: Output should be same with activated or deactivated offload for RandomSharpness op.
     """

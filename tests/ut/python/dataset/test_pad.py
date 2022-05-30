@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ GENERATE_GOLDEN = False
 
 def test_pad_op():
     """
-    Test Pad op
+    Feature: Pad op
+    Description: Test Pad op between Python and Cpp implementation
+    Expectation: Both outputs are the same as expected
     """
     logger.info("test_random_color_jitter_op")
 
@@ -73,7 +75,9 @@ def test_pad_op():
 
 def test_pad_op2():
     """
-    Test Pad op2
+    Feature: Pad op
+    Description: Test Pad op parameter with size 2
+    Expectation: Output's shape is the same as expected output's shape
     """
     logger.info("test padding parameter with size 2")
 
@@ -94,7 +98,9 @@ def test_pad_op2():
 
 def test_pad_grayscale():
     """
-    Tests that the pad works for grayscale images
+    Feature: Pad op
+    Description: Test Pad op for grayscale images
+    Expectation: Output's shape is the same as expected output
     """
 
     # Note: image.transpose performs channel swap to allow py transforms to
@@ -140,7 +146,9 @@ def test_pad_grayscale():
 
 def test_pad_md5():
     """
-    Test Pad with md5 check
+    Feature: Pad op
+    Description: Test Pad op with md5 check
+    Expectation: Passes the md5 check test
     """
     logger.info("test_pad_md5")
 

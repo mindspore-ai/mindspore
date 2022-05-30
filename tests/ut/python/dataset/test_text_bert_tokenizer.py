@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -229,7 +229,9 @@ def check_bert_tokenizer_with_offsets(first, last, expect_str,
 
 def test_bert_tokenizer_default():
     """
-    Test WordpieceTokenizer when with_offsets=False
+    Feature: BertTokenizer
+    Description: Test BertTokenizer by setting with_offsets to False
+    Expectation: Output is equal to the expected output
     """
     for paras in test_paras:
         check_bert_tokenizer_default(**paras)
@@ -237,7 +239,9 @@ def test_bert_tokenizer_default():
 
 def test_bert_tokenizer_with_offsets():
     """
-    Test WordpieceTokenizer when with_offsets=True
+    Feature: BertTokenizer
+    Description: Test BertTokenizer by setting with_offsets to True
+    Expectation: Output is equal to the expected output
     """
     for paras in test_paras:
         check_bert_tokenizer_with_offsets(**paras)
@@ -245,7 +249,9 @@ def test_bert_tokenizer_with_offsets():
 
 def test_bert_tokenizer_callable_invalid_input():
     """
-    Test WordpieceTokenizer in eager mode with invalid input
+    Feature: BertTokenizer
+    Description: Test BertTokenizer with invalid input
+    Expectation: Error is raised as expected
     """
     data = {'张三': 18, '王五': 20}
     vocab = text.Vocab.from_list(vocab_bert)

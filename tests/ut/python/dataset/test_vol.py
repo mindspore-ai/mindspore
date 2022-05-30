@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,7 +45,11 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 
 
 def test_func_vol_eager():
-    """ mindspore eager mode normal testcase:vol op"""
+    """
+    Feature: Vol op
+    Description: Test Vol op in eager mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
 
     logger.info("check vol op output")
     ndarr_in = np.array([[0.3667, 0.5295, 0.2949, 0.4508, 0.6457, 0.3625, 0.4377, 0.3568],
@@ -95,7 +99,11 @@ def test_func_vol_eager():
 
 
 def test_func_vol_pipeline():
-    """ mindspore pipeline mode normal testcase:vol op"""
+    """
+    Feature: Vol op
+    Description: Test Vol op in pipeline mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
 
     logger.info("test vol op with gain_type='power'")
     data = np.array([[[0.7012, 0.2500, 0.0108],
@@ -140,6 +148,11 @@ def test_func_vol_pipeline():
 
 
 def test_vol_invalid_input():
+    """
+    Feature: Vol op
+    Description: Test Vol op with invalid input
+    Expectation: Error is raised as expected
+    """
     def test_invalid_input(test_name, gain, gain_type, error, error_msg):
         logger.info("Test Vol with invalid input: {0}".format(test_name))
         with pytest.raises(error) as error_info:

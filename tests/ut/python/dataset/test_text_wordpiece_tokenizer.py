@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -142,7 +142,9 @@ def check_wordpiece_tokenizer_with_offsets(first, last, expect_str, expected_off
 
 def test_wordpiece_tokenizer_default():
     """
-    Test WordpieceTokenizer
+    Feature: WordpieceTokenizer
+    Description: Test WordpieceTokenizer with default parameters
+    Expectation: Output is equal to the expected output
     """
     for paras in test_paras:
         check_wordpiece_tokenizer_default(**paras)
@@ -150,7 +152,9 @@ def test_wordpiece_tokenizer_default():
 
 def test_wordpiece_tokenizer_with_offsets():
     """
-    Test WordpieceTokenizer
+    Feature: WordpieceTokenizer
+    Description: Test WordpieceTokenizer by setting with_offsets to True
+    Expectation: Output is equal to the expected output
     """
     for paras in test_paras:
         check_wordpiece_tokenizer_with_offsets(**paras)

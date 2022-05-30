@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,9 @@ def split_by_unicode_char(input_strs):
 
 def test_unicode_char_tokenizer_default():
     """
-    Test UnicodeCharTokenizer
+    Feature: UnicodeCharTokenizer op
+    Description: Test UnicodeCharTokenizer op with default parameters
+    Expectation: Output is equal to the expected output
     """
     input_strs = ("Welcome to Beijing!", "北京欢迎您！", "我喜欢English!", "  ")
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
@@ -54,7 +56,9 @@ def test_unicode_char_tokenizer_default():
 
 def test_unicode_char_tokenizer_with_offsets():
     """
-    Test UnicodeCharTokenizer
+    Feature: UnicodeCharTokenizer op
+    Description: Test UnicodeCharTokenizer op with with_offsets=True
+    Expectation: Output is equal to the expected output
     """
     input_strs = ("Welcome to Beijing!", "北京欢迎您！", "我喜欢English!", "  ")
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
@@ -80,7 +84,9 @@ def test_unicode_char_tokenizer_with_offsets():
 
 def test_whitespace_tokenizer_default():
     """
-    Test WhitespaceTokenizer
+    Feature: WhitespaceTokenizer op
+    Description: Test WhitespaceTokenizer op with default parameters
+    Expectation: Output is equal to the expected output
     """
     whitespace_strs = [["Welcome", "to", "Beijing!"],
                        ["北京欢迎您！"],
@@ -99,7 +105,9 @@ def test_whitespace_tokenizer_default():
 
 def test_whitespace_tokenizer_with_offsets():
     """
-    Test WhitespaceTokenizer
+    Feature: WhitespaceTokenizer op
+    Description: Test WhitespaceTokenizer op with with_offsets=True
+    Expectation: Output is equal to the expected output
     """
     whitespace_strs = [["Welcome", "to", "Beijing!"],
                        ["北京欢迎您！"],
@@ -127,7 +135,9 @@ def test_whitespace_tokenizer_with_offsets():
 
 def test_unicode_script_tokenizer_default():
     """
-    Test UnicodeScriptTokenizer when para keep_whitespace=False
+    Feature: UnicodeScriptTokenizer op
+    Description: Test UnicodeScriptTokenizer op with para keep_whitespace=False
+    Expectation: Output is equal to the expected output
     """
     unicode_script_strs = [["Welcome", "to", "Beijing", "!"],
                            ["北京欢迎您", "！"],
@@ -147,7 +157,9 @@ def test_unicode_script_tokenizer_default():
 
 def test_unicode_script_tokenizer_default2():
     """
-    Test UnicodeScriptTokenizer when para keep_whitespace=True
+    Feature: UnicodeScriptTokenizer op
+    Description: Test UnicodeScriptTokenizer op with para keep_whitespace=True
+    Expectation: Output is equal to the expected output
     """
     unicode_script_strs2 = [["Welcome", " ", "to", " ", "Beijing", "!"],
                             ["北京欢迎您", "！"],
@@ -166,7 +178,9 @@ def test_unicode_script_tokenizer_default2():
 
 def test_unicode_script_tokenizer_with_offsets():
     """
-    Test UnicodeScriptTokenizer when para keep_whitespace=False and with_offsets=True
+    Feature: UnicodeScriptTokenizer op
+    Description: Test UnicodeScriptTokenizer op with para keep_whitespace=False and with_offsets=True
+    Expectation: Output is equal to the expected output
     """
     unicode_script_strs = [["Welcome", "to", "Beijing", "!"],
                            ["北京欢迎您", "！"],
@@ -193,7 +207,9 @@ def test_unicode_script_tokenizer_with_offsets():
 
 def test_unicode_script_tokenizer_with_offsets2():
     """
-    Test UnicodeScriptTokenizer when para keep_whitespace=True and with_offsets=True
+    Feature: UnicodeScriptTokenizer op
+    Description: Test UnicodeScriptTokenizer op with para keep_whitespace=True and with_offsets=True
+    Expectation: Output is equal to the expected output
     """
     unicode_script_strs2 = [["Welcome", " ", "to", " ", "Beijing", "!"],
                             ["北京欢迎您", "！"],
@@ -220,7 +236,9 @@ def test_unicode_script_tokenizer_with_offsets2():
 
 def test_case_fold():
     """
-    Test CaseFold
+    Feature: CaseFold op
+    Description: Test CaseFold op basic usage
+    Expectation: Output is equal to the expected output
     """
     expect_strs = ["welcome to beijing!", "北京欢迎您!", "我喜欢english!", "  "]
     dataset = ds.TextFileDataset(DATA_FILE, shuffle=False)
@@ -236,7 +254,9 @@ def test_case_fold():
 
 def test_normalize_utf8():
     """
-    Test NormalizeUTF8
+    Feature: NormalizeUTF8 op
+    Description: Test NormalizeUTF8 op basic usage
+    Expectation: Output is equal to the expected output
     """
 
     def normalize(normalize_form):
@@ -274,7 +294,9 @@ def test_normalize_utf8():
 
 def test_regex_replace():
     """
-    Test RegexReplace
+    Feature: RegexReplace op
+    Description: Test RegexReplace op basic usage
+    Expectation: Output is equal to the expected output
     """
 
     def regex_replace(first, last, expect_str, pattern, replace):
@@ -301,7 +323,9 @@ def test_regex_replace():
 
 def test_regex_tokenizer_default():
     """
-    Test RegexTokenizer
+    Feature: RegexTokenizer op
+    Description: Test RegexTokenizer op with default parameters
+    Expectation: Output is equal to the expected output
     """
 
     def regex_tokenizer(first, last, expect_str, delim_pattern, keep_delim_pattern):
@@ -332,7 +356,9 @@ def test_regex_tokenizer_default():
 
 def test_regex_tokenizer_with_offsets():
     """
-    Test RegexTokenizer
+    Feature: RegexTokenizer op
+    Description: Test RegexTokenizer op with with_offsets=True
+    Expectation: Output is equal to the expected output
     """
 
     def regex_tokenizer(first, last, expect_str, expected_offsets_start, expected_offsets_limit, delim_pattern,

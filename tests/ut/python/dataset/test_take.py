@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,9 @@ def filter_func_ge(data):
 
 def test_take_01():
     """
-    Test take: origin there are 3 row, and take 1 row, in this case: will not meet eoe and eof
+    Feature: Take op
+    Description: Test take op where originally there are 3 rows and take 1 row. In this case, will not meet EOE and EOF
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_01")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -55,7 +57,9 @@ def test_take_01():
 
 def test_take_02():
     """
-    Test take: origin there are 3 row, and take 2 row, in this case: will meet eoe
+    Feature: Take op
+    Description: Test take op where originally there are 3 rows and take 2 rows. In this case, will meet EOE
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_02")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -72,7 +76,9 @@ def test_take_02():
 
 def test_take_03():
     """
-    Test take: origin there are 3 row, and take 3 row, in this case: will meet eoe and eof
+    Feature: Take op
+    Description: Test take op where originally there are 3 rows and take 3 rows. In this case, will meet EOE and EOF
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_03")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -89,7 +95,9 @@ def test_take_03():
 
 def test_take_04():
     """
-    Test take: origin there are 3 row, and take 4 row, this is more than the total rows
+    Feature: Take op
+    Description: Test take op where originally there are 3 rows and take 4 rows (more than the total rows)
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_04")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -106,7 +114,9 @@ def test_take_04():
 
 def test_take_05():
     """
-    Test take: there is no repeat op
+    Feature: Take op
+    Description: Test take op where there is no repeat op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_05")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -122,7 +132,9 @@ def test_take_05():
 
 def test_take_06():
     """
-    Test take: repeat is before take
+    Feature: Take op
+    Description: Test take op where repeat op is done before take op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_06")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -139,7 +151,9 @@ def test_take_06():
 
 def test_take_07():
     """
-    Test take: take is before batch, that mean take(N), N refer to rows num
+    Feature: Take op
+    Description: Test take op where take op is before batch op and have take(N) where N refers to rows num
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_07")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -151,7 +165,9 @@ def test_take_07():
 
 def test_take_08():
     """
-    Test take: take is after batch, that mean take(N), N refer to batches num
+    Feature: Take op
+    Description: Test take op where take op is after batch op and have take(N) where N refers to batches num
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_08")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -163,7 +179,9 @@ def test_take_08():
 
 def test_take_09():
     """
-    Test take: take count is -1, and read the whole dataset, take after repeat
+    Feature: Take op
+    Description: Test take op where take count is -1 and read the the whole dataset, take op is after repeat op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_09")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -180,7 +198,9 @@ def test_take_09():
 
 def test_take_10():
     """
-    Test take: take count is -1, and read the whole dataset, take before repeat
+    Feature: Take op
+    Description: Test take op where take count is -1 and read the the whole dataset, take op is before repeat op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_10")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -197,7 +217,9 @@ def test_take_10():
 
 def test_take_11():
     """
-    Test take: batch first, then do repeat and take operation
+    Feature: Take op
+    Description: Test take op where batch op is first, followed by repeat op, then take op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_11")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -215,7 +237,9 @@ def test_take_11():
 
 def test_take_12():
     """
-    Test take: take first, then do batch and repeat operation
+    Feature: Take op
+    Description: Test take op where take op is first, followed by batch op, then repeat op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_12")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -233,7 +257,9 @@ def test_take_12():
 
 def test_take_13():
     """
-    Test take: skip first, then do take, batch and repeat operation
+    Feature: Take op
+    Description: Test take op where skip op is first, followed by take op, then batch op, finally repeat op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_13")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -252,7 +278,9 @@ def test_take_13():
 
 def test_take_14():
     """
-    Test take: take first, then do batch, skip and repeat operation
+    Feature: Take op
+    Description: Test take op where take op is first, followed by batch op, then skip op, finally repeat op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_14")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -271,7 +299,9 @@ def test_take_14():
 
 def test_take_15():
     """
-    Test take: large amount data, take a part, then do skip operation
+    Feature: Take op
+    Description: Test take op with large amount of data, first take op then skip op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_15")
     data1 = ds.GeneratorDataset(generator_10, ["data"])
@@ -288,7 +318,9 @@ def test_take_15():
 
 def test_take_16():
     """
-    Test take: large amount data, skip a part, then do take operation
+    Feature: Take op
+    Description: Test take op with large amount of data, first skip op then take op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_16")
     data1 = ds.GeneratorDataset(generator_10, ["data"])
@@ -305,7 +337,9 @@ def test_take_16():
 
 def test_take_17():
     """
-    Test take: take first, then do filter operation
+    Feature: Take op
+    Description: Test take op with take op first then filter op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_17")
     data1 = ds.GeneratorDataset(generator_10, ["data"])
@@ -322,7 +356,9 @@ def test_take_17():
 
 def test_take_18():
     """
-    Test take: take first, then do filter, skip, batch and repeat operation
+    Feature: Take op
+    Description: Test take op with take op first, then filter op, skip op, batch op, and repeat op
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_take_18")
     data1 = ds.GeneratorDataset(generator_10, ["data"])
@@ -343,7 +379,9 @@ def test_take_18():
 
 def test_take_19():
     """
-    Test take: take is after batch, that mean take(N), N refer to batches num
+    Feature: Take op
+    Description: Test take op where take op is after batch op, meaning take(N) where N refers to batches num
+    Expectation: Error is raised as expected
     """
     logger.info("test_take_19")
     with pytest.raises(ValueError) as info:

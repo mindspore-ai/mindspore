@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_soft_dvpp_decode_resize_jpeg(plot=False):
     """
-    Test SoftDvppDecodeResizeJpeg op
+    Feature: SoftDvppDecodeResizeJpeg op
+    Description: Compare image using SoftDvppDecodeResizeJpeg op with a tuple input with [Decode, Resize] op
+    Expectation: Both outputs are equal to each other
     """
     logger.info("test_random_decode_resize_op")
 
@@ -58,7 +60,9 @@ def test_soft_dvpp_decode_resize_jpeg(plot=False):
 
 def test_soft_dvpp_decode_random_crop_resize_jpeg(plot=False):
     """
-    Test SoftDvppDecodeRandomCropResizeJpeg op
+    Feature: SoftDvppDecodeResizeJpeg op
+    Description: Compare image using SoftDvppDecodeResizeJpeg op with SoftDvppDecodeRandomCropResizeJpeg op
+    Expectation: Both outputs are equal to each other
     """
     logger.info("test_random_decode_resize_op")
 
@@ -89,7 +93,9 @@ def test_soft_dvpp_decode_random_crop_resize_jpeg(plot=False):
 
 def test_soft_dvpp_decode_resize_jpeg_supplement(plot=False):
     """
-    Test SoftDvppDecodeResizeJpeg op
+    Feature: SoftDvppDecodeResizeJpeg op
+    Description: Compare image using SoftDvppDecodeResizeJpeg op with an int input with [Decode, Resize] op
+    Expectation: Both outputs are equal to each other
     """
     logger.info("test_random_decode_resize_op")
 

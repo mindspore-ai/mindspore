@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ DATA_FILE = "../data/dataset/testTokenizerData/1.txt"
 
 def test_whitespace_tokenizer_ch():
     """
-    Test PythonTokenizer
+    Feature: PythonTokenizer
+    Description: Test PythonTokenizer using English and Chinese text based on whitespace separator
+    Expectation: Output is the same as expected output
     """
     whitespace_strs = [["Welcome", "to", "Beijing!"],
                        ["北京欢迎您！"],

@@ -73,7 +73,9 @@ def util_test_ten_crop(crop_size, vertical_flip=False, plot=False):
 
 def test_ten_crop_op_square(plot=False):
     """
-    Tests TenCrop for a square crop
+    Feature: TenCrop op
+    Description: Test TenCrop op for a square crop
+    Expectation: Output's shape is equal to the expected output's shape
     """
 
     logger.info("test_ten_crop_op_square")
@@ -82,7 +84,9 @@ def test_ten_crop_op_square(plot=False):
 
 def test_ten_crop_op_rectangle(plot=False):
     """
-    Tests TenCrop for a rectangle crop
+    Feature: TenCrop op
+    Description: Test TenCrop op for a rectangle crop
+    Expectation: Output's shape is equal to the expected output's shape
     """
 
     logger.info("test_ten_crop_op_rectangle")
@@ -91,7 +95,9 @@ def test_ten_crop_op_rectangle(plot=False):
 
 def test_ten_crop_op_vertical_flip(plot=False):
     """
-    Tests TenCrop with vertical flip set to True
+    Feature: TenCrop op
+    Description: Test TenCrop op with vertical flip set to True
+    Expectation: Output's shape is equal to the expected output's shape
     """
 
     logger.info("test_ten_crop_op_vertical_flip")
@@ -100,8 +106,9 @@ def test_ten_crop_op_vertical_flip(plot=False):
 
 def test_ten_crop_md5():
     """
-    Tests TenCrops for giving the same results in multiple runs.
-    Since TenCrop is a deterministic function, we expect it to return the same result for a specific input every time
+    Feature: TenCrop op
+    Description: Test TenCrop op for giving the same results in multiple run for a specific input (since deterministic)
+    Expectation: Passes the md5 check test
     """
     logger.info("test_ten_crop_md5")
 
@@ -120,7 +127,9 @@ def test_ten_crop_md5():
 
 def test_ten_crop_list_size_error_msg():
     """
-    Tests TenCrop error message when the size arg has more than 2 elements
+    Feature: TenCrop op
+    Description: Test TenCrop op when size arg has more than 2 elements
+    Expectation: Error is raised as expected
     """
     logger.info("test_ten_crop_list_size_error_msg")
 
@@ -136,7 +145,9 @@ def test_ten_crop_list_size_error_msg():
 
 def test_ten_crop_invalid_size_error_msg():
     """
-    Tests TenCrop error message when the size arg is not positive
+    Feature: TenCrop op
+    Description: Test TenCrop op when size arg is not positive
+    Expectation: Error is raised as expected
     """
     logger.info("test_ten_crop_invalid_size_error_msg")
 
@@ -162,8 +173,8 @@ def test_ten_crop_invalid_size_error_msg():
 def test_ten_crop_wrong_img_error_msg():
     """
     Feature: TenCrop op
-    Description: Test TenCrop op when the input image is not in the correct format.
-    Expectation: Invalid input is detected
+    Description: Test TenCrop op when the input image is not in the correct format
+    Expectation: Error is raised as expected
     """
 
     logger.info("test_ten_crop_wrong_img_error_msg")

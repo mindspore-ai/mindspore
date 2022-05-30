@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,7 +53,9 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 
 def test_time_stretch_pipeline():
     """
-    Test TimeStretch op. Pipeline.
+    Feature: TimeStretch op
+    Description: Test TimeStretch op in pipeline mode
+    Expectation: Output's shape is the same as expected output's shape
     """
     logger.info("test TimeStretch op")
     generator = gen([CHANNEL_NUM, FREQ, FRAME_NUM, COMPLEX])
@@ -69,7 +71,9 @@ def test_time_stretch_pipeline():
 
 def test_time_stretch_pipeline_invalid_param():
     """
-    Test TimeStretch op. Set invalid param. Pipeline.
+    Feature: TimeStretch op
+    Description: Test TimeStretch op in pipeline mode with invalid parameter
+    Expectation: Error is raised as expected
     """
     logger.info("test TimeStretch op with invalid values")
     generator = gen([CHANNEL_NUM, FREQ, FRAME_NUM, COMPLEX])
@@ -86,7 +90,9 @@ def test_time_stretch_pipeline_invalid_param():
 
 def test_time_stretch_eager():
     """
-    Test TimeStretch op. Set param. Eager.
+    Feature: TimeStretch op
+    Description: Test TimeStretch op in eager mode with customized parameter values
+    Expectation: Output's shape is the same as expected output's shape
     """
     logger.info("test TimeStretch op with customized parameter values")
     spectrogram = next(gen([CHANNEL_NUM, FREQ, FRAME_NUM, COMPLEX]))[0]
@@ -96,7 +102,9 @@ def test_time_stretch_eager():
 
 def test_percision_time_stretch_eager():
     """
-    Test TimeStretch op. Compare precision. Eager.
+    Feature: TimeStretch op
+    Description: Test TimeStretch op in eager mode by comparing precision
+    Expectation: Output is the same as expected output
     """
     logger.info("test TimeStretch op with default values")
     spectrogram = np.array([[[[1.0402449369430542, 0.3807601034641266],

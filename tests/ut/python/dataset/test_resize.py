@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,11 @@ GENERATE_GOLDEN = False
 
 
 def test_resize_op(plot=False):
+    """
+    Feature: Resize op
+    Description: Test Resize op basic usage
+    Expectation: The dataset is processed as expected
+    """
     def test_resize_op_parameters(test_name, size, plot):
         """
         Test resize_op
@@ -61,7 +66,9 @@ def test_resize_op(plot=False):
 
 def test_resize_op_ANTIALIAS():
     """
-    Test resize_op
+    Feature: Resize op
+    Description: Test Resize op basic usage where image interpolation mode is Inter.ANTIALIAS
+    Expectation: The dataset is processed as expected
     """
     logger.info("Test resize for ANTIALIAS")
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -79,6 +86,11 @@ def test_resize_op_ANTIALIAS():
     logger.info("use Resize by Inter.ANTIALIAS process {} images.".format(num_iter))
 
 def test_resize_md5(plot=False):
+    """
+    Feature: Resize op
+    Description: Test Resize op using md5 check
+    Expectation: Passes the md5 check test
+    """
     def test_resize_md5_parameters(test_name, size, filename, seed, plot):
         """
         Test Resize with md5 check
@@ -116,6 +128,11 @@ def test_resize_md5(plot=False):
 
 
 def test_resize_op_invalid_input():
+    """
+    Feature: Resize op
+    Description: Test Resize op with invalid input
+    Expectation: Correct error is raised as expected
+    """
     def test_invalid_input(test_name, size, interpolation, error, error_msg):
         logger.info("Test Resize with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:

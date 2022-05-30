@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,8 +26,9 @@ def generator_1d():
 
 def test_case_0():
     """
-    Test 1D Generator.
-    Test without explicit kwargs for input args.
+    Feature: GeneratorDataset
+    Description: Test 1D Generator without explicit kwargs for input args
+    Expectation: Output is the same as expected output
     """
     original_seed = config_get_set_seed(55)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)

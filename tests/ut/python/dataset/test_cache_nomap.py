@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,9 +51,10 @@ GENERATE_GOLDEN = False
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic1():
     """
-    A random dataset (a non mappable dataset) with a cache over it just after the leaf
+    Feature: DatasetCache op
+    Description: Test a RandomDataset (a non mappable dataset) with a Cache over it just after the leaf
+    Expectation: Output is equal to the expected output
     """
-
     logger.info("Test cache nomap basic 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -85,9 +86,10 @@ def test_cache_nomap_basic1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic2():
     """
-    A random dataset (a non mappable dataset) with a cache over it just after the leaf
+    Feature: DatasetCache op
+    Description: Test RandomDataset (a non mappable dataset with num_samples) with a Cache over it just after the leaf
+    Expectation: Output is equal to the expected output
     """
-
     logger.info("Test cache nomap basic 2")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -121,17 +123,19 @@ def test_cache_nomap_basic2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic3():
     """
-    A TF reader dataset (a non mappable dataset) with a cache over it just after the leaf
+    Feature: DatasetCache op
+    Description: Test a TFReaderDataset (a non mappable dataset) with a Cache over it just after the leaf
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
        Cache
          |
       TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap basic 3")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -167,19 +171,21 @@ def test_cache_nomap_basic3():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic4():
     """
-    A TF reader dataset (a non mappable dataset) with a map decode and cache after it
-    Since a global shuffle is used for the tf reader, it will inject a shuffle op over the tf.
-    But, if there's a cache later, that shuffle becomes invalid and should be removed.
+    Feature: DatasetCache op
+    Description: Test a TFReaderDataset (a non mappable dataset) with a map Decode and Cache after it
+        Since a global shuffle is used for the tf reader, it will inject a shuffle op over the tf.
+        But, if there's a cache later, that shuffle becomes invalid and should be removed.
 
        Repeat
          |
        Cache
          |
-     Map(decode)
+     Map(Decode)
          |
       TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap basic 4")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -212,22 +218,24 @@ def test_cache_nomap_basic4():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic5():
     """
-    A TF reader dataset (a non mappable dataset) with a cache over it just after the leaf
-    Same as test 3, but this one does not have shuffle arg, causing tf to default to global
-    shuffle which attempts to inject a shuffle operator.  However, since there is a cache
-    we do not need global shuffle, so the shuffle will not be built.  It ends up being
-    identical to test basic 3, however we arrive at the same tree in different codepaths
-    (if there was no cache, then the shuffle IS built)
+    Feature: DatasetCache op
+    Description: Test a TFReaderDataset (a non mappable dataset) with a Cache over it just after the leaf.
+        Same as test 3, but this one does not have Shuffle arg, causing TF to default to global
+        shuffle which attempts to inject a Shuffle operator. However, since there is a Cache
+        we do not need global shuffle, so the shuffle will not be built. It ends up being
+        identical to test basic 3, however we arrive at the same tree in different codepaths
+        (if there was no Cache, then the Shuffle is built)
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
        Cache
          |
       TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap basic 5")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -253,20 +261,22 @@ def test_cache_nomap_basic5():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic6():
     """
-    A TF reader dataset (a non mappable dataset) with a cache over it just after the leaf
-    In this one, the tf dataset will be given sharding configuration, however since a cache is
-    used, the tree prepare should undo the sharding configuration and instead, a distributed
-    sampler will be chosen with the same shard config.
+    Feature: DatasetCache op
+    Description: Test a TFReaderDataset (a non mappable dataset) with a Cache over it just after the leaf
+        In this one, the TFReaderDataset will be given sharding configuration, however since a Cache is
+        used, the tree prepare should undo the sharding configuration and instead, a distributed
+        sampler will be chosen with the same shard config.
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
        Cache
          |
       TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap basic 6")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -297,20 +307,21 @@ def test_cache_nomap_basic6():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic7():
     """
-    A TF reader dataset (a non mappable dataset) that uses global shuffle, and is cached followed by
-    map.
-    In this one, the tf dataset with global shuffle might want to inject a shuffle op over top of the
-    tf reader, but since a cache is given, it will choose not to.
+    Feature: DatasetCache op
+    Description: Test a TFReaderDataset (a non mappable dataset) that uses global shuffle, and is Cached followed by
+        Map. In this one, the TFReaderDataset with global shuffle might want to inject a Shuffle op over top of the
+        TFReaderDataset, but since a Cache is given, it will choose not to.
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
        cache
          |
       TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap basic 7")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -337,11 +348,14 @@ def test_cache_nomap_basic7():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic8():
     """
-    Test cache as root node
+    Feature: DatasetCache op
+    Description: Test Cache as root node
 
-       cache
+       Cache
          |
       TFReader
+
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test cache basic 8")
     if "SESSION_ID" in os.environ:
@@ -365,10 +379,10 @@ def test_cache_nomap_basic8():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_basic9():
     """
-    Testing the get_stat interface for getting some info from server, but this should fail if the cache is not created
-    in a pipeline.
+    Feature: DatasetCache op
+    Description: Testing the get_stat interface for getting some info from server but Cache is not created in pipeline
+    Expectation: Error is raised as expected
     """
-
     logger.info("Test cache nomap basic 9")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -391,15 +405,17 @@ def test_cache_nomap_basic9():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_allowed_share1():
     """
-    It is allowed to share the cache between the following two trees:
+    Feature: DatasetCache op
+    Description: Test sharing the Cache between the following two trees:
 
        Repeat     Shuffle
          |           |
        Cache       Cache
          |           |
       TFReader    TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap allowed share 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -431,17 +447,19 @@ def test_cache_nomap_allowed_share1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_allowed_share2():
     """
-    It is allowed to share the cache between the following two trees (with map decode):
+    Feature: DatasetCache op
+    Description: Test sharing the Cache between the following two trees (with Map Decode):
 
        Repeat     Shuffle
          |           |
        Cache       Cache
          |           |
-     Map(decode) Map(decode)
+     Map(Decode) Map(Decode)
          |           |
       TFReader    TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap allowed share 2")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -477,15 +495,17 @@ def test_cache_nomap_allowed_share2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_allowed_share3():
     """
-    It is allowed to share the cache between the following two trees (different shard ids):
+    Feature: DatasetCache op
+    Description: Test sharing the Cache between the following two trees (different shard ids):
 
        Repeat                     Repeat
          |                          |
        Cache                      Cache
          |                          |
       TFReader(shard_id = 0)     TFReader(shard_id = 1)
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap allowed share 3")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -517,15 +537,17 @@ def test_cache_nomap_allowed_share3():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_allowed_share4():
     """
-    It is allowed to share the cache between the following two trees:
+    Feature: DatasetCache op
+    Description: Test sharing the Cache between the following two trees:
 
        Cache                                  Cache
          |                                      |
-     Map(decode, num_parallel_workers=1)    Map(decode, num_parallel_workers=2)
+     Map(Decode, num_parallel_workers=1)    Map(Decode, num_parallel_workers=2)
          |                                      |
       TFReader                              TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap allowed share 4")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -560,15 +582,17 @@ def test_cache_nomap_allowed_share4():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_disallowed_share1():
     """
-    It is not allowed to share the cache between the following two trees:
+    Feature: DatasetCache op
+    Description: Test sharing the Cache between the following two trees:
 
        Cache       Cache
          |           |
-     Map(decode) Map(rescale)
+     Map(Decode) Map(Rescale)
          |           |
       TFReader    TFReader
-    """
 
+    Expectation: Error is raised as expected
+    """
     logger.info("Test cache nomap disallowed share1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -602,17 +626,19 @@ def test_cache_nomap_disallowed_share1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_running_twice1():
     """
-    Executing the same pipeline for twice (from python), with cache injected after map
+    Feature: DatasetCache op
+    Description: Test executing the same pipeline for twice (from Python), with Cache injected after Map
 
        Repeat
          |
        Cache
          |
-     Map(decode)
+     Map(Decode)
          |
      TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap running twice 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -645,17 +671,19 @@ def test_cache_nomap_running_twice1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_running_twice2():
     """
-    Executing the same pipeline for twice (from shell), with cache injected after leaf
+    Feature: DatasetCache op
+    Description: Test executing the same pipeline for twice (from shell), with Cache injected after leaf
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
        Cache
          |
      TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap running twice 2")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -682,17 +710,19 @@ def test_cache_nomap_running_twice2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_extra_small_size1():
     """
-    Test running pipeline with cache of extra small size and spilling true
+    Feature: DatasetCache op
+    Description: Test running pipeline with Cache of extra small size and spilling=True
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
        Cache
          |
      TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap extra small size 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -718,17 +748,19 @@ def test_cache_nomap_extra_small_size1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_extra_small_size2():
     """
-    Test running pipeline with cache of extra small size and spilling false (failure)
+    Feature: DatasetCache op
+    Description: Test running pipeline with Cache of extra small size and spilling=False
 
        Repeat
          |
        Cache
          |
-     Map(decode)
+     Map(Decode)
          |
      TFRecord
-    """
 
+    Expectation: Error is raised as expected
+    """
     logger.info("Test cache nomap extra small size 2")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -751,17 +783,19 @@ def test_cache_nomap_extra_small_size2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_parallel_pipeline1(shard):
     """
-    Test running two parallel pipelines (sharing cache) with cache injected after leaf op
+    Feature: DatasetCache op
+    Description: Test running two parallel pipelines (sharing Cache) with Cache injected after leaf op
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
-       cache
+       Cache
          |
       TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap parallel pipeline 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -787,17 +821,19 @@ def test_cache_nomap_parallel_pipeline1(shard):
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_parallel_pipeline2(shard):
     """
-    Test running two parallel pipelines (sharing cache) with cache injected after map op
+    Feature: DatasetCache op
+    Description: Test running two parallel pipelines (sharing Cache) with Cache injected after Map op
 
        Repeat
          |
-       cache
+       Cache
          |
-     Map(decode)
+     Map(Decode)
          |
       TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap parallel pipeline 2")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -823,17 +859,19 @@ def test_cache_nomap_parallel_pipeline2(shard):
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_parallel_workers():
     """
-    Test cache with num_parallel_workers > 1 set for map op and leaf op
+    Feature: DatasetCache op
+    Description: Test Cache with num_parallel_workers > 1 set for Map op and leaf op
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
-       cache
+       Cache
          |
       TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap parallel workers")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -859,17 +897,19 @@ def test_cache_nomap_parallel_workers():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_server_workers_1():
     """
-    start cache server with --workers 1 and then test cache function
+    Feature: DatasetCache op
+    Description: Start Cache server with --workers 1 and then test Cache function
 
        Repeat
          |
-       cache
+       Cache
          |
-     Map(decode)
+     Map(Decode)
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap server workers 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -896,17 +936,19 @@ def test_cache_nomap_server_workers_1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_server_workers_100():
     """
-    start cache server with --workers 100 and then test cache function
+    Feature: DatasetCache op
+    Description: Start Cache server with --workers 100 and then test Cache function
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
-       cache
+       Cache
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap server workers 100")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -933,17 +975,19 @@ def test_cache_nomap_server_workers_100():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_num_connections_1():
     """
-    Test setting num_connections=1 in DatasetCache
+    Feature: DatasetCache op
+    Description: Test setting num_connections=1 in DatasetCache
 
        Repeat
          |
-       cache
+       Cache
          |
-     Map(decode)
+     Map(Decode)
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap num_connections 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -970,17 +1014,19 @@ def test_cache_nomap_num_connections_1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_num_connections_100():
     """
-    Test setting num_connections=100 in DatasetCache
+    Feature: DatasetCache op
+    Description: Test setting num_connections=100 in DatasetCache
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
-       cache
+       Cache
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap num_connections 100")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1007,17 +1053,19 @@ def test_cache_nomap_num_connections_100():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_prefetch_size_1():
     """
-    Test setting prefetch_size=1 in DatasetCache
+    Feature: DatasetCache op
+    Description: Test setting prefetch_size=1 in DatasetCache
 
        Repeat
          |
-       cache
+       Cache
          |
-     Map(decode)
+     Map(Decode)
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap prefetch_size 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1044,17 +1092,19 @@ def test_cache_nomap_prefetch_size_1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_prefetch_size_100():
     """
-    Test setting prefetch_size=100 in DatasetCache
+    Feature: DatasetCache op
+    Description: Test setting prefetch_size=100 in DatasetCache
 
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
-       cache
+       Cache
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap prefetch_size 100")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1081,7 +1131,8 @@ def test_cache_nomap_prefetch_size_100():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_to_device():
     """
-    Test cache with to_device
+    Feature: DatasetCache op
+    Description: Test Cache with to_device
 
      DeviceQueue
          |
@@ -1089,13 +1140,14 @@ def test_cache_nomap_to_device():
          |
        Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
-       cache
+       Cache
          |
       TFReader
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap to_device")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1118,15 +1170,17 @@ def test_cache_nomap_to_device():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_session_destroy():
     """
-    Test executing cache_admin -d while the pipeline is running
+    Feature: DatasetCache op
+    Description: Test executing cache_admin -d while the pipeline is running
 
        Repeat
          |
        Cache
          |
      RandomDataset
-    """
 
+    Expectation: Error is raised as expected
+    """
     logger.info("Test cache nomap session destroy")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1156,15 +1210,17 @@ def test_cache_nomap_session_destroy():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_server_stop():
     """
-    Test executing cache_admin --stop while the pipeline is running
+    Feature: DatasetCache op
+    Description: Test executing cache_admin --stop while the pipeline is running
 
        Repeat
          |
        Cache
          |
      RandomDataset
-    """
 
+    Expectation: Error is raised as expected
+    """
     logger.info("Test cache nomap server stop")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1195,13 +1251,15 @@ def test_cache_nomap_server_stop():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_interrupt_and_rerun():
     """
-    Test interrupt a running pipeline and then re-use the same cache to run another pipeline
+    Feature: DatasetCache op
+    Description: Test interrupt a running pipeline and then re-use the same Cache to run another pipeline
 
        Cache
          |
      RandomDataset
-    """
 
+    Expectation: Error is raised after the interrupt then putput is equal to the expected output after the rerun
+    """
     logger.info("Test cache nomap interrupt and rerun")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1247,15 +1305,17 @@ def test_cache_nomap_interrupt_and_rerun():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_epoch_ctrl1():
     """
-    Test using two-loops method to run several epochs
+    Feature: DatasetCache op
+    Description: Test using two-loops method to run several epochs
 
-     Map(decode)
+     Map(Decode)
          |
-       cache
+       Cache
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap epoch ctrl1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1287,15 +1347,17 @@ def test_cache_nomap_epoch_ctrl1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_epoch_ctrl2():
     """
-    Test using two-loops method with infinite epochs
+    Feature: DatasetCache op
+    Description: Test using two-loops method with infinite epochs
 
-        cache
+        Cache
          |
-     Map(decode)
+     Map(Decode)
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap epoch ctrl2")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1331,17 +1393,19 @@ def test_cache_nomap_epoch_ctrl2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_epoch_ctrl3():
     """
-    Test using two-loops method with infinite epochs over repeat
+    Feature: DatasetCache op
+    Description: Test using two-loops method with infinite epochs over Repeat op
 
-       repeat
+       Repeat
          |
-     Map(decode)
+     Map(Decode)
          |
-       cache
+       Cache
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap epoch ctrl3")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1378,17 +1442,19 @@ def test_cache_nomap_epoch_ctrl3():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_epoch_ctrl4():
     """
-    Test using two-loops method with repeat under cache
+    Feature: DatasetCache op
+    Description: Test using two-loops method with Repeat under Cache
 
-        cache
+        Cache
          |
-     Map(decode)
+     Map(Decode)
          |
-       repeat
+       Repeat
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap epoch ctrl4")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1422,15 +1488,17 @@ def test_cache_nomap_epoch_ctrl4():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_multiple_cache1():
     """
-    Test multiple cache in the same python script
+    Feature: DatasetCache op
+    Description: Test multiple Cache in the same python script
 
-       cache                  cache
+       Cache                  Cache
          |                      |
-    Map(decode)             Map(decode)
+    Map(Decode)             Map(Decode)
          |                      |
     TFRecord(train)        TFRecord(eval)
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap multiple cache 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1466,15 +1534,17 @@ def test_cache_nomap_multiple_cache1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_multiple_cache2():
     """
-    Test multiple cache in the same python script
+    Feature: DatasetCache op
+    Description: Test multiple Cache in the same Python script
 
-       cache
+       Cache
          |
-    Map(decode)               cache
+    Map(Decode)               Cache
          |                      |
     TFRecord(image)        TFRecord(text)
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap multiple cache 2")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1511,13 +1581,16 @@ def test_cache_nomap_multiple_cache2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_multiple_cache3():
     """
-    Test multiple cache in the same python script
+    Feature: DatasetCache op
+    Description: Test multiple Cache in the same Python script
 
-       cache                   cache
+       Cache                   Cache
          |                      |
-    Map(decode)             Map(decode)
+    Map(Decode)             Map(Decode)
          |                      |
     TFRecord                ImageFolder
+
+    Expectation: Output is equal to the expected output
     """
 
     logger.info("Test cache nomap multiple cache 3")
@@ -1555,16 +1628,18 @@ def test_cache_nomap_multiple_cache3():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_multiple_cache_train():
     """
-    Test multiple cache in different python scripts. This test case is going to run concurrently with
-    test_cache_nomap_multiple_cache_eval.
+    Feature: DatasetCache op
+    Description: Test multi Cache in different Python scripts.
+        Runs concurrently with test_cache_nomap_multiple_cache_eval
 
-       cache
+       Cache
          |
-    Map(decode)
+    Map(Decode)
          |
     TFRecord(train)
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap multiple cache train")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1593,16 +1668,18 @@ def test_cache_nomap_multiple_cache_train():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_multiple_cache_eval():
     """
-    Test multiple cache in different python scripts. This test case is going to run concurrently with
-    test_cache_nomap_multiple_cache_train.
+    Feature: DatasetCache op
+    Description: Test multi Cache in different Python scripts.
+        Runs concurrently with test_cache_nomap_multiple_cache_eval
 
-       cache
+       Cache
          |
-    Map(decode)
+    Map(Decode)
          |
     TFRecord(eval)
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap multiple cache eval")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1631,16 +1708,18 @@ def test_cache_nomap_multiple_cache_eval():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_clue1():
     """
-    A clue dataset (a non mappable dataset) with a cache over it just after the leaf
-    In this one, the clue dataset will be given sharding configuration, however since a cache is
-    used, the tree prepare should undo the sharding configuration and instead, a distributed
-    sampler will be chosen with the same shard config.
+    Feature: DatasetCache op
+    Description: Test CLUEDataset (a non mappable dataset) with a Cache over it just after the leaf
+        In this one, the CLUEDataset will be given sharding configuration, however since a Cache is
+        used, the tree prepare should undo the sharding configuration and instead, a distributed
+        sampler will be chosen with the same shard config.
 
        Cache
          |
        CLUE
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap clue 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1670,16 +1749,17 @@ def test_cache_nomap_clue1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_clue2():
     """
-    A clue dataset (a non mappable dataset) with a cache over it after map
-    In this one, a num_samples argument is given
+    Feature: DatasetCache op
+    Description: Test CLUEDataset (a non mappable dataset) with a Cache over it after Map, num_samples arg is given
 
        Cache
          |
-    map(lambda x: x)
+    Map(lambda x: x)
          |
        CLUE
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap clue 2")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1706,16 +1786,18 @@ def test_cache_nomap_clue2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_csv1():
     """
-    A csv dataset (a non mappable dataset) with a cache over it just after the leaf
-    In this one, the csv dataset will be given sharding configuration, however since a cache is
-    used, the tree prepare should undo the sharding configuration and instead, a distributed
-    sampler will be chosen with the same shard config.
+    Feature: DatasetCache op
+    Description: Test CSVDataset (a non mappable dataset) with a Cache over it just after the leaf
+        In this one, the CSVDataset will be given sharding configuration, however since a Cache is
+        used, the tree prepare should undo the sharding configuration and instead, a distributed
+        sampler will be chosen with the same shard config.
 
        Cache
          |
        CSV
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap csv 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1746,16 +1828,17 @@ def test_cache_nomap_csv1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_csv2():
     """
-    A csv dataset (a non mappable dataset) with a cache over it after map
-    In this one, a num_samples argument is given
+    Feature: DatasetCache op
+    Description: Test CSVDataset (a non mappable dataset) with a Cache over it after Map, num_samples arg is given
 
        Cache
          |
-    map(lambda x: x)
+    Map(lambda x: x)
          |
        CSV
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap csv 2")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1783,16 +1866,18 @@ def test_cache_nomap_csv2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_textfile1():
     """
-    A text file dataset (a non mappable dataset) with a cache over it just after the leaf
-    In this one, the text file dataset will be given sharding configuration, however since a cache is
-    used, the tree prepare should undo the sharding configuration and instead, a distributed
-    sampler will be chosen with the same shard config.
+    Feature: DatasetCache op
+    Description: Test TextFileDataset (a non mappable dataset) with a Cache over it just after the leaf
+        In this one, the text file dataset will be given sharding configuration, however since a Cache is
+        used, the tree prepare should undo the sharding configuration and instead, a distributed
+        sampler will be chosen with the same shard config.
 
        Cache
          |
      TextFile
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap textfile 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1822,16 +1907,17 @@ def test_cache_nomap_textfile1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_textfile2():
     """
-    A text file dataset (a non mappable dataset) with a cache over it after map
-    In this one, a num_samples argument is given
+    Feature: DatasetCache op
+    Description: Test TextFileDataset (a non mappable dataset) with a Cache over it after Map, num_samples arg is given
 
        Cache
          |
-    Map(tokenizer)
+    Map(Tokenizer)
          |
      TextFile
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     def my_tokenizer(line):
         words = line.split()
         if not words:
@@ -1865,19 +1951,21 @@ def test_cache_nomap_textfile2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_nested_repeat():
     """
-    Test cache on pipeline with nested repeat ops
+    Feature: DatasetCache op
+    Description: Test Cache on pipeline with nested Repeat ops
 
         Repeat
           |
         Cache
           |
-      Map(decode)
+      Map(Decode)
           |
         Repeat
           |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap nested repeat")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1906,17 +1994,19 @@ def test_cache_nomap_nested_repeat():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_get_repeat_count():
     """
-    Test get_repeat_count() for a pipeline with cache and nested repeat ops
+    Feature: DatasetCache op
+    Description: Test get_repeat_count for a pipeline with Cache and nested repeat ops
 
         Cache
           |
-      Map(decode)
+      Map(Decode)
           |
         Repeat
           |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap get_repeat_count")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1945,13 +2035,15 @@ def test_cache_nomap_get_repeat_count():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_long_file_list():
     """
-    Test cache after TFRecord with a long list of files as arguments
+    Feature: DatasetCache op
+    Description: Test Cache after TFRecord with a long list of files as arguments
 
         Cache
           |
       TFRecord
-    """
 
+    Expectation: Error is raised as expected
+    """
     logger.info("Test cache nomap long file list")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -1972,18 +2064,20 @@ def test_cache_nomap_long_file_list():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_failure1():
     """
-    Test nested cache (failure)
+    Feature: DatasetCache op
+    Description: Test nested Cache
 
         Repeat
           |
         Cache
           |
-      Map(decode)
+      Map(Decode)
           |
         Cache
           |
       TFRecord
 
+    Expectation: Error is raised as expected
     """
     logger.info("Test cache nomap failure 1")
     if "SESSION_ID" in os.environ:
@@ -2016,18 +2110,20 @@ def test_cache_nomap_failure1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_failure2():
     """
-    Test zip under cache (failure)
+    Feature: DatasetCache op
+    Description: Test Zip under Cache
 
-               repeat
+               Repeat
                   |
                 Cache
                   |
-             Map(decode)
+             Map(Decode)
                   |
                  Zip
                 |    |
            Random    Random
 
+    Expectation: Error is raised as expected
     """
     logger.info("Test cache nomap failure 2")
     if "SESSION_ID" in os.environ:
@@ -2062,17 +2158,20 @@ def test_cache_nomap_failure2():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_failure3():
     """
-    Test batch under cache (failure)
+    Feature: DatasetCache op
+    Description: Test Batch under Cache
 
-               repeat
+               Repeat
                   |
                 Cache
                   |
-             Map(resize)
+             Map(Resize)
                   |
                 Batch
                   |
                 Clue
+
+    Expectation: Error is raised as expected
     """
     logger.info("Test cache nomap failure 3")
     if "SESSION_ID" in os.environ:
@@ -2101,18 +2200,20 @@ def test_cache_nomap_failure3():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_failure4():
     """
-    Test filter under cache (failure)
+    Feature: DatasetCache op
+    Description: Test Filter under Cache
 
-               repeat
+               Repeat
                   |
                 Cache
                   |
-             Map(decode)
+             Map(Decode)
                   |
                 Filter
                   |
                  CSV
 
+    Expectation: Error is raised as expected
     """
     logger.info("Test cache nomap failure 4")
     if "SESSION_ID" in os.environ:
@@ -2143,16 +2244,18 @@ def test_cache_nomap_failure4():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_failure5():
     """
-    Test Map containing random operation under cache (failure)
+    Feature: DatasetCache op
+    Description: Test Map containing Random operation under Cache
 
-               repeat
+               Repeat
                   |
                 Cache
                   |
-             Map(decode, randomCrop)
+             Map(Decode, RandomCrop)
                   |
               TextFile
 
+    Expectation: Error is raised as expected
     """
     logger.info("Test cache nomap failure 5")
     if "SESSION_ID" in os.environ:
@@ -2183,14 +2286,16 @@ def test_cache_nomap_failure5():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_pyfunc_lambda():
     """
-    Test cache after map op with a python lambda function.
-    Only allowed if the lambda function is wrapped by 'pyvision.not_random', otherwise an error will be raised.
+    Feature: DatasetCache op
+    Description: Test cache after Map op with a Python lambda function
 
         Cache
           |
         Map(lambda function1, lambda function2)
           |
       TFRecord
+
+    Expectation: Only success if the lambda function is wrapped by 'pyvision.not_random', otherwise error is raised
     """
     logger.info("Test cache nomap pyfunc lambda")
     if "SESSION_ID" in os.environ:
@@ -2225,14 +2330,16 @@ def test_cache_nomap_pyfunc_lambda():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_pyfunc_builtin():
     """
-    Test cache after map op with a python builtin PyFunc.
-    An error will be raised if the builtin pyfunc containing random operation.
+    Feature: DatasetCache op
+    Description: Test Cache after Map op with a Python builtin PyFunc
 
         Cache
           |
      Map([builtin pyfunc1, builtin pyfunc2])
           |
       TFRecord
+
+    Expectation: Error will be raised if the builtin PyFunc containing Random op, otherwise runs successfully
     """
     logger.info("Test cache nomap pyfunc builtin")
     if "SESSION_ID" in os.environ:
@@ -2267,16 +2374,17 @@ def test_cache_nomap_pyfunc_builtin():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_pyfunc_function():
     """
-    Test cache after map op with a python customized function.
-    Only allowed if the function is decorated with 'vision.not_random', otherwise an error will be raised.
+    Feature: DatasetCache op
+    Description: Test Cache after Map op with a Python customized function
 
         Cache
           |
      Map([function1, function2])
           |
       TFRecord
-    """
 
+    Expectation: Only success if the function is decorated with 'vision.not_random', otherwise an error will be raised
+    """
     @vision.not_random
     def not_random_func(x):
         return np.ones(x.shape, dtype=x.dtype)
@@ -2316,13 +2424,15 @@ def test_cache_nomap_pyfunc_function():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_all_rows_cached():
     """
-    Make sure all rows are cached before we switch to the fetching phase
+    Feature: DatasetCache op
+    Description: Test making sure all rows are cached before we switch to the fetching phase
 
        Cache
          |
      RandomDataset
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap all rows cached")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -2357,13 +2467,15 @@ def test_cache_nomap_all_rows_cached():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_dataset_size1():
     """
-    Test get_dataset_size() when cache is injected directly after a non-mappable leaf
+    Feature: DatasetCache op
+    Description: Test get_dataset_size when Cache is injected directly after a non-mappable leaf
 
        Cache
          |
       TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap dataset size 1")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
@@ -2390,15 +2502,17 @@ def test_cache_nomap_dataset_size1():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_dataset_size2():
     """
-    Test get_dataset_size() when cache is injected after map
+    Feature: DatasetCache op
+    Description: Test get_dataset_size when Cache is injected after Map
 
        Cache
          |
-    Map(decode)
+    Map(Decode)
          |
      TFRecord
-    """
 
+    Expectation: Output is equal to the expected output
+    """
     logger.info("Test cache nomap dataset size 2")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])

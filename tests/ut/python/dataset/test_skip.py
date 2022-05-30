@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ SCHEMA_DIR_TF2 = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_tf_skip():
     """
-    a simple skip operation.
+    Feature: Skip op
+    Description: Test simple skip op usage with TFRecordDataset
+    Expectation: Output is equal to the expected output
     """
     data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
 
@@ -51,6 +53,11 @@ def generator_md():
 
 
 def test_generator_skip():
+    """
+    Feature: Skip op
+    Description: Test simple skip op usage with GeneratorDataset with num_parallel_workers=4
+    Expectation: Output is equal to the expected output
+    """
     ds1 = ds.GeneratorDataset(generator_md, ["data"], num_parallel_workers=4)
 
     # Here ds1 should be [3, 4]
@@ -64,6 +71,11 @@ def test_generator_skip():
 
 
 def test_skip_1():
+    """
+    Feature: Skip op
+    Description: Test skip op using input count > 0
+    Expectation: Output is equal to the expected output
+    """
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
     # Here ds1 should be []
@@ -76,6 +88,11 @@ def test_skip_1():
 
 
 def test_skip_2():
+    """
+    Feature: Skip op
+    Description: Test skip op using input count=0
+    Expectation: Output is equal to the expected output
+    """
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
     # Here ds1 should be [0, 1, 2, 3, 4]
@@ -89,6 +106,11 @@ def test_skip_2():
 
 
 def test_skip_repeat_1():
+    """
+    Feature: Skip op
+    Description: Test skip op after a repeat op
+    Expectation: Output is equal to the expected output
+    """
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
     # Here ds1 should be [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
@@ -105,6 +127,11 @@ def test_skip_repeat_1():
 
 
 def test_skip_repeat_2():
+    """
+    Feature: Skip op
+    Description: Test skip op followed by a repeat op
+    Expectation: Output is equal to the expected output
+    """
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
     # Here ds1 should be [3, 4]
@@ -121,6 +148,11 @@ def test_skip_repeat_2():
 
 
 def test_skip_repeat_3():
+    """
+    Feature: Skip op
+    Description: Test skip op by applying repeat -> skip -> repeat
+    Expectation: Output is equal to the expected output
+    """
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
     # Here ds1 should be [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
@@ -140,6 +172,11 @@ def test_skip_repeat_3():
 
 
 def test_skip_take_1():
+    """
+    Feature: Skip op
+    Description: Test skip op after applying take op
+    Expectation: Output is equal to the expected output
+    """
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
     # Here ds1 should be [0, 1, 2, 3]
@@ -156,6 +193,11 @@ def test_skip_take_1():
 
 
 def test_skip_take_2():
+    """
+    Feature: Skip op
+    Description: Test skip op followed by a take op
+    Expectation: Output is equal to the expected output
+    """
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
     # Here ds1 should be [2, 3, 4]
@@ -177,6 +219,11 @@ def generator_1d():
 
 
 def test_skip_filter_1():
+    """
+    Feature: Skip op
+    Description: Test skip op followed by a filter op
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ['data'])
     dataset = dataset.skip(5)
     dataset = dataset.filter(predicate=lambda data: data < 11, num_parallel_workers=4)
@@ -188,6 +235,11 @@ def test_skip_filter_1():
 
 
 def test_skip_filter_2():
+    """
+    Feature: Skip op
+    Description: Test skip op after filter op is applied
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ['data'])
     dataset = dataset.filter(predicate=lambda data: data < 11, num_parallel_workers=4)
     dataset = dataset.skip(5)
@@ -199,6 +251,11 @@ def test_skip_filter_2():
 
 
 def test_skip_exception_1():
+    """
+    Feature: Skip op
+    Description: Test skip op using input count=-1
+    Expectation: Error is raised as expected
+    """
     data1 = ds.GeneratorDataset(generator_md, ["data"])
 
     try:
@@ -212,6 +269,11 @@ def test_skip_exception_1():
 
 
 def test_skip_exception_2():
+    """
+    Feature: Skip op
+    Description: Test skip op using input count=-2
+    Expectation: Error is raised as expected
+    """
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
     with pytest.raises(ValueError) as e:

@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,9 @@ GENERATE_GOLDEN = False
 
 def test_zip_01():
     """
-    Test zip: zip 2 datasets, #rows-data1 == #rows-data2, #cols-data1 < #cols-data2
+    Feature: Zip op
+    Description: Test zip op with 2 datasets where #rows-data1 == #rows-data2 and #cols-data1 < #cols-data2
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_01")
     ds.config.set_seed(1)
@@ -49,7 +51,9 @@ def test_zip_01():
 
 def test_zip_02():
     """
-    Test zip: zip 2 datasets, #rows-data1 < #rows-data2, #cols-data1 == #cols-data2
+    Feature: Zip op
+    Description: Test zip op with 2 datasets where #rows-data1 < #rows-data2 and #cols-data1 == #cols-data2
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_02")
     ds.config.set_seed(1)
@@ -63,7 +67,9 @@ def test_zip_02():
 
 def test_zip_03():
     """
-    Test zip: zip 2 datasets, #rows-data1 > #rows-data2, #cols-data1 > #cols-data2
+    Feature: Zip op
+    Description: Test zip op with 2 datasets where #rows-data1 > #rows-data2 and #cols-data1 > #cols-data2
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_03")
     ds.config.set_seed(1)
@@ -77,7 +83,9 @@ def test_zip_03():
 
 def test_zip_04():
     """
-    Test zip: zip >2 datasets
+    Feature: Zip op
+    Description: Test zip op with > 2 datasets
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_04")
     ds.config.set_seed(1)
@@ -92,7 +100,9 @@ def test_zip_04():
 
 def test_zip_05():
     """
-    Test zip: zip dataset with renamed columns
+    Feature: Zip op
+    Description: Test zip op with renamed columns
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_05")
     ds.config.set_seed(1)
@@ -110,7 +120,9 @@ def test_zip_05():
 
 def test_zip_06():
     """
-    Test zip: zip dataset with renamed columns and repeat zipped dataset
+    Feature: Zip op
+    Description: Test zip op with renamed columns and repeat zipped dataset
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_zip_06")
     ds.config.set_seed(1)
@@ -129,7 +141,9 @@ def test_zip_06():
 
 def test_zip_exception_01():
     """
-    Test zip: zip same datasets
+    Feature: Zip op
+    Description: Test zip op with same datasets
+    Expectation: Exception is raised as expected
     """
     logger.info("test_zip_exception_01")
     data1 = ds.TFRecordDataset(DATA_DIR_1, SCHEMA_DIR_1)
@@ -149,7 +163,9 @@ def test_zip_exception_01():
 
 def test_zip_exception_02():
     """
-    Test zip: zip datasets with duplicate column name
+    Feature: Zip op
+    Description: Test zip op with duplicate column names
+    Expectation: Exception is raised as expected
     """
     logger.info("test_zip_exception_02")
     data1 = ds.TFRecordDataset(DATA_DIR_1, SCHEMA_DIR_1)
@@ -170,7 +186,9 @@ def test_zip_exception_02():
 
 def test_zip_exception_03():
     """
-    Test zip: zip with tuple of 1 dataset
+    Feature: Zip op
+    Description: Test zip op with tuple of 1 dataset
+    Expectation: Exception is raised as expected
     """
     logger.info("test_zip_exception_03")
     data1 = ds.TFRecordDataset(DATA_DIR_1, SCHEMA_DIR_1)
@@ -191,7 +209,9 @@ def test_zip_exception_03():
 
 def test_zip_exception_04():
     """
-    Test zip: zip with empty tuple of datasets
+    Feature: Zip op
+    Description: Test zip op with empty tuple of datasets
+    Expectation: Exception is raised as expected
     """
     logger.info("test_zip_exception_04")
 
@@ -211,7 +231,9 @@ def test_zip_exception_04():
 
 def test_zip_exception_05():
     """
-    Test zip: zip with non-tuple of 2 datasets
+    Feature: Zip op
+    Description: Test zip op with non-tuple of 2 datasets
+    Expectation: Exception is raised as expected
     """
     logger.info("test_zip_exception_05")
     data1 = ds.TFRecordDataset(DATA_DIR_1, SCHEMA_DIR_1)
@@ -232,7 +254,9 @@ def test_zip_exception_05():
 
 def test_zip_exception_06():
     """
-    Test zip: zip with non-tuple of 1 dataset
+    Feature: Zip op
+    Description: Test zip op with non-tuple of 1 dataset
+    Expectation: Exception is raised as expected
     """
     logger.info("test_zip_exception_06")
     data1 = ds.TFRecordDataset(DATA_DIR_1, SCHEMA_DIR_1)
@@ -252,7 +276,9 @@ def test_zip_exception_06():
 
 def test_zip_exception_07():
     """
-    Test zip: zip with string as parameter
+    Feature: Zip op
+    Description: Test zip op with string as parameter
+    Expectation: Exception is raised as expected
     """
     logger.info("test_zip_exception_07")
 

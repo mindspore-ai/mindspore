@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,11 @@ import mindspore.dataset as ds
 
 
 def test_tensor_empty():
+    """
+    Feature: Tensor
+    Description: Test empty tensor using GeneratorDataset
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         for _ in range(4):
             (yield np.array([], dtype=np.int64), np.array([], dtype='S').reshape([0, 4]), np.array([1],
@@ -32,6 +37,11 @@ def test_tensor_empty():
 
 
 def test_tensor_empty_map():
+    """
+    Feature: Tensor
+    Description: Test empty tensor using GeneratorDataset and map it using a function op
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         for _ in range(4):
             (yield np.array([], dtype=np.int64), np.array([], dtype='S'), np.array([1], dtype=np.float64))
@@ -53,6 +63,11 @@ def test_tensor_empty_map():
 
 
 def test_tensor_empty_batch():
+    """
+    Feature: Tensor
+    Description: Test empty tensor using GeneratorDataset and apply batch op
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         for _ in range(4):
             (yield np.array([], dtype=np.int64), np.array([], dtype='S').reshape([0, 4]), np.array([1],

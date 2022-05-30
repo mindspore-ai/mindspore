@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,11 @@ FILES_NUM = 1
 
 
 def test_cv_minddataset_reader_multi_image_and_ndarray_tutorial():
+    """
+    Feature: MindDataset
+    Description: Test for MindDataset reader for multiple images and ndarray tutorial
+    Expectation: Runs successfully
+    """
     try:
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         writer = FileWriter(file_name, FILES_NUM)

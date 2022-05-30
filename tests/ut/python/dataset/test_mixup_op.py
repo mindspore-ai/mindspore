@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ GENERATE_GOLDEN = False
 
 def test_mixup_batch_success1(plot=False):
     """
-    Test MixUpBatch op with specified alpha parameter
+    Feature: MixUpBatch op
+    Description: Test MixUpBatch op with specified alpha parameter
+    Expectation: Output is the same as expected output
     """
     logger.info("test_mixup_batch_success1")
 
@@ -75,7 +77,9 @@ def test_mixup_batch_success1(plot=False):
 
 def test_mixup_batch_success2(plot=False):
     """
-    Test MixUpBatch op with specified alpha parameter on ImageFolderDataset
+    Feature: MixUpBatch op
+    Description: Test MixUpBatch op with specified alpha parameter on ImageFolderDataset
+    Expectation: Output is the same as expected output
     """
     logger.info("test_mixup_batch_success2")
 
@@ -123,8 +127,9 @@ def test_mixup_batch_success2(plot=False):
 
 def test_mixup_batch_success3(plot=False):
     """
-    Test MixUpBatch op without specified alpha parameter.
-    Alpha parameter will be selected by default in this case
+    Feature: MixUpBatch op
+    Description: Test MixUpBatch op without specified alpha parameter (alpha parameter will be selected by default)
+    Expectation: Output is the same as expected output
     """
     logger.info("test_mixup_batch_success3")
 
@@ -166,8 +171,9 @@ def test_mixup_batch_success3(plot=False):
 
 def test_mixup_batch_success4(plot=False):
     """
-    Test MixUpBatch op on a dataset where OneHot returns a 2D vector.
-    Alpha parameter will be selected by default in this case
+    Feature: MixUpBatch op
+    Description: Test MixUpBatch op on dataset where OneHot returns a 2D vector (alpha parameter selected by default)
+    Expectation: Output is the same as expected output
     """
     logger.info("test_mixup_batch_success4")
 
@@ -215,7 +221,9 @@ def test_mixup_batch_success4(plot=False):
 
 def test_mixup_batch_md5():
     """
-    Test MixUpBatch with MD5:
+    Feature: MixUpBatch op
+    Description: Test MixUpBatch op with md5
+    Expectation: Passes the md5 check test
     """
     logger.info("test_mixup_batch_md5")
     original_seed = config_get_set_seed(0)
@@ -240,8 +248,9 @@ def test_mixup_batch_md5():
 
 def test_mixup_batch_fail1():
     """
-    Test MixUpBatch Fail 1
-    We expect this to fail because the images and labels are not batched
+    Feature: MixUpBatch op
+    Description: Test MixUpBatch op with images and labels that are not batched
+    Expectation: Error is raised as expected
     """
     logger.info("test_mixup_batch_fail1")
 
@@ -275,8 +284,9 @@ def test_mixup_batch_fail1():
 
 def test_mixup_batch_fail2():
     """
-    Test MixUpBatch Fail 2
-    We expect this to fail because alpha is negative
+    Feature: MixUpBatch op
+    Description: Test MixUpBatch op with negative alpha parameter
+    Expectation: Error is raised as expected
     """
     logger.info("test_mixup_batch_fail2")
 
@@ -304,8 +314,9 @@ def test_mixup_batch_fail2():
 
 def test_mixup_batch_fail3():
     """
-    Test MixUpBatch op
-    We expect this to fail because label column is not passed to mixup_batch
+    Feature: MixUpBatch op
+    Description: Test MixUpBatch op where label column is not passed
+    Expectation: Error is raised as expected
     """
     logger.info("test_mixup_batch_fail3")
     # Original Images
@@ -341,8 +352,9 @@ def test_mixup_batch_fail3():
 
 def test_mixup_batch_fail4():
     """
-    Test MixUpBatch Fail 2
-    We expect this to fail because alpha is zero
+    Feature: MixUpBatch op
+    Description: Test MixUpBatch op where alpha parameter is 0
+    Expectation: Error is raised as expected
     """
     logger.info("test_mixup_batch_fail4")
 
@@ -370,8 +382,9 @@ def test_mixup_batch_fail4():
 
 def test_mixup_batch_fail5():
     """
-    Test MixUpBatch Fail 5
-    We expect this to fail because labels are not OntHot encoded
+    Feature: MixUpBatch op
+    Description: Test MixUpBatch op where labels are not OneHot encoded
+    Expectation: Error is raised as expected
     """
     logger.info("test_mixup_batch_fail5")
 

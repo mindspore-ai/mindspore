@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,6 +42,11 @@ def generate_3_columns(n):
 
 
 def test_bucket_batch_invalid_input():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with invalid inputs
+    Expectation: Correct error is raised as expected
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
 
     column_names = ["col1"]
@@ -119,6 +124,11 @@ def test_bucket_batch_invalid_input():
 
 
 def test_bucket_batch_multi_bucket_no_padding():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with multi buckets but without padding
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
 
     column_names = ["col1"]
@@ -142,6 +152,11 @@ def test_bucket_batch_multi_bucket_no_padding():
 
 
 def test_bucket_batch_multi_bucket_no_padding_repeat():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with multi buckets but without padding, followed by repeat op
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
 
     column_names = ["col1"]
@@ -170,6 +185,11 @@ def test_bucket_batch_multi_bucket_no_padding_repeat():
 
 
 def test_bucket_batch_multi_bucket_with_padding():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with multi buckets and padding
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential(10)), ["col1"])
 
     column_names = ["col1"]
@@ -201,6 +221,11 @@ def test_bucket_batch_multi_bucket_with_padding():
 
 
 def test_bucket_batch_single_bucket_no_padding():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with single bucket but without padding
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
 
     column_names = ["col1"]
@@ -222,6 +247,11 @@ def test_bucket_batch_single_bucket_no_padding():
 
 
 def test_bucket_batch_single_bucket_with_padding():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with single bucket and padding
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential(9)), ["col1"])
 
     column_names = ["col1"]
@@ -252,6 +282,11 @@ def test_bucket_batch_single_bucket_with_padding():
 
 
 def test_bucket_batch_pad_to_bucket_boundary():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with pad_to_bucket_boundary
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential(9)), ["col1"])
 
     column_names = ["col1"]
@@ -283,6 +318,11 @@ def test_bucket_batch_pad_to_bucket_boundary():
 
 
 def test_bucket_batch_default_pad():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with default pad
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential(15)), ["col1"])
 
     column_names = ["col1"]
@@ -319,6 +359,11 @@ def test_bucket_batch_default_pad():
 
 
 def test_bucket_batch_drop_remainder():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with drop_remainder
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(27)), ["col1"])
 
     column_names = ["col1"]
@@ -350,6 +395,11 @@ def test_bucket_batch_drop_remainder():
 
 
 def test_bucket_batch_default_length_function():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with default element_length_function
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential(9)), ["col1"])
 
     column_names = ["col1"]
@@ -380,6 +430,11 @@ def test_bucket_batch_default_length_function():
 
 
 def test_bucket_batch_multi_column():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with multi columns
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_2_columns(10)), ["same_shape", "variable_shape"])
 
     column_names = ["same_shape"]
@@ -417,6 +472,11 @@ def test_bucket_batch_multi_column():
 
 
 def test_bucket_batch_three_columns():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with three columns
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_3_columns(10)), ["same_shape", "same_shape2", "variable_shape"])
 
     column_names = ["same_shape2"]
@@ -458,6 +518,11 @@ def test_bucket_batch_three_columns():
 
 
 def test_bucket_batch_get_dataset_size():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op followed by get_dataset_size op
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
 
     column_names = ["col1"]
@@ -478,6 +543,11 @@ def test_bucket_batch_get_dataset_size():
 
 
 def test_bucket_batch_invalid_column():
+    """
+    Feature: bucket_batch_by_length op
+    Description: Test bucket_batch_by_length op with invalid column
+    Expectation: Error is raised as expected
+    """
     dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
 
     column_names = ["invalid_column"]

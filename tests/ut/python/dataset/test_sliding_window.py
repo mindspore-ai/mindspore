@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import mindspore.dataset.text as text
 
 def test_sliding_window_callable():
     """
-    Test sliding window op is callable
+    Feature: SlidingWindow op
+    Description: Test SlidingWindow op with 1D input, 2D input, and multiple tensors
+    Expectation: Output is equal to the expected output for 1D, but error is raised for 2D and multiple tensors
     """
     op = text.SlidingWindow(2, 0)
 
@@ -45,7 +47,11 @@ def test_sliding_window_callable():
 
 
 def test_sliding_window_string():
-    """ test sliding_window with string type"""
+    """
+    Feature: SlidingWindow op
+    Description: Test SlidingWindow op with string type
+    Expectation: Output is equal to the expected output
+    """
     inputs = [["大", "家", "早", "上", "好"]]
     expect = np.array([['大', '家'], ['家', '早'], ['早', '上'], ['上', '好']])
 
@@ -63,6 +69,11 @@ def test_sliding_window_string():
 
 
 def test_sliding_window_number():
+    """
+    Feature: SlidingWindow op
+    Description: Test SlidingWindow op with int type
+    Expectation: Output is equal to the expected output
+    """
     inputs = [1]
     expect = np.array([[1]])
 
@@ -77,6 +88,11 @@ def test_sliding_window_number():
 
 
 def test_sliding_window_big_width():
+    """
+    Feature: SlidingWindow op
+    Description: Test SlidingWindow op with big width parameter
+    Expectation: Output is equal to the expected output
+    """
     inputs = [[1, 2, 3, 4, 5]]
     expect = np.array([])
 
@@ -88,6 +104,11 @@ def test_sliding_window_big_width():
 
 
 def test_sliding_window_exception():
+    """
+    Feature: SlidingWindow op
+    Description: Test SlidingWindow op with invalid inputs
+    Expectation: Correct error is raised as expected
+    """
     try:
         _ = text.SlidingWindow(0, 0)
         assert False

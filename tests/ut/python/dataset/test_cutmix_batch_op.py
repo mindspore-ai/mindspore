@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ GENERATE_GOLDEN = False
 
 def test_cutmix_batch_success1(plot=False):
     """
-    Test CutMixBatch op with specified alpha and prob parameters on a batch of CHW images
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op with specified alpha and prob parameters on a batch of CHW images
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_cutmix_batch_success1")
     # Original Images
@@ -76,7 +78,9 @@ def test_cutmix_batch_success1(plot=False):
 
 def test_cutmix_batch_success2(plot=False):
     """
-    Test CutMixBatch op with default values for alpha and prob on a batch of rescaled HWC images
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op with default values for alpha and prob on a batch of rescaled HWC images
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_cutmix_batch_success2")
 
@@ -119,7 +123,9 @@ def test_cutmix_batch_success2(plot=False):
 
 def test_cutmix_batch_success3(plot=False):
     """
-    Test CutMixBatch op with default values for alpha and prob on a batch of HWC images on ImageFolderDataset
+    Feature: CutMixBatch op
+    Description: Test with default values for alpha and prob on a batch of HWC images on ImagesFolderDataset
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_cutmix_batch_success3")
 
@@ -171,7 +177,9 @@ def test_cutmix_batch_success3(plot=False):
 
 def test_cutmix_batch_success4(plot=False):
     """
-    Test CutMixBatch on a dataset where OneHot returns a 2D vector
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op on a dataset where OneHot returns a 2D vector
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_cutmix_batch_success4")
 
@@ -223,7 +231,9 @@ def test_cutmix_batch_success4(plot=False):
 
 def test_cutmix_batch_nhwc_md5():
     """
-    Test CutMixBatch on a batch of HWC images with MD5:
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op on a batch of HWC images with md5 comparison check
+    Expectation: Passes the md5 check test
     """
     logger.info("test_cutmix_batch_nhwc_md5")
     original_seed = config_get_set_seed(0)
@@ -248,7 +258,9 @@ def test_cutmix_batch_nhwc_md5():
 
 def test_cutmix_batch_nchw_md5():
     """
-    Test CutMixBatch on a batch of CHW images with MD5:
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op on a batch of CHW images with md5 comparison check
+    Expectation: Passes the md5 check test
     """
     logger.info("test_cutmix_batch_nchw_md5")
     original_seed = config_get_set_seed(0)
@@ -274,8 +286,9 @@ def test_cutmix_batch_nchw_md5():
 
 def test_cutmix_batch_fail1():
     """
-    Test CutMixBatch Fail 1
-    We expect this to fail because the images and labels are not batched
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op where images and labels are not batched
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_cutmix_batch_fail1")
 
@@ -298,8 +311,9 @@ def test_cutmix_batch_fail1():
 
 def test_cutmix_batch_fail2():
     """
-    Test CutMixBatch Fail 2
-    We expect this to fail because alpha is negative
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op where alpha is negative
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_cutmix_batch_fail2")
 
@@ -316,8 +330,9 @@ def test_cutmix_batch_fail2():
 
 def test_cutmix_batch_fail3():
     """
-    Test CutMixBatch Fail 2
-    We expect this to fail because prob is larger than 1
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op where prob is larger than 1
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_cutmix_batch_fail3")
 
@@ -334,8 +349,9 @@ def test_cutmix_batch_fail3():
 
 def test_cutmix_batch_fail4():
     """
-    Test CutMixBatch Fail 2
-    We expect this to fail because prob is negative
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op where prob is negative
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_cutmix_batch_fail4")
 
@@ -352,8 +368,9 @@ def test_cutmix_batch_fail4():
 
 def test_cutmix_batch_fail5():
     """
-    Test CutMixBatch op
-    We expect this to fail because label column is not passed to cutmix_batch
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op where label column is not passed to cutmix_batch
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_cutmix_batch_fail5")
 
@@ -379,8 +396,9 @@ def test_cutmix_batch_fail5():
 
 def test_cutmix_batch_fail6():
     """
-    Test CutMixBatch op
-    We expect this to fail because image_batch_format passed to CutMixBatch doesn't match the format of the images
+    Feature: CutMixBatch op
+    Description: Test op where image_batch_format passed to CutMixBatch doesn't match the format of the images
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_cutmix_batch_fail6")
 
@@ -406,8 +424,9 @@ def test_cutmix_batch_fail6():
 
 def test_cutmix_batch_fail7():
     """
-    Test CutMixBatch op
-    We expect this to fail because labels are not in one-hot format
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op where labels are not in one-hot format
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_cutmix_batch_fail7")
 
@@ -431,8 +450,9 @@ def test_cutmix_batch_fail7():
 
 def test_cutmix_batch_fail8():
     """
-    Test CutMixBatch Fail 8
-    We expect this to fail because alpha is zero
+    Feature: CutMixBatch op
+    Description: Test CutMixBatch op where alpha is 0
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_cutmix_batch_fail8")
 

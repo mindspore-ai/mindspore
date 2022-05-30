@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ from mindspore import log as logger
 
 def test_mu_law_decoding():
     """
-    Test mu_law_decoding_op (pipeline).
+    Feature: MuLawDecoding op
+    Description: Test MuLawDecoding op in pipeline mode
+    Expectation: Output is the same as expected output
     """
     logger.info("Test MuLawDecoding.")
 
@@ -47,7 +49,9 @@ def test_mu_law_decoding():
 
 def test_mu_law_decoding_eager():
     """
-    Test mu_law_decoding_op callable (eager).
+    Feature: MuLawDecoding op
+    Description: Test MuLawDecoding op in eager mode
+    Expectation: Output is the same as expected output
     """
     logger.info("Test MuLawDecoding callable.")
 
@@ -62,7 +66,9 @@ def test_mu_law_decoding_eager():
 
 def test_mu_law_decoding_uncallable():
     """
-    Test mu_law_decoding_op not callable.
+    Feature: MuLawDecoding op
+    Description: Test parameter check of MuLawDecoding op
+    Expectation: Error is raised as expected
     """
     logger.info("Test MuLawDecoding not callable.")
 

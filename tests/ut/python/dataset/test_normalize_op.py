@@ -162,7 +162,9 @@ def test_normalize_op_chw(plot=False):
 
 def test_decode_op():
     """
-    Test Decode op
+    Feature: Decode op
+    Description: Test Decode op basic usage
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
     logger.info("Test Decode")
 
@@ -184,7 +186,9 @@ def test_decode_op():
 
 def test_decode_normalize_op():
     """
-    Test Decode op followed by Normalize op
+    Feature: Decode op and Normalize op
+    Description: Test Decode op followed by Normalize op in one map
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
     logger.info("Test [Decode, Normalize] in one Map")
 
@@ -207,8 +211,9 @@ def test_decode_normalize_op():
 
 def test_normalize_md5_01():
     """
-    Test Normalize with md5 check: valid mean and std
-    expected to pass
+    Feature: Normalize Op
+    Description: Test Normalize op with md5 check with valid mean and std
+    Expectation: Passes the md5 check test
     """
     logger.info("test_normalize_md5_01")
     data_c = util_test_normalize([121.0, 115.0, 100.0], [70.0, 68.0, 71.0], False)
@@ -223,8 +228,9 @@ def test_normalize_md5_01():
 
 def test_normalize_md5_02():
     """
-    Test Normalize with md5 check: len(mean)=len(std)=1 with RGB images
-    expected to pass
+    Feature: Normalize Op
+    Description: Test Normalize op with md5 check with len(mean)=len(std)=1 with RBG images
+    Expectation: Passes the md5 check test
     """
     logger.info("test_normalize_md5_02")
     data_py = util_test_normalize([0.475], [0.275], True)
@@ -312,8 +318,9 @@ def test_normalize_exception_invalid_range():
 
 def test_normalize_grayscale_md5_01():
     """
-    Test Normalize with md5 check: len(mean)=len(std)=1 with 1 channel grayscale images
-    expected to pass
+    Feature: Normalize Op
+    Description: Test Normalize op with md5 check with len(mean)=len(std)=1 with 1 channel grayscale images
+    Expectation: Passes the md5 check test
     """
     logger.info("test_normalize_grayscale_md5_01")
     data = util_test_normalize_grayscale(1, [0.5], [0.175])
@@ -324,8 +331,9 @@ def test_normalize_grayscale_md5_01():
 
 def test_normalize_grayscale_md5_02():
     """
-    Test Normalize with md5 check: len(mean)=len(std)=3 with 3 channel grayscale images
-    expected to pass
+    Feature: Normalize Op
+    Description: Test Normalize op with md5 check with len(mean)=len(std)=3 with 3 channels grayscale images
+    Expectation: Passes the md5 check test
     """
     logger.info("test_normalize_grayscale_md5_02")
     data = util_test_normalize_grayscale(3, [0.5, 0.5, 0.5], [0.175, 0.235, 0.512])
@@ -336,8 +344,9 @@ def test_normalize_grayscale_md5_02():
 
 def test_normalize_grayscale_exception():
     """
-    Test Normalize: len(mean)=len(std)=3 with 1 channel grayscale images
-    expected to raise RuntimeError
+    Feature: Normalize Op
+    Description: Test Normalize op with md5 check with len(mean)=len(std)=3 with 1 channel grayscale images
+    Expectation: Error is raised as expected
     """
     logger.info("test_normalize_grayscale_exception")
     try:
@@ -348,6 +357,11 @@ def test_normalize_grayscale_exception():
 
 
 def test_multiple_channels():
+    """
+    Feature: Normalize Op
+    Description: Test Normalize op with multiple channels
+    Expectation: Output is equal to the expected output
+    """
     logger.info("test_multiple_channels")
 
     def util_test(item, mean, std):
@@ -381,7 +395,7 @@ def test_multiple_channels():
 def test_normalize_eager_hwc():
     """
     Feature: Normalize op
-    Description: Test eager support for Normalize C implementation with HWC input
+    Description: Test eager support for Normalize Cpp implementation with HWC input
     Expectation: Receive non-None output image from op
     """
     img_in = Image.open("../data/dataset/apple.jpg").convert("RGB")
@@ -395,7 +409,7 @@ def test_normalize_eager_hwc():
 def test_normalize_eager_chw():
     """
     Feature: Normalize op
-    Description: Test eager support for Normalize C implementation with CHW input
+    Description: Test eager support for Normalize Cpp implementation with CHW input
     Expectation: Receive non-None output image from op
     """
     img_in = Image.open("../data/dataset/apple.jpg").convert("RGB")

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import mindspore.dataset.text as text
 
 def test_ngram_callable():
     """
-    Test ngram op is callable
+    Feature: Ngram op
+    Description: Test Ngram op basic usage with valid input
+    Expectation: Output is the same as expected output
     """
     op = text.Ngram(2, separator="-")
 
@@ -39,7 +41,11 @@ def test_ngram_callable():
 
 
 def test_multiple_ngrams():
-    """ test n-gram where n is a list of integers"""
+    """
+    Feature: Ngram op
+    Description: Test Ngram op where n is a list of integers
+    Expectation: Output is the same as expected output
+    """
     plates_mottos = ["WildRose Country", "Canada's Ocean Playground", "Land of Living Skies"]
     n_gram_mottos = []
     n_gram_mottos.append(
@@ -66,7 +72,11 @@ def test_multiple_ngrams():
 
 
 def test_simple_ngram():
-    """ test simple gram with only one n value"""
+    """
+    Feature: Ngram op
+    Description: Test Ngram op with only one n value
+    Expectation: Output is the same as expected output
+    """
     plates_mottos = ["Friendly Manitoba", "Yours to Discover", "Land of Living Skies",
                      "Birthplace of the Confederation"]
     n_gram_mottos = [[""]]
@@ -88,7 +98,11 @@ def test_simple_ngram():
 
 
 def test_corner_cases():
-    """ testing various corner cases and exceptions"""
+    """
+    Feature: Ngram op
+    Description: Test Ngram op with various corner cases and exceptions
+    Expectation: Output is the same as expected output or error is raised when appropriate
+    """
 
     def test_config(input_line, n, l_pad=("", 0), r_pad=("", 0), sep=" "):
         def gen(texts):

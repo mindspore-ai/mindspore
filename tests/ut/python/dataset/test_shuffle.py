@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ GENERATE_GOLDEN = False
 
 def test_shuffle_01():
     """
-    Test shuffle: buffer_size < number-of-rows-in-dataset
+    Feature: Shuffle op
+    Description: Test shuffle op where buffer_size < number-of-rows-in-dataset
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_shuffle_01")
     # define parameters
@@ -42,7 +44,9 @@ def test_shuffle_01():
 
 def test_shuffle_02():
     """
-    Test shuffle: buffer_size = number-of-rows-in-dataset
+    Feature: Shuffle op
+    Description: Test shuffle op where buffer_size == number-of-rows-in-dataset
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_shuffle_02")
     # define parameters
@@ -60,7 +64,9 @@ def test_shuffle_02():
 
 def test_shuffle_03():
     """
-    Test shuffle: buffer_size=2 (minimum size), number-of-rows-in-dataset > 2
+    Feature: Shuffle op
+    Description: Test shuffle op where buffer_size=2 (minimum size) and number-of-rows-in-dataset > 2
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_shuffle_03")
     # define parameters
@@ -78,7 +84,9 @@ def test_shuffle_03():
 
 def test_shuffle_04():
     """
-    Test shuffle: buffer_size=2 (minimum size), number-of-rows-in-dataset = 2
+    Feature: Shuffle op
+    Description: Test shuffle op where buffer_size=2 (minimum size) and number-of-rows-in-dataset=2
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_shuffle_04")
     # define parameters
@@ -96,7 +104,9 @@ def test_shuffle_04():
 
 def test_shuffle_05():
     """
-    Test shuffle: buffer_size > number-of-rows-in-dataset
+    Feature: Shuffle op
+    Description: Test shuffle op where buffer_size > number-of-rows-in-dataset
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_shuffle_05")
     # define parameters
@@ -114,7 +124,9 @@ def test_shuffle_05():
 
 def test_shuffle_06():
     """
-    Test shuffle: with set seed, both datasets
+    Feature: Shuffle op
+    Description: Test shuffle op with set seed for both datasets
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_shuffle_06")
     # define parameters
@@ -136,7 +148,9 @@ def test_shuffle_06():
 
 def test_shuffle_exception_01():
     """
-    Test shuffle exception: buffer_size<0
+    Feature: Shuffle op
+    Description: Test shuffle op where buffer_size < 0
+    Expectation: Exception is raised as expected
     """
     logger.info("test_shuffle_exception_01")
 
@@ -154,7 +168,9 @@ def test_shuffle_exception_01():
 
 def test_shuffle_exception_02():
     """
-    Test shuffle exception: buffer_size=0
+    Feature: Shuffle op
+    Description: Test shuffle op where buffer_size=0
+    Expectation: Exception is raised as expected
     """
     logger.info("test_shuffle_exception_02")
 
@@ -172,7 +188,9 @@ def test_shuffle_exception_02():
 
 def test_shuffle_exception_03():
     """
-    Test shuffle exception: buffer_size=1
+    Feature: Shuffle op
+    Description: Test shuffle op where buffer_size=1
+    Expectation: Exception is raised as expected
     """
     logger.info("test_shuffle_exception_03")
 
@@ -190,7 +208,9 @@ def test_shuffle_exception_03():
 
 def test_shuffle_exception_05():
     """
-    Test shuffle exception: Missing mandatory buffer_size input parameter
+    Feature: Shuffle op
+    Description: Test shuffle op where mandatory buffer_size input parameter is missing
+    Expectation: Exception is raised as expected
     """
     logger.info("test_shuffle_exception_05")
 
@@ -208,7 +228,9 @@ def test_shuffle_exception_05():
 
 def test_shuffle_exception_06():
     """
-    Test shuffle exception: buffer_size wrong type, boolean value False
+    Feature: Shuffle op
+    Description: Test shuffle op where buffer_size has wrong type, boolean value False
+    Expectation: Exception is raised as expected
     """
     logger.info("test_shuffle_exception_06")
 
@@ -226,7 +248,9 @@ def test_shuffle_exception_06():
 
 def test_shuffle_exception_07():
     """
-    Test shuffle exception: buffer_size wrong type, boolean value True
+    Feature: Shuffle op
+    Description: Test shuffle op where buffer_size has wrong type, boolean value True
+    Expectation: Exception is raised as expected
     """
     logger.info("test_shuffle_exception_07")
 

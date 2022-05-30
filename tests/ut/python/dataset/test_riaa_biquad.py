@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_riaa_biquad_eager():
-    """ mindspore eager mode normal testcase:riaa_biquad op"""
+    """
+    Feature: RiaaBiquad op
+    Description: Test RiaaBiquad op in eager mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
     # Expect waveform
@@ -48,7 +52,11 @@ def test_riaa_biquad_eager():
 
 
 def test_riaa_biquad_pipeline():
-    """ mindspore pipeline mode normal testcase:riaa_biquad op"""
+    """
+    Feature: RiaaBiquad op
+    Description: Test RiaaBiquad op in pipeline mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[1.47, 4.722, 5.863], [0.492, 0.235, 0.56]], dtype=np.float32)
     # Expect waveform
@@ -65,6 +73,11 @@ def test_riaa_biquad_pipeline():
 
 
 def test_riaa_biquad_invalid_parameter():
+    """
+    Feature: RiaaBiquad op
+    Description: Test RiaaBiquad op with invalid parameter
+    Expectation: Error is raised as expected
+    """
     def test_invalid_input(test_name, sample_rate, error, error_msg):
         logger.info("Test RiaaBiquad with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,11 @@ def compare(array, res, idx, cnt):
         np.testing.assert_array_equal(cnt, d["z"])
 
 def test_duplicate_basics():
+    """
+    Feature: Unique op
+    Description: Test Unique op basic usage where there are duplicates
+    Expectation: Output is equal to the expected output
+    """
     compare([0, 1, 2, 1, 2, 3], np.array([0, 1, 2, 3]),
             np.array([0, 1, 2, 1, 2, 3]), np.array([1, 2, 2, 1]))
     compare([0.0, 1.0, 2.0, 1.0, 2.0, 3.0], np.array([0.0, 1.0, 2.0, 3.0]),

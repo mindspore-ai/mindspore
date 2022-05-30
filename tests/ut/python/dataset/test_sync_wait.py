@@ -1,4 +1,4 @@
-# Copyright 2019i-2022 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,9 @@ class Augment:
 
 def test_simple_sync_wait():
     """
-    Test simple sync wait: test sync in dataset pipeline
+    Feature: Sync_wait op
+    Description: Test sync_wait op in dataset pipeline
+    Expectation: Runs successfully
     """
     logger.info("test_simple_sync_wait")
     batch_size = 4
@@ -58,7 +60,9 @@ def test_simple_sync_wait():
 
 def test_simple_shuffle_sync():
     """
-    Test simple shuffle sync: test shuffle before sync
+    Feature: Sync_wait op
+    Description: Test sync_wait op after shuffle op
+    Expectation: Runs successfully
     """
     logger.info("test_simple_shuffle_sync")
     shuffle_size = 4
@@ -81,7 +85,9 @@ def test_simple_shuffle_sync():
 
 def test_two_sync():
     """
-    Test two sync: dataset pipeline with with two sync_operators
+    Feature: Sync_wait op
+    Description: Test sync_wait op in dataset pipeline with two sync_wait ops
+    Expectation: Runs successfully
     """
     logger.info("test_two_sync")
     batch_size = 6
@@ -109,7 +115,9 @@ def test_two_sync():
 
 def test_sync_epoch():
     """
-    Test sync wait with epochs: test sync with epochs in dataset pipeline
+    Feature: Sync_wait op
+    Description: Test sync_wait op with epochs in dataset pipeline
+    Expectation: Runs successfully
     """
     logger.info("test_sync_epoch")
     batch_size = 30
@@ -132,7 +140,9 @@ def test_sync_epoch():
 
 def test_multiple_iterators():
     """
-    Test sync wait with multiple iterators: will start multiple
+    Feature: Sync_wait op
+    Description: Test sync_wait op with multiple iterators
+    Expectation: Runs successfully
     """
     logger.info("test_sync_epoch")
     batch_size = 30
@@ -161,7 +171,9 @@ def test_multiple_iterators():
 
 def test_sync_exception_01():
     """
-    Test sync: with shuffle in sync mode
+    Feature: Sync_wait op
+    Description: Test sync_wait op followed by shuffle op
+    Expectation: Error is raised as expected
     """
     logger.info("test_sync_exception_01")
     shuffle_size = 4
@@ -179,7 +191,9 @@ def test_sync_exception_01():
 
 def test_sync_exception_02():
     """
-    Test sync: with duplicated condition name
+    Feature: Sync_wait op
+    Description: Test sync_wait op with duplicated condition name
+    Expectation: Error is raised as expected
     """
     logger.info("test_sync_exception_02")
 
@@ -197,7 +211,9 @@ def test_sync_exception_02():
 
 def test_sync_exception_03():
     """
-    Test sync: with wrong batch size
+    Feature: Sync_wait op
+    Description: Test sync_wait op with wrong batch size
+    Expectation: Error is raised as expected
     """
     logger.info("test_sync_exception_03")
 
@@ -212,7 +228,9 @@ def test_sync_exception_03():
 
 def test_sync_exception_04():
     """
-    Test sync: with negative batch size in update
+    Feature: Sync_wait op
+    Description: Test sync_wait op with negative batch size in update
+    Expectation: Error is raised as expected
     """
     logger.info("test_sync_exception_04")
 
@@ -233,7 +251,9 @@ def test_sync_exception_04():
 
 def test_sync_exception_05():
     """
-    Test sync: with wrong condition name in update
+    Feature: Sync_wait op
+    Description: Test sync_wait op with wrong condition name in update
+    Expectation: Error is raised as expected
     """
     logger.info("test_sync_exception_05")
 
@@ -253,7 +273,11 @@ def test_sync_exception_05():
 
 
 def test_simple_sync_wait_empty_condition_name():
-    """ callback is none, sync_wait and sync_update's condition_name is empty string ('') """
+    """
+    Feature: Sync_wait op
+    Description: Test where callback is none, and sync_wait and sync_update condition_name is empty string ('')
+    Expectation: Runs successfully
+    """
     logger.info("test_simple_sync_wait_empty_condition_name")
     batch_size = 10
     dataset = ds.GeneratorDataset(gen, column_names=["input"])
@@ -272,7 +296,9 @@ def test_simple_sync_wait_empty_condition_name():
 
 def test_sync_exception_06():
     """
-    Test sync: with string batch size
+    Feature: Sync_wait op
+    Description: Test sync_wait op with string batch size
+    Expectation: Error is raised as expected
     """
     logger.info("test_sync_exception_03")
 
