@@ -94,15 +94,26 @@ public class SyncFLJob {
         }
         initFlIDForPkiVerify();
         localFLParameter.setMsConfig(0, flParameter.getThreadNum(), flParameter.getCpuBindMode(), false);
+        Client client = ClientManager.getClient(flParameter.getFlName());
+        Status modelInitRet = client.initModel(flParameter);
+        if (modelInitRet != Status.SUCCESS) {
+            LOGGER.severe("initModel failed");
+            client.free();
+            return FLClientStatus.FAILED;
+        }
         FLLiteClient flLiteClient = new FLLiteClient();
         LOGGER.info("recovery StopJobFlag to false in the start of fl job");
         localFLParameter.setStopJobFlag(false);
         InitialParameters();
         LOGGER.info("flJobRun start");
         flRunLoop(flLiteClient);
+        if (curStatus == FLClientStatus.SUCCESS) {
+            client.saveModel(flParameter, localFLParameter);
+        }
         LOGGER.info("flJobRun finish");
         flJobResultCallback.onFlJobFinished(flParameter.getFlName(), flLiteClient.getIterations(),
                 flLiteClient.getRetCode());
+        client.free();
         return curStatus;
     }
 
@@ -135,9 +146,8 @@ public class SyncFLJob {
             updateTryTimePerIter(flLiteClient);
 
             // Copy weights before training.
-            Map<String, float[]> oldFeatureMap = flLiteClient.getFeatureMap();
-            localFLParameter.setOldFeatureMap(oldFeatureMap);
-
+            Client client = ClientManager.getClient(flParameter.getFlName());
+            client.EnableTrain(true);
             // create mask
             curStatus = flLiteClient.getFeatureMask();
             if (curStatus == FLClientStatus.RESTART) {
@@ -206,7 +216,6 @@ public class SyncFLJob {
                     "======================================================================");
             flJobResultCallback.onFlJobIterationFinished(flParameter.getFlName(), flLiteClient.getIteration(),
                     flLiteClient.getRetCode());
-            Common.freeSession();
             tryTimePerIter = 0;
         } while (flLiteClient.getIteration() < flLiteClient.getIterations());
     }
@@ -306,11 +315,13 @@ public class SyncFLJob {
             client.free();
             return null;
         }
-        Status tag = client.initSessionAndInputs(flParameter.getInferModelPath(),
-                flParameter.getInputShape());
-        if (!Status.SUCCESS.equals(tag)) {
-            LOGGER.severe("[model inference] unsolved error code in <initSessionAndInputs>: the return " +
-                    " status is: " + tag);
+        Status modelInitRet = client.initModel(flParameter);
+        if(modelInitRet != Status.SUCCESS){
+            LOGGER.severe("initModel failed");
+            return null;
+        }
+        if (!client.EnableTrain(false)) {
+            LOGGER.severe("[model inference] call EnableTrain failed");
             client.free();
             return null;
         }
@@ -342,10 +353,19 @@ public class SyncFLJob {
         }
         localFLParameter.setServerMod(flParameter.getServerMod().toString());
         localFLParameter.setMsConfig(0, 1, 0, false);
-        FLClientStatus status;
+        Client client = ClientManager.getClient(flParameter.getFlName());
+        Status modelInitRet = client.initModel(flParameter);
+        if (modelInitRet != Status.SUCCESS) {
+            LOGGER.severe("initModel failed");
+            client.free();
+            return null;
+        }
         FLLiteClient flLiteClient = new FLLiteClient();
-        status = flLiteClient.getModel();
-        Common.freeSession();
+        FLClientStatus status = flLiteClient.getModel();
+        if (status == FLClientStatus.SUCCESS) {
+            client.saveModel(flParameter, localFLParameter);
+        }
+        client.free();
         return status;
     }
 
@@ -374,7 +394,6 @@ public class SyncFLJob {
     private void resetContext(String tag, String nextReqTime, FLLiteClient flLiteClient) {
         LOGGER.info(tag + " out of time: need wait and request startFLJob again");
         waitNextReqTime(nextReqTime);
-        Common.freeSession();
         flJobResultCallback.onFlJobIterationFinished(flParameter.getFlName(), flLiteClient.getIteration(),
                 flLiteClient.getRetCode());
     }
@@ -383,7 +402,6 @@ public class SyncFLJob {
         LOGGER.info(tag + " failed");
         LOGGER.info("=========================================the total response of " +
                 flLiteClient.getIteration() + ": " + curStatus + "=========================================");
-        Common.freeSession();
         flJobResultCallback.onFlJobIterationFinished(flParameter.getFlName(), flLiteClient.getIteration(),
                 flLiteClient.getRetCode());
     }

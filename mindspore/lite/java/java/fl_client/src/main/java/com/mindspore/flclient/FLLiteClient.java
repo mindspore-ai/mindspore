@@ -71,7 +71,6 @@ public class FLLiteClient {
     private SecureProtocol secureProtocol = new SecureProtocol();
     private String nextRequestTime;
     private Client client;
-    private Map<String, float[]> oldFeatureMap;
     private float signK = 0.01f;
     private float signEps = 100;
     private float signThrRatio = 0.6f;
@@ -324,11 +323,10 @@ public class FLLiteClient {
     }
 
     private FLClientStatus trainLoop() {
-        retCode = ResponseCode.SUCCEED;
-        status = Common.initSession(flParameter.getTrainModelPath());
-        if (status == FLClientStatus.FAILED) {
+        Client client = ClientManager.getClient(flParameter.getFlName());
+        if(!client.EnableTrain(true)){
             retCode = ResponseCode.RequestError;
-            return status;
+            return FLClientStatus.FAILED;
         }
         retCode = ResponseCode.SUCCEED;
         LOGGER.info("[train] train in " + flParameter.getFlName());
@@ -343,8 +341,6 @@ public class FLLiteClient {
         if (!Status.SUCCESS.equals(tag)) {
             failed("[train] unsolved error code in <client.trainModel>", ResponseCode.RequestError);
         }
-        client.saveModel(flParameter.getTrainModelPath());
-        Common.freeSession();
         return status;
     }
 
@@ -447,28 +443,11 @@ public class FLLiteClient {
         return status;
     }
 
-    public Map<String, float[]> getFeatureMap() {
-        status = Common.initSession(flParameter.getTrainModelPath());
-        if (status == FLClientStatus.FAILED) {
-            Common.freeSession();
-            retCode = ResponseCode.RequestError;
-            return new HashMap<>();
-        }
-        Map<String, float[]>  featureMap = client.getFeatureMap();
-        Common.freeSession();
-        return featureMap;
-    }
-
     public void updateDpNormClip() {
         EncryptLevel encryptLevel = localFLParameter.getEncryptLevel();
         if (encryptLevel == EncryptLevel.DP_ENCRYPT) {
-            Map<String, float[]> fedFeatureMap = getFeatureMap();
-            float fedWeightUpdateNorm = calWeightUpdateNorm(oldFeatureMap, fedFeatureMap);
-            if (fedWeightUpdateNorm == -1) {
-                LOGGER.severe("[updateDpNormClip] the returned value fedWeightUpdateNorm is not valid: " +
-                        "-1, please check!");
-                throw new IllegalArgumentException();
-            }
+            client.EnableTrain(true);
+            float fedWeightUpdateNorm = client.getDpWeightNorm(secureProtocol.getUpdateFeatureName());
             LOGGER.info("[DP] L2-norm of weights' average update is: " + fedWeightUpdateNorm);
             float newNormCLip = (float) getDpNormClipFactor() * fedWeightUpdateNorm;
             if (iteration == 1) {
@@ -482,26 +461,6 @@ public class FLLiteClient {
             }
             LOGGER.info("[DP] Adaptive dpNormClip is: " + getDpNormClipAdapt());
         }
-    }
-
-    private float calWeightUpdateNorm(Map<String, float[]> originalData, Map<String, float[]> newData) {
-        float updateL2Norm = 0f;
-        ArrayList<String> featureList = secureProtocol.getUpdateFeatureName();
-        for (String key : featureList) {
-            float[] data = originalData.get(key);
-            float[] dataAfterUpdate = newData.get(key);
-            for (int j = 0; j < data.length; j++) {
-                if (j >= dataAfterUpdate.length) {
-                    LOGGER.severe("[calWeightUpdateNorm] the index j is out of range for array dataAfterUpdate, " +
-                            "please check");
-                    return -1;
-                }
-                float updateData = data[j] - dataAfterUpdate[j];
-                updateL2Norm += updateData * updateData;
-            }
-        }
-        updateL2Norm = (float) Math.sqrt(updateL2Norm);
-        return updateL2Norm;
     }
 
     /**
@@ -525,8 +484,7 @@ public class FLLiteClient {
                         localFLParameter.getEncryptLevel().toString() + "> : " + curStatus);
                 return curStatus;
             case DP_ENCRYPT:
-                oldFeatureMap = localFLParameter.getOldFeatureMap();
-                curStatus = secureProtocol.setDPParameter(iteration, dpEps, dpDelta, dpNormClipAdapt, oldFeatureMap);
+                curStatus = secureProtocol.setDPParameter(iteration, dpEps, dpDelta, dpNormClipAdapt);
                 retCode = ResponseCode.SUCCEED;
                 if (curStatus != FLClientStatus.SUCCESS) {
                     LOGGER.severe("---Differential privacy init failed---");
@@ -536,8 +494,7 @@ public class FLLiteClient {
                 LOGGER.info("[Encrypt] set parameters for DP_ENCRYPT!");
                 return FLClientStatus.SUCCESS;
             case SIGNDS:
-                oldFeatureMap = localFLParameter.getOldFeatureMap();
-                curStatus = secureProtocol.setDSParameter(signK, signEps, signThrRatio, signGlobalLr, signDimOut, oldFeatureMap);
+                curStatus = secureProtocol.setDSParameter(signK, signEps, signThrRatio, signGlobalLr, signDimOut);
                 retCode = ResponseCode.SUCCEED;
                 if (curStatus != FLClientStatus.SUCCESS) {
                     LOGGER.severe("---SignDS init failed---");
@@ -594,19 +551,18 @@ public class FLLiteClient {
 
 
     private FLClientStatus evaluateLoop() {
-        client.free();
         status = FLClientStatus.SUCCESS;
         retCode = ResponseCode.SUCCEED;
 
         float acc = 0;
         if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
             LOGGER.info("[evaluate] evaluateModel by " + localFLParameter.getServerMod());
-            client.initSessionAndInputs(flParameter.getInferModelPath(), flParameter.getInputShape());
+            client.EnableTrain(false);
             LOGGER.info("[evaluate] modelPath: " + flParameter.getInferModelPath());
             acc = client.evalModel();
         } else {
             LOGGER.info("[evaluate] evaluateModel by " + localFLParameter.getServerMod());
-            client.initSessionAndInputs(flParameter.getTrainModelPath(), flParameter.getInputShape());
+            client.EnableTrain(true);
             LOGGER.info("[evaluate] modelPath: " + flParameter.getTrainModelPath());
             acc = client.evalModel();
         }

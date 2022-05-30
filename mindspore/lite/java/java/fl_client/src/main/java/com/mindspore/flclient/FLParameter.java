@@ -253,11 +253,6 @@ public class FLParameter {
     }
 
     public String getTrainModelPath() {
-        if (trainModelPath == null || trainModelPath.isEmpty()) {
-            LOGGER.severe("[flParameter] the parameter of <trainModelPath> is null or empty, please set" +
-                    " it before using");
-            throw new IllegalArgumentException();
-        }
         return trainModelPath;
     }
 
@@ -273,11 +268,6 @@ public class FLParameter {
     }
 
     public String getInferModelPath() {
-        if (inferModelPath == null || inferModelPath.isEmpty()) {
-            LOGGER.severe("[flParameter] the parameter of <inferModelPath> is null or empty, please set" +
-                    " it before using");
-            throw new IllegalArgumentException();
-        }
         return inferModelPath;
     }
 

@@ -465,35 +465,6 @@ public class Common {
         }
     }
 
-
-    /**
-     * Initialization session.
-     *
-     * @return the status code in client.
-     */
-    public static FLClientStatus initSession(String modelPath) {
-        FLParameter flParameter = FLParameter.getInstance();
-        LOGGER.info("==========Loading model, " + modelPath + " Create Session=============");
-        Client client = ClientManager.getClient(flParameter.getFlName());
-        Status tag = client.initSessionAndInputs(modelPath, flParameter.getInputShape());
-        if (!Status.SUCCESS.equals(tag)) {
-            LOGGER.severe("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
-                    "is -1");
-            return FLClientStatus.FAILED;
-        }
-        return FLClientStatus.SUCCESS;
-    }
-
-    /**
-     * Free session.
-     */
-    protected static void freeSession() {
-        FLParameter flParameter = FLParameter.getInstance();
-        LOGGER.info("===========free session=============");
-        Client client = ClientManager.getClient(flParameter.getFlName());
-        client.free();
-    }
-
     /**
      * Initialization session.
      *
