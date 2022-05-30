@@ -73,7 +73,7 @@ AbstractBasePtr SoftShrinkInfer(const abstract::AnalysisEnginePtr &, const Primi
                                 const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = SoftShrinkInferType(primitive, input_args);
   auto infer_shape = SoftShrinkInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape);
 }
 
 MIND_API_OPERATOR_IMPL(SoftShrink, BaseOperator);

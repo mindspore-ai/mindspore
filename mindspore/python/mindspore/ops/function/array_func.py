@@ -1989,14 +1989,14 @@ def tensor_scatter_div(input_x, indices, updates):
         - The operator can't handle division by 0 exceptions, so the user needs to make sure
           there is no 0 value in `updates`.
 
-    Inputs:
+    Args:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
           The rank must be at least 2.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
           and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and type as `input_x`.
 
     Raises:

@@ -27,6 +27,7 @@ op_map = {
     "sub": ops.TensorScatterSub,
     "max": ops.TensorScatterMax,
     "min": ops.TensorScatterMin,
+    "div": ops.TensorScatterDiv,
 }
 
 func_map = {
