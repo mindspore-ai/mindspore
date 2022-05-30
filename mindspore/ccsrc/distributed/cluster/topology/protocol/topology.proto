@@ -39,3 +39,9 @@ message MetadataMessage {
   string name = 1;
   bytes value = 2;
 }
+
+message ActorAddress {
+  string actor_id = 1;
+  string ip = 2;
+  uint32 port = 3;
+}

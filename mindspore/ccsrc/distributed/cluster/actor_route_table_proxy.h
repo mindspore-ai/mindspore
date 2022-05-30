@@ -20,17 +20,13 @@
 #include <string>
 #include <memory>
 #include <chrono>
-#include "proto/comm.pb.h"
-#include "ps/core/abstract_node.h"
+#include "proto/topology.pb.h"
 #include "distributed/constants.h"
+#include "distributed/cluster/topology/compute_graph_node.h"
 
 namespace mindspore {
 namespace distributed {
 namespace cluster {
-using ps::core::ActorAddress;
-using ps::core::GeneralResponseMsg;
-using ps::core::NodeCommand;
-
 // The timeout in milliseconds for one lookup.
 constexpr uint32_t kDefaultLookupTimeout = 60000;
 
@@ -41,22 +37,20 @@ constexpr uint32_t kLookupInterval = 100;
 // across the network.
 class ActorRouteTableProxy {
  public:
-  explicit ActorRouteTableProxy(const ps::core::AbstractNodePtr &node, uint32_t lookup_timeout = kDefaultLookupTimeout)
-      : node_(node), lookup_timeout_(std::chrono::milliseconds(lookup_timeout)) {}
+  explicit ActorRouteTableProxy(std::shared_ptr<topology::ComputeGraphNode> cgn,
+                                uint32_t lookup_timeout = kDefaultLookupTimeout)
+      : cgn_(cgn), lookup_timeout_(std::chrono::milliseconds(lookup_timeout)) {}
   ~ActorRouteTableProxy() = default;
 
   // Register actor address to the route table stored in scheduler.
-  bool RegisterRoute(const std::string &actor_id, const ActorAddress &actor_addr);
-
-  // Delete the actor address of the specified actor_id from the route table stored in scheduler.
-  bool DeleteRoute(const std::string &actor_id);
+  bool RegisterRoute(const std::string &actor_id, const topology::ActorAddress &actor_addr);
 
   // Get the actor address for the specified actor_id from the route table stored in scheduler.
-  ActorAddress LookupRoute(const std::string &actor_id) const;
+  topology::ActorAddress LookupRoute(const std::string &actor_id) const;
 
  private:
-  // The node variable helps proxy to communicate with scheduler, e.g., SendMessage.
-  ps::core::AbstractNodePtr node_;
+  // The cgn variable helps proxy to communicate with meta server.
+  std::shared_ptr<topology::ComputeGraphNode> cgn_;
 
   // The timeout window for lookup route operation because time of route lookup_timeout of each process is different.
   std::chrono::milliseconds lookup_timeout_;

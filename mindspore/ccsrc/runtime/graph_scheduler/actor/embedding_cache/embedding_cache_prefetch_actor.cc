@@ -18,6 +18,7 @@
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "kernel/common_utils.h"
 #include "runtime/graph_scheduler/actor/rpc/rpc_actor.h"
+#include "proto/topology.pb.h"
 
 namespace mindspore {
 namespace runtime {
@@ -74,9 +75,9 @@ std::string GenerateInterProcessEdge(const std::string &src_role, uint32_t src_r
 }
 
 ActorRouteTableProxyPtr CreateRouteTableProxy() {
-  auto node = ClusterContext::instance()->node();
-  ActorRouteTableProxyPtr actor_route_table_proxy =
-    std::make_shared<ActorRouteTableProxy>(std::dynamic_pointer_cast<ps::core::AbstractNode>(node));
+  auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
+    ClusterContext::instance()->node_base());
+  ActorRouteTableProxyPtr actor_route_table_proxy = std::make_shared<ActorRouteTableProxy>(cgn);
   MS_EXCEPTION_IF_NULL(actor_route_table_proxy);
   return actor_route_table_proxy;
 }
@@ -1336,7 +1337,7 @@ bool Receiver::StartServer() {
   // 3. Register the server address to route table. The server should not be connected before this step is done.
   MS_LOG(INFO) << "Start server for receiver. Server address: " << server_url
                << ", inter process edge name: " << inter_process_edge_;
-  ActorAddress recv_actor_addresss;
+  distributed::cluster::topology::ActorAddress recv_actor_addresss;
   recv_actor_addresss.set_actor_id(inter_process_edge_);
   recv_actor_addresss.set_ip(ip_);
   recv_actor_addresss.set_port(port_);

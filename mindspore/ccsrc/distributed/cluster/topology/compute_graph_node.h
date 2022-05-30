@@ -40,14 +40,14 @@ class ComputeGraphNode : public NodeBase {
   bool Finalize(bool force = false) override;
 
   // Send the specified message to the meta server node.
-  bool SendMessageToMSN(const std::string msg_name, const std::string &msg_body);
+  bool SendMessageToMSN(const std::string msg_name, const std::string &msg_body, bool sync = true);
 
   // Query the specified message from the meta server node according to the given message name.
   // Returns nullptr if no message returned after timeout.
   std::shared_ptr<std::string> RetrieveMessageFromMSN(const std::string &msg_name, uint32_t timeout = 5);
 
   // Write and read user defined metadata to the meta server node.
-  bool PutMetadata(const std::string &name, const std::string &value);
+  bool PutMetadata(const std::string &name, const std::string &value, bool sync = true);
   bool PutMetadata(const std::string &name, const void *value, const size_t &size);
 
   std::string GetMetadata(const std::string &name, uint32_t timeout = 5);

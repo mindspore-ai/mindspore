@@ -222,17 +222,22 @@ bool ComputeGraphNode::Reconnect() {
   return tcp_client_->IsConnected(server_url) && hb_client_->IsConnected(server_url);
 }
 
-bool ComputeGraphNode::SendMessageToMSN(const std::string msg_name, const std::string &msg_body) {
+bool ComputeGraphNode::SendMessageToMSN(const std::string msg_name, const std::string &msg_body, bool sync) {
   MS_EXCEPTION_IF_NULL(tcp_client_);
 
   auto message = CreateMessage(meta_server_addr_.GetUrl(), msg_name, msg_body);
   MS_EXCEPTION_IF_NULL(message);
 
-  auto retval = tcp_client_->SendSync(std::move(message));
-  if (retval > 0) {
-    return true;
+  if (sync) {
+    auto retval = tcp_client_->SendSync(std::move(message));
+    if (retval > 0) {
+      return true;
+    } else {
+      return false;
+    }
   } else {
-    return false;
+    tcp_client_->SendSync(std::move(message));
+    return true;
   }
 }
 
@@ -249,11 +254,12 @@ std::shared_ptr<std::string> ComputeGraphNode::RetrieveMessageFromMSN(const std:
   return nullptr;
 }
 
-bool ComputeGraphNode::PutMetadata(const std::string &name, const std::string &value) {
+bool ComputeGraphNode::PutMetadata(const std::string &name, const std::string &value, bool sync) {
   MetadataMessage metadata;
   metadata.set_name(name);
   metadata.set_value(value);
-  return SendMessageToMSN(std::to_string(static_cast<int>(MessageName::kWriteMetadata)), metadata.SerializeAsString());
+  return SendMessageToMSN(std::to_string(static_cast<int>(MessageName::kWriteMetadata)), metadata.SerializeAsString(),
+                          sync);
 }
 
 bool ComputeGraphNode::PutMetadata(const std::string &name, const void *value, const size_t &size) {
