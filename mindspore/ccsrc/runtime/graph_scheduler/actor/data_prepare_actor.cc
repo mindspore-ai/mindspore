@@ -371,9 +371,15 @@ void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
 
 void DataPrepareActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   // Allocate continuous memory in the begin of the step running.
-  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
-                        &continuous_memory_alloc_list_list_, &size_list_list_, &total_size_list_,
-                        &continuous_memory_device_contexts_, context, GetAID());
+  if (ActorDispatcher::get_is_memory_allocation_sync()) {
+    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
+                              &continuous_memory_alloc_list_list_, &size_list_list_, &total_size_list_,
+                              &continuous_memory_device_contexts_, context, GetAID());
+  } else {
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
+                          &continuous_memory_alloc_list_list_, &size_list_list_, &total_size_list_,
+                          &continuous_memory_device_contexts_, context, GetAID());
+  }
 }
 
 void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {

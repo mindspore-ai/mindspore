@@ -170,9 +170,31 @@ class ActorDispatcher {
     }
   }
 
+  template <typename T, typename Arg0, typename Arg1>
+  static void SendSync(const AID &aid, void (T::*method)(Arg0), Arg1 &&arg) {
+    auto actor_manager = ActorMgr::GetActorMgrRef();
+    MS_EXCEPTION_IF_NULL(actor_manager);
+    auto base_actor = actor_manager->GetActor(aid);
+    T *actor = static_cast<T *>(base_actor.get());
+    MS_EXCEPTION_IF_NULL(actor);
+    (actor->*method)(arg);
+  }
+
+  template <typename T, typename... Args0, typename... Args1>
+  static void SendSync(const AID &aid, void (T::*method)(Args0...), Args1 &&... args) {
+    auto actor_manager = ActorMgr::GetActorMgrRef();
+    MS_EXCEPTION_IF_NULL(actor_manager);
+    auto base_actor = actor_manager->GetActor(aid);
+    T *actor = static_cast<T *>(base_actor.get());
+    MS_EXCEPTION_IF_NULL(actor);
+    (actor->*method)(std::forward<Args1>(args)...);
+  }
+
   static void is_multi_thread_execution(bool is_multi_thread_execution) {
     is_multi_thread_execution_ = is_multi_thread_execution;
   }
+
+  static bool get_is_memory_allocation_sync() { return is_memory_allocation_sync_; }
 
   // The first five executions are for warm-up, the next five executions are statistics of multi thread execution time,
   // and the next next five executions are statistics of single thread execution time. The first 30 step which do search
@@ -193,6 +215,10 @@ class ActorDispatcher {
   // There are scenarios with small network and data, and the performance of multi thread execution is not as good as
   // that of single thread, so single thread execution is required at this time.
   static bool is_multi_thread_execution_;
+
+  // Decide whether alloc and free memory synchronously.
+  // The memory manager actor will not send and recv message if true.
+  static bool is_memory_allocation_sync_;
 };
 
 void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num);

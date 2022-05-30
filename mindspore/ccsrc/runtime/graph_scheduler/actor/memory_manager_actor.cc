@@ -22,6 +22,16 @@
 
 namespace mindspore {
 namespace runtime {
+namespace {
+void OnMemoryAllocFinish(const AID &from_aid, OpContext<DeviceTensor> *const op_context) {
+  if (ActorDispatcher::get_is_memory_allocation_sync()) {
+    ActorDispatcher::SendSync(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+  } else {
+    ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+  }
+}
+}  // namespace
+
 void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc_list,
                                         const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
                                         const AID &from_aid) {
@@ -48,7 +58,7 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
   }
 
   // Call back to the from actor to process after memory allocation finished.
-  ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+  OnMemoryAllocFinish(from_aid, op_context);
 }
 
 void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<DeviceTensorPtr>> *alloc_list_list,
@@ -104,7 +114,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
   }
 
   // Call back to the from actor to process after memory allocation finished.
-  ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+  OnMemoryAllocFinish(from_aid, op_context);
 }
 
 void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *alloc_list,
@@ -141,7 +151,7 @@ void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *
   }
 
   // Call back to the from actor to process after memory allocation finished.
-  ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+  OnMemoryAllocFinish(from_aid, op_context);
 }
 
 void MemoryManagerActor::FreeMemory(const std::vector<DeviceTensor *> *free_list, const DeviceContext *device_context,
@@ -181,6 +191,7 @@ void MemoryManagerActor::SetOpContextMemoryAllocFail(const std::string &kernel_n
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
 
+  std::lock_guard<std::mutex> locker(mem_alloc_failed_mutex_);
   int step_id = op_context->sequential_num_;
   // First occur allocating memory failed.
   if (mem_alloc_failed_step_ids_.find(step_id) == mem_alloc_failed_step_ids_.end()) {

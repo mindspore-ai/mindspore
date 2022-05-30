@@ -15,6 +15,7 @@
  */
 
 #include "runtime/graph_scheduler/actor/actor_common.h"
+#include <memory>
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
@@ -22,6 +23,7 @@
 namespace mindspore {
 namespace runtime {
 bool ActorDispatcher::is_multi_thread_execution_ = true;
+bool ActorDispatcher::is_memory_allocation_sync_ = true;
 
 void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num) {
   MS_EXCEPTION_IF_NULL(actor_thread_num);

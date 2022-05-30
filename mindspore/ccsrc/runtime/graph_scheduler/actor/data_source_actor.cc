@@ -113,8 +113,13 @@ void DeviceQueueDataSourceActor::FillDataBuffer() {
 
 void DeviceQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.back();
-  ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors, device_contexts_[0],
-                        context, GetAID());
+  if (ActorDispatcher::get_is_memory_allocation_sync()) {
+    ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors,
+                              device_contexts_[0], context, GetAID());
+  } else {
+    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors,
+                          device_contexts_[0], context, GetAID());
+  }
 }
 
 void DeviceQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
@@ -198,12 +203,22 @@ void HostQueueDataSourceActor::FillDataBuffer() {
 
 void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   auto &device_tensors = buffers_.back();
-  if (IsSameDeviceType()) {
-    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors,
-                          device_contexts_[0], context, GetAID());
+  if (ActorDispatcher::get_is_memory_allocation_sync()) {
+    if (IsSameDeviceType()) {
+      ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors,
+                                device_contexts_[0], context, GetAID());
+    } else {
+      ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateBatchMemory, &device_tensors,
+                                &device_contexts_, context, GetAID());
+    }
   } else {
-    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateBatchMemory, &device_tensors,
-                          &device_contexts_, context, GetAID());
+    if (IsSameDeviceType()) {
+      ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors,
+                            device_contexts_[0], context, GetAID());
+    } else {
+      ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateBatchMemory, &device_tensors,
+                            &device_contexts_, context, GetAID());
+    }
   }
 }
 

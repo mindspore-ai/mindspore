@@ -188,8 +188,13 @@ void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContex
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
-    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
-                          device_contexts_[0], context, GetAID());
+    if (ActorDispatcher::get_is_memory_allocation_sync()) {
+      ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
+                                device_contexts_[0], context, GetAID());
+    } else {
+      ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
+                            device_contexts_[0], context, GetAID());
+    }
   } else {
     AllocateMemory(memory_alloc_list_, device_contexts_[0], context, GetAID().Name());
   }
