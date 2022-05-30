@@ -52,6 +52,7 @@ tensor_scatter_add_ = P.TensorScatterAdd()
 tensor_scatter_sub_ = P.TensorScatterSub()
 tensor_scatter_mul_ = P.TensorScatterMul()
 tensor_scatter_div_ = P.TensorScatterDiv()
+tensor_scatter_min_ = P.TensorScatterMin()
 scalar_to_array_ = P.ScalarToArray()
 scalar_to_tensor_ = P.ScalarToTensor()
 tuple_to_array_ = P.TupleToArray()
@@ -1869,6 +1870,49 @@ def tensor_scatter_sub(input_x, indices, updates):
     return tensor_scatter_sub_(input_x, indices, updates)
 
 
+def tensor_scatter_min(input_x, indices, updates):
+    """
+    By comparing the value at the position indicated by `indices` in `input_x` with the value in the `updates`,
+    the value at the index will eventually be equal to the smallest one to create a new tensor.
+
+    The last axis of the index is the depth of each index vector. For each index vector,
+    there must be a corresponding value in `updates`. The shape of `updates` should be
+    equal to the shape of `input_x[indices]`. For more details, see case below.
+
+    Note:
+        If some values of the `indices` are out of range, instead of raising an index error,
+        the corresponding `updates` will not be hw to `input_x`.
+
+    Args:
+        indices (Tensor): The index of input tensor whose data type is int32 or int64.
+            The rank must be at least 2.
+        updates (Tensor): The tensor to update the input tensor, has the same type as input,
+            and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+    Returns:
+        Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype('float32'))
+        >>> indices = Tensor(np.array([[0, 0], [0, 0]]).astype('int32'))
+        >>> updates = Tensor(np.array([1.0, 2.2]).astype('float32'))
+        >>> output = x.tensor_scatter_min(indices, updates)
+        >>> print(output)
+        [[ -0.1  0.3  3.6]
+        [ 0.4  0.5 -3.2]]
+    """
+    return tensor_scatter_min_(input_x, indices, updates)
+
+
 def space_to_batch_nd(input_x, block_size, paddings):
     r"""
     Divides a tensor's spatial dimensions into blocks and combines the block sizes with the original batch.
@@ -2576,14 +2620,15 @@ __all__ = [
     'scatter_nd_min',
     'tensor_scatter_add',
     'tensor_scatter_sub',
+    'tensor_scatter_mul',
+    'tensor_scatter_div',
+    'tensor_scatter_min',
     'gather',
     'gather_d',
     'gather_nd',
     'one_hot',
     'masked_fill',
     'masked_select',
-    'tensor_scatter_mul',
-    'tensor_scatter_div',
     'scatter_max',
     'scatter_min',
     'scatter_div',

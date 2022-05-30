@@ -2171,6 +2171,49 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('tensor_scatter_sub')()(self, indices, updates)
 
+    def tensor_scatter_min(self, indices, updates):
+        """
+        By comparing the value at the position indicated by `indices` in self tensor with the value in the `updates`,
+        the value at the index will eventually be equal to the smallest one to create a new tensor.
+
+        The last axis of the index is the depth of each index vector. For each index vector,
+        there must be a corresponding value in `updates`. The shape of `updates` should be
+        equal to the shape of `input_x[indices]`. For more details, see case below.
+
+        Note:
+            If some values of the `indices` are out of range, instead of raising an index error,
+            the corresponding `updates` will not be updated to `input_x`.
+
+        Args:
+            indices (Tensor): The index of input tensor whose data type is int32 or int64.
+                The rank must be at least 2.
+            updates (Tensor): The tensor to update the input tensor, has the same type as input,
+                and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+        Returns:
+            Tensor, has the same shape and type as `input_x`.
+
+        Raises:
+            TypeError: If dtype of `indices` is neither int32 nor int64.
+            ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype('float32'))
+            >>> indices = Tensor(np.array([[0, 0], [0, 0]]).astype('int32'))
+            >>> updates = Tensor(np.array([1.0, 2.2]).astype('float32'))
+            >>> output = x.tensor_scatter_min(indices, updates)
+            >>> print(output)
+            [[ -0.1  0.3  3.6]
+            [ 0.4  0.5 -3.2]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('tensor_scatter_min')()(self, indices, updates)
+
     def fill(self, value):
         """
         Fill the tensor with a scalar value.

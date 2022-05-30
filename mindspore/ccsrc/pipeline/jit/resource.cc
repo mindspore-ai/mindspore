@@ -229,6 +229,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"tensor_scatter_add", std::string("tensor_scatter_add")},          // P.TensorScatterAdd()
        {"tensor_scatter_mul", std::string("tensor_scatter_mul")},          // tensor_scatter_mul()
        {"tensor_scatter_sub", std::string("tensor_scatter_sub")},          // P.TensorScatterSub()
+       {"tensor_scatter_min", std::string("tensor_scatter_min")},          // P.TensorScatterMin()
        {"tensor_scatter_div", std::string("tensor_scatter_div")},          // P.TensorScatterDiv()
        {"lp_norm", std::string("lp_norm")},                                // lp_norm()
        {"trace", std::string("trace")},                                    // P.Eye()
