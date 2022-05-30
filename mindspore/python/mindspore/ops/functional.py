@@ -67,7 +67,6 @@ if not security.enable_security():
 squeeze = P.Squeeze()
 scatter_nd_mul = P.ScatterNdMul()
 scatter_nd_max = P.ScatterNdMax()
-scatter_nd_min = P.ScatterNdMin()
 scatter_update = P.ScatterUpdate()
 tensor_scatter_update = P.TensorScatterUpdate()
 tensor_scatter_min = P.TensorScatterMin()
