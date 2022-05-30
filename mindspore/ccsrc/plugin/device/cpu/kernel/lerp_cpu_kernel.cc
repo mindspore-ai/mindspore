@@ -39,41 +39,33 @@ bool LerpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 int LerpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
   auto start_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto end_shape = inputs.at(kIndex1)->GetShapeVector();
-  auto weight_shape = inputs.at(kIndex2)->GetShapeVector();
-  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  start_shape_.clear();
   (void)std::transform(start_shape.begin(), start_shape.end(), std::back_inserter(start_shape_), LongToSize);
+  end_shape_.clear();
+  auto end_shape = inputs.at(kIndex1)->GetShapeVector();
   (void)std::transform(end_shape.begin(), end_shape.end(), std::back_inserter(end_shape_), LongToSize);
+  weight_shape_.clear();
+  auto weight_shape = inputs.at(kIndex2)->GetShapeVector();
+  output_shape_.clear();
   (void)std::transform(weight_shape.begin(), weight_shape.end(), std::back_inserter(weight_shape_), LongToSize);
+  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
   output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
   return KRET_OK;
 }
 
-void LerpCpuKernelMod::ResetResource() noexcept {
-  output_size_ = 0;
-  start_shape_.clear();
-  end_shape_.clear();
-  weight_shape_.clear();
-  output_shape_.clear();
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
-}
-
 template <typename T>
 bool LerpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &outputs) {
+  auto input_start = GetDeviceAddress<T>(inputs, kIndex0);
+  auto input_end = GetDeviceAddress<T>(inputs, kIndex1);
+  auto input_weight = GetDeviceAddress<T>(inputs, kIndex2);
+  auto output = GetDeviceAddress<T>(outputs, kIndex0);
   if (start_shape_ == end_shape_ && start_shape_ == weight_shape_) {
-    auto *input_start = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-    auto *input_end = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-    auto *input_weight = reinterpret_cast<T *>(inputs.at(kIndex2)->addr);
-    T *output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
     auto task = [&input_start, &input_end, &input_weight, &output](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         T start_value = input_start[i];
@@ -85,10 +77,6 @@ bool LerpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
     ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_, pool_);
   } else {
     MultipleBroadcastIterator multi_broadcast_iterator({start_shape_, end_shape_, weight_shape_}, output_shape_);
-    auto *input_start = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-    auto *input_end = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
-    auto *input_weight = reinterpret_cast<T *>(inputs.at(kIndex2)->addr);
-    T *output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
     auto task = [&input_start, &input_end, &input_weight, &output, &multi_broadcast_iterator](size_t start,
                                                                                               size_t end) {
       auto iter = multi_broadcast_iterator;
@@ -108,12 +96,8 @@ bool LerpCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
 
 const std::vector<std::pair<KernelAttr, LerpCpuKernelMod::KernelRunFunc>> &LerpCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, LerpCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &LerpCpuKernelMod::LaunchKernel<float16>},
+    // Lerp support fp16 && fp32, but precision is too low in fp16.
+    // So we register fp32 and make use of ms framework to cast fp16 to fp32.
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
