@@ -68,6 +68,9 @@ class SchedulerHelper {
   static void ConvertDataArrowToControlArrow(AbstractActor *const from_actor, AbstractActor *const to_actor,
                                              const DataArrowPtr &data_arrow, size_t data_arrow_index);
 
+  // Fuse the data arrows to batch data arrow for the same destination actor.
+  static void FuseDataArrowsToBatchDataArrow(AbstractActor *const actor);
+
   // Check whether the actor set is valid.
   static void CheckActorValid(const ActorSet *actor_set);
 

@@ -91,8 +91,7 @@ void KernelActor::Init() {
     auto data =
       std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, device_address, data_arrow->to_input_index_);
     (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(data.get());
-    bool is_to_stack = (data_arrow->to_op_id_.Name().find(kStackActorNameSuffix) != std::string::npos);
-    (void)output_data_.emplace_back(std::make_pair(std::move(data), is_to_stack));
+    AddOutputData(std::move(data), data_arrow);
   }
 }
 

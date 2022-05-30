@@ -48,6 +48,15 @@ void AbstractActor::RunOpControl(AID *const input_control, OpContext<DeviceTenso
   }
 }
 
+void AbstractActor::RunBatchOpData(std::vector<OpData<DeviceTensor> *> *const batch_input_data,
+                                   OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(batch_input_data);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the batch input op data.";
+  for (auto &input_data : *batch_input_data) {
+    RunOpData(input_data, context);
+  }
+}
+
 bool AbstractActor::CheckRunningCondition(const OpContext<DeviceTensor> *context) const {
   MS_EXCEPTION_IF_NULL(context);
   if (input_datas_num_ != 0) {
@@ -103,6 +112,19 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
+void AbstractActor::AddOutputData(OpDataUniquePtr<DeviceTensor> &&data, const DataArrowPtr &data_arrow) {
+  MS_EXCEPTION_IF_NULL(data);
+  MS_EXCEPTION_IF_NULL(data_arrow);
+  // Add the batch output data.
+  if (data_arrow->is_batch_arrow_) {
+    (void)batch_output_data_[data_arrow->to_op_id_.Name()].emplace_back(data.get());
+  }
+
+  // Add the output data.
+  bool is_to_stack = (data_arrow->to_op_id_.Name().find(kStackActorNameSuffix) != std::string::npos);
+  (void)output_data_.emplace_back(std::make_pair(std::move(data), is_to_stack));
+}
+
 void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   // Must be the execution order: send data --> send control, avoid the illegal timing problem.
@@ -112,19 +134,29 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
       (type_ < KernelTransformType::kSwitchActor)) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output data arrows is not equal to the output data.");
   }
+  mindspore::HashMap<std::string, size_t> batch_op_count;
   size_t output_data_arrow_index = 0;
   for (auto &output_data : output_data_) {
     MS_EXCEPTION_IF_NULL(output_data.first);
+    MS_EXCEPTION_IF_NULL(output_data_arrows_[output_data_arrow_index]);
+    auto &to_op_id = output_data.first->op_id_;
     UpdateOutputData(output_data.first.get(), output_data_arrows_[output_data_arrow_index],
                      output_data_nodes_[output_data_arrow_index], context);
-    if (output_data.second) {
+    // Send batch output data. As the data need update, so all data must be collected completely before sending.
+    if (output_data_arrows_[output_data_arrow_index]->is_batch_arrow_) {
+      auto &to_op_name = to_op_id.Name();
+      ++(batch_op_count[to_op_name]);
+      if (batch_op_count[to_op_name] == batch_output_data_arrows_[to_op_name].size()) {
+        ActorDispatcher::Send(to_op_id, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()], context);
+      }
+    } else if (output_data.second) {
       // Create a new op data for stack actor.
-      auto to_stack_data = std::make_unique<OpData<DeviceTensor>>(output_data.first->op_id_, output_data.first->data_,
-                                                                  output_data.first->index_);
+      auto to_stack_data =
+        std::make_unique<OpData<DeviceTensor>>(to_op_id, output_data.first->data_, output_data.first->index_);
       (void)to_stack_data_.emplace_back(std::move(to_stack_data));
-      ActorDispatcher::Send(output_data.first->op_id_, &OpActor::RunOpData, to_stack_data_.back().get(), context);
+      ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
     } else {
-      ActorDispatcher::Send(output_data.first->op_id_, &OpActor::RunOpData, output_data.first.get(), context);
+      ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);
     }
     ++output_data_arrow_index;
   }
