@@ -156,6 +156,7 @@ from .environ_set import _environ_set_aicpu
 from .environ_get import _environ_get_aicpu
 from .environ_destroy_all import _environ_destroy_all_aicpu
 from .cross import _cross_aicpu
+from .check_numerics import _check_numerics_aicpu
 from .cummax import _cummax_aicpu
 from .round import _round_aicpu
 from .truncated_normal import _truncated_normal_aicpu

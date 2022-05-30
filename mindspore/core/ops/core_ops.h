@@ -109,6 +109,7 @@ constexpr auto kSegmentSum = "SegmentSum";
 constexpr auto kSegmentMin = "SegmentMin";
 constexpr auto kDynamicShape = "DynamicShape";
 constexpr auto kTensorShape = "TensorShape";
+constexpr auto kCheckNumerics = "CheckNumerics";
 constexpr auto kStack = "Stack";
 constexpr auto kUnstack = "Unstack";
 constexpr auto kTupleGetItem = "TupleGetItem";
@@ -330,6 +331,7 @@ GVAR_DEF(PrimitivePtr, kPrimStridedSlice, std::make_shared<Primitive>(kStridedSl
 GVAR_DEF(PrimitivePtr, kPrimStridedSliceGrad, std::make_shared<Primitive>(kStridedSliceGrad));
 GVAR_DEF(PrimitivePtr, kPrimTensorShape, std::make_shared<Primitive>(kTensorShape));
 GVAR_DEF(PrimitivePtr, kPrimDynamicShape, std::make_shared<Primitive>(kDynamicShape));
+GVAR_DEF(PrimitivePtr, kPrimCheckNumerics, std::make_shared<Primitive>(kCheckNumerics));
 GVAR_DEF(PrimitivePtr, kPrimEmbeddingLookup, std::make_shared<Primitive>("EmbeddingLookup"));
 GVAR_DEF(PrimitivePtr, kPrimEmbeddingLookupCommGrad, std::make_shared<Primitive>("EmbeddingLookupCommGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSize, std::make_shared<Primitive>("Size"));

@@ -37,6 +37,7 @@ from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
+from mindspore.ops.operations.array_ops import CheckNumerics
 from mindspore.ops.operations.array_ops import SegmentMax
 from mindspore.ops.operations.array_ops import SegmentMin
 from mindspore.ops.operations.array_ops import SegmentSum
@@ -2767,6 +2768,10 @@ test_case_array_ops = [
     ('Shape', {
         'block': P.Shape(),
         'desc_inputs': [[3, 3, 2, 2]],
+        'skip': ['backward']}),
+    ('CheckNumerics', {
+        'block': CheckNumerics(),
+        'desc_inputs': [[1, 2, 3, 4]],
         'skip': ['backward']}),
     ('Reshape', {
         'block': P.Reshape(),
