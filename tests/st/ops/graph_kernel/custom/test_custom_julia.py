@@ -13,7 +13,8 @@ def test_julia():
     Expectation: res == 0
     """
     system = platform.system()
-    if system != 'Linux':
+    machine = platform.machine()
+    if system != 'Linux' or machine != 'x86_64':
         return
     res = os.system('sh julia_run.sh')
     if res != 0:
