@@ -144,6 +144,28 @@ void RunSwitchNodeReplace(const FuncGraphManagerPtr &manager, std::vector<std::p
   }
 }
 
+bool HasDependencyOnSubGraph(const FuncGraphPtr &graph, const AnfNodePtr &state) {
+  std::queue<AnfNodePtr> nodes;
+  nodes.push(state);
+  while (!nodes.empty()) {
+    auto cur_node = nodes.front();
+    MS_EXCEPTION_IF_NULL(cur_node);
+    nodes.pop();
+    if (cur_node->isa<Parameter>() || cur_node->isa<ValueNode>()) {
+      continue;
+    }
+    if (cur_node->func_graph() == graph) {
+      return true;
+    }
+    auto cur_cnode = cur_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cur_cnode);
+    for (size_t i = 1; i < cur_cnode->inputs().size(); i++) {
+      nodes.push(cur_cnode->inputs()[i]);
+    }
+  }
+  return false;
+}
+
 // trace the node that should add switch and replace them with new nodes in the graph
 FuncGraphPtr TransformGraphCondBranchNodes(
   const FuncGraphPtr &graph, const AnfNodePtr &cond,
@@ -186,6 +208,22 @@ FuncGraphPtr TransformGraphCondBranchNodes(
         repl_node_inputs[std::pair<AnfNodePtr, size_t>(node, index)] = input_node;
         should_replace = true;
       }
+      // Insert GeSwitch after load
+      if (IsPrimitiveCNode(input_node, prim::kPrimLoad)) {
+        auto cnode_load = input_node->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cnode_load);
+        auto load_real_input = cnode_load->inputs()[kLoadRealInput];
+        MS_EXCEPTION_IF_NULL(load_real_input);
+        auto load_state_input = cnode_load->inputs()[kLoadStateInput];
+        MS_EXCEPTION_IF_NULL(load_state_input);
+        if ((load_real_input->func_graph() != nullptr && load_real_input->func_graph() != graph) &&
+            !HasDependencyOnSubGraph(graph, load_state_input)) {
+          input_node = generate_func(graph, cond, input_node);
+          repl_node_inputs[std::pair<AnfNodePtr, size_t>(node, index)] = input_node;
+          should_replace = true;
+        }
+      }
+
       if (input_node == nullptr) {
         MS_LOG(EXCEPTION) << "generate switch node failed";
       }
