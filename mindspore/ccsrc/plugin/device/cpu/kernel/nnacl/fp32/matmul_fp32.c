@@ -31,6 +31,7 @@ void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, 
     c[ci] = value;
   }
 }
+#endif
 
 void MatVecMulFp32Block8(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
                          int col) {
@@ -42,19 +43,19 @@ void MatVecMulFp32Block8(const float *a, const float *b, float *c, const float *
     float32x4_t value1 = vdupq_n_f32(0.0f);
     for (int di = 0; di < depth; ++di, b += C8NUM) {
       value0 += vdupq_n_f32(a[di]) * vld1q_f32(b);
-      value1 += vdupq_n_f32(a[di]) * vld1q_f32(b + 4);
+      value1 += vdupq_n_f32(a[di]) * vld1q_f32(b + C4NUM);
     }
     if (bias != NULL) {
-      value0 += vld1q_f32(bias[ci]);
-      value1 += vld1q_f32(bias[ci + 4]);
+      value0 += vld1q_f32(bias + ci);
+      value1 += vld1q_f32(bias + ci + C4NUM);
     }
     if (act_type == ActType_Relu || act_type == ActType_Relu6) {
-      value0 = vmaxq_f32(value0, 0.0f);
-      value1 = vmaxq_f32(value1, 0.0f);
+      value0 = vmaxq_f32(value0, vdupq_n_f32(0.0f));
+      value1 = vmaxq_f32(value1, vdupq_n_f32(0.0f));
     }
     if (act_type == ActType_Relu6) {
-      value0 = vminq_f32(value0, 6.0f);
-      value1 = vminq_f32(value1, 6.0f);
+      value0 = vminq_f32(value0, vdupq_n_f32(6.0f));
+      value1 = vminq_f32(value1, vdupq_n_f32(6.0f));
     }
     vst1q_f32(c, value0);
     vst1q_f32(c + 4, value1);
@@ -87,7 +88,6 @@ void MatVecMulFp32Block8(const float *a, const float *b, float *c, const float *
   }
   memcpy(c, value, res * sizeof(float));
 }
-#endif
 
 #ifdef ENABLE_ARM32
 void MatVecMulFp32Block4(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
