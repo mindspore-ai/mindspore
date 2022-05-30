@@ -21,6 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include "src/runtime/lite_model.h"
+#include "src/runtime/inner_context.h"
 #include "src/common/tensor_util.h"
 #include "schema/ops_generated.h"
 #include "schema/model_generated.h"
@@ -83,8 +84,8 @@ struct ShapeFusionMatrix {
 
 class ShapeFusionPass {
  public:
-  ShapeFusionPass(LiteModel *model, std::vector<lite::Tensor *> *src_tensors)
-      : lite_model_(model), all_nodes_(&(model->graph_.all_nodes_)), src_tensors_(src_tensors) {
+  ShapeFusionPass(InnerContext *ctx, LiteModel *model, std::vector<lite::Tensor *> *src_tensors)
+      : context_(ctx), lite_model_(model), all_nodes_(&(model->graph_.all_nodes_)), src_tensors_(src_tensors) {
     MS_ASSERT(model != nullptr && src_tensors != nullptr);
     for (auto node : model->graph_.all_nodes_) {
       for (auto input_idx : node->input_indices_) {
@@ -96,6 +97,10 @@ class ShapeFusionPass {
 
   void Run(LiteGraph::Node *node, size_t subgraph_index) {
 #ifndef RUNTIME_PASS_CLIP
+    // gpu does not support to run fused shape op.
+    if (context_->IsDeviceTypeEnabled(DeviceType::DT_GPU)) {
+      return;
+    }
     if (ConvertToShapeFusion(node) != RET_OK) {
       MS_LOG(WARNING) << "Convert to built-in shape failed: " << node->name_;
     } else if (FusePostNodes(node, subgraph_index) != RET_OK) {
@@ -134,6 +139,7 @@ class ShapeFusionPass {
   std::map<uint32_t, ShapeFusionMatrix> shape_fusion_matrices_;
   std::vector<lite::Tensor *> shape_fusion_outputs_;
 #endif
+  InnerContext *context_ = nullptr;
   LiteModel *lite_model_ = nullptr;
   const std::vector<LiteGraph::Node *> *all_nodes_ = nullptr;
   std::vector<lite::Tensor *> *src_tensors_ = nullptr;
