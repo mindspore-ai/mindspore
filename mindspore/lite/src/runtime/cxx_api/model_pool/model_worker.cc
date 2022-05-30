@@ -58,7 +58,8 @@ void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &pred
   while (!predict_task_queue->IsPredictTaskDone()) {
     auto task = predict_task_queue->GetPredictTask(node_id, this);
     if (task == nullptr) {
-      break;
+      MS_LOG(DEBUG) << "task queue is empty, wait task ...";
+      continue;
     }
     available_ = false;
     auto inputs = task->inputs;
