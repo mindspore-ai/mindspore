@@ -415,7 +415,8 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
     return check_input_ret;
   }
 
-  shape_fusion_pass_ = std::make_shared<ShapeFusionPass>(reinterpret_cast<LiteModel *>(src_model_), src_tensors_);
+  shape_fusion_pass_ =
+    std::make_shared<ShapeFusionPass>(context_, reinterpret_cast<LiteModel *>(src_model_), src_tensors_);
   MS_CHECK_TRUE_RET(shape_fusion_pass_ != nullptr, RET_ERROR);
   int ret = SchedulePreProcess();
   if (ret != RET_OK) {
