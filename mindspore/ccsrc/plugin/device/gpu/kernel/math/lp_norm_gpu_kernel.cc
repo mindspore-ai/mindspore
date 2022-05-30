@@ -128,13 +128,11 @@ int LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 template <typename T>
 bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
-  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-
-  auto device_input_shape = reinterpret_cast<size_t *>(workspace.at(kIndex0)->addr);
-  auto device_axis_output = reinterpret_cast<size_t *>(workspace.at(kIndex1)->addr);
-  auto device_output_stride = reinterpret_cast<size_t *>(workspace.at(kIndex2)->addr);
-
-  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  auto input = GetDeviceAddress<T>(inputs, kIndex0);
+  auto device_input_shape = GetDeviceAddress<size_t>(workspace, kIndex0);
+  auto device_axis_output = GetDeviceAddress<size_t>(workspace, kIndex1);
+  auto device_output_stride = GetDeviceAddress<size_t>(workspace, kIndex2);
+  auto output = GetDeviceAddress<T>(outputs, kIndex0);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(device_input_shape, input_shape_.data(), input_shape_.size() * sizeof(size_t),
@@ -151,9 +149,15 @@ bool LpNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "LpNormGpuKernelMod cudaMemcpyAsync output_shape_ failed");
 
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(output, 0, output_elements_ * sizeof(float)),
+                                    "LpNormGpuKernelMod failed  to set output cuda memory to zeros.");
+
   // The workspace for device output high precision.
   if constexpr (std::is_same_v<T, half>) {
-    auto middle_output = reinterpret_cast<float *>(workspace.at(kIndex3)->addr);
+    auto middle_output = GetDeviceAddress<float>(workspace, kIndex3);
+    auto middle_output_size = output_elements_ * sizeof(float);
+    CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemset(middle_output, 0, middle_output_size),
+                                      "LpNormGpuKernelMod failed  to set middle output cuda memory to zeros.");
     CalLpNorm(input, device_input_shape, input_shape_.size(), input_elements_, device_axis_output, device_output_stride,
               output_axis_.size(), output_elements_, p_, epsilon_, middle_output, output, device_id_,
               reinterpret_cast<cudaStream_t>(cuda_stream_));

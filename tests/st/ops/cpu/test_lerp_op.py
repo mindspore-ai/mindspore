@@ -138,10 +138,10 @@ def test_lerp(data_shape, data_type):
     benchmark_output = lerp_np_bencmark(start, end, weight)
     lerp = LerpNet()
     output = lerp(Tensor(start), Tensor(end), Tensor(np.array(weight, dtype=data_type)))
-    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
     context.set_context(mode=context.PYNATIVE_MODE)
     output = lerp(Tensor(start), Tensor(end), Tensor(np.array(weight, dtype=data_type)))
-    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
 
 
 @pytest.mark.level0
