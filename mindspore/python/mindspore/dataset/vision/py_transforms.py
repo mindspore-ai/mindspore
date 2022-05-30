@@ -824,6 +824,11 @@ class Pad(py_transforms.PyTensorOperation):
             - Border.REFLECT, pads with reflection of the image omitting the last value on the edge.
             - Border.SYMMETRIC, pads with reflection of the image repeating the last value on the edge.
 
+    Note:
+        The behaviour when padding is a sequence of length 2 will change from padding left/top with
+        the first value and right/bottom with the second to left/right with the first and top/bottom with
+        the second in the future.
+
     Raises:
         TypeError: If `padding` is not of type int or Sequence[int, int].
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
@@ -849,8 +854,6 @@ class Pad(py_transforms.PyTensorOperation):
 
     @check_pad
     def __init__(self, padding, fill_value=0, padding_mode=Border.CONSTANT):
-        parse_padding(padding)
-
         self.padding = padding
         self.fill_value = fill_value
         self.padding_mode = DE_PY_BORDER_TYPE[padding_mode]

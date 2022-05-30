@@ -22,6 +22,7 @@ import colorsys
 import numpy as np
 from PIL import Image, ImageOps, ImageEnhance, __version__
 
+from mindspore import log as logger
 from .utils import Inter
 from ..core.py_util_helpers import is_numpy
 
@@ -901,6 +902,9 @@ def pad(img, padding, fill_value, padding_mode):
 
     elif isinstance(padding, (tuple, list)):
         if len(padding) == 2:
+            logger.warning("The behaviour when padding is a sequence of length 2 will change from padding left/top "
+                           "with the first value and right/bottom with the second to left/right with the first and "
+                           "top/bottom with the second in the future.")
             left = top = padding[0]
             right = bottom = padding[1]
         elif len(padding) == 4:

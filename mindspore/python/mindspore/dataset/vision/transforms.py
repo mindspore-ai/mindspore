@@ -1216,6 +1216,11 @@ class Pad(TensorOperation, PyTensorOperation):
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
               value of edge.
 
+    Note:
+        The behaviour when padding is a sequence of length 2 will change from padding left/top with
+        the first value and right/bottom with the second to left/right with the first and top/bottom with
+        the second in the future.
+
     Raises:
         TypeError: If `padding` is not of type int or Sequence[int].
         TypeError: If `fill_value` is not of type int or tuple[int].
