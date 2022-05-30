@@ -19,21 +19,35 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/common_func.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/reduce_fp32_avx512.h"
+#endif
+
+#ifdef ENABLE_AVX
+#include "nnacl/avx/reduce_fp32_avx.h"
+#endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/sse/reduce_fp32_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/reduce_fp32_neon.h"
+#endif
 
 #ifdef ENABLE_NNACL_INFER_SHAPE
 #include "nnacl/reduce_parameter.h"
 #endif
 
 // 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define ReduceCoreCalc(block_size, block_num, op_name, op_type, outer_src, outer_dst, k)      \
-  for (int block_max_size = inner_size - block_num + 1; k < block_max_size; k += block_num) { \
-    const op_type *inner_src = outer_src + k;                                                 \
-    op_type *inner_dst = outer_dst + k;                                                       \
-    op_name##PreDeal(block_size, block_num);                                                  \
-    for (int i = 0; i < axis_size; i++) {                                                     \
-      op_name##MidCalc(block_size, block_num);                                                \
-    }                                                                                         \
-    op_name##PostDeal(block_size, block_num);                                                 \
+#define ReduceCoreCalc(op_name, op_type, outer_src, outer_dst, k) \
+  for (; k < inner_size; k++) {                                   \
+    const op_type *inner_src = outer_src + k;                     \
+    op_name##PreDeal;                                             \
+    for (int i = 0; i < axis_size; i++) {                         \
+      op_name##MidCalc;                                           \
+    }                                                             \
+    op_name##PostDeal;                                            \
   }
 
 #define RegReduceOp(op_name, op_type)                                                                             \
@@ -41,115 +55,76 @@
               int thread_num) {                                                                                   \
     MS_CHECK_TRUE_RET(src_data != NULL && dst_data != NULL, NNACL_NULL_PTR);                                      \
     MS_CHECK_TRUE_RET(thread_num > 0, NNACL_PARAM_INVALID);                                                       \
+    MS_CHECK_TRUE_RET(axis_size > 0, NNACL_ERR);                                                                  \
     for (int j = tid; j < outer_size; j += thread_num) {                                                          \
       const op_type *outer_src = src_data + j * axis_size * inner_size;                                           \
       op_type *outer_dst = dst_data + j * inner_size;                                                             \
       int k = 0;                                                                                                  \
-      MS_SIMD_RUN(ReduceCoreCalc, op_name, op_type, outer_src, outer_dst, k);                                     \
+      SIMD_RUN_NO_SCALAR(op_name, k, outer_src, outer_dst, inner_size, axis_size);                                \
+                                                                                                                  \
+      ReduceCoreCalc(op_name, op_type, outer_src, outer_dst, k);                                                  \
     }                                                                                                             \
     return NNACL_OK;                                                                                              \
   }
 
 // ReduceSum
-// (c style) ReduceSumPreDeal : float tmp = 0;
-#define ReduceSumPreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, 0);
-// (c style) ReduceSumMidCalc : tmp = tmp + *(inner_src + i * inner_size);
-#define ReduceSumMidCalc(block_size, block_num) \
-  tmp = MS_ADD_F32(block_size, tmp, MS_LD_F32(block_size, inner_src + i * inner_size));
-// (c style) ReduceSumPostDeal : *inner_dst = tmp;
-#define ReduceSumPostDeal(block_size, block_num) MS_ST_F32(block_size, inner_dst, tmp);
+#define ReduceSumPreDeal float tmp = 0;
+#define ReduceSumMidCalc tmp += inner_src[i * inner_size];
+#define ReduceSumPostDeal outer_dst[k] = tmp;
 RegReduceOp(ReduceSum, float);
 
 // ReduceMean
-// (c style) ReduceMeanPreDeal : int tmp = 0;
-#define ReduceMeanPreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, 0);
-// (c style) ReduceMeanMidCalc : tmp = tmp + *(inner_src + i * inner_size);
-#define ReduceMeanMidCalc(block_size, block_num) \
-  tmp = MS_ADD_F32(block_size, tmp, MS_LD_F32(block_size, inner_src + i * inner_size));
-// (c style) ReduceMeanPostDeal : *inner_dst = tmp / axis_size;
-#define ReduceMeanPostDeal(block_size, block_num) \
-  MS_ST_F32(block_size, inner_dst, MS_DIV_N_F32(block_size, tmp, axis_size));
+#define ReduceMeanPreDeal float tmp = 0;
+#define ReduceMeanMidCalc tmp += inner_src[i * inner_size];
+#define ReduceMeanPostDeal outer_dst[k] = tmp / axis_size;
 RegReduceOp(ReduceMean, float);
 
 // ReduceMin
-// (c style) ReduceMinPreDeal : float tmp = FLT_MAX;
-#define ReduceMinPreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, FLT_MAX);
-// (c style) ReduceMinMidCalc : tmp = fminf(tmp, *(inner_src + i * inner_size));
-#define ReduceMinMidCalc(block_size, block_num) \
-  tmp = MS_MIN_F32(block_size, tmp, MS_LD_F32(block_size, inner_src + i * inner_size));
-// (c style) ReduceMinPostDeal : *inner_dst = tmp;
-#define ReduceMinPostDeal(block_size, block_num) MS_ST_F32(block_size, inner_dst, tmp);
+#define ReduceMinPreDeal float tmp = FLT_MAX;
+#define ReduceMinMidCalc tmp = fminf(tmp, inner_src[i * inner_size]);
+#define ReduceMinPostDeal outer_dst[k] = tmp;
 RegReduceOp(ReduceMin, float);
 
 // ReduceMax
-// (c style) ReduceMaxPreDeal : float tmp = FLT_MIN;
-#define ReduceMaxPreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, FLT_MIN);
-// (c style) ReduceMaxMidCalc : tmp = fmaxf(tmp, *(inner_src + i * inner_size));
-#define ReduceMaxMidCalc(block_size, block_num) \
-  tmp = MS_MAX_F32(block_size, tmp, MS_LD_F32(block_size, inner_src + i * inner_size));
-// (c style) ReduceMaxPostDeal : *inner_dst = tmp;
-#define ReduceMaxPostDeal(block_size, block_num) MS_ST_F32(block_size, inner_dst, tmp);
+#define ReduceMaxPreDeal float tmp = FLT_MIN;
+#define ReduceMaxMidCalc tmp = fmaxf(tmp, inner_src[i * inner_size]);
+#define ReduceMaxPostDeal outer_dst[k] = tmp;
 RegReduceOp(ReduceMax, float);
 
 // ReduceProd
-// (c style) ReduceProdPreDeal : float tmp = 1.0f;
-#define ReduceProdPreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, 1.0f);
-// (c style) ReduceProdMidCalc : tmp = tmp * (*(inner_src + i * inner_size));
-#define ReduceProdMidCalc(block_size, block_num) \
-  tmp = MS_MUL_F32(block_size, tmp, MS_LD_F32(block_size, inner_src + i * inner_size));
-// (c style) ReduceProdPostDeal : *inner_dst = tmp;
-#define ReduceProdPostDeal(block_size, block_num) MS_ST_F32(block_size, inner_dst, tmp);
+#define ReduceProdPreDeal float tmp = 1.0f;
+#define ReduceProdMidCalc tmp *= inner_src[i * inner_size];
+#define ReduceProdPostDeal outer_dst[k] = tmp;
 RegReduceOp(ReduceProd, float);
 
 // ReduceSumSquare
-// (c style) ReduceSumSquarePreDeal : float tmp = 0;
-#define ReduceSumSquarePreDeal(block_size, block_num) MS_FLOAT_32xN(block_num) tmp = MS_MOVN_F32(block_size, 0);
-// (c style) ReduceSumSquareMidCalc : float val = *(inner_src + i * inner_size); tmp = tmp + val * val;
-#define ReduceSumSquareMidCalc(block_size, block_num) \
-  tmp = MS_ADD_F32(block_size, tmp, MS_MUL_SQUARE_F32(block_size, MS_LD_F32(block_size, inner_src + i * inner_size)));
-// (c style) ReduceSumSquarePostDeal : *inner_dst = tmp;
-#define ReduceSumSquarePostDeal(block_size, block_num) MS_ST_F32(block_size, inner_dst, tmp);
+#define ReduceSumSquarePreDeal float tmp = 0;
+#define ReduceSumSquareMidCalc tmp += (inner_src[i * inner_size] * inner_src[i * inner_size]);
+#define ReduceSumSquarePostDeal outer_dst[k] = tmp;
 RegReduceOp(ReduceSumSquare, float);
 
 // IntReduceSum
-// (c style) IntReduceSumPreDeal : int tmp = 0;
-#define IntReduceSumPreDeal(block_size, block_num) MS_INT_32xN(block_num) tmp = MS_MOVN_EPI32(block_size, 0);
-// (c style) IntReduceSumMidCalc : tmp = tmp + *(inner_src + i * inner_size);
-#define IntReduceSumMidCalc(block_size, block_num) \
-  tmp = MS_ADD_EPI32(block_size, tmp, MS_LD_EPI32(block_size, inner_src + i * inner_size));
-// (c style) IntReduceSumPostDeal : *inner_dst = tmp;
-#define IntReduceSumPostDeal(block_size, block_num) MS_ST_EPI32(block_size, inner_dst, tmp);
+#define IntReduceSumPreDeal int tmp = 0;
+#define IntReduceSumMidCalc tmp += inner_src[i * inner_size];
+#define IntReduceSumPostDeal outer_dst[k] = tmp;
 RegReduceOp(IntReduceSum, int);
 
 // IntReduceMean
-// (c style) IntReduceSumPreDeal : int tmp = 0;
-#define IntReduceMeanPreDeal(block_size, block_num) MS_INT_32xN(block_num) tmp = MS_MOVN_EPI32(block_size, 0);
-// (c style) IntReduceSumMidCalc : tmp = tmp + *(inner_src + i * inner_size);
-#define IntReduceMeanMidCalc(block_size, block_num) \
-  tmp = MS_ADD_EPI32(block_size, tmp, MS_LD_EPI32(block_size, inner_src + i * inner_size));
-// (c style) IntReduceSumPostDeal : *inner_dst = tmp / axis_size;
-#define IntReduceMeanPostDeal(block_size, block_num) \
-  MS_ST_EPI32(block_size, inner_dst, MS_DIV_N_EPI32(block_size, tmp, axis_size));
+#define IntReduceMeanPreDeal int tmp = 0;
+#define IntReduceMeanMidCalc tmp += inner_src[i * inner_size];
+#define IntReduceMeanPostDeal outer_dst[k] = tmp / axis_size;
 RegReduceOp(IntReduceMean, int);
 
 // IntReduceMin
-// (c style) IntReduceMinPreDeal : int tmp = INT32_MAX;
-#define IntReduceMinPreDeal(block_size, block_num) MS_INT_32xN(block_num) tmp = MS_MOVN_EPI32(block_size, INT32_MAX);
-// (c style) IntReduceMinMidCalc : tmp = fminf(tmp, *(inner_src + i * inner_size));
-#define IntReduceMinMidCalc(block_size, block_num) \
-  tmp = MS_MIN_EPI32(block_size, tmp, MS_LD_EPI32(block_size, inner_src + i * inner_size));
-// (c style) IntReduceMinPostDeal : *inner_dst = tmp;
-#define IntReduceMinPostDeal(block_size, block_num) MS_ST_EPI32(block_size, inner_dst, tmp);
+#define IntReduceMinPreDeal int tmp = INT32_MAX;
+#define IntReduceMinMidCalc tmp = MSMIN(tmp, inner_src[i * inner_size]);
+#define IntReduceMinPostDeal outer_dst[k] = tmp;
 RegReduceOp(IntReduceMin, int);
 
 // IntReduceMax
-// (c style) IntReduceMinPreDeal : int tmp = INT32_MIN;
-#define IntReduceMaxPreDeal(block_size, block_num) MS_INT_32xN(block_num) tmp = MS_MOVN_EPI32(block_size, INT32_MIN);
-// (c style) IntReduceMinMidCalc : tmp = fmax+f(tmp, *(inner_src + i * inner_size));
-#define IntReduceMaxMidCalc(block_size, block_num) \
-  tmp = MS_MAX_EPI32(block_size, tmp, MS_LD_EPI32(block_size, inner_src + i * inner_size));
-// (c style) IntReduceMinPostDeal : *inner_dst = tmp;
-#define IntReduceMaxPostDeal(block_size, block_num) MS_ST_EPI32(block_size, inner_dst, tmp);
+#define IntReduceMaxPreDeal int tmp = INT32_MIN;
+#define IntReduceMaxMidCalc tmp = MSMAX(tmp, inner_src[i * inner_size]);
+#define IntReduceMaxPostDeal outer_dst[k] = tmp;
 RegReduceOp(IntReduceMax, int);
 
 int ReduceAll(int outer_size, int inner_size, int axis_size, const bool *src_data, bool *dst_data, int tid,
