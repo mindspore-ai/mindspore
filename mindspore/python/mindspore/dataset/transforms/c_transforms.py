@@ -86,7 +86,8 @@ class OneHot(TensorOperation):
         self.num_classes = num_classes
 
     def parse(self):
-        return cde.OneHotOperation(self.num_classes)
+        # Use smoothing_rate=0 for legacy support for OneHot
+        return cde.OneHotOperation(self.num_classes, 0)
 
 
 class Fill(TensorOperation):

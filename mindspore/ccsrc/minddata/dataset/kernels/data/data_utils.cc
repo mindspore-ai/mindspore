@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,53 +34,31 @@
 
 namespace mindspore {
 namespace dataset {
-Status OneHotEncodingUnsigned(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                              dsize_t num_classes, int64_t index) {
-  uint64_t class_idx;
-  if (input->Rank() == 0) {
-    RETURN_IF_NOT_OK(input->GetItemAt<uint64_t>(&class_idx, {}));
-  } else {
-    RETURN_IF_NOT_OK(input->GetItemAt<uint64_t>(&class_idx, {index}));
-  }
-  if (class_idx >= static_cast<uint64_t>(num_classes)) {
-    RETURN_STATUS_UNEXPECTED("OneHot: index values should not bigger than num classes: " + std::to_string(num_classes) +
-                             ", but got: " + std::to_string(class_idx));
-  }
-  if (input->type() == DataType::DE_UINT64) {
-    RETURN_IF_NOT_OK((*output)->SetItemAt<uint64_t>({index, static_cast<dsize_t>(class_idx)}, 1));
-  } else if (input->type() == DataType::DE_UINT32) {
-    RETURN_IF_NOT_OK((*output)->SetItemAt<uint32_t>({index, static_cast<dsize_t>(class_idx)}, 1));
-  } else if (input->type() == DataType::DE_UINT16) {
-    RETURN_IF_NOT_OK((*output)->SetItemAt<uint16_t>({index, static_cast<dsize_t>(class_idx)}, 1));
-  } else if (input->type() == DataType::DE_UINT8) {
-    RETURN_IF_NOT_OK((*output)->SetItemAt<uint8_t>({index, static_cast<dsize_t>(class_idx)}, 1));
-  } else {
-    RETURN_STATUS_UNEXPECTED("OneHot: unsigned input case only supports unsigned int as input, but got:" +
-                             input->type().ToString());
-  }
-  return Status::OK();
-}
 
-Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
-                            int64_t index) {
-  int64_t class_idx;
+template <typename T>
+Status OneHotEncodingImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
+                          int64_t index, double smoothing_rate) {
+  T class_idx;
   if (input->Rank() == 0) {
-    RETURN_IF_NOT_OK(input->GetItemAt<int64_t>(&class_idx, {}));
+    RETURN_IF_NOT_OK(input->GetItemAt<T>(&class_idx, {}));
   } else {
-    RETURN_IF_NOT_OK(input->GetItemAt<int64_t>(&class_idx, {index}));
+    RETURN_IF_NOT_OK(input->GetItemAt<T>(&class_idx, {index}));
   }
   if (class_idx >= static_cast<int64_t>(num_classes)) {
     RETURN_STATUS_UNEXPECTED("OneHot: index values should not bigger than num classes: " + std::to_string(num_classes) +
                              ", but got: " + std::to_string(class_idx));
   }
-  if (input->type() == DataType::DE_INT64) {
-    RETURN_IF_NOT_OK((*output)->SetItemAt<int64_t>({index, static_cast<dsize_t>(class_idx)}, 1));
-  } else if (input->type() == DataType::DE_INT32) {
-    RETURN_IF_NOT_OK((*output)->SetItemAt<int32_t>({index, static_cast<dsize_t>(class_idx)}, 1));
-  } else if (input->type() == DataType::DE_INT16) {
-    RETURN_IF_NOT_OK((*output)->SetItemAt<int16_t>({index, static_cast<dsize_t>(class_idx)}, 1));
-  } else if (input->type() == DataType::DE_INT8) {
-    RETURN_IF_NOT_OK((*output)->SetItemAt<int8_t>({index, static_cast<dsize_t>(class_idx)}, 1));
+  if ((*output)->type().IsInt()) {
+    RETURN_IF_NOT_OK((*output)->SetItemAt<T>({index, static_cast<dsize_t>(class_idx)}, 1));
+  } else if ((*output)->type() == DataType::DE_FLOAT64) {
+    auto itr = (*output)->begin<double>();
+    auto end = (*output)->end<double>();
+    double val = smoothing_rate / static_cast<double>(num_classes);
+    for (; itr != end; itr++) {
+      *itr = val;
+    }
+    double value = (1 - smoothing_rate) + val;
+    RETURN_IF_NOT_OK((*output)->SetItemAt<double>({index, static_cast<dsize_t>(class_idx)}, value));
   } else {
     RETURN_STATUS_UNEXPECTED("OneHot: signed input case only supports signed int as input but got:" +
                              input->type().ToString());
@@ -88,7 +66,8 @@ Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_pt
   return Status::OK();
 }
 
-Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes) {
+Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
+                      double smoothing_rate) {
   input->Squeeze();
 
   if (input->Rank() > 1) {  // We expect the input to be int he first dimension
@@ -103,13 +82,31 @@ Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     if (input->Rank() == 1) num_elements = input->shape()[0];
     TensorShape out_shape({num_elements, num_classes});
     std::shared_ptr<Tensor> out;
-    RETURN_IF_NOT_OK(Tensor::CreateEmpty(out_shape, input->type(), &out));
+    mindspore::dataset::DataType type = input->type();
+    if (smoothing_rate != 0) {
+      type = DataType(DataType::DE_FLOAT64);
+    }
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(out_shape, type, &out));
     RETURN_IF_NOT_OK(out->Zero());
     for (dsize_t i = 0; i < num_elements; ++i) {
-      if (input->type().IsUnsignedInt()) {
-        RETURN_IF_NOT_OK(OneHotEncodingUnsigned(input, &out, num_classes, i));
+      if (input->type() == DataType::DE_INT8) {
+        RETURN_IF_NOT_OK(OneHotEncodingImpl<int8_t>(input, &out, num_classes, i, smoothing_rate));
+      } else if (input->type() == DataType::DE_INT16) {
+        RETURN_IF_NOT_OK(OneHotEncodingImpl<int16_t>(input, &out, num_classes, i, smoothing_rate));
+      } else if (input->type() == DataType::DE_INT32) {
+        RETURN_IF_NOT_OK(OneHotEncodingImpl<int32_t>(input, &out, num_classes, i, smoothing_rate));
+      } else if (input->type() == DataType::DE_INT64) {
+        RETURN_IF_NOT_OK(OneHotEncodingImpl<int64_t>(input, &out, num_classes, i, smoothing_rate));
+      } else if (input->type() == DataType::DE_UINT8) {
+        RETURN_IF_NOT_OK(OneHotEncodingImpl<uint8_t>(input, &out, num_classes, i, smoothing_rate));
+      } else if (input->type() == DataType::DE_UINT16) {
+        RETURN_IF_NOT_OK(OneHotEncodingImpl<uint16_t>(input, &out, num_classes, i, smoothing_rate));
+      } else if (input->type() == DataType::DE_UINT32) {
+        RETURN_IF_NOT_OK(OneHotEncodingImpl<uint32_t>(input, &out, num_classes, i, smoothing_rate));
+      } else if (input->type() == DataType::DE_UINT64) {
+        RETURN_IF_NOT_OK(OneHotEncodingImpl<uint64_t>(input, &out, num_classes, i, smoothing_rate));
       } else {
-        RETURN_IF_NOT_OK(OneHotEncodingSigned(input, &out, num_classes, i));
+        RETURN_STATUS_UNEXPECTED("OneHot: OneHot only support input of int type, but got:" + input->type().ToString());
       }
     }
     out->Squeeze();

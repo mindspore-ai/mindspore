@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,39 +19,14 @@ import mindspore.dataset.transforms as data_trans
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
-DATA_DIR = "../data/dataset/testImageNetData/train"
 DATA_DIR_2 = "../data/dataset/testImageNetData2/train"
-
-
-def skip_test_one_hot_op():
-    """
-    Test one hot encoding op
-    """
-    logger.info("Test one hot encoding op")
-
-    # define map operations
-    dataset = ds.ImageFolderDataset(DATA_DIR)
-    num_classes = 2
-    epsilon_para = 0.1
-
-    transforms = [data_trans.OneHot(num_classes=num_classes, smoothing_rate=epsilon_para)]
-    transform_label = transCompose(transforms)
-    dataset = dataset.map(operations=transform_label, input_columns=["label"])
-
-    golden_label = np.ones(num_classes) * epsilon_para / num_classes
-    golden_label[1] = 1 - epsilon_para / num_classes
-
-    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        label = data["label"]
-        logger.info("label is {}".format(label))
-        logger.info("golden_label is {}".format(golden_label))
-        assert label.all() == golden_label.all()
-        logger.info("====test one hot op ok====")
 
 
 def test_mix_up_single():
     """
-    Test single batch mix up op
+    Feature: MixUp Op
+    Description: Test Python op, single batch mix up scenario
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
     logger.info("Test single batch mix up op")
 
@@ -101,7 +76,9 @@ def test_mix_up_single():
 
 def test_mix_up_multi():
     """
-    Test multi batch mix up op
+    Feature: MixUp Op
+    Description: Test Python op, multiple batch mix up scenario
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
     logger.info("Test several batch mix up op")
 
@@ -158,6 +135,5 @@ def test_mix_up_multi():
 
 
 if __name__ == "__main__":
-    skip_test_one_hot_op()
     test_mix_up_single()
     test_mix_up_multi()

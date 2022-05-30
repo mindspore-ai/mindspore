@@ -13,9 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing the OneHot Op
+Testing OneHot Op in Dataset
 """
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as data_trans
@@ -25,6 +26,7 @@ from util import dataset_equal_with_function
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+DATA_DIR_IMAGENET = "../data/dataset/testImageNetData/train"
 
 
 def one_hot(index, depth):
@@ -38,7 +40,9 @@ def one_hot(index, depth):
 
 def test_one_hot():
     """
-    Test OneHot Tensor Operator
+    Feature: OneHot Op
+    Description: Test C++ op with One Hot Encoding
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
     logger.info("test_one_hot")
 
@@ -57,7 +61,9 @@ def test_one_hot():
 
 def test_one_hot_post_aug():
     """
-    Test One Hot Encoding after Multiple Data Augmentation Operators
+    Feature: OneHot Op
+    Description: Test C++ op with One Hot Encoding after Multiple Data Augmentation Operators
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
     logger.info("test_one_hot_post_aug")
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -100,7 +106,12 @@ def test_one_hot_post_aug():
 
 
 def test_one_hot_success():
-    # success
+    """
+    Feature: OneHot Op
+    Description: Test Python op, with generated label using np.array(index)
+    Expectation: Dataset pipeline runs successfully and results are verified
+    """
+
     class GetDatasetGenerator:
         def __init__(self):
             np.random.seed(58)
@@ -126,7 +137,12 @@ def test_one_hot_success():
 
 
 def test_one_hot_success2():
-    # success
+    """
+    Feature: OneHot Op
+    Description: Test Python op, with generated label using np.array([index])
+    Expectation: Dataset pipeline runs successfully and results are verified
+    """
+
     class GetDatasetGenerator:
         def __init__(self):
             np.random.seed(58)
@@ -153,7 +169,12 @@ def test_one_hot_success2():
 
 
 def test_one_hot_success3():
-    # success
+    """
+    Feature: OneHot Op
+    Description: Test Python op, with multi-dimension generated label
+    Expectation: Dataset pipeline runs successfully and results are verified
+    """
+
     class GetDatasetGenerator:
         def __init__(self):
             np.random.seed(58)
@@ -184,7 +205,12 @@ def test_one_hot_success3():
 
 
 def test_one_hot_type_error():
-    # type error
+    """
+    Feature: OneHot Op
+    Description: Test Python op with invalid float input type
+    Expectation: Invalid input is detected
+    """
+
     class GetDatasetGenerator:
         def __init__(self):
             np.random.seed(58)
@@ -212,6 +238,54 @@ def test_one_hot_type_error():
         assert "OneHot only support input of int type, but got:float64" in str(e)
 
 
+def test_one_hot_smoothing_rate():
+    """
+    Feature: OneHot op
+    Description: Test smoothing_rate parameter
+    Expectation: The dataset is processed as expected
+    """
+    logger.info("Test one hot encoding op")
+
+    # define map operations
+    dataset = ds.ImageFolderDataset(DATA_DIR_IMAGENET, num_samples=20)
+    num_classes = 2
+    epsilon_para = 0.1
+
+    op = data_trans.OneHot(num_classes=num_classes, smoothing_rate=epsilon_para)
+    dataset = dataset.map(operations=op, input_columns=["label"])
+
+    golden_label = np.ones(num_classes) * epsilon_para / num_classes
+    golden_label[1] = 1 - epsilon_para / num_classes
+
+    for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        label = data["label"]
+        logger.info("label is {}".format(label))
+        logger.info("golden_label is {}".format(golden_label))
+        assert label.all() == golden_label.all()
+
+
+def test_one_hot_smoothing_rate_error_input():
+    """
+    Feature: OneHot op
+    Description: Test smoothing_rate with invalid input
+    Expectation: Error is raised as expected
+    """
+
+    def test_config(my_smoothing_rate):
+        with pytest.raises(ValueError) as info:
+            data1 = ds.ImageFolderDataset(DATA_DIR_IMAGENET, num_samples=20)
+            op = data_trans.OneHot(num_classes=10, smoothing_rate=my_smoothing_rate)
+            data1 = data1.map(operations=op, input_columns=["label"])
+            for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+                pass
+        error_msg = "Input smoothing_rate is not within the required interval of [0.0, 1.0]."
+        assert error_msg in str(info.value)
+
+    # Test out-of-bound values for OneHot's smoothing_rate parameter
+    test_config(-0.1)
+    test_config(1.1)
+
+
 if __name__ == "__main__":
     test_one_hot()
     test_one_hot_post_aug()
@@ -219,3 +293,5 @@ if __name__ == "__main__":
     test_one_hot_success2()
     test_one_hot_success3()
     test_one_hot_type_error()
+    test_one_hot_smoothing_rate()
+    test_one_hot_smoothing_rate_error_input()

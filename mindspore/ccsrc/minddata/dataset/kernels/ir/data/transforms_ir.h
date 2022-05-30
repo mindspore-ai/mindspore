@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ class MaskOperation : public TensorOperation {
 
 class OneHotOperation : public TensorOperation {
  public:
-  explicit OneHotOperation(int32_t num_classes);
+  explicit OneHotOperation(int32_t num_classes, double smoothing_rate = 0);
 
   ~OneHotOperation() = default;
 
@@ -152,6 +152,7 @@ class OneHotOperation : public TensorOperation {
 
  private:
   int32_t num_classes_;
+  double smoothing_rate_;
 };
 
 class PadEndOperation : public TensorOperation {

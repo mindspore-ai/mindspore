@@ -34,7 +34,7 @@ TEST_F(MindDataTestOneHotOp, TestOp) {
   Tensor::CreateFromVector(labels, &input);
   std::shared_ptr<Tensor> output;
 
-  std::unique_ptr<OneHotOp> op(new OneHotOp(5));
+  std::unique_ptr<OneHotOp> op = std::make_unique<OneHotOp>(5, 0);
   Status s = op->Compute(input, &output);
   std::vector<uint64_t> out = {1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0};
   std::shared_ptr<Tensor> expected;
