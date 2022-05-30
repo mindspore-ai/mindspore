@@ -175,7 +175,9 @@ def test_numpyslices_sampler_chain_multi_add_child():
 
 def test_imagefolder_sampler_chain():
     """
-    Test ImageFolderDataset sampler chain
+    Feature: Chained Sampler
+    Description: ImageFolderDataset with sampler chain; add child sampler with 2 statements
+    Expectation: Data verified to be correct
     """
     logger.info("test_imagefolder_sampler_chain")
 
@@ -200,7 +202,9 @@ def test_imagefolder_sampler_chain():
 
 def test_mnist_sampler_chain():
     """
-    Test Mnist sampler chain
+    Feature: Chained Sampler
+    Description: MnistDataset with sampler chain; add child sampler with 2 statements
+    Expectation: Data verified to be correct
     """
     logger.info("test_mnist_sampler_chain")
 
@@ -226,7 +230,9 @@ def test_mnist_sampler_chain():
 
 def test_manifest_sampler_chain():
     """
-    Test Manifest sampler chain
+    Feature: Chained Sampler
+    Description: ManifestDataset with sampler chain; add child sampler with 2 statements
+    Expectation: Data verified to be correct
     """
     logger.info("test_manifest_sampler_chain")
 
@@ -252,7 +258,9 @@ def test_manifest_sampler_chain():
 
 def test_coco_sampler_chain():
     """
-    Test Coco sampler chain
+    Feature: Chained Sampler
+    Description: CocoDataset with sampler chain; add child sampler with 2 statements
+    Expectation: Data verified to be correct
     """
     logger.info("test_coco_sampler_chain")
 
@@ -280,7 +288,9 @@ def test_coco_sampler_chain():
 
 def test_cifar_sampler_chain():
     """
-    Test Cifar sampler chain, including nested child sampler
+    Feature: Chained Sampler
+    Description: CifarDataset with sampler chain, including nested child sampler
+    Expectation: Data verified to be correct
     """
     logger.info("test_cifar_sampler_chain")
 
@@ -309,7 +319,9 @@ def test_cifar_sampler_chain():
 
 def test_voc_sampler_chain():
     """
-    Test VOC sampler chain
+    Feature: Chained Sampler
+    Description: VOCDataset with sampler chain; add child sampler with 2 statements
+    Expectation: Data verified to be correct
     """
     logger.info("test_voc_sampler_chain")
 
@@ -336,7 +348,9 @@ def test_voc_sampler_chain():
 
 def test_numpyslices_sampler_chain_batch():
     """
-    Test NumpySlicesDataset sampler chaining, with batch
+    Feature: Chained Sampler
+    Description: NumpySlicesDataset with sampler chain with batch
+    Expectation: Data verified to be correct
     """
     logger.info("test_numpyslices_sampler_chain_batch")
 
@@ -367,7 +381,9 @@ def test_numpyslices_sampler_chain_batch():
 
 def test_sampler_chain_errors():
     """
-    Test error cases for sampler chains
+    Feature: Chained Sampler
+    Description: Test error cases for sampler chains
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_sampler_chain_errors")
 
@@ -396,7 +412,9 @@ def test_sampler_chain_errors():
 
 def test_manifest_sampler_chain_repeat():
     """
-    Test ManifestDataset sampler chain DistributedSampler->SequentialSampler, with repeat
+    Feature: Chained Sampler
+    Description: Test ManifestDataset sampler chain DistributedSampler -> SequentialSampler with repeat
+    Expectation: Data verified to be correct
     """
     logger.info("test_manifest_sampler_chain_batch")
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
@@ -425,7 +443,9 @@ def test_manifest_sampler_chain_repeat():
 
 def test_manifest_sampler_chain_batch_repeat():
     """
-    Test ManifestDataset sampler chain DistributedSampler->SequentialSampler, with batch then repeat
+    Feature: Chained Sampler
+    Description: Test ManifestDataset sampler chain DistributedSampler -> SequentialSampler, with batch then repeat
+    Expectation: Data verified to be correct
     """
     logger.info("test_manifest_sampler_chain_batch_repeat")
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"

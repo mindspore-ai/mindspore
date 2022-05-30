@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -120,7 +120,9 @@ def check_basic_tokenizer_with_offsets(first, last, expected_tokens, expected_of
 
 def test_basic_tokenizer_with_offsets():
     """
-    Test BasicTokenizer
+    Feature: BasicTokenizer
+    Description: Test BasicTokenizer by setting with_offsets to True
+    Expectation: Output is equal to the expected output
     """
     for paras in test_paras:
         check_basic_tokenizer_with_offsets(**paras)
@@ -128,7 +130,9 @@ def test_basic_tokenizer_with_offsets():
 
 def test_basic_tokenizer_default():
     """
-    Test BasicTokenizer
+    Feature: BasicTokenizer
+    Description: Test BasicTokenizer with default parameters
+    Expectation: Output is equal to the expected output
     """
     for paras in test_paras:
         check_basic_tokenizer_default(**paras)

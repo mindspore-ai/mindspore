@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,11 @@ CV_FILE_NAME = "../data/mindrecord/testTwoImageData/twobytes.mindrecord"
 
 
 def test_cv_minddataset_reader_two_png_tutorial():
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test for CV MindDataset basic reader with two pngs tutorial
+    Expectation: Runs successfully
+    """
     columns_list = ["id", "file_name", "label_name", "img_data", "label_data"]
     num_readers = 1
     data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)
@@ -44,7 +48,11 @@ def test_cv_minddataset_reader_two_png_tutorial():
 
 
 def test_cv_minddataset_reader_two_png_tutorial_just_image2():
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test for CV MindDataset basic reader with two pngs tutorial but only using image and label data
+    Expectation: Runs successfully
+    """
     columns_list = ["img_data", "label_data"]
     num_readers = 1
     data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)

@@ -176,8 +176,8 @@ def test_vectors_from_file_eager():
 def test_vectors_invalid_input():
     """
     Feature: Vectors
-    Description: Test the validate function with invalid parameters.
-    Expectation:
+    Description: Test the validate function with invalid parameters
+    Expectation: Correct error is raised as expected
     """
     def test_invalid_input(test_name, file_path, error, error_msg, max_vectors=None,
                            unk_init=None, lower_case_backup=False, token="ok"):

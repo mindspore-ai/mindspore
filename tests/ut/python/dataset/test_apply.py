@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,11 @@ def generator_1d():
 
 
 def test_apply_generator_case():
+    """
+    Feature: Apply op
+    Description: Test apply op on GeneratorDataset
+    Expectation: Output is equal to the expected output
+    """
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data2 = ds.GeneratorDataset(generator_1d, ["data"])
@@ -46,6 +51,11 @@ def test_apply_generator_case():
 
 
 def test_apply_imagefolder_case():
+    """
+    Feature: Apply op
+    Description: Test apply op on ImageFolderDataset
+    Expectation: Output is equal to the expected output
+    """
     # apply dataset map operations
     data1 = ds.ImageFolderDataset(DATA_DIR, num_shards=4, shard_id=3)
     data2 = ds.ImageFolderDataset(DATA_DIR, num_shards=4, shard_id=3)
@@ -70,6 +80,11 @@ def test_apply_imagefolder_case():
 
 
 def test_apply_flow_case_0(id_=0):
+    """
+    Feature: Apply op
+    Description: Test control flow operation by applying batch op
+    Expectation: Output is equal to the expected output
+    """
     # apply control flow operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 
@@ -101,6 +116,11 @@ def test_apply_flow_case_0(id_=0):
 
 
 def test_apply_flow_case_1(id_=1):
+    """
+    Feature: Apply op
+    Description: Test control flow operation by applying repeat op
+    Expectation: Output is equal to the expected output
+    """
     # apply control flow operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 
@@ -132,6 +152,11 @@ def test_apply_flow_case_1(id_=1):
 
 
 def test_apply_flow_case_2(id_=2):
+    """
+    Feature: Apply op
+    Description: Test control flow operation by applying batch op then repeat op
+    Expectation: Output is equal to the expected output
+    """
     # apply control flow operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 
@@ -163,6 +188,11 @@ def test_apply_flow_case_2(id_=2):
 
 
 def test_apply_flow_case_3(id_=3):
+    """
+    Feature: Apply op
+    Description: Test control flow operation by applying shuffle op
+    Expectation: Output is equal to the expected output
+    """
     # apply control flow operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 
@@ -194,6 +224,11 @@ def test_apply_flow_case_3(id_=3):
 
 
 def test_apply_exception_case():
+    """
+    Feature: Apply op
+    Description: Test apply op using invalid inputs
+    Expectation: Correct error is raised as expected
+    """
     # apply exception operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 

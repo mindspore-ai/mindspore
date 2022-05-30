@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,7 +43,9 @@ def config_error_func(config_interface, input_args, err_type, except_err_msg):
 
 def test_basic():
     """
-    Test basic configuration functions
+    Feature: Config
+    Description: Test basic configuration functions
+    Expectation: Output is equal to the expected value
     """
     # Save original configuration values
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
@@ -80,14 +82,18 @@ def test_basic():
 
 def test_get_seed():
     """
-    This gets the seed value without explicitly setting a default, expect int.
+    Feature: Config
+    Description: Test get_seed value without explicitly setting a default
+    Expectation: Expecting to get an int
     """
     assert isinstance(ds.config.get_seed(), int)
 
 
 def test_pipeline():
     """
-    Test that our configuration pipeline works when we set parameters at different locations in dataset code
+    Feature: Config
+    Description: Test that the config pipeline works when parameters are set at different locations in dataset code
+    Expectation: Output is equal to the expected value
     """
     # Save original configuration values
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
@@ -120,7 +126,9 @@ def test_pipeline():
 
 def test_deterministic_run_fail():
     """
-    Test RandomCrop with seed, expected to fail
+    Feature: Config
+    Description: Test RandomCrop with seed
+    Expectation: Exception is raised as expected
     """
     logger.info("test_deterministic_run_fail")
 
@@ -162,7 +170,9 @@ def test_deterministic_run_fail():
 
 def test_seed_undeterministic():
     """
-    Test seed with num parallel workers in c, this test is expected to fail some of the time
+    Feature: Config
+    Description: Test seed with num_parallel_workers in Cpp
+    Expectation: Exception is raised some of the time
     """
     logger.info("test_seed_undeterministic")
 
@@ -202,7 +212,9 @@ def test_seed_undeterministic():
 
 def test_seed_deterministic():
     """
-    Test deterministic run with setting the seed, only works with num_parallel worker = 1
+    Feature: Config
+    Description: Test deterministic run with setting the seed
+    Expectation: Runs successfully if num_parallel_worker=1
     """
     logger.info("test_seed_deterministic")
 
@@ -237,7 +249,9 @@ def test_seed_deterministic():
 
 def test_deterministic_run_distribution():
     """
-    Test deterministic run with with setting the seed being used in a distribution
+    Feature: Config
+    Description: Test deterministic run with with setting the seed being used in a distribution
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_deterministic_run_distribution")
 
@@ -272,7 +286,9 @@ def test_deterministic_run_distribution():
 
 def test_deterministic_python_seed():
     """
-    Test deterministic execution with seed in python
+    Feature: Config
+    Description: Test deterministic execution with seed in Python
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_deterministic_python_seed")
 
@@ -317,7 +333,9 @@ def test_deterministic_python_seed():
 
 def test_deterministic_python_seed_multi_thread():
     """
-    Test deterministic execution with seed in python, this fails with multi-thread pyfunc run
+    Feature: Config
+    Description: Test deterministic execution with seed in Python with multi-thread PyFunc run
+    Expectation: Exception is raised as expected
     """
     logger.info("test_deterministic_python_seed_multi_thread")
 
@@ -376,7 +394,9 @@ def test_deterministic_python_seed_multi_thread():
 
 def test_auto_num_workers_error():
     """
-    Test auto_num_workers error
+    Feature: Config
+    Description: Test set_auto_num_workers with invalid input
+    Expectation: Error is raised as expected
     """
     err_msg = ""
     try:
@@ -389,9 +409,10 @@ def test_auto_num_workers_error():
 
 def test_auto_num_workers():
     """
-    Test auto_num_workers can be set.
+    Feature: Config
+    Description: Test set_auto_num_workers with no argument
+    Expectation: Output is equal to the expected value
     """
-
     saved_config = ds.config.get_auto_num_workers()
     assert isinstance(saved_config, bool)
     # change to a different config

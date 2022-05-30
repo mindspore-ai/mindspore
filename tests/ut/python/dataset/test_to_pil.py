@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_to_pil_01():
     """
-    Test ToPIL Op with md5 comparison: input is already PIL image
-    Expected to pass
+    Feature: ToPIL op
+    Description: Test ToPIL op with md5 comparison where input is already PIL image
+    Expectation: Passes the md5 check test
     """
     logger.info("test_to_pil_01")
 
@@ -52,8 +53,9 @@ def test_to_pil_01():
 
 def test_to_pil_02():
     """
-    Test ToPIL Op with md5 comparison: input is not PIL image
-    Expected to pass
+    Feature: ToPIL op
+    Description: Test ToPIL op with md5 comparison where input is not a PIL image
+    Expectation: Passes the md5 check test
     """
     logger.info("test_to_pil_02")
 

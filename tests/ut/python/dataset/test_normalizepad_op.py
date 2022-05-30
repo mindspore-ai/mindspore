@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -165,7 +165,9 @@ def test_normalizepad_op_comp_chw():
 
 def test_decode_normalizepad_op():
     """
-    Test Decode op followed by NormalizePad op
+    Feature: NormalizePad op
+    Description: Test Decode op followed by NormalizePad op
+    Expectation: Passes the md5 check test
     """
     logger.info("Test [Decode, Normalize] in one Map")
 
@@ -188,8 +190,8 @@ def test_decode_normalizepad_op():
 
 def test_normalizepad_exception_unequal_size_1():
     """
-    Feature: Normalize op
-    Description: Test Normalize with error input: len(mean) != len(std)
+    Feature: NormalizePad op
+    Description: Test NormalizePad with error input: len(mean) != len(std)
     Expectation: ValueError raised
     """
     logger.info("test_normalizepad_exception_unequal_size_1")
@@ -214,8 +216,8 @@ def test_normalizepad_exception_unequal_size_1():
 
 def test_normalizepad_exception_unequal_size_2():
     """
-    Feature: Normalize op
-    Description: Test Normalize with error input: len(mean) != len(std)
+    Feature: NormalizePad op
+    Description: Test NormalizePad with error input: len(mean) != len(std)
     Expectation: ValueError raised
     """
     logger.info("test_normalizepad_exception_unequal_size_2")
@@ -240,8 +242,8 @@ def test_normalizepad_exception_unequal_size_2():
 
 def test_normalizepad_exception_invalid_range():
     """
-    Feature: Normalize op
-    Description: Test Normalize with error input: value is not in range [0,1]
+    Feature: NormalizePad op
+    Description: Test NormalizePad with error input: value is not in range [0,1]
     Expectation: ValueError raised
     """
     logger.info("test_normalizepad_exception_invalid_range")

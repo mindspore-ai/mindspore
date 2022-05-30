@@ -28,7 +28,9 @@ DATA_DIR = "../data/dataset/testImageNetData/train/"
 
 def test_uniform_augment_callable(num_ops=2):
     """
-    Test UniformAugment is callable
+    Feature: UniformAugment
+    Description: Test UniformAugment under normal test case
+    Expectation: Output's shape is the same as expected output's shape
     """
     logger.info("test_uniform_augment_callable")
     img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
@@ -47,7 +49,9 @@ def test_uniform_augment_callable(num_ops=2):
 
 def test_uniform_augment(plot=False, num_ops=2):
     """
-    Test UniformAugment
+    Feature: UniformAugment
+    Description: Test UniformAugment using Python implementation
+    Expectation: Output is the same as expected output
     """
     logger.info("Test UniformAugment")
 
@@ -111,7 +115,9 @@ def test_uniform_augment(plot=False, num_ops=2):
 
 def test_cpp_uniform_augment(plot=False, num_ops=2):
     """
-    Test UniformAugment
+    Feature: UniformAugment
+    Description: Test UniformAugment using Cpp implementation
+    Expectation: Output is the same as expected output
     """
     logger.info("Test CPP UniformAugment")
 
@@ -170,7 +176,9 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
 
 def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
     """
-    Test UniformAugment invalid large number of ops
+    Feature: UniformAugment
+    Description: Test UniformAugment using invalid large number of ops
+    Expectation: Exception is raised as expected
     """
     logger.info("Test CPP UniformAugment invalid large num_ops exception")
 
@@ -190,7 +198,9 @@ def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
 
 def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
     """
-    Test UniformAugment invalid non-positive number of ops
+    Feature: UniformAugment
+    Description: Test UniformAugment using invalid non-positive num_ops
+    Expectation: Exception is raised as expected
     """
     logger.info("Test CPP UniformAugment invalid non-positive num_ops exception")
 
@@ -210,7 +220,9 @@ def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
 
 def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
     """
-    Test UniformAugment invalid float number of ops
+    Feature: UniformAugment
+    Description: Test UniformAugment using invalid float num_ops
+    Expectation: Exception is raised as expected
     """
     logger.info("Test CPP UniformAugment invalid float num_ops exception")
 
@@ -230,7 +242,9 @@ def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
 
 def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
     """
-    Test UniformAugment with greater crop size
+    Feature: UniformAugment
+    Description: Test UniformAugment with greater crop size
+    Expectation: Exception is raised as expected
     """
     logger.info("Test CPP UniformAugment with random_crop bad input")
     batch_size = 2

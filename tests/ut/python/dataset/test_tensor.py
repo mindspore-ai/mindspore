@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,11 @@ import mindspore._c_dataengine as cde
 
 
 def test_shape():
+    """
+    Feature: TensorShape op
+    Description: Test TensorShape op basic usage
+    Expectation: Output is equal to the expected output
+    """
     x = [2, 3]
     s = cde.TensorShape(x)
     assert s.as_list() == x
@@ -25,6 +30,11 @@ def test_shape():
 
 
 def test_basic():
+    """
+    Feature: Tensor
+    Description: Test Tensor basic usage
+    Expectation: Output is equal to the expected output
+    """
     x = np.array([1, 2, 3, 4, 5])
     n = cde.Tensor(x)
     arr = np.array(n, copy=False)
@@ -43,6 +53,11 @@ def test_basic():
 
 
 def test_strides():
+    """
+    Feature: Tensor
+    Description: Test Tensor basic usage with strides
+    Expectation: Output is equal to the expected output
+    """
     x = np.array([[1, 2, 3], [4, 5, 6]])
     n1 = cde.Tensor(x[:, 1])
     arr = np.array(n1, copy=False)

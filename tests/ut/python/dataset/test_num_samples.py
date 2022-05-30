@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,11 @@ from mindspore import log as logger
 
 
 def test_num_samples():
+    """
+    Feature: num_samples
+    Description: Test num_samples parameter in ManifestDataset
+    Expectation: Output is the same as expected output
+    """
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     num_samples = 1
     # sampler = ds.DistributedSampler(num_shards=1, shard_id=0, shuffle=False, num_samples=3, offset=1)
@@ -30,6 +35,11 @@ def test_num_samples():
 
 
 def test_num_samples_tf():
+    """
+    Feature: num_samples
+    Description: Test num_samples parameter in TFRecordDataset
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_tfrecord_read_all_dataset")
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchemaNoRow.json"
     files = ["../data/dataset/testTFTestAllTypes/test.data"]
@@ -42,6 +52,11 @@ def test_num_samples_tf():
 
 
 def test_num_samples_image_folder():
+    """
+    Feature: num_samples
+    Description: Test num_samples parameter in ImageFolderDataset
+    Expectation: Output is the same as expected output
+    """
     data_dir = "../data/dataset/testPK/data"
     ds1 = ds.ImageFolderDataset(data_dir, num_samples=2, num_shards=2, shard_id=0)
     count = 0

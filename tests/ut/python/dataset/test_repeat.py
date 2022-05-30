@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,9 @@ GENERATE_GOLDEN = False
 
 def test_tf_repeat_01():
     """
-    Test a simple repeat operation.
+    Feature: Repeat op
+    Description: Test repeat op under simple case
+    Expectation: Output is the same as expected output
     """
     logger.info("Test Simple Repeat")
     # define parameters
@@ -49,7 +51,9 @@ def test_tf_repeat_01():
 
 def test_tf_repeat_02():
     """
-    Test Infinite Repeat.
+    Feature: Repeat op
+    Description: Test repeat op with infinite count
+    Expectation: Runs successfully
     """
     logger.info("Test Infinite Repeat")
     # define parameters
@@ -69,7 +73,9 @@ def test_tf_repeat_02():
 
 def test_tf_repeat_03():
     """
-    Test Repeat then Batch.
+    Feature: Repeat op
+    Description: Test repeat op then batch op
+    Expectation: Output is the same as expected output
     """
     logger.info("Test Repeat then Batch")
     data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
@@ -92,7 +98,9 @@ def test_tf_repeat_03():
 
 def test_tf_repeat_04():
     """
-    Test a simple repeat operation with column list.
+    Feature: Repeat op
+    Description: Test repeat op under simple case with column list
+    Expectation: Output is the same as expected output
     """
     logger.info("Test Simple Repeat Column List")
     # define parameters
@@ -112,6 +120,11 @@ def generator():
 
 
 def test_nested_repeat1():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat with count > 1
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat1")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(2)
@@ -124,6 +137,11 @@ def test_nested_repeat1():
 
 
 def test_nested_repeat2():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat with count = 1
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat2")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(1)
@@ -136,6 +154,11 @@ def test_nested_repeat2():
 
 
 def test_nested_repeat3():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat with first repeat with count = 1 and second repeat with count > 1
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat3")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(1)
@@ -148,6 +171,11 @@ def test_nested_repeat3():
 
 
 def test_nested_repeat4():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat with first repeat with count > 1 and second input with count = 1
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat4")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(2)
@@ -160,6 +188,11 @@ def test_nested_repeat4():
 
 
 def test_nested_repeat5():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat after a batch operation
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat5")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.batch(3)
@@ -173,6 +206,11 @@ def test_nested_repeat5():
 
 
 def test_nested_repeat6():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat with batch op (repeat -> batch -> repeat)
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat6")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(2)
@@ -186,6 +224,11 @@ def test_nested_repeat6():
 
 
 def test_nested_repeat7():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat followed by a batch op
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat7")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(2)
@@ -199,6 +242,11 @@ def test_nested_repeat7():
 
 
 def test_nested_repeat8():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat after a batch operation with drop_remainder=False
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat8")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.batch(2, drop_remainder=False)
@@ -215,6 +263,11 @@ def test_nested_repeat8():
 
 
 def test_nested_repeat9():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat with first repeat with no count
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat9")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat()
@@ -227,6 +280,11 @@ def test_nested_repeat9():
 
 
 def test_nested_repeat10():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat with second repeat with no count
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat10")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(3)
@@ -239,6 +297,11 @@ def test_nested_repeat10():
 
 
 def test_nested_repeat11():
+    """
+    Feature: Repeat op
+    Description: Test nested repeat (4 repeat ops)
+    Expectation: Output is the same as expected output
+    """
     logger.info("test_nested_repeat11")
     data = ds.GeneratorDataset(generator, ["data"])
     data = data.repeat(2)
@@ -253,6 +316,11 @@ def test_nested_repeat11():
 
 
 def test_repeat_count1():
+    """
+    Feature: Repeat op
+    Description: Test repeat after multiple operations, then followed by batch op
+    Expectation: Output is the same as expected output
+    """
     data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
     data1_size = data1.get_dataset_size()
     logger.info("dataset size is {}".format(data1_size))
@@ -276,6 +344,11 @@ def test_repeat_count1():
 
 
 def test_repeat_count2():
+    """
+    Feature: Repeat op
+    Description: Test repeat after multiple operations and a batch op
+    Expectation: Output is the same as expected output
+    """
     data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
     data1_size = data1.get_dataset_size()
     logger.info("dataset size is {}".format(data1_size))
@@ -300,7 +373,9 @@ def test_repeat_count2():
 
 def test_repeat_count0():
     """
-    Test Repeat with invalid count 0.
+    Feature: Repeat op
+    Description: Test repeat with invalid count = 0
+    Expectation: Error is raised as expected
     """
     logger.info("Test Repeat with invalid count 0")
     with pytest.raises(ValueError) as info:
@@ -311,7 +386,9 @@ def test_repeat_count0():
 
 def test_repeat_countneg2():
     """
-    Test Repeat with invalid count -2.
+    Feature: Repeat op
+    Description: Test nested repeat with invalid count = -2
+    Expectation: Error is raised as expected
     """
     logger.info("Test Repeat with invalid count -2")
     with pytest.raises(ValueError) as info:

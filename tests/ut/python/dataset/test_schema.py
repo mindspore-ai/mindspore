@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,11 +24,21 @@ SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 
 
 def test_schema_simple():
+    """
+    Feature: Schema
+    Description: Test Schema simple case
+    Expectation: Runs successfully
+    """
     logger.info("test_schema_simple")
     ds.Schema(SCHEMA_FILE)
 
 
 def test_schema_file_vs_string():
+    """
+    Feature: Schema
+    Description: Test Schema by comparing file and string
+    Expectation: Both datasets are equal
+    """
     logger.info("test_schema_file_vs_string")
 
     schema1 = ds.Schema(SCHEMA_FILE)
@@ -44,6 +54,11 @@ def test_schema_file_vs_string():
 
 
 def test_schema_exception():
+    """
+    Feature: Schema
+    Description: Test Schema with invalid inputs
+    Expectation: Correct error is raised as expected
+    """
     logger.info("test_schema_exception")
 
     with pytest.raises(TypeError) as info:

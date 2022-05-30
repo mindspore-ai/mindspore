@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ IMAGE_FILE = "../data/dataset/apple.jpg"
 
 def test_gaussian_blur_pipeline(plot=False):
     """
-    Test GaussianBlur of C implementation
+    Feature: GaussianBlur
+    Description: Test GaussianBlur of Cpp implementation
+    Expectation: Output is the same as expected output
     """
     logger.info("test_gaussian_blur_pipeline")
 
@@ -63,7 +65,9 @@ def test_gaussian_blur_pipeline(plot=False):
 
 def test_gaussian_blur_eager():
     """
-    Test GaussianBlur with eager mode
+    Feature: GaussianBlur
+    Description: Test GaussianBlur in eager mode
+    Expectation: Output is the same as expected output
     """
     logger.info("test_gaussian_blur_eager")
     img = cv2.imread(IMAGE_FILE)
@@ -76,7 +80,9 @@ def test_gaussian_blur_eager():
 
 def test_gaussian_blur_exception():
     """
-    Test GaussianBlur with invalid parameters
+    Feature: GaussianBlur
+    Description: Test GaussianBlur with invalid parameters
+    Expectation: Error is raised as expected
     """
     logger.info("test_gaussian_blur_exception")
     try:

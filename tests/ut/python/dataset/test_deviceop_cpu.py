@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ TF_SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 
 def test_case_0():
     """
-    Test Repeat
+    Feature: Device_que op
+    Description: Test device_que op after a repeat op
+    Expectation: Runs successfully
     """
     # apply dataset operations
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -43,7 +45,9 @@ def test_case_0():
 
 def test_case_1():
     """
-    Test Batch
+    Feature: Device_que op
+    Description: Test device_que op after a batch op
+    Expectation: Runs successfully
     """
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     # define data augmentation parameters
@@ -68,7 +72,9 @@ def test_case_1():
 
 def test_case_2():
     """
-    Test Batch & Repeat
+    Feature: Device_que op
+    Description: Test device_que op after a batch op then a repeat op
+    Expectation: Runs successfully
     """
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     # define data augmentation parameters
@@ -96,7 +102,9 @@ def test_case_2():
 
 def test_case_3():
     """
-    Test Repeat & Batch
+    Feature: Device_que op
+    Description: Test device_que op after a repeat op then a batch op
+    Expectation: Runs successfully
     """
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     # define data augmentation parameters
@@ -122,6 +130,11 @@ def test_case_3():
 
 
 def test_case_tf_file():
+    """
+    Feature: Device_que op
+    Description: Test device_que op using TFRecordDataset
+    Expectation: Runs successfully
+    """
     data = ds.TFRecordDataset(TF_FILES, TF_SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
 
     data = data.to_device()

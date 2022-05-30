@@ -32,7 +32,9 @@ GENERATE_GOLDEN = False
 
 def test_cut_out_op(plot=False):
     """
-    Test CutOut
+    Feature: CutOut op
+    Description: Test CutOut op by comparing between Python and Cpp implementation
+    Expectation: Both outputs are equal to each other
     """
     logger.info("test_cut_out")
 
@@ -80,7 +82,9 @@ def test_cut_out_op(plot=False):
 
 def test_cut_out_op_multicut(plot=False):
     """
-    Test CutOut
+    Feature: CutOut op
+    Description: Test CutOut where Python is implemented without RandomErasing and Cpp is implemented with num_patches
+    Expectation: Both outputs are equal to each other
     """
     logger.info("test_cut_out")
 
@@ -128,7 +132,9 @@ def test_cut_out_op_multicut(plot=False):
 
 def test_cut_out_md5():
     """
-    Test CutOut with md5 check
+    Feature: CutOut op
+    Description: Test CutOut with md5 comparison check
+    Expectation: Passes the md5 check test
     """
     logger.info("test_cut_out_md5")
     original_seed = config_get_set_seed(2)
@@ -165,7 +171,7 @@ def test_cut_out_comp_hwc(plot=False):
     """
     Feature: CutOut op
     Description: Test CutOut with HWC input, Decode(to_pil=True) & ToTensor versus Decode(to_pil=False) comparison
-    Expectation: Test succeeds. Manual confirmation of logged info. Manual visualization confirmation.
+    Expectation: Test succeeds. Manual confirmation of logged info. Manual visualization confirmation
     """
     logger.info("test_cut_out_comp")
 
@@ -214,8 +220,8 @@ def test_cut_out_comp_chw():
     """
     Feature: CutOut op
     Description: Test CutOut with CHW input, Decode(to_pil=True) & ToTensor versus Decode(to_pil=False) & HWC2CHW
-                 comparison.
-    Expectation: Test succeeds.  Manual confirmation of logged info.
+                 comparison
+    Expectation: Test succeeds. Manual confirmation of logged info
     """
     logger.info("test_cut_out_comp_chw")
 

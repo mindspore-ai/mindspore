@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,9 @@ def get_rescaled(image_id):
 
 def test_rescale_op(plot=False):
     """
-    Test rescale
+    Feature: Rescale op
+    Description: Test rescale op basic usage
+    Expectation: Output is the same as expected output
     """
     logger.info("Test rescale")
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -84,7 +86,9 @@ def test_rescale_op(plot=False):
 
 def test_rescale_md5():
     """
-    Test Rescale with md5 comparison
+    Feature: Rescale op
+    Description: Test rescale op with md5 check
+    Expectation: Passes the md5 check test
     """
     logger.info("Test Rescale with md5 comparison")
 

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ IMAGE_FILE = "../data/dataset/apple.jpg"
 
 def test_rotate_pipeline_with_expanding(plot=False):
     """
-    Test Rotate of C implementation with expanding
+    Feature: Rotate
+    Description: Test Rotate of Cpp implementation in pipeline mode with expanding
+    Expectation: Output is the same as expected output
     """
     logger.info("test_rotate_pipeline_with_expanding")
 
@@ -63,7 +65,9 @@ def test_rotate_pipeline_with_expanding(plot=False):
 
 def test_rotate_pipeline_without_expanding():
     """
-    Test Rotate of C implementation without expanding
+    Feature: Rotate
+    Description: Test Rotate of Cpp implementation in pipeline mode without expanding
+    Expectation: Output is the same as expected output
     """
     logger.info("test_rotate_pipeline_without_expanding")
 
@@ -83,7 +87,9 @@ def test_rotate_pipeline_without_expanding():
 
 def test_rotate_eager():
     """
-    Test Rotate with eager mode
+    Feature: Rotate
+    Description: Test Rotate in eager mode
+    Expectation: Output is the same as expected output
     """
     logger.info("test_rotate_eager")
     img = cv2.imread(IMAGE_FILE)
@@ -94,7 +100,9 @@ def test_rotate_eager():
 
 def test_rotate_exception():
     """
-    Test Rotate with invalid parameters
+    Feature: Rotate
+    Description: Test Rotate with invalid parameters
+    Expectation: Correct error is raised as expected
     """
     logger.info("test_rotate_exception")
     try:

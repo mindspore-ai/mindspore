@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,11 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 
 def test_treble_biquad_eager():
-    """ mindspore eager mode normal testcase:treble_biquad op"""
+    """
+    Feature: TrebleBiquad op
+    Description: Test TrebleBiquad op in eager mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[0.234, 1.873, 0.786], [-2.673, 0.886, 1.666]], dtype=np.float64)
     # Expect waveform
@@ -43,7 +47,11 @@ def test_treble_biquad_eager():
 
 
 def test_treble_biquad_pipeline():
-    """ mindspore pipeline mode normal testcase:treble_biquad op"""
+    """
+    Feature: TrebleBiquad op
+    Description: Test TrebleBiquad op in pipeline mode under normal test case
+    Expectation: Output is equal to the expected output
+    """
     # Original waveform
     waveform = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float64)
     # Expect waveform
@@ -59,6 +67,11 @@ def test_treble_biquad_pipeline():
 
 
 def test_treble_biquad_invalid_input():
+    """
+    Feature: TrebleBiquad op
+    Description: Test TrebleBiquad op with invalid input
+    Expectation: Error is raised as expected
+    """
     def test_invalid_input(test_name, sample_rate, gain, central_freq, Q, error, error_msg):
         logger.info("Test TrebleBiquad with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:

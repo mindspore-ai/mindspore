@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ SCHEMA_DIR_2 = "../data/dataset/testTFBert5Rows2/datasetSchema.json"
 
 
 def test_rename():
+    """
+    Feature: Rename op
+    Description: Test rename op followed by repeat
+    Expectation: Output is the same as expected output
+    """
     data1 = ds.TFRecordDataset(DATA_DIR_2, SCHEMA_DIR_2, shuffle=False)
     data2 = ds.TFRecordDataset(DATA_DIR_2, SCHEMA_DIR_2, shuffle=False)
 

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,11 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 
 
 def test_func_time_masking_eager_random_input():
-    """ mindspore eager mode normal testcase:time_masking op"""
+    """
+    Feature: TimeMasking op
+    Description: Test TimeMasking op in eager mode under normal test case
+    Expectation: Output's shape is the same as expected output's shape
+    """
     logger.info("test time_masking op")
     spectrogram = next(gen((CHANNEL, FREQ, TIME)))[0]
     out_put = audio.TimeMasking(False, 3, 1, 10)(spectrogram)
@@ -62,7 +66,11 @@ def test_func_time_masking_eager_random_input():
 
 
 def test_func_time_masking_eager_precision():
-    """ mindspore eager mode normal testcase:time_masking op"""
+    """
+    Feature: TimeMasking op
+    Description: Test TimeMasking op in eager mode by comparing precision
+    Expectation: Output is the same as expected output
+    """
     logger.info("test time_masking op")
     spectrogram = np.array([[[0.17274511, 0.85174704, 0.07162686, -0.45436913],
                              [-1.045921, -1.8204843, 0.62333095, -0.09532598],
@@ -81,7 +89,11 @@ def test_func_time_masking_eager_precision():
 
 
 def test_func_time_masking_pipeline():
-    """ mindspore pipeline mode normal testcase:time_masking op"""
+    """
+    Feature: TimeMasking op
+    Description: Test TimeMasking op in pipeline mode under normal test case
+    Expectation: Output's shape is the same as expected output's shape
+    """
     logger.info("test time_masking op, pipeline")
 
     generator = gen([CHANNEL, FREQ, TIME])
@@ -96,6 +108,11 @@ def test_func_time_masking_pipeline():
 
 
 def test_time_masking_invalid_input():
+    """
+    Feature: TimeMasking op
+    Description: Test TimeMasking op with invalid input
+    Expectation: Correct error is raised as expected
+    """
     def test_invalid_param(test_name, iid_masks, time_mask_param, mask_start, error, error_msg):
         logger.info("Test TimeMasking with wrong params: {0}".format(test_name))
         with pytest.raises(error) as error_info:
