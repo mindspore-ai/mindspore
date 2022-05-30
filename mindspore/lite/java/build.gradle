@@ -38,8 +38,6 @@ test {
 }
 
 task releaseJar(type: Jar) {
-    from('java/common/build/classes/java/main')
-    from('java/linux_x86/build/classes/java/main')
     from('build/classes/java/main')
     from('src/main/resources')
     destinationDirectory = file('build/lib/jar')
