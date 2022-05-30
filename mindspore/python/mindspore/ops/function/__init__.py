@@ -163,6 +163,7 @@ from .math_func import (
     erf,
     erfc,
     cdist,
+    bernoulli,
     bessel_i0,
     bessel_i0e,
     bessel_j0,

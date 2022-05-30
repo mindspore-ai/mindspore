@@ -2266,6 +2266,14 @@ def sparse_ndim_(x):
     return F.tuple_len(x.shape)
 
 
+def bernoulli(x, p=0.5, seed=-1):
+    """
+    Randomly draws binary numbers from a Bernoulli distribution.
+    """
+    check_is_int(seed, 'bernoulli', 'seed')
+    return F.bernoulli(x, p, seed)
+
+
 def gather_nd(input_x, indices):
     r"""
     Gathers slices from a tensor by indices.

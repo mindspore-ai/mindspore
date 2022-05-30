@@ -79,6 +79,7 @@ Element-by-Element Operations
     mindspore.ops.atan
     mindspore.ops.atan2
     mindspore.ops.atanh
+    mindspore.ops.bernoulli
     mindspore.ops.bessel_i0
     mindspore.ops.bessel_i0e
     mindspore.ops.bessel_j0

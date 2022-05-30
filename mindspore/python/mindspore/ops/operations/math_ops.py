@@ -5767,3 +5767,32 @@ class Zeta(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Zeta"""
+
+
+class Bernoulli(Primitive):
+    """
+    Randomly set the elements of output to 0 or 1 with the probability of P which follows the Bernoulli distribution.
+
+    Refer to :func:`mindspore.ops.bernoulli` for more detail.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([1, 2, 3], mindspore.int8))
+        >>> bernoulli = P.Bernoulli()
+        >>> output = bernoulli(input_x, p=1.0)
+        >>> print(output)
+        [1, 1, 1]
+        >>> input_p = Tensor(np.array([0.0, 1.0, 1.0], mindspore.float32))
+        >>> output = bernoulli(input_x, input_p)
+        >>> print(output)
+        [0, 1, 1]
+    """
+    @prim_attr_register
+    def __init__(self, seed=-1):
+        """Initialize Bernoulli"""
+        self.init_prim_io_names(inputs=['x', 'p'], outputs=['y'])
+        validator.check_value_type("seed", seed, [int], self.name)
+        if seed != -1 and seed < 0:
+            raise ValueError(f"Seed must be -1 or a non-negative integer, but got {seed}.")

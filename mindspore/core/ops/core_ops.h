@@ -96,6 +96,7 @@ constexpr auto kImag = "Imag";
 constexpr auto kConj = "Conj";
 constexpr auto kGer = "Ger";
 constexpr auto kZeta = "Zeta";
+constexpr auto kBernoulli = "Bernoulli";
 
 // Math
 constexpr auto kCross = "Cross";
@@ -866,6 +867,7 @@ GVAR_DEF(PrimitivePtr, kPrimZeta, std::make_shared<Primitive>("Zeta"));
 GVAR_DEF(PrimitivePtr, kPrimIgamma, std::make_shared<Primitive>("Igamma"));
 GVAR_DEF(PrimitivePtr, kPrimIgammac, std::make_shared<Primitive>("Igammac"));
 GVAR_DEF(PrimitivePtr, kPrimIgammaGradA, std::make_shared<Primitive>("IgammaGradA"));
+GVAR_DEF(PrimitivePtr, kPrimBernoulli, std::make_shared<Primitive>(kBernoulli));
 GVAR_DEF(PrimitivePtr, kPrimKLDivLoss, std::make_shared<Primitive>("KLDivLoss"));
 
 // linalg

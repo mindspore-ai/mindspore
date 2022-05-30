@@ -22,7 +22,7 @@ import numpy as np
 from ...nn.layer import math
 from .. import functional as F
 from .. import operations as P
-from ..operations.math_ops import Trace
+from ..operations.math_ops import Trace, Bernoulli
 from ..functional import broadcast_gradient_args
 from .._grad.grad_base import bprop_getters
 from .._grad.grad_math_ops import binop_grad_common
@@ -545,6 +545,16 @@ def get_bprop_trace(self):
         shape = shape_op(x)
         dx = input_grad(dout, cast(to_array(shape), mstype.int64))
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Bernoulli)
+def get_bprop_bernoulli(self):
+    """"Grad definition for 'Bernoulli' operation."""
+
+    def bprop(x, p, out, dout):
+        return zeros_like(x), zeros_like(p)
 
     return bprop
 
