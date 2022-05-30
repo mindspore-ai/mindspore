@@ -199,7 +199,7 @@
 
     int，类别的数目。
 
-.. py:method:: output_shapes()
+.. py:method:: output_shapes(estimate=False)
 
     获取数据集对象中每列数据的shape。
 
