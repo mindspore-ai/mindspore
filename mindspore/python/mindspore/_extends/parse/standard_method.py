@@ -829,76 +829,7 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
 
 def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_LEFT"):
     """
-    Returns a Tensor with the contents in `x` as k[0]-th to k[1]-th diagonals of a matrix, with everything else padded
-    with `padding_value`. `num_rows` and `num_cols` specify the dimension of the innermost matrix of the output. If both
-    are not specified, the op assumes the innermost matrix of output Tensor is square and infers its size from `k` and
-    the innermost dimension of `x`. If the `num_rows` and `num_cols` specify only one of them, the operator will derive
-    the smallest legal value as the dimension of output. Moreover, when only one diagonal is given
-    (k is an integer or k[0] == k[1]), the first to the second innermost dimension of `x` is the batch size. Otherwise,
-    the second innermost dimension is not a part of batch size.
-
-    Args:
-        x (Tensor): The diagonal Tensor.
-        k (Union[int, Tensor], optional): A Tensor of type int32. Diagonal offsets. Positive value means superdiagonal,
-          0 refers to the main diagonal, and negative value means subdiagonals. `k` can be a single integer
-          (for a single diagonal) or a pair of integers specifying the low and high ends of a matrix band. k[0] must not
-          be larger than k[1]. The value must be in the range of given or derivated `num_rows` and `num_cols`, meaning
-          value of k must be in (-num_rows, num_cols). Default: 0.
-        num_rows (Union[int, Tensor], optional): A Tensor of type int32 with only one value. The number of rows of the
-          output Tensor. If `num_rows` is -1, indicating that the innermost matrix of the output Tensor is a square
-          matrix, and the real number of rows will be derivated by other inputs. That is
-          :math:`num_rows = x.shape[-1] - min(k[1], 0)`. Otherwise, the value must be equal or greater than
-          :math:`x.shape[-1] - min(k[1], 0)`. Default: -1.
-        num_cols (Union[int, Tensor], optional): A Tensor of type int32 with only one value. The number of columns of
-          the output Tensor. If `num_cols` is -1, indicating that the innermost matrix of the output Tensor is a square
-          matrix, and the real number of columns will be derivated by other inputs. That is
-          :math:`num_cols = x.shape[-1] + max(k[0], 0)`. Otherwise, the value must be equal or greater than
-          :math:`x.shape[-1] - min(k[1], 0)`.  Default: -1.
-        padding_value (Union[int, float, Tensor], optional): A Tensor with only one value. Have the same dtype as x.
-          The number to fill the area outside the specified diagonal band.  Default: 0.
-        align (str): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT". Align
-          is a string specifying how superdiagonals and subdiagonals should be aligned, respectively. "RIGHT_LEFT"
-          aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left (right-pads the row).
-
-    Returns:
-        A Tensor. Has the same type as `x`.
-        Suppose `x` has r dimensions with shape `(I, J, ..., M, N)`. The output Tensor has rank r + 1 with shape
-        `(I, J, ..., M, num_rows, num_cols)` when only one diagonal is given (k is an integer or k[0] == k[1]).
-        Otherwise, it has rank r with shape `(I, J, ..., num_rows, num_cols)`.
-
-    Raises:
-        TypeError: If `x` is not Tensor.
-        TypeError: If input `x` and `padding_value` are not the same dtype.
-        TypeError: If `k`, `num_rows` or `num_cols` is not int32 dtype.
-        ValueError: If rank of `k` is not equal to 0 or 1.
-        ValueError: If rank of `num_rows`, `num_cols` or `padding_value` is not equal to 0.
-        ValueError: If size of `k` is not equal to 1 or 2.
-        ValueError: If the value of `k` is not in (-num_rows, num_cols).
-        ValueError: If k[1] is not greater equal to k[0] when k[0] != k[1].
-        ValueError: If rank of `x` is not greater than or is equal to 1 when k is an integer or k[0] == k[1].
-        ValueError: If rank of `x` is not greater than or is equal to 2 when k[0] != k[1].
-        ValueError: If x.shape[-2] is not equal to k[1] - k[0] + 1 when k[0] != k[1].
-        ValueError: If `num_rows` and `num_cols` do not match the dimensions of `x` and the values of `k`.
-        ValueError: If `align` is not a string or not in the valid set of values.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> x = Tensor(np.array([[8, 9, 0],
-        ...                      [1, 2, 3],
-        ...                      [0, 4, 5]]), mindspore.float32)
-        >>> k =Tensor(np.array([-1, 1]), mindspore.int32)
-        >>> num_rows = Tensor(np.array(3), mindspore.int32)
-        >>> num_cols = Tensor(np.array(3), mindspore.int32)
-        >>> padding_value = Tensor(np.array(11), mindspore.float32)
-        >>> output = x.matrix_diag(k, num_rows, num_cols, padding_value, align='LEFT_RIGHT')
-        >>> print(output)
-        [[ 1.  8. 11.]
-         [ 4.  2.  9.]
-         [11.  5.  3.]]
-        >>> print(output.shape)
-        (3, 3)
+    Returns a batched diagonal tensor with given batched diagonal values.
     """
     return F.matrix_diag(x, k, num_rows, num_cols, padding_value, align)
 
