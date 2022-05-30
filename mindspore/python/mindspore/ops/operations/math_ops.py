@@ -1990,7 +1990,7 @@ class Reciprocal(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Outputs:
         Tensor, has the same shape as the `x`.
