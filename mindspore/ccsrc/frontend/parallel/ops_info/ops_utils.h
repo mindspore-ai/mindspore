@@ -88,6 +88,7 @@ constexpr size_t TUPLE_GETITEM_INDEX_POS = 2;
 constexpr size_t MATMUL_DDS_INPUTS_SIZE = 4;
 constexpr size_t MATMUL_DDS_OUTPUTS_SIZE = 2;
 constexpr size_t MATMUL_DDS_STRATEGY_SIZE = 4;
+constexpr size_t BATCH_NORM_INPUTS_SIZE = 5;
 constexpr double EPS = 1e-6;
 constexpr double INF = 1e20;
 constexpr double COST_FACTOR = 2.0;

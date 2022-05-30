@@ -77,45 +77,49 @@ Status MaxPoolInfo::GetAttrs() {
 
 Status MaxPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
   if (outputs_shape_[0][2] % h_strategy != 0) {
-    MS_LOG(ERROR) << name_
-                  << ": Do not support to split h dimension when out_shape of h dimension is not divisible by strategy "
-                     "of h dimension";
+    FILTER_LOG(is_auto_parallel_)
+      << name_
+      << ": Do not support to split h dimension when out_shape of h dimension is not divisible by strategy "
+         "of h dimension";
     return FAILED;
   }
 
   if (outputs_shape_[0][3] % w_strategy != 0) {
-    MS_LOG(ERROR) << name_
-                  << ": Do not support to split w dimension when out_shape of w dimension is not divisible by strategy "
-                     "of w dimension";
+    FILTER_LOG(is_auto_parallel_)
+      << name_
+      << ": Do not support to split w dimension when out_shape of w dimension is not divisible by strategy "
+         "of w dimension";
     return FAILED;
   }
 
   if (h_strategy > 1) {
     if (kernel_size_[2] > stride_[2]) {
-      MS_LOG(ERROR) << name_ << ": It does not support to split H dimension when kernel_size > stride";
+      FILTER_LOG(is_auto_parallel_) << name_ << ": It does not support to split H dimension when kernel_size > stride";
       return FAILED;
     }
 
     int64_t h_slice_shape = inputs_shape_[0][2] / h_strategy;
     if (h_slice_shape % stride_[2] != 0) {
-      MS_LOG(ERROR) << name_
-                    << ": It does not support to split H dimension when kernel_size <= stride but slice shape is not "
-                       "divisible by stride ";
+      FILTER_LOG(is_auto_parallel_)
+        << name_
+        << ": It does not support to split H dimension when kernel_size <= stride but slice shape is not "
+           "divisible by stride ";
       return FAILED;
     }
   }
 
   if (w_strategy > 1) {
     if (kernel_size_[3] > stride_[3]) {
-      MS_LOG(ERROR) << name_ << ": It does not support to split W dimension when kernel_size > stride";
+      FILTER_LOG(is_auto_parallel_) << name_ << ": It does not support to split W dimension when kernel_size > stride";
       return FAILED;
     }
 
     int64_t w_slice_shape = inputs_shape_[0][3] / w_strategy;
     if (w_slice_shape % stride_[3] != 0) {
-      MS_LOG(ERROR) << name_
-                    << ": It does not support to split W dimension when kernel_size <= stride but slice shape is not "
-                       "divisible by stride ";
+      FILTER_LOG(is_auto_parallel_)
+        << name_
+        << ": It does not support to split W dimension when kernel_size <= stride but slice shape is not "
+           "divisible by stride ";
       return FAILED;
     }
   }
@@ -126,19 +130,20 @@ Status MaxPoolInfo::CheckHWStrategy(int64_t h_strategy, int64_t w_strategy) {
 Status MaxPoolInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy";
+    FILTER_LOG(is_auto_parallel_) << name_ << ": Invalid strategy";
     return FAILED;
   }
 
   std::vector<Dimensions> stra = strategy->GetInputDim();
   if (stra.size() != 1) {
-    MS_LOG(ERROR) << name_ << ": The size of strategy must be 1, but got " << stra.size();
+    FILTER_LOG(is_auto_parallel_) << name_ << ": The size of strategy must be 1, but got " << stra.size();
     return FAILED;
   }
 
   Dimensions input_strategy = stra[0];
   if (input_strategy.size() != 4) {
-    MS_LOG(ERROR) << name_ << ": The size of input strategy must be 4, but got" << input_strategy.size();
+    FILTER_LOG(is_auto_parallel_) << name_ << ": The size of input strategy must be 4, but got"
+                                  << input_strategy.size();
     return FAILED;
   }
 
@@ -180,8 +185,7 @@ Status MaxPoolInfo::InferTensorMap() {
 Status MaxPoolInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> MaxPoolInfo::GenerateOpStrategies(int64_t stage_id) {
-  Shape input0_split(inputs_shape_[0].size(), 0);
-  input0_split[0] = 1;
+  Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
   std::vector<StrategyPtr> sp_vector;

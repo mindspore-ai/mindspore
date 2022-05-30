@@ -196,6 +196,83 @@ void MatMulCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_outp
   }
 }
 
+// return the per device communication cost in the forward phase.
+double BatchNormCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                         int64_t) const {
+  TensorInfo input0 = inputs[0];
+  Shape input0_shape = input0.shape();
+  if (input0_shape.size() < 2) {
+    MS_LOG(EXCEPTION) << "The dimension of first input can not be smaller than 2, but got " << input0_shape.size();
+  }
+  Shape input0_slice_shape = input0.slice_shape();
+  if (input0_shape[1] == input0_slice_shape[1]) {
+    // If the 'channel' dimension has not been partitioned, then there is no communication cost.
+    return 0.0;
+  } else {
+    // Else, the communication cost is the size (number of bytes) of a slice of input tensor.
+    return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+  }
+}
+
+// return the per device communication cost in the forward phase.
+double BatchNormCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                          int64_t stage_id) const {
+  // In backward phase, the communication cost is incurred only when last 4 tensor are Parameter and they does not
+  // fully utilize all devices
+  double result = 0.0, tmp_cost = 0.0;
+
+  TensorInfo input1 = inputs[1];  // tensor gamma
+  CheckGlobalDeviceManager();
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto total_device_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
+
+  Shape input1_shape = input1.shape();
+  Shape input1_slice_shape = input1.slice_shape();
+  int64_t used_device_num = 1;
+  for (size_t i = 0; i < input1_shape.size(); ++i) {
+    used_device_num *= input1_shape[i] / input1_slice_shape[i];
+  }
+
+  if (total_device_num != LongToSize(used_device_num)) {
+    tmp_cost = ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]);
+  }
+
+  for (size_t i = 1; i < is_parameter_.size(); ++i) {
+    if (is_parameter_[i]) {
+      result += tmp_cost;
+    }
+  }
+  return result;
+}
+
+// Return the per device computation cost in the forward phase. The cost is calculated according to the bytes
+// this operator uses
+double BatchNormCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                                int64_t) const {
+  double result = 0.0;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    result += ListProduct(inputs[i].slice_shape()) * static_cast<double>(inputs_type_lengths_[i]);
+  }
+  return result;
+}
+
+// Return the per device computation cost in the forward phase. The cost is calculated according to the bytes
+// this operator uses
+double BatchNormCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                                 int64_t stage_id) const {
+  return 0.0;
+}
+
+// Not taking account of output
+void BatchNormCost::CalculateOutputInMemory() { is_output_should_in_memory_ = true; }
+
+// Taking account of input
+void BatchNormCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
+  for (size_t i = 0; i < is_inputs_should_in_memory_.size(); ++i) {
+    is_inputs_should_in_memory_[0] = true;
+  }
+}
+
 // Return the per device communication cost in the forward phase.
 double CastCost::GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const {
   // ReLU is the element-wise operator, thus it does not need communication in the forward phase

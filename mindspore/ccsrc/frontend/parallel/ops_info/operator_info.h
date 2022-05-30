@@ -50,6 +50,8 @@ using different_type = std::vector<int64_t>::difference_type;
 using PrimitiveAttrs = mindspore::HashMap<std::string, ValuePtr>;
 using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>;
 
+#define FILTER_LOG(x) x ? void(0) : MS_LOG(ERROR)
+
 class Edge;
 
 class OperatorInfo {
@@ -248,7 +250,7 @@ class OperatorInfo {
   std::vector<int64_t> GetTupleIntAttr(const std::string &attr_name);
   void ReportError(const std::string &error_msg) const {
     if (is_auto_parallel_) {
-      MS_LOG(INFO) << error_msg;
+      MS_LOG(DEBUG) << error_msg;
     } else {
       MS_LOG(ERROR) << error_msg;
     }

@@ -33,7 +33,7 @@ class BatchNormInfo : public OperatorInfo {
  public:
   BatchNormInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                 const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()) {}
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchNormCost>()) {}
   ~BatchNormInfo() override = default;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;

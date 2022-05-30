@@ -132,13 +132,9 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
   size_t inputs_shape_size = inputs_shape.size();
   Strategys stra = strategy->GetInputDim();
   if (strategy_size != inputs_shape_size) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": The strategy is " << StrategyToString(stra) << ", strategy size: " << strategy_size
-                    << " is not equal to inputs size: " << inputs_shape_size;
-    } else {
-      MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", strategy size: " << strategy_size
-                    << " is not equal to inputs size: " << inputs_shape_size;
-    }
+    FILTER_LOG(is_auto_parallel_) << name_ << ": The strategy is " << StrategyToString(stra)
+                                  << ", strategy size: " << strategy_size
+                                  << " is not equal to inputs size: " << inputs_shape_size;
     return FAILED;
   }
 
@@ -148,53 +144,35 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
     size_t strategy_len = sub_strategy.size();
     size_t inputs_len = sub_input_shape.size();
     if (strategy_len != inputs_len) {
-      if (is_auto_parallel_) {
-        MS_LOG(DEBUG) << name_ << ": The strategy is " << StrategyToString(stra) << ", strategy len: " << strategy_len
-                      << " is not equal to inputs len: " << inputs_len << ", index: " << i;
-      } else {
-        MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", strategy len: " << strategy_len
-                      << " is not equal to inputs len: " << inputs_len << ", index: " << i;
-      }
+      FILTER_LOG(is_auto_parallel_) << name_ << ": The strategy is " << StrategyToString(stra)
+                                    << ", strategy len: " << strategy_len
+                                    << " is not equal to inputs len: " << inputs_len << ", index: " << i;
       return FAILED;
     }
 
     for (size_t j = 0; j < strategy_len; ++j) {
       int64_t strategy_value = sub_strategy.at(j);
       if (strategy_value < MIN_SLICE_NUM) {
-        if (is_auto_parallel_) {
-          MS_LOG(DEBUG) << name_ << ": The strategy is " << StrategyToString(stra)
-                        << ", the value of strategy must be larger than 0, but get " << strategy_value;
-        } else {
-          MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra)
-                        << ", the value of strategy must be larger than 0, but get " << strategy_value;
-        }
+        FILTER_LOG(is_auto_parallel_) << name_ << ": The strategy is " << StrategyToString(stra)
+                                      << ", the value of strategy must be larger than 0, but get " << strategy_value;
         return FAILED;
       }
 
       int64_t shape_value = sub_input_shape.at(j);
       if ((shape_value % strategy_value) != 0) {
-        if (is_auto_parallel_) {
-          MS_LOG(DEBUG) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
-                        << " cannot be divisible by strategy value " << strategy_value;
-        } else {
-          MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
-                        << " cannot be divisible by strategy value " << strategy_value;
-        }
+        FILTER_LOG(is_auto_parallel_) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape "
+                                      << shape_value << " cannot be divisible by strategy value " << strategy_value;
         return FAILED;
       }
 
       if ((LongToUlong(strategy_value) & LongToUlong(strategy_value - 1)) != 0) {
         if ((g_device_manager->DeviceNum() & (g_device_manager->DeviceNum() - 1)) != 0) {
-          MS_LOG(INFO) << "The device num is not the power of 2, thus do not check the strategy as power of 2";
+          MS_LOG(INFO) << name_
+                       << ": The device num is not the power of 2, thus do not check the strategy as power of 2";
           return SUCCESS;
         }
-        if (is_auto_parallel_) {
-          MS_LOG(DEBUG) << name_ << ": The strategy is " << StrategyToString(stra)
-                        << ", the value of strategy must be the power of 2, but get " << strategy_value;
-        } else {
-          MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra)
-                        << ", the value of strategy must be the power of 2, but get " << strategy_value;
-        }
+        FILTER_LOG(is_auto_parallel_) << name_ << ": The strategy is " << StrategyToString(stra)
+                                      << ", the value of strategy must be the power of 2, but get " << strategy_value;
         return FAILED;
       }
     }
@@ -633,7 +611,7 @@ OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num) {
 
 Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector<Group> *group) {
   if (group == nullptr) {
-    MS_LOG(ERROR) << "The group is null.";
+    MS_LOG(ERROR) << name_ << ": The group is null.";
     return FAILED;
   }
   CheckGlobalDeviceManager();
@@ -645,12 +623,12 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
   }
 
   if (group_devices.size() == 1) {
-    MS_LOG(INFO) << "The dev size is 1, no need to create group.";
+    MS_LOG(INFO) << name_ << ": The dev size is 1, no need to create group.";
     return SUCCESS;
   }
   if (is_auto_parallel_) {
     if (g_device_manager->CheckDeviceList(group_devices) != SUCCESS) {
-      MS_LOG(INFO) << "Try to create communication group : " << group_devices
+      MS_LOG(INFO) << name_ << ": Try to create communication group : " << group_devices
                    << " failed in auto parallel mode, "
                       "this error can be ignored in parallel strategies searching step";
       return FAILED;
@@ -660,8 +638,7 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
 
   Group g;
   if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
-    MS_LOG(ERROR) << "Operator " << name_
-                  << " create communication group by tensor_map failed, the rank_list is: " << group_devices
+    MS_LOG(ERROR) << name_ << ": Create communication group by tensor_map failed, the rank_list is: " << group_devices
                   << ", the input strategy is " << strategy_->GetInputDim()
                   << ", the full_name of node is: " << cnode_->fullname_with_scope();
     return FAILED;
@@ -672,7 +649,7 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
 
 Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, std::vector<Group> *groups) {
   if (groups == nullptr) {
-    MS_LOG(ERROR) << "The group is null. Operator is " << name_;
+    MS_LOG(ERROR) << name_ << ": The group is null.";
     return FAILED;
   }
   CheckGlobalDeviceManager();
@@ -685,7 +662,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
   }
 
   if (group_devices.size() == 1) {
-    MS_LOG(INFO) << "The dev size is 1, no need to create group.";
+    MS_LOG(INFO) << name_ << ": The dev size is 1, no need to create group.";
     return SUCCESS;
   }
   int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
@@ -694,8 +671,8 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
     int64_t index = std::find(group_devices.begin(), group_devices.end(), rank) - group_devices.begin();
     int64_t repeated_size = SizeToLong(group_devices.size());
     if (repeated_size % optimizer_weight_shard_size != 0) {
-      MS_LOG(WARNING) << "Parallel optimizer: optimizer_weight_shard_size " << optimizer_weight_shard_size
-                      << " can not be applied. The repeated size of Operator " << name_ << " is " << repeated_size;
+      MS_LOG(WARNING) << name_ << ": Parallel optimizer: optimizer_weight_shard_size " << optimizer_weight_shard_size
+                      << " can not be applied. The repeated size is " << repeated_size;
       return FAILED;
     }
     repeated_size = repeated_size / optimizer_weight_shard_size;
@@ -706,8 +683,8 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
       group_devices.begin() + (index / optimizer_weight_shard_size + 1) * optimizer_weight_shard_size);
     Group allgather_group;
     if (g_device_manager->CreateGroup(new_group_devices, &allgather_group) != SUCCESS) {
-      MS_LOG(ERROR) << "Operator " << name_
-                    << " create communication group for allgather in optimizer parallel failed,"
+      MS_LOG(ERROR) << name_
+                    << ": Create communication group for allgather in optimizer parallel failed,"
                        " the rank_list is: "
                     << group_devices << ", the input strategy is " << strategy_->GetInputDim()
                     << ", the full_name of node is: " << cnode_->fullname_with_scope();
@@ -715,7 +692,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
     }
     groups->push_back(allgather_group);
     tensor_layout->set_opt_shard_group(allgather_group.name());
-    MS_LOG(INFO) << "Parallel optimizer: create allgather group " << allgather_group.name();
+    MS_LOG(INFO) << name_ << ": Parallel optimizer, create allgather group " << allgather_group.name();
     // create mirror group
     // eg: optimizer_weight_shard_size = 2, [0, 8, 16, 24] -> [0, 16], [8, 24]
     int64_t device_num = g_device_manager->stage_device_num();
@@ -727,8 +704,8 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
     }
     Group mirror_group;
     if (g_device_manager->CreateGroup(mirror_group_devices, &mirror_group)) {
-      MS_LOG(ERROR) << "Operator " << name_
-                    << " create communication group for mirror in optimizer parallel failed,"
+      MS_LOG(ERROR) << name_
+                    << ": Create communication group for mirror in optimizer parallel failed,"
                        " the rank_list is: "
                     << group_devices << ", the input strategy is " << strategy_->GetInputDim()
                     << ", the full_name of node is: " << cnode_->fullname_with_scope();
@@ -736,14 +713,14 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
     }
     groups->push_back(mirror_group);
     tensor_layout->set_opt_shard_mirror_group(mirror_group.name());
-    MS_LOG(INFO) << "Parallel optimizer: create mirror group " << mirror_group.name();
+    MS_LOG(INFO) << name_ << ": Parallel optimizer, create mirror group " << mirror_group.name();
   } else {
     // fully use opt shard
     // create allgather group
     Group allgather_group;
     if (g_device_manager->CreateGroup(group_devices, &allgather_group) != SUCCESS) {
-      MS_LOG(ERROR) << "Operator " << name_
-                    << " create communication group for allgather in optimizer parallel failed,"
+      MS_LOG(ERROR) << name_
+                    << ": Create communication group for allgather in optimizer parallel failed,"
                        " the rank_list is: "
                     << group_devices << ", the input strategy is " << strategy_->GetInputDim()
                     << ", the full_name of node is: " << cnode_->fullname_with_scope();
@@ -751,7 +728,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
     }
     groups->push_back(allgather_group);
     tensor_layout->set_opt_shard_group(allgather_group.name());
-    MS_LOG(INFO) << "Parallel optimizer: create allgather group " << allgather_group.name();
+    MS_LOG(INFO) << name_ << ": Parallel optimizer, create allgather group " << allgather_group.name();
   }
   // save in tensor_layout for strategy ckpt
   auto integrated_save = ParallelContext::GetInstance()->optimizer_weight_shard_aggregated_save();
@@ -760,14 +737,15 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, s
     int64_t opt_weight_shard_step =
       (group_devices.back() - group_devices.front()) / (SizeToLong(group_devices.size()) - 1);
     tensor_layout->set_opt_weight_shard_step(LongToInt(opt_weight_shard_step));
-    MS_LOG(INFO) << "Parallel optimizer: save opt_weight_shard_step " << opt_weight_shard_step << " in strategy ckpt";
+    MS_LOG(INFO) << name_ << "Parallel optimizer, save opt_weight_shard_step " << opt_weight_shard_step
+                 << " in strategy ckpt";
   }
   return SUCCESS;
 }
 
 Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
   if (group == nullptr) {
-    MS_LOG(ERROR) << "The group is null.";
+    MS_LOG(ERROR) << name_ << ": The group is null.";
     return FAILED;
   }
   CheckGlobalDeviceManager();
@@ -779,12 +757,12 @@ Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
   }
 
   if (group_devices.size() == 1) {
-    MS_LOG(INFO) << "The dev size is 1, no need to create group.";
+    MS_LOG(INFO) << name_ << ": The dev size is 1, no need to create group.";
     return SUCCESS;
   }
   if (is_auto_parallel_) {
     if (g_device_manager->CheckDeviceList(group_devices) != SUCCESS) {
-      MS_LOG(INFO) << "Try to create communication group : " << group_devices
+      MS_LOG(INFO) << name_ << ": Try to create communication group : " << group_devices
                    << " failed in auto parallel mode, "
                       "this error can be ignored in parallel strategies searching step";
       return FAILED;
@@ -793,8 +771,7 @@ Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
   }
   Group g;
   if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
-    MS_LOG(ERROR) << "Operator " << name_
-                  << " create communication group by dim failed, the rank_list is: " << group_devices
+    MS_LOG(ERROR) << name_ << ": Create communication group by dim failed, the rank_list is: " << group_devices
                   << ", the input strategy is " << strategy_->GetInputDim()
                   << ", the full_name of node is: " << cnode_->fullname_with_scope();
     return FAILED;
@@ -857,17 +834,17 @@ Status InferSliceShapeByStrategy(const Strategys &strategys, const Shapes &shape
 Status OperatorInfo::InferSliceShape(const Strategys &inputs_strategy, const Strategys &outputs_strategy,
                                      Shapes *inputs_slice_shape, Shapes *outputs_slice_shape) {
   if (inputs_slice_shape == nullptr || outputs_slice_shape == nullptr) {
-    MS_LOG(ERROR) << "The slice_shape is null.";
+    MS_LOG(ERROR) << name_ << ": The slice_shape is null.";
     return FAILED;
   }
 
   if (InferSliceShapeByStrategy(inputs_strategy, inputs_shape_, inputs_slice_shape) != SUCCESS) {
-    MS_LOG(ERROR) << "Infer inputs slice shape error.";
+    MS_LOG(ERROR) << name_ << ": Infer inputs slice shape error.";
     return FAILED;
   }
 
   if (InferSliceShapeByStrategy(outputs_strategy, outputs_shape_, outputs_slice_shape) != SUCCESS) {
-    MS_LOG(ERROR) << "Infer outputs slice shape error.";
+    MS_LOG(ERROR) << name_ << ": Infer outputs slice shape error.";
     inputs_slice_shape->clear();
     return FAILED;
   }
@@ -910,11 +887,7 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
 
   // must be after InferAttrs()
   if (CheckStrategy(in_strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": CheckStrategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": CheckStrategy failed.";
-    }
+    FILTER_LOG(is_auto_parallel_) << name_ << ": CheckStrategy failed.";
     return FAILED;
   }
   strategy_ = in_strategy;
@@ -939,7 +912,7 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &in_st
 
   // must be after InferDevMatrixShape
   if (InferRepeatedCalcInfo() != SUCCESS) {
-    MS_LOG(ERROR) << ": InferRepeatedCalcInfo failed.";
+    MS_LOG(ERROR) << name_ << ": InferRepeatedCalcInfo failed.";
     return FAILED;
   }
 
@@ -1601,11 +1574,7 @@ Status GenerateStrategiesWithBroadcast(int64_t stage_id, const Shapes &inputs_sh
 
 Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
   if (InitForCostModel(strategy, nullptr) == FAILED) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Initialization under the strategy failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Initialization under the strategy failed.";
-    }
+    MS_LOG(DEBUG) << name_ << ": Initialization under the strategy failed.";
     return FAILED;
   }
   int64_t stage_id = strategy->GetInputStage();
@@ -1707,7 +1676,7 @@ void OperatorInfo::ApproximateStrategies() {
   if (!enable_approxi) {
     return;
   }
-  MS_LOG(INFO) << "Approximating strategy-cost for: " << name_;
+  MS_LOG(INFO) << name_ << ": Approximating strategy-cost";
   auto epsilon = CostModelContext::GetInstance()->dp_algo_approxi_epsilon();
   auto target_num = static_cast<size_t>(std::ceil(1.0 / epsilon));
   if (strategy_cost_.size() <= target_num) {
@@ -1744,19 +1713,19 @@ void OperatorInfo::ExactStrategiesAndRelatedEdges() {
   }
   ClearStrategyCost();
   if (GenerateStrategies(0) != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Strategy search for Operator " << name() << " failed.";
+    MS_LOG(EXCEPTION) << name_ << ": Strategy search failed.";
   }
   SetIsStrategyCostExactTrue();
   // re-init the previous edges
   for (auto &prev_edge : prev_edges()) {
     if (prev_edge->InitEdgeCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Edge: " << prev_edge->edge_name() << " cost init failed.";
+      MS_LOG(EXCEPTION) << name_ << ": Edge: " << prev_edge->edge_name() << " cost init failed.";
     }
   }
   // re-init the successive edges
   for (auto &next_edge : succ_edges()) {
     if (next_edge->InitEdgeCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Edge: " << next_edge->edge_name() << " cost init failed.";
+      MS_LOG(EXCEPTION) << name_ << ": Edge: " << next_edge->edge_name() << " cost init failed.";
     }
   }
 }
@@ -1809,7 +1778,7 @@ int64_t OperatorInfo::ComputeOpAndPrevEdgeParameterInvolved() {
 
 Status OperatorInfo::set_is_parameter(const std::vector<bool> &is_parameter) {
   if (is_parameter.size() != inputs_shape_.size()) {
-    MS_LOG(ERROR) << "Is_parameter: " << is_parameter.size()
+    MS_LOG(ERROR) << name_ << ": Is_parameter: " << is_parameter.size()
                   << " do not have the same number of inputs_shape_: " << inputs_shape_.size();
     return FAILED;
   }
@@ -1820,7 +1789,9 @@ Status OperatorInfo::set_is_parameter(const std::vector<bool> &is_parameter) {
 
 Status OperatorInfo::CalculateMemoryCost() {
   if (is_parameter_involve_.size() != is_parameter_.size()) {
-    MS_LOG(ERROR) << "'is_parameter_' does not have the same number of input size of 'is_parameter_involve_'.";
+    MS_LOG(ERROR) << name_ << ": the size of 'is_parameter_' is " << is_parameter_.size()
+                  << " does not have the same number of the size of 'is_parameter_involve_'."
+                  << is_parameter_involve_.size();
     return FAILED;
   }
   // Set the memory cost in the 'strategy_cost_'
@@ -1834,7 +1805,7 @@ Status OperatorInfo::CalculateMemoryCost() {
 Status OperatorInfo::CalculateMemoryCostForInference() {
   // First, set the 'is_outputs_critical_' flag into OperatorCost.
   if (is_output_critical_ == -1) {
-    MS_LOG(EXCEPTION) << "The critical flag is not set.";
+    MS_LOG(EXCEPTION) << name_ << ": The critical flag is not set.";
   }
   operator_cost()->set_output_critical(is_output_critical_);
   // Set the memory cost in the 'strategy_cost_'
@@ -1851,7 +1822,7 @@ Status OperatorInfo::CorrectMemoryCost(size_t input_index) {
                                 static_cast<double>(operator_cost()->inputs_type_lengths()[input_index]);
     swc->cost_list[0]->memory_with_reuse_ -= parameter_mem_cost;
     if (swc->cost_list[0]->memory_with_reuse_ < 0) {
-      MS_LOG(ERROR) << "The memory cost after correction is: " << swc->cost_list[0]->memory_with_reuse_
+      MS_LOG(ERROR) << name_ << ": The memory cost after correction is: " << swc->cost_list[0]->memory_with_reuse_
                     << ", the parameter memory cost is: " << parameter_mem_cost;
       return FAILED;
     }
@@ -1944,12 +1915,12 @@ Status OperatorInfo::InferVirtualDivOps() {
 Status OperatorInfo::SetInputAndOutputTypeLength(const std::vector<size_t> &input_lengths,
                                                  const std::vector<size_t> &output_lengths) {
   if (input_lengths.size() != inputs_shape_.size()) {
-    MS_LOG(ERROR) << "Input_lengths: " << input_lengths.size()
+    MS_LOG(ERROR) << name_ << ": Input_lengths: " << input_lengths.size()
                   << " do not have the same number of inputs shape: " << inputs_shape_.size();
     return FAILED;
   }
   if (output_lengths.size() != outputs_shape_.size()) {
-    MS_LOG(ERROR) << "Output_lengths: " << output_lengths.size()
+    MS_LOG(ERROR) << name_ << ": Output_lengths: " << output_lengths.size()
                   << " do not have the same number of outputs shape: " << outputs_shape_.size();
     return FAILED;
   }
@@ -1964,7 +1935,7 @@ double OperatorInfo::GetOutputsTotalSize() {
     return outputs_total_size_;
   }
   if (outputs_type_lengths_.size() != outputs_shape_.size()) {
-    MS_LOG(EXCEPTION) << "Output_lengths: " << outputs_type_lengths_.size()
+    MS_LOG(EXCEPTION) << name_ << ": Output_lengths: " << outputs_type_lengths_.size()
                       << " do not have the same number of outputs shape: " << outputs_shape_.size();
   }
   double sum = 0.0;
@@ -1980,7 +1951,7 @@ double OperatorInfo::GetOutputsTotalSize() {
 
 Status OperatorInfo::set_outputs_type(const std::vector<TypePtr> &outputs_type) {
   if (outputs_type.size() != outputs_shape_.size()) {
-    MS_LOG(ERROR) << "Outputs type: " << outputs_type.size()
+    MS_LOG(ERROR) << name_ << ": Outputs type: " << outputs_type.size()
                   << " do not have the same number of outputs shape: " << outputs_shape_.size();
     return FAILED;
   }
@@ -2013,14 +1984,14 @@ void OperatorInfo::SetSelectedStrategy(const StrategyPtr &s_strategy, size_t cur
     MS_LOG(INFO) << name_ << " has already been set strategy.";
     return;
   }
-  MS_LOG(INFO) << "Set strategy for: " << name_;
+  MS_LOG(INFO) << name_ << ": Set strategy";
   PrintStrategy(s_strategy);
   selected_strategy_ = s_strategy;
   selected_strategy_depth_ = SizeToLong(curr_depth);
 }
 
 void OperatorInfo::set_swc_index(int64_t swc, int64_t depth) {
-  MS_LOG(INFO) << "Set SWC index: " << swc << " for: " << name();
+  MS_LOG(INFO) << name_ << ": Set SWC index: " << swc;
   selected_strategy_depth_ = depth;
   swc_index_ = swc;
 }
@@ -2034,9 +2005,9 @@ double OperatorInfo::GetForwardMemoryCostFromCNode() {
 void OperatorInfo::CheckSelectedStrategy(const StrategyPtr &s_strategy) {
   MS_EXCEPTION_IF_NULL(s_strategy);
   if (!s_strategy->IsEqual(selected_strategy_)) {
-    MS_LOG(INFO) << name() << "'s strategy may cause suboptimal, the determined strategy:";
+    MS_LOG(INFO) << name_ << "'s strategy may cause suboptimal, the determined strategy:";
     PrintStrategy(selected_strategy_);
-    MS_LOG(INFO) << "The minimal strategy:";
+    MS_LOG(INFO) << name_ << ": The minimal strategy:";
     PrintStrategy(s_strategy);
   }
 }

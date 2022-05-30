@@ -143,6 +143,34 @@ class MatMulCost : public OperatorCost {
 };
 using TensorDotCost = MatMulCost;
 
+class BatchNormCost : public OperatorCost {
+ public:
+  BatchNormCost() : OperatorCost() {}
+  ~BatchNormCost() override = default;
+
+  // per device communication cost
+  double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                     int64_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int64_t stage_id) const override;
+  double GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                             int64_t stage_id) const override;
+
+  // per device computation cost
+  double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int64_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                   int64_t stage_id) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                    int64_t stage_id) const override;
+  void CalculateOutputInMemory() override;
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
 class CastCost : public OperatorCost {
  public:
   CastCost() : OperatorCost() {}

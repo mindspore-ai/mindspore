@@ -946,11 +946,7 @@ Status GatherInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_s
 
 Status GatherInfo::InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
   if (InitForCostModelWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    }
+    MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
   auto param_strategy = strategy_->GetInputDim().at(0);
@@ -968,7 +964,6 @@ std::vector<StrategyPtr> GatherInfo::GenerateOpStrategies(int64_t stage_id) {
   if (manual_split_) {
     MS_LOG(EXCEPTION) << name_ << ": Manual split does not support to search strategy";
   }
-  is_auto_parallel_ = true;
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shape input1_split(inputs_shape_[1].size(), 1);
   Shapes splittable_inputs = {input0_split, input1_split};
