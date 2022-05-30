@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -575,8 +575,14 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeMakeSequenceAdjoint(const CNodePtr &c
       } else if (input->isa<ValueNode>()) {
         const auto &input_value = GetValueNode(input);
         op_args.push_back(input_value);
+      } else if (input->isa<Parameter>()) {
+        const auto input_parameter = dyn_cast<Parameter>(input);
+        MS_EXCEPTION_IF_NULL(input_parameter);
+        const auto &input_value = input_parameter->default_param();
+        op_args.push_back(input_value);
       } else {
-        MS_LOG(EXCEPTION) << "Input of MakeTuple/MakeLis is not a CNode or ValueNode, but: " << input->DebugString();
+        MS_LOG(EXCEPTION) << "The input of MakeTuple/MakeList is not a CNode, ValueNode or Parameter, but "
+                          << input->DebugString();
       }
     } else {
       op_args.push_back(input_adjoint_iter->second->out());
