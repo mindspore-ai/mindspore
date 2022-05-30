@@ -45,7 +45,7 @@ def clip_by_norm(x, clip_norm, axis=None):
         TypeError: If `axis` is not one of None, int, tuple(int) and list(int).
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
