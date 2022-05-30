@@ -510,6 +510,7 @@ def get_masked_select_vmap_rule(prim, axis_size):
                                "but got {}.".format(mask_dim))
 
         x = _bdim_at_front(x, x_dim, axis_size)
+        mask = _bdim_at_front(mask, mask_dim, axis_size)
         x_shape = F.shape(x)
         mask_shape = F.shape(mask)
         x = _handle_broadcasting(x, x_shape, mask_shape)

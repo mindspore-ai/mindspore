@@ -63,10 +63,11 @@ def vmap_case():
             return vmap(self.net, self.in_axes, self.out_axes)(a, b)
 
     # batch dimension of x is 0, and batch dimension of y is None
-    x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32))
+    # the shape of x is (2, 3), and the mask is [False, True, True], bdim is 0, so the shape of output is (2, 2)
+    x = Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32))
     y = Tensor(np.array([False, True, True], dtype=np.bool))
     output = WrapNet(Net(), (0, None), 0)(x, y)
-    expect = np.array([[2, 3], [5, 6], [8, 9]], dtype=np.float32)
+    expect = np.array([[2, 3], [5, 6]], dtype=np.float32)
     assert np.allclose(output.asnumpy(), expect)
 
 
@@ -87,13 +88,17 @@ def vmap_case_nested():
             self.out_axes = out_axes
 
         def construct(self, a, b):
-            return vmap(vmap(self.net, self.in_axes, self.out_axes), in_axes=(0, None))(a, b)
+            return vmap(vmap(self.net, self.in_axes, self.out_axes), in_axes=(-1, None))(a, b)
 
-    # the shape of x is [2, 2, 2], the shape of mask is [2], the output shape is [2, 2, 1]
-    x = Tensor(np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], dtype=np.float32))
-    y = Tensor(np.array([False, True], dtype=np.bool))
-    output = WrapNet2(Net2(), (0, None), 0)(x, y)
-    expect = np.array([[[2], [4]], [[6], [8]]], dtype=np.float32)
+    # the shape of x is (2, 3, 4), the bdim is nested -1
+    # the shape of mask is [[False, False], [False, True]]
+    # the shape of output is (4, 3, 1)
+    x = Tensor(np.array([[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
+                         [[13, 14, 15, 16], [17, 18, 19, 20], [21, 22, 23, 24]]], dtype=np.float32))
+    y = Tensor(np.array([[False, False], [False, True]], dtype=np.bool))
+    output = WrapNet2(Net2(), (-1, None), 0)(x, y)
+    expect = np.array([[[13], [17], [21]], [[14], [18], [22]], [[15], [19], [23]], [[16], [20], [24]]],
+                      dtype=np.float32)
     assert np.allclose(output.asnumpy(), expect)
 
 
