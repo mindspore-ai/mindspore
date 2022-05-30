@@ -426,7 +426,7 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
     device_list.push_back(npu_device_info);
   }
 
-  if (flags_->device_ == "Ascend310" || flags_->device_ == "Ascend710") {
+  if (flags_->device_ == "Ascend310" || flags_->device_ == "Ascend310P") {
     uint32_t device_id = 0;
     auto device_id_env = std::getenv("ASCEND_DEVICE_ID");
     if (device_id_env != nullptr) {

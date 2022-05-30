@@ -130,8 +130,8 @@ echo 'run Ascend logs: ' > ${run_ascend_log_file}
 echo "Start to run benchmark in ${backend}, device id ${device_id}..."
 if [[ ${backend} =~ "ascend310" ]]; then
   ascend_device=Ascend310
-elif [[ ${backend} =~ "ascend710" ]]; then
-  ascend_device=Ascend710
+elif [[ ${backend} =~ "ascend310P" ]]; then
+  ascend_device=Ascend310P
 else
   echo "${backend} is not support."
   exit 1
