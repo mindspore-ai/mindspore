@@ -1085,7 +1085,7 @@ void PipelineTransformer::ModifyParameterList() {
     }
   }
   auto del_num = parameters.size() - parameter_list.size();
-  root_->set_hyper_param_count(root_->hyper_param_count() - del_num);
+  root_->set_fv_param_count(root_->fv_param_count() - del_num);
   manager_->SetParameters(root_, parameter_list);
 }
 }  // namespace parallel

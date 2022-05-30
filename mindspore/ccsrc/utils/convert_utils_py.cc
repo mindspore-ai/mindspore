@@ -469,8 +469,8 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
     auto func_graph = output->func_graph();
     MS_EXCEPTION_IF_NULL(func_graph);
     auto params = func_graph->parameters();
-    if ((args.size() + func_graph->hyper_param_count()) != params.size()) {
-      MS_LOG(EXCEPTION) << "Input size " << args.size() << " add Parameter count " << func_graph->hyper_param_count()
+    if ((args.size() + func_graph->fv_param_count()) != params.size()) {
+      MS_LOG(EXCEPTION) << "Input size " << args.size() << " add Parameter count " << func_graph->fv_param_count()
                         << " not equal to graph input size " << params.size() << ", let graph to be executed.";
     }
 
@@ -479,9 +479,9 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
       MS_EXCEPTION(UnknownError) << "When graph output is Parameter,  it should be found in graph parameters";
     }
     size_t index = it - params.cbegin();
-    if (index >= args.size() + func_graph->hyper_param_count()) {
+    if (index >= args.size() + func_graph->fv_param_count()) {
       MS_EXCEPTION(UnknownError) << "Index " << index << " equal or larger than args size " << args.size()
-                                 << " add Parameter count " << func_graph->hyper_param_count() << ".";
+                                 << " add Parameter count " << func_graph->fv_param_count() << ".";
     }
     if (index < args.size()) {
       *ret_val = args[index];

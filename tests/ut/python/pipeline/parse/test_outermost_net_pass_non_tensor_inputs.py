@@ -19,9 +19,9 @@ import pytest
 import mindspore.nn as nn
 from mindspore.common import mutable
 from mindspore import Tensor, Parameter, ParameterTuple
-from mindspore import context
 from mindspore.ops import composite as C
 import mindspore.ops as ops
+from mindspore import context
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -91,29 +91,7 @@ def test_grad_first_input_net(mode):
 
     context.set_context(mode=mode)
     grad_fist_input_tensor_net = GradNet1(FirstInputTensorNet(), get_all=False)
-    res = grad_fist_input_tensor_net(tensor_z, tuple_arg, list_arg, tensor_w, tensor_y, dict_arg)
-    print('res:', res)
-    assert np.allclose(res.asnumpy(), np.ones((2, 2), np.float32))
-
-
-# PyNative run error.
-# Support context.PYNATIVE_MODE later.
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_grad_first_input_net_pynative_error(mode):
-    """
-    Feature: Construct()/ms_function input type with back propagate.
-    Description: Normal input type.
-    Expectation: No exception.
-    """
-    class FirstInputTensorNet(nn.Cell):
-        def construct(self, tensor_a, tuple_a, list_b, tensor_b, tensor_c, dict_c):
-            return tensor_a + tuple_a[2] - list_b[1][1]["y"] + tensor_b - tensor_c + dict_c["y"]
-
-    context.set_context(mode=mode)
-    grad_fist_input_tensor_net = GradNet1(FirstInputTensorNet(), get_all=False)
-    res = grad_fist_input_tensor_net(tensor_z, tuple_arg, list_arg, tensor_w, tensor_y, dict_arg)
-    print('res:', res)
-    assert np.allclose(res.asnumpy(), np.ones((2, 2), np.float32))
+    grad_fist_input_tensor_net(tensor_z, tuple_arg, list_arg, tensor_w, tensor_y, dict_arg)
 
 
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
@@ -149,7 +127,6 @@ def test_outermost_net_pass_parameter(mode):
 
 
 # Support the Parameter as outermost input.
-# Support context.PYNATIVE_MODE UT later.
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_outermost_net_pass_tuple_including_parameter(mode):
     """
@@ -163,7 +140,6 @@ def test_outermost_net_pass_tuple_including_parameter(mode):
 
 
 # Support the Parameter as outermost input.
-# Support context.PYNATIVE_MODE UT later.
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_outermost_net_pass_list_including_parameter(mode):
     """
@@ -177,7 +153,6 @@ def test_outermost_net_pass_list_including_parameter(mode):
 
 
 # Support the Parameter as outermost input.
-# Support context.PYNATIVE_MODE UT later.
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_net_pass_dict_including_parameter(mode):
     """
@@ -188,96 +163,6 @@ def test_grad_net_pass_dict_including_parameter(mode):
     context.set_context(mode=mode)
     mutable_dict = mutable({"x": tensor_z, "y": tensor_w, "z": parameter_x})
     forward_net(tuple_arg, tensor_z, list_arg, SCALAR_NUM, SCALAR_NUM, mutable_dict, flag_0)
-
-
-class TestCell(nn.Cell):
-    def __init__(self, param):
-        super().__init__()
-        self.a = Tensor(np.array([[1, 2], [3, 4]]))
-        self.param = param
-
-    def construct(self, x):
-        return self.a * self.param * x
-
-
-class GradCellWithParameter(nn.Cell):
-    def __init__(self, net):
-        super().__init__()
-        self.net = net
-        self.grad = ops.GradOperation(get_all=True, get_by_list=True)
-        self.param = self.net.param
-
-    def construct(self, x):
-        return self.grad(self.net, self.param)(x)
-
-
-class GradCell(nn.Cell):
-    def __init__(self, net):
-        super().__init__()
-        self.net = net
-        self.grad_all = ops.GradOperation(get_all=True)
-
-    def construct(self, x):
-        return self.grad_all(self.net)(x)
-
-
-@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
-def test_grad_parameter_input(mode):
-    """
-    Feature: Construct()/ms_function input type with back propagate.
-    Description: Grad with Parameter as input type.
-    Expectation: No exception.
-    """
-    context.set_context(mode=mode)
-    x = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
-    a = GradCell(TestCell(x))(y)
-    b = GradCell(TestCell(x))(z)
-    print(f'a: {a}')
-    print(f'b: {b}')
-    assert np.array_equal(a[0].asnumpy(), b[0].asnumpy())
-
-
-# PyNative run error.
-# Support context.PYNATIVE_MODE later.
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_grad_parameter_as_input_and_fv(mode):
-    """
-    Feature: Construct()/ms_function input type with back propagate.
-    Description: Grad with Parameters as input type and fv.
-    Expectation: No exception.
-    """
-    context.set_context(mode=mode)
-    x = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x')
-    y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
-    z = Tensor(np.array([[7, 8], [9, 0]]))
-    a = GradCellWithParameter(TestCell(x))(y)
-    b = GradCellWithParameter(TestCell(x))(z)
-    print(f'a: {a}')
-    print(f'b: {b}')
-    assert np.array_equal(a[0][0].asnumpy(), b[0][0].asnumpy())
-    assert np.array_equal(a[1].asnumpy(), b[1].asnumpy())
-
-
-# PyNative run error.
-# Support context.PYNATIVE_MODE later.
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
-def test_grad_same_parameter_both_input_and_fv(mode):
-    """
-    Feature: Construct()/ms_function input type with back propagate.
-    Description: Grad with the same Parameter used as input type and fv at the same time.
-    Expectation: No exception.
-    """
-    context.set_context(mode=mode)
-    x = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x')
-    y = Tensor(np.array([[1, 2], [3, 4]]))
-    a = GradCellWithParameter(TestCell(x))(x)
-    b = GradCellWithParameter(TestCell(x))(y)
-    print(f'a: {a}')
-    print(f'b: {b}')
-    assert np.array_equal(a[0][0].asnumpy(), b[0][0].asnumpy())
-    assert np.array_equal(a[1].asnumpy(), b[1].asnumpy())
 
 
 class TestCell2(nn.Cell):
@@ -329,7 +214,7 @@ class GradCellWithTupleOfParameter(nn.Cell):
 
 
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
-def test_grad_parameter_as_input_and_fv2(mode):
+def test_grad_parameter_tuple(mode):
     """
     Feature: Construct()/ms_function input type with back propagate.
     Description: Grad with Parameters as input type and fv. ParameterTuple as fv.
@@ -340,13 +225,8 @@ def test_grad_parameter_as_input_and_fv2(mode):
     x2 = Parameter(Tensor(np.array([[1, 2], [3, 4]])), name='input_x2')
     y = Parameter(Tensor(np.array([[7, 8], [9, 0]])), name='input_y')
     z = Tensor(np.array([[7, 8], [9, 0]]))
-    a = GradCellWithParameterTuple(TestCell2(x1, x2))(y)
-    b = GradCellWithParameterTuple(TestCell2(x1, x2))(z)
-    print(f'a: {a}')
-    print(f'b: {b}')
-    assert np.array_equal(a[0][0].asnumpy(), b[0][0].asnumpy())
-    assert np.array_equal(a[1][0].asnumpy(), b[1][0].asnumpy())
-    assert np.array_equal(a[1][1].asnumpy(), b[1][1].asnumpy())
+    GradCellWithParameterTuple(TestCell2(x1, x2))(y)
+    GradCellWithParameterTuple(TestCell2(x1, x2))(z)
 
 
 @pytest.mark.skip(reason='Not support list or tuple of parameters as GradOperation inputs by now')

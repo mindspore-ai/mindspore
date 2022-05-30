@@ -1488,7 +1488,7 @@ bool MSANFModelParser::MSANFParseModelConfigureInfo(const mind_ir::ModelProto &m
 
 bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph,
                                                     const std::map<std::string, ValuePtr> &weights) {
-  size_t hyper_param_count = 0;
+  size_t fv_param_count = 0;
   auto parameters = topGraph->parameters();
   for (int i = parameters.size() - 1; i >= 0; --i) {
     size_t index = IntToSize(i);
@@ -1512,9 +1512,9 @@ bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph
       return false;
     }
     parameter->set_default_param(weights_iter->second);
-    hyper_param_count++;
+    fv_param_count++;
   }
-  topGraph->set_hyper_param_count(hyper_param_count);
+  topGraph->set_fv_param_count(fv_param_count);
   return true;
 }
 

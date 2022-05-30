@@ -175,14 +175,9 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     }
   }
   if (para_node == nullptr) {
-    auto node = top_func_graph->AddWeightParameter(param_name);
     auto value = py::cast<tensor::MetaTensorPtr>(obj);
+    para_node = top_func_graph->AddFvParameter(param_name, value);
     param_obj_ids.emplace_back(obj_id);
-    node->set_default_param(value);
-    // Set abstract for parameter
-    auto abs = value->ToAbstract();
-    node->set_abstract(abs);
-    para_node = node;
     MS_LOG(DEBUG) << "Created a new weight parameter for " << func_graph->ToString()
                   << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
   }
@@ -224,8 +219,8 @@ void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
 
       // Update top_graph
       top_graph->add_parameter(param_ptr);
-      size_t hyper_param_count = top_graph->hyper_param_count();
-      top_graph->set_hyper_param_count(hyper_param_count + 1);
+      size_t fv_param_count = top_graph->fv_param_count();
+      top_graph->set_fv_param_count(fv_param_count + 1);
     } else {
       input_params.push_back(param_ptr);
     }

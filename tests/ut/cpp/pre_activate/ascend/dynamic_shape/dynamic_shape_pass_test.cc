@@ -36,7 +36,7 @@ constexpr auto kDependRealInputSize = 2;
 ParameterPtr TestCreateParameter(const KernelGraphPtr &g, const std::string &name,
                                  const abstract::AbstractBasePtr &abstract) {
   MS_EXCEPTION_IF_NULL(g);
-  auto parameter = g->AddWeightParameter(name);
+  auto parameter = g->AddFvParameter(name, abstract->BuildValue());
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "Cannot add weight parameter!";
   }
