@@ -22,9 +22,6 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net1(Cell):
-    def __init__(self):
-        super().__init__()
-
     def construct(self, x):
         dic = {'x': 0, 'y': 1}
         output = []
@@ -36,9 +33,6 @@ class Net1(Cell):
 
 
 class Net2(Cell):
-    def __init__(self):
-        super().__init__()
-
     def construct(self, x):
         dic = {'x': x, 'y': 1}
         output = []
@@ -50,9 +44,6 @@ class Net2(Cell):
 
 
 class Net3(Cell):
-    def __init__(self):
-        super().__init__()
-
     def construct(self, x):
         dic = {'x': 0}
         dic['y'] = (0, 1)
@@ -89,14 +80,11 @@ def test_dict3():
 
 def test_dict4():
     class Net(Cell):
-        def __init__(self):
-            super().__init__()
-
         def construct(self, tuple_x):
             output = tuple_x + tuple_x
             return output
 
-    x = (1, Tensor([1, 2, 3]), {"a": Tensor([1, 2, 3]), "b": 1})
+    x = (1, Tensor([1, 2, 3]), (Tensor([1, 2, 3]), 1))
     net = Net()
     out_me = net(x)
     assert out_me == x + x

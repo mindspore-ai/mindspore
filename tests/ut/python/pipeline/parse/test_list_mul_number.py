@@ -38,9 +38,9 @@ def test_list_mul_number():
     context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     expect_ret0 = [Tensor([1, 2, 3])] * 5
-    expect_ret1 = [Tensor([1, 2, 3])] * 0
-    assert isinstance(net()[0], list)
-    assert isinstance(net()[1], list)
+    expect_ret1 = (Tensor([1, 2, 3]),) * 0
+    assert isinstance(net()[0], tuple)
+    assert isinstance(net()[1], tuple)
     for i in range(len(net()[0])):
         assert np.array_equal(net()[0][i].asnumpy(), expect_ret0[i].asnumpy())
     assert net()[1] == expect_ret1

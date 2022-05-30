@@ -40,7 +40,6 @@ namespace opt {
 using mindspore::abstract::AbstractAttribute;
 using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractBasePtr;
-using mindspore::abstract::AbstractCOOTensor;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractDictionaryPtr;
 using mindspore::abstract::AbstractList;
@@ -588,33 +587,35 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return (this->*(iter->second))(cnode);
   }
 
-  // ValueList --> ValueTuple
-  static ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr &value_list, size_t depth) {
+  static ValuePtr ConvertValueSequenceToValueTuple(const ValuePtr &value, size_t depth, bool *need_convert) {
     if (depth > kMaxSeqRecursiveDepth) {
       MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
     }
-    const auto &list_elements = value_list->value();
-    std::vector<ValuePtr> elements;
-    elements.reserve(list_elements.size());
-    for (const auto &element : list_elements) {
-      if (element->isa<ValueList>()) {
-        (void)elements.emplace_back(ConvertValueListToValueTuple(element->cast<ValueListPtr>(), depth + 1));
-      } else {
-        (void)elements.emplace_back(element);
+    if (value->isa<ValueSequence>()) {
+      std::vector<ValuePtr> elements;
+      if (value->isa<ValueList>()) {
+        (*need_convert) |= true;
       }
+      auto value_seq = value->cast<ValueSequencePtr>();
+      std::transform(value_seq->value().begin(), value_seq->value().end(), std::back_inserter(elements),
+                     [&](const ValuePtr &value) -> ValuePtr {
+                       return ConvertValueSequenceToValueTuple(value, depth + 1, need_convert);
+                     });
+      return std::make_shared<ValueTuple>(elements);
     }
-    return std::make_shared<ValueTuple>(elements);
+    return value;
   }
 
   AnfNodePtr ConvertValueNode(const ValueNodePtr &, const ValuePtr &value) override {
-    auto value_list = dyn_cast<ValueList>(value);
-    if (value_list != nullptr) {
-      return std::make_shared<ValueNode>(ConvertValueListToValueTuple(value_list, 0));
+    bool need_convert = false;
+    auto convert_value = ConvertValueSequenceToValueTuple(value, 0, &need_convert);
+    if (need_convert) {
+      return std::make_shared<ValueNode>(convert_value);
     }
     return nullptr;
   }
 
-  // AbstractSequence, AbstractDict, AbstractCOOTensor, AbstractRowTensor --> AbstractTuple.
+  // AbstractSequence, AbstractDict, AbstractRowTensor --> AbstractTuple.
   static AbstractTuplePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
       MS_LOG(EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
@@ -669,12 +670,6 @@ class CleanAfterOptARewriter : public BaseRewriter {
       }
       return std::make_shared<AbstractTuple>(elements);
     }
-    // AbstractCOOTensor --> AbstractTuple.
-    auto abs_sparse = abs->cast<abstract::AbstractCOOTensorPtr>();
-    if (abs_sparse != nullptr) {
-      std::vector<AbstractBasePtr> elements{abs_sparse->indices(), abs_sparse->values(), abs_sparse->dense_shape()};
-      return std::make_shared<AbstractTuple>(std::move(elements));
-    }
     // AbstractRowTensor --> AbstractTuple.
     auto abs_row_tensor = abs->cast<std::shared_ptr<AbstractRowTensor>>();
     if (abs_row_tensor != nullptr) {
@@ -686,7 +681,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
   }
 
   AbstractBasePtr ConvertAbstract(const AbstractBasePtr &abs) override {
-    // AbstractSequence, AbstractDict, AbstractCOOTensor, AbstractRowTensor --> AbstractTuple.
+    // AbstractSequence, AbstractDict, AbstractRowTensor --> AbstractTuple.
     return ConvertToAbstractTuple(abs, 0);
   }
 };
