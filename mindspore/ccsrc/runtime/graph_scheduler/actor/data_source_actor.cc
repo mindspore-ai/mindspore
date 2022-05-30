@@ -32,12 +32,7 @@ void DataSourceActor::Init() {
     MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
   }
 
-  // Init output data.
-  for (auto &data_arrow : output_data_arrows_) {
-    MS_EXCEPTION_IF_NULL(data_arrow);
-    auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    AddOutputData(std::move(data), data_arrow);
-  }
+  InitOutputData();
 }
 
 void DataSourceActor::FetchData(OpContext<DeviceTensor> *const context) {
@@ -85,12 +80,7 @@ void DeviceQueueDataSourceActor::Init() {
     MS_LOG(EXCEPTION) << "The device contexts number is wrong.";
   }
 
-  // Init output data.
-  for (auto &data_arrow : output_data_arrows_) {
-    MS_EXCEPTION_IF_NULL(data_arrow);
-    auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    AddOutputData(std::move(data), data_arrow);
-  }
+  InitOutputData();
 
   // Init kernel launch info.
   MS_EXCEPTION_IF_NULL(kernel_info_);

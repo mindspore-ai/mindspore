@@ -33,20 +33,23 @@ void SuperKernelActor::Init() {
   // Set the number of actor running dependent messages.
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
 
+  // Init the output data.
+  InitOutputData();
   if (output_data_arrows_.size() != output_data_nodes_.size()) {
     MS_LOG(EXCEPTION) << "The size of output data arrows is not equal to the output data nodes.";
   }
-  // Init the output data.
+  if (output_data_arrows_.size() != output_data_.size()) {
+    MS_LOG(EXCEPTION) << "The size of output data arrows is not equal to the output data.";
+  }
   for (size_t i = 0; i < output_data_arrows_.size(); ++i) {
     auto &data_arrow = output_data_arrows_[i];
     auto &output_node = output_data_nodes_[i];
+    auto data = output_data_[i].first.get();
     MS_EXCEPTION_IF_NULL(data_arrow);
     MS_EXCEPTION_IF_NULL(output_node);
-
+    MS_EXCEPTION_IF_NULL(data);
     auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, data_arrow->from_output_index_, false);
-    auto data =
-      std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, device_address.get(), data_arrow->to_input_index_);
-    AddOutputData(std::move(data), data_arrow);
+    data->data_ = device_address.get();
   }
 }
 

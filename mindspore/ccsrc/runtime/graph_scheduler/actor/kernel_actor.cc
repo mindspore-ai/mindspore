@@ -82,16 +82,22 @@ void KernelActor::Init() {
 
   // Init the output data.
   output_data_by_output_index_.resize(output_device_tensors_.size());
+  InitOutputData();
+  if (output_data_.size() != output_data_arrows_.size()) {
+    MS_LOG(EXCEPTION) << "The output data size is wrong: " << GetAID().Name();
+  }
+  size_t output_data_index = 0;
   for (auto &data_arrow : output_data_arrows_) {
+    auto data = output_data_[output_data_index].first.get();
+    MS_EXCEPTION_IF_NULL(data);
     MS_EXCEPTION_IF_NULL(data_arrow);
     if (IntToSize(data_arrow->from_output_index_) >= output_device_tensors_.size()) {
       MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID().Name();
     }
-    auto device_address = output_device_tensors_[data_arrow->from_output_index_];
-    auto data =
-      std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, device_address, data_arrow->to_input_index_);
-    (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(data.get());
-    AddOutputData(std::move(data), data_arrow);
+    data->data_ = output_device_tensors_[data_arrow->from_output_index_];
+    (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(data);
+
+    ++output_data_index;
   }
 }
 

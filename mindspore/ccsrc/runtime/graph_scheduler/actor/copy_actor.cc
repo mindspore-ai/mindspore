@@ -34,15 +34,15 @@ void CopyActor::Init() {
   input_device_tensor_.resize(kDeviceTensorNum);
   output_device_tensor_.resize(kDeviceTensorNum);
 
-  // Init output data.
+  // Check output data index.
   for (auto &data_arrow : output_data_arrows_) {
     MS_EXCEPTION_IF_NULL(data_arrow);
     if (IntToSize(data_arrow->from_output_index_) != 0) {
       MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID().Name();
     }
-    auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    AddOutputData(std::move(data), data_arrow);
   }
+
+  InitOutputData();
 }
 
 void CopyActor::Run(OpContext<DeviceTensor> *const context) {
