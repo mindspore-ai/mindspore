@@ -29,14 +29,12 @@ def test_SSD_mobilenet_v1_fpn_coco2017():
     model_name = "ssd"
     utils.copy_files(model_path, cur_path, model_name)
     cur_model_path = os.path.join(cur_path, model_name)
+    os.system("cp -r {} {}".format(os.path.join(cur_path, "train.py"), cur_model_path))
 
     old_list = ["/cache/data", "MindRecord_COCO", "coco_ori", "/ckpt/mobilenet_v1.ckpt"]
     new_list = [os.path.join(utils.data_root, "coco/coco2017"), "mindrecord_train/ssd_mindrecord", ".",
                 os.path.join(utils.ckpt_root, "ssd_mobilenet_v1/mobilenet-v1.ckpt")]
     utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "config/ssd_mobilenet_v1_fpn_config.yaml"))
-    old_list = ["config.epoch_size", "dataset_sink_mode=dataset_sink_mode"]
-    new_list = ["5", "dataset_sink_mode=dataset_sink_mode, sink_size=20"]
-    utils.exec_sed_command(old_list, new_list, os.path.join(cur_model_path, "train.py"))
 
     exec_network_shell = "cd {0}; sh -x scripts/run_distribute_train.sh 8 {1} 0.2 coco \
         {2} ssd_mobilenet_v1_fpn_config.yaml".format(model_name, 60, utils.rank_table_path)
@@ -55,4 +53,4 @@ def test_SSD_mobilenet_v1_fpn_coco2017():
         loss = utils.get_loss_data_list(log_file.format(i))
         print("loss is", loss[-1])
         loss_list.append(loss[-1])
-    assert sum(loss_list) / len(loss_list) < 5.63
+    assert 500000 < sum(loss_list) / len(loss_list) < 600000
