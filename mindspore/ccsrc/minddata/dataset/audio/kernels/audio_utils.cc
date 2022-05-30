@@ -78,6 +78,24 @@ Status ComplexAbs(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
   return Status::OK();
 }
 
+Status CreateLinearFbanks(std::shared_ptr<Tensor> *output, int32_t n_freqs, float f_min, float f_max, int32_t n_filter,
+                          int32_t sample_rate) {
+  // all_freqs is equivalent filterbank construction.
+  std::shared_ptr<Tensor> all_freqs;
+  // the sampling frequency is at least twice the highest frequency of the signal.
+  const double signal_times = 2;
+  RETURN_IF_NOT_OK(Linspace<float>(&all_freqs, 0, sample_rate / signal_times, n_freqs));
+  // f_pts is mel value sequence in linspace of (m_min, m_max).
+  std::shared_ptr<Tensor> f_pts;
+  const int32_t bias = 2;
+  RETURN_IF_NOT_OK(Linspace<float>(&f_pts, f_min, f_max, n_filter + bias));
+  // create filterbank
+  std::shared_ptr<Tensor> fb;
+  RETURN_IF_NOT_OK(CreateTriangularFilterbank<float>(&fb, all_freqs, f_pts));
+  *output = fb;
+  return Status::OK();
+}
+
 /// \brief Reconstruct complex tensor from norm and angle.
 /// \param[in] abs - The absolute value of the complex tensor.
 /// \param[in] angle - The angle of the complex tensor.

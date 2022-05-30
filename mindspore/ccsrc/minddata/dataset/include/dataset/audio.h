@@ -677,6 +677,17 @@ class MS_API LFilter final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Creates a linear triangular filterbank.
+/// \param output Tensor of a linear triangular filterbank.
+/// \param n_freqs: Number of frequency.
+/// \param f_min: Minimum of frequency in Hz.
+/// \param f_max: Maximum of frequency in Hz.
+/// \param n_filter: Number of (linear) triangular filter.
+/// \param sample_rate: Sample rate.
+/// \return Status code.
+Status MS_API LinearFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_filter,
+                           int32_t sample_rate);
+
 /// \brief Design biquad lowpass filter and perform filtering. Similar to SoX implementation.
 class MS_API LowpassBiquad final : public TensorTransform {
  public:

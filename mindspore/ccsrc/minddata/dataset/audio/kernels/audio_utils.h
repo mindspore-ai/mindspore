@@ -532,6 +532,17 @@ Status CreateFbanks(std::shared_ptr<Tensor> *output, int32_t n_freqs, float f_mi
   return Status::OK();
 }
 
+/// \brief Creates a linear triangular filterbank.
+/// \param output Tensor of a linear triangular filterbank.
+/// \param n_freqs: Number of frequency.
+/// \param f_min: Minimum of frequency in Hz.
+/// \param f_max: Maximum of frequency in Hz.
+/// \param n_filter: Number of (linear) triangular filter.
+/// \param sample_rate: Sample rate.
+/// \return Status code.
+Status CreateLinearFbanks(std::shared_ptr<Tensor> *output, int32_t n_freqs, float f_min, float f_max, int32_t n_filter,
+                          int32_t sample_rate);
+
 /// \brief Convert normal STFT to STFT at the Mel scale.
 /// \param input: Input audio tensor.
 /// \param output: Mel scale audio tensor.
@@ -1190,6 +1201,7 @@ std::vector<std::vector<T>> FlangerInterpolation(const std::shared_ptr<Tensor> &
   int n_batch = input->shape()[0];
   int n_channels = input->shape()[-2];
   int delay_buf_length = input->shape()[-1];
+  const int32_t bias = 2;
 
   std::vector<std::vector<T>> delayed_value_a(n_batch, std::vector<T>(n_channels, 0));
   std::vector<std::vector<T>> delayed_value_b(n_batch, std::vector<T>(n_channels, 0));
@@ -1207,7 +1219,7 @@ std::vector<std::vector<T>> FlangerInterpolation(const std::shared_ptr<Tensor> &
   }
   // delay subscript backward
   for (int j = 0; j < n_channels; j++) {
-    int_delay[j] = int_delay[j] + 2;
+    int_delay[j] = int_delay[j] + bias;
   }
   std::vector<std::vector<T>> delayed(n_batch, std::vector<T>(n_channels, 0));
   std::vector<std::vector<T>> delayed_value_c(n_batch, std::vector<T>(n_channels, 0));

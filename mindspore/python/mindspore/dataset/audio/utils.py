@@ -248,6 +248,47 @@ DE_C_NORM_TYPE = {NormType.SLANEY: cde.NormType.DE_NORM_TYPE_SLANEY,
                   NormType.NONE: cde.NormType.DE_NORM_TYPE_NONE}
 
 
+def linear_fbanks(n_freqs, f_min, f_max, n_filter, sample_rate):
+    """
+    Creates a linear triangular filterbank.
+
+    Args:
+        n_freqs (int): Number of frequency.
+        f_min (float): Minimum of frequency in Hz.
+        f_max (float): Maximum of frequency in Hz.
+        n_filter (int): Number of (linear) triangular filter.
+        sample_rate (int): Sample rate.
+
+    Returns:
+        numpy.ndarray, the linear triangular filterbank.
+
+    Examples:
+        >>> from mindspore.dataset.audio import linear_fbanks
+        >>>
+        >>> fbanks = linear_fbanks(n_freqs=4096, f_min=0, f_max=8000, n_filter=40, sample_rate=16000)
+    """
+
+    type_check(n_freqs, (int,), "n_freqs")
+    check_non_negative_int32(n_freqs, "n_freqs")
+
+    type_check(f_min, (int, float,), "f_min")
+    check_non_negative_float32(f_min, "f_min")
+
+    type_check(f_max, (int, float,), "f_max")
+    check_pos_float32(f_max, "f_max")
+    if f_min > f_max:
+        raise ValueError(
+            "Input f_min should be no more than f_max, but got f_min: {0} and f_max: {1}.".format(f_min, f_max))
+
+    type_check(n_filter, (int,), "n_filter")
+    check_pos_int32(n_filter, "n_filter")
+
+    type_check(sample_rate, (int,), "sample_rate")
+    check_pos_int32(sample_rate, "sample_rate")
+
+    return cde.linear_fbanks(n_freqs, f_min, f_max, n_filter, sample_rate).as_array()
+
+
 def melscale_fbanks(n_freqs, f_min, f_max, n_mels, sample_rate, norm=NormType.NONE, mel_type=MelType.HTK):
     """
     Create a frequency transformation matrix with shape (n_freqs, n_mels).

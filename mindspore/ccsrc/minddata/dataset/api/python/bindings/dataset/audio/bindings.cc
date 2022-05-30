@@ -54,6 +54,15 @@ PYBIND_REGISTER(NormType, 0, ([](const py::module *m) {
                     .export_values();
                 }));
 
+PYBIND_REGISTER(LinearFbanks, 1, ([](py::module *m) {
+                  (void)m->def("linear_fbanks",
+                               ([](int32_t n_freqs, float f_min, float f_max, int32_t n_filter, int32_t sample_rate) {
+                                 std::shared_ptr<Tensor> fb;
+                                 THROW_IF_ERROR(CreateLinearFbanks(&fb, n_freqs, f_min, f_max, n_filter, sample_rate));
+                                 return fb;
+                               }));
+                }));
+
 PYBIND_REGISTER(NormMode, 0, ([](const py::module *m) {
                   (void)py::enum_<NormMode>(*m, "NormMode", py::arithmetic())
                     .value("DE_NORM_MODE_NONE", NormMode::kNone)
