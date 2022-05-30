@@ -33,6 +33,7 @@ from .datasets_standard_format import *
 from .datasets_user_defined import *
 from .graphdata import GraphData, SamplingStrategy, OutputFormat
 from .iterators import *
+from .obs.obs_mindrecord_dataset import *
 from .samplers import *
 from .serializer_deserializer import compare, deserialize, serialize, show
 
@@ -87,6 +88,7 @@ __all__ = ["Caltech101Dataset",        # Vision
            "YesNoDataset",             # Audio
            "CSVDataset",               # Standard Format
            "MindDataset",              # Standard Format
+           "OBSMindDataset",           # Standard Format
            "TFRecordDataset",          # Standard Format
            "GeneratorDataset",         # User Defined
            "NumpySlicesDataset",       # User Defined
@@ -107,4 +109,5 @@ __all__ = ["Caltech101Dataset",        # Vision
            "deserialize",
            "serialize",
            "show",
+           "sync_wait_for_dataset",
            "zip"]
