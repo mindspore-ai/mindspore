@@ -85,6 +85,7 @@ constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
 constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
 constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
 constexpr auto kPriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
+constexpr auto kReLUV3 = "ReLUV3";
 constexpr auto kNonZero = "NonZero";
 constexpr auto kMaxPoolV1 = "MaxPoolV1";
 constexpr auto kMaxPoolGradV1 = "MaxPoolGradV1";
@@ -110,6 +111,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kMaxPoolV1, "MaxPool"},
   {kMaxPoolGradV1, "MaxPoolGrad"},
   {kNameRangeV2, "Range"},
+  {kReLUV3, "Relu"},
   {kStack, "Pack"},
   {kUnstack, "Unpack"},
   {kGather, "GatherV2"},

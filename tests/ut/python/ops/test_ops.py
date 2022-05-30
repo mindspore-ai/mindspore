@@ -63,6 +63,7 @@ from mindspore.ops.operations._grad_ops import AvgPoolGradV1
 from mindspore.ops.operations.nn_ops import MaxPoolV1
 from mindspore.ops.operations.array_ops import NonZero
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
+from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
@@ -2084,6 +2085,10 @@ test_case_nn_ops = [
         'block': P.ReLUV2(),
         'desc_inputs': [[1, 3, 4, 4]],
         'desc_bprop': [[1, 3, 4, 4], ([1, 1, 4, 4, 2], {'dtype': np.uint8})]}),
+    ('ReLUV3', {
+        'block': ReLUV3(),
+        'desc_inputs': [[1, 3, 4, 7, 9]],
+        'desc_bprop': [[1, 3, 4, 7, 9]]}),
     ('ReLUGrad', {
         'block': G.ReluGrad(),
         'desc_inputs': [[1, 3, 4, 4], [1, 3, 4, 4]],

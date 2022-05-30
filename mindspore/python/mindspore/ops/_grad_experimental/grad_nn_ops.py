@@ -36,6 +36,8 @@ from ..operations.nn_ops import AvgPoolV1
 from ..operations._grad_ops import AvgPoolGradV1
 from ..operations.nn_ops import MaxPoolV1
 from ..operations._grad_ops import MaxPoolGradV1
+from ..operations.nn_ops import ReLUV3
+from ..operations._grad_ops import ReluGrad
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -111,6 +113,18 @@ def get_bprop_grid_sampler_3d(self):
     def bprop(input_x, grid, out, dout):
         dx, dgrid = grad(dout, input_x, grid)
         return dx, dgrid
+    return bprop
+
+
+@bprop_getters.register(ReLUV3)
+def get_bprop_relu(self):
+    """Grad definition for `ReLUV3` operation."""
+    input_grad = ReluGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, out)
+        return (dx,)
+
     return bprop
 
 
