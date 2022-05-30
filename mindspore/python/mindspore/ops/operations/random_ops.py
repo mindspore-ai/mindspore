@@ -141,7 +141,7 @@ class StandardNormal(PrimitiveWithInfer):
 
     Args:
         seed (int): Random seed, must be non-negative. Default: 0.
-        seed2 (int): Random seed2, must be non-negative. Default: 0.
+        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
@@ -464,7 +464,7 @@ class UniformInt(PrimitiveWithInfer):
 
     Args:
         seed (int): Random seed, must be non-negative. Default: 0.
-        seed2 (int): Random seed2, must be non-negative. Default: 0.
+        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: 0.
 
     Inputs:
         - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.

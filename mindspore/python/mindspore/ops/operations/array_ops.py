@@ -925,7 +925,7 @@ class SparseGatherV2(PrimitiveWithCheck):
         - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor, must be in the range
-          `[0, input_param.shape[axis])`.
+          `[0, input_params.shape[axis])`.
         - **axis** (int) - Specifies the dimension index to gather indices.
 
     Outputs:

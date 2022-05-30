@@ -263,7 +263,7 @@ class InsertGradientOf(PrimitiveWithInfer):
         Tensor, returns `input_x` directly. `InsertGradientOf` does not affect the forward result.
 
     Raises:
-        TypeError: If `f` is not a function of mindspore.
+        TypeError: If `f` is not a function of MindSpore.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
