@@ -1590,3 +1590,192 @@ class HuberLoss(LossBase):
         loss = self.select(condition, l1, l2)
 
         return self.get_loss(loss)
+
+
+class NLLLoss(LossBase):
+    r"""
+    Gets the negative log likelihood loss between logits and labels.
+
+    The nll loss with reduction=none can be described as:
+
+    .. math::
+
+        \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
+        \quad l_{n}=-w_{t_{n}} x_{n, t_{n}},
+        \quad w_{c}=\text { weight }[c] \cdot 1
+
+    where :math:`x` is the logits, :math:`t` is the labels, :math:`w` is the weight,
+    N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
+
+    If reduction is not 'none' (default 'mean'), then
+
+    .. math::
+
+        \ell(x, t)=\left\{\begin{array}{ll}
+        \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean'; } \\
+        \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
+        \end{array}\right.
+
+    Args:
+        weight (Tensor, optional): The rescaling weight to each class. If the value is not None, the shape is (C,).
+            The data type only supports float32 or float16. Default: None.
+        ignore_index (int, optional): Specifies a target value that is ignored (typically for padding value)
+            and does not contribute to the gradient. Default: -100.
+        reduction (string, optional):  Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
+            Default: 'mean'.
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
+          in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`(for high-dimensional data).
+          Data type must be float16 or float32. `inputs` needs to be logarithmic probability.
+        - **labels** (Tensor) -:math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for high-dimensional data.
+          Data type must be int32.
+
+    Returns:
+        Tensor, the computed negative log likelihood loss value.
+
+    Raises:
+        TypeError: If `weight` is not a Tensor.
+        TypeError: If `ignore_index` is not an int.
+        TypeError: If the data type of `weight` is not float16 or float32.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        TypeError: If `logits` is not a Tensor.
+        TypeError: If `labels` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Example::
+
+        >>> logits = mindspore.Tensor(np.random.randn(3, 5))
+        >>> labels = mindspore.Tensor(np.array([1, 0, 4]))
+        >>> loss = nn.NLLLoss()
+        >>> output = loss(logits, labels)
+    """
+
+    def __init__(self, weight=None, ignore_index=-100, reduction='mean'):
+        super().__init__(reduction)
+        validator.check_value_type('ignore_index', ignore_index, int, self.cls_name)
+        if weight is not None:
+            validator.check_value_type("weight", weight, [Tensor], self.cls_name)
+            validator.check_type_name('weight', weight.dtype, [mstype.float16, mstype.float32], self.cls_name)
+
+        self.weight = weight
+        self.ignore_index = ignore_index
+        self.reduction = reduction
+
+    def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        return F.nll_loss(logits, labels, self.weight, self.ignore_index, self.reduction)
+
+
+class CrossEntropyLoss(LossBase):
+    r"""
+    The cross entropy loss between input and target.
+
+    The cross entropy support two kind of targets:
+
+    - Class indices (int) in the range :math:`[0, C)` where :math:`C` is the number of classes,
+      the loss with reduction=none can be described as:
+
+      .. math::
+
+          \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
+          l_n = - w_{y_n} \log \frac{\exp(x_{n,y_n})}{\sum_{c=1}^C \exp(x_{n,c})}
+          \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}
+
+      where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
+      N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
+
+      If reduction is not 'none' (default 'mean'), then
+
+      .. math::
+
+          \ell(x, y) = \begin{cases}
+              \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}} l_n, &
+              \text{if reduction} = \text{`mean';}\\
+              \sum_{n=1}^N l_n,  &
+              \text{if reduction} = \text{`sum'.}
+              \end{cases}
+
+    - Probabilities (float) for each class, useful when labels beyond a single class per minibatch item
+      are required, the loss with reduction=none can be described as:
+
+      .. math::
+
+          \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
+          l_n = - \sum_{c=1}^C w_c \log \frac{\exp(x_{n,c})}{\sum_{i=1}^C \exp(x_{n,i})} y_{n,c}
+
+      where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
+      N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
+
+      If reduction is not 'none' (default 'mean'), then
+
+      .. math::
+
+          \ell(x, y) = \begin{cases}
+              \frac{\sum_{n=1}^N l_n}{N}, &
+              \text{if reduction} = \text{`mean';}\\
+              \sum_{n=1}^N l_n,  &
+              \text{if reduction} = \text{`sum'.}
+              \end{cases}
+
+    Args:
+        weight (Tensor): The rescaling weight to each class. If the value is not None, the shape is (C,).
+            The data type only supports float32 or float16. Default: None.
+        ignore_index (int): Specifies a target value that is ignored (typically for padding value)
+            and does not contribute to the gradient. Default: -100.
+        reduction (string):  Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
+            Default: 'mean'.
+        label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
+            from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: 0.0.
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
+          in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`. Data type must be float16 or float32.
+        - **labels** (Tensor) -:math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for high-dimensional data.
+
+    Returns:
+        Tensor, the computed cross entropy loss value.
+
+    Raises:
+        TypeError: If `weight` is not a Tensor.
+        TypeError: If `ignore_index` is not an int.
+        TypeError: If the data type of `weight` is not float16 or float32.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        TypeError: If `label_smoothing` is not a float.
+        TypeError: If `logits` is not a Tensor.
+        TypeError: If `labels` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Example::
+
+        >>> inputs = mindspore.Tensor(np.random.randn(3, 5))
+        >>> target = mindspore.Tensor(np.array([1, 0, 4]))
+        >>> loss = nn.CrossEntropy()
+        >>> output = loss(inputs, target)
+    """
+
+    def __init__(self, weight=None, ignore_index=-100, reduction='mean',
+                 label_smoothing=0.0):
+        super().__init__(reduction)
+        validator.check_value_type('ignore_index', ignore_index, int, self.cls_name)
+        validator.check_value_type('label_smoothing', label_smoothing, float, self.cls_name)
+        validator.check_float_range(label_smoothing, 0.0, 1.0, Rel.INC_BOTH, 'label_smoothing', self.cls_name)
+
+        if weight is not None:
+            validator.check_value_type("weight", weight, [Tensor], self.cls_name)
+            validator.check_type_name('weight', weight.dtype, [mstype.float16, mstype.float32], self.cls_name)
+
+        self.weight = weight
+        self.ignore_index = ignore_index
+        self.reduction = reduction
+        self.label_smoothing = label_smoothing
+
+    def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        return F.cross_entropy(logits, labels, self.weight, self.ignore_index, self.reduction, self.label_smoothing)
