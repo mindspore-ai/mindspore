@@ -39,6 +39,7 @@ TypePtr ConjInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, common_valid_types_with_complex, prim->name());
   return input_type;
 }
+}  // namespace
 
 AbstractBasePtr ConjInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
@@ -46,9 +47,10 @@ AbstractBasePtr ConjInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
 
-  return abstract::MakeAbstract(ConjInferShape(primitive, input_args), ConjInferType(primitive, input_args));
+  auto infer_type = ConjInferType(primitive, input_args);
+  auto infer_shape = ConjInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
-}  // namespace
 
 MIND_API_OPERATOR_IMPL(Conj, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Conj, prim::kPrimConj, ConjInfer, nullptr, true);
