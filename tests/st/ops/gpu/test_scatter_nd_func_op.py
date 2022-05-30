@@ -67,7 +67,7 @@ def scatter_nd_func_np(func, inputx, indices, updates):
 
     for idx, _ in np.ndenumerate(np.zeros(indices.shape[:-1])):
         out_index = indices[idx]
-        result[out_index] = f(result[out_index], updates_np[idx])
+        result[out_index] = f(result[out_index], updates_np[idx]).astype(result.dtype)
 
     return result
 
@@ -211,3 +211,23 @@ def test_scatter_nd_func_one_value(lock, func, data_type, index_type):
     updates = Tensor(np.array([1.0]), data_type)
 
     compare_scatter_nd_func(func, lock, inputx, indices, updates)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize('data_type', [mstype.int64])
+@pytest.mark.parametrize('index_type', [mstype.int64])
+def test_scatter_nd_div_division_by_zero(data_type, index_type):
+    """
+    Feature: Test ScatterNdSub && ScatterNdAdd DyNamicShape.
+    Description: The input shape may need to broadcast.
+    Expectation: raise ValueError.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+
+    inputx = Tensor(np.array([[-2, 5, 3], [4, 5, -3]]), data_type)
+    indices = Tensor(np.array([[0, 0], [1, 1]]), index_type)
+    updates = Tensor(np.array([0, 2]), data_type)
+
+    compare_scatter_nd_func('div', False, inputx, indices, updates)

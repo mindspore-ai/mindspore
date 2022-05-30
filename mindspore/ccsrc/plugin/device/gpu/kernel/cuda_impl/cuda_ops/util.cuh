@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UTIL_CUH_
 #include <cuda_fp16.h>
 #include <algorithm>
+#include <limits>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 #define kThreadsPerBlock (256)
@@ -180,8 +181,19 @@ struct Mul {
 
 struct Div {
   template <typename T>
-  __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    return lhs / rhs;
+  __device__ __forceinline__ T operator()(const T &dividend, const T &divisor) {
+    const T zero = T(0);
+    if (divisor == zero) {
+      if (dividend == zero) {
+        return std::numeric_limits<T>::quiet_NaN();
+      }
+      if (std::numeric_limits<T>::has_infinity) {
+        return dividend > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+      } else {
+        return dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+      }
+    }
+    return dividend / divisor;
   }
 };
 

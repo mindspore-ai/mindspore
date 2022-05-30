@@ -27,12 +27,14 @@ func_map = {
     "mul": ops.ScatterNdMul,
     "add": ops.ScatterNdAdd,
     "sub": ops.ScatterNdSub,
+    "div": ops.ScatterNdDiv,
 }
 
 np_func_map = {
     "mul": lambda a, b: a * b,
     "add": lambda a, b: a + b,
     "sub": lambda a, b: a - b,
+    "div": lambda a, b: a / b,
 }
 
 
@@ -96,7 +98,7 @@ def scatter_nd_np(func, input_x, indices, updates):
     for idx, _ in np.ndenumerate(np.zeros(indices.shape[:-1])):
         upd_idx = tuple(idx)
         out_idx = tuple(indices_np[upd_idx])
-        result[out_idx] = f(result[out_idx], updates_np[upd_idx])
+        result[out_idx] = f(result[out_idx], updates_np[upd_idx]).astype(result.dtype)
 
     return result
 
@@ -248,6 +250,26 @@ def test_scatter_nd_dy_shape(func_name):
     real_input_x, ms_result = net(scatter_indices, updates, indices)
     np_result = scatter_nd_np(func_name, real_input_x, scatter_indices, updates)
     np.testing.assert_allclose(np_result, ms_result.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize('data_type', [mstype.int64])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_scatter_nd_div_division_by_zero(data_type, index_type):
+    """
+    Feature: Test ScatterNdSub && ScatterNdAdd DyNamicShape.
+    Description: The input shape may need to broadcast.
+    Expectation: raise ValueError.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    np.random.seed(1)
+    input_x = Tensor(np.array([[-2, 5, 3], [4, 5, -3]]), data_type)
+    indices = Tensor(np.array([[0, 0], [1, 1]]), index_type)
+    updates = Tensor(np.array([0, 2]), data_type)
+
+    compare_with_numpy('div', False, input_x, indices, updates)
 
 
 @pytest.mark.level0

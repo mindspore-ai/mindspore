@@ -28,6 +28,21 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kMinIndiceRank = 2;
+template <typename T>
+inline T RealDiv(const T &a, const T &b) {
+  constexpr T zero = T(0);
+  if (b == zero) {
+    if (a == zero) {
+      return std::numeric_limits<T>::quiet_NaN();
+    }
+    if constexpr (std::numeric_limits<T>::has_infinity) {
+      return a > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+    } else {
+      return a > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+    }
+  }
+  return static_cast<T>(a / b);
+}
 }  // namespace
 bool ScatterNdArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
@@ -98,12 +113,12 @@ std::pair<bool, ScatterNdArithmeticCpuKernelMod::ComputeFunc<T>> ScatterNdArithm
   ComputeFunc<T> compute_func;
   static const mindspore::HashMap<std::string, std::function<T(const T &a, const T &b)>> scatter_nd_arithmetic_func_map{
     {prim::kPrimScatterNdMul->name(), [](const T &a, const T &b) { return a * b; }},
-    {prim::kPrimScatterNdDiv->name(), [](const T &a, const T &b) { return ((b == 0) ? (0) : (a / b)); }},
+    {prim::kPrimScatterNdDiv->name(), [](const T &a, const T &b) { return RealDiv(a, b); }},
     {prim::kPrimScatterNdAdd->name(), [](const T &a, const T &b) { return a + b; }},
     {prim::kPrimScatterNdSub->name(), [](const T &a, const T &b) { return a - b; }},
     {prim::kPrimTensorScatterAdd->name(), [](const T &a, const T &b) { return a + b; }},
     {prim::kPrimTensorScatterSub->name(), [](const T &a, const T &b) { return a - b; }},
-    {prim::kPrimTensorScatterDiv->name(), [](const T &a, const T &b) { return ((b == 0) ? (0) : (a / b)); }},
+    {prim::kPrimTensorScatterDiv->name(), [](const T &a, const T &b) { return RealDiv(a, b); }},
     {prim::kPrimTensorScatterMul->name(), [](const T &a, const T &b) { return a * b; }},
     {prim::kPrimTensorScatterMax->name(), [](const T &a, const T &b) { return std::max(a, b); }},
     {prim::kPrimTensorScatterMin->name(), [](const T &a, const T &b) { return std::min(a, b); }}};
@@ -255,10 +270,10 @@ const ScatterNdArithmeticCpuKernelMod::ScatterNdSupportListType &ScatterNdArithm
   };
   return func_list;
 }
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdMul, ScatterNdArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdAdd, ScatterNdArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdSub, ScatterNdArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdMul, ScatterNdArithmeticCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdDiv, ScatterNdArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterAdd, ScatterNdArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterSub, ScatterNdArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterDiv, ScatterNdArithmeticCpuKernelMod);

@@ -35,11 +35,11 @@ static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMa
   {"ScatterNdMin", SCATTER_ND_FUNC_MIN},
 };
 }  // namespace
-using KernelRunFunc = ScatterNdFunctorKernelMod::KernelRunFunc;
+using KernelRunFunc = ScatterNdFunctorGPUKernelMod::KernelRunFunc;
 template <typename T, typename S>
-bool ScatterNdFunctorKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
-                                             const std::vector<AddressPtr> &outputs) {
+bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                const std::vector<AddressPtr> &workspace,
+                                                const std::vector<AddressPtr> &outputs) {
   T *input = GetDeviceAddress<T>(inputs, kIndex0);
   S *indices = GetDeviceAddress<S>(inputs, kIndex1);
   T *updates = GetDeviceAddress<T>(inputs, kIndex2);
@@ -47,39 +47,38 @@ bool ScatterNdFunctorKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   const size_t indices_len = sizeof(S) * out_strides_.size();
   S *indices_stride = GetDeviceAddress<S>(workspace, kIndex0);
 
+  auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr_);
+
   // The out_strides_ used to be std::vector<S>, use int as default outside
   if constexpr (std::is_same_v<S, int64_t>) {
     std::vector<int64_t> long_out_stride;
     std::transform(out_strides_.begin(), out_strides_.end(), std::back_inserter(long_out_stride), IntToLong);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(indices_stride, long_out_stride.data(), indices_len, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
-      "For '" << kernel_name_ << "', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
+      cudaMemcpyAsync(indices_stride, long_out_stride.data(), indices_len, cudaMemcpyHostToDevice, cuda_stream),
+      "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
   } else {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(indices_stride, out_strides_.data(), indices_len, cudaMemcpyHostToDevice,
-                      reinterpret_cast<cudaStream_t>(stream_ptr_)),
-      "For '" << kernel_name_ << "', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
+      cudaMemcpyAsync(indices_stride, out_strides_.data(), indices_len, cudaMemcpyHostToDevice, cuda_stream),
+      "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
   }
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
-                    reinterpret_cast<cudaStream_t>(stream_ptr_)),
-    "For '" << kernel_name_ << "', cudaMemcpyAsync output failed")
+    cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice, cuda_stream),
+    "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync output failed")
 
   CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride, indices, updates,
-                      output, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+                      output, device_id_, cuda_stream);
   return true;
 }
 
-bool ScatterNdFunctorKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs) {
+bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   auto iter = kScatterNdFunctorTypeMap.find(kernel_name_);
   if (iter == kScatterNdFunctorTypeMap.end()) {
     MS_LOG(EXCEPTION) << "Only support these scatter functors: " << Map2Str(kScatterNdFunctorTypeMap)
                       << " currently, but got " << kernel_name_;
-    return false;
   }
   scatter_nd_functor_type_ = iter->second;
 
@@ -90,9 +89,10 @@ bool ScatterNdFunctorKernelMod::Init(const BaseOperatorPtr &base_operator, const
   return true;
 }
 
-int ScatterNdFunctorKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &) {
+int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs,
+                                         const std::map<uint32_t, tensor::TensorPtr> &) {
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
@@ -147,10 +147,10 @@ int ScatterNdFunctorKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
 #define DTYPE_REGISTER(INPUT, INDICES, UPDATES, OUTPUT, T, S)                                           \
   {                                                                                                     \
     KernelAttr().AddInputAttr(INPUT).AddInputAttr(INDICES).AddInputAttr(UPDATES).AddOutputAttr(OUTPUT), \
-      &ScatterNdFunctorKernelMod::LaunchKernel<T, S>                                                    \
+      &ScatterNdFunctorGPUKernelMod::LaunchKernel<T, S>                                                 \
   }
 
-const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ScatterNdFunctorKernelMod::GetFuncList() const {
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ScatterNdFunctorGPUKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     // Data type: double
     DTYPE_REGISTER(kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64, double, int),
@@ -161,6 +161,12 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ScatterNdFunctorKernelM
     // Data type: half
     DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat16, half, int),
     DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeFloat16, half, int64_t),
+    // Data type: int64
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t, int),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
+    // Data type: uint64
+    DTYPE_REGISTER(kNumberTypeUInt64, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int),
+    DTYPE_REGISTER(kNumberTypeUInt64, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int64_t),
     // Data type: int
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int, int),
     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int, int64_t),
@@ -179,12 +185,12 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ScatterNdFunctorKernelM
   };
   return func_list;
 }
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdUpdate, ScatterNdFunctorKernelMod);
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdAdd, ScatterNdFunctorKernelMod);
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdSub, ScatterNdFunctorKernelMod);
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdMul, ScatterNdFunctorKernelMod);
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdDiv, ScatterNdFunctorKernelMod);
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdMax, ScatterNdFunctorKernelMod);
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdMin, ScatterNdFunctorKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdUpdate, ScatterNdFunctorGPUKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdAdd, ScatterNdFunctorGPUKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdSub, ScatterNdFunctorGPUKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdMul, ScatterNdFunctorGPUKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdDiv, ScatterNdFunctorGPUKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdMax, ScatterNdFunctorGPUKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ScatterNdMin, ScatterNdFunctorGPUKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
