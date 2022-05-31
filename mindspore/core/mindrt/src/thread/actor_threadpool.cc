@@ -56,17 +56,9 @@ bool ActorWorker::RunQueueActorTask() {
   if (actor == nullptr) {
     return false;
   }
-  bool ret = false;
-  if (available() || check_task_nullptr()) {
-    status_ = kThreadBusy;
-    set_task_free(true);
-    ret = true;
-  } else {
-    set_task_free(false);
-  }
 
   actor->Run();
-  return ret;
+  return true;
 }
 
 bool ActorWorker::ActorActive() {
@@ -151,7 +143,7 @@ void ActorThreadPool::PushActorToQueue(ActorBase *actor) {
 
 int ActorThreadPool::ActorQueueInit() {
 #ifdef USE_HQUEUE
-  if (actor_queue_.Init(MAX_READY_ACTOR_NR) != true) {
+  if (actor_queue_.Init(kMaxHqueueSize) != true) {
     THREAD_ERROR("init actor queue failed.");
     return THREAD_ERROR;
   }
@@ -174,12 +166,17 @@ int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_nu
   THREAD_INFO("ThreadInfo, Actor: [%zu], All: [%zu], CoreNum: [%zu]", actor_thread_num, all_thread_num, core_num);
   actor_thread_num_ = actor_thread_num < core_num ? actor_thread_num : core_num;
   core_num -= actor_thread_num_;
+  size_t kernel_thread_num =
+    (all_thread_num - actor_thread_num_) < core_num ? (all_thread_num - actor_thread_num_) : core_num;
+  size_t total_thread_num = actor_thread_num_ + kernel_thread_num;
+  if (TaskQueuesInit(total_thread_num) != THREAD_OK) {
+    return THREAD_ERROR;
+  }
+
   if (ThreadPool::CreateThreads<ActorWorker>(actor_thread_num_, core_list) != THREAD_OK) {
     return THREAD_ERROR;
   }
 
-  size_t kernel_thread_num =
-    (all_thread_num - actor_thread_num_) < core_num ? (all_thread_num - actor_thread_num_) : core_num;
   if (kernel_thread_num > 0) {
     return ThreadPool::CreateThreads<Worker>(kernel_thread_num, core_list);
   }

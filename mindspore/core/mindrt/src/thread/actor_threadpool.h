@@ -30,7 +30,6 @@
 #define USE_HQUEUE
 #endif
 namespace mindspore {
-constexpr size_t MAX_READY_ACTOR_NR = 8192;
 class ActorThreadPool;
 class ActorWorker : public Worker {
  public:

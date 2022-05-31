@@ -27,10 +27,22 @@ Worker::~Worker() {
     alive_ = false;
   }
   cond_var_.notify_one();
+
+  bool terminate = false;
+  int count = 0;
+  do {
+    terminate = local_task_queue_->Empty();
+    if (!terminate) {
+      auto task_split = local_task_queue_->Dequeue();
+      (void)TryRunTask(task_split);
+    }
+  } while (!terminate && count++ < kMaxCount);
+
   if (thread_.joinable()) {
     thread_.join();
   }
   pool_ = nullptr;
+  local_task_queue_ = nullptr;
 }
 
 void Worker::CreateThread() { thread_ = std::thread(&Worker::Run, this); }
@@ -89,7 +101,7 @@ void Worker::Run() {
   _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
 #endif
   while (alive_) {
-    if (RunLocalKernelTask()) {
+    if (RunLocalKernelTask() || RunOtherKernelTask()) {
       spin_count_ = 0;
     } else {
       YieldAndDeactive();
@@ -101,25 +113,43 @@ void Worker::Run() {
   }
 }
 
-bool Worker::RunLocalKernelTask() {
-  Task *task = task_.load(std::memory_order_consume);
-  if (task == nullptr) {
+bool Worker::TryRunTask(TaskSplit *task_split) {
+  if (task_split == nullptr) {
     return false;
   }
-  int task_id_start = task_id_start_.load(std::memory_order_consume);
-  int task_id_end = task_id_end_.load(std::memory_order_consume);
-  for (int i = task_id_start; i < task_id_end; ++i) {
-    task->status |= task->func(task->content, i, lhs_scale_, rhs_scale_);
-  }
-  task_.store(nullptr, std::memory_order_relaxed);
-  task->finished += task_id_end - task_id_start;
+  auto task = task_split->task_;
+  auto task_id = task_split->task_id_;
+  task->status |= task->func(task->content, task_id, lhs_scale_, rhs_scale_);
+  (void)++task->finished;
   return true;
+}
+
+bool Worker::RunLocalKernelTask() {
+  if (local_task_queue_->Empty()) {
+    return false;
+  }
+  auto task_split = local_task_queue_->Dequeue();
+  return TryRunTask(task_split);
+}
+
+bool Worker::RunOtherKernelTask() {
+  if (pool_ == nullptr) {
+    return false;
+  }
+  auto queues_length = pool_->task_queues().size();
+  for (size_t i = 0; i < queues_length; ++i) {
+    size_t index = (worker_id_ + i + 1) % queues_length;
+    auto task_split = pool_->task_queues()[index]->Dequeue();
+    if (TryRunTask(task_split)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void Worker::YieldAndDeactive() {
   // deactivate this worker only on the first entry
   if (spin_count_ == 0) {
-    THREAD_TEST_TRUE(task_ == nullptr);
     status_.store(kThreadIdle);
   }
   spin_count_++;
@@ -137,13 +167,13 @@ void Worker::set_scale(float lhs_scale, float rhs_scale) {
   rhs_scale_ = rhs_scale;
 }
 
-void Worker::Active(Task *task, int task_id_start, int task_id_end) {
+void Worker::Active(std::vector<TaskSplit> *task_list, int task_id_start, int task_id_end) {
   {
     std::lock_guard<std::mutex> _l(mutex_);
-    THREAD_TEST_TRUE(task_ == nullptr);
-    task_id_start_.store(task_id_start, std::memory_order_relaxed);
-    task_id_end_.store(task_id_end, std::memory_order_relaxed);
-    task_.store(task, std::memory_order_release);
+    for (int i = task_id_start; i < task_id_end; ++i) {
+      while (!local_task_queue_->Enqueue(&(*task_list)[i])) {
+      }
+    }
     status_ = kThreadBusy;
   }
   cond_var_.notify_one();
@@ -163,14 +193,6 @@ bool Worker::available() {
   return status_.compare_exchange_strong(expected, kThreadHeld);
 }
 
-bool Worker::check_task_nullptr() {
-  std::lock_guard<std::mutex> _l(mutex_);
-  if (status_ == kThreadBusy && task_ == nullptr) {
-    return true;
-  }
-  return false;
-}
-
 ThreadPool::~ThreadPool() {
   for (auto &worker : workers_) {
     delete worker;
@@ -182,7 +204,26 @@ ThreadPool::~ThreadPool() {
     delete affinity_;
     affinity_ = nullptr;
   }
+
+  for (auto &task_queue : task_queues_) {
+    task_queue->Clean();
+  }
+  task_queues_.clear();
   THREAD_INFO("destruct success");
+}
+
+int ThreadPool::TaskQueuesInit(size_t thread_num) {
+  for (size_t i = 0; i < thread_num; ++i) {
+    task_queues_.emplace_back(std::make_unique<HQueue<TaskSplit>>());
+  }
+  for (size_t i = 0; i < thread_num; ++i) {
+    if (task_queues_[i]->Init(kMaxHqueueSize) != true) {
+      THREAD_ERROR("init task queue failed.");
+      return THREAD_ERROR;
+    }
+  }
+  THREAD_ERROR("init task queues success.");
+  return THREAD_OK;
 }
 
 int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) {
@@ -195,15 +236,14 @@ int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) 
   // if the task num is greater than the KernelThread num
   THREAD_DEBUG("launch: %d", task_num);
   Task task = {func, content};
+  std::vector<TaskSplit> task_list;
+  for (int i = 0; i < task_num; ++i) {
+    task_list.emplace_back(TaskSplit{&task, i});
+  }
   Worker *curr = CurrentWorker();
-  DistributeTask(&task, task_num, curr);
+  DistributeTask(&task_list, &task, task_num, curr);
   // synchronization
   // wait until the finished is equal to task_num
-  if (curr != nullptr) {
-    if (curr->RunLocalKernelTask()) {
-      curr->set_task_free(true);
-    }
-  }
   while (task.finished != task_num) {
     std::this_thread::yield();
   }
@@ -237,13 +277,13 @@ int ThreadPool::SyncRunFunc(const Func &func, Content content, int start, int en
   return THREAD_OK;
 }
 
-void ThreadPool::DistributeTask(Task *task, int task_num, Worker *curr) const {
+void ThreadPool::DistributeTask(std::vector<TaskSplit> *task_list, Task *task, int task_num, Worker *curr) const {
   int sum_frequency = 0;
   std::vector<Worker *> assigned;
   assigned.reserve(task_num);
   int num = static_cast<int>(workers_.size()) - 1;
   int offset = 0;
-  bool use_curr = (curr != nullptr) ? curr->get_task_free() : false;
+  bool use_curr = (curr != nullptr);
   // if the current thread isn't nullptr, that is the curr is a ActorThread,
   // then assign (task_num - 1) tasks to workers, and run the last one by itself
   int num_assigned = use_curr ? task_num - 1 : task_num;
@@ -266,13 +306,13 @@ void ThreadPool::DistributeTask(Task *task, int task_num, Worker *curr) const {
     sum_frequency += curr->frequency();
   } else if (assigned.size() != static_cast<size_t>(task_num)) {
     CalculateScales(assigned, sum_frequency);
-    ActiveWorkers(assigned, task, assigned.size(), curr);
+    ActiveWorkers(assigned, task_list, assigned.size(), curr);
     SyncRunTask(task, assigned.size(), task_num);
     return;
   }
 
   CalculateScales(assigned, sum_frequency);
-  ActiveWorkers(assigned, task, task_num, curr);
+  ActiveWorkers(assigned, task_list, task_num, curr);
 }
 
 void ThreadPool::CalculateScales(const std::vector<Worker *> &assigned, int sum_frequency) const {
@@ -291,7 +331,7 @@ void ThreadPool::CalculateScales(const std::vector<Worker *> &assigned, int sum_
   }
 }
 
-void ThreadPool::ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num,
+void ThreadPool::ActiveWorkers(const std::vector<Worker *> &workers, std::vector<TaskSplit> *task_list, int task_num,
                                const Worker *curr) const {
   // recalculate task num for each worker.
   int worker_num = static_cast<int>(workers.size());
@@ -308,9 +348,11 @@ void ThreadPool::ActiveWorkers(const std::vector<Worker *> &workers, Task *task,
       } else {
         end = start + each_worker_task_num;
       }
-      worker->Active(task, start, end);
+      worker->Active(task_list, start, end);
       if (worker == curr) {
-        (void)worker->RunLocalKernelTask();
+        while (!worker->local_task_queue()->Empty()) {
+          (void)worker->RunLocalKernelTask();
+        }
       }
       start = end;
     }
@@ -428,6 +470,10 @@ void ThreadPool::SetMinSpinCount(int spin_count) {
 ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<int> &core_list) {
   ThreadPool *pool = new (std::nothrow) ThreadPool();
   if (pool == nullptr) {
+    return nullptr;
+  }
+  if (pool->TaskQueuesInit(thread_num) != THREAD_OK) {
+    delete pool;
     return nullptr;
   }
   int ret = pool->CreateThreads<Worker>(thread_num, core_list);
