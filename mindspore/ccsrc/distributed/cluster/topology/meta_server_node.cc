@@ -159,10 +159,10 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
     MS_LOG(ERROR) << "The node: " << node_id << " have been registered before.";
 
     RegistrationRespMessage reg_resp_msg;
-    reg_resp_msg.set_success(false);
+    reg_resp_msg.set_success(true);
     std::string content = reg_resp_msg.SerializeAsString();
 
-    auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kInvalidNode, content);
+    auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess, content);
     MS_EXCEPTION_IF_NULL(response);
     return response.release();
   }
