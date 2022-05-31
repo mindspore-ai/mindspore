@@ -39,6 +39,7 @@ from mindspore.ops.operations.array_ops import ConjugateTranspose
 from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
+from mindspore.ops.operations.math_ops import LuUnpack
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import NextAfter
@@ -1890,6 +1891,28 @@ test_case_math_ops = [
                         Tensor(np.random.rand(3, 3), mstype.float32),
                         Tensor(np.random.rand(3), mstype.int32)],
         'skip': ['backward']}),
+    ('LuUnpack', {
+        'block': LuUnpack(),
+        'desc_inputs': [Tensor(np.array([[[-0.3806, -0.4872, 0.5536],
+                                          [-0.1287, 0.6508, -0.2396],
+                                          [0.2583, 0.5239, 0.6902]],
+                                         [[0.6706, -1.1782, 0.4574],
+                                          [-0.6401, -0.4779, 0.6701],
+                                          [0.1015, -0.5363, 0.6165]]]), mstype.float32),
+                        Tensor(np.array([[1, 3, 3],
+                                         [2, 3, 3]]), mstype.int32)],
+        'desc_bprop': [Tensor(np.array([[[1, 1, 1],
+                                         [1, 1, 1],
+                                         [1, 1, 1]],
+                                        [[1, 1, 1],
+                                         [1, 1, 1],
+                                         [1, 1, 1]]]), mstype.float32),
+                       Tensor(np.array([[[1, 1, 1],
+                                         [1, 1, 1],
+                                         [1, 1, 1]],
+                                        [[1, 1, 1],
+                                         [1, 1, 1],
+                                         [1, 1, 1]]]), mstype.float32)]}),
     ('Rsqrt', {
         'block': P.Rsqrt(),
         'desc_inputs': [[4]],
