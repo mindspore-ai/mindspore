@@ -793,6 +793,15 @@ class _AutoParallelContext:
         self.check_context_handle()
         grad_shard_name = _ParallelOptimizerConfig.GRADIENT_ACCUMULATION_SHARD
         threshold_name = _ParallelOptimizerConfig.PARALLEL_OPTIMIZER_THRESHOLD
+
+        for config_name in parallel_optimizer_config:
+            unknown_config = []
+            if config_name not in [grad_shard_name, threshold_name]:
+                unknown_config.append(config_name)
+
+            if unknown_config:
+                raise ValueError("Unknown config: {}".format(unknown_config))
+
         if grad_shard_name in parallel_optimizer_config:
             Validator.check_bool(
                 parallel_optimizer_config[grad_shard_name], grad_shard_name, grad_shard_name)
