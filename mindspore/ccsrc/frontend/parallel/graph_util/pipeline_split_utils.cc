@@ -330,7 +330,7 @@ bool CompFunc(const AnfNodePtr &node1, const AnfNodePtr &node2) {
   auto micro1_value = GetValue<int64_t>(micro1);
   auto micro2_value = GetValue<int64_t>(micro2);
   if (micro1_value == micro2_value) {
-    if (IsPrimitiveCNode(node1, prim::kPrimStridedSlice)) {
+    if (IsPrimitiveCNode(node1, prim::kPrimStridedSlice) || IsPrimitiveCNode(node2, prim::kPrimStridedSlice)) {
       return true;
     }
     auto prim1 = GetCNodePrimitive(cnode1);

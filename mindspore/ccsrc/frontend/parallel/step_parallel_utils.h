@@ -46,7 +46,7 @@ bool IsControlFlowNode(const AnfNodePtr &node);
 int64_t GetTupleGetItemIndex(const CNodePtr &cnode);
 void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
                            std::vector<AnfNodePtr> *pre_nodes);
-void RedistributionNextNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager, NodeUsersMap *node_users_map,
+void RedistributionNextNode(const AnfNodePtr &cnode, const FuncGraphManagerPtr &manager, NodeUsersMap *node_users_map,
                             int64_t get_item_index,
                             std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes);
 
