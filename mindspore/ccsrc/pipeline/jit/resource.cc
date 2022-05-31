@@ -285,6 +285,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"to_coo", std::string("csr_to_coo")},      // C.csr_to_coo
        {"to_dense", std::string("csr_to_dense")},  // C.csr_to_dense
        {"mm", std::string("csr_mm")},              // C.csr_mm
+       {"add", std::string("csr_add")},            // C.csr_add
      }},
     {kObjectTypeCOOTensorType,
      {

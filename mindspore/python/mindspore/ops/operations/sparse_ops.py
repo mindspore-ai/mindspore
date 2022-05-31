@@ -1194,3 +1194,81 @@ class SparseMatrixMatMul(Primitive):
         validator.check_value_type("conjugate_output", conjugate_output, [bool], self.name)
         self.init_prim_io_names(inputs=['x1_dense_shape', 'x1_batch_pointers', 'x1_row_pointers',
                                         'x1_col_indices', 'x1_values', 'x2_dense'], outputs=['y_dense'])
+
+
+class SparseMatrixAdd(Primitive):
+    """
+    Addition of two CSR Tensors : C = alpha * A + beta * B
+
+    Inputs:
+        - **x1_dense_shape** (Tensor) - A 1-D Tensor represents the dense form shape of the input CSR sparse matrix.
+        - **x1_batch_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix is of
+          batch size `n`, it should have shape :math:`(n+1,)`, while the `i`-th element of which stores
+          acummulated counts of non-zero values of the first `i - 1` batches.
+        - **x1_row_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix is of
+          batch size `n` and row number `m`, it can be divided into `n` parts, each part of length
+          `m + 1`. The `i`-th element of each :math:`(m+1,)` vector stores acummulated counts of
+          non-zero values of the first `i - 1` rows in the corresponding batch.
+        - **x1_col_indices** (Tensor) - A 1-D Tensor. It represents column indices of the non-zero values
+          in the input CSR sparse matrix.
+        - **x1_values** (Tensor) - A 1-D Tensor. It represents all the non-zero values in the input CSR sparse matrix.
+        - **x2_dense_shape** (Tensor) - A Tensor, same meaning as x1_dense_shape.
+        - **x2_batch_pointers** (Tensor) - A Tensor, same meaning as x1_batch_pointers.
+        - **x2_row_pointers** (Tensor) - A Tensor, same meaning as x1_row_pointers.
+        - **x2_col_indices** (Tensor) - A Tensor, same meaning as x1_col_indices.
+        - **x2_values** (Tensor) - A Tensor, same meaning as x1_values.
+        - **alpha** (Tensor) - A Tensor.
+        - **beta** (Tensor) - A Tensor.
+
+    Outputs:
+        - **y1_dense_shape** (Tensor) - A Tensor.
+        - **y1_batch_pointers** (Tensor) - A Tensor.
+        - **y1_row_pointers** (Tensor) - A Tensor.
+        - **y1_col_indices** (Tensor) - A Tensor.
+        - **y1_values** (Tensor) - A Tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.nn as nn
+        >>> import mindspore.common.dtype as mstype
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations.sparse_ops import SparseMatrixAdd
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.op = SparseMatrixAdd()
+        ...
+        ...     def construct(self, a_shape, a_batch_pointer, a_indptr, a_indices, a_values,
+        ...                   b_shape, b_batch_pointer, b_indptr, b_indices, b_values, alpha, beta):
+        ...         return self.op(a_shape, a_batch_pointer, a_indptr, a_indices, a_values,
+        ...                        b_shape, b_batch_pointer, b_indptr, b_indices, b_values, alpha, beta)
+        >>> a_indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> a_indices = Tensor([0, 1], dtype=mstype.int32)
+        >>> a_values = Tensor([1, 2], dtype=mstype.float32)
+        >>> a_pointers = Tensor([0, a_values.shape[0]], dtype=mstype.int32)
+        >>> shape = Tensor([2, 6], dtype=mstype.int32)
+        >>> b_indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> b_indices = Tensor([0, 1], dtype=mstype.int32)
+        >>> b_values = Tensor([1, 2], dtype=mstype.float32)
+        >>> b_pointers = Tensor([0, b_values.shape[0]], dtype=mstype.int32)
+        >>> alpha = Tensor(1, mstype.float32)
+        >>> beta = Tensor(1, mstype.float32)
+        >>> out = Net()(shape, a_pointers, a_indptr, a_indices, a_values,
+        ...             shape, b_pointers, b_indptr, b_indices, b_values, alpha, beta)
+        >>> print(out)
+        (Tensor(shape=[2], dtype=Int32, value =[2, 6]),
+         Tensor(shape[2], dtype=Int32, value = [0, 2]),
+         Tensor(shape=[3], dtype=Int32, values = [0, 1, 2]),
+         Tensor(shape=[2], dtype=Int32, values = [0, 1]),
+         Tensor(shape=[2], dtype=Float32, values = [2.0, 4.0]))
+    """
+    @prim_attr_register
+    def __init__(self):
+        '''Initialize for SparseMatrixAdd'''
+        self.init_prim_io_names(inputs=['x1_dense_shape', 'x1_batch_pointers', 'x1_row_pointers', 'x1_col_indices',
+                                        'x1_values', 'x2_dense_shape', 'x2_batch_pointers', 'x2_row_pointers',
+                                        'x2_col_indices', 'x2_values', 'alpha', 'beta'],
+                                outputs=['y_dense_shape', 'y_batch_pointers', 'y_row_pointers', 'y_col_indices',
+                                         'y_values'])

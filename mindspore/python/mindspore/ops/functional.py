@@ -889,6 +889,7 @@ tensor_operator_registry.register('log', log)
 tensor_operator_registry.register('lerp', lerp)
 tensor_operator_registry.register('floor', floor)
 # support sparse tensor operators
+tensor_operator_registry.register('csr_add', csr_add)
 tensor_operator_registry.register('csr_mul', csr_mul)
 tensor_operator_registry.register('csr2coo', csr2coo)
 tensor_operator_registry.register('coo2csr', coo2csr)

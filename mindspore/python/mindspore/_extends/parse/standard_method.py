@@ -2319,6 +2319,11 @@ def filter_(fun, iter_):
 ##################
 
 
+def csr_add(a, b, alpha, beta):
+    """Implementation of "csr_add" for CSRTensor."""
+    return F.csr_add(a, b, alpha, beta)
+
+
 def csr_astype(x, dtype):
     """Implementation of `astype` for CSRTensor."""
     data = x.values.astype(dtype)
