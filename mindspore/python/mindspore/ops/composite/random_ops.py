@@ -13,7 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Operations for random number generators."""
+import numpy as np
 from mindspore.ops.primitive import constexpr
+from ...common.tensor import Tensor
 from .. import operations as P
 from .. import functional as F
 from .multitype_ops import _constexpr_utils as const_utils
@@ -234,7 +236,7 @@ def gamma(shape, alpha, beta, seed=None):
         TypeError: If dtype of `alpha` and `beta` is not float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, ops
@@ -246,45 +248,41 @@ def gamma(shape, alpha, beta, seed=None):
         >>> output = ops.gamma(shape, alpha, beta, seed=5)
         >>> result = output.shape
         >>> print(result)
-        (3, 2, 2)
-        >>> # case 2: alpha_shape is (2, 3), so shape is (3, 1, 3)
-        >>> shape = (3, 1, 3)
-        >>> alpha = Tensor(np.array([[1, 3, 4], [2, 5, 6]]), mindspore.float32)
+        (3, 1, 2, 2, 2)
+        >>> # case 2: alpha_shape is (2), so shape is (7, 5, 2)
+        >>> shape = (7, 5)
+        >>> alpha = Tensor(np.array([0.5, 1.5]), mindspore.float32)
         >>> beta = Tensor(np.array([1.0]), mindspore.float32)
         >>> output = ops.gamma(shape, alpha, beta, seed=5)
         >>> result = output.shape
         >>> print(result)
-        (3, 2, 3)
+        (7, 5, 2)
         >>> # case 3: beta_shape is (1, 2), the output is different.
         >>> shape = (3, 1, 2)
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
-        >>> beta = Tensor(np.array([1.0, 2]), mindspore.float32)
-        >>> output = ops.gamma(shape, alpha, beta, seed=5)
+        >>> beta = Tensor(np.array([3.0, 2.0]), mindspore.float32)
+        >>> output = ops.gamma(shape, alpha, beta, seed=3)
         >>> result = output.shape
         >>> print(output)
-        [[[ 2.2132034  5.8855834]]
-         [ 3.3981476  7.5805717]
-        [[ 3.3981476  7.5805717]]
-         [ 3.7190282 19.941492]
-        [[ 2.9512358  2.5969937]]
-         [ 3.786061   5.160872 ]]]
-        >>> # case 4: beta_shape is (2, 1), the output is different.
-        >>> shape = (3, 1, 2)
-        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
-        >>> beta = Tensor(np.array([[1.0], [2.0]]), mindspore.float32)
-        >>> output = ops.gamma(shape, alpha, beta, seed=5)
-        >>> result = output.shape
-        >>> print(output)
-        [[[ 5.6085486  7.8280783]]
-         [ 15.97684  16.116285]
-        [[ 1.8347423  1.713663]]
-         [ 3.2434065 15.667398]
-        [[ 4.2922077  7.3365674]]
-         [ 5.3876944  13.159832 ]]]
+        [[[[[0.8373873  1.4698703 ]
+            [1.0850314  3.487788  ]]
+           [[0.57389003 1.8903136 ]
+            [1.2278512  1.3656161 ]]]]
+         [[[[0.12379696 1.9381095 ]
+            [1.3704795  3.5111923 ]]
+           [[0.49400368 1.9125801 ]
+            [0.94508415 2.0883005 ]]]]
+         [[[[0.5898374  1.1703413 ]
+            [1.4078385  0.8582265 ]]
+           [[0.5685522  1.4178807 ]
+            [1.5442697  3.6673684 ]]]]]
     """
     seed1, seed2 = _get_seed(seed, "gamma")
     random_gamma = P.Gamma(seed1, seed2)
-    value = random_gamma(shape, alpha, beta)
+    alpha_type = F.dtype(alpha)
+    if beta is None:
+        beta = Tensor(np.array([1.0]), alpha_type)
+    value = random_gamma(shape, alpha, beta) / beta
     return value
 
 

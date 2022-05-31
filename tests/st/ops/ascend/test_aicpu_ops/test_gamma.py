@@ -47,9 +47,9 @@ def test_net_1D():
 def test_net_ND():
     seed = 10
     shape = (3, 1, 2)
-    alpha = np.array([[[1], [2]], [[3], [4]], [[5], [6]]]).astype(np.float32)
+    alpha = np.array([[1, 2], [3, 4]]).astype(np.float32)
     beta = np.array([1.0]).astype(np.float32)
     net = Net(shape=shape, seed=seed)
     talpha, tbeta = Tensor(alpha), Tensor(beta)
     output = net(talpha, tbeta)
-    assert output.shape == (3, 2, 2)
+    assert output.shape == (3, 1, 2, 2, 2)

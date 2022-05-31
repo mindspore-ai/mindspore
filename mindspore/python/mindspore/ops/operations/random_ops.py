@@ -288,7 +288,7 @@ class Gamma(PrimitiveWithInfer):
         ValueError: If `shape` is not a constant value.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> shape = (3, 1, 2)
@@ -298,7 +298,7 @@ class Gamma(PrimitiveWithInfer):
         >>> output = gamma(shape, alpha, beta)
         >>> result = output.shape
         >>> print(result)
-        (3, 2, 2)
+        (3, 1, 2, 2, 2)
     """
 
     @prim_attr_register
@@ -320,10 +320,11 @@ class Gamma(PrimitiveWithInfer):
         Validator.check_tensor_dtype_valid("beta", beta["dtype"], [mstype.float32], self.name)
         broadcast_shape = get_broadcast_shape(alpha['shape'], beta['shape'], self.name,
                                               arg_name1="alpha", arg_name2="beta")
-        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name,
-                                              arg_name1="broadcast_alpha_beta", arg_name2="shape")
+        out_shape = list(shape_v)
+        out_shape.extend(broadcast_shape)
+
         out = {
-            'shape': broadcast_shape,
+            'shape': out_shape,
             'dtype': mstype.float32,
             'value': None}
         return out
@@ -445,7 +446,6 @@ class RandomPoisson(Primitive):
         Validator.check_value_type('seed2', seed2, [int], self.name)
         valid_values = (mstype.int64, mstype.int32, mstype.float16, mstype.float32, mstype.float64)
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
-
 
 
 class UniformInt(PrimitiveWithInfer):
