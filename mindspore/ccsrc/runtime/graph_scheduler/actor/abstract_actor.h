@@ -33,6 +33,13 @@ namespace mindspore {
 namespace runtime {
 using mindspore::device::DeviceContext;
 
+// The flag of output data.
+constexpr int kOutputDataFalgInit = 0;
+// Indicates that the output data destination is stack actor, and the output data cannot be reused.
+constexpr int kOutputDataFalgToStack = 1;
+// Indicates that the output data is the last data in the batch.
+constexpr int kOutputDataFalgLastBatch = 2;
+
 // The abstract common attributes of actors. The actor inheritance relationship:  OpActor --> AbstractActor -->
 // MemoryAwareActor --> DebugAwareActor --> KernelActor/DataSourceActor/CopyActor/LoopCountActor/OutputActor.
 class AbstractActor : public OpActor<DeviceTensor> {
@@ -86,8 +93,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // Erase input data and input controls when finish actor running.
   virtual void EraseInput(const OpContext<DeviceTensor> *context);
 
-  // Add the data to the member output_data_ and batch_output_data_.
-  void AddOutputData(OpDataUniquePtr<DeviceTensor> &&data, const DataArrowPtr &data_arrow);
+  // Init the member output_data_ and batch_output_data_ by output data arrows.
+  void InitOutputData();
   // Update the output data before send output data.
   virtual void UpdateOutputData(OpData<DeviceTensor> *const output_data, const DataArrowPtr &data_arrow,
                                 const AnfNodePtr &output_node, OpContext<DeviceTensor> *const context) {}
@@ -106,9 +113,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // The output_data_nodes_ and output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<AnfNodePtr> output_data_nodes_;
-  // Bool which is the second of pair, indicating whether the output data destination is stack actor, and the output
-  // data cannot be reused.
-  std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, bool>> output_data_;
+  // The second of pair indicates the output data falg. See constant prefixed with kOutputDataFalg for details.
+  std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, int>> output_data_;
   // Used to send batch data in the message which RunBatchOpData needs, the key is the actor name of destination actor.
   mindspore::HashMap<std::string, std::vector<OpData<DeviceTensor> *>> batch_output_data_;
   mindspore::HashMap<std::string, std::vector<DataArrowPtr>> batch_output_data_arrows_;

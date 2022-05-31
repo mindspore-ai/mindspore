@@ -38,7 +38,6 @@ class SwitchActor : public ControlActor {
   ~SwitchActor() override = default;
 
  protected:
-  void Init() override;
   void FetchInput(OpContext<DeviceTensor> *const context) override;
 
  private:

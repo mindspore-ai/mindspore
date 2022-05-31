@@ -112,17 +112,34 @@ void AbstractActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
-void AbstractActor::AddOutputData(OpDataUniquePtr<DeviceTensor> &&data, const DataArrowPtr &data_arrow) {
-  MS_EXCEPTION_IF_NULL(data);
-  MS_EXCEPTION_IF_NULL(data_arrow);
-  // Add the batch output data.
-  if (data_arrow->is_batch_arrow_) {
-    (void)batch_output_data_[data_arrow->to_op_id_.Name()].emplace_back(data.get());
-  }
+void AbstractActor::InitOutputData() {
+  mindspore::HashMap<std::string, size_t> batch_op_count;
+  for (auto &data_arrow : output_data_arrows_) {
+    MS_EXCEPTION_IF_NULL(data_arrow);
+    auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
+    auto &to_op_name = data_arrow->to_op_id_.Name();
 
-  // Add the output data.
-  bool is_to_stack = (data_arrow->to_op_id_.Name().find(kStackActorNameSuffix) != std::string::npos);
-  (void)output_data_.emplace_back(std::make_pair(std::move(data), is_to_stack));
+    // Identify whether the output data flag is kOutputDataFalgToStack.
+    bool is_to_stack = (to_op_name.find(kStackActorNameSuffix) != std::string::npos);
+    int output_data_flag = (is_to_stack == true) ? kOutputDataFalgToStack : kOutputDataFalgInit;
+
+    // Add the batch output data.
+    if (data_arrow->is_batch_arrow_) {
+      if (is_to_stack) {
+        MS_LOG(EXCEPTION) << "Not support the batch output data to stack actor.";
+      }
+      (void)batch_output_data_[to_op_name].emplace_back(data.get());
+
+      // Identify whether the output data flag is kOutputDataFalgLastBatch.
+      ++(batch_op_count[to_op_name]);
+      if (batch_op_count[to_op_name] == batch_output_data_arrows_[to_op_name].size()) {
+        output_data_flag = kOutputDataFalgLastBatch;
+      }
+    }
+
+    // Add the output data.
+    (void)output_data_.emplace_back(std::make_pair(std::move(data), output_data_flag));
+  }
 }
 
 void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
@@ -134,7 +151,7 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
       (type_ < KernelTransformType::kSwitchActor)) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The size of output data arrows is not equal to the output data.");
   }
-  mindspore::HashMap<std::string, size_t> batch_op_count;
+
   size_t output_data_arrow_index = 0;
   for (auto &output_data : output_data_) {
     MS_EXCEPTION_IF_NULL(output_data.first);
@@ -142,20 +159,18 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
     auto &to_op_id = output_data.first->op_id_;
     UpdateOutputData(output_data.first.get(), output_data_arrows_[output_data_arrow_index],
                      output_data_nodes_[output_data_arrow_index], context);
-    // Send batch output data. As the data need update, so all data must be collected completely before sending.
-    if (output_data_arrows_[output_data_arrow_index]->is_batch_arrow_) {
-      auto &to_op_name = to_op_id.Name();
-      ++(batch_op_count[to_op_name]);
-      if (batch_op_count[to_op_name] == batch_output_data_arrows_[to_op_name].size()) {
-        ActorDispatcher::Send(to_op_id, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()], context);
-      }
-    } else if (output_data.second) {
+
+    if (output_data.second == kOutputDataFalgLastBatch) {
+      // Send batch output data. As the data need update, so all data must be collected completely before sending.
+      ActorDispatcher::Send(to_op_id, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()], context);
+    } else if (output_data.second == kOutputDataFalgToStack) {
       // Create a new op data for stack actor.
       auto to_stack_data =
         std::make_unique<OpData<DeviceTensor>>(to_op_id, output_data.first->data_, output_data.first->index_);
       (void)to_stack_data_.emplace_back(std::move(to_stack_data));
       ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
-    } else {
+    } else if (!output_data_arrows_[output_data_arrow_index]->is_batch_arrow_) {
+      // The batch output data only send when the output flag is kOutputDataFalgLastBatch.
       ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);
     }
     ++output_data_arrow_index;

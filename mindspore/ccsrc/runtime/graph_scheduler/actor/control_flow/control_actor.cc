@@ -25,19 +25,25 @@ ControlActor::ControlActor(const std::string &name, KernelTransformType type, co
   input_partials_.resize(parameters.size());
   input_device_tensors_.resize(parameters.size());
   backend_parameters_.resize(parameters.size());
+  output_data_by_output_index_.resize(parameters.size());
 }
 
 void ControlActor::Init() {
-  output_data_by_output_index_.resize(formal_parameters_.size());
+  InitOutputData();
+  if (output_data_.size() != output_data_arrows_.size()) {
+    MS_LOG(EXCEPTION) << "The output data size is wrong: " << GetAID().Name();
+  }
+
+  size_t output_data_index = 0;
   for (auto &data_arrow : output_data_arrows_) {
+    auto data = output_data_[output_data_index].first.get();
+    MS_EXCEPTION_IF_NULL(data);
     MS_EXCEPTION_IF_NULL(data_arrow);
-    if (IntToSize(data_arrow->from_output_index_) >= formal_parameters_.size()) {
+    if (IntToSize(data_arrow->from_output_index_) >= output_data_by_output_index_.size()) {
       MS_LOG(EXCEPTION) << "The output index is out of range: " << GetAID();
     }
-
-    auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(data.get());
-    AddOutputData(std::move(data), data_arrow);
+    (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(data);
+    ++output_data_index;
   }
 }
 
