@@ -3790,7 +3790,7 @@ class StridedSlice(PrimitiveWithInfer):
         new_axis_pos = bin(self.new_axis_mask)[-1:1:-1]
         shrink_axis_pos = bin(self.shrink_axis_mask)[-1:1:-1]
         if self.ellipsis_mask:
-            raise ValueError("Ellipsis Mask is currently not supported.")
+            raise ValueError("Ellipsis Mask is currently not supported in dynamic shape.")
         ret_shape = []
         ret_min_shape = []
         ret_max_shape = []
@@ -4218,7 +4218,7 @@ class ScatterNdUpdate(Primitive):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index of input tensor, with int32 data type.
+        - **indices** (Tensor) - The index of input tensor, with int32 or int64 data type.
         - **updates** (Tensor) - The tensor to be updated to the input tensor, has the same type as input.
           The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
 
@@ -4227,7 +4227,7 @@ class ScatterNdUpdate(Primitive):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or an int64.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
 
@@ -4998,7 +4998,7 @@ class ScatterNdMul(_ScatterNdOp):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index of input tensor, with int32 data type.
+        - **indices** (Tensor) - The index of input tensor, with int32 or int64 data type.
           The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor to be updated to the input tensor, has the same type as input.
           The shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
@@ -5008,7 +5008,7 @@ class ScatterNdMul(_ScatterNdOp):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or an int64.
         ValueError: If the shape of `updates` is not equal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
@@ -5126,7 +5126,7 @@ class ScatterNdMax(_ScatterNdOp):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index of input tensor, with int32 data type.
+        - **indices** (Tensor) - The index of input tensor, with int32 or int64 data type.
           The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor to be updated to the input tensor, has the same type as input.
           The shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
@@ -5136,7 +5136,7 @@ class ScatterNdMax(_ScatterNdOp):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or an int64.
         ValueError: If the shape of `updates` is not equal to `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
