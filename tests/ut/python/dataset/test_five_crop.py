@@ -97,7 +97,8 @@ def test_five_crop_error_msg():
     with pytest.raises(RuntimeError) as info:
         for _ in data:
             pass
-    error_msg = "TypeError: execute_py() takes 2 positional arguments but 6 were given"
+    error_msg = \
+        "Unexpected error. map operation: [ToTensor] failed. The op is OneToOne, can only accept one tensor as input."
     assert error_msg in str(info.value)
 
 

@@ -35,7 +35,7 @@ constexpr char kToTensorOperation[] = "ToTensor";
 
 class ToTensorOperation : public TensorOperation {
  public:
-  explicit ToTensorOperation(const std::string &data_type);
+  explicit ToTensorOperation(const std::string &output_type);
 
   ~ToTensorOperation();
 
@@ -50,7 +50,7 @@ class ToTensorOperation : public TensorOperation {
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
-  DataType data_type_;
+  DataType output_type_;
 };
 }  // namespace vision
 }  // namespace dataset

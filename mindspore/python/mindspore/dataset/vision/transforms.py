@@ -3518,18 +3518,7 @@ class ToTensor(TensorOperation, PyTensorOperation):
             output_type = nptype_to_detype(output_type)
         self.output_type = str(output_type)
         self.random = False
-
-    def execute_py(self, img):
-        """
-        Execute method.
-
-        Args:
-            img (Union[PIL Image, numpy.ndarray]): PIL Image or numpy.ndarray to be type converted.
-
-        Returns:
-            numpy.ndarray, converted numpy.ndarray with desired type.
-        """
-        return util.to_tensor(img, self.output_type)
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.ToTensorOperation(self.output_type)

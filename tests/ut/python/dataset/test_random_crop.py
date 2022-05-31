@@ -546,7 +546,9 @@ def test_random_crop_09():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
-    assert "img should be PIL image." in str(error_info.value)
+    error_msg = \
+        "Unexpected error. map operation: [RandomCrop] failed. Pad: input shape is not <H,W,C> or <H, W>, got rank: 3"
+    assert error_msg in str(error_info.value)
 
 
 
