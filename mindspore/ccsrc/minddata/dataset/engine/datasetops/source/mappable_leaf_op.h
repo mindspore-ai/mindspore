@@ -68,6 +68,16 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   /// @return Name of the current Op
   std::string Name() const override { return "MappableLeafPp"; }
 
+#ifdef ENABLE_PYTHON
+  /// \brief Decrypt the encrypted image data as a public function.
+  /// \param[in] path - The path of the image that needs to be decrypted.
+  /// \param[in] decrypt - Image decryption function. Default: None, no decryption.
+  /// \param[out] tensor - Returned tensor.
+  /// \return Status code.
+  static Status ImageDecrypt(const std::string &path, std::shared_ptr<Tensor> *tensor,
+                             const py::function &decrypt = py::none());
+#endif
+
  protected:
   /// Initialize Sampler, calls sampler->Init() within
   /// @return Status The status code returned

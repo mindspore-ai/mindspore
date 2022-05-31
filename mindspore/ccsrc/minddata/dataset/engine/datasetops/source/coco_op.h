@@ -146,6 +146,23 @@ class CocoOp : public MappableLeafOp {
     std::unique_ptr<DataSchema> builder_schema_;
   };
 
+#ifdef ENABLE_PYTHON
+  /// \brief Constructor.
+  /// \param[in] task_type Task type of Coco.
+  /// \param[in] image_folder_path Image folder path of Coco.
+  /// \param[in] annotation_path Annotation json path of Coco.
+  /// \param[in] num_workers Number of workers reading images in parallel.
+  /// \param[in] queue_size Connector queue size.
+  /// \param[in] num_samples Number of samples to read.
+  /// \param[in] decode Whether to decode images.
+  /// \param[in] data_schema The schema of the Coco dataset.
+  /// \param[in] sampler Sampler tells CocoOp what to read.
+  /// \param[in] decrypt - Image decryption function, which accepts the path of the encrypted image file
+  ///     and returns the decrypted bytes data. Default: None, no decryption.
+  CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
+         int32_t num_workers, int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
+         std::shared_ptr<SamplerRT> sampler, bool extra_metadata, py::function decrypt = py::none());
+#else
   /// \brief Constructor.
   /// \param[in] task_type Task type of Coco.
   /// \param[in] image_folder_path Image folder path of Coco.
@@ -159,6 +176,7 @@ class CocoOp : public MappableLeafOp {
   CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
          int32_t num_workers, int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
          std::shared_ptr<SamplerRT> sampler, bool extra_metadata);
+#endif
 
   /// \brief Destructor.
   ~CocoOp() = default;
@@ -298,6 +316,9 @@ class CocoOp : public MappableLeafOp {
   std::map<std::string, std::vector<uint32_t>> simple_item_map_;
   std::map<std::string, std::vector<std::string>> captions_map_;
   std::set<uint32_t> category_set_;
+#ifdef ENABLE_PYTHON
+  py::function decrypt_;
+#endif
 };
 }  // namespace dataset
 }  // namespace mindspore

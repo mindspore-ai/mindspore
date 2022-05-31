@@ -28,10 +28,17 @@ namespace mindspore {
 namespace dataset {
 class VOCNode : public MappableSourceNode {
  public:
+#ifdef ENABLE_PYTHON
+  /// \brief Constructor
+  VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+          const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler,
+          std::shared_ptr<DatasetCache> cache, bool extra_metadata = false, py::function decrypt = py::none());
+#else
   /// \brief Constructor
   VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
           const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler,
           std::shared_ptr<DatasetCache> cache, bool extra_metadata = false);
+#endif
 
   /// \brief Destructor
   ~VOCNode() override = default;
@@ -112,6 +119,9 @@ class VOCNode : public MappableSourceNode {
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
   bool extra_metadata_;
+#ifdef ENABLE_PYTHON
+  py::function decrypt_;
+#endif
 };
 }  // namespace dataset
 }  // namespace mindspore

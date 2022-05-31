@@ -19,6 +19,7 @@
     - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号，默认值：None。只有当指定了 `num_shards` 时才能指定此参数。
     - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
     - **extra_metadata** (bool, 可选) - 用于指定是否额外输出一个数据列用于表示图片元信息。如果为True，则将额外输出一个名为 `[_meta-filename, dtype=string]` 的数据列，默认值：False。
+    - **decrypt** (callable, 可选) - 图像解密函数，接受加密的图片路径并返回bytes类型的解密数据。默认值：None，不进行解密。
 
     [表1] 根据不同 `task` 参数设置，生成数据集具有不同的输出列：
 

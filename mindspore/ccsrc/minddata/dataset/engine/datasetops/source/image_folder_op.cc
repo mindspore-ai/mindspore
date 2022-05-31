@@ -27,6 +27,25 @@
 
 namespace mindspore {
 namespace dataset {
+#ifdef ENABLE_PYTHON
+ImageFolderOp::ImageFolderOp(int32_t num_wkrs, std::string file_dir, int32_t queue_size, bool recursive, bool do_decode,
+                             const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
+                             std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler,
+                             py::function decrypt)
+    : MappableLeafOp(num_wkrs, queue_size, std::move(sampler)),
+      folder_path_(std::move(file_dir)),
+      recursive_(recursive),
+      decode_(do_decode),
+      extensions_(exts),
+      class_index_(map),
+      data_schema_(std::move(data_schema)),
+      sampler_ind_(0),
+      dirname_offset_(0),
+      decrypt_(std::move(decrypt)) {
+  folder_name_queue_ = std::make_unique<Queue<std::string>>(num_wkrs * queue_size);
+  image_name_queue_ = std::make_unique<Queue<FolderImagesPair>>(num_wkrs * queue_size);
+}
+#else
 ImageFolderOp::ImageFolderOp(int32_t num_wkrs, std::string file_dir, int32_t queue_size, bool recursive, bool do_decode,
                              const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
                              std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
@@ -42,6 +61,7 @@ ImageFolderOp::ImageFolderOp(int32_t num_wkrs, std::string file_dir, int32_t que
   folder_name_queue_ = std::make_unique<Queue<std::string>>(num_wkrs * queue_size);
   image_name_queue_ = std::make_unique<Queue<FolderImagesPair>>(num_wkrs * queue_size);
 }
+#endif
 
 // Master thread that pulls the prescan worker's results.
 // Keep collecting results until all prescan workers quit
@@ -88,7 +108,11 @@ Status ImageFolderOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   ImageLabelPair pair_ptr = image_label_pairs_[row_id];
   std::shared_ptr<Tensor> image, label;
   RETURN_IF_NOT_OK(Tensor::CreateScalar(pair_ptr->second, &label));
+#ifdef ENABLE_PYTHON
+  RETURN_IF_NOT_OK(MappableLeafOp::ImageDecrypt(folder_path_ + (pair_ptr->first), &image, decrypt_));
+#else
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(folder_path_ + (pair_ptr->first), &image));
+#endif
 
   if (decode_ == true) {
     Status rc = Decode(image, &image);

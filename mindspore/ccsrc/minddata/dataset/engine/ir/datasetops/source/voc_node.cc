@@ -31,6 +31,21 @@
 namespace mindspore {
 namespace dataset {
 
+#ifdef ENABLE_PYTHON
+// Constructor for VOCNode
+VOCNode::VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                 const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler,
+                 std::shared_ptr<DatasetCache> cache, bool extra_metadata, py::function decrypt)
+    : MappableSourceNode(std::move(cache)),
+      dataset_dir_(dataset_dir),
+      task_(task),
+      usage_(usage),
+      class_index_(class_indexing),
+      decode_(decode),
+      sampler_(sampler),
+      extra_metadata_(extra_metadata),
+      decrypt_(decrypt) {}
+#else
 // Constructor for VOCNode
 VOCNode::VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
                  const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler,
@@ -43,11 +58,17 @@ VOCNode::VOCNode(const std::string &dataset_dir, const std::string &task, const 
       decode_(decode),
       sampler_(sampler),
       extra_metadata_(extra_metadata) {}
+#endif
 
 std::shared_ptr<DatasetNode> VOCNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
+#ifdef ENABLE_PYTHON
+  auto node = std::make_shared<VOCNode>(dataset_dir_, task_, usage_, class_index_, decode_, sampler, cache_,
+                                        extra_metadata_, decrypt_);
+#else
   auto node =
     std::make_shared<VOCNode>(dataset_dir_, task_, usage_, class_index_, decode_, sampler, cache_, extra_metadata_);
+#endif
   node->SetNumWorkers(num_workers_);
   node->SetConnectorQueueSize(connector_que_size_);
   return node;
@@ -125,11 +146,18 @@ Status VOCNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
   std::shared_ptr<VOCOp> voc_op;
+#ifdef ENABLE_PYTHON
+  voc_op = std::make_shared<VOCOp>(task_type_, usage_, dataset_dir_, class_index_, num_workers_, connector_que_size_,
+                                   decode_, std::move(schema), std::move(sampler_rt), extra_metadata_, decrypt_);
+
+#else
   voc_op = std::make_shared<VOCOp>(task_type_, usage_, dataset_dir_, class_index_, num_workers_, connector_que_size_,
                                    decode_, std::move(schema), std::move(sampler_rt), extra_metadata_);
+#endif
   voc_op->SetTotalRepeats(GetTotalRepeats());
   voc_op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(voc_op);
+
   return Status::OK();
 }
 

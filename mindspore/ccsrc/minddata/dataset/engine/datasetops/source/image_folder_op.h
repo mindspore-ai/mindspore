@@ -53,6 +53,23 @@ using FolderImagesPair = std::shared_ptr<std::pair<std::string, std::queue<Image
 
 class ImageFolderOp : public MappableLeafOp {
  public:
+#ifdef ENABLE_PYTHON
+  // Constructor
+  // @param int32_t num_wkrs - Num of workers reading images in parallel
+  // @param std::string - dir directory of ImageNetFolder
+  // @param int32_t queue_size - connector queue size
+  // @param bool recursive - read recursively
+  // @param bool do_decode - decode the images after reading
+  // @param std::set<std::string> &exts - set of file extensions to read, if empty, read everything under the dir
+  // @param std::map<std::string, int32_t> &map- map of folder name and class id
+  // @param std::unique_ptr<dataschema> data_schema - schema of data
+  // @param py::function decrypt - Image decryption function, which accepts the path of the encrypted image file
+  //     and returns the decrypted bytes data. Default: None, no decryption.
+  ImageFolderOp(int32_t num_wkrs, std::string file_dir, int32_t queue_size, bool recursive, bool do_decode,
+                const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
+                std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler,
+                py::function decrypt = py::none());
+#else
   // Constructor
   // @param int32_t num_wkrs - Num of workers reading images in parallel
   // @param std::string - dir directory of ImageNetFolder
@@ -65,6 +82,7 @@ class ImageFolderOp : public MappableLeafOp {
   ImageFolderOp(int32_t num_wkrs, std::string file_dir, int32_t queue_size, bool recursive, bool do_decode,
                 const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
                 std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
+#endif
 
   /// Destructor.
   ~ImageFolderOp() = default;
@@ -144,6 +162,9 @@ class ImageFolderOp : public MappableLeafOp {
   std::vector<ImageLabelPair> image_label_pairs_;
   std::unique_ptr<Queue<std::string>> folder_name_queue_;
   std::unique_ptr<Queue<FolderImagesPair>> image_name_queue_;
+#ifdef ENABLE_PYTHON
+  py::function decrypt_;
+#endif
 };
 }  // namespace dataset
 }  // namespace mindspore

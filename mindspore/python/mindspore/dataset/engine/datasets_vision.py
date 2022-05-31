@@ -429,6 +429,8 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
+        decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
+            and returns the decrypted bytes data. Default: None, no decryption.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -548,13 +550,14 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
 
     @check_celebadataset
     def __init__(self, dataset_dir, num_parallel_workers=None, shuffle=None, usage='all', sampler=None, decode=False,
-                 extensions=None, num_samples=None, num_shards=None, shard_id=None, cache=None):
+                 extensions=None, num_samples=None, num_shards=None, shard_id=None, cache=None, decrypt=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
         self.dataset_dir = dataset_dir
         self.decode = replace_none(decode, False)
         self.extensions = replace_none(extensions, [])
         self.usage = replace_none(usage, "all")
+        self.decrypt = decrypt
 
     def parse(self, children=None):
         if self.usage != "all":
@@ -562,7 +565,8 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
             partition_file = os.path.join(dataset_dir, "list_eval_partition.txt")
             if os.path.exists(partition_file) is False:
                 raise RuntimeError("Partition file can not be found when usage is not 'all'.")
-        return cde.CelebANode(self.dataset_dir, self.usage, self.sampler, self.decode, self.extensions)
+        return cde.CelebANode(self.dataset_dir, self.usage, self.sampler, self.decode,
+                              self.extensions, self.decrypt)
 
 
 
@@ -1023,6 +1027,8 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
             (default=None, which means no cache is used).
         extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column will be
             output at the end :py:obj:`[_meta-filename, dtype=string]` (default=False).
+        decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
+            and returns the decrypted bytes data. Default: None, no decryption.
 
     The generated dataset with different task setting has different output columns:
 
@@ -1195,7 +1201,7 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
     @check_cocodataset
     def __init__(self, dataset_dir, annotation_file, task="Detection", num_samples=None, num_parallel_workers=None,
                  shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None,
-                 extra_metadata=False):
+                 extra_metadata=False, decrypt=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
         self.dataset_dir = dataset_dir
@@ -1203,10 +1209,11 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         self.task = replace_none(task, "Detection")
         self.decode = replace_none(decode, False)
         self.extra_metadata = extra_metadata
+        self.decrypt = decrypt
 
     def parse(self, children=None):
         return cde.CocoNode(self.dataset_dir, self.annotation_file, self.task, self.decode, self.sampler,
-                            self.extra_metadata)
+                            self.extra_metadata, self.decrypt)
 
     def get_class_indexing(self):
         """
@@ -2203,6 +2210,8 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
+        decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
+            and returns the decrypted bytes data. Default: None, no decryption.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -2287,7 +2296,8 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
 
     @check_imagefolderdataset
     def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None, shuffle=None, sampler=None,
-                 extensions=None, class_indexing=None, decode=False, num_shards=None, shard_id=None, cache=None):
+                 extensions=None, class_indexing=None, decode=False, num_shards=None, shard_id=None, cache=None,
+                 decrypt=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
 
@@ -2295,9 +2305,11 @@ class ImageFolderDataset(MappableDataset, VisionBaseDataset):
         self.extensions = replace_none(extensions, [])
         self.class_indexing = replace_none(class_indexing, {})
         self.decode = replace_none(decode, False)
+        self.decrypt = decrypt
 
     def parse(self, children=None):
-        return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions, self.class_indexing)
+        return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions, self.class_indexing,
+                                   self.decrypt)
 
 
 class KITTIDataset(MappableDataset):
@@ -4534,6 +4546,8 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
             (default=None, which means no cache is used).
         extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column named
             :py:obj:`[_meta-filename, dtype=string]` will be output at the end (default=False).
+        decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
+            and returns the decrypted bytes data. Default: None, no decryption.
 
     Raises:
         RuntimeError: If `dataset_dir` does not contain data files.
@@ -4658,7 +4672,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
     @check_vocdataset
     def __init__(self, dataset_dir, task="Segmentation", usage="train", class_indexing=None, num_samples=None,
                  num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None,
-                 cache=None, extra_metadata=False):
+                 cache=None, extra_metadata=False, decrypt=None):
         super().__init__(num_parallel_workers=num_parallel_workers, sampler=sampler, num_samples=num_samples,
                          shuffle=shuffle, num_shards=num_shards, shard_id=shard_id, cache=cache)
         self.dataset_dir = dataset_dir
@@ -4667,10 +4681,11 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
         self.class_indexing = replace_none(class_indexing, {})
         self.decode = replace_none(decode, False)
         self.extra_metadata = extra_metadata
+        self.decrypt = decrypt
 
     def parse(self, children=None):
         return cde.VOCNode(self.dataset_dir, self.task, self.usage, self.class_indexing, self.decode, self.sampler,
-                           self.extra_metadata)
+                           self.extra_metadata, self.decrypt)
 
     def get_class_indexing(self):
         """

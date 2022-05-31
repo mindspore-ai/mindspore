@@ -24,6 +24,36 @@ namespace dataset {
 MappableLeafOp::MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_wkrs, queue_size, std::move(sampler)) {}
 
+#ifdef ENABLE_PYTHON
+Status MappableLeafOp::ImageDecrypt(const std::string &path, std::shared_ptr<Tensor> *tensor,
+                                    const py::function &decrypt) {
+  RETURN_UNEXPECTED_IF_NULL(tensor);
+  if (py::isinstance<py::none>(decrypt)) {
+    RETURN_IF_NOT_OK(Tensor::CreateFromFile(path, tensor));
+  } else {
+    // Acquire Python GIL
+    py::gil_scoped_acquire gil_acquire;
+    if (Py_IsInitialized() == 0) {
+      RETURN_STATUS_ERROR(StatusCode::kMDPythonInterpreterFailure, "[Internal ERROR] Python Interpreter is finalized.");
+    }
+    try {
+      py::bytes ret_py_obj = decrypt(path);
+      int64_t num_bytes = len(ret_py_obj);
+      CHECK_FAIL_RETURN_UNEXPECTED(num_bytes < kDeMaxDim,
+                                   "The length of decrypted bytes returned by the decryption function exceeds the "
+                                   "maximum value of int64, check path: " +
+                                     path);
+      std::string ret_str = ret_py_obj;
+      RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape{num_bytes}, DataType(DataType::DE_UINT8),
+                                                reinterpret_cast<const uchar *>(ret_str.c_str()), num_bytes, tensor));
+    } catch (const py::error_already_set &e) {
+      RETURN_STATUS_ERROR(StatusCode::kMDPyFuncException, e.what());
+    }
+  }
+  return Status::OK();
+}
+#endif
+
 // Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
 Status MappableLeafOp::operator()() {
   // Registering and launching worker threads have to be before in sync with caller (i.e., before FindMe()::Post())
