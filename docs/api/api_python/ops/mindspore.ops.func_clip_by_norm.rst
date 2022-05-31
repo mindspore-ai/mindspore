@@ -11,11 +11,17 @@ mindspore.ops.clip_by_norm
     .. note::
         :math:`L_2`-norm 是对输入Tensor计算 `L_2` 范数。
 
-    **参数：**
+    **输入：**
 
     - **x** (Tensor) - 任意维度的Tensor。数据类型是 `float16` 或者 `float32` 。
     - **clip_norm** (Tensor) - 表示裁剪比率的Tensor，数值应该大于0。Shape必须支持能广播至 `x` 的shape。数据类型是 `float16` 或者 `float32` 。
     - **axis** (Union[None, int, tuple(int), list(int)]) - 执行 :math:`L_2`-norm 计算的维度。默认值： `None` ，表示所有维度。
+
+    **异常：**
+
+    - **TypeError** - `x` 的数据类型不是 `float16` 或者 `float32` 。
+    - **TypeError** - `clip_norm` 的数据类型不是 `float16` 或者 `float32` 。
+    - **TypeError** - `axis` 的类型不是 `None`、`int`、`tuple(int)` 或者 `list(int)` 。
 
     **返回：**
 

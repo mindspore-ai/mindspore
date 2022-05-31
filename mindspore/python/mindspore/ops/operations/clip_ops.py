@@ -53,7 +53,7 @@ class ClipByNorm(PrimitiveWithInfer):
         TypeError: If dtype of `clip_norm` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
