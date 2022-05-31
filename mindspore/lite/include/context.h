@@ -16,7 +16,9 @@
 
 #ifndef MINDSPORE_LITE_INCLUDE_CONTEXT_H_
 #define MINDSPORE_LITE_INCLUDE_CONTEXT_H_
+
 #include <string>
+#include <vector>
 #include "include/ms_tensor.h"
 #include "include/lite_utils.h"
 #include "include/lite_types.h"
@@ -69,17 +71,13 @@ struct DeviceContext {
 
 /// \brief Context defined for holding environment variables during runtime.
 struct Context {
-  String vendor_name_;
+  std::string vendor_name_;
   int thread_num_ = 2; /**< thread number config for thread pool */
   int inter_op_parallel_num_ = 1;
   bool enable_parallel_ = false;
-  Vector<int> affinity_core_list_; /**< explicitly specify the core to be bound. priority use affinity core list */
+  std::vector<int> affinity_core_list_; /**< explicitly specify the core to be bound. priority use affinity core list */
   AllocatorPtr allocator = nullptr;
-#ifndef NOT_USE_STL
   DeviceContextVector device_list_ = {{DT_CPU, {{false, MID_CPU}}}};
-#else
-  DeviceContextVector device_list_;
-#endif  // NOT_USE_STL
   DelegatePtr delegate = nullptr;
   bool float_mode = false; /**< convert full quant model to float model */
 };
