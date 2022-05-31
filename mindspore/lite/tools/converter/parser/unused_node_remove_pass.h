@@ -19,7 +19,6 @@
 #include <set>
 #include <string>
 #include "backend/common/optimizer/pass.h"
-#include "tools/converter/converter_flags.h"
 #include "mindspore/lite/include/errorcode.h"
 
 using mindspore::lite::STATUS;

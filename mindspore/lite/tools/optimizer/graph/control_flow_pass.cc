@@ -26,6 +26,7 @@
 #include "src/common/log_adapter.h"
 #include "tools/common/node_util.h"
 #include "nnacl/op_base.h"
+#include "include/registry/converter_context.h"
 
 namespace mindspore::opt {
 void ControlFlowPass::ReplaceNode(const FuncGraphPtr &fg,

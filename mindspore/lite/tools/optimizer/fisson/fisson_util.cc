@@ -26,6 +26,7 @@
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 #include "ops/op_utils.h"
+#include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore {

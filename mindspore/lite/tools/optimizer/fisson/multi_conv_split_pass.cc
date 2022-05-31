@@ -26,7 +26,6 @@
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
 
-using mindspore::converter::FmkType;
 using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 namespace mindspore {
 namespace opt {

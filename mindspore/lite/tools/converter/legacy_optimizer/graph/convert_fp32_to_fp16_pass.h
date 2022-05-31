@@ -19,7 +19,6 @@
 
 #include <unordered_map>
 #include "tools/converter/optimizer.h"
-#include "tools/converter/converter_flags.h"
 
 namespace mindspore {
 namespace lite {

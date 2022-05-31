@@ -26,7 +26,6 @@
 #include "tools/common/protobuf_utils.h"
 #include "tools/common/tensor_util.h"
 #include "ir/func_graph.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/parser/parser_utils.h"

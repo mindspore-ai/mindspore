@@ -171,10 +171,10 @@ build_lite_jni_and_jar() {
 }
 
 build_python_wheel_package() {
-  local python_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'`
+  local python_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'` || true
   if [[ "${python_version}" == "3" ]]; then
     cd ${BASEPATH}/mindspore/lite/build/
-    local lite_wrapper_so=`ls python/*.so`
+    local lite_wrapper_so=`ls python/*.so` || true
     if [ ! -f "${lite_wrapper_so}" ]; then
       return 0
     fi
@@ -198,7 +198,7 @@ build_python_wheel_package() {
     export TOP_DIR=${BASEPATH}
     cd package
     python setup.py bdist_wheel
-    local minor_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $2}'`
+    local minor_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $2}'` || true
     local py_tags="cp${python_version}${minor_version}-cp${python_version}${minor_version}"
     if [[ "${minor_version}" == "7" ]]; then
       py_tags="cp37-cp37m"
