@@ -1077,8 +1077,8 @@ mindspore.Tensor
         **返回：**
 
         - **s** (Tensor) - 奇异值。shape为 :math:`(*, P)`。
-        - **u** (Tensor) - 左奇异向量。如果compute_uv为False，该值为空Tensor。shape为 :math:`(*, M, P)` 。如果full_matrices为true，则shape为 :math:`(*, M, M)` 。
-        - **v** (Tensor) - 右奇异向量。如果compute_uv为False，该值为空Tensor。shape为 :math:`(*, P, N)` 。如果full_matrices为true，则shape为 :math:`(*, N, N)` 。
+        - **u** (Tensor) - 左奇异向量。如果compute_uv为False，该值不会返回。shape为 :math:`(*, M, P)` 。如果full_matrices为true，则shape为 :math:`(*, M, M)` 。
+        - **v** (Tensor) - 右奇异向量。如果compute_uv为False，该值不会返回。shape为 :math:`(*, P, N)` 。如果full_matrices为true，则shape为 :math:`(*, N, N)` 。
 
         **异常：**
 
