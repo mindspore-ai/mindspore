@@ -62,6 +62,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"CeLU", "CeluV2"},
     {"TransposeNOD", "Transpose"},
     {"IndexAdd", "InplaceIndexAdd"},
+    {"KLDivLoss", "KLDiv"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {
