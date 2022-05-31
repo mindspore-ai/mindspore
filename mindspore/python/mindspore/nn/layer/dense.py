@@ -27,13 +27,6 @@ __all__ = ['BiDense']
 
 
 @constexpr
-def check_dense_input_shape(x, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if len(x) < 2:
-        raise ValueError(f"{msg_prefix} dimension of 'x' should not be less than 2, but got {len(x)}.")
-
-
-@constexpr
 def check_dense_inputs_same_shape(input1, input2, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if input1[:-1] != input2[:-1]:
@@ -48,7 +41,7 @@ class BiDense(Cell):
     Applies dense connected layer for two inputs. This layer implements the operation as:
 
     .. math::
-        \text{outputs} = \text{X_{1}}^{T} * \text{kernel} * \text{X_{2}} + \text{bias},
+        \text{outputs} = X_{1}^{T} * \text{kernel} * X_{2} + \text{bias},
 
     where :math:`X_{1}` is the first input tensor, math:`X_{2}` is the second input tensor
     , :math:`\text{kernel}` is a weight matrix with the same data type as the :math:`X` created by the layer
@@ -141,8 +134,6 @@ class BiDense(Cell):
     def construct(self, input1, input2):
         input1_shape = input1.shape
         input2_shape = input2.shape
-        check_dense_input_shape(input1_shape, self.cls_name)
-        check_dense_input_shape(input2_shape, self.cls_name)
         check_dense_inputs_same_shape(input1_shape, input2_shape, self.cls_name)
         if len(input1_shape) != 2:
             input1 = input1.reshape((-1, input1_shape[-1]))
