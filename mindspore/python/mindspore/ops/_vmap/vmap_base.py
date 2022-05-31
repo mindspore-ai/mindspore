@@ -24,7 +24,6 @@ from ..composite import _VmapGeneralPreprocess
 from ..primitive import Primitive
 from ...common import Tensor
 
-
 vmap_rules_getters = Registry()
 vmap_rules = Registry()
 
@@ -185,6 +184,7 @@ def vmap_monad_rule(prim, axis_size):
                 vals = vals + (val,)
         out = prim(*vals)
         return (out, None)
+
     return vmap_rule
 
 
@@ -277,5 +277,37 @@ def get_unsupported_dynamic_vmap_rule(prim, axis_size):
             _raise_value_error("For operator {}, all axis should be none, but got {}".format(prim_name, dims))
 
         return result
+
+    return vmap_rule
+
+
+def get_unary_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `UnaryGrad`."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(x_bdim, dout_bdim):
+        x, x_dim = x_bdim
+        dout, dout_dim = dout_bdim
+        x_shape = F.shape(x)
+        dout_shape = F.shape(dout)
+        if x_dim == dout_dim and x_shape == dout_shape:
+            out = prim(x, dout)
+            return (out, x_dim)
+
+        # This branch means (x_dim is None) and (dout_dim is not None).
+        if x_dim is None:
+            x = _broadcast_by_axis(x, dout_dim, axis_size)
+            out_dim = dout_dim
+        # This branch means (x_dim is not None) and (dout_dim is None).
+        elif dout_dim is None:
+            dout = _broadcast_by_axis(dout, x_dim, axis_size)
+            out_dim = x_dim
+        # This branch means (x_dim is not None) and (dout_dim is not None).
+        else:
+            dout = mnp.moveaxis(dout, dout_dim, x_dim)
+            out_dim = x_dim
+        out = prim(x, dout)
+        return (out, out_dim)
 
     return vmap_rule

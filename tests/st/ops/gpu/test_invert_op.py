@@ -19,6 +19,7 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 @pytest.mark.level0
@@ -40,4 +41,32 @@ def test_invert(mode, shape, dtype):
     input_x = (np.random.randn(*shape) * prop).astype(dtype)
     output = invert(Tensor(input_x))
     expect_output = np.invert(input_x)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_invert_vmap(mode):
+    """
+    Feature: test invert vmap feature.
+    Description: test invert vmap feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor(np.array([[25, 4, 13, 9], [2, -1, 0, -5]], dtype=np.int16))
+    # Case 1
+    output = F.vmap(F.invert, 0, 0)(x)
+    expect_output = np.array([[-26, -5, -14, -10], [-3, 0, -1, 4]], dtype=np.int16)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 2
+    output = F.vmap(F.invert, 1, 0)(x)
+    expect_output = np.array([[-26, -3], [-5, 0], [-14, -1], [-10, 4]], dtype=np.int16)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 3
+    output = F.vmap(F.invert, 0, 1)(x)
+    expect_output = np.array([[-26, -3], [-5, 0], [-14, -1], [-10, 4]], dtype=np.int16)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)

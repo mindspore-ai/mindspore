@@ -15,6 +15,10 @@
  */
 
 #include "ops/grad/sqrt_grad.h"
+#include <set>
+#include <map>
+#include <string>
+#include <vector>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"

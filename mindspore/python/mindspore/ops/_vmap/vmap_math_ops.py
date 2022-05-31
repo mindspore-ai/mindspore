@@ -23,9 +23,11 @@ from mindspore.common import Tensor
 from mindspore.ops.operations.math_ops import Lerp
 from mindspore.ops.operations.math_ops import LpNorm
 from mindspore.ops.operations import linalg_ops
+from mindspore.ops.operations import _grad_ops as G
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
-    get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting
+    get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting, \
+    get_unary_grad_vmap_rule
 from ..operations.math_ops import (Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
                                    BesselK1e)
 
@@ -406,6 +408,7 @@ def get_lp_norm_vmap_rule(prim, axis_size):
 
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignAdd)(get_assign_vmap_rule)
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignSub)(get_assign_vmap_rule)
+# Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Abs)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ACos)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Acosh)(get_unop_vmap_rule)
@@ -431,6 +434,8 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.Log1p)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.LogicalNot)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Neg)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Reciprocal)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.Inv)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.Invert)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Rint)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Round)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Rsqrt)(get_unop_vmap_rule)
@@ -454,3 +459,5 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.BesselI1e)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselK1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselK1e)(get_unop_vmap_rule)
+# UnaryGrad vmap
+get_unary_grad_vmap_rule = vmap_rules_getters.register(G.InvGrad)(get_unary_grad_vmap_rule)

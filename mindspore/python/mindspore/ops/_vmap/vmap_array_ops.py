@@ -447,8 +447,8 @@ def _get_one_hot_vmap_axis(orig_axis, ndim, indices_dim):
     """Find vmap axis for OneHot."""
     if orig_axis >= 0 and indices_dim <= orig_axis:
         return orig_axis + 1
-    if indices_dim == (ndim-1) and orig_axis in (-1, (ndim-1)):
-        return ndim-1
+    if indices_dim == (ndim - 1) and orig_axis in (-1, (ndim - 1)):
+        return ndim - 1
     return orig_axis
 
 
@@ -518,6 +518,55 @@ def get_masked_select_vmap_rule(prim, axis_size):
         if x_rank > 1:
             out = F.reshape(out, (x_shape[0], -1))
         return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.array_ops.MatrixBandPart)
+def get_matrix_band_part_vmap_rule(prim, axis_size):
+    """VmapRule for `MatrixBandPart` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(x_bdim, lower_bdim, upper_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, lower_bdim, upper_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        lower, lower_dim = lower_bdim
+        upper, upper_dim = upper_bdim
+        if lower_dim is not None:
+            _raise_value_error("The source axis of `lower` in `P.array_ops.MatrixBandPart` currently does not support"
+                               "setting to None, but got {}.".format(lower_dim))
+        if upper_dim is not None:
+            _raise_value_error("The source axis of `upper` in `P.array_ops.MatrixBandPart` currently does not support"
+                               "setting to None, but got {}.".format(upper_dim))
+        x = _bdim_at_front(x, x_dim, axis_size)
+        out = prim(x, lower, upper)
+        return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.Padding)
+def get_padding_vmap_rule(prim, axis_size):
+    """VmapRule for `Padding` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        if F.rank(x) and x_dim in (-1, F.rank(x) - 1):
+            x = _bdim_at_front(x, x_dim, axis_size)
+            output = prim(x)
+            return (output, 0)
+        output = prim(x)
+        return (output, x_dim)
 
     return vmap_rule
 
