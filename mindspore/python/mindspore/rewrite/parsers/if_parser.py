@@ -70,7 +70,8 @@ class IfParser(Parser):
                     continue
                 targets = ast_node.targets
                 for target in targets:
-                    dst_bodies.append(ast.Assign(targets=[target], value=ast.Constant(value=0, ctx=ast.Load())))
+                    dst_bodies.append(ast.Assign(targets=[target], value=ast.Constant(value=0, kind=None,
+                                                                                      ctx=ast.Load())))
         else:
             dst_bodies.append(ast.Pass())
 

@@ -777,7 +777,20 @@ class Conv2dBnFoldQuantOneConv(Cell):
 
     @classmethod
     def from_float(cls, convbn: Conv2dBnAct, quant_config: QuantConfig):
-        """A class method to create `Conv2dBnFoldQuantOneConv` from a `Conv2dBnAct`"""
+        """
+        A class method to create `Conv2dBnFoldQuantOneConv` from a `Conv2dBnAct`
+
+        Examples:
+            >>> from mindspore import nn
+            >>> ic = 10
+            >>> oc = 100
+            >>> kernel_size = 3
+            >>> conv_bn_op = nn.Conv2dBnAct(ic, oc, kernel_size)
+            >>> # when apply QAT on `conv_bn_op`, QAT need to create a quant Conv2dBnAct whose weight is fake-quanted,
+            >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
+            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
+            >>> conv_bn_quant = nn.Conv2dBnFoldQuantOneConv.from_float(conv_bn_op, quant_config)
+        """
 
         kwargs = {'in_channels': convbn.conv.in_channels,
                   'out_channels': convbn.conv.out_channels,
@@ -1032,7 +1045,20 @@ class Conv2dBnFoldQuant(Cell):
 
     @classmethod
     def from_float(cls, convbn: Conv2dBnAct, quant_config: QuantConfig):
-        """A class method to create `Conv2dBnFoldQuantOneConv` from a `Conv2dBnAct`"""
+        """
+        A class method to create `Conv2dBnFoldQuantOneConv` from a `Conv2dBnAct`
+
+        Examples:
+            >>> from mindspore import nn
+            >>> ic = 10
+            >>> oc = 100
+            >>> kernel_size = 3
+            >>> conv_bn_op = nn.Conv2dBnAct(ic, oc, kernel_size)
+            >>> # when apply QAT on `conv_bn_op`, QAT need to create a quant Conv2dBnAct whose weight is fake-quanted
+            >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
+            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
+            >>> conv_bn_quant = nn.Conv2dBnFoldQuant.from_float(conv_bn_op, quant_config)
+        """
 
         kwargs = {'in_channels': convbn.conv.in_channels,
                   'out_channels': convbn.conv.out_channels,
@@ -1382,7 +1408,20 @@ class Conv2dQuant(Cell):
 
     @classmethod
     def from_float(cls, conv: Conv2d, quant_config: QuantConfig):
-        """A class method to create `Conv2dQuant` from a `Conv2d`"""
+        """
+        A class method to create `Conv2dQuant` from a `Conv2d`
+
+        Examples:
+            >>> from mindspore import nn
+            >>> ic = 10
+            >>> oc = 100
+            >>> kernel_size = 3
+            >>> conv_op = nn.Conv2d(ic, oc, kernel_size)
+            >>> # when apply QAT on `conv_op`, QAT need to create a quant conv2d whose weight is fake-quanted
+            >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
+            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
+            >>> conv_quant = nn.Conv2dQuant.from_float(conv_op, quant_config)
+        """
         conv_quant = cls(
             conv.in_channels,
             conv.out_channels,
@@ -1522,7 +1561,19 @@ class DenseQuant(Cell):
 
     @classmethod
     def from_float(cls, dense: Dense, quant_config: QuantConfig):
-        """A class method to create `DenseQuant` from a `Dense`"""
+        """
+        A class method to create `DenseQuant` from a `Dense`
+
+        Examples:
+            >>> from mindspore import nn
+            >>> ic = 10
+            >>> oc = 100
+            >>> dense_op = nn.Dense(ic, oc)
+            >>> # when apply QAT on `dense_op`, QAT need to create a quant dense whose weight is fake-quanted
+            >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
+            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
+            >>> dense_quant = nn.DenseQuant.from_float(dense_op, quant_config)
+        """
         dense_quant = cls(
             dense.in_channels,
             dense.out_channels,
