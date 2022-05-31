@@ -160,6 +160,7 @@
 #include "plugin/device/ascend/optimizer/mindir/all_to_all_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/neighbor_exchange_v2_unify_mindir.h"
 #include "backend/common/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
+#include "backend/common/pass/gradients_allreduce_depend_last_send.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/config_manager.h"
@@ -492,6 +493,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
   other_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
+  other_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   other_pm->AddPass(std::make_shared<SplitOpOptimizer>());
