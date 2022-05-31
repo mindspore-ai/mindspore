@@ -1,7 +1,7 @@
 mindspore.ops.DynamicGRUV2
 ==========================
 
-.. py:class:: mindspore.ops.DynamicGRUV2(direction="UNIDIRECTIONAL", cell_depth=1, keep_prob=1.0, cell_clip=-1.0, num_proj=0, time_major=True, activation='tahn', gate_order='rzh', reset_after=True, is_training=True)
+.. py:class:: mindspore.ops.DynamicGRUV2(direction="UNIDIRECTIONAL", cell_depth=1, keep_prob=1.0, cell_clip=-1.0, num_proj=0, time_major=True, activation='tanh', gate_order='rzh', reset_after=True, is_training=True)
 
     为输入序列应用一个单层GRU(gated recurrent unit)。
 

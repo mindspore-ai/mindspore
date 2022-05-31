@@ -4,9 +4,9 @@ mindspore.ops.adaptive_max_pool2d
 .. py:function:: mindspore.ops.adaptive_max_pool2d(input_x, output_size, return_indices)
 
     对输入的多维数据进行二维的自适应最大池化运算。
-	
+
 	通过output_size指定输出的高度 :math:`H_{out}` 和宽度 :math:`W_{out}` 
-	
+
     一般，输入shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 的Tensor，输出 :math:`(N_{in}, C_{in}, H_{out}, W_{out})` 维上的区域最大值。运算如下：	
 
     .. math::

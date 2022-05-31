@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.Xlogy
 
-    计算第一个输入Tensor乘以第二个输入Tensor的对数。当`x`为零时，则返回零。
+    计算第一个输入Tensor乘以第二个输入Tensor的对数。当 `x` 为零时，则返回零。
 
     .. math::
         out_i = x_{i}\ln{y_{i}}
