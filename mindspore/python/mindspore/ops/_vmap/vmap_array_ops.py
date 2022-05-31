@@ -21,8 +21,9 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error, \
-    _handle_broadcasting
+    _handle_broadcasting, get_unsupported_dynamic_vmap_rule
 from ..operations.array_ops import Fills
+from ..operations.array_ops import UniqueConsecutive
 
 
 @vmap_rules_getters.register("Cast")
@@ -44,21 +45,6 @@ def get_cast_vmap_rule(prim, axis_size):
         return (out, x_dim)
 
     return vmap_rule
-
-
-@constexpr
-def _get_transpose_batch_perm(dim, perm, x_rank):
-    """Generate batch_perm based on the original perm of transpose operation and dim of the input."""
-    if dim < 0:
-        dim = dim + x_rank
-    batch_perm = (dim,)
-    for i in perm:
-        if i < dim:
-            batch_perm = batch_perm + (i,)
-        else:
-            index = i + 1
-            batch_perm = batch_perm + (index,)
-    return batch_perm
 
 
 @constexpr
@@ -85,6 +71,20 @@ def get_transpose_vmap_rule(prim, axis_size):
     if isinstance(prim, str):
         prim = Primitive(prim)
 
+    @constexpr
+    def _get_transpose_batch_perm(dim, perm, x_rank):
+        """Generate batch_perm based on the original perm of transpose operation and dim of the input."""
+        if dim < 0:
+            dim = dim + x_rank
+        batch_perm = (dim,)
+        for i in perm:
+            if i < dim:
+                batch_perm = batch_perm + (i,)
+            else:
+                index = i + 1
+                batch_perm = batch_perm + (index,)
+        return batch_perm
+
     def vmap_rule(x_bdim, perm_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, perm_bdim)
         if is_all_none:
@@ -103,23 +103,22 @@ def get_transpose_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@constexpr
-def _get_tile_shape(input_shape, multiples):
-    input_ndim = len(input_shape)
-    multiples_ndim = len(multiples)
-    input_shape = (input_shape[0],) + (1,) * (multiples_ndim - input_ndim + 1) + input_shape[1:]
-    multiples = (1,) * (input_ndim - multiples_ndim) + multiples
-    input_expand_shape = (input_shape[0],) + tuple([j for i in input_shape[1:] for j in [1, i]])
-    repeat_shape = (input_shape[0],) + tuple([k for pair in zip(multiples[1:], input_shape[1:]) for k in pair])
-    output_shape = tuple([a * b for a, b in zip(input_shape, multiples)])
-    return input_expand_shape, repeat_shape, output_shape
-
-
 @vmap_rules_getters.register(P.Tile)
 def get_tile_vmap_rule(prim, axis_size):
     """VmapRule for `P.Tile` operation."""
     if isinstance(prim, str):
         prim = Primitive(prim)
+
+    @constexpr
+    def _get_tile_shape(input_shape, multiples):
+        input_ndim = len(input_shape)
+        multiples_ndim = len(multiples)
+        input_shape = (input_shape[0],) + (1,) * (multiples_ndim - input_ndim + 1) + input_shape[1:]
+        multiples = (1,) * (input_ndim - multiples_ndim) + multiples
+        input_expand_shape = (input_shape[0],) + tuple([j for i in input_shape[1:] for j in [1, i]])
+        repeat_shape = (input_shape[0],) + tuple([k for pair in zip(multiples[1:], input_shape[1:]) for k in pair])
+        output_shape = tuple([a * b for a, b in zip(input_shape, multiples)])
+        return input_expand_shape, repeat_shape, output_shape
 
     def vmap_rule(input_bdim, multiples_bdim):
         is_all_none, result = vmap_general_preprocess(prim, input_bdim, multiples_bdim)
@@ -654,3 +653,93 @@ def get_masked_fill_vmap_rule(prim, axis_size):
         return (out, 0)
 
     return vmap_rule
+
+
+@vmap_rules_getters.register(P.Gather)
+def get_gather_vmap_rule(prim, axis_size):
+    """VmapRule for `Gather` operation. """
+    if isinstance(prim, str):
+        prim_name = prim
+        prim = Primitive(prim)
+    else:
+        prim_name = prim.name
+
+    @constexpr
+    def process_axis(axis, x_shape_size, has_xdim: bool, has_idim: bool):
+        if has_xdim and has_idim:
+            if axis < 0:
+                axis = x_shape_size - 1 + axis
+        elif has_xdim:
+            if axis >= 0:
+                axis = axis + 1
+        else:
+            if axis < 0:
+                axis = x_shape_size + axis
+
+        return axis
+
+    @constexpr
+    def get_x_dst_shape(x_shape, axis):
+        target_axis_size = x_shape[axis + 1]
+        x_dst_shape = x_shape[0:axis] + (axis_size * target_axis_size,) + x_shape[axis+2:]
+        max_axis_size = axis_size * target_axis_size
+
+        return target_axis_size, x_dst_shape, max_axis_size
+
+    def vmap_rule(x_bdim, indices_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, indices_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        indices, indices_dim = indices_bdim
+        axis, axis_dim = axis_bdim
+
+        if axis_dim is not None:
+            _raise_value_error("The source axis of `axis` in {} must be None, but got {}.".format(prim_name, axis_dim))
+
+        x_shape_len = len(x.shape)
+
+        if x_dim is not None and indices_dim is None:
+            x = _bdim_at_front(x, x_dim, axis_size)
+            axis = process_axis(axis, x_shape_len, True, False)
+            output = prim(x, indices, axis)
+            return (output, 0)
+
+        if x_dim is None and indices_dim is not None:
+            indices = _bdim_at_front(indices, indices_dim, axis_size)
+            axis = process_axis(axis, x_shape_len, False, True)
+            output = prim(x, indices, axis)
+            return (output, axis)
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        indices = _bdim_at_front(indices, indices_dim, axis_size)
+
+        axis = process_axis(axis, x_shape_len, True, True)
+
+        x = mnp.moveaxis(x, 0, axis)
+
+        x_shape = x.shape
+        target_axis_size, x_dst_shape, max_axis_size = get_x_dst_shape(x_shape, axis)
+
+        x = x.reshape(x_dst_shape)
+
+        counts_shape = indices.shape
+        counts = mnp.arange(0, axis_size, 1)
+        counts = F.mul(counts, target_axis_size)
+        counts = P.BroadcastTo(counts_shape[1:] + (axis_size,))(counts)
+        counts = mnp.moveaxis(counts, -1, 0)
+
+        indices_out_of_bound = mnp.where(indices > target_axis_size - 1, x=max_axis_size, y=0)
+
+        indices = F.add(indices, counts)
+        indices = F.add(indices, indices_out_of_bound)
+
+        output = prim(x, indices, axis)
+
+        return (output, axis)
+    return vmap_rule
+
+get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
+get_unsupported_dynamic_vmap_rule =\
+    vmap_rules_getters.register(UniqueConsecutive)(get_unsupported_dynamic_vmap_rule)

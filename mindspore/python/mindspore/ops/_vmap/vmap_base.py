@@ -246,3 +246,36 @@ def get_unop_vmap_rule(prim, axis_size):
         return (out, dim)
 
     return vmap_rule
+
+
+def get_unsupported_dynamic_vmap_rule(prim, axis_size):
+    """
+    Vmaprule for the dynamic shape operator whose output shape can not be determined,
+    which means the output shape of every batch will be different, so the operator can not support vmap.
+    Forexample, the `Unique` operator, whose output shape is also base on the value of the input.
+    Otherwise, the other dynamic shape operators need to implement their own vmaprules.
+    """
+    if isinstance(prim, str):
+        prim_name = prim
+        prim = Primitive(prim)
+    else:
+        prim_name = prim.name
+
+    def get_all_dims(*params_bdim):
+        dims = []
+        for bdim in params_bdim:
+            _, dim = bdim
+            dims.append(dim)
+
+        return dims
+
+    def vmap_rule(*params_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, params_bdim)
+
+        if not is_all_none:
+            dims = get_all_dims(*params_bdim)
+            _raise_value_error("For operator {}, all axis should be none, but got {}".format(prim_name, dims))
+
+        return result
+
+    return vmap_rule
