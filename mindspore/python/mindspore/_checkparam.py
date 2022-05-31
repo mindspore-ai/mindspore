@@ -493,11 +493,13 @@ class Validator:
         if not hit:
             if addition_error_info is None:
                 addition_error_info = ''
+            else:
+                addition_error_info = ' ' + addition_error_info
             type_str = (f"type '{type(type_).__name__}'" if isinstance(type_, (tuple, list)) else str(type_))
             raise TypeError(f"For '{prim_name}', the type of '{arg_name}'"
                             f" must be {'one of ' if len(template_types) > 1 else ''}"
                             f"{', '.join((str(x) for x in template_types))}, but got {type_str}"
-                            f" {addition_error_info}.The supported data types depend on the hardware that"
+                            f"{addition_error_info}.The supported data types depend on the hardware that"
                             f" executes the operator, for more details, please refer to the MindSpore official "
                             f"website to get more information about the data type.")
 
