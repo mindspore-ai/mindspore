@@ -124,12 +124,13 @@ void AbstractActor::InitOutputData() {
     int output_data_flag = (is_to_stack == true) ? kOutputDataFalgToStack : kOutputDataFalgInit;
 
     // Add the batch output data.
-    if (data_arrow->is_batch_arrow_) {
+    if (data_arrow->flag_ == kOutputDataFalgBatch) {
       if (is_to_stack) {
         MS_LOG(EXCEPTION) << "Not support the batch output data to stack actor.";
       }
       (void)batch_output_data_[to_op_name].emplace_back(data.get());
 
+      output_data_flag = kOutputDataFalgBatch;
       // Identify whether the output data flag is kOutputDataFalgLastBatch.
       ++(batch_op_count[to_op_name]);
       if (batch_op_count[to_op_name] == batch_output_data_arrows_[to_op_name].size()) {
@@ -169,7 +170,7 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
         std::make_unique<OpData<DeviceTensor>>(to_op_id, output_data.first->data_, output_data.first->index_);
       (void)to_stack_data_.emplace_back(std::move(to_stack_data));
       ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
-    } else if (!output_data_arrows_[output_data_arrow_index]->is_batch_arrow_) {
+    } else if (output_data.second != kOutputDataFalgBatch) {
       // The batch output data only send when the output flag is kOutputDataFalgLastBatch.
       ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);
     }

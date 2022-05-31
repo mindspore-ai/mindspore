@@ -91,7 +91,9 @@ enum class KernelTransformType {
   kStackActor,
   // RPC actor type.
   kSendActor,
-  kRecvActor
+  kRecvActor,
+  // Fusion actor type.
+  kFusionActor
 };
 
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \

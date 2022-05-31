@@ -344,7 +344,7 @@ void SchedulerHelper::FuseDataArrowsToBatchDataArrow(AbstractActor *const actor)
     auto &to_op_name = data_arrow->to_op_id_.Name();
     // The output data cannot be reused whose destination is stack actor, and cannot to be fused.
     if ((to_actor_count[to_op_name] > 1) && (to_op_name.find(kStackActorNameSuffix) == std::string::npos)) {
-      data_arrow->is_batch_arrow_ = true;
+      data_arrow->flag_ = kOutputDataFalgBatch;
       (void)actor->batch_output_data_arrows_[to_op_name].emplace_back(data_arrow);
     }
   }

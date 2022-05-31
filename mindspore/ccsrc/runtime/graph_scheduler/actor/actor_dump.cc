@@ -70,7 +70,7 @@ void DumpBaseOutputInfo(const AbstractActor *actor, std::ofstream &ofs) {
         MS_EXCEPTION_IF_NULL(data_arrow);
         ofs << "\t\t\t\tfrom_output_index:" << data_arrow->from_output_index_
             << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
-            << "\tis_batch_arrow:" << data_arrow->is_batch_arrow_ << "\n";
+            << "\tflag:" << data_arrow->flag_ << "\n";
       }
     }
   }
@@ -87,11 +87,11 @@ void DumpBaseOutputInfo(const AbstractActor *actor, std::ofstream &ofs) {
       auto data_arrow = actor->output_data_arrows()[i];
       auto output_node = actor->output_data_nodes()[i];
       MS_EXCEPTION_IF_NULL(data_arrow);
-      if (!data_arrow->is_batch_arrow_) {
+      if (data_arrow->flag_ != kOutputDataFalgBatch) {
         std::string node_name = (output_node != nullptr) ? GetSplitName(output_node->fullname_with_scope()) : "";
         ofs << "\t\t\tfrom_output_node:" << node_name << "\tfrom_output_index:" << data_arrow->from_output_index_
             << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
-            << "\tis_batch_arrow:" << data_arrow->is_batch_arrow_ << "\n";
+            << "\tflag:" << data_arrow->flag_ << "\n";
       }
     }
   }
