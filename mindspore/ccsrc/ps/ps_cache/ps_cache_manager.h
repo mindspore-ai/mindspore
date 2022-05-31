@@ -52,6 +52,7 @@ struct HashTableInfo {
   Address device_address{nullptr, 0};
   std::shared_ptr<float> host_address{nullptr};
   ParamInitInfo param_init_info_;
+  int32_t param_key_{-1};
 };
 
 struct EmbeddingDeviceCache {
