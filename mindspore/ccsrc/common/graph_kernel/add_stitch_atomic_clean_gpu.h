@@ -34,17 +34,17 @@ class StitchAtomicCleanInserter : public AtomicCleanInserter {
 
  protected:
   void CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
-                              const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &clean_infos) override;
+                              const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &inplace_infos) override;
   void ProcessOriginCNode(
     const AnfNodePtr &composite_node,
-    const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes) override;
+    const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &info_and_inplace_assignee_addr) override;
 
  private:
   CNodePtr CreateAssignNode(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter,
-                            const CleanZeroUserInfo &info) const;
+                            const InplaceAssignerInfo &info) const;
   std::vector<std::pair<AnfNodePtr, int>> FindInnerCNodeUsers(const AnfNodePtr &inner_node,
                                                               const CNodePtr &target) const;
-  std::pair<bool, CleanZeroUserInfo> IsStitchWithAtomic(const AnfNodePtr &anf_node);
+  std::pair<bool, InplaceAssignerInfo> IsStitchWithAtomic(const AnfNodePtr &anf_node);
 
   void AddDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &clean_node, const AnfNodePtr &composite_node,
                  const AnfNodePtr &user_node, int index) const;

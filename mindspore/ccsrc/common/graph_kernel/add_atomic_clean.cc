@@ -88,20 +88,6 @@ bool HaveReduceInPredecessors(const AnfNodePtr &node) {
 
   return false;
 }
-
-size_t GetItemIdx(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-    MS_LOG(EXCEPTION) << "Expect TupleGetItem node, but got " << common::AnfAlgo::GetCNodeName(node);
-  }
-  auto get_item_cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(get_item_cnode);
-  auto value_input = get_item_cnode->input(kInputNodeOutputIndexInTupleGetItem);
-  MS_EXCEPTION_IF_NULL(value_input);
-  auto value_node = value_input->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto item_idx = LongToSize(GetValue<int64_t>(value_node->value()));
-  return item_idx;
-}
 }  // namespace
 
 std::shared_ptr<AtomicAddChecker> AtomicAddChecker::Init() {
@@ -125,13 +111,13 @@ bool AtomicAddChecker::FindCandidate(const AnfNodePtr &anf_node) {
     sub_graph->set_manager(mng_sub);
   }
 
-  auto CheckSuitableTarget = [&mng_sub](const CleanZeroUserInfo &atomic_add_info) {
+  auto CheckSuitableTarget = [&mng_sub](const InplaceAssignerInfo &atomic_add_info) {
     // Target type should not fuse any other ops in out direction, which means it should be in output list.
     return mng_sub->node_users()[atomic_add_info.op_node].size() <= 1;
   };
 
   auto real_return_node = sub_graph->get_return()->input(kFirstDataInputIndex);
-  CleanZeroUserInfo atomic_add_info;
+  InplaceAssignerInfo atomic_add_info;
   if (IsPrimitiveCNode(real_return_node, prim::kPrimMakeTuple)) {
     const auto &inputs = real_return_node->cast<CNodePtr>()->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
@@ -248,94 +234,29 @@ bool AtomicAddCheckerAscend::SuitableForAtomicAdd(const AnfNodePtr &node) {
   return false;
 }
 
-std::vector<AtomicAddUserInfo> AtomicCleanInserter::FindOriginCNodeUsers(
-  const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
-  const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
-  const FuncGraphManagerPtr &mng) const {
-  std::vector<AtomicAddUserInfo> reduce_user_nodes;
-
-  std::map<size_t, AnfNodePtr> real_indices_and_clean_node;
-  for (auto &[info, clean] : info_and_broadcast_to_nodes) {
-    (void)real_indices_and_clean_node.emplace(info.real_output_index, clean);
-  }
-
-  if (info_and_broadcast_to_nodes[0].first.real_output_num <= 1) {
-    // Find users directly.
-    auto users = mng->node_users()[composite_node];
-    auto update_state_node = InsertUpdateState(main_graph, {composite_node});
-    for (const auto &[user, index] : users) {
-      reduce_user_nodes.push_back({info_and_broadcast_to_nodes[0].second, update_state_node, user, IntToSize(index)});
-    }
-  } else {
-    std::vector<std::pair<AnfNodePtr, AnfNodePtr>> getitem_user_nodes;
-    auto users = mng->node_users()[composite_node];
-    for (const auto &node_index : users) {
-      // 1. First, find TupleGetItem nodes.
-      const auto &user_node = node_index.first;
-      if (!IsPrimitiveCNode(user_node, prim::kPrimTupleGetItem)) continue;
-      auto item_idx = GetItemIdx(user_node);
-      auto iter = real_indices_and_clean_node.find(item_idx);
-      if (iter != real_indices_and_clean_node.end()) {
-        (void)getitem_user_nodes.emplace_back(user_node, iter->second);
-      }
-    }
-    // 2. Find users of TupleGetItem nodes.
-    for (size_t i = 0; i < getitem_user_nodes.size(); ++i) {
-      const auto &getitem_node = getitem_user_nodes[i].first;
-      const auto &broadcast_to_node = getitem_user_nodes[i].second;
-      auto real_users = mng->node_users()[getitem_node];
-      auto update_state_node = InsertUpdateState(main_graph, {getitem_node});
-      for (const auto &[user, index] : real_users) {
-        reduce_user_nodes.push_back({broadcast_to_node, update_state_node, user, IntToSize(index)});
-      }
-    }
-  }
-
-  return reduce_user_nodes;
-}
-
-void AtomicCleanInserter::ProcessOriginCNodeUser(
-  const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
-  const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
-  const FuncGraphManagerPtr &mng) {
-  // 1. Find users.
-  auto reduce_user_nodes = FindOriginCNodeUsers(main_graph, composite_node, info_and_broadcast_to_nodes, mng);
-  for (const auto &iter : reduce_user_nodes) {
-    // 2. Make sure modified composite node running first, So firstly, create load_node, then add edge to connect
-    // update_state_node, broadcast_node and load_node to keep order.
-    AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), iter.clean_node, iter.update_state_node};
-    auto load_node = main_graph->NewCNode(load_inputs);
-    load_node->set_abstract(iter.clean_node->abstract());
-    main_graph->AddNode(load_node);
-    auto user_cnode = iter.user_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(user_cnode);
-    user_cnode->set_input(iter.user_input_idx, load_node);
-  }
-}
-
 void AtomicCleanInserter::InsertAtomicClean(const FuncGraphPtr &main_graph, const AnfNodePtr &anf_node,
-                                            const std::vector<CleanZeroUserInfo> &atomic_add_infos,
+                                            const std::vector<InplaceAssignerInfo> &atomic_add_infos,
                                             const FuncGraphManagerPtr &mng) {
   auto origin_composite_node = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(origin_composite_node);
 
   // Create broadcast node.
-  std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> info_and_broadcast_to_nodes;
+  std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> info_and_inplace_assignee_addr;
   for (auto atomic_add_info : atomic_add_infos) {
     auto out_type = GetType(atomic_add_info.op_node)->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(out_type);
     auto broadcast_to_node = CreateCleanCompositeNode(atomic_add_info, main_graph, out_type->element()->type_id());
-    (void)info_and_broadcast_to_nodes.emplace_back(atomic_add_info, broadcast_to_node);
+    (void)info_and_inplace_assignee_addr.emplace_back(atomic_add_info, broadcast_to_node);
   }
 
   // Insert extra input(broadcast node output) to composite node, and make ReduceSum inplace-assign to it.
-  ProcessOriginCNode(origin_composite_node, info_and_broadcast_to_nodes);
+  ProcessOriginCNode(origin_composite_node, info_and_inplace_assignee_addr);
 
   // Insert UpdateState + Load before origin ReduceSum's user to keep execution order.
-  ProcessOriginCNodeUser(main_graph, origin_composite_node, info_and_broadcast_to_nodes, mng);
+  ProcessOriginCNodeUser(main_graph, origin_composite_node, info_and_inplace_assignee_addr, mng);
   std::stringstream ss;
   ss << "Target node: " << origin_composite_node->fullname_with_scope() << ", clean nodes: ";
-  for (auto iter : info_and_broadcast_to_nodes) {
+  for (auto iter : info_and_inplace_assignee_addr) {
     ss << iter.second->fullname_with_scope() << ", ";
   }
 

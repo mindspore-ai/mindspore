@@ -117,7 +117,7 @@ bool GraphKernelCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (AnfUtils::IsGraphKernel(node)) {
     auto sub_graph = GetCNodeFuncGraph(node);
     if (auto type = sub_graph->get_attr("composite_type")) {
-      if (GetValue<std::string>(type) == "clean_inserter") return false;
+      if (GetValue<std::string>(type) == "inplace_assign_builder") return false;
     }
     return true;
   }

@@ -46,8 +46,8 @@ bool CanConvert() {
   return true;
 }
 
-CleanZeroUserInfo SubGraphSignleOutput(const AnfNodePtr &anf_node) {
-  CleanZeroUserInfo new_op_info;
+InplaceAssignerInfo SubGraphSignleOutput(const AnfNodePtr &anf_node) {
+  InplaceAssignerInfo new_op_info;
   auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(anf_node);
   auto output = sub_graph->output();
   if (IsPrimitiveCNode(output, kPrimElemAny)) {
@@ -91,7 +91,7 @@ void FloatStatusAddNFusion::ProcessFloatStatusAddN(const FuncGraphPtr &main_grap
   }
 
   // Create broadcast node.
-  CleanZeroUserInfo op_info = SubGraphSignleOutput(addn->input(1));
+  InplaceAssignerInfo op_info = SubGraphSignleOutput(addn->input(1));
   auto out_type = GetType(op_info.op_node)->cast<TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(out_type);
   auto broadcast_to_node = CreateCleanCompositeNode(op_info, main_graph, out_type->element()->type_id());

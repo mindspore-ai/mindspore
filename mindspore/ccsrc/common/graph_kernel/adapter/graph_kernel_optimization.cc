@@ -54,6 +54,7 @@
 #include "common/graph_kernel/graph_kernel_recompute.h"
 #include "common/graph_kernel/reduce_fake_out_mem.h"
 #include "common/graph_kernel/depend_elimination.h"
+#include "common/graph_kernel/tensor_inplace.h"
 #include "common/graph_kernel/floatstatus_addn_fusion.h"
 #include "common/graph_kernel/parallel_optimizer.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
@@ -183,6 +184,10 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   auto level_low_precision = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_low_precision);
   pm->Add(std::make_shared<DecreaseTransferPrecision>(), level_low_precision);
   pm->Add(std::make_shared<DecreaseComputePrecision>(), level_low_precision, is_ascend);
+
+  // Optimize memory
+  auto memory_optimize_level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_auto_tensor_inplace);
+  pm->Add(std::make_shared<TensorInplace>(), memory_optimize_level);
 
   // Enable tsa and uss
   pm->Add(std::make_shared<TsaAtomicAddToFirstTensor>(), OptLevel_1, is_gpu);
