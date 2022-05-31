@@ -185,6 +185,8 @@ from .math_func import (
     deg2rad,
     isreal,
     rad2deg,
+    truncate_div,
+    truncate_mod
 )
 from .nn_func import (
     deformable_conv2d,
