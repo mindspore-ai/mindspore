@@ -953,6 +953,20 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
   }
 }
 
+int BenchmarkUnifiedApi::AddConfigInfo(const std::shared_ptr<RunnerConfig> &runner_config) {
+  auto env = std::getenv("BENCHMARK_WEIGHT_PATH");
+  if (env == nullptr) {
+    return RET_OK;
+  }
+  auto weight_path = std::string(env);
+  if (weight_path != "") {
+    std::map<std::string, std::string> config;
+    config[kWeightPath] = weight_path;
+    runner_config->SetConfigInfo(kWeight, config);
+  }
+  return RET_OK;
+}
+
 int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> context) {
   if (flags_->warm_up_loop_count_ > kMaxRequestNum || flags_->parallel_num_ > kMaxRequestNum) {
     MS_LOG(WARNING) << "in parallel predict warm up loop count should less than" << kMaxRequestNum;
@@ -965,6 +979,8 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
   auto runner_config = std::make_shared<RunnerConfig>();
   runner_config->SetContext(context);
   runner_config->SetWorkersNum(flags_->workers_num_);
+  auto status = AddConfigInfo(runner_config);
+  MS_CHECK_FALSE_MSG(status != kSuccess, RET_ERROR, "add config info for parallel predict failed.");
   auto model_init_start = GetTimeUs();
   auto ret = model_runner_.Init(flags_->model_file_, runner_config);
   MS_CHECK_FALSE_MSG(ret != kSuccess, RET_ERROR, "model pool init failed.");
@@ -974,13 +990,13 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
   ms_inputs_for_api_ = model_runner_.GetInputs();
   MS_CHECK_FALSE_MSG(ms_inputs_for_api_.empty(), RET_ERROR, "model pool input is empty.");
   for (int i = 0; i < flags_->parallel_num_ + flags_->warm_up_loop_count_; i++) {
-    auto status = LoadInput();
+    status = LoadInput();
     MS_CHECK_FALSE_MSG(status != RET_OK, status, "Generate input data error");
     std::vector<MSTensor> output;
     all_outputs_.push_back(output);
   }
   if (!flags_->benchmark_data_file_.empty()) {
-    auto status = PrintInputData();
+    status = PrintInputData();
     MS_CHECK_FALSE_MSG(status != RET_OK, status, "PrintInputData error ");
     status = ReadCalibData();
     MS_CHECK_FALSE_MSG(status != RET_OK, status, "ReadCalibData error ");

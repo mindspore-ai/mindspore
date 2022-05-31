@@ -322,7 +322,8 @@ class LiteModel : public Model {
 };
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf,
-                        mindspore::ModelType model_type = mindspore::ModelType::kMindIR_Lite);
+                        mindspore::ModelType model_type = mindspore::ModelType::kMindIR_Lite,
+                        const std::string &path = "");
 LiteModel *LiteImportFromPath(const char *model_path);
 Model *ImportFromPath(const char *model_path);
 }  // namespace lite
