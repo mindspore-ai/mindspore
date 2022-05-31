@@ -94,6 +94,27 @@ class FederatedLearningManager(Callback):
 
                          - fixed: The frequency of parameter synchronization is fixed.
                          - adaptive: The frequency of parameter synchronization changes adaptively.
+        min_consistent_rate (float): Minimum consistency ratio threshold. The greater the value, the more
+                                     difficult it is to improve the synchronization frequency.
+                                     Value range: greater than or equal to 0.0. Default: 1.1.
+        min_consistent_rate_at_round (int): The number of rounds of the minimum consistency ratio threshold.
+                                            The greater the value, the more difficult it is to improve the
+                                            synchronization frequency.
+                                            Value range: greater than or equal to 0. Default: 0.
+        ema_alpha (float): Gradient consistency smoothing coefficient. The smaller the value, the more the
+                           frequency will be judged according to the gradient bifurcation of the current round
+                           more. Otherwise it will be judged according to the historical gradient bifurcation
+                           more.
+                           Value range: (0.0, 1.0). Default: 0.5.
+        observation_window_size (int): The number of rounds in the observation time window. The greater the
+                                       value, the more difficult it is to reduce the synchronization frequency.
+                                       Value range: greater than 0. Default: 5.
+        frequency_increase_ratio (int): Frequency increase amplitude. The greater the value, the greater the
+                                        frequency increase amplitude.
+                                        Value range: greater than 0. Default: 2.
+        unchanged_round (int): The number of rounds whose frequency does not change. The frequency is unchanged
+                               before unchanged_round rounds.
+                               Value range: greater than or equal to 0. Default: 0.
 
     Note:
         This is an experimental prototype that is subject to change.
@@ -182,7 +203,10 @@ class FederatedLearningManager(Callback):
                 abs_grads[self._as_prefix + param.name] = np.abs(param.asnumpy() - self._last_param[param.name])
         for param in self._model.trainable_params():
             if self._as_prefix in param.name:
-                param.set_data(Parameter(abs_grads[param.name]))
+                try:
+                    param.set_data(Parameter(abs_grads[param.name]))
+                except KeyError:
+                    print("{} is not in abs_grads".format(param.name))
 
     def _as_analyze_gradient(self):
         """

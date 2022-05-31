@@ -783,7 +783,7 @@ def set_context(**kwargs):
             If enable_graph_kernel is set to True, acceleration can be enabled.
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
-            <https://www.mindspore.cn/docs/en/master/design/graph_fusion_engine.html>`_.
+            <https://www.mindspore.cn/tutorials/experts/en/master/debug/graph_fusion_engine.html>`_.
         graph_kernel_flags (str) –
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
@@ -1050,29 +1050,126 @@ def set_fl_context(**kwargs):
     """
     Set federated learning training mode context.
 
+    Note:
+        Attribute name is required for setting attributes.
+
+    Some configurations need to be set on specific roles. For details, see the following table:
+
+    +-------------------------+---------------------------------+-----------------------------+
+    | Function Classification |  Configuration Parameters       |  Federated Role             |
+    +=========================+=================================+=============================+
+    | Network Configuration   |  enable_fl                      |  scheduler/server/worker    |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  server_mode                    |  scheduler/server/worker    |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  ms_role                        |  scheduler/server/worker    |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  worker_num                     |  scheduler/server/worker    |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  server_num                     |  scheduler/server/worker    |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  scheduler_ip                   |  scheduler/server/worker    |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  scheduler_port                 |  scheduler/server/worker    |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  fl_server_port                 |  scheduler/server           |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  scheduler_manage_port          |  scheduler                  |
+    +-------------------------+---------------------------------+-----------------------------+
+    | Training Configuration  |  start_fl_job_threshold         |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  start_fl_job_time_window       |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  update_model_ratio             |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  update_model_time_window       |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  fl_iteration_num               |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  client_epoch_num               |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  client_batch_size              |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  client_learning_rate           |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  worker_step_num_per_iteration  |  worker                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  global_iteration_time_window   |  server                     |
+    +-------------------------+---------------------------------+-----------------------------+
+    | Encrypt Configuration   |  encrypt_type                   |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  share_secrets_ratio            |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  cipher_time_window             |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  reconstruct_secrets_threshold  |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  dp_eps                         |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  dp_delta                       |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  dp_norm_clip                   |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  sign_k                         |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  sign_eps                       |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  sign_thr_ratio                 |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  sign_global_lr                 |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  sign_dim_out                   |  server                     |
+    +-------------------------+---------------------------------+-----------------------------+
+    | Cert Configuration      |  enable_ssl                     |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  client_password                |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  server_password                |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  root_first_ca_path             |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  pki_verify                     |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  root_second_ca_path            |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  equip_crl_path                 |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  replay_attack_time_diff        |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  http_url_prefix                |  server                     |
+    +-------------------------+---------------------------------+-----------------------------+
+    | DR and OM Configuration |  fl_name                        |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  config_file_path               |  scheduler/server           |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  checkpoint_dir                 |  server                     |
+    +-------------------------+---------------------------------+-----------------------------+
+    | Compress Configuration  |  upload_compress_type           |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  upload_sparse_rate             |  server                     |
+    |                         +---------------------------------+-----------------------------+
+    |                         |  download_compress_type         |  server                     |
+    +-------------------------+---------------------------------+-----------------------------+
+
     Args:
         enable_fl (bool): Whether to enable federated learning training mode.
                           Default: False.
         server_mode (str): Describe the server mode, which must one of 'FEDERATED_LEARNING' and 'HYBRID_TRAINING'.
-                              Default: 'FEDERATED_LEARNING'.
         ms_role (str): The process's role in the federated learning mode,
                           which must be one of 'MS_SERVER', 'MS_WORKER' and 'MS_SCHED'.
-                          Default: 'MS_SERVER'.
-        worker_num (int): The number of workers. For current version, this must be set to 1 or 0.
+        worker_num (int): The number of workers.
         server_num (int): The number of federated learning servers. Default: 0.
         scheduler_ip (str): The scheduler IP. Default: '0.0.0.0'.
         scheduler_port (int): The scheduler port. Default: 6667.
-        fl_server_port (int): The http port of the federated learning server.
-                              Normally for each server this should be set to the same value. Default: 6668.
-        enable_fl_client (bool): Whether this process is federated learning client. Default: False.
+        fl_server_port (int): The server port. Default: 6668.
         start_fl_job_threshold (int): The threshold count of startFLJob. Default: 1.
-        start_fl_job_time_window (int): The time window duration for startFLJob in millisecond. Default: 3000.
+        start_fl_job_time_window (int): The time window duration for startFLJob in millisecond. Default: 300000.
         share_secrets_ratio (float): The ratio for computing the threshold count of share secrets. Default: 1.0.
         update_model_ratio (float): The ratio for computing the threshold count of updateModel. Default: 1.0.
         cipher_time_window (int): The time window duration for each cipher round in millisecond. Default: 300000.
-        reconstruct_secrets_threshold (int): The threshold count of reconstruct threshold. Default: 0.
-        update_model_time_window (int): The time window duration for updateModel in millisecond. Default: 3000.
-        fl_name (string): The federated learning job name. Default: ''.
+        reconstruct_secrets_threshold (int): The threshold count of reconstruct threshold. Default: 2000.
+        update_model_time_window (int): The time window duration for updateModel in millisecond. Default: 300000.
+        fl_name (str): The federated learning job name. Default: ''.
         fl_iteration_num (int): Iteration number of federated learning,
                                 which is the number of interactions between client and server. Default: 20.
         client_epoch_num (int): Client training epoch number. Default: 25.
@@ -1086,7 +1183,7 @@ def set_fl_context(**kwargs):
             client number. The smaller the dp_delta, the better the privacy protection effect. Default: 0.01.
         dp_norm_clip (float): A factor used for clipping model's weights for differential mechanism. Its value is
             suggested to be 0.5~2. Default: 1.0.
-        encrypt_type (string): Secure schema for federated learning, which can be 'NOT_ENCRYPT', 'DP_ENCRYPT',
+        encrypt_type (str): Secure schema for federated learning, which can be 'NOT_ENCRYPT', 'DP_ENCRYPT',
             'PW_ENCRYPT', 'STABLE_PW_ENCRYPT' or 'SIGNDS'. If 'DP_ENCRYPT', differential privacy schema would be applied
             for clients and the privacy protection effect would be determined by dp_eps, dp_delta and dp_norm_clip
             as described above. If 'PW_ENCRYPT', pairwise secure aggregation would be applied to protect clients'
@@ -1099,9 +1196,10 @@ def set_fl_context(**kwargs):
         sign_thr_ratio (float): SignDS: Threshold of the expected topk dimension. Default: 0.6.
         sign_global_lr (float): SignDS: The constant value assigned to the selected dimension. Default: 1.
         sign_dim_out (int): SignDS: Number of output dimensions. Default: 0.
-        config_file_path (string): Configuration file path used by recovery. Default: ''.
+        config_file_path (str): Configuration file paths used for cluster disaster recovery, cert-related parameters
+            and file paths, metrics-related file path and O&M-related file paths. Default: ''.
         scheduler_manage_port (int): scheduler manage port used to scale out/in. Default: 11202.
-        enable_ssl (bool): Set PS SSL mode enabled or disabled. Default: False.
+        enable_ssl (bool): Enable SSL secure communication for federated learning. Default: False.
         client_password (str): Password to decrypt the secret key stored in the client certificate. Default: ''.
         server_password (str): Password to decrypt the secret key stored in the server certificate. Default: ''.
         pki_verify (bool): If True, the identity verification between server and clients would be turned on.
@@ -1116,12 +1214,21 @@ def set_fl_context(**kwargs):
             pki_verify is True. Default: "".
         replay_attack_time_diff (int): The maximum tolerable error of certificate timestamp verification (ms).
             Default: 600000.
-        http_url_prefix (string): The http url prefix for http server.
+        http_url_prefix (str): Setting the http path for federated learning cross-device communication.
             Default: "".
-        global_iteration_time_window (unsigned long): The global iteration time window for one iteration
+        global_iteration_time_window (int): The global iteration time window for one iteration
             with rounds(ms). Default: 3600000.
-        checkpoint_dir (string): The Server model checkpoint directory. If no checkpoint dir is set,
-            the startup script directory is used by default. Default: "".
+        checkpoint_dir (str): The directory where the server reads and saves model files. If it is not set,
+            the model file will not be read and saved. Default: "".
+        upload_compress_type (str): Upload compression method, which can be 'NO_COMPRESS' or 'DIFF_SPARSE_QUANT'.
+            If 'NO_COMPRESS', our framework does not compress the uploaded model. If 'DIFF_SPARSE_QUANT', the
+            weight difference + sparse + quantization compression strategy is used for the uploaded model.
+            Default: 'NO_COMPRESS'.
+        upload_sparse_rate (float): Upload compression sparsity ratio. The larger the sparsity ratio, the smaller the
+            compression ratio. Value range: (0, 1.0]. Default: 0.4.
+        download_compress_type (str): Download the compression method, which can be 'NO_COMPRESS' or 'QUANT'. If
+            'NO_COMPRESS', our framework does not compress the downloaded model. If'QUANT', the quantized compression
+            strategy is used for the downloaded model. Default: 'NO_COMPRESS'.
     Raises:
         ValueError: If input key is not the attribute in federated learning mode context.
 
