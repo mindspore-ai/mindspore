@@ -642,7 +642,7 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       init_flag_(tensor.init_flag_),
       is_forward_output_(tensor.is_forward_output_),
       data_(MakeTensorData(data_type, tensor.shape_, tensor.data_->data(), tensor.data_type_)),
-      id_(tensor.id_),
+      id_(tensor.data_type_ != data_type ? MakeId() : tensor.id_),
       event_(tensor.event_),
       need_wait_(tensor.need_wait_),
       sync_status_(tensor.sync_status_),
