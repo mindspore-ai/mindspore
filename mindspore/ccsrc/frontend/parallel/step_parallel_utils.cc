@@ -195,15 +195,23 @@ int64_t GetTupleGetItemIndex(const CNodePtr &cnode) {
   return tuple_index_value->cast<Int64ImmPtr>()->value();
 }
 
-void RedistributionNextNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager, NodeUsersMap *node_users_map,
+void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &manager, NodeUsersMap *node_users_map,
                             int64_t get_item_index,
                             std::vector<std::pair<std::pair<AnfNodePtr, int>, int>> *next_nodes) {
-  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node_users_map);
-  auto node_set = (*node_users_map)[cnode];
+  auto node_set = (*node_users_map)[node];
   for (auto &node_pair : node_set) {
     auto use_cnode = node_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(use_cnode);
+    if (IsValueNode<FuncGraph>(use_cnode->input(0))) {
+      auto fg = GetValueNode<FuncGraphPtr>(use_cnode->input(0));
+      MS_EXCEPTION_IF_NULL(fg);
+      auto fg_parameters = fg->parameters();
+      auto param = fg_parameters[node_pair.second - 1];
+      MS_EXCEPTION_IF_NULL(param);
+      RedistributionNextNode(param, manager, node_users_map, get_item_index, next_nodes);
+    }
     if (IsPrimitiveCNode(use_cnode, prim::kPrimTupleGetItem)) {
       get_item_index = LongToInt(GetTupleGetItemIndex(use_cnode));
     }
