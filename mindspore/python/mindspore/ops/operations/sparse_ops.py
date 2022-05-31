@@ -247,3 +247,66 @@ class DenseToCSRSparseMatrix(Primitive):
         self.init_prim_io_names(
             inputs=['dense_input', 'indices'],
             outputs=['y_dense_shape', 'y_batch_pointers', 'y_row_pointers', 'y_col_indices', 'y_values'])
+
+
+class DenseToDenseSetOperation(Primitive):
+    """
+    Applies set operation along last dimension of 2 `Tensor` inputs.
+    Iterate over groups in set x1 and set x2, applying `ApplySetOperation` to each,
+    and outputting the result `SparseTensor`. A "group" is a collection of values
+    with the same first n-1 dimensions in x1 and x2.
+
+    Args:
+        set_operation (str): The type of set operation, case insensitive. Default:"a-b".
+            "a-b": Get the difference set of x1 to x2.
+            "b-a": Get the difference set of x2 to x1.
+            "intersection": Get the intersection set of x2 to x1.
+            "union": Get the union set of x2 to x1.
+        validate_indices (bool): Optional attributes for DenseToDenseSetOperation.  Default: True.
+
+    Inputs:
+        - **x1** (Tensor) - The input tensor `x1` with rank `n`. 1st `n-1` dimensions must be the same as `x2`.
+          Dimension `n` contains values in a set, duplicates are allowed but ignored.
+        - **x2** (Tensor) - The input tensor `x2` with rank `n`. 1st `n-1` dimensions must be the same as `x1`.
+          Dimension `n` contains values in a set, duplicates are allowed but ignored.
+
+    Outputs:
+        - **y_indices** (Tensor) - A 2-D Tensor of type int64, represents the position of the element
+          in the sparse tensor.
+        - **y_values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position
+          in the `y_indices`. The dtype is same as input.
+        - **y_shape** (Tensor) - A 1-D Tensor of type int64, represents the shape of sparse tensor.
+          `y_shape[0...n-1]` is the same as the 1st `n-1` dimensions of `x1` and `x2`,
+          `y_shape[n]` is the max result set size across all `0...n-1` dimensions.
+
+    Raises:
+        TypeError: If input `x1` or `x2` is not Tensor.
+        TypeError: If the type of `x1` is not the same as `x2`.
+        ValueError: If the group shape of `x1` or `x2` mismatch with each other.
+        ValueError: If the rank of `x1` or `x2` is less than 2.
+        ValueError: If the value of attr set_operation is not a valid value.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor([[2, 2, 0], [2, 2, 1], [0, 2, 2]], dtype=mstype.int32)
+        >>> x2 = Tensor([[2, 2, 1], [0, 2, 0], [0, 1, 1]], dtype=mstype.int32)
+        >>> dtod=P.DenseToDenseSetOperation(set_operation="a-b",validate_indices=True)
+        >>> res=dtod(x1,x2)
+        >>> print(res[0])
+        [[0 0]
+         [1 0]
+         [2 0]]
+        >>> print(res[1])
+        [0 1 2]
+        >>> print(res[2])
+        [3 1]
+    """
+
+    @prim_attr_register
+    def __init__(self, set_operation="a-b", validate_indices=True):
+        """Initialize DenseToDenseSetOperation."""
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y_indices', 'y_values', 'y_shape'])
+        validator.check_value_type("set_operation", set_operation, [str], self.name)
+        validator.check_value_type("validate_indices", validate_indices, [bool], self.name)
