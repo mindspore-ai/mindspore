@@ -25,7 +25,6 @@
 #include "ps/core/configuration.h"
 #include "ps/core/file_configuration.h"
 #include "fl/server/local_meta_store.h"
-#include "fl/server/iteration.h"
 #include "ps/core/comm_util.h"
 
 namespace mindspore {
