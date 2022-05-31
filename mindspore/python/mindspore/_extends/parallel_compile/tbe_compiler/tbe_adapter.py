@@ -22,7 +22,6 @@ from datetime import datetime
 
 from tbe.common.rl_bank.bank_manager import set_current_op_name
 from tbe.common.repository_manager.interface import cann_kb_finalize, cann_kb_init
-from tbe.common.rl_bank.bank_cfg import LocalLock
 from te.platform.cce_conf import te_set_version
 from te.platform.cce_policy import set_L1_info
 from te_fusion.compile_task_manager import dispatch_prebuild_task, dispatch_single_op_compile_task, import_py_module, \
@@ -35,7 +34,7 @@ from te_fusion.parallel_compilation import init_multi_process_env, start_ga_mult
     get_finished_compilation_task
 
 from .tbe_helper import get_soc_info, assemble_op_args, get_compute_op_list, get_options_info, get_fuzz_build_info, \
-    adjust_custom_op_info, pack_op_args, get_module_name, get_real_op_debug_level
+    adjust_custom_op_info, pack_op_args, get_module_name, get_real_op_debug_level, LocalLock
 from .tbe_job import TbeJob, JobStatus
 
 PLATFORM_FLAG = ["Ascend310", "Ascend910", "Hi3796CV300ES", "Ascend710", "Ascend610", "Hi3796CV300CS", "SD3403"]

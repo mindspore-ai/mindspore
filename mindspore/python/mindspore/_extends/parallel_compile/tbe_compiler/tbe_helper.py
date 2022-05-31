@@ -14,9 +14,79 @@
 # ============================================================================
 """tbe helper to parse json content"""
 import os
+import stat
+import fcntl
 from enum import Enum
 
 from .tbe_job import JobType
+
+
+def create_dir(dir_path):
+    """
+    create dir
+    :param dir_path:
+    :return: T/F
+    """
+    dir_path = os.path.realpath(dir_path)
+    is_exists = os.path.exists(dir_path)
+    if not is_exists:
+        try:
+            os.makedirs(dir_path, 0o750, exist_ok=True)
+        except (OSError, TypeError) as excep:
+            raise excep
+        finally:
+            pass
+    return True
+
+
+def write_to_file(file_path, content=""):
+    """
+    write to file
+    :param file_path:
+    :param content:
+    :return: T/F
+    """
+    dir_name = os.path.dirname(file_path)
+    ret = create_dir(dir_name)
+    if not ret:
+        return False
+
+    with os.fdopen(os.open(file_path, os.O_WRONLY | os.O_CREAT, \
+        stat.S_IWUSR | stat.S_IRUSR | stat.S_IRGRP), 'w') as file_handler:
+        file_handler.write(content)
+    return True
+
+
+class LocalLock:
+    """
+    LocalLock
+    """
+
+    def __init__(self, lock_file):
+        if not os.path.exists(lock_file):
+            write_to_file(lock_file)
+        self.lock_fd = os.open(lock_file, os.O_WRONLY | os.O_CREAT, stat.S_IWUSR | stat.S_IRUSR | stat.S_IRGRP)
+
+    def __del__(self):
+        try:
+            os.close(self.lock_fd)
+        except OSError:
+            pass
+        finally:
+            pass
+
+    def lock(self):
+        """
+        lock
+        """
+        fcntl.flock(self.lock_fd, fcntl.LOCK_EX)
+
+    def unlock(self):
+        """
+        unlock
+        """
+        fcntl.flock(self.lock_fd, fcntl.LOCK_UN)
+        os.close(self.lock_fd)
 
 
 class BuildType(Enum):
