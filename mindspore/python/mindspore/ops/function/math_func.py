@@ -2705,6 +2705,46 @@ def deg2rad(x):
     return out
 
 
+def rad2deg(x):
+    """
+    Returns a new tensor with each of the elements of `x` converted from angles in radians to degrees.
+
+    Args:
+        x (Tensor): The input tensor.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` isn't float16, float32 or float64.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> x = Tensor([[6.283, -3.142],[1.570, -6.283],[3.142, -1.570]], mindspore.float32)
+        >>> output = rad2deg(x)
+        >>> print(output)
+        [[ 359.98935 -180.02333]
+         [  89.95438 -359.98935]
+         [ 180.02333  -89.95438]]
+
+    """
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("The input x must be tensor")
+    dtype_op = P.DType()
+    x_dtype = dtype_op(x)
+    _check_input_dtype("x", x_dtype, [mstype.float16, mstype.float32, mstype.float64], "")
+    if x_dtype == mstype.float16:
+        out = x * (Tensor(180.0 / math.pi).astype(mstype.float16))
+    else:
+        out = x * 180.0 / math.pi
+    return out
+
 #####################################
 # Reduction Operation Functions.
 #####################################
@@ -2844,6 +2884,7 @@ __all__ = [
     'bessel_k1',
     'bessel_k1e',
     'exp2',
-    'deg2rad'
+    'deg2rad',
+    'rad2deg'
 ]
 __all__.sort()

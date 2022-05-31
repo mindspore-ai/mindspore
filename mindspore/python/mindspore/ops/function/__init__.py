@@ -182,6 +182,7 @@ from .math_func import (
     exp2,
     deg2rad,
     isreal,
+    rad2deg,
 )
 from .nn_func import (
     deformable_conv2d,
