@@ -219,7 +219,7 @@ class _DynamicGRUCPUGPU(Cell):
     def construct(self, x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh):
         gate_size, input_size = w_ih.shape
         hidden_size = gate_size // 3
-        if self.is_gpu and seq_length is None:
+        if self.is_gpu:
             if b_ih is None:
                 weights = self.concat((
                     w_ih.view(-1, 1, 1),
@@ -239,6 +239,10 @@ class _DynamicGRUCPUGPU(Cell):
                 h_0.view(1, *h_0.shape),
                 weights.astype(x.dtype)
             )
+            if seq_length is not None:
+                h_n = get_hidden(output, seq_length)
+                mask = sequence_mask(seq_length, x.shape[0])
+                output = select_by_mask(output, mask)
         else:
             output, h_n = _DynamicRNNBase('GRU')(x, h_0, seq_length, w_ih, w_hh, b_ih, b_hh)
 
