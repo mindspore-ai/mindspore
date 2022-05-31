@@ -50,7 +50,7 @@ class GPUDeviceContext : public DeviceContext {
                                        const ShapeVector &shape = ShapeVector()) const override;
 
   // Optimize the kernel graph for graph mode.
-  void OptimizeGraph(const KernelGraphPtr &graph) const override;
+  void OptimizeGraph(const FuncGraphPtr &graph) const override;
 
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
@@ -67,7 +67,7 @@ class GPUDeviceContext : public DeviceContext {
 
   bool LoadCollectiveCommLib() override;
 
-  void PreprocessBeforeRun(const KernelGraphPtr &graph) const override;
+  void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);

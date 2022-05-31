@@ -103,27 +103,29 @@ DeviceAddressPtr CPUDeviceContext::CreateDeviceAddress(void *const device_ptr, s
   return device_address;
 }
 
-void CPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
+void CPUDeviceContext::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  if (graph->is_from_single_op()) {
-    SetOperatorInfo(graph);
-    OptimizeGraphImpl(graph);
-    UpdateKernelRefInfo(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->is_from_single_op()) {
+    SetOperatorInfo(kernel_graph);
+    OptimizeGraphImpl(kernel_graph);
+    UpdateKernelRefInfo(kernel_graph);
   } else {
     // Update Graph Dynamic Shape Attr.
-    opt::AddDynamicShapeAttrPass(graph);
+    opt::AddDynamicShapeAttrPass(kernel_graph);
 
-    SetOperatorInfo(graph);
-    OptimizeGraphImpl(graph);
+    SetOperatorInfo(kernel_graph);
+    OptimizeGraphImpl(kernel_graph);
 
     // Run final optimization.
-    opt::CommonFinalOptimization(graph);
+    opt::CommonFinalOptimization(kernel_graph);
 
 #ifdef ENABLE_AKG
     // Run graph kernel fusion optimization
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-      graphkernel::GraphKernelOptimize(graph);
-      graph->SetExecOrderByDefault();
+      graphkernel::GraphKernelOptimize(kernel_graph);
+      kernel_graph->SetExecOrderByDefault();
     }
 #endif
   }
@@ -304,18 +306,20 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 #endif
 }
 
-void CPUDeviceContext::PreprocessBeforeRun(const KernelGraphPtr &graph) const {
+void CPUDeviceContext::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  if (!graph->is_from_single_op()) {
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (!kernel_graph->is_from_single_op()) {
     // Remove reorder after PS feature finish adapting push/pull in auto_monad.
-    auto execution_order = graph->execution_order();
+    auto execution_order = kernel_graph->execution_order();
     common::AnfAlgo::ReorderPosteriorExecList(NOT_NULL(&execution_order));
-    graph->set_execution_order(execution_order);
+    kernel_graph->set_execution_order(execution_order);
 
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
-    if (graph->is_dynamic_shape() && ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-      opt::DynamicShapeConvertPass(graph);
+    if (kernel_graph->is_dynamic_shape() && ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+      opt::DynamicShapeConvertPass(kernel_graph);
     }
   }
 }

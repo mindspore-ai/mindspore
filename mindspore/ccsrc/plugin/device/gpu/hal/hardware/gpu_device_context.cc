@@ -214,12 +214,14 @@ DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *const device_ptr, s
   return device_address;
 }
 
-void GPUDeviceContext::PreprocessBeforeRun(const KernelGraphPtr &graph) const {
-  if (!graph->is_from_single_op()) {
+void GPUDeviceContext::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (!kernel_graph->is_from_single_op()) {
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
-    if (graph->is_dynamic_shape() && ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-      opt::DynamicShapeConvertPass(graph);
+    if (kernel_graph->is_dynamic_shape() && ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+      opt::DynamicShapeConvertPass(kernel_graph);
     }
   }
 }
@@ -355,40 +357,42 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
 }
 }  // namespace
 
-void GPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
+void GPUDeviceContext::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  if (graph->is_from_single_op()) {
-    RunOpOptimize(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->is_from_single_op()) {
+    RunOpOptimize(kernel_graph);
 
-    FormatTransformChecker::GetInstance().CheckSupportFormatTransform(graph);
-    SetOperatorInfo(graph);
+    FormatTransformChecker::GetInstance().CheckSupportFormatTransform(kernel_graph);
+    SetOperatorInfo(kernel_graph);
 
-    RunOpHardwareOptimize(graph);
+    RunOpHardwareOptimize(kernel_graph);
 
-    RunOpHideNopNode(graph);
-    RunOpRemoveNopNode(graph);
-    UpdateKernelRefInfo(graph);
+    RunOpHideNopNode(kernel_graph);
+    RunOpRemoveNopNode(kernel_graph);
+    UpdateKernelRefInfo(kernel_graph);
   } else {
     // Optimization pass which is irrelevant to device type or format.
-    OptimizeGraphWithoutDeviceInfo(graph);
+    OptimizeGraphWithoutDeviceInfo(kernel_graph);
 
-    FormatTransformChecker::GetInstance().CheckSupportFormatTransform(graph);
-    SetOperatorInfo(graph);
+    FormatTransformChecker::GetInstance().CheckSupportFormatTransform(kernel_graph);
+    SetOperatorInfo(kernel_graph);
 
     // Optimization pass which is relevant to device type or format.
-    OptimizeGraphWithDeviceInfo(graph);
+    OptimizeGraphWithDeviceInfo(kernel_graph);
 
     // Run final optimization.
-    opt::CommonFinalOptimization(graph);
+    opt::CommonFinalOptimization(kernel_graph);
 
     // Graph kernel fusion optimization
     if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-      graphkernel::GraphKernelOptimize(graph);
-      graph->SetExecOrderByDefault();
+      graphkernel::GraphKernelOptimize(kernel_graph);
+      kernel_graph->SetExecOrderByDefault();
     }
 
     // Assign the stream and insert the send/recv node for all reduce kernel, so must be the last in the optimizer.
-    device::gpu::AssignGpuStream(graph);
+    device::gpu::AssignGpuStream(kernel_graph);
   }
 }
 
