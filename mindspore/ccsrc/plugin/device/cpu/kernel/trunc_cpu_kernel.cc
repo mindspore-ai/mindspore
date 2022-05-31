@@ -1,0 +1,86 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "plugin/device/cpu/kernel/trunc_cpu_kernel.h"
+#include <functional>
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+
+namespace mindspore {
+namespace kernel {
+namespace {
+const size_t kZero = 0;
+constexpr size_t kTruncInputsNum = 1;
+constexpr size_t kTruncOutputsNum = 1;
+
+template <typename T>
+void Trunc(const T *in0, T *out0, size_t start, size_t end) {
+  for (size_t index = start; index < end; index++) {
+    auto retp = floor(in0[index]);
+    auto retn = ceil(in0[index]);
+    int ind = static_cast<int>(in0[index]);
+    out0[index] = (ind < 0) ? retn : retp;
+  }
+}
+}  // namespace
+
+bool TruncCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  auto input_shape = inputs[kZero]->GetShapeVector();
+  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
+  dtype_ = inputs[kZero]->GetDtype();
+  return true;
+}
+
+bool TruncCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                               const std::vector<kernel::AddressPtr> &workspace,
+                               const std::vector<kernel::AddressPtr> &outputs) {
+  bool ret = true;
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kTruncInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTruncOutputsNum, kernel_name_);
+  if (dtype_ == kNumberTypeFloat16) {
+    ret = LaunchKernel<float16>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat32) {
+    ret = LaunchKernel<float>(inputs, outputs);
+  } else {
+    MS_EXCEPTION(TypeError) << "Unsupported input data type for operator [" << kernel_name_
+                            << "]: " << TypeIdToType(dtype_)->ToString();
+  }
+  return ret;
+}
+
+template <typename T>
+bool TruncCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  const T *input_0_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
+  T *output_0_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
+  auto task = std::bind(Trunc<T>, input_0_addr, output_0_addr, std::placeholders::_1, std::placeholders::_2);
+  ParallelLaunchAutoSearch(task, input_size_ * kTruncInputsNum, this, &parallel_search_info_);
+  return true;
+}
+
+std::vector<KernelAttr> TruncCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+
+    KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
+
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Trunc, TruncCpuKernelMod);
+}  // namespace kernel
+}  // namespace mindspore
