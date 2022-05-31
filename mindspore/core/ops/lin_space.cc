@@ -18,7 +18,6 @@
 #include <memory>
 #include <map>
 #include <string>
-#include <sstream>
 #include "ops/primitive_c.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
@@ -72,14 +71,9 @@ abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::
   CheckAndConvertUtils::CheckValue<size_t>("dimension of 'start'", start_dims, kEqual, "dimension of 'stop'", stop_dims,
                                            prim_name);
 
-  std::stringstream start_ss, end_ss;
   for (size_t i = 0; i < start_dims; ++i) {
-    start_ss.clear();
-    end_ss.clear();
-    start_ss << "the " << std::to_string(i) << " th dimension of 'start'";
-    end_ss << "the " << std::to_string(i) << " th dimension of 'stop'";
-    CheckAndConvertUtils::CheckValue<int64_t>(start_ss.str(), start_shape[i], kEqual, end_ss.str(), stop_shape[i],
-                                              prim_name);
+    CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dimension of 'start'", start_shape[i], kEqual,
+                                              std::to_string(i) + "th dimension of 'stop'", stop_shape[i], prim_name);
   }
 
   // Checked in LinSpaceInferType, num is a Scalar

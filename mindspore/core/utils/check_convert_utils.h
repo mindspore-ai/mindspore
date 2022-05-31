@@ -155,7 +155,7 @@ class MS_CORE_API CheckAndConvertUtils {
       MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator
                                    << " cannot find in the compare string map";
     }
-    buffer << iter_to_string->second << " " << match_name << " " << match_value << " , but got " << arg_value << ".";
+    buffer << iter_to_string->second << match_name << " " << match_value << " , but got " << arg_value << ".";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
 
