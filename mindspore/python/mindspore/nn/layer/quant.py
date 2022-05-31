@@ -759,8 +759,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
                                          requires_grad=False)
 
         # initialize fake ops
-        self.fake_quant_weight = quant_config.weight(ema=False,
-                                                     channel_axis=channel_axis,
+        self.fake_quant_weight = quant_config.weight(channel_axis=channel_axis,
                                                      num_channels=out_channels)
         self.freeze_bn = False
         self.bn_train = P.BatchNorm(is_training=True, epsilon=self.eps,
@@ -1012,8 +1011,7 @@ class Conv2dBnFoldQuant(Cell):
                                          requires_grad=False)
 
         # initialize fake ops
-        self.fake_quant_weight = quant_config.weight(ema=False,
-                                                     channel_axis=channel_axis,
+        self.fake_quant_weight = quant_config.weight(channel_axis=channel_axis,
                                                      num_channels=out_channels)
         self.batchnorm_fold = BatchNormFoldCell(epsilon=eps, momentum=momentum, freeze_bn=freeze_bn)
         self.correct_mul = Q.CorrectionMul(channel_axis)
@@ -1231,8 +1229,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
         weight_shape = [out_channels, in_channels // group, *self.kernel_size]
         channel_axis = 0
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
-        self.fake_quant_weight = quant_config.weight(ema=False,
-                                                     channel_axis=channel_axis,
+        self.fake_quant_weight = quant_config.weight(channel_axis=channel_axis,
                                                      num_channels=out_channels,
                                                      quant_dtype=quant_dtype)
         self.batchnorm = BatchNorm2d(out_channels, eps=eps, momentum=momentum)
@@ -1376,8 +1373,7 @@ class Conv2dQuant(Cell):
                              dilation=self.dilation,
                              group=self.group)
         channel_axis = 0
-        self.fake_quant_weight = quant_config.weight(ema=False,
-                                                     channel_axis=channel_axis,
+        self.fake_quant_weight = quant_config.weight(channel_axis=channel_axis,
                                                      num_channels=out_channels)
 
     @classmethod
@@ -1516,8 +1512,7 @@ class DenseQuant(Cell):
                             f"but got {activation}.")
 
         self.activation_flag = self.activation is not None
-        self.fake_quant_weight = quant_config.weight(ema=False,
-                                                     channel_axis=0,
+        self.fake_quant_weight = quant_config.weight(channel_axis=0,
                                                      num_channels=out_channels)
 
     @classmethod
