@@ -1,5 +1,5 @@
 
-0.1.1	MindSpore*1.7.0:ê
+0.1.1	MindSpore*1.8.0:ê
 l
 bprop.1:dout
 bprop.1:outbprop.1:dx:1bprop.1:dx:1"REF::S-Prim-ReluGrad:2:Default/S-Prim-ReluGrad-op0
@@ -8,7 +8,7 @@ m
 	bprop.1:x*
 bprop.1:out*
 bprop.1:dout2
-bprop.1:[CNode]2:3:@3d4ca3af3054d32fe54a557e457674558c4179705eccb4c3dae775993ba1a76aPb&
+bprop.1:[CNode]2:3:@4eb77b4d937ea1cf65d3f3bf0eb173752690cdc682e3b4321ec277eb485f2957Pb&
 S-Prim-MakeTuple:4S-Prim-MakeTuplebr
 S-Prim-ReluGrad:2S-Prim-ReluGrad
 output_names€ŠZoutput€+
