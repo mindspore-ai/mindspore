@@ -28,7 +28,6 @@
 #include "mindspore/core/ops/op_utils.h"
 #include "ops/fusion/partial_fusion.h"
 #include "ops/call.h"
-#include "ops/control_depend.h"
 #include "ops/depend.h"
 #include "ops/quant_dtype_cast.h"
 #include "ops/make_tuple.h"
