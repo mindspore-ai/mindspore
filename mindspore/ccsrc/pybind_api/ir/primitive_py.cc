@@ -118,6 +118,15 @@ std::map<std::string, py::object> PrimitivePy::hook_grad_;
 
 PrimitivePy::PrimitivePy(const std::string &name) : Primitive(name, false), python_obj_(py::none()) {}
 
+PrimitivePy::PrimitivePy(const PrimitivePy &prim_py)
+    : Primitive(prim_py),
+      python_obj_(prim_py.python_obj_),
+      bprop_cls_name_(prim_py.bprop_cls_name_),
+      adapter_(prim_py.adapter_),
+      signatures_(prim_py.signatures_),
+      bprop_cut_prims_(prim_py.bprop_cut_prims_),
+      backward_hook_fn_(prim_py.backward_hook_fn_) {}
+
 PrimitivePy::PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterPtr &adapter)
     : Primitive(adapter->name_, false), python_obj_(python_obj), adapter_(adapter) {
   MS_LOG(DEBUG) << "New primitive:" << adapter->name_;

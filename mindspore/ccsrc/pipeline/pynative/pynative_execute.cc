@@ -618,16 +618,16 @@ void ConvertPyObjectToTensor(const OpExecInfoPtr &op_run_info, size_t index, con
   input_tensors->emplace_back(tensor_ptr);
 }
 
-bool NeedConvertConstInputToAttr(const OpExecInfoPtr &op_run_info, const PrimitivePtr &op_prim,
-                                 opt::ConstInputToAttrInfoRegister *reg) {
+bool NeedConvertConstInputToAttr(const OpExecInfoPtr &op_run_info, opt::ConstInputToAttrInfoRegister *reg) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(op_prim);
   MS_EXCEPTION_IF_NULL(reg);
   // Checking whether attr conversion is needed.
   bool need_convert_input_to_attr = false;
   if (op_run_info->op_name == prim::kPrimCustom->name()) {
     // Custom op needs to set reg dynamically
     mindspore::HashSet<size_t> attr_indexes;
+    const PrimitivePtr &op_prim = op_run_info->py_primitive;
+    MS_EXCEPTION_IF_NULL(op_prim);
     opt::GetCustomOpAttrIndex(op_prim, &attr_indexes);
     if (!attr_indexes.empty()) {
       need_convert_input_to_attr = true;
@@ -688,12 +688,16 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(tensors_mask);
   MS_EXCEPTION_IF_NULL(input_tensors);
-  PrimitivePtr op_prim = op_run_info->py_primitive;
-  MS_EXCEPTION_IF_NULL(op_prim);
 
   opt::ConstInputToAttrInfoRegister reg;
-  bool need_convert_input_to_attr = NeedConvertConstInputToAttr(op_run_info, op_prim, &reg);
+  bool need_convert_input_to_attr = NeedConvertConstInputToAttr(op_run_info, &reg);
   MS_LOG(DEBUG) << "Need convert input to addr " << need_convert_input_to_attr;
+  if (need_convert_input_to_attr) {
+    // Clone a new prim
+    op_run_info->py_primitive = std::make_shared<PrimitivePy>(*op_run_info->py_primitive);
+  }
+  const auto &op_prim = op_run_info->py_primitive;
+
   // Get input tensors.
   op_prim->BeginRecordAddAttr();
   size_t input_num = op_run_info->op_inputs.size();
