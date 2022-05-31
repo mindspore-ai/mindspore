@@ -14,11 +14,9 @@
 # ============================================================================
 """Linear algebra submodule"""
 from .. import numpy as mnp
-from .ops import MatrixDiagPartV3
 from ..common import dtype as mstype
 from .utils import _to_tensor
 from .utils_const import _raise_value_error
-from ..ops import functional as F
 from ..ops.operations.array_ops import MatrixSetDiagV3
 
 
@@ -74,24 +72,3 @@ def matrix_set_diag(input_x, diagonal, k=0, alignment="RIGHT_LEFT"):
     k_vec = _to_tensor(k_vec, dtype=mstype.int32)
     output = matrix_set_diag_net(input_x, diagonal, k_vec)
     return output
-
-
-def matrix_diag_part(a, k=0, padding_value=0, align="RIGHT_LEFT"):
-    """
-     Returns:
-          batched diagonal part of a batched tensor, the part between, k[0] to k[1], the shape is dynamic
-
-     Raises:
-       k[1] should not less then k[0]
-     """
-    k_vec = mnp.zeros((2,), dtype=mstype.int64)
-    if isinstance(k, int):
-        k_vec += k
-    elif isinstance(k, (list, tuple)):
-        k_vec = k
-    else:
-        _raise_value_error("input k to indicate diagonal region is invalid.")
-    if padding_value == 0:
-        padding_value = F.cast(padding_value, F.dtype(a))
-    msp_matrixdiagpart = MatrixDiagPartV3(align)
-    return msp_matrixdiagpart(a, k_vec, padding_value)

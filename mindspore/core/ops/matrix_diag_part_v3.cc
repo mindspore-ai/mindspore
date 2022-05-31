@@ -155,6 +155,14 @@ TypePtr MatrixDiagPartV3InferType(const PrimitivePtr &prim, const std::vector<Ab
   return x_type;
 }
 }  // namespace
+void MatrixDiagPartV3::Init(const std::string &align) { this->set_align(align); }
+
+void MatrixDiagPartV3::set_align(const std::string &align) { (void)this->AddAttr(kAlign, api::MakeValue(align)); }
+
+std::string MatrixDiagPartV3::get_align() const {
+  auto value_ptr = GetAttr(kAlign);
+  return GetValue<std::string>(value_ptr);
+}
 
 MIND_API_OPERATOR_IMPL(MatrixDiagPartV3, BaseOperator);
 AbstractBasePtr MatrixDiagPartV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -162,9 +170,11 @@ AbstractBasePtr MatrixDiagPartV3Infer(const abstract::AnalysisEnginePtr &, const
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  auto align_ptr = primitive->GetAttr(kAlign);
+  MS_EXCEPTION_IF_NULL(align_ptr);
+  auto align = GetValue<std::string>(align_ptr);
+  CheckAndConvertUtils::CheckString(kAlign, align, {"LEFT_RIGHT", "RIGHT_LEFT", "LEFT_LEFT", "RIGHT_RIGHT"},
+                                    primitive->name());
   auto infer_type = MatrixDiagPartV3InferType(primitive, input_args);
   auto infer_shape = MatrixDiagPartV3InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
