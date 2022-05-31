@@ -306,16 +306,6 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
     tensor_address->SetNodeIndex(input_node, 0);
     tensor_address->set_original_ref_count(SIZE_MAX);
     tensor_address->ResetRefCount();
-  } else if (device_address->GetPtr() != nullptr) {
-    // The `device_address` may come from another previous tensor. In order to prevent pollute the device data of
-    // previous tensor, creating a new device address for holding current input tensor data.
-    auto new_device_address = device_context->CreateDeviceAddress(
-      nullptr, tensor_data_size, device_address->format(), device_address->type_id(), device_address->host_shape());
-    MS_EXCEPTION_IF_NULL(new_device_address);
-    AnfAlgo::SetOutputAddr(new_device_address, 0, input_node.get());
-    new_device_address->SetNodeIndex(input_node, 0);
-    new_device_address->set_original_ref_count(SIZE_MAX);
-    new_device_address->ResetRefCount();
   }
 }
 

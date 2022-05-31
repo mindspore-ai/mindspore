@@ -328,6 +328,10 @@ void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
     actor_set->output_actor_->outputs_.resize(actor_set->output_actor_->outputs_num_);
   }
 
+  for (auto &data_source_actor : actor_set->data_source_actors_) {
+    data_source_actor->ReleaseDataNodeAddress();
+  }
+
   for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
     super_kernel_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
