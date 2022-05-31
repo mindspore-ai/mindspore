@@ -148,9 +148,23 @@ def test_sliding_window_exception():
         assert "SlidingWindow supports 1D input only for now, but got 0D." in str(e)
 
 
+def test_sliding_window_big_width2():
+    """
+    Feature: SlidingWindow op
+    Description: In eager mode, test SlidingWindow op with big width parameter
+    Expectation: Output is equal to the expected output
+    """
+    op = text.SlidingWindow(10, 0)
+    inputs = ["大", "家", "早", "上", "好"]
+    expect = np.array([])
+    result = op(inputs)
+    assert np.array_equal(result, expect)
+
+
 if __name__ == '__main__':
     test_sliding_window_callable()
     test_sliding_window_string()
     test_sliding_window_number()
     test_sliding_window_big_width()
     test_sliding_window_exception()
+    test_sliding_window_big_width2()

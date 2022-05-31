@@ -309,7 +309,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
         std::stringstream ss;
         ss << "Transformation returned an empty tensor at location " << idx << ". ";
         ss << "The shape of the tensor is " << tensor->shape();
-        RETURN_STATUS_UNEXPECTED(ss.str());
+        MS_LOG(WARNING) << ss.str();
       }
       auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(tensor));
       output_tensor_list->emplace_back(ms_tensor);

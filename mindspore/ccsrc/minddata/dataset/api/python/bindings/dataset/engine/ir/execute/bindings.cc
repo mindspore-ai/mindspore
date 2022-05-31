@@ -50,11 +50,20 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                       THROW_IF_ERROR(self(ms_input_tensor_list, &ms_output_tensor_list));
                       std::vector<std::shared_ptr<dataset::Tensor>> de_output_tensor_list;
                       for (auto &tensor : ms_output_tensor_list) {
-                        std::shared_ptr<dataset::Tensor> de_output_tensor;
-                        THROW_IF_ERROR(dataset::Tensor::CreateFromMemory(
-                          dataset::TensorShape(tensor.Shape()), MSTypeToDEType(static_cast<TypeId>(tensor.DataType())),
-                          (const uchar *)(tensor.Data().get()), tensor.DataSize(), &de_output_tensor));
-                        de_output_tensor_list.emplace_back(std::move(de_output_tensor));
+                        if (tensor.Data().get()) {
+                          std::shared_ptr<dataset::Tensor> de_output_tensor;
+                          THROW_IF_ERROR(dataset::Tensor::CreateFromMemory(
+                            dataset::TensorShape(tensor.Shape()),
+                            MSTypeToDEType(static_cast<TypeId>(tensor.DataType())),
+                            (const uchar *)(tensor.Data().get()), tensor.DataSize(), &de_output_tensor));
+                          de_output_tensor_list.emplace_back(std::move(de_output_tensor));
+                        } else {
+                          std::shared_ptr<dataset::Tensor> de_output_tensor;
+                          THROW_IF_ERROR(dataset::Tensor::CreateEmpty(
+                            dataset::TensorShape(tensor.Shape()),
+                            MSTypeToDEType(static_cast<TypeId>(tensor.DataType())), &de_output_tensor));
+                          de_output_tensor_list.emplace_back(std::move(de_output_tensor));
+                        }
                       }
                       return de_output_tensor_list;
                     });
