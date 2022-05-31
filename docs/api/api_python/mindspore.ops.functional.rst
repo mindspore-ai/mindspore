@@ -385,6 +385,7 @@ Parameter操作算子
     mindspore.ops.scatter_max
     mindspore.ops.scatter_nd_add
     mindspore.ops.scatter_nd_sub
+    mindspore.ops.scatter_update
 
 .. list-table::
    :widths: 50 50
@@ -394,8 +395,6 @@ Parameter操作算子
      - Description
    * - mindspore.ops.scatter_nd_update
      - Refer to :class:`mindspore.ops.ScatterNdUpdate`.
-   * - mindspore.ops.scatter_update
-     - Refer to :class:`mindspore.ops.ScatterUpdate`.
 
 调试算子
 ----------------
