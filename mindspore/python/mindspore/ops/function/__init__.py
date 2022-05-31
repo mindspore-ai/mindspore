@@ -184,6 +184,7 @@ from .math_func import (
     isreal,
 )
 from .nn_func import (
+    deformable_conv2d,
     fast_gelu,
     hardshrink,
     softsign,

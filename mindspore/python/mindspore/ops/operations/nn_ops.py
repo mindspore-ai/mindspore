@@ -9714,6 +9714,59 @@ class PSROIPooling(Primitive):
         self.add_prim_attr('output_dim', self.output_dim)
 
 
+class DeformableOffsets(Primitive):
+    r"""
+    Computes the deformed convolution output with the expected input.
+
+    Refer to :func:`mindspore.ops.deformable_conv2d` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 strides,
+                 pads,
+                 ksize,
+                 dilations=(1, 1, 1, 1),
+                 data_format="NCHW",
+                 deformable_groups=1,
+                 modulated=True):
+        """Initialize DeformableOffsets"""
+        self.init_prim_io_names(inputs=['x', 'offsets'], outputs=['y'])
+
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'data_format', self.name)
+        pos_c = 1
+        if self.format == "NHWC":
+            pos_c = 3
+        self.add_prim_attr('format', self.format)
+
+        validator.check_size_and_element_type_of_tuple('strides', strides, 4, int, self.name)
+        if strides[0] != 1 or strides[pos_c] != 1:
+            raise ValueError(f"For '{self.name}', The N and C dimensions of 'strides' must be set to 1.")
+        self.add_prim_attr('strides', strides)
+
+        validator.check_size_and_element_type_of_tuple('pads', pads, 4, int, self.name)
+        self.add_prim_attr('pads', pads)
+
+        validator.check_size_and_element_type_of_tuple('kernel_size', ksize, 2, int, self.name)
+        self.add_prim_attr('ksize', ksize)
+
+        validator.check_size_and_element_type_of_tuple('dilations', dilations, 4, int, self.name)
+        if dilations[0] != 1 or dilations[pos_c] != 1:
+            raise ValueError(f"For '{self.name}', The N and C dimensions of 'dilations' must be set to 1.")
+        self.add_prim_attr('dilations', dilations)
+
+        self.deformable_groups = validator.check_positive_int(deformable_groups, 'deformable_groups', self.name)
+        self.add_prim_attr('deformable_groups', self.deformable_groups)
+
+        self.modulated = validator.check_bool(modulated, 'modulated', self.name)
+        if self.modulated is not True:
+            raise ValueError(f"For '{self.name}', The modulated must be set to True.")
+        self.add_prim_attr('modulated', self.modulated)
+
+
 class GridSampler2D(Primitive):
     """
     This operation samples 2d input_x by using interpolation based on flow field grid, which is usually gennerated by

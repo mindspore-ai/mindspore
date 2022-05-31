@@ -1020,6 +1020,13 @@ class Validator:
                                 f"{type_names if num_types > 1 else type_names[0]}, "
                                 f"but got '{element}' with type '{type(element).__name__}'.")
 
+    @staticmethod
+    def check_size_and_element_type_of_tuple(arg_name, arg_value, expect_size, expect_element_type, prim_name=None):
+        """Check the size and element type of a tuple."""
+        Validator.check_value_type(arg_name, arg_value, [tuple], prim_name)
+        Validator.check_equal_int(len(arg_value), expect_size, arg_name + ' size', prim_name)
+        Validator.check_element_type_of_iterable('arg_name', arg_value, [expect_element_type], prim_name)
+
 
 def check_dyn_shape_value_equal(index, dyn_shape, actual_shape):
     """Check the consistency of dynamic shape and actual input shape."""
