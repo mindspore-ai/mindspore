@@ -3750,7 +3750,7 @@ class StridedSlice(PrimitiveWithInfer):
         if has_ellipsis:
             # When there is ellipsis, handle the second half of the ellipsis split.
             ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + \
-                                     len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
+                len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
             ret_shape.extend(x_shape[i:i + ellipsis_occupied_dims])
             j += 1
             i += ellipsis_occupied_dims
@@ -5592,8 +5592,8 @@ class SpaceToBatchND(PrimitiveWithInfer):
             the length of `block_shape` is the number of spatial dimensions, called M later.
             If `block_shape` is an int, the block size of M dimensions are the same, equal to `block_shape`.
             In this case of Ascend, M must be 2.
-        paddings (Union[tuple, list]): The padding values for spatial dimensions, containing 2 subtraction list.
-            Each contains M integer values. All values must be greater than 0.
+        paddings (Union[tuple, list]): The padding values for spatial dimensions, containing M subtraction list.
+            Each contains 2 integer values. All values must be greater than 0.
             `paddings[i]` specifies the paddings for the spatial dimension i,
             which corresponds to the input dimension i + offset.
             For each i, input_shape[i + offset]+paddings[i][0]+paddings[i][1]
@@ -5603,8 +5603,8 @@ class SpaceToBatchND(PrimitiveWithInfer):
         - **input_x** (Tensor) - The input tensor. The input tensor must be a 4-D tensor on Ascend.
 
     Outputs:
-        Tensor, the output tensor with the same data type as input.
-        Assume input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)` with
+        Tensor, the output tensor with the same data type as the input.
+        Assume the input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)` with
         :math:`block\_shape` and :math:`paddings`.
         The shape of the output tensor will be :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`,
         where
@@ -5682,7 +5682,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
                              f"while the shape of blocks is {self.block_shape}.")
         for i in range(len(self.block_shape)):
             padded = out_shape[i + offset] + self.paddings[i][0] + \
-                     self.paddings[i][1]
+                self.paddings[i][1]
             if padded % self.block_shape[i] != 0:
                 raise ValueError(f"For '{self.name}', the padded must be divisible by 'block_shape', "
                                  f"where padded = input_x_shape[i + 2] + paddings[i][0] + paddings[i][1], "
