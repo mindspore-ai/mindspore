@@ -87,7 +87,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   pm->Add(std::make_shared<SpreadUpdateState>(), OptLevel_1);
 
   // Parallel optimizer by UpdateState reorganization
-  pm->Add(std::make_shared<ParallelOptimizer>(), OptLevel_2);
+  pm->Add(std::make_shared<ParallelOptimizer>(PARALLEL_OPS_LIMIT), OptLevel_2);
 
   // Eliminate the common nodes that generated in SpreadUpdateState
   pm->Add(std::make_shared<GraphKernelCSE>(), OptLevel_1);

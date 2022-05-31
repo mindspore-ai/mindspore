@@ -35,9 +35,12 @@ namespace mindspore::graphkernel {
  */
 class ParallelOptimizer : public opt::Pass {
  public:
-  ParallelOptimizer() : Pass("parallel_optimizer") {}
+  explicit ParallelOptimizer(const size_t &max_n = 7) : Pass("parallel_optimizer"), max_parallel_num_(max_n) {}
   ~ParallelOptimizer() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
+
+ private:
+  size_t max_parallel_num_;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_PARALLEL_OPTIMIZER_H_
