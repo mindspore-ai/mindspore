@@ -173,7 +173,7 @@
         - **epoch** (int) – 训练执行轮次。通常每个epoch都会使用全量数据集进行训练。当 `dataset_sink_mode` 设置为True且 `sink_size` 大于零时，则每个epoch训练次数为 `sink_size` 而不是数据集的总步数。如果 `epoch` 与 `initial_epoch` 一起使用，它表示训练的最后一个 `epoch` 是多少。
         - **train_dataset** (Dataset) – 训练数据集迭代器。如果定义了 `loss_fn` ，则数据和标签会被分别传给 `network` 和 `loss_fn` ，此时数据集需要返回一个元组（data, label）。如果数据集中有多个数据或者标签，可以设置 `loss_fn` 为None，并在 `network` 中实现损失函数计算，此时数据集返回的所有数据组成的元组（data1, data2, data3, ...）会传给 `network` 。
         - **valid_dataset** (Dataset) – 评估模型的数据集迭代器。默认值：None。
-        - **valid_frequency** (Dataset) – 此参数只有在valid_dataset不为None时生效。如果为int类型，表示执行推理的频率，例如 `valid_frequency=2`，则每2个训练epoch执行一次推理；如果为list类型，指明在哪几个epoch时执行推理，例如 `valid_frequency=[1, 5]`，则在第1个和第5个epoch执行推理。默认值：1。
+        - **valid_frequency** (int, list) – 此参数只有在valid_dataset不为None时生效。如果为int类型，表示执行推理的频率，例如 `valid_frequency=2`，则每2个训练epoch执行一次推理；如果为list类型，指明在哪几个epoch时执行推理，例如 `valid_frequency=[1, 5]`，则在第1个和第5个epoch执行推理。默认值：1。
         - **callbacks** (Optional[list[Callback], Callback]) – 训练过程中需要执行的回调对象或者回调对象列表。默认值：None。
         - **dataset_sink_mode** (bool) – 训练数据是否直接下沉至处理器进行处理。使用PYNATIVE_MODE模式或CPU处理器时，模型训练流程将以非下沉模式执行。默认值：True。
         - **valid_dataset_sink_mode** (bool) - 推理数据是否直接下沉至处理器进行处理。默认值：True。

@@ -375,7 +375,7 @@ class CallbackManager(Callback):
     def on_train_step_end(self, run_context):
         """Called after each train step finished."""
         for cb in self._callbacks:
-            cb.step_end(run_context)
+            cb.on_train_step_end(run_context)
 
     def on_train_end(self, run_context):
         """Called after network train end."""
