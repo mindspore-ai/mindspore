@@ -168,7 +168,7 @@ Federated-Server
 
     **异常：**
 
-    **ValueError** - 如果输入key不是联邦学习模式context中的属性。
+    - **ValueError** - 如果输入key不是联邦学习模式context中的属性。
 
 
 .. py:function:: mindspore.get_fl_context(attr_key)
@@ -186,5 +186,5 @@ Federated-Server
 
     **异常：**
 
-    **ValueError** - 如果输入key不是联邦学习模式context中的属性。
+    - **ValueError** - 如果输入key不是联邦学习模式context中的属性。
 
