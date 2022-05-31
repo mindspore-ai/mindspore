@@ -53,10 +53,16 @@ class Inter(IntEnum):
         """
         Function to return Python type for Interpolation Mode.
         """
-        python_values = {Inter.NEAREST: Image.NEAREST,
-                         Inter.ANTIALIAS: Image.ANTIALIAS,
-                         Inter.LINEAR: Image.LINEAR,
-                         Inter.CUBIC: Image.CUBIC}
+        if Image.__version__ >= "9.1.0":
+            python_values = {Inter.NEAREST: Image.Resampling.NEAREST,
+                             Inter.ANTIALIAS: Image.Resampling.LANCZOS,
+                             Inter.LINEAR: Image.Resampling.BILINEAR,
+                             Inter.CUBIC: Image.Resampling.BICUBIC}
+        else:
+            python_values = {Inter.NEAREST: Image.NEAREST,
+                             Inter.ANTIALIAS: Image.ANTIALIAS,
+                             Inter.LINEAR: Image.LINEAR,
+                             Inter.CUBIC: Image.CUBIC}
         return python_values.get(inter_type)
 
     @staticmethod

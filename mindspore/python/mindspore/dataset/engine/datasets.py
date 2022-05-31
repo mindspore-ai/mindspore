@@ -616,7 +616,7 @@ class Dataset:
             ...     index = 0
             ...     for c in col:
             ...         img = Image.fromarray(c.astype('uint8')).convert('RGB')
-            ...         img = img.resize((s, s), Image.ANTIALIAS)
+            ...         img = img.resize((s, s))
             ...         output[index] = np.array(img)
             ...         index += 1
             ...     return (output,)
