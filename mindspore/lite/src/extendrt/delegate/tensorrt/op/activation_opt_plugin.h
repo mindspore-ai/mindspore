@@ -26,8 +26,8 @@ namespace mindspore::lite {
 constexpr char *ACTIVATION_OPT_PLUGIN_NAME{"ActivationOptPlugin"};
 class ActivationOptPlugin : public TensorRTPlugin {
  public:
-  ActivationOptPlugin(const std::string name, schema::ActivationType activation_type)
-      : TensorRTPlugin(name, std::string(ACTIVATION_OPT_PLUGIN_NAME)), activation_type_(activation_type) {}
+  ActivationOptPlugin(const std::string name, schema::ActivationType activation_type, uint32_t device_id)
+      : TensorRTPlugin(name, std::string(ACTIVATION_OPT_PLUGIN_NAME), device_id), activation_type_(activation_type) {}
 
   ActivationOptPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(ACTIVATION_OPT_PLUGIN_NAME)) {

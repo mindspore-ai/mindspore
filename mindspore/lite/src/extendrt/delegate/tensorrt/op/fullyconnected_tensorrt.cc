@@ -34,16 +34,10 @@ int FullyConnectedTensorRT::IsSupport(const mindspore::schema::Primitive *primit
 }
 
 int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  int axis = -1;
-  auto primitive = this->GetPrimitive()->value_as_FullConnection();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "convert to primitive FullConnection failed for " << op_name_;
-    return RET_ERROR;
-  }
-  if (type_ == schema::PrimitiveType_FullConnection) {
-    activation_ = primitive->activation_type();
-    axis = primitive->axis();
-  }
+  auto primitive = op_primitive_->value_as_FullConnection();
+  CHECK_NULL_RETURN(primitive);
+  activation_ = primitive->activation_type();
+  int axis = primitive->axis();
   if (axis < 0 || axis >= out_tensors_[0].Shape().size()) {
     MS_LOG(ERROR) << "axis: " << axis << " is invalid for " << op_name_;
     return RET_ERROR;
@@ -76,7 +70,8 @@ int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   // add activation
   if (activation_ != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    nvinfer1::ILayer *activation_layer = ActivationTensorRT::AddActivation(network, activation_, 0, 0, 0, out_tensor);
+    nvinfer1::ILayer *activation_layer =
+      ActivationTensorRT::AddActivation(network, activation_, 0, 0, 0, out_tensor, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for matmul failed";
       return RET_ERROR;

@@ -28,8 +28,8 @@ __global__ void NormalizeKernel(const T *input, const T *gamma, const T *beta, T
   const int block_loop = (dim_before_axis - 1) / gridDim.x + 1;
   const int element_cnt = dim_before_axis * n;
 
-  __shared__ float s_mean[1024];
-  __shared__ float s_variance[1024];
+  __shared__ float s_mean[2048];
+  __shared__ float s_variance[2048];
   float sum = 0.0f;
   float variance = 0.0f;
 

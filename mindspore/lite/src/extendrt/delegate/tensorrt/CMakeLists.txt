@@ -86,6 +86,7 @@ find_package(CUDA)
 file(GLOB_RECURSE CUDA_KERNEL_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/cuda_impl/*.cu
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather.cu
+    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/swish_impl.cu
 )
 
 set_source_files_properties(${CUDA_KERNEL_SRC} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)

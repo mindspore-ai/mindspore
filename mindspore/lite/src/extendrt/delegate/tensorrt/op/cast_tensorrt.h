@@ -43,8 +43,9 @@ class CastTensorRT : public TensorRTOp {
 
 class CastPlugin : public TensorRTPlugin {
  public:
-  CastPlugin(const std::string name, nvinfer1::DataType origin_datatype, nvinfer1::DataType dest_datatype)
-      : TensorRTPlugin(name, std::string(CAST_PLUGIN_NAME)),
+  CastPlugin(const std::string name, nvinfer1::DataType origin_datatype, nvinfer1::DataType dest_datatype,
+             uint32_t device_id)
+      : TensorRTPlugin(name, std::string(CAST_PLUGIN_NAME), device_id),
         origin_datatype_(origin_datatype),
         dest_datatype_(dest_datatype) {}
 

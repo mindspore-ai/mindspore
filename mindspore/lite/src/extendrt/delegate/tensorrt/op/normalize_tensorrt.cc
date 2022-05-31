@@ -66,18 +66,18 @@ int NormalizeTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   if (in_tensors_.size() == BETA_INDEX + 1) {
-    size_t expand_shape_size = in_tensors_[0].Shape().size();
-    gamma_ = ConvertTensorWithExpandDims(network, in_tensors_[1], expand_shape_size, in_tensors_[1].Name());
+    gamma_ =
+      ConvertTensorWithExpandDims(network, in_tensors_[1], in_tensors_[0].Shape(), op_name_ + in_tensors_[1].Name());
     CHECK_NULL_RETURN(gamma_);
-    beta_ =
-      ConvertTensorWithExpandDims(network, in_tensors_[BETA_INDEX], expand_shape_size, in_tensors_[BETA_INDEX].Name());
+    beta_ = ConvertTensorWithExpandDims(network, in_tensors_[BETA_INDEX], in_tensors_[0].Shape(),
+                                        op_name_ + in_tensors_[BETA_INDEX].Name());
     CHECK_NULL_RETURN(beta_);
   }
   return RET_OK;
 }
 
 int NormalizeTensorRT::RunAsOptPlugin(nvinfer1::INetworkDefinition *network) {
-  auto plugin = std::make_shared<NormalizeOptPlugin>(op_name_, axis_, epsilon_);
+  auto plugin = std::make_shared<NormalizeOptPlugin>(op_name_, axis_, epsilon_, device_id_);
   if (plugin == nullptr) {
     MS_LOG(ERROR) << "create NormalizeOptPlugin failed for " << op_name_;
     return RET_ERROR;
@@ -89,6 +89,7 @@ int NormalizeTensorRT::RunAsOptPlugin(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   layer_ = norm_layer;
+  layer_->setName(op_name_.c_str());
   AddInnerOutTensors(ITensorHelper{norm_layer->getOutput(0), norm_input_.format_, norm_input_.same_format_});
   return RET_OK;
 }

@@ -74,7 +74,8 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   // add activation
   if (activation_ != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    nvinfer1::ILayer *activation_layer = ActivationTensorRT::AddActivation(network, activation_, 0, 0, 0, out_tensor);
+    nvinfer1::ILayer *activation_layer =
+      ActivationTensorRT::AddActivation(network, activation_, 0, 0, 0, out_tensor, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for matmul failed";
       return RET_ERROR;
@@ -134,8 +135,12 @@ nvinfer1::ITensor *MatMulTensorRT::ProcessWeightTensor(nvinfer1::INetworkDefinit
   int weight_index = in_tensors_[1].Data() != nullptr ? 1 : 0;
   if (in_tensors_[weight_index].Shape().size() <
       static_cast<size_t>(tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims)) {
-    weight = ConvertTensorWithExpandDims(network, in_tensors_[weight_index],
-                                         in_tensors_[1 - weight_index].Shape().size(), op_name_);
+    std::vector<int64_t> expect_shape(in_tensors_[1 - weight_index].Shape().size(), 1);
+    auto origin_shape = in_tensors_[weight_index].Shape();
+    for (int i = 0; i < origin_shape.size(); i++) {
+      expect_shape[expect_shape.size() - 1 - i] = origin_shape[origin_shape.size() - 1 - i];
+    }
+    weight = ConvertTensorWithExpandDims(network, in_tensors_[weight_index], expect_shape, op_name_);
   } else if (in_tensors_[weight_index].Shape().size() ==
              static_cast<size_t>(tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims)) {
     weight = ConvertConstantTensor(network, in_tensors_[weight_index], op_name_);
@@ -232,10 +237,10 @@ nvinfer1::ITensor *MatMulTensorRT::AddAsOptPlugin(nvinfer1::INetworkDefinition *
   if (tensorrt_in_tensors_.size() >= INPUT_SIZE2) {
     weight_tensor = tensorrt_in_tensors_[1].trt_tensor_;
   } else {
-    weight_tensor = ConvertConstantTensor(network, in_tensors_[1], in_tensors_[1].Name());
+    weight_tensor = ConvertConstantTensor(network, in_tensors_[1], op_name_);
   }
 
-  auto plugin = std::make_shared<MatmulOptPlugin>(op_name_, transpose_a_, transpose_b_);
+  auto plugin = std::make_shared<MatmulOptPlugin>(op_name_, transpose_a_, transpose_b_, device_id_);
   if (plugin == nullptr) {
     MS_LOG(ERROR) << "create MatmulOptPlugin failed for " << op_name_;
     return nullptr;
@@ -254,8 +259,9 @@ nvinfer1::ITensor *MatMulTensorRT::AddBias(nvinfer1::INetworkDefinition *network
   if (in_tensors_.size() == kBiasIndex + 1) {
     nvinfer1::ITensor *bias = nullptr;
     if (in_tensors_[kBiasIndex].Shape().size() < static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
-      bias =
-        ConvertTensorWithExpandDims(network, in_tensors_[kBiasIndex], out_tensor->getDimensions().nbDims, op_name_);
+      std::vector<int64_t> expect_dims(out_tensors_[0].Shape());
+      expect_dims[0] = out_tensor->getDimensions().d[0];
+      bias = ConvertTensorWithExpandDims(network, in_tensors_[kBiasIndex], expect_dims, op_name_);
     } else if (in_tensors_[kBiasIndex].Shape().size() == static_cast<size_t>(out_tensor->getDimensions().nbDims)) {
       bias = ConvertConstantTensor(network, in_tensors_[kBiasIndex], op_name_);
     } else {

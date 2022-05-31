@@ -34,6 +34,16 @@ class TopKTensorRT : public TensorRTOp {
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
+
+ private:
+  int ParseParams(nvinfer1::INetworkDefinition *network);
+
+  int PreprocessInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *topk_input);
+
+  nvinfer1::TopKOperation topk_op_{nvinfer1::TopKOperation::kMAX};
+  uint32_t axis_{0};
+  int axis_value_{0};
+  int32_t top_k_{0};
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TOPK_TENSORRT_H_

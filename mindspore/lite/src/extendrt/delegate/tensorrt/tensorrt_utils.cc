@@ -210,32 +210,35 @@ std::experimental::optional<ActivationParams> TryConvertActivationType(schema::A
      ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, true, 0, false, 0}},
     {schema::ActivationType_RELU6, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 6}},
     {schema::ActivationType_RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}},
-    {schema::ActivationType_GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}},
     {schema::ActivationType_HARD_TANH, ActivationParams{nvinfer1::ActivationType::kCLIP, true, -1, true, 1}},
-  };
+    // using plugin
+    {schema::ActivationType_GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}},
+    {schema::ActivationType_SWISH, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}}};
   return action_map.find(activation_type) != action_map.end()
            ? std::experimental::optional<ActivationParams>(action_map[activation_type])
            : std::experimental::nullopt;
 }
 
 nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
-                                               const mindspore::MSTensor &ms_tensor, size_t expand_shape_size,
-                                               const std::string &op_name) {
+                                               const mindspore::MSTensor &ms_tensor,
+                                               const std::vector<int64_t> &expect_shape, const std::string &op_name) {
   if (network == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertTensorWithExpandDims";
     return nullptr;
   }
-  std::vector<int64_t> shape(expand_shape_size);
-  size_t shape_size = ms_tensor.Shape().size();
-  size_t expand_size = expand_shape_size - shape_size;
-  for (size_t i = 0; i < expand_shape_size; ++i) {
-    if (i < expand_size) {
-      shape[i] = 1;
+  auto origin_shape = ms_tensor.Shape();
+  std::vector<int64_t> convert_shape(expect_shape);
+  size_t origin_index = 0;
+  for (size_t i = 0; i < convert_shape.size(); ++i) {
+    if (origin_index >= origin_shape.size()) {
+      convert_shape[i] = 1;
+    } else if (origin_shape[origin_index] == convert_shape[i]) {
+      origin_index++;
     } else {
-      shape[i] = ms_tensor.Shape()[i - expand_size];
+      convert_shape[i] = 1;
     }
   }
-  nvinfer1::Dims dims = ConvertCudaDims(shape);
+  nvinfer1::Dims dims = ConvertCudaDims(convert_shape);
   if (dims.nbDims == -1) {
     MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name;
     return nullptr;
@@ -254,6 +257,36 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
   auto name = ms_tensor.Name() + "_" + op_name;
   constant_tensor->setName(name.c_str());
   return constant_tensor->getOutput(0);
+}
+
+nvinfer1::ITensor *ConvertConstantTensorWithDims(nvinfer1::INetworkDefinition *network,
+                                                 const mindspore::MSTensor &ms_tensor,
+                                                 const std::vector<int64_t> &expect_shape, const std::string &op_name) {
+  nvinfer1::ITensor *constant_input{nullptr};
+  std::string tensor_name = op_name + "_" + ms_tensor.Name();
+  if (ms_tensor.Shape().size() == 0 || ms_tensor.ElementNum() == 1) {
+    constant_input = lite::ConvertScalarToITensor(network, expect_shape.size(), ms_tensor.Data().get(),
+                                                  ms_tensor.DataType(), tensor_name);
+    if (constant_input == nullptr) {
+      MS_LOG(ERROR) << "create Itensor from scalar tensor failed: " << tensor_name;
+      return nullptr;
+    }
+  } else if (ms_tensor.Shape().size() == expect_shape.size()) {
+    constant_input = lite::ConvertConstantTensor(network, ms_tensor, tensor_name);
+    if (constant_input == nullptr) {
+      MS_LOG(ERROR) << "create Itensor from constant tensor failed: " << tensor_name;
+      return nullptr;
+    }
+  } else if (ms_tensor.ElementNum() >= 1) {
+    constant_input = ConvertTensorWithExpandDims(network, ms_tensor, expect_shape, tensor_name);
+    if (constant_input == nullptr) {
+      MS_LOG(ERROR) << "create Itensor from ConvertTensorWithExpandDims failed: " << tensor_name;
+      return nullptr;
+    }
+  } else {
+    MS_LOG(ERROR) << "const tensor value needs check: " << tensor_name;
+  }
+  return constant_input;
 }
 
 nvinfer1::Weights TransposeWeight4D(const mindspore::MSTensor &ms_tensor, void **pack_weight) {
@@ -518,6 +551,7 @@ std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(s
     {schema::ReduceMode::ReduceMode_ReduceMax, nvinfer1::ReduceOperation::kMAX},
     {schema::ReduceMode::ReduceMode_ReduceMin, nvinfer1::ReduceOperation::kMIN},
     {schema::ReduceMode::ReduceMode_ReduceProd, nvinfer1::ReduceOperation::kPROD},
+    {schema::ReduceMode::ReduceMode_ReduceL2, nvinfer1::ReduceOperation::kSUM},
     {schema::ReduceMode::ReduceMode_ReduceSum, nvinfer1::ReduceOperation::kSUM},
   };
   return reduce_ops_.find(mode) != reduce_ops_.end()
@@ -618,6 +652,30 @@ void DeserializeValue(void const **buffer, size_t *buffer_size, void *value, siz
   std::memcpy(value, *buffer, cpy_size);
   *buffer = static_cast<const char *>(*buffer) + cpy_size;
   *buffer_size -= cpy_size;
+}
+
+int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *dst) {
+  if (ms_tensor.Data() == nullptr) {
+    MS_LOG(ERROR) << "ignore tensor: " << ms_tensor.Name();
+    return RET_ERROR;
+  }
+  dst->clear();
+  dst->resize(ms_tensor.ElementNum());
+  switch (ms_tensor.DataType()) {
+    case DataType::kNumberTypeInt64: {
+      Data2Vector<int64_t>(dst, ms_tensor.Data().get());
+      break;
+    }
+    case DataType::kNumberTypeInt32: {
+      Data2Vector<int>(dst, ms_tensor.Data().get());
+      break;
+    }
+    default: {
+      MS_LOG(ERROR) << ms_tensor.Name() << " has more datatype to parse";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 
 nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,

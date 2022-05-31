@@ -67,7 +67,8 @@ int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
       break;
     }
     case schema::PrimitiveType_Transpose:
-    case schema::PrimitiveType_ExpandDims: {
+    case schema::PrimitiveType_ExpandDims:
+    case schema::PrimitiveType_BroadcastTo: {
       if (in_tensors.size() != INPUT_SIZE2) {
         MS_LOG(ERROR) << "PrimitiveType_Transpose Unsupported in_tensors size: " << in_tensors.size();
         return RET_ERROR;
@@ -135,6 +136,10 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
     case schema::PrimitiveType_ExpandDims: {
       ret = AddExpandDimsOp(shuffle_layer);
+      break;
+    }
+    case schema::PrimitiveType_BroadcastTo: {
+      ret = AddBroadcastToOp(shuffle_layer);
       break;
     }
     default:
@@ -320,6 +325,26 @@ int ShuffleTensorRT::AddExpandDimsOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   return shuffler_output_ == nullptr ? RET_ERROR : RET_OK;
 }
 
+int ShuffleTensorRT::AddBroadcastToOp(nvinfer1::IShuffleLayer *shuffle_layer) {
+  if (out_tensors_[0].ElementNum() != in_tensors_[0].ElementNum() &&
+      out_tensors_[0].Shape().size() == in_tensors_[0].Shape().size()) {
+    MS_LOG(WARNING) << "broadcast element cnt changes, ignore broadcast for " << op_name_;
+    shuffle_layer->setReshapeDimensions(shuffler_input_->getDimensions());
+  } else if (out_tensors_[0].ElementNum() == in_tensors_[0].ElementNum()) {
+    nvinfer1::Dims new_dims = ConvertCudaDims(out_tensors_[0].Shape());
+    if (new_dims.nbDims == -1) {
+      MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+      return RET_ERROR;
+    }
+    new_dims.d[0] = shuffler_input_->getDimensions().d[0];
+    shuffle_layer->setReshapeDimensions(new_dims);
+  } else {
+    MS_LOG(ERROR) << "broadcast needs check for " << op_name_;
+  }
+  shuffler_output_ = shuffle_layer->getOutput(0);
+  return shuffler_output_ == nullptr ? RET_ERROR : RET_OK;
+}
+
 nvinfer1::ITensor *ShuffleTensorRT::ExpandDim(nvinfer1::IShuffleLayer *shuffle_layer, nvinfer1::ITensor *input_tensor,
                                               int axis) {
   auto input_dims = input_tensor->getDimensions();
@@ -408,4 +433,5 @@ REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Reshape, ShuffleTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Transpose, ShuffleTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Flatten, ShuffleTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ExpandDims, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_BroadcastTo, ShuffleTensorRT)
 }  // namespace mindspore::lite

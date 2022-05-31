@@ -74,6 +74,7 @@ Status TensorRTDelegate::Init() {
     MS_LOG(ERROR) << "TensorRTRuntime init failed.";
     return mindspore::kLiteError;
   }
+  runtime_->SetDeviceID(device_info_->GetDeviceID());
 
   auto cuda_ret = cudaStreamCreate(&stream_);
   if (cuda_ret != cudaSuccess) {

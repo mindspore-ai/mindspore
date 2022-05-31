@@ -45,20 +45,15 @@ int ScaleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
 int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   CHECK_NULL_RETURN(network);
   auto scale_op = op_primitive_->value_as_ScaleFusion();
-  if (scale_op == nullptr) {
-    MS_LOG(ERROR) << "convert failed";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(scale_op);
 
   schema::ActivationType activation_type = scale_op->activation_type();
   // mode of scale
   axis_ = scale_op->axis();
-  if (axis_ == -1) {
-    axis_ = static_cast<int64_t>(in_tensors_[0].Shape().size() - 1);
-  }
-  mode_ = GetScaleMode(axis_);
+  axis_ = axis_ < 0 ? static_cast<int64_t>(in_tensors_[0].Shape().size() + axis_) : axis_;
   out_format_ = tensorrt_in_tensors_[0].format_;
   out_same_format_ = tensorrt_in_tensors_[0].same_format_;
+  mode_ = GetScaleMode(axis_);
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
 
   nvinfer1::ITensor *scale_in_tensor = PreProcessInputTensor(network);
@@ -69,61 +64,23 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(scale_in_tensor, out_format_, out_same_format_);
 
-  bool nd = false;
-  // (input * scale + shift) ^ power
-  nvinfer1::Weights power{nvinfer1::DataType::kFLOAT, nullptr, 0};
-  nvinfer1::Weights shift{nvinfer1::DataType::kFLOAT, nullptr, 0};
-  nvinfer1::Weights scale{nvinfer1::DataType::kFLOAT, nullptr, 0};
-  if (in_tensors_.size() > SCALE_INDEX) {
-    scale.values = in_tensors_[SCALE_INDEX].MutableData();
-    MS_ASSERT(scale.values);
-    scale.count = in_tensors_[SCALE_INDEX].ElementNum();
-    scale.type = ConvertDataType(in_tensors_[SCALE_INDEX].DataType());
-    shift.type = scale.type;
-    power.type = scale.type;
-    nd = in_tensors_[1].Shape().size() == 1 ? false : true;
-  }
-  if (in_tensors_.size() > SHIFT_INDEX) {
-    shift.values = in_tensors_[SHIFT_INDEX].MutableData();
-    MS_ASSERT(shift.values);
-    shift.count = in_tensors_[SHIFT_INDEX].ElementNum();
-  }
-  if (in_tensors_.size() > POWER_INDEX) {
-    power.values = in_tensors_[POWER_INDEX].MutableData();
-    MS_ASSERT(power.values);
-    power.count = in_tensors_[POWER_INDEX].ElementNum();
-  }
-  nvinfer1::IScaleLayer *cal_layer = nullptr;
-
-  if (nd) {
-    MS_LOG(WARNING) << "multi dims ScaleMode enter";
-    cal_layer = network->addScaleNd(*scale_in_tensor, mode_, shift, scale, power, axis_);
+  nvinfer1::ITensor *op_out_tensor{nullptr};
+  if (scale_in_tensor->getDimensions().nbDims == DIMENSION_4D) {
+    op_out_tensor = RunAs4DimsScale(network, scale_in_tensor);
   } else {
-    cal_layer = network->addScale(*scale_in_tensor, mode_, shift, scale, power);
+    op_out_tensor = RunAsMutiDimsScale(network, scale_in_tensor);
   }
-
-  if (cal_layer == nullptr) {
-    MS_LOG(ERROR) << "addScaleNd failed for: " << op_name_;
-    return RET_ERROR;
-  }
-  cal_layer->setName(op_name_.c_str());
-  this->layer_ = cal_layer;
+  CHECK_NULL_RETURN(op_out_tensor);
 
   // add activation
-  nvinfer1::ITensor *activation_tensor = cal_layer->getOutput(0);
   if (activation_type != schema::ActivationType::ActivationType_NO_ACTIVATION) {
     auto activation_layer =
-      ActivationTensorRT::AddActivation(network, activation_type, 0, 0, 0, cal_layer->getOutput(0));
+      ActivationTensorRT::AddActivation(network, activation_type, 0, 0, 0, op_out_tensor, device_id_);
     CHECK_NULL_RETURN(activation_layer);
     activation_layer->setName((op_name_ + "_activation").c_str());
-    activation_tensor = activation_layer->getOutput(0);
+    op_out_tensor = activation_layer->getOutput(0);
   }
 
-  // squeeze to origin dim
-  nvinfer1::ITensor *op_out_tensor = activation_tensor;
-  if (activation_tensor->getDimensions().nbDims > static_cast<int>(out_tensors_[0].Shape().size())) {
-    op_out_tensor = AddSqueezeOp(activation_tensor, network);
-  }
   op_out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{op_out_tensor, out_format_, out_same_format_});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
@@ -132,15 +89,8 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
 nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *scale_in_tensor = tensorrt_in_tensors_[0].trt_tensor_;
-  if (in_tensors_[0].Shape().size() < DIMENSION_4D) {
-    // unsqueeze input Itensor to 4 dims
-    scale_in_tensor = AddUnsqueezeOp(network);
-    if (scale_in_tensor == nullptr) {
-      MS_LOG(ERROR) << "AddUnsqueezeOp failed";
-      return nullptr;
-    }
-  } else if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-             mode_ == nvinfer1::ScaleMode::kCHANNEL) {
+  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      mode_ == nvinfer1::ScaleMode::kCHANNEL) {
     // per channel input format should be nchw, otherwise should be same with scale nhwc
     // transpose: NHWC->NCHW
     if ((tensorrt_in_tensors_[0].format_ == Format::NHWC && axis_ == kNHWC_C) ||
@@ -195,33 +145,86 @@ nvinfer1::ScaleMode ScaleTensorRT::GetScaleMode(int64_t axis) {
   return mode;
 }
 
-nvinfer1::ITensor *ScaleTensorRT::AddUnsqueezeOp(nvinfer1::INetworkDefinition *network) {
-  auto unsqueeze_shape = ConvertMSShape(tensorrt_in_tensors_[0].trt_tensor_->getDimensions());
-  size_t unsqueeze_size = DIMENSION_4D - unsqueeze_shape.size();
-  for (size_t i = 0; i < unsqueeze_size; i++) {
-    unsqueeze_shape.push_back(1);
+nvinfer1::ITensor *ScaleTensorRT::RunAs4DimsScale(nvinfer1::INetworkDefinition *network,
+                                                  nvinfer1::ITensor *scale_in_tensor) {
+  bool nd = false;
+  // (input * scale + shift) ^ power
+  nvinfer1::Weights power{nvinfer1::DataType::kFLOAT, nullptr, 0};
+  nvinfer1::Weights shift{nvinfer1::DataType::kFLOAT, nullptr, 0};
+  nvinfer1::Weights scale{nvinfer1::DataType::kFLOAT, nullptr, 0};
+  if (in_tensors_.size() > SCALE_INDEX) {
+    scale.values = in_tensors_[SCALE_INDEX].MutableData();
+    MS_ASSERT(scale.values);
+    scale.count = in_tensors_[SCALE_INDEX].ElementNum();
+    scale.type = ConvertDataType(in_tensors_[SCALE_INDEX].DataType());
+    shift.type = scale.type;
+    power.type = scale.type;
+    nd = in_tensors_[1].Shape().size() == 1 ? false : true;
   }
-  for (size_t i = 0; i < unsqueeze_shape.size(); i++) {
-    if (unsqueeze_shape[i] == -1) {
-      unsqueeze_shape[i] = 0;
-    }
+  if (in_tensors_.size() > SHIFT_INDEX) {
+    shift.values = in_tensors_[SHIFT_INDEX].MutableData();
+    MS_ASSERT(shift.values);
+    shift.count = in_tensors_[SHIFT_INDEX].ElementNum();
   }
-  nvinfer1::Dims unsqueeze_dims = lite::ConvertCudaDims(unsqueeze_shape);
-  if (unsqueeze_dims.nbDims == -1) {
-    MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
+  if (in_tensors_.size() > POWER_INDEX) {
+    power.values = in_tensors_[POWER_INDEX].MutableData();
+    MS_ASSERT(power.values);
+    power.count = in_tensors_[POWER_INDEX].ElementNum();
+  }
+  nvinfer1::IScaleLayer *cal_layer = nullptr;
+
+  if (nd) {
+    MS_LOG(WARNING) << "multi dims ScaleMode enter";
+    cal_layer = network->addScaleNd(*scale_in_tensor, mode_, shift, scale, power, axis_);
+  } else {
+    cal_layer = network->addScale(*scale_in_tensor, mode_, shift, scale, power);
+  }
+
+  if (cal_layer == nullptr) {
+    MS_LOG(ERROR) << "addScaleNd failed for: " << op_name_;
     return nullptr;
   }
-  return Reshape(network, tensorrt_in_tensors_[0].trt_tensor_, unsqueeze_shape);
+  cal_layer->setName(op_name_.c_str());
+  this->layer_ = cal_layer;
+  return cal_layer->getOutput(0);
 }
 
-nvinfer1::ITensor *ScaleTensorRT::AddSqueezeOp(nvinfer1::ITensor *in_tensor, nvinfer1::INetworkDefinition *network) {
-  nvinfer1::Dims squeeze_dims;
-  squeeze_dims.nbDims = out_tensors_[0].Shape().size();
-  for (int i = 0; i < squeeze_dims.nbDims; i++) {
-    squeeze_dims.d[i] = in_tensor->getDimensions().d[i] == -1 ? 0 : in_tensor->getDimensions().d[i];
+nvinfer1::ITensor *ScaleTensorRT::RunAsMutiDimsScale(nvinfer1::INetworkDefinition *network,
+                                                     nvinfer1::ITensor *scale_in_tensor) {
+  auto scale_tensor = ConvertConstantTensorWithDims(network, in_tensors_[1], in_tensors_[0].Shape(), op_name_);
+  if (scale_tensor == nullptr) {
+    MS_LOG(ERROR) << "ConvertConstantTensorWithDims failed for " << op_name_;
+    return nullptr;
   }
-  MS_LOG(DEBUG) << "squeeze_dims cnt for scale: " << squeeze_dims.nbDims;
-  return Reshape(network, in_tensor, squeeze_dims);
+  auto mul_layer = network->addElementWise(*scale_in_tensor, *scale_tensor, nvinfer1::ElementWiseOperation::kPROD);
+  if (mul_layer == nullptr) {
+    MS_LOG(ERROR) << "add mul failed for " << op_name_;
+    return nullptr;
+  }
+  mul_layer->setName((op_name_ + "_scale").c_str());
+  layer_ = mul_layer;
+  nvinfer1::ITensor *out_tensor = mul_layer->getOutput(0);
+  // add shift
+  if (in_tensors_.size() >= INPUT_SIZE3) {
+    auto shift_tensor =
+      ConvertConstantTensorWithDims(network, in_tensors_[SHIFT_INDEX], in_tensors_[0].Shape(), op_name_);
+    if (shift_tensor == nullptr) {
+      MS_LOG(ERROR) << "ConvertConstantTensorWithDims failed for " << op_name_;
+      return nullptr;
+    }
+    auto shift_layer = network->addElementWise(*out_tensor, *shift_tensor, nvinfer1::ElementWiseOperation::kSUM);
+    if (shift_layer == nullptr) {
+      MS_LOG(ERROR) << "add bias failed for " << op_name_;
+      return nullptr;
+    }
+    shift_layer->setName((op_name_ + "_shift").c_str());
+    out_tensor = shift_layer->getOutput(0);
+  }
+  if (in_tensors_.size() == INPUT_SIZE4) {
+    MS_LOG(WARNING) << op_name_ << " has power";
+    return nullptr;
+  }
+  return out_tensor;
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ScaleFusion, ScaleTensorRT)
 }  // namespace mindspore::lite

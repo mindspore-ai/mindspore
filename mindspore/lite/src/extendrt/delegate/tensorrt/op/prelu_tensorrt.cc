@@ -49,7 +49,7 @@ int PReluTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   int slope_nbdims = in_tensors_[1].Shape().size();
   auto slope = tensorrt_in_tensors_[1].trt_tensor_;
   if (input_nbdims != slope_nbdims) {
-    slope = ConvertTensorWithExpandDims(network, in_tensors_[1], input_nbdims, op_name_ + "_slope");
+    slope = ConvertTensorWithExpandDims(network, in_tensors_[1], in_tensors_[0].Shape(), op_name_ + "_slope");
     tensorrt_in_tensors_[1].trt_tensor_ = slope;
   }
   if (slope == nullptr) {

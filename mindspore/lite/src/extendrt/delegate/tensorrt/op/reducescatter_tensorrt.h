@@ -43,8 +43,8 @@ class ReduceScatterTensorRT : public TensorRTOp {
 
 class ReduceScatterPlugin : public TensorRTPlugin {
  public:
-  ReduceScatterPlugin(const std::string name, schema::ReduceMode red_mode, int rank)
-      : TensorRTPlugin(name, std::string(REDUCESCATTER_PLUGIN_NAME)), red_mode_(red_mode), rank_(rank) {}
+  ReduceScatterPlugin(const std::string name, schema::ReduceMode red_mode, int rank, uint32_t device_id)
+      : TensorRTPlugin(name, std::string(REDUCESCATTER_PLUGIN_NAME), device_id), red_mode_(red_mode), rank_(rank) {}
 
   ReduceScatterPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(REDUCESCATTER_PLUGIN_NAME)) {

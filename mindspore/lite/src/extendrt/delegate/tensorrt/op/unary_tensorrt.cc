@@ -51,6 +51,17 @@ int UnaryTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   cal_layer->setName(op_name_.c_str());
   this->layer_ = cal_layer;
+  if (type_ == schema::PrimitiveType_ExpFusion) {
+    auto exp_op = op_primitive_->value_as_ExpFusion();
+    CHECK_NULL_RETURN(exp_op);
+    float scale = exp_op->scale();
+    float shift = exp_op->shift();
+    float base = exp_op->base();
+    if (scale != 1.0f || shift != 0.0f || base != -1.0f) {
+      MS_LOG(ERROR) << op_name_ << " has fusion to calculate.";
+      return RET_ERROR;
+    }
+  }
 
   nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);
   op_out_tensor->setName((op_name_ + "_output").c_str());
@@ -66,6 +77,7 @@ REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Sin, UnaryTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Cos, UnaryTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Ceil, UnaryTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Floor, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ExpFusion, UnaryTensorRT)
 #if TRT_VERSION_GE(7, 2)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalNot, UnaryTensorRT)
 #endif

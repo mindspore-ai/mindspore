@@ -78,11 +78,15 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
                                          const std::string &op_name);
 
 nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
-                                               const mindspore::MSTensor &ms_tensor, size_t expand_shape_size,
-                                               const std::string &op_name);
+                                               const mindspore::MSTensor &ms_tensor,
+                                               const std::vector<int64_t> &expect_shape, const std::string &op_name);
 
 nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value,
                                           const DataType data_type, const std::string &op_name);
+
+nvinfer1::ITensor *ConvertConstantTensorWithDims(nvinfer1::INetworkDefinition *network,
+                                                 const mindspore::MSTensor &ms_tensor,
+                                                 const std::vector<int64_t> &expect_shape, const std::string &op_name);
 
 nvinfer1::Weights TransposeWeight4D(const mindspore::MSTensor &ms_tensor, void **pack_weight);
 
@@ -130,6 +134,8 @@ nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITen
 nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
                            const nvinfer1::Dims &shape);
 
+int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *dst);
+
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {
   if (shape1.size() != shape2.size()) {
@@ -164,6 +170,13 @@ inline size_t IntToSize(int u) {
     return SIZE_MAX;
   }
   return static_cast<size_t>(u);
+}
+template <typename T>
+void Data2Vector(std::vector<float> *dst, const void *src) {
+  auto src_ptr = static_cast<const T *>(src);
+  for (int i = 0; i < dst->size(); i++) {
+    dst->at(i) = static_cast<float>(src_ptr[i]);
+  }
 }
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_UTILS_H_

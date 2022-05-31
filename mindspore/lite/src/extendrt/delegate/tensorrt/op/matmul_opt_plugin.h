@@ -25,8 +25,8 @@ namespace mindspore::lite {
 constexpr char *MATMUL_OPT_PLUGIN_NAME{"MatmulOptPlugin"};
 class MatmulOptPlugin : public TensorRTPlugin {
  public:
-  MatmulOptPlugin(const std::string name, bool a_trans, bool b_trans)
-      : TensorRTPlugin(name, std::string(MATMUL_OPT_PLUGIN_NAME)), a_trans_(a_trans), b_trans_(b_trans) {}
+  MatmulOptPlugin(const std::string name, bool a_trans, bool b_trans, uint32_t device_id)
+      : TensorRTPlugin(name, std::string(MATMUL_OPT_PLUGIN_NAME), device_id), a_trans_(a_trans), b_trans_(b_trans) {}
 
   MatmulOptPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(MATMUL_OPT_PLUGIN_NAME)) {

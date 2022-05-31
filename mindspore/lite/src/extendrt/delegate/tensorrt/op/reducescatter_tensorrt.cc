@@ -61,7 +61,7 @@ int ReduceScatterTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   auto reduce_mode = reduce_op->mode();
   auto rank = GetGPUGroupSize();
-  auto plugin = std::make_shared<ReduceScatterPlugin>(op_name_, reduce_mode, rank);
+  auto plugin = std::make_shared<ReduceScatterPlugin>(op_name_, reduce_mode, rank, device_id_);
   MS_LOG(INFO) << op_name_ << " group size: " << rank << ", rank id: " << GetRankID();
   nvinfer1::IPluginV2Layer *reduce_scatter_layer = network->addPluginV2(inputTensors, 1, *plugin);
   if (reduce_scatter_layer == nullptr) {

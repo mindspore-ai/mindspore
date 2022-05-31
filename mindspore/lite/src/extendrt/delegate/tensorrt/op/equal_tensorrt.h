@@ -40,7 +40,8 @@ class EqualTensorRT : public TensorRTOp {
 
 class EqualPlugin : public TensorRTPlugin {
  public:
-  explicit EqualPlugin(const std::string name) : TensorRTPlugin(name, std::string(EQUAL_PLUGIN_NAME)) {}
+  EqualPlugin(const std::string name, uint32_t device_id)
+      : TensorRTPlugin(name, std::string(EQUAL_PLUGIN_NAME), device_id) {}
 
   EqualPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(EQUAL_PLUGIN_NAME)) {}
