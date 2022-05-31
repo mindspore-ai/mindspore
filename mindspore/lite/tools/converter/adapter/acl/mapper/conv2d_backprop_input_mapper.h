@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ACL_MAPPER_PRIMITIVE_CONV2DBACKPRORINPUT_MAPPER_H
-#define ACL_MAPPER_PRIMITIVE_CONV2DBACKPRORINPUT_MAPPER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_CONV2D_BACKPROP_INPUT_MAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_CONV2D_BACKPROP_INPUT_MAPPER_H_
 
 #include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
 #include "tools/converter/adapter/acl/mapper/conv_base_mapper.h"
@@ -37,4 +37,4 @@ class Conv2DBackpropInputMapper : public ConvBaseMapper {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // ACL_MAPPER_PRIMITIVE_CONV2DBACKPRORINPUT_MAPPER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_CONV2D_BACKPROP_INPUT_MAPPER_H_

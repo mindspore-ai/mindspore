@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_COMMON_DATA_TRANSPOSE_UTILS_H
-#define DPICO_COMMON_DATA_TRANSPOSE_UTILS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_DATA_TRANSPOSE_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_DATA_TRANSPOSE_UTILS_H_
 
 #include <vector>
 #include "mindapi/base/format.h"
@@ -85,4 +85,4 @@ STATUS TransFilterFormat(const mindspore::api::TensorPtr &tensor, mindspore::For
 void TransposeMatrix(float *matrix, int row, int col);
 }  // namespace dpico
 }  // namespace mindspore
-#endif  // DPICO_COMMON_DATA_TRANSPOSE_UTILS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_DATA_TRANSPOSE_UTILS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_LITE_MODEL_PARSER_CREATOR_H_
-#define MINDSPORE_LITE_TOOLS_LITE_MODEL_PARSER_CREATOR_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_LITE_MODEL_PARSER_CREATOR_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_LITE_MODEL_PARSER_CREATOR_H_
 
 #include "include/registry/model_parser.h"
 #include "ir/anf.h"
@@ -33,4 +33,4 @@ converter::ModelParser *LiteModelParserCreator() {
   return parser;
 }
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_LITE_MODEL_PARSER_CREATOR_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_LITE_MODEL_PARSER_CREATOR_H_

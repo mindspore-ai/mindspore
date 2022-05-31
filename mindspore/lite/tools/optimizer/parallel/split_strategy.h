@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
-#define MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_SPLIT_STRATEGY_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_SPLIT_STRATEGY_H_
 #include <vector>
 #include <string>
 #include <set>
@@ -109,4 +109,4 @@ std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy(
 
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PASS_PARALLEL_SPLIT_STRATEGY_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_SPLIT_STRATEGY_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CUSTOM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CUSTOM_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_SRC_CUSTOM_FP32_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_SRC_CUSTOM_FP32_H_
 
 #include <vector>
 #include <string>
@@ -69,4 +69,4 @@ class CustomCPUKernel : public Kernel {
 };
 }  // namespace nnie
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CUSTOM_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_NNIE_SRC_CUSTOM_FP32_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_LRU_CACHE_ALGORITHM_H_
-#define MINDSPORE_LITE_LRU_CACHE_ALGORITHM_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_CACHE_ALGORITHM_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_CACHE_ALGORITHM_H_
 
 #include <vector>
 #include "include/api/status.h"
@@ -40,4 +40,4 @@ class CacheAlgorithm {
 };
 }  // namespace cache
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_LRU_CACHE_ALGORITHM_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_CACHE_ALGORITHM_H_

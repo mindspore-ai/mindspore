@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_OPS_MS_OPS_UTILS_H_
-#define MINDSPORE_LITE_SRC_OPS_MS_OPS_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_OPS_OPS_UTILS_H_
+#define MINDSPORE_LITE_SRC_COMMON_OPS_OPS_UTILS_H_
 
 #include <map>
 #include <string>
@@ -70,4 +70,4 @@ class RegistryMSOps {
 }  // namespace mindspore
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_OPS_MS_OPS_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_OPS_OPS_UTILS_H_

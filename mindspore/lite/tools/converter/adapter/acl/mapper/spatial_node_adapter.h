@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ACL_MAPPER_SPATIAL_NODE_ADAPTER_PASS_H
-#define ACL_MAPPER_SPATIAL_NODE_ADAPTER_PASS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_SPATIAL_NODE_ADAPTER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_SPATIAL_NODE_ADAPTER_H_
 
 #include "ir/func_graph.h"
 #include "include/errorcode.h"
@@ -26,4 +26,4 @@ STATUS AdapteSpatialNode(const FuncGraphPtr &func_graph, const FuncGraphManagerP
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // ACL_MAPPER_SPATIAL_NODE_ADAPTER_PASS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_SPATIAL_NODE_ADAPTER_H_

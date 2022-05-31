@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ACL_MAPPER_PRIMITIVE_MAPPER_REGISTER_H
-#define ACL_MAPPER_PRIMITIVE_MAPPER_REGISTER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_PRIMITIVE_MAPPER_REGISTER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_PRIMITIVE_MAPPER_REGISTER_H_
 
 #include <map>
 #include <memory>
@@ -51,4 +51,4 @@ class RegisterPrimitiveMapper {
   static RegisterPrimitiveMapper g_##name##PrimMapper(name, std::make_shared<mapper>());
 }  // namespace lite
 }  // namespace mindspore
-#endif  // ACL_MAPPER_PRIMITIVE_MAPPER_REGISTER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_PRIMITIVE_MAPPER_REGISTER_H_

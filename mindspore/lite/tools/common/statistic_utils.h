@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_STATISTIC_UTILS_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_STATISTIC_UTILS_H_
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_STATISTIC_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_STATISTIC_UTILS_H_
 
 #include <vector>
 #include <algorithm>
@@ -203,4 +203,4 @@ float KLDivergence(std::vector<T> p, std::vector<T> q) {
   return result;
 }
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_STATISTIC_UTILS_H_
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_STATISTIC_UTILS_H_

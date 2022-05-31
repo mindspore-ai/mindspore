@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_CXXAPI_MULTI_PROCESS_H
-#define MINDSPORE_CCSRC_CXXAPI_MULTI_PROCESS_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_CONVERTER_UTILS_MULTI_PROCESS_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_CONVERTER_UTILS_MULTI_PROCESS_H_
 #include <iostream>
 #include <functional>
 #include "include/api/status.h"
@@ -60,4 +60,4 @@ class MultiProcess {
   void ChildProcess(const ProcessFuncCall &child_process);
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXXAPI_MULTI_PROCESS_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_CONVERTER_UTILS_MULTI_PROCESS_H_

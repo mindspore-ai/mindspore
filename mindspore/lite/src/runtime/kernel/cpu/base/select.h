@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SELECT_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SELECT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_SELECT_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_SELECT_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -33,4 +33,4 @@ class SelectCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SELECT_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_SELECT_H_

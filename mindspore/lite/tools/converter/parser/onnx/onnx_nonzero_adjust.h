@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_ONNX_NONZERO_ADJUST_H
-#define LITE_ONNX_NONZERO_ADJUST_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_NONZERO_ADJUST_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_NONZERO_ADJUST_H_
 #include "backend/common/optimizer/pass.h"
 #include "backend/common/optimizer/optimizer.h"
 
@@ -26,4 +26,4 @@ class OnnxNonZeroAdjust {
 };
 }  // namespace mindspore::lite
 
-#endif  // LITE_ONNX_NONZERO_ADJUST_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_NONZERO_ADJUST_H_

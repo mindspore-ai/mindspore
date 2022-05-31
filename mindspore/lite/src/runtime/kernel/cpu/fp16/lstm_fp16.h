@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LSTM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LSTM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_LSTM_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_LSTM_FP16_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -64,4 +64,4 @@ class LstmFp16CPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LSTM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_LSTM_FP16_H_

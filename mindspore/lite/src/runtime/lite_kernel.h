@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_LITE_KERNEL_H_
-#define MINDSPORE_LITE_SRC_LITE_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_LITE_KERNEL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_LITE_KERNEL_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -209,4 +209,4 @@ class LiteKernel : public Abstractkernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_LITE_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_LITE_KERNEL_H_

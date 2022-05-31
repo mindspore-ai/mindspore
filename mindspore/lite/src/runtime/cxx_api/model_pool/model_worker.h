@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_WORKER_H_
-#define MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_WORKER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_WORKER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_WORKER_H_
 #include <queue>
 #include <string>
 #include <mutex>
@@ -82,4 +82,4 @@ class ModelWorker {
   std::mutex create_work_done_mutex_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_WORKER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_WORKER_H_

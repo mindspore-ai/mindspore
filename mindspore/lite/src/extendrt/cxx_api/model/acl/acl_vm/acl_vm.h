@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXX_API_ACL_VM_ACL_VM_H
-#define MINDSPORE_CCSRC_CXX_API_ACL_VM_ACL_VM_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_ACL_VM_ACL_VM_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_ACL_VM_ACL_VM_H_
 
 #include <vector>
 #include <memory>
@@ -59,4 +59,4 @@ class AclCompileGraphs : public compile::CompileGraphs {
   ~AclCompileGraphs() override = default;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXX_API_ACL_VM_ACL_VM_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_ACL_VM_ACL_VM_H_

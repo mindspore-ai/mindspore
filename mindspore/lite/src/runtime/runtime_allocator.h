@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_OPTIMIZE_ALLOCATOR_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_OPTIMIZE_ALLOCATOR_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_ALLOCATOR_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_ALLOCATOR_H_
 
 #include <memory>
 #include <map>
@@ -60,4 +60,4 @@ class RuntimeAllocator : public Allocator {
 using RuntimeAllocatorPtr = std::shared_ptr<RuntimeAllocator>;
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_OPTIMIZE_ALLOCATOR_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_ALLOCATOR_H_

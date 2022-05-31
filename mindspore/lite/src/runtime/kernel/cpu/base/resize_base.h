@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_RESIZE_BASE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_RESIZE_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_RESIZE_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_RESIZE_BASE_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -49,4 +49,4 @@ class ResizeBaseCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_RESIZE_BASE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_RESIZE_BASE_H_

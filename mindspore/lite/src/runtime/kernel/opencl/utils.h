@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_UTILS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_UTILS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_UTILS_H_
 
 #include <string>
 #include <vector>
@@ -105,4 +105,4 @@ std::vector<T> MatrixMultiply(const T A[], const T B[], int M, int N, int K) {
 
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_UTILS_H_

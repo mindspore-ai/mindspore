@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_MAPPER_OP_MAPPER_REGISTRY_H_
-#define DPICO_MAPPER_OP_MAPPER_REGISTRY_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_OP_MAPPER_REGISTRY_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_OP_MAPPER_REGISTRY_H_
 
 #include <vector>
 #include <string>
@@ -50,4 +50,4 @@ class OpMapperRegistrar {
   static OpMapperRegistrar g_##primitive_type##MapperReg(#primitive_type, std::make_shared<mapper>());
 }  // namespace dpico
 }  // namespace mindspore
-#endif  // DPICO_MAPPER_OP_MAPPER_REGISTRY_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_OP_MAPPER_REGISTRY_H_

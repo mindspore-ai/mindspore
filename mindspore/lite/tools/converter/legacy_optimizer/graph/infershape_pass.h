@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_PREDICT_INFERSHAPE_PASS_H
-#define MINDSPORE_PREDICT_INFERSHAPE_PASS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAPH_INFERSHAPE_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAPH_INFERSHAPE_PASS_H_
 
 #include <unordered_map>
 #include <memory>
@@ -65,4 +65,4 @@ class InferShapePass : public GraphPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_PREDICT_INFERSHAPE_PASS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAPH_INFERSHAPE_PASS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_CODER_TRAIN_H_
-#define MINDSPORE_LITE_MICRO_CODER_CODER_TRAIN_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_TRAIN_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_TRAIN_H_
 
 #include <memory>
 #include <vector>
@@ -29,4 +29,4 @@ class Train {
                                     int schema_version);
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_CODER_TRAIN_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_TRAIN_H_

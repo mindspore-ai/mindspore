@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_POOLING_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_POOLING_INT8_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_POOLING_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_POOLING_INT8_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -40,4 +40,4 @@ class PoolingInt8CPUKernel : public PoolingBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_POOLING_INT8_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_POOLING_INT8_H_

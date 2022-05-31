@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_OPS_POPULATE_DEFAULT_POPULATE_H_
-#define MINDSPORE_LITE_SRC_OPS_POPULATE_DEFAULT_POPULATE_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_DEFAULT_POPULATE_H_
+#define MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_DEFAULT_POPULATE_H_
 
 #include "nnacl/op_base.h"
 
@@ -23,4 +23,4 @@ namespace lite {
 OpParameter *DefaultPopulateParameter(const void *prim);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_OPS_POPULATE_DEFAULT_POPULATE_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_DEFAULT_POPULATE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_NPU_OP_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_NPU_OP_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_NPU_OP_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_NPU_OP_H_
 #include <utility>
 #include <vector>
 #include <string>
@@ -165,4 +165,4 @@ NPUOp *GetNPUOp(const schema::Primitive *primitive, const std::vector<mindspore:
   return op;
 }
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_NPU_OP_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_NPU_OP_H_

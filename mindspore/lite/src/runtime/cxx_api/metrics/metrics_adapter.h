@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_METRICS_METRICS_ADAPTER_H_
-#define MINDSPORE_LITE_SRC_CXX_API_METRICS_METRICS_ADAPTER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_METRICS_METRICS_ADAPTER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_METRICS_METRICS_ADAPTER_H_
 
 #include <vector>
 #include "include/train/metrics.h"
@@ -39,4 +39,4 @@ class MetricsAdapter : public session::Metrics {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_METRICS_METRICS_ADAPTER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_METRICS_METRICS_ADAPTER_H_

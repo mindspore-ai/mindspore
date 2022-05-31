@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TOOLS_CONVERTER_ADAPTER_ACL_COMMON_ACL_TYPES_H
-#define TOOLS_CONVERTER_ADAPTER_ACL_COMMON_ACL_TYPES_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_COMMON_ACL_TYPES_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_COMMON_ACL_TYPES_H_
 
 #include <string>
 #include <vector>
@@ -47,4 +47,4 @@ constexpr auto kOutputShapes = "outputs_shape";
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // TOOLS_CONVERTER_ADAPTER_ACL_COMMON_ACL_TYPES_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_COMMON_ACL_TYPES_H_

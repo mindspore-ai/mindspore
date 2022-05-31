@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_AUTO_REGISTRASTION_FACTORY
-#define MINDSPORE_LITE_SRC_DELEGATE_AUTO_REGISTRASTION_FACTORY
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_AUTO_REGISTRATION_FACTORY_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_AUTO_REGISTRATION_FACTORY_H_
 
 #include <unordered_map>
 
@@ -54,4 +54,4 @@ class AutoRegistrationFactory {
   static AutoRegistrationFactory<KeyType, CreatorType>::AutoRegister AUTO_REGISTRATION_FACTORY_UNIQUE_NAME(k, creator);
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_AUTO_REGISTRASTION_FACTORY
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_AUTO_REGISTRATION_FACTORY_H_

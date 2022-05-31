@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_TEST_UT_TOOLS_CONVERTER_REGISTRY_NODE_PARSER_TEST_H
-#define LITE_TEST_UT_TOOLS_CONVERTER_REGISTRY_NODE_PARSER_TEST_H
+#ifndef MINDSPORE_LITE_TEST_UT_TOOLS_CONVERTER_REGISTRY_PARSER_NODE_PARSER_TEST_H_
+#define MINDSPORE_LITE_TEST_UT_TOOLS_CONVERTER_REGISTRY_PARSER_NODE_PARSER_TEST_H_
 
 #include <memory>
 #include <string>
@@ -69,4 +69,4 @@ class RegisterNodeParserTest {
 #define REGISTER_NODE_PARSER_TEST(name, node_parser) \
   static RegisterNodeParserTest g_##name##_node_parser(name, node_parser);
 }  // namespace mindspore
-#endif  // LITE_TEST_UT_TOOLS_CONVERTER_REGISTRY_NODE_PARSER_TEST_H
+#endif  // MINDSPORE_LITE_TEST_UT_TOOLS_CONVERTER_REGISTRY_PARSER_NODE_PARSER_TEST_H_

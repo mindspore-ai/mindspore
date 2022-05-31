@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_UTIL_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_UTIL_H_
 
 #include <string>
 #include <string_view>
@@ -44,4 +44,4 @@ class TensorFlowUtils {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_UTIL_H_

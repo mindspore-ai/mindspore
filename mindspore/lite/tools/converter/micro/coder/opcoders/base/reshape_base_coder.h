@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_RESHAPE_BASE_CODER_H
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_RESHAPE_BASE_CODER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_BASE_RESHAPE_BASE_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_BASE_RESHAPE_BASE_CODER_H_
 
 #include <vector>
 #include "coder/opcoders/op_coder.h"
@@ -34,4 +34,4 @@ class ReshapeBaseCoder final : public OperatorCoder {
   int DoCode(CoderContext *const context) override;
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_RESHAPE_BASE_CODER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_BASE_RESHAPE_BASE_CODER_H_

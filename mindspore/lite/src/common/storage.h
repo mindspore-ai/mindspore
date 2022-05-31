@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_COMMON_STORAGE_H
-#define MINDSPORE_LITE_SRC_COMMON_STORAGE_H
+#ifndef MINDSPORE_LITE_SRC_COMMON_STORAGE_H_
+#define MINDSPORE_LITE_SRC_COMMON_STORAGE_H_
 
 #include <fstream>
 #include <string>

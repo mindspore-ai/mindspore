@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_MEMORY_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_MEMORY_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_MEMORY_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_MEMORY_H_
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -47,4 +47,4 @@ HI_S32 NnieMemFlushCache(HI_U64 phy_addr, HI_VOID *pv_vir_addr, HI_U32 size);
 HI_S32 NnieGetVirMemInfo(HI_U64 pv_vir_addr, HI_U64 *phy_addr);
 }  // namespace nnie
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_MEMORY_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_MEMORY_H_

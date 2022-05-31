@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GRU_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GRU_FP16_H_
 #include <vector>
 #include "src/runtime/lite_kernel.h"
 #include "nnacl/gru_parameter.h"
@@ -60,4 +60,4 @@ class GruFp16CPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GRU_FP16_H_

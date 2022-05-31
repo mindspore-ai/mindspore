@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_AFFINE_FUSION_H_
-#define MINDSPORE_LITE_SRC_PASS_FUSION_AFFINE_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_AFFINE_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_AFFINE_FUSION_H_
 
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
@@ -35,4 +35,4 @@ class AffineFusion : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_AFFINE_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_AFFINE_FUSION_H_

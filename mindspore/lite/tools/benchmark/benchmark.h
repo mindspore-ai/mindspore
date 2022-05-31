@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINNIE_BENCHMARK_BENCHMARK_H_
-#define MINNIE_BENCHMARK_BENCHMARK_H_
+#ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_BENCHMARK_H_
+#define MINDSPORE_LITE_TOOLS_BENCHMARK_BENCHMARK_H_
 
 #include <signal.h>
 #include <random>
@@ -110,4 +110,4 @@ class MS_API Benchmark : public BenchmarkBase {
 };
 
 }  // namespace mindspore::lite
-#endif  // MINNIE_BENCHMARK_BENCHMARK_H_
+#endif  // MINDSPORE_LITE_TOOLS_BENCHMARK_BENCHMARK_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_SWITCH_LAYER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_SWITCH_LAYER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_CONTROL_SWITCH_LAYER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_CONTROL_SWITCH_LAYER_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -32,4 +32,4 @@ class SwitchLayerCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONTROL_SWITCH_LAYER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_CONTROL_SWITCH_LAYER_H_

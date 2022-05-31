@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_OPS_OPS_FUNC_DECLARE_H_
-#define MINDSPORE_LITE_SRC_OPS_OPS_FUNC_DECLARE_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_OPS_OPS_FUNC_DECLARE_H_
+#define MINDSPORE_LITE_SRC_COMMON_OPS_OPS_FUNC_DECLARE_H_
 
 #ifdef PRIMITIVE_WRITEABLE
 #include <memory>
@@ -490,4 +490,4 @@ FUNC_MSOP2SCHEMAOP_DECLARE(GroupNormFusion)
 #else
 #define FUNC_MSOP2SCHEMAOP_DECLARE(OP)
 #endif
-#endif  // MINDSPORE_LITE_SRC_OPS_OPS_FUNC_DECLARE_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_OPS_OPS_FUNC_DECLARE_H_

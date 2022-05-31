@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_PARSER_CAFFE_DEPTHWISE_CONV_PARSER_H_
-#define DPICO_PARSER_CAFFE_DEPTHWISE_CONV_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_PARSER_CAFFE_CAFFE_DEPTHWISE_CONV_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_PARSER_CAFFE_CAFFE_DEPTHWISE_CONV_PARSER_H_
 
 #include <vector>
 #include "parser/caffe/caffe_convolution_parser.h"
@@ -32,4 +32,4 @@ class CaffeDepthwiseConvolutionParser : public CaffeConvolutionParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // DPICO_PARSER_CAFFE_DEPTHWISE_CONV_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_PARSER_CAFFE_CAFFE_DEPTHWISE_CONV_PARSER_H_

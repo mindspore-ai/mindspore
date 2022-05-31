@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SPLIT_BASE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SPLIT_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_SPLIT_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_SPLIT_BASE_H_
 
 #include <vector>
 #include "include/errorcode.h"
@@ -53,4 +53,4 @@ class SplitBaseCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SPLIT_BASE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_SPLIT_BASE_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOL_CONVERTER_CXX_API_CONVERTER_PARA_H_
-#define MINDSPORE_LITE_TOOL_CONVERTER_CXX_API_CONVERTER_PARA_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CXX_API_CONVERTER_PARA_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_CXX_API_CONVERTER_PARA_H_
 
 #include <map>
 #include <string>
@@ -67,4 +67,4 @@ struct ConverterPara {
   ParallelSplitConfig parallel_split_config;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOL_CONVERTER_CXX_API_CONVERTER_PARA_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CXX_API_CONVERTER_PARA_H_

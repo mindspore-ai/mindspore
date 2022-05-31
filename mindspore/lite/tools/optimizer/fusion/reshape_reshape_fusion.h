@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_RESHAPE_RESHAPE_FUSION_H_
-#define MINDSPORE_LITE_SRC_PASS_FUSION_RESHAPE_RESHAPE_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_RESHAPE_RESHAPE_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_RESHAPE_RESHAPE_FUSION_H_
 
 #include <string>
 #include <memory>
@@ -38,4 +38,4 @@ class ReshapeReshapeFusion : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_RESHAPE_RESHAPE_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_RESHAPE_RESHAPE_FUSION_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_SRC_CUSTOM_ALLOCATOR_H_
-#define DPICO_SRC_CUSTOM_ALLOCATOR_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_DPICO_SRC_CUSTOM_ALLOCATOR_H_
+#define MINDSPORE_LITE_PROVIDERS_DPICO_SRC_CUSTOM_ALLOCATOR_H_
 
 #include <memory>
 #include <string>
@@ -73,4 +73,4 @@ constexpr int64_t MAX_MALLOC_SIZE = static_cast<size_t>(2000) * 1024 * 1024;
 constexpr int64_t MAX_THREAD_POOL_SIZE = static_cast<size_t>(3000) * 1024 * 1024;
 }  // namespace lite
 }  // namespace mindspore
-#endif  // DPICO_SRC_CUSTOM_ALLOCATOR_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_DPICO_SRC_CUSTOM_ALLOCATOR_H_

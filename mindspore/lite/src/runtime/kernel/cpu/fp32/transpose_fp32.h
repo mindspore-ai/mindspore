@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_ARM_FP32_TRANSPOSE_FP32_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_ARM_FP32_TRANSPOSE_FP32_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_TRANSPOSE_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_TRANSPOSE_FP32_H_
 
 #ifndef BFC_MEMORY
 #include <vector>
@@ -36,5 +36,5 @@ class TransposeCPUKernel : public TransposeBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_ARM_FP32_TRANSPOSE_FP32_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_TRANSPOSE_FP32_H_
 #endif

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_OPS_DEF_H_
-#define LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_OPS_DEF_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_OPS_OPS_DEF_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_OPS_OPS_DEF_H_
 #include "ops/primitive_c.h"
 using mindspore::ops::PrimitiveC;
 

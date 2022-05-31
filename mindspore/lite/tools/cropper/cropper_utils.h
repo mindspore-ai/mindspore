@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_UTILS_H
-#define MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_UTILS_H
+#ifndef MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_UTILS_H_
 #include <string>
 namespace mindspore {
 namespace lite {
@@ -25,4 +25,4 @@ int ValidFile(std::ifstream &in_file, const std::string &file_path);
 }  // namespace cropper
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_UTILS_H
+#endif  // MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_UTILS_H_

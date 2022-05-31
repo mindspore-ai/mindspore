@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXX_API_DLUTILS_H_
-#define MINDSPORE_CCSRC_CXX_API_DLUTILS_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_DLUTILS_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_DLUTILS_H_
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <dlfcn.h>
 #include <dirent.h>
@@ -98,4 +98,4 @@ inline void DLSoClose(void *handle) {
   } while (false)
 }  // namespace mindspore
 #endif
-#endif  // MINDSPORE_CCSRC_CXX_API_DLUTILS_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_DLUTILS_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_
-#define MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_
 #include <memory>
 #include <string>
 #include <map>
@@ -26,4 +26,4 @@ struct RunnerConfig::Data {
   std::map<std::string, std::map<std::string, std::string>> config_info;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_

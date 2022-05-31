@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_UTIL_H
-#define MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_UTILS_H_
 
 #include <vector>
 #include "inner/model_generated.h"
@@ -51,4 +51,4 @@ STATUS IsolateOneWayNode(schema::MetaGraphT *graphT, size_t nodeIdx, bool remove
 
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_UTILS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_ALLOCATOR_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_ALLOCATOR_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_INNER_ALLOCATOR_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_INNER_ALLOCATOR_H_
 
 #include <memory>
 #include <string>
@@ -73,4 +73,4 @@ constexpr int64_t MAX_THREAD_POOL_SIZE = static_cast<size_t>(3000) * 1024 * 1024
 
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_ALLOCATOR_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_INNER_ALLOCATOR_H_

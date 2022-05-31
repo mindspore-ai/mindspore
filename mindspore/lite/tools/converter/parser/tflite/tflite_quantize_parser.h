@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_QUANTIZE_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_QUANTIZE_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_TFLITE_QUANTIZE_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_TFLITE_QUANTIZE_PARSER_H_
 
 #include <vector>
 #include <memory>
@@ -37,4 +37,4 @@ class TfliteQuantizeParser : public TfliteNodeParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_QUANTIZE_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_TFLITE_QUANTIZE_PARSER_H_

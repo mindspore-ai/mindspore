@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_OPERATOR_INFO_H_
-#define MINDSPORE_LITE_SRC_PASS_PARALLEL_OPERATOR_INFO_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_OPERATOR_INFO_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_OPERATOR_INFO_H_
 
 #include <utility>
 #include <vector>
@@ -106,4 +106,4 @@ bool is_any_not_none(const std::vector<int64_t> &split);
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_PASS_PARALLEL_OPERATOR_INFO_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_OPERATOR_INFO_H_

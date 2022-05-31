@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_COMMON_INFER_UTIL_H_
-#define DPICO_COMMON_INFER_UTIL_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_INFER_UTIL_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_INFER_UTIL_H_
 
 #include <string>
 #include <vector>
@@ -32,4 +32,4 @@ int GetOmNetType(const schema::Primitive *primitive, OmNetType *om_net_type);
 }  // namespace dpico
 }  // namespace mindspore
 
-#endif  // DPICO_COMMON_INFER_UTIL_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_INFER_UTIL_H_

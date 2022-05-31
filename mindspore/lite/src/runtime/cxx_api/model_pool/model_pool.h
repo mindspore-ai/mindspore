@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_
-#define MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_
 #include <vector>
 #include <unordered_map>
 #include <memory>
@@ -104,4 +104,4 @@ class ModelPool {
   std::set<size_t> free_tasks_id_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_

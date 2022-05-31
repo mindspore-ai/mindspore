@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SUBGTAPH_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SUBGTAPH_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_
 #include <utility>
 #include <set>
 #include <map>
@@ -150,4 +150,4 @@ class TensorRTSubGraph : public kernel::Kernel {
   cudaStream_t stream_{nullptr};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SUBGTAPH_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_SUBGRAPH_H_

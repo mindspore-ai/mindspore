@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_COMMON_H_
-#define MINDSPORE_LITE_MICRO_CODER_COMMON_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_COMMON_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_COMMON_H_
 
 namespace mindspore::lite::micro {
 constexpr int kLeftShift = 20;
@@ -33,4 +33,4 @@ constexpr int kNine = 9;
 constexpr int k64 = 64;
 constexpr int k1024 = 1024;
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_COMMON_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_COMMON_H_

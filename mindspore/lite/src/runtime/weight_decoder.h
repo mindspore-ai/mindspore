@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_WEIGHT_DECODER_H_
-#define MINDSPORE_LITE_SRC_WEIGHT_DECODER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_WEIGHT_DECODER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_WEIGHT_DECODER_H_
 
 #include <map>
 #include <utility>
@@ -369,4 +369,4 @@ class WeightDecoder {
 #endif
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_WEIGHT_DECODER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_WEIGHT_DECODER_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_REMOVE_PUBLIC_PRIMITIVE_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_REMOVE_PUBLIC_PRIMITIVE_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_REMOVE_PUBLIC_PRIMITIVE_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_REMOVE_PUBLIC_PRIMITIVE_H_
 
 #include "ir/func_graph.h"
 
@@ -31,4 +31,4 @@ class RemovePublicPrimitiveInterference {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_REMOVE_PUBLIC_PRIMITIVE_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_REMOVE_PUBLIC_PRIMITIVE_H_

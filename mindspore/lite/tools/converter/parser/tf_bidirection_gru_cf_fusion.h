@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TF_BIDIRECTION_GRU_CF_FUSION_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TF_BIDIRECTION_GRU_CF_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_BIDIRECTION_GRU_CF_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_BIDIRECTION_GRU_CF_FUSION_H_
 
 #include <vector>
 #include <memory>
@@ -48,4 +48,4 @@ class TfBidirectionGruCfFusion : public TfBidirectionGruFusion {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TF_BIDIRECTION_GRU_CF_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_BIDIRECTION_GRU_CF_FUSION_H_

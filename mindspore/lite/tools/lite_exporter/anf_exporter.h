@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_ANF_EXPORTER_ANF_EXPORTER_H_
-#define MINDSPORE_LITE_TOOLS_ANF_EXPORTER_ANF_EXPORTER_H_
+#ifndef MINDSPORE_LITE_TOOLS_LITE_EXPORTER_ANF_EXPORTER_H_
+#define MINDSPORE_LITE_TOOLS_LITE_EXPORTER_ANF_EXPORTER_H_
 
 #include <map>
 #include <string>
@@ -103,4 +103,4 @@ class AnfExporter {
 schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false, bool copy_primitive = false,
                            bool train_flag = false);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_ANF_EXPORTER_ANF_EXPORTER_H_
+#endif  // MINDSPORE_LITE_TOOLS_LITE_EXPORTER_ANF_EXPORTER_H_

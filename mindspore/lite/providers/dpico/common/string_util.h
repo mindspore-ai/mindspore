@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_COMMON_STRING_UTIL_H_
-#define DPICO_COMMON_STRING_UTIL_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_STRING_UTIL_H_
+#define MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_STRING_UTIL_H_
 
 #include <string>
 #include <vector>
@@ -33,4 +33,4 @@ bool IsValidUnsignedNum(const std::string &num_str);
 bool IsValidDoubleNum(const std::string &num_str);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // DPICO_COMMON_STRING_UTIL_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_STRING_UTIL_H_

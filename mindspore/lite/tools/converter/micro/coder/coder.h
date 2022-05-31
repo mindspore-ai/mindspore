@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_CODER_H_
 #include <string>
 #include <memory>
 #include "tools/converter/micro/coder/session.h"
@@ -44,4 +44,4 @@ class Coder final {
   std::string model_name_;
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_CODER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_CODER_H_

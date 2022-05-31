@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_CODER_CONTEXT_H_
-#define MINDSPORE_LITE_MICRO_CODER_CODER_CONTEXT_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_CONTEXT_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_CONTEXT_H_
 #include <map>
 #include <memory>
 #include <set>

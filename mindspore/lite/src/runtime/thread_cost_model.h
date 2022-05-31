@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_THREAD_COST_MODEL_H
-#define MINDSPORE_LITE_SRC_THREAD_COST_MODEL_H
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_THREAD_COST_MODEL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_THREAD_COST_MODEL_H_
 
 #include <stdint.h>
 #include "nnacl/op_base.h"

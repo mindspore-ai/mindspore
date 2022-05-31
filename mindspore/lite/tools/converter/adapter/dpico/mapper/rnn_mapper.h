@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_MAPPER_RNN_MAPPER_H__
-#define DPICO_MAPPER_RNN_MAPPER_H__
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_RNN_MAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_RNN_MAPPER_H_
 
 #include <memory>
 #include <vector>
@@ -34,4 +34,4 @@ class RnnMapper : public OpMapper {
 }  // namespace dpico
 }  // namespace mindspore
 
-#endif  // DPICO_MAPPER_RNN_MAPPER_H__
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_RNN_MAPPER_H_

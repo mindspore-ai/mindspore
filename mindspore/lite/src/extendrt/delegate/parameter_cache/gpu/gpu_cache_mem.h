@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_PARAMETER_GPU_CACHE_MEM_H_
-#define MINDSPORE_LITE_PARAMETER_GPU_CACHE_MEM_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_GPU_GPU_CACHE_MEM_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_GPU_GPU_CACHE_MEM_H_
 
 #include <cuda_runtime_api.h>
 #include <memory>
@@ -45,4 +45,4 @@ class GPUCacheMem : public cache::CacheMemBase {
 }  // namespace gpu
 }  // namespace cache
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_PARAMETER_GPU_CACHE_MEM_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_GPU_GPU_CACHE_MEM_H_

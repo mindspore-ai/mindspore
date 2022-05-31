@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_COMMON_COMPONENT_H_
-#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_COMMON_COMPONENT_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMMON_COMPONENT_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMMON_COMPONENT_H_
 
 #include <map>
 #include <string>
@@ -51,4 +51,4 @@ void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
 
 void CodeInferenceState(std::ofstream &ofs);
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_COMMON_COMPONENT_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMMON_COMPONENT_H_

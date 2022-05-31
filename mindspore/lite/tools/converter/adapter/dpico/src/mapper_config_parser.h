@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_SRC_MAPPER_CONFIG_PARSER_H_
-#define DPICO_SRC_MAPPER_CONFIG_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_MAPPER_CONFIG_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_MAPPER_CONFIG_PARSER_H_
 
 #include <string>
 #include <utility>
@@ -83,4 +83,4 @@ class MapperConfigParser {
 };
 }  // namespace dpico
 }  // namespace mindspore
-#endif  // DPICO_SRC_MAPPER_CONFIG_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_MAPPER_CONFIG_PARSER_H_

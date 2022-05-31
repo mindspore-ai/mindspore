@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CONTROLFLOW_KERNEL_EXIT_SUBGRAPH_KERNEL_H_
-#define MINDSPORE_LITE_SRC_CONTROLFLOW_KERNEL_EXIT_SUBGRAPH_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_CONTROL_FLOW_KERNEL_EXIT_SUBGRAPH_KERNEL_H_
+#define MINDSPORE_LITE_SRC_CONTROL_FLOW_KERNEL_EXIT_SUBGRAPH_KERNEL_H_
 #include <atomic>
 #include <utility>
 #include <string>
@@ -56,4 +56,4 @@ class ExitSubGraphKernel : public SubGraphKernel {
   std::set<kernel::KernelExec *> partials_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_CONTROLFLOW_KERNEL_EXIT_SUBGRAPH_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_CONTROL_FLOW_KERNEL_EXIT_SUBGRAPH_KERNEL_H_

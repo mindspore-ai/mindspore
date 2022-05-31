@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CAST_OP_ADJUST_PASS_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CAST_OP_ADJUST_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_CAST_OP_ADJUST_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_CAST_OP_ADJUST_H_
 #include <string>
 #include "tools/optimizer/common/gllo_utils.h"
 
@@ -27,4 +27,4 @@ class CastOpAdjust {
   bool Run(const FuncGraphPtr &graph);
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CAST_OP_ADJUST_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_CAST_OP_ADJUST_H_

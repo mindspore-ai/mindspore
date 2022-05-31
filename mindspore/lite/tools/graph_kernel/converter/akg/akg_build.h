@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_BUILD_H_
-#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_BUILD_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_
 #include <string>
 #include "utils/anf_utils.h"
 
@@ -31,4 +31,4 @@ class AkgKernelBuilder {
   bool CompileJsonsInAnfnodes(const AnfNodePtrList &node_list);
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_BUILD_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_AKG_BUILD_H_

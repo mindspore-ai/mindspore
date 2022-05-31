@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OBFUSCATOR_INCLUDE_DEOBFUSCATOR_H
-#define MINDSPORE_LITE_TOOLS_OBFUSCATOR_INCLUDE_DEOBFUSCATOR_H
+#ifndef MINDSPORE_LITE_TOOLS_OBFUSCATOR_INCLUDE_DEOBFUSCATOR_H_
+#define MINDSPORE_LITE_TOOLS_OBFUSCATOR_INCLUDE_DEOBFUSCATOR_H_
 
 #include "src/common/common.h"
 #include "include/model.h"
@@ -76,4 +76,4 @@ DeObfuscator *GetModelDeObfuscator(const T &meta_graph, Model *model) {
 }
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_TOOLS_OBFUSCATOR_INCLUDE_DEOBFUSCATOR_H
+#endif  // MINDSPORE_LITE_TOOLS_OBFUSCATOR_INCLUDE_DEOBFUSCATOR_H_

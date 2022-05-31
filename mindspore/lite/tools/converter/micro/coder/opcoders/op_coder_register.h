@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_OP_CODER_REGISTER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_OP_CODER_REGISTER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_REGISTER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_REGISTER_H_
 
 #include <map>
 #include <vector>
@@ -82,4 +82,4 @@ class OpCoderRegister {
 #define REG_OPERATOR_CODER(target, data_type, operator_type, creator_func) \
   static OpCoderRegister g_##target##data_type##operator_type##Creator(target, data_type, operator_type, creator_func);
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_OP_CODER_REGISTER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_REGISTER_H_

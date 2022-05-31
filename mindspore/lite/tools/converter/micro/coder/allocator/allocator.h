@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_MEMORY_ALLOCATOR_H_
-#define MINDSPORE_LITE_MICRO_CODER_MEMORY_ALLOCATOR_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_ALLOCATOR_ALLOCATOR_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_ALLOCATOR_ALLOCATOR_H_
 #include <map>
 #include <vector>
 #include <memory>
@@ -164,4 +164,4 @@ class MemoryAllocator {
   std::map<Tensor *, std::string> tensors_addr_;
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_MEMORY_ALLOCATOR_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_ALLOCATOR_ALLOCATOR_H_

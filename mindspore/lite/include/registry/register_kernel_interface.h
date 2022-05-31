@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_KERNEL_INTERFACE_H_
-#define MINDSPORE_LITE_INCLUDE_REGISTRY_KERNEL_INTERFACE_H_
+#ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_REGISTER_KERNEL_INTERFACE_H_
+#define MINDSPORE_LITE_INCLUDE_REGISTRY_REGISTER_KERNEL_INTERFACE_H_
 
 #include <set>
 #include <string>
@@ -136,4 +136,4 @@ std::shared_ptr<kernel::KernelInterface> RegisterKernelInterface::GetKernelInter
 }  // namespace registry
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_KERNEL_INTERFACE_H_
+#endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_REGISTER_KERNEL_INTERFACE_H_

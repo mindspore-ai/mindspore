@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_GRAPH_GRAPH_DATA_H_
-#define MINDSPORE_LITE_SRC_CXX_API_GRAPH_GRAPH_DATA_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_GRAPH_GRAPH_DATA_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_GRAPH_GRAPH_DATA_H_
 
 #include <string>
 #include <vector>
@@ -44,4 +44,4 @@ class Graph::GraphData {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_GRAPH_GRAPH_DATA_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_GRAPH_GRAPH_DATA_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BATCHNORM_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BATCHNORM_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_BATCHNORM_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_BATCHNORM_FP16_H_
 
 #include <vector>
 #include "src/runtime/kernel/cpu/fp32/batchnorm_fp32.h"
@@ -41,4 +41,4 @@ class BatchnormFp16CPUKernel : public BatchnormCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BATCHNORM_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_BATCHNORM_FP16_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_WHERE_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_WHERE_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_WHERE_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_WHERE_FP16_H_
 
 #include <vector>
 #include "src/runtime/kernel/cpu/fp32/where_fp32.h"
@@ -30,4 +30,4 @@ class WhereFp16CPUKernel : public WhereCPUKernel {
   int DoExcute(int task_id) override;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_WHERE_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_WHERE_FP16_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CLE_PATTERN_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_CLE_PATTERN_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_CLE_PATTERN_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_CLE_PATTERN_H_
 
 #include <vector>
 #include <unordered_map>
@@ -54,4 +54,4 @@ class CLEPattern : public opt::MultiplePatternProcessPass {
   mutable std::vector<CombinationLayer> combination_layer_;
 };
 }  // namespace mindspore::lite::quant
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CLE_PATTERN_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_CLE_PATTERN_H_

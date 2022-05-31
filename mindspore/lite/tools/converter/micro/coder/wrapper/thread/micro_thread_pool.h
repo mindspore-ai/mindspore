@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_THREAD_POOL_H
-#define MINDSPORE_LITE_MICRO_THREAD_POOL_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_THREAD_MICRO_THREAD_POOL_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_THREAD_MICRO_THREAD_POOL_H_
 
 #include <pthread.h>
 #include <stdatomic.h>
@@ -55,4 +55,4 @@ int ParallelLaunch(int (*func)(void *, int, float, float), void *content, int ta
 
 void ClearThreadPool();
 
-#endif  // MINDSPORE_LITE_MICRO_THREAD_POOL_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_THREAD_MICRO_THREAD_POOL_H_

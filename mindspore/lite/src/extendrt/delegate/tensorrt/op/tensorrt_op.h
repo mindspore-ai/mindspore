@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TENSORRT_OP_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TENSORRT_OP_H_
 
 #include <utility>
 #include <NvInfer.h>
@@ -177,4 +177,4 @@ typedef TensorRTOp *(*TensorRTGetOp)(const schema::Primitive *primitive,
 #define REGISTER_TENSORRT_CREATOR(KEY, TENSORRT_OP) \
   REGISTER_CLASS_CREATOR(schema::PrimitiveType, KEY, TensorRTGetOp, GetTensorRTOp<TENSORRT_OP>);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TENSORRT_OP_H_

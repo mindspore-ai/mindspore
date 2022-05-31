@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_OPENGL_UTIL_H
-#define LITE_OPENGL_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_OPENGL_UTIL_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_OPENGL_UTIL_H_
 
 #include <map>
 #include <vector>
@@ -103,4 +103,4 @@ class OpenGLRuntime {
 }  // namespace OpenGL
 }  // namespace mindspore
 
-#endif  // LITE_OPENGL_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_OPENGL_UTIL_H_

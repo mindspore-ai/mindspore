@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_PARSER_CONTEXT_H_
-#define MINDSPORE_LITE_INCLUDE_REGISTRY_PARSER_CONTEXT_H_
+#ifndef MINDSPORE_LITE_INCLUDE_REGISTRY_CONVERTER_CONTEXT_H_
+#define MINDSPORE_LITE_INCLUDE_REGISTRY_CONVERTER_CONTEXT_H_
 
 #include <map>
 #include <string>
@@ -83,4 +83,4 @@ class MS_API ConverterContext {
 }  // namespace converter
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_PARSER_CONTEXT_H_
+#endif  // MINDSPORE_LITE_INCLUDE_REGISTRY_CONVERTER_CONTEXT_H_

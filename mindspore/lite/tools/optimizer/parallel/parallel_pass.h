@@ -25,8 +25,8 @@
 #include "tools/optimizer/parallel/split_strategy.h"
 #include "tools/optimizer/parallel/operator_info.h"
 
-#ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_PARALLEL_PASS_H_
-#define MINDSPORE_LITE_SRC_PASS_PARALLEL_PARALLEL_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_PARALLEL_PASS_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_PARALLEL_PASS_H_
 
 namespace mindspore {
 namespace opt {
@@ -58,4 +58,4 @@ class ParallelPass : public opt::NodePass {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_PASS_PARALLEL_PARALLEL_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_PARALLEL_PASS_H_

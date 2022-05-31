@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_OPENCL_KERNEL_H_
-#define MINDSPORE_LITE_SRC_OPENCL_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_OPENCL_KERNEL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_OPENCL_KERNEL_H_
 #define MAX_PROFILING_TIME_MILLI_SECOND 10 * 1000  // 10 seconds
 #include <vector>
 #include <set>
@@ -383,4 +383,4 @@ kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &input
 }
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_OPENCL_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_OPENCL_KERNEL_H_

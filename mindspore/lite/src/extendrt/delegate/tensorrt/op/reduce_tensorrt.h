@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_REDUCE_TENSORRT_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_REDUCE_TENSORRT_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_REDUCE_TENSORRT_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_REDUCE_TENSORRT_H_
 
 #include <string>
 #include <vector>
@@ -41,4 +41,4 @@ class ReduceTensorRT : public TensorRTOp {
   Format out_format_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_REDUCE_TENSORRT_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_REDUCE_TENSORRT_H_

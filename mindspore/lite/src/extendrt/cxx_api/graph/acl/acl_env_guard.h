@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXX_API_GRAPH_ACL_ACL_ENV_GUARD_H
-#define MINDSPORE_CCSRC_CXX_API_GRAPH_ACL_ACL_ENV_GUARD_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_ACL_ACL_ENV_GUARD_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_ACL_ACL_ENV_GUARD_H_
 
 #include <memory>
 #include <mutex>
@@ -35,4 +35,4 @@ class __attribute__((visibility("default"))) AclEnvGuard {
   aclError errno_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_ACL_ACL_ENV_GUARD_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_ACL_ACL_ENV_GUARD_H_

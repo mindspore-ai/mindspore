@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_MEMORY_MANAGER_H_
-#define MINDSPORE_LITE_MICRO_CODER_MEMORY_MANAGER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_ALLOCATOR_MEMORY_MANAGER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_ALLOCATOR_MEMORY_MANAGER_H_
 
 #include <map>
 #include <vector>
@@ -70,4 +70,4 @@ class MemoryManager {
   std::map<Tensor *, size_t> variables_offset_;
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_MEMORY_MANAGER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_ALLOCATOR_MEMORY_MANAGER_H_

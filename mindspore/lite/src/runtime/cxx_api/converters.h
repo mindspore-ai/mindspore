@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_CXX_API_CONVERTERS_H_
-#define MINDSPORE_LITE_SRC_CXX_API_CONVERTERS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_CONVERTERS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_CONVERTERS_H_
 
 #include <vector>
 #include <string>
@@ -63,4 +63,4 @@ inline lite::QuantizationType A2L_ConvertQT(mindspore::QuantizationType qt) {
 Status A2L_ConvertConfig(const TrainCfg *a_train_cfg, lite::TrainCfg *l_train_cfg);
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_CONVERTERS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_CONVERTERS_H_

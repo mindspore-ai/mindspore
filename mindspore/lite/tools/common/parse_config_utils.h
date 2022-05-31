@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_PARSE_CONFIG_UTILS_H
-#define MINDSPORE_LITE_TOOLS_COMMON_PARSE_CONFIG_UTILS_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_PARSE_CONFIG_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_PARSE_CONFIG_UTILS_H_
 #include <string>
 #include <map>
 namespace mindspore {
@@ -26,4 +26,4 @@ int ParseConfigFile(const std::string &config_file_path,
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_PARSE_CONFIG_UTILS_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_PARSE_CONFIG_UTILS_H_

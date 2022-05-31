@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_OPS_POPULATE_ARITHMETIC_POPULATE_H_
-#define MINDSPORE_LITE_SRC_OPS_POPULATE_ARITHMETIC_POPULATE_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_ARITHMETIC_POPULATE_H_
+#define MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_ARITHMETIC_POPULATE_H_
 
 #include "nnacl/arithmetic.h"
 
@@ -24,4 +24,4 @@ ArithmeticParameter *PopulateArithmeticCommonPara(const void *primitive);
 OpParameter *PopulateArithmetic(const void *primitive);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_OPS_POPULATE_ARITHMETIC_POPULATE_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_ARITHMETIC_POPULATE_H_

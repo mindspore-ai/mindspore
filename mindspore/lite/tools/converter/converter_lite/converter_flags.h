@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_LITE_CONVERTER_FLAGS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_LITE_CONVERTER_FLAGS_H_
 
 #include <string>
 #include <vector>
@@ -83,4 +83,4 @@ class Flags : public virtual mindspore::lite::FlagParser {
 }  // namespace converter
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_LITE_CONVERTER_FLAGS_H_

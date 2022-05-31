@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_SCHEDELER_CB_H_
-#define MINDSPORE_LITE_SRC_SCHEDELER_CB_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_SCHEDULER_CB_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_SCHEDULER_CB_H_
 
 #include <functional>
 #include "include/model.h"
@@ -40,4 +40,4 @@ class SchedulerCb {
 };
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_SCHEDELER_CB_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_SCHEDULER_CB_H_

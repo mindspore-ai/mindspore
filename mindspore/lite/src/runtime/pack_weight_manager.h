@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_
-#define MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_MANAGER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_MANAGER_H_
 #include <memory>
 #include "include/model.h"
 #include "include/errorcode.h"
@@ -43,4 +43,4 @@ class PackWeightManager {
 #endif
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_MANAGER_H_

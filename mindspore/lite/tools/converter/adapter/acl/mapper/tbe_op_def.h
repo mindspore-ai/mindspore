@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ACL_MAPPER_TBE_OP_DEF_H
-#define ACL_MAPPER_TBE_OP_DEF_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_TBE_OP_DEF_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_TBE_OP_DEF_H_
 
 #include "ops/primitive_c.h"
 
@@ -53,4 +53,4 @@ ADD_CONVERTER_TBE_OP(FillV1)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
-#endif  // ACL_MAPPER_TBE_OP_DEF_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_TBE_OP_DEF_H_

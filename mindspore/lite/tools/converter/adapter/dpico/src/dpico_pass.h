@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_SRC_DPICO_PASS_H
-#define DPICO_SRC_DPICO_PASS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_DPICO_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_DPICO_PASS_H_
 
 #include <vector>
 #include <utility>
@@ -60,4 +60,4 @@ class DpicoPass : public registry::PassBase {
 }  // namespace dpico
 }  // namespace mindspore
 
-#endif  // DPICO_SRC_DPICO_PASS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_DPICO_PASS_H_

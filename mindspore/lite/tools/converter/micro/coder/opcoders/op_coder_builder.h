@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_OPCODERS_OP_CODER_BUILDER_H_
-#define MINDSPORE_LITE_MICRO_OPCODERS_OP_CODER_BUILDER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_BUILDER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_BUILDER_H_
 
 #include <vector>
 #include <memory>
@@ -72,4 +72,4 @@ class OpCoderBuilder {
   bool support_parallel_{false};
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_OPCODERS_OP_CODER_BUILDER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_BUILDER_H_

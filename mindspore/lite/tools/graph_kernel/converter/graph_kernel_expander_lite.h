@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_GRAPH_KERNEL_EXPANDER_LITE_H_
-#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_GRAPH_KERNEL_EXPANDER_LITE_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_EXPANDER_LITE_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_EXPANDER_LITE_H_
 #include <memory>
 #include <vector>
 
@@ -61,4 +61,4 @@ class GraphKernelExpanderLite : public GraphKernelExpander {
   bool CanExpand(const CNodePtr &node) const override;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_GRAPH_KERNEL_EXPANDER_LITE_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_EXPANDER_LITE_H_

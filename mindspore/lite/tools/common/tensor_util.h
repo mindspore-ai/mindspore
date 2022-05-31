@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_TENSOR_UTIL_H
-#define MINDSPORE_LITE_TOOLS_COMMON_TENSOR_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_TENSOR_UTIL_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_TENSOR_UTIL_H_
 
 #include <cmath>
 #include <unordered_map>
@@ -194,4 +194,4 @@ float CompareData(const std::shared_ptr<mindspore::Model> &origin_model,
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_TENSOR_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_TENSOR_UTIL_H_

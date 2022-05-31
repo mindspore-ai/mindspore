@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_SLICE_POPULATE_H_
-#define MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_SLICE_POPULATE_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_STRIDED_SLICE_POPULATE_H_
+#define MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_STRIDED_SLICE_POPULATE_H_
 
 #include "src/common/ops/populate/populate_register.h"
 #include "nnacl/strided_slice_parameter.h"
@@ -25,4 +25,4 @@ namespace lite {
 OpParameter *PopulateStridedSliceParameter(const void *prim);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_SLICE_POPULATE_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_OPS_POPULATE_STRIDED_SLICE_POPULATE_H_

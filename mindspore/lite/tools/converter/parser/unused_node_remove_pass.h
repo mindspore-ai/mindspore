@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UNUSED_NODE_REMOVE_PASS_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UNUSED_NODE_REMOVE_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_UNUSED_NODE_REMOVE_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_UNUSED_NODE_REMOVE_PASS_H_
 
 #include <set>
 #include <string>
@@ -34,4 +34,4 @@ class UnusedNodeRemovePass : public Pass {
 };
 }  // namespace mindspore::opt
 
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UNUSED_NODE_REMOVE_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_UNUSED_NODE_REMOVE_PASS_H_

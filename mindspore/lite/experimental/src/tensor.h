@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_TENSOR_H_
-#define MINDSPORE_LITE_SRC_TENSOR_H_
+#ifndef MINDSPORE_LITE_EXPERIMENTAL_SRC_TENSOR_H_
+#define MINDSPORE_LITE_EXPERIMENTAL_SRC_TENSOR_H_
 
 #include <math.h>
 #include <memory>
@@ -259,4 +259,4 @@ std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &sr
 }  // namespace mindspore
 
 using TensorPtr = std::shared_ptr<mindspore::lite::Tensor>;
-#endif  // MINDSPORE_LITE_SRC_TENSOR_H_
+#endif  // MINDSPORE_LITE_EXPERIMENTAL_SRC_TENSOR_H_

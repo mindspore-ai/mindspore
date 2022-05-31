@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_SRC_DPICO_PREPROCESS_PASS_H_
-#define DPICO_SRC_DPICO_PREPROCESS_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_DPICO_PREPROCESS_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_DPICO_PREPROCESS_PASS_H_
 
 #include <vector>
 #include <string>
@@ -43,4 +43,4 @@ class DpicoPreprocessPass : public registry::PassBase {
 }  // namespace dpico
 }  // namespace mindspore
 
-#endif  // DPICO_SRC_DPICO_PREPROCESS_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_DPICO_PREPROCESS_PASS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_KERNEL_REGISTRY_H_
-#define MINDSPORE_LITE_SRC_KERNEL_REGISTRY_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_REGISTRY_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_REGISTRY_H_
 
 #include <string>
 #include <map>
@@ -86,4 +86,4 @@ class KernelRegistrar {
   static KernelRegistrar g_##arch##data_type##op_type##kernelReg(arch, data_type, op_type, kernelCreater);
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_KERNEL_REGISTRY_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_REGISTRY_H_

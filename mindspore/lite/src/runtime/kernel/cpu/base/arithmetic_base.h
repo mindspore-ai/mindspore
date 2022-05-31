@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_ARITHMETIC_BASE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_ARITHMETIC_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_ARITHMETIC_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_ARITHMETIC_BASE_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -96,4 +96,4 @@ class ArithmeticBaseCPUKernel : public LiteKernel {
   std::vector<BlockBoundaryInfo> block_boundary_infos_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_ARITHMETIC_BASE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_ARITHMETIC_BASE_H_

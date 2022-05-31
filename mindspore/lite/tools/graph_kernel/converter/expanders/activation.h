@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_EXPANDERS_ACTIVATION_H_
-#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_EXPANDERS_ACTIVATION_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_EXPANDERS_ACTIVATION_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_EXPANDERS_ACTIVATION_H_
 
 #include <memory>
 #include <set>
@@ -46,4 +46,4 @@ class CheckActivationType : public Validator {
 
 NodePtr GetActivationExpander(const inner::GraphBuilder &gb, const NodePtrList &inputs, int64_t activation_type);
 }  // namespace mindspore::graphkernel::expanders
-#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_EXPANDERS_ACTIVATION_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_EXPANDERS_ACTIVATION_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DPICO_COMMON_FLOAT16_H_
-#define DPICO_COMMON_FLOAT16_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_FLOAT16_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_FLOAT16_H_
 
 #if defined(ENABLE_ARM32) || defined(ENABLE_ARM64)
 // Built for lite and ARM
@@ -308,4 +308,4 @@ inline float16 pow(const float16 &a, const float16 &b) {
 
 inline float half_to_float(const float16 &h) { return static_cast<float>(h); }
 
-#endif  // DPICO_COMMON_FLOAT16_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_FLOAT16_H_

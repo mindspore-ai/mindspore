@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H_
-#define MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_MODEL_IMPL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_MODEL_IMPL_H_
 
 #include <functional>
 #include <map>
@@ -133,4 +133,4 @@ class ModelImpl {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_MODEL_IMPL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_MODEL_IMPL_H_

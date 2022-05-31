@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_LITE_SESSION_H_
-#define MINDSPORE_LITE_SRC_LITE_SESSION_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_LITE_SESSION_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_LITE_SESSION_H_
 
 #include <memory>
 #include <vector>
@@ -212,4 +212,4 @@ class LiteSession {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_LITE_SESSION_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_LITE_SESSION_H_

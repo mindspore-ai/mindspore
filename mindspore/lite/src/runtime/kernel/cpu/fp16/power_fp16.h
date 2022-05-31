@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_POWER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_POWER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_POWER_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_POWER_FP16_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -49,4 +49,4 @@ class PowerFp16CPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_POWER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_POWER_FP16_H_

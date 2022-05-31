@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_MANAGER_ACL_MODEL_HELPER_H_
-#define DPICO_MANAGER_ACL_MODEL_HELPER_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_DPICO_MANAGER_ACL_MODEL_HELPER_H_
+#define MINDSPORE_LITE_PROVIDERS_DPICO_MANAGER_ACL_MODEL_HELPER_H_
 
 #include <vector>
 #include <unordered_map>
@@ -48,4 +48,4 @@ int WriteDetBoxesToTensorData(const std::vector<std::vector<float>> &det_boxes,
 int AclMalloc(void **buf, size_t size);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // DPICO_MANAGER_ACL_MODEL_HELPER_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_DPICO_MANAGER_ACL_MODEL_HELPER_H_

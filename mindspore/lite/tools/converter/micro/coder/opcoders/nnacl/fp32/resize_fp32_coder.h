@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_RESIZE_FP32_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_RESIZE_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_RESIZE_FP32_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_RESIZE_FP32_CODER_H_
 
 #include "coder/opcoders/base/resize_base_coder.h"
 #include <vector>
@@ -57,4 +57,4 @@ class ResizeFP32Coder final : public ResizeBaseCoder {
   std::string calculate_str_;
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_RESIZE_FP32_CODER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_RESIZE_FP32_CODER_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_LITE_KERNEL_UTIL_H_
-#define MINDSPORE_LITE_SRC_LITE_KERNEL_UTIL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_EXEC_UTIL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_EXEC_UTIL_H_
 #include <vector>
 #include <set>
 #include "src/runtime/kernel_exec.h"
@@ -64,4 +64,4 @@ class KernelExecUtil {
 
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_LITE_KERNEL_UTIL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_EXEC_UTIL_H_

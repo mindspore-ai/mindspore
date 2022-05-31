@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_IMAGE_PREPROCESS_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_IMAGE_PREPROCESS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_IMAGE_PREPROCESS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_IMAGE_PREPROCESS_H_
 
 #include <vector>
 #include <string>
@@ -47,4 +47,4 @@ int ImagePreProcess(const ImagePreProcessParam &image_preprocess_param, cv::Mat 
 }  // namespace preprocess
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_IMAGE_PREPROCESS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_IMAGE_PREPROCESS_H_

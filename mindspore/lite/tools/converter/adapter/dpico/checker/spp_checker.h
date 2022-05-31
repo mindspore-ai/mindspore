@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_CHECKER_SPP_CHECKER_H_
-#define DPICO_CHECKER_SPP_CHECKER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_CHECKER_SPP_CHECKER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_CHECKER_SPP_CHECKER_H_
 
 #include <string>
 #include "checker/op_checker.h"
@@ -31,4 +31,4 @@ class SppChecker : public OpChecker {
 }  // namespace dpico
 }  // namespace mindspore
 
-#endif  // DPICO_CHECKER_SPP_CHECKER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_CHECKER_SPP_CHECKER_H_

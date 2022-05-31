@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXX_API_ACL_VM_MS_TENSOR_REF_H
-#define MINDSPORE_CCSRC_CXX_API_ACL_VM_MS_TENSOR_REF_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_ACL_VM_MS_TENSOR_REF_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_ACL_VM_MS_TENSOR_REF_H_
 
 #include <memory>
 #include <string>
@@ -46,4 +46,4 @@ class MSTensorRef : public BaseRef {
   MSTensor ms_tensor_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXX_API_ACL_VM_MS_TENSOR_REF_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_ACL_VM_MS_TENSOR_REF_H_

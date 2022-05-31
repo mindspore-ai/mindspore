@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LAYOUT_TRANSFORM_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LAYOUT_TRANSFORM_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_LAYOUT_TRANSFORM_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_LAYOUT_TRANSFORM_FP16_H_
 
 #include "src/runtime/kernel/cpu/base/layout_transform.h"
 
@@ -23,4 +23,4 @@ namespace mindspore::kernel {
 LayoutConvertor LayoutTransformFp16(mindspore::Format src_format, mindspore::Format dst_format);
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LAYOUT_TRANSFORM_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_LAYOUT_TRANSFORM_FP16_H_

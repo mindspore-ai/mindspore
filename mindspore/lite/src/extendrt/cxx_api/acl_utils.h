@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_CXX_API_ACL_UTILS_H
-#define MINDSPORE_CCSRC_CXX_API_ACL_UTILS_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_ACL_UTILS_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_ACL_UTILS_H_
 
 #include <string>
 #include "acl/acl_base.h"
@@ -45,4 +45,4 @@ static inline bool IsAscendNo910Soc() {
 }
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_CXX_API_ACL_UTILS_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_ACL_UTILS_H_

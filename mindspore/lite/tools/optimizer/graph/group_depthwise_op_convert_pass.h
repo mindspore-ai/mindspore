@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LITE_GROUP_DEPTHWISE_OP_CONVERT_PASS_H
-#define LITE_GROUP_DEPTHWISE_OP_CONVERT_PASS_H
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_GROUP_DEPTHWISE_OP_CONVERT_PASS_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_GROUP_DEPTHWISE_OP_CONVERT_PASS_H_
 #include <string>
 #include "backend/common/optimizer/pass.h"
 
@@ -26,4 +26,4 @@ class GroupDepthwiseOpConvertPass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 };
 }  // namespace mindspore::opt
-#endif  // LITE_GROUP_DEPTHWISE_OP_CONVERT_PASS_H
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_GROUP_DEPTHWISE_OP_CONVERT_PASS_H_

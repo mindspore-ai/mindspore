@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_PASS_DELETE_ISOLATED_KENREL_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_PASS_DELETE_ISOLATED_KENREL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_PASS_DELETE_ISOLATED_KERNEL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_PASS_DELETE_ISOLATED_KERNEL_H_
 
 #include <vector>
 #include "src/runtime/pass/runtime_optimizer.h"
@@ -28,4 +28,4 @@ class DeleteIsolatedKernel : public RuntimePass {
   int Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *tensors = nullptr) override;
 };
 }  // namespace mindspore::lite::pass
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_DELETE_ISOLATED_KENREL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_DELETE_ISOLATED_KERNEL_H_

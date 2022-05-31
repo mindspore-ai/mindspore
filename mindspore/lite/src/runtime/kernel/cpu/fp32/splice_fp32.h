@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPLICE_SPLICE_FP32_H
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPLICE_SPLICE_FP32_H
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SPLICE_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SPLICE_FP32_H_
 #include <vector>
 #include "src/runtime/lite_kernel.h"
 #include "nnacl/splice_parameter.h"
@@ -37,4 +37,4 @@ class SpliceCPUKernel final : public LiteKernel {
   SpliceParameter *parameter_{nullptr};
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPLICE_SPLICE_FP32_H
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SPLICE_FP32_H_

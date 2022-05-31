@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_CXXAPI_SESSION_ACL_MODEL_CONVERTER_H
-#define MINDSPORE_CCSRC_CXXAPI_SESSION_ACL_MODEL_CONVERTER_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_MODEL_CONVERTER_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_MODEL_CONVERTER_H_
 #include <vector>
 #include <string>
 #include <map>
@@ -48,4 +48,4 @@ class MS_API ModelConverter {
   std::weak_ptr<AclModelOptions> options_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXXAPI_SESSION_ACL_MODEL_CONVERTER_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_MODEL_CONVERTER_H_

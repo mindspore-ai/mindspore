@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_LOOP_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_LOOP_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_LOOP_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_LOOP_PARSER_H_
 
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
@@ -31,4 +31,4 @@ class OnnxLoopParser : public OnnxNodeParser {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_LOOP_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_LOOP_PARSER_H_

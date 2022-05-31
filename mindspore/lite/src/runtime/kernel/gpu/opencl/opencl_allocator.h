@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_OPENCL_ALLOCATOR_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_OPENCL_ALLOCATOR_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_GPU_OPENCL_OPENCL_ALLOCATOR_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_GPU_OPENCL_OPENCL_ALLOCATOR_H_
 
 #include <memory>
 #include <string>
@@ -120,4 +120,4 @@ class OpenCLAllocator : public mindspore::Allocator {
 };
 }  // namespace mindspore::lite::opencl
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_OPENCL_ALLOCATOR_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_GPU_OPENCL_OPENCL_ALLOCATOR_H_

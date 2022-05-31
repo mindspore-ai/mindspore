@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXX_API_GRAPH_MS_ASCEND_GRAPH_IMPL_H
-#define MINDSPORE_CCSRC_CXX_API_GRAPH_MS_ASCEND_GRAPH_IMPL_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_ASCEND_ASCEND_GRAPH_IMPL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_ASCEND_ASCEND_GRAPH_IMPL_H_
 #include <functional>
 #include <map>
 #include <string>
@@ -93,4 +93,4 @@ class PythonEnvGuard {
   bool origin_init_status_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_MS_ASCEND_GRAPH_IMPL_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_ASCEND_ASCEND_GRAPH_IMPL_H_

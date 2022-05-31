@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_INFER_DPICO_DETECTION_OUTPUT_INFER_H_
-#define DPICO_INFER_DPICO_DETECTION_OUTPUT_INFER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_INFER_DPICO_DETECTION_OUTPUT_INFER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_INFER_DPICO_DETECTION_OUTPUT_INFER_H_
 
 #include <vector>
 #include "include/kernel_interface.h"
@@ -34,4 +34,4 @@ class DpicoDetectionOutputInterface : public KernelInterface {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // DPICO_INFER_DPICO_DETECTION_OUTPUT_INFER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_INFER_DPICO_DETECTION_OUTPUT_INFER_H_

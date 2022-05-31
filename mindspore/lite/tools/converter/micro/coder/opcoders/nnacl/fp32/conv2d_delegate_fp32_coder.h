@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_OPCODERS_NNACL_FP32_CONV2D_DELEGATE_FP32_CODER_H
-#define MINDSPORE_LITE_MICRO_OPCODERS_NNACL_FP32_CONV2D_DELEGATE_FP32_CODER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_CONV2D_DELEGATE_FP32_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_CONV2D_DELEGATE_FP32_CODER_H_
 #include <vector>
 #include <memory>
 #include "coder/opcoders/op_coder.h"
@@ -55,4 +55,4 @@ std::unique_ptr<OperatorCoder> CPUConv2DFusionFP32CoderCreator(const std::vector
                                                                const LiteGraph::Node *node, size_t node_index,
                                                                Target target, int schema_version);
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_MICRO_OPCODERS_NNACL_FP32_CONV2D_DELEGATE_FP32_CODER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_CONV2D_DELEGATE_FP32_CODER_H_

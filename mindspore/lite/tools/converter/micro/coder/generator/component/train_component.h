@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_TRAIN_COMPONENT_H_
-#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_TRAIN_COMPONENT_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_TRAIN_COMPONENT_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_TRAIN_COMPONENT_H_
 
 #include <map>
 #include <string>
@@ -34,4 +34,4 @@ void CodeFeaturesImplement(std::ofstream &ofs, const std::unique_ptr<CoderContex
 void CodeTrainState(std::ofstream &ofs);
 void CodeTrainImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_TRAIN_COMPONENT_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_TRAIN_COMPONENT_H_

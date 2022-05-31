@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_COMMON_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_COMMON_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_COMMON_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_COMMON_H_
 #include <iostream>
 #include <string>
 #include <vector>
@@ -119,4 +119,4 @@ int NnieCommGetOutputData(NnieRunCfg *nnie_run_cfg, float *data, int64_t *shape,
 HI_U32 GetBlobSize(const SVP_SRC_BLOB_S &blob);
 }  // namespace nnie
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_COMMON_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_COMMON_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_SLIDEWINDOW_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_SLIDEWINDOW_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_CONVOLUTION_SLIDEWINDOW_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_CONVOLUTION_SLIDEWINDOW_FP32_H_
 #ifdef ENABLE_AVX
 #include <vector>
 #include "src/runtime/kernel_exec.h"
@@ -65,4 +65,4 @@ class ConvolutionSWCPUKernel : public ConvolutionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 #endif  // ENABLE_AVX
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_SLIDEWINDOW_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_CONVOLUTION_SLIDEWINDOW_FP32_H_

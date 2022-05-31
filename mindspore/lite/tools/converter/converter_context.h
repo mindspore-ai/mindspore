@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_RETURN_CODE_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_RETURN_CODE_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_CONTEXT_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_CONTEXT_H_
 
 #include <string>
 #include <set>
@@ -135,4 +135,4 @@ class ConverterInnerContext {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_RETURN_CODE_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_CONTEXT_H_

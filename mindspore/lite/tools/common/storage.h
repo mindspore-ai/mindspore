@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_STORAGE_H
-#define MINDSPORE_LITE_TOOLS_COMMON_STORAGE_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_STORAGE_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_STORAGE_H_
 
 #include <fstream>
 #include <string>
@@ -32,4 +32,4 @@ class Storage {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_STORAGE_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_STORAGE_H_

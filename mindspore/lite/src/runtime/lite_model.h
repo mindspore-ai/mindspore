@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_LITE_MODEL_H_
-#define MINDSPORE_LITE_SRC_LITE_MODEL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_LITE_MODEL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_LITE_MODEL_H_
 
 #include <string>
 #include <utility>
@@ -328,4 +328,4 @@ Model *ImportFromPath(const char *model_path);
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_LITE_MODEL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_LITE_MODEL_H_

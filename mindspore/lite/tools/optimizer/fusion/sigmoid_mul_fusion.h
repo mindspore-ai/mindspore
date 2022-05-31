@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_SIGMOID_MUL_FUSION_H_
-#define MINDSPORE_LITE_SRC_PASS_FUSION_SIGMOID_MUL_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SIGMOID_MUL_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SIGMOID_MUL_FUSION_H_
 
 #include "backend/common/optimizer/optimizer.h"
 #include "tools/converter/converter_context.h"
@@ -33,4 +33,4 @@ class SigmoidMulFusion : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_SIGMOID_MUL_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SIGMOID_MUL_FUSION_H_

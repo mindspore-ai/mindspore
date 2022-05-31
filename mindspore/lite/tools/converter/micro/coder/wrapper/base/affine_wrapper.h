@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_CODER_WRAPPER_FP32_AFFINE_FP32_WRAPPER_H_
-#define MINDSPORE_LITE_MICRO_CODER_WRAPPER_FP32_AFFINE_FP32_WRAPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_BASE_AFFINE_WRAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_BASE_AFFINE_WRAPPER_H_
 #include "nnacl/op_base.h"
 #ifdef __cplusplus
 extern "C" {
@@ -36,4 +36,4 @@ void IncrementSpliceRunInt8(const int8_t *in_data, int8_t *out_data, const Splic
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_LITE_MICRO_CODER_WRAPPER_FP32_AFFINE_FP32_WRAPPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_BASE_AFFINE_WRAPPER_H_

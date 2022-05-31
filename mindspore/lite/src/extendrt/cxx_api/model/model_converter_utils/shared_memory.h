@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_CXXAPI_SHARED_MEMORY_H
-#define MINDSPORE_CCSRC_CXXAPI_SHARED_MEMORY_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_CONVERTER_UTILS_SHARED_MEMORY_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_CONVERTER_UTILS_SHARED_MEMORY_H_
 #include <iostream>
 #include "include/api/status.h"
 
@@ -35,4 +35,4 @@ class SharedMemory {
   uint8_t *shmat_addr_ = nullptr;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXXAPI_SHARED_MEMORY_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MODEL_CONVERTER_UTILS_SHARED_MEMORY_H_

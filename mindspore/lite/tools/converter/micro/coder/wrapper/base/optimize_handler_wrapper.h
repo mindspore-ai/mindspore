@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_OPTIMIZE_HANDLER_WRAPPER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_OPTIMIZE_HANDLER_WRAPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_BASE_OPTIMIZE_HANDLER_WRAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_BASE_OPTIMIZE_HANDLER_WRAPPER_H_
 
 #include "nnacl/op_base.h"
 
@@ -38,4 +38,4 @@ void MatMulDpInt8_optimize_handler(const int8_t *a, const int8_t *b, int8_t *dst
                                    int32_t output_zp, int32_t mini, int32_t maxi, size_t per_channel,
                                    const int32_t *filter_zp);
 #endif
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_OPTIMIZE_HANDLER_WRAPPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_BASE_OPTIMIZE_HANDLER_WRAPPER_H_

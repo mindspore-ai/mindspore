@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_TOPK_TENSORRT_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_TOPK_TENSORRT_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TOPK_TENSORRT_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TOPK_TENSORRT_H_
 #include <string>
 #include <vector>
 #include <map>
@@ -36,4 +36,4 @@ class TopKTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_TOPK_TENSORRT_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TOPK_TENSORRT_H_

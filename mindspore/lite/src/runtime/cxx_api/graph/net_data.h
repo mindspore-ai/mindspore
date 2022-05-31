@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_GRAPH_NET_DATA_H_
-#define MINDSPORE_LITE_SRC_CXX_API_GRAPH_NET_DATA_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_GRAPH_NET_DATA_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_GRAPH_NET_DATA_H_
 
 #include <memory>
 #include "include/api/net.h"
@@ -32,4 +32,4 @@ class NetData {
   std::shared_ptr<Net> net_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_CXX_API_GRAPH_NET_DATA_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_GRAPH_NET_DATA_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_OPS_ANF_UTILS_H_
-#define MINDSPORE_LITE_SRC_OPS_ANF_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_OPS_ANF_UTILS_H_
+#define MINDSPORE_LITE_SRC_COMMON_OPS_ANF_UTILS_H_
 
 #include <memory>
 #include "src/common/ops/ops_utils.h"
@@ -26,4 +26,4 @@ std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const mindspore::AnfNodePtr &n
 }
 }  // namespace mindspore
 #endif
-#endif  // MINDSPORE_LITE_SRC_OPS_ANF_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_OPS_ANF_UTILS_H_

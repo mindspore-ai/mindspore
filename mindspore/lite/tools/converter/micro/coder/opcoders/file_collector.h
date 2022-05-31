@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_FILE_COLLECTOR_H_
-#define MINDSPORE_LITE_MICRO_CODER_FILE_COLLECTOR_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_FILE_COLLECTOR_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_FILE_COLLECTOR_H_
 
 #include <string>
 #include <vector>
@@ -26,4 +26,4 @@ void Collect(CoderContext *const ctx, const std::vector<std::string> &headers,
              const std::vector<std::string> &cFiles = {}, const std::vector<std::string> &asmFiles = {});
 }
 // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_FILE_COLLECTOR_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_FILE_COLLECTOR_H_

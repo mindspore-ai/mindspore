@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_SCHEDULER_H_
-#define MINDSPORE_LITE_SRC_SCHEDULER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_SCHEDULER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_SCHEDULER_H_
 
 #include <utility>
 #include <vector>
@@ -174,4 +174,4 @@ class Scheduler {
 };
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_SCHEDULER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_SCHEDULER_H_

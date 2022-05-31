@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_SERIALIZER_H
-#define MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_SERIALIZER_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_SERIALIZER_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_SERIALIZER_H_
 
 #include <fstream>
 #include <string>
@@ -60,4 +60,4 @@ class MetaGraphSerializer {
 };
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_SERIALIZER_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_META_GRAPH_SERIALIZER_H_

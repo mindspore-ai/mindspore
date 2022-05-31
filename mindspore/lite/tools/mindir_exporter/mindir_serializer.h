@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_MINDIR_SERIALIZER_MINDIR_SERIALIZER_H_
-#define MINDSPORE_LITE_TOOLS_MINDIR_SERIALIZER_MINDIR_SERIALIZER_H_
+#ifndef MINDSPORE_LITE_TOOLS_MINDIR_EXPORTER_MINDIR_SERIALIZER_H_
+#define MINDSPORE_LITE_TOOLS_MINDIR_EXPORTER_MINDIR_SERIALIZER_H_
 
 #include <string>
 #include <memory>
@@ -76,4 +76,4 @@ class MindIRSerializer {
 // export func_graph
 int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_MINDIR_SERIALIZER_MINDIR_SERIALIZER_H_
+#endif  // MINDSPORE_LITE_TOOLS_MINDIR_EXPORTER_MINDIR_SERIALIZER_H_

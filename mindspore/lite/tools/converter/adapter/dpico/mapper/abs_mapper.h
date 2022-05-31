@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef ADAPTER_DPICO_MAPPER_ABS_MAPPER_H_
-#define ADAPTER_DPICO_MAPPER_ABS_MAPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_ABS_MAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_ABS_MAPPER_H_
 
 #include <memory>
 #include <vector>
@@ -34,4 +34,4 @@ class AbsMapper : public OpMapper {
 }  // namespace dpico
 }  // namespace mindspore
 
-#endif  // ADAPTER_DPICO_MAPPER_ABS_MAPPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_ABS_MAPPER_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PARALLEL_CONFIG_H_
-#define MINDSPORE_LITE_SRC_PARALLEL_CONFIG_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_PARALLEL_CONFIG_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_PARALLEL_CONFIG_H_
 
 // whether to enable parallel_executor or not
 #define PARALLEL 1
@@ -30,4 +30,4 @@
 #define PROFILE 0
 
 #define CPU16SUB_INSERT_CAST 0
-#endif  // MINDSPORE_LITE_SRC_PARALLEL_CONFIG_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_PARALLEL_CONFIG_H_

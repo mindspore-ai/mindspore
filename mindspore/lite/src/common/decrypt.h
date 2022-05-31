@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_UTILS_DECRYPT_H_
-#define MINDSPORE_CORE_UTILS_DECRYPT_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_DECRYPT_H_
+#define MINDSPORE_LITE_SRC_COMMON_DECRYPT_H_
 
 #include <string>
 #include <memory>

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H_
 
 #include <map>
 #include <set>
@@ -51,4 +51,4 @@ bool RunExternalPass(const FuncGraphPtr &func_graph, registry::PassPosition posi
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_OPTIMIZER_MANAGER_H_

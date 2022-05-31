@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_ANF_IMPORTER_IMPORTER_FROM_META_GRAPHT_H_
-#define MINDSPORE_LITE_TOOLS_COMMON_ANF_IMPORTER_IMPORTER_FROM_META_GRAPHT_H_
+#ifndef MINDSPORE_LITE_TEST_COMMON_IMPORT_FROM_META_GRAPHT_H_
+#define MINDSPORE_LITE_TEST_COMMON_IMPORT_FROM_META_GRAPHT_H_
 
 #include <utility>
 #include <memory>
@@ -61,4 +61,4 @@ class AnfImporterFromMetaGraphT {
 FuncGraphPtr Fb2Anf(schema::MetaGraphT *meta_graph);
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_ANF_IMPORTER_IMPORTER_FROM_META_GRAPHT_H_
+#endif  // MINDSPORE_LITE_TEST_COMMON_IMPORT_FROM_META_GRAPHT_H_

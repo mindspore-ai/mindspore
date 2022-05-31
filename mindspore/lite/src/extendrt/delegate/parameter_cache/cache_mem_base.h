@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_PARAMETER_CACHE_MEM_BASE_H_
-#define MINDSPORE_LITE_PARAMETER_CACHE_MEM_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_CACHE_MEM_BASE_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_CACHE_MEM_BASE_H_
 #include <utility>
 #include <memory>
 
@@ -38,4 +38,4 @@ class CacheMemBase {
 };
 }  // namespace cache
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_PARAMETER_CACHE_MEM_BASE_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_CACHE_MEM_BASE_H_

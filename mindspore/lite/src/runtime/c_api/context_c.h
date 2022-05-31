@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_C_API_CONTEXT_C_H_
-#define MINDSPORE_LITE_SRC_C_API_CONTEXT_C_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_C_API_CONTEXT_C_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_C_API_CONTEXT_C_H_
 
 #include <string>
 #include <vector>
@@ -43,4 +43,4 @@ typedef struct ContextC {
   std::shared_ptr<Delegate> delegate = nullptr;
 } ContextC;
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_C_API_CONTEXT_C_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_C_API_CONTEXT_C_H_

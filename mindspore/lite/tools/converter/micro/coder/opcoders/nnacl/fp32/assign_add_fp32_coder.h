@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_ASSIGN_ADD_FP32_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_ASSIGN_ADD_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_ASSIGN_ADD_FP32_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_ASSIGN_ADD_FP32_CODER_H_
 
 #include <vector>
 #include "coder/opcoders/op_coder.h"
@@ -34,4 +34,4 @@ class AssignAddFP32Coder final : public OperatorCoder {
   int DoCode(CoderContext *const context) override;
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_ASSIGN_ADD_FP32_CODER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_ASSIGN_ADD_FP32_CODER_H_

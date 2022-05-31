@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPARSITY_NHWC_SPMM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPARSITY_NHWC_SPMM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SPARSE_MATMUL_SPARSE_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SPARSE_MATMUL_SPARSE_FP32_H_
 
 #include <vector>
 #include "nnacl/matmul_parameter.h"
@@ -59,4 +59,4 @@ class MatmulSparseCPUKernel : public LiteKernel {
   float *bias_pack_ = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SPARSITY_NHWC_SPMM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_SPARSE_MATMUL_SPARSE_FP32_H_

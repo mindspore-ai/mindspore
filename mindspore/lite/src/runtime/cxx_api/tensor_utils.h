@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_TENSOR_UTILS_H
-#define MINDSPORE_LITE_SRC_CXX_API_TENSOR_UTILS_H
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_TENSOR_UTILS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_TENSOR_UTILS_H_
 
 #include <limits.h>
 #include <vector>
@@ -36,4 +36,4 @@ std::vector<MSTensor> MS_API LiteTensorsToMSTensors(const std::vector<mindspore:
 
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_TENSOR_UTILS_H
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_TENSOR_UTILS_H_

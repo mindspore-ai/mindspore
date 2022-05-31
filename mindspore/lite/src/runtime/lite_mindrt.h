@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_LITE_MINDRT_H_
-#define MINDSPORE_LITE_SRC_LITE_MINDRT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_LITE_MINDRT_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_LITE_MINDRT_H_
 #include <vector>
 #include <memory>
 #include <string>
@@ -120,4 +120,4 @@ static std::atomic_int64_t actor_count = 0;
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::KernelExec *> &kernels,
                                                         lite::InnerContext *ctx, const std::shared_ptr<ActorMgr> &mgr);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_LITE_MINDRT_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_LITE_MINDRT_H_

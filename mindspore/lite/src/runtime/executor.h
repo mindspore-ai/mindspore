@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_EXECUTOR_H_
-#define MINDSPORE_LITE_SRC_EXECUTOR_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_EXECUTOR_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_EXECUTOR_H_
 
 #include <vector>
 #include "src/runtime/inner_allocator.h"

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_CONV1X1_RUN_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_CONV1X1_RUN_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_INT8_CONV1X1_RUN_INT8_WRAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_INT8_CONV1X1_RUN_INT8_WRAPPER_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -53,4 +53,4 @@ int RunArm64OptOc(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 int RunArmOc(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 int RunArm64OptHw(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 int RunArmHw(void *cdata, int task_id, float lhs_scale, float rhs_scale);
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_CONV1X1_RUN_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_INT8_CONV1X1_RUN_INT8_WRAPPER_H_

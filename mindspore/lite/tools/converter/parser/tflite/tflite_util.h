@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_UTIL_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_TFLITE_UTIL_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_TFLITE_UTIL_H_
 
 #include <string>
 #include <vector>
@@ -47,4 +47,4 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_TFLITE_UTIL_H_

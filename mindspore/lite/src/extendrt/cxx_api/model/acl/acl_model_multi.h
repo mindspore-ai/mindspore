@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXX_API_ACL_MODEL_MULTI_H
-#define MINDSPORE_CCSRC_CXX_API_ACL_MODEL_MULTI_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_ACL_MODEL_MULTI_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_ACL_MODEL_MULTI_H_
 
 #include "cxx_api/model/acl/acl_model.h"
 #include <memory>
@@ -51,4 +51,4 @@ class AclModelMulti : public AclModel {
   std::vector<MSTensor> outputs_ = {};
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXX_API_ACL_MODEL_MULTI_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_ACL_ACL_MODEL_MULTI_H_

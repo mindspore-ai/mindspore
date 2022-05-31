@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_EXP_FP32_CODER_H
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_EXP_FP32_CODER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_EXP_FP32_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_EXP_FP32_CODER_H_
 #include <vector>
 #include "coder/opcoders/op_coder.h"
 #include "nnacl/fp32/exp_fp32.h"
@@ -36,4 +36,4 @@ class ExpFP32Coder final : public OperatorCoder {
   ExpParameter *exp_parameter_{nullptr};
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_EXP_FP32_CODER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_FP32_EXP_FP32_CODER_H_

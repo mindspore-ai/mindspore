@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_CONV_INFO_H
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_CONV_INFO_H
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_CONV_INFO_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_CONV_INFO_H_
 #include <memory>
 #include <vector>
 #include "tools/optimizer/parallel/multi_node_split.h"
@@ -113,4 +113,4 @@ class MultiConvSplitH final : public MultiConvSplit {
 
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_CONV_INFO_H
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_CONV_INFO_H_

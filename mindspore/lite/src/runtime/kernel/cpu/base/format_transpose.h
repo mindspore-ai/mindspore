@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FORMAT_TRANSPOSE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FORMAT_TRANSPOSE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_FORMAT_TRANSPOSE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_FORMAT_TRANSPOSE_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -38,4 +38,4 @@ class FormatTransposeCPUKernel : public LiteKernel {
   FormatTransposeParameter *param_ = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FORMAT_TRANSPOSE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_FORMAT_TRANSPOSE_H_

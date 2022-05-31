@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_DELEGATE_UTILS
-#define MINDSPORE_LITE_SRC_DELEGATE_DELEGATE_UTILS
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_DELEGATE_UTILS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_DELEGATE_UTILS_H_
 #include <vector>
 #include "include/api/delegate.h"
 #include "src/common/log_adapter.h"
@@ -220,4 +220,4 @@ int GetGraphInOutOps(const std::vector<mindspore::MSTensor> &inputs, const std::
 }
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_DELEGATE_UTILS
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_DELEGATE_UTILS_H_

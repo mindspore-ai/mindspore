@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_ACL_OPTION_PARAM_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_ACL_OPTION_PARAM_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_ACL_OPTION_PARAM_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_ACL_OPTION_PARAM_PARSER_H_
 #include <string>
 #include "tools/converter/config_parser/config_file_parser.h"
 #include "tools/converter/adapter/acl/common/acl_types.h"
@@ -37,4 +37,4 @@ class AclOptionParamParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_ACL_OPTION_PARAM_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_ACL_OPTION_PARAM_PARSER_H_

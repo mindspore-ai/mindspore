@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_OPENCL_EXECUTOR_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_OPENCL_EXECUTOR_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_GPU_OPENCL_OPENCL_EXECUTOR_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_GPU_OPENCL_OPENCL_EXECUTOR_H_
 
 #include <vector>
 #include "src/runtime/kernel/gpu/opencl/opencl_runtime.h"

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CONTROLFLOW_CONTROL_SUBGRAPH_CREATOR_H_
-#define MINDSPORE_LITE_SRC_CONTROLFLOW_CONTROL_SUBGRAPH_CREATOR_H_
+#ifndef MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_SUBGRAPH_CREATOR_H_
+#define MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_SUBGRAPH_CREATOR_H_
 #include "src/runtime/lite_kernel.h"
 #include "src/runtime/sub_graph_kernel.h"
 
 namespace mindspore::lite {
 kernel::SubGraphKernel *CreateControlSubgraph(const kernel::SubGraphType &type, kernel::LiteKernel *kernel);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_CONTROLFLOW_CONTROL_SUBGRAPH_CREATOR_H_
+#endif  // MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_SUBGRAPH_CREATOR_H_

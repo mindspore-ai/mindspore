@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_PROPOSAL_PROPOSAL_H_
-#define MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_PROPOSAL_PROPOSAL_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_PROPOSAL_SRC_PROPOSAL_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_PROPOSAL_SRC_PROPOSAL_H_
 #include <vector>
 #include "include/api/types.h"
 
@@ -92,4 +92,4 @@ int32_t ProposalRun(std::vector<mindspore::MSTensor> *inputs, std::vector<mindsp
 void ProposalDeInit(ProposalParam *param);
 }  // namespace proposal
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_PROPOSAL_PROPOSAL_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_NNIE_PROPOSAL_SRC_PROPOSAL_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_PASS_INFERSHAPE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_PASS_INFERSHAPE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_PASS_INFERSHAPE_PASS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_PASS_INFERSHAPE_PASS_H_
 
 #include <vector>
 #include "src/runtime/pass/runtime_optimizer.h"
@@ -28,4 +28,4 @@ class Infershape : public RuntimePass {
   int Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *tensors = nullptr) override;
 };
 }  // namespace mindspore::lite::pass
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_INFERSHAPE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_INFERSHAPE_PASS_H_

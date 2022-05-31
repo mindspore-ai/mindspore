@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_COMMON_CHECK_BASE_H_
-#define DPICO_COMMON_CHECK_BASE_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_CHECK_BASE_H_
+#define MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_CHECK_BASE_H_
 
 #include <limits.h>
 #include "common/log_util.h"
@@ -84,4 +84,4 @@
     }                                      \
   } while (0)
 
-#endif  // DPICO_COMMON_CHECK_BASE_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_CHECK_BASE_H_

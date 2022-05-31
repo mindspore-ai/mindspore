@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_UTILS_DIRS_H_
-#define MINDSPORE_LITE_MICRO_CODER_UTILS_DIRS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_DIR_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_DIR_UTILS_H_
 #include <string>
 namespace mindspore::lite::micro {
 #if defined(_WIN32) || defined(_WIN64)
@@ -30,4 +30,4 @@ bool DirExists(const std::string &dir_path);
 
 bool FileExists(const std::string &dir_path);
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_UTILS_DIRS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_DIR_UTILS_H_

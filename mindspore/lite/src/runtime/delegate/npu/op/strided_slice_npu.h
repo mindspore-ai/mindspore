@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_STRIDEDSLICE_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_STRIDEDSLICE_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_STRIDED_SLICE_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_STRIDED_SLICE_NPU_H_
 #include <vector>
 #include <string>
 #include "include/graph/op/all_ops.h"
@@ -66,4 +66,4 @@ class StridedSliceNPUOp : public NPUOp {
   int shrink_axis_mask_ = 0;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_STRIDEDSLICE_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_STRIDED_SLICE_NPU_H_
