@@ -114,6 +114,7 @@ maximum_ = P.Maximum()
 minimum_ = P.Minimum()
 lerp_ = P.Lerp()
 tensor_round_ = P.Round()
+linspace_ = P.LinSpace()
 matrix_determinant_ = P.MatrixDeterminant()
 log_matrix_determinant_ = P.LogMatrixDeterminant()
 exp2_ = P.Pow()
@@ -1719,6 +1720,64 @@ def bessel_y1(x):
     return bessel_y1_(x)
 
 
+def linspace(start, stop, num):
+    r"""
+    Returns a Tensor whose value is `num` evenly spaced in the interval `start` and `stop` (including `start` and
+    `stop`), and the length of the output Tensor is `num`.
+
+    .. math::
+        \begin{aligned}
+        &step = (stop - start)/(num - 1)\\
+        &output = [start, start+step, start+2*step, ... , stop]
+        \end{aligned}
+
+    Note:
+        In Ascend and GPU, batch dimension input is not supported. Specifically, `start` and `stop` are both required
+        to be 0-D input Tensors.
+
+    Args:
+        start (Tensor): Start value of interval. The data type must be float32. The shape of tensor is
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        stop (Tensor): Last value of interval. The data type must be float32. The shape of tensor must
+            be the same as `start`.
+        num (int): Number of ticks in the interval, inclusive of start and stop.
+            Must be positive int number.
+
+    Outputs:
+        Tensor, has the same dtype as `start`, and the shape of :math:`(N, *, num)`
+
+    Raises:
+        TypeError: If `start` or `stop` is not a Tensor.
+        TypeError: If dtype of `start` or dtype of `stop` is not float32.
+        ValueError: If shape of `start` is not the same as `stop`.
+        TypeError: If `num` is not int.
+        ValueError: If `num` is not positive int number.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> start = Tensor(1, mindspore.float32)
+        >>> stop = Tensor(10, mindspore.float32)
+        >>> num = 5
+        >>> output = ops.linspace(start, stop, num)
+        >>> print(output)
+        [ 1.    3.25  5.5   7.75 10.  ]
+        >>> start = Tensor([[2, 3, 5], [4, 6, 8]], mindspore.float32)
+        >>> stop = Tensor([[-4, 7, -2], [-10, 26, 18]], mindspore.float32)
+        >>> num = 5
+        >>> output = ops.linspace(start, stop, num)
+        >>> print(output)
+        [[[  2.     0.5   -1.    -2.5   -4.  ]
+          [  3.     4.     5.     6.     7.  ]
+          [  5.     3.25   1.5   -0.25  -2.  ]]
+         [[  4.     0.5   -3.    -6.5  -10.  ]
+          [  6.    11.    16.    21.    26.  ]
+          [  8.    10.5   13.    15.5   18.  ]]]
+    """
+    return linspace_(start, stop, num)
+
+
 def matrix_determinant(x):
     """
     Computes the determinant of one or more square matrices.
@@ -2801,6 +2860,7 @@ __all__ = [
     'log',
     'log_matrix_determinant',
     'matrix_determinant',
+    'linspace',
     'same_type_shape',
     'maximum',
     'minimum',

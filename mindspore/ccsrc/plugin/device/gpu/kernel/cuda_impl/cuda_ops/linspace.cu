@@ -30,3 +30,5 @@ void calLinSpace(const T *start, const T *stop, const size_t value_count, T *out
 }
 template CUDA_LIB_EXPORT void calLinSpace<float>(const float *start, const float *stop, const size_t value_count,
                                                  float *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void calLinSpace<double>(const double *start, const double *stop, const size_t value_count,
+                                                  double *output, cudaStream_t cuda_stream);

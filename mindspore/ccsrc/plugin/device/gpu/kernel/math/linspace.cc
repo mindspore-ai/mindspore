@@ -25,5 +25,12 @@ MS_REG_GPU_KERNEL_ONE(LinSpace,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat32),
                       LinSpaceGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(LinSpace,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeFloat64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat64),
+                      LinSpaceGpuKernelMod, double)
 }  // namespace kernel
 }  // namespace mindspore

@@ -136,6 +136,7 @@ from .math_func import (
     log,
     log_matrix_determinant,
     matrix_determinant,
+    linspace,
     maximum,
     logaddexp,
     logaddexp2,
