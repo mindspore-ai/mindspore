@@ -36,7 +36,7 @@ bool HcomAllReduceScatterKernel::Launch(const std::vector<AddressPtr> &inputs, c
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclReduceScatter(
     inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0], op_type_, stream_, group_);
   if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcclReduceScatter faled, ret:" << hccl_result;
+    MS_LOG(ERROR) << "HcclReduceScatter failed, ret:" << hccl_result;
     return false;
   }
   return true;

@@ -22,6 +22,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
+#include "include/common/utils/comm_manager.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
@@ -51,9 +52,8 @@ void ChangePrimitiveToAllToAllV(const AnfNodePtr &node) {
 
 uint32_t GetRankSize(const std::string &group) {
   uint32_t rank_size;
-  auto hccl_ret = hccl::HcclAdapter::GetInstance().HcclGetRankSize(group, &rank_size);
-  if (hccl_ret != ::HcclResult::HCCL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Get hccl rank size for group " << group << " failed, ret = " << hccl_ret;
+  if (!CommManager::GetInstance().GetRankSize(group, &rank_size)) {
+    MS_LOG(EXCEPTION) << "Get hccl rank size for group " << group << " failed.";
   }
   return rank_size;
 }
