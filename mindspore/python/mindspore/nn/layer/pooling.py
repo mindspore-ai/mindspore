@@ -421,8 +421,8 @@ def _adaptive_shape_check(in_shape, output_size, prim_name):
 @constexpr
 def _adaptive_dtype_check(x_dtype, prim_name):
     """Check dtype."""
-    if x_dtype not in [mstype.float16, mstype.float32, mstype.float64]:
-        raise TypeError("For {}, the x_dtype must be float16, float32 or float64, "
+    if x_dtype not in [mstype.float16, mstype.float32]:
+        raise TypeError("For {}, the x_dtype must be float16 or float32, "
                         "but got {}.".format(prim_name, x_dtype))
 
 
@@ -445,14 +445,14 @@ class AdaptiveAvgPool1d(Cell):
         output_size (int): the target output size :math:`L_{out}`.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16, float32 or float64 data type.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
 
     Outputs:
         Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `x`.
 
     Raises:
         TypeError: If `output_size` is not an int.
-        TypeError: If `x` is neither float16 nor float32 nor float64.
+        TypeError: If `x` is neither float16 nor float32.
         ValueError: If `output_size` is less than 1.
         ValueError: If length of shape of `x` is not equal to 3.
         ValueError: If the last dimension of `x` is smaller than `output_size`.
@@ -463,6 +463,9 @@ class AdaptiveAvgPool1d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> pool = nn.AdaptiveAvgPool1d(output_size=2)
         >>> x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
         >>> output = pool(x)
@@ -519,13 +522,13 @@ class AdaptiveMaxPool1d(Cell):
         output_size (int): the target output size :math:`L_{out}`.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16, float32 or float64 data type.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, L_{in})`, with float16 or float32 data type.
 
     Outputs:
         Tensor of shape :math:`(N, C_{in}, L_{out})`, has the same type as `x`.
 
     Raises:
-        TypeError: If `x` is neither float16 nor float32 nor float64.
+        TypeError: If `x` is neither float16 nor float32.
         TypeError: If `output_size` is not an int.
         ValueError: If `output_size` is less than 1.
         ValueError: If the last dimension of `x` is smaller than `output_size`.
@@ -537,6 +540,9 @@ class AdaptiveMaxPool1d(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
         >>> pool = nn.AdaptiveMaxPool1d(output_size=3)
         >>> x = Tensor(np.random.randint(0, 10, [1, 3, 6]), mindspore.float32)
         >>> output = pool(x)
