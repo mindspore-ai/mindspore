@@ -126,8 +126,8 @@ def run_train():
           "device{}, training loss {}, "
           "training per step cost {:.2f} ms, total_cost {:.2f} ms".format(epoch_idx, device_id,
                                                                           loss, time_cost, time_cost * step_size))
-    print(f"===resnet_thor_loss: {loss}")
-    print(f"===resnet_thor_time_cost: {time_cost}")
+    print(f"#-#resnet_thor_loss: {loss}")
+    print(f"#-#resnet_thor_time_cost: {time_cost}")
 
 if __name__ == '__main__':
     run_train()

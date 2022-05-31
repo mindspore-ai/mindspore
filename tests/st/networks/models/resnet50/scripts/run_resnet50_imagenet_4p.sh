@@ -35,7 +35,7 @@ do
     mkdir $BASE_PATH/../train_parallel$j
     cd $BASE_PATH/../train_parallel$j || exit
     echo "start resnet training for rank $RANK_ID, device $DEVICE_ID"
-    (taskset -c $cmdopt python $BASE_PATH/../train_resnet50.py &> log; grep "===" log > resnet_$i.txt) &
+    (taskset -c $cmdopt python $BASE_PATH/../train_resnet50.py &> log; grep "#-#" log > resnet_$i.txt) &
     cd ..
 done
 wait
