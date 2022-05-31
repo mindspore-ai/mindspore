@@ -22,6 +22,15 @@ from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path
 
 
+def _get_log_level(attrs):
+    attrs_dict = {}
+    if isinstance(attrs, str):
+        attrs_dict = json.loads(attrs)
+    elif isinstance(attrs, dict):
+        attrs_dict = attrs
+    return attrs_dict.get("log_level")
+
+
 def _compile_akg_task_default(json_strs, attrs):
     """
     compile func called in single process
@@ -49,15 +58,25 @@ def _compile_akg_task_ascend(json_strs, attrs):
     """
     if attrs is None:
         attrs = "{}"
+    log_level = _get_log_level(attrs)
     akg_compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
     for json_str in json_strs:
         compile_result = subprocess.run([sys.executable, akg_compiler, json_str, attrs], text=True, check=False,
                                         capture_output=True)
         if compile_result.returncode:
-            json_dict = json.loads(json_str)
-            if not json_dict.get("composite"):
+            stdout_log = compile_result.stdout.strip()
+            stderr_log = compile_result.stderr.strip()
+            if log_level == "ERROR":
+                if stdout_log:
+                    logger.error(stdout_log)
+                if stderr_log:
+                    logger.error(compile_result.stderr)
                 raise ValueError("Compile error, json str: {}! build attrs: {}".format(json_str, attrs))
-            logger.debug("Will try to split, json str: {}! build attrs: {}".format(json_str, attrs))
+            if stdout_log:
+                logger.info(stdout_log)
+            if stderr_log:
+                logger.info(compile_result.stderr)
+            logger.info("Will try to split, json str: {}! build attrs: {}".format(json_str, attrs))
 
 
 def create_akg_parallel_process(process_num, wait_time, platform):
