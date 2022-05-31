@@ -116,6 +116,8 @@ constexpr auto kAvgPoolV1 = "AvgPoolV1";
 constexpr auto kAvgPoolGradV1 = "AvgPoolGradV1";
 constexpr auto kUniqueConsecutive = "UniqueConsecutive";
 constexpr auto kRandomShuffle = "RandomShuffle";
+constexpr auto kHSigmoid = "HSigmoid";
+constexpr auto kHSigmoidGrad = "HSigmoidGrad";
 
 const std::set<std::string> kCpuKernelOps{kIdentity,           kMaskedSelect,          kMaskedSelectGrad,
                                           kDynamicStitch,      kSearchSorted,          kResizeBilinear,
@@ -176,7 +178,9 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kAvgPoolV1, "AvgPool"},
   {kNonZero, "Where"},
   {kAvgPoolGradV1, "AvgPoolGrad"},
-  {kTensorScatterElements, "ScatterElements"}};
+  {kTensorScatterElements, "ScatterElements"},
+  {kHSigmoid, "HardSigmoid"},
+  {kHSigmoidGrad, "HardSigmoidGrad"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number

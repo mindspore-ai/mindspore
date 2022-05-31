@@ -50,7 +50,8 @@ TypePtr CheckType(TypePtr type, const TypePtrList &accepts, const std::string &e
   if (ok) {
     return type;
   } else {
-    MS_EXCEPTION(TypeError) << error_message_prefix << " should be " << accepts << ",but got " << ori_type->ToString();
+    MS_EXCEPTION(TypeError) << error_message_prefix << " should be Tensor" << accepts << ",but got "
+                            << ori_type->ToString();
   }
 }
 

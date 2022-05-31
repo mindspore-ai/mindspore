@@ -2110,6 +2110,44 @@ def conv2d(x, weight, kernel_size, pad_mode="valid", padding=0, stride=1, dilati
     return output
 
 
+def hardsigmoid(input_x):
+    r"""
+    Hard sigmoid activation function.
+
+    Applies hard sigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    Hard sigmoid is defined as:
+
+    .. math::
+
+        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{x_{i} + 3}{6})),
+
+    where :math:`x_i` is an element of the input Tensor.
+
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(*)`, where :math:`*` means any number of
+          dimensions, with float16, float32 or float64 data type.
+
+    Outputs:
+        A Tensor whose dtype and shape are the same as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([ -3.5,  0,  4.3]), mindspore.float32)
+        >>> output = F.hardsigmoid(x)
+        >>> print(output)
+        [0.  0.5 1. ]
+    """
+    hardsigmoid_ = NN_OPS.HSigmoid()
+    return hardsigmoid_(input_x)
+
+
 __all__ = [
     'adaptive_avg_pool2d',
     'adaptive_max_pool3d',
