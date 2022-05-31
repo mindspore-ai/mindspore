@@ -116,6 +116,11 @@ if(ENABLE_GPU)
     list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/kernel/cuda_impl/cuda_ops/*.cu")
 
     list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        list(APPEND CUDA_NVCC_FLAGS -G)
+        message("CUDA_NVCC_FLAGS" ${CUDA_NVCC_FLAGS})
+    endif()
+
     list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/hal/device/blocking_queue.cc"
             "plugin/device/gpu/hal/device/gpu_buffer_mgr.cc")
     list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/hal/device/mpi/mpi_initializer.cc"
