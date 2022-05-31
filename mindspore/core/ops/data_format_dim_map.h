@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_OPS_DATA_FORMAT_DIM_MAP_H_
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
@@ -29,6 +30,11 @@ class MIND_API DataFormatDimMap : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DataFormatDimMap);
   DataFormatDimMap() : BaseOperator(kNameDataFormatDimMap) { InitIOName({"x"}, {"output"}); }
+  void Init(const std::string &src_format = "NHWC", const std::string &dst_format = "NCHW");
+  void set_src_format(const std::string &src_format);
+  void set_dst_format(const std::string &dst_format);
+  std::string get_src_format() const;
+  std::string get_dst_format() const;
 };
 abstract::AbstractBasePtr DataFormatDimMapInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
