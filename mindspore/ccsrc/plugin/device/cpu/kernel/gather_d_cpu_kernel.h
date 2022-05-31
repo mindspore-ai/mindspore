@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHER_D_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHER_D_CPU_KERNEL_H_
 #include <vector>
+#include <map>
 #include <memory>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -23,25 +24,27 @@
 
 namespace mindspore {
 namespace kernel {
-class GatherDCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class GatherDCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<GatherDCpuKernelMod> {
  public:
   GatherDCpuKernelMod() = default;
   ~GatherDCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  private:
   template <typename T, typename I>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using GatherDFunc = std::function<bool(GatherDCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, GatherDFunc>> func_list_;
-  GatherDFunc kernel_func_;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
   std::vector<size_t> input_shape_;
   std::vector<size_t> index_shape_;
   std::vector<size_t> output_shape_;

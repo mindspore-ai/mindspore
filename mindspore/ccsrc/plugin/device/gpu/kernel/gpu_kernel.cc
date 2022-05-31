@@ -385,10 +385,15 @@ std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(
                       << "th input in the depend_tensor_map";
   }
   auto input_tensor = depend_iter->second;
-  const auto &input_shape = inputs[input_index]->GetShapeVector();
+  auto input_shape = inputs[input_index]->GetShapeVector();
+  // The shape keep in depend_tensor_map was processed if it was empty.
+  if (input_shape.empty()) {
+    input_shape.push_back(1);
+  }
   if (input_shape != input_tensor->shape()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the " << input_index
-                      << "th input is different between the InferShape and the TensorShape";
+                      << "th input is different between the InferShape and the TensorShape: " << input_shape << " vs "
+                      << input_tensor->shape();
   }
   const auto &data_format = inputs[input_index]->GetFormat();
   if (data_format != mindspore::Format::DEFAULT_FORMAT && data_format != mindspore::Format::NCHW) {
