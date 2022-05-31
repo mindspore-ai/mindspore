@@ -27,6 +27,9 @@ __all__ = ['ModelType', 'Model', 'RunnerConfig', 'ModelParallelRunner']
 
 
 class ModelType(Enum):
+    """
+    The MoedelType is used to define the model type.
+    """
     MINDIR = 0
     MINDIR_LITE = 4
 
