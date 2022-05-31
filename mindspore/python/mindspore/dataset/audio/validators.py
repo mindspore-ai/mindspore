@@ -719,6 +719,60 @@ def check_griffin_lim(method):
     return new_method
 
 
+def check_vad(method):
+    """Wrapper method to check the parameters of Vad."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [sample_rate, trigger_level, trigger_time, search_time, allowed_gap, pre_trigger_time,
+         boot_time, noise_up_time, noise_down_time, noise_reduction_amount, measure_freq,
+         measure_duration, measure_smooth_time, hp_filter_freq, lp_filter_freq,
+         hp_lifter_freq, lp_lifter_freq], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(sample_rate, (int,), "sample_rate")
+        check_pos_int32(sample_rate, "sample_rate")
+        type_check(trigger_level, (int, float), "trigger_level")
+        check_float32(trigger_level, "trigger_level")
+        type_check(trigger_time, (int, float), "trigger_time")
+        check_non_negative_float32(trigger_time, "trigger_time")
+        type_check(search_time, (int, float), "search_time")
+        check_non_negative_float32(search_time, "search_time")
+        type_check(allowed_gap, (int, float), "allowed_gap")
+        check_non_negative_float32(allowed_gap, "allowed_gap")
+        type_check(pre_trigger_time, (int, float), "pre_trigger_time")
+        check_non_negative_float32(pre_trigger_time, "pre_trigger_time")
+        type_check(boot_time, (int, float), "boot_time")
+        check_non_negative_float32(boot_time, "boot_time")
+        type_check(noise_up_time, (int, float), "noise_up_time")
+        check_non_negative_float32(noise_up_time, "noise_up_time")
+        type_check(noise_down_time, (int, float), "noise_down_time")
+        check_non_negative_float32(noise_down_time, "noise_down_time")
+        if noise_up_time < noise_down_time:
+            raise ValueError("Input noise_up_time should be greater than noise_down_time, but got noise_up_time: {0} "
+                             "and noise_down_time: {1}.".format(noise_up_time, noise_down_time))
+        type_check(noise_reduction_amount, (int, float), "noise_reduction_amount")
+        check_non_negative_float32(noise_reduction_amount, "noise_reduction_amount")
+        type_check(measure_freq, (int, float), "measure_freq")
+        check_pos_float32(measure_freq, "measure_freq")
+        if measure_duration:
+            type_check(measure_duration, (int, float), "measure_duration")
+            check_non_negative_float32(measure_duration, "measure_duration")
+        type_check(measure_smooth_time, (int, float), "measure_smooth_time")
+        check_non_negative_float32(measure_smooth_time, "measure_smooth_time")
+        type_check(hp_filter_freq, (int, float), "hp_filter_freq")
+        check_pos_float32(hp_filter_freq, "hp_filter_freq")
+        type_check(lp_filter_freq, (int, float), "lp_filter_freq")
+        check_pos_float32(lp_filter_freq, "lp_filter_freq")
+        type_check(hp_lifter_freq, (int, float), "hp_lifter_freq")
+        check_pos_float32(hp_lifter_freq, "hp_lifter_freq")
+        type_check(lp_lifter_freq, (int, float), "lp_lifter_freq")
+        check_pos_float32(lp_lifter_freq, "lp_lifter_freq")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_vol(method):
     """Wrapper method to check the parameters of Vol."""
 

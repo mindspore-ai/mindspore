@@ -58,6 +58,7 @@
 #include "minddata/dataset/audio/ir/kernels/time_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/time_stretch_ir.h"
 #include "minddata/dataset/audio/ir/kernels/treble_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/vad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/vol_ir.h"
 #include "minddata/dataset/audio/ir/validators.h"
 #include "minddata/dataset/audio/kernels/audio_utils.h"
@@ -861,6 +862,65 @@ TrebleBiquad::TrebleBiquad(int32_t sample_rate, float gain, float central_freq, 
 
 std::shared_ptr<TensorOperation> TrebleBiquad::Parse() {
   return std::make_shared<TrebleBiquadOperation>(data_->sample_rate_, data_->gain_, data_->central_freq_, data_->Q_);
+}
+
+// Vad Transform Operation.
+struct Vad::Data {
+  Data(int32_t sample_rate, float trigger_level, float trigger_time, float search_time, float allowed_gap,
+       float pre_trigger_time, float boot_time, float noise_up_time, float noise_down_time,
+       float noise_reduction_amount, float measure_freq, float measure_duration, float measure_smooth_time,
+       float hp_filter_freq, float lp_filter_freq, float hp_lifter_freq, float lp_lifter_freq)
+      : sample_rate_(sample_rate),
+        trigger_level_(trigger_level),
+        trigger_time_(trigger_time),
+        search_time_(search_time),
+        allowed_gap_(allowed_gap),
+        pre_trigger_time_(pre_trigger_time),
+        boot_time_(boot_time),
+        noise_up_time_(noise_up_time),
+        noise_down_time_(noise_down_time),
+        noise_reduction_amount_(noise_reduction_amount),
+        measure_freq_(measure_freq),
+        measure_duration_(measure_duration),
+        measure_smooth_time_(measure_smooth_time),
+        hp_filter_freq_(hp_filter_freq),
+        lp_filter_freq_(lp_filter_freq),
+        hp_lifter_freq_(hp_lifter_freq),
+        lp_lifter_freq_(lp_lifter_freq) {}
+  int32_t sample_rate_;
+  float trigger_level_;
+  float trigger_time_;
+  float search_time_;
+  float allowed_gap_;
+  float pre_trigger_time_;
+  float boot_time_;
+  float noise_up_time_;
+  float noise_down_time_;
+  float noise_reduction_amount_;
+  float measure_freq_;
+  float measure_duration_;
+  float measure_smooth_time_;
+  float hp_filter_freq_;
+  float lp_filter_freq_;
+  float hp_lifter_freq_;
+  float lp_lifter_freq_;
+};
+
+Vad::Vad(int32_t sample_rate, float trigger_level, float trigger_time, float search_time, float allowed_gap,
+         float pre_trigger_time, float boot_time, float noise_up_time, float noise_down_time,
+         float noise_reduction_amount, float measure_freq, float measure_duration, float measure_smooth_time,
+         float hp_filter_freq, float lp_filter_freq, float hp_lifter_freq, float lp_lifter_freq)
+    : data_(std::make_shared<Data>(sample_rate, trigger_level, trigger_time, search_time, allowed_gap, pre_trigger_time,
+                                   boot_time, noise_up_time, noise_down_time, noise_reduction_amount, measure_freq,
+                                   measure_duration, measure_smooth_time, hp_filter_freq, lp_filter_freq,
+                                   hp_lifter_freq, lp_lifter_freq)) {}
+
+std::shared_ptr<TensorOperation> Vad::Parse() {
+  return std::make_shared<VadOperation>(
+    data_->sample_rate_, data_->trigger_level_, data_->trigger_time_, data_->search_time_, data_->allowed_gap_,
+    data_->pre_trigger_time_, data_->boot_time_, data_->noise_up_time_, data_->noise_down_time_,
+    data_->noise_reduction_amount_, data_->measure_freq_, data_->measure_duration_, data_->measure_smooth_time_,
+    data_->hp_filter_freq_, data_->lp_filter_freq_, data_->hp_lifter_freq_, data_->lp_lifter_freq_);
 }
 
 // Vol Transform Operation.

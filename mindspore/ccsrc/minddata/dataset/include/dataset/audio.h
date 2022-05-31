@@ -1099,6 +1099,57 @@ class MS_API TrebleBiquad final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Vad TensorTransform.
+/// \notes Attempt to trim silent background sounds from the end of the voice recording.
+class MS_API Vad final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] sample_rate Sample rate of audio signal.
+  /// \param[in] trigger_level The measurement level used to trigger activity detection (Default: 7.0).
+  /// \param[in] trigger_time The time constant (in seconds) used to help ignore short sounds (Default: 0.25).
+  /// \param[in] search_time The amount of audio (in seconds) to search for quieter/shorter sounds to include prior to
+  ///     the detected trigger point (Default: 1.0).
+  /// \param[in] allowed_gap The allowed gap (in seconds) between quiteter/shorter sounds to include prior to the
+  ///     detected trigger point (Default: 0.25).
+  /// \param[in] pre_trigger_time The amount of audio (in seconds) to preserve before the trigger point and any found
+  ///     quieter/shorter bursts (Default: 0.0).
+  /// \param[in] boot_time The time for the initial noise estimate (Default: 0.35).
+  /// \param[in] noise_up_time Time constant used by the adaptive noise estimator, when the noise level is increasing
+  ///     (Default: 0.1).
+  /// \param[in] noise_down_time Time constant used by the adaptive noise estimator, when the noise level is decreasing
+  ///     (Default: 0.01).
+  /// \param[in] noise_reduction_amount The amount of noise reduction used in the detection algorithm (Default: 1.35).
+  /// \param[in] measure_freq The frequency of the algorithm’s processing (Default: 20.0).
+  /// \param[in] measure_duration The duration of measurement (Default: 0, use twice the measurement period).
+  /// \param[in] measure_smooth_time The time constant used to smooth spectral measurements (Default: 0.4).
+  /// \param[in] hp_filter_freq The "Brick-wall" frequency of high-pass filter applied at the input to the detector
+  ///     algorithm (Default: 50.0).
+  /// \param[in] lp_filter_freq The "Brick-wall" frequency of low-pass filter applied at the input to the detector
+  ///     algorithm (Default: 6000.0).
+  /// \param[in] hp_lifter_freq The "Brick-wall" frequency of high-pass lifter applied at the input to the detector
+  ///     algorithm (Default: 150.0).
+  /// \param[in] lp_lifter_freq The "Brick-wall" frequency of low-pass lifter applied at the input to the detector
+  ///     algorithm (Default: 2000.0).
+  explicit Vad(int32_t sample_rate, float trigger_level = 7.0, float trigger_time = 0.25, float search_time = 1.0,
+               float allowed_gap = 0.25, float pre_trigger_time = 0.0, float boot_time = 0.35,
+               float noise_up_time = 0.1, float noise_down_time = 0.01, float noise_reduction_amount = 1.35,
+               float measure_freq = 20.0, float measure_duration = 0.0, float measure_smooth_time = 0.4,
+               float hp_filter_freq = 50.0, float lp_filter_freq = 6000.0, float hp_lifter_freq = 150.0,
+               float lp_lifter_freq = 2000.0);
+
+  /// \brief Destructor.
+  ~Vad() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Vol TensorTransform.
 /// \notes Add a volume to an waveform.
 class MS_API Vol final : public TensorTransform {
