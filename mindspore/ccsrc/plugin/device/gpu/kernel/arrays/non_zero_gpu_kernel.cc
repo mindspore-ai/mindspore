@@ -99,6 +99,10 @@ bool NonZeroGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     "NonZero cudaMemcpyAsync failed.");
 
   NonZero(input_ptr, index_ptr, shape_ptr, output_ptr, input_size_, rank_, cuda_stream_);
+  auto err = cudaGetLastError();
+  if (err != cudaSuccess) {
+    MS_LOG(EXCEPTION) << "Nonzero kernel failed : " << cudaGetErrorString(err);
+  }
 
   // The last element of index_ptr is the final output size of NonZero.
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&real_output_size_, index_ptr + input_size_ - 1, sizeof(int64_t),
