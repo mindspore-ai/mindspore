@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_PARSER_DETECTION_OUTPUT_PARAM_HELPER_H_
-#define DPICO_PARSER_DETECTION_OUTPUT_PARAM_HELPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_PARSER_DETECTION_OUTPUT_PARAM_HELPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_PARSER_DETECTION_OUTPUT_PARAM_HELPER_H_
 
 #include <string>
 #include <utility>
@@ -33,4 +33,4 @@ int GetDetectionOutputParamFromAttrs(std::vector<mapper::DetectionOutputParam> *
                                      const api::SharedPtr<ops::Custom> &custom_prim);
 }  // namespace dpico
 }  // namespace mindspore
-#endif  // DPICO_PARSER_DETECTION_OUTPUT_PARAM_HELPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_PARSER_DETECTION_OUTPUT_PARAM_HELPER_H_

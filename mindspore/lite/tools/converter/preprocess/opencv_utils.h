@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H_
 #include <string>
 #include <opencv2/opencv.hpp>
 #include "tools/converter/preprocess/preprocess_param.h"
@@ -32,4 +32,4 @@ int GetMatData(const cv::Mat &mat, void **data, size_t *size);
 }  // namespace preprocess
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_OPENCV_UTILS_H_

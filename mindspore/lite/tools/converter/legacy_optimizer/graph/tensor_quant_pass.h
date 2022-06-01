@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LITE_TENSOR_QUANT_PASS_H
-#define LITE_TENSOR_QUANT_PASS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAPH_TENSOR_QUANT_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAPH_TENSOR_QUANT_PASS_H_
 
 #include <memory>
 #include "tools/converter/optimizer.h"
@@ -32,4 +32,4 @@ class TensorQuantPass : public GraphPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // LITE_TENSOR_QUANT_PASS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAPH_TENSOR_QUANT_PASS_H_

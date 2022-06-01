@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_PROPOSAL_PROPOSAL_FP32_H_
-#define MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_PROPOSAL_PROPOSAL_FP32_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_PROPOSAL_SRC_PROPOSAL_FP32_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_PROPOSAL_SRC_PROPOSAL_FP32_H_
 
 #include <vector>
 #include "schema/model_generated.h"
@@ -48,4 +48,4 @@ class ProposalCPUKernel : public Kernel {
 }  // namespace proposal
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_PROPOSAL_PROPOSAL_FP32_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_NNIE_PROPOSAL_SRC_PROPOSAL_FP32_H_

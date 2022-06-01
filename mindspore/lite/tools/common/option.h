@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_OPTION_H
-#define MINDSPORE_LITE_TOOLS_COMMON_OPTION_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_OPTION_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_OPTION_H_
 
 #include <type_traits>
 #include <utility>
@@ -116,4 +116,4 @@ class Option {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_OPTION_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_OPTION_H_

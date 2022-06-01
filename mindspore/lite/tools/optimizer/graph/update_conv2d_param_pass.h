@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_
-#define MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UPDATE_CONV2D_PARAM_PASS_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UPDATE_CONV2D_PARAM_PASS_H_
 
 #include "backend/common/optimizer/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -31,4 +31,4 @@ class UpdateConv2DParamPass : public Pass {
   STATUS UpdateConv2DAttr(const CNodePtr &cnode);
 };
 }  // namespace mindspore::opt
-#endif  // MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UPDATE_CONV2D_PARAM_PASS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef NNIE_SRC_CUSTOM_ALLOCATOR_H_
-#define NNIE_SRC_CUSTOM_ALLOCATOR_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_SRC_CUSTOM_ALLOCATOR_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_SRC_CUSTOM_ALLOCATOR_H_
 
 #include <memory>
 #include <string>
@@ -44,4 +44,4 @@ class CustomAllocator : public Allocator {
 }  // namespace nnie
 }  // namespace mindspore
 
-#endif  // NNIE_SRC_CUSTOM_ALLOCATOR_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_NNIE_SRC_CUSTOM_ALLOCATOR_H_

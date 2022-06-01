@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_POOL_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_POOL_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_POOL_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_POOL_PARSER_H_
 
 #include <vector>
 #include "tools/converter/parser/pytorch/pytorch_node_parser.h"
@@ -32,4 +32,4 @@ class PytorchAvgPoolParser : public PytorchNodeParser {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_POOL_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_PYTORCH_PYTORCH_POOL_PARSER_H_

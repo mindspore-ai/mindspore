@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_COMMON_OP_ATTR_H_
-#define DPICO_COMMON_OP_ATTR_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_OP_ATTR_H_
+#define MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_OP_ATTR_H_
 
 namespace mindspore {
 constexpr auto kAclConfigPath = "AclConfigPath";
@@ -32,4 +32,4 @@ constexpr auto kOutputsFormat = "outputs_format";
 constexpr auto kOutputsShape = "outputs_shape";
 constexpr auto kScoreThreshold = "ScoreThreshold";
 }  // namespace mindspore
-#endif  // DPICO_COMMON_OP_ATTR_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_OP_ATTR_H_

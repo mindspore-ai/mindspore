@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_CALLBACK_CALLBACK_ADAPTER_H_
-#define MINDSPORE_LITE_SRC_CXX_API_CALLBACK_CALLBACK_ADAPTER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_CALLBACK_CALLBACK_ADAPTER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_CALLBACK_CALLBACK_ADAPTER_H_
 
 #include "include/api/model.h"
 #include "include/train/train_loop_callback.h"
@@ -57,4 +57,4 @@ class TrainLoopCallBackAdapter : public lite::TrainLoopCallBack {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_CALLBACK_CALLBACK_ADAPTER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_CALLBACK_CALLBACK_ADAPTER_H_

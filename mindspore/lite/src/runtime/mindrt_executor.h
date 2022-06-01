@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_MINDRT_EXECUTOR_H_
-#define MINDSPORE_LITE_SRC_MINDRT_EXECUTOR_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_MINDRT_EXECUTOR_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_MINDRT_EXECUTOR_H_
 
 #include <memory>
 #include <vector>

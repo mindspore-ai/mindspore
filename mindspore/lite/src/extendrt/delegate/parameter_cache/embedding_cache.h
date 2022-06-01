@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_EMBEDDING_CACHE_H_
-#define MINDSPORE_LITE_EMBEDDING_CACHE_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_EMBEDDING_CACHE_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_EMBEDDING_CACHE_H_
 #include <cmath>
 #include <algorithm>
 #include <memory>
@@ -86,4 +86,4 @@ class EmbeddingCache {
 };
 }  // namespace cache
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_EMBEDDING_CACHE_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_EMBEDDING_CACHE_H_

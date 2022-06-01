@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_JAVA_SRC_COMMON_MS_LOG_H
-#define MINDSPORE_LITE_JAVA_SRC_COMMON_MS_LOG_H
+#ifndef MINDSPORE_LITE_JAVA_NATIVE_COMMON_MS_LOG_H_
+#define MINDSPORE_LITE_JAVA_NATIVE_COMMON_MS_LOG_H_
 
 #define TAG "MS_LITE"
 
@@ -42,4 +42,4 @@
   { printf("[INFO] %s|%s|%s[%d]|: " #fmt "\r\n", TAG, __FILE__, __func__, __LINE__, ##args); }
 #endif
 
-#endif  // MINDSPORE_LITE_JAVA_SRC_COMMON_MS_LOG_H
+#endif  // MINDSPORE_LITE_JAVA_NATIVE_COMMON_MS_LOG_H_

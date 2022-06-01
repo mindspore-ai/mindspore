@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_COMPONENT_H_
-#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_COMPONENT_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMPONENT_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMPONENT_H_
 
 namespace mindspore::lite::micro {
 constexpr auto kInputPrefixName = "g_Input";
@@ -55,4 +55,4 @@ constexpr auto kEndExternCpp =
   "}\n"
   "#endif\n";
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_COMPONENT_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_COMPONENT_COMPONENT_H_

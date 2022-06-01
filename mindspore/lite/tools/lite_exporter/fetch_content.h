@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_ANF_EXPORTER_FETCH_CONTENT_H_
-#define MINDSPORE_LITE_TOOLS_ANF_EXPORTER_FETCH_CONTENT_H_
+#ifndef MINDSPORE_LITE_TOOLS_LITE_EXPORTER_FETCH_CONTENT_H_
+#define MINDSPORE_LITE_TOOLS_LITE_EXPORTER_FETCH_CONTENT_H_
 
 #include <string>
 #include <vector>
@@ -63,4 +63,4 @@ int FetchOpParameterFromNode(const AnfNodePtr &node, OpParameter **op_parameter)
 int FetchOpParameterFromFuncGraph(const FuncGraphPtr &func_graph, std::map<std::string, OpParameter *> *op_parameters);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_ANF_EXPORTER_FETCH_CONTENT_H_
+#endif  // MINDSPORE_LITE_TOOLS_LITE_EXPORTER_FETCH_CONTENT_H_

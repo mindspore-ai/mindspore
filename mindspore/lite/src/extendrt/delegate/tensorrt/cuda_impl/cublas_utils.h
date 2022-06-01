@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_CUBLAS_UTILS_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_CUBLAS_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_CUDA_IMPL_CUBLAS_UTILS_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_CUDA_IMPL_CUBLAS_UTILS_H_
 
 #include <cublas_v2.h>
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cuda_helper.h"
@@ -59,4 +59,4 @@ void CublasMM1Batch(const void *a_addr, const void *b_addr, void *c_addr, const 
 void CublasMMBatched(void **a_addrs, void **b_addrs, void **c_addrs, const int *params,
                      const cublasOperation_t *operations, const cudaDataType *data_types, cublasHandle_t cublas_handle);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_CUBLAS_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_CUDA_IMPL_CUBLAS_UTILS_H_

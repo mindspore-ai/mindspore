@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_CXX_API_CONTEXT_H_
-#define MINDSPORE_LITE_SRC_CXX_API_CONTEXT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_CONTEXT_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_CONTEXT_H_
 
 #include <cstdint>
 #include <map>
@@ -57,4 +57,4 @@ struct DeviceInfoContext::Data {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_CONTEXT_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_CONTEXT_H_

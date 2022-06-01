@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_PROTOBUF_UTILS_H
-#define MINDSPORE_LITE_TOOLS_COMMON_PROTOBUF_UTILS_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_PROTOBUF_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_PROTOBUF_UTILS_H_
 
 #include <string>
 #include <vector>
@@ -39,4 +39,4 @@ STATUS ReadProtoFromBinaryFile(const std::string &file, google::protobuf::Messag
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_PROTOBUF_UTILS_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_PROTOBUF_UTILS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_GRAPH_H_
-#define MINDSPORE_LITE_MICRO_CODER_GRAPH_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GRAPH_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GRAPH_H_
 
 #include <map>
 #include <memory>
@@ -87,4 +87,4 @@ class CoderGraph {
   Model *model_{nullptr};
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_GRAPH_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GRAPH_H_

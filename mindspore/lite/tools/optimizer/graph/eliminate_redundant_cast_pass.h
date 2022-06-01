@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_ELIMINATE_REDUNDANT_CAST_PASS_H
-#define LITE_ELIMINATE_REDUNDANT_CAST_PASS_H
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ELIMINATE_REDUNDANT_CAST_PASS_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ELIMINATE_REDUNDANT_CAST_PASS_H_
 #include <set>
 #include "include/registry/converter_context.h"
 #include "backend/common/optimizer/pass.h"
@@ -38,4 +38,4 @@ class EliminateRedundantCastPass : public Pass {
   std::set<AnfNodePtr> remove_cnode_;
 };
 }  // namespace mindspore::opt
-#endif  // LITE_ELIMINATE_REDUNDANT_CAST_PASS_H
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ELIMINATE_REDUNDANT_CAST_PASS_H_

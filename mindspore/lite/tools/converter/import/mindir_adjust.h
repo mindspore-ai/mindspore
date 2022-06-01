@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_MINDIR_ADJUST_PASS_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_MINDIR_ADJUST_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_MINDIR_ADJUST_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_MINDIR_ADJUST_H_
 
 #include <set>
 #include <string>
@@ -44,4 +44,4 @@ class MindirAdjust {
   bool train_flag_ = false;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_MINDIR_ADJUST_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_MINDIR_ADJUST_H_

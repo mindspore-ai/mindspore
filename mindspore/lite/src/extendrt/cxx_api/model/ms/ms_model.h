@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_SESSION_SESSION_H
-#define MINDSPORE_CCSRC_SESSION_SESSION_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MS_MS_MODEL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_MS_MS_MODEL_H_
 
 #include <vector>
 #include <string>

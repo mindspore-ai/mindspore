@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H_
-#define MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_TENSOR_TENSOR_IMPL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_TENSOR_TENSOR_IMPL_H_
 
 #include <cstddef>
 #include <numeric>
@@ -272,4 +272,4 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_CXX_API_TENSOR_TENSOR_IMPL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_TENSOR_TENSOR_IMPL_H_

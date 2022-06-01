@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_CONV_INIT_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_CONV_INIT_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_INT8_CONV_INIT_INT8_WRAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_INT8_CONV_INIT_INT8_WRAPPER_H_
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -31,4 +31,4 @@ size_t ConvPackWeightSize(int input_channel, int output_channel, int kernel_plan
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_WRAPPER_INT8_CONV_INIT_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_INT8_CONV_INIT_INT8_WRAPPER_H_

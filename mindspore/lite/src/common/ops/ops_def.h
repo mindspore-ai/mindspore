@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_OPS_OPS_DEF_H_
-#define MINDSPORE_LITE_SRC_OPS_OPS_DEF_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_OPS_OPS_DEF_H_
+#define MINDSPORE_LITE_SRC_COMMON_OPS_OPS_DEF_H_
 #include <string>
 #include <map>
 #include <memory>
@@ -181,4 +181,4 @@
 #define OP_SCHEMA_DEF_ONLY_END(OP)
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_OPS_OPS_DEF_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_OPS_OPS_DEF_H_

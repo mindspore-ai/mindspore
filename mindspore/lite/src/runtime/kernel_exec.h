@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_KERNEL_EXEC_H_
-#define MINDSPORE_LITE_SRC_KERNEL_EXEC_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_EXEC_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_EXEC_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -403,4 +403,4 @@ LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs, const s
 }
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_KERNEL_EXEC_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_EXEC_H_

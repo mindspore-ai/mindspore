@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_FP32_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_FP32_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_ARITHMETIC_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_ARITHMETIC_FP32_H_
 
 #include <vector>
 #include "src/runtime/kernel/cpu/base/arithmetic_base.h"
@@ -55,4 +55,4 @@ class ArithmeticCPUKernel : public ArithmeticBaseCPUKernel {
   ArithmeticOptFunc<bool> arithmetic_opt_run_bool_{nullptr};
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_FP32_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_ARITHMETIC_FP32_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TOOLS_CONVERTER_ADAPTER_ACL_INFER_CUSTOM_INFER_H_
-#define TOOLS_CONVERTER_ADAPTER_ACL_INFER_CUSTOM_INFER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_INFER_CUSTOM_INFER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_INFER_CUSTOM_INFER_H_
 
 #include <vector>
 #include <string>
@@ -37,4 +37,4 @@ class CustomInterface : public mindspore::kernel::KernelInterface {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // TOOLS_CONVERTER_ADAPTER_ACL_INFER_CUSTOM_INFER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_INFER_CUSTOM_INFER_H_

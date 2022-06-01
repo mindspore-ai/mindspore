@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_ARM_BASE_TRANSPOSE_BASE_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_ARM_BASE_TRANSPOSE_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_TRANSPOSE_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_TRANSPOSE_BASE_H_
 
 #include <vector>
 #include "nnacl/transpose.h"
@@ -77,4 +77,4 @@ class TransposeBaseCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_ARM_BASE_TRANSPOSE_BASE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_TRANSPOSE_BASE_H_

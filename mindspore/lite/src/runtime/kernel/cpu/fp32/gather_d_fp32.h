@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHER_D_H
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHER_D_H
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_GATHER_D_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_GATHER_D_FP32_H_
 
 #include <vector>
 #include "include/errorcode.h"
@@ -36,4 +36,4 @@ class GatherDCPUKernel : public GatherBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHER_D_H
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_GATHER_D_FP32_H_

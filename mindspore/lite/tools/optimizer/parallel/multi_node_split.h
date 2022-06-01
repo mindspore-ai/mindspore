@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_NODE_SPLIT_H
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_NODE_SPLIT_H
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_NODE_SPLIT_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_NODE_SPLIT_H_
 #include <utility>
 #include <memory>
 #include "tools/optimizer/parallel/split_strategy.h"
@@ -58,4 +58,4 @@ class MultiNodeSplitProxy : public MultiNodeSplit {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_NODE_SPLIT_H
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_MULTI_NODE_SPLIT_H_

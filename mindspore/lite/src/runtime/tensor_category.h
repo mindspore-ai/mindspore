@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_TENSOR_CATEGORY_H_
-#define MINDSPORE_LITE_SRC_TENSOR_CATEGORY_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_TENSOR_CATEGORY_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_TENSOR_CATEGORY_H_
 
 #include <cstddef>
 #include "ir/dtype/type_id.h"
@@ -36,4 +36,4 @@ Category TensorCategory(const int node_type, const size_t shape_num, const TypeI
 Category TensorCategory(const schema::Tensor &tensor);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_TENSOR_CATEGORY_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_TENSOR_CATEGORY_H_

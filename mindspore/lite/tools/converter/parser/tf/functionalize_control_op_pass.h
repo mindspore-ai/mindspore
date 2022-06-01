@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUNCTIONALIZE_CONTROL_OP_PASS_H_
-#define MINDSPORE_LITE_SRC_PASS_FUNCTIONALIZE_CONTROL_OP_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_FUNCTIONALIZE_CONTROL_OP_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_FUNCTIONALIZE_CONTROL_OP_PASS_H_
 #include <string>
 #include <set>
 #include <utility>
@@ -72,4 +72,4 @@ class FunctionalizeControlOpPass : public Pass {
   std::vector<CNodePtr> loop_cond_nodes_{};
 };
 }  // namespace mindspore::opt
-#endif  // MINDSPORE_LITE_SRC_PASS_FUNCTIONALIZE_CONTROL_OP_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_FUNCTIONALIZE_CONTROL_OP_PASS_H_

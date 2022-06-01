@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_PRINT_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_PRINT_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_PRINT_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_PRINT_H_
 #include "include/mpi_nnie.h"
 #include "include/hi_type.h"
 #include "src/nnie_common.h"
@@ -55,4 +55,4 @@ HI_S32 NniePrintReportResult(NnieParam *pst_nnie_param);
 HI_S32 NniePrintReportResultInputSeg(NnieParam *pst_nnie_param, int segnum);
 }  // namespace nnie
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_PRINT_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_PRINT_H_

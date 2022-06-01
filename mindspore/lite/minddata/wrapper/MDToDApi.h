@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_MDTODAPI_H_
-#define DATASET_MDTODAPI_H_
+#ifndef MINDSPORE_LITE_MINDDATA_WRAPPER_MDTODAPI_H_
+#define MINDSPORE_LITE_MINDDATA_WRAPPER_MDTODAPI_H_
 
 #include <stdint.h>
 #include <sys/types.h>

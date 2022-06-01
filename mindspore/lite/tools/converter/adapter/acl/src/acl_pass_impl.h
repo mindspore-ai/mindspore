@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TOOLS_CONVERTER_ADAPTER_ACL_ACL_PASS_IMPL_H
-#define TOOLS_CONVERTER_ADAPTER_ACL_ACL_PASS_IMPL_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_SRC_ACL_PASS_IMPL_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_SRC_ACL_PASS_IMPL_H_
 
 #include <string>
 #include <utility>
@@ -90,4 +90,4 @@ class AclPassImpl {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // TOOLS_CONVERTER_ADAPTER_ACL_ACL_PASS_IMPL_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_SRC_ACL_PASS_IMPL_H_

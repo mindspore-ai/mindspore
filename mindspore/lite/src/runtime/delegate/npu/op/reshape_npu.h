@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_NPU_OP_RESHAPE_NPU_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_NPU_OP_RESHAPE_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_RESHAPE_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_RESHAPE_NPU_H_
 #include <vector>
 #include <string>
 #include <utility>
@@ -47,4 +47,4 @@ class ReshapeNPUOp : public NPUOp {
   hiai::op::Reshape *reshape_ = nullptr;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_NPU_OP_RESHAPE_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_RESHAPE_NPU_H_

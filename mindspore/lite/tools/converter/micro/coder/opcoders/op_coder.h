@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_H_
 
 #include <vector>
 #include <set>
@@ -131,4 +131,4 @@ std::unique_ptr<OperatorCoder> CPUOpCoderCreator(const std::vector<Tensor *> &in
   return coder;
 }
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_OP_CODER_H_

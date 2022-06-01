@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_MANAGER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_MANAGER_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_MANAGER_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_MANAGER_H_
 #include <vector>
 #include <string>
 #include <map>
@@ -114,4 +114,4 @@ class NNIEManager {
 };
 }  // namespace nnie
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_MANAGER_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_MANAGER_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_CODER_SIGMOID_INT8_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_SIGMOID_INT8_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_SIGMOID_INT8_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_SIGMOID_INT8_CODER_H_
 
 #include <string>
 #include <memory>
@@ -38,4 +38,4 @@ class SigmodInt8Coder final : public OperatorCoder {
   int8_t *table_list_{nullptr};
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_MICRO_CODER_SIGMOID_INT8_CODER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_SIGMOID_INT8_CODER_H_

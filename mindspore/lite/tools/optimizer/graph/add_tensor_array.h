@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_GRAPH_ADD_TENSOR_ARRAY_H_
-#define MINDSPORE_LITE_SRC_PASS_GRAPH_ADD_TENSOR_ARRAY_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ADD_TENSOR_ARRAY_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ADD_TENSOR_ARRAY_H_
 
 #include <string>
 #include "schema/inner/model_generated.h"
@@ -34,4 +34,4 @@ class AddTensorArray : public PatternProcessPass {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_PASS_GRAPH_ADD_TENSOR_ARRAY_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ADD_TENSOR_ARRAY_H_

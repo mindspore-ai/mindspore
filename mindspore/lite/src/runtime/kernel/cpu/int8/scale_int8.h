@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SCALE_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SCALE_INT8_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_SCALE_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_SCALE_INT8_H_
 
 #include <string.h>
 #include <vector>
@@ -61,4 +61,4 @@ class ScaleInt8CPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SCALE_INT8_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_SCALE_INT8_H_

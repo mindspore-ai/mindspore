@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_SUB_GRAPH_KERNEL_H_
-#define MINDSPORE_LITE_SRC_SUB_GRAPH_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_SUB_GRAPH_KERNEL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_SUB_GRAPH_KERNEL_H_
 
 #include <atomic>
 #include <utility>
@@ -252,4 +252,4 @@ class CustomSubGraph : public SubGraphKernel {
   int Execute(const KernelCallBack &before, const KernelCallBack &after) override;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_SUB_GRAPH_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_SUB_GRAPH_KERNEL_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_AFFINE_FP32_H
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_AFFINE_FP32_H
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_AFFINE_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_AFFINE_FP32_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -75,4 +75,4 @@ class AffineFp32CPUKernel : public LiteKernel {
   int splice_dst_col_{0};
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_AFFINE_FP32_H
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_AFFINE_FP32_H_

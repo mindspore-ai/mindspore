@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_INFER_DPICO_SPP_INFER_H_
-#define DPICO_INFER_DPICO_SPP_INFER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_INFER_DPICO_SPP_INFER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_INFER_DPICO_SPP_INFER_H_
 
 #include <vector>
 #include "include/kernel_interface.h"

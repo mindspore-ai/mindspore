@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXX_API_GRAPH_MS_GPU_GRAPH_IMPL_H
-#define MINDSPORE_CCSRC_CXX_API_GRAPH_MS_GPU_GRAPH_IMPL_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_GPU_GPU_GRAPH_IMPL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_GPU_GPU_GRAPH_IMPL_H_
 #include <string>
 #include <vector>
 #include <utility>
@@ -66,4 +66,4 @@ class GPUGraphImpl : public GraphCell::GraphImpl {
   uint32_t workspace_size_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_MS_GPU_GRAPH_IMPL_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_GPU_GPU_GRAPH_IMPL_H_

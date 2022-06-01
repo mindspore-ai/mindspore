@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_CODER_WRAPPER_FP32_ARITHMETIC_FP32_WRAPPER_H_
-#define MINDSPORE_LITE_MICRO_CODER_WRAPPER_FP32_ARITHMETIC_FP32_WRAPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_FP32_ARITHMETIC_FP32_WRAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_FP32_ARITHMETIC_FP32_WRAPPER_H_
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include <string.h>
 #ifdef __cplusplus
@@ -63,4 +63,4 @@ void BroadcastRun(const void *input0, const void *input1, void *output, int dim,
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_LITE_MICRO_CODER_WRAPPER_FP32_ARITHMETIC_FP32_WRAPPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_FP32_ARITHMETIC_FP32_WRAPPER_H_

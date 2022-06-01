@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TOOLS_CONVERTER_ADAPTER_ACL_COMMON_COMMON_UTILS_H
-#define TOOLS_CONVERTER_ADAPTER_ACL_COMMON_COMMON_UTILS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_COMMON_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_COMMON_UTILS_H_
 
 #include <vector>
 #include <memory>
@@ -42,4 +42,4 @@ STATUS DelRedundantParameter(const FuncGraphPtr &func_graph);
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
-#endif  // TOOLS_CONVERTER_ADAPTER_ACL_COMMON_COMMON_UTILS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_COMMON_UTILS_H_

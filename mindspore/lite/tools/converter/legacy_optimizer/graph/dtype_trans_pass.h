@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_PREDICT_DTYPE_TRANS_PASS_H
-#define MINDSPORE_PREDICT_DTYPE_TRANS_PASS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAPH_DTYPE_TRANS_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAPH_DTYPE_TRANS_PASS_H_
 
 #include <memory>
 #include <utility>
@@ -81,4 +81,4 @@ class DTypeTransPass : public GraphPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_PREDICT_DTYPE_TRANS_PASS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_LEGACY_OPTIMIZER_GRAPH_DTYPE_TRANS_PASS_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_PREPROCESS_PARAM_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_PREPROCESS_PARAM_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_PREPROCESS_PARAM_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_PREPROCESS_PARAM_H_
 #include <string>
 #include <vector>
 #include <map>
@@ -47,4 +47,4 @@ struct DataPreProcessParam {
 }  // namespace preprocess
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_PREPROCESS_PARAM_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PREPROCESS_PREPROCESS_PARAM_H_

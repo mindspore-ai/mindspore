@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_CODER_UTILS_TYPE_CAST_H_
-#define MINDSPORE_LITE_MICRO_CODER_UTILS_TYPE_CAST_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_TYPE_CAST_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_TYPE_CAST_H_
 
 #include <map>
 #include <limits>
@@ -72,4 +72,4 @@ std::string GetVariableTypeName() {
   return "";
 }
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_UTILS_TYPE_CAST_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_TYPE_CAST_H_

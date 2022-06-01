@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SLICE_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SLICE_INT8_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_SLICE_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_SLICE_INT8_H_
 
 #include <vector>
 #include "src/runtime/kernel/cpu/base/slice_base.h"
@@ -35,4 +35,4 @@ class SliceInt8CPUKernel : public SliceCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SLICE_INT8_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_SLICE_INT8_H_

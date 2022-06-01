@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_SRC_GRAPH_SPLITTER_H_
-#define DPICO_SRC_GRAPH_SPLITTER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_GRAPH_SPLIT_API_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_GRAPH_SPLIT_API_H_
 
 #include <memory>
 #include <map>
@@ -33,4 +33,4 @@ api::AnfNodePtrList GetSubgraphOutputs(const Subgraph &subgraph, const api::Func
 int FillSubgraphOutputsFormat(Subgraph *subgraph, const api::FuncGraphPtr &func_graph);
 }  // namespace dpico
 }  // namespace mindspore
-#endif  // DPICO_SRC_GRAPH_SPLITTER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_GRAPH_SPLIT_API_H_

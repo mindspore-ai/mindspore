@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_
 #include <NvInfer.h>
 #include "include/errorcode.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
@@ -77,4 +77,4 @@ class TensorRTRuntime {
   RuntimePrecisionMode runtime_percision_mode_{RuntimePrecisionMode::RuntimePrecisionMode_FP32};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_

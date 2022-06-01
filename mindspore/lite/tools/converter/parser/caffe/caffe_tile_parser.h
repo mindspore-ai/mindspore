@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_TILE_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_TILE_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_TILE_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_TILE_PARSER_H_
 
 #include <vector>
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
@@ -33,4 +33,4 @@ class CaffeTileParser : public CaffeNodeParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_TILE_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_TILE_PARSER_H_

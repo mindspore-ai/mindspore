@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
-#define MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_SRC_CUSTOM_INTERFACE_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_SRC_CUSTOM_INTERFACE_H_
 
 #include <vector>
 #include <string>
@@ -35,4 +35,4 @@ class CustomInterface : public mindspore::kernel::KernelInterface {
 };
 }  // namespace acl
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_ACL_CUSTOM_INTERFACE_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_SRC_CUSTOM_INTERFACE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_LAYERNORM_GRAD_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_LAYERNORM_GRAD_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_GRAD_LAYERNORM_GRAD_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_GRAD_LAYERNORM_GRAD_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -40,4 +40,4 @@ class LayerNormGradCPUKernel : public LiteKernel {
   int param_size_ = 1;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_LAYERNORM_GRAD_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_GRAD_LAYERNORM_GRAD_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_PARALLEL_DEPTHWISE_CONV2D_INFO_H_
-#define MINDSPORE_LITE_SRC_PASS_PARALLEL_DEPTHWISE_CONV2D_INFO_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_DEPTHWISE_CONV2D_INFO_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_DEPTHWISE_CONV2D_INFO_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -63,4 +63,4 @@ class DepthwiseConv2DInfo : public Conv2DInfo {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_PASS_PARALLEL_DEPTHWISE_CONV2D_INFO_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_DEPTHWISE_CONV2D_INFO_H_

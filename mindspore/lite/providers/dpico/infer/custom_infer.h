@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_INFER_CUSTOM_INFER_H_
-#define DPICO_INFER_CUSTOM_INFER_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_DPICO_INFER_CUSTOM_INFER_H_
+#define MINDSPORE_LITE_PROVIDERS_DPICO_INFER_CUSTOM_INFER_H_
 
 #include <vector>
 #include "include/kernel_interface.h"
@@ -34,4 +34,4 @@ class CustomInterface : public kernel::KernelInterface {
 }  // namespace dpico
 }  // namespace mindspore
 
-#endif  // DPICO_INFER_CUSTOM_INFER_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_DPICO_INFER_CUSTOM_INFER_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_EXPORT_MODEL_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_EXPORT_MODEL_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_EXPORT_MODEL_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_EXPORT_MODEL_H_
 
 #include <map>
 #include <memory>
@@ -31,4 +31,4 @@ STATUS ExportModel(const FuncGraphPtr &graph, const std::shared_ptr<ConverterPar
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_EXPORT_MODEL_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_EXPORT_MODEL_H_

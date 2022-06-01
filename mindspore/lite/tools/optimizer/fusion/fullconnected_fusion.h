@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_FC_FC_FUSION_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_FC_FC_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_FULLCONNECTED_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_FULLCONNECTED_FUSION_H_
 
 #include <string>
 #include <unordered_map>
@@ -34,4 +34,4 @@ class FullConnectedFusion : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 }  // namespace mindspore::opt
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_FC_FC_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_FULLCONNECTED_FUSION_H_

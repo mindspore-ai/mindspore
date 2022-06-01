@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_INT8_CONCAT_WRAPPER_INT8_WRAPPER_H_
-#define MINDSPORE_LITE_MICRO_INT8_CONCAT_WRAPPER_INT8_WRAPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_INT8_CONCAT_INT8_WRAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_INT8_CONCAT_INT8_WRAPPER_H_
 
 #include "nnacl/errorcode.h"
 #include "nnacl/concat_parameter.h"
@@ -31,4 +31,4 @@ typedef struct {
 } ConcatInt8Args;
 
 int ConcatInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
-#endif  // MINDSPORE_LITE_MICRO_INT8_CONCAT_WRAPPER_INT8_WRAPPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_INT8_CONCAT_INT8_WRAPPER_H_

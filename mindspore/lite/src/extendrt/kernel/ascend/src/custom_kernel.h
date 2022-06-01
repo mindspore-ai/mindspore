@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ASCEND310_KERNEL_CUSTOM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ASCEND310_KERNEL_CUSTOM_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_SRC_CUSTOM_KERNEL_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_SRC_CUSTOM_KERNEL_H_
 
 #include <vector>
 #include <string>
@@ -56,4 +56,4 @@ class CustomAscendKernel : public kernel::Kernel {
 }  // namespace acl
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ASCEND310_KERNEL_CUSTOM_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_KERNEL_ASCEND_SRC_CUSTOM_KERNEL_H_

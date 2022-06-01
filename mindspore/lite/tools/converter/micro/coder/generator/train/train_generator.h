@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_TRAIN_GENERATOR_H_
-#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_TRAIN_GENERATOR_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_TRAIN_TRAIN_GENERATOR_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_TRAIN_TRAIN_GENERATOR_H_
 
 #include <utility>
 #include <memory>
@@ -33,4 +33,4 @@ class TrainGenerator : public Generator {
   void CodeGradientFunc(std::ofstream &ofs) const;
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_TRAIN_GENERATOR_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_TRAIN_TRAIN_GENERATOR_H_

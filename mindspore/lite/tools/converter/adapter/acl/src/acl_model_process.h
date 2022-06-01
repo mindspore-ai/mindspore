@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef TOOLS_CONVERTER_ADAPTER_ACL_SRC_ACL_MODEL_PROCESS_H
-#define TOOLS_CONVERTER_ADAPTER_ACL_SRC_ACL_MODEL_PROCESS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_SRC_ACL_MODEL_PROCESS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_SRC_ACL_MODEL_PROCESS_H_
 
 #include <vector>
 #include "include/errorcode.h"
@@ -46,4 +46,4 @@ class AclModelProcess {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // TOOLS_CONVERTER_ADAPTER_ACL_SRC_ACL_MODEL_PROCESS_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_SRC_ACL_MODEL_PROCESS_H_

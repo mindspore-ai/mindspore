@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MUL_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MUL_INT8_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_MUL_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_MUL_INT8_H_
 
 #include <vector>
 #include <limits>
@@ -60,4 +60,4 @@ int MulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 int FastHWBroadcastMulInt8Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MUL_INT8_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_MUL_INT8_H_

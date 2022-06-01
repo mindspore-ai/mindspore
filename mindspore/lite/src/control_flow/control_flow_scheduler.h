@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CONTROL_FLOW_SCHEDULER_H_
-#define MINDSPORE_LITE_SRC_CONTROL_FLOW_SCHEDULER_H_
+#ifndef MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_FLOW_SCHEDULER_H_
+#define MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_FLOW_SCHEDULER_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -127,4 +127,4 @@ class ControlFlowScheduler {
 
 using ControlFlowSchedulerPtr = std::shared_ptr<ControlFlowScheduler>;
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_CONTROL_FLOW_SCHEDULER_H_
+#endif  // MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_FLOW_SCHEDULER_H_

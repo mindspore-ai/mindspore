@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_DISTRIBUTION_DISTRIBUTION_UTILS_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_DISTRIBUTION_DISTRIBUTION_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_DISTRIBUTION_DISTRIBUTION_UTILS_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_DISTRIBUTION_DISTRIBUTION_UTILS_H_
 
 #include <nccl.h>
 #include "include/errorcode.h"
@@ -29,4 +29,4 @@ ncclDataType_t ConvertNCCLDataType(nvinfer1::DataType type_id);
 
 ncclRedOp_t ConvertNCCLReduceMode(schema::ReduceMode mode);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_DISTRIBUTION_DISTRIBUTION_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_DISTRIBUTION_DISTRIBUTION_UTILS_H_

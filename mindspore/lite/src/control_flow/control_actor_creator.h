@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CONTROLFLOW_CONTROL_ACTOR_CREATOR_H_
-#define MINDSPORE_LITE_SRC_CONTROLFLOW_CONTROL_ACTOR_CREATOR_H_
+#ifndef MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_ACTOR_CREATOR_H_
+#define MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_ACTOR_CREATOR_H_
 
 #include <memory>
 #include "src/runtime/lite_kernel.h"
@@ -24,4 +24,4 @@
 namespace mindspore::lite {
 std::shared_ptr<LiteOpActor> CreateActor(kernel::KernelExec *kernel, lite::InnerContext *ctx);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_CONTROLFLOW_CONTROL_ACTOR_CREATOR_H_
+#endif  // MINDSPORE_LITE_SRC_CONTROL_FLOW_CONTROL_ACTOR_CREATOR_H_

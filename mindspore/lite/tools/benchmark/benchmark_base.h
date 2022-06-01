@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINNIE_BENCHMARK_BENCHMARK_BASE_H_
-#define MINNIE_BENCHMARK_BENCHMARK_BASE_H_
+#ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_BENCHMARK_BASE_H_
+#define MINDSPORE_LITE_TOOLS_BENCHMARK_BENCHMARK_BASE_H_
 
 #include <signal.h>
 #include <random>
@@ -469,4 +469,4 @@ int SvpSysExit();
 #endif
 
 }  // namespace mindspore::lite
-#endif  // MINNIE_BENCHMARK_BENCHMARK_BASE_H_
+#endif  // MINDSPORE_LITE_TOOLS_BENCHMARK_BENCHMARK_BASE_H_

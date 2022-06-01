@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_BASE_STRIDED_SLICE_H_
-#define MINDSPORE_LITE_SRC_BACKEND_ARM_BASE_STRIDED_SLICE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_STRIDED_SLICE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_STRIDED_SLICE_H_
 
 #include <vector>
 #include "nnacl/fp32/strided_slice_fp32.h"
@@ -55,4 +55,4 @@ class StridedSliceCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_BASE_STRIDED_SLICE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_STRIDED_SLICE_H_

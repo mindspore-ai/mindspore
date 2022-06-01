@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_COMMON_OP_ATTR_H_
-#define DPICO_COMMON_OP_ATTR_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_OP_ATTR_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_OP_ATTR_H_
 
 namespace mindspore {
 namespace dpico {
@@ -118,4 +118,4 @@ constexpr auto kUseGlobalStats = "use_global_stats";
 constexpr auto kZoomFactor = "zoom_factor";
 }  // namespace dpico
 }  // namespace mindspore
-#endif  // DPICO_COMMON_OP_ATTR_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_OP_ATTR_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESIZE_INT8_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESIZE_INT8_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_RESIZE_INT8_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_RESIZE_INT8_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -57,4 +57,4 @@ class ResizeInt8CPUKernel : public ResizeBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_RESIZE_INT8_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_INT8_RESIZE_INT8_H_

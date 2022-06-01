@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CONTROLFLOW_ACTOR_SWITCH_ACTOR_H_
-#define MINDSPORE_LITE_SRC_CONTROLFLOW_ACTOR_SWITCH_ACTOR_H_
+#ifndef MINDSPORE_LITE_SRC_CONTROL_FLOW_ACTOR_SWITCH_ACTOR_H_
+#define MINDSPORE_LITE_SRC_CONTROL_FLOW_ACTOR_SWITCH_ACTOR_H_
 #include <vector>
 #include <memory>
 #include <string>
@@ -73,4 +73,4 @@ class LiteSwitchOpActor : public LiteOpActor {
   std::vector<std::vector<OpDataPtr<Tensor>>> all_branchs_output_data_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_CONTROLFLOW_ACTOR_SWITCH_ACTOR_H_
+#endif  // MINDSPORE_LITE_SRC_CONTROL_FLOW_ACTOR_SWITCH_ACTOR_H_

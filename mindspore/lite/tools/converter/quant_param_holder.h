@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANT_PARAM_CONTEXT_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANT_PARAM_CONTEXT_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANT_PARAM_HOLDER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANT_PARAM_HOLDER_H_
 
 #include <utility>
 #include <vector>
@@ -154,4 +154,4 @@ using QuantParamHolderPtr = std::shared_ptr<QuantParamHolder>;
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANT_PARAM_CONTEXT_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANT_PARAM_HOLDER_H_

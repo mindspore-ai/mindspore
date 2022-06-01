@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_PROPOSAL_PROPOSAL_INFER_H_
-#define MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_PROPOSAL_PROPOSAL_INFER_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_PROPOSAL_SRC_PROPOSAL_INFER_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_PROPOSAL_SRC_PROPOSAL_INFER_H_
 #include <vector>
 #include "include/kernel_interface.h"
 
@@ -32,4 +32,4 @@ class ProposalInterface : public mindspore::kernel::KernelInterface {
 };
 }  // namespace proposal
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_PROPOSAL_PROPOSAL_INFER_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_NNIE_PROPOSAL_SRC_PROPOSAL_INFER_H_

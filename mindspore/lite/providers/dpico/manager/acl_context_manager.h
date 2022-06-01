@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_MANAGER_ACL_CONTEXT_MANAGER_H_
-#define DPICO_MANAGER_ACL_CONTEXT_MANAGER_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_DPICO_MANAGER_ACL_CONTEXT_MANAGER_H_
+#define MINDSPORE_LITE_PROVIDERS_DPICO_MANAGER_ACL_CONTEXT_MANAGER_H_
 
 #include <memory>
 #include <map>
@@ -40,4 +40,4 @@ class AclContextManager {
 using AclContextManagerPtr = std::shared_ptr<AclContextManager>;
 }  // namespace lite
 }  // namespace mindspore
-#endif  // DPICO_MANAGER_ACL_CONTEXT_MANAGER_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_DPICO_MANAGER_ACL_CONTEXT_MANAGER_H_

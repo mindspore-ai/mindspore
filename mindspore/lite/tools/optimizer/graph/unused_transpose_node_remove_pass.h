@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_REMOVE_UNUSED_TRANSPOSE_PASS_H_
-#define MINDSPORE_LITE_SRC_PASS_REMOVE_UNUSED_TRANSPOSE_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UNUSED_TRANSPOSE_NODE_REMOVE_PASS_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UNUSED_TRANSPOSE_NODE_REMOVE_PASS_H_
 #include <string>
 #include "backend/common/optimizer/pass.h"
 #include "include/registry/converter_context.h"
@@ -33,4 +33,4 @@ class RemoveUnusedTransposeOpPass : public Pass {
   FmkType fmk_type = converter::kFmkTypeTf;
 };
 }  // namespace mindspore::opt
-#endif  // MINDSPORE_LITE_SRC_PASS_REMOVE_UNUSED_TRANSPOSE_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_UNUSED_TRANSPOSE_NODE_REMOVE_PASS_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PACK_WEIGHT_H_
-#define MINDSPORE_LITE_SRC_PACK_WEIGHT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_H_
 #include <map>
 #include <string>
 #include <algorithm>
@@ -53,4 +53,4 @@ class PackWeight {
   std::unordered_map<const char *, char *> model_buf_map_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_PACK_WEIGHT_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_H_

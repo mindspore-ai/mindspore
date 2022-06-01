@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LITE_MICRO_PARAM_PARSER_H
-#define LITE_MICRO_PARAM_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_MICRO_PARAM_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_MICRO_PARAM_PARSER_H_
 
 #include <string>
 #include "tools/converter/config_parser/config_file_parser.h"
@@ -37,4 +37,4 @@ class MicroParamParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MICRO_PARAM_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CONFIG_PARSER_MICRO_PARAM_PARSER_H_

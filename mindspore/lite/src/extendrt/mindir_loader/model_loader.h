@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_MODEL_LOADER_MODEL_LOADER_H_
-#define MINDSPORE_LITE_SRC_MODEL_LOADER_MODEL_LOADER_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_MINDIR_LOADER_MODEL_LOADER_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_MINDIR_LOADER_MODEL_LOADER_H_
 
 #include <memory>
 
@@ -68,4 +68,4 @@ class ModelLoaderRegistrar {
   static ModelLoaderRegistrar g_##model_type##model_loader##ModelLoader(model_type, model_loader_creator);
 }  // namespace mindspore::infer
 
-#endif  // MINDSPORE_LITE_SRC_MODEL_LOADER_MODEL_LOADER_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_MINDIR_LOADER_MODEL_LOADER_H_

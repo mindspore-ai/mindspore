@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_INNER_CONTEXT_H
-#define MINDSPORE_LITE_SRC_INNER_CONTEXT_H
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_INNER_CONTEXT_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_INNER_CONTEXT_H_
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -105,4 +105,4 @@ struct InnerContext : public Context {
 int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num);
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_INNER_CONTEXT_H
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_INNER_CONTEXT_H_

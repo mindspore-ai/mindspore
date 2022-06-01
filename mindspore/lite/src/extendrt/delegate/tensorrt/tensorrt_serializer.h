@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SERIALIZER_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SERIALIZER_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_SERIALIZER_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_SERIALIZER_H_
 #include <string>
 #include <utility>
 #include <NvInfer.h>
@@ -42,4 +42,4 @@ class TensorRTSerializer {
   TensorRTLogger logger_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_SERIALIZER_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_SERIALIZER_H_

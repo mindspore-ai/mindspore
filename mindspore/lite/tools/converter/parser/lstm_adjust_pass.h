@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_PARSER_LSTM_ADJUST_PASS_H_
-#define MINDSPORE_LITE_TOOLS_PARSER_LSTM_ADJUST_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_LSTM_ADJUST_PASS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_LSTM_ADJUST_PASS_H_
 #include <vector>
 #include <memory>
 #include <set>
@@ -35,4 +35,4 @@ class LstmAdjustPass : public Pass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_PARSER_LSTM_ADJUST_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_LSTM_ADJUST_PASS_H_

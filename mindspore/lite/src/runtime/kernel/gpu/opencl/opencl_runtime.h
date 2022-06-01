@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_
-#define MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_GPU_OPENCL_OPENCL_RUNTIME_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_GPU_OPENCL_OPENCL_RUNTIME_H_
 #include <vector>
 #include <map>
 #include <memory>
@@ -238,4 +238,4 @@ class OpenCLRuntimeInnerWrapper {
   OpenCLRuntime *ocl_runtime_{nullptr};
 };
 }  // namespace mindspore::lite::opencl
-#endif  // MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_GPU_OPENCL_OPENCL_RUNTIME_H_

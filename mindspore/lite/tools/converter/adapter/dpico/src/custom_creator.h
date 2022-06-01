@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_SRC_CUSTOM_CREATOR_H
-#define DPICO_SRC_CUSTOM_CREATOR_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_CUSTOM_CREATOR_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_CUSTOM_CREATOR_H_
 
 #include <memory>
 #include <string>
@@ -58,4 +58,4 @@ class CustomOpCreator {
 };
 }  // namespace dpico
 }  // namespace mindspore
-#endif  // DPICO_SRC_CUSTOM_CREATOR_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_SRC_CUSTOM_CREATOR_H_

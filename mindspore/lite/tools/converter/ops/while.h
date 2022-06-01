@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_WHILE_H_
-#define LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_WHILE_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_OPS_WHILE_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_OPS_WHILE_H_
 #include <vector>
 #include <memory>
 
@@ -46,4 +46,4 @@ using PrimWhilePtr = std::shared_ptr<While>;
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_WHILE_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_OPS_WHILE_H_

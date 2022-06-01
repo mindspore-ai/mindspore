@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_NNIE_CFG_PARSER_H_
-#define MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_NNIE_CFG_PARSER_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_CFG_PARSER_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_SRC_NNIE_CFG_PARSER_H_
 #include <vector>
 #include <map>
 #include <string>

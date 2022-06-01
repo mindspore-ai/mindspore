@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXX_API_FACTORY_H
-#define MINDSPORE_CCSRC_CXX_API_FACTORY_H
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_FACTORY_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_FACTORY_H_
 #include <functional>
 #include <map>
 #include <string>
@@ -84,4 +84,4 @@ class Registrar {
 
 #define API_FACTORY_REG(BASE, DERIVE) static const Registrar<BASE> g_api_##DERIVE##_reg(API_FACTORY_CREATOR(DERIVE));
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXX_API_FACTORY_H
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_FACTORY_H_

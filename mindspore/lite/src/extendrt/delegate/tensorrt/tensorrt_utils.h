@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_UTILS_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_UTILS_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_UTILS_H_
 #include <experimental/optional>
 #include <vector>
 #include <NvInfer.h>

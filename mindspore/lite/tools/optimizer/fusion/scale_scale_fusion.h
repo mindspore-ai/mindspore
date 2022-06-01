@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_SCALE_SCALE_FUSION_H_
-#define MINDSPORE_LITE_SRC_PASS_FUSION_SCALE_SCALE_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SCALE_SCALE_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SCALE_SCALE_FUSION_H_
 
 #include <vector>
 #include <string>
@@ -50,4 +50,4 @@ class ScaleScaleFusion : public PatternProcessPass {
   mutable size_t down_scale_axis_;
 };
 }  // namespace mindspore::opt
-#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_SCALE_SCALE_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_SCALE_SCALE_FUSION_H_

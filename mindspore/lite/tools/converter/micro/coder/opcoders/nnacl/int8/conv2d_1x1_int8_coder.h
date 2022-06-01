@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_Conv2D_1X1_INT8_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_Conv2D_1X1_INT8_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_CONV2D_1X1_INT8_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_CONV2D_1X1_INT8_CODER_H_
 #include "coder/opcoders/base/conv2d_base_coder.h"
 #include <memory>
 #include <string>
@@ -64,4 +64,4 @@ class Conv2D1x1Int8Coder final : public Conv2DBaseCoder {
   bool filter_peroc_{false};
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_Conv2D_1X1_INT8_CODER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_NNACL_INT8_CONV2D_1X1_INT8_CODER_H_

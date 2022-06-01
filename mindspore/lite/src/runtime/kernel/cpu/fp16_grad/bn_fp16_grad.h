@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_BN_FP16_GRAD_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_BN_FP16_GRAD_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GRAD_BN_FP16_GRAD_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GRAD_BN_FP16_GRAD_H_
 
 #include <vector>
 #include "src/runtime/kernel_exec.h"
@@ -40,4 +40,4 @@ class BNGradCPUKernelFp16 : public LiteKernel {
   size_t ws_size_ = 0;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_BN_FP16_GRAD_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GRAD_BN_FP16_GRAD_H_

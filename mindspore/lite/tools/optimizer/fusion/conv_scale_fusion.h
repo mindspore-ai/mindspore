@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_CONV_SCALE_FUSION_H_
-#define MINDSPORE_LITE_SRC_PASS_FUSION_CONV_SCALE_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_SCALE_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_SCALE_FUSION_H_
 
 #include "tools/optimizer/fusion/conv_transform_fusion.h"
 
@@ -33,4 +33,4 @@ class ConvScaleFusion : public ConvTransformFusion {
   int InitTransParam(const CNodePtr &, int, float *, float *) const override;
 };
 }  // namespace mindspore::opt
-#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV_SCALE_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_SCALE_FUSION_H_

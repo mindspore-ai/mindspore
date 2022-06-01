@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H
-#define MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H_
 
 #include <cstdlib>
 #include <unordered_map>
@@ -92,4 +92,4 @@ int TransferMetaGraph(const schema::MetaGraphT &graph, void **model_buf, size_t 
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H_

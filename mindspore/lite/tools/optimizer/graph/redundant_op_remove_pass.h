@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_REDUNDANT_OP_REMOVE_PASS_H_
-#define MINDSPORE_LITE_SRC_PASS_REDUNDANT_OP_REMOVE_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_REDUNDANT_OP_REMOVE_PASS_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_REDUNDANT_OP_REMOVE_PASS_H_
 #include <string>
 #include <set>
 #include "backend/common/optimizer/pass.h"
@@ -43,4 +43,4 @@ class RemoveRedundantOpPass : public Pass {
   std::set<AnfNodePtr> remove_cnode_;
 };
 }  // namespace mindspore::opt
-#endif  // MINDSPORE_LITE_SRC_PASS_REDUNDANT_OP_REMOVE_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_REDUNDANT_OP_REMOVE_PASS_H_

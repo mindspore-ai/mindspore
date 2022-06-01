@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_SPLITER_H
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_SPLITER_H
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_SPLITER_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_SPLITER_H_
 #include <vector>
 #include <string>
 #include <set>
@@ -84,4 +84,4 @@ class Spliter {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_SPLITER_H
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_PARALLEL_SPLITER_H_

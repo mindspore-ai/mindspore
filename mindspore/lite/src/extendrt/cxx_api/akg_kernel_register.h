@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXXAPI_AKG_KERNEL_REGISTER_H_
-#define MINDSPORE_CCSRC_CXXAPI_AKG_KERNEL_REGISTER_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_AKG_KERNEL_REGISTER_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_AKG_KERNEL_REGISTER_H_
 
 namespace mindspore {
 void RegAllOp();
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_CXXAPI_AKG_KERNEL_REGISTER_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_AKG_KERNEL_REGISTER_H_

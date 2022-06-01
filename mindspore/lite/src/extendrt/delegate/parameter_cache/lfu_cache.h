@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_LRU_CACHE_H_
-#define MINDSPORE_LITE_LRU_CACHE_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_LFU_CACHE_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_LFU_CACHE_H_
 
 #include <map>
 #include <unordered_map>
@@ -52,4 +52,4 @@ class LFUCacheAlgorithm : public CacheAlgorithm {
 };
 }  // namespace cache
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_LRU_CACHE_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_LFU_CACHE_H_

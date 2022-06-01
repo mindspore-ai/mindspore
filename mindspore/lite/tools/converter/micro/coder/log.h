@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_LOG_H_
-#define MINDSPORE_LITE_MICRO_CODER_LOG_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_LOG_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_LOG_H_
 
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
@@ -111,4 +111,4 @@
       return false;                       \
     }                                     \
   } while (0)
-#endif  // MINDSPORE_LITE_MICRO_CODER_LOG_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_LOG_H_

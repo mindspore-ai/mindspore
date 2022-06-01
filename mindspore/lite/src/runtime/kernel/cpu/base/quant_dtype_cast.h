@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_QUANTDTYPECAST_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_QUANTDTYPECAST_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_QUANT_DTYPE_CAST_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_QUANT_DTYPE_CAST_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -48,4 +48,4 @@ class QuantDTypeCastCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_QUANTDTYPECAST_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_QUANT_DTYPE_CAST_H_

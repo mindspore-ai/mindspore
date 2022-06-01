@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_SUB_GRAPH_SPLIT_H_
-#define MINDSPORE_LITE_SRC_SUB_GRAPH_SPLIT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_SUB_GRAPH_SPLIT_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_SUB_GRAPH_SPLIT_H_
 
 #include <stack>
 #include <vector>
@@ -153,4 +153,4 @@ class SearchSubGraph {
 };
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_SUB_GRAPH_SPLIT_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_SUB_GRAPH_SPLIT_H_

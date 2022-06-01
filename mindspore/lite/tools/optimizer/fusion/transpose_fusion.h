@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_TRANSPOSE_FUSION_H_
-#define MINDSPORE_LITE_SRC_PASS_FUSION_TRANSPOSE_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TRANSPOSE_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TRANSPOSE_FUSION_H_
 
 #include <string>
 #include <unordered_map>
@@ -47,4 +47,4 @@ class TransposeFusion : public MultiplePatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_TRANSPOSE_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TRANSPOSE_FUSION_H_

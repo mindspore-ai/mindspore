@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GATHER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GATHER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GATHER_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GATHER_FP16_H_
 
 #include <arm_neon.h>
 #include <vector>
@@ -37,4 +37,4 @@ class GatherFp16CPUKernel : public GatherBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GATHER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GATHER_FP16_H_

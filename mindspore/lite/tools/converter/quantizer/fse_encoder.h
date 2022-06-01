@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H_
 
 #include <vector>
 #include "tools/converter/quantizer/fse_bit_stream.h"
@@ -61,4 +61,4 @@ class FSEEncoder {
                           uint8_t *out8, size_t max_size, size_t *offset);
 };
 }  // namespace mindspore::lite::quant
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H_

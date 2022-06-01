@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MINDSPORE_LITE_SRC_HUFFMAN_DECODE_H_
-#define MINDSPORE_LITE_MINDSPORE_LITE_SRC_HUFFMAN_DECODE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_HUFFMAN_DECODE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_HUFFMAN_DECODE_H_
 
 #include <cstring>
 #include <utility>
@@ -76,4 +76,4 @@ class HuffmanDecode {
 
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_MINDSPORE_LITE_SRC_HUFFMAN_DECODE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_HUFFMAN_DECODE_H_

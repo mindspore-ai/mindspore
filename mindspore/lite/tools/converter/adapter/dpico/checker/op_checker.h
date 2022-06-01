@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_CHECKER_OP_CHECKER_H_
-#define DPICO_CHECKER_OP_CHECKER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_CHECKER_OP_CHECKER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_CHECKER_OP_CHECKER_H_
 
 #include <string>
 #include <utility>
@@ -72,4 +72,4 @@ class OpCheckerRegistrar {
 }  // namespace dpico
 }  // namespace mindspore
 
-#endif  // DPICO_CHECKER_OP_CHECKER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_CHECKER_OP_CHECKER_H_

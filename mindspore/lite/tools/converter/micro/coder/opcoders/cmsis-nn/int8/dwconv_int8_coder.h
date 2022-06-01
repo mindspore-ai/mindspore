@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_CMSIS_NN_DWCONV_INT8_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_CMSIS_NN_DWCONV_INT8_CODER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_CMSIS_NN_INT8_DWCONV_INT8_CODER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_CMSIS_NN_INT8_DWCONV_INT8_CODER_H_
 
 #include <vector>
 #include "coder/opcoders/cmsis-nn/int8/conv2d_base_coder.h"
@@ -75,4 +75,4 @@ class DWConvInt8Coder final : public Conv2DBaseCoder {
   int16_t *buffer{nullptr};
 };
 }  // namespace mindspore::lite::micro::cmsis
-#endif  // MINDSPORE_LITE_MICRO_CODER_CMSIS_NN_DWCONV_INT8_CODER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_CMSIS_NN_INT8_DWCONV_INT8_CODER_H_

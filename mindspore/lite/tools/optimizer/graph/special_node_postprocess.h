@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_SPECIAL_NODE_POSTPROCESS_H_
-#define MINDSPORE_LITE_SRC_PASS_SPECIAL_NODE_POSTPROCESS_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_SPECIAL_NODE_POSTPROCESS_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_SPECIAL_NODE_POSTPROCESS_H_
 
 #include "backend/common/optimizer/pass.h"
 
@@ -34,4 +34,4 @@ class SpecialNodePostProcess : public Pass {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_PASS_SPECIAL_NODE_POSTPROCESS_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_SPECIAL_NODE_POSTPROCESS_H_

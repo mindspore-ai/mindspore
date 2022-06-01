@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_LAYOUT_TRANSFORM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_LAYOUT_TRANSFORM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_LAYOUT_TRANSFORM_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_LAYOUT_TRANSFORM_H_
 
 #ifdef ENABLE_FP16
 #include <arm_neon.h>
@@ -36,4 +36,4 @@ LayoutConvertor LayoutTransformInt8(mindspore::Format src_format, mindspore::For
 LayoutConvertor LayoutTransform(TypeId data_type, mindspore::Format src_format, mindspore::Format dst_format);
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_LAYOUT_TRANSFORM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_LAYOUT_TRANSFORM_H_

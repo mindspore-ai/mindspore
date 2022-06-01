@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CPU_INFO_H
-#define MINDSPORE_LITE_SRC_CPU_INFO_H
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_CPU_INFO_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_CPU_INFO_H_
 
 #if defined(ENABLE_AVX512) || defined(ENABLE_AVX)
 #include "nnacl/intrinsics/ms_simd_cpu_info.h"
@@ -79,4 +79,4 @@ class CpuInfo {
 };
 }  // namespace mindspore::lite
 #endif
-#endif  // MINDSPORE_LITE_SRC_CPU_INFO_H
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_CPU_INFO_H_

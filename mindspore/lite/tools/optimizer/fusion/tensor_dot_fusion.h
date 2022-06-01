@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_TENSOR_DOT_FUSION_H_
-#define MINDSPORE_LITE_SRC_PASS_FUSION_TENSOR_DOT_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TENSOR_DOT_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TENSOR_DOT_FUSION_H_
 
 #include <memory>
 #include <string>
@@ -40,4 +40,4 @@ class TensorDotFusion : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_TENSOR_DOT_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TENSOR_DOT_FUSION_H_

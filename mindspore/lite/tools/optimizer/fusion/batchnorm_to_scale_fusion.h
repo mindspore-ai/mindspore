@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_FUSION_BN_TO_SCALE_FUSION_H_
-#define MINDSPORE_LITE_SRC_PASS_FUSION_BN_TO_SCALE_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_BATCHNORM_TO_SCALE_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_BATCHNORM_TO_SCALE_FUSION_H_
 
 #include <vector>
 #include "backend/common/optimizer/optimizer.h"
@@ -36,4 +36,4 @@ class BatchNormToScaleFusion : public Pass {
 
 int CalculateScaleAndBiasFromBN(const CNodePtr &bn_node, int kernel_num, float *trans_scale, float *trans_bias);
 }  // namespace mindspore::opt
-#endif  // MINDSPORE_LITE_SRC_PASS_FUSION_BN_TO_SCALE_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_BATCHNORM_TO_SCALE_FUSION_H_

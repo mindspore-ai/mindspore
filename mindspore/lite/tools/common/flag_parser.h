@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_FLAG_PARSER_H
-#define MINDSPORE_LITE_TOOLS_COMMON_FLAG_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_FLAG_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_FLAG_PARSER_H_
 
 #include <functional>
 #include <map>
@@ -302,4 +302,4 @@ void FlagParser::AddFlag(Option<T> Flags::*t, const std::string &flagName, const
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_FLAG_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_FLAG_PARSER_H_

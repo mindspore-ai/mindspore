@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_PRIOR_BOX_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_PRIOR_BOX_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_PRIOR_BOX_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_PRIOR_BOX_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -55,4 +55,4 @@ class PriorBoxCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_PRIOR_BOX_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_PRIOR_BOX_H_

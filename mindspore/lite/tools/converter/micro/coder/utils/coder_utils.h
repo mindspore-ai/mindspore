@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
-#define MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_CODER_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_CODER_UTILS_H_
 
 #include <set>
 #include <limits>
@@ -42,4 +42,4 @@ std::string ArrayToString(std::vector<T> array) {
   return "{" + result + "}";
 }
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_UTILS_CODER_UTILS_H_

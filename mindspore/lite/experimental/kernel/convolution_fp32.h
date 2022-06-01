@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_CONVOLUTION_FP32_H_
-#define MINDSPORE_LITE_CONVOLUTION_FP32_H_
+#ifndef MINDSPORE_LITE_EXPERIMENTAL_KERNEL_CONVOLUTION_FP32_H_
+#define MINDSPORE_LITE_EXPERIMENTAL_KERNEL_CONVOLUTION_FP32_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -39,4 +39,4 @@ class ConvolutionCPUFp32 : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_FP32_H_
+#endif  // MINDSPORE_LITE_EXPERIMENTAL_KERNEL_CONVOLUTION_FP32_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_FACTORY_MGR_BASE_H_
-#define MINDSPORE_LITE_FACTORY_MGR_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_FACTORY_MGR_BASE_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_FACTORY_MGR_BASE_H_
 #include <map>
 #include <memory>
 #include "include/api/status.h"
@@ -78,4 +78,4 @@ class CommonProcductRegistrar : public ProcductRegistrar<KEY, PRODUCT> {
   static mindspore::lite::CommonProcductRegistrar<KEY, PRODUCT, PRODUCT_IMPL> g_commonProcductRegistrar##name(key);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_FACTORY_MGR_BASE_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_PARAMETER_CACHE_FACTORY_MGR_BASE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_BIAS_FP16_GRAD_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_BIAS_FP16_GRAD_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GRAD_BIAS_FP16_GRAD_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GRAD_BIAS_FP16_GRAD_H_
 
 #include <vector>
 #include "src/runtime/kernel_exec.h"
@@ -41,4 +41,4 @@ class BiasGradCPUKernelFp16 : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_BIAS_FP16_GRAD_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_GRAD_BIAS_FP16_GRAD_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LITE_TFLITE_INPUTS_ADJUST_H
-#define LITE_TFLITE_INPUTS_ADJUST_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_TFLITE_INPUTS_ADJUST_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_TFLITE_INPUTS_ADJUST_H_
 
 #include <string>
 #include "tools/optimizer/common/gllo_utils.h"
@@ -31,4 +31,4 @@ class TfliteInputsAdjust {
   STATUS AdjustSlice(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::lite
-#endif  // LITE_TFLITE_INPUTS_ADJUST_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_TFLITE_INPUTS_ADJUST_H_

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_STRING_HASHTABLE_LOOKUP_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_STRING_HASHTABLE_LOOKUP_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_STRING_HASHTABLE_LOOKUP_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_STRING_HASHTABLE_LOOKUP_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -34,4 +34,4 @@ class HashtableLookupCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_STRING_HASHTABLE_LOOKUP_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_STRING_HASHTABLE_LOOKUP_H_

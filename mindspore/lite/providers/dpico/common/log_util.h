@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_COMMON_LOG_UTIL_H_
-#define DPICO_COMMON_LOG_UTIL_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_LOG_UTIL_H_
+#define MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_LOG_UTIL_H_
 
 #include <memory>
 #include <sstream>
@@ -97,4 +97,4 @@ class DpicoLogWriter {
 #define MS_LOG_ERROR MSLOG_IF(mindspore::DpicoLogLevel::ERROR)
 }  // namespace mindspore
 
-#endif  // DPICO_COMMON_LOG_UTIL_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_LOG_UTIL_H_

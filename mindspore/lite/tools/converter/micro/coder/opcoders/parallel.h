@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_PARALLEL_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_PARALLEL_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_PARALLEL_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_PARALLEL_H_
 
 namespace mindspore::lite::micro {
 constexpr auto kDefaultTaskId = 0;
@@ -37,4 +37,4 @@ constexpr auto kRunArgsAddr = "(void *)&args";
 constexpr float kLhsScale = 0;
 constexpr float kRhsScale = 1;
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_PARALLEL_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_PARALLEL_H_

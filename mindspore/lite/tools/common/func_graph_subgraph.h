@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_FUNC_GRAPH_SUBGRAPH_H
-#define MINDSPORE_LITE_TOOLS_FUNC_GRAPH_SUBGRAPH_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_FUNC_GRAPH_SUBGRAPH_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_FUNC_GRAPH_SUBGRAPH_H_
 
 #include <memory>
 #include <string>
@@ -76,4 +76,4 @@ class SubGraph {
   const std::string name_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_FUNC_GRAPH_SUBGRAPH_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_FUNC_GRAPH_SUBGRAPH_H_

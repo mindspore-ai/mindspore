@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_SCHEMA_TENSOR_WRAPPER_H_
-#define MINDSPORE_LITE_SRC_SCHEMA_TENSOR_WRAPPER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_SCHEMA_TENSOR_WRAPPER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_SCHEMA_TENSOR_WRAPPER_H_
 
 #include <utility>
 #include <string>
@@ -57,4 +57,4 @@ class SchemaTensorWrapper {
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_SCHEMA_TENSOR_WRAPPER_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_SCHEMA_TENSOR_WRAPPER_H_

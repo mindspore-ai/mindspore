@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_PARSER_CAFFE_NODE_PARSER_H_
-#define DPICO_PARSER_CAFFE_NODE_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_PARSER_CAFFE_CAFFE_NODE_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_PARSER_CAFFE_CAFFE_NODE_PARSER_H_
 
 #include <string>
 #include <utility>
@@ -52,4 +52,4 @@ STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape);
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // DPICO_PARSER_CAFFE_NODE_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_PARSER_CAFFE_CAFFE_NODE_PARSER_H_

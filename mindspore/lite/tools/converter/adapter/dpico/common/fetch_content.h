@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_COMMON_FETCH_CONTENT_H_
-#define DPICO_COMMON_FETCH_CONTENT_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_FETCH_CONTENT_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_FETCH_CONTENT_H_
 
 #include <string>
 #include <vector>
@@ -38,4 +38,4 @@ int FetchDataFromParameterNode(const api::CNodePtr &cnode, size_t index, DataInf
 int GetDataSizeFromTensor(DataInfo *data_info, int *data_size);
 }  // namespace dpico
 }  // namespace mindspore
-#endif  // DPICO_COMMON_FETCH_CONTENT_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_COMMON_FETCH_CONTENT_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_PASS_RUNTIME_NCX_PASS__H_
-#define MINDSPORE_LITE_SRC_RUNTIME_PASS_RUNTIME_NCX_PASS__H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_PASS_RUNTIME_NCX_PASS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_PASS_RUNTIME_NCX_PASS_H_
 
 #include <vector>
 #include "src/runtime/kernel_exec.h"
@@ -25,4 +25,4 @@ namespace mindspore::lite::pass {
 // To support NC4HW4(fp32) or NC8HW8(fp16) runtime kernel.
 int RuntimeNCXPass(std::vector<kernel::KernelExec *> *subgraphs, std::vector<Tensor *> *tensors);
 }  // namespace mindspore::lite::pass
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_RUNTIME_NCX_PASS__H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_RUNTIME_NCX_PASS_H_

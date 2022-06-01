@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_KERNEL_BUILDER_H_
-#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_KERNEL_BUILDER_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_KERNEL_BUILDER_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_KERNEL_BUILDER_H_
 #include "ir/func_graph.h"
 #include "backend/common/optimizer/pass.h"
 
@@ -30,4 +30,4 @@ class KernelBuilder : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_KERNEL_BUILDER_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_AKG_KERNEL_BUILDER_H_

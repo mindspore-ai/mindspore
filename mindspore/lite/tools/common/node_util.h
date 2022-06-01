@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H
-#define MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H_
 
 #include <memory>
 #include <vector>
@@ -435,4 +435,4 @@ inline bool IsGraphInput(const AnfNodePtr &cnode) {
 int UpdateDataType(const AnfNodePtr &cnode, TypeId new_data_type);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_NODE_UTIL_H_

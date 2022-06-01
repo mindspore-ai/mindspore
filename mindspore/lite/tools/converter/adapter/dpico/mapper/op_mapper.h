@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_MAPPER_OP_MAPPER_H_
-#define DPICO_MAPPER_OP_MAPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_OP_MAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_OP_MAPPER_H_
 
 #include <vector>
 #include <string>
@@ -58,4 +58,4 @@ STATUS PushOfflineArgs(const api::CNodePtr &cnode, mapper::BaseOperator *base_op
 }  // namespace dpico
 }  // namespace mindspore
 
-#endif  // DPICO_MAPPER_OP_MAPPER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_DPICO_MAPPER_OP_MAPPER_H_

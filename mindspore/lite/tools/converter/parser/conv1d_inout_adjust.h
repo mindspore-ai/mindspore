@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CONV1D_INOUT_ADJUST_PASS_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CONV1D_INOUT_ADJUST_PASS_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CONV1D_INOUT_ADJUST_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CONV1D_INOUT_ADJUST_H_
 #include <string>
 #include <vector>
 #include "backend/common/optimizer/pass.h"
@@ -39,4 +39,4 @@ class Conv1DInOutAdjust {
   lite::STATUS ExpandFilterShape(const AnfNodePtr &weight_node, const schema::Format &format);
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_CONV1D_INOUT_ADJUST_PASS_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CONV1D_INOUT_ADJUST_H_

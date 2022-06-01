@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_H_
-#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_GENERATOR_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_GENERATOR_H_
 
 #include <sys/stat.h>
 #include <fstream>
@@ -77,4 +77,4 @@ class Generator {
 #endif
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_GENERATOR_GENERATOR_H_

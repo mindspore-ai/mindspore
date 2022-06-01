@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_CUDNN_UTILS_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_CUDNN_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_CUDA_IMPL_CUDNN_UTILS_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_CUDA_IMPL_CUDNN_UTILS_H_
 
 #include <cudnn.h>
 #include <NvInfer.h>
@@ -45,4 +45,4 @@ cudnnDataType_t ConvertCudnnDataType(nvinfer1::DataType trt_datatype);
 int CudnnActivation(cudnnHandle_t handle, cudnnActivationDescriptor_t activation_desc,
                     const cudnnTensorDescriptor_t x_esc, const void *x, const cudnnTensorDescriptor_t y_dsc, void *y);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_CDUA_IMPL_CUDNN_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_CUDA_IMPL_CUDNN_UTILS_H_

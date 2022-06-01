@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef DPICO_COMMON_INFER_UTIL_H_
-#define DPICO_COMMON_INFER_UTIL_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_INFER_UTIL_H_
+#define MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_INFER_UTIL_H_
 
 #include <string>
 #include <vector>
@@ -30,4 +30,4 @@ int CheckCustomParam(const schema::Custom *param, const std::string &param_name)
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // DPICO_COMMON_INFER_UTIL_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_DPICO_COMMON_INFER_UTIL_H_

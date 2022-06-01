@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_COMMON_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_COMMON_FP16_H_
 
 #include <vector>
 #include "src/runtime/lite_kernel.h"
@@ -27,4 +27,4 @@ float16_t *MallocOutputFp16(lite::Tensor *output, const lite::InnerContext *ctx)
 int ConvertFp32TensorToFp16(lite::Tensor *tensor, const lite::InnerContext *ctx);
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP16_COMMON_FP16_H_

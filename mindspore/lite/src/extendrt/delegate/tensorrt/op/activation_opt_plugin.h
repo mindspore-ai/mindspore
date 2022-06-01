@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ACTIVATION_OPT_PLUGIN_H_
-#define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ACTIVATION_OPT_PLUGIN_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_ACTIVATION_OPT_PLUGIN_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_ACTIVATION_OPT_PLUGIN_H_
 
 #include <string>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
@@ -69,4 +69,4 @@ class ActivationOptPluginCreater : public TensorRTPluginCreater<ActivationOptPlu
   ActivationOptPluginCreater() : TensorRTPluginCreater(std::string(ACTIVATION_OPT_PLUGIN_NAME)) {}
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ACTIVATION_OPT_PLUGIN_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_ACTIVATION_OPT_PLUGIN_H_

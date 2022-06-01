@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_CODER_SESSION_H_
-#define MINDSPORE_LITE_MICRO_CODER_SESSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_SESSION_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_SESSION_H_
 
 #include <map>
 #include <string>
@@ -61,4 +61,4 @@ class CoderSession {
 
 std::shared_ptr<CoderSession> CreateCoderSession();
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_SESSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_SESSION_H_

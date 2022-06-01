@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_CUSTOM_PARAMETER_H_
-#define MINDSPORE_LITE_NNACL_CUSTOM_PARAMETER_H_
+#ifndef MINDSPORE_LITE_PROVIDERS_NNIE_SRC_CUSTOM_INFER_H_
+#define MINDSPORE_LITE_PROVIDERS_NNIE_SRC_CUSTOM_INFER_H_
 #include <vector>
 #include <memory>
 #include "include/kernel_interface.h"
@@ -32,4 +32,4 @@ class CustomInterface : public mindspore::kernel::KernelInterface {
 };
 }  // namespace nnie
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_NNACL_CUSTOM_PARAMETER_H_
+#endif  // MINDSPORE_LITE_PROVIDERS_NNIE_SRC_CUSTOM_INFER_H_

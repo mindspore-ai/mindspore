@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_TOOLS_STRING_UTIL_H_
-#define MINDSPORE_LITE_SRC_TOOLS_STRING_UTIL_H_
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_STRING_UTIL_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_STRING_UTIL_H_
 #include <vector>
 #include <string>
 #include <utility>
@@ -46,4 +46,4 @@ bool ConvertDoubleVector(const std::string &str, std::vector<double> *value);
 size_t Hex2ByteArray(const std::string &hex_str, unsigned char *byte_array, size_t max_len);
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_TOOLS_STRING_UTIL_H_
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_STRING_UTIL_H_
