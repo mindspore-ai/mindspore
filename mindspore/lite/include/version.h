@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_LITE_INCLUDE_VERSION_H_
 #define MINDSPORE_LITE_INCLUDE_VERSION_H_
 
+#include <string>
+#include <vector>
 #include "include/lite_utils.h"
 
 namespace mindspore {
@@ -24,7 +26,7 @@ namespace lite {
 /// \brief Global method to get a version string.
 ///
 /// \return The version string of MindSpore Lite.
-MS_API String Version();
+MS_API std::string Version();
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_VERSION_H_

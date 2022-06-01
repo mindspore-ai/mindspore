@@ -17,6 +17,8 @@
 #define MINDSPORE_LITE_INCLUDE_MODEL_H_
 
 #include <memory>
+#include <string>
+#include <vector>
 #include "include/lite_utils.h"
 
 namespace mindspore::lite {
@@ -26,8 +28,8 @@ typedef enum { ModelType_MSLite, ModelType_MindIR } LiteModelType;
 // FuncGraph, e.g., non-tail recursive.
 struct MS_API LiteGraph {
   struct Node {
-    String name_;
-    String op_type_;
+    std::string name_;
+    std::string op_type_;
     int node_type_;
     const void *primitive_ = nullptr;
     std::shared_ptr<void> base_operator_ = nullptr;
@@ -36,26 +38,26 @@ struct MS_API LiteGraph {
     int quant_type_;
     int device_type_ = -1;
   };
-  using NodePtrVector = Vector<Node *>;
+  using NodePtrVector = std::vector<Node *>;
   struct SubGraph {
-    String name_;
+    std::string name_;
     Uint32Vector input_indices_;
     Uint32Vector output_indices_;
     Uint32Vector node_indices_;
     Uint32Vector tensor_indices_;
   };
-  using SubGraphPtrVector = Vector<SubGraph *>;
-  String name_;
-  String version_;
+  using SubGraphPtrVector = std::vector<SubGraph *>;
+  std::string name_;
+  std::string version_;
   Uint32Vector input_indices_;
   Uint32Vector output_indices_;
-  TensorPtrVector all_tensors_;
+  std::vector<mindspore::schema::Tensor *> all_tensors_;
   NodePtrVector all_nodes_;
   SubGraphPtrVector sub_graphs_;
 #ifdef ENABLE_MODEL_OBF
-  using NodeStatVector = Vector<uint32_t>;
-  using PrimTypeVector = Vector<uint32_t>;
-  using PrimVector = Vector<unsigned char *>;
+  using NodeStatVector = Uint32Vector;
+  using PrimTypeVector = Uint32Vector;
+  using PrimVector = std::vector<unsigned char *>;
   PrimTypeVector all_prims_type_;
   NodeStatVector all_nodes_stat_;
   bool model_obfuscated_ = false;

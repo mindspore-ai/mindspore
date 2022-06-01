@@ -67,8 +67,8 @@ std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
 #endif
 }
 
-String Version() {
-  String version = VERSION_STR;
+std::string Version() {
+  std::string version = VERSION_STR;
   return "MindSpore Lite " + version;
 }
 }  // namespace lite

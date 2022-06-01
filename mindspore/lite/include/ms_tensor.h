@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
 #define MINDSPORE_LITE_INCLUDE_MS_TENSOR_H_
 
+#include <string>
 #include <vector>
 #include "include/lite_utils.h"
 #include "ir/dtype/type_id.h"
@@ -39,10 +40,10 @@ class MS_API MSTensor {
   /// \brief Create a MSTensor.
   ///
   /// \return Pointer to an instance of MindSpore Lite MSTensor.
-  static MSTensor *CreateTensor(const String &name, TypeId type, const Vector<int> &shape, const void *data,
+  static MSTensor *CreateTensor(const std::string &name, TypeId type, const std::vector<int> &shape, const void *data,
                                 size_t data_len);
-  static MSTensor *CreateTensorByDeepCopy(const String &name, TypeId type, const Vector<int> &shape, const void *data,
-                                          size_t data_len);
+  static MSTensor *CreateTensorByDeepCopy(const std::string &name, TypeId type, const std::vector<int> &shape,
+                                          const void *data, size_t data_len);
 
   /// \brief Set memory allocator for current MSTensor.
   ///
@@ -80,10 +81,10 @@ class MS_API MSTensor {
   /// \brief Get shape of the MindSpore Lite MSTensor.
   ///
   /// \return A vector of int as the shape of the MindSpore Lite MSTensor.
-  virtual Vector<int> shape() const = 0;
+  virtual std::vector<int> shape() const = 0;
 
   /// \brief Set the shape of MSTensor.
-  virtual void set_shape(const Vector<int> &shape) = 0;
+  virtual void set_shape(const std::vector<int> &shape) = 0;
 
   /// \brief Get number of element in MSTensor.
   ///
@@ -98,10 +99,10 @@ class MS_API MSTensor {
   /// \brief Get the name of MSTensor.
   ///
   /// \return the name of MSTensor.
-  virtual String tensor_name() const = 0;
+  virtual std::string tensor_name() const = 0;
 
   /// \brief Set the name of MSTensor.
-  virtual void set_tensor_name(const String &name) = 0;
+  virtual void set_tensor_name(const std::string &name) = 0;
 
   /// \brief Get the pointer of data in MSTensor.
   ///
@@ -126,9 +127,9 @@ class MS_API MSTensor {
   /// \node MSTensor will hold this data and free this data in destructor.
   virtual void set_data(void *data) = 0;
 
-  virtual Vector<lite::LiteQuantParam> quant_params() const = 0;
+  virtual std::vector<lite::LiteQuantParam> quant_params() const = 0;
 
-  virtual void set_quant_params(Vector<lite::LiteQuantParam>) = 0;
+  virtual void set_quant_params(std::vector<lite::LiteQuantParam>) = 0;
 
   /// \brief Get whether the MSTensor data is const data
   ///

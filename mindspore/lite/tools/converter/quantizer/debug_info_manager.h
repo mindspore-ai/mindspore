@@ -80,7 +80,7 @@ struct QuantParamExtend {
   std::string tensor_name;
   int64_t element_num;
   std::vector<int> dims;
-  Vector<lite::LiteQuantParam> quant_params;
+  std::vector<lite::LiteQuantParam> quant_params;
 };
 
 class DebugInfoManager {
