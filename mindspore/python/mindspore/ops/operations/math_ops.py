@@ -5163,7 +5163,7 @@ class Real(PrimitiveWithInfer):
     If input is real, it is returned unchanged.
 
     Inputs:
-        -**input** (Tensor) - The input tensor to compute to.
+        - **input** (Tensor) - The input tensor to compute to.
 
     Outputs:
         Tensor, the shape is the same as the input.
