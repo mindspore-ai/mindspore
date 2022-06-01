@@ -48,6 +48,7 @@ from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
+from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.array_ops import RangeV2
 from mindspore.ops.operations.nn_ops import FractionalMaxPool, DataFormatVecPermute
@@ -536,12 +537,12 @@ class ScatterNdAdd(nn.Cell):
         return out
 
 
-class ScatterNdMax(nn.Cell):
+class ScatterNdMaxNet(nn.Cell):
     """ScatterNdMax net definition"""
 
     def __init__(self, ref_shape, dtype=np.float32):
-        super(ScatterNdMax, self).__init__()
-        self.scatter_nd_max = P.ScatterNdMax()
+        super(ScatterNdMaxNet, self).__init__()
+        self.scatter_nd_max = ScatterNdMax()
         self.ref = Parameter(Tensor(np.ones(ref_shape, dtype)), name="ref")
 
     def construct(self, indices, updates):
@@ -3363,7 +3364,7 @@ test_case_other_ops = [
                         Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
         'skip': ['backward']}),
     ('ScatterNdMax', {
-        'block': ScatterNdMax((8,)),
+        'block': ScatterNdMaxNet((8,)),
         'desc_inputs': (Tensor(np.array([[2], [3], [4], [5]], np.int32)),
                         Tensor(np.array([2.0, 3.0, 4.0, 8.0], np.float32))),
         'skip': ['backward']}),
