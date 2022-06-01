@@ -172,11 +172,7 @@ Status CropAndResizeInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 
 Status CropAndResizeInfo::InitForCostModel(const StrategyPtr &strategy, const StrategyPtr &out_strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy, out_strategy) != SUCCESS) {
-    if (is_auto_parallel_) {
-      MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
-    } else {
-      MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
-    }
+    MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
 
