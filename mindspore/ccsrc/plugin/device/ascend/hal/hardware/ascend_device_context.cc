@@ -352,12 +352,14 @@ void AscendDeviceContext::UnifyMindIR(const KernelGraphPtr &graph) const {
   AscendGraphOptimization::GetInstance().UnifyMindIR(graph);
 }
 
-void AscendDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
+void AscendDeviceContext::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  if (graph->is_from_single_op()) {
-    AscendGraphOptimization::GetInstance().OptimizeSingleOpGraph(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->is_from_single_op()) {
+    AscendGraphOptimization::GetInstance().OptimizeSingleOpGraph(kernel_graph);
   } else {
-    AscendGraphOptimization::GetInstance().OptimizeGraph(graph);
+    AscendGraphOptimization::GetInstance().OptimizeGraph(kernel_graph);
   }
 }
 
@@ -416,12 +418,14 @@ void AscendDeviceContext::SetAtomicCleanToNodes(const KernelGraphPtr &graph,
   }
 }
 
-void AscendDeviceContext::PreprocessBeforeRun(const KernelGraphPtr &graph) const {
+void AscendDeviceContext::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  if (graph->is_from_single_op()) {
-    PreprocessBeforeRunSingleOpGraph(graph);
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->is_from_single_op()) {
+    PreprocessBeforeRunSingleOpGraph(kernel_graph);
   } else {
-    PreprocessBeforeRunGraph(graph);
+    PreprocessBeforeRunGraph(kernel_graph);
   }
 }
 

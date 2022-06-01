@@ -50,14 +50,14 @@ class AscendDeviceContext : public DeviceContext {
 
   RunMode GetRunMode(const FuncGraphPtr &func_graph) const override;
   // Optimize the kernel graph for graph mode.
-  void OptimizeGraph(const KernelGraphPtr &graph) const override;
+  void OptimizeGraph(const FuncGraphPtr &graph) const override;
 
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
   // Adjust kernel graph before run graph, used in Graph Mode.
-  void PreprocessBeforeRun(const KernelGraphPtr &graph) const override;
+  void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
 
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;

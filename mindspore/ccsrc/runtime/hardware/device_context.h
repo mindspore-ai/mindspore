@@ -89,14 +89,14 @@ class DeviceContext {
   virtual void UnifyMindIR(const KernelGraphPtr &graph) const { opt::CommonUnifyMindIR(graph); }
 
   // Optimize the kernel graph for graph mode.
-  virtual void OptimizeGraph(const KernelGraphPtr &graph) const {}
+  virtual void OptimizeGraph(const FuncGraphPtr &graph) const {}
 
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const = 0;
 
   // Adjust kernel graph before run graph.
-  virtual void PreprocessBeforeRun(const KernelGraphPtr &graph) const {}
+  virtual void PreprocessBeforeRun(const FuncGraphPtr &graph) const {}
 
   // Launch graph, device such as Ascend support the whole graph sink to the device executing.
   virtual bool LaunchGraph(const KernelGraphPtr &graph) const { return true; }
