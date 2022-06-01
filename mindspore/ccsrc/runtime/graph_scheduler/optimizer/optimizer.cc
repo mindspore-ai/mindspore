@@ -18,6 +18,7 @@
 #include "runtime/graph_scheduler/scheduler_helper.h"
 #include "include/common/debug/common.h"
 #include "utils/profile.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace runtime {

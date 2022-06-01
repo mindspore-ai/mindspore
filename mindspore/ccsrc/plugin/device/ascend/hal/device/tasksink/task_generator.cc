@@ -29,6 +29,7 @@
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/task_debug_info_recorder.h"
 #endif
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace device {

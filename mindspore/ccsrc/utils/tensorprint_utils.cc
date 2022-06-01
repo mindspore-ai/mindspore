@@ -24,6 +24,7 @@
 #include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
 #include "utils/shape_utils.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace py = pybind11;
 namespace mindspore {

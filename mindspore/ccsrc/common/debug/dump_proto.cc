@@ -30,6 +30,7 @@
 #include "include/common/debug/anf_dump_utils.h"
 #include "utils/anf_utils.h"
 #include "frontend/parallel/ops_info/ops_utils.h"  // todo: use constant string now
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 class ProtoExporter {

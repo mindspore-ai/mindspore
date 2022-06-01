@@ -28,6 +28,7 @@
 #include "utils/anf_utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/anf_dump_utils.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 void PrintTupleNodeUsedFlags(std::ostringstream &buffer, const abstract::AbstractSequencePtr &sequence_abs) {

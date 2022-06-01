@@ -28,6 +28,7 @@
 #include "utils/system/sha256.h"
 #include "include/common/utils/utils.h"
 #include "frontend/parallel/step_parallel.h"
+#include "mindspore/core/utils/file_utils.h"
 
 #ifdef WITH_BACKEND
 #include "ps/ps_context.h"

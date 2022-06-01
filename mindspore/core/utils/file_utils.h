@@ -17,9 +17,13 @@
 #ifndef MINDSPORE_CORE_UTILS_FILE_UTILS_H_
 #define MINDSPORE_CORE_UTILS_FILE_UTILS_H_
 
+#include <sys/stat.h>
+#include <unistd.h>
 #include <string>
 #include <optional>
+#include "mindspore/core/utils/ms_utils.h"
 #include "utils/visible.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 class MS_CORE_API FileUtils {
@@ -39,5 +43,18 @@ class MS_CORE_API FileUtils {
   static std::string UTF_8ToGB2312(const char *text);
 #endif
 };
+
+static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
+  if (access(file_name.c_str(), F_OK) == -1) {
+    return;
+  }
+  try {
+    if (chmod(common::SafeCStr(file_name), mode) != 0) {
+      MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
+    }
+  } catch (std::exception &e) {
+    MS_LOG(WARNING) << "File `" << file_name << "` change mode failed! May be not exist.";
+  }
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_FILE_UTILS_H_

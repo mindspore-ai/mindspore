@@ -25,6 +25,7 @@
 #include "proto/profiling_parallel.pb.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
+#include "mindspore/core/utils/file_utils.h"
 
 #include "google/protobuf/util/json_util.h"
 

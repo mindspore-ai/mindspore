@@ -24,6 +24,7 @@
 #include "mindspore/ccsrc/include/common/utils/utils.h"
 #include "src/common/file_utils.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore::lite {
 // unit is byte. model size more than 1G need split.

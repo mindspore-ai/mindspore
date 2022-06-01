@@ -20,6 +20,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
 #include "utils/ms_context.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace profiler {

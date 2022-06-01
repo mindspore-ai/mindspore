@@ -24,6 +24,8 @@
 #include <memory>
 #include "profiler/device/profiling.h"
 #include "utils/log_adapter.h"
+#include "mindspore/core/utils/file_utils.h"
+
 namespace mindspore {
 namespace profiler {
 struct OpDetailInfo {

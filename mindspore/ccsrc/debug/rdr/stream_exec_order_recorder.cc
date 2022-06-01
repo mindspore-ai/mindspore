@@ -22,6 +22,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
 #include "include/common/debug/rdr/recorder_manager.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 std::string Vector2String(const std::vector<uint32_t> &v) {

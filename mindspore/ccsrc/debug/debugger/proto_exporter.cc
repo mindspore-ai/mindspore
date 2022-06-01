@@ -33,6 +33,7 @@
 #include "utils/symbolic.h"
 #include "utils/trace_base.h"
 #include "debug/data_dump/e2e_dump.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 

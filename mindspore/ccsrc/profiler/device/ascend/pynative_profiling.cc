@@ -23,6 +23,7 @@
 #include "profiler/device/profiling.h"
 #include "profiler/device/ascend/pynative_profiling.h"
 #include "include/common/pybind_api/api_register.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace profiler {

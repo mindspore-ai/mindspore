@@ -28,6 +28,7 @@
 #include "ir/tensor.h"
 #include "include/common/utils/utils.h"
 #include "include/common/debug/anf_dump_utils.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 // namespace to support debug utils
