@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/pack_weight_manager.h"
+#include "src/common/graph_util.h"
 namespace mindspore::lite {
 namespace {
 #ifndef __ANDROID__
@@ -25,7 +26,33 @@ PackWeightManager *PackWeightManager::GetInstance() {
   return &instance;
 }
 
-STATUS PackWeightManager::InitByBuf(const char *model_buf, size_t model_size, int numa_id) {
+bool PackWeightManager::IsCopyTensor(int op_type) {
+#ifdef SHARING_MODEL_WEIGHT
+  if (is_parallel_) {
+    return true;
+  }
+#endif
+  if (IsPackedOp(op_type)) {
+    return true;
+  }
+  return false;
+}
+
+STATUS PackWeightManager::InitPackWeightByBuf(const char *model_buf, size_t model_size) {
+  if (is_parallel_) {
+    return RET_OK;
+  }
+#ifdef SHARING_MODEL_WEIGHT
+  if (pack_weight_ == nullptr) {
+    pack_weight_ = std::make_shared<PackWeight>();
+    MS_CHECK_FALSE_MSG(pack_weight_ == nullptr, kLiteError, "pack_weight_ is nullptr.");
+  }
+  return pack_weight_->InitWeightManagerByBuf(model_buf, model_size, -1, false);
+#endif
+  return RET_OK;
+}
+
+STATUS PackWeightManager::InitPackWeight(const char *model_buf, size_t model_size, int numa_id) {
 #ifdef SHARING_MODEL_WEIGHT
   if (pack_weight_ == nullptr) {
     pack_weight_ = std::make_shared<PackWeight>();
@@ -34,12 +61,13 @@ STATUS PackWeightManager::InitByBuf(const char *model_buf, size_t model_size, in
       return RET_ERROR;
     }
   }
-  auto status = pack_weight_->InitWeightManagerByBuf(model_buf, model_size, numa_id);
+  auto status = pack_weight_->InitWeightManagerByBuf(model_buf, model_size, numa_id, true);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "InitWeightManagerByBuf failed.";
     return RET_ERROR;
   }
 #endif
+  is_parallel_ = true;
   return RET_OK;
 }
 

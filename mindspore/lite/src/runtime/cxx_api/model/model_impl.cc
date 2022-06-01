@@ -34,9 +34,6 @@
 #include "src/common/file_utils.h"
 #include "src/common/config_file.h"
 #include "src/runtime/cpu_info.h"
-#ifdef SERVER_INFERENCE
-#include "src/common/common.h"
-#endif
 
 namespace mindspore {
 namespace {

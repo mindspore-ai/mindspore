@@ -394,7 +394,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   }
   for (size_t i = 0; i < workers_num_; i++) {
     int numa_node_id = model_pool_config[i]->numa_id;
-    auto ret = lite::PackWeightManager::GetInstance()->InitByBuf(graph_buf, size, numa_node_id);
+    auto ret = lite::PackWeightManager::GetInstance()->InitPackWeight(graph_buf, size, numa_node_id);
     MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
     auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
     MS_CHECK_TRUE_MSG(new_model_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
