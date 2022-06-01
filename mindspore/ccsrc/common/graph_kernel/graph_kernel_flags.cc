@@ -271,7 +271,6 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_horizontal_fusion", &enable_horizontal_fusion, false);
   reg.AddFlag("enable_auto_tensor_inplace", &enable_auto_tensor_inplace, false);
   reg.AddFlag("enable_low_precision", &enable_low_precision);
-  reg.AddFlag("enable_trans_op_optimize", &enable_trans_op_optimize);
 
   // Integer flags
   reg.AddFlag("online_tuning", &online_tuning);
@@ -306,7 +305,6 @@ std::string GraphKernelFlags::DumpAllFlags() const {
   json["enable_horizontal_fusion"] = enable_horizontal_fusion;
   json["enable_auto_tensor_inplace"] = enable_auto_tensor_inplace;
   json["enable_low_precision"] = enable_low_precision;
-  json["enable_trans_op_optimize"] = enable_trans_op_optimize;
 
   json["opt_level"] = opt_level;
   json["fusion_ops_level"] = fusion_ops_level;
