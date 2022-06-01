@@ -15,9 +15,9 @@ endif()
 add_library(kernel_executor SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_executor_impl.cc
-        ${TOP_DIR}/mindspore/lite/src/ops/ops_utils.cc
+        ${TOP_DIR}/mindspore/lite/src/common/ops/ops_utils.cc
         ${TOP_DIR}/mindspore/lite/src/common/primitive_t_utils.cc
-        ${TOP_DIR}/mindspore/lite/src/ops/ops_def.cc)
+        ${TOP_DIR}/mindspore/lite/src/common/ops/ops_def.cc)
 
 add_dependencies(kernel_executor fbs_inner_src fbs_src mindspore_core)
 
