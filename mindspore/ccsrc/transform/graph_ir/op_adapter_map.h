@@ -20,7 +20,6 @@
 #include <string>
 #include <memory>
 #include "utils/hash_map.h"
-#include "include/common/visible.h"
 
 namespace mindspore {
 namespace transform {
@@ -359,7 +358,7 @@ constexpr const char kNameKLDiv[] = "KLDivLoss";
 
 class OpAdapterDesc;
 
-class COMMON_EXPORT OpAdapterMap {
+class OpAdapterMap {
  public:
   static mindspore::HashMap<std::string, std::shared_ptr<OpAdapterDesc>> &get();
 };

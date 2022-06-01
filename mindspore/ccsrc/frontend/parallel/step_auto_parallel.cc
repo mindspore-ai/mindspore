@@ -48,14 +48,30 @@
 #include "ir/anf.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
 #include "ps/util.h"
 #endif
 
 namespace mindspore {
 namespace parallel {
+void SearchParallelStrategy(const std::string &strategy_search_mode, const FuncGraphPtr &root,
+                            const std::vector<AnfNodePtr> &all_nodes) {
+  if ((strategy_search_mode == kDynamicProgramming) || (strategy_search_mode == kShardingPropagation)) {
+    if (ParallelStrategySearch(all_nodes, root) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using " << strategy_search_mode
+                        << " searching mode";
+    }
+  } else if (strategy_search_mode == kRecursiveProgramming) {
+    if (ParallelStrategyRecSearch(all_nodes, root) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using RP searching mode";
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "Auto-parallel strategy searching mode unexpected: " << strategy_search_mode;
+  }
+}
+
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   if (ps::Util::IsRoleOfPServer() || ps::Util::IsRoleOfScheduler()) {
     return false;
   }
@@ -108,19 +124,7 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   }
 
   // search parallelization strategy
-  if ((strategy_search_mode == kDynamicProgramming) || (strategy_search_mode == kShardingPropagation)) {
-    if (ParallelStrategySearch(all_nodes, root) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using " << strategy_search_mode
-                        << " searching mode";
-    }
-  } else if (strategy_search_mode == kRecursiveProgramming) {
-    if (ParallelStrategyRecSearch(all_nodes, root) != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Auto-parallel strategy search failed when using RP searching mode";
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "Auto-parallel strategy searching mode unexpected: " << strategy_search_mode;
-  }
-
+  SearchParallelStrategy(strategy_search_mode, root, all_nodes);
   (void)gettimeofday(&end_time, nullptr);
   uint64_t time = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   time += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);

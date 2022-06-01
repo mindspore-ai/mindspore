@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_UTIL_H_
-#define MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_UTIL_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_UTIL_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_UTIL_H_
 
 #include <string>
 #include <vector>
@@ -26,13 +26,11 @@
 #include "ir/dtype.h"
 #include "ir/tensor.h"
 #include "include/transform/graph_ir/types.h"
-#include "graph/tensor.h"
 #include "utils/shape_utils.h"
-#include "include/common/visible.h"
 
 namespace mindspore {
 namespace transform {
-class COMMON_EXPORT TransformUtil {
+class TransformUtil {
  public:
   /*
    * Parameters:
@@ -255,4 +253,4 @@ class COMMON_EXPORT TransformUtil {
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_UTIL_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_UTIL_H_

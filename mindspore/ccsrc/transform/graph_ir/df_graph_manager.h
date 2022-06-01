@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_DF_GRAPH_MANAGER_H_
-#define MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_DF_GRAPH_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_DF_GRAPH_MANAGER_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_DF_GRAPH_MANAGER_H_
 
 #include <set>
 #include <string>
@@ -25,29 +25,12 @@
 #include <utility>
 #include "include/transform/graph_ir/types.h"
 #include "ir/anf.h"
-#include "include/common/visible.h"
 
 namespace mindspore {
-const char BROADCAST_GRAPH_NAME[] = "broadcast_subgraph";
-
 namespace transform {
 class GraphRunner;
-using OptionMap = std::map<std::string, std::string>;
 
-struct DfGraphWrapper {
- public:
-  DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr, const OptionMap &options);
-  ~DfGraphWrapper() {}
-
-  std::string name_;
-  int id_;
-  DfGraphPtr graph_ptr_;
-  OptionMap options_ = {};
-};
-
-using DfGraphWrapperPtr = std::shared_ptr<DfGraphWrapper>;
-
-class COMMON_EXPORT DfGraphManager {
+class DfGraphManager {
  public:
   ~DfGraphManager();
   void ClearGraph() noexcept;
@@ -84,4 +67,4 @@ class COMMON_EXPORT DfGraphManager {
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_DF_GRAPH_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_DF_GRAPH_MANAGER_H_

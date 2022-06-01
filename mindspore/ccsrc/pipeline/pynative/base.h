@@ -36,7 +36,6 @@ namespace pynative {
 namespace py = pybind11;
 
 enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
-
 struct OpExecInfo {
   bool is_nop_prim = false;
   bool is_dynamic_shape = false;
@@ -56,9 +55,7 @@ struct OpExecInfo {
   // Tensor input and with its value
   std::vector<std::pair<size_t, ValuePtr>> index_with_value;
   std::vector<tensor::TensorPtr> input_tensors;
-#ifdef ENABLE_D
   py::dict op_attrs;
-#endif
   std::vector<int64_t> inputs_mask;
   bool lazy_build = false;
 };

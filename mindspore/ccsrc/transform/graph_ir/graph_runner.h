@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_GRAPH_RUNNER_H_
-#define MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_GRAPH_RUNNER_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_GRAPH_RUNNER_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_GRAPH_RUNNER_H_
 
 #include <set>
 #include <string>
@@ -23,29 +23,13 @@
 #include <map>
 #include <memory>
 
-#include "include/transform/graph_ir/types.h"
-#include "include/transform/graph_ir/util.h"
-#include "include/transform/graph_ir/df_graph_manager.h"
-#include "include/common/visible.h"
+#include "transform/graph_ir/transform_util.h"
+#include "transform/graph_ir/df_graph_manager.h"
 #include "ir/tensor.h"
 
 namespace mindspore {
 namespace transform {
-using SessionOptions = std::map<std::string, std::string>;
-
-struct GraphRunnerOptions {
-  std::string target{"default_graph_runner"};
-  SessionOptions options;
-  // if sess_ptr is nullptr, GraphRunner will create a new ge session
-  std::shared_ptr<ge::Session> sess_ptr{nullptr};
-};
-
-struct RunOptions {
-  // graph's name
-  std::string name;
-};
-
-class COMMON_EXPORT GraphRunner {
+class GraphRunner {
  public:
   explicit GraphRunner(const GraphRunnerOptions &options);
   ~GraphRunner() { sess_ = nullptr; }
@@ -63,4 +47,4 @@ class COMMON_EXPORT GraphRunner {
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_GRAPH_RUNNER_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_GRAPH_RUNNER_H_

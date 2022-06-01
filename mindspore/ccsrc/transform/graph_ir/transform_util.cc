@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/transform/graph_ir/util.h"
-
+#include "transform/graph_ir/transform_util.h"
 #include <utility>
 #include <map>
 
@@ -31,6 +30,10 @@ using std::string;
 using std::vector;
 
 const size_t kErrorSize = 0;
+const size_t kIdx0 = 0;
+const size_t kIdx1 = 1;
+const size_t kIdx2 = 2;
+const size_t kIdx3 = 3;
 
 vector<int64_t> TransformUtil::ConvertIntToList(int64_t data, int size) {
   vector<int64_t> list{};
@@ -287,8 +290,8 @@ bool IsGeShapeCompatible(const GeShape &ge_shape, const ShapeVector &request_dim
   }
 
   // convert NHWC to NCHW
-  if ((request_dims.size() == 1) && (ge_dims.size() == GE_DIMS) && (request_dims[0] == ge_dims[1]) &&
-      (ge_dims[0] == 1) && (ge_dims[2] == 1) && (ge_dims[3] == 1)) {
+  if ((request_dims.size() == 1) && (ge_dims.size() == GE_DIMS) && (request_dims[kIdx0] == ge_dims[kIdx1]) &&
+      (ge_dims[kIdx0] == 1) && (ge_dims[kIdx2] == 1) && (ge_dims[kIdx3] == 1)) {
     MS_LOG(INFO) << "Ge tensor shape and request shape is compatible";
     return true;
   }

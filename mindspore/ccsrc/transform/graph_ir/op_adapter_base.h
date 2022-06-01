@@ -24,11 +24,10 @@
 #include <sstream>
 
 #include "utils/hash_map.h"
-#include "include/transform/graph_ir/util.h"
+#include "transform/graph_ir/transform_util.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
 #include "ir/value.h"
-#include "include/transform/graph_ir/types.h"
 #include "graph/operator_reg.h"
 #include "external/ge/ge_api.h"
 #include "graph/tensor.h"

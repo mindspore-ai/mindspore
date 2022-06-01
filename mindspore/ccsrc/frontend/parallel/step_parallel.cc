@@ -50,7 +50,7 @@
 #include "utils/symbolic.h"
 #include "mindspore/core/utils/parallel_node_check.h"
 #include "frontend/parallel/parallel_optimizer/opt_param_mgr.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
 #include "ps/util.h"
 #include "ps/ps_context.h"
 #endif
@@ -2924,7 +2924,7 @@ CommInfo GetCommInfo() {
     device_num = UintToInt(world_rank_size);
     MS_LOG(INFO) << "Get device num from communication model, the device num is  " << device_num;
   }
-#if ENABLE_D || ENABLE_GPU
+#if (!defined(_WIN32) && !defined(__APPLE__) && !(defined(ENABLE_TESTCASES) || defined(ENABLE_TEST)))
   if (ParallelContext::GetInstance()->device_num_is_set() && world_rank_size != device_num &&
       !ParallelContext::GetInstance()->hccl_test_available()) {
     // hccl_test_available is used when we compile graphs in real ascend card environment, but with hccl_test.
@@ -3284,7 +3284,7 @@ static void HandlGlobalNormScale(const FuncGraphPtr &root, const std::vector<Anf
 }
 
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return false;
   }

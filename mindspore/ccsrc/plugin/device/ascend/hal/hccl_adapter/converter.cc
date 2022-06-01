@@ -26,7 +26,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/ops/core_ops.h"
-#include "include/transform/graph_ir/util.h"
+#include "include/transform/graph_ir/utils.h"
 #include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
 
 namespace mindspore::hccl {
@@ -180,18 +180,16 @@ std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const AnfNodePtr
     auto ms_shape = AnfAlgo::GetInputDeviceShape(cnode, i);
     std::transform(ms_shape.begin(), ms_shape.end(), std::back_inserter(ge_shape),
                    [](size_t in) { return static_cast<int64_t>(in); });
-    op_desc->AddInputDesc(
-      ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
-                       transform::TransformUtil::ConvertDataType(AnfAlgo::GetInputDeviceDataType(cnode, i))));
+    op_desc->AddInputDesc(ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
+                                           transform::ConvertDataType(AnfAlgo::GetInputDeviceDataType(cnode, i))));
   }
   for (size_t i = 0; i < output_num; ++i) {
     std::vector<int64_t> ge_shape;
     auto ms_shape = AnfAlgo::GetOutputDeviceShape(cnode, i);
     std::transform(ms_shape.begin(), ms_shape.end(), std::back_inserter(ge_shape),
                    [](size_t in) { return static_cast<int64_t>(in); });
-    op_desc->AddOutputDesc(
-      ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
-                       transform::TransformUtil::ConvertDataType(AnfAlgo::GetOutputDeviceDataType(cnode, i))));
+    op_desc->AddOutputDesc(ge::GeTensorDesc(ge::GeShape(ge_shape), ge::Format::FORMAT_NCHW,
+                                            transform::ConvertDataType(AnfAlgo::GetOutputDeviceDataType(cnode, i))));
   }
 
   // set node data type

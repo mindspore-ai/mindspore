@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_CONVERT_H_
-#define MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_CONVERT_H_
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_CONVERT_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_CONVERT_H_
 
 #define DRAW_GE_GRAPH
 
@@ -36,9 +36,8 @@
 #include "ops/core_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "include/transform/graph_ir/util.h"
 #include "ir/tensor.h"
-#include "include/transform/graph_ir/df_graph_manager.h"
+#include "transform/graph_ir/df_graph_manager.h"
 #include "transform/graph_ir/op_adapter.h"
 #include "graph/operator_reg.h"
 #include "external/ge/ge_api.h"
@@ -46,18 +45,16 @@
 #include "graph/utils/op_desc_utils.h"
 #include "graph/utils/tensor_utils.h"
 #include "ops/hcom_ops.h"
-#include "include/common/visible.h"
 
 namespace mindspore {
 namespace transform {
 class BaseOpAdapter;
-using TensorOrderMap = std::map<std::string, std::shared_ptr<tensor::Tensor>>;
 using HcomBroadcast = ge::op::HcomBroadcast;
 using OpAdapterPtr = std::shared_ptr<BaseOpAdapter>;
 
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
 enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
-class COMMON_EXPORT DfGraphConvertor {
+class DfGraphConvertor {
  public:
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph) : anf_graph_(anf_graph) {
     MS_EXCEPTION_IF_NULL(anf_graph);
@@ -138,8 +135,6 @@ class COMMON_EXPORT DfGraphConvertor {
   DfGraphPtr GetInitGraph();
   DfGraphPtr GetSaveCheckpointGraph();
   DfGraphPtr GetBroadcastGraph();
-  static OpAdapterPtr FindAdapter(const std::string &op_name, bool train = false);
-  static OpAdapterPtr FindAdapter(AnfNodePtr node, bool train = false);
   int ErrCode() const { return static_cast<int>(error_); }
 
   bool is_training() const { return training_; }
@@ -292,4 +287,4 @@ class COMMON_EXPORT DfGraphConvertor {
 }  // namespace transform
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_INCLUDE_TRANSFORM_GRAPH_IR_CONVERT_H_
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_CONVERT_H_

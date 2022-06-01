@@ -25,7 +25,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/step_parallel.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
 #include "ps/util.h"
 #include "ps/ps_context.h"
 #endif
@@ -529,7 +529,7 @@ void SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfNodePtr>
 
 // Only auto_parallel and semi_auto_parallel support PipelineSplit
 bool PipelineSplit(const ResourcePtr &res) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return true;
   }

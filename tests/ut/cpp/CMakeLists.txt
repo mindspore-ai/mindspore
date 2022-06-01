@@ -99,6 +99,12 @@ if(ENABLE_MINDDATA)
         list(REMOVE_ITEM UT_SRCS ${PYTHON_RELATED_SRCS})
     endif()
 
+    set(REPEATED_DEFINED_FILE
+            stub/fl/fl_stub.cc
+            stub/fl/server_stub.cc
+            stub/ps/ps_core_stub.cc)
+    list(REMOVE_ITEM UT_SRCS ${REPEATED_DEFINED_FILE})
+
     if(NOT ENABLE_ACL)
         set(ASCEND310_RELATED_SRCS
                 dataset/dvpp_decode_jpeg_test.cc

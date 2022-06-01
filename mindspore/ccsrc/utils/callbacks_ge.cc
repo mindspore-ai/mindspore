@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifdef ENABLE_D
 #include "include/common/utils/callbacks_ge.h"
 #include "pybind11/pybind11.h"
 #include "ir/param_info.h"
-#include "include/transform/graph_ir/df_graph_manager.h"
-#include "include/transform/graph_ir/util.h"
+#include "include/transform/graph_ir/utils.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "include/common/utils/python_adapter.h"
 #include "utils/shape_utils.h"
@@ -34,7 +32,6 @@ const char kCheckPoint[] = "Save";
 const int ONE_SHAPE = 1;
 
 using mindspore::transform::Status;
-using mindspore::transform::TransformUtil;
 
 bool GetParameterShape(const FuncGraphPtr &graph, const std::string &param_name,
                        const std::shared_ptr<ShapeVector> &shape) {
@@ -69,7 +66,7 @@ bool GetParameterShape(const FuncGraphPtr &graph, const std::string &param_name,
 
 static TensorPtr GetMeTensorTransformed(uint32_t graph_id, const std::string &parameter_name,
                                         const std::shared_ptr<ge::Tensor> &ge_tensor_ptr) {
-  FuncGraphPtr anf_graph = transform::DfGraphManager::GetInstance().GetAnfGraph(graph_id);
+  FuncGraphPtr anf_graph = transform::GetAnfGraph(graph_id);
   if (anf_graph == nullptr) {
     MS_LOG(ERROR) << "Get anf graph failed during callback";
     return nullptr;
@@ -81,7 +78,7 @@ static TensorPtr GetMeTensorTransformed(uint32_t graph_id, const std::string &pa
     return nullptr;
   }
 
-  return TransformUtil::ConvertGeTensor(ge_tensor_ptr, *parameter_shape_ptr);
+  return transform::ConvertGeTensor(ge_tensor_ptr, *parameter_shape_ptr);
 }
 
 uint32_t CheckpointSaveCallback(uint32_t graph_id, const std::map<std::string, ge::Tensor> &params_list) {
@@ -134,19 +131,19 @@ static TensorPtr GetMeTensorForSummary(const std::string &name, const std::share
     // Because the ge tensor is dim = 4, so set the (1,1,1,1)-->(1,)
     // We do the (1,) shape is scalar
     auto shape = ShapeVector({ONE_SHAPE});
-    return TransformUtil::ConvertGeTensor(ge_tensor_ptr, shape);
+    return transform::ConvertGeTensor(ge_tensor_ptr, shape);
   }
   if (tname == "[:Tensor]" || tname == "[:Histogram]") {
     MS_LOG(DEBUG) << "The summary(" << name << ") is Tensor";
     // process the tensor summary
     // Now we can't get the real shape, so we keep same shape with GE
-    return TransformUtil::ConvertGeTensor(ge_tensor_ptr);
+    return transform::ConvertGeTensor(ge_tensor_ptr);
   }
   if (tname == "[:Image]") {
     MS_LOG(DEBUG) << "The summary(" << name << ") is Image";
     // process the Image summary
     // Image dim = 4, is same with ge, so we keep same shape with GE
-    return TransformUtil::ConvertGeTensor(ge_tensor_ptr);
+    return transform::ConvertGeTensor(ge_tensor_ptr);
   }
 
   MS_LOG(EXCEPTION) << "The summary name(" << name << ") is invalid.";

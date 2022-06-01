@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/transform/graph_ir/df_graph_manager.h"
+#include "transform/graph_ir/df_graph_manager.h"
 
 #include <sstream>
 
