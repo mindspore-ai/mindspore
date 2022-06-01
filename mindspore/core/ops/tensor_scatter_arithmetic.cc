@@ -70,12 +70,12 @@ abstract::ShapePtr TensorScatterArithmeticInferShape(const PrimitivePtr &primiti
   auto input_x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto last_dim = indices_shape.back();
   const size_t kMinIndicesRank = 2;
   if (indices_shape.size() < kMinIndicesRank) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the dimension of 'indices' cannot be less than 2,  but got "
                              << indices_shape.size();
   }
+  auto last_dim = indices_shape.back();
   indices_shape.pop_back();
   if (last_dim > SizeToLong(input_x_shape.size())) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", the last dimension of 'indices' must be less than or equal "
