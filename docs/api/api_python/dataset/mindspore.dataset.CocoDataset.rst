@@ -1,7 +1,7 @@
 ﻿mindspore.dataset.CocoDataset
 ==============================
 
-.. py:class:: mindspore.dataset.CocoDataset(dataset_dir, annotation_file, task='Detection', num_samples=None, num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None, extra_metadata=False)
+.. py:class:: mindspore.dataset.CocoDataset(dataset_dir, annotation_file, task='Detection', num_samples=None, num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None, extra_metadata=False, decrypt=None)
 
     读取和解析COCO数据集的源文件构建数据集。该API支持解析COCO2017数据集，支持四种类型的机器学习任务，分别是目标检测、关键点检测、物体分割和全景分割。
 

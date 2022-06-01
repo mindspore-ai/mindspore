@@ -1,7 +1,7 @@
 mindspore.dataset.CelebADataset
 ===============================
 
-.. py:class:: mindspore.dataset.CelebADataset(dataset_dir, num_parallel_workers=None, shuffle=None, usage='all', sampler=None, decode=False, extensions=None, num_samples=None, num_shards=None, shard_id=None, cache=None)
+.. py:class:: mindspore.dataset.CelebADataset(dataset_dir, num_parallel_workers=None, shuffle=None, usage='all', sampler=None, decode=False, extensions=None, num_samples=None, num_shards=None, shard_id=None, cache=None, decrypt=None)
 
     读取和解析CelebA数据集的源文件构建数据集。目前仅支持解析CelebA数据集中的 `list_attr_celeba.txt` 文件作为数据集的label。
 
