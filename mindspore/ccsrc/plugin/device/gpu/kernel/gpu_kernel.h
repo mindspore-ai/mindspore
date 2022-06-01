@@ -131,6 +131,22 @@ class NativeGpuKernelMod : public GpuKernelMod {
 
  protected:
   virtual void InitResource() {}
+  // choose the suitable datatype for cudnn/cublas
+  inline cudnnDataType_t GetCudnnDataType(const std::string &Type) {
+    auto type = kCudnnDtypeMap.find(Type);
+    if (type == kCudnnDtypeMap.end()) {
+      MS_EXCEPTION(TypeError) << Type << " is not supported.";
+    }
+    return type->second;
+  }
+  inline cudaDataType_t GetCudaDataType(const std::string &Type) {
+    auto type = kCudaDtypeMap.find(Type);
+    if (type == kCudaDtypeMap.end()) {
+      MS_EXCEPTION(TypeError) << Type << " is not supported.";
+    }
+    return type->second;
+  }
+
   uint32_t device_id_;
   static mindspore::HashMap<std::string, std::vector<KernelAttr>> support_map_;
 };

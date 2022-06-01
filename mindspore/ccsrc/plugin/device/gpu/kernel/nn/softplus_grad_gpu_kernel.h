@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SOFTPLUS_GRAD_KERNEL_H_
 
 #include <vector>
+#include <utility>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
@@ -25,54 +27,38 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class SoftplusGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class SoftplusGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SoftplusGradGpuKernelMod() : input_size_(0) {}
+  SoftplusGradGpuKernelMod() = default;
   ~SoftplusGradGpuKernelMod() override = default;
 
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
-    T *dy_addr = GetDeviceAddress<T>(inputs, 0);
-    T *x_addr = GetDeviceAddress<T>(inputs, 1);
-    T *dx_addr = GetDeviceAddress<T>(outputs, 0);
-
-    SoftplusGrad(input_size_ / sizeof(T), dy_addr, x_addr, dx_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
-  }
-
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    InitResource();
-    input_size_ = sizeof(T);
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    for (auto dim : input_shape) {
-      input_size_ *= dim;
-    }
-    InitSizeLists();
-    return true;
+    cuda_stream_ = cuda_stream;
+    return kernel_func_(this, inputs, outputs);
   }
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(input_size_);
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  bool is_null_input_;
-
-  size_t input_size_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  using SoftplusGradFunc = std::function<bool(SoftplusGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                              const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, SoftplusGradFunc>> func_list_;
+  SoftplusGradFunc kernel_func_;
+  bool is_null_input_{false};
+  void *cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

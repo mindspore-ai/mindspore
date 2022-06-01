@@ -272,7 +272,7 @@ bool UnaryOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   kernel_name_ = base_operator->name();
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
-    MS_LOG(ERROR) << "For 'Unary op', the kernel name must be in" << kernel::Map2Str(kernel_attr_map_) << ", but got "
+    MS_LOG(ERROR) << "For 'Unary op', the kernel name must be in " << kernel::Map2Str(kernel_attr_map_) << ", but got "
                   << kernel_name_;
     return false;
   }
@@ -308,7 +308,7 @@ int UnaryOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 std::vector<KernelAttr> UnaryOpGpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_map_.find(kernel_name_);
   if (iter == kernel_attr_map_.end()) {
-    MS_LOG(ERROR) << "For 'Unary op', the kernel name must be in" << kernel::Map2Str(kernel_attr_map_) << ", but got "
+    MS_LOG(ERROR) << "For 'Unary op', the kernel name must be in " << kernel::Map2Str(kernel_attr_map_) << ", but got "
                   << kernel_name_;
     return std::vector<KernelAttr>{};
   }
