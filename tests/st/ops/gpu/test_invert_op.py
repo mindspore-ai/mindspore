@@ -18,8 +18,20 @@ import pytest
 
 import mindspore.context as context
 from mindspore import Tensor
+import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
+
+
+class InvertDynamicShapeNet(nn.Cell):
+    def __init__(self):
+        super(InvertDynamicShapeNet, self).__init__()
+        self.test_dynamic = inner.GpuConvertToDynamicShape()
+
+    def construct(self, x):
+        x = self.test_dynamic(x)
+        return F.invert(x)
 
 
 @pytest.mark.level0
@@ -69,4 +81,23 @@ def test_invert_vmap(mode):
     # Case 3
     output = F.vmap(F.invert, 0, 1)(x)
     expect_output = np.array([[-26, -3], [-5, 0], [-14, -1], [-10, 4]], dtype=np.int16)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_invert_dynamic_shape(mode):
+    """
+    Feature: test invert dynamic_shape feature.
+    Description: test invert dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor(np.array([[25, 4, 13, 9],
+                         [2, -1, 0, -5]], dtype=np.int16))
+    output = InvertDynamicShapeNet()(x)
+    expect_output = np.array([[-26, -5, -14, -10],
+                              [-3, 0, -1, 4]], dtype=np.int16)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)

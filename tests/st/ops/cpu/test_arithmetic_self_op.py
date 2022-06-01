@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -76,6 +77,43 @@ class IdentityNet(nn.Cell):
 
     def construct(self, x):
         return self.identity(x)
+
+
+class InvDynamicShapeNet(nn.Cell):
+    def __init__(self):
+        super(InvDynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.reshape = P.Reshape()
+
+    def construct(self, x):
+        x_unique, _ = self.unique(x)
+        x_unique = self.reshape(x_unique, (3, 3))
+        return F.inv(x_unique)
+
+
+class InvertDynamicShapeNet(nn.Cell):
+    def __init__(self):
+        super(InvertDynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.reshape = P.Reshape()
+
+    def construct(self, x):
+        x_unique, _ = self.unique(x)
+        x_unique = self.reshape(x_unique, (3, 3))
+        x_unique = F.cast(x_unique, mindspore.int16)
+        return F.invert(x_unique)
+
+
+class SoftsignDynamicShapeNet(nn.Cell):
+    def __init__(self):
+        super(SoftsignDynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.reshape = P.Reshape()
+
+    def construct(self, x):
+        x_unique, _ = self.unique(x)
+        x_unique = self.reshape(x_unique, (3, 3))
+        return F.softsign(x_unique)
 
 
 @pytest.mark.level0
@@ -274,6 +312,25 @@ def test_inv_vmap(mode):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_inv_dynamic_shape(mode):
+    """
+    Feature: test inv dynamic_shape feature.
+    Description: test inv dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([8., -3., 0., 0., 10., 1., 21., -3., 11., 4., -2., 10., 8.]).astype(np.float32))
+    output = InvDynamicShapeNet()(x)
+    expect_output = np.array([[0.125, -0.33333334, np.inf],
+                              [0.1, 1., 0.04761905],
+                              [0.09090909, 0.25, -0.5]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype', [np.int16, np.uint16])
 def test_invert(shape, dtype):
@@ -315,6 +372,25 @@ def test_invert_vmap(mode):
     # Case 3
     output = F.vmap(F.invert, 0, 1)(x)
     expect_output = np.array([[-26, -3], [-5, 0], [-14, -1], [-10, 4]], dtype=np.int16)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_invert_dynamic_shape(mode):
+    """
+    Feature: test invert dynamic_shape feature.
+    Description: test invert dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([8, -3, 0, 0, 10, 1, 21, -3, 11, 4, -2, 10, 8]).astype(np.int16))
+    output = InvertDynamicShapeNet()(x)
+    expect_output = np.array([[-9, 2, -1],
+                              [-11, -2, -22],
+                              [-12, -5, 1]], dtype=np.int16)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
@@ -373,6 +449,25 @@ def test_softsign_vmap(mode):
                               [0.6666667, 0.],
                               [0.9677419, -0.8333333],
                               [-0.9677419, 0.98039216]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_softsign_dynamic_shape(mode):
+    """
+    Feature: test softsign dynamic_shape feature.
+    Description: test softsign dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([8., -3., 0., 0., 10., 1., 21., -3., 11., 4., 2., 10., 8.]).astype(np.float32))
+    output = SoftsignDynamicShapeNet()(x)
+    expect_output = np.array([[0.8888889, -0.75, 0.],
+                              [0.90909094, 0.5, 0.95454544],
+                              [0.9166667, 0.8, 0.6666667]], dtype=np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 

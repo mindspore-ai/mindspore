@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 
 
@@ -30,6 +31,21 @@ class NetInvGrad(nn.Cell):
 
     def construct(self, y, dy):
         return self.grad(y, dy)
+
+
+class InvGradDynamicShapeNet(nn.Cell):
+    def __init__(self):
+        super(InvGradDynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.reshape = P.Reshape()
+        self.grad = G.InvGrad()
+
+    def construct(self, y, dy):
+        y_unique, _ = self.unique(y)
+        y_unique = self.reshape(y_unique, (3, 3))
+        dy_unique, _ = self.unique(dy)
+        dy_unique = self.reshape(dy_unique, (3, 3))
+        return self.grad(y_unique, dy_unique)
 
 
 @pytest.mark.level0
@@ -43,15 +59,15 @@ def test_inv_grad_float32(mode):
     Expectation: the result match to numpy
     """
     context.set_context(mode=mode, device_target="CPU")
-    y = Tensor(np.array([[[[-1, 1, 12],
-                           [5, 34, 6],
-                           [10, 2, -1]]]]).astype(np.float32))
-    dy = Tensor(np.array([[[[29, 1, 55],
-                            [2.2, 63, 2],
-                            [3, 3, 12]]]]).astype(np.float32))
-    expect = np.array([[[[-29, -1, -7920],
-                         [-55, -72828, -72],
-                         [-300, -12, -12]]]]).astype(np.float32)
+    y = Tensor(np.array([[-1, 1, 12],
+                         [5, 34, 6],
+                         [10, 2, -1]]).astype(np.float32))
+    dy = Tensor(np.array([[29, 1, 55],
+                          [2.2, 63, 2],
+                          [3, 3, 12]]).astype(np.float32))
+    expect = np.array([[-29, -1, -7920],
+                       [-55, -72828, -72],
+                       [-300, -12, -12]]).astype(np.float32)
     net = NetInvGrad()
     output = net(y, dy)
     np.testing.assert_array_almost_equal(output.asnumpy(), expect)
@@ -141,4 +157,24 @@ def test_inv_grad_vmap(mode):
     expect_output = np.array([[-29, -55, -300],
                               [-1, -72828, -12],
                               [-7920, -72, -12]]).astype(np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_inv_grad_dynamic_shape(mode):
+    """
+    Feature: test inv_grad dynamic_shape feature.
+    Description: test inv_grad dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    y = Tensor(np.array([8., -3., 0., 0., 10., 1., 21., -3., 11., 4., -2., 10., 8.]).astype(np.float32))
+    dout = Tensor(np.array([18., -1.3, 0., 0., 12., 1., 2.1, -1.3, 11., 4.2, -2., 12., 18.]).astype(np.float32))
+    output = InvGradDynamicShapeNet()(y, dout)
+    expect_output = np.array([[-1152., 11.7, 0.],
+                              [-1200., -1., -926.1],
+                              [-1331., -67.2, 8.]]).astype(np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)

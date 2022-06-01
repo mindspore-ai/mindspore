@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 
 
 class NetInv(nn.Cell):
@@ -30,6 +31,16 @@ class NetInv(nn.Cell):
 
     def construct(self, x):
         return self.inv(x)
+
+
+class InvDynamicShapeNet(nn.Cell):
+    def __init__(self):
+        super(InvDynamicShapeNet, self).__init__()
+        self.test_dynamic = inner.GpuConvertToDynamicShape()
+
+    def construct(self, x):
+        x = self.test_dynamic(x)
+        return F.inv(x)
 
 
 @pytest.mark.level0
@@ -83,4 +94,23 @@ def test_inv_vmap(mode):
     output = F.vmap(F.inv, 0, 1)(x)
     expect_output = np.array([[4., 2.], [2.5, 8.333334], [3.2258065, 3.2258065], [1.923077, 1.724138]],
                              dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_inv_dynamic_shape(mode):
+    """
+    Feature: test inv dynamic_shape feature.
+    Description: test inv dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor(np.array([[0.25, 0.4, 0.31, 0.52],
+                         [0.5, 0.12, 0.31, 0.58]], dtype=np.float32))
+    output = InvDynamicShapeNet()(x)
+    expect_output = np.array([[4., 2.5, 3.2258065, 1.923077],
+                              [2., 8.333334, 3.2258065, 1.724138]], dtype=np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)

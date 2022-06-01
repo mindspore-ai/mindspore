@@ -44,6 +44,22 @@ class MishGradNet(nn.Cell):
         return gout
 
 
+class MishGradDynamicShapeNet(nn.Cell):
+    def __init__(self, network):
+        super(MishGradDynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.reshape = P.Reshape()
+        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.network = network
+
+    def construct(self, x, dy):
+        x_unique, _ = self.unique(x)
+        x_unique = self.reshape(x_unique, (3, 3))
+        dy_unique, _ = self.unique(dy)
+        dy_unique = self.reshape(dy_unique, (3, 3))
+        return self.grad(self.network)(x_unique, dy_unique)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -148,3 +164,23 @@ def test_mish_grad_vmap(mode):
                                [[-1.3482722, 0.22441024, 0.05531986],
                                 [-0.41696107, -1.2767013, 0.1277946]]]]).astype(np.float32)
     assert np.allclose(output[0].asnumpy(), expect_output, atol=1e-4, rtol=1e-4, equal_nan=True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_mish_grad_dynamic_shape(mode):
+    """
+    Feature: test mish_grad dynamic_shape feature.
+    Description: test mish_grad dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([8., -3., 0., 0., 10., 1., 21., -3., 11., 4., -2., 10., 8.]).astype(np.float32))
+    dout = Tensor(np.array([18., -1.3, 0., 0., 12., 1., 2.1, -1.3, 11., 4.2, -2., 12., 18.]).astype(np.float32))
+    output = MishGradDynamicShapeNet(MishNet())(x, dout)
+    expect_output = np.array([[18.000065, 0.12141099, 0.],
+                              [12., 1.0490363, 2.1],
+                              [11., 4.218619, 0.21672803]], dtype=np.float32)
+    np.testing.assert_almost_equal(output[0].asnumpy(), expect_output)

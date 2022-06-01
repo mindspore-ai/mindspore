@@ -46,6 +46,11 @@ abstract::ShapePtr PaddingInferShape(const PrimitivePtr &primitive, const std::v
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  auto input_x_shape_ptr = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
+  if (input_x_shape_ptr->IsDynamic()) {
+    return input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
+  }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
   CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
@@ -54,15 +59,12 @@ abstract::ShapePtr PaddingInferShape(const PrimitivePtr &primitive, const std::v
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the last dimension of 'x' must be 1, but got: " << x_last_dim << ".";
   }
-
   auto value_ptr = primitive->GetAttr(kPadDimSize);
   auto pad_dim_size = GetValue<int64_t>(value_ptr);
   CheckAndConvertUtils::CheckInteger("pad_dim_size", pad_dim_size, kGreaterEqual, kNumber1, prim_name);
-  std::vector<int64_t> out_dim_shape;
-  (void)std::transform(x_shape.begin(), x_shape.end(), std::back_inserter(out_dim_shape), SizeToLong);
   // Extends the last dimension of the input tensor from 1 to pad_dim_size.
-  out_dim_shape[out_dim_shape.size() - 1] += pad_dim_size - 1;
-  return std::make_shared<abstract::Shape>(out_dim_shape);
+  x_shape[x_shape.size() - 1] += pad_dim_size - 1;
+  return std::make_shared<abstract::Shape>(x_shape);
 }
 }  // namespace
 
