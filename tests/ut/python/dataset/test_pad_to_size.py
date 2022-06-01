@@ -142,7 +142,7 @@ def test_pad_to_size_check():
 
     test_invalid_input(TypeError, "is not of type", 3.5)
     test_invalid_input(ValueError, "The size must be a sequence of length 2", ())
-    test_invalid_input(ValueError, "must be greater than 0", -100)
+    test_invalid_input(ValueError, "is not within the required interval", -100)
     test_invalid_input(ValueError, "is not within the required interval", (0, 50))
 
     test_invalid_input(TypeError, "is not of type", 100, "5")

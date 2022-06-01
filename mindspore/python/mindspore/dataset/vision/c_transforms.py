@@ -46,9 +46,8 @@ import numbers
 import numpy as np
 from PIL import Image
 
-from mindspore import log as logger
 import mindspore._c_dataengine as cde
-from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
+from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy, parse_padding
 from .validators import check_prob, check_crop, check_center_crop, check_resize_interpolation, \
     check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
     check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, check_alpha, \
@@ -133,23 +132,6 @@ DE_C_CONVERT_COLOR_MODE = {ConvertMode.COLOR_BGR2BGRA: cde.ConvertMode.DE_COLOR_
                            ConvertMode.COLOR_BGRA2GRAY: cde.ConvertMode.DE_COLOR_BGRA2GRAY,
                            ConvertMode.COLOR_RGBA2GRAY: cde.ConvertMode.DE_COLOR_RGBA2GRAY,
                            }
-
-
-def parse_padding(padding):
-    """ Parses and prepares the padding tuple"""
-
-    if isinstance(padding, numbers.Number):
-        padding = [padding] * 4
-    if len(padding) == 2:
-        logger.warning("The behaviour when padding is a sequence of length 2 will change from padding left/top "
-                       "with the first value and right/bottom with the second to left/right with the first and "
-                       "top/bottom with the second in the future.")
-        left = top = padding[0]
-        right = bottom = padding[1]
-        padding = (left, top, right, bottom,)
-    if isinstance(padding, list):
-        padding = tuple(padding)
-    return padding
 
 
 class AdjustGamma(ImageTensorOperation):
@@ -899,9 +881,10 @@ class Pad(ImageTensorOperation):
               value of edge.
 
     Note:
-        The behaviour when padding is a sequence of length 2 will change from padding left/top with
-        the first value and right/bottom with the second to left/right with the first and top/bottom with
-        the second in the future.
+        The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+        the first value and right/bottom with the second, to padding left/right with the first one
+        and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
+        left, top, right and bottom respectively.
 
     Raises:
         TypeError: If `padding` is not of type int or Sequence[int].
@@ -1270,6 +1253,12 @@ class RandomCrop(ImageTensorOperation):
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
               value of edge.
 
+    Note:
+        The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+        the first value and right/bottom with the second, to padding left/right with the first one
+        and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
+        left, top, right and bottom respectively.
+
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
         TypeError: If `padding` is not of type int or Sequence[int].
@@ -1430,6 +1419,12 @@ class RandomCropWithBBox(ImageTensorOperation):
 
             - Border.SYMMETRIC, means it reflects the values on the edge repeating the last
               value of edge.
+
+    Note:
+        The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+        the first value and right/bottom with the second, to padding left/right with the first one
+        and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
+        left, top, right and bottom respectively.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].

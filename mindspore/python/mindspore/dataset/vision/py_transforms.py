@@ -831,9 +831,10 @@ class Pad(py_transforms.PyTensorOperation):
             - Border.SYMMETRIC, pads with reflection of the image repeating the last value on the edge.
 
     Note:
-        The behaviour when padding is a sequence of length 2 will change from padding left/top with
-        the first value and right/bottom with the second to left/right with the first and top/bottom with
-        the second in the future.
+        The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+        the first value and right/bottom with the second, to padding left/right with the first one
+        and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
+        left, top, right and bottom respectively.
 
     Raises:
         TypeError: If `padding` is not of type int or Sequence[int, int].
@@ -860,7 +861,7 @@ class Pad(py_transforms.PyTensorOperation):
 
     @check_pad
     def __init__(self, padding, fill_value=0, padding_mode=Border.CONSTANT):
-        self.padding = padding
+        self.padding = parse_padding(padding)
         self.fill_value = fill_value
         self.padding_mode = DE_PY_BORDER_TYPE[padding_mode]
         self.random = False
@@ -1126,6 +1127,12 @@ class RandomCrop(py_transforms.PyTensorOperation):
             - Border.EDGE, pads with the last value at the edge of the image.
             - Border.REFLECT, pads with reflection of the image omitting the last value on the edge.
             - Border.SYMMETRIC, pads with reflection of the image repeating the last value on the edge.
+
+    Note:
+        The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+        the first value and right/bottom with the second, to padding left/right with the first one
+        and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
+        left, top, right and bottom respectively.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int, int].

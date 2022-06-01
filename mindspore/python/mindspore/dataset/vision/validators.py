@@ -614,7 +614,7 @@ def check_pad_to_size(method):
 
         type_check(size, (int, list, tuple), "size")
         if isinstance(size, int):
-            check_positive(size, "size")
+            check_pos_int32(size, "size")
         else:
             if len(size) != 2:
                 raise ValueError("The size must be a sequence of length 2.")
