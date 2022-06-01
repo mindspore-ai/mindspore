@@ -445,6 +445,15 @@ class IsRealFunc(nn.Cell):
         return y
 
 
+class Rad2degNet(nn.Cell):
+    def __init__(self):
+        super(Rad2degNet, self).__init__()
+        self.rad2deg = ops.rad2deg
+
+    def construct(self, x):
+        return self.rad2deg(x)
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -530,6 +539,11 @@ test_case_math_ops = [
         'block': IsRealFunc(),
         'desc_inputs': [Tensor([1, 1+1j, 2+0j])],
     }),
+    ('Rad2deg', {
+        'block': Rad2degNet(),
+        'desc_inputs': [Tensor(np.array([[3.142, -3.142], [6.283, -6.283], [1.570, -1.570]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[3.142, -3.142], [6.283, -6.283], [1.570, -1.570]], np.float32))],
+    }),
 ]
 
 test_case_lists = [test_case_math_ops]
@@ -594,6 +608,12 @@ raise_set = [
     ('Deg2rad_2_Error', {
         'block': (lambda x: Deg2radNet(), {'exception': TypeError}),
         'desc_inputs': [Tensor(np.array([[90, -90], [180, -180], [270, -270]], np.int32))]}),
+    ('Rad2deg_1_Error', {
+        'block': (lambda x: Rad2degNet(), {'exception': TypeError}),
+        'desc_inputs': [0]}),
+    ('Rad2deg_2_Error', {
+        'block': (lambda x: Rad2degNet(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.array([[3, -3], [6, -6], [1, -1]], np.int32))]}),
 ]
 
 
