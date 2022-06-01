@@ -52,9 +52,7 @@ ParamMap AddCacheParameters(const FuncGraphPtr &graph, const ParamSet &parameter
       auto cache_name = ori_param_name + "_cache";
       new_param_info->set_name(cache_name);
       new_tensor->set_param_info(new_param_info);
-      auto cache_param = graph->AddWeightParameter(cache_name);
-      cache_param->set_default_param(MakeValue(new_tensor));
-      cache_param->set_abstract(new_tensor->ToAbstract());
+      auto cache_param = graph->AddFvParameter(cache_name, new_tensor);
       cache_host_params_map[cache_param] = param;
     }
   }
@@ -260,10 +258,7 @@ AnfNodePtr InitHashMap(const FuncGraphPtr &func_graph, const int64_t host_size, 
   std::string hashmap_name = "cache_hashmap";
   new_param_info->set_name(hashmap_name);
   new_tensor->set_param_info(new_param_info);
-  auto hashmap = func_graph->AddWeightParameter(hashmap_name);
-  hashmap->set_default_param(MakeValue(new_tensor));
-  hashmap->set_abstract(new_tensor->ToAbstract());
-  return hashmap;
+  return func_graph->AddFvParameter(hashmap_name, new_tensor);
 }
 
 AnfNodePtr InitStep(const FuncGraphPtr &func_graph, TypeId type_id) {
@@ -273,10 +268,7 @@ AnfNodePtr InitStep(const FuncGraphPtr &func_graph, TypeId type_id) {
   std::string step_name = "cache_step";
   new_param_info->set_name(step_name);
   new_tensor->set_param_info(new_param_info);
-  auto step = func_graph->AddWeightParameter(step_name);
-  step->set_default_param(MakeValue(new_tensor));
-  step->set_abstract(new_tensor->ToAbstract());
-  return step;
+  return func_graph->AddFvParameter(step_name, new_tensor);
 }
 
 AnfNodePtr CreateMapCacheIdx(const FuncGraphPtr &func_graph, const AnfNodePtr &indices,
@@ -540,11 +532,7 @@ AnfNodePtr CreateOutputNodeParam(const FuncGraphPtr &graph, const AnfNodePtr &or
   auto new_param_name = name + "_pipe";
   new_param_info->set_name(new_param_name);
   new_tensor->set_param_info(new_param_info);
-  auto new_param = graph->AddWeightParameter(new_param_name);
-  new_param->set_default_param(MakeValue(new_tensor));
-  auto abs_tensor = new_tensor->ToAbstract();
-  new_param->set_abstract(abs_tensor);
-  return new_param->cast<AnfNodePtr>();
+  return graph->AddFvParameter(new_param_name, new_tensor);
 }
 
 AnfMap CreateOtherPipeParams(const FuncGraphPtr &graph, const AnfSet &no_ref_params) {

@@ -196,7 +196,7 @@ void FuncGraph::GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
                                      const std::vector<AnfNodePtr> &specialized_parameter_list,
                                      mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl_nodes) const {
   MS_EXCEPTION_IF_NULL(specialized_graph);
-  for (size_t i = 0; i < specialized_graph->parameters().size() - hyper_param_count(); ++i) {
+  for (size_t i = 0; i < specialized_graph->parameters().size() - fv_param_count(); ++i) {
     MS_EXCEPTION_IF_NULL(specialized_graph->parameters()[i]);
     auto param_node = specialized_graph->parameters()[i]->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param_node);
@@ -222,10 +222,10 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   std::vector<abstract::AbstractKeywordArgPtr> kwarg_list;
   std::vector<size_t> pos_arg_indexes;
   size_t arguments_count = args_spec_list.size();
-  if (hyper_param_count_ > arguments_count) {
+  if (fv_param_count_ > arguments_count) {
     MS_LOG(EXCEPTION) << "The number of parameters in funcgraph cannot exceed the number of arguments.";
   }
-  for (size_t i = 0; i < arguments_count - hyper_param_count_; i++) {
+  for (size_t i = 0; i < arguments_count - fv_param_count_; i++) {
     MS_EXCEPTION_IF_NULL(args_spec_list[i]);
     if (args_spec_list[i]->isa<abstract::AbstractKeywordArg>()) {
       kwarg_list.push_back(args_spec_list[i]->cast<abstract::AbstractKeywordArgPtr>());
@@ -243,7 +243,7 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   }
   FuncGraphPtr specialized_graph = BasicClone(shared_from_base<FuncGraph>());
   size_t kwarg_count = kwarg_list.size();
-  int pos_args_input_count = SizeToInt((arguments_count - kwarg_count) - hyper_param_count_);
+  int pos_args_input_count = SizeToInt((arguments_count - kwarg_count) - fv_param_count_);
   int pos_args_count = std::min(pos_args_input_count, this->GetPositionalArgsCount());
   int variable_args_count = pos_args_input_count - pos_args_count;
   std::vector<AnfNodePtr> specialized_parameter_list;
@@ -263,7 +263,7 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   // append hyper parameter to specialized_parameter_list
   MS_EXCEPTION_IF_NULL(specialized_graph);
   auto params = specialized_graph->parameters();
-  specialized_parameter_list.insert(specialized_parameter_list.end(), params.end() - SizeToInt(hyper_param_count_),
+  specialized_parameter_list.insert(specialized_parameter_list.end(), params.end() - SizeToInt(fv_param_count_),
                                     params.end());
   std::vector<AnfNodePtr> specialized_parameter_list_update(specialized_parameter_list.begin() + pos_arg_indexes.size(),
                                                             specialized_parameter_list.end());

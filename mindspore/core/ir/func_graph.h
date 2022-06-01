@@ -132,8 +132,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void PrependParameter(const ParameterPtr &p) { parameters_.insert(parameters_.begin(), p); }
   void set_parameters(const std::vector<AnfNodePtr> &params) { parameters_ = params; }
   void set_parameters(std::vector<AnfNodePtr> &&params) { parameters_ = std::move(params); }
-  // Add a weight parameter with specific name.
-  ParameterPtr AddWeightParameter(const std::string &name);
+  // Add a FV weight parameter with specific name.
+  ParameterPtr AddFvParameter(const std::string &name, const ValuePtr &default_value);
 
   // Create a cnode with given inputs, bound to this graph.
   virtual CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs);
@@ -154,7 +154,6 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // Create a cnode with given inputs, put it to order list after the position node.
   CNodePtr NewCNodeAfter(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs);
 
-  virtual ParameterPtr add_weight(const tensor::MetaTensorPtr &meta_tensor);
   // Functions for handling variable argument, keyword-only arguments and variable keyword argument.
   AnfNodePtr GetDefaultValueByName(const std::string &name);
   void set_param_default_value(const std::string &name, const AnfNodePtr &node) {
@@ -176,8 +175,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   AnfNodePtr GetVariableKwargParameter();
   std::string GetVariableKwargName();
   AnfNodePtrList GetKwOnlyArgsParameters();
-  void set_hyper_param_count(size_t count) { hyper_param_count_ = count; }
-  size_t hyper_param_count() const { return hyper_param_count_; }
+  void set_fv_param_count(size_t count) { fv_param_count_ = count; }
+  size_t fv_param_count() const { return fv_param_count_; }
   int GetPositionalArgsCount() const;
   AnfNodePtr GetParameterByName(const std::string &name);
   bool NeedGenerate(const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list);
@@ -418,9 +417,9 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   bool has_kwarg_;
   bool exist_multi_target_;
   int kw_only_args_count_;
-  // Hyper param is placed on the top graph,
+  // Hyper param is used as free variable and placed on the top graph.
   // and positioned in the end of the param list, so we record the number to trace the position.
-  size_t hyper_param_count_;
+  size_t fv_param_count_;
   // Argument input list for the graph used to generate this graph.
   bool is_generated_;
   // CNode that calls 'return' primitive.

@@ -176,9 +176,9 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
   //       2. The arguments in caller may be less than the formal parameters in called as some parameters can have
   //       default value.
   if (!called->has_vararg() &&
-      caller->inputs().size() > (1 + called->GetPositionalArgsCount() + called->hyper_param_count())) {
+      caller->inputs().size() > (1 + called->GetPositionalArgsCount() + called->fv_param_count())) {
     size_t start_offset = called->GetPositionalArgsCount() + 1;
-    size_t end_offset = called->hyper_param_count();
+    size_t end_offset = called->fv_param_count();
     new_args.erase(new_args.begin() + start_offset, new_args.end() - end_offset);
   }
 

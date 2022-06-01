@@ -338,13 +338,13 @@ void RemoveBatchNormalizetionNotUseParameters(const FuncGraphManagerPtr &manager
                                              }),
                               root_parameters.end());
   size_t remove_param_count = origin_param_count - root_parameters.size();
-  size_t hyper_param_count = root_graph->hyper_param_count();
-  if (remove_param_count > hyper_param_count) {
+  size_t fv_param_count = root_graph->fv_param_count();
+  if (remove_param_count > fv_param_count) {
     MS_LOG(ERROR) << "The number of deleted parameters cannot exceed the number of original parameters.";
     return;
   }
-  hyper_param_count = hyper_param_count - remove_param_count;
-  root_graph->set_hyper_param_count(hyper_param_count);
+  fv_param_count = fv_param_count - remove_param_count;
+  root_graph->set_fv_param_count(fv_param_count);
   manager->SetParameters(root_graph, root_parameters);
 }
 }  // namespace

@@ -41,7 +41,7 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
       has_kwarg_(false),
       exist_multi_target_(false),
       kw_only_args_count_(0),
-      hyper_param_count_(0),
+      fv_param_count_(0),
       is_generated_(false),
       return_(nullptr),
       manager_(),
@@ -91,54 +91,56 @@ const std::vector<AnfNodePtr> FuncGraph::get_inputs() const {
 
 ParameterPtr FuncGraph::add_parameter() {
   FuncGraphPtr this_func_graph = shared_from_base<FuncGraph>();
-  ParameterPtr p = std::make_shared<Parameter>(this_func_graph);
-  add_parameter(p);
-  return p;
+  ParameterPtr param = std::make_shared<Parameter>(this_func_graph);
+  add_parameter(param);
+  return param;
 }
 
 ParameterPtr FuncGraph::add_parameter(NodeDebugInfoPtr &&debug_info) {
   FuncGraphPtr this_func_graph = shared_from_base<FuncGraph>();
-  ParameterPtr p = std::make_shared<Parameter>(this_func_graph, std::move(debug_info));
-  add_parameter(p);
-  return p;
+  ParameterPtr param = std::make_shared<Parameter>(this_func_graph, std::move(debug_info));
+  add_parameter(param);
+  return param;
 }
 
-void FuncGraph::add_parameter(const ParameterPtr &p) {
+void FuncGraph::add_parameter(const ParameterPtr &param) {
   if (manager_.lock()) {
-    manager_.lock()->AddParameter(shared_from_base<FuncGraph>(), p);
+    manager_.lock()->AddParameter(shared_from_base<FuncGraph>(), param);
   } else {
-    parameters_.push_back(p);
+    parameters_.push_back(param);
   }
 }
 
 ParameterPtr FuncGraph::InsertFrontParameter() {
   FuncGraphPtr this_func_graph = shared_from_base<FuncGraph>();
-  ParameterPtr p = std::make_shared<Parameter>(this_func_graph);
-  InsertFrontParameter(p);
-  return p;
+  ParameterPtr param = std::make_shared<Parameter>(this_func_graph);
+  InsertFrontParameter(param);
+  return param;
 }
 
-void FuncGraph::InsertFrontParameter(const ParameterPtr &p) {
+void FuncGraph::InsertFrontParameter(const ParameterPtr &param) {
   if (manager_.lock()) {
-    manager_.lock()->InsertFrontParameter(shared_from_base<FuncGraph>(), p);
+    manager_.lock()->InsertFrontParameter(shared_from_base<FuncGraph>(), param);
   } else {
-    PrependParameter(p);
+    PrependParameter(param);
   }
 }
 
-ParameterPtr FuncGraph::AddWeightParameter(const std::string &name) {
+ParameterPtr FuncGraph::AddFvParameter(const std::string &name, const ValuePtr &default_value) {
   FuncGraphPtr this_graph = shared_from_base<FuncGraph>();
-  ParameterPtr p = std::make_shared<Parameter>(this_graph);
-  p->set_name(name);
-  p->debug_info()->set_name(name);
-
+  ParameterPtr param = std::make_shared<Parameter>(this_graph);
+  param->set_name(name);
+  param->debug_info()->set_name(name);
+  MS_EXCEPTION_IF_NULL(default_value);
+  param->set_default_param(default_value);
+  param->set_abstract(default_value->ToAbstract());
   if (manager_.lock()) {
-    manager_.lock()->AddParameter(shared_from_base<FuncGraph>(), p);
+    manager_.lock()->AddParameter(shared_from_base<FuncGraph>(), param);
   } else {
-    parameters_.push_back(p);
+    parameters_.push_back(param);
   }
-  hyper_param_count_++;
-  return p;
+  ++fv_param_count_;
+  return param;
 }
 
 bool FuncGraph::has_flag(const std::string &key) const {
@@ -573,11 +575,11 @@ AnfNodePtr FuncGraph::GetVariableArgParameter() {
     min_param_num += 1;
   }
   min_param_num += kw_only_args_count_;
-  min_param_num += hyper_param_count_;
+  min_param_num += fv_param_count_;
 
   if (parameters_.size() < min_param_num) {
     MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size()
-                      << " which less than the sum of following: hyper_param_count: " << hyper_param_count_
+                      << " which less than the sum of following: fv_param_count: " << fv_param_count_
                       << ", has_vararg: " << has_vararg_ << ", has_kwarg: " << has_kwarg_
                       << ", kw_only_args_count_: " << kw_only_args_count_;
   }
@@ -598,22 +600,22 @@ std::string FuncGraph::GetVariableArgName() {
 
 AnfNodePtr FuncGraph::GetVariableKwargParameter() {
   if (has_kwarg_) {
-    if (parameters_.size() < hyper_param_count_ + 1) {
-      MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
-                        << hyper_param_count_ << ", parameters is less than 1 + hyper_param_count";
+    if (parameters_.size() < fv_param_count_ + 1) {
+      MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", fv_param_count is " << fv_param_count_
+                        << ", parameters is less than 1 + fv_param_count";
     }
-    return parameters_[(parameters_.size() - hyper_param_count_) - 1];
+    return parameters_[(parameters_.size() - fv_param_count_) - 1];
   }
   return nullptr;
 }
 
 std::string FuncGraph::GetVariableKwargName() {
   if (has_kwarg_) {
-    if (parameters_.size() < hyper_param_count_ + 1) {
-      MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
-                        << hyper_param_count_ << ", parameters is less than 1 + hyper_param_count";
+    if (parameters_.size() < fv_param_count_ + 1) {
+      MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", fv_param_count is " << fv_param_count_
+                        << ", parameters is less than 1 + fv_param_count";
     }
-    const auto &parameter = parameters_[(parameters_.size() - hyper_param_count_) - 1]->cast<ParameterPtr>();
+    const auto &parameter = parameters_[(parameters_.size() - fv_param_count_) - 1]->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(parameter);
     return parameter->name();
   }
@@ -637,17 +639,17 @@ AnfNodePtrList FuncGraph::GetKwOnlyArgsParameters() {
     varargs_kwargs_num += 1;
   }
   min_param_num += kw_only_args_count_;
-  min_param_num += hyper_param_count_;
+  min_param_num += fv_param_count_;
 
   if (parameters_.size() < min_param_num) {
     MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size()
-                      << " which less than the sum of following: hyper_param_count: " << hyper_param_count_
+                      << " which less than the sum of following: fv_param_count: " << fv_param_count_
                       << ", has_vararg: " << has_vararg_ << ", has_kwarg: " << has_kwarg_
                       << ", kw_only_args_count: " << kw_only_args_count_;
   }
   size_t kw_only_args_start_offset = parameters_.size() - min_param_num;
-  std::copy(parameters_.cbegin() + kw_only_args_start_offset,
-            parameters_.cend() - hyper_param_count_ - varargs_kwargs_num, std::back_inserter(kw_only_args));
+  std::copy(parameters_.cbegin() + kw_only_args_start_offset, parameters_.cend() - fv_param_count_ - varargs_kwargs_num,
+            std::back_inserter(kw_only_args));
   return kw_only_args;
 }
 
@@ -659,7 +661,7 @@ int FuncGraph::GetPositionalArgsCount() const {
   if (has_vararg_) {
     count--;
   }
-  return (count - kw_only_args_count_) - SizeToInt(hyper_param_count_);
+  return (count - kw_only_args_count_) - SizeToInt(fv_param_count_);
 }
 
 AnfNodePtr FuncGraph::GetParameterByName(const std::string &name) {
@@ -761,13 +763,6 @@ CNodePtr FuncGraph::NewCNode(const PrimitivePtr &primitive, const std::vector<An
 CNodePtr FuncGraph::NewCNodeInOrder(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
   auto input_node_list = MakeInputNodes(primitive, inputs);
   return NewCNodeInOrder(std::move(input_node_list));
-}
-
-ParameterPtr FuncGraph::add_weight(const tensor::MetaTensorPtr &meta_tensor) {
-  auto parameter = add_parameter();
-  parameter->set_default_param(MakeValue(meta_tensor));
-  parameter->set_abstract(meta_tensor->ToAbstract());
-  return parameter;
 }
 
 void FuncGraph::SetMultiTarget() {
