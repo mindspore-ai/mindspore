@@ -819,7 +819,7 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Invalid tensor size.");
   }
   for (size_t i = 0; i < control_node_parameters.size(); ++i) {
-    auto &front_parameter = control_node_parameters[i];
+    auto &front_parameter = control_node_parameters[i].first;
     auto &tensor = tensors[i];
     if (tensor == nullptr) {
       continue;
@@ -873,7 +873,7 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
 
   const auto &control_node_parameters = graph_compiler_info_->control_node_parser_->control_node_parameters();
   for (size_t i = 0; i < control_node_parameters.size(); ++i) {
-    const auto &input_node = control_node_parameters[i];
+    const auto &input_node = control_node_parameters[i].first;
     const auto &input_tensor = tensors[i];
     MS_EXCEPTION_IF_NULL(input_node);
     if (IsPersistentDeviceTensor(input_node)) {
@@ -890,6 +890,9 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
     if (tensor_position >= host_tensors->size()) {
       std::string error_info = "The position of tensor is out of range: " + std::to_string(tensor_position);
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
+    }
+    if ((*host_tensors)[tensor_position] != nullptr) {
+      continue;
     }
     (*host_tensors)[tensor_position] = input_tensor;
     // Avoid the device `ptr_` being hold by the input tensor and the output tensor, the input tensor address cannot be

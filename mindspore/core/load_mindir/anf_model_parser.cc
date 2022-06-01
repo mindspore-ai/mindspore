@@ -283,6 +283,30 @@ abstract::AbstractBasePtr MSANFModelParser::GetNodeAbstractFromAttrProtoWithType
       const mind_ir::TensorProto &attr_tensor = attr_proto.tensors(0);
       return GetAbsTensorFromTensorProto(attr_tensor);
     }
+    case mind_ir::AttributeProto_AttributeType_CSR_TENSOR: {
+      std::vector<abstract::AbstractBasePtr> vec;
+      for (int i = 0; i < attr_proto.values_size(); ++i) {
+        auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto.values(i));
+        if (abs == nullptr) {
+          MS_LOG(WARNING) << "Failed to get the CSRTensor's abstract from AttrProto. " << attr_proto.DebugString();
+          return nullptr;
+        }
+        (void)vec.emplace_back(abs);
+      }
+      return std::make_shared<abstract::AbstractCSRTensor>(vec);
+    }
+    case mind_ir::AttributeProto_AttributeType_COO_TENSOR: {
+      std::vector<abstract::AbstractBasePtr> vec;
+      for (int i = 0; i < attr_proto.values_size(); ++i) {
+        auto abs = GetNodeAbstractFromAttrProtoWithType(attr_proto.values(i));
+        if (abs == nullptr) {
+          MS_LOG(WARNING) << "Failed to get the COOTensor's abstract from AttrProto. " << attr_proto.DebugString();
+          return nullptr;
+        }
+        (void)vec.emplace_back(abs);
+      }
+      return std::make_shared<abstract::AbstractCOOTensor>(vec);
+    }
     case mind_ir::AttributeProto_AttributeType_TUPLE: {
       std::vector<abstract::AbstractBasePtr> vec;
       for (int i = 0; i < attr_proto.values_size(); ++i) {

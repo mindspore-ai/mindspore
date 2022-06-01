@@ -32,7 +32,6 @@
 #include "backend/common/pass/reduce_sum_optimizer.h"
 #include "backend/common/pass/add_dynamic_shape_attr.h"
 #include "backend/common/pass/add_akg_kernel_attrs.h"
-#include "backend/common/pass/sparse_process.h"
 #include "backend/common/pass/inplace_assign_for_custom_op.h"
 #include "backend/common/pass/flatten_concat_fission.h"
 #include "backend/common/optimizer/dynamic_shape/convert_custom_op.h"
@@ -61,7 +60,6 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ReduceSumOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());
-  common_pm->AddPass(std::make_shared<SparseProcess>());
   common_pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());

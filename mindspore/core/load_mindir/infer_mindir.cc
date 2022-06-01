@@ -190,6 +190,17 @@ AbstractBasePtr MindIREngine::InferPrimitiveShape(const PrimitivePtr &prim, cons
 
 void MindIREngine::EvalCommonPrimitive(const PrimitivePtr &prim, const CNodePtr &node,
                                        const AbstractBasePtrListPtr &args) {
+  // Save MakeTuple cnode abstract by its own abstract when MakeTuple have an abstract of
+  // AbstractCSRTensor/AbstractCOOTensor that can not be inferred by its Infer Functions.
+  if (prim->name() == prim::kPrimMakeTuple->name()) {
+    if (node->abstract() != nullptr && (node->abstract()->isa<abstract::AbstractCSRTensor>() ||
+                                        node->abstract()->isa<abstract::AbstractCOOTensor>())) {
+      MS_LOG(INFO) << "Save MakeTuple cnode abstract by its own abstract : " << node->abstract()->ToString();
+      SaveNodeInferResult(node, node->abstract());
+      return;
+    }
+  }
+
   AbstractBasePtrList args_spec_list;
   // Args has been resolved by partial
   if (args != nullptr) {
@@ -251,8 +262,9 @@ void MindIREngine::EvalPartialPrimitive(const CNodePtr &node, const AbstractBase
     return;
   }
   // Not Resolved.
-  if (node->inputs().size() < 2) {
-    MS_LOG(EXCEPTION) << node->DebugString() << " input size < 2";
+  constexpr size_t kSizeTwo = 2;
+  if (node->inputs().size() < kSizeTwo) {
+    MS_LOG(EXCEPTION) << node->DebugString() << " input size < " << kSizeTwo;
   }
   auto &func = infer_resut_[node->inputs()[1]];
   auto real_func = func->cast<abstract::AbstractFuncAtomPtr>();

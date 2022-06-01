@@ -43,10 +43,12 @@ py::object BuiltinsToPyData(const BaseRef &value);
 py::object VectorToPyData(const Any &value);
 py::object VectorRefToPyData(const VectorRef &value_list);
 py::object VectorRefToPyData(const VectorRef &value_list, const AbstractBasePtr &output);
-// Wrap VectorRef to CSRTensor
 py::object MakeCSRTensor(const VectorRef &value_list);
+py::object MakeCSRTensor(const ValuePtr &value);
 py::object MakeCOOTensor(const VectorRef &value_list);
-ShapeVector ConvertToShapeVector(const ValuePtr &shape_ptr, const VectorRef &value_list, size_t shape_idx);
+py::object MakeCOOTensor(const ValuePtr &value);
+ShapeVector ConvertShapeTupleToShapeVector(const ValueTuplePtr &shape_tuple);
+ShapeVector ConvertToShapeVector(const VectorRef &value_list, size_t shape_idx);
 py::object CSRTensorToPyData(const tensor::CSRTensorPtr &csr_tensor) {
   auto ref = py::tuple(1);
   ref[0] = csr_tensor;
@@ -457,7 +459,13 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
   if (output->isa<ValueNode>()) {
     MS_LOG(INFO) << "Graph's output is a constant. No need to execute.";
     ValuePtr value = GetValueNode(output);
-    *ret_val = ValueToPyData(value);
+    if (output->abstract()->isa<abstract::AbstractCSRTensor>()) {
+      *ret_val = MakeCSRTensor(value);
+    } else if (output->abstract()->isa<abstract::AbstractCOOTensor>()) {
+      *ret_val = MakeCOOTensor(value);
+    } else {
+      *ret_val = ValueToPyData(value);
+    }
     return true;
   }
 
@@ -499,71 +507,119 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
   return false;
 }
 
-ShapeVector ConvertToShapeVector(const ValuePtr &shape_ptr, const VectorRef &value_list, size_t shape_idx) {
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  ShapeVector shape;
-  ValueTuplePtr shape_tuple = shape_ptr->cast<ValueTuplePtr>();
-  if (shape_tuple) {
-    for (const auto &v : shape_tuple->value()) {
-      MS_EXCEPTION_IF_NULL(v);
-      ScalarPtr scalar = v->cast<ScalarPtr>();
-      MS_EXCEPTION_IF_NULL(scalar);
-      shape.push_back(GetValue<int64_t>(scalar));
-    }
-  } else {
-    auto shape_ref = utils::cast<VectorRef>(value_list[shape_idx]);
-    MS_EXCEPTION_IF_NULL(shape_ref);
-    for (const auto &v : shape_ref) {
-      MS_EXCEPTION_IF_NULL(v);
-      auto tensorptr = utils::cast<tensor::TensorPtr>(v);
-      MS_EXCEPTION_IF_NULL(tensorptr);
-      if (tensorptr->DataDim() != 0) {
-        MS_LOG(EXCEPTION) << "Element in COOTensor's shape must be scalar!";
-      }
-      tensorptr->data_sync(false);
-      shape.push_back(*(static_cast<int64_t *>(tensorptr->data_c())));
-    }
+// SparseTensor Converters
+using TensorPtr = tensor::TensorPtr;
+using CSRTensor = tensor::CSRTensor;
+constexpr size_t kCSRTensorInputSize{4};
+constexpr size_t kCOOTensorInputSize{3};
+
+void CheckCSRValueNums(size_t size) {
+  if (size < kCSRTensorInputSize) {
+    MS_LOG(EXCEPTION) << "CSRTensor must have at least " << kCSRTensorInputSize << " inputs, but got " << size;
   }
-  return shape;
+}
+
+py::object MakeCSRTensor(const ValuePtr &value) {
+  py::object ret;
+  if (value->isa<ValueSequence>()) {
+    auto value_sequeue = value->cast<ValueSequencePtr>()->value();
+    CheckCSRValueNums(value_sequeue.size());
+    TensorPtr indptr = utils::cast<TensorPtr>(value_sequeue[tensor::CSRTensor::kIndptrIdx]);
+    TensorPtr indices = utils::cast<TensorPtr>(value_sequeue[tensor::CSRTensor::kIndicesIdx]);
+    TensorPtr values = utils::cast<TensorPtr>(value_sequeue[tensor::CSRTensor::kValuesIdx]);
+    ValueTuplePtr shape_ptr = utils::cast<ValueTuplePtr>(value_sequeue[tensor::CSRTensor::kShapeIdx]);
+    ShapeVector shape = ConvertShapeTupleToShapeVector(shape_ptr);
+    auto csr_tensor_ptr = std::make_shared<CSRTensor>(indptr, indices, values, shape);
+    return CSRTensorToPyData(csr_tensor_ptr);
+  }
+  MS_LOG_WARNING << "value is not ValueSequence, but got " << value->ToString();
+  return ret;
 }
 
 py::object MakeCSRTensor(const VectorRef &value_list) {
-  constexpr size_t kCSRTensorInputSize{4};
-  if (value_list.size() != kCSRTensorInputSize) {
-    MS_LOG(EXCEPTION) << "CSRTensor must have 4 inputs.";
-  }
-  using TensorPtr = tensor::TensorPtr;
-  using CSRTensor = tensor::CSRTensor;
-  constexpr size_t kIndptrIdx{0};
-  constexpr size_t kIndicesIdx{1};
-  constexpr size_t kValuesIdx{2};
-  constexpr size_t kShapeIdx{3};
-  TensorPtr indptr = utils::cast<TensorPtr>(value_list[kIndptrIdx]);
-  TensorPtr indices = utils::cast<TensorPtr>(value_list[kIndicesIdx]);
-  TensorPtr values = utils::cast<TensorPtr>(value_list[kValuesIdx]);
-  ValuePtr shape_ptr = utils::cast<ValuePtr>(value_list[kShapeIdx]);
-
-  ShapeVector shape = ConvertToShapeVector(shape_ptr, value_list, kShapeIdx);
+  CheckCSRValueNums(value_list.size());
+  TensorPtr indptr = utils::cast<TensorPtr>(value_list[tensor::CSRTensor::kIndptrIdx]);
+  TensorPtr indices = utils::cast<TensorPtr>(value_list[tensor::CSRTensor::kIndicesIdx]);
+  TensorPtr values = utils::cast<TensorPtr>(value_list[tensor::CSRTensor::kValuesIdx]);
+  ShapeVector shape = ConvertToShapeVector(value_list, tensor::CSRTensor::kShapeIdx);
   auto csr_tensor_ptr = std::make_shared<CSRTensor>(indptr, indices, values, shape);
   return CSRTensorToPyData(csr_tensor_ptr);
 }
 
-py::object MakeCOOTensor(const VectorRef &value_list) {
-  constexpr size_t kCOOTensorInputSize{3};
-  constexpr size_t kIndicesIdx{0};
-  constexpr size_t kValuesIdx{1};
-  constexpr size_t kShapeIdx{2};
-  if (value_list.size() != kCOOTensorInputSize) {
-    MS_LOG(EXCEPTION) << "COOTensor must have " << kCOOTensorInputSize << "inputs.";
+ShapeVector ConvertShapeTupleToShapeVector(const ValueTuplePtr &shape_tuple) {
+  ShapeVector shape;
+  MS_EXCEPTION_IF_NULL(shape_tuple);
+  for (const auto &v : shape_tuple->value()) {
+    MS_EXCEPTION_IF_NULL(v);
+    ScalarPtr scalar = v->cast<ScalarPtr>();
+    MS_EXCEPTION_IF_NULL(scalar);
+    shape.push_back(GetValue<int64_t>(scalar));
   }
-  tensor::TensorPtr indices = utils::cast<tensor::TensorPtr>(value_list[kIndicesIdx]);
-  tensor::TensorPtr values = utils::cast<tensor::TensorPtr>(value_list[kValuesIdx]);
-  ValuePtr shape_ptr = utils::cast<ValuePtr>(value_list[kShapeIdx]);
+  return shape;
+}
 
-  ShapeVector shape = ConvertToShapeVector(shape_ptr, value_list, kShapeIdx);
-  auto ref = py::tuple(1);
-  auto coo_tensor_ptr = std::make_shared<tensor::COOTensor>(indices, values, shape);
-  ref[0] = coo_tensor_ptr;
-  return ref[0];
+ShapeVector ConvertToShapeVector(const VectorRef &value_list, size_t index) {
+  ShapeVector shape;
+  if (index >= value_list.size()) {
+    MS_LOG(EXCEPTION) << "Index " << index << " is out of range of " << value_list.size();
+    return shape;
+  }
+  BaseRef ref = value_list[index];
+  MS_EXCEPTION_IF_NULL(ref);
+
+  auto converter = [](BaseRef ref) {
+    auto tensorptr = utils::cast<tensor::TensorPtr>(ref);
+    MS_EXCEPTION_IF_NULL(tensorptr);
+    if (tensorptr->DataDim() != 0) {
+      MS_LOG(EXCEPTION) << "Element must be scalar!";
+    }
+    tensorptr->data_sync(false);
+    return *(static_cast<int64_t *>(tensorptr->data_c()));
+  };
+
+  if (utils::isa<tensor::Tensor>(ref)) {
+    std::transform(value_list.begin() + index, value_list.end(), std::back_inserter(shape), converter);
+  } else if (utils::isa<VectorRef>(ref)) {
+    VectorRef shape_ref = utils::cast<VectorRef>(ref);
+    std::transform(shape_ref.begin(), shape_ref.end(), std::back_inserter(shape), converter);
+  } else if (utils::isa<ValueTuple>(ref)) {
+    ValueTuplePtr shape_tuple = utils::cast<ValueTuplePtr>(ref);
+    shape = ConvertShapeTupleToShapeVector(shape_tuple);
+  }
+  if (shape.empty()) {
+    MS_LOG(ERROR) << "ShapeVector is empty!";
+  }
+  return shape;
+}
+
+void CheckCOOValueNums(size_t size) {
+  if (size < kCOOTensorInputSize) {
+    MS_LOG(EXCEPTION) << "COOTensor must have at least " << kCOOTensorInputSize << " inputs, but got " << size;
+  }
+}
+
+py::object MakeCOOTensor(const ValuePtr &value) {
+  auto ret = py::tuple(1);
+  if (value->isa<ValueSequence>()) {
+    auto value_sequeue = value->cast<ValueSequencePtr>()->value();
+    CheckCOOValueNums(value_sequeue.size());
+    TensorPtr indices = utils::cast<TensorPtr>(value_sequeue[tensor::COOTensor::kIndicesIdx]);
+    TensorPtr values = utils::cast<TensorPtr>(value_sequeue[tensor::COOTensor::kValuesIdx]);
+    ValueTuplePtr shape_ptr = utils::cast<ValueTuplePtr>(value_sequeue[tensor::COOTensor::kShapeIdx]);
+    ShapeVector shape = ConvertShapeTupleToShapeVector(shape_ptr);
+    ret[0] = std::make_shared<tensor::COOTensor>(indices, values, shape);
+  }
+  MS_LOG_WARNING << "value is not ValueSequence, but got " << value->ToString();
+  return ret[0];
+}
+
+py::object MakeCOOTensor(const VectorRef &value_list) {
+  CheckCOOValueNums(value_list.size());
+  tensor::TensorPtr indices = utils::cast<tensor::TensorPtr>(value_list[tensor::COOTensor::kIndicesIdx]);
+  tensor::TensorPtr values = utils::cast<tensor::TensorPtr>(value_list[tensor::COOTensor::kValuesIdx]);
+  ShapeVector shape = ConvertToShapeVector(value_list, tensor::COOTensor::kShapeIdx);
+  auto ret = py::tuple(1);
+  ret[0] = std::make_shared<tensor::COOTensor>(indices, values, shape);
+  return ret[0];
 }
 }  // namespace mindspore

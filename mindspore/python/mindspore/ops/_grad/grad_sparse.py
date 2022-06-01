@@ -120,28 +120,20 @@ def bprop_csr_tensor_get_dense_shape(csr_tensor, out, dout):
 @bprop_getters.register(_csr_ops.CSRReduceSum)
 def get_bprop_csr_reduce_sum(self):
     "Back-propagation for CSRReduceSum."
-    def bprop(csr_tensor, axis, out, dout):
-        indptr = csr_tensor.indptr
-        indices = csr_tensor.indices
-        shape = csr_tensor.shape
-
+    def bprop(indptr, indices, values, shape, axis, out, dout):
         output_shape_kept_dims = F.reduced_shape(shape, axis)
         tile_scaling = F.tuple_div(shape, output_shape_kept_dims)
         values_grad_dense = F.tile(F.reshape(dout, output_shape_kept_dims), tile_scaling)
         values_grad = F.csr_gather(indptr, indices, values_grad_dense, shape)
-        return F.make_csr_tensor(indptr, indices, values_grad, shape), zeros_like(axis)
+        res = (indptr, indices, values_grad, (), zeros_like(axis))
+        return res
     return bprop
 
 
 @bprop_getters.register(_csr_ops.CSRMV)
 def get_bprop_csr_mv(self):
     "Back-propagation for CSRMV."
-    def bprop(csr_tensor, dense, out, dout):
-        indptr = F.csr_tensor_get_indptr(csr_tensor)
-        indices = F.csr_tensor_get_indices(csr_tensor)
-        values = F.csr_tensor_get_values(csr_tensor)
-        dense_shape = csr_tensor.shape
-
+    def bprop(indptr, indices, values, dense_shape, dense, out, dout):
         rows = F.csr2coo(indptr, indices.shape[0])
         idx_dtype = rows.dtype
         rows_transposed, cols_indexing = F.sort(indices.astype(mstype.float32))
@@ -156,7 +148,8 @@ def get_bprop_csr_mv(self):
         parts_a = F.gather(dout, rows, 0)
         parts_b = F.gather(dense, indices, 0)
         values_grad = F.reduce_sum(parts_a * parts_b, 1)
-        return F.make_csr_tensor(indptr, indices, values_grad, csr_tensor.shape), dense_grad
+        res = (indptr, indices, values_grad, (), dense_grad)
+        return res
     return bprop
 
 
@@ -170,14 +163,8 @@ def get_bprop_csr_mul(self):
     could be used instead, which bypass the constraint by making use of the indices in the CSR input
     to index the dense input.
     """
-    def bprop(csr_tensor, dense, out, dout):
-        indptr = csr_tensor.indptr
-        indices = csr_tensor.indices
-        values = csr_tensor.values
-        shape = csr_tensor.shape
-
+    def bprop(indptr, indices, values, shape, dense, out, dout):
         csr_tensor_grad_value = F.csr_mul(F.make_csr_tensor(indptr, indices, dout, shape), dense)
-        csr_tensor_grad = F.make_csr_tensor(indptr, indices, csr_tensor_grad_value, shape)
         dense_grad_value = F.mul(dout, values)
         dense_grad = F.make_csr_tensor(indptr, indices, dense_grad_value, shape)
         if len(dense.shape) == 1 or dense.shape[0] == 1:
@@ -189,7 +176,8 @@ def get_bprop_csr_mul(self):
             row = F.csr2coo(indptr, indices.shape[0])
             coo_idx = P.Stack(-1)((row, indices))
             dense_grad = F.tensor_scatter_update(zeros_like(dense), coo_idx, dense_grad_value)
-        return csr_tensor_grad, dense_grad
+        res = (indptr, indices, csr_tensor_grad_value, (), dense_grad)
+        return res
     return bprop
 
 
@@ -203,11 +191,7 @@ def get_bprop_csr_div(self):
     could be used instead, which bypass the constraint by making use of the indices in the CSR input
     to index the dense input.
     """
-    def bprop(csr_tensor, dense, out, dout):
-        indptr = csr_tensor.indptr
-        indices = csr_tensor.indices
-        shape = csr_tensor.shape
-
+    def bprop(indptr, indices, values, shape, dense, out, dout):
         batch_dim_csr_start = 2
         batch_dim_dense_start = len(dense.shape) - (len(shape) - batch_dim_csr_start)
         if batch_dim_dense_start < 0:
@@ -221,7 +205,6 @@ def get_bprop_csr_div(self):
         csr_tensor_grad_value = F.csr_div(F.make_csr_tensor(indptr, indices, dout, shape), dense)
         if reduce_x:
             csr_tensor_grad_value = P.ReduceSum(True)(csr_tensor_grad_value, reduce_x)
-        csr_tensor_grad = F.make_csr_tensor(indptr, indices, csr_tensor_grad_value, shape)
         dense_grad_value = F.neg_tensor(F.mul(out, csr_tensor_grad_value))
         dense_grad = F.make_csr_tensor(indptr, indices, dense_grad_value, shape)
         if len(dense.shape) == 1 or dense.shape[0] == 1:
@@ -235,7 +218,8 @@ def get_bprop_csr_div(self):
             dense_grad = F.tensor_scatter_update(zeros_like(dense), coo_idx, dense_grad_value)
         if reduce_y:
             dense_grad = P.ReduceSum(True)(csr_tensor_grad_value, reduce_y)
-        return csr_tensor_grad, dense_grad
+        res = (indptr, indices, csr_tensor_grad_value, (), dense_grad)
+        return res
     return bprop
 
 

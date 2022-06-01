@@ -30,6 +30,7 @@
 #include "abstract/abstract_value.h"
 #include "base/complex_storage.h"
 #include "utils/log_adapter.h"
+#include "mindspore/ccsrc/include/common/utils/convert_utils.h"
 #include "utils/ms_utils_secure.h"
 #include "utils/shape_utils.h"
 #include "utils/ordered_set.h"
@@ -989,19 +990,18 @@ abstract::AbstractBasePtr CSRTensor::ToAbstract() {
   if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {
     MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";
   }
-  auto abs_csr_tensor = std::make_shared<abstract::AbstractCSRTensor>(dtype, shape_);
 
-  abs_csr_tensor->set_indptr(indptr_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
-  abs_csr_tensor->set_indices(indices_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
-  abs_csr_tensor->set_values(values_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
-
+  auto indptr = indptr_->ToAbstract()->cast<abstract::AbstractTensorPtr>();
+  auto indices = indices_->ToAbstract()->cast<abstract::AbstractTensorPtr>();
+  auto values = values_->ToAbstract()->cast<abstract::AbstractTensorPtr>();
   std::vector<abstract::AbstractBasePtr> abstract_shape;
   (void)std::transform(
     shape_.begin(), shape_.end(), std::back_inserter(abstract_shape),
     [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
-  abs_csr_tensor->set_dense_shape(std::make_shared<abstract::AbstractTuple>(abstract_shape));
+  auto shape = std::make_shared<abstract::AbstractTuple>(abstract_shape);
+  AbstractBasePtrList element_list{indptr, indices, values, shape};
 
-  return abs_csr_tensor;
+  return std::make_shared<abstract::AbstractCSRTensor>(element_list);
 }
 
 const size_t CSRTensor::GetSizeAt(size_t index) const {
@@ -1021,6 +1021,25 @@ const size_t CSRTensor::GetSizeAt(size_t index) const {
   return kTypeUnknown;
 }
 
+TensorPtr CSRTensor::GetTensorAt(size_t index) const {
+  if (index == kIndptrIdx) {
+    MS_EXCEPTION_IF_NULL(indptr_);
+    return indptr_;
+  } else if (index == kIndicesIdx) {
+    MS_EXCEPTION_IF_NULL(indices_);
+    return indices_;
+  } else if (index == kValuesIdx) {
+    MS_EXCEPTION_IF_NULL(values_);
+    return values_;
+  } else if (index >= kShapeIdx && index < kShapeIdx + shape().size()) {
+    auto scalar = MakeValue(shape_[index - kShapeIdx])->cast<ScalarPtr>();
+    MS_EXCEPTION_IF_NULL(scalar);
+    return std::make_shared<tensor::Tensor>(GetValue<int64_t>(scalar), scalar->type());
+  }
+  MS_LOG(EXCEPTION) << "Invalid index: " << index << " for CSRTensor: " << ToString();
+  return nullptr;
+}
+
 std::string COOTensor::ToString() const {
   std::ostringstream buf;
   MS_EXCEPTION_IF_NULL(indices_);
@@ -1036,18 +1055,16 @@ abstract::AbstractBasePtr COOTensor::ToAbstract() {
   if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {
     MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";
   }
-  auto abs_sparse_tensor = std::make_shared<abstract::AbstractCOOTensor>(dtype, shape_);
-
-  abs_sparse_tensor->set_indices(indices_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
-  abs_sparse_tensor->set_values(values_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
-
+  auto indices = indices_->ToAbstract()->cast<abstract::AbstractTensorPtr>();
+  auto values = values_->ToAbstract()->cast<abstract::AbstractTensorPtr>();
   std::vector<abstract::AbstractBasePtr> abstract_shape;
   (void)std::transform(
     shape_.begin(), shape_.end(), std::back_inserter(abstract_shape),
     [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
-  abs_sparse_tensor->set_dense_shape(std::make_shared<abstract::AbstractTuple>(abstract_shape));
+  auto shape = std::make_shared<abstract::AbstractTuple>(abstract_shape);
+  AbstractBasePtrList element_list{indices, values, shape};
 
-  return abs_sparse_tensor;
+  return std::make_shared<abstract::AbstractCOOTensor>(element_list);
 }
 
 std::string RowTensor::ToString() const {

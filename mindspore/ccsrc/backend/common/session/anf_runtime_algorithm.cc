@@ -259,6 +259,9 @@ std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t 
                       << " is out of the node output range :" << common::AnfAlgo::GetOutputTensorNum(node) << " #node ["
                       << node->DebugString() << "]" << trace::DumpSourceLines(node);
   }
+  if (common::AnfAlgo::CheckAbsSparseTensor(node)) {
+    return kOpFormat_DEFAULT;
+  }
   if (!AnfUtils::IsRealKernel(node)) {
     return AnfAlgo::GetPrevNodeOutputFormat(node, output_idx);
   }
@@ -421,6 +424,9 @@ TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size
     MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
                       << common::AnfAlgo::GetOutputTensorNum(node) << "#node [ " << node->DebugString() << "]"
                       << trace::DumpSourceLines(node);
+  }
+  if (common::AnfAlgo::CheckAbsSparseTensor(node)) {
+    return common::AnfAlgo::GetSparseTypeIdAt(node, output_idx);
   }
   if (!AnfUtils::IsRealKernel(node)) {
     return GetPrevNodeOutputDeviceDataType(node, output_idx);

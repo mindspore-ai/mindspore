@@ -157,7 +157,7 @@ std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const OpRunInfo &op_run
   return tensors_without_value_node;
 }
 
-void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs) {
+void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, size_t index = 0) {
   MS_EXCEPTION_IF_NULL(inputs);
   if (utils::isa<tensor::TensorPtr>(arg)) {
     auto value = utils::cast<tensor::TensorPtr>(arg);
@@ -165,10 +165,10 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs)
   } else if (utils::isa<tensor::CSRTensorPtr>(arg)) {
     auto csr = utils::cast<tensor::CSRTensorPtr>(arg);
     MS_EXCEPTION_IF_NULL(csr);
-    auto csr_values = csr->GetValues();
+    auto csr_values = csr->GetTensorAt(index);
     MS_EXCEPTION_IF_NULL(csr_values);
     inputs->push_back(csr_values);
-    MS_LOG(INFO) << "For CSRTensor, push its values.";
+    MS_LOG(INFO) << "For CSRTensor, push index: " << index;
   } else if (utils::isa<ValuePtr>(arg)) {
     auto value = utils::cast<ValuePtr>(arg);
     MS_EXCEPTION_IF_NULL(value);
@@ -201,15 +201,15 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs)
 }
 
 // Insert the front_node related tensor in the input_tensor.
-void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
+void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const KernelWithIndex &front_node,
                 std::vector<tensor::TensorPtr> *input_tensor) {
-  const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
+  const auto &iter = std::find(parameters.begin(), parameters.end(), front_node.first);
   if (iter == parameters.end()) {
     (void)((*input_tensor).emplace_back(nullptr));
     return;
   }
   auto position = iter - parameters.begin();
-  PushInputTensor(args[position], input_tensor);
+  PushInputTensor(args[position], input_tensor, front_node.second);
 }
 
 void UpdateOutputAbstract(const KernelGraphPtr &kernel_graph, OpRunInfo *op_run_info) {
@@ -861,6 +861,11 @@ void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
         FlattenValue(value, flatted_value);
       }
     }
+  } else if (utils::isa<tensor::CSRTensorPtr>(arg)) {
+    auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(arg);
+    for (size_t i = 0; i < csr_tensor->GetTensorLength(); ++i) {
+      (void)flatted_value->emplace_back(csr_tensor->GetTensorAt(i));
+    }
   } else {
     MS_LOG(EXCEPTION) << "The value input to flatten should only contains be sequence or dictionary, but it is "
                       << arg.ToString();
@@ -1088,7 +1093,7 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
         PushTupleTensor(args, origin_parameters, element_pair.first, element_pair.second, &input_tensor);
       } else {
         const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
-        PushTensor(args, origin_parameters, front_node, &input_tensor);
+        PushTensor(args, origin_parameters, {front_node, 0}, &input_tensor);
       }
     }
     (void)input_tensors.emplace_back(input_tensor);
@@ -1141,27 +1146,6 @@ BaseRef MindRTBackend::ConstructOutputByAbstract(const abstract::AbstractBasePtr
                       << " total:" << output_tensors.size();
   }
   VectorRef outputs;
-
-  if (abstract->isa<abstract::AbstractCSRTensor>()) {
-    auto csr_tensor_abstract = abstract->cast<abstract::AbstractCSRTensorPtr>();
-    MS_EXCEPTION_IF_NULL(csr_tensor_abstract);
-    outputs.emplace_back(ConstructOutputByAbstract(csr_tensor_abstract->indptr(), output_tensors, output_position));
-    outputs.emplace_back(ConstructOutputByAbstract(csr_tensor_abstract->indices(), output_tensors, output_position));
-    outputs.emplace_back(ConstructOutputByAbstract(csr_tensor_abstract->values(), output_tensors, output_position));
-    outputs.emplace_back(
-      ConstructOutputByAbstract(csr_tensor_abstract->dense_shape(), output_tensors, output_position));
-    return outputs;
-  }
-
-  if (abstract->isa<abstract::AbstractCOOTensor>()) {
-    auto coo_tensor_abstract = abstract->cast<abstract::AbstractCOOTensorPtr>();
-    MS_EXCEPTION_IF_NULL(coo_tensor_abstract);
-    outputs.emplace_back(ConstructOutputByAbstract(coo_tensor_abstract->indices(), output_tensors, output_position));
-    outputs.emplace_back(ConstructOutputByAbstract(coo_tensor_abstract->values(), output_tensors, output_position));
-    outputs.emplace_back(
-      ConstructOutputByAbstract(coo_tensor_abstract->dense_shape(), output_tensors, output_position));
-    return outputs;
-  }
 
   if (!abstract->isa<abstract::AbstractTuple>()) {
     (*output_position)++;

@@ -706,19 +706,24 @@ class MS_CORE_API CSRTensor : public MetaSparseTensor {
 
   const size_t GetSizeAt(size_t index) const;
 
+  TensorPtr GetTensorAt(size_t index) const;
+
+  const size_t GetTensorLength() const { return kShapeIdx + shape().size(); }
+
   /// \brief Get display information of this Tensor.
   ///
   /// \return The display information of this Tensor.
   std::string ToString() const override;
 
- private:
-  TensorPtr indptr_;
-  TensorPtr indices_;
-  TensorPtr values_;
   static constexpr size_t kIndptrIdx = 0;
   static constexpr size_t kIndicesIdx = 1;
   static constexpr size_t kValuesIdx = 2;
   static constexpr size_t kShapeIdx = 3;
+
+ private:
+  TensorPtr indptr_;
+  TensorPtr indices_;
+  TensorPtr values_;
 };
 using CSRTensorPtr = std::shared_ptr<CSRTensor>;
 
@@ -766,6 +771,10 @@ class MS_CORE_API COOTensor : public MetaSparseTensor {
   ///
   /// \return The display information of this Tensor.
   std::string ToString() const override;
+
+  static constexpr size_t kIndicesIdx = 0;
+  static constexpr size_t kValuesIdx = 1;
+  static constexpr size_t kShapeIdx = 2;
 
  private:
   TensorPtr indices_;

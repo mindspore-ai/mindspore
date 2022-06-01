@@ -93,15 +93,15 @@ def sparse_dot(a, b):
     return res
 
 
-def _normalize_matvec(f):
-    """Normalize an argument for computing matrix-vector products."""
-    if isinstance(f, Tensor):
-        return F.partial(dot, f)
+def _matvec(a, b):
+    """Computing matrix-vector products."""
+    if isinstance(a, Tensor):
+        return dot(a, b)
 
-    if isinstance(f, CSRTensor):
-        return F.partial(sparse_dot, f)
+    if isinstance(a, CSRTensor):
+        return sparse_dot(a, b)
 
-    return f
+    return a(b)
 
 
 def _norm(x, ord_=None):

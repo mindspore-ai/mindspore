@@ -548,21 +548,28 @@ bool IrExportBuilder::SetCSRTensorToProto(const AbstractBasePtr &abstract, mind_
   abstract::AbstractCSRTensorPtr csr_tensor_abs = abstract->cast<abstract::AbstractCSRTensorPtr>();
   MS_EXCEPTION_IF_NULL(csr_tensor_abs);
   attr_proto->set_type(mind_ir::AttributeProto_AttributeType_CSR_TENSOR);
-  (void)SetTensorProto(csr_tensor_abs->indptr(), attr_proto->add_tensors());
-  (void)SetTensorProto(csr_tensor_abs->indices(), attr_proto->add_tensors());
-  (void)SetTensorProto(csr_tensor_abs->values(), attr_proto->add_tensors());
-  auto dense_proto = attr_proto->add_values();
-  return SetAbstractToNodeProto(csr_tensor_abs->dense_shape(), dense_proto);
+  mind_ir::AttributeProto *indptr = attr_proto->add_values();
+  bool res = SetAbstractToNodeProto(csr_tensor_abs->indptr(), indptr);
+  mind_ir::AttributeProto *indices = attr_proto->add_values();
+  res &= SetAbstractToNodeProto(csr_tensor_abs->indices(), indices);
+  mind_ir::AttributeProto *values = attr_proto->add_values();
+  res &= SetAbstractToNodeProto(csr_tensor_abs->values(), values);
+  mind_ir::AttributeProto *shape = attr_proto->add_values();
+  res &= SetAbstractToNodeProto(csr_tensor_abs->shape(), shape);
+  return res;
 }
 
 bool IrExportBuilder::SetCOOTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto) {
   abstract::AbstractCOOTensorPtr coo_tensor_abs = abstract->cast<abstract::AbstractCOOTensorPtr>();
   MS_EXCEPTION_IF_NULL(coo_tensor_abs);
   attr_proto->set_type(mind_ir::AttributeProto_AttributeType_COO_TENSOR);
-  (void)SetTensorProto(coo_tensor_abs->indices(), attr_proto->add_tensors());
-  (void)SetTensorProto(coo_tensor_abs->values(), attr_proto->add_tensors());
-  auto dense_proto = attr_proto->add_values();
-  return SetAbstractToNodeProto(coo_tensor_abs->dense_shape(), dense_proto);
+  mind_ir::AttributeProto *indices = attr_proto->add_values();
+  bool res = SetAbstractToNodeProto(coo_tensor_abs->indices(), indices);
+  mind_ir::AttributeProto *values = attr_proto->add_values();
+  res &= SetAbstractToNodeProto(coo_tensor_abs->values(), values);
+  mind_ir::AttributeProto *shape = attr_proto->add_values();
+  res &= SetAbstractToNodeProto(coo_tensor_abs->shape(), shape);
+  return res;
 }
 
 bool IrExportBuilder::SetTensorProto(const AbstractBasePtr &abstract, mind_ir::TensorProto *const tensor_proto) {

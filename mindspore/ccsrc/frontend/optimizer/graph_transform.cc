@@ -24,7 +24,8 @@ namespace mindspore {
 namespace opt {
 bool FuncGraphHasTupleInput(const FuncGraphPtr &fg) {
   auto is_tuple = [](const AnfNodePtr &param) {
-    return param->abstract() != nullptr && param->abstract()->isa<abstract::AbstractTuple>();
+    auto abs = param->abstract();
+    return abs != nullptr && abs->isa<abstract::AbstractTuple>() && !common::AnfAlgo::CheckAbsSparseTensor(param);
   };
   return std::any_of(fg->parameters().cbegin(), fg->parameters().cend(), is_tuple);
 }
@@ -39,7 +40,7 @@ std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const Anf
     idx->set_abstract(abstract_scalar);
     auto elem_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
     elem_node->set_abstract(elements[i]);
-    if (elements[i]->isa<abstract::AbstractTuple>()) {
+    if (elements[i]->isa<abstract::AbstractTuple>() && !common::AnfAlgo::CheckAbsSparseTensor(elements[i])) {
       auto nodes = TransformTupleArgument(fg, elem_node, elements[i]->cast<abstract::AbstractTuplePtr>());
       tuple_node_expanded.insert(tuple_node_expanded.end(), nodes.begin(), nodes.end());
     } else {

@@ -51,7 +51,8 @@ bool FlattenArgs(const FuncGraphPtr &fg, const AnfNodePtrList &args, size_t star
     if (abs == nullptr) {
       MS_LOG(EXCEPTION) << "Null abs of arg:" << arg->DebugString();
     }
-    if (!abs->isa<abstract::AbstractTuple>()) {
+    if (!abs->isa<abstract::AbstractTuple>() || abs->isa<abstract::AbstractCSRTensor>() ||
+        abs->isa<abstract::AbstractCOOTensor>()) {
       new_args->push_back(arg);
       continue;
     }

@@ -19,10 +19,10 @@ import pytest
 import numpy as np
 
 from mindspore import Tensor, CSRTensor, ms_function, nn, ops
-from mindspore.ops.operations import _csr_ops
 from mindspore.common import dtype as mstype
 from mindspore.train.serialization import export, load
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _csr_ops
 
 from .sparse_utils import get_platform, compare_res
 
@@ -267,7 +267,6 @@ def test_batch_csr_ops():
     """
     if get_platform() != "linux":
         return
-    csr_reducesum = _csr_ops.CSRReduceSum()
     csr_gather = _csr_ops.CSRGather()
 
     indptr = Tensor([0, 1, 1, 2, 2], dtype=mstype.int32)
@@ -284,7 +283,7 @@ def test_batch_csr_ops():
         return dense
 
     def test_ops_pynative_reducesum():
-        dense = csr_reducesum(csr_tensor, 1)
+        dense = F.csr_reduce_sum(csr_tensor, 1)
         return dense
 
     def test_ops_pynative_sparse_elemwise():
@@ -332,8 +331,6 @@ def test_csr_ops():
     """
     if get_platform() != "linux":
         return
-    csr_reducesum = _csr_ops.CSRReduceSum()
-    csrmv = _csr_ops.CSRMV()
 
     indptr = Tensor([0, 1, 2], dtype=mstype.int32)
     indices = Tensor([0, 1], dtype=mstype.int32)
@@ -345,8 +342,8 @@ def test_csr_ops():
     csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
 
     def test_ops_pynative_dense():
-        dense1 = csr_reducesum(csr_tensor, 1)
-        dense2 = csrmv(csr_tensor, dense_vector)
+        dense1 = F.csr_reduce_sum(csr_tensor, 1)
+        dense2 = F.csr_mv(csr_tensor, dense_vector)
         return dense1, dense2
 
     def test_ops_pynative_sparse():
@@ -434,13 +431,11 @@ def test_csrops_export_and_import_mindir():
         def __init__(self, shape):
             super(TestCSRNet, self).__init__()
             self.shape = shape
-            self.csr_reducesum = _csr_ops.CSRReduceSum()
-            self.csr_mv = _csr_ops.CSRMV()
 
         def construct(self, indptr, indices, values, dence_tensor, dense_vector):
             csr_tensor = CSRTensor(indptr, indices, values, self.shape)
-            dense1 = self.csr_reducesum(csr_tensor, 1)
-            dense2 = self.csr_mv(csr_tensor, dense_vector)
+            dense1 = F.csr_reduce_sum(csr_tensor, 1)
+            dense2 = F.csr_mv(csr_tensor, dense_vector)
             dense3 = dense1 * dense2
             sparse1 = csr_tensor * dence_tensor
             sparse2 = dence_tensor * csr_tensor
@@ -564,75 +559,83 @@ def test_bprop():
     """
     if get_platform() != "linux":
         return
-    csr_reduce_sum = _csr_ops.CSRReduceSum()
-    csrmv = _csr_ops.CSRMV()
     grad_op = ops.GradOperation(get_all=True)
 
     @grad_op
     @ms_function
-    def test_csr_mul(csr_tensor, dense):
+    def test_csr_mul(indptr, indices, values, shape, dense):
+        csr_tensor = CSRTensor(indptr, indices, values, shape)
         return csr_tensor * dense
 
     @grad_op
     @ms_function
-    def test_csr_div(csr_tensor, dense):
+    def test_csr_div(indptr, indices, values, shape, dense):
+        csr_tensor = CSRTensor(indptr, indices, values, shape)
         return csr_tensor / dense
 
     @grad_op
     @ms_function
-    def test_csr_reduce_sum(csr_tensor, axis):
-        return csr_reduce_sum(csr_tensor, axis)
+    def test_csr_reduce_sum(indptr, indices, values, shape, axis):
+        csr_tensor = CSRTensor(indptr, indices, values, shape)
+        return F.csr_reduce_sum(csr_tensor, axis)
 
     @grad_op
     @ms_function
-    def test_csrmv(csr_tensor, dense):
-        return csrmv(csr_tensor, dense)
+    def test_csrmv(indptr, indices, values, shape, dense):
+        csr_tensor = CSRTensor(indptr, indices, values, shape)
+        return F.csr_mv(csr_tensor, dense)
 
     indptr = Tensor([0, 1, 4, 6], dtype=mstype.int32)
     indices = Tensor([3, 0, 1, 2, 1, 3], dtype=mstype.int32)
     values = Tensor(np.arange(6), dtype=mstype.float32)
     dense_shape = (3, 4)
-    csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
 
     csr_mv_arg = Tensor([[1], [2], [3], [4]], dtype=mstype.float32)
     csr_mv_expect_1 = np.array([4, 1, 2, 3, 2, 4], dtype=np.float32)
     csr_mv_expect_2 = np.array([[1], [6], [3], [5]], dtype=np.float32)
-    csr_mv_output_1, csr_mv_output_2 = test_csrmv(csr_tensor, csr_mv_arg)
-    assert np.allclose(csr_mv_output_1.values.asnumpy(), csr_mv_expect_1)
-    assert np.allclose(csr_mv_output_2.asnumpy(), csr_mv_expect_2)
+    csr_mv_output = test_csrmv(indptr, indices, values, dense_shape, csr_mv_arg)
+    # indptr, indices, values, dense_grad
+    assert len(csr_mv_output) == 4
+    assert np.allclose(csr_mv_output[2].asnumpy(), csr_mv_expect_1)
+    assert np.allclose(csr_mv_output[3].asnumpy(), csr_mv_expect_2)
 
     csr_reduce_sum_expect_1 = np.ones(6, dtype=np.float32)
-    csr_reduce_sum_output_1 = test_csr_reduce_sum(csr_tensor, 1)
-    assert np.allclose(csr_reduce_sum_output_1[0].values.asnumpy(), csr_reduce_sum_expect_1)
+    csr_reduce_sum_output_1 = test_csr_reduce_sum(indptr, indices, values, dense_shape, 1)
+    assert len(csr_reduce_sum_output_1) == 3
+    assert np.allclose(csr_reduce_sum_output_1[2].asnumpy(), csr_reduce_sum_expect_1)
 
     csr_mul_arg_1 = Tensor([[1], [2], [3]], dtype=mstype.float32)
     csr_mul_expect_1_1 = np.array([1, 2, 2, 2, 3, 3], dtype=np.float32)
     csr_mul_expect_1_2 = np.array([[0], [6], [9]], dtype=np.float32)
-    csr_mul_output_1_1, csr_mul_output_1_2 = test_csr_mul(csr_tensor, csr_mul_arg_1)
-    assert np.allclose(csr_mul_output_1_1.values.asnumpy(), csr_mul_expect_1_1)
-    assert np.allclose(csr_mul_output_1_2.asnumpy(), csr_mul_expect_1_2)
+    csr_mul_output_1 = test_csr_mul(indptr, indices, values, dense_shape, csr_mul_arg_1)
+    assert len(csr_mul_output_1) == 4
+    assert np.allclose(csr_mul_output_1[2].asnumpy(), csr_mul_expect_1_1)
+    assert np.allclose(csr_mul_output_1[3].asnumpy(), csr_mul_expect_1_2)
 
     csr_mul_arg_2 = Tensor(np.arange(12).reshape(3, 4), dtype=mstype.float32)
     csr_mul_expect_2_1 = np.array([3, 4, 5, 6, 9, 11], dtype=np.float32)
     csr_mul_expect_2_2 = np.array([[0, 0, 0, 0], [1, 2, 3, 0], [0, 4, 0, 5]], np.float32)
-    csr_mul_output_2_1, csr_mul_output_2_2 = test_csr_mul(csr_tensor, csr_mul_arg_2)
-    assert np.allclose(csr_mul_output_2_1.values.asnumpy(), csr_mul_expect_2_1)
-    assert np.allclose(csr_mul_output_2_2.asnumpy(), csr_mul_expect_2_2)
+    csr_mul_output_2 = test_csr_mul(indptr, indices, values, dense_shape, csr_mul_arg_2)
+    assert len(csr_mul_output_2) == 4
+    assert np.allclose(csr_mul_output_2[2].asnumpy(), csr_mul_expect_2_1)
+    assert np.allclose(csr_mul_output_2[3].asnumpy(), csr_mul_expect_2_2)
 
     csr_div_expect_1_1 = np.array([1, 0.5, 0.5, 0.5, 0.3333333, 0.3333333], dtype=np.float32)
     csr_div_expect_1_2 = np.array([[0], [-1.5], [-1]], dtype=np.float32)
     csr_div_arg_1 = Tensor([[1], [2], [3]], dtype=mstype.float32)
-    csr_div_output_1_1, csr_div_output_1_2 = test_csr_div(csr_tensor, csr_div_arg_1)
-    assert np.allclose(csr_div_output_1_1.values.asnumpy(), csr_div_expect_1_1)
-    assert np.allclose(csr_div_output_1_2.asnumpy(), csr_div_expect_1_2)
+    csr_div_output_1 = test_csr_div(indptr, indices, values, dense_shape, csr_div_arg_1)
+    assert len(csr_div_output_1) == 4
+    assert np.allclose(csr_div_output_1[2].asnumpy(), csr_div_expect_1_1)
+    assert np.allclose(csr_div_output_1[3].asnumpy(), csr_div_expect_1_2)
 
     csr_div_arg_2 = Tensor(np.arange(1, 13).reshape(3, 4), dtype=mstype.float32)
     csr_div_expect_2_1 = np.array([0.25, 0.2, 0.16666667, 0.14285715, 0.1, 0.0833333], dtype=np.float32)
     csr_div_expect_2_2 = np.array(
         [[0, 0, 0, 0], [-0.04, -0.05555556, -0.06122449, 0], [0, -0.04, 0, -0.03472222]], dtype=np.float32)
-    csr_div_output_2_1, csr_div_output_2_2 = test_csr_div(csr_tensor, csr_div_arg_2)
-    assert np.allclose(csr_div_output_2_1.values.asnumpy(), csr_div_expect_2_1)
-    assert np.allclose(csr_div_output_2_2.asnumpy(), csr_div_expect_2_2)
+    csr_div_output_2 = test_csr_div(indptr, indices, values, dense_shape, csr_div_arg_2)
+    assert len(csr_div_output_2) == 4
+    assert np.allclose(csr_div_output_2[2].asnumpy(), csr_div_expect_2_1)
+    assert np.allclose(csr_div_output_2[3].asnumpy(), csr_div_expect_2_2)
 
 
 @pytest.mark.level0

@@ -21,8 +21,8 @@ from ...common import Tensor, CSRTensor, COOTensor, dtype as mstype
 from ...ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from ..linalg import solve_triangular
 from ..linalg import cho_factor, cho_solve
-from ..utils import _normalize_matvec, _to_tensor, _safe_normalize, _eps, _norm, _type_check, _value_check, \
-    _sparse_check
+from ..utils import _to_tensor, _safe_normalize, _eps, _norm, _type_check, _value_check, \
+    _sparse_check, _matvec
 from ..utils_const import _raise_value_error, _raise_type_error, is_within_graph
 
 
@@ -37,7 +37,7 @@ def gram_schmidt(Q, q):
 def arnoldi_iteration(k, A, M, V, H):
     """Performs a single (the k'th) step of the Arnoldi process."""
     v_ = V[..., k]
-    v = M(A(v_))
+    v = _matvec(M, _matvec(A, v_))
     v, h = gram_schmidt(V, v)
     _, v_norm_0 = _safe_normalize(v)
     tol = _eps(v) * v_norm_0
@@ -82,7 +82,7 @@ def _batch_gmres(A, b, x0, tol, restart, maxiter, M, atol):
     dtype = b.dtype
     _, b_norm = _safe_normalize(b)
     atol = mnp.maximum(tol * b_norm, _to_tensor(atol), dtype=dtype)
-    residual = M(b - A(x0))
+    residual = _matvec(M, b - _matvec(A, x0))
     unit_residual, residual_norm = _safe_normalize(residual)
     k = _INT_ZERO
     x = x0
@@ -100,7 +100,7 @@ def _batch_gmres(A, b, x0, tol, restart, maxiter, M, atol):
         y = _high_precision_cho_solve(H, beta_vec, data_type=dtype)
         dx = mnp.dot(V[..., :-1], y)
         x = x + dx
-        residual = M(b - A(x))
+        residual = _matvec(M, b - _matvec(A, x))
         unit_residual, residual_norm = _safe_normalize(residual)
         k += 1
     return x, F.select(residual_norm > atol, k, _INT_ZERO)
@@ -116,11 +116,11 @@ def _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol):
     _, b_norm = _safe_normalize(b)
     atol = mnp.maximum(tol * b_norm, atol)
 
-    Mb = M(b)
+    Mb = _matvec(M, b)
     _, Mb_norm = _safe_normalize(Mb)
     ptol = Mb_norm * mnp.minimum(1.0, atol / b_norm)
 
-    r = M(b - A(x0))
+    r = _matvec(M, b - _matvec(A, x0))
     r, r_norm = _safe_normalize(r)
 
     iters = _INT_ZERO
@@ -164,7 +164,7 @@ def _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol):
         dx = mnp.dot(V[:, :-1], y)
 
         x = x0 + dx
-        r = M(b - A(x))
+        r = _matvec(M, b - _matvec(A, x))
         r, r_norm = _safe_normalize(r)
         x0 = x
         iters += 1
@@ -187,14 +187,12 @@ class GMRES(nn.Cell):
 
     def construct(self, b, x0, tol, restart, maxiter, atol):
         # Constant tensor which avoids loop unrolling
-        A = _normalize_matvec(self.A)
-        M = _normalize_matvec(self.M)
         x = x0
         info = _to_tensor(0)
         if self.solve_method == 'batched':
-            x, info = _batch_gmres(A, b, x0, tol, restart, maxiter, M, atol)
+            x, info = _batch_gmres(self.A, b, x0, tol, restart, maxiter, self.M, atol)
         elif self.solve_method == "incremental":
-            x, info = _incremental_gmres(A, b, x0, tol, restart, maxiter, M, atol)
+            x, info = _incremental_gmres(self.A, b, x0, tol, restart, maxiter, self.M, atol)
         else:
             _raise_value_error("solve_method should be in ('incremental' or 'batched'), but got ", self.solve_method,
                                ".")
@@ -222,8 +220,6 @@ class GMRESV2(nn.Cell):
         return a.T
 
     def construct(self, A, b, x0, tol, restart, maxiter, M, atol):
-        A = _normalize_matvec(A)
-        M = _normalize_matvec(M)
         x = x0
         info = _to_tensor(0)
         if self.solve_method == 'batched':
@@ -367,18 +363,18 @@ def _cg(A, b, x0, tol, atol, maxiter, M):
     _INT_ZERO = _to_tensor(0)
     atol_ = mnp.maximum(atol, tol * _norm(b))
 
-    r = b - A(x0)
-    z = p = M(r)
+    r = b - _matvec(A, x0)
+    z = p = _matvec(M, r)
     rho = mnp.dot(r, z)
     k = _INT_ZERO
     x = x0
     while k < maxiter and _norm(r) > atol_:
-        q = A(p)
+        q = _matvec(A, p)
         alpha = rho / mnp.dot(p, q)
         x = x + alpha * p
         r = r - alpha * q
 
-        z = M(r)
+        z = _matvec(M, r)
         rho_ = mnp.dot(r, z)
         beta = rho_ / rho
         p = z + beta * p
@@ -402,9 +398,7 @@ class CG(nn.Cell):
         self.M = M
 
     def construct(self, b, x0, tol, atol, maxiter):
-        A = _normalize_matvec(self.A)
-        M = _normalize_matvec(self.M)
-        return _cg(A, b, x0, tol, atol, maxiter, M)
+        return _cg(self.A, b, x0, tol, atol, maxiter, self.M)
 
 
 class CGv2(nn.Cell):
@@ -416,8 +410,6 @@ class CGv2(nn.Cell):
         super(CGv2, self).__init__()
 
     def construct(self, A, b, x0, tol, atol, maxiter, M):
-        A = _normalize_matvec(A)
-        M = _normalize_matvec(M)
         return _cg(A, b, x0, tol, atol, maxiter, M)
 
     def bprop(self, A, b, x0, tol, atol, maxiter, M, out, dout):
@@ -546,14 +538,11 @@ class BiCGStab(nn.Cell):
         _INT_ZERO = _to_tensor(0)
         _INT_NEG_ONE = _to_tensor(-1)
 
-        A = _normalize_matvec(self.A)
-        M = _normalize_matvec(self.M)
-
-        _FLOAT_ONE = _to_tensor(1., dtype=b.dtype)
+        _float_one = _to_tensor(1., dtype=b.dtype)
         atol_ = mnp.maximum(atol, tol * _norm(b))
 
-        r = r_tilde = v = p = b - A(x0)
-        rho = alpha = omega = _FLOAT_ONE
+        r = r_tilde = v = p = b - _matvec(self.A, x0)
+        rho = alpha = omega = _float_one
         k = _INT_ZERO
         x = x0
         while k < maxiter:
@@ -564,16 +553,16 @@ class BiCGStab(nn.Cell):
 
             beta = rho_ / rho * (alpha / omega)
             p = r + beta * (p - omega * v)
-            p_hat = M(p)
-            v = A(p_hat)
+            p_hat = _matvec(self.M, p)
+            v = _matvec(self.A, p_hat)
             alpha = rho_ / mnp.dot(r_tilde, v)
             s = r - alpha * v
             x = x + alpha * p_hat
             if _norm(s) <= atol_:
                 break
 
-            s_hat = M(s)
-            t = A(s_hat)
+            s_hat = _matvec(self.M, s)
+            t = _matvec(self.A, s_hat)
             omega = mnp.dot(t, s) / mnp.dot(t, t)
             x = x + omega * s_hat
             r = s - omega * t

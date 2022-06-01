@@ -18,13 +18,17 @@ from ..primitive import prim_attr_register, PrimitiveWithInfer
 
 class CSRReduceSum(PrimitiveWithInfer):
     """
-    Reduces a dimension of a CSRTensor by summing all elements in the dimension.
+    Reduces a dimension of a CSRTensor (composed of `indptr`, `indices`, `values` and `shape`) by summing all elements
+    in the dimension.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
     Inputs:
-        - **sparse_tensor** (CSRTensor) - A CSRTensor.
+        - **indptr** (Tensor) - A Tensor.
+        - **indices** (Tensor) - A Tensor.
+        - **values** (Tensor) - A Tensor.
+        - **shape** (tuple(int)) - A tuple.
         - **axis** (int) - The dimensions to reduce.
 
     Outputs:
@@ -45,10 +49,9 @@ class CSRReduceSum(PrimitiveWithInfer):
         ...         self.op = _csr_ops.CSRReduceSum()
         ...
         ...     def construct(self, indptr, indices, values, dense_shape, axis):
-        ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
-        ...         return self.op(csr_tensor, axis)
-        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
-        >>> indices = Tensor([0, 1], dtype=mstype.int32)
+        ...         return self.op(indptr, indices, values, dense_shape, axis)
+        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int3)
+        >>> indices = Tensor([0, 1], dtype=mstype.int3)
         >>> values = Tensor([2, 1], dtype=mstype.float32)
         >>> dense_shape = (2, 4)
         >>> out = Net()(indptr, indices, values, dense_shape, 1)
@@ -72,7 +75,10 @@ class CSRMV(PrimitiveWithInfer):
         This is an experimental prototype that is subject to change and/or deletion.
 
     Inputs:
-        - **sparse_tensor** (CSRTensor) - A CSRTensor.
+        - **indptr** (Tensor) - A Tensor.
+        - **indices** (Tensor) - A Tensor.
+        - **values** (Tensor) - A Tensor.
+        - **shape** (tuple(int)) - A tuple.
         - **dense_tensor** (Tensor) - A dense Tensor.
 
     Outputs:
@@ -93,10 +99,9 @@ class CSRMV(PrimitiveWithInfer):
         ...         self.op = _csr_ops.CSRMV()
         ...
         ...     def construct(self, indptr, indices, values, dense_shape, dense):
-        ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
-        ...         return self.op(csr_tensor, dense)
-        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
-        >>> indices = Tensor([0, 1], dtype=mstype.int32)
+        ...         return self.op(indptr, indices, values, dense_shape, dense)
+        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int3)
+        >>> indices = Tensor([0, 1], dtype=mstype.int3)
         >>> values = Tensor([2, 1], dtype=mstype.float32)
         >>> dense_shape = (2, 4)
         >>> dense = Tensor([[1], [1], [1], [1]], dtype=mstype.float32)
@@ -115,17 +120,20 @@ class CSRMV(PrimitiveWithInfer):
 
 class CSRMul(PrimitiveWithInfer):
     """
-    Elemwise multiplication of a CSRTensor and a dense tensor.
+    Elemwise multiplication of a CSRTensor (composed of `indptr`, `indices`, `values` and `shape`) and a dense tensor.
 
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
     Note:
-        The op outputs a 1-D dense tensor whose shape and values are the same as input `CSRTensor.values`.
+        The op outputs a 1-D dense tensor whose shape and values are the same as input `values`.
         If expect a CSRTensor output, please use `*` directly, e.g. `x * y`, `x` or `y` can be CSRTensor.
 
     Inputs:
-        - **sparse_tensor** (CSRTensor) - A CSRTensor.
+        - **indptr** (Tensor) - A Tensor.
+        - **indices** (Tensor) - A Tensor.
+        - **values** (Tensor) - A Tensor.
+        - **shape** (tuple(int)) - A tuple.
         - **dense_tensor** (Tensor) - A Tensor.
 
     Outputs:
@@ -146,10 +154,9 @@ class CSRMul(PrimitiveWithInfer):
         ...         self.op = _csr_ops.CSRMul()
         ...
         ...     def construct(self, indptr, indices, values, dense_shape, dense):
-        ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
-        ...         return self.op(csr_tensor, dense)
-        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
-        >>> indices = Tensor([0, 1], dtype=mstype.int32)
+        ...         return self.op(indptr, indices, values, dense_shape, dense)
+        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int3)
+        >>> indices = Tensor([0, 1], dtype=mstype.int3)
         >>> values = Tensor([2, 1], dtype=mstype.float32)
         >>> dense_shape = (2, 4)
         >>> dense = Tensor([[1., 1, 1, 1], [1, 1, 1, 1]], dtype=mstype.float32)
@@ -299,11 +306,14 @@ class CSRDiv(PrimitiveWithInfer):
     Elemwise division on a CSRTensor and a dense tensor.
 
     Note:
-        The op outputs a 1-D dense tensor whose shape and values are the same as input `CSRTensor.values`.
+        The op outputs a 1-D dense tensor whose shape and values are the same as input `values`.
         If expect a CSRTensor output, please use `/` directly, e.g. `x / y`, can be CSRTensor.
 
     Inputs:
-        - **sparse_tensor** (CSRTensor) - A CSRTensor.
+        - **indptr** (Tensor) - A Tensor.
+        - **indices** (Tensor) - A Tensor.
+        - **values** (Tensor) - A Tensor.
+        - **shape** (tuple(int)) - A tuple.
         - **dense_tensor** (Tensor) - A Tensor.
 
     Outputs:
@@ -324,8 +334,7 @@ class CSRDiv(PrimitiveWithInfer):
         ...         self.op = _csr_ops.CSRDiv()
         ...
         ...     def construct(self, indptr, indices, values, dense_shape, dense):
-        ...         csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
-        ...         return self.op(csr_tensor, dense)
+        ...         return self.op(indptr, indices, values, dense_shape, dense)
         >>> indptr = Tensor([0, 1, 2])
         >>> indices = Tensor([0, 1])
         >>> values = Tensor([2, 1], dtype=mstype.float32)

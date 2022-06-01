@@ -545,6 +545,7 @@ void ConvertCSRTensorToTensorList(const py::object &input_object, const Primitiv
   input_tensors->emplace_back(csr_inputs.GetIndices());
   input_tensors->emplace_back(csr_inputs.GetValues());
   op_prim->set_attr("is_csr", MakeValue(true));
+  op_prim->set_attr("dense_shape", MakeValue(csr_inputs.shape()));
 }
 
 void ConvertMultiPyObjectToTensor(const py::object &input_object, const PrimitivePtr &op_prim,
@@ -590,6 +591,10 @@ void ConvertPyObjectToTensor(const OpExecInfoPtr &op_run_info, size_t index, con
     tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<bool>(input_object), kBool);
     *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::int_>(input_object)) {
+    if (op_prim->name() == prim::kPrimCSRReduceSum->name()) {
+      op_prim->set_attr("axis", MakeValue(py::cast<int64_t>(input_object)));
+      return;
+    }
     tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
     *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::array>(input_object)) {
