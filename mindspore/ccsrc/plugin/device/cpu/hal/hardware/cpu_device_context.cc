@@ -340,7 +340,6 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   const auto &profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
   if (profiler_inst->GetEnableFlag()) {
-    std::lock_guard<std::mutex> locker(launch_mutex_);
     return LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
   }
 #endif

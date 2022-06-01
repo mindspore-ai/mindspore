@@ -168,15 +168,14 @@ class Profiler:
         Profiler users can use this interface to obtain operator performance data.
 
         Args:
-            op_name (str, list): The primitive operator name.
-            device_id (int): ID of the target device, users can use device_id parameter to specify which card operator
-                performance data to parse, Default: 0.
+            op_name (str or list): The primitive operator name to query.
+            device_id (int, optional): ID of the target device. This parameter is optional during network training or
+                inference, and users can use device_id parameter to specify which card operator performance data to
+                parse. If this interface is used for offline data parsing, Default: 0.
 
         Raises:
-            TypeError: If the op_name parameter type is incorrect,
-                Profiler cannot parse the generated operator performance data.
-            TypeError: If the device_id parameter type is incorrect,
-                Profiler cannot parse the generated operator performance data.
+            TypeError: If the op_name parameter type is incorrect.
+            TypeError: If the device_id parameter type is incorrect.
             RunTimeError: If MindSpore runs on Ascend, this interface cannot be used.
 
         Supported Platforms:

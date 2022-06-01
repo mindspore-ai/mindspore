@@ -121,22 +121,24 @@ void CPUProfiler::OpDataProducerBeginParallel(const std::string op_name, const u
 }
 
 void CPUProfiler::RecordFrameWorkInfo(const CNodePtr &kernel) {
+  CurKernelInputInfo cur_kernel_input_info;
+  CurKernelInfo cur_kernel_info;
   auto op_name = kernel->fullname_with_scope();
   auto begin_iter = op_name.rfind('/') + 1;
   auto end_iter = op_name.rfind('-');
   if (begin_iter != std::string::npos && end_iter != std::string::npos && begin_iter < end_iter) {
-    cur_kernel_info_.op_type = op_name.substr(begin_iter, end_iter - begin_iter);
-    cur_kernel_info_.op_name = op_name.substr(begin_iter, op_name.length() - begin_iter);
+    cur_kernel_info.op_type = op_name.substr(begin_iter, end_iter - begin_iter);
+    cur_kernel_info.op_name = op_name.substr(begin_iter, op_name.length() - begin_iter);
   }
   for (uint32_t i = 0; i < (uint32_t)kernel->inputs().size(); i++) {
     if (kernel->input(i)->Shape() != nullptr) {
-      cur_kernel_input_info_.input_id = i;
-      cur_kernel_input_info_.shape = kernel->input(i)->Shape()->DumpText();
-      cur_kernel_info_.cur_kernel_all_inputs_info.push_back(cur_kernel_input_info_);
+      cur_kernel_input_info.input_id = i;
+      cur_kernel_input_info.shape = kernel->input(i)->Shape()->DumpText();
+      cur_kernel_info.cur_kernel_all_inputs_info.push_back(cur_kernel_input_info);
     }
   }
-  all_kernel_info_.push_back(cur_kernel_info_);
-  cur_kernel_info_.cur_kernel_all_inputs_info.clear();
+  std::lock_guard<std::mutex> locker(kernel_mutex_);
+  all_kernel_info_.push_back(cur_kernel_info);
 }
 
 void CPUProfiler::OpDataProducerEndParallel(const std::string op_name) {
