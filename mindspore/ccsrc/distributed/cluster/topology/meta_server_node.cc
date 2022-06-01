@@ -32,6 +32,8 @@ namespace topology {
 constexpr char kComputeNodeStates[] = "compute_node_states";
 constexpr char kNodeId[] = "node_id";
 constexpr char kRecoveryFileName[] = "recovery.dat";
+constexpr char kHostName[] = "host_name";
+constexpr char kRole[] = "role";
 
 bool MetaServerNode::Initialize() {
   // Init the address of meta server node.
@@ -96,6 +98,8 @@ bool MetaServerNode::InitTCPServer() {
     std::bind(&MetaServerNode::ProcessWriteMetadata, this, std::placeholders::_1);
   system_msg_handlers_[MessageName::kReadMetadata] =
     std::bind(&MetaServerNode::ProcessReadMetadata, this, std::placeholders::_1);
+  system_msg_handlers_[MessageName::kGetHostNames] =
+    std::bind(&MetaServerNode::ProcessGetHostNames, this, std::placeholders::_1);
   return true;
 }
 
@@ -137,13 +141,18 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
 
   // Add the compute graph node into registered nodes.
   const auto &node_id = registration.node_id();
+  const auto &host_name = registration.host_name();
+  const auto &role = registration.role();
   std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) == nodes_.end()) {
     std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
+    node_info->host_name = host_name;
+    node_info->role = role;
     node_info->state = NodeState::kRegistered;
     time(&(node_info->last_update));
     nodes_[node_id] = node_info;
-    MS_LOG(INFO) << "The new node: " << node_id << " is registered successfully.";
+    MS_LOG(INFO) << "The new node: " << node_id << "(role: " << role << ")"
+                 << " is registered successfully.";
     TransitionToInitialized();
 
     RegistrationRespMessage reg_resp_msg;
@@ -258,6 +267,37 @@ MessageBase *const MetaServerNode::ProcessReadMetadata(MessageBase *const messag
   return response.release();
 }
 
+MessageBase *const MetaServerNode::ProcessGetHostNames(MessageBase *const message) {
+  // Convert result to the message.
+  nlohmann::json hostnames = nlohmann::json::array();
+  nlohmann::json retval = nlohmann::json::object();
+  MessageName result;
+
+  if (nodes_.size() != total_node_num_) {
+    result = MessageName::kInvalidMetadata;
+  } else {
+    result = MessageName::kValidMetadata;
+
+    auto node_role = message->body;
+
+    // Collect all the hostnames from nodes info.
+    std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
+    for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
+      auto node_info = iter->second;
+      if (node_info->role != node_role) {
+        continue;
+      }
+      MS_EXCEPTION_IF_NULL(node_info);
+      hostnames.push_back(node_info->host_name);
+    }
+  }
+
+  retval[kHostNames] = hostnames;
+  auto response = CreateMessage(meta_server_addr_.GetUrl(), result, retval.dump());
+  MS_EXCEPTION_IF_NULL(response);
+  return response.release();
+}
+
 void MetaServerNode::UpdateTopoState() {
   while (enable_monitor_) {
     nodes_mutex_.lock();
@@ -347,6 +387,8 @@ bool MetaServerNode::Recovery() {
       const auto &node_id = iter.key();
       std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
       time(&(node_info->last_update));
+      node_info->host_name = iter.value().at(kHostName);
+      node_info->role = iter.value().at(kRole);
       node_info->state = NodeState::kRegistered;
       nodes_[node_id] = node_info;
     }
@@ -372,7 +414,11 @@ bool MetaServerNode::Persist() {
     const auto &node_id = iter->first;
     nlohmann::json node_state;
     node_state[kNodeId] = node_id;
-    node_states[node_id] = node_state.dump();
+
+    MS_EXCEPTION_IF_NULL(iter->second);
+    node_state[kHostName] = iter->second->host_name;
+    node_state[kRole] = iter->second->role;
+    node_states[node_id] = node_state;
   }
 
   configuration_->Put(kComputeNodeStates, node_states.dump());

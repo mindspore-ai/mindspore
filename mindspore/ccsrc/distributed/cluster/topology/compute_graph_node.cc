@@ -15,9 +15,11 @@
  */
 
 #include <utility>
+#include <nlohmann/json.hpp>
 #include "utils/log_adapter.h"
 #include "distributed/cluster/topology/utils.h"
 #include "distributed/cluster/topology/common.h"
+#include "distributed/constants.h"
 #include "proto/topology.pb.h"
 #include "distributed/cluster/topology/compute_graph_node.h"
 
@@ -99,6 +101,15 @@ bool ComputeGraphNode::Register() {
 
   RegistrationMessage reg_msg;
   reg_msg.set_node_id(node_id_);
+  reg_msg.set_role(role_);
+
+  // Set the local hostname.
+  char host_name[MAX_HOSTNAME_LEN] = {0};
+  if (gethostname(host_name, MAX_HOSTNAME_LEN) != 0) {
+    MS_LOG(ERROR) << "Failed to get local host name.";
+    return false;
+  }
+  reg_msg.set_host_name(std::string(host_name));
 
   std::string content = reg_msg.SerializeAsString();
   auto message = CreateMessage(server_url, MessageName::kRegistration, content);
@@ -242,16 +253,7 @@ bool ComputeGraphNode::SendMessageToMSN(const std::string msg_name, const std::s
 }
 
 std::shared_ptr<std::string> ComputeGraphNode::RetrieveMessageFromMSN(const std::string &msg_name, uint32_t timeout) {
-  MS_EXCEPTION_IF_NULL(tcp_client_);
-
-  auto message = CreateMessage(meta_server_addr_.GetUrl(), msg_name, msg_name);
-  MS_EXCEPTION_IF_NULL(message);
-
-  auto retval = tcp_client_->ReceiveSync(std::move(message), timeout);
-  if (retval != rpc::NULL_MSG) {
-    return std::make_shared<std::string>(retval->body);
-  }
-  return nullptr;
+  return RetrieveMessageFromMSN(msg_name, msg_name);
 }
 
 bool ComputeGraphNode::PutMetadata(const std::string &name, const std::string &value, bool sync) {
@@ -284,6 +286,28 @@ std::string ComputeGraphNode::GetMetadata(const std::string &name, uint32_t time
     return metadata.value();
   }
   return "";
+}
+
+std::vector<std::string> ComputeGraphNode::GetHostNames(const std::string &role) {
+  auto retval = RetrieveMessageFromMSN(std::to_string(static_cast<int>(MessageName::kGetHostNames)), role);
+  MS_EXCEPTION_IF_NULL(retval);
+
+  nlohmann::json hostnames = nlohmann::json::parse(*retval);
+  return hostnames.at(kHostNames).get<std::vector<std::string>>();
+}
+
+std::shared_ptr<std::string> ComputeGraphNode::RetrieveMessageFromMSN(const std::string &msg_name,
+                                                                      const std::string &msg_body, uint32_t timeout) {
+  MS_EXCEPTION_IF_NULL(tcp_client_);
+
+  auto message = CreateMessage(meta_server_addr_.GetUrl(), msg_name, msg_body);
+  MS_EXCEPTION_IF_NULL(message);
+
+  auto retval = tcp_client_->ReceiveSync(std::move(message), timeout);
+  if (retval != rpc::NULL_MSG) {
+    return std::make_shared<std::string>(retval->body);
+  }
+  return nullptr;
 }
 }  // namespace topology
 }  // namespace cluster

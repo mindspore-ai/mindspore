@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include <thread>
+#include <vector>
 #include "distributed/cluster/topology/common.h"
 #include "distributed/rpc/tcp/tcp_client.h"
 #include "distributed/cluster/topology/node_base.h"
@@ -31,7 +32,8 @@ namespace topology {
 // The ComputeGraphNode is a separate process representing a sub-graph of the distributed computation graph.
 class ComputeGraphNode : public NodeBase {
  public:
-  explicit ComputeGraphNode(const std::string &node_id) : NodeBase(node_id), authenticated_(false), enable_hb_(false) {}
+  ComputeGraphNode(const std::string &node_id, const std::string &role)
+      : NodeBase(node_id, role), authenticated_(false), enable_hb_(false) {}
   ~ComputeGraphNode() override = default;
 
   bool Initialize() override;
@@ -52,6 +54,9 @@ class ComputeGraphNode : public NodeBase {
 
   std::string GetMetadata(const std::string &name, uint32_t timeout = 5);
 
+  // Get all the hostnames of compute graph nodes.
+  std::vector<std::string> GetHostNames(const std::string &role);
+
  private:
   // Send the register message to the meta server node when this node process startup.
   bool Register();
@@ -67,6 +72,9 @@ class ComputeGraphNode : public NodeBase {
 
   // Reconnect to the meta server node.
   bool Reconnect();
+
+  std::shared_ptr<std::string> RetrieveMessageFromMSN(const std::string &msg_name, const std::string &msg_body,
+                                                      uint32_t timeout = 5);
 
   // The meta server address used to synchronize metadata with other compute graph nodes.
   MetaServerAddress meta_server_addr_;

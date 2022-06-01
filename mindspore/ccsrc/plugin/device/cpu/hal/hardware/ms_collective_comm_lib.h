@@ -72,12 +72,6 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   MsCollectiveCommLib();
   ~MsCollectiveCommLib() override = default;
 
-  // Send host hash name to scheduler.
-  bool SendHostHashName(size_t host_hash_name) const;
-
-  // Query host hash names of all nodes from scheduler.
-  bool QueryHostHashNames(std::vector<size_t> *host_hash_names) const;
-
   // Send unique id to scheduler.
   bool SendUniqueID(const std::string &group_name, size_t root_info_size, const void *root_info) const;
 
