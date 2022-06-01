@@ -342,9 +342,6 @@ Serdes::InitializeFuncPtr() {
   ops_ptr[vision::kRgbToGrayOperation] = &(vision::RgbToGrayOperation::from_json);
   ops_ptr[vision::kRotateOperation] = &(vision::RotateOperation::from_json);
   ops_ptr[vision::kSlicePatchesOperation] = &(vision::SlicePatchesOperation::from_json);
-  ops_ptr[vision::kSoftDvppDecodeRandomCropResizeJpegOperation] =
-    &(vision::SoftDvppDecodeRandomCropResizeJpegOperation::from_json);
-  ops_ptr[vision::kSoftDvppDecodeResizeJpegOperation] = &(vision::SoftDvppDecodeResizeJpegOperation::from_json);
   ops_ptr[vision::kSwapRedBlueOperation] = &(vision::SwapRedBlueOperation::from_json);
   ops_ptr[vision::kToTensorOperation] = &(vision::ToTensorOperation::from_json);
   ops_ptr[vision::kUniformAugOperation] = &(vision::UniformAugOperation::from_json);

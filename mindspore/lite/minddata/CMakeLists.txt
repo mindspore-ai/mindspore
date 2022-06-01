@@ -280,8 +280,6 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_bgr_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_rgb_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/rotate_ir.cc
-        ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.cc
-        ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/swap_red_blue_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/uniform_aug_ir.cc
         ${MINDDATA_DIR}/callback/callback_manager.cc
@@ -423,8 +421,6 @@ elseif(MSLITE_MINDDATA_IMPLEMENT STREQUAL "wrapper")
             ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_rgb_ir.cc
             ${MINDDATA_DIR}/kernels/ir/vision/rgb_to_gray_ir.cc
             ${MINDDATA_DIR}/kernels/ir/vision/rotate_ir.cc
-            ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.cc
-            ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.cc
             ${MINDDATA_DIR}/kernels/ir/vision/swap_red_blue_ir.cc
             ${MINDDATA_DIR}/kernels/ir/vision/uniform_aug_ir.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/MDToDApi.cc
@@ -584,8 +580,6 @@ elseif(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite")
         ${MINDDATA_DIR}/kernels/ir/vision/rgba_to_rgb_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/rgb_to_gray_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/rotate_ir.cc
-        ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.cc
-        ${MINDDATA_DIR}/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/swap_red_blue_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/uniform_aug_ir.cc
         )

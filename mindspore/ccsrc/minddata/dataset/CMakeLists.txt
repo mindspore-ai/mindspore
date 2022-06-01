@@ -82,7 +82,6 @@ add_subdirectory(plugin)
 add_dependencies(utils core)
 add_dependencies(kernels-image core)
 add_dependencies(kernels-data core)
-add_dependencies(kernels-soft-dvpp-image core soft-dvpp-utils)
 add_dependencies(kernels core)
 add_dependencies(engine-datasetops-source core)
 add_dependencies(engine-datasetops-source-sampler core)
@@ -167,8 +166,6 @@ set(dataengine_submodules
         $<TARGET_OBJECTS:engine-ir-datasetops-source>
         $<TARGET_OBJECTS:engine-ir-datasetops-source-samplers>
         $<TARGET_OBJECTS:engine-ir-cache>
-        $<TARGET_OBJECTS:kernels-soft-dvpp-image>
-        $<TARGET_OBJECTS:soft-dvpp-utils>
         $<TARGET_OBJECTS:engine-datasetops-source>
         $<TARGET_OBJECTS:engine-datasetops-source-sampler>
         $<TARGET_OBJECTS:engine-datasetops-mapop>

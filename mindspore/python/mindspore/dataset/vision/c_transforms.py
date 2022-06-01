@@ -55,7 +55,7 @@ from .validators import check_prob, check_crop, check_center_crop, check_resize_
     check_uniform_augment_cpp, check_convert_color, check_random_resize_crop, check_random_auto_contrast, \
     check_random_adjust_sharpness, check_auto_augment, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
-    check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
+    check_random_solarize, check_positive_degrees, FLOAT_MAX_INTEGER, \
     check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_adjust_gamma
 
 
@@ -2416,6 +2416,10 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
     The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
     Only images with an even resolution can be output. The output of odd resolution is not supported.
 
+    Note:
+        SoftDvppDecodeRandomCropResizeJpeg is not supported as of 1.8 version.
+        Please use RandomCropDecodeResize instead.
+
     Args:
         size (Union[int, Sequence[int]]): The size of the output image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
@@ -2452,17 +2456,13 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
         ...                                                     input_columns=["image"])
     """
 
-    @check_soft_dvpp_decode_random_crop_resize_jpeg
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), max_attempts=10):
-        if isinstance(size, int):
-            size = (size, size)
-        self.size = size
-        self.scale = scale
-        self.ratio = ratio
-        self.max_attempts = max_attempts
+        raise NotImplementedError("SoftDvppDecodeRandomCropResizeJpeg is not supported as of 1.8 version. "
+                                  "Please use RandomCropDecodeResize instead.")
 
     def parse(self):
-        return cde.SoftDvppDecodeRandomCropResizeJpegOperation(self.size, self.scale, self.ratio, self.max_attempts)
+        raise NotImplementedError("SoftDvppDecodeRandomCropResizeJpeg is not supported as of 1.8 version. "
+                                  "Please use RandomCropDecodeResize instead.")
 
 
 class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
@@ -2476,6 +2476,9 @@ class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
     and the input image size should be in range [32*32, 8192*8192].
     The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
     Only images with an even resolution can be output. The output of odd resolution is not supported.
+
+    Note:
+        SoftDvppDecodeResizeJpeg is not supported as of 1.8 version. Please use Decode and Resize instead.
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
@@ -2502,14 +2505,13 @@ class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
         ...                                                     input_columns=["image"])
     """
 
-    @check_resize
     def __init__(self, size):
-        if isinstance(size, int):
-            size = (size,)
-        self.size = size
+        raise NotImplementedError("SoftDvppDecodeResizeJpeg is not supported as of 1.8 version. "
+                                  "Please use Decode and Resize instead.")
 
     def parse(self):
-        return cde.SoftDvppDecodeResizeJpegOperation(self.size)
+        raise NotImplementedError("SoftDvppDecodeResizeJpeg is not supported as of 1.8 version. "
+                                  "Please use Decode and Resize instead.")
 
 
 class UniformAugment(ImageTensorOperation):

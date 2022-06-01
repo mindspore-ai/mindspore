@@ -282,7 +282,7 @@ def check_resize(method):
 
 
 def check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts):
-    """Wrapper method to check the parameters of RandomCropDecodeResize and SoftDvppDecodeRandomCropResizeJpeg."""
+    """Wrapper method to check the parameters of RandomCropDecodeResize."""
 
     check_crop_size(size)
     if scale is not None:
@@ -1038,19 +1038,6 @@ def check_random_select_subpolicy_op(method):
                 check_2tuple(tp, "policy[{0}][{1}]".format(sub_ind, op_ind))
                 check_c_tensor_op(tp[0], "op of (op, prob) in policy[{0}][{1}]".format(sub_ind, op_ind))
                 check_value(tp[1], (0, 1), "prob of (op, prob) policy[{0}][{1}]".format(sub_ind, op_ind))
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_soft_dvpp_decode_random_crop_resize_jpeg(method):
-    """Wrapper method to check the parameters of SoftDvppDecodeRandomCropResizeJpeg."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [size, scale, ratio, max_attempts], _ = parse_user_args(method, *args, **kwargs)
-        check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
 
         return method(self, *args, **kwargs)
 

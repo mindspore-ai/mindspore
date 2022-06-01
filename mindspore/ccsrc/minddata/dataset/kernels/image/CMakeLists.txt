@@ -1,6 +1,5 @@
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
-add_subdirectory(soft_dvpp)
 add_subdirectory(lite_cv)
 if(ENABLE_ACL)
     add_subdirectory(dvpp)
@@ -74,7 +73,5 @@ add_library(kernels-image OBJECT
     to_tensor_op.cc
     )
 if(ENABLE_ACL)
-    add_dependencies(kernels-image kernels-soft-dvpp-image kernels-dvpp-image)
-else()
-    add_dependencies(kernels-image kernels-soft-dvpp-image)
+    add_dependencies(kernels-image kernels-dvpp-image)
 endif()

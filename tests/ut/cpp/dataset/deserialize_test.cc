@@ -283,16 +283,13 @@ TEST_F(MindDataTestDeserialize, TestDeserializeImageFolder) {
   std::vector<float> center = {50.0, 50.0};
   std::vector<uint8_t> fill_value = {150, 150, 150};
   InterpolationMode interpolation = InterpolationMode::kLinear;
-  std::shared_ptr<TensorOperation> operation1 = std::make_shared<vision::SoftDvppDecodeResizeJpegOperation>(size);
-  std::vector<std::shared_ptr<TensorOperation>> ops = {operation1};
-  ds = std::make_shared<MapNode>(ds, ops);
   std::vector<std::shared_ptr<TensorOperation>> operations;
+  std::shared_ptr<TensorOperation> operation1 =
+    std::make_shared<vision::RandomCropDecodeResizeOperation>(size, scale, ratio, interpolation, 2);
   std::shared_ptr<TensorOperation> operation2 =
-    std::make_shared<vision::SoftDvppDecodeRandomCropResizeJpegOperation>(size, scale, ratio, 2);
-  std::shared_ptr<TensorOperation> operation3 =
     std::make_shared<vision::RotateOperation>(0.5, interpolation, true, center, fill_value);
+  operations.push_back(operation1);
   operations.push_back(operation2);
-  operations.push_back(operation3);
   ds = std::make_shared<MapNode>(ds, operations);
   ds = std::make_shared<BatchNode>(ds, 2, true);
   compare_dataset(ds);

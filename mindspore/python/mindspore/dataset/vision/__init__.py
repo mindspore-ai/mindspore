@@ -53,7 +53,6 @@ from .transforms import not_random, AdjustGamma, AutoAugment, AutoContrast, Boun
     RandomHorizontalFlipWithBBox, RandomInvert, RandomLighting, RandomPerspective, RandomPosterize, RandomResizedCrop, \
     RandomResizedCropWithBBox, RandomResize, RandomResizeWithBBox, RandomRotation, RandomSelectSubpolicy, \
     RandomSharpness, RandomSolarize, RandomVerticalFlip, RandomVerticalFlipWithBBox, Rescale, Resize, ResizeWithBBox, \
-    RgbToHsv, Rotate, SlicePatches, SoftDvppDecodeRandomCropResizeJpeg, SoftDvppDecodeResizeJpeg, TenCrop, ToNumpy, \
-    ToPIL, ToTensor, ToType, UniformAugment, VerticalFlip
+    RgbToHsv, Rotate, SlicePatches, TenCrop, ToNumpy, ToPIL, ToTensor, ToType, UniformAugment, VerticalFlip
 from .utils import Inter, Border, ConvertMode, ImageBatchFormat, SliceMode, AutoAugmentPolicy, get_image_num_channels, \
     get_image_size
