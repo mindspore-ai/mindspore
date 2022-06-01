@@ -30,6 +30,7 @@ constexpr size_t kIndexGrad = 2;
 
 void MaskedSelectGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  tensor_size_ = 1;
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_a_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexInput);
   input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexMask);

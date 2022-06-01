@@ -325,7 +325,7 @@ class Cell(Cell_):
 
     def __del__(self):
         if context.get_context is not None and context._get_mode() == context.PYNATIVE_MODE:
-            _pynative_executor.del_cell(str(id(self)))
+            _pynative_executor.del_cell(self)
 
         # while deepcopy a cell instance, the copied cell instance can't be added to cells_compile_cache
         # here using pop(id(self), None) to avoid KeyError exception
@@ -588,10 +588,8 @@ class Cell(Cell_):
         if self.requires_grad:
             _pynative_executor.set_grad_flag(True)
 
-        # PyNative feed dynamic shape inputs
         if self._dynamic_shape_inputs is not None:
             self._check_compile_dynamic_shape(*args)
-            _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
 
         try:
             _pynative_executor.new_graph(self, *args, **kwargs)
@@ -900,6 +898,9 @@ class Cell(Cell_):
         for ele in self._dynamic_shape_inputs:
             if isinstance(ele, (str, int, dict)):
                 raise TypeError(f"For element in 'set_inputs', the type must be Tensor, but got {type(ele)}.")
+        if context._get_mode() == context.PYNATIVE_MODE:
+            _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
+
 
     def get_inputs(self):
         """

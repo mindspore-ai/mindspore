@@ -20,9 +20,17 @@
 #include "utils/ms_utils.h"
 
 namespace mindspore {
+static std::string MakeId() {
+  // Use atomic to make id generator thread safe.
+  static std::atomic<uint64_t> last_id{1};
+  return "C" + std::to_string(last_id.fetch_add(1, std::memory_order_relaxed));
+}
+
 using mindspore::abstract::AbstractFunction;
 
 abstract::AbstractBasePtr Cell::ToAbstract() { return nullptr; }
+
+Cell::Cell(const std::string &name) : Named(name), id_(MakeId()) {}
 
 bool Cell::operator==(const Value &other) const {
   if (other.isa<Cell>()) {

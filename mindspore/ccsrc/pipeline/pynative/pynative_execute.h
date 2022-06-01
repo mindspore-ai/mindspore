@@ -67,6 +67,23 @@ struct DynamicShapeInfo {
 };
 using DynamicShapeInfoPtr = std::shared_ptr<DynamicShapeInfo>;
 
+struct CellSelfInfo {
+  CellSelfInfo() = default;
+  ~CellSelfInfo() = default;
+  CellSelfInfo(std::string cell_self_id, std::vector<std::string> args_id, std::vector<abstract::ShapePtr> args_shape,
+               std::vector<TypePtr> args_type)
+      : cell_self_id(std::move(cell_self_id)),
+        args_id(std::move(args_id)),
+        args_shape(std::move(args_shape)),
+        args_type(std::move(args_type)) {}
+
+  std::string cell_self_id;
+  std::vector<std::string> args_id;
+  std::vector<abstract::ShapePtr> args_shape;
+  std::vector<TypePtr> args_type;
+};
+using CellSelfInfoPtr = std::shared_ptr<CellSelfInfo>;
+
 class TopCellInfo {
  public:
   TopCellInfo() = default;
@@ -113,7 +130,9 @@ class TopCellInfo {
   size_t op_num() const { return op_num_; }
   void set_op_num(size_t op_num) { op_num_ = op_num; }
   const std::string &cell_id() const { return cell_id_; }
+  void set_cell_id(const std::string &cell_id) { cell_id_ = cell_id; }
   const std::string &already_run_cell_id() const { return already_run_cell_id_; }
+  void set_already_run_cell_id(const std::string &already_run_cell_id) { already_run_cell_id_ = already_run_cell_id; }
   const std::string &input_args_id() const { return input_args_id_; }
   void set_input_args_id(const std::string &input_args_id) { input_args_id_ = input_args_id; }
   std::string &all_op_info() { return all_op_info_; }
@@ -121,6 +140,9 @@ class TopCellInfo {
   void set_grad_operation(const std::string &grad_operation) { grad_operation_ = grad_operation; }
   const abstract::AbstractBasePtr &last_output_abs() const { return last_output_abs_; }
   void set_last_output_abs(const abstract::AbstractBasePtr &last_output_abs) { last_output_abs_ = last_output_abs; }
+  CellSelfInfoPtr cell_self_info() const { return cell_self_info_; }
+  void set_cell_self_info(const CellSelfInfoPtr &cell_self_info) { cell_self_info_ = cell_self_info; }
+  void SetCellSelfInfoForTopCell(const py::object &cell, const py::args &args);
   mindspore::HashSet<std::string> &sub_cell_list() { return sub_cell_list_; }
   std::set<std::string> &forward_op_output_id() { return forward_op_output_id_; }
   bool IsSubCell(const std::string &cell_id) const;
@@ -165,6 +187,7 @@ class TopCellInfo {
   std::string all_op_info_;
   std::string grad_operation_;
   abstract::AbstractBasePtr last_output_abs_;
+  CellSelfInfoPtr cell_self_info_;
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   mindspore::HashSet<std::string> sub_cell_list_;
   // Record `register hook` or `remove hook` function has been called by sub cell
@@ -246,10 +269,10 @@ class GradExecutor {
   py::object GradMsFunction(const py::object &out, const py::args &args);
   void GradMsFunctionInner(const std::string &phase, const py::object &out, const py::args &args,
                            const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph);
-  void SaveDynShapeAbsForMsFunction(const py::object &forward_out, const FuncGraphPtr &ms_func_graph);
+  void SaveDynShapeAbsForMsFunction(const py::args &args, const py::object &out, const FuncGraphPtr &ms_func_graph);
   void UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info, const ValuePtr &new_forward_value);
-  void MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
-                                const py::object &actual_out, const py::args &args, const ValuePtr &actual_out_v);
+  CNodePtr MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
+                                    const py::object &actual_out, const py::args &args, const ValuePtr &actual_out_v);
   void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args, ValuePtrList *input_values,
                               CNodePtr *ms_function_cnode);
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const CNodePtr &cnode);
@@ -258,6 +281,14 @@ class GradExecutor {
   void UpdateForwardTensorInfoInBpropGraph(const string &op_info, const ValuePtr &op_out);
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   py::object CheckGraph(const py::object &cell, const py::args &args);
+  TopCellInfoPtr ChangeTopCellToDynamicShapeByAuto(const TopCellInfoPtr &top_cell,
+                                                   const std::vector<ShapeVector> &new_args_shape,
+                                                   const py::object &cell, const py::args &args);
+  TopCellInfoPtr ChangeTopCellToDynamicShapeBySetInputs(const TopCellInfoPtr &top_cell,
+                                                        const std::vector<ShapeVector> &new_args_shape,
+                                                        const py::object &cell);
+  TopCellInfoPtr GetTopCellWithDynamicShape(const py::object &cell, const py::args &args, bool is_auto);
+  void CheckPreviousTopCellCanBeDynamicShape(const py::object &cell, const py::args &args);
   void RunGradGraph(py::object *ret, const py::object &cell, const py::object &sens_param, const py::tuple &args);
   py::object CheckAlreadyRun(const prim::GradOperationPtr &grad, const py::object &cell, const py::args &args);
   void EraseTopCellFromTopCellList(const TopCellInfoPtr &top_cell);
@@ -472,7 +503,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   // Used by graph clean
   // Cell destruct will call
-  void ClearCell(const std::string &cell_id);
+  void ClearCell(const py::object &cell);
   void ClearGrad(const py::object &cell, const py::args &args);
   // Abnormal existed
   void ClearRes();
