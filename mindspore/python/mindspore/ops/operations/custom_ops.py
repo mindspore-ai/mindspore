@@ -21,6 +21,7 @@ import ast
 import hashlib
 import inspect
 import importlib
+import subprocess
 import numpy as np
 from mindspore._c_expression import Oplib, typing
 from mindspore import context
@@ -67,23 +68,45 @@ def _compile_aot(file):
     file_name = file.split('/')[-1]
     func_path = cache_path + file_name + ".so"
 
-    if file.endswith("cpp") or file.endswith("cc"):
-        cmd = "g++ -std=c++17 --shared -fPIC " + \
-            include_file + " -o " + func_path + " " + file
-    elif file.endswith("cu"):
-        cmd = "nvcc --shared -Xcompiler -fPIC " + \
-            include_file + " -o " + func_path + " " + file
-    else:
-        raise ValueError("The source file must be a cc/cpp/cu file, but get: {}".format(file))
+    if not os.path.exists(func_path):
 
-    with os.popen(cmd) as f:
-        r = f.read()
-    if os.path.exists(func_path) and not r:
-        pass
-    else:
-        if os.path.exists(func_path):
-            os.remove(func_path)
-        assert False, "Failed to compile " + file + " to so library"
+        if file.endswith("cpp") or file.endswith("cc"):
+            cmd = ["g++", "-std=c++17", "--shared", "-fPIC"]
+            cmd += [include_file, "-o", func_path, file]
+        elif file.endswith("cu"):
+            cmd = ["nvcc"]
+            cmd += ["--shared", "-Xcompiler", "-fPIC", "-O3", "-gencode", "arch=compute_70, code=sm_70"]
+            cmd += ["--use_fast_math", "--expt-relaxed-constexpr", "--expt-extended-lambda"]
+
+            def _get_cuda_bare_metal_version():
+                raw_output = subprocess.check_output(["nvcc", "-V"],
+                                                     universal_newlines=True)
+                output = raw_output.split()
+                release_idx = output.index("release") + 1
+                release = output[release_idx].split(".")
+                version_major = release[0]
+
+                return int(version_major)
+
+            if _get_cuda_bare_metal_version() >= 11:
+                cmd += ["-gencode", "arch=compute_80,code=sm_80"]
+            cmd += [include_file, "-o", func_path, file]
+        else:
+            raise ValueError("The source file must be a cc/cpp/cu file, but get: {}".format(file))
+
+        proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        (out, _) = proc.communicate()
+
+        if proc.returncode != 0:
+            msg = "Compilation error in compiling {}:\n".format(file)
+            msg += out.decode('utf-8')
+            raise RuntimeError(msg)
+
+        if not bytearray(open(func_path, "rb").read()):
+            raise RuntimeError(
+                "Compilation error: empty result is generated for {}".format(file))
 
     return func_path
 
