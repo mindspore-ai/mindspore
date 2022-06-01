@@ -110,6 +110,8 @@ class AscendStreamAssign {
 
   void AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr> &graph_ptr);
   vector<CNodePtr> GetLastInputCnode(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &cur_cnode_ptr);
+  vector<CNodePtr> GetIndependentNodesNeedsInsertActive(const std::vector<CNodePtr> exe_orders,
+                                                        const uint32_t graph_id);
   bool IsSatisfiedHcom(const std::vector<std::pair<uint32_t, vector<size_t>>> &hcom_index, const CNodePtr &node_ptr,
                        size_t index);
 

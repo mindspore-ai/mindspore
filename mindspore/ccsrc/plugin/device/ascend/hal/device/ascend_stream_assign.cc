@@ -1062,6 +1062,33 @@ void AscendStreamAssign::InsertStreamActiveForCommon(const NotNull<KernelGraphPt
   graph_ptr->set_execution_order(update_cnode_list);
 }
 
+vector<CNodePtr> AscendStreamAssign::GetIndependentNodesNeedsInsertActive(const std::vector<CNodePtr> exe_orders,
+                                                                          const uint32_t graph_id) {
+  uint32_t pre_stream_id = 0;
+  std::vector<CNodePtr> independent_nodes_need_insert_active;
+  CNodePtr pre_cnode;
+  for (size_t i = 0; i < exe_orders.size(); i++) {
+    auto cur_cnode_ptr = exe_orders[i];
+    if (!AnfAlgo::IsIndependentNode(cur_cnode_ptr)) {
+      continue;
+    }
+    if (AnfAlgo::GetGraphId(cur_cnode_ptr.get()) != graph_id) {
+      continue;
+    }
+    auto cur_stream_id = AnfAlgo::GetStreamId(cur_cnode_ptr);
+    if (pre_stream_id == 0) {
+      pre_stream_id = cur_stream_id;
+      pre_cnode = cur_cnode_ptr;
+    }
+    if (cur_stream_id != pre_stream_id) {
+      independent_nodes_need_insert_active.push_back(pre_cnode);
+    }
+    pre_stream_id = cur_stream_id;
+    pre_cnode = cur_cnode_ptr;
+  }
+  return independent_nodes_need_insert_active;
+}
+
 void AscendStreamAssign::InsertStreamActiveForIndependent(const NotNull<KernelGraphPtr> &graph_ptr) {
   auto root_graph_id = graph_ptr->graph_id();
   if (root_graph_id == kInvalidGraphId) {
@@ -1081,24 +1108,18 @@ void AscendStreamAssign::InsertStreamActiveForIndependent(const NotNull<KernelGr
   }
   std::vector<CNodePtr> update_cnode_list;
   auto exe_orders = graph_ptr->execution_order();
-
+  auto independent_nodes_need_insert_active = GetIndependentNodesNeedsInsertActive(exe_orders, root_graph_id);
   // first independent is been activated, active other independent stream
   std::vector<uint32_t> streams;
   std::copy(independent_streams.begin(), independent_streams.end(), std::back_inserter(streams));
   std::sort(streams.begin(), streams.end());
-  uint32_t node_num = 0;
   for (size_t i = 0; i < exe_orders.size(); i++) {
     auto cur_cnode_ptr = exe_orders[i];
     update_cnode_list.emplace_back(cur_cnode_ptr);
-    if (!AnfAlgo::IsIndependentNode(cur_cnode_ptr)) {
+    if (!AnfAlgo::IsIndependentNode(cur_cnode_ptr) || AnfAlgo::GetGraphId(cur_cnode_ptr.get()) != root_graph_id) {
       continue;
     }
 
-    if (AnfAlgo::GetGraphId(cur_cnode_ptr.get()) != root_graph_id) {
-      continue;
-    }
-
-    node_num++;
     auto cur_stream_id = AnfAlgo::GetStreamId(cur_cnode_ptr);
     auto it = std::find(streams.begin(), streams.end(), cur_stream_id);
     if (it == streams.end()) {
@@ -1107,7 +1128,8 @@ void AscendStreamAssign::InsertStreamActiveForIndependent(const NotNull<KernelGr
       std::copy(exe_orders.begin() + i + 1, exe_orders.end(), std::back_inserter(update_cnode_list));
       break;
     } else {
-      if (node_num == kMaxCommonNodeNumPerStream) {
+      if (std::find(independent_nodes_need_insert_active.begin(), independent_nodes_need_insert_active.end(),
+                    cur_cnode_ptr) != independent_nodes_need_insert_active.end()) {
         CNodePtr active_ptr = KernelAdjust::GetInstance().CreateStreamActiveOp(graph_ptr);
         // 1.set stream id
         AnfAlgo::SetStreamId(cur_stream_id, active_ptr.get());
@@ -1116,7 +1138,6 @@ void AscendStreamAssign::InsertStreamActiveForIndependent(const NotNull<KernelGr
         common::AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(active_index_list),
                                      active_ptr);
         update_cnode_list.emplace_back(active_ptr);
-        node_num = 0;
       }
     }
   }
