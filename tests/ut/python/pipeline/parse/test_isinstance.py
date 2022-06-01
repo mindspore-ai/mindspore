@@ -53,16 +53,16 @@ def test_isinstance():
             is_tuple_var = isinstance((x, 1, 1.0, y), tuple)
             is_list_const = isinstance(self.list_member, list)
             is_list_var = isinstance([x, 1, 1.0, y], list)
+            is_empty_list = isinstance(self.empty_list, list)
             is_dict_const = isinstance(self.dict_member, dict)
             is_dict_var = isinstance({"x": x, "y": y}, dict)
             is_empty_dic = isinstance(self.empty_dict, dict)
-            is_list_or_tensor = isinstance([x, y], (Tensor, list))
             is_int_or_float_or_tensor_or_tuple = isinstance(x, (Tensor, tuple, int, float))
+            is_list_or_tensor = isinstance([x, y], (Tensor, list))
             float_is_int = isinstance(self.float_member, int)
             bool_is_string = isinstance(self.bool_member, str)
             tensor_is_tuple = isinstance(x, tuple)
             tuple_is_list = isinstance(self.tuple_member, list)
-            is_empty_list = isinstance(self.empty_list, list)
             return is_int, is_float, is_bool, bool_is_int, is_string, is_parameter, \
                    parameter_is_tensor, is_tensor_const, is_tensor_var, \
                    is_tuple_const, is_tuple_var, is_list_const, is_list_var, is_empty_list, \

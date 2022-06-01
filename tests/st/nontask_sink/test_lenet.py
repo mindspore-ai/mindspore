@@ -177,3 +177,69 @@ def test_ascend_lenet2():
     loss_output = test_ascend_lenet()
     assert loss_output.asnumpy() < 0.004
     assert loss_output.asnumpy() > 0.003
+
+
+class GradWrapTuple(nn.Cell):
+    """
+    GradWrapTuple definition
+    """
+
+    def __init__(self, network):
+        super(GradWrapTuple, self).__init__()
+        self.network = network
+        self.weights = tuple(filter(lambda x: x.requires_grad, network.get_parameters()))
+
+    def construct(self, x, label):
+        weights = self.weights
+        return grad_by_list(self.network, weights)(x, label)
+
+
+def test_ascend_lenet_grad_by_list_tuple():
+    """
+    Feature: GradOperation get_by_list pass tuple/list
+    Description: Grad with Parameters as input type and fv. list or tuple as fv of grad.
+    Expectation: No exception.
+    """
+    epoch_size = 20
+    batch_size = 32
+    inputs = Tensor(np.ones([batch_size, 1, 32, 32]).astype(np.float32))
+    labels = Tensor(np.ones([batch_size]).astype(np.int32))
+
+    net = LeNet()
+    criterion = CrossEntropyLoss()
+    optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.1, 0.9)
+
+    net_with_criterion = WithLossCell(net, criterion)
+    train_network = GradWrapTuple(net_with_criterion)
+    train_network.set_train()
+    total_time = 0
+
+    for epoch in range(0, epoch_size):
+        start_time = time.time()
+        fw_output = net(inputs)
+        loss_output = criterion(fw_output, labels)
+        grads = train_network(inputs, labels)
+        optimizer(grads)
+        end_time = time.time()
+        cost_time = end_time - start_time
+        total_time = total_time + cost_time
+
+        print("======epoch: ", epoch, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
+    return loss_output
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ascend_lenet_grad_by_list_tuple1():
+    """
+    Feature: GradOperation get_by_list pass tuple/list
+    Description: Grad with Parameters as input type and fv. list or tuple as fv of grad.
+    Expectation: No exception.
+    """
+    os.environ['GRAPH_OP_RUN'] = str(1)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    loss_output = test_ascend_lenet_grad_by_list_tuple()
+    assert loss_output.asnumpy() < 0.004
+    assert loss_output.asnumpy() > 0.003

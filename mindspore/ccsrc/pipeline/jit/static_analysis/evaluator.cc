@@ -58,17 +58,6 @@ void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &,
     }
   }
 }
-
-PrimitivePtr GetRealPrimitive(const AnfNodePtr &node) {
-  const auto &primitive = GetCNodePrimitive(node);
-  if (primitive != nullptr) {
-    auto do_signature_prim = dyn_cast<prim::DoSignaturePrimitive>(primitive);
-    if (do_signature_prim != nullptr) {
-      return dyn_cast<Primitive>(do_signature_prim->function());
-    }
-  }
-  return primitive;
-}
 }  // namespace
 
 bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
@@ -92,7 +81,7 @@ bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg)
 
 void BaseFuncGraphEvaluator::CollectSideEffectNodes(const AnfNodePtr &node,
                                                     std::vector<AnfNodePtr> *side_effect_nodes) {
-  const auto &primitive = GetRealPrimitive(node);
+  const auto &primitive = GetCNodePrimitiveWithoutDoSignature(node);
   if (primitive != nullptr) {
     auto effect_info = GetPrimEffectInfo(primitive);
     if (effect_info.memory || effect_info.io) {

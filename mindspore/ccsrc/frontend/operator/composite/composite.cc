@@ -555,9 +555,9 @@ FuncGraphPtr Tail::GenerateGradFuncGraph(const AbstractTuplePtr &tuple_arg, cons
 
   if (tail_type_ == kGradFirst) {
     AnfNodePtr tuple_parameter = fg->add_parameter();
-    PrimitivePtr getitem_op = prim::kPrimTupleGetItem;
     if (CanGradArgument(tuple_arg, 1) || EnableGradFirstForTuple(tuple_arg, enable_tuple_grad_first_)) {
-      fg->set_output(fg->NewCNode({NewValueNode(getitem_op), tuple_parameter, NewValueNode(SizeToLong(1))}));
+      fg->set_output(
+        fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), tuple_parameter, NewValueNode(SizeToLong(1))}));
     } else {
       fg->set_output(NewValueNode(std::make_shared<ValueTuple>(ValuePtrList())));
     }
@@ -572,14 +572,22 @@ FuncGraphPtr Tail::GenerateGradFuncGraph(const AbstractTuplePtr &tuple_arg, cons
   if (tail_type_ == kGradAll) {
     AnfNodePtr tuple_parameter = fg->add_parameter();
     std::vector<AnfNodePtr> elements = {NewValueNode(prim::kPrimMakeTuple)};
-    PrimitivePtr op = prim::kPrimTupleGetItem;
     for (size_t i = 1; i < tuple_arg->size(); ++i) {
       MS_EXCEPTION_IF_NULL((*tuple_arg)[i]);
       if (CanGradArgument(tuple_arg, i)) {
-        elements.push_back(fg->NewCNodeInOrder({NewValueNode(op), tuple_parameter, NewValueNode(SizeToLong(i))}));
+        elements.push_back(
+          fg->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), tuple_parameter, NewValueNode(SizeToLong(i))}));
       }
     }
-    if (elements.size() > 1) {
+
+    // We should deal with 'get_all=True' as other options later:
+    // "The returned result may vary for grad result element number.
+    // A single value if only one result, a tuple for multiple results, or a empty tuple for no result.
+    //
+    // Notice that even if the user set 'get_all=True' and pass multiple inputs,
+    // the 'CanGradArgument' may change it to only one gradient output or no gradient."
+    constexpr size_t args_least_size = 2;
+    if (elements.size() >= args_least_size) {
       fg->set_output(fg->NewCNodeInOrder(elements));
       return fg;
     }
@@ -744,12 +752,8 @@ void CheckPrimBpropReturnSparse(const FuncGraphPtr &primal_graph) {
                    if (has_sparse_bprop_prim) {
                      return EXCLUDE;
                    }
-                   auto prim = GetCNodePrimitive(node);
+                   auto prim = GetCNodePrimitiveWithoutDoSignature(node);
                    if (prim != nullptr) {
-                     auto do_signature = dyn_cast<mindspore::prim::DoSignaturePrimitive>(prim);
-                     if (do_signature != nullptr) {
-                       prim = dyn_cast<Primitive>(do_signature->function());
-                     }
                      bool sparse_bprop = GetPrimitiveFlag(prim, GRAPH_FLAG_BPROP_RETURN_SPARSE);
                      if (sparse_bprop) {
                        MS_LOG(DEBUG) << "prim: " << prim->ToString() << " has attr 'bprop_return_sparse'";

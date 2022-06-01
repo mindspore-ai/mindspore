@@ -67,26 +67,16 @@ static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, std::ve
   return unpack_graph_node;
 }
 
-MetaFuncGraphPtr GetMetaFuncGraphOfValueNode(const AnfNodePtr &node) {
-  ValuePtr value;
-  if (IsValueNode<prim::DoSignaturePrimitive>(node)) {
-    value = GetValueNode(node)->cast<prim::DoSignaturePrimitivePtr>()->function();
-  } else {
-    value = GetValueNode(node);
-  }
-  if (value == nullptr) {
-    return nullptr;
-  }
-  return value->cast<MetaFuncGraphPtr>();
-}
-
-// check if node is a specific meta_fg_opration that registered in the meta_fg_ops
+// Check if node is a specific meta_fg_opration that registered in the meta_fg_ops
 bool CheckMetaFgOps(const AnfNodePtr &node) {
   if (node == nullptr) {
     return false;
   }
-
-  auto meta_func_graph_ptr = GetMetaFuncGraphOfValueNode(node);
+  auto value = GetValueWithoutDoSignature(node);
+  if (value == nullptr) {
+    return false;
+  }
+  auto meta_func_graph_ptr = value->cast<MetaFuncGraphPtr>();
   if (meta_func_graph_ptr == nullptr) {
     return false;
   }
@@ -143,16 +133,29 @@ AnfNodePtr MetaFgVarPrepare::operator()(const OptimizerPtr &, const AnfNodePtr &
   // For general meta_fg_opration, ‘sens_param’ is not involved, and that of GradOperation obtained specifically.
   bool sens_param = false;
   if (grad_op_->Match(inputs_x[0])) {
-    auto meta_func = GetMetaFuncGraphOfValueNode(inputs_x[0]);
-    if (meta_func == nullptr) {
-      return nullptr;
-    }
+    auto value = GetValueWithoutDoSignature(inputs_x[0]);
+    MS_EXCEPTION_IF_NULL(value);
+    auto meta_func = value->cast<MetaFuncGraphPtr>();
+    MS_EXCEPTION_IF_NULL(meta_func);
     auto grad_op_ptr = meta_func->cast<prim::GradOperationPtr>();
     sens_param = grad_op_ptr->sens_param();
+
+    // Remove the tuple/list inputs from order list for grad(UnpackGraph(..), list/tuple)(..)
+    if (inputs_x.size() > inputs_x_minimum_size) {
+      constexpr size_t sequence_input_pos = 2;
+      auto seq_node = inputs_x[sequence_input_pos];
+      auto prim = GetCNodePrimitiveWithoutDoSignature(seq_node);
+      if (prim != nullptr &&
+          (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList))) {
+        auto seq_cnode = dyn_cast<CNode>(seq_node);
+        MS_EXCEPTION_IF_NULL(seq_cnode);
+        seq_cnode->func_graph()->EraseUnusedNodeInOrder(seq_cnode);
+      }
+    }
   }
 
   inputs_x[1] = GenerateUnpackGraphNode(node, inputs_y, func_node, is_unpack, sens_param);
-  // construct new meta_fg_opration
+  // Construct new meta_fg_opration
   auto meta_fg_op_cnode = func_graph->NewCNodeBefore(node, inputs_x);
   if (unpack_op_->Match(inputs_y[0])) {
     inputs_y[1] = meta_fg_op_cnode;

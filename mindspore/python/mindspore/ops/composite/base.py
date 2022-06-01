@@ -168,6 +168,8 @@ class GradOperation(GradOperation_):
     4. Call the gradient function with input function's inputs
        to get the gradients with respect to all inputs and given parameters: `gradient_function(x, y)`.
 
+    To be noticed, for above gradient functions, the returned gradient result may vary for grad result element number:
+    A single value if only one result, a tuple for multiple results, or a empty tuple for no result.
 
     We can configure the sensitivity(gradient with respect to output) by setting `sens_param` as True and
     passing an extra sensitivity input to the gradient function, the sensitivity input should has the
@@ -188,11 +190,11 @@ class GradOperation(GradOperation_):
 
     Args:
         get_all (bool): If True, get all the gradients with respect to inputs. Default: False.
-        get_by_list (bool): If True, get all the gradients with respect to Parameter variables.
+        get_by_list (bool): If True, get all the gradients with respect to Parameter free variables.
             If get_all and get_by_list are both False, get the gradient with respect to first input.
-            If get_all and get_by_list are both True, get the gradients with respect to inputs and Parameter variables
-            at the same time in the form of ((gradients with respect to inputs),
-            (gradients with respect to parameters)). Default: False.
+            If get_all and get_by_list are both True, get the gradients with respect to inputs and
+            Parameter free variables at the same time in the form of ("gradients with respect to inputs",
+            "gradients with respect to parameter free variables"). Default: False.
         sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
             If sens_param is False, a 'ones_like(outputs)' sensitivity will be attached automatically.
             Default: False.

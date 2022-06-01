@@ -232,3 +232,67 @@ def test_train_lenet_with_new_interface(num_classes=10, epoch=20, batch_size=32)
         losses.append(loss)
     assert losses[-1].asnumpy() < 0.01
     assert losses[-1].asnumpy() > 0.001
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_train_lenet_with_new_interface_tuple(num_classes=10, epoch=20, batch_size=32):
+    """
+    Feature: GradOperation get_by_list pass tuple/list
+    Description: Grad with Parameters as input type and fv. list or tuple as fv of grad.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    network = LeNet5(num_classes)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+    net_with_criterion = WithLossCell(network, criterion)
+    net_with_criterion.set_train()
+
+    weights = tuple(network.trainable_params())
+    optimizer = nn.Momentum(weights, 0.1, 0.9)
+
+    train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True)
+    losses = []
+    for i in range(0, epoch):
+        data = Tensor(np.ones([batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
+        label = Tensor(np.ones([batch_size]).astype(np.int32))
+        sens = Tensor(np.ones([1]).astype(np.float32))
+        loss, grads = train_network(data, label, sens)
+        grads = F.identity(grads)
+        optimizer(grads)
+        losses.append(loss)
+    assert losses[-1].asnumpy() < 0.01
+    assert losses[-1].asnumpy() > 0.001
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_train_lenet_with_new_interface_list(num_classes=10, epoch=20, batch_size=32):
+    """
+    Feature: GradOperation get_by_list pass tuple/list
+    Description: Grad with Parameters as input type and fv. list or tuple as fv of grad.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    network = LeNet5(num_classes)
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+    net_with_criterion = WithLossCell(network, criterion)
+    net_with_criterion.set_train()
+
+    weights = list(network.trainable_params())
+    optimizer = nn.Momentum(weights, 0.1, 0.9)
+
+    train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True)
+    losses = []
+    for i in range(0, epoch):
+        data = Tensor(np.ones([batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
+        label = Tensor(np.ones([batch_size]).astype(np.int32))
+        sens = Tensor(np.ones([1]).astype(np.float32))
+        loss, grads = train_network(data, label, sens)
+        grads = F.identity(grads)
+        optimizer(grads)
+        losses.append(loss)
+    assert losses[-1].asnumpy() < 0.01
+    assert losses[-1].asnumpy() > 0.001
