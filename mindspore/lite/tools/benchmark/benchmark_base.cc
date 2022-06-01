@@ -295,7 +295,7 @@ int BenchmarkBase::CheckThreadNumValid() {
 
 int BenchmarkBase::CheckDeviceTypeValid() {
   if (flags_->device_ != "CPU" && flags_->device_ != "GPU" && flags_->device_ != "NPU" &&
-      flags_->device_ != "Ascend310" && flags_->device_ != "Ascend710") {
+      flags_->device_ != "Ascend310" && flags_->device_ != "Ascend310P") {
     MS_LOG(ERROR) << "Device type:" << flags_->device_ << " is not supported.";
     std::cerr << "Device type:" << flags_->device_ << " is not supported." << std::endl;
     return RET_ERROR;
