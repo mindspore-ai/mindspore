@@ -45,6 +45,7 @@ Neural Network
     :template: classtemplate.rst
 
     mindspore.ops.pdist
+    mindspore.ops.deformable_conv2d
 
 Activation Functions
 ^^^^^^^^^^^^^^^^^^^^

@@ -128,87 +128,94 @@ def softsign(x):
 
 
 def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1,
-                      data_format="NCHW", deformable_groups=1, modulated=True):
+                      deformable_groups=1, modulated=True):
     r"""
-    Computes a 2D deformable convolution given 4D `x`, `weight` and `offsets` tensors.
+    Given 4D tensor inputs `x`, `weight` and `offsets`, compute a 2D deformable convolution. The deformable convolution
+    operation can be expressed as follow:
+    Deformable Convolution v1:
+    .. math::
+        y(p)=\sum_{k=1}^{K}w_{k}\cdot x(p+p_{k}+\Delta{p_{k}})
 
-    Note:
-        For Ascend platform, only support cases when `in_channels` can be divisible by 8, `deformable_groups` is 1
-        and `offsets` value is float which needs to contain a decimal part. For example: `x` is
-        `(batch, 2, in_height, in_width)`, or `deformable_groups` is 2, or `offsets` assign with 'numpy.ones()'
-        function, none of these scenarios are supported.
-        This is an experimental interface that is subject to change or deletion.
+    Deformable Convolution v2:
+    .. math::
+        y(p)=\sum_{k=1}^{K}w_{k}\cdot x(p+p_{k}+\Delta{p_{k}})\cdot \Delta{m_{k}}
+
+    Where :math:`\Delta{p_{k}}` and :math:`\Delta{m_{k}}` are the learnable offset and modulation scalar for the k-th
+    location. For details, please refer to `Deformable ConvNets v2: More Deformable, Better Results
+    <https://arxiv.org/abs/1811.11168>`_ and `Deformable Convolutional Networks <https://arxiv.org/abs/1703.06211>`_.
 
     Args:
-        x (Tensor): A 4D tensor of input image. With the format "NCHW" or "NHWC", the data is stored in the order of:
-            :math:`(batch, in_channels, in_height, in_width)` when the format is "NCHW".
-        weight (Tensor): A 4D tensor of learnable filters. Must have the same type as `x`. The data is stored in the
-            order of: :math:`(out_channels, in_channels / groups, filter_height, filter_width)` when the format of
-            `x` is "NCHW".
-        offsets (Tensor): A 4D tensor of x-y coordinates offset and mask. With the format "NCHW" or "NHWC", when the
-            format is "NCHW", the data is stored in the order of:
-            :math:`(batch, deformable_groups * filter_height * filter_width * 3, out_height, out_width)`.
-        kernel_size (tuple[int]): Required. A tuple of 2 integers. The size of kernel.
-        strides (tuple[int]): Required. A tuple of 4 integers. The stride of the sliding window for each dimension of
+        x (Tensor): A 4D tensor of input image. With the format "NCHW",
+            the shape is :math:`(N, C_{in}, H_{in}, W_{in})`. Dtype: float16 or float32.
+        weight (Tensor): A 4D tensor of learnable filters. Must have the same type as `x`.
+            The shape is :math:`(C_{out}, C_{in} / groups, H_{f}, W_{f})`.
+        offsets (Tensor): A 4D tensor of x-y coordinates offset and mask. With the format "NCHW",
+            the shape is :math:`(batch, 3 * deformable_groups * H_{f} * W_{f}, H_{out}, W_{out})`. Note the C dimension
+            is stored in the order of (offset_x, offset_y, mask). Must have the same type as `x`.
+        kernel_size (tuple[int]): A tuple of 2 integers. The size of kernel.
+        strides (tuple[int]): A tuple of 4 integers. The stride of the sliding window for each dimension of
             input. The dimension order is interpreted according to the data format of `x`. The N and C dimensions must
             be set to 1.
-        padding (tuple[int]): Required. A list of 4 integers. The number of pixels to add to each (top, bottom, left,
+        padding (tuple[int]): A tuple of 4 integers. The number of pixels to add to each (top, bottom, left,
             right) side of the input.
-        bias (Tensor): Optional. An 1D tensor of additive biases to the filter outputs. The data is stored in the
-            order of: :math:`(out_channels)`.
-        dilations (tuple[int]): Optional. A list of 4 integers. The dilation factor for each dimension of input. The
+        bias (Tensor, Optional): An 1D tensor of additive biases to the filter outputs.
+            The shape is :math:`(out_channels)`. Defaults to None.
+        dilations (tuple[int], Optional): A tuple of 4 integers. The dilation factor for each dimension of input. The
             dimension order is interpreted according to the data format of `x`. The N and C dimensions must be set
             to 1. Defaults to (1, 1, 1, 1).
-        groups (int): Optional. An integer of type int32. The number of blocked connections from input channels
+        groups (int, Optional): An integer of type int32. The number of blocked connections from input channels
             to output channels. In_channels and out_channels must both be divisible by `groups`. Defaults to 1.
-        data_format (str): Optional. The value for data format, is 'NCHW' or 'NHWC'. Defaults to 'NCHW'.
-        deformable_groups (int) -  Optional. An integer of type int32. The number of deformable group partitions.
+        deformable_groups (int, Optional): An integer of type int32. The number of deformable group partitions.
             In_channels must be divisible by `deformable_groups`. Defaults to 1.
-        modulated (bool) -  Optional. Specify version of DeformableConv2D, True means v2, False means v1, currently
-            only support v2. Defaults to True.
+        modulated (bool, Optional): Specifies version of DeformableConv2D, True means v2, False means v1, currently
+            only supports v2. Defaults to True.
 
     Returns:
-        Tensor, A 4D Tensor of output feature map. With the same type as `x`. With the format "NCHW" or "NHWC", the
-            data is stored in the order of: :math:`(batch, out_channels, out_height, out_width)` when the format is
-            "NCHW".
+        Tensor, A 4D Tensor of output feature map. With the same type as `x`. With the format "NCHW",
+        the shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
         .. math::
             \begin{array}{ll} \\
-                \text{out\_height} = {\frac{\text{in\_height} + \text{pad\_top} + \text{pad\_bottom}
-                - (\text{dilation\_h} * (\text{filter\_height} - 1) + 1)}{\text{stride\_h}}} + 1 \\
-                \text{out\_width} = {\frac{\text{in\_width} + \text{pad\_left} + \text{pad\_right}
-                - (\text{dilation\_w} * (\text{filter\_width} - 1) + 1)}{\text{stride\_w}}} + 1 \\
+                H_{out} = \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (H_{f} - 1) \times
+                \text{dilations[3]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
+                W_{out} = \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (W_{f} - 1) \times
+                \text{dilations[4]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
             \end{array}
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
         TypeError: If `strides`, `padding`, `kernel_size` or `dilations` is not a tuple with integer elements.
         TypeError: If `modulated` is not a bool.
+        ValueError: If the tuple size of `strides`, `padding`, `kernel_size` or `dilations` is not expected.
         ValueError: The N or C dimensions of 'strides' or `dilations` is not set to 1.
-        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
         ValueError: If `modulated` is not set to True.
+
+    .. note::
+        - This is an experimental interface that is subject to change or deletion.
+        - For Ascend platform, only supports cases when :math:`C_{in}` can be divisible by 8, `deformable_groups` is 1
+          and `offsets` value is float which needs to contain a decimal part. For example, these scenarios where the
+          shape of `x` is :math:`(N, 2, H_{in}, W_{in})`, `deformable_groups` is 2 or `offsets` is assigned with
+          "numpy.ones()" function are not supported.
 
     Examples:
         >>> x = Tensor(np.ones((4, 3, 10, 10)), mstype.float32)
         >>> kh, kw = 3, 3
         >>> weight = Tensor(np.ones((5, 3, kh, kw)), mstype.float32)
         >>> offsets = Tensor(np.ones((4, 3 * kh * kw, 8, 8)), mstype.float32)
-        >>> output = ops.deformable_conv2d(x, weight, offsets, (kh, kw), (1, 1, 1, 1), (0, 0, 0, 0), data_format="NCHW")
+        >>> output = ops.deformable_conv2d(x, weight, offsets, (kh, kw), (1, 1, 1, 1), (0, 0, 0, 0))
         >>> print(output.shape)
         (4, 5, 8, 8)
     """
-    deformable_offsets = NN.DeformableOffsets(strides, padding, kernel_size, dilations, data_format, deformable_groups,
+    deformable_offsets = NN.DeformableOffsets(strides, padding, kernel_size, dilations, "NCHW", deformable_groups,
                                               modulated)
     fm_offset = deformable_offsets(x, offsets)
 
     weight_shape = weight.shape
     out_channel = weight_shape[0]
-    if data_format == "NHWC":
-        out_channel = weight_shape[3]
     strides_conv = (kernel_size[0], kernel_size[1])
-    conv = P.Conv2D(out_channel, kernel_size, 1, "valid", 0, strides_conv, 1, groups, data_format)
-    bias_add = P.BiasAdd(data_format)
+    conv = P.Conv2D(out_channel, kernel_size, 1, "valid", 0, strides_conv, 1, groups)
+    bias_add = P.BiasAdd()
 
     output = conv(fm_offset, weight)
     if bias is not None:
