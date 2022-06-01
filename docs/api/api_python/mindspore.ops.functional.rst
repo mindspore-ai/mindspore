@@ -258,6 +258,7 @@ Reduction算子
     mindspore.ops.matmul
     mindspore.ops.cdist
     mindspore.ops.ger
+    mindspore.ops.renorm
 
 Tensor操作算子
 ----------------

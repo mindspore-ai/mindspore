@@ -1037,6 +1037,27 @@ mindspore.Tensor
 
         一维Tensor，含有与输入相同的元素。
 
+    .. py:method:: renorm(p, dim, maxnorm)
+        沿维度 `dim` 重新规范Tensor的子张量，并且每个子张量的p范数不超过给定的最大范数 `maxnorm` 。
+        如果子张量的p范数小于 `maxnorm` ，则当前子张量不需要修改；否则该子张量需要修改为对应位置的原值除以该子张量的p范数，然后再乘上 `maxnorm` 。
+
+        **参数：**
+
+        - **p** (int) - 范数。
+        - **dim** (int) - 维度。
+        - **maxnorm** (float) - 给定的最大范数。
+
+        **返回：**
+
+        Tensor，shape和type与输入Tensor一致。
+
+        **异常：**
+
+        - **TypeError** - `p` 不是int类型。
+        - **TypeError** - `dim` 不是int类型。
+        - **TypeError** - `maxnorm` 不是float类型。
+        - **ValueError** - `p` 小于等于0。
+
     .. py:method:: repeat(repeats, axis=None)
 
         对数组中的元素进行重复复制。
