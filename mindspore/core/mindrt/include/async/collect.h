@@ -67,8 +67,8 @@ class Collected {
     if (future.IsError()) {
       promise->SetFailed(future.GetErrorCode());
     } else if (future.IsOK()) {
-      (void)ready.fetch_add(1);
-      if (ready.load() == futures.size()) {
+      auto val = ready.fetch_add(1);
+      if ((val + 1) == futures.size()) {
         std::list<T> values;
         auto iter = futures.begin();
         for (; iter != futures.end(); ++iter) {
