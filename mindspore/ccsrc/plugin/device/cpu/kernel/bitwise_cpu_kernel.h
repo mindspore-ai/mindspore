@@ -61,6 +61,13 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
 
+  template <typename T>
+  void InitFunc();
+
+  using DistFunc = std::function<void(const void *input1, const void *input2, void *output, size_t input1_index,
+                                      size_t input2_index, size_t output_index)>;
+  DistFunc dist_func_;
+
   std::string kernel_type_{"Unknown"};
   std::string kernel_name_;
   TypeId input_type_1_{kTypeUnknown};
@@ -68,6 +75,7 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   std::vector<size_t> input_shape_1_;
   std::vector<size_t> input_shape_2_;
   std::vector<size_t> output_shape_;
+  size_t output_size_ = 1;
   const size_t max_dims_{7};
 };
 }  // namespace kernel

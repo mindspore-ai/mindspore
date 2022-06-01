@@ -56,7 +56,78 @@ bool BitwiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
+
+  switch (input_type_1_) {
+    case kNumberTypeInt8:
+      InitFunc<int8_t>();
+      break;
+    case kNumberTypeInt16:
+      InitFunc<int16_t>();
+      break;
+    case kNumberTypeInt32:
+      InitFunc<int32_t>();
+      break;
+    case kNumberTypeInt64:
+      InitFunc<int64_t>();
+      break;
+    case kNumberTypeUInt8:
+      InitFunc<uint8_t>();
+      break;
+    case kNumberTypeUInt16:
+      InitFunc<uint16_t>();
+      break;
+    case kNumberTypeUInt32:
+      InitFunc<uint32_t>();
+      break;
+    case kNumberTypeUInt64:
+      InitFunc<uint64_t>();
+      break;
+    default:
+      MS_LOG(ERROR) << "For '" << kernel_name_ << " kernel does not support " << TypeIdToString(input_type_1_);
+      return false;
+  }
   return true;
+}
+
+template <typename T>
+void BitwiseAndFunc(const void *input1, const void *input2, void *output, size_t input1_index, size_t input2_index,
+                    size_t output_index) {
+  const auto *in1 = static_cast<const T *>(input1);
+  const auto *in2 = static_cast<const T *>(input2);
+  auto *out = static_cast<T *>(output);
+  out[output_index] = in1[input1_index] & in2[input2_index];
+}
+
+template <typename T>
+void BitwiseOrFunc(const void *input1, const void *input2, void *output, size_t input1_index, size_t input2_index,
+                   size_t output_index) {
+  const auto *in1 = static_cast<const T *>(input1);
+  const auto *in2 = static_cast<const T *>(input2);
+  auto *out = static_cast<T *>(output);
+  out[output_index] = in1[input1_index] | in2[input2_index];
+}
+
+template <typename T>
+void BitwiseXorFunc(const void *input1, const void *input2, void *output, size_t input1_index, size_t input2_index,
+                    size_t output_index) {
+  const auto *in1 = static_cast<const T *>(input1);
+  const auto *in2 = static_cast<const T *>(input2);
+  auto *out = static_cast<T *>(output);
+  out[output_index] = in1[input1_index] ^ in2[input2_index];
+}
+
+template <typename T>
+void BitwiseCpuKernelMod::InitFunc() {
+  if (kernel_type_ == prim::kPrimBitwiseAnd->name()) {
+    dist_func_ = BitwiseAndFunc<T>;
+  } else if (kernel_type_ == prim::kPrimBitwiseOr->name()) {
+    dist_func_ = BitwiseOrFunc<T>;
+  } else if (kernel_type_ == prim::kPrimBitwiseXor->name()) {
+    dist_func_ = BitwiseXorFunc<T>;
+  } else {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' kernel type should be " << kernel_name_ << " but got "
+                      << kernel_type_;
+  }
 }
 
 int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -88,6 +159,13 @@ int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     output_shape_[i] = static_cast<size_t>(output_shape[i]);
   }
 
+  if (output_shape_.size() == 0) {
+    (void)output_shape_.insert(output_shape_.begin(), 1);
+  }
+  for (size_t i = 0; i < output_shape_.size(); ++i) {
+    output_size_ *= output_shape_[i];
+  }
+
   return KRET_OK;
 }
 
@@ -97,31 +175,15 @@ bool BitwiseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBitwiseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBitwiseOutputsNum, kernel_name_);
-  T *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  if (output_shape_.size() == 0) {
-    (void)output_shape_.insert(output_shape_.begin(), 1);
-  }
-  size_t output_size_ = 1;
-  for (size_t i = 0; i < output_shape_.size(); ++i) {
-    output_size_ *= output_shape_[i];
-  }
+  const auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
   BroadcastIterator base_iter(input_shape_1_, input_shape_2_, output_shape_);
   auto task = [this, &input1, &input2, &output, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
     iter.SetPos(start);
     for (size_t i = start; i < end; i++) {
-      if (this->kernel_name_.compare(prim::kPrimBitwiseAnd->name()) == 0) {
-        output[i] = static_cast<T>(input1[iter.GetInputPosA()] & input2[iter.GetInputPosB()]);
-      } else if (this->kernel_name_.compare(prim::kPrimBitwiseOr->name()) == 0) {
-        output[i] = static_cast<T>(input1[iter.GetInputPosA()] | input2[iter.GetInputPosB()]);
-      } else if (this->kernel_name_.compare(prim::kPrimBitwiseXor->name()) == 0) {
-        output[i] = static_cast<T>(input1[iter.GetInputPosA()] ^ input2[iter.GetInputPosB()]);
-      } else {
-        MS_LOG(EXCEPTION) << "For '" << this->kernel_name_ << "', kernel name should be '" << this->kernel_name_
-                          << "', but got " << this->kernel_name_;
-      }
+      this->dist_func_(input1, input2, output, iter.GetInputPosA(), iter.GetInputPosB(), i);
       iter.GenNextPos();
     }
   };

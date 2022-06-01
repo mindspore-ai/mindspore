@@ -33,6 +33,11 @@ abstract::ShapePtr FastGeLUGradInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  auto prim_name = primitive->name();
+  auto gradients_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto features_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  CheckAndConvertUtils::Check("gradients_shape", gradients_shape, kEqual, features_shape, prim_name, TypeError);
+
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
