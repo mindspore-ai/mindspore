@@ -51,7 +51,7 @@ def test_lin_space(start_np, stop_np, num_np):
     num = num_np
     ls_op = P.LinSpace()
     result_ms = ls_op(start, stop, num).asnumpy()
-    result_np = np.linspace(start_np, stop_np, num_np)
+    result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
     assert np.allclose(result_ms, result_np)
 
 
@@ -71,5 +71,26 @@ def test_lin_space_net(start_np, stop_np, num_np):
     stop = Tensor(stop_np, dtype=mstype.float32)
     net = LinSpaceNet(num_np)
     result_ms = net(start, stop).asnumpy()
-    result_np = np.linspace(start_np, stop_np, num_np)
+    result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
+    assert np.allclose(result_ms, result_np)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('start_np, stop_np', [[[2, 3, 5], [4, 6, 8]], [[-4, 7, -2], [-10, 26, 18]]])
+@pytest.mark.parametrize('num_np', [10, 20, 36])
+@pytest.mark.parametrize('dtype', [mstype.float32, mstype.float64])
+def test_lin_space_batched(start_np, stop_np, num_np, dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for LinSpace Net
+    Expectation: the result match to numpy
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    start = Tensor(start_np, dtype=mstype.float32)
+    stop = Tensor(stop_np, dtype=mstype.float32)
+    net = LinSpaceNet(num_np)
+    result_ms = net(start, stop).asnumpy()
+    result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
     assert np.allclose(result_ms, result_np)

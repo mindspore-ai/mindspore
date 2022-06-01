@@ -4882,24 +4882,11 @@ class LinSpace(PrimitiveWithInfer):
     Returns a Tensor whose value is `num` evenly spaced in the interval `start` and `stop` (including `start` and
     `stop`), and the length of the output Tensor is `num`.
 
-    .. math::
-        \begin{aligned}
-        &step = (stop - start)/(num - 1)\\
-        &output = [start, start+step, start+2*step, ... , stop]
-        \end{aligned}
+    Note:
+        In Ascend and GPU, batch dimension input is not supported. Specifically, `start` and `stop` are both required
+        to be 0-D input Tensors.
 
-    Inputs:
-        - **start** (Tensor) - The data type must be float32. Start value of interval, With shape of 0-D.
-        - **stop** (Tensor) - The data type must be float32. Last value of interval, With shape of 0-D.
-        - **num** (int) - Number of ticks in the interval, inclusive of start and stop.
-
-    Outputs:
-        Tensor, has the same shape and dtype as `start`.
-
-    Raises:
-        TypeError: If `start` or `stop` is not a Tensor.
-        TypeError: If dtype of `start` or dtype of `stop` is not float32.
-        TypeError: If `num` is not a int.
+    Refer to :func:`mindspore.ops.linspace` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4912,6 +4899,17 @@ class LinSpace(PrimitiveWithInfer):
         >>> output = linspace(start, stop, num)
         >>> print(output)
         [ 1.    3.25  5.5   7.75 10.  ]
+        >>> start = Tensor([[2, 3, 5], [4, 6, 8]], mindspore.float32)
+        >>> stop = Tensor([[-4, 7, -2], [-10, 26, 18]], mindspore.float32)
+        >>> num = 5
+        >>> output = linspace(start, stop, num)
+        >>> print(output)
+        [[[  2.     0.5   -1.    -2.5   -4.  ]
+          [  3.     4.     5.     6.     7.  ]
+          [  5.     3.25   1.5   -0.25  -2.  ]]
+         [[  4.     0.5   -3.    -6.5  -10.  ]
+          [  6.    11.    16.    21.    26.  ]
+          [  8.    10.5   13.    15.5   18.  ]]]
     """
 
     @prim_attr_register

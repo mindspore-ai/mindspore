@@ -22,6 +22,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
+
 class LinSpaceNet(Cell):
     def __init__(self, num):
         super(LinSpaceNet, self).__init__()
@@ -58,8 +59,8 @@ def test_lin_shape_2():
     start_np = -25
     stop_np = 147
     num_np = 10
-    start = Tensor(start_np, dtype=mstype.float32)
-    stop = Tensor(stop_np, dtype=mstype.float32)
+    start = Tensor(start_np, dtype=mstype.float64)
+    stop = Tensor(stop_np, dtype=mstype.float64)
     num = num_np
     ls_op = P.LinSpace()
     result_ms = ls_op(start, stop, num).asnumpy()
@@ -75,8 +76,8 @@ def test_lin_shape_3():
     start_np = 25
     stop_np = -147
     num_np = 20
-    start = Tensor(start_np, dtype=mstype.float32)
-    stop = Tensor(stop_np, dtype=mstype.float32)
+    start = Tensor(start_np, dtype=mstype.float64)
+    stop = Tensor(stop_np, dtype=mstype.float64)
     net = LinSpaceNet(num_np)
     result_ms = net(start, stop).asnumpy()
     result_np = np.linspace(start_np, stop_np, num_np)

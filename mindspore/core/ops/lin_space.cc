@@ -48,7 +48,7 @@ TypePtr LinSpaceInferType(const PrimitivePtr &primitive, const std::vector<Abstr
     {"start type", start_dtype},
     {"stop type", stop_dtype},
   };
-  return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, {kFloat32}, prim_name);
+  return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, {kFloat32, kFloat64}, prim_name);
 }
 abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
@@ -86,7 +86,7 @@ abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::
   const auto num_value = input_args[kInputIndex2]->BuildValue();
   const int64_t num = num_value->cast<Int64ImmPtr>()->value();
 
-  CheckAndConvertUtils::CheckValue<int64_t>("num", num, kGreaterEqual, 0, prim_name);
+  CheckAndConvertUtils::CheckValue<int64_t>("num", num, kGreaterThan, 0, prim_name);
 
   ShapeVector out_shape(start_shape.begin(), start_shape.end());
   out_shape.push_back(num);
