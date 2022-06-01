@@ -46,6 +46,42 @@ def test_compile_axis():
     net(input_tensor)
 
 
+class SoftminNet(nn.Cell):
+    """Softmin."""
+    def __init__(self, dim):
+        super(SoftminNet, self).__init__()
+        self.softmin = nn.Softmin(dim)
+
+    def construct(self, x):
+        return self.softmin(x)
+
+
+@non_graph_engine
+def test_compile_softmin():
+    """
+    Feature: Test Softmin.
+    Description: Test Softmin functional.
+    Expectation: Success.
+    """
+    net = SoftminNet(0)
+    input_tensor = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]], dtype=np.float32))
+    net(input_tensor)
+
+
+@non_graph_engine
+def test_compile_axis_softmin():
+    """
+    Feature: Test Softmin.
+    Description: Test Softmin functional.
+    Expectation: Success.
+    """
+    net = SoftminNet(-1)
+    prob = 355
+    input_data = np.random.randn(4, 16, 1, 1).astype(np.float32) * prob
+    input_tensor = Tensor(input_data)
+    net(input_tensor)
+
+
 class LogSoftmaxNet(nn.Cell):
     def __init__(self, dim):
         super(LogSoftmaxNet, self).__init__()
@@ -73,6 +109,27 @@ class Net1(nn.Cell):
 
 def test_compile_relu():
     net = Net1()
+    input_data = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]], dtype=np.float32))
+    _cell_graph_executor.compile(net, input_data)
+
+
+class NetSiLU(nn.Cell):
+    """SiLU."""
+    def __init__(self):
+        super(NetSiLU, self).__init__()
+        self.silu = nn.SiLU()
+
+    def construct(self, x):
+        return self.silu(x)
+
+
+def test_compile_silu():
+    """
+    Feature: Test SiLU.
+    Description: Test SiLU functional.
+    Expectation: Success.
+    """
+    net = NetSiLU()
     input_data = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]], dtype=np.float32))
     _cell_graph_executor.compile(net, input_data)
 
