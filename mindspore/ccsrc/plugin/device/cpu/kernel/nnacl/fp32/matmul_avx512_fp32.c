@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 #ifdef ENABLE_AVX512
-#pragma GCC push_options
-#pragma GCC target("avx512f")
 
 #include "nnacl/fp32/matmul_avx512_fp32.h"
 #include "nnacl/op_base.h"
@@ -251,5 +249,4 @@ int64_t GemmIsNotPackOptimizeAVX512(int64_t m_index, const float *a, const float
   return m_index;
 }
 
-#pragma GCC pop_options
 #endif

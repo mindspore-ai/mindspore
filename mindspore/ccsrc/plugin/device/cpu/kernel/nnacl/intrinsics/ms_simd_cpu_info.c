@@ -117,7 +117,7 @@ X86CpuInfoErrorCodeEnum IntelX86InstructionSetSupportCheck(void) {
   if (IntelX86CpuInfoInit() != NNACL_OK) {
     return X86CPUINFO_PLATFORM_ERR;
   }
-#ifdef ENABLE_AVX512
+#if defined(ENABLE_AVX512) && !defined(AVX512_HARDWARE_SELF_AWARENESS)
   if (!X86_Avx512_Support()) {
     return X86CPUINFO_AVX512_ERR;
   }

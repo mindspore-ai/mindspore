@@ -19,16 +19,6 @@
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
 
-#ifdef ENABLE_SSE
-#ifdef SUPPORT_MSVC
-#include <immintrin.h>
-#else
-#include <x86intrin.h>
-#endif
-#endif
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
-#include <immintrin.h>
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -23,7 +23,11 @@
 extern "C" {
 #endif
 
-#if defined(SERVER_INFERENCE) && defined(ENABLE_AVX512)
+#ifdef ENABLE_AVX512
+#define AVX512_HARDWARE_SELF_AWARENESS
+#endif
+
+#if defined(AVX512_HARDWARE_SELF_AWARENESS)
 #define AVX512_HARDWARE_SELF_AWARENESS_BEGIN if (X86_Avx512_Support()) {
 #define AVX512_HARDWARE_SELF_AWARENESS_END }
 #else

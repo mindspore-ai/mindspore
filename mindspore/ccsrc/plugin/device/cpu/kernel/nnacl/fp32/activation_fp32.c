@@ -198,7 +198,7 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
       dst[i] = 0.5 * src[i] * (1.0 + TanhOpt((0.79788456080287f + 0.035677408136f * src[i] * src[i]) * src[i]));
     }
   } else {
-#if defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM)
+#if defined(ENABLE_SSE) || defined(ENABLE_ARM)
     MS_FLOAT32X4 para1 = MS_MOVQ_F32(1.4142135623730951f);
     MS_FLOAT32X4 para2 = MS_MOVQ_F32(1.0f);
     MS_FLOAT32X4 para3 = MS_MOVQ_F32(0.5f);
