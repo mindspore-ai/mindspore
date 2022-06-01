@@ -30,9 +30,6 @@ class LessTestKernelMod : public CpuKernelMod {
 
   explicit LessTestKernelMod(const std::string name) { kernel_name_ = name; }
 
-  // virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-  //                     const std::vector<AddressPtr> &outputs);
-
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr);
 
