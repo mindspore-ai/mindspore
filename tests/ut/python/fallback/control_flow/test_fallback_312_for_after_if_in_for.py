@@ -20,11 +20,6 @@ from mindspore import Tensor, ms_function, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_after_if_in_for_tensor():
     """
     Feature: JIT Fallback
@@ -48,11 +43,6 @@ def test_for_after_if_in_for_tensor():
     assert res == 10
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_after_if_in_for_tensor_2():
     """
     Feature: JIT Fallback
@@ -77,11 +67,6 @@ def test_for_after_if_in_for_tensor_2():
 
 
 @pytest.mark.skip(reason='Not support to get attribute for InterpretObject.')
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_after_if_in_for_numpy():
     """
     Feature: JIT Fallback
@@ -105,11 +90,6 @@ def test_for_after_if_in_for_numpy():
 
 
 @pytest.mark.skip(reason='Not support to get attribute for InterpretObject.')
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_after_if_in_for_numpy_2():
     """
     Feature: JIT Fallback

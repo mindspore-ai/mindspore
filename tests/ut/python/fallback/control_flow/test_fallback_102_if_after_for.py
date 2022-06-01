@@ -20,11 +20,6 @@ from mindspore import Tensor, ms_function, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_if_after_for_tensor():
     """
     Feature: JIT Fallback
@@ -45,11 +40,6 @@ def test_if_after_for_tensor():
     assert res == 19
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_if_after_for_tensor_2():
     """
     Feature: JIT Fallback
@@ -70,11 +60,6 @@ def test_if_after_for_tensor_2():
     assert res == 1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_if_after_for_tensor_3():
     """
     Feature: JIT Fallback
@@ -95,11 +80,6 @@ def test_if_after_for_tensor_3():
 
 
 @pytest.mark.skip(reason="Currently, a can not be parsed in if statement.")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_if_after_for_tensor_zip():
     """
     Feature: JIT Fallback
@@ -121,11 +101,6 @@ def test_if_after_for_tensor_zip():
     assert res == 14
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_single_for_numpy():
     """
     Feature: JIT Fallback
@@ -145,11 +120,6 @@ def test_single_for_numpy():
     assert (res.asnumpy() == [1, 9, 17]).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_single_for_numpy_2():
     """
     Feature: JIT Fallback

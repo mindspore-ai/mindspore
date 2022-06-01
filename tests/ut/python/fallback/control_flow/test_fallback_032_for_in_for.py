@@ -13,18 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
-import pytest
 import numpy as np
 from mindspore import Tensor, ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_in_for_tensor():
     """
     Feature: JIT Fallback
@@ -45,11 +39,6 @@ def test_for_in_for_tensor():
     assert res == 216
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_in_for_tensor_2():
     """
     Feature: JIT Fallback
@@ -71,11 +60,6 @@ def test_for_in_for_tensor_2():
     assert res == 24
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_in_for_numpy():
     """
     Feature: JIT Fallback
@@ -96,11 +80,6 @@ def test_for_in_for_numpy():
     assert out == 27
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_in_for_numpy_2():
     """
     Feature: JIT Fallback

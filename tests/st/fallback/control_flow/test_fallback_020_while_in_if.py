@@ -46,7 +46,7 @@ def test_while_in_if_1():
     assert res == 8
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -72,7 +72,7 @@ def test_while_in_if_2():
     assert res == 12
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -99,7 +99,7 @@ def test_while_in_if_3():
     assert res == 7
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -126,7 +126,7 @@ def test_while_two_cond_in_if_1():
     assert res == 21
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -152,7 +152,7 @@ def test_while_two_cond_in_if_2():
     assert res == 8
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_ascend_training

@@ -49,7 +49,7 @@ def test_for_after_while_in_for_1():
     assert res == 7
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

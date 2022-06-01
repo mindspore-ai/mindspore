@@ -14,7 +14,6 @@
 # ============================================================================
 """ test graph fallback control flow if after if scenario"""
 import pytest
-import numpy as np
 from mindspore import Tensor, ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -44,7 +43,7 @@ def test_if_after_if_tensor():
     assert res == 8
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -74,7 +73,7 @@ def test_if_after_if_tensor_2():
     assert res == 9
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -96,31 +95,3 @@ def test_if_after_if_tensor_3():
         return a
     res = control_flow_if_after_if(Tensor(10))
     assert res == 11
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_if_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_if():
-        x = np.array([1, 2, 3, 4])
-        a = sum(x)
-        if a > 15:
-            y = np.array([1, 2, 3, 4])
-        else:
-            y = np.array([4, 5, 6])
-        if np.all(y == np.array([1, 2, 3, 4])):
-            ret = Tensor(1)
-        else:
-            ret = Tensor(2)
-        return ret
-    res = control_flow_if_after_if()
-    assert res == 2

@@ -52,7 +52,7 @@ def test_while_after_if_in_for_tensor():
     assert res == 73
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

@@ -1,0 +1,62 @@
+# Copyright 2022 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+""" test graph fallback control flow."""
+import numpy as np
+from mindspore import Tensor, ms_function, context
+
+context.set_context(mode=context.GRAPH_MODE)
+
+
+def test_if_after_for_in_while_numpy():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_if_after_for_in_while():
+        x = np.array([5, 4, 3, 2, 1])
+        y = np.zeros(5)
+        z = np.ones(5)
+        while sum(x) > y[0]:
+            for _ in range(3):
+                y -= 1
+            x = y + 2
+        if (x != z).all():
+            y = y - z[2]
+        return Tensor(y + z[0])
+    res = control_flow_if_after_for_in_while()
+    assert (res.asnumpy() == [-3, -3, -3, -3, -3]).all()
+
+
+def test_if_after_for_in_while_numpy_2():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_if_after_for_in_while():
+        x = np.array([5, 4, 3, 2, 1])
+        y = (Tensor(1), Tensor(3), Tensor(5))
+        while sum(x) >= 15:
+            for _ in range(3):
+                x -= 4
+            x = x + 2
+        if sum(y) == 9:
+            return Tensor(x)
+        return y[2]
+    res = control_flow_if_after_for_in_while()
+    assert (res.asnumpy() == [-5, -6, -7, -8, -9]).all()

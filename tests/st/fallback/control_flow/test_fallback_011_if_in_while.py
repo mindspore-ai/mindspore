@@ -44,7 +44,7 @@ def test_if_in_while_1():
     assert res == 7
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -67,7 +67,7 @@ def test_if_in_while_2():
     assert res == 3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -93,7 +93,7 @@ def test_if_in_while_3():
     assert res == 6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -124,58 +124,7 @@ def test_if_in_while_4():
     assert res == 5
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_in_while_built_in_func():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_in_while():
-        x = np.array([1, 2, 3, 4])
-        y = 0
-        while sum(x) <= 40 and y % 2 == 0:
-            if min(x) % 2 == 0:
-                x += 1
-            else:
-                x += 3
-        return Tensor(sum(x))
-    res = control_flow_if_in_while()
-    assert res == 42
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_in_while_built_in_func_3():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_in_while():
-        x = np.array([1, 2, 3, 4])
-        while sum(x) <= 40:
-            if min(x) % 2 == 0:
-                x += 1
-            else:
-                x += 3
-            if max(x) == 8:
-                break
-        return Tensor(sum(x))
-    res = control_flow_if_in_while()
-    assert res == 26
-
-
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

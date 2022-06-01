@@ -20,11 +20,6 @@ from mindspore import Tensor, ms_function, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_after_for_in_if_1():
     """
     Feature: JIT Fallback
@@ -104,11 +99,6 @@ def test_for_after_for_in_if_3():
     assert res == 64
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_after_for_in_if_4():
     """
     Feature: JIT Fallback
