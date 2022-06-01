@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/optimizer/ir_fission/deformable_offsets_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/deformable_offsets_fusion.h"
 #include <memory>
 #include <vector>
 #include <algorithm>
@@ -30,7 +30,7 @@ constexpr size_t kDeformableOffsetsInputNum = 3;
 constexpr size_t kChannel = 3;
 }  // namespace
 
-ValueNodePtr DeformableOffsetsFission::CreateHelperNode(
+ValueNodePtr DeformableOffsetsFusion::CreateHelperNode(
   const FuncGraphPtr &func_graph, const AnfNodePtr &node, const std::vector<size_t> &offset_shape,
   const std::vector<int64_t> &kernel_sizes, const std::vector<int64_t> &strides, const std::vector<int64_t> &pads,
   const std::vector<int64_t> &dilations, const size_t axis_h, const size_t axis_w, const size_t axis_c) const {
@@ -82,15 +82,18 @@ ValueNodePtr DeformableOffsetsFission::CreateHelperNode(
   return assist_value_node;
 }
 
-const BaseRef DeformableOffsetsFission::DefinePattern() const {
+const BaseRef DeformableOffsetsFusion::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   return VectorRef({prim::kPrimDeformableOffsets, Xs});
 }
 
-const AnfNodePtr DeformableOffsetsFission::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                   const EquivPtr &) const {
+const AnfNodePtr DeformableOffsetsFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                                  const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  if (common::AnfAlgo::IsDynamicShape(node)) {
+    return nullptr;
+  }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   auto deformable_offsets_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(deformable_offsets_cnode);

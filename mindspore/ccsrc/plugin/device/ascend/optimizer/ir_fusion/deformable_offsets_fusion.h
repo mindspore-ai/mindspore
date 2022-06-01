@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_DEFORMABLE_OFFSETS_FISSION_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_DEFORMABLE_OFFSETS_FISSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_DEFORMABLE_OFFSETS_FUSION_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_DEFORMABLE_OFFSETS_FUSION_H_
 
 #include <vector>
 #include "backend/common/optimizer/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class DeformableOffsetsFission : public PatternProcessPass {
+class DeformableOffsetsFusion : public PatternProcessPass {
  public:
-  explicit DeformableOffsetsFission(bool multigraph = true)
-      : PatternProcessPass("deformable_offsets_fission", multigraph) {}
-  ~DeformableOffsetsFission() override = default;
+  explicit DeformableOffsetsFusion(bool multigraph = true)
+      : PatternProcessPass("deformable_offsets_fusion", multigraph) {}
+  ~DeformableOffsetsFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
@@ -38,4 +38,5 @@ class DeformableOffsetsFission : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_DEFORMABLE_OFFSETS_FISSION_H_
+
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_DEFORMABLE_OFFSETS_FUSION_H_
