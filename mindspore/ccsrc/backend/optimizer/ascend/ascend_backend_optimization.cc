@@ -159,6 +159,7 @@
 #include "backend/optimizer/ascend/dynamic_shape/convert_inherited_dynamic_op.h"
 #include "backend/optimizer/ascend/dynamic_shape/link_custom_op.h"
 #include "backend/optimizer/pass/adjust_depend_for_parallel_optimizer_recompute_all_gather.h"
+#include "backend/optimizer/pass/gradients_allreduce_depend_last_send.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_compile.h"
 #include "utils/ms_context.h"
 #include "utils/config_manager.h"
@@ -461,6 +462,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
   other_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
+  other_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   other_pm->AddPass(std::make_shared<SplitOpOptimizer>());
