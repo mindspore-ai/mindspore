@@ -20,6 +20,7 @@
 #include <utility>
 #include <functional>
 #include <condition_variable>
+#include "proto/topology.pb.h"
 #include "distributed/rpc/tcp/constants.h"
 #include "plugin/device/cpu/kernel/rpc/rpc_recv_kernel.h"
 #include "backend/common/optimizer/helper.h"
@@ -69,7 +70,7 @@ bool RecvActor::StartServer() {
   for (const auto &inter_process_edge_name : inter_process_edge_names_) {
     MS_LOG(INFO) << "Start server for recv actor. Server address: " << server_url
                  << ", inter-process edge name: " << inter_process_edge_name;
-    ActorAddress recv_actor_addresss;
+    distributed::cluster::topology::ActorAddress recv_actor_addresss;
     recv_actor_addresss.set_actor_id(inter_process_edge_name);
     recv_actor_addresss.set_ip(ip_);
     recv_actor_addresss.set_port(port_);

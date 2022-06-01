@@ -27,16 +27,17 @@
 #include "distributed/rpc/tcp/tcp_client.h"
 #include "distributed/rpc/tcp/tcp_server.h"
 #include "proto/rpc.pb.h"
+#include "proto/topology.pb.h"
 
 namespace mindspore {
 namespace runtime {
 using distributed::cluster::ActorRouteTableProxy;
 using distributed::cluster::ActorRouteTableProxyPtr;
 using distributed::cluster::ClusterContext;
+using distributed::cluster::topology::ActorAddress;
 using distributed::rpc::TCPClient;
 using distributed::rpc::TCPServer;
 using mindspore::device::KernelInfo;
-using ps::core::ActorAddress;
 
 // The inter-process edge mark between two nodes.
 constexpr char kInterProcessEdgeMark[] = "->";

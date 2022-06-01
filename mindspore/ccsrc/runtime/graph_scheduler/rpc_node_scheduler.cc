@@ -15,6 +15,7 @@
  */
 
 #include "runtime/graph_scheduler/rpc_node_scheduler.h"
+#include "distributed/cluster/topology/compute_graph_node.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -157,9 +158,9 @@ void RpcNodeScheduler::ResetOpcontext(const RpcActorSetPtr &rpc_actors) {
 ActorRouteTableProxyPtr RpcNodeScheduler::CreateRouteTableProxy() {
   ActorRouteTableProxyPtr actor_route_table_proxy;
   if (!ClusterContext::instance()->IsScheduler()) {
-    auto node = ClusterContext::instance()->node();
-    actor_route_table_proxy =
-      std::make_shared<ActorRouteTableProxy>(std::dynamic_pointer_cast<ps::core::AbstractNode>(node));
+    auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
+      ClusterContext::instance()->node_base());
+    actor_route_table_proxy = std::make_shared<ActorRouteTableProxy>(cgn);
     MS_EXCEPTION_IF_NULL(actor_route_table_proxy);
   }
   return actor_route_table_proxy;

@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_DUMMY_ACTOR_ROUTE_TABLE_PROXY_H_
 
 #include <string>
-#include "proto/comm.pb.h"
+#include "proto/topology.pb.h"
 
 namespace mindspore {
 namespace distributed {
 namespace cluster {
-using ps::core::ActorAddress;
+using distributed::cluster::topology::ActorAddress;
 // The dummy ActorRouteTableProxy interface. This class is for ut test and windows compiling so the implementation is
 // empty.
 class ActorRouteTableProxy {
