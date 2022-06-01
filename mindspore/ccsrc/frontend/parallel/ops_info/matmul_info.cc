@@ -69,7 +69,7 @@ void SetDevMatrixShape(const Dimensions &mat_a_strategy, const Dimensions &mat_b
 
 Status MatMulBase::GetAttrs() {
   if (attrs_.size() < MATMUL_ATTRS_SIZE) {
-    MS_LOG(ERROR) << name_ << " : The size of attrs small than 2.";
+    MS_LOG(ERROR) << name_ << ": The size of attrs small than 2, got " << attrs_.size();
     return FAILED;
   }
 
@@ -79,9 +79,14 @@ Status MatMulBase::GetAttrs() {
     if (transpose_a_iter->second->isa<BoolImm>()) {
       transpose_a_ = transpose_a_iter->second->cast<BoolImmPtr>()->value();
     } else {
-      MS_LOG(ERROR) << name_ << " : The value of transpose_a is not bool.";
+      MS_LOG(ERROR) << name_ << ": The value of transpose_a is not bool.";
       return FAILED;
     }
+  }
+
+  if (transpose_a_) {
+    MS_LOG(ERROR) << name_ << ": The transpose_a=true is not be supported";
+    return FAILED;
   }
 
   auto transpose_b_iter = attrs_.find(TRANSPOSE_B);
@@ -90,7 +95,7 @@ Status MatMulBase::GetAttrs() {
     if (transpose_b_iter->second->isa<BoolImm>()) {
       transpose_b_ = transpose_b_iter->second->cast<BoolImmPtr>()->value();
     } else {
-      MS_LOG(ERROR) << name_ << " : The value of transpose_b is not bool.";
+      MS_LOG(ERROR) << name_ << ": The value of transpose_b is not bool.";
       return FAILED;
     }
   }
@@ -101,18 +106,22 @@ Status MatMulBase::GetAttrs() {
     if (field_size_iter->second->isa<Int64Imm>()) {
       field_size_ = field_size_iter->second->cast<Int64ImmPtr>()->value();
     } else {
-      MS_LOG(ERROR) << name_ << " : The value of field_size is not int64_t.";
+      MS_LOG(ERROR) << name_ << ": The value of field_size is not int64_t.";
       return FAILED;
     }
   }
 
   // infer inputs dimension size
   if ((inputs_shape_.size() != MATMUL_INPUTS_SIZE) || (outputs_shape_.size() != MATMUL_OUTPUTS_SIZE)) {
-    MS_LOG(ERROR) << name_ << " : Inputs shape size or outputs shape size is wrong.";
+    MS_LOG(ERROR) << name_ << ": Inputs shape size or outputs shape size is wrong.";
     return FAILED;
   }
   mat_a_dimension_ = inputs_shape_.at(0).size();
   mat_b_dimension_ = inputs_shape_.at(1).size();
+  if (mat_a_dimension_ < 2 || mat_b_dimension_ < 2) {
+    MS_LOG(ERROR) << name_ << ": The dim of mat_a or mat_b can not smaller than 2, but the dim of mat_a is "
+                  << mat_a_dimension_ << ", the dim of mat_b is " << mat_b_dimension_;
+  }
 
   return SUCCESS;
 }
@@ -150,7 +159,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
   size_t mat_a_size = mat_a_strategy.size();
   size_t mat_b_size = mat_b_strategy.size();
   if ((mat_a_size != mat_a_dimension_) || (mat_b_size != mat_b_dimension_)) {
-    MS_LOG(ERROR) << name_ << " : The dimensions of mat_a or mat_b's strategy is wrong.";
+    MS_LOG(ERROR) << name_ << ": The dimensions of mat_a or mat_b's strategy is wrong.";
     return FAILED;
   }
 
@@ -158,12 +167,12 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
   // dev_matrix_shape:[2,4,8,16,32] (transpose_b is false)
   // [16] in the example above
   if (!transpose_b_ && (mat_a_strategy.back() != mat_b_strategy.at(SECOND_FROM_END(mat_b_size)))) {
-    MS_LOG(ERROR) << name_ << " : Can not do this operator in the strategy: " << StrategyToString(stra)
+    MS_LOG(ERROR) << name_ << ": Can not do this operator in the strategy: " << StrategyToString(stra)
                   << ", the transpose_b is false, the shard num of first input's column is " << mat_a_strategy.back()
                   << ", but the shard num of second input's row is " << mat_b_strategy.at(SECOND_FROM_END(mat_b_size));
     return FAILED;
   } else if (transpose_b_ && (mat_a_strategy.back() != mat_b_strategy.back())) {
-    MS_LOG(ERROR) << name_ << " : Can not do this operator in the strategy: " << StrategyToString(stra)
+    MS_LOG(ERROR) << name_ << ": Can not do this operator in the strategy: " << StrategyToString(stra)
                   << ", the transpose_b is true, the shard num of first input's column is " << mat_a_strategy.back()
                   << ", but the shard num of second input's column is " << mat_b_strategy.back();
     return FAILED;
@@ -171,12 +180,12 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
 
   if (mat_a_size >= mat_b_size) {
     if (CheckRelevantDimension(mat_a_strategy, mat_b_strategy) != SUCCESS) {
-      MS_LOG(ERROR) << name_ << " : Strategies of relevant dimensions are not equal.";
+      MS_LOG(ERROR) << name_ << ": Strategies of relevant dimensions are not equal.";
       return FAILED;
     }
   } else {
     if (CheckRelevantDimension(mat_b_strategy, mat_a_strategy) != SUCCESS) {
-      MS_LOG(ERROR) << name_ << " : Strategies of relevant dimensions are not equal.";
+      MS_LOG(ERROR) << name_ << ": Strategies of relevant dimensions are not equal.";
       return FAILED;
     }
   }
@@ -196,7 +205,7 @@ Status MatMul::CheckOutputStrategy(const StrategyPtr &out_strategy) {
   }
 
   if (CheckStrategyValue(out_strategy, outputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Invalid output strategy.";
+    MS_LOG(ERROR) << name_ << ": Invalid output strategy.";
     return FAILED;
   }
 
@@ -255,16 +264,16 @@ Status MatMulBase::InferForwardCommunication() {
   // Relevant dimension is not split and all reduce is not required,
   // need to use origin_dev_matrix_shape_ here, since the dev_matrix_shape_ will be changed if repeated calculation.
   if (origin_dev_matrix_shape_.at(relevant_dimension_index) == MIN_SLICE_NUM) {
-    MS_LOG(INFO) << name_ << " : Forward all reduce is not required.";
+    MS_LOG(INFO) << name_ << ": Forward all reduce is not required.";
     return SUCCESS;
   }
 
   std::vector<Group> group_list;
   if (CreateGroupByDim(relevant_dimension_index, &group_list) != SUCCESS) {
-    ReportError(name_ + " : Infer forward communication, create group failed.");
+    ReportError(name_ + ": Infer forward communication, create group failed.");
     return FAILED;
   } else if (group_list.empty()) {
-    MS_LOG(INFO) << name_ << " : Forward all reduce is not required.";
+    MS_LOG(INFO) << name_ << ": Forward all reduce is not required.";
     return SUCCESS;
   }
 
@@ -276,7 +285,7 @@ Status MatMulBase::InferForwardCommunication() {
   }
 
   forward_op_.push_back(op);
-  MS_LOG(INFO) << name_ << " : The group name of forward communication is " << group_list[0].name();
+  MS_LOG(INFO) << name_ << ": The group name of forward communication is " << group_list[0].name();
   return SUCCESS;
 }
 
@@ -392,7 +401,7 @@ Status MatMulBase::InferTensorInfo() {
 
 Status MatMulBase::SwapLastTwoElements(mindspore::parallel::Shape *const input) {
   if (input->size() < 2) {
-    MS_LOG(ERROR) << name_ << " : The size of inputs small than 2.";
+    MS_LOG(ERROR) << name_ << ": The size of inputs small than 2.";
     return FAILED;
   }
   auto last_1st_value = input->at(input->size() - 1);
@@ -404,268 +413,74 @@ Status MatMulBase::SwapLastTwoElements(mindspore::parallel::Shape *const input) 
   return SUCCESS;
 }
 
-Status MatMulBase::GenerateStrategiesBase(int64_t stage_id, size_t dev_num, const Shape &input0_shape,
-                                          Shape input1_shape, std::vector<StrategyPtr> *const sp_vector) {
-  // The shape of input0 (input1)
-  // E.g., input0 = [100, 200, 300], input1 = [300, 400]
-
-  // Combining the input0_shape and input1_shape
-  // E.g., combined_shape = [100, 200, 300, 400]
-  size_t input1_shape_size = input1_shape.size(), input0_shape_size = input0_shape.size();
-  Dimensions combined_partitions;
-  Shape combined_shape;
-  // In SwapLastTwoElements(), it is guaranteed that input0_shape.size() and input1_shape.size() are both larger than 2
-  if (input0_shape.size() >= input1_shape.size()) {
-    combined_shape = input0_shape;
-    combined_shape.push_back(input1_shape[input1_shape.size() - 1]);
-  } else {
-    combined_shape = input1_shape;
-    combined_shape.push_back(input0_shape[input0_shape.size() - 2]);
+std::vector<StrategyPtr> MatMulBase::GenerateOpStrategies(int64_t stage_id) {
+  Shape mat_a_shape = inputs_shape_[0];
+  Shape mat_b_shape = inputs_shape_[1];
+  // it is not support transpose_a
+  if (transpose_a_) {
+    MS_LOG(EXCEPTION) << name_ << ": It's not yet supported transpose_a";
   }
-  std::function<void(uint64_t, size_t)> recursive = [&stage_id, &dev_num, &sp_vector, &combined_partitions,
-                                                     &combined_shape, &input1_shape_size, &recursive,
-                                                     &input0_shape_size, this](uint64_t current_index, size_t n) {
-    // Finishing the recursive steps, if the strategy is valid, then calculate the cost
-    // for this operator under the strategy.
-    if (current_index == combined_shape.size()) {
-      StrategyPtr sp;
-      if (this->PrepareStrategy(stage_id, dev_num, combined_partitions, input0_shape_size, input1_shape_size, &sp) ==
-          FAILED) {
-        return;
-      }
-      sp_vector->push_back(sp);
-    } else {
-      MS_LOG(DEBUG) << name_ << " : The value input0_shape_size: " << input0_shape_size
-                    << ", input1_shape_size: " << input1_shape_size;
-      for (uint64_t i = 1; i <= n; i *= 2) {
-        if (n % i == 0 && LongToSize(combined_shape[current_index]) % i == 0) {
-          combined_partitions.push_back(i);
-          recursive(current_index + 1, n / i);
-          combined_partitions.pop_back();
-        }
-      }
+  // it is not support [B, C, D] * [A, B, D, E]
+  if (mat_b_shape.size() > mat_a_shape.size()) {
+    MS_LOG(EXCEPTION) << name_
+                      << ": It's not yet supported that the dim of mat_b larger than the dim of mat_a, but the dim of"
+                         " mat_a is "
+                      << mat_a_shape.size() << ", the dim of mat_b is " << mat_b_shape.size();
+  }
+  // it is not support that broadcasts containing 1, such as [A, B, C, D] * [A, 1, D, E]
+  size_t diff_len = mat_a_shape.size() - mat_b_shape.size();
+  for (size_t i = 0; i < mat_b_shape.size() - 2; ++i) {
+    if (mat_b_shape[i] != mat_a_shape[i + diff_len]) {
+      MS_LOG(EXCEPTION) << name_ << ": It's not yet supported that broadcasts containing 1, but the shape of mat a is "
+                        << mat_a_shape << ", the shape of mat_b is " << mat_b_shape;
     }
-  };
-  recursive(0, dev_num);
-  if (sp_vector->empty()) {
-    MS_LOG(ERROR) << name_ << " : No available strategy.";
-    return FAILED;
   }
-  return Status::SUCCESS;
-}
 
-Status MatMulBase::GenerateStrategiesNotPower2(int64_t stage_id, size_t dev_num_not_2_power,
-                                               const std::vector<StrategyPtr> &sp_vector_2_power_part) {
+  // e.g. mat_a: [A, B, C, D], mat_b: [B, D, E], then to generate the strategy for [A, B, C, D, E]
   std::vector<StrategyPtr> sp_vector;
-  size_t related_dim_left = transpose_a_ ? inputs_shape_[0].size() - 2 : inputs_shape_[0].size() - 1;
-  size_t related_dim_right = transpose_b_ ? inputs_shape_[1].size() - 1 : inputs_shape_[1].size() - 2;
-  // Handle the not power of 2 part.
-  for (auto &stra : sp_vector_2_power_part) {
-    auto stra_arrays = stra->GetInputDim();
-    if (stra_arrays.size() != 2) {
-      MS_LOG(ERROR) << "The generated strategy of matmul dose not match two input, the strategy is: " << stra_arrays;
-    }
-    for (size_t i = 0; i < 2; ++i) {
-      size_t stra_size = stra_arrays[i].size();
-      for (size_t j = 0; j < stra_size; ++j) {
-        if (i == 1 && j == related_dim_right) {
-          continue;
-        }
-        auto new_stra_arrays{stra_arrays};
-        new_stra_arrays[i][j] = new_stra_arrays[i][j] * SizeToLong(dev_num_not_2_power);
-        if (i == 0 && j == related_dim_left) {
-          new_stra_arrays[1][related_dim_right] =
-            new_stra_arrays[1][related_dim_right] * SizeToLong(dev_num_not_2_power);
-        }
-        StrategyPtr new_stra = std::make_shared<Strategy>(stage_id, new_stra_arrays);
-        sp_vector.push_back(new_stra);
-      }
-    }
+  Shape splittable_flag(mat_a_shape.size() + 1, 1);
+  Shapes splittable_input = {splittable_flag};
+  Shape tmp_shape = inputs_shape_[0];
+  size_t index = 0;
+  if (transpose_b_) {
+    index = inputs_shape_[1].size() - 2;
+    tmp_shape.push_back(inputs_shape_[1][index]);  // mat_a: [A, B, C, D], mat_b: [B, E, D], tmp_shape: [A, B, C, D, E]
+  } else {
+    index = inputs_shape_[1].size() - 1;
+    tmp_shape.push_back(inputs_shape_[1][index]);  // mat_a: [A, B, C, D], mat_b: [B, D, E], tmp_shape: [A, B, C, D, E]
   }
-  strategy_cost_.clear();
-  // add the repeated strategy
-  auto repeated_stra_arrays{inputs_shape_};
-  for (auto &stra_array : repeated_stra_arrays) {
-    std::fill(stra_array.begin(), stra_array.end(), 1);
-  }
-  StrategyPtr repeated_stra = std::make_shared<Strategy>(stage_id, repeated_stra_arrays);
-  sp_vector.push_back(repeated_stra);
+  Shapes tmp_inputs_shape = {tmp_shape};
 
+  if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_input, &sp_vector) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": Generate strategies failed";
+  }
+
+  // set the inputs' strategies
   for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == FAILED) {
-      MS_LOG(WARNING) << name_ << " : Calculating cost for strategy failed.";
-      continue;
+    if ((sp == nullptr) || sp->GetInputDim().empty()) {
+      MS_LOG(EXCEPTION) << name_ << ": The strategy is null or empty";
     }
-  }
-  if (strategy_cost_.empty()) {
-    MS_LOG(EXCEPTION) << name_ << " : No available strategy.";
-  }
-  return SUCCESS;
-}
+    Strategys replace_strategy;
+    Dimensions tmp_strategy = sp->GetInputDim()[0];
+    Dimensions mat_a_strategy = tmp_strategy;
+    mat_a_strategy.pop_back();
 
-Status MatMulBase::GenerateStrategies(int64_t stage_id) {
-  if (GetAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : GetAttrs failed.";
-    return FAILED;
-  }
-  CheckGlobalDeviceManager();
-  RankList dev_list = g_device_manager->GetDeviceListByStageId(stage_id);
-  size_t dev_num = dev_list.size();
-  Shape input0_shape = inputs_shape_[0], input1_shape = inputs_shape_[1];
-  if (transpose_a_) {
-    if (SwapLastTwoElements(&input0_shape) == FAILED) {
-      MS_LOG(ERROR) << name_ << " : Swap last two elements failed.";
+    // mat_b_shape: [B, D, E], tmp_strategy: [A, B, C, D, E]
+    // mat_b_strategy: init [A, B, C, D, E]
+    Dimensions mat_b_strategy = tmp_strategy;
+    // mat_b_strategy: delete C, [A, B, D, E]
+    (void)mat_b_strategy.erase(mat_b_strategy.end() - 3);
+    // mat_b_strategy: delete A, [B, D, E]
+    (void)mat_b_strategy.erase(mat_b_strategy.begin(), mat_b_strategy.begin() + static_cast<different_type>(diff_len));
+    // handle transpose_b
+    if (transpose_b_) {
+      (void)SwapLastTwoElements(&mat_b_strategy);
     }
+    replace_strategy.push_back(mat_a_strategy);
+    replace_strategy.push_back(mat_b_strategy);
+    sp->ResetInputs(replace_strategy);
   }
-  if (transpose_b_) {
-    if (SwapLastTwoElements(&input1_shape) == FAILED) {
-      MS_LOG(ERROR) << name_ << " : Swap last two elements failed.";
-    }
-  }
-  auto dev_num_2_power = (dev_num & (dev_num - 1));
-  std::vector<StrategyPtr> sp_vector_2_power_part;
-  if (dev_num_2_power == 0) {
-    if (GenerateStrategiesBase(stage_id, dev_num, input0_shape, input1_shape, &sp_vector_2_power_part) != SUCCESS) {
-      MS_LOG(ERROR) << "No available strategy.";
-      return FAILED;
-    }
-    strategy_cost_.clear();
-    for (auto &sp : sp_vector_2_power_part) {
-      if (SetCostUnderStrategy(sp) == FAILED) {
-        MS_LOG(WARNING) << name_ << " : Calculating cost for strategy failed.";
-        continue;
-      }
-    }
-    if (strategy_cost_.empty()) {
-      MS_LOG(EXCEPTION) << name_ << " : No available strategy.";
-    }
-    return SUCCESS;
-  }
-  auto dev_num_not_2_power = dev_num / (dev_num - dev_num_2_power);
-  if (GenerateStrategiesBase(stage_id, dev_num - dev_num_2_power, input0_shape, input1_shape,
-                             &sp_vector_2_power_part) != SUCCESS) {
-    MS_LOG(ERROR) << "Generating strategy in power of 2 devices failed.";
-    return FAILED;
-  }
-  return GenerateStrategiesNotPower2(stage_id, dev_num_not_2_power, sp_vector_2_power_part);
-}
-
-std::vector<StrategyPtr> MatMulBase::GenerateOpStrategies(int64_t) {
-  std::vector<StrategyPtr> sp_vector;
   return sp_vector;
-}
-
-Status MatMulBase::PrepareStrategy(int64_t stage_id, size_t dev_num,
-                                   mindspore::parallel::Dimensions combined_partitions, size_t input0_shape_size,
-                                   size_t input1_shape_size, mindspore::parallel::StrategyPtr *const sp) {
-  int64_t product =
-    std::accumulate(combined_partitions.begin(), combined_partitions.end(), 1, std::multiplies<int64_t>());
-  const auto fully_use_device = CostModelContext::GetInstance()->fully_use_device();
-  if (!fully_use_device) {
-    if (LongToSize(product) > dev_num) {
-      return FAILED;
-    }
-  } else {
-    if (LongToSize(product) != dev_num) {
-      return FAILED;
-    }
-  }
-  Dimensions input0_partitions, input1_partitions;
-  if (input0_shape_size >= input1_shape_size) {
-    for (size_t i = 0; i < input0_shape_size; ++i) {
-      input0_partitions.push_back(combined_partitions[i]);
-    }
-    if (input1_shape_size == 2) {
-      input1_partitions.push_back(combined_partitions[combined_partitions.size() - 2]);
-      input1_partitions.push_back(combined_partitions[combined_partitions.size() - 1]);
-    } else {
-      // input1_shape.size() > 2
-      for (size_t j = combined_partitions.size() - input1_shape_size - 1; j < combined_partitions.size(); ++j) {
-        if (j == combined_partitions.size() - 3) {
-          continue;
-        }
-        input1_partitions.push_back(combined_partitions[j]);
-      }
-    }
-  } else {
-    for (size_t i = 0; i < input1_shape_size; ++i) {
-      input1_partitions.push_back(combined_partitions[i]);
-    }
-    for (size_t j = combined_partitions.size() - input0_shape_size - 1; j < combined_partitions.size() - 3; ++j) {
-      input0_partitions.push_back(combined_partitions[j]);
-    }
-    input0_partitions.push_back(combined_partitions[combined_partitions.size() - 1]);
-    input0_partitions.push_back(combined_partitions[combined_partitions.size() - 3]);
-  }
-  if (transpose_a_) {
-    if (SwapLastTwoElements(&input0_partitions) == FAILED) {
-      MS_LOG(ERROR) << name_ << " : Swap last two elements failed.";
-    }
-  }
-  if (transpose_b_) {
-    if (SwapLastTwoElements(&input1_partitions) == FAILED) {
-      MS_LOG(ERROR) << name_ << " : Swap last two elements failed.";
-    }
-  }
-  Strategys stras;
-  stras.push_back(input0_partitions);
-  stras.push_back(input1_partitions);
-  (*sp) = std::make_shared<Strategy>(stage_id, stras);
-
-  return SUCCESS;
-}
-
-void MatMulBase::InitTensorInfoForCost(std::vector<TensorInfo> *relica_inputs_tensor_vector) {
-  TensorLayout tly;
-  if (transpose_a_) {
-    Shape replica_input0_shape(inputs_tensor_info_[0].shape());
-    Shape replica_input0_slice_shape(inputs_tensor_info_[0].slice_shape());
-    if (SwapLastTwoElements(&replica_input0_shape) == FAILED) {
-      MS_LOG(ERROR) << name_ << " : Swap last two elements failed.";
-    }
-    if (SwapLastTwoElements(&replica_input0_slice_shape) == FAILED) {
-      MS_LOG(ERROR) << name_ << " : Swap last two elements failed.";
-    }
-
-    TensorInfo replica_input0_info(tly, replica_input0_shape, replica_input0_slice_shape);
-    relica_inputs_tensor_vector->push_back(replica_input0_info);
-  } else {
-    relica_inputs_tensor_vector->push_back(inputs_tensor_info_[0]);
-  }
-  if (transpose_b_) {
-    Shape replica_input1_shape(inputs_tensor_info_[1].shape());
-    Shape replica_input1_slice_shape(inputs_tensor_info_[1].slice_shape());
-    if (SwapLastTwoElements(&replica_input1_shape) == FAILED) {
-      MS_LOG(ERROR) << name_ << " : Swap last two elements failed.";
-    }
-    if (SwapLastTwoElements(&replica_input1_slice_shape) == FAILED) {
-      MS_LOG(ERROR) << name_ << " : Swap last two elements failed.";
-    }
-
-    TensorInfo replica_input1_info(tly, replica_input1_shape, replica_input1_slice_shape);
-    relica_inputs_tensor_vector->push_back(replica_input1_info);
-  } else {
-    relica_inputs_tensor_vector->push_back(inputs_tensor_info_[1]);
-  }
-}
-
-Status MatMulBase::CheckForTensorSliceValid() const {
-  const auto align_enable = CostModelContext::GetInstance()->tensor_slice_alignment_enable();
-  const auto align_size = CostModelContext::GetInstance()->tensor_slice_alignment_size();
-  if (!align_enable) {
-    return SUCCESS;
-  }
-  if (inputs_tensor_info_.empty()) {
-    return FAILED;
-  }
-  for (auto &one_input_tensor : inputs_tensor_info_) {
-    auto slice_shape = one_input_tensor.slice_shape();
-    if ((LongToSize(slice_shape[LAST_INDEX(slice_shape.size())]) % align_size != 0) ||
-        (LongToSize(slice_shape[SECOND_FROM_END(slice_shape.size())]) % align_size != 0)) {
-      return FAILED;
-    }
-  }
-  return SUCCESS;
 }
 
 std::shared_ptr<Strategys> BatchMatMulInfo::GenerateBatchStrategies() {
@@ -675,50 +490,6 @@ std::shared_ptr<Strategys> BatchMatMulInfo::GenerateBatchStrategies() {
   return std::make_shared<Strategys>(strategy_v);
 }
 
-Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
-  if (InitForCostModel(strategy, nullptr) == FAILED) {
-    MS_LOG(INFO) << name_ << " : Initialization under the strategy failed.";
-    return FAILED;
-  }
-  PrintStrategy(strategy);
-  // Check whether the tensor slice of input_tensor_info is valid or not
-  if (CheckForTensorSliceValid() != SUCCESS) {
-    MS_LOG(INFO) << name_ << " : The tensor slice is not valid under this strategy.";
-    return FAILED;
-  }
-  // Here, a replicated inputs_ is constructed for the transposed TensorInfo.
-  std::vector<TensorInfo> relica_inputs_tensor_vector;
-  InitTensorInfoForCost(&relica_inputs_tensor_vector);
-
-  int64_t stage_id = strategy->GetInputStage();
-  // Here, we use the origin outputs_, because we only use the slice size of the output tensor.
-  // It does not matter whether the output tensor is transposed or not.
-  double computation_cost =
-    operator_cost()->GetForwardComputationCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
-  double communication_cost = operator_cost()->GetCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
-  const auto gamma = CostModelContext::GetInstance()->costmodel_gamma();
-  std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
-  result->communication_without_parameter_ =
-    operator_cost()->GetForwardCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
-  result->communication_with_partial_para_ =
-    result->communication_without_parameter_ + gamma * (communication_cost - result->communication_without_parameter_);
-
-  // Breaking ties for preferring data parallelization
-  BreakingTiesForPerferringDataParallel(strategy, result);
-  MS_LOG(DEBUG) << name_ << " : computation_cost: " << result->computation_cost_
-                << ", communication_cost: " << result->communication_cost_
-                << ", communication_without_parameter_: " << result->communication_without_parameter_
-                << ", communication_with_partial_para_: " << result->communication_with_partial_para_;
-  // refine communication cost calculation for practice
-  RefineForPracticalCost(result, false);
-  result->communication_forward_ = result->communication_without_parameter_;
-
-  std::shared_ptr<StrategyWithCost> swc =
-    std::make_shared<StrategyWithCost>(strategy, inputs_tensor_info_, outputs_tensor_info_);
-  swc->cost_list.push_back(result);
-  (void)strategy_cost_.emplace_back(swc);
-
-  return SUCCESS;
-}
+Status MatMulBase::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 }  // namespace parallel
 }  // namespace mindspore

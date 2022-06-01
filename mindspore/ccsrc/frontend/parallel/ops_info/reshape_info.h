@@ -61,8 +61,7 @@ class ReshapeInfo : public OperatorInfo {
   Status GenerateStrategyCosts(const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
                                const std::vector<std::shared_ptr<StrategyWithCost>> &next_stra_costs, int64_t out_index,
                                int64_t in_index, bool is_prev_param, bool is_next_reshape);
-  Status GenerateStrategies(int64_t stage_id) override;
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   std::string pre_operator_name() const { return pre_operator_name_; }
   std::string next_operator_name() const { return next_operator_name_; }

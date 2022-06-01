@@ -38,12 +38,8 @@ class MatMulBase : public OperatorInfo {
   ~MatMulBase() override = default;
 
   // Generate all strategies and the corresponding cost for this MatMul operator
-  Status GenerateStrategies(int64_t stage_id) override;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  Status PrepareStrategy(int64_t stage_id, size_t dev_num, Dimensions combined_partitions, size_t input0_shape_size,
-                         size_t input1_shape_size, StrategyPtr *sp);
-
   Status SwapLastTwoElements(Shape *shape);
 
  protected:
@@ -52,12 +48,6 @@ class MatMulBase : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
-  void InitTensorInfoForCost(std::vector<TensorInfo> *);
-  Status GenerateStrategiesBase(int64_t stage_id, size_t dev_num, const Shape &input0_shape, Shape input1_shape,
-                                std::vector<StrategyPtr> *const sp_vector);
-  Status GenerateStrategiesNotPower2(int64_t stage_id, size_t dev_num_not_2_power,
-                                     const std::vector<StrategyPtr> &sp_vector_2_power_part);
-  Status CheckForTensorSliceValid() const;
   Status GetAttrs() override;
 
   bool transpose_a_ = false;
