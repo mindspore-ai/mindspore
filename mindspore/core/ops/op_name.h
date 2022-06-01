@@ -36,6 +36,7 @@ constexpr auto kAxisType = "axis_type";
 constexpr auto kAlign = "align";
 constexpr auto kBaseSize = "base_size";
 constexpr auto kBatchDim = "batch_dim";
+constexpr auto kBatchRank = "batch_rank";
 constexpr auto kBeginMask = "begin_mask";
 constexpr auto kBeginNormAxis = "begin_norm_axis";
 constexpr auto kBeginParamsAxis = "begin_params_axis";

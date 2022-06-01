@@ -40,19 +40,17 @@ abstract::TupleShapePtr ApplyProximalAdagradInferShape(const PrimitivePtr &primi
   auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
   auto grad_shape_ptr = input_args[kInputIndex5]->BuildShape();
-  // lr, l1, l2 must be scalar or size equal with 1
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kLessEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kLessEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kLessEqual, 1, prim_name);
-  if (lr_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("lr_shape's first rank must be 1", lr_shape[0], kEqual, 1, prim_name);
+
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
   }
-  if (l1_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("l1_shape's first rank must be 1", l1_shape[0], kEqual, 1, prim_name);
-  }
-  if (l2_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("l2_shape's first rank must be 1", l2_shape[0], kEqual, 1, prim_name);
-  }
+
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, batch_rank, prim_name);
+
   if (grad_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_ptr, accum_shape_ptr});
   }
