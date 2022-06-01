@@ -56,7 +56,7 @@ class ModelPool {
   Status SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_config, const std::shared_ptr<Context> &context);
 
   std::shared_ptr<mindspore::Context> GetDefaultContext();
-  std::shared_ptr<Context> InitUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config);
+  std::shared_ptr<Context> GetUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config);
   Status SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Context> &context);
 
   Status SetModelBindMode(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
@@ -101,7 +101,7 @@ class ModelPool {
   bool create_worker_success_ = true;
   PredictTask *tasks_ = nullptr;
   std::mutex task_id_mutex_;
-  std::set<size_t> free_tasks_id_;
+  std::queue<size_t> free_tasks_id_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_

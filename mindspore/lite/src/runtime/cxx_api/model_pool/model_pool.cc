@@ -18,13 +18,11 @@
 #include <future>
 #include "src/common/log_adapter.h"
 #include "include/lite_types.h"
-#include "src/common/config_file.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/common/file_utils.h"
 #include "src/runtime/pack_weight_manager.h"
 #include "src/runtime/numa_adapter.h"
 #include "src/common/common.h"
-
 namespace mindspore {
 namespace {
 constexpr int kNumDeviceInfo = 2;
@@ -128,10 +126,18 @@ std::shared_ptr<mindspore::Context> ModelPool::GetDefaultContext() {
   return context;
 }
 
-std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config) {
+std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config) {
   auto context = runner_config->GetContext();
   if (context == nullptr) {
     MS_LOG(ERROR) << "user set config context nullptr.";
+    return nullptr;
+  }
+  if (context->GetThreadNum() <= 0) {
+    MS_LOG(ERROR) << "Invalid thread num " << context->GetThreadNum();
+    return nullptr;
+  }
+  if (!context->GetThreadAffinityCoreList().empty()) {
+    MS_LOG(ERROR) << "parallel predict not support user set core list.";
     return nullptr;
   }
   auto device_list = context->MutableDeviceInfo();
@@ -173,7 +179,7 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
     use_numa_bind_mode_ = numa::NUMAAdapter::GetInstance()->Available() &&
                           runner_config->GetContext()->GetThreadAffinityMode() == lite::HIGHER_CPU;
     numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
-    context = InitUserDefineContext(runner_config);
+    context = GetUserDefineContext(runner_config);
   } else {
     use_numa_bind_mode_ = numa::NUMAAdapter::GetInstance()->Available();
     numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
@@ -214,7 +220,7 @@ Status ModelPool::SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_conf
     // User defined number of models
     workers_num_ = runner_config->GetWorkersNum();
   } else {
-    MS_LOG(ERROR) << "user set worker num" << runner_config->GetWorkersNum() << " < 0";
+    MS_LOG(ERROR) << "user set worker num " << runner_config->GetWorkersNum() << " < 0";
     return kLiteError;
   }
   return kSuccess;
@@ -432,7 +438,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     return kLiteNullptr;
   }
   for (size_t i = 0; i < kNumMaxTaskQueueSize; i++) {
-    free_tasks_id_.insert(i);
+    free_tasks_id_.push(i);
   }
   return kSuccess;
 }
@@ -691,10 +697,10 @@ PredictTask *ModelPool::CreatePredictTask(const std::vector<MSTensor> &inputs, s
                                           size_t *task_id) {
   std::lock_guard<std::mutex> lock(task_id_mutex_);
   if (!free_tasks_id_.empty()) {
-    auto item = free_tasks_id_.begin();
-    *task_id = *item;
-    free_tasks_id_.erase(item);
-    PredictTask *task = &tasks_[*item];
+    auto item = free_tasks_id_.front();
+    *task_id = item;
+    free_tasks_id_.pop();
+    PredictTask *task = &tasks_[*task_id];
     task->inputs = &inputs;
     task->outputs = outputs;
     task->before = before;
@@ -707,7 +713,7 @@ PredictTask *ModelPool::CreatePredictTask(const std::vector<MSTensor> &inputs, s
 
 void ModelPool::UpdateFreeTaskId(size_t id) {
   std::lock_guard<std::mutex> lock(task_id_mutex_);
-  free_tasks_id_.insert(id);
+  free_tasks_id_.push(id);
 }
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
