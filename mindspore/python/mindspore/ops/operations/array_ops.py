@@ -7910,3 +7910,111 @@ class AffineGrid(Primitive):
         """Initialize AffineGrid."""
         validator.check_value_type("align_corners", align_corners, [bool], self.name)
         self.init_prim_io_names(inputs=['theta', 'output_size'], outputs=['y'])
+
+
+class SegmentMean(Primitive):
+    r"""
+    Computes the mean along segments of a tensor.
+
+    Computes a tensor such that :math:`output_i = \mean_j data_j` where mean is over :math:`j` such that
+    :math:`segment\_ids[j] == i`. If the mean is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
+
+    .. warning::
+        If the dtype of `input_x` is complex number, the gradient can not be calculated.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor whose dtype is real number or complex number and whose rank is not
+          less than 1.
+        - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
+          the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
+          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+
+    Outputs:
+        Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
+        is equal to the value of the last element of `segment_ids` plus one, and the other dimensions are the same as
+        those of `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `segment_ids` is not a Tensor.
+        TypeError: If the dtype of `input_x` is invalid.
+        TypeError: If the dtype of `segment_ids` is invalid.
+        ValueError: If the rank of `input_x` is less than 1.
+        ValueError: If the rank of `segment_ids` is not equal to 1.
+        ValueError: If the size of `segment_ids` is not equal to the first dimension of the shape of `input_x`.
+        ValueError: If the values of `segment_ids` are negative.
+        ValueError: If the values of `segment_ids` are not sorted in ascending order.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[1, 2, 3], [1, 2, 3], [7, 8, 9]], mstype.float64)
+        >>> segment_ids = Tensor([0, 0, 2], mstype.int64)
+        >>> op = ops.SegmentMean()
+        >>> output = op(x, segment_ids)
+        >>> print(output)
+        [[1. 2. 3.]
+         [0. 0. 0.]
+         [7. 8. 9.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SegmentMean"""
+        self.add_prim_attr("max_length", 1000000)
+        self.init_prim_io_names(inputs=['input_x', 'segment_ids'], outputs=['output'])
+
+
+class SegmentProd(Primitive):
+    r"""
+    Computes the prod along segments of a tensor.
+
+    Computes a tensor such that :math:`output_i = \prod_j data_j` where prod is over :math:`j` such that
+    :math:`segment\_ids[j] == i`. If the prod is empty for a given segment ID :math:`i`, :math:`output[i] = 0`.
+
+    .. warning::
+        If the dtype of `input_x` is complex number, the gradient can not be calculated.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor whose dtype is real number or complex number and whose rank is not
+          less than 1.
+        - **segment_ids** (Tensor) - A 1-D tensor whose dtype is int32 or int64. The size of tensor must be equal to
+          the first dimension of the shape of `input_x`. Values must be sorted in ascending order and need not cover
+          all values in the full range of valid values, but must be positive intege. Only constant values is allowed.
+
+    Outputs:
+        Tensor, whose dtype and the dimension of the shape is the same as `input_x`. The first dimension of the shape
+        is equal to the value of the last element of `segment_ids` plus one, and the other dimensions are the same as
+        those of `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `segment_ids` is not a Tensor.
+        TypeError: If the dtype of `input_x` is invalid.
+        TypeError: If the dtype of `segment_ids` is invalid.
+        ValueError: If the rank of `input_x` is less than 1.
+        ValueError: If the rank of `segment_ids` is not equal to 1.
+        ValueError: If the size of `segment_ids` is not equal to the first dimension of the shape of `input_x`.
+        ValueError: If the values of `segment_ids` are negative.
+        ValueError: If the values of `segment_ids` are not sorted in ascending order.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
+        >>> segment_ids = Tensor([0, 0, 2], mstype.int64)
+        >>> op = ops.SegmentProd()
+        >>> output = op(x, segment_ids)
+        >>> print(output)
+        [[ 4. 10. 18.]
+         [ 1.  1.  1.]
+         [ 7.  8.  9.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SegmentProd"""
+        self.add_prim_attr("max_length", 1000000)
+        self.init_prim_io_names(inputs=['input_x', 'segment_ids'], outputs=['output'])

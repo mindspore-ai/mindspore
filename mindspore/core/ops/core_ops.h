@@ -120,6 +120,8 @@ constexpr auto kFillDiagonal = "FillDiagonal";
 constexpr auto kSegmentMax = "SegmentMax";
 constexpr auto kSegmentSum = "SegmentSum";
 constexpr auto kSegmentMin = "SegmentMin";
+constexpr auto kSegmentMean = "SegmentMean";
+constexpr auto kSegmentProd = "SegmentProd";
 constexpr auto kDynamicShape = "DynamicShape";
 constexpr auto kTensorShape = "TensorShape";
 constexpr auto kCheckNumerics = "CheckNumerics";
@@ -511,6 +513,8 @@ GVAR_DEF(PrimitivePtr, kPrimSegmentMax, std::make_shared<Primitive>(kSegmentMax)
 GVAR_DEF(PrimitivePtr, kPrimSegmentMin, std::make_shared<Primitive>(kSegmentMin));
 GVAR_DEF(PrimitivePtr, kPrimSegmentSum, std::make_shared<Primitive>(kSegmentSum));
 GVAR_DEF(PrimitivePtr, kPrimAffineGrid, std::make_shared<Primitive>(kAffineGrid));
+GVAR_DEF(PrimitivePtr, kPrimSegmentMean, std::make_shared<Primitive>(kSegmentMean));
+GVAR_DEF(PrimitivePtr, kPrimSegmentProd, std::make_shared<Primitive>(kSegmentProd));
 
 // image
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));

@@ -36,6 +36,7 @@ from ..operations.array_ops import SegmentMin
 from ..operations.array_ops import SegmentSum
 from ..operations.array_ops import TensorScatterElements
 from ..operations.array_ops import Expand
+from ..operations.array_ops import SegmentMean
 from .. import functional as F
 from .. import operations as P
 from .._utils.utils import is_shape_unknown
@@ -449,5 +450,31 @@ def get_bprop_expand(self):
             dout = reducesum(dout, reduce_dims)
         dx = dout.reshape(x_shape) if leading_dims > 0 else dout
         return dx, dshape
+
+    return bprop
+
+
+@bprop_getters.register(SegmentMean)
+def get_bprop_segment_mean(self):
+    """Generate bprop for SegmentMean"""
+    rank = P.Rank()
+    shape = P.Shape()
+    fill = P.Fill()
+    divide = P.Div()
+    segment_sum = SegmentSum()
+    gather = P.Gather()
+    cast = P.Cast()
+
+    def bprop(input_x, segment_ids, output, dout):
+        input_x_type = F.dtype(input_x)
+        input_x = cast(input_x, mstype.float32)
+        dout = cast(dout, mstype.float32)
+        dout_type = F.dtype(dout)
+        input_rank = rank(input_x)
+        ones_shape = shape(segment_ids)
+        ones_shape = ones_shape + (1,) * (input_rank - 1)
+        ones = fill(dout_type, ones_shape, 1)
+        scaled_grad = divide(dout, segment_sum(ones, segment_ids))
+        return cast(gather(scaled_grad, segment_ids, 0), input_x_type), zeros_like(segment_ids)
 
     return bprop

@@ -36,6 +36,8 @@ constexpr auto kFractionalAvgPoolGradOpName = "FractionalAvgPoolGrad";
 constexpr auto kSegmentMaxOpName = "SegmentMax";
 constexpr auto kSegmentMinOpName = "SegmentMin";
 constexpr auto kSegmentSumOpName = "SegmentSum";
+constexpr auto kSegmentMeanOpName = "SegmentMean";
+constexpr auto kSegmentProdOpName = "SegmentProd";
 constexpr auto kConcatOpName = "Concat";
 constexpr auto kListDiffOpName = "ListDiff";
 constexpr auto kUniqueOpName = "Unique";
@@ -881,6 +883,8 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,
                                               kSegmentMinOpName,
                                               kSegmentSumOpName,
                                               kResizeBicubicOpName,
+                                              kSegmentMeanOpName,
+                                              kSegmentProdOpName,
                                               kNonZeroOpName};
 
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
