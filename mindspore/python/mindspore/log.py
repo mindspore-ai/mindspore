@@ -15,6 +15,7 @@
 """
 log module
 """
+import warnings
 import sys
 import os
 import re
@@ -476,9 +477,16 @@ def _get_stack_info(frame):
 def _get_rank_id():
     """Get rank id."""
     rank_id = os.getenv('RANK_ID')
+    gpu_rank_id = os.getenv('OMPI_COMM_WORLD_RANK')
     rank = '0'
+    if rank_id and gpu_rank_id and rank_id != gpu_rank_id:
+        warnings.warn(
+            f"Environment variables RANK_ID and OMPI_COMM_WORLD_RANK set by different values, RANK_ID={rank_id}, "
+            f"OMPI_COMM_WORLD_RANK={gpu_rank_id}. We will use RANK_ID to get rank id by default.")
     if rank_id:
         rank = rank_id
+    elif gpu_rank_id:
+        rank = gpu_rank_id
     return rank
 
 
