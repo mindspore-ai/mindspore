@@ -218,6 +218,22 @@ def softsign(x):
     return softsign_(x)
 
 
+def soft_shrink(x, lambd=0.5):
+    r"""
+    Soft shrink activation function. Calculates the output according to the input elements.
+    Refer to :func:`mindspore.ops.SoftShrink` for more detail.
+
+    Examples:
+        >>> x = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mindspore.float32)
+        >>> output = ops.soft_shrink(x)
+        >>> print(output)
+        [[ 0.02979  0.287    0.676  ]
+         [ 0.2837   0.1216  -0.6543 ]]
+    """
+    soft_shrink_op = P.SoftShrink(lambd)
+    return soft_shrink_op(x)
+
+
 def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1,
                       data_format="NCHW", deformable_groups=1, modulated=True):
     r"""
@@ -672,6 +688,7 @@ __all__ = [
     'deformable_conv2d',
     'fast_gelu',
     'hardshrink',
+    'soft_shrink',
     'intopk',
     'softsign',
     'pdist',

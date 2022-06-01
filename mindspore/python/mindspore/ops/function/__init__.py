@@ -207,6 +207,7 @@ from .nn_func import (
     deformable_conv2d,
     fast_gelu,
     hardshrink,
+    soft_shrink,
     intopk,
     softsign,
     pdist,

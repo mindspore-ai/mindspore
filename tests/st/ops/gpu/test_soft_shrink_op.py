@@ -18,8 +18,11 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 
 
 def soft_shrink_op_np_bencmark(input_x, lambd):
@@ -69,3 +72,102 @@ def test_soft_shrink(dtype, data_shape, lambd):
     soft_shrink_net = SoftShrinkNet(lambd)
     output = soft_shrink_net(input_tensor)
     np.testing.assert_array_almost_equal(output.asnumpy(), benchmark_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_soft_shrink_tensor_check():
+    """
+    Feature: test_soft_shrink_tensor_check.
+    Description: test cases for tensor func
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+
+    in_np = np.random.rand(10).astype(np.float32)
+    in_tensor = Tensor(in_np)
+
+    benchmark_output = soft_shrink_op_np_bencmark(in_tensor, 0.5)
+    output = in_tensor.soft_shrink()
+
+    np.testing.assert_array_almost_equal(output.asnumpy(), benchmark_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_soft_shrink_functional_check():
+    """
+    Feature: test_soft_shrink_functional_check.
+    Description: test cases for functional func.
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+
+    in_np = np.random.rand(3, 5).astype(np.float32)
+    in_tensor = Tensor(in_np)
+
+    output_ms = F.soft_shrink(in_tensor)
+    output_np = soft_shrink_op_np_bencmark(in_tensor, 0.5)
+
+    np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
+
+
+class DynamicShapeSoftShrinkNet(nn.Cell):
+    def __init__(self):
+        super(DynamicShapeSoftShrinkNet, self).__init__()
+        self.soft_shrink_op = P.SoftShrink()
+        self.gpu_convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
+
+    def construct(self, in_x):
+        data = self.gpu_convert_to_dynamic_shape(in_x)
+        return self.soft_shrink_op(data)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_soft_shrink_dy_shape():
+    """
+    Feature: test_soft_shrink_dy_shape.
+    Description: test cases for dynamic shape.
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    np.random.seed(1)
+    in_np = np.random.rand(3, 5, 2).astype(np.float32)
+    in_tensor = Tensor(in_np)
+
+    net = DynamicShapeSoftShrinkNet()
+
+    output_ms = net(in_tensor)
+    output_np = soft_shrink_op_np_bencmark(in_tensor, 0.5)
+
+    np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
+
+
+def soft_shrink_graph(x):
+    return P.SoftShrink()(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_soft_shrink_vmap():
+    """
+    Feature: test tan vmap.
+    Description: in_axes : 0
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+
+    np.random.seed(0)
+    in_np = np.random.rand(3, 4, 5, 6, 7).astype(np.float32)
+    in_tensor = Tensor(in_np)
+    output_np = soft_shrink_op_np_bencmark(in_tensor, 0.5)
+
+    vmap_round_net = ops.vmap(soft_shrink_graph, 0)
+    output = vmap_round_net(in_tensor)
+    np.testing.assert_allclose(output.asnumpy(), output_np, rtol=1e-3)
