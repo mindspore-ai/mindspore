@@ -32,7 +32,7 @@ class ReduceMin(nn.Cell):
         return self.reduce_min(x, axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
@@ -74,7 +74,7 @@ class ReduceMinDynamic(nn.Cell):
         return self.reduce_min(dynamic_x, self.axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32])

@@ -31,7 +31,7 @@ class NetResizeBilinear(nn.Cell):
         return self.op(inputs)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_nn_grayscale_integer_ratio_half(datatype=np.float16):
@@ -141,7 +141,7 @@ def test_resize_nn_grayscale_integer_ratio_half(datatype=np.float16):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_nn_grayscale_integer_ratio_float(datatype=np.float32):
@@ -353,7 +353,7 @@ def test_resize_nn_grayscale_not_integer_ratio_half(datatype=np.float16):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_nn_grayscale_not_integer_ratio_float(datatype=np.float32):
@@ -465,7 +465,7 @@ def test_resize_nn_grayscale_not_integer_ratio_float(datatype=np.float32):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_nn_grayscale_multiple_images_half(datatype=np.float16):
@@ -487,7 +487,7 @@ def test_resize_nn_grayscale_multiple_images_half(datatype=np.float16):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_nn_grayscale_multiple_images_float(datatype=np.float32):
@@ -510,7 +510,7 @@ def test_resize_nn_grayscale_multiple_images_float(datatype=np.float32):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_nn_grayscale_align_corners_half(datatype=np.float16):
@@ -538,7 +538,7 @@ def test_resize_nn_grayscale_align_corners_half(datatype=np.float16):
     assert np.all(abs(diff_align) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_resize_nn_grayscale_align_corners_float(datatype=np.float32):

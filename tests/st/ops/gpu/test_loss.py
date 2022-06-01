@@ -60,13 +60,13 @@ def weighted_loss(nptype):
     diff = test_data - output.asnumpy()
     assert np.all(abs(diff) < error_range)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_weighted_loss_float32():
     weighted_loss(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_weighted_loss_float64():
@@ -101,13 +101,13 @@ def custom_loss(nptype):
 def test_custom_loss_float16():
     custom_loss(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_custom_loss_float32():
     custom_loss(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_custom_loss_float64():

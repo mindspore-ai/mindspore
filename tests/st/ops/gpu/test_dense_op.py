@@ -34,7 +34,7 @@ class BiasAdd(nn.Cell):
         return self.ba(x, b)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_biasadd():
@@ -98,7 +98,7 @@ class DenseNet(nn.Cell):
         return self.dense(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dx():
@@ -128,7 +128,7 @@ def test_dx():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dx_ND():
@@ -169,7 +169,7 @@ def test_dx_ND():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dw():
@@ -206,7 +206,7 @@ def test_dw():
     assert np.all(-diff < db_error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dw_ND():
@@ -259,7 +259,7 @@ class Grad(nn.Cell):
         return self.grad(self.network)(input_, bias, dy)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_biasadd_3d():
@@ -326,7 +326,7 @@ def test_biasadd_3d():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_biasadd_4d():
@@ -455,7 +455,7 @@ class BiasAddDynamic(nn.Cell):
         output = self.ba(x, b)
         return output
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_bias_add_dynamic_two_inputs():

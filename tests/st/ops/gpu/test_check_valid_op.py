@@ -47,13 +47,13 @@ def check_valid(nptype):
     output = boundingbox_decode(anchor_box, image_metas_box)
     assert np.array_equal(output.asnumpy(), expect)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_check_valid_float32():
     check_valid(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_check_valid_float16():

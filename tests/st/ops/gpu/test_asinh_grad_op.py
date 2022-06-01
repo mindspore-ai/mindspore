@@ -22,7 +22,7 @@ import mindspore.ops.operations._grad_ops as P
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 np.random.seed(1)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_asinhgrad_fp32():

@@ -47,7 +47,7 @@ class Conv2dFilter(nn.Cell):
         return self.conv_filter(out, x, self.get_shape(w))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv2d_backprop_filter():

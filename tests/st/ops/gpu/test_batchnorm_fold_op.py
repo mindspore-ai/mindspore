@@ -52,7 +52,7 @@ def np_result(x, mean, var, momentum, epsilon):
     return np_mean, np_var, mean_update, var_update, delay_mean, delay_std
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_fold():
@@ -77,7 +77,7 @@ def test_batchnorm_fold():
     assert np.allclose(delay_std.asnumpy(), expect6, rtol=1.e-7, atol=1.e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_fold2():
@@ -100,7 +100,7 @@ def test_batchnorm_fold2():
     assert np.allclose(delay_std.asnumpy(), expect6, rtol=1.e-7, atol=1.e-5)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_fold_freeze():

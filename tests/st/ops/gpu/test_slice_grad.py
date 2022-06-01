@@ -35,7 +35,7 @@ class SliceGrad(nn.Cell):
         return self.slice_grad(dy, x, (0, 1, 0), (2, 1, 3))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_slice():
@@ -52,7 +52,7 @@ def test_slice():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_slice_float64():

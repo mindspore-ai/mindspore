@@ -185,7 +185,7 @@ def test_greater_equal_net():
     assert out_gk_on_3.shape == out_gk_off_3.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_less_gpu():

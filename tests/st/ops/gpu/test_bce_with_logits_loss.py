@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.loss(predict, target, weight, pos_weight)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reduction_none_testcases():
@@ -70,7 +70,7 @@ def test_reduction_none_testcases():
     np.testing.assert_almost_equal(expected, output.asnumpy(), decimal=3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reduction_mean_testcases():

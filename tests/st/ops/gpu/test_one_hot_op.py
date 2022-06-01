@@ -78,13 +78,13 @@ def one_hot(nptype):
     assert (output[2].asnumpy() == expect_2).all()
     assert (output[3].asnumpy() == expect_3).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_one_hot_int32():
     one_hot(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_one_hot_int64():

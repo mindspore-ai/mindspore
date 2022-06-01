@@ -41,7 +41,7 @@ class Net_Pool2(nn.Cell):
         return self.maxpool_fun(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool2d():
@@ -81,7 +81,7 @@ def test_maxpool2d():
     assert (output2.asnumpy() == expect_result2).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_max_pool3d_1():
@@ -108,7 +108,7 @@ def test_max_pool3d_1():
     assert (output_ms.asnumpy() == expert_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_max_pool3d_2():
@@ -135,7 +135,7 @@ def test_max_pool3d_2():
     assert (output_ms.asnumpy() == expert_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_max_pool3d_3():
@@ -156,7 +156,7 @@ def test_max_pool3d_3():
     assert (output_ms.asnumpy() == expert_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_max_pool3d_4():
@@ -207,7 +207,7 @@ def test_max_pool3d_4():
     assert (output_ms.asnumpy() == expert_result).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_max_pool3d_5():

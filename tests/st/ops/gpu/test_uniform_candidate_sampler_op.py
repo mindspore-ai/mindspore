@@ -71,7 +71,7 @@ def uniform_candidate_sampler_hit(x, num_true, num_sampled, unique, range_max, s
     return out1, out2, out3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_unique_1_true():
@@ -85,7 +85,7 @@ def test_uniform_candidate_sampler_unique_1_true():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_not_unique_1_true():
@@ -99,7 +99,7 @@ def test_uniform_candidate_sampler_not_unique_1_true():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_unique_2_true():
@@ -114,7 +114,7 @@ def test_uniform_candidate_sampler_unique_2_true():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_not_unique_2_true():
@@ -130,7 +130,7 @@ def test_uniform_candidate_sampler_not_unique_2_true():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_large():
@@ -149,7 +149,7 @@ def test_uniform_candidate_sampler_large():
     np.testing.assert_array_equal(ms3, expected_3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_large_random():
@@ -163,7 +163,7 @@ def test_uniform_candidate_sampler_large_random():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_large_random_int64_input():
@@ -177,7 +177,7 @@ def test_uniform_candidate_sampler_large_random_int64_input():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_unique_1_true_hit():
@@ -187,7 +187,7 @@ def test_uniform_candidate_sampler_unique_1_true_hit():
     np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_uniform_candidate_sampler_unique_1_true_no_hit():

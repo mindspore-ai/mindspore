@@ -126,7 +126,7 @@ def cum_prod(nptype):
     assert np.all(diff6 < error6)
     assert output[6].shape == expect6.shape
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_prod_uint8():
@@ -144,13 +144,13 @@ def test_cum_prod_int8():
 def test_cum_prod_int32():
     cum_prod(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_prod_float16():
     cum_prod(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_prod_float32():

@@ -49,7 +49,7 @@ class Net_half(nn.Cell):
         return out
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ftrl():
@@ -74,7 +74,7 @@ def test_ftrl():
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ftrl_sparse_int64_ind():
@@ -99,7 +99,7 @@ def test_ftrl_sparse_int64_ind():
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ftrl_half():
@@ -124,7 +124,7 @@ def test_ftrl_half():
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ftrl_sparse_half_int64_ind():
@@ -148,7 +148,7 @@ def test_ftrl_sparse_half_int64_ind():
     sparse_apply_ftrl(gradient, indices)
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ftrl_half_return_output():

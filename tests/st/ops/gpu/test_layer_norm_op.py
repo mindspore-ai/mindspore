@@ -47,7 +47,7 @@ def LayerNormReference(begin_norm_axis, begin_params_axis, x, gamma, beta):
     return y, mean, var
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernorm0():
@@ -70,7 +70,7 @@ def test_layernorm0():
     assert np.allclose(var_ms.asnumpy(), var_np, atol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernorm1():
@@ -93,7 +93,7 @@ def test_layernorm1():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernorm3d_1():
@@ -116,7 +116,7 @@ def test_layernorm3d_1():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernorm3d_2():
@@ -139,7 +139,7 @@ def test_layernorm3d_2():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernorm2d_2():
@@ -161,7 +161,7 @@ def test_layernorm2d_2():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernorm2d_3():
@@ -183,7 +183,7 @@ def test_layernorm2d_3():
     assert np.allclose(var_ms.asnumpy(), var_np, rtol=1e-6, atol=1e-6)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernorm2d_4():

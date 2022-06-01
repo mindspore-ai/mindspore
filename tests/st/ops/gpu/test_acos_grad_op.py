@@ -21,7 +21,7 @@ from mindspore import Tensor
 import mindspore.ops.operations._grad_ops as P
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acosgrad_fp32():
@@ -33,7 +33,7 @@ def test_acosgrad_fp32():
     diff = output_ms.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acosgrad_fp16():

@@ -31,7 +31,7 @@ class Net(nn.Cell):
         return self.extractimagepatches(input_tensor)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_extract_image_patches_valid():
@@ -62,7 +62,7 @@ def test_extract_image_patches_valid():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_extract_image_patches_same():

@@ -29,7 +29,7 @@ def smoothl1loss(beta):
     net = nn.SmoothL1Loss(beta)
     return net(Tensor(prediction), Tensor(target))
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_smoothl1loss():
@@ -77,7 +77,7 @@ def smoothl1loss_grad(beta):
     grad = Grad(net)
     return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_smoothl1loss_grad():

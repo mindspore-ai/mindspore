@@ -31,7 +31,7 @@ class NetSqrtGrad(nn.Cell):
         return self.sqrt_grad(x, dx)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sqrt_grad():

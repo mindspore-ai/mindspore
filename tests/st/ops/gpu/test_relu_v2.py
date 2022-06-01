@@ -34,7 +34,7 @@ class ReluNet(nn.Cell):
         dx = self.relu_grad(dy, y)
         return y, dx
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ReluV2():
@@ -73,7 +73,7 @@ class AddReluNet(nn.Cell):
         return y, dx
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_AddRelu():
@@ -114,7 +114,7 @@ class AddReluGradNet(nn.Cell):
         return y, dx
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_AddReluGrad():

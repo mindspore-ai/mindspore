@@ -31,7 +31,7 @@ class NetReLU6Grad(nn.Cell):
         return self.relu6_grad(dy, x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu6_grad():

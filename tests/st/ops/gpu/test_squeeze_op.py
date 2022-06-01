@@ -92,13 +92,13 @@ def test_squeeze_int64():
 def test_squeeze_float16():
     squeeze(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_squeeze_float32():
     squeeze(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_squeeze_float64():

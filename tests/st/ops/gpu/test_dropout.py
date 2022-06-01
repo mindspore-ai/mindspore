@@ -30,7 +30,7 @@ class Net(nn.Cell):
         return self.drop(x_)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dropout():
@@ -67,7 +67,7 @@ class DropoutDynamic(nn.Cell):
         return self.drop(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dropout_dynamic():

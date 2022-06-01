@@ -30,7 +30,7 @@ class NetSoftmaxCrossEntropyWithLogits(nn.Cell):
         return self.loss(logits, labels)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softmax_cross_entropy_with_logits():

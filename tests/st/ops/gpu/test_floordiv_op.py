@@ -29,7 +29,7 @@ class NetFloorDiv(nn.Cell):
     def construct(self, x, y):
         return self.floordiv(x, y)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_floor_div():

@@ -91,7 +91,7 @@ def test_logsoftmaxgrad():
     assert np.allclose(dx[0].asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logsoftmax_gpu():
@@ -99,7 +99,7 @@ def test_logsoftmax_gpu():
     test_logsoftmax()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logsoftmaxgrad_gpu():

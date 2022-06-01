@@ -100,7 +100,7 @@ def atomic_add_multi_output():
     assert res
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_atomic_add_sum_output_gpu():
@@ -108,7 +108,7 @@ def test_atomic_add_sum_output_gpu():
     atomic_add_sum_output()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_atomic_add_single_output_gpu():

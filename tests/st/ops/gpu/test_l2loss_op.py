@@ -31,7 +31,7 @@ class L2LossNet(nn.Cell):
     def construct(self, x):
         return self.l2_loss(x)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_pynative_fp32_22():
@@ -43,7 +43,7 @@ def test_gather_pynative_fp32_22():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_pynative_fp16_22():
@@ -55,7 +55,7 @@ def test_gather_pynative_fp16_22():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_pynative_fp32_14():

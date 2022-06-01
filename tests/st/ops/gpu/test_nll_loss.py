@@ -123,7 +123,7 @@ def nll_loss_grad_template(nptype_input, nptype_weight, reduction):
     np.testing.assert_allclose(dx_np, dx_expected, ertol_loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nll_loss_no_reduction():
@@ -134,7 +134,7 @@ def test_nll_loss_no_reduction():
     nll_loss_template(np.float16, np.float16, "none")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nll_loss_mean_reduction():
@@ -145,7 +145,7 @@ def test_nll_loss_mean_reduction():
     nll_loss_template(np.float16, np.float16, "mean")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nll_loss_sum_reduction():
@@ -156,7 +156,7 @@ def test_nll_loss_sum_reduction():
     nll_loss_template(np.float16, np.float16, "sum")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nll_loss_grad_mean_reduction():
@@ -167,7 +167,7 @@ def test_nll_loss_grad_mean_reduction():
     nll_loss_grad_template(np.float16, np.float16, "mean")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nll_loss_grad_sum_reduction():
@@ -178,7 +178,7 @@ def test_nll_loss_grad_sum_reduction():
     nll_loss_grad_template(np.float16, np.float16, "sum")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nll_loss_grad_no_reduction():

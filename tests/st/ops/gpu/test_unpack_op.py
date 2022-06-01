@@ -91,14 +91,14 @@ def unstack_pynative(nptype):
         assert (output[i].asnumpy() == exp).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unstack_graph_float32():
     unstack(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unstack_graph_float16():
@@ -133,14 +133,14 @@ def test_unstack_graph_bool():
     unstack(np.bool)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unstack_pynative_float32():
     unstack_pynative(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unstack_pynative_float16():

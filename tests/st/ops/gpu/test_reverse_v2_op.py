@@ -55,14 +55,14 @@ def reverse_v2_1d(nptype):
     reverse_v2(x_numpy, (0,))
     reverse_v2(x_numpy, (-1,))
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reverse_v2_float16():
     reverse_v2_1d(np.float16)
     reverse_v2_3d(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reverse_v2_float32():

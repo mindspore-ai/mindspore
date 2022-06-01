@@ -32,7 +32,7 @@ class GatherNet(nn.Cell):
         return self.gather(x, indices, 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather0():
@@ -856,7 +856,7 @@ class GatherNet1(nn.Cell):
         return self.gather(x, indices, -1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather1():
@@ -910,7 +910,7 @@ class GatherNet2(nn.Cell):
         return self.gather(x, indices, 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather2():
@@ -959,7 +959,7 @@ class GatherNetDynamic(nn.Cell):
         return self.gather(x, indices, self.axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gatherV2_dyn_ab():
@@ -990,7 +990,7 @@ def test_gatherV2_dyn_ab():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gatherV2_dyn_a():
@@ -1066,7 +1066,7 @@ def test_gatherV2_dyn_a():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gatherV2_dyn_b():
@@ -1137,7 +1137,7 @@ def test_gatherV2_dyn_b():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather1_float64():
@@ -1182,7 +1182,7 @@ def test_gather1_float64():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather1_int32():

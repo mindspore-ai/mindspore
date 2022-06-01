@@ -36,7 +36,7 @@ class Net(nn.Cell):
         return self.op(x, minq, maxq)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant_perchannel1():
@@ -77,7 +77,7 @@ def test_fake_quant_perchannel2():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant_perchannel3():
@@ -387,7 +387,7 @@ def test_fake_quant_perchannel15():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant_perchannel16():
@@ -408,7 +408,7 @@ def test_fake_quant_perchannel16():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant_perchannel17():
@@ -571,7 +571,7 @@ def test_fake_quant_perchannel23():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant_perchannel24():
@@ -598,7 +598,7 @@ def test_fake_quant_perchannel24():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_fake_quant_perchannel25():

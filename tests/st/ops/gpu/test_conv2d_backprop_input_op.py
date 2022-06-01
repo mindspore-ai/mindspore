@@ -46,7 +46,7 @@ class Conv2dInput(nn.Cell):
         return self.conv_input(out, w, self.get_shape(x))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv2d_backprop_input():

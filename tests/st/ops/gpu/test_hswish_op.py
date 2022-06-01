@@ -71,7 +71,7 @@ def generate_test_cases(np_type, mode):
     judge_result_correct(output[0].asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_hswish_forward_and_backward():

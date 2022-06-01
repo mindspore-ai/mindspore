@@ -51,13 +51,13 @@ def axis32(nptype):
                         [3., 6., 7.]]]).astype(nptype)
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis32_float64():
     axis32(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis32_float32():
@@ -112,13 +112,13 @@ def axis43(nptype):
                          [14., 15., 21., 22., 23.]]]]).astype(nptype)
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis43_float64():
     axis43(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis43_float32():
@@ -130,7 +130,7 @@ def test_axis43_float32():
 def test_axis43_int16():
     axis43(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis43_uint8():
@@ -167,13 +167,13 @@ def axis21(nptype):
                        [2., 3., 3., 4., 5.]]).astype(nptype)
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis21_float64():
     axis21(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis21_float32():
@@ -185,7 +185,7 @@ def test_axis21_float32():
 def test_axis21_int16():
     axis21(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_axis21_uint8():
@@ -225,13 +225,13 @@ def concat_3i(nptype):
     diff = output_ms.asnumpy() - output_np
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_3i_float64():
     concat_3i(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_3i_float32():
@@ -298,13 +298,13 @@ def concat_4i(nptype):
     diff = output_ms.asnumpy() - output_np
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_4i_float64():
     concat_4i(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_concat_4i_float32():

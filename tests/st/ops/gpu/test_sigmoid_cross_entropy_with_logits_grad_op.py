@@ -59,14 +59,14 @@ def sigmoid_cross_entropy_with_logits_grad(nptype):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sigmoid_cross_entropy_with_logits_float32():
     sigmoid_cross_entropy_with_logits_grad(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sigmoid_cross_entropy_with_logits_float64():

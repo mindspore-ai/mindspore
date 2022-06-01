@@ -67,7 +67,7 @@ context.set_context(device_target="GPU", mode=context.GRAPH_MODE)
 dtypes = [mstype.float16, mstype.float32]
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_single_weight():
@@ -86,7 +86,7 @@ def test_prelu_single_weight():
         test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_multiple_weight():
@@ -127,7 +127,7 @@ def test_prelu_multiple_weight():
         test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_single_weight_0_D():
@@ -146,7 +146,7 @@ def test_prelu_single_weight_0_D():
         test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_single_weight_1_D():
@@ -165,7 +165,7 @@ def test_prelu_single_weight_1_D():
         test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_single_weight_2_D():
@@ -184,7 +184,7 @@ def test_prelu_single_weight_2_D():
         test_prelu(x, weight, expect_forward, expect_dx, expect_dw)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_prelu_multiple_weight_2_D():

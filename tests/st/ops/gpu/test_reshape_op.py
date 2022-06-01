@@ -95,13 +95,13 @@ def reshape_bool():
     np.testing.assert_array_equal(output_tensor.asnumpy().flatten(), data)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reshape_float():
     reshape(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reshape_float16():

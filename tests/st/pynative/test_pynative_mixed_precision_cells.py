@@ -154,7 +154,7 @@ def test_mixed_precision_multiples_cell_ascend_01():
     context.set_context(device_target="Ascend")
     mixed_precision_multiples_cell_01()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mixed_precision_multiples_cell_gpu_01():
@@ -169,7 +169,7 @@ def test_mixed_precision_multiples_cell_ascend_02():
     context.set_context(device_target="Ascend")
     mixed_precision_multiples_cell_02()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mixed_precision_multiples_cell_gpu_02():
@@ -184,7 +184,7 @@ def test_mixed_precision_multiples_cell_ascend_03():
     context.set_context(device_target="Ascend")
     mixed_precision_multiples_cell_03()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mixed_precision_multiples_cell_gpu_03():

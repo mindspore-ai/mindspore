@@ -190,7 +190,7 @@ def test_crop_and_resize_float16_nearest(datatype=np.float16):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_float32_bilinear(datatype=np.float32):
@@ -239,7 +239,7 @@ def test_crop_and_resize_float32_bilinear(datatype=np.float32):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_float64_nearest(datatype=np.float64):
@@ -284,7 +284,7 @@ def test_crop_and_resize_float64_nearest(datatype=np.float64):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_crop_and_resize_int64_bilinearv2(datatype=np.int64):

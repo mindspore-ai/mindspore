@@ -19,7 +19,7 @@ class Net(nn.Cell):
         return self.reverse_sequence(x, seq_lengths)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_int8():
@@ -49,7 +49,7 @@ def test_net_int32():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_float32():
@@ -78,7 +78,7 @@ def test_net_float32():
     assert np.array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_float64_0_dim():

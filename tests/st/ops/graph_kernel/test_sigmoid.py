@@ -41,7 +41,7 @@ class NetSigmoidGrad(nn.Cell):
         return self.sigmoid_grad(y, dy)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sigmoid():
@@ -64,7 +64,7 @@ def test_sigmoid():
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sigmoid_grad():

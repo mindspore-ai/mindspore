@@ -53,7 +53,7 @@ class NetDynamic(Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast():
@@ -224,7 +224,7 @@ def test_cast9():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast10():
@@ -292,7 +292,7 @@ def test_cast13():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'float16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast14():
@@ -547,7 +547,7 @@ def test_cast28():
     type1 = output[1].asnumpy().dtype
     assert type1 == 'int16'
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast29():
@@ -599,7 +599,7 @@ def test_cast31():
     assert type1 == 'uint32'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cast32():

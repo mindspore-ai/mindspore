@@ -1252,7 +1252,7 @@ def test_select():
     match_res(mnp.select, onp.select, condlist, choicelist, default=10)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

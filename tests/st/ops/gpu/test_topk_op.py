@@ -40,7 +40,7 @@ def test_topk_small_2d():
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_topk_3d():
@@ -58,7 +58,7 @@ def test_topk_3d():
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_topk_big_2d():
@@ -90,7 +90,7 @@ def test_topk_big_2d():
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_topk_big_k():
@@ -102,7 +102,7 @@ def test_topk_big_k():
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_topk_1d():

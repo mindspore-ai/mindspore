@@ -45,7 +45,7 @@ class Grad(Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_forward_backward():
@@ -94,7 +94,7 @@ def test_train_forward_backward():
     diff = dx - expect_dx
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool_with_argmax_2d():
@@ -147,7 +147,7 @@ def test_maxpool_with_argmax_2d():
     assert (index.asnumpy() == expect_index_result).all()
     assert (index2.asnumpy() == expect__index_result2).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool_with_argmax_2d_fp16():

@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 
 # test to make sure this op actually generates a dynamically shaped output
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dyanamic_shape_confirm_dynamic():
@@ -103,13 +103,13 @@ def test_gpu_convert_to_dynamic_shape_bool():
 def test_gpu_convert_to_dynamic_shape_float16():
     gpu_convert_to_dynamic_shape_float(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_float32():
     gpu_convert_to_dynamic_shape_float(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_float64():

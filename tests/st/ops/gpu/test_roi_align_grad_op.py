@@ -38,7 +38,7 @@ class NetROIAlignGrad(nn.Cell):
         return self.roiAlignGrad(dy, rois)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_roi_align_grad():

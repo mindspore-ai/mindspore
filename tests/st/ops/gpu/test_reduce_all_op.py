@@ -69,7 +69,7 @@ class ReduceAll(nn.Cell):
                 P.ReduceAll(self.keep_dims3)(self.x3, self.axis3))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ReduceAll():
@@ -113,7 +113,7 @@ class ReduceAllDynamic(nn.Cell):
         return self.reduceall(dynamic_x, self.axis)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reduce_all_dynamic():

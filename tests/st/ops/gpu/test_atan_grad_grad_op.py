@@ -73,14 +73,14 @@ def atan_grad_grad_base(dtype, loss):
     assert np.allclose(dgrad_ms.asnumpy(), dgrad_np, loss, loss)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_atan_grad_grad_float16():
     atan_grad_grad_base(np.float16, 1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_atan_grad_grad_float32():

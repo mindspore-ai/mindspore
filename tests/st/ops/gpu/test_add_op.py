@@ -129,7 +129,7 @@ def add(nptype):
 
 
 @pytest.mark.skip(reason='0 in shape is not support')
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_float64():
@@ -137,7 +137,7 @@ def test_add_float64():
 
 
 @pytest.mark.skip(reason='0 in shape is not support')
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_float32():

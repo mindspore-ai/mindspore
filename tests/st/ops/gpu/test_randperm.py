@@ -87,19 +87,19 @@ def test_randperm_uint8():
 def test_randperm_uint16():
     randperm(8, 0, mindspore.uint16, 8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_randperm_uint32():
     randperm(4, 8, mindspore.uint32, 3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_randperm_uint64():
     randperm(5, 4, mindspore.uint64, 5)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_randperm_n_too_large():

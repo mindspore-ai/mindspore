@@ -34,7 +34,7 @@ class NetErf(nn.Cell):
         return self.erf(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_erf_fp32():
@@ -45,7 +45,7 @@ def test_erf_fp32():
     tol = 1e-6
     assert (np.abs(output.asnumpy() - expect) < tol).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_erf_fp16():

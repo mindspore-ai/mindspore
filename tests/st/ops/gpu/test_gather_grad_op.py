@@ -33,7 +33,7 @@ class GatherDNet(nn.Cell):
     def construct(self, x, index):
         return self.gather_d(x, self.dim, index)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_grad_graph_int32_fp32():
@@ -52,7 +52,7 @@ def test_gather_grad_graph_int32_fp32():
     diff = output[0].asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_grad_graph_int64_fp32():
@@ -71,7 +71,7 @@ def test_gather_grad_graph_int64_fp32():
     diff = output[0].asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_grad_graph_int32_fp16():
@@ -90,7 +90,7 @@ def test_gather_grad_graph_int32_fp16():
     diff = output[0].asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_grad_graph_int64_fp16():
@@ -109,7 +109,7 @@ def test_gather_grad_graph_int64_fp16():
     diff = output[0].asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_grad_pynative_int32_fp32():
@@ -126,7 +126,7 @@ def test_gather_grad_pynative_int32_fp32():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_grad_pynative_int64_fp32():
@@ -143,7 +143,7 @@ def test_gather_grad_pynative_int64_fp32():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_grad_pynative_int32_fp16():
@@ -160,7 +160,7 @@ def test_gather_grad_pynative_int32_fp16():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_grad_pynative_int64_fp16():

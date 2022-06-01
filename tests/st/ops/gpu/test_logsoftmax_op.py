@@ -23,7 +23,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logsoftmax():
@@ -60,7 +60,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logsoftmaxgrad():
@@ -101,7 +101,7 @@ def test_logsoftmaxgrad():
     assert np.allclose(dx[0].asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_logsoftmaxgrad1():

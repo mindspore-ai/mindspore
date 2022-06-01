@@ -71,7 +71,7 @@ def test_sequence_mask_3d():
 
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sequence_mask_maxlen_1():
@@ -87,7 +87,7 @@ def test_sequence_mask_maxlen_1():
 
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sequence_mask_dynamic():
@@ -149,7 +149,7 @@ def sequence_mask_optional(x):
     return C.sequence_mask(Tensor(x.astype(np.int32)))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sequence_mask_optional_maxlen():

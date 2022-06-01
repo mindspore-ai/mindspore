@@ -119,7 +119,7 @@ def test_net_float16():
     assert np.all(output.asnumpy() == np.expand_dims(x, -1))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_float32():
@@ -130,7 +130,7 @@ def test_net_float32():
     assert np.all(output.asnumpy() == np.expand_dims(x, -1))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_float64():

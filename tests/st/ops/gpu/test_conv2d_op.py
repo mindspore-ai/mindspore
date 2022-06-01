@@ -43,7 +43,7 @@ class NetConv2d(nn.Cell):
         return self.conv(x, w)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv2d():
@@ -86,7 +86,7 @@ class NetConv(nn.Cell):
         return self.conv(self.x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv():
@@ -190,7 +190,7 @@ class NetConv2dDynamic(nn.Cell):
         return x_conv
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv2d_dynamic():
@@ -251,7 +251,7 @@ class NetConvNHWC(nn.Cell):
         return self.conv(self.x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv_NHWC():

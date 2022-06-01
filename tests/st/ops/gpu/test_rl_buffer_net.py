@@ -67,7 +67,7 @@ exp = [s, a, r, s_]
 exp1 = [s_, a, r, s]
 
 
-@ pytest.mark.level0
+@ pytest.mark.level1
 @ pytest.mark.platform_x86_gpu_training
 @ pytest.mark.env_onecard
 def test_Buffer():

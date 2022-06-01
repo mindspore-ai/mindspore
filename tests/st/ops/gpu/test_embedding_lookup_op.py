@@ -49,14 +49,14 @@ def embeddinglookup_testcase(nptype):
     np.testing.assert_almost_equal(expect, output.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_embeddinglookup_float32():
     embeddinglookup_testcase(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_embeddinglookup_float16():

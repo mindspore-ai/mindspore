@@ -23,7 +23,7 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import operations as P
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_square_normal():
@@ -54,7 +54,7 @@ class SqaureNetDynamic(nn.Cell):
         return self.square(x_dyn)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_square_dynamic():

@@ -31,7 +31,7 @@ class NetIOU(nn.Cell):
     def construct(self, anchor, groundtruth):
         return self.encode(anchor, groundtruth)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_iou():

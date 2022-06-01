@@ -132,7 +132,7 @@ def cum_sum(nptype):
 def test_cum_sum_uint8():
     cum_sum(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_sum_int8():
@@ -144,13 +144,13 @@ def test_cum_sum_int8():
 def test_cum_sum_int32():
     cum_sum(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_sum_float16():
     cum_sum(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cum_sum_float32():

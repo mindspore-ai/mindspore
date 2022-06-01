@@ -36,7 +36,7 @@ x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
 value = np.array([[1, 2], [3, 4.0]]).astype(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_assign():
@@ -54,7 +54,7 @@ def test_assign():
     assert np.all(-diff2 < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_assign_float64():

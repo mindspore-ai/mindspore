@@ -161,21 +161,21 @@ def test_gpu_2():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_basic2(Net2)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_3():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_basic2(Net3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_4():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_basic1(Net4)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_5():

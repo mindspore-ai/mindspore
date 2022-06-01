@@ -31,7 +31,7 @@ class Net_Pool_Grad(nn.Cell):
         return self.maxpool_grad_fun(x, dy, index)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool2d_grad():
@@ -73,7 +73,7 @@ def test_maxpool2d_grad():
     assert np.allclose(expect_result, output.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool2d_grad_fp16():

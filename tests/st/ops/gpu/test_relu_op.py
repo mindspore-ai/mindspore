@@ -43,7 +43,7 @@ class NetReluDynamic(nn.Cell):
         return self.relu(x_conv)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_float32():
@@ -65,7 +65,7 @@ def test_relu_float32():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_int8():
@@ -87,7 +87,7 @@ def test_relu_int8():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_int32():
@@ -109,7 +109,7 @@ def test_relu_int32():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_int64():
@@ -132,7 +132,7 @@ def test_relu_int64():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_int64_dynamic_shape():

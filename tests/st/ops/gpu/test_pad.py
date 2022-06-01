@@ -24,7 +24,7 @@ from mindspore import Tensor
 from mindspore.ops.composite import GradOperation
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_basic():
@@ -52,7 +52,7 @@ def test_pad_basic():
     np.testing.assert_array_equal(y_test, test_arr_expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_row():
@@ -83,7 +83,7 @@ def test_pad_row():
     np.testing.assert_equal(y_test_2[:, :, 3:, :], test_arr_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_column():
@@ -114,7 +114,7 @@ def test_pad_column():
     np.testing.assert_equal(y_test_2[:, :, :, 6:-1], test_arr_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_3d_pad():
@@ -172,7 +172,7 @@ class Net(nn.Cell):
         return self.pad(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_3d_backprop():
@@ -211,12 +211,12 @@ def test_pad_3d_backprop():
     np.testing.assert_array_equal(dx, expected_dx)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_error_cases():
     """
-    Test against common errorneous inputs to trigger correct errors
+    Test against common erroneous inputs to trigger correct errors
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 

@@ -89,13 +89,13 @@ def stack_pynative(nptype):
     output = P.Stack(axis=2)((x1, x2))
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_graph_float32():
     stack(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_graph_float16():
@@ -125,13 +125,13 @@ def test_stack_graph_uint8():
 def test_stack_graph_bool():
     stack(np.bool)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_pynative_float32():
     stack_pynative(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_stack_pynative_float16():
