@@ -330,6 +330,9 @@ bool CompFunc(const AnfNodePtr &node1, const AnfNodePtr &node2) {
   auto micro1_value = GetValue<int64_t>(micro1);
   auto micro2_value = GetValue<int64_t>(micro2);
   if (micro1_value == micro2_value) {
+    if (IsPrimitiveCNode(node1, prim::kPrimStridedSlice) || IsPrimitiveCNode(node2, prim::kPrimStridedSlice)) {
+      return true;
+    }
     auto prim1 = GetCNodePrimitive(cnode1);
     auto prim2 = GetCNodePrimitive(cnode2);
     MS_EXCEPTION_IF_NULL(prim1);
@@ -670,7 +673,6 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
                    std::vector<AnfNodePtr> *forward_params, std::vector<AnfNodePtr> *backward_params,
                    std::vector<AnfNodePtr> *allreduce_params, const FuncGraphPtr &root) {
   std::list<ValuePtr> name_list = {};
-  auto stage_id = g_device_manager->stage_id();
   for (auto &node : root->nodes()) {
     if (!node->isa<CNode>()) {
       continue;
@@ -703,9 +705,6 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
       }
     } else {
       if (cnode->HasPrimalAttr(PIPELINE_BEGIN)) {
-        if (stage_id != 0 && IsPrimitiveCNode(node, prim::kPrimStridedSlice)) {
-          continue;
-        }
         forward_start->push_back(node);
       }
       if (cnode->HasPrimalAttr(PIPELINE_END)) {
