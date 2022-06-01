@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <set>
+#include <mutex>
 #include "utils/hash_map.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
@@ -71,6 +72,7 @@ class MemoryManagerActor : public ActorBase {
   // will set fail message info OpContext, major thread will destroy the OpContext object, subsequent actor can not set
   // fail message again, so we record allocating memory fail event by the uuid of the batch, which is key of the set.
   std::set<int> mem_alloc_failed_step_ids_;
+  std::mutex mem_alloc_failed_mutex_;
 };
 }  // namespace runtime
 }  // namespace mindspore
