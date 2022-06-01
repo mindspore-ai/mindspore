@@ -46,6 +46,8 @@ class MoEConfig:
                 router) to be added to the entire model loss, which is < 1.0. Default: 0.05.
             num_experts_chosen (int): The number of experts is chosen by each token and it should not be larger
                 than expert_num. Default: 1.
+            expert_group_size (int): The number of tokens in each data parallel group. Default: None. This parameter is
+                effective only when in AUTO_PARALLEL mode, and NOT SHARDING_PROPAGATION.
         Supported Platforms:
             ``Ascend``
 
@@ -55,11 +57,13 @@ class MoEConfig:
     """
 
     def __init__(self, expert_num=1, capacity_factor=1.1, aux_loss_factor=0.05,
-                 num_experts_chosen=1):
+                 num_experts_chosen=1, expert_group_size=None):
         Validator.check_positive_int(expert_num, "expert_num")
         Validator.check_positive_float(capacity_factor, "capacity_factor")
         Validator.check_positive_float(aux_loss_factor, "aux_loss_factor")
         Validator.check_positive_int(num_experts_chosen, "num_experts_chosen")
+        if expert_group_size is not None:
+            Validator.check_positive_int(expert_group_size, "expert_group_size")
         if capacity_factor < 1.0:
             raise ValueError(f"'capacity_factor' must be equal to or greater than 1.0, "
                              f"but got {capacity_factor}.")
@@ -73,6 +77,7 @@ class MoEConfig:
         self.capacity_factor = capacity_factor
         self.aux_loss_factor = aux_loss_factor
         self.num_experts_chosen = num_experts_chosen
+        self.expert_group_size = expert_group_size
 
 
 default_moe_config = MoEConfig()
@@ -151,6 +156,7 @@ class MoE(Cell):
             self.capacity_factor = moe_config.capacity_factor
             self.aux_loss_factor = moe_config.aux_loss_factor
             self.num_experts_chosen = moe_config.num_experts_chosen
+            self.expert_group_size = moe_config.expert_group_size
             self.dp_group = parallel_config.data_parallel
             self.dp = parallel_config.data_parallel
             self.ep = parallel_config.expert_parallel
@@ -161,6 +167,7 @@ class MoE(Cell):
                                    dropout_rate=dropout_rate,
                                    hidden_act=hidden_act,
                                    expert_num=self.expert_dim,
+                                   expert_group_size=self.expert_group_size,
                                    param_init_type=param_init_type,
                                    parallel_config=parallel_config)
             self.reshape = P.Reshape()
