@@ -16,7 +16,7 @@ mindspore.ops.fills
 
     **异常：**
 
-    **TypeError** - `x` 不是Tensor。
-    **TypeError** - `value` 具有前面未指定的类型。
-    **RuntimeError** - `value` 不能转换为与当前Tensor相同的类型。
-    **ValueError** - `value` 是非0维Tensor。
+    - **TypeError** - `x` 不是Tensor。
+    - **TypeError** - `value` 具有前面未指定的类型。
+    - **RuntimeError** - `value` 不能转换为与当前Tensor相同的类型。
+    - **ValueError** - `value` 是非0维Tensor。
