@@ -20,5 +20,7 @@
 namespace mindspore::lite::micro {
 extern const char *calib_header;
 extern const char *calib_source;
+extern const char *calib_header_cortex;
+extern const char *calib_source_cortex;
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_CALIB_OUTPUT_H_

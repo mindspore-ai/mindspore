@@ -20,5 +20,10 @@
 namespace mindspore::lite::micro {
 extern const char load_input_h[];
 extern const char load_input_c[];
+extern const char load_input_h_cortex[];
+extern const char load_input_c_cortex[];
+extern const char data_h_cortex[];
+extern const char cortex_m7_toolchain[];
+extern const char cortex_build_sh[];
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_BENCH_LOAD_INPUT_H_

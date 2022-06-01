@@ -19,5 +19,6 @@
 
 namespace mindspore::lite::micro {
 extern const char benchmark_source[];
+extern const char benchmark_source_cortex[];
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_BENCHMARK_H_

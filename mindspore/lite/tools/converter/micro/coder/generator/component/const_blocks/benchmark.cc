@@ -17,8 +17,7 @@
 #include "coder/generator/component/const_blocks/benchmark.h"
 
 namespace mindspore::lite::micro {
-const char benchmark_source[] = R"RAW(
-/**
+const char benchmark_source[] = R"RAW(/**
  * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -244,6 +243,154 @@ int main(int argc, const char **argv) {
     FreeCalibTensors(&calib_tensors, calib_num);
   }
   printf("========run success=======\n");
+  MSModelDestroy(&model_handle);
+  return kMSStatusSuccess;
+}
+)RAW";
+
+const char benchmark_source_cortex[] = R"RAW(/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "calib_output.h"
+#include "load_input.h"
+#include "data.h"
+#include "c_api/types_c.h"
+#include "c_api/model_c.h"
+#include "c_api/context_c.h"
+#include "src/tensor.h"
+#include <time.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Print data in tensor
+void PrintTensorHandle(MSTensorHandle tensor) {
+  printf("name: %s, ", MSTensorGetName(tensor));
+  MSDataType data_type = MSTensorGetDataType(tensor);
+  printf("DataType: %d, ", data_type);
+  size_t element_num = (size_t)(MSTensorGetElementNum(tensor));
+  printf("Elements: %zu, ", element_num);
+  printf("Shape: [");
+  size_t shape_num = 0;
+  const int64_t *dims = MSTensorGetShape(tensor, &shape_num);
+  for (size_t i = 0; i < shape_num; i++) {
+    printf("%d ", (int)dims[i]);
+  }
+  printf("], Data: \n");
+  void *data = MSTensorGetMutableData(tensor);
+  element_num = element_num > 10 ? 10 : element_num;
+  switch (data_type) {
+    case kMSDataTypeNumberTypeFloat32: {
+      for (size_t i = 0; i < element_num; i++) {
+        printf("%.6f, ", ((float *)data)[i]);
+      }
+      printf("\n");
+    } break;
+    case kMSDataTypeNumberTypeInt32: {
+      for (size_t i = 0; i < element_num; i++) {
+        printf("%ld", ((int32_t *)data)[i]);
+      }
+      printf("\n");
+    } break;
+    case kMSDataTypeNumberTypeInt8: {
+      for (size_t i = 0; i < element_num; i++) {
+        printf("%c", ((int8_t *)data)[i]);
+      }
+      printf("\n");
+    } break;
+    case kMSDataTypeNumberTypeUInt8: {
+      for (size_t i = 0; i < element_num; i++) {
+        printf("%u", ((uint8_t *)data)[i]);
+      }
+      printf("\n");
+    } break;
+    default:
+      printf("Unsupported data type to print");
+      break;
+  }
+}
+
+int benchmark() {
+  int ret;
+  printf("========run benchmark======\n");
+  printf("========Model build========\n");
+  MSModelHandle model_handle = MSModelCreate();
+  if (model_handle == NULL) {
+    printf("MSModelCreate failed.\n");
+    return kMSStatusLiteNullptr;
+  }
+  ret = MSModelBuild(model_handle, NULL, 0, kMSModelTypeMindIR, NULL);
+  if (ret != kMSStatusSuccess) {
+    printf("MSModelBuildFromFile failed, ret : %d.\n", ret);
+    MSModelDestroy(&model_handle);
+    return ret;
+  }
+
+  printf("========Load inputs=======\n");
+  MSTensorHandleArray inputs_handle = MSModelGetInputs(model_handle);
+  if (inputs_handle.handle_list == NULL) {
+    printf("MSModelGetInputs failed.");
+    MSModelDestroy(&model_handle);
+    return kMSStatusLiteError;
+  }
+  ret = SetDataToMSTensor(&inputs_handle, &g_inputs);
+  if (ret != kMSStatusSuccess) {
+    MSModelDestroy(&model_handle);
+    return ret;
+  }
+  ret = LoadCalibInputs(&inputs_handle, &g_calib_inputs);
+  if (ret != kMSStatusSuccess) {
+    MSModelDestroy(&model_handle);
+    return ret;
+  }
+
+  printf("========Set outputs data pointer=======\n");
+  MSTensorHandleArray outputs_handle = MSModelGetOutputs(model_handle);
+  if (outputs_handle.handle_list == NULL) {
+    printf("MSModelGetOutputs failed.");
+    MSModelDestroy(&model_handle);
+    return kMSStatusLiteError;
+  }
+  ret = SetDataToMSTensor(&outputs_handle, &g_outputs);
+  if (ret != kMSStatusSuccess) {
+    MSModelDestroy(&model_handle);
+    return ret;
+  }
+
+  printf("========Infer start=======\n");
+  ret = MSModelPredict(model_handle, inputs_handle, &outputs_handle, NULL, NULL);
+  if (ret != kMSStatusSuccess) {
+    MSModelDestroy(&model_handle);
+    return ret;
+  }
+
+  printf("========Compare outputs=======\n");
+  for (size_t i = 0; i < outputs_handle.handle_num; i++) {
+    MSTensorHandle output = outputs_handle.handle_list[i];
+    PrintTensorHandle(output);
+  }
+
+  ret = CompareOutputs(&outputs_handle, &g_calib_outputs);
+  if (ret != kMSStatusSuccess) {
+    MSModelDestroy(&model_handle);
+    return ret;
+  }
+
+  printf("========Calib success=======\n");
   MSModelDestroy(&model_handle);
   return kMSStatusSuccess;
 }

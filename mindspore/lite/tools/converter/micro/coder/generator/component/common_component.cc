@@ -56,7 +56,7 @@ void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &
   if (config.target() != kARM32M) {
     ofs << model_runtime_malloc_source;
   } else {
-    ofs << "micro_model->runtime_buffer = " << ctx->buffer_name() << ";\n";
+    ofs << "  micro_model->runtime_buffer = " << ctx->buffer_name() << ";\n";
   }
   auto array_tostring = [&ofs](Tensor *tensor, const std::string &prefix, size_t index) {
     ofs << kAlignedString << prefix << "_tensors[" << index << "] = malloc(sizeof(MicroTensor));\n";

@@ -20,5 +20,6 @@
 namespace mindspore::lite::micro {
 extern const char context_header[];
 extern const char context_source[];
+extern const char context_source_cortex[];
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_MCONTEXT_H_

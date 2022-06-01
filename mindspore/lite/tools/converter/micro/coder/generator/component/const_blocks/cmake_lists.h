@@ -18,7 +18,8 @@
 #define MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_CMAKE_LISTS_H_
 
 namespace mindspore::lite::micro {
-extern const char bench_cmake_lists_txt[];
-extern const char src_cmake_lists_txt[];
+extern const char bench_cmake_lists[];
+extern const char bench_cmake_lists_cortex[];
+extern const char src_cmake_lists[];
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_CMAKE_LISTS_H_
