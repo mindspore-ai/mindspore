@@ -28,9 +28,8 @@ class DecreaseTransferPrecision : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph);
 
  private:
-  bool ProcessFather(const FuncGraphPtr &func_graph, const AnfNodePtr &node, bool is_tuple_out = false,
-                     size_t index = 0);
-  bool ProcessSon(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t index);
+  bool ProcessFather(const FuncGraphPtr &, const AnfNodePtr &node, bool is_tuple_out = false, size_t index = 0) const;
+  bool ProcessSon(const FuncGraphPtr &, const AnfNodePtr &node, size_t index) const;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_DECREASE_TRANSFER_PRECISION_H_

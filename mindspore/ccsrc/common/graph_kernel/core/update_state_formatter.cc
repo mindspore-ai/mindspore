@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ AnfNodePtrList GetUpdateStateList(const FuncGraphPtr &func_graph) {
 }
 
 AnfNodePtrList SpreadUpdateState::ExtendInputsOfUpdateState(const AnfNodePtrList &nodes,
-                                                            const FuncGraphPtr &func_graph) {
+                                                            const FuncGraphPtr &func_graph) const {
   AnfNodePtrList result;
   for (auto node : nodes) {
     if (node->abstract()->isa<abstract::AbstractTuple>()) {
@@ -69,13 +69,15 @@ bool SpreadUpdateState::Run(const FuncGraphPtr &func_graph) {
   for (auto node : todos) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->size() <= kUpdateStateRealInput) continue;
+    if (cnode->size() <= kUpdateStateRealInput) {
+      continue;
+    }
     auto inputs = GkUtils::SpreadTuples(cnode->inputs(), kUpdateStateRealInput);
     // extend inputs of UpdateState if which have multiple outputs
     inputs = ExtendInputsOfUpdateState(inputs, func_graph);
     if (inputs.size() + kUpdateStateRealInput != cnode->size() || inputs[0] != cnode->input(kUpdateStateRealInput)) {
       AnfNodePtrList node_inputs = {cnode->input(kAnfPrimitiveIndex), cnode->input(kUpdateStateStateInput)};
-      (void)node_inputs.insert(node_inputs.end(), inputs.begin(), inputs.end());
+      (void)node_inputs.insert(node_inputs.cend(), inputs.cbegin(), inputs.cend());
       // Create a new UpdateState
       auto new_node = func_graph->NewCNode(node_inputs);
       new_node->set_abstract(node->abstract());
@@ -94,12 +96,14 @@ bool ShrinkUpdateState::Run(const FuncGraphPtr &func_graph) {
   for (const auto &node : todos) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->size() <= kUpdateStateRealInput + 1) continue;
+    if (cnode->size() <= kUpdateStateRealInput + 1) {
+      continue;
+    }
     AnfNodePtrList mt_inputs = GkUtils::SpreadTuples(cnode->inputs(), kUpdateStateRealInput);
     AbstractBasePtrList abs_list;
     (void)std::transform(mt_inputs.begin(), mt_inputs.end(), std::back_inserter(abs_list),
                          [](const AnfNodePtr &inp) { return inp->abstract(); });
-    (void)mt_inputs.insert(mt_inputs.begin(), NewValueNode(prim::kPrimMakeTuple));
+    (void)mt_inputs.insert(mt_inputs.cbegin(), NewValueNode(prim::kPrimMakeTuple));
     auto mt_node = func_graph->NewCNode(mt_inputs);
     mt_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
     Callback::Instance()->SetEmptyKernelInfo(mt_node);
@@ -121,12 +125,18 @@ bool ExtendOutputForUpdateState::Run(const FuncGraphPtr &func_graph) {
   bool changed = false;
   for (const auto &node : todos) {
     (void)GetGraphKernelGetitemList(mng, node, &getitems_, false);
-    if (getitems_.empty()) continue;
+    if (getitems_.empty()) {
+      continue;
+    }
     FindIndexesToUpdateState(mng);
-    if (indexes_.empty()) continue;
+    if (indexes_.empty()) {
+      continue;
+    }
     auto sub_func_graph = GetCNodeFuncGraph(node);
     FilterIndexes(sub_func_graph);
-    if (indexes_.empty()) continue;
+    if (indexes_.empty()) {
+      continue;
+    }
     for (auto idx : indexes_) {
       changed = ProcessIndex(func_graph, sub_func_graph, idx) || changed;
     }
@@ -149,7 +159,9 @@ void ExtendOutputForUpdateState::FindIndexesToUpdateState(const FuncGraphManager
   external_user_type_.resize(getitems_.size(), ExternalUserType::kNormalOp);
   for (size_t i = 0; i < getitems_.size(); ++i) {
     const AnfNodePtr &getitem = getitems_[i];
-    if (getitem == nullptr) continue;
+    if (getitem == nullptr) {
+      continue;
+    }
 
     const auto &getitem_user = mng->node_users()[getitem];
     auto IsUpdateState = [](const std::pair<AnfNodePtr, int> &user) {
@@ -170,7 +182,7 @@ void ExtendOutputForUpdateState::FilterIndexes(const FuncGraphPtr &func_graph) {
   // do not process the side-effect nodes.
   (void)indexes_.erase(std::remove_if(indexes_.begin(), indexes_.end(),
                                       [&output_node](size_t i) { return IsSideEffectNode(output_node->input(i + 1)); }),
-                       indexes_.end());
+                       indexes_.cend());
 }
 
 std::vector<size_t> ExtendOutputForUpdateState::FindAllOutputs(const FuncGraphPtr &func_graph, size_t index) {
@@ -195,7 +207,9 @@ std::vector<size_t> ExtendOutputForUpdateState::FindAllOutputs(const FuncGraphPt
   for (size_t i = 1; i < output_node->size(); i++) {
     auto out = output_node->input(i);
     // only process the nodes that depend on index_node.
-    if (!DependsOnIndexNode(out)) continue;
+    if (!DependsOnIndexNode(out)) {
+      continue;
+    }
 
     // 1. always extend to the side-effect nodes
     // 2. if the external users are only UpdateState, the related output will be eliminated,

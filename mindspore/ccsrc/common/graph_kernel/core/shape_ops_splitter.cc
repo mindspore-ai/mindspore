@@ -51,7 +51,7 @@ void SplitNode(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) {
   }
 
   size_t i = 0;
-  for (auto [user, indices] : users_info) {
+  for (const auto [user, indices] : users_info) {
     auto user_node = user->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(user_node);
     for (auto index : indices) {
@@ -71,7 +71,7 @@ bool ShapeOpsSplitter::IsMultiUserShapeOps(const AnfNodePtr &node, const FuncGra
                                             [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
 }
 
-bool ShapeOpsSplitter::Process(const FuncGraphPtr &func_graph) {
+bool ShapeOpsSplitter::Process(const FuncGraphPtr &func_graph) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto mng = func_graph->manager();
   if (mng == nullptr) {

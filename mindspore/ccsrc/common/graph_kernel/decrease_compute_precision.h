@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,7 @@ class DecreaseComputePrecision : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool Process(const FuncGraphPtr &func_graph);
-  AnfNodePtr CreateCast(const AnfNodePtr &input, const TypePtr &dst_type, const std::string &format) const;
+  bool Process(const FuncGraphPtr &func_graph) const;
   std::vector<PrimitivePtr> black_list_;
 };
 }  // namespace mindspore::graphkernel

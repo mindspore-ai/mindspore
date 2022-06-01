@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ CNodePtr InsertCastForGraphKernel(const FuncGraphPtr &func_graph, const CNodePtr
   return new_node;
 }
 
-bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) {
+bool DecreaseComputePrecision::Process(const FuncGraphPtr &func_graph) const {
   auto mng = func_graph->manager();
   if (mng == nullptr) {
     mng = Manage(func_graph, true);

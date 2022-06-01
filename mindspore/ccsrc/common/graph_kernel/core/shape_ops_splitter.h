@@ -30,7 +30,7 @@ class ShapeOpsSplitter : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool Process(const FuncGraphPtr &func_graph);
+  bool Process(const FuncGraphPtr &func_graph) const;
   bool IsMultiUserShapeOps(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) const;
   std::vector<PrimitivePtr> shape_ops_;
 };

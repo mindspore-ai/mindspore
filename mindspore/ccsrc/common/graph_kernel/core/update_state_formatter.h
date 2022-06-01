@@ -1,6 +1,6 @@
 
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ class SpreadUpdateState : public opt::Pass {
  public:
   SpreadUpdateState() : Pass("spread_update_state") {}
   ~SpreadUpdateState() override = default;
-  AnfNodePtrList ExtendInputsOfUpdateState(const AnfNodePtrList &nodes, const FuncGraphPtr &func_graph);
+  AnfNodePtrList ExtendInputsOfUpdateState(const AnfNodePtrList &nodes, const FuncGraphPtr &func_graph) const;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 
