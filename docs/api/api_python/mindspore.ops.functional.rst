@@ -307,6 +307,7 @@ Array操作
     mindspore.ops.expand_dims
     mindspore.ops.gather
     mindspore.ops.gather_d
+    mindspore.ops.gather_elements
     mindspore.ops.gather_nd
     mindspore.ops.masked_fill
     mindspore.ops.masked_select

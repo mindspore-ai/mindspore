@@ -33,6 +33,7 @@ int64_t GetGatherDimValue(const AbstractBasePtr dim_ptr) {
   auto dim_type_ptr = dim_ptr->BuildType();
   MS_EXCEPTION_IF_NULL(dim_type_ptr);
   int64_t dim_v = 0;
+  bool value_type_error = false;
   if (dim_value_ptr->isa<tensor::Tensor>()) {
     auto dim_tensor = dim_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(dim_tensor);
@@ -46,17 +47,23 @@ int64_t GetGatherDimValue(const AbstractBasePtr dim_ptr) {
       auto dim_data32 = reinterpret_cast<int *>(dim_tensor->data_c());
       MS_EXCEPTION_IF_NULL(dim_data32);
       dim_v = static_cast<int64_t>(*dim_data32);
-    } else {
+    } else if (element->type_id() == kNumberTypeInt64) {
       auto dim_data64 = reinterpret_cast<int64_t *>(dim_tensor->data_c());
       MS_EXCEPTION_IF_NULL(dim_data64);
       dim_v = static_cast<int64_t>(*dim_data64);
+    } else {
+      value_type_error = true;
     }
   } else {
     if (dim_value_ptr->isa<Int32Imm>() || dim_value_ptr->isa<Int64Imm>()) {
       dim_v = GetValue<int64_t>(dim_value_ptr);
     } else {
-      MS_LOG(EXCEPTION) << "For GatherD, 'dim' must be one of these types: [int32/int64].";
+      value_type_error = true;
     }
+  }
+
+  if (value_type_error) {
+    MS_LOG(EXCEPTION) << "For GatherD, 'dim' must be one of these types: [int32/int64].";
   }
 
   return dim_v;
@@ -134,7 +141,9 @@ AbstractBasePtr GatherDInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   (void)CheckAndConvertUtils::CheckTensorTypeValid("index", input_args[kInputIndex2]->BuildType(), index_valid_types,
                                                    prim_name);
   (void)CheckAndConvertUtils::CheckSubClass("dim", input_args[kInputIndex1]->BuildType(), dim_valid_types, prim_name);
-  return abstract::MakeAbstract(GatherDInferShape(primitive, input_args), GatherDInferType(primitive, input_args));
+  auto infer_type = GatherDInferType(primitive, input_args);
+  auto infer_shape = GatherDInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(GatherD, prim::kPrimGatherD, GatherDInfer, nullptr, true);
 }  // namespace ops

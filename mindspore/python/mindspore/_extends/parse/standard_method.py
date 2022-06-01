@@ -1353,6 +1353,18 @@ def one_hot(self, depth, on_value, off_value, axis=-1):
     return P.OneHot(axis)(self, depth, on_value, off_value)
 
 
+def gather_elements(x, dim, index):
+    r"""
+    Gathers values along an axis specified by dim.
+
+    Refer to :func:`mindspore.ops.gather_d` for more detail.
+    """
+    check_value_type('x', x, (Tensor,), 'Tensor.gather_elements')
+    check_value_type('dim', dim, (int,), 'Tensor.gather_elements')
+    check_value_type('index', index, (Tensor,), 'Tensor.gather_elements')
+    return F.gather_elements(x, dim, index)
+
+
 def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disable=redefined-builtin
     """
     Return sum of array elements over a given axis.

@@ -1775,10 +1775,10 @@ class Tensor(Tensor_):
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 
@@ -3620,6 +3620,41 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('masked_select')(self, mask)
+
+    def gather_elements(self, dim, index):
+        """
+        Gathers values along an axis specified by dim.
+
+        Args:
+            dim (int): The axis along which to index. It must be int32 or int64.
+            index (Tensor): The indices of elements to gather. It can be one of the following data types:
+                int32, int64. The value range of each index element is [-x_rank[dim], x_rank[dim]).
+
+        Returns:
+            Tensor, has the same shape as index tensor and same data type as input tensor.
+
+        Raises:
+            TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
+            ValueError: If length of shape of `x` is not equal to length of shape of `index`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
+            >>> index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
+            >>> dim = 1
+            >>> output = x.gather_elements(dim, index)
+            >>> print(output)
+            [[1 1]
+             [4 3]]
+        """
+        self._init_check()
+        validator.check_value_type('index', index, (Tensor_,), 'Tensor.gather_elements')
+        return tensor_operator_registry.get('gather_elements')(self, dim, index)
 
     def nonzero(self):
         """
