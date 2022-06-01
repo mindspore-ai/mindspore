@@ -22,7 +22,6 @@
 #include <functional>
 #include <utility>
 #include <vector>
-#include "tools/converter/converter_flags.h"
 #include "abstract/abstract_value.h"
 #include "mindspore/core/ir/primitive.h"
 #include "mindspore/core/ops/op_name.h"

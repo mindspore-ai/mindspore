@@ -20,7 +20,8 @@
 #include <vector>
 #include "backend/common/optimizer/pass.h"
 #include "backend/common/optimizer/optimizer.h"
-#include "tools/converter/converter_flags.h"
+#include "include/errorcode.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore::lite {
 class Conv1DInOutAdjust {

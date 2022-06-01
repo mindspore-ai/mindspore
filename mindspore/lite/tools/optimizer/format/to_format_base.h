@@ -23,7 +23,6 @@
 #include <unordered_map>
 #include <vector>
 #include "backend/common/optimizer/pass.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 

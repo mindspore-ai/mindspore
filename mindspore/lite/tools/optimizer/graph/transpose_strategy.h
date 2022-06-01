@@ -21,7 +21,6 @@
 #include <memory>
 #include <string>
 #include "schema/inner/model_generated.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/optimizer/graph/node_infershape.h"
 

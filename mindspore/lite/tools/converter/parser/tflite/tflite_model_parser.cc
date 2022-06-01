@@ -27,7 +27,6 @@
 #include "tools/common/graph_util.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/converter_context.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/converter/parser/tflite/tflite_inputs_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/lite_model_parser_creator.h"
