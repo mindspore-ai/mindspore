@@ -31,7 +31,7 @@ class Dataset;
 using MSTensorVec = std::vector<mindspore::MSTensor>;
 }  // namespace dataset
 
-using LoadDataFunc = std::function<int(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *dataset_vec)>;
+using LoadDataFunc = std::function<int(std::vector<lite::Tensor *> inputs, dataset::MSTensorVec *dataset_vec)>;
 
 namespace session {
 

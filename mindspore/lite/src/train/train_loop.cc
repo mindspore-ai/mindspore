@@ -160,7 +160,7 @@ int TrainLoop::Eval(Dataset *ds, std::vector<TrainLoopCallBack *> cbs, LoadDataF
   return RET_OK;
 }
 
-int TrainLoop::LoadData(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *row_vec) {
+int TrainLoop::LoadData(std::vector<lite::Tensor *> inputs, dataset::MSTensorVec *row_vec) {
   auto num_of_inputs = inputs.size();
   if ((num_of_inputs == 0) || (row_vec == nullptr) || (num_of_inputs != row_vec->size())) {
     return RET_STOP_TRAINING;

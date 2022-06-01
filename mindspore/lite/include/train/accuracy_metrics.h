@@ -33,7 +33,7 @@ class AccuracyMetrics : public Metrics {
   virtual ~AccuracyMetrics() = default;
   void Clear() override { total_accuracy_ = total_steps_ = 0.0; }
   float Eval() override;
-  void Update(std::vector<tensor::MSTensor *> inputs, std::vector<tensor::MSTensor *> outputs) override;
+  void Update(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) override;
 
  protected:
   int accuracy_metrics_ = METRICS_CLASSIFICATION;

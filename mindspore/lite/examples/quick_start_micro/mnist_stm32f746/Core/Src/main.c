@@ -12,7 +12,7 @@ int main(void) {
     const char *model_buffer = nullptr;
     int model_size = 0;
     session::LiteSession *session = mindspore::session::LiteSession::CreateSession(model_buffer, model_size, nullptr);
-    Vector<tensor::MSTensor *> inputs = session->GetInputs();
+    Vector<lite::Tensor *> inputs = session->GetInputs();
     size_t inputs_num = inputs.size();
     void *inputs_binbuf[inputs_num];
     int inputs_size[inputs_num];
@@ -31,7 +31,7 @@ int main(void) {
     }
     Vector<String> outputs_name = session->GetOutputTensorNames();
     for (int i = 0; i < outputs_name.size(); ++i) {
-      tensor::MSTensor *output_tensor = session->GetOutputByTensorName(outputs_name[i]);
+      lite::Tensor *output_tensor = session->GetOutputByTensorName(outputs_name[i]);
       if (output_tensor == nullptr) {
         return -1;
       }

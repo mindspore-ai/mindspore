@@ -24,7 +24,6 @@
 #include <map>
 #include <atomic>
 #include "src/runtime/kernel_exec.h"
-#include "include/ms_tensor.h"
 #include "src/runtime/lite_model.h"
 #include "src/runtime/inner_context.h"
 #include "src/runtime/runtime_allocator.h"
@@ -65,17 +64,16 @@ class LiteSession {
   virtual int Init(InnerContext *context);
   virtual void BindThread(bool if_bind);
   virtual int CompileGraph(Model *model);
-  virtual std::vector<mindspore::tensor::MSTensor *> GetInputs() const;
-  virtual mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &name) const;
+  virtual std::vector<mindspore::lite::Tensor *> GetInputs() const;
+  virtual mindspore::lite::Tensor *GetInputsByTensorName(const std::string &name) const;
   virtual int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
-  virtual std::vector<mindspore::tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const;
+  virtual std::vector<mindspore::lite::Tensor *> GetOutputsByNodeName(const std::string &node_name) const;
   virtual std::vector<std::string> GetOutputTensorNames() const;
-  virtual mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const;
-  virtual std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const;
+  virtual mindspore::lite::Tensor *GetOutputByTensorName(const std::string &tensor_name) const;
+  virtual std::unordered_map<std::string, mindspore::lite::Tensor *> GetOutputs() const;
   virtual int BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
                                     std::map<std::string, unsigned int> *outputGLTexture);
-  virtual int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
-                     const std::vector<std::vector<int>> &dims);
+  virtual int Resize(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims);
   void InitExecutionConfig(std::map<std::string, TypeId> *config) { execution_plan_ = config; }
   void set_model(Model *model) { this->model_ = model; }
   const std::vector<kernel::KernelExec *> &get_kernels() const { return this->kernels_; }
@@ -94,8 +92,8 @@ class LiteSession {
   virtual int SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f) {
     return mindspore::lite::RET_ERROR;
   }
-  virtual std::vector<tensor::MSTensor *> GetPredictions() const {
-    std::vector<tensor::MSTensor *> outputs;
+  virtual std::vector<lite::Tensor *> GetPredictions() const {
+    std::vector<lite::Tensor *> outputs;
     return outputs;
   }
   virtual int Export(const std::string &file_name, lite::ModelType model_type = lite::MT_TRAIN,
@@ -103,22 +101,22 @@ class LiteSession {
                      std::vector<std::string> out_put_tensor_name = {}) {
     return mindspore::lite::RET_ERROR;
   }
-  virtual int UpdateWeights(std::vector<tensor::MSTensor *> new_weights) { return mindspore::lite::RET_ERROR; }
-  virtual std::vector<tensor::MSTensor *> GetFeatureMaps() const {
-    std::vector<tensor::MSTensor *> features;
+  virtual int UpdateWeights(std::vector<lite::Tensor *> new_weights) { return mindspore::lite::RET_ERROR; }
+  virtual std::vector<lite::Tensor *> GetFeatureMaps() const {
+    std::vector<lite::Tensor *> features;
     return features;
   }
-  virtual int UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features) { return mindspore::lite::RET_ERROR; }
-  virtual std::vector<tensor::MSTensor *> GetGradients() const {
-    std::vector<tensor::MSTensor *> gradients;
+  virtual int UpdateFeatureMaps(const std::vector<lite::Tensor *> &features) { return mindspore::lite::RET_ERROR; }
+  virtual std::vector<lite::Tensor *> GetGradients() const {
+    std::vector<lite::Tensor *> gradients;
     return gradients;
   }
-  virtual int ApplyGradients(const std::vector<tensor::MSTensor *> &gradients) { return mindspore::lite::RET_ERROR; }
-  virtual std::vector<tensor::MSTensor *> GetOptimizerParams() const {
-    std::vector<tensor::MSTensor *> params;
+  virtual int ApplyGradients(const std::vector<lite::Tensor *> &gradients) { return mindspore::lite::RET_ERROR; }
+  virtual std::vector<lite::Tensor *> GetOptimizerParams() const {
+    std::vector<lite::Tensor *> params;
     return params;
   }
-  virtual int SetOptimizerParams(const std::vector<tensor::MSTensor *> &params) { return mindspore::lite::RET_ERROR; }
+  virtual int SetOptimizerParams(const std::vector<lite::Tensor *> &params) { return mindspore::lite::RET_ERROR; }
 
  protected:
   static void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
@@ -134,7 +132,7 @@ class LiteSession {
   void InitGraphOutputNodeMap(const lite::Model *model);
   void InitGraphOutputTensorMap(const lite::Model *model);
   int UpdateInputShapeMap();
-  int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims);
+  int ResizeInputs(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims);
   int SetAllocatorForDelegateKernels(const kernel::KernelExec *kernel);
   int PrepareKernels(const Model *model);
   int SetTensorInitRefCount(const Model *model);
@@ -182,17 +180,17 @@ class LiteSession {
   // graph output tensors
   std::vector<Tensor *> outputs_;
   // graph input MSTensors
-  std::vector<mindspore::tensor::MSTensor *> input_vec_;
+  std::vector<mindspore::lite::Tensor *> input_vec_;
   // graph input tensor name -- input tensors
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> input_map_;
+  std::unordered_map<std::string, mindspore::lite::Tensor *> input_map_;
   // graph input tensor -- input tensor shape
   std::unordered_map<Tensor *, std::vector<int>> input_shape_map_;
   // graph output node name -- output tensors
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> output_node_map_;
+  std::unordered_map<std::string, std::vector<mindspore::lite::Tensor *>> output_node_map_;
 
   std::vector<std::string> output_tensor_names_;
   // graph output tensor name -- output tensor
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> output_tensor_map_;
+  std::unordered_map<std::string, mindspore::lite::Tensor *> output_tensor_map_;
 
   Executor *executor_ = nullptr;
   Model *model_ = nullptr;

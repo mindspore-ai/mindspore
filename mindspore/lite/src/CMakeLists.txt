@@ -122,7 +122,6 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tensor_category.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ms_tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/inner_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_model.cc

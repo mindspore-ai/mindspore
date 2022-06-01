@@ -131,7 +131,7 @@ int MindrtExecutor::PrepareGraphOutput(const std::vector<kernel::KernelExec *> &
   return RET_OK;
 }
 
-int MindrtExecutor::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+int MindrtExecutor::Resize(const std::vector<mindspore::lite::Tensor *> &inputs,
                            const std::vector<std::vector<int>> &dims) {
   for (auto actor : op_actors_) {
     actor->ResizeGraphInput(inputs, dims);

@@ -30,7 +30,7 @@ class MetricsAdapter : public session::Metrics {
   void Clear() override { metrics_->Clear(); }
 
   float Eval() override { return metrics_->Eval(); }
-  void Update(std::vector<tensor::MSTensor *> inputs, std::vector<tensor::MSTensor *> outputs) override {
+  void Update(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) override {
     // metrics_->Update(inputs, outputs); TODO need to implement
   }
 

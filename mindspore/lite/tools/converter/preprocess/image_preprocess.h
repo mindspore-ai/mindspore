@@ -20,7 +20,6 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 #include "tools/converter/preprocess/preprocess_param.h"
-#include "include/ms_tensor.h"
 #include "include/api/model.h"
 namespace mindspore {
 namespace lite {

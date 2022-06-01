@@ -23,7 +23,6 @@
 #include <vector>
 #include <string>
 #include "include/lite_session.h"
-#include "include/ms_tensor.h"
 #include "src/dataset.h"
 
 class NetRunner {
@@ -40,7 +39,7 @@ class NetRunner {
   std::vector<int> FillInputData(const std::vector<DataLabelTuple> &dataset, int serially = -1) const;
   float CalculateAccuracy(const std::vector<DataLabelTuple> &dataset, mindspore::session::LiteSession *session) const;
   float GetLoss() const;
-  mindspore::tensor::MSTensor *SearchOutputsForSize(size_t size) const;
+  mindspore::lite::Tensor *SearchOutputsForSize(size_t size) const;
 
   DataSet ds_;
   mindspore::session::LiteSession *session_ = nullptr;

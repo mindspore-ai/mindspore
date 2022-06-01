@@ -19,7 +19,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
-#include "include/ms_tensor.h"
+#include "src/tensor.h"
 
 namespace mindspore {
 namespace session {
@@ -29,7 +29,7 @@ class Metrics {
   virtual ~Metrics() = default;
   virtual void Clear() {}
   virtual float Eval() { return 0.0; }
-  virtual void Update(std::vector<tensor::MSTensor *> inputs, std::vector<tensor::MSTensor *> outputs) = 0;
+  virtual void Update(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) = 0;
 };
 
 }  // namespace session

@@ -169,7 +169,7 @@ int TrainSession::InitCallBack() {
   return RET_OK;
 }
 
-static int ReshapeWeightTensor(Tensor *orig_tensor, tensor::MSTensor *new_tensor) {
+static int ReshapeWeightTensor(Tensor *orig_tensor, lite::Tensor *new_tensor) {
   if (orig_tensor->data_type() != new_tensor->data_type()) {
     MS_LOG(ERROR) << "Cannot reshape tensor of different type: " << new_tensor->tensor_name();
     return RET_PARAM_INVALID;
@@ -212,7 +212,7 @@ static int ReshapeWeightTensor(Tensor *orig_tensor, tensor::MSTensor *new_tensor
   return RET_OK;
 }
 
-int TrainSession::UpdateWeights(std::vector<tensor::MSTensor *> modify_tensors) {
+int TrainSession::UpdateWeights(std::vector<lite::Tensor *> modify_tensors) {
   unsigned int num_of_found_tensors = 0;
   for (auto tensor : tensors_) {
     for (auto modify : modify_tensors) {
@@ -851,8 +851,8 @@ float TrainSession::GetLearningRate() {
   return 0.0;
 }
 
-std::vector<tensor::MSTensor *> TrainSession::GetOptimizerParams() const {
-  std::vector<tensor::MSTensor *> params;
+std::vector<lite::Tensor *> TrainSession::GetOptimizerParams() const {
+  std::vector<lite::Tensor *> params;
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
       auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
@@ -876,7 +876,7 @@ std::vector<tensor::MSTensor *> TrainSession::GetOptimizerParams() const {
   return params;
 }
 
-int TrainSession::SetOptimizerParams(const std::vector<tensor::MSTensor *> &params) {
+int TrainSession::SetOptimizerParams(const std::vector<lite::Tensor *> &params) {
   for (size_t ix = 0; ix < params.size(); ix++) {
     auto param = params[ix];
     if (param == nullptr) {
@@ -900,8 +900,8 @@ int TrainSession::SetOptimizerParams(const std::vector<tensor::MSTensor *> &para
   return RET_OK;
 }
 
-std::vector<tensor::MSTensor *> TrainSession::GetGradients() const {
-  std::vector<tensor::MSTensor *> gradients;
+std::vector<lite::Tensor *> TrainSession::GetGradients() const {
+  std::vector<lite::Tensor *> gradients;
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
       auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
@@ -914,7 +914,7 @@ std::vector<tensor::MSTensor *> TrainSession::GetGradients() const {
   return gradients;
 }
 
-int TrainSession::ApplyGradients(const std::vector<tensor::MSTensor *> &gradients) {
+int TrainSession::ApplyGradients(const std::vector<lite::Tensor *> &gradients) {
   auto current_gradients = GetGradients();
   if (current_gradients.size() != gradients.size()) {
     MS_LOG(ERROR) << "gradients vector has wrong size " << gradients.size() << " instead of "
@@ -1062,7 +1062,7 @@ bool TrainSession::IsBN(kernel::KernelExec *kernel) const {
           (kernel->type() == schema::PrimitiveType_FusedBatchNorm));
 }
 
-int TrainSession::Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) {
+int TrainSession::Resize(const std::vector<lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims) {
   FreeWorkSpace();
   if (tensors_data_ != nullptr) {
     free(tensors_data_);
@@ -1201,8 +1201,8 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
   if (orig_train_state) Train();
   return status;
 }
-std::vector<tensor::MSTensor *> TrainSession::GetFeatureMaps() const {
-  std::vector<tensor::MSTensor *> features;
+std::vector<lite::Tensor *> TrainSession::GetFeatureMaps() const {
+  std::vector<lite::Tensor *> features;
   for (auto cur_tensor : this->tensors_) {
     if (cur_tensor->IsConst() && cur_tensor->data_type() == kNumberTypeFloat32) {
       features.push_back(cur_tensor);
@@ -1211,7 +1211,7 @@ std::vector<tensor::MSTensor *> TrainSession::GetFeatureMaps() const {
   return features;
 }
 
-int TrainSession::UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features_map) {
+int TrainSession::UpdateFeatureMaps(const std::vector<lite::Tensor *> &features_map) {
   for (auto feature : features_map) {
     bool find = false;
     for (auto tensor : tensors_) {

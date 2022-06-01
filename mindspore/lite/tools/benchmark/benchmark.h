@@ -60,7 +60,7 @@ class MS_API Benchmark : public BenchmarkBase {
 
   int ReadGLTextureFile(std::map<std::string, GLuint> *inputGlTexture, std::map<std::string, GLuint> *outputGLTexture);
 
-  int FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::tensor::MSTensor *tensor,
+  int FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::lite::Tensor *tensor,
                             std::string name, void *data = nullptr);
 
   int LoadInput() override;
@@ -73,8 +73,7 @@ class MS_API Benchmark : public BenchmarkBase {
 
   int CompareOutput() override;
 
-  int CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
-                                     int *total_size);
+  int CompareDataGetTotalBiasAndSize(const std::string &name, lite::Tensor *tensor, float *total_bias, int *total_size);
 
   int InitTimeProfilingCallbackParameter() override;
 
@@ -94,16 +93,16 @@ class MS_API Benchmark : public BenchmarkBase {
 
   int CompareOutputByCosineDistance(float cosine_distance_threshold);
 
-  int CompareDataGetTotalCosineDistanceAndSize(const std::string &name, tensor::MSTensor *tensor,
+  int CompareDataGetTotalCosineDistanceAndSize(const std::string &name, lite::Tensor *tensor,
                                                float *total_cosine_distance, int *total_size);
-  tensor::MSTensor *GetTensorByNodeShape(const std::vector<size_t> &node_shape);
-  tensor::MSTensor *GetTensorByNameOrShape(const std::string &node_or_tensor_name, const std::vector<size_t> &dims);
+  lite::Tensor *GetTensorByNodeShape(const std::vector<size_t> &node_shape);
+  lite::Tensor *GetTensorByNameOrShape(const std::string &node_or_tensor_name, const std::vector<size_t> &dims);
 
  private:
   mindspore::OpenGL::OpenGLRuntime gl_runtime_;
   session::LiteSession *session_{nullptr};
-  std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> ms_outputs_;
+  std::vector<mindspore::lite::Tensor *> ms_inputs_;
+  std::unordered_map<std::string, mindspore::lite::Tensor *> ms_outputs_;
 
   KernelCallBack before_call_back_ = nullptr;
   KernelCallBack after_call_back_ = nullptr;

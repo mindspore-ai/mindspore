@@ -43,8 +43,7 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
     GPUCallBackParam callbackParam;
     callbackParam.node_name = kernel->name();
     callbackParam.node_type = kernel->type_str();
-    if ((before != nullptr) &&
-        !before(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()), callbackParam)) {
+    if ((before != nullptr) && !before(kernel->in_tensors(), kernel->out_tensors(), callbackParam)) {
       MS_LOG(ERROR) << "run kernel before_callback failed, name: " << kernel->name();
     }
     // Don't support ZeroShape
@@ -87,8 +86,7 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
       }
     }
 
-    if ((after != nullptr) &&
-        !after(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()), callbackParam)) {
+    if ((after != nullptr) && !after(kernel->in_tensors(), kernel->out_tensors(), callbackParam)) {
       MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->name();
     }
   }

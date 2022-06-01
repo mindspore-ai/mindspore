@@ -32,8 +32,8 @@ size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor
 size_t TSFindTensorByName(const std::vector<lite::Tensor *> &where, const std::string &searchParameter);
 kernel::KernelExec *TSFindKernel(const std::vector<kernel::KernelExec *> &where, const std::string &searchParameter);
 size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite::Tensor *searchParameter);
-float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output);
-float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *output);
+float CalculateSparseClassification(lite::Tensor *input, lite::Tensor *output);
+float CalculateOneHotClassification(lite::Tensor *input, lite::Tensor *output);
 Tensor *CastTensor(Tensor *tensor, TypeId dst_data_type, bool support_fp16);
 int ScaleTensor(Tensor *tensor, float scale);
 }  // namespace lite

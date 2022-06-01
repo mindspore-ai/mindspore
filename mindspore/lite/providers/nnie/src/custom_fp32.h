@@ -30,8 +30,8 @@
 #include "src/nnie_print.h"
 #include "src/custom_allocator.h"
 
+using mindspore::MSTensor;
 using mindspore::kernel::Kernel;
-using mindspore::tensor::MSTensor;
 namespace mindspore {
 namespace nnie {
 class CustomCPUKernel : public Kernel {

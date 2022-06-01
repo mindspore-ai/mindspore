@@ -61,8 +61,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   virtual int PreInit(std::vector<std::shared_ptr<LiteOpActor>> *actors,
                       std::unordered_map<Tensor *, Tensor *> *input_map);
   virtual int PostInit();
-  int ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor *> &inputs,
-                       const std::vector<std::vector<int>> &dims);
+  int ResizeGraphInput(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims);
 
  public:
   void AddResultIndex(size_t index);

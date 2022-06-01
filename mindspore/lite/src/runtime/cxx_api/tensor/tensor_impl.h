@@ -28,7 +28,6 @@
 #include "include/api/status.h"
 #include "include/errorcode.h"
 #include "include/lite_utils.h"
-#include "include/ms_tensor.h"
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
 #include "ir/api_tensor_impl.h"
@@ -53,7 +52,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
     }
   }
 
-  explicit LiteTensorImpl(tensor::MSTensor *tensor) : lite_tensor_(tensor), from_session_(true) {
+  explicit LiteTensorImpl(lite::Tensor *tensor) : lite_tensor_(tensor), from_session_(true) {
     if (tensor != nullptr) {
       tensor_name_ = tensor->tensor_name();
     }
@@ -248,9 +247,9 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
 
   bool IsDevice() const override { return false; }
 
-  tensor::MSTensor *lite_tensor() const { return lite_tensor_; }
+  lite::Tensor *lite_tensor() const { return lite_tensor_; }
 
-  Status set_lite_tensor(tensor::MSTensor *tensor) {
+  Status set_lite_tensor(lite::Tensor *tensor) {
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "Tensor to set is null.";
       return kLiteNullptr;
@@ -264,7 +263,7 @@ class LiteTensorImpl : public mindspore::MSTensor::Impl {
   void set_from_session(bool from_session) { from_session_ = from_session; }
 
  private:
-  tensor::MSTensor *lite_tensor_ = nullptr;
+  lite::Tensor *lite_tensor_ = nullptr;
   std::string tensor_name_ = "";
   mutable std::vector<int64_t> lite_shape_;
   bool own_data_ = false;

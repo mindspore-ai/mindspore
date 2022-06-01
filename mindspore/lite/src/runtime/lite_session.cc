@@ -702,7 +702,7 @@ int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount(
   return RET_OK;
 }
 
-std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const { return this->input_vec_; }
+std::vector<mindspore::lite::Tensor *> LiteSession::GetInputs() const { return this->input_vec_; }
 
 int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &after) {
   bool expected = false;
@@ -963,7 +963,7 @@ LiteSession::~LiteSession() {
   is_running_.store(false);
 }
 
-mindspore::tensor::MSTensor *LiteSession::GetInputsByTensorName(const std::string &name) const {
+mindspore::lite::Tensor *LiteSession::GetInputsByTensorName(const std::string &name) const {
   auto ret = input_map_.find(name);
   if (ret == input_map_.end()) {
     MS_LOG(WARNING) << "Tensor  " << name << " is not exist";
@@ -972,11 +972,11 @@ mindspore::tensor::MSTensor *LiteSession::GetInputsByTensorName(const std::strin
   return ret->second;
 }
 
-std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputsByNodeName(const std::string &node_name) const {
+std::vector<mindspore::lite::Tensor *> LiteSession::GetOutputsByNodeName(const std::string &node_name) const {
   auto ret = output_node_map_.find(node_name);
   if (ret == output_node_map_.end()) {
     MS_LOG(WARNING) << "Node  " << node_name << " is not an output node";
-    std::vector<mindspore::tensor::MSTensor *> empty_ret;
+    std::vector<mindspore::lite::Tensor *> empty_ret;
     return empty_ret;
   }
   return ret->second;
@@ -984,7 +984,7 @@ std::vector<mindspore::tensor::MSTensor *> LiteSession::GetOutputsByNodeName(con
 
 std::vector<std::string> LiteSession::GetOutputTensorNames() const { return this->output_tensor_names_; }
 
-mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const std::string &tensor_name) const {
+mindspore::lite::Tensor *LiteSession::GetOutputByTensorName(const std::string &tensor_name) const {
   auto ret = output_tensor_map_.find(tensor_name);
   if (ret == output_tensor_map_.end()) {
     MS_LOG(WARNING) << "Tensor  " << tensor_name << " is not an output node";
@@ -993,7 +993,7 @@ mindspore::tensor::MSTensor *LiteSession::GetOutputByTensorName(const std::strin
   return ret->second;
 }
 
-std::unordered_map<std::string, mindspore::tensor::MSTensor *> LiteSession::GetOutputs() const {
+std::unordered_map<std::string, mindspore::lite::Tensor *> LiteSession::GetOutputs() const {
   return this->output_tensor_map_;
 }
 
@@ -1010,7 +1010,7 @@ int LiteSession::UpdateInputShapeMap() {
   return RET_OK;
 }
 
-int LiteSession::ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+int LiteSession::ResizeInputs(const std::vector<mindspore::lite::Tensor *> &inputs,
                               const std::vector<std::vector<int>> &dims) {
   if (inputs.size() != inputs_.size()) {
     MS_LOG(ERROR) << "Inputs size " << inputs.size() << " is not equal to " << inputs_.size();
@@ -1154,7 +1154,7 @@ int LiteSession::BindGLTexture2DMemory(const std::map<std::string, unsigned int>
   return RET_OK;
 }
 
-int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+int LiteSession::Resize(const std::vector<mindspore::lite::Tensor *> &inputs,
                         const std::vector<std::vector<int>> &dims) {
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {

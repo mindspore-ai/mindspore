@@ -37,10 +37,7 @@ class Executor {
                   const std::vector<kernel::KernelExec *> &kernels, const KernelCallBack &before = nullptr,
                   const KernelCallBack &after = nullptr);
 
-  virtual int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
-                     const std::vector<std::vector<int>> &dims) {
-    return RET_OK;
-  }
+  virtual int Resize(const std::vector<Tensor *> &inputs, const std::vector<std::vector<int>> &dims) { return RET_OK; }
 
  protected:
   lite::InnerContext *ctx_ = nullptr;

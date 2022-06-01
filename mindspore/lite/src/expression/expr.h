@@ -23,8 +23,8 @@
 #include <map>
 #include <functional>
 #include <string>
-#include "include/ms_tensor.h"
 #include "include/api/format.h"
+#include "mindapi/base/type_id.h"
 
 namespace mindspore {
 namespace lite {

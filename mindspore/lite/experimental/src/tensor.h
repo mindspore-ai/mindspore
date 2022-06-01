@@ -24,7 +24,6 @@
 #include <numeric>
 #include <functional>
 #include <atomic>
-#include "include/ms_tensor.h"
 #include "include/api/format.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/common/log_adapter.h"
@@ -52,7 +51,7 @@ struct LiteQuantParam {
   int dstDtype{32};
 };
 
-class Tensor : public mindspore::tensor::MSTensor {
+class Tensor {
  public:
   Tensor() = default;
 
@@ -75,15 +74,15 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual bool operator==(const Tensor &tensor);
 
-  void set_tensor_name(const std::string &name) override { tensor_name_ = name; }
+  void set_tensor_name(const std::string &name) { tensor_name_ = name; }
 
-  std::string tensor_name() const override { return tensor_name_; }
+  std::string tensor_name() const { return tensor_name_; }
 
-  TypeId data_type() const override { return (TypeId)tensorc.data_type_; }
+  TypeId data_type() const { return (TypeId)tensorc.data_type_; }
 
-  void set_data_type(TypeId data_type) override { tensorc.data_type_ = data_type; }
+  void set_data_type(TypeId data_type) { tensorc.data_type_ = data_type; }
 
-  std::vector<int> shape() const override {
+  std::vector<int> shape() const {
     std::vector<int> shape(tensorc.shape_size_);
     for (size_t s = 0; s < tensorc.shape_size_; s++) {
       shape[s] = tensorc.shape_[s];
@@ -91,7 +90,7 @@ class Tensor : public mindspore::tensor::MSTensor {
     return shape;
   }
 
-  void set_shape(const std::vector<int> &shape) override {
+  void set_shape(const std::vector<int> &shape) {
     tensorc.shape_size_ = shape.size();
     for (size_t s = 0; s < tensorc.shape_size_; s++) {
       tensorc.shape_[s] = shape[s];
@@ -114,9 +113,9 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   size_t Size() const override;
 
-  void set_allocator(AllocatorPtr allocator) override { allocator_ = allocator; }
+  void set_allocator(AllocatorPtr allocator) { allocator_ = allocator; }
 
-  AllocatorPtr allocator() const override { return allocator_; }
+  AllocatorPtr allocator() const { return allocator_; }
 
   virtual int MallocData(const AllocatorPtr allocator = nullptr);
 
@@ -126,12 +125,12 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void *ReallocData();
 
-  void *data() override { return tensorc.data_; };
+  void *data() { return tensorc.data_; }
 
   virtual void *data() const { return tensorc.data_; }
 
   // tensor will hold this data, and free this data in destructor
-  void set_data(void *data) override {
+  void set_data(void *data) {
     this->tensorc.data_ = data;
     this->own_data_ = true;
   }
@@ -140,9 +139,9 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_category(Category category) { this->category_ = category; }
 
-  void set_format(mindspore::Format format) override { this->tensorc.format_ = format; }
+  void set_format(mindspore::Format format) { this->tensorc.format_ = format; }
 
-  mindspore::Format format() const override { return (mindspore::Format)this->tensorc.format_; }
+  mindspore::Format format() const { return (mindspore::Format)this->tensorc.format_; }
   virtual int ref_count() const { return ref_count_; }
 
   virtual int init_ref_count() const { return static_cast<int>(this->init_ref_count_); }
@@ -176,7 +175,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_quant_clusters(const std::vector<float> &clusters);
 
-  bool IsConst() const override {
+  bool IsConst() const {
     return (this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR) && this->tensorc.data_ != nullptr;
   }
 
@@ -253,8 +252,6 @@ class Tensor : public mindspore::tensor::MSTensor {
   bool own_data_{false};
   float scale_ = 1.0f;
 };
-
-std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src);
 }  // namespace lite
 }  // namespace mindspore
 

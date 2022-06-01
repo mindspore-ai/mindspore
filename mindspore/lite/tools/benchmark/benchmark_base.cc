@@ -22,9 +22,6 @@
 #include <utility>
 #include <regex>
 #include <functional>
-#include "include/context.h"
-#include "include/ms_tensor.h"
-#include "include/version.h"
 #include "schema/model_generated.h"
 #include "src/common/common.h"
 #include "src/tensor.h"
