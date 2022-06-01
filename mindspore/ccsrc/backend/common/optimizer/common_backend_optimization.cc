@@ -37,6 +37,7 @@
 #include "backend/common/pass/flatten_concat_fission.h"
 #include "backend/common/optimizer/dynamic_shape/convert_custom_op.h"
 #include "backend/common/optimizer/dynamic_shape/link_custom_op.h"
+#include "backend/common/pass/convert_unused_tuple_para_to_make_tuple.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
 
@@ -65,6 +66,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ConvertAttrToUnifyMindIR>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
+  common_pm->AddPass(std::make_shared<ConvertUnusedTupleParaToMakeTuple>());
   common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
   common_pm->AddPass(std::make_shared<AddTrainingAttr>());
