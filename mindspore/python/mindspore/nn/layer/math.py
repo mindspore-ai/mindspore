@@ -107,10 +107,11 @@ class ReduceLogSumExp(Cell):
         self.log = P.Log()
 
     def construct(self, x):
-        exp = self.exp(x)
+        x_max = x.max()
+        exp = self.exp(x - x_max)
         sumexp = self.sum(exp, self.axis)
         logsumexp = self.log(sumexp)
-        return logsumexp
+        return logsumexp + x_max
 
 
 class Range(Cell):

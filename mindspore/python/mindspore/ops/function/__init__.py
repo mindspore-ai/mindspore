@@ -149,6 +149,7 @@ from .math_func import (
     logical_not,
     logical_or,
     logical_and,
+    logsumexp,
     sin,
     cos,
     tan,
