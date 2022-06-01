@@ -73,6 +73,10 @@ AbstractBasePtr MaxUnpool2DGradInfer(const abstract::AnalysisEnginePtr &, const 
   auto infer_shape = MaxUnpool2DGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+std::string MaxUnpool2DGrad::get_format() const {
+  auto value_ptr = GetAttr("format");
+  return GetValue<std::string>(value_ptr);
+}
 REGISTER_PRIMITIVE_EVAL_IMPL(MaxUnpool2DGrad, prim::kPrimMaxUnpool2DGrad, MaxUnpool2DGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
