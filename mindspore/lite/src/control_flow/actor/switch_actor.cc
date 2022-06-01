@@ -266,7 +266,8 @@ void LiteSwitchOpActor::AsyncBranchOutput(const size_t &index, OpContext<Tensor>
   }
   for (size_t i = 0; i < branch_output_data_arrows.size(); ++i) {
     auto &data = branch_outputs_data.at(i);
-    Async(branch_output_data_arrows[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
+    Async(branch_output_data_arrows[i]->to_op_id_, get_actor_mgr(), &mindspore::OpActor<Tensor>::RunOpData, data.get(),
+          context);
   }
 }
 
