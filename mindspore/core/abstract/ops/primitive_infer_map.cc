@@ -191,7 +191,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimScatterSub, R{InferImplScatterSub, nullptr, true}},
     {prim::kPrimScatterElements, R{InferImplScatterElements, nullptr, true}},
     {prim::kPrimSubAndFilter, R{InferImplSubAndFilter, nullptr, true}},
-    {prim::kPrimScatterUpdate, R{InferImplScatterUpdate, nullptr, true}},
     {prim::kPrimMapCacheIdx, R{InferImplMapCacheIdx, nullptr, true}},
     {prim::kPrimDynamicAssign, R{InferImplDynamicAssign, nullptr, true}},
     {prim::kPrimCacheSwapTable, R{InferImplCacheSwapTable, nullptr, true}},

@@ -1300,7 +1300,7 @@ def scatter_nd(indices, updates, shape):
     return scatter_nd_(indices, updates, shape)
 
 
-def scatter_update(input_x, indices, updates, use_locking=True):
+def scatter_update(input_x, indices, updates):
     r"""
     Updates tensor values by using input indices and value.
 
@@ -1323,14 +1323,13 @@ def scatter_update(input_x, indices, updates, use_locking=True):
           If there are duplicates in indices, the order for updating is undefined.
         updates (Tensor) - The tensor to update the input tensor, has the same type as input,
           and updates.shape = indices.shape + input_x.shape[1:].
-        use_locking (bool): Whether to protect the assignment by a lock. Default: True.
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
 
     Raises:
-        TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32 or an int64.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
 
@@ -1349,7 +1348,7 @@ def scatter_update(input_x, indices, updates, use_locking=True):
         [[2. 1.2  1.]
          [3. 1.2  1.]]
     """
-    scatter_update_inner = P.ScatterUpdate(use_locking)
+    scatter_update_inner = P.ScatterUpdate()
     return scatter_update_inner(input_x, indices, updates)
 
 
