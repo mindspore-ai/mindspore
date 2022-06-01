@@ -78,16 +78,21 @@ class GraphKernelFlags {
   bool enable_parallel_fusion{false};
 
   /**
-   * Enable horizontal fusion in graph kernel fusion strategy, default is false.
-   */
-  bool enable_horizontal_fusion{false};
-
-  /**
    * Parallel AKG's operators by level.
    * 0: Parallel operators by local data relation analyzation with less memory influence.
    * 1: Parallel operators with global analyzation with more memory influence.
    */
   unsigned int parallel_ops_level{OpLevel_0};
+
+  /**
+   * Enable horizontal fusion in graph kernel fusion strategy, default is false.
+   */
+  bool enable_horizontal_fusion{false};
+
+  /**
+   * Enable auto tensor inplace in graph kernel, default is false.
+   */
+  bool enable_auto_tensor_inplace{false};
 
   /**
    * Enable low precision in data transferring between graph kernel and computing in graph kernel

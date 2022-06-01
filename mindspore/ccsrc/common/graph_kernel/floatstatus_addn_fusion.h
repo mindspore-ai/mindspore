@@ -18,7 +18,7 @@
 
 #include <string>
 #include "backend/common/optimizer/pass.h"
-#include "common/graph_kernel/clean_inserter.h"
+#include "common/graph_kernel/inplace_assign_builder.h"
 
 namespace mindspore::graphkernel {
 /**
@@ -57,9 +57,9 @@ namespace mindspore::graphkernel {
  *   return %7
  *    }
  */
-class FloatStatusAddNFusion : public CleanInserter {
+class FloatStatusAddNFusion : public InplaceAssignBuilder {
  public:
-  explicit FloatStatusAddNFusion(const std::string &name = "floatstatus_addn_fusion") : CleanInserter(name) {}
+  explicit FloatStatusAddNFusion(const std::string &name = "floatstatus_addn_fusion") : InplaceAssignBuilder(name) {}
   ~FloatStatusAddNFusion() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 

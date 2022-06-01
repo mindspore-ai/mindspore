@@ -25,16 +25,9 @@
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/session/kernel_graph.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
-#include "common/graph_kernel/clean_inserter.h"
+#include "common/graph_kernel/inplace_assign_builder.h"
 
 namespace mindspore::graphkernel {
-struct AtomicAddUserInfo {
-  AnfNodePtr clean_node{nullptr};
-  AnfNodePtr update_state_node{nullptr};
-  AnfNodePtr user_node{nullptr};
-  size_t user_input_idx{0};
-};
-
 class AtomicAddChecker {
  public:
   AtomicAddChecker() = default;
@@ -42,13 +35,13 @@ class AtomicAddChecker {
   static std::shared_ptr<AtomicAddChecker> Init();
 
   bool Check(const AnfNodePtr &node);
-  std::vector<CleanZeroUserInfo> GetAtomicAddInfo() { return atomic_add_infos_; }
+  std::vector<InplaceAssignerInfo> GetAtomicAddInfo() { return atomic_add_infos_; }
 
  protected:
   virtual bool SuitableForAtomicAdd(const AnfNodePtr &) { return false; }
   virtual bool FindCandidate(const AnfNodePtr &anf_node);
   virtual bool CanActivateAtomicAdd(const AnfNodePtr &anf_node);
-  std::vector<CleanZeroUserInfo> atomic_add_infos_;
+  std::vector<InplaceAssignerInfo> atomic_add_infos_;
   PrimitivePtr target_type_{prim::kPrimReduceSum};
 };
 
@@ -70,28 +63,18 @@ class AtomicAddCheckerAscend : public AtomicAddChecker {
   bool SuitableForAtomicAdd(const AnfNodePtr &node) override;
 };
 
-class AtomicCleanInserter : public CleanInserter {
+class AtomicCleanInserter : public InplaceAssignBuilder {
  public:
-  explicit AtomicCleanInserter(const std::string &name = "atomic_clean") : CleanInserter(name) {}
+  explicit AtomicCleanInserter(const std::string &name = "atomic_clean") : InplaceAssignBuilder(name) {}
   ~AtomicCleanInserter() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
  protected:
   void InsertAtomicClean(const FuncGraphPtr &main_graph, const AnfNodePtr &anf_node,
-                         const std::vector<CleanZeroUserInfo> &atomic_add_infos, const FuncGraphManagerPtr &mng);
-
-  void ProcessOriginCNodeUser(const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
-                              const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
-                              const FuncGraphManagerPtr &mng);
+                         const std::vector<InplaceAssignerInfo> &atomic_add_infos, const FuncGraphManagerPtr &mng);
   void SetTargetAttrs(const CNodePtr &cnode) override {
     SetNodeAttrSafely("enable_atomic_add", MakeValue(true), cnode);
   }
-
- private:
-  std::vector<AtomicAddUserInfo> FindOriginCNodeUsers(
-    const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
-    const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
-    const FuncGraphManagerPtr &mng) const;
 };
 using AtomicCleanInserterPtr = std::shared_ptr<AtomicCleanInserter>;
 }  // namespace mindspore::graphkernel

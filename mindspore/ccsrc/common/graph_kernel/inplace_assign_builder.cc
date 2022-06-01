@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/graph_kernel/clean_inserter.h"
+#include "common/graph_kernel/inplace_assign_builder.h"
 
 #include <algorithm>
 #include <memory>
@@ -36,7 +36,7 @@
 namespace mindspore::graphkernel {
 namespace {
 CNodePtr CreateAssign(const FuncGraphPtr &sub_graph,
-                      const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &parameters_infos, size_t idx) {
+                      const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &parameters_infos, size_t idx) {
   if (idx >= parameters_infos.size()) {
     MS_LOG(EXCEPTION) << "idx " << idx << " is out of range [0, " << parameters_infos.size() << ")";
   }
@@ -50,10 +50,24 @@ CNodePtr CreateAssign(const FuncGraphPtr &sub_graph,
                 {.format = GetFormat(target_node), .shape = GetShape(target_node), .type = GetType(target_node)});
   return node;
 }
+
+size_t GetItemIdx(const AnfNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    MS_LOG(EXCEPTION) << "Expect TupleGetItem node, but got " << common::AnfAlgo::GetCNodeName(node);
+  }
+  auto get_item_cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(get_item_cnode);
+  auto value_input = get_item_cnode->input(kInputNodeOutputIndexInTupleGetItem);
+  MS_EXCEPTION_IF_NULL(value_input);
+  auto value_node = value_input->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto item_idx = LongToSize(GetValue<int64_t>(value_node->value()));
+  return item_idx;
+}
 }  // namespace
 
-void CleanInserter::CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
-                                           const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &clean_infos) {
+void InplaceAssignBuilder::CorrectKernelBuildInfo(
+  const AnfNodePtr &composite_node, const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &inplace_infos) {
   // Change kernel build info.
   auto kernel_info = dynamic_cast<device::KernelInfo *>(composite_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -64,11 +78,13 @@ void CleanInserter::CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
 
   std::vector<std::string> &new_inputs_format = origin_inputs_format;
   std::vector<TypeId> &new_inputs_type = origin_inputs_type;
-  for (const auto &clean_info : clean_infos) {
-    auto &new_input = clean_info.second;
-    auto kernel_with_index = common::AnfAlgo::VisitKernel(new_input, 0);
-    new_inputs_format.push_back(AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
-    new_inputs_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
+  for (const auto &inplace_info : inplace_infos) {
+    if (inplace_info.first.inplace_to_origin_input < 0) {
+      auto &new_input = inplace_info.second;
+      auto kernel_with_index = common::AnfAlgo::VisitKernel(new_input, 0);
+      new_inputs_format.push_back(AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
+      new_inputs_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
+    }
   }
 
   auto new_selected_info = BuildSelectKernelBuildInfo(
@@ -77,8 +93,8 @@ void CleanInserter::CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
   AnfAlgo::SetSelectKernelBuildInfo(new_selected_info, composite_node.get());
 }
 
-void CleanInserter::CreateAssignNodeAndCorrectReturn(
-  const FuncGraphPtr &sub_graph, const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &parameters_infos) {
+void InplaceAssignBuilder::CreateAssignNodeAndCorrectReturn(
+  const FuncGraphPtr &sub_graph, const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &parameters_infos) {
   std::map<size_t, size_t> target_indices;
   for (size_t i = 0; i < parameters_infos.size(); ++i) {
     target_indices[parameters_infos[i].first.real_output_index + 1] = i;
@@ -101,7 +117,7 @@ void CleanInserter::CreateAssignNodeAndCorrectReturn(
   }
 }
 
-CNodePtr CleanInserter::InsertUpdateState(const FuncGraphPtr &main_graph, const AnfNodePtrList &nodes) const {
+CNodePtr InplaceAssignBuilder::InsertUpdateState(const FuncGraphPtr &main_graph, const AnfNodePtrList &nodes) const {
   // Insert update_state_node, need mount a monad node.
   auto u = NewValueNode(kUMonad);
   u->set_abstract(kUMonad->ToAbstract());
@@ -113,8 +129,8 @@ CNodePtr CleanInserter::InsertUpdateState(const FuncGraphPtr &main_graph, const 
   return update_state_cnode;
 }
 
-CNodePtr CleanInserter::CreateCleanCompositeNode(const CleanZeroUserInfo &op_info, const FuncGraphPtr &main_graph,
-                                                 TypeId dst_type) {
+CNodePtr InplaceAssignBuilder::CreateCleanCompositeNode(const InplaceAssignerInfo &op_info,
+                                                        const FuncGraphPtr &main_graph, TypeId dst_type) {
   std::set<TypeId> data_support = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
 
   if (!std::any_of(data_support.cbegin(), data_support.cend(), [&dst_type](TypeId type) { return dst_type == type; })) {
@@ -160,16 +176,17 @@ CNodePtr CleanInserter::CreateCleanCompositeNode(const CleanZeroUserInfo &op_inf
   auto broadcast_to_composite_node = main_graph->NewCNode({NewValueNode(new_sub_graph)});
   broadcast_to_composite_node->set_abstract(broadcast_to_node_inner->abstract());
   SetNewKernelInfo(broadcast_to_composite_node, new_sub_graph, {}, {broadcast_to_node_inner});
-  auto graph_attr = GkUtils::ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "clean_inserter");
+  auto graph_attr =
+    GkUtils::ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "inplace_assign_builder");
   new_sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(graph_attr));
-  new_sub_graph->set_attr("composite_type", MakeValue("clean_inserter"));
+  new_sub_graph->set_attr("composite_type", MakeValue("inplace_assign_builder"));
 
   return broadcast_to_composite_node;
 }
 
-void CleanInserter::ProcessOriginCNode(
+void InplaceAssignBuilder::ProcessOriginCNode(
   const AnfNodePtr &composite_node,
-  const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes) {
+  const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &info_and_inplace_assignee_addr) {
   auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
   auto mng_sub = sub_graph->manager();
   if (mng_sub == nullptr) {
@@ -178,25 +195,95 @@ void CleanInserter::ProcessOriginCNode(
   }
 
   // Add input
-  std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> parameters_infos;
-  for (const auto &[target_node_info, new_input] : info_and_broadcast_to_nodes) {
+  std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> parameters_infos;
+  std::vector<AnfNodePtr> additonal_inputs;
+  for (const auto &[target_node_info, input] : info_and_inplace_assignee_addr) {
     // Add attribute to target node.
     SetTargetAttrs(target_node_info.op_node);
 
     // add parameter
-    auto parameter = sub_graph->add_parameter();
-    parameter->set_abstract(new_input->abstract());
-    parameter->set_kernel_info(new_input->kernel_info_ptr());
-    (void)parameters_infos.emplace_back(target_node_info, parameter);
+    if (target_node_info.inplace_to_origin_input < 0) {
+      auto parameter = sub_graph->add_parameter();
+      parameter->set_abstract(input->abstract());
+      parameter->set_kernel_info(input->kernel_info_ptr());
+      (void)parameters_infos.emplace_back(target_node_info, parameter);
+      (void)additonal_inputs.emplace_back(input);
+    } else {
+      auto params = sub_graph->parameters();
+      (void)parameters_infos.emplace_back(target_node_info, params[target_node_info.inplace_to_origin_input]);
+    }
   }
 
   auto inputs = composite_node->cast<CNodePtr>()->inputs();
-  (void)std::transform(info_and_broadcast_to_nodes.cbegin(), info_and_broadcast_to_nodes.cend(),
-                       std::back_inserter(inputs),
-                       [](const std::pair<CleanZeroUserInfo, AnfNodePtr> &pair_item) { return pair_item.second; });
+  (void)inputs.insert(inputs.end(), additonal_inputs.begin(), additonal_inputs.end());
   composite_node->cast<CNodePtr>()->set_inputs(inputs);
 
   CreateAssignNodeAndCorrectReturn(sub_graph, parameters_infos);
-  CorrectKernelBuildInfo(composite_node, info_and_broadcast_to_nodes);
+  CorrectKernelBuildInfo(composite_node, info_and_inplace_assignee_addr);
+}
+
+std::vector<InplaceAssignUserInfo> InplaceAssignBuilder::FindOriginCNodeUsers(
+  const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
+  const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &info_and_inplace_assignee_addr,
+  const FuncGraphManagerPtr &mng) const {
+  std::vector<InplaceAssignUserInfo> user_node_infos;
+
+  std::map<size_t, AnfNodePtr> real_indices_and_input_node;
+  for (auto &[info, clean] : info_and_inplace_assignee_addr) {
+    (void)real_indices_and_input_node.emplace(info.real_output_index, clean);
+  }
+
+  if (info_and_inplace_assignee_addr[0].first.real_output_num <= 1) {
+    // Find users directly.
+    auto users = mng->node_users()[composite_node];
+    auto update_state_node = InsertUpdateState(main_graph, {composite_node});
+    for (const auto &[user, index] : users) {
+      user_node_infos.push_back({info_and_inplace_assignee_addr[0].second, update_state_node, user, IntToSize(index)});
+    }
+  } else {
+    std::vector<std::pair<AnfNodePtr, AnfNodePtr>> getitem_user_nodes;
+    auto users = mng->node_users()[composite_node];
+    for (const auto &node_index : users) {
+      // 1. First, find TupleGetItem nodes.
+      const auto &user_node = node_index.first;
+      if (!IsPrimitiveCNode(user_node, prim::kPrimTupleGetItem)) continue;
+      auto item_idx = GetItemIdx(user_node);
+      auto iter = real_indices_and_input_node.find(item_idx);
+      if (iter != real_indices_and_input_node.end()) {
+        (void)getitem_user_nodes.emplace_back(user_node, iter->second);
+      }
+    }
+    // 2. Find users of TupleGetItem nodes.
+    for (size_t i = 0; i < getitem_user_nodes.size(); ++i) {
+      const auto &getitem_node = getitem_user_nodes[i].first;
+      const auto &broadcast_to_node = getitem_user_nodes[i].second;
+      auto real_users = mng->node_users()[getitem_node];
+      auto update_state_node = InsertUpdateState(main_graph, {getitem_node});
+      for (const auto &[user, index] : real_users) {
+        user_node_infos.push_back({broadcast_to_node, update_state_node, user, IntToSize(index)});
+      }
+    }
+  }
+
+  return user_node_infos;
+}
+
+void InplaceAssignBuilder::ProcessOriginCNodeUser(
+  const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
+  const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &info_and_inplace_assignee_addr,
+  const FuncGraphManagerPtr &mng) {
+  // 1. Find users.
+  auto user_nodes = FindOriginCNodeUsers(main_graph, composite_node, info_and_inplace_assignee_addr, mng);
+  for (const auto &iter : user_nodes) {
+    // 2. Make sure modified composite node running first, So firstly, create load_node, then add edge to connect
+    // update_state_node, broadcast_node and load_node to keep order.
+    AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), iter.inplace_assignee_addr, iter.update_state_node};
+    auto load_node = main_graph->NewCNode(load_inputs);
+    load_node->set_abstract(iter.inplace_assignee_addr->abstract());
+    main_graph->AddNode(load_node);
+    auto user_cnode = iter.user_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(user_cnode);
+    user_cnode->set_input(iter.user_input_idx, load_node);
+  }
 }
 }  // namespace mindspore::graphkernel
