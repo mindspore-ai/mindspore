@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import shutil
+import glob
+
 from mindspore import context
 from mindspore.nn import Cell
 from mindspore.common.api import _cell_graph_executor
@@ -126,3 +130,32 @@ def compile_net(net: Cell, *inputs, auto_parallel_mode=False):
     phase, _ = _cell_graph_executor.compile(net, *inputs, auto_parallel_mode=auto_parallel_mode)
     context.reset_auto_parallel_context()
     return phase
+
+
+class BasicValidator:
+    def __init__(self):
+        self.output_path = None
+
+    def setup_method(self):
+        self.output_path = './graphs' + self.__str__()
+        context.set_context(save_graphs=True,
+                            save_graphs_path=self.output_path)
+
+    def teardown_method(self):
+        shutil.rmtree(self.output_path)
+
+    def validate_pattern_from_ir(self, pattern, target_count, file_name):
+        """
+        This function will check the assign aa count with the golden one.
+        :param pattern: The match pattern for the specific count
+        :param target_count: The gold float16 count in the Ir files
+        :param file_name: The extract file name
+        """
+        ir_files = glob.glob(os.path.join(self.output_path, 'rank_0', f'*{file_name}*.ir'))
+        assert len(ir_files) == 1, f"The filename {file_name} appears {len(ir_files)}, expect {target_count}"
+        appear_count = 0
+        with open(ir_files[0], 'r') as fp:
+            for line in fp:
+                if pattern in line:
+                    appear_count += 1
+        assert appear_count == target_count, f"The pattern {pattern} appears {appear_count}, expect {target_count}"

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import shutil
 import glob
 
 import numpy as np
@@ -33,6 +32,7 @@ from mindspore.nn.wrap.cell_wrapper import PipelineCell, _VirtualDatasetCell, Tr
 from mindspore.nn.wrap.loss_scale import _TrainPipelineWithLossScaleCell
 from mindspore.train import Model
 from mindspore.parallel import set_algo_parameters
+from parallel.utils.utils import BasicValidator
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
@@ -107,6 +107,18 @@ class TransformerEncoderNet(nn.Cell):
 config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8, vocab_emb_dp=False)
 pipeline_config = TransformerOpParallelConfig(data_parallel=2, model_parallel=8, pipeline_stage=4,
                                               micro_batch_num=4, vocab_emb_dp=False)
+
+
+class NetWithLossThreeInputs(nn.Cell):
+    def __init__(self, network, config_setting):
+        super(NetWithLossThreeInputs, self).__init__()
+        self.loss = CrossEntropyLoss(config_setting)
+        self.network = network
+
+    def construct(self, x1, x2, x3):
+        predict, _ = self.network(x1)
+        predict = P.Reshape()(predict, (-1, 16))
+        return self.loss(predict, x2, x3)
 
 
 class NetWithLossFiveInputs(nn.Cell):
@@ -272,18 +284,7 @@ def test_transformer_model_2d_sp():
     run_transformer_model_2d_inputs()
 
 
-class TestTransformerEmbeddingHead:
-    def __init__(self):
-        self.output_path = None
-
-    def setup_method(self):
-        self.output_path = './graphs' + self.__str__()
-        context.set_context(save_graphs=True,
-                            save_graphs_path=self.output_path)
-
-    def teardown_method(self):
-        shutil.rmtree(self.output_path)
-
+class TestTransformerEmbeddingHead(BasicValidator):
     def virtual_assign_add_from_ir(self, pattern, target_count):
         """
         This function will check the assign aa count with the golden one.
@@ -787,32 +788,6 @@ def test_sparse_attention_parallel_dp():
     model.train(1, dataset, dataset_sink_mode=False)
 
 
-def test_parallel_cross_entroy_loss_semi_auto_parallel():
-    set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
-
-    class NetWithLoss(nn.Cell):
-        def __init__(self, network, config_setting):
-            super(NetWithLoss, self).__init__()
-            self.loss = CrossEntropyLoss(config_setting)
-            self.network = network
-
-        def construct(self, x1, x2, x3):
-            predict, _ = self.network(x1)
-            predict = P.Reshape()(predict, (-1, 16))
-            return self.loss(predict, x2, x3)
-
-    net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=config.embedding_dp_mp_config)
-    net = NetWithLoss(net, config.dp_mp_config)
-    net = _VirtualDatasetCell(net)
-    embed_ids = Tensor(np.ones((2, 64)), mstype.int32)
-    labels = Tensor(np.ones((2 * 64,)), mstype.int32)
-    input_mask = Tensor(np.ones((2 * 64,)), mstype.float32)
-    dataset = Dataset(embed_ids, labels, input_mask)
-
-    model = Model(net)
-    model.train(1, dataset, dataset_sink_mode=False)
-
-
 def test_transformer_args():
 
     with pytest.raises(TypeError):
@@ -915,3 +890,121 @@ def test_embedding_parallel_config():
         parallel_test_config.vocab_emb_dp = 0
 
     assert not parallel_test_config.vocab_emb_dp
+
+
+class TestCrossEntropyLoss(BasicValidator):
+    def test_parallel_cross_entropy_loss_auto_parallel(self):
+        """
+        Feature: Optimizer the memory usage for cross entropy loss
+        Description: Test cross entropy loss in auto parallel, except work well as there will be sub graphs with
+                 no bprop. This case will cause there is no J in the forward graphs, thus the forward marker will
+                 be used for each subgraph. And there should be only one Virtual dataset.
+        Expectation: When there are many virtual datasets, or there are no forward operators.
+        """
+        set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+        net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=config.embedding_dp_mp_config)
+        net = NetWithLossThreeInputs(net, config.dp_mp_config)
+        embed_ids = Tensor(np.ones((2, 64)), mstype.int32)
+        labels = Tensor(np.ones((2 * 64,)), mstype.int32)
+        input_mask = Tensor(np.ones((2 * 64,)), mstype.float32)
+        dataset = Dataset(embed_ids, labels, input_mask)
+
+        model = Model(net)
+        model.train(1, dataset, dataset_sink_mode=False)
+        self.validate_pattern_from_ir("= _VirtualDataset", target_count=1, file_name="step_parallel_end")
+        self.validate_pattern_from_ir("= forward_op", target_count=3, file_name="step_parallel_end")
+
+    def test_parallel_cross_entropy_loss_semi_auto_parallel_dp1_mp8(self):
+        """
+        Feature: Optimizer the memory usage for cross entropy loss
+        Description: Test cross entropy loss in semi auto parallel, except work well as there will be sub graphs.
+                 In the case, there should be less redistribution operator between the context of the subgraph.
+        Expectation: When there are many virtual datasets and not expected redistribution operators.
+        """
+        set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+
+        dp_mp_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8, vocab_emb_dp=False)
+        net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=dp_mp_config.embedding_dp_mp_config)
+        net = NetWithLossThreeInputs(net, dp_mp_config.dp_mp_config)
+        embed_ids = Tensor(np.ones((2, 64)), mstype.int32)
+        labels = Tensor(np.ones((2 * 64,)), mstype.int32)
+        input_mask = Tensor(np.ones((2 * 64,)), mstype.float32)
+        dataset = Dataset(embed_ids, labels, input_mask)
+
+        model = Model(net, optimizer=AdamWeightDecay(net.trainable_params()))
+        model.train(1, dataset, dataset_sink_mode=False)
+        self.validate_pattern_from_ir("= _VirtualDataset", target_count=1, file_name="step_parallel_end")
+        self.validate_pattern_from_ir("= _redistribution_op", target_count=4, file_name="step_parallel_end")
+
+    def test_parallel_cross_entropy_loss_semi_auto_parallel_dp2_mp4(self):
+        """
+        Feature: Optimizer the memory usage for cross entropy loss
+        Description: Test cross entropy loss in semi auto parallel, except work well as there will be sub graphs.
+                 In the case, there should be some redistribution operators after the final subgraph, as the
+                 redistributionPreNode should search the sub graphs and skip an AllReduce produced by model parallel.
+        Expectation: When there are many virtual datasets and not expected redistribution operators.
+        """
+        set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+
+        dp_mp_config = TransformerOpParallelConfig(data_parallel=2, model_parallel=4, vocab_emb_dp=False)
+        net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=dp_mp_config.embedding_dp_mp_config)
+        net = NetWithLossThreeInputs(net, dp_mp_config.dp_mp_config)
+        embed_ids = Tensor(np.ones((2, 64)), mstype.int32)
+        labels = Tensor(np.ones((2 * 64,)), mstype.int32)
+        input_mask = Tensor(np.ones((2 * 64,)), mstype.float32)
+        dataset = Dataset(embed_ids, labels, input_mask)
+
+        model = Model(net, optimizer=AdamWeightDecay(net.trainable_params()))
+        model.train(1, dataset, dataset_sink_mode=False)
+        self.validate_pattern_from_ir("= _VirtualDataset", target_count=1, file_name="step_parallel_end")
+        self.validate_pattern_from_ir("= _redistribution_op", target_count=14, file_name="step_parallel_end")
+
+    def test_parallel_cross_entropy_loss_semi_auto_parallel_dp2_mp4_pipeline_global_rank0(self):
+        """
+        Feature: Optimizer the memory usage for cross entropy loss
+        Description: Test cross entropy loss in semi auto parallel, except work well as there will be sub graphs.
+                 In the case, test the pipeline training when the loss used.
+        Expectation: When there are many virtual datasets and not expected redistribution operators.
+        """
+        set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                  pipeline_stages=2)
+
+        dp_mp_config = TransformerOpParallelConfig(data_parallel=2, model_parallel=2, vocab_emb_dp=False)
+        net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=dp_mp_config.embedding_dp_mp_config)
+        net = NetWithLossThreeInputs(net, dp_mp_config.dp_mp_config)
+        net.network.pipeline_stage = 0
+        net.network.loss = 1
+        embed_ids = Tensor(np.ones((2, 64)), mstype.int32)
+        labels = Tensor(np.ones((2 * 64,)), mstype.int32)
+        input_mask = Tensor(np.ones((2 * 64,)), mstype.float32)
+        dataset = Dataset(embed_ids, labels, input_mask)
+
+        model = Model(net, optimizer=AdamWeightDecay(net.trainable_params()))
+        model.train(1, dataset, dataset_sink_mode=False)
+        self.validate_pattern_from_ir("= _VirtualDataset", target_count=1, file_name="step_parallel_end")
+        self.validate_pattern_from_ir("= _redistribution_op", target_count=19, file_name="step_parallel_end")
+
+    def test_parallel_cross_entropy_loss_semi_auto_parallel_dp2_mp4_pipeline_global_rank4(self):
+        """
+        Feature: Optimizer the memory usage for cross entropy loss
+        Description: Test cross entropy loss in semi auto parallel, except work well as there will be sub graphs.
+                 In the case, test the pipeline training when the loss used in the last stage.
+        Expectation: When there are many virtual datasets and not expected redistribution operators.
+        """
+        set_auto_parallel_context(device_num=8, global_rank=4, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                  pipeline_stages=2)
+
+        dp_mp_config = TransformerOpParallelConfig(data_parallel=2, model_parallel=2, vocab_emb_dp=False)
+        net = VocabEmbedding(vocab_size=160, embedding_size=16, parallel_config=dp_mp_config.embedding_dp_mp_config)
+        net = NetWithLossThreeInputs(net, dp_mp_config.dp_mp_config)
+        net.network.pipeline_stage = 0
+        net.network.loss = 1
+        embed_ids = Tensor(np.ones((2, 64)), mstype.int32)
+        labels = Tensor(np.ones((2 * 64,)), mstype.int32)
+        input_mask = Tensor(np.ones((2 * 64,)), mstype.float32)
+        dataset = Dataset(embed_ids, labels, input_mask)
+
+        model = Model(net, optimizer=AdamWeightDecay(net.trainable_params()))
+        model.train(1, dataset, dataset_sink_mode=False)
+        self.validate_pattern_from_ir("= _VirtualDataset", target_count=1, file_name="step_parallel_end")
+        self.validate_pattern_from_ir("= _redistribution_op", target_count=19, file_name="step_parallel_end")

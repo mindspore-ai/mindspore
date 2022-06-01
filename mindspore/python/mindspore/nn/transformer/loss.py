@@ -30,6 +30,116 @@ from .op_parallel_config import default_dpmp_config, OpParallelConfig
 __all__ = ["CrossEntropyLoss"]
 
 
+class _Softmax(Cell):
+    """
+    Calculate the softmax results with given logits.
+
+    Note:
+        The bprop of the cell is rewritten, just returns the accepted dout as returns. This cell should be used
+        together with _NLLoss, to optimize the bprop of the cross entroy loss.
+
+    Args:
+        parallel_config (OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
+            an instance of `OpParallelConfig` with default args.
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape (N, C). Data type must be float16 or float32. The output logits of
+          the backbone.
+
+
+    Outputs:
+        Tensor. The corresponding softmax results.
+    """
+    def __init__(self, parallel_config=default_dpmp_config):
+        super(_Softmax, self).__init__()
+        if not isinstance(parallel_config, OpParallelConfig):
+            raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig"
+                            ", but got the type: {}.".format(type(parallel_config)))
+        dp = parallel_config.data_parallel
+        mp = parallel_config.model_parallel
+        # on/off value for onehot, for smooth labeling, modify the off_value
+        self.on_value = Tensor(1.0, mstype.float32)
+        self.off_value = Tensor(0.0, mstype.float32)
+
+        self.sum = P.ReduceSum().shard(((dp, mp),))
+        self.max = P.ArgMaxWithValue(axis=-1, keep_dims=True).shard(
+            ((dp, mp),))
+        self.sub = P.Sub().shard(((dp, mp), (dp, 1)))
+        self.exp = P.Exp().shard(((dp, mp),))
+        self.div = P.RealDiv().shard(((dp, mp), (dp, 1)))
+        self.onehot = P.OneHot().shard(((dp, mp), (), ()))
+
+    def construct(self, logits, label):
+        # LogSoftmax for logits over last dimension
+        logits = F.cast(logits, mstype.float32)
+        _, logit_max = self.max(logits)
+        logit_sub = self.sub(logits, logit_max)
+        logit_exp = self.exp(logit_sub)
+        exp_sum = self.sum(logit_exp, -1)
+        exp_sum = P.Reshape()(exp_sum, (F.shape(exp_sum)[0], 1))
+        softmax_result = self.div(logit_exp, exp_sum)
+
+        one_hot_label = self.onehot(label, F.shape(logits)[-1], self.on_value, self.off_value)
+        return softmax_result, one_hot_label
+
+    def bprop(self, logits, label, out, dout):
+        d_logits = F.cast(dout[0], F.dtype(logits))
+        return d_logits, F.zeros_like(label)
+
+
+class _NLLLoss(Cell):
+    """
+    Calculate the NLLLoss results with given softmax results and the label.
+
+    Note:
+        The bprop of the cell is rewritten. This cell should be used
+        together with _Softmax, to optimize the bprop of the cross entroy loss.
+
+    Args:
+        parallel_config (OpParallelConfig): The parallel configure. Default `default_dpmp_config`,
+            an instance of `OpParallelConfig` with default args.
+
+    Inputs:
+        - **loss** (Tensor) - Tensor of shape (N, C). Data type is float32.
+
+    Outputs:
+        Tensor. The corresponding loss results.
+    """
+    def __init__(self, parallel_config=default_dpmp_config):
+        super(_NLLLoss, self).__init__()
+        if not isinstance(parallel_config, OpParallelConfig):
+            raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig"
+                            ", but got the type: {}.".format(type(parallel_config)))
+        dp = parallel_config.data_parallel
+        mp = parallel_config.model_parallel
+        self.eps_const = Tensor(1e-24, mstype.float32)
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            self.sum = P.ReduceSum()
+            self.mul = P.Mul()
+            self.neg = P.Neg()
+            self.log = P.Log()
+            self.add = P.Add().shard(((dp, mp), ()))
+        else:
+            self.sum = P.ReduceSum().shard(((dp, mp),))
+            self.mul = P.Mul().shard(((dp, mp), (dp, mp)))
+            self.neg = P.Neg().shard(((dp, mp),))
+            self.log = P.Log().shard(((dp, mp),))
+            self.add = P.Add().shard(((dp, mp), ()))
+
+    def construct(self, softmax_result, one_hot_label):
+        log_softmax_result = self.log(self.add(softmax_result, self.eps_const))
+        loss = self.mul(log_softmax_result, one_hot_label)
+        loss_unsum = self.neg(loss)
+        loss_reduce = self.sum(loss_unsum, -1)
+        return loss_reduce
+
+    def bprop(self, softmax_result, one_hot_label, out, dout):
+        logits = softmax_result - one_hot_label
+        logits = logits * P.ExpandDims()(dout, -1)
+
+        return logits, F.zeros_like(one_hot_label)
+
+
 class CrossEntropyLoss(Cell):
     """
     Calculate the cross entropy loss.
@@ -67,84 +177,31 @@ class CrossEntropyLoss(Cell):
 
     def __init__(self, parallel_config=default_dpmp_config):
         super(CrossEntropyLoss, self).__init__()
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
-            if not isinstance(parallel_config, OpParallelConfig):
-                raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig"
-                                ", but got the type: {}.".format(type(parallel_config)))
-            dp = parallel_config.data_parallel
-            mp = parallel_config.model_parallel
-            self.sum = P.ReduceSum()
-            self.onehot = P.OneHot()
-            # on/off value for onehot, for smooth labeling, modify the off_value
-            self.on_value = Tensor(1.0, mstype.float32)
-            self.off_value = Tensor(0.0, mstype.float32)
-            self.max = P.ArgMaxWithValue(axis=-1, keep_dims=True).shard(
-                ((dp, mp),))
-            self.eps_const = Tensor(1e-24, mstype.float32)
-            self.sub = P.Sub()
-            self.exp = P.Exp()
-            self.div = P.RealDiv()
-            self.log = P.Log()
-            self.add = P.Add()
-            self.mul = P.Mul()
-            self.neg = P.Neg()
-            self.sum2 = P.ReduceSum().shard(((1,),))
+        if not isinstance(parallel_config, OpParallelConfig):
+            raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig"
+                            ", but got the type: {}.".format(type(parallel_config)))
+        dp = parallel_config.data_parallel
+        mp = parallel_config.model_parallel
+        self.add = P.Add().shard(((dp, mp), (1,)))
+        self.sum2 = P.ReduceSum().shard(((1,),))
+        self.mul2 = P.Mul().shard(((1,), (1,)))
+        self.add2 = P.Add()
+        self.div2 = P.RealDiv()
+        self.relu = P.ReLU().shard(((1,),))
 
-            self.mul2 = P.Mul().shard(((1,), (1,)))
-            self.add2 = P.Add()
-            self.div2 = P.RealDiv()
-        else:
-            if not isinstance(parallel_config, OpParallelConfig):
-                raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig"
-                                ", but got the type: {}.".format(type(parallel_config)))
-            dp = parallel_config.data_parallel
-            mp = parallel_config.model_parallel
-            self.sum = P.ReduceSum().shard(((dp, mp),))
-            self.onehot = P.OneHot().shard(((dp, mp), (), ()))
-            # on/off value for onehot, for smooth labeling, modify the off_value
-            self.on_value = Tensor(1.0, mstype.float32)
-            self.off_value = Tensor(0.0, mstype.float32)
-            self.max = P.ArgMaxWithValue(axis=-1, keep_dims=True).shard(
-                ((dp, mp),))
-            self.eps_const = Tensor(1e-24, mstype.float32)
-            self.sub = P.Sub().shard(((dp, mp), (dp, 1)))
-            self.exp = P.Exp().shard(((dp, mp),))
-            self.div = P.RealDiv().shard(((dp, mp), (dp, 1)))
-            self.log = P.Log().shard(((dp, mp),))
-            self.add = P.Add().shard(((dp, mp), ()))
-            self.mul = P.Mul().shard(
-                ((dp, mp), (dp, mp)))
-            self.neg = P.Neg().shard(((dp, mp),))
-            self.sum2 = P.ReduceSum().shard(((1,),))
-
-            self.mul2 = P.Mul().shard(((1,), (1,)))
-            self.add2 = P.Add()
-            self.div2 = P.RealDiv()
+        self._softmax = _Softmax(parallel_config)
+        self._nllloss = _NLLLoss(parallel_config)
 
     def construct(self, logits, label, input_mask):
         self._check_input(logits, label, input_mask)
 
-        # the shape is [bs*seq_length, vocab_size]
-        logits = F.cast(logits, mstype.float32)
-        # LogSoftmax for logits over last dimension
-        _, logit_max = self.max(logits)
-        logit_sub = self.sub(logits, logit_max)
-        logit_exp = self.exp(logit_sub)
-        exp_sum = self.sum(logit_exp, -1)
-        exp_sum = P.Reshape()(exp_sum, (F.shape(exp_sum)[0], 1))
-        softmax_result = self.div(logit_exp, exp_sum)
-        log_softmax_result = self.log(self.add(softmax_result, self.eps_const))
+        # The add is used for forcing the redistribution before stepping in sub graphs, when semi/auto parallel enabled.
+        # After relu, the following case should be euqal to add(logits, 0)
+        logits = self.add(logits, F.cast(self.relu(F.tuple_to_array((-1e-32,))), F.dtype(logits)))
+        softmax, one_hot_label = self._softmax(logits, label)
+        loss_reduce = self._nllloss(softmax, one_hot_label)
 
-        # Flatten label to [bs*seq_length]
-        label = P.Reshape()(label, (-1,))
-        # Get onehot label [bs*seq_length, vocab_size]
-        one_hot_label = self.onehot(label, F.shape(logits)[-1], self.on_value,
-                                    self.off_value)
-        # Cross-Entropy loss
-        loss = self.mul(log_softmax_result, one_hot_label)
-        loss_unsum = self.neg(loss)
-        loss_reduce = self.sum(loss_unsum, -1)
-        # input_mask indicates whether there is padded inputs and for padded inputs it will not be counted into loss
+        # Using input_mask to mask the loss
         input_mask = P.Reshape()(input_mask, (-1,))
         numerator = self.sum2(self.mul2(loss_reduce, input_mask))
 
@@ -152,6 +209,7 @@ class CrossEntropyLoss(Cell):
             self.sum2(input_mask),
             P.Cast()(F.tuple_to_array((1e-5,)), mstype.float32))
         loss = self.div2(numerator, denominator)
+
         return loss
 
     def _check_input(self, logits, label, input_mask):

@@ -521,46 +521,6 @@ static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, con
   return std::make_pair(shape_list, dtype);
 }
 
-AnfNodePtr GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index, CNodePtr *call_node = nullptr) {
-  if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad) ||
-      IsPrimitiveCNode(node, prim::kPrimCast)) {
-    return GetRealKernelNode(node->cast<CNodePtr>()->input(1), get_item_index, call_node);
-  }
-  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-    auto cnode = node->cast<CNodePtr>();
-    auto cur_get_item_index = LongToInt(GetTupleGetItemIndex(cnode));
-    auto tuple_getitem_input = cnode->input(1);
-    auto pass_through_node = GetRealKernelNode(tuple_getitem_input, cur_get_item_index, call_node);
-    return GetRealKernelNode(pass_through_node, get_item_index, call_node);
-  }
-  if (get_item_index != -1 && IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
-    auto make_tuple_cnode = node->cast<CNodePtr>();
-    auto make_tuple_input = make_tuple_cnode->input(LongToSize(get_item_index + 1));
-    return GetRealKernelNode(make_tuple_input, -1, call_node);
-  }
-  if (node->isa<CNode>() && IsValueNode<FuncGraph>(node->cast<CNodePtr>()->input(0))) {
-    if (call_node != nullptr && *call_node == nullptr) {
-      *call_node = node->cast<CNodePtr>();
-    }
-    auto cnode = node->cast<CNodePtr>();
-    auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-    auto output = GetRealKernelNode(graph->output(), get_item_index, call_node);
-    MS_EXCEPTION_IF_NULL(output);
-    if (output->isa<Parameter>()) {
-      auto parameters = graph->parameters();
-      auto pos_iter = std::find(parameters.begin(), parameters.end(), output);
-      // If can't find in parameters, the parameter is a fv.
-      if (pos_iter == parameters.end()) {
-        return output;
-      }
-      auto pos = std::distance(parameters.begin(), pos_iter);
-      return GetRealKernelNode(cnode->input(LongToSize(pos + 1)), -1, call_node);
-    }
-    return output;
-  }
-  return node;
-}
-
 AnfNodePtr PipelineTransformer::FindPipelineCareNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto real_node = GetRealKernelNode(node, -1);
