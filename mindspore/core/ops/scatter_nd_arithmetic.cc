@@ -23,7 +23,6 @@
 #include "ops/scatter_nd_min.h"
 #include <map>
 #include <string>
-#include <sstream>
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -64,22 +63,16 @@ abstract::ShapePtr ScatterNdArithmeticInferShape(const PrimitivePtr &primitive,
                                    "len(indices.shape) - 1 + len(input_x.shape) - indices.shape[-1]",
                                    indices_size - 1 + input_x_size - last_dim, prim_name);
 
-  std::stringstream value_ss, match_value_ss;
   for (int i = 0; i < indices_size - 1; ++i) {
-    value_ss.clear();
-    match_value_ss.clear();
-    value_ss << i << "th dimension of indices";
-    match_value_ss << i << "th dimension of updates";
-    CheckAndConvertUtils::CheckValue<int64_t>(value_ss.str(), indices_shape[i], kEqual, match_value_ss.str(),
-                                              updates_shape[i], prim_name);
+    CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dimension of indices", indices_shape[i], kEqual,
+                                              std::to_string(i) + "th dimension of updates", updates_shape[i],
+                                              prim_name);
   }
   for (int64_t i = indices_size - 1; i < updates_size; ++i) {
-    value_ss.clear();
-    match_value_ss.clear();
-    value_ss << i << "th dimension of updates";
-    match_value_ss << (i - (indices_size - 1) + last_dim) << "th dimension of input_x.shape[indices.shape[-1]:]";
-    CheckAndConvertUtils::CheckValue<int64_t>(value_ss.str(), updates_shape[i], kEqual, match_value_ss.str(),
-                                              input_x_shape[i - (indices_size - 1) + last_dim], prim_name);
+    CheckAndConvertUtils::CheckValue<int64_t>(
+      std::to_string(i) + "th dimension of updates", updates_shape[i], kEqual,
+      std::to_string(i - (indices_size - 1) + last_dim) + "th dimension of input_x.shape[indices.shape[-1]:]",
+      input_x_shape[i - (indices_size - 1) + last_dim], prim_name);
   }
   auto output_shape = input_x_shape_ptr->cast<abstract::ShapePtr>();
   return output_shape;

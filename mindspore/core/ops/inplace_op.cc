@@ -21,7 +21,6 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include <sstream>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -55,22 +54,17 @@ abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std:
   CheckAndConvertUtils::CheckValue<size_t>("rank of x", x_in_shape.size(), kEqual, "rank of v", v_in_shape.size(),
                                            primitive->name());
 
-  std::stringstream value_ss, match_ss;
   for (size_t i = 1; i < x_in_shape.size(); ++i) {
-    value_ss.clear();
-    match_ss.clear();
-    value_ss << "dim " << i << " of x";
-    match_ss << "dim " << i << " of v";
-    CheckAndConvertUtils::CheckValue<int64_t>(value_ss.str(), x_in_shape.at(i), kEqual, match_ss.str(),
-                                              v_in_shape.at(i), primitive->name());
+    CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dim of x", x_in_shape.at(i), kEqual,
+                                              std::to_string(i) + "th dim of v", v_in_shape.at(i), primitive->name());
   }
 
   // check indices
-  CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.size(), kEqual, LongToSize(v_in_shape.at(0)),
-                                           primitive->name());
+  CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.size(), kEqual, "v.shape[0]",
+                                           LongToSize(v_in_shape.at(0)), primitive->name());
   for (size_t i = 0; i < indices.size(); ++i) {
-    CheckAndConvertUtils::CheckInRange<int64_t>("value of indices", indices.at(i), kIncludeLeft, {0, x_in_shape.at(0)},
-                                                primitive->name());
+    CheckAndConvertUtils::CheckInRange<int64_t>(std::to_string(i) + "th value of indices", indices.at(i), kIncludeLeft,
+                                                {0, x_in_shape.at(0)}, primitive->name());
   }
 
   if (!x_min_shape.empty() && !x_max_shape.empty()) {
