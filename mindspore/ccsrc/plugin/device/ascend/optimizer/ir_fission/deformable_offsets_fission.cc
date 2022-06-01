@@ -34,8 +34,8 @@ ValueNodePtr DeformableOffsetsFission::CreateHelperNode(
   const FuncGraphPtr &func_graph, const AnfNodePtr &node, const std::vector<size_t> &offset_shape,
   const std::vector<int64_t> &kernel_sizes, const std::vector<int64_t> &strides, const std::vector<int64_t> &pads,
   const std::vector<int64_t> &dilations, const size_t axis_h, const size_t axis_w, const size_t axis_c) const {
-  size_t H_OUT = offset_shape[axis_h];
-  size_t W_OUT = offset_shape[axis_w];
+  int64_t H_OUT = offset_shape[axis_h];
+  int64_t W_OUT = offset_shape[axis_w];
   int64_t K_H = kernel_sizes[0];
   int64_t K_W = kernel_sizes[1];
   int64_t stride_h = strides[axis_h];
@@ -55,8 +55,8 @@ ValueNodePtr DeformableOffsetsFission::CreateHelperNode(
   tensor::DeviceInfo device_info{kOpFormat_NHWC, tensor_type, kOpFormat_NHWC};
   helper_tensor->set_device_info(device_info);
   auto tensor_data = reinterpret_cast<float *>(helper_tensor->data_c());
-  for (size_t h = 0; h < H_OUT; ++h) {
-    for (size_t w = 0; w < W_OUT; ++w) {
+  for (int64_t h = 0; h < H_OUT; ++h) {
+    for (int64_t w = 0; w < W_OUT; ++w) {
       for (size_t g = 0; g < group; ++g) {
         for (int64_t k_h = 0; k_h < K_H; ++k_h) {
           for (int64_t k_w = 0; k_w < K_W; ++k_w) {
