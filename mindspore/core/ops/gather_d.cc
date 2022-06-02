@@ -62,16 +62,16 @@ int64_t GetGatherDimValue(const AbstractBasePtr dim_ptr) {
   return dim_v;
 }
 
-bool IsShapeInValid(const ShapeVector &shape) {
-  return std::any_of(shape.cbegin(), shape.cend(), [](int64_t s) { return s < 0; });
-}
-
 void CheckGatherShapeEqual(const std::string &prim_name, const ShapeVector &x_shape, int64_t dim_v,
                            const ShapeVector &index_shape) {
+  auto IsShapeInValid = [](const ShapeVector &shape) -> bool {
+    return std::any_of(shape.cbegin(), shape.cend(), [](int64_t s) { return s < 0; });
+  };
   if (IsShapeInValid(x_shape) || IsShapeInValid(index_shape)) {
     return;
   }
 
+  CheckAndConvertUtils::Check("x_rank", SizeToLong(x_shape.size()), kEqual, SizeToLong(index_shape.size()), prim_name);
   for (size_t i = 0; i < x_shape.size(); ++i) {
     if (SizeToLong(i) == dim_v) continue;
     MS_LOG(INFO) << "For '" << prim_name << "', it's now checking " << i << "th x shape.";
@@ -90,15 +90,10 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
   MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->BuildShape()->isa<abstract::Shape>(), "x's shape wrong.");
   auto shape_element = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
   auto x_shape = shape_element->shape();
-  auto x_min_shape = shape_element->min_shape();
-  auto x_max_shape = shape_element->max_shape();
   MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(), "index's shape wrong.");
   auto index_shape_element = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>();
   auto index_shape = index_shape_element->shape();
-  auto index_min_shape = index_shape_element->min_shape();
-  auto index_max_shape = index_shape_element->max_shape();
   int64_t x_rank = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::Check("x_rank", x_rank, kEqual, SizeToLong(index_shape.size()), prim_name);
   auto dim_v = GetGatherDimValue(input_args[kInputIndex1]);
   CheckAndConvertUtils::Check("dim value", dim_v, kGreaterEqual, -x_rank, prim_name);
   CheckAndConvertUtils::Check("dim value", dim_v, kLessThan, x_rank, prim_name);
@@ -109,8 +104,9 @@ abstract::ShapePtr GatherDInferShape(const PrimitivePtr &primitive, const std::v
 
   // For Ascend, only support x.shape[d] == index.shape[d] when d != dim. So limit it.
   CheckGatherShapeEqual(prim_name, x_shape, dim_v, index_shape);
-  CheckGatherShapeEqual(prim_name, x_min_shape, dim_v, index_min_shape);
-  CheckGatherShapeEqual(prim_name, x_max_shape, dim_v, index_max_shape);
+
+  auto index_min_shape = index_shape_element->min_shape();
+  auto index_max_shape = index_shape_element->max_shape();
   return std::make_shared<abstract::Shape>(index_shape, index_min_shape, index_max_shape);
 }
 
