@@ -52,6 +52,7 @@ class History(Callback):
     def __init__(self):
         super(History, self).__init__()
         self.history = {}
+        self.epoch = None
 
     def begin(self, run_context):
         """

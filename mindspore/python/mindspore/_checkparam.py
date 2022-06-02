@@ -455,7 +455,7 @@ class Validator:
         """Check whether file name is legitimate."""
         if not isinstance(target, str):
             prim_name = f"For '{prim_name}', the" if prim_name else "The"
-            raise ValueError("{} '{}' must be string, but got {}.".format(prim_name, target, type(target)))
+            raise TypeError("{} '{}' must be string, but got {}.".format(prim_name, target, type(target)))
         if target.endswith("\\") or target.endswith("/"):
             prim_name = f"For '{prim_name}', the" if prim_name else "The"
             raise ValueError(f"{prim_name} '{target}' cannot be a directory path.")
