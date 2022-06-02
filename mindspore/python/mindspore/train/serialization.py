@@ -533,8 +533,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                          "failed to load the checkpoint file {}.".format(ckpt_file_name))
 
     if not parameter_dict:
-        raise ValueError(f"The loaded parameter dict is empty after filtering, please check whether "
-                         f"'filter_prefix' was set to filter out all parameters.")
+        raise ValueError(f"The loaded parameter dict is empty after filter or specify, please check whether "
+                         f"'filter_prefix' or 'specify_prefix' are set correctly.")
 
     if net is not None:
         load_param_into_net(net, parameter_dict, strict_load)
@@ -571,7 +571,7 @@ def _check_prefix(prefix):
         prefix = (prefix,)
     if not prefix:
         raise ValueError("For 'load_checkpoint', the argument 'specify_prefix' or 'filter_prefix' can't be empty when"
-                         " 'filter_prefix' is list or tuple.")
+                         " 'specify_prefix' or 'filter_prefix' is list or tuple.")
     for index, pre in enumerate(prefix):
         if not isinstance(pre, str):
             raise TypeError("For 'load_checkpoint', when 'specify_prefix' or 'filter_prefix' is list or tuple, "
