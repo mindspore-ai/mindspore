@@ -3547,7 +3547,7 @@ class FastGeLU(Primitive):
     Refer to :func:`mindspore.ops.fast_gelu` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
@@ -9475,7 +9475,6 @@ class PSROIPooling(Primitive):
 
     @prim_attr_register
     def __init__(self, spatial_scale, group_size, output_dim):
-
         """Initialize PSROIPooling"""
         validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
         validator.check_value_type("group_size", group_size, [int], self.name)

@@ -627,7 +627,7 @@ class FastGelu(Cell):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
