@@ -19,7 +19,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-SignalGuard::SignalGuard(IntHandlerFunc IntHandler) { RegisterHandlers(IntHandler); }
+SignalGuard::SignalGuard(IntHandlerFunc func) { RegisterHandlers(func); }
 
 SignalGuard::~SignalGuard() {
   if (old_handler != nullptr) {

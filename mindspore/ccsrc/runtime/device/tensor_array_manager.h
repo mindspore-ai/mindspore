@@ -43,7 +43,7 @@ class TensorArrayMgr {
   TensorArrayMgr(const TensorArrayMgr &) = delete;
   TensorArrayMgr(const TensorArrayMgr &&) = delete;
   TensorArrayMgr &operator=(const TensorArrayMgr &&) = delete;
-  TensorArrayMgr operator=(const TensorArrayMgr &) = delete;
+  TensorArrayMgr &operator=(const TensorArrayMgr &) = delete;
 
   void AddTensorArray(const int64_t handle, const TensorArrayPtr &ta) {
     MS_LOG(DEBUG) << "Add a TensorArray to map, handle is " << handle;
@@ -95,7 +95,7 @@ class TensorsQueueMgr {
   TensorsQueueMgr(const TensorsQueueMgr &) = delete;
   TensorsQueueMgr(const TensorsQueueMgr &&) = delete;
   TensorsQueueMgr &operator=(const TensorsQueueMgr &&) = delete;
-  TensorsQueueMgr operator=(const TensorsQueueMgr &) = delete;
+  TensorsQueueMgr &operator=(const TensorsQueueMgr &) = delete;
 
   void AddTensorsQueue(const int64_t handle, const TensorsQueuePtr &tq) {
     MS_LOG(DEBUG) << "Add a TensorsQueue to map, handle is " << handle;

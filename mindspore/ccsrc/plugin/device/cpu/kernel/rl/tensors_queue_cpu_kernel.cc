@@ -174,7 +174,7 @@ void TensorsQueueClearCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 bool TensorsQueueClearCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                           const std::vector<AddressPtr> &outputs) {
+                                           const std::vector<AddressPtr> &) {
   CPUTensorsQueuePtr tensors_q = GetTensorsQueue(inputs);
   std::unique_lock<std::mutex> lock_(tq_mutex_);
   // Return all the element addr back to store, and the tensors_q will be empty.
