@@ -118,6 +118,8 @@ linspace_ = P.LinSpace()
 matrix_determinant_ = P.MatrixDeterminant()
 log_matrix_determinant_ = P.LogMatrixDeterminant()
 exp2_ = P.Pow()
+truncate_div_ = P.TruncateDiv()
+truncate_mod_ = P.TruncateMod()
 
 
 #####################################
@@ -1950,6 +1952,87 @@ def log_matrix_determinant(x):
     return log_matrix_determinant_(x)
 
 
+def truncate_div(x, y):
+    """
+    Divides the first input tensor by the second input tensor element-wise for integer types, negative numbers will
+    round fractional quantities towards zero.
+
+    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar could only be a constant.
+
+    Note:
+        Broadcasting is supported.
+
+    Args:
+        - x(Union[Tensor, Number, bool]) - The first input is a number, or a bool,
+          or a tensor whose data type is number or bool.
+        - y(Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
+          is a tensor, or a tensor whose data type is number or bool.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
+        >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> truncate_div = ops.truncate_div()
+        >>> output = truncate_div(x, y)
+        >>> print(output)
+        [0 1 0]
+    """
+    return truncate_div_(x, y)
+
+
+def truncate_mod(x, y):
+    r"""
+    Returns the remainder of division element-wise.
+
+    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar could only be a constant.
+
+    Args:
+        - **x** (Union[Tensor, numbers.Number, bool]) - The first input is a number, or a bool,
+          or a tensor whose data type is number or bool.
+        - **y** (Union[Tensor, numbers.Number, bool]) - The second input is a number, or a bool when the first input
+          is a tensor, or a tensor whose data type is number or bool.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision among the two inputs.
+
+    Raises:
+        TypeError: If neither `x` nor `y` is one of the following: Tensor, number, bool.
+        TypeError: If neither `x` nor `y` is a Tensor.
+        ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
+        >>> y = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> truncate_mod = ops.truncate_mod()
+        >>> output = truncate_mod(x, y)
+        >>> print(output)
+        [ 2  1 -1]
+    """
+    return truncate_mod_(x, y)
+
 #####################################
 # Comparison Operation Functions.
 #####################################
@@ -3148,6 +3231,8 @@ __all__ = [
     'bessel_k1e',
     'exp2',
     'deg2rad',
-    'rad2deg'
+    'rad2deg',
+    'truncate_div',
+    'truncate_mod'
 ]
 __all__.sort()
