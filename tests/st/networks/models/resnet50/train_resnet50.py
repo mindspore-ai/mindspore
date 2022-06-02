@@ -80,8 +80,8 @@ def train_and_eval(device_id, epoch_size, model, dataset, loss_cb, eval_dataset)
                                             loss, acc, time_cost,
                                             eval_cost,
                                             time_cost * step_size + eval_cost))
-    print(f"===resnet_acc: {acc}")
-    print(f"===resnet_time_cost: {time_cost}")
+    print(f"#-#resnet_acc: {acc}")
+    print(f"#-#resnet_time_cost: {time_cost}")
 
 
 def run_train():
