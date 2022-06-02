@@ -125,7 +125,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
-    mindspore.ops.logsumexp
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.pow
@@ -183,6 +182,7 @@ Reduction算子
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.logsumexp
     mindspore.ops.lp_norm
 
 .. list-table::

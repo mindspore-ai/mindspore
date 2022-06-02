@@ -3,7 +3,7 @@ mindspore.ops.logsumexp
 
 .. py:function:: mindspore.ops.logsumexp(x, aixs, keep_dims=False)
 
-    逐元素返回Tensor的对数指数和。
+    求Tensor的对数指数和。
 
     .. math::
 
