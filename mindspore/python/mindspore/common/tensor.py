@@ -881,6 +881,50 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('ger')(self, x)
 
+    def broadcast_to(self, shape):
+        """
+        Broadcasts input tensor to a given shape.
+        Input shape can be broadcast to target shape if for each dimension pair they are either equal or input is
+        one or the target dimension is -1. In case of -1 in target shape, it will be replaced by the input
+        shape's value in that dimension.
+        When input shape is broadcast to target shape, it starts with the trailing
+        dimensions. If there is a -1 in the target shape, the -1 cannot be in a leading,
+        non-existing dimension.
+
+        Args:
+            shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
+                           where it will be substituted by the input tensor's shape in that position, see example.
+
+        Returns:
+            Tensor, with the given `shape` and the same data type as `self`.
+
+        Raises:
+            TypeError: If `shape` is not a tuple.
+            ValueError: If the target and input shapes are incompatible, or if a - 1
+                        in the target shape is in an invalid location.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> from mindspore import dtype as mstype
+            >>> shape = (2, 3)
+            >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+            >>> output = x.broadcast_to(shape)
+            >>> print(output)
+            [[1. 2. 3.]
+             [1. 2. 3.]]
+            >>> shape = (-1, 2)
+            >>> x = Tensor(np.array([[1], [2]]).astype(np.float32))
+            >>> output = x.broadcast_to(shape)
+            >>> print(output)
+            [[1. 1.]
+             [2. 2.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('broadcast_to')(shape)(self)
+
     def expand_as(self, x):
         """
         Expand the dimension of target tensor to the dimension of input tensor.

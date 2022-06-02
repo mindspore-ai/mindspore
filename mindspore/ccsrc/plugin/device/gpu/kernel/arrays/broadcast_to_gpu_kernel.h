@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t SHAPE_SIZE = 4;
+constexpr size_t SHAPE_SIZE = 8;
 template <typename T>
 class BroadcastToGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
@@ -40,9 +40,10 @@ class BroadcastToGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-    BroadcastTo(input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], output_shape_[0], output_shape_[1],
-                output_shape_[2], output_shape_[3], input_addr, output_addr,
-                reinterpret_cast<cudaStream_t>(stream_ptr));
+    BroadcastTo(input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], input_shape_[4], input_shape_[5],
+                input_shape_[6], input_shape_[7], output_shape_[0], output_shape_[1], output_shape_[2],
+                output_shape_[3], output_shape_[4], output_shape_[5], output_shape_[6], output_shape_[7], input_addr,
+                output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
@@ -93,13 +94,15 @@ class BroadcastToGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
  protected:
   void InitSizeLists() override {
-    input_size_list_.push_back(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T));
-    output_size_list_.push_back(output_shape_[0] * output_shape_[1] * output_shape_[2] * output_shape_[3] * sizeof(T));
+    input_size_list_.push_back(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] *
+                               input_shape_[5] * input_shape_[6] * input_shape_[7] * sizeof(T));
+    output_size_list_.push_back(output_shape_[0] * output_shape_[1] * output_shape_[2] * output_shape_[3] *
+                                output_shape_[4] * output_shape_[5] * output_shape_[6] * output_shape_[7] * sizeof(T));
   }
 
  private:
-  size_t input_shape_[SHAPE_SIZE] = {1, 1, 1, 1};
-  size_t output_shape_[SHAPE_SIZE] = {1, 1, 1, 1};
+  size_t input_shape_[SHAPE_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1};
+  size_t output_shape_[SHAPE_SIZE] = {1, 1, 1, 1, 1, 1, 1, 1};
   bool is_null_input_ = false;
   std::string kernel_name_;
 };

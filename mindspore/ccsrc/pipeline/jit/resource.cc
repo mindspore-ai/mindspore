@@ -172,6 +172,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__le__", std::string("le")},                                      // C.le
        {"__ge__", std::string("ge")},                                      // C.ge
        {"expand_as", std::string("expand_tensor_as")},                     // C.expand_as
+       {"broadcast_to", std::string("broadcast_to")},                      // P.BroadcastTo
        {"view", std::string("view")},                                      // C.view
        {"__len__", prim::kPrimArrayLen},                                   // P.array_len,
        {"__getitem__", prim::kPrimArrayGetItem},                           // P.array_getitem,
