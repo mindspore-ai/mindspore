@@ -958,6 +958,51 @@ def logical_and(x):
     return logical_and_(x)
 
 
+def logsumexp(x, axis, keep_dims=False):
+    r"""
+    Reduces a dimension of a tensor by calculating exponential for all elements in the dimension,
+    then calculate logarithm of the sum.
+
+    .. math::
+
+        logsumexp(x) = \log(\sum(e^(x-x_{max}))) + x_{max}
+
+    Args:
+        x (Tensor): The input tensor. With float16 or float32 data type.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
+            Only constant value is allowed.
+        keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
+            If False, don't keep these dimensions.
+            Default : False.
+
+    Outputs:
+        Tensor, has the same dtype as the `x`.
+
+        - If axis is (), and keep_dims is False,
+          the output is a 0-D tensor representing the sum of all elements in the input tensor.
+        - If axis is int, set as 2, and keep_dims is False,
+          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
+          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> op = ops.logsumexp(x, 1, keep_dims=True)
+        >>> output = op(x)
+        >>> print(output.shape)
+        (3, 1, 5, 6)
+    """
+
+    x_max = x.max()
+    x_exp = P.Exp()(x - x_max)
+    x_sumexp = P.ReduceSum(keep_dims)(x_exp, axis)
+    x_logsumexp = P.Log()(x_sumexp)
+    return x_logsumexp + x_max
+
+
 def sin(x):
     r"""
     Computes sine of the input element-wise.
@@ -3065,6 +3110,7 @@ __all__ = [
     'logical_not',
     'logical_or',
     'logical_and',
+    'logsumexp',
     'sin',
     'cos',
     'tan',
