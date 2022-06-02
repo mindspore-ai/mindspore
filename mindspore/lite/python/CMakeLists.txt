@@ -22,10 +22,8 @@ if(Python3_FOUND)
     endif()
 
     file(GLOB_RECURSE PY_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
-    if(NOT MSLITE_ENABLE_CONVERTER)
-      file(GLOB_RECURSE CONVERTER_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "converter_pybind.cc")
-      list(REMOVE_ITEM PY_SRC_LIST ${CONVERTER_SRC_FILES})
-    endif()
+    file(GLOB_RECURSE CONVERTER_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "converter_pybind.cc")
+    list(REMOVE_ITEM PY_SRC_LIST ${CONVERTER_SRC_FILES})
     pybind11_add_module(_c_lite_wrapper NO_EXTRAS ${PY_SRC_LIST})
 
     target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--whole-archive mindspore-lite_static -Wl,--no-whole-archive)
