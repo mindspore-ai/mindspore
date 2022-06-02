@@ -45,7 +45,7 @@ void Gather(const T *input, const S *index, T *output, const size_t dim_before_a
             const size_t dim_at_axis_input, const size_t dim_at_axis_output,
             const size_t dim_after_axis, cudaStream_t stream, uint32_t device_id) {
   size_t size = dim_before_axis * dim_at_axis_output * dim_after_axis;
-  GatherKernel<<<CUDA_BLOCKS(size, device_id), CUDA_THREADS(device_id), 0, stream>>>(input, index, output,
+  GatherKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, stream>>>(input, index, output,
       dim_before_axis, dim_at_axis_input, dim_at_axis_output, dim_after_axis);
   return;
 }
