@@ -37,7 +37,7 @@ namespace kernel {
 
 GPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeFloat32, float)
 GPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeFloat64, double)
-GPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeFloat64, cuComplex)
-GPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeFloat64, cuDoubleComplex)
+GPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeComplex64, cuComplex)
+GPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(kNumberTypeComplex128, cuDoubleComplex)
 }  // namespace kernel
 }  // namespace mindspore
