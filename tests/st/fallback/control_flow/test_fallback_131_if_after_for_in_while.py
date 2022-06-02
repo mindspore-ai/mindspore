@@ -14,7 +14,6 @@
 # ============================================================================
 """ test graph fallback control flow."""
 import pytest
-import numpy as np
 from mindspore import Tensor, ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -47,7 +46,7 @@ def test_if_after_for_in_while_tensor():
     assert res == 13
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -73,56 +72,3 @@ def test_if_after_for_in_while_tensor_2():
         return y + z
     res = control_flow_if_after_for_in_while()
     assert res == 48
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_for_in_while_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_for_in_while():
-        x = np.array([5, 4, 3, 2, 1])
-        y = np.zeros(5)
-        z = np.ones(5)
-        while sum(x) > y[0]:
-            for _ in range(3):
-                y -= 1
-            x = y + 2
-        if (x != z).all():
-            y = y - z[2]
-        return Tensor(y + z[0])
-    res = control_flow_if_after_for_in_while()
-    assert (res.asnumpy() == [-3, -3, -3, -3, -3]).all()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_for_in_while_numpy_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_for_in_while():
-        x = np.array([5, 4, 3, 2, 1])
-        y = (Tensor(1), Tensor(3), Tensor(5))
-        while sum(x) >= 15:
-            for _ in range(3):
-                x -= 4
-            x = x + 2
-        if sum(y) == 9:
-            return Tensor(x)
-        return y[2]
-    res = control_flow_if_after_for_in_while()
-    assert (res.asnumpy() == [-5, -6, -7, -8, -9]).all()

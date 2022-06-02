@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_for_after_if_in_if_1():
+def test_for_after_while_in_if_1():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
@@ -51,7 +51,7 @@ def test_for_after_if_in_if_1():
     assert res == 8
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -89,7 +89,7 @@ def test_for_after_while_in_if_2():
     assert res_y == 5
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -120,32 +120,3 @@ def test_for_after_while_in_if_3():
 
     res = func3203()
     assert res == 15
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_after_while_in_if_4():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func3204():
-        x = Tensor([1])
-        y = Tensor([2])
-        if y - x == Tensor([1]):
-            while min(x, y) == Tensor([1]):
-                x = x + min(x, y)
-
-        z = (Tensor(1), Tensor(2), Tensor(3))
-        for i in zip(z):
-            x = x * i
-        return x
-
-    res = func3204()
-    assert res == 12

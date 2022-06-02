@@ -14,7 +14,6 @@
 # ============================================================================
 """ test graph fallback control flow if after while scenario"""
 import pytest
-import numpy as np
 from mindspore import Tensor, ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -46,7 +45,7 @@ def test_if_after_while_tensor():
     assert res == 6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -71,107 +70,3 @@ def test_if_after_while_tensor_2():
         return x + y
     res = control_flow_if_after_while()
     assert res == 11
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_while_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_while():
-        x = np.array([1, 2, 3, 4])
-        y = np.array([5, 6])
-        while sum(x) < 20:
-            x += 1
-            y += 1
-        if max(y) == 9:
-            return Tensor(sum(y))
-        y = y - 2
-        return Tensor(sum(y))
-    res = control_flow_if_after_while()
-    assert res == 17
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_while_numpy_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_while():
-        x = np.array([1, 2, 3, 4])
-        y = np.array([5, 6])
-        while sum(x) < 20:
-            x += 1
-            y += 1
-        if max(y) == 8:
-            return Tensor(sum(y))
-        y = y - 2
-        return Tensor(sum(y))
-    res = control_flow_if_after_while()
-    assert res == 13
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_while_tensor_and_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_while():
-        x = np.array([1, 2, 3, 4])
-        y = Tensor(5)
-        while sum(x) < 20:
-            x += 1
-            y += 1
-        if max(x) == 7:
-            return y
-        y = y - 2
-        return y
-    res = control_flow_if_after_while()
-    assert res == 8
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_while_tensor_and_numpy_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_while():
-        x = np.array([1, 2, 3, 4])
-        y = Tensor(5)
-        while sum(x) < 20:
-            x += 1
-            y += 1
-        if max(x) == 6:
-            return y
-        y = y - 2
-        return y
-    res = control_flow_if_after_while()
-    assert res == 6

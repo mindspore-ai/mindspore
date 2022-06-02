@@ -25,32 +25,6 @@ context.set_context(mode=context.GRAPH_MODE)
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_for_after_if_1():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func():
-        x = Tensor([0])
-        y = Tensor([0])
-        if x == y:
-            x = x + 3
-        for _ in range(3):
-            y = y + 1
-        return x + y
-
-    res = func()
-    assert res == 6
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_for_after_if_2():
     """
     Feature: JIT Fallback
@@ -78,7 +52,7 @@ def test_for_after_if_2():
     assert res_y == 5
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -104,34 +78,6 @@ def test_for_after_if_3():
         for i in z:
             out = out + i
         return out
-
-    res = func()
-    assert res == 12
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_after_if_4():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func():
-        x = Tensor([1])
-        y = Tensor([2])
-        if max(x, y) == Tensor([2]):
-            x = x + min(x, y)
-
-        z = (Tensor(1), Tensor(2), Tensor(3))
-        for i in zip(z):
-            x = x * i
-        return x
 
     res = func()
     assert res == 12

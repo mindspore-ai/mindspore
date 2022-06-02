@@ -47,36 +47,6 @@ def test_if_after_for_in_if_tensor():
     assert res == 5
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_for_in_if_tensor_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_for_in_if():
-        x = Tensor([1])
-        y = Tensor([2])
-        z = Tensor([7])
-        if y > x:
-            z = Tensor([1])
-            for _ in range(3):
-                y -= z
-                z = x + y
-        if x + y >= z:
-            y = y * x - z
-        else:
-            y = y * x + z
-        return y
-    res = control_flow_if_after_for_in_if()
-    assert (res.asnumpy() == [-1]).all()
-
-
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_if_after_for_in_if_numpy():
     """
@@ -98,30 +68,3 @@ def test_if_after_for_in_if_numpy():
         return Tensor(z)
     res = control_flow_if_after_for_in_if()
     assert (res.asnumpy() == [6, 10]).all()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_for_in_if_numpy_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_for_in_for():
-        x = np.array([3, 2])
-        y = Tensor(np.array([0, 2, 4, 6, 8]))
-        z = Tensor([0])
-        if 5 in x:
-            for j in range(5):
-                y[j] -= j
-                z = Tensor(x[1] + y[j])
-        if sum(y) >= z:
-            z = Tensor(sum(y)) - Tensor([9])
-        return z
-    res = control_flow_if_after_for_in_for()
-    assert res == 11

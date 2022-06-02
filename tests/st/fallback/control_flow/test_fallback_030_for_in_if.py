@@ -46,7 +46,7 @@ def test_for_in_if_tensor():
     assert res == 10
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -70,30 +70,7 @@ def test_for_in_if_tensor_2():
     assert res == -5
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_in_if_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for_in_if():
-        x = np.array([1, 2, 3, 4, 5])
-        y = np.array([1, 2, 3, 4, 5])
-        if (x == y).all():
-            for _ in range(2):
-                y += x
-        return Tensor(y)
-    res = control_flow_for_in_if()
-    assert np.all(res.asnumpy() == np.array([3, 6, 9, 12, 15]))
-
-
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -127,75 +104,7 @@ def test_for_in_if_param():
     assert res2 == 12
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_in_if_list():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for_in_if():
-        x = list((1, 2, 3, 4, 5))
-        if len(x) == 5:
-            for _ in range(2):
-                x.append(10)
-        return Tensor(x)
-    res = control_flow_for_in_if()
-    assert np.all(res.asnumpy() == np.array([1, 2, 3, 4, 5, 10, 10]))
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_in_if_tuple_list():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for_in_if():
-        x = tuple([1, 2, 3, 4, 5])
-        y = list((0, 1))
-        if x[4] == 5 and len(y) < 3:
-            for _ in range(2):
-                y.append(x[1])
-        return Tensor(y)
-    res = control_flow_for_in_if()
-    assert np.all(res.asnumpy() == np.array([0, 1, 2, 2]))
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_in_if_numpy_list_len_max():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for_in_if():
-        x = np.array([1, 2, 3, 1, 1])
-        y = list((4, 6, -2))
-        if len(y) <= max(x):
-            for i in range(2, 4):
-                y += x[i]
-        return Tensor(y)
-    out = control_flow_for_in_if()
-    np.all(out.asnumpy() == np.array([9, 11, 3]))
-
-
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -220,7 +129,7 @@ def test_for_in_if_numpy_print():
     np.all(out.asnumpy() == np.array([7, 9, 1]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

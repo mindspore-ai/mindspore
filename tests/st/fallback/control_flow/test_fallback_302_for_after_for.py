@@ -15,36 +15,9 @@
 """ test graph fallback control flow."""
 import pytest
 import numpy as np
-import mindspore
 from mindspore import Tensor, ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_after_for_1():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func():
-        x = Tensor([0])
-        y = np.array([1])
-        for _ in range(2):
-            x = x + 1
-        for i in range(3):
-            y = y + i
-        return x + Tensor(y, dtype=mindspore.int64)
-
-    res = func()
-    assert res == 6
 
 
 @pytest.mark.level0
@@ -100,30 +73,3 @@ def test_for_after_for_3():
 
     res = func()
     assert res == 9
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_after_for_4():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func():
-        x = Tensor([0])
-        for i in range(3):
-            x = x - Tensor([i])
-
-        z = (Tensor(0), Tensor(1), Tensor(2))
-        for i in zip(z):
-            x = x + i
-        return x
-
-    res = func()
-    assert res == 0

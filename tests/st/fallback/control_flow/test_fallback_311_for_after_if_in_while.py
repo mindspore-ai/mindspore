@@ -14,7 +14,6 @@
 # ============================================================================
 """ test graph fallback control flow for after if in while scenario"""
 import pytest
-import numpy as np
 from mindspore import Tensor, ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -50,7 +49,7 @@ def test_for_after_if_in_while_tensor():
     assert res == 13
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -79,58 +78,3 @@ def test_for_after_if_in_while_tensor_2():
         return x - y
     res = control_flow_for_after_if_in_while()
     assert res == 4
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_after_if_in_while_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for_after_if_in_while():
-        x = np.array([1, 2, 3, 4])
-        y = np.array([9, 10, 11, 12])
-        while sum(x) < 20:
-            x += 2
-            if max(y) % 2 == 0:
-                y -= 3
-        a = Tensor(0)
-        for i in range(4):
-            a += Tensor(x[i] - y[i])
-        return a
-    res = control_flow_for_after_if_in_while()
-    assert res == -4
-
-
-@pytest.mark.skip(reason='Not support to get attribute for InterpretObject.')
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_after_if_in_while_numpy_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for_after_if_in_while():
-        x = np.array([1, 2, 3, 4])
-        y = np.array([1, 2, 3, 4])
-        while sum(x) < 20:
-            x += 1
-            if max(x) == 7:
-                break
-            x += 1
-        for i in x:
-            y += i - 20
-        return sum(y)
-    res = control_flow_for_after_if_in_while()
-    assert res == 18

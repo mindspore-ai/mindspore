@@ -47,7 +47,7 @@ def test_if_after_while_in_for_tensor():
     assert res == 13
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -75,7 +75,7 @@ def test_if_after_while_in_for_tensor_2():
     assert res == 4
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -98,28 +98,3 @@ def test_if_after_while_in_for_numpy():
         return y
     res = control_flow_if_after_while_in_for()
     assert res == 11
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_while_in_for_numpy_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_while_in_for():
-        x = np.array([1, 2, 3, 4])
-        y = np.array([4])
-        for _ in range(4):
-            while y > x[0]:
-                y -= x[1]
-        if y != 0:
-            y = y + sum(x)
-        return Tensor(y)
-    res = control_flow_if_after_while_in_for()
-    assert res == 0

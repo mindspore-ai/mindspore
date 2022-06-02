@@ -49,35 +49,7 @@ def test_if_after_if_in_while_tensor():
     assert res == 54
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_if_after_if_in_while_tensor_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_if_in_while():
-        x = Tensor(5)
-        y = Tensor(2)
-        z = x - y
-        while x >= Tensor(3):
-            if y > x:
-                y += x
-            z = x * 2 + y
-            x -= 2
-        if x + y >= z:
-            return y * x - z
-        return y
-    res = control_flow_if_after_if_in_while()
-    assert res == 2
-
-
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

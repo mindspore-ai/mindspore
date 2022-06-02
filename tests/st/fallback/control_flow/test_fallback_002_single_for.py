@@ -43,7 +43,7 @@ def test_single_for_1():
     assert res == 21
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -67,7 +67,7 @@ def test_single_for_2():
         assert res == 21
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -90,99 +90,7 @@ def test_single_for_zip():
     assert res == 9
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_single_for_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for():
-        x = np.array([1, 3, 5])
-        y = np.array([0, 2, 4])
-        for _ in range(3):
-            x = x + y
-        return Tensor(x)
-    res = control_flow_for()
-    assert (res.asnumpy() == [1, 9, 17]).all()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_single_for_builtin_function_sum():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for():
-        x = np.array([1, 3, 5, 7, 9])
-        result = x
-        for _ in range(3):
-            result = sum(x)
-        return Tensor(result)
-    res = control_flow_for()
-    assert res == 25
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_single_for_builtin_function_numpy_sum():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for():
-        x = np.array([1, 3, 5, 7, 9])
-        y = np.array([0, 2, 4, 6, 8])
-        result = x
-        for _ in range(3):
-            x = x + y
-            result = sum(x, 1)
-        return Tensor(result)
-    res = control_flow_for()
-    assert res == 86
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_single_for_builtin_function_tensor_sum():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for():
-        x = Tensor(np.array([1, 3, 5, 7, 9]))
-        y = Tensor(np.array([0, 2, 4, 6, 8]))
-        result = x
-        for _ in range(3):
-            x = x + y
-            result = sum(x, 1)
-        return result
-    res = control_flow_for()
-    assert res == 86
-
-
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -201,24 +109,3 @@ def test_single_for_builtin_function_int():
         return Tensor(x, mstype.float32)
     res = control_flow_for()
     assert res == 8.1
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_single_for_builtin_function_list():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for():
-        x = np.array([1.1, 2.2])
-        for _ in range(3):
-            x = x + list(x)
-        return Tensor(x)
-    res = control_flow_for()
-    assert (res.asnumpy() == [8.8, 17.6]).all()

@@ -14,7 +14,6 @@
 # ============================================================================
 """ test graph fallback control flow."""
 import pytest
-import numpy as np
 from mindspore import Tensor, ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -50,7 +49,7 @@ def test_while_after_for_in_while_1():
     assert res == 6
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -78,65 +77,3 @@ def test_while_after_for_in_while_2():
 
     res = func2312()
     assert res == -2
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_while_after_for_in_while_3():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func2313():
-        x = [1, 2, 3, 4]
-        y = Tensor([8])
-        z = 2
-        while Tensor([sum(x)]) > y:
-            for _ in range(1):
-                x.append(z)
-                y = Tensor([18])
-        while y >= 0:
-            y -= Tensor(np.array([x[0]]))
-        return Tensor(np.array(x)), y
-
-    res_x, res_y = func2313()
-    assert (res_x.asnumpy() == [1, 2, 3, 4, 2]).all()
-    assert res_y == -1
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_while_after_for_in_while_4():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func2314():
-        x = Tensor([1])
-        y = Tensor([2])
-        z = []
-        while max(x, y) == Tensor([2]):
-            y = y + min(x, y)
-            for _ in range(3):
-                z.append(Tensor([2]))
-
-        i = 0
-        while i < len(z):
-            x = x * z[i]
-            i = i + 1
-        return x
-
-    res = func2314()
-    assert res == 8

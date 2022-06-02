@@ -46,7 +46,7 @@ def test_while_after_while_tensor():
     assert res == -3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -69,33 +69,6 @@ def test_while_after_while_tensor_2():
         return z
     res = control_flow_while_after_while()
     assert res == 6
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_while_after_while_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_while_after_while():
-        x = [1, 2, 3, 4]
-        y = Tensor([8])
-        z = 2
-        while Tensor([sum(x)]) > y:
-            x.append(z)
-            y = Tensor([18])
-        while y >= 0:
-            y -= Tensor([x[0]])
-        return Tensor(x), y
-    res_x, res_y = control_flow_while_after_while()
-    assert (res_x.asnumpy() == [1, 2, 3, 4, 2]).all()
-    assert res_y == -1
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')

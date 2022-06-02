@@ -20,11 +20,6 @@ from mindspore import Tensor, ms_function, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_while_after_while_in_while_tensor():
     """
     Feature: JIT Fallback
@@ -49,11 +44,6 @@ def test_while_after_while_in_while_tensor():
     assert res == (2, -3, 1)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_while_after_while_in_while_tensor_2():
     """
     Feature: JIT Fallback
@@ -105,11 +95,6 @@ def test_while_after_while_in_while_numpy():
     assert res == (11, 20)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_while_after_while_in_while_numpy_2():
     """
     Feature: JIT Fallback

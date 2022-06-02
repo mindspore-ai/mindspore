@@ -49,7 +49,7 @@ def test_for_after_for_in_while_1():
     assert res == 0
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -80,7 +80,7 @@ def test_for_after_for_in_while_2():
     assert res_y == 5
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -109,33 +109,3 @@ def test_for_after_for_in_while_3():
 
     res = func3313()
     assert res == 12
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_after_for_in_while_4():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func3314():
-        x = Tensor([1])
-        y = Tensor([2])
-        z = []
-        while max(x, y) == Tensor([2]):
-            y = y + min(x, y)
-            for _ in range(3):
-                z.append(Tensor([2]))
-
-        for i in z:
-            x = x * i
-        return x
-
-    res = func3314()
-    assert res == 8
