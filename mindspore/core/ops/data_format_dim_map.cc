@@ -59,6 +59,32 @@ AbstractBasePtr DataFormatDimMapInfer(const abstract::AnalysisEnginePtr &, const
   auto infer_shape = DataFormatDimMapInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+void DataFormatDimMap::Init(const std::string &src_format, const std::string &dst_format) {
+  this->set_src_format(src_format);
+  this->set_dst_format(dst_format);
+}
+
+void DataFormatDimMap::set_src_format(const std::string &src_format) {
+  CheckAndConvertUtils::CheckString(kSrcFormat, src_format, {"NHWC", "NCHW"}, this->name());
+  (void)this->AddAttr(kSrcFormat, api::MakeValue(src_format));
+}
+
+std::string DataFormatDimMap::get_src_format() const {
+  auto value_ptr = this->GetAttr(kSrcFormat);
+  return GetValue<std::string>(value_ptr);
+}
+
+void DataFormatDimMap::set_dst_format(const std::string &dst_format) {
+  CheckAndConvertUtils::CheckString(kSrcFormat, dst_format, {"NHWC", "NCHW"}, this->name());
+  (void)this->AddAttr(kDstFormat, api::MakeValue(dst_format));
+}
+
+std::string DataFormatDimMap::get_dst_format() const {
+  auto value_ptr = this->GetAttr(kDstFormat);
+  return GetValue<std::string>(value_ptr);
+}
+
 REGISTER_PRIMITIVE_EVAL_IMPL(DataFormatDimMap, prim::kPrimDataFormatDimMap, DataFormatDimMapInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
