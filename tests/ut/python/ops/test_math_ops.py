@@ -29,6 +29,7 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations._grad_ops import IgammaGradA
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.operations.math_ops import Zeta, Igamma, Igammac
+from mindspore.ops.operations.sparse_ops import DenseToDenseSetOperation
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -529,6 +530,12 @@ test_case_math_ops = [
     ('Exp2', {
         'block': Exp2Func(),
         'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16))],
+    }),
+    ('DenseToDenseSetOperation', {
+        'block': DenseToDenseSetOperation(set_operation="a-b", validate_indices=True),
+        'desc_inputs': [Tensor(np.array([[1, 2, 4], [3, 4, 5]], np.int32)),
+                        Tensor(np.array([[3, 2, 5], [1, 4, 7]], np.int32))],
+        'skip': ['backward']
     }),
     ('Deg2rad', {
         'block': Deg2radNet(),
