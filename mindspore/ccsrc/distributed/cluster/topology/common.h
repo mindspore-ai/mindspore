@@ -39,6 +39,9 @@ constexpr char kEnvMetaServerPort[] = "MS_SCHED_PORT";
 
 constexpr char kEnvNodeId[] = "MS_NODE_ID";
 
+// The key of compute graph node's hostname metadata stored in meta server.
+constexpr char kHostNames[] = "hostnames";
+
 // For port number conversion.
 static const int kDecimal = 10;
 
@@ -58,6 +61,7 @@ enum class MessageName {
   kUninitTopo,
   kWriteMetadata,
   kReadMetadata,
+  kGetHostNames,
   kValidMetadata,
   kInvalidMetadata
 };

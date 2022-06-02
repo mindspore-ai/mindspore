@@ -200,9 +200,9 @@ bool ClusterContext::BuildCluster() {
   // Init the node according to the process role.
   if (node_role_ == kEnvRoleOfScheduler) {
     auto node_num = node_num_each_role_[kEnvRoleOfWorker] + node_num_each_role_[kEnvRoleOfServer];
-    node_base_ = std::make_shared<topology::MetaServerNode>(node_id, node_num);
+    node_base_ = std::make_shared<topology::MetaServerNode>(node_id, node_role_, node_num);
   } else {
-    node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id);
+    node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id, node_role_);
   }
   MS_EXCEPTION_IF_NULL(node_base_);
   RETURN_IF_FALSE_WITH_LOG(node_base_->Initialize(), "Failed to initialize the node.");

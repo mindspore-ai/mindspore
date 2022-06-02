@@ -41,12 +41,12 @@ TEST_F(TestMSCollectiveTopo, InitCollectiveTopoNode) {
 
   size_t total_node_num = 8;
   std::vector<std::shared_ptr<distributed::cluster::topology::ComputeGraphNode>> cgns;
-  distributed::cluster::topology::MetaServerNode msn("meta_server_node", total_node_num);
+  distributed::cluster::topology::MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
   for (size_t i = 0; i < total_node_num; ++i) {
-    auto cgn =
-      std::make_shared<distributed::cluster::topology::ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1));
+    auto cgn = std::make_shared<distributed::cluster::topology::ComputeGraphNode>(
+      "compute_graph_node_" + std::to_string(i + 1), "worker");
     ASSERT_TRUE(cgn->Initialize());
     cgns.push_back(cgn);
   }

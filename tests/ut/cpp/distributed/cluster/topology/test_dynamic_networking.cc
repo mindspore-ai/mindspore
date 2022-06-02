@@ -44,11 +44,11 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
 
   size_t total_node_num = 4;
   std::vector<std::shared_ptr<ComputeGraphNode>> cgns;
-  MetaServerNode msn("meta_server_node", total_node_num);
+  MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
   for (size_t i = 0; i < total_node_num; ++i) {
-    auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1));
+    auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1), "worker");
     ASSERT_TRUE(cgn->Initialize());
     cgns.push_back(cgn);
   }
@@ -92,7 +92,7 @@ TEST_F(TestDynamicNetworking, AddMessageHandler) {
   common::SetEnv(kEnvMetaServerPort, server_port.c_str());
 
   size_t total_node_num = 1;
-  MetaServerNode msn("meta_server_node", total_node_num);
+  MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
   std::string message_name = "route";
@@ -104,7 +104,7 @@ TEST_F(TestDynamicNetworking, AddMessageHandler) {
     });
   msn.RegisterMessageHandler(message_name, func);
 
-  ComputeGraphNode cgn("compute_graph_node");
+  ComputeGraphNode cgn("compute_graph_node", "worker");
   ASSERT_TRUE(cgn.Initialize());
 
   size_t interval = 1;
@@ -143,7 +143,7 @@ TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
   common::SetEnv(kEnvMetaServerPort, server_port.c_str());
 
   size_t total_node_num = 1;
-  MetaServerNode msn("meta_server_node", total_node_num);
+  MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
   std::string message_name = "get_route";
@@ -152,7 +152,7 @@ TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
     [](const std::string &) -> std::string { return received_message; });
   msn.RegisterMessageHandler(message_name, func);
 
-  ComputeGraphNode cgn("compute_graph_node");
+  ComputeGraphNode cgn("compute_graph_node", "worker");
   ASSERT_TRUE(cgn.Initialize());
 
   size_t interval = 1;
@@ -210,13 +210,13 @@ TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
   constexpr char kEnvMSRole[] = "MS_ROLE";
   common::SetEnv(kEnvMSRole, "MS_SCHED");
   size_t total_node_num = 4;
-  MetaServerNode msn("meta_server_node", total_node_num);
+  MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
   common::SetEnv(kEnvMSRole, "MS_WORKER");
   std::vector<std::shared_ptr<ComputeGraphNode>> cgns;
   for (size_t i = 0; i < total_node_num; ++i) {
-    auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1));
+    auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1), "worker");
     ASSERT_TRUE(cgn->Initialize());
     cgns.push_back(cgn);
   }
@@ -251,7 +251,7 @@ TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
 
   // Restart the meta server node and check if the node is restored successfully.
   common::SetEnv(kEnvMSRole, "MS_SCHED");
-  MetaServerNode restored_msn("meta_server_node", total_node_num);
+  MetaServerNode restored_msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(restored_msn.Initialize());
 
   ASSERT_EQ(total_node_num, restored_msn.GetAliveNodeNum());
@@ -276,7 +276,7 @@ TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
 
   size_t total_node_num = 4;
   uint64_t timeout = 4;
-  MetaServerNode msn("meta_server_node", total_node_num, timeout);
+  MetaServerNode msn("meta_server_node", "scheduler", total_node_num, timeout);
   ASSERT_TRUE(msn.Initialize());
 
   // Start compute graph nodes in separate sub processes.
@@ -290,7 +290,7 @@ TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
       common::SetEnv(kEnvMetaServerHost, server_host.c_str());
       common::SetEnv(kEnvMetaServerPort, server_port.c_str());
 
-      auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1));
+      auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1), "worker");
       ASSERT_TRUE(cgn->Initialize());
       size_t time = 3600;
       sleep(time);
@@ -343,7 +343,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
     if (pid == 0) {
       common::SetEnv(kEnvMetaServerHost, server_host.c_str());
       common::SetEnv(kEnvMetaServerPort, server_port.c_str());
-      auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1));
+      auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1), "worker");
       ASSERT_TRUE(cgn->Initialize());
       while (!cgn->Initialized()) {
         sleep(1);
@@ -360,7 +360,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
   sleep(interval);
 
   // Start the meta server node.
-  MetaServerNode msn("meta_server_node", total_node_num);
+  MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
   // Wait for the cluster to be ready.
@@ -413,14 +413,14 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
   constexpr char kEnvMSRole[] = "MS_ROLE";
   common::SetEnv(kEnvMSRole, "MS_SCHED");
   size_t total_node_num = 1;
-  MetaServerNode msn("meta_server_node", total_node_num);
+  MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
   // Start the compute graph nodes.
   common::SetEnv(kEnvMSRole, "MS_WORKER");
   std::vector<std::shared_ptr<ComputeGraphNode>> cgns;
   for (size_t i = 0; i < total_node_num; ++i) {
-    auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1));
+    auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1), "worker");
     ASSERT_TRUE(cgn->Initialize());
     cgns.push_back(cgn);
   }
@@ -440,7 +440,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
 
   // Restart the meta server node.
   common::SetEnv(kEnvMSRole, "MS_SCHED");
-  MetaServerNode restarted_msn("meta_server_node", total_node_num);
+  MetaServerNode restarted_msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(restarted_msn.Initialize());
 
   // Check if the cluster is recovered successfully.
@@ -464,6 +464,71 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringUnreg) {
   ASSERT_EQ(0, restarted_msn.GetAliveNodeNum());
   ASSERT_EQ(TopoState::kFinished, restarted_msn.TopologyState());
   restarted_msn.Finalize();
+}
+
+/// Feature: test get hostnames from meta server node from compute graph node.
+/// Description: build a cluster and call the gethostname of compute graph node.
+/// Expectation: the hostnames of specified compute graph node are returned.
+TEST_F(TestDynamicNetworking, GetHostNames) {
+  std::string server_host = "127.0.0.1";
+  std::string server_port = "8090";
+  common::SetEnv(kEnvMetaServerHost, server_host.c_str());
+  common::SetEnv(kEnvMetaServerPort, server_port.c_str());
+  common::SetEnv(recovery::kEnvEnableRecovery, "0");
+
+  size_t total_node_num = 4;
+  size_t total_node_group_0_num = 3;
+  size_t total_node_group_1_num = 1;
+  std::string worker_group_0 = "worker_group_0";
+  std::string worker_group_1 = "worker_group_1";
+
+  std::vector<std::shared_ptr<ComputeGraphNode>> cgns;
+  MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
+  ASSERT_TRUE(msn.Initialize());
+
+  constexpr char kEnvMSRole[] = "MS_ROLE";
+  common::SetEnv(kEnvMSRole, worker_group_0.c_str());
+  for (size_t i = 0; i < total_node_group_0_num; ++i) {
+    auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1), worker_group_0);
+    ASSERT_TRUE(cgn->Initialize());
+    cgns.push_back(cgn);
+  }
+
+  common::SetEnv(kEnvMSRole, worker_group_1.c_str());
+  for (size_t i = total_node_group_0_num; i < total_node_num; ++i) {
+    auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1), worker_group_1);
+    ASSERT_TRUE(cgn->Initialize());
+    cgns.push_back(cgn);
+  }
+
+  size_t interval = 1;
+  size_t retry = 30;
+  while (((msn.GetAliveNodeNum() != total_node_num) || (msn.TopologyState() != TopoState::kInitialized)) &&
+         (retry-- > 0)) {
+    sleep(interval);
+  }
+
+  ASSERT_EQ(total_node_num, msn.GetAliveNodeNum());
+  ASSERT_EQ(TopoState::kInitialized, msn.TopologyState());
+
+  auto hostnames_0 = cgns[0]->GetHostNames(worker_group_0);
+  auto hostnames_1 = cgns[0]->GetHostNames(worker_group_1);
+
+  ASSERT_EQ(total_node_group_0_num, hostnames_0.size());
+  ASSERT_EQ(total_node_group_1_num, hostnames_1.size());
+
+  for (auto &cgn : cgns) {
+    cgn->Finalize();
+  }
+
+  retry = 30;
+  while ((msn.GetAliveNodeNum() > 0 || msn.TopologyState() != TopoState::kFinished) && retry-- > 0) {
+    sleep(interval);
+  }
+  ASSERT_EQ(0, msn.GetAliveNodeNum());
+  ASSERT_EQ(TopoState::kFinished, msn.TopologyState());
+
+  msn.Finalize();
 }
 }  // namespace topology
 }  // namespace cluster

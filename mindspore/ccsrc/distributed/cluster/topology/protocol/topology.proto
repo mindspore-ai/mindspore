@@ -19,6 +19,8 @@ package mindspore.distributed.cluster.topology;
 
 message RegistrationMessage {
   string node_id = 1;
+  string host_name = 2;
+  string role = 3;
 }
 
 message RegistrationRespMessage {

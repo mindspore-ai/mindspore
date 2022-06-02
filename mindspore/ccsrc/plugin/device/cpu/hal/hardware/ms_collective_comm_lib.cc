@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
 
+#include "distributed/constants.h"
 #include "runtime/collective/collective_communication_lib.h"
 #include "plugin/device/cpu/hal/hardware/allreduce_impl.h"
 
@@ -64,21 +65,26 @@ bool MsCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name
 
 bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) const {
   CHECK_IF_NULL(host_hash_names);
-  while (!SendHostHashName(host_hash_name)) {
-    MS_LOG(WARNING) << "Send host hash name to scheduler failed, retrying...";
-    if (finalized_.load()) {
+
+  bool success = false;
+  const size_t interval = 3;
+  auto role = common::GetEnv(distributed::kEnvRole);
+  while (!success) {
+    auto hostnames = cgn_->GetHostNames(role);
+    if (hostnames.size() < host_hash_names->size()) {
+      sleep(interval);
+      continue;
+    } else if (hostnames.size() > host_hash_names->size()) {
+      MS_LOG(ERROR) << "Invalid number of hostnames, expected number of hostnames: " << host_hash_names->size()
+                    << ", actual number of hostnames: " << hostnames.size();
       return false;
     }
 
-    std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
-  }
-
-  while (!QueryHostHashNames(host_hash_names)) {
-    MS_LOG(WARNING) << "Query host hash names from scheduler failed, retrying...";
-    if (finalized_.load()) {
-      return false;
+    for (size_t i = 0; i < host_hash_names->size(); i++) {
+      size_t host_hash = std::hash<std::string>()(hostnames[i]);
+      (*host_hash_names)[i] = host_hash;
     }
-    std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
+    success = true;
   }
 
   return true;
@@ -109,65 +115,6 @@ bool MsCollectiveCommLib::BroadcastUniqueID(const std::string &group_name, size_
 
     std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
   }
-  return true;
-}
-
-bool MsCollectiveCommLib::SendHostHashName(size_t host_hash_name) const {
-  CHECK_IF_NULL(node_);
-  CHECK_IF_NULL(cgn_);
-  ps::core::SendHostHashNameMessage send_host_name_msg;
-  send_host_name_msg.set_node_id(node_->node_id());
-  send_host_name_msg.set_rank_id(node_->rank_id());
-  send_host_name_msg.set_host_hash_name(host_hash_name);
-  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
-  if (!node_->SendToScheduler(send_host_name_msg.SerializeAsString().data(),
-                              send_host_name_msg.SerializeAsString().size(), NodeCommand::SEND_HOST_NAME, &output)) {
-    MS_LOG(WARNING) << "Failed to send host hash name request to scheduler.";
-    return false;
-  }
-
-  ps::core::GeneralResponseMsg resp_msg;
-  CHECK_IF_NULL(output);
-  (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
-  if (!resp_msg.is_success()) {
-    MS_LOG(WARNING) << "Send host hash name to scheduler failed, error msg: " << resp_msg.error();
-    return false;
-  }
-  return true;
-}
-
-bool MsCollectiveCommLib::QueryHostHashNames(std::vector<size_t> *host_hash_names) const {
-  CHECK_IF_NULL(host_hash_names);
-  CHECK_IF_NULL(node_);
-  CHECK_IF_NULL(cgn_);
-  ps::core::GeneralQueryMessage general_query_msg;
-  general_query_msg.set_node_id(node_->node_id());
-  general_query_msg.set_rank_id(node_->rank_id());
-  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
-  if (!node_->SendToScheduler(general_query_msg.SerializeAsString().data(),
-                              general_query_msg.SerializeAsString().size(), NodeCommand::QUERY_HOST_NAMES, &output)) {
-    MS_LOG(WARNING) << "Failed to send query host name request to scheduler.";
-    return false;
-  }
-
-  ps::core::QueryHostHashNameRespMessage resp_msg;
-  CHECK_IF_NULL(output);
-  (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
-  if (!resp_msg.is_success()) {
-    MS_LOG(INFO) << "Query host hash name from scheduer failed, maybe scheduler has not received all host names.";
-    return false;
-  }
-
-  if (host_hash_names->size() != IntToSize(resp_msg.host_hash_names_size())) {
-    MS_LOG(ERROR) << "The host_hash_names container size: " << host_hash_names->size()
-                  << ", but received size: " << resp_msg.host_hash_names_size();
-    return false;
-  }
-
-  for (size_t i = 0; i < host_hash_names->size(); i++) {
-    (*host_hash_names)[i] = resp_msg.host_hash_names()[i];
-  }
-
   return true;
 }
 

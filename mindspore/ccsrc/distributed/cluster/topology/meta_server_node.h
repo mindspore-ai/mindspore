@@ -68,6 +68,12 @@ struct NodeInfo {
   explicit NodeInfo(std::string id) { node_id = id; }
   std::string node_id;
 
+  // The local host name of this cluster node.
+  std::string host_name;
+
+  // The role name of this cluster node.
+  std::string role;
+
   // The timestamp of last heartbeat.
   // This timestamp is considered the health state of the node.
   time_t last_update;
@@ -80,9 +86,9 @@ struct NodeInfo {
 // of computation graph nodes.
 class MetaServerNode : public NodeBase {
  public:
-  explicit MetaServerNode(const std::string &node_id, const size_t &node_num,
+  explicit MetaServerNode(const std::string &node_id, const std::string &role, const size_t &node_num,
                           uint64_t node_timeout = kDefaultNodeTimeout)
-      : NodeBase(node_id),
+      : NodeBase(node_id, role),
         total_node_num_(node_num),
         topo_state_(TopoState::kInitializing),
         enable_monitor_(true),
@@ -124,6 +130,9 @@ class MetaServerNode : public NodeBase {
   // Process user-defined metadata writing and reading requests.
   MessageBase *const ProcessWriteMetadata(MessageBase *const message);
   MessageBase *const ProcessReadMetadata(MessageBase *const message);
+
+  // Gather all the hostname of registered compute graph nodes.
+  MessageBase *const ProcessGetHostNames(MessageBase *const message);
 
   // Maintain the state which is type of `TopoState` of this cluster topology.
   void UpdateTopoState();
