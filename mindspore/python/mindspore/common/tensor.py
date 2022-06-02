@@ -906,7 +906,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('broadcast_to')(x.shape)(self)
 
-
     def tan(self):
         """
         Computes tangent of `x` element-wise.
@@ -922,7 +921,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('tan')()(self)
 
-
     def cosh(self):
         """
         Computes hyperbolic cosine of `x` element-wise.
@@ -937,7 +935,6 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('cosh')()(self)
-
 
     def abs(self):
         """
@@ -1032,7 +1029,7 @@ class Tensor(Tensor_):
             [ 9.165152 10.954452]
         """
         self._init_check()
-        return tensor_operator_registry.get('lp_norm')(self, p, axis, keep_dims, epsilon)
+        return tensor_operator_registry.get('lp_norm')(self, axis, p, keep_dims, epsilon)
 
     def matrix_determinant(self):
         """
