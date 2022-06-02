@@ -758,6 +758,80 @@ mindspore.Tensor
         - **ValueError** - `num_rows` 和 `num_cols` 与 当前Tensor的维度和 `k` 的值不匹配。
         - **ValueError** - `align` 取值不在合法值集合内。
 
+    .. py:method:: inv()
+
+        计算当前Tensor的倒数。
+
+        .. math::
+            out_i = \frac{1}{x_{i} }
+
+        其中 `x` 表示当前Tensor。
+
+        **返回：**
+
+        Tensor，shape和类型与当前Tensor相同。
+
+        **异常：**
+
+    	- **TypeError** - 当前Tensor的数据类型不为float16、float32或int32。
+
+    .. py:method:: invert()
+
+        按位翻转当前Tensor。
+
+        .. math::
+            out_i = ~x_{i}
+
+        其中 `x` 表示当前Tensor。
+
+        **返回：**
+
+        Tensor，shape和类型与当前Tensor相同。
+
+        **异常：**
+
+    	- **TypeError** - 当前Tensor的数据类型不为int16或uint16。
+
+    .. py:method:: matrix_band_part(lower, upper)
+
+        将当前Tensor每个中心带外的所有位置设置为零。
+
+
+        **参数：**
+
+        - **lower** (int) - 要保留的子对角线数。`lower` 的数据类型必须是int32或int64。如果为负数，则保留整个下三角形。
+    	- **upper** (int) - 要保留的子对角线数。`upper` 的数据类型必须是int32或int64。如果为负数，则保留整个上三角形。
+
+        **返回：**
+
+        Tensor，shape和类型与当前Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - 当前Tensor的数据类型不是float16、float32、float64、int32或int64。
+    	- **TypeError** - 输入的 `lower` 的数据类型不是int32或int64。
+    	- **TypeError** - 输入的 `upper` 的数据类型不是int32或int64。
+        - **ValueError** - 当前Tensor的shape不是大于或等于2维。
+
+    .. py:method:: padding(pad_dim_size=8)
+
+        通过填充0，将当前Tensor的最后一个维度从1扩展到pad_dim_size。
+
+
+        **参数：**
+
+        - **pad_dim_size** (int) - 要扩展的当前Tensor的最后一个维度的值，该值必须为正数。默认值：8。
+
+        **返回：**
+
+        Tensor，其数据类型和维度必须和输入中的当前Tensor保持一致。
+
+        **异常：**
+
+    	- **TypeError** - `pad_dim_size` 的数据类型不是int。
+    	- **ValueError** - `pad_dim_size` 的值小于1。
+        - **ValueError** - 当前Tensor的最后一个维度不等于1。
+
     .. py:method:: max(axis=None, keepdims=False, initial=None, where=True)
 
         返回Tensor的最大值或轴方向上的最大值。

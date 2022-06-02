@@ -134,7 +134,7 @@ def matrix_band_part(x, lower, upper):
             If negative, keep entire upper triangle.
 
     Returns:
-        Tensor, has the same type and shape as input shape value.
+        Tensor, has the same type and shape as `x`.
 
     Raises:
         TypeError: If dtype of `x` is not one of float16, float32, float64, int32 or int64.
