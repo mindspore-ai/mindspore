@@ -19,8 +19,7 @@ mindspore.nn.SiLU
 
         \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
-    关于SiLU的图例见 `Sigmoid <https://en.wikipedia.org/wiki/
-    Activation_function#/media/File:Activation_rectified_linear.svg>`_ 。
+    关于SiLU的图例见 `SiLU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Swish.svg>`_ 。
 
     **输入：**
 
