@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
 #define MINDSPORE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
 #include <math.h>
+#include "nnacl/intrinsics/ms_simd_cpu_info.h"
 
 #ifdef ENABLE_AVX512
 #include "nnacl/intrinsics/ms_simd_avx512_instructions.h"
@@ -176,7 +177,12 @@
 
 // enable avx512
 #if defined(ENABLE_AVX512)
-#define SIMD_RUN_AVX512(function, index, ...) index = function##AVX512(index, __VA_ARGS__)
+#define SIMD_RUN_AVX512(function, index, ...)     \
+  do {                                            \
+    AVX512_HARDWARE_SELF_AWARENESS_BEGIN          \
+    index = function##AVX512(index, __VA_ARGS__); \
+    AVX512_HARDWARE_SELF_AWARENESS_END            \
+  } while (0)
 #else
 #define SIMD_RUN_AVX512(function, index, ...)
 #endif

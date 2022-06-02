@@ -55,14 +55,11 @@ if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
 endif()
 
 if(NOT MSVC)
-    if("${X86_64_SIMD}" STREQUAL "avx")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2 -mfma")
-    endif()
-    if("${X86_64_SIMD}" STREQUAL "avx512")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2 -mfma -mavx512f")
-    endif()
-    if("${X86_64_SIMD}" STREQUAL "sse")
+    if("${X86_64_SIMD}" STREQUAL "sse" OR "${X86_64_SIMD}" STREQUAL "avx" OR "${X86_64_SIMD}" STREQUAL "avx512")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1")
+    endif()
+    if("${X86_64_SIMD}" STREQUAL "avx" OR "${X86_64_SIMD}" STREQUAL "avx512")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx -mavx2 -mfma")
     endif()
 endif()
 
@@ -158,6 +155,13 @@ if("${X86_64_SIMD}" STREQUAL "avx512")
         file(GLOB HPC_SRC ${NNACL_DIR}/experimental/HPC-generator/gemm_avx512/*.c)
         set_property(SOURCE ${HPC_SRC} PROPERTY LANGUAGE C)
     endif()
+
+    set(MS_X86_AVX512_SRC ${HPC_SRC}
+                          ${NNACL_DIR}/fp32/matmul_avx512_fp32.c)
+
+    set_source_files_properties(${MS_X86_AVX512_SRC} PROPERTIES LANGUAGE C
+        COMPILE_FLAGS "${CMAKE_C_FLAGS} -mavx512f")
+
 endif()
 
 if(APPLE)
@@ -167,7 +171,7 @@ endif()
 ########################### build nnacl library ########################
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
-add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC} ${HPC_SRC})
+add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC} ${MS_X86_AVX512_SRC})
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     target_compile_definitions(nnacl_mid PRIVATE ENABLE_DEBUG)
@@ -183,7 +187,6 @@ if(ENABLE_CPU)
         target_compile_definitions(nnacl_mid PRIVATE ENABLE_SSE ENABLE_AVX)
     elseif("${X86_64_SIMD}" STREQUAL "avx512")
         target_compile_definitions(nnacl_mid PRIVATE ENABLE_SSE ENABLE_AVX ENABLE_AVX512)
-        target_compile_options(nnacl_mid PRIVATE -mavx512f)
     endif()
     target_compile_options(nnacl_mid PRIVATE -fPIC)
     add_library(nnacl SHARED $<TARGET_OBJECTS:nnacl_mid>)
