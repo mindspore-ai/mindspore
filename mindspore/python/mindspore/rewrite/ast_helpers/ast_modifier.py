@@ -257,6 +257,75 @@ class AstModifier(ast.NodeTransformer):
         return result
 
     @staticmethod
+    def _create_arg_by_single_value(value: ScopedValue):
+        """
+        Create an instance of ast.Constant.
+
+        Args:
+            value (ScopedValue): value used to create arg.
+
+        Raises:
+            RuntimeError: if scope of value is not empty.
+            TypeError: type of arg not in [ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue]
+
+        Returns:
+            ast.Constant: An instance of ast.Constant
+        """
+        if value.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
+            if value.scope:
+                raise RuntimeError("For arg the scope should be empty")
+            return ast.Constant(value=value.value, kind=None)
+        raise TypeError("Type of arg only support [ValueType.IntValue, ValueType.FloatValue,"
+                        f" ValueType.StringValue], but got {type(value)}")
+
+    @staticmethod
+    def _create_list_or_tuple(value: ScopedValue):
+        """
+        Create an instance of ast.List or ast.Tuple.
+
+        Args:
+            value (ScopedValue): value used to create ast node.
+
+        Returns:
+            ast.List or ast.Tuple: An instance of ast.List or ast.Tuple.
+        """
+        elts = []
+        for v in value.value:
+            elts.append(AstModifier._create_arg_by_single_value(v))
+        if isinstance(value, list):
+            return ast.List(elts=elts)
+        return ast.Tuple(elts=elts)
+
+    @staticmethod
+    def _create_keyword(arg: str, value: ScopedValue):
+        """
+        Create an instance of ast.keyword.
+
+        Args:
+            arg (str): key of keyword.
+            value (ScopedValue): value used to create ast.keywrod instance.
+
+        Raises:
+            RuntimeError:  if scope of value is not empty.
+            TypeError: type of arg not in [ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue,
+            ValueType.ListValue, ValueType.TupleValue]
+
+        Returns:
+            ast.keyword: a instance of ast.keyword.
+        """
+        if value.scope:
+            raise RuntimeError("value.scope should be empty")
+        if value.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
+            v = ast.Constant(value=value.value, kind=None)
+        elif value.type in (ValueType.ListValue, ValueType.TupleValue):
+            v = AstModifier._create_list_or_tuple(value)
+        else:
+            raise TypeError("Type of keyword value only support [ValueType.IntValue, ValueType.FloatValue,"
+                            "ValueType.StringValue, ValueType.ListValue, ValueType.TupleValue],"
+                            f"but got {type(value)}")
+        return ast.keyword(arg=arg, value=v)
+
+    @staticmethod
     def _create_call_args(args: [ScopedValue]) -> [ast.AST]:
         """
         Create a list of ast.AST as args of ast.Call from a list of `ScopedValue`.
@@ -279,14 +348,14 @@ class AstModifier(ast.NodeTransformer):
             if not isinstance(arg, ScopedValue):
                 raise TypeError("arg should be ScopedValue, got: ", type(arg))
             if arg.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
-                if arg.scope:
-                    raise RuntimeError("arg.scope should be empty")
-                results.append(ast.Constant(value=arg.value, kind=None))
+                results.append(AstModifier._create_arg_by_single_value(arg))
             elif arg.type == ValueType.NamingValue:
                 if arg.scope:
                     results.append(ast.Attribute(ast.Name(arg.scope, ast.Load()), arg.value, ast.Store()))
                 else:
                     results.append(ast.Name(arg.value, ast.Store()))
+            elif arg.type == ValueType.ListValue or arg.type == ValueType.TupleValue:
+                results.append(AstModifier._create_list_or_tuple(arg))
             else:
                 raise RuntimeError("Please handle custom-object first")
         return results
@@ -313,10 +382,9 @@ class AstModifier(ast.NodeTransformer):
         for arg, value in kwargs.items():
             if not isinstance(value, ScopedValue):
                 raise TypeError("value should be ScopedValue, got: ", type(value))
-            if value.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
-                if value.scope:
-                    raise RuntimeError("value.scope should be empty")
-                results.append(ast.keyword(arg=arg, value=ast.Constant(value=value.value, kind=None)))
+            if value.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue,
+                              ValueType.ListValue, ValueType.TupleValue):
+                results.append(AstModifier._create_keyword(arg, value))
             elif value.type == ValueType.NamingValue:
                 if value.scope:
                     results.append(ast.keyword(arg=arg, value=ast.Attribute(ast.Name(value.scope, ast.Load()),
