@@ -61,6 +61,8 @@ void GPUDeviceManager::ReleaseDevice() {
       CHECK_OP_RET_WITH_ERROR(CudaDriver::DestroyStream(stream), "Failed to destroy CUDA stream.");
     }
   }
+  gpu_streams_.clear();
+
   if (cudnn_handle_ != nullptr) {
     CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroy(cudnn_handle_), "Failed to destroy cuDNN handle");
   }
