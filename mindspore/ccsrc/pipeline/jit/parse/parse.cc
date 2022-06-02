@@ -1758,18 +1758,19 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   py::object bodyNode = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr true_end = ParseStatements(true_block, bodyNode);
   MS_EXCEPTION_IF_NULL(true_end->func_graph());
+  bool return_of_true_end_is_set = true, return_of_false_end_is_set = true;
   // If the return_ is set, it has its own continuation block
   if (true_end->func_graph()->get_return() == nullptr) {
+    return_of_true_end_is_set = false;
     true_end->Jump(after_block, {});
+    MS_LOG(DEBUG) << "The true_end block jump to after, true_block: " << true_block->ToString()
+                  << ", true_end: " << true_end->ToString() << ", after: " << after_block->ToString();
     if (ignored_if_latter_call_graphs_.find(true_end) == ignored_if_latter_call_graphs_.end()) {
       true_branch_graphs.second = true_end;
     } else {
       MS_LOG(DEBUG) << "Ignore the true_end block for transform to parallem call, true_block: "
                     << true_block->ToString() << ", true_end: " << true_end->ToString();
     }
-    MS_LOG(DEBUG) << "The true_end block jump to after, true_block: " << true_block->ToString()
-                  << ", true_end: " << true_end->ToString();
-
     if (use_fallback) {
       UpdateBlockPyParams(after_block, true_end);
     }
@@ -1782,15 +1783,16 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   MS_EXCEPTION_IF_NULL(false_end->func_graph());
   // If the return_ is set, it has its own continuation block
   if (false_end->func_graph()->get_return() == nullptr) {
+    return_of_false_end_is_set = false;
     false_end->Jump(after_block, {});
+    MS_LOG(DEBUG) << "The false_end block jump to after, false_block: " << false_block->ToString()
+                  << ", false_end: " << false_end->ToString() << ", after: " << after_block->ToString();
     if (ignored_if_latter_call_graphs_.find(false_end) == ignored_if_latter_call_graphs_.end()) {
       false_branch_graphs.second = false_end;
     } else {
       MS_LOG(DEBUG) << "Ignore the false_end block for transform to parallem call, false_block: "
                     << false_block->ToString() << ", false_end: " << false_end->ToString();
     }
-    MS_LOG(DEBUG) << "The false_end block jump to after, false_block: " << false_block->ToString()
-                  << ", false_end: " << false_end->ToString();
     if (use_fallback) {
       UpdateBlockPyParams(after_block, false_end);
     }
@@ -1798,7 +1800,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   auto switch_app = block->ConditionalJump(bool_node, true_block, false_block);
 
   // Record the former, middle, latter graphs info.
-  if (true_end->func_graph()->get_return() != nullptr || false_end->func_graph()->get_return() != nullptr) {
+  if (return_of_true_end_is_set || return_of_false_end_is_set) {
     MS_LOG(DEBUG) << "True_end or false_end will not call after_block, true_block: " << true_block->ToString()
                   << ", true_end: " << true_end->ToString() << ", false_block: " << false_block->ToString()
                   << ", false_end: " << false_end->ToString() << ", after_block: " << after_block->ToString();
@@ -1808,14 +1810,13 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   if (transform_tail_call_to_parallel_call && true_branch_graphs.second != nullptr &&
       false_branch_graphs.second != nullptr) {
     true_branch_graphs.first = block;
-    MS_LOG(DEBUG) << "Record tail call graphs, true: {former: " << true_branch_graphs.first->func_graph()->ToString()
-                  << ", middle: " << true_branch_graphs.second->func_graph()->ToString() << "}";
     false_branch_graphs.first = block;
+    MS_LOG(DEBUG) << "Record tail call {former: " << block->func_graph()->ToString()
+                  << ", true middle: " << true_branch_graphs.second->func_graph()->ToString()
+                  << ", false middle: " << false_branch_graphs.second->func_graph()->ToString() << "}";
     std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>> branch_graphs_vec{true_branch_graphs,
                                                                                  false_branch_graphs};
     (void)parallel_call_graphs_.emplace_back(branch_graphs_vec);
-    MS_LOG(DEBUG) << "Record tail call graphs, false: {former: " << false_branch_graphs.first->func_graph()->ToString()
-                  << ", middle: " << false_branch_graphs.second->func_graph()->ToString() << "}";
   }
 
   static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
