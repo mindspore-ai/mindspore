@@ -46,9 +46,9 @@ int ResizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
   return RET_OK;
 }
 
-int ResizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is invalid";
+int ResizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
 
@@ -57,7 +57,7 @@ int ResizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   if (resize_in_tensor->getDimensions().nbDims == DIMENSION_4D && tensorrt_in_tensors_[0].format_ == Format::NHWC) {
     // NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
     if (transpose_layer == nullptr) {
       MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
       return RET_ERROR;
@@ -68,7 +68,7 @@ int ResizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(resize_in_tensor, Format::NCHW, false);
 
-  nvinfer1::IResizeLayer *resize_layer = network->addResize(*resize_in_tensor);
+  nvinfer1::IResizeLayer *resize_layer = ctx->network()->addResize(*resize_in_tensor);
   if (resize_layer == nullptr) {
     MS_LOG(ERROR) << "create resize layer failed for " << op_name_;
     return RET_ERROR;

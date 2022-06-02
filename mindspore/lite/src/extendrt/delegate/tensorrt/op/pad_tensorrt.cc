@@ -57,7 +57,7 @@ int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
   return RET_OK;
 }
 
-int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   mindspore::MSTensor &pad_tensor = in_tensors_[1];
   int element_cnt = std::accumulate(pad_tensor.Shape().begin(), pad_tensor.Shape().end(), 1, std::multiplies<int>());
   if (element_cnt != tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims * INPUT_SIZE2) {
@@ -72,7 +72,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NHWC) {
     // transpose: NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
     if (transpose_layer_in == nullptr) {
       MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
       return RET_ERROR;
@@ -117,7 +117,7 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(DEBUG) << op_name_ << " prePadding: " << prePadding.d[0] << ", " << prePadding.d[1]
                   << "; postPadding: " << postPadding.d[0] << ", " << postPadding.d[1];
 
-    padding_layer = network->addPadding(*pad_input, prePadding, postPadding);
+    padding_layer = ctx->network()->addPadding(*pad_input, prePadding, postPadding);
   } else {
     MS_LOG(ERROR) << "need check for pad_tensor dims: " << op_name_
                   << ", pad_tensor ElementNum: " << pad_tensor.ElementNum();

@@ -41,7 +41,7 @@ int PoolTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
   return RET_OK;
 }
 
-int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int PoolTensorRT::AddInnerOp(TensorRTContext *ctx) {
   if (tensorrt_in_tensors_.size() != 1) {
     MS_LOG(ERROR) << "invalid input tensor size: " << tensorrt_in_tensors_.size();
     return RET_ERROR;
@@ -57,7 +57,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NHWC) {
     // transpose: NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
     if (transpose_layer_in == nullptr) {
       MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
       return RET_ERROR;
@@ -73,7 +73,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "ConvertCudaDims failed for " << op_name_;
     return RET_ERROR;
   }
-  nvinfer1::IPoolingLayer *pooling_layer = network->addPoolingNd(*pool_input, pooling_type_, windowSize);
+  nvinfer1::IPoolingLayer *pooling_layer = ctx->network()->addPoolingNd(*pool_input, pooling_type_, windowSize);
   if (pooling_layer == nullptr) {
     MS_LOG(ERROR) << "addPoolingNd failed for TensorRT.";
     return RET_ERROR;
@@ -88,7 +88,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     activation_layer = pooling_layer;
   } else {
     activation_layer =
-      ActivationTensorRT::AddActivation(network, activation_type_, 0, 0, 0, pooling_layer->getOutput(0), device_id_);
+      ActivationTensorRT::AddActivation(ctx, activation_type_, 0, 0, 0, pooling_layer->getOutput(0), device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for pool failed";
       return RET_ERROR;

@@ -85,11 +85,11 @@ class StrideSliceTensorRTUtil final : public SliceTensorRTUtil {
     }
     return std::make_tuple(start_dims, size_dims, stride_dims);
   }
-  nvinfer1::ITensor *PostProcess(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
+  nvinfer1::ITensor *PostProcess(TensorRTContext *ctx, nvinfer1::ITensor *input,
                                  const std::vector<mindspore::MSTensor> &in_tensors,
                                  const std::vector<mindspore::MSTensor> &out_tensors) {
     if (shrink_axis_ != 0) {
-      return Reshape(network, input, out_tensors.at(0).Shape());
+      return Reshape(ctx, input, out_tensors.at(0).Shape());
     }
     return input;
   }
@@ -239,9 +239,9 @@ int SliceTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
   return RET_OK;
 }
 
-int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int SliceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   ITensorHelper slice_input;
-  int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &slice_input);
+  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &slice_input);
   if (ret != RET_OK || slice_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return RET_ERROR;
@@ -256,7 +256,8 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
 
-  nvinfer1::ISliceLayer *slice_layer = network->addSlice(*slice_input.trt_tensor_, start_dims, size_dims, stride_dims);
+  nvinfer1::ISliceLayer *slice_layer =
+    ctx->network()->addSlice(*slice_input.trt_tensor_, start_dims, size_dims, stride_dims);
   if (slice_layer == nullptr) {
     MS_LOG(ERROR) << "add Slice op failed for TensorRT: " << op_name_;
     return RET_ERROR;
@@ -264,7 +265,7 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   this->layer_ = slice_layer;
   slice_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = slice_layer->getOutput(0);
-  out_tensor = util_->PostProcess(network, out_tensor, in_tensors_, out_tensors_);
+  out_tensor = util_->PostProcess(ctx, out_tensor, in_tensors_, out_tensors_);
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "output tensor create failed";
     return RET_ERROR;

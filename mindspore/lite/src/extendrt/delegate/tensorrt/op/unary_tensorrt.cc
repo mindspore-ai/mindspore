@@ -39,12 +39,12 @@ int UnaryTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
   return RET_OK;
 }
 
-int UnaryTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr || this->tensorrt_in_tensors_.size() != 1) {
+int UnaryTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr || this->tensorrt_in_tensors_.size() != 1) {
     MS_LOG(ERROR) << "network or input tensor is invalid";
     return RET_ERROR;
   }
-  nvinfer1::IUnaryLayer *cal_layer = network->addUnary(*tensorrt_in_tensors_[0].trt_tensor_, unary_op_);
+  nvinfer1::IUnaryLayer *cal_layer = ctx->network()->addUnary(*tensorrt_in_tensors_[0].trt_tensor_, unary_op_);
   if (cal_layer == nullptr) {
     MS_LOG(ERROR) << "addUnary failed for: " << op_name_;
     return RET_ERROR;

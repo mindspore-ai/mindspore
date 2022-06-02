@@ -31,13 +31,13 @@ class FullyConnectedTensorRT : public TensorRTOp {
 
   ~FullyConnectedTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int PreprocessInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *fc_input);
+  int PreprocessInputs(TensorRTContext *ctx, ITensorHelper *fc_input);
 
   schema::ActivationType activation_{schema::ActivationType::ActivationType_NO_ACTIVATION};
 };

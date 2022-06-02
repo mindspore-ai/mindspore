@@ -42,9 +42,9 @@ int ConvolutionTensorRT::IsSupport(const schema::Primitive *primitive,
   return RET_OK;
 }
 
-int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is invalid";
+int ConvolutionTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
   const schema::Conv2DFusion *conv_op = this->op_primitive_->value_as_Conv2DFusion();
@@ -57,7 +57,7 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NHWC) {
     // transpose: NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
     if (transpose_layer_in == nullptr) {
       MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
       return RET_ERROR;
@@ -99,7 +99,7 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   nvinfer1::IConvolutionLayer *conv_layer =
-    network->addConvolutionNd(*conv_input, nbOutputMaps, kernelSize, kernelWeights, biasWeights);
+    ctx->network()->addConvolutionNd(*conv_input, nbOutputMaps, kernelSize, kernelWeights, biasWeights);
 
   if (conv_layer == nullptr) {
     MS_LOG(ERROR) << "ConvolutionLayer failed";
@@ -116,8 +116,8 @@ int ConvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (conv_op->activation_type() == schema::ActivationType::ActivationType_NO_ACTIVATION) {
     activation_layer = conv_layer;
   } else {
-    activation_layer = ActivationTensorRT::AddActivation(network, conv_op->activation_type(), 0, 0, 0,
-                                                         conv_layer->getOutput(0), device_id_);
+    activation_layer =
+      ActivationTensorRT::AddActivation(ctx, conv_op->activation_type(), 0, 0, 0, conv_layer->getOutput(0), device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for conv failed";
       return RET_ERROR;

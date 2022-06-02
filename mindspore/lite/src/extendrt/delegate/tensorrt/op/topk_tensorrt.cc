@@ -34,19 +34,19 @@ int TopKTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
   return RET_OK;
 }
 
-int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr || this->tensorrt_in_tensors_.size() != 1) {
+int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx->network() == nullptr || this->tensorrt_in_tensors_.size() != 1) {
     MS_LOG(ERROR) << "network or input tensor is invalid";
     return RET_ERROR;
   }
-  int ret = ParseParams(network);
+  int ret = ParseParams(ctx);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseParams failed for " << op_name_;
     return ret;
   }
 
   ITensorHelper topk_input;
-  ret = PreprocessInputs(network, &topk_input);
+  ret = PreprocessInputs(ctx, &topk_input);
   if (ret != RET_OK || topk_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "preprocess input failed for " << op_name_;
     return ret;
@@ -55,7 +55,7 @@ int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   MS_LOG(DEBUG) << "addTopK input " << GetTensorFormat(topk_input);
   MS_LOG(DEBUG) << op_name_ << " has k: " << top_k_ << ", axis: " << axis_value_;
 
-  nvinfer1::ITopKLayer *topk_layer = network->addTopK(*topk_input.trt_tensor_, topk_op_, top_k_, axis_);
+  nvinfer1::ITopKLayer *topk_layer = ctx->network()->addTopK(*topk_input.trt_tensor_, topk_op_, top_k_, axis_);
   CHECK_NULL_RETURN(topk_layer);
   this->layer_ = topk_layer;
   topk_layer->setName(op_name_.c_str());
@@ -66,10 +66,10 @@ int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (value_out_tensor->getDimensions().nbDims != out_tensors_[0].Shape().size()) {
     nvinfer1::Dims out_dims = ConvertCudaDims(out_tensors_[0].Shape());
     out_dims.d[0] = value_out_tensor->getDimensions().d[0];
-    value_out_tensor = Reshape(network, value_out_tensor, out_dims);
+    value_out_tensor = Reshape(ctx, value_out_tensor, out_dims);
     CHECK_NULL_RETURN(value_out_tensor);
     value_out_tensor->setName((op_name_ + "_value_output").c_str());
-    index_out_tensor = Reshape(network, index_out_tensor, out_dims);
+    index_out_tensor = Reshape(ctx, index_out_tensor, out_dims);
     CHECK_NULL_RETURN(index_out_tensor);
     index_out_tensor->setName((op_name_ + "_index_output").c_str());
   }
@@ -80,7 +80,7 @@ int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-int TopKTensorRT::ParseParams(nvinfer1::INetworkDefinition *network) {
+int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
   switch (type_) {
     case schema::PrimitiveType_ArgMaxFusion: {
       topk_op_ = nvinfer1::TopKOperation::kMAX;
@@ -130,11 +130,11 @@ int TopKTensorRT::ParseParams(nvinfer1::INetworkDefinition *network) {
   }
   return RET_OK;
 }
-int TopKTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *topk_input) {
+int TopKTensorRT::PreprocessInputs(TensorRTContext *ctx, ITensorHelper *topk_input) {
   auto input_dim = tensorrt_in_tensors_[0].trt_tensor_->getDimensions();
   int ret = RET_ERROR;
   if (input_dim.nbDims == DIMENSION_4D) {
-    ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], topk_input);
+    ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], topk_input);
   } else if (input_dim.nbDims < DIMENSION_4D) {
     // only support 4d
     nvinfer1::Dims4 expect_dim;
@@ -145,7 +145,7 @@ int TopKTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *network, ITenso
         expect_dim.d[DIMENSION_4D - 1 - i] = 1;
       }
     }
-    topk_input->trt_tensor_ = Reshape(network, tensorrt_in_tensors_[0].trt_tensor_, expect_dim);
+    topk_input->trt_tensor_ = Reshape(ctx, tensorrt_in_tensors_[0].trt_tensor_, expect_dim);
     CHECK_NULL_RETURN(topk_input->trt_tensor_);
     axis_value_ += (DIMENSION_4D - input_dim.nbDims);
     return RET_OK;

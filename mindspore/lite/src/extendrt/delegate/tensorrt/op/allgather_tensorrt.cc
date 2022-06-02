@@ -50,7 +50,7 @@ int AllGatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::
 #endif
 }
 
-int AllGatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int AllGatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_};
   auto allgather_op = op_primitive_->value_as_AllGather();
   if (allgather_op == nullptr) {
@@ -60,7 +60,7 @@ int AllGatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   int rank = GetGPUGroupSize();
   auto plugin = std::make_shared<AllGatherPlugin>(op_name_, rank, device_id_);
   MS_LOG(INFO) << op_name_ << " group size: " << rank << ", rank id: " << GetRankID();
-  nvinfer1::IPluginV2Layer *allgather_layer = network->addPluginV2(inputTensors, 1, *plugin);
+  nvinfer1::IPluginV2Layer *allgather_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
   if (allgather_layer == nullptr) {
     MS_LOG(ERROR) << "create AllGather layer failed for: " << op_name_;
     return RET_ERROR;

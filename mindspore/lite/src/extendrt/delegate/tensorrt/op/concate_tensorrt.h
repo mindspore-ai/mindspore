@@ -33,13 +33,13 @@ class ConcateTensorRT : public TensorRTOp {
 
   ~ConcateTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int PreProcessInputs(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *trt_input_tensors[]);
+  int PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *trt_input_tensors[]);
 
   Format out_format_{Format::NHWC};
   bool same_format_{true};

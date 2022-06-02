@@ -49,41 +49,40 @@ int NormalizeTensorRT::IsSupport(const schema::Primitive *primitive, const std::
   return RET_OK;
 }
 
-int NormalizeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  CHECK_NULL_RETURN(network);
-  int ret = PreprocessInputs(network);
+int NormalizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  CHECK_NULL_RETURN(ctx->network());
+  int ret = PreprocessInputs(ctx);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "preprocess input failed for " << op_name_;
     return ret;
   }
-  return RunOptPlugin() ? RunAsOptPlugin(network) : RunAsTrtOps(network);
+  return RunOptPlugin() ? RunAsOptPlugin(ctx) : RunAsTrtOps(ctx);
 }
 
-int NormalizeTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *network) {
-  int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &norm_input_);
+int NormalizeTensorRT::PreprocessInputs(TensorRTContext *ctx) {
+  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &norm_input_);
   if (ret != RET_OK || norm_input_.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim norm_input failed for " << op_name_;
     return RET_ERROR;
   }
   if (in_tensors_.size() == BETA_INDEX + 1) {
-    gamma_ =
-      ConvertTensorWithExpandDims(network, in_tensors_[1], in_tensors_[0].Shape(), op_name_ + in_tensors_[1].Name());
+    gamma_ = ConvertTensorWithExpandDims(ctx, in_tensors_[1], in_tensors_[0].Shape(), op_name_ + in_tensors_[1].Name());
     CHECK_NULL_RETURN(gamma_);
-    beta_ = ConvertTensorWithExpandDims(network, in_tensors_[BETA_INDEX], in_tensors_[0].Shape(),
+    beta_ = ConvertTensorWithExpandDims(ctx, in_tensors_[BETA_INDEX], in_tensors_[0].Shape(),
                                         op_name_ + in_tensors_[BETA_INDEX].Name());
     CHECK_NULL_RETURN(beta_);
   }
   return RET_OK;
 }
 
-int NormalizeTensorRT::RunAsOptPlugin(nvinfer1::INetworkDefinition *network) {
+int NormalizeTensorRT::RunAsOptPlugin(TensorRTContext *ctx) {
   auto plugin = std::make_shared<NormalizeOptPlugin>(op_name_, axis_, epsilon_, device_id_);
   if (plugin == nullptr) {
     MS_LOG(ERROR) << "create NormalizeOptPlugin failed for " << op_name_;
     return RET_ERROR;
   }
   nvinfer1::ITensor *inputTensors[] = {norm_input_.trt_tensor_, gamma_, beta_};
-  nvinfer1::IPluginV2Layer *norm_layer = network->addPluginV2(inputTensors, INPUT_SIZE3, *plugin);
+  nvinfer1::IPluginV2Layer *norm_layer = ctx->network()->addPluginV2(inputTensors, INPUT_SIZE3, *plugin);
   if (norm_layer == nullptr) {
     MS_LOG(ERROR) << "add norm opt plugin layer failed for " << op_name_;
     return RET_ERROR;
@@ -94,47 +93,50 @@ int NormalizeTensorRT::RunAsOptPlugin(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-int NormalizeTensorRT::RunAsTrtOps(nvinfer1::INetworkDefinition *network) {
+int NormalizeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
   size_t axis = 1u << axis_;
   // first output, add later
   AddInnerOutTensors(ITensorHelper{nullptr, norm_input_.format_, norm_input_.same_format_});
 
   // mean
-  auto mean = network->addReduce(*(norm_input_.trt_tensor_), nvinfer1::ReduceOperation::kAVG, axis, true)->getOutput(0);
+  auto mean =
+    ctx->network()->addReduce(*(norm_input_.trt_tensor_), nvinfer1::ReduceOperation::kAVG, axis, true)->getOutput(0);
   CHECK_NULL_RETURN(mean);
   if (out_tensors_.size() == INPUT_SIZE3) {
     AddInnerOutTensors(ITensorHelper{mean, norm_input_.format_, norm_input_.same_format_});
   }
   // x - mean
-  auto sub_mean =
-    network->addElementWise(*(norm_input_.trt_tensor_), *mean, nvinfer1::ElementWiseOperation::kSUB)->getOutput(0);
+  auto sub_mean = ctx->network()
+                    ->addElementWise(*(norm_input_.trt_tensor_), *mean, nvinfer1::ElementWiseOperation::kSUB)
+                    ->getOutput(0);
   CHECK_NULL_RETURN(sub_mean);
   // (x - mean)^2
-  auto const_two = ConvertScalarToITensor(network, in_tensors_[0].Shape().size(), &two_, DataType::kNumberTypeFloat32,
-                                          op_name_ + "_two");
+  auto const_two =
+    ConvertScalarToITensor(ctx, in_tensors_[0].Shape().size(), &two_, DataType::kNumberTypeFloat32, op_name_ + "_two");
   CHECK_NULL_RETURN(const_two);
-  auto pow = network->addElementWise(*sub_mean, *const_two, nvinfer1::ElementWiseOperation::kPOW)->getOutput(0);
+  auto pow = ctx->network()->addElementWise(*sub_mean, *const_two, nvinfer1::ElementWiseOperation::kPOW)->getOutput(0);
   CHECK_NULL_RETURN(pow);
   // mean of (x - mean)^2
-  auto var = network->addReduce(*pow, nvinfer1::ReduceOperation::kAVG, axis, true)->getOutput(0);
+  auto var = ctx->network()->addReduce(*pow, nvinfer1::ReduceOperation::kAVG, axis, true)->getOutput(0);
   CHECK_NULL_RETURN(var);
   if (out_tensors_.size() == INPUT_SIZE3) {
     AddInnerOutTensors(ITensorHelper{var, norm_input_.format_, norm_input_.same_format_});
   }
 
   // var + min epsilon
-  auto const_epsilon = ConvertScalarToITensor(network, in_tensors_[0].Shape().size(), &epsilon_,
+  auto const_epsilon = ConvertScalarToITensor(ctx, in_tensors_[0].Shape().size(), &epsilon_,
                                               DataType::kNumberTypeFloat32, op_name_ + "_epsilion");
   CHECK_NULL_RETURN(const_epsilon);
-  auto var_epsilon = network->addElementWise(*var, *const_epsilon, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
+  auto var_epsilon =
+    ctx->network()->addElementWise(*var, *const_epsilon, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
   CHECK_NULL_RETURN(var_epsilon);
 
   // standard deviation
-  auto std_dev = network->addUnary(*var_epsilon, nvinfer1::UnaryOperation::kSQRT)->getOutput(0);
+  auto std_dev = ctx->network()->addUnary(*var_epsilon, nvinfer1::UnaryOperation::kSQRT)->getOutput(0);
   CHECK_NULL_RETURN(std_dev);
 
   // sub_mean / std_dev
-  auto norm_layer = network->addElementWise(*sub_mean, *std_dev, nvinfer1::ElementWiseOperation::kDIV);
+  auto norm_layer = ctx->network()->addElementWise(*sub_mean, *std_dev, nvinfer1::ElementWiseOperation::kDIV);
   CHECK_NULL_RETURN(norm_layer);
   this->layer_ = norm_layer;
   auto norm = norm_layer->getOutput(0);
@@ -142,9 +144,11 @@ int NormalizeTensorRT::RunAsTrtOps(nvinfer1::INetworkDefinition *network) {
 
   // scale with gamma and beta
   if (gamma_ != nullptr && beta_ != nullptr) {
-    auto gamma_out = network->addElementWise(*norm, *gamma_, nvinfer1::ElementWiseOperation::kPROD)->getOutput(0);
+    auto gamma_out =
+      ctx->network()->addElementWise(*norm, *gamma_, nvinfer1::ElementWiseOperation::kPROD)->getOutput(0);
     CHECK_NULL_RETURN(gamma_out);
-    auto beta_out = network->addElementWise(*gamma_out, *beta_, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
+    auto beta_out =
+      ctx->network()->addElementWise(*gamma_out, *beta_, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
     CHECK_NULL_RETURN(beta_out);
     tensorrt_out_tensors_[0].trt_tensor_ = beta_out;
   } else {

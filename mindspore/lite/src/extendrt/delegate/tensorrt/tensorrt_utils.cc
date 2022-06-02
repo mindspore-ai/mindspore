@@ -88,9 +88,9 @@ std::vector<int64_t> NHWC2NCHW(std::vector<int64_t> nhwc_shape) {
   return nchw_shape;
 }
 
-nvinfer1::IShuffleLayer *SetTranspose(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input,
+nvinfer1::IShuffleLayer *SetTranspose(TensorRTContext *ctx, const nvinfer1::ITensor &input,
                                       nvinfer1::Permutation permutation) {
-  nvinfer1::IShuffleLayer *layer = network->addShuffle(const_cast<nvinfer1::ITensor &>(input));
+  nvinfer1::IShuffleLayer *layer = ctx->network()->addShuffle(const_cast<nvinfer1::ITensor &>(input));
   if (layer == nullptr) {
     MS_LOG(ERROR) << "failed to create ShuffleLayer when create transpose op.";
     return nullptr;
@@ -138,22 +138,22 @@ cudaDataType ConvertDataType(nvinfer1::DataType type_id) {
   return data_type;
 }
 
-nvinfer1::IShuffleLayer *NHWC2NCHW(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input) {
+nvinfer1::IShuffleLayer *NHWC2NCHW(TensorRTContext *ctx, const nvinfer1::ITensor &input) {
   // NHWC 0123 NCHW 0312
   nvinfer1::Permutation perm{{0, 3, 1, 2}};
-  return SetTranspose(network, input, perm);
+  return SetTranspose(ctx, input, perm);
 }
 
-nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input) {
+nvinfer1::IShuffleLayer *NCHW2NHWC(TensorRTContext *ctx, const nvinfer1::ITensor &input) {
   // NCHW 0123 NHWC 0231
   nvinfer1::Permutation perm{{0, 2, 3, 1}};
-  return SetTranspose(network, input, perm);
+  return SetTranspose(ctx, input, perm);
 }
 
-nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
                                          const std::string &op_name) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is null for ConvertConstantTensor";
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is null for ConvertConstantTensor";
     return nullptr;
   }
   nvinfer1::Dims dims = ConvertCudaDims(ms_tensor.Shape());
@@ -168,17 +168,16 @@ nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, 
     return nullptr;
   }
   nvinfer1::Weights weights{data_type, ms_tensor.Data().get(), ms_tensor.ElementNum()};
-  nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
+  nvinfer1::IConstantLayer *constant_tensor = ctx->network()->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
     return nullptr;
   }
-  auto name = ms_tensor.Name() + "_" + op_name;
-  constant_tensor->setName(name.c_str());
+  ctx->RegisterLayer(constant_tensor, ms_tensor.Name() + "_" + op_name);
   return constant_tensor->getOutput(0);
 }
 
-nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value,
+nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const void *value,
                                           const DataType data_type, const std::string &op_name) {
   nvinfer1::Dims dims = ConvertCudaDims(1, shape_size);
   if (dims.nbDims == -1) {
@@ -186,13 +185,12 @@ nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network,
     return nullptr;
   }
   nvinfer1::Weights weights{ConvertDataType(data_type), value, 1};
-  nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
+  nvinfer1::IConstantLayer *constant_tensor = ctx->network()->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
     return nullptr;
   }
-  auto name = op_name + "_constant";
-  constant_tensor->setName(name.c_str());
+  ctx->RegisterLayer(constant_tensor, op_name + "_constant");
   return constant_tensor->getOutput(0);
 }
 
@@ -219,10 +217,9 @@ std::experimental::optional<ActivationParams> TryConvertActivationType(schema::A
            : std::experimental::nullopt;
 }
 
-nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
-                                               const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
                                                const std::vector<int64_t> &expect_shape, const std::string &op_name) {
-  if (network == nullptr) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "network is null for ConvertTensorWithExpandDims";
     return nullptr;
   }
@@ -249,36 +246,34 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *net
     return nullptr;
   }
   nvinfer1::Weights weights{data_type, ms_tensor.Data().get(), ms_tensor.ElementNum()};
-  nvinfer1::IConstantLayer *constant_tensor = network->addConstant(dims, weights);
+  nvinfer1::IConstantLayer *constant_tensor = ctx->network()->addConstant(dims, weights);
   if (constant_tensor == nullptr) {
     MS_LOG(ERROR) << "create constant_tensor failed.";
     return nullptr;
   }
-  auto name = ms_tensor.Name() + "_" + op_name;
-  constant_tensor->setName(name.c_str());
+  ctx->RegisterLayer(constant_tensor, ms_tensor.Name() + "_" + op_name);
   return constant_tensor->getOutput(0);
 }
 
-nvinfer1::ITensor *ConvertConstantTensorWithDims(nvinfer1::INetworkDefinition *network,
-                                                 const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertConstantTensorWithDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
                                                  const std::vector<int64_t> &expect_shape, const std::string &op_name) {
   nvinfer1::ITensor *constant_input{nullptr};
   std::string tensor_name = op_name + "_" + ms_tensor.Name();
   if (ms_tensor.Shape().size() == 0 || ms_tensor.ElementNum() == 1) {
-    constant_input = lite::ConvertScalarToITensor(network, expect_shape.size(), ms_tensor.Data().get(),
-                                                  ms_tensor.DataType(), tensor_name);
+    constant_input =
+      lite::ConvertScalarToITensor(ctx, expect_shape.size(), ms_tensor.Data().get(), ms_tensor.DataType(), tensor_name);
     if (constant_input == nullptr) {
       MS_LOG(ERROR) << "create Itensor from scalar tensor failed: " << tensor_name;
       return nullptr;
     }
   } else if (ms_tensor.Shape().size() == expect_shape.size()) {
-    constant_input = lite::ConvertConstantTensor(network, ms_tensor, tensor_name);
+    constant_input = lite::ConvertConstantTensor(ctx, ms_tensor, tensor_name);
     if (constant_input == nullptr) {
       MS_LOG(ERROR) << "create Itensor from constant tensor failed: " << tensor_name;
       return nullptr;
     }
   } else if (ms_tensor.ElementNum() >= 1) {
-    constant_input = ConvertTensorWithExpandDims(network, ms_tensor, expect_shape, tensor_name);
+    constant_input = ConvertTensorWithExpandDims(ctx, ms_tensor, expect_shape, tensor_name);
     if (constant_input == nullptr) {
       MS_LOG(ERROR) << "create Itensor from ConvertTensorWithExpandDims failed: " << tensor_name;
       return nullptr;
@@ -558,7 +553,7 @@ std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(s
            ? std::experimental::optional<nvinfer1::ReduceOperation>(reduce_ops_[mode])
            : std::experimental::nullopt;
 }
-int PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network, const ITensorHelper &input_tensor_helper,
+int PreprocessInputs2SameDim(TensorRTContext *ctx, const ITensorHelper &input_tensor_helper,
                              ITensorHelper *out_tensor_helper) {
   out_tensor_helper->trt_tensor_ = input_tensor_helper.trt_tensor_;
   out_tensor_helper->format_ = input_tensor_helper.format_;
@@ -566,7 +561,7 @@ int PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network, const ITenso
   if (input_tensor_helper.trt_tensor_->getDimensions().nbDims == DIMENSION_4D && !input_tensor_helper.same_format_) {
     if (input_tensor_helper.format_ == Format::NCHW) {
       // transpose: NCHW->NHWC
-      nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *input_tensor_helper.trt_tensor_);
+      nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(ctx, *input_tensor_helper.trt_tensor_);
       if (transpose_layer_in == nullptr) {
         MS_LOG(ERROR) << "op action convert failed";
         return RET_ERROR;
@@ -577,7 +572,7 @@ int PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network, const ITenso
       out_tensor_helper->format_ = Format::NHWC;
     } else {
       // transpose: NHWC->NCHW
-      nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *input_tensor_helper.trt_tensor_);
+      nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *input_tensor_helper.trt_tensor_);
       if (transpose_layer_in == nullptr) {
         MS_LOG(ERROR) << "op action convert failed";
         return RET_ERROR;
@@ -678,14 +673,12 @@ int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *d
   return RET_OK;
 }
 
-nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
-                           const std::vector<int64_t> &shape) {
-  return Reshape(network, input, ConvertCudaDims(shape));
+nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const std::vector<int64_t> &shape) {
+  return Reshape(ctx, input, ConvertCudaDims(shape));
 }
 
-nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
-                           const nvinfer1::Dims &shape) {
-  auto reshape_layer = network->addShuffle(*input);
+nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const nvinfer1::Dims &shape) {
+  auto reshape_layer = ctx->network()->addShuffle(*input);
   if (reshape_layer == nullptr) {
     MS_LOG(ERROR) << "add reshape_layer failed";
     return nullptr;

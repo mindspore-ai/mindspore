@@ -46,7 +46,7 @@ int TileTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
   return RET_OK;
 }
 
-int TileTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int TileTensorRT::AddInnerOp(TensorRTContext *ctx) {
   auto repeats_tensor = in_tensors_[1];
   CHECK_NULL_RETURN(repeats_tensor.Data());
   if (repeats_tensor.ElementNum() != tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims) {
@@ -61,15 +61,15 @@ int TileTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   ITensorHelper tile_input;
 
-  ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &tile_input);
+  ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &tile_input);
   if (ret != RET_OK || tile_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << op_name_ << " preprocess tensor failed.";
     return RET_ERROR;
   }
 
-  return RunAsConcat(network, tile_input);
+  return RunAsConcat(ctx, tile_input);
 }
-int TileTensorRT::RunAsConcat(nvinfer1::INetworkDefinition *network, const ITensorHelper &tile_input) {
+int TileTensorRT::RunAsConcat(TensorRTContext *ctx, const ITensorHelper &tile_input) {
   int axis = -1;
   float tile_times = 0.0f;
   for (int i = 0; i < repeats_.size(); i++) {
@@ -87,7 +87,7 @@ int TileTensorRT::RunAsConcat(nvinfer1::INetworkDefinition *network, const ITens
   for (int i = 0; i < tile_times; i++) {
     concat_inputs[i] = tile_input.trt_tensor_;
   }
-  nvinfer1::IConcatenationLayer *concat_layer = network->addConcatenation(concat_inputs, tile_times);
+  nvinfer1::IConcatenationLayer *concat_layer = ctx->network()->addConcatenation(concat_inputs, tile_times);
   CHECK_NULL_RETURN(concat_layer);
   concat_layer->setAxis(axis);
   concat_layer->setName(op_name_.c_str());
@@ -97,11 +97,11 @@ int TileTensorRT::RunAsConcat(nvinfer1::INetworkDefinition *network, const ITens
   this->AddInnerOutTensors(ITensorHelper{tile_out, tile_input.format_, true});
   return RET_OK;
 }
-int TileTensorRT::RunAsPlugin(nvinfer1::INetworkDefinition *network, const ITensorHelper &tile_input) {
+int TileTensorRT::RunAsPlugin(TensorRTContext *ctx, const ITensorHelper &tile_input) {
   // Floating point Exception
   nvinfer1::ITensor *inputTensors[] = {tile_input.trt_tensor_};
   auto plugin = std::make_shared<TilePlugin>(op_name_, repeats_, device_id_);
-  nvinfer1::IPluginV2Layer *tile_layer = network->addPluginV2(inputTensors, 1, *plugin);
+  nvinfer1::IPluginV2Layer *tile_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
   CHECK_NULL_RETURN(tile_layer);
   nvinfer1::ITensor *tile_out = tile_layer->getOutput(0);
   tile_layer->setName(op_name_.c_str());

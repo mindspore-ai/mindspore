@@ -33,7 +33,7 @@ int FullyConnectedTensorRT::IsSupport(const mindspore::schema::Primitive *primit
   return RET_OK;
 }
 
-int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int FullyConnectedTensorRT::AddInnerOp(TensorRTContext *ctx) {
   auto primitive = op_primitive_->value_as_FullConnection();
   CHECK_NULL_RETURN(primitive);
   activation_ = primitive->activation_type();
@@ -43,7 +43,7 @@ int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   ITensorHelper fc_input;
-  auto ret = PreprocessInputs(network, &fc_input);
+  auto ret = PreprocessInputs(ctx, &fc_input);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreprocessInputs failed for " << op_name_;
     return ret;
@@ -53,8 +53,8 @@ int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (primitive->has_bias()) {
     bias_weight = ConvertWeight(in_tensors_[BIAS_INDEX]);
   }
-  nvinfer1::IFullyConnectedLayer *fc_layer =
-    network->addFullyConnected(*(fc_input.trt_tensor_), out_tensors_[0].Shape()[axis], kernel_weight, bias_weight);
+  nvinfer1::IFullyConnectedLayer *fc_layer = ctx->network()->addFullyConnected(
+    *(fc_input.trt_tensor_), out_tensors_[0].Shape()[axis], kernel_weight, bias_weight);
   if (fc_layer == nullptr) {
     MS_LOG(ERROR) << "addFullyConnected failed for " << op_name_;
     return RET_ERROR;
@@ -66,12 +66,12 @@ int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (out_tensor->getDimensions().nbDims != out_tensors_[0].Shape().size()) {
     std::vector<int64_t> squeeze_dim(out_tensors_[0].Shape());
     squeeze_dim[0] = out_tensor->getDimensions().d[0] == -1 ? -1 : squeeze_dim[0];
-    out_tensor = Reshape(network, out_tensor, squeeze_dim);
+    out_tensor = Reshape(ctx, out_tensor, squeeze_dim);
   }
   // add activation
   if (activation_ != schema::ActivationType::ActivationType_NO_ACTIVATION) {
     nvinfer1::ILayer *activation_layer =
-      ActivationTensorRT::AddActivation(network, activation_, 0, 0, 0, out_tensor, device_id_);
+      ActivationTensorRT::AddActivation(ctx, activation_, 0, 0, 0, out_tensor, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for matmul failed";
       return RET_ERROR;
@@ -86,8 +86,8 @@ int FullyConnectedTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-int FullyConnectedTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *fc_input) {
-  auto ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], fc_input);
+int FullyConnectedTensorRT::PreprocessInputs(TensorRTContext *ctx, ITensorHelper *fc_input) {
+  auto ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], fc_input);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim failed for " << op_name_;
     return ret;
@@ -98,7 +98,7 @@ int FullyConnectedTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *netwo
     for (int i = 0; i < DIMENSION_4D - origin_dims.nbDims; i++) {
       expand_dim.push_back(1);
     }
-    fc_input->trt_tensor_ = Reshape(network, fc_input->trt_tensor_, expand_dim);
+    fc_input->trt_tensor_ = Reshape(ctx, fc_input->trt_tensor_, expand_dim);
   }
   return RET_OK;
 }

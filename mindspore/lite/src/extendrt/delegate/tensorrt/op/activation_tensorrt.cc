@@ -59,8 +59,8 @@ int ActivationTensorRT::IsSupport(const schema::Primitive *primitive,
   }
   return RET_OK;
 }
-int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
+int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx->network() == nullptr) {
     MS_LOG(ERROR) << "network is invalid";
     return RET_ERROR;
   }
@@ -75,7 +75,7 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     auto plugin = std::make_shared<CastPlugin>(op_name_ + "_cast_in", nvinfer1::DataType::kINT32,
                                                nvinfer1::DataType::kFLOAT, device_id_);
     nvinfer1::ITensor *inputTensors[] = {activation_input};
-    nvinfer1::IPluginV2Layer *cast_layer = network->addPluginV2(inputTensors, 1, *plugin);
+    nvinfer1::IPluginV2Layer *cast_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
     if (cast_layer == nullptr) {
       MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
       return RET_ERROR;
@@ -85,7 +85,7 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   auto activation_layer =
-    ActivationTensorRT::AddActivation(network, activation_op->activation_type(), alpha,
+    ActivationTensorRT::AddActivation(ctx, activation_op->activation_type(), alpha,
                                       std::isfinite(activation_op->min_val()) ? activation_op->min_val() : FLT_MIN,
                                       std::isfinite(activation_op->max_val()) ? activation_op->max_val() : FLT_MAX,
                                       activation_input, device_id_, quant_type_);
@@ -101,7 +101,7 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     auto plugin = std::make_shared<CastPlugin>(op_name_ + "_cast_out", out_tensor->getType(),
                                                ConvertDataType(out_tensors_[0].DataType()), device_id_);
     nvinfer1::ITensor *inputTensors[] = {activation_layer->getOutput(0)};
-    nvinfer1::IPluginV2Layer *cast_layer = network->addPluginV2(inputTensors, 1, *plugin);
+    nvinfer1::IPluginV2Layer *cast_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
     if (cast_layer == nullptr) {
       MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
       return RET_ERROR;
@@ -115,10 +115,10 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   this->layer_ = activation_layer;
   return RET_OK;
 }
-nvinfer1::ILayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition *network,
-                                                    schema::ActivationType activation_type, float alpha,
-                                                    float min_value, float max_value, nvinfer1::ITensor *trt_in_tensor,
-                                                    uint32_t device_id, schema::QuantType quant_type) {
+nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, schema::ActivationType activation_type,
+                                                    float alpha, float min_value, float max_value,
+                                                    nvinfer1::ITensor *trt_in_tensor, uint32_t device_id,
+                                                    schema::QuantType quant_type) {
   bool has_custom_plugin = HasCustomActivationPlugin(activation_type);
   // sigmoid precision is wrong for trt
   if (quant_type == schema::QuantType_QUANT_NONE && has_custom_plugin) {
@@ -130,7 +130,7 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition
       return nullptr;
     }
     nvinfer1::ITensor *inputTensors[] = {trt_in_tensor};
-    nvinfer1::IPluginV2Layer *activation_opt_layer = network->addPluginV2(inputTensors, 1, *plugin);
+    nvinfer1::IPluginV2Layer *activation_opt_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
     activation_opt_layer->setName(layer_name.c_str());
     return activation_opt_layer;
   }
@@ -142,7 +142,8 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition
     return nullptr;
   }
   auto action_param = action_param_opt.value();
-  nvinfer1::IActivationLayer *activation_layer = network->addActivation(*trt_in_tensor, action_param.activation_type);
+  nvinfer1::IActivationLayer *activation_layer =
+    ctx->network()->addActivation(*trt_in_tensor, action_param.activation_type);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return nullptr;

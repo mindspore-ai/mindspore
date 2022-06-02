@@ -29,13 +29,13 @@ class SoftMaxTensorRT : public TensorRTOp {
 
   ~SoftMaxTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  nvinfer1::ISoftMaxLayer *AddSoftMaxOp(nvinfer1::INetworkDefinition *network);
+  nvinfer1::ISoftMaxLayer *AddSoftMaxOp(TensorRTContext *ctx);
 
   const schema::Softmax *softmax_op_{nullptr};
 };

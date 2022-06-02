@@ -17,8 +17,8 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_RUNTIME_H_
 #include <NvInfer.h>
 #include "include/errorcode.h"
-#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_allocator.h"
+#include "src/common/log_adapter.h"
 #define MAX_BATCH_SIZE 64
 
 using mindspore::lite::RET_ERROR;

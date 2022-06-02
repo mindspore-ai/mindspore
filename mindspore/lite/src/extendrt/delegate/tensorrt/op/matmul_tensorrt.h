@@ -34,20 +34,20 @@ class MatMulTensorRT : public TensorRTOp {
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
  private:
-  int PreprocessMatMulInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *matmul_a, ITensorHelper *matmul_b);
+  int PreprocessMatMulInputs(TensorRTContext *ctx, ITensorHelper *matmul_a, ITensorHelper *matmul_b);
 
-  nvinfer1::ITensor *ProcessWeightTensor(nvinfer1::INetworkDefinition *network);
+  nvinfer1::ITensor *ProcessWeightTensor(TensorRTContext *ctx);
 
-  nvinfer1::ITensor *AddAsMatmul(nvinfer1::INetworkDefinition *network);
+  nvinfer1::ITensor *AddAsMatmul(TensorRTContext *ctx);
 
-  nvinfer1::ITensor *AddAsFullConnect(nvinfer1::INetworkDefinition *network);
+  nvinfer1::ITensor *AddAsFullConnect(TensorRTContext *ctx);
 
-  nvinfer1::ITensor *AddAsOptPlugin(nvinfer1::INetworkDefinition *network);
+  nvinfer1::ITensor *AddAsOptPlugin(TensorRTContext *ctx);
 
-  nvinfer1::ITensor *AddBias(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input_tensor);
+  nvinfer1::ITensor *AddBias(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor);
 
   bool RunOptPlugin();
   bool RunFullConnect();

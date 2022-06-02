@@ -25,6 +25,7 @@
 #include "src/extendrt/delegate/tensorrt/tensorrt_runtime.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_serializer.h"
+#include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
 #include "src/extendrt/delegate/parameter_cache/embedding_cache_manager.h"
 #include "include/api/context.h"
 
@@ -135,6 +136,8 @@ class TensorRTSubGraph : public kernel::Kernel {
   nvinfer1::ICudaEngine *engine_{nullptr};
   nvinfer1::IExecutionContext *trt_context_{nullptr};
   nvinfer1::IOptimizationProfile *profile_{nullptr};
+
+  TensorRTContext *ctx_;
 
   // -1 means don't support resize
   int input_batchsize_index_{0};

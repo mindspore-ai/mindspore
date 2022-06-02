@@ -48,9 +48,9 @@ int ConcateTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
   }
   return RET_OK;
 }
-int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is invalid";
+int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
 
@@ -61,7 +61,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   nvinfer1::ITensor *trt_input_tensors[tensorrt_in_tensors_.size()];
-  int ret = PreProcessInputs(network, trt_input_tensors);
+  int ret = PreProcessInputs(ctx, trt_input_tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreProcessInputs failed for " << op_name_;
     return ret;
@@ -79,7 +79,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   if (type_ == schema::PrimitiveType_Stack) {
     for (size_t i = 0; i != tensorrt_in_tensors_.size(); ++i) {
-      auto shuffle_layer = network->addShuffle(*trt_input_tensors[i]);
+      auto shuffle_layer = ctx->network()->addShuffle(*trt_input_tensors[i]);
       if (shuffle_layer == nullptr) {
         MS_LOG(ERROR) << "addShuffle failed for TensorRT.";
         return RET_ERROR;
@@ -94,7 +94,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
   }
   nvinfer1::IConcatenationLayer *concate_layer =
-    network->addConcatenation(trt_input_tensors, static_cast<int>(tensorrt_in_tensors_.size()));
+    ctx->network()->addConcatenation(trt_input_tensors, static_cast<int>(tensorrt_in_tensors_.size()));
   if (concate_layer == nullptr) {
     MS_LOG(ERROR) << "addConcatenation failed for TensorRT.";
     return RET_ERROR;
@@ -111,7 +111,7 @@ int ConcateTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-int ConcateTensorRT::PreProcessInputs(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *trt_input_tensors[]) {
+int ConcateTensorRT::PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *trt_input_tensors[]) {
   int input_nbDims = tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims;
   out_format_ = tensorrt_in_tensors_[0].format_;
   same_format_ = tensorrt_in_tensors_[0].same_format_;
@@ -134,7 +134,7 @@ int ConcateTensorRT::PreProcessInputs(nvinfer1::INetworkDefinition *network, nvi
         trt_input_tensors[i] = tensorrt_in_tensors_[i].trt_tensor_;
         MS_LOG(DEBUG) << "concate input " << GetTensorFormat(tensorrt_in_tensors_[i]);
       } else {
-        nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *tensorrt_in_tensors_[i].trt_tensor_);
+        nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *tensorrt_in_tensors_[i].trt_tensor_);
         if (transpose_layer == nullptr) {
           MS_LOG(ERROR) << "op action convert failed";
           return RET_ERROR;
