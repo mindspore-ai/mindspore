@@ -69,7 +69,7 @@ from .validators import check_adjust_gamma, check_alpha, check_auto_contrast, ch
     check_resize, check_rescale, check_uniform_augment_cpp, check_convert_color, check_random_auto_contrast, \
     check_random_adjust_sharpness, check_auto_augment, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_random_solarize, \
-    check_soft_dvpp_decode_random_crop_resize_jpeg, FLOAT_MAX_INTEGER, \
+    FLOAT_MAX_INTEGER, \
     check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_pad_to_size
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
@@ -3233,115 +3233,6 @@ class SlicePatches(TensorOperation):
     def parse(self):
         return cde.SlicePatchesOperation(self.num_height, self.num_width,
                                          SliceMode.to_c_type(self.slice_mode), self.fill_value)
-
-
-class SoftDvppDecodeRandomCropResizeJpeg(TensorOperation):
-    """
-    A combination of `Crop`, `Decode` and `Resize` using the simulation algorithm of Ascend series chip DVPP module.
-
-    The usage scenario is consistent with SoftDvppDecodeResizeJpeg.
-    The input image size should be in range [32*32, 8192*8192].
-    The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
-    Only images with an even resolution can be output. The output of odd resolution is not supported.
-
-    Args:
-        size (Union[int, Sequence[int]]): The size of the output image. The size value(s) must be positive.
-            If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-        scale (list, tuple, optional): Range [min, max) of respective size of the
-            original size to be cropped, which must be non-negative (default=(0.08, 1.0)).
-        ratio (list, tuple, optional): Range [min, max) of aspect ratio to be
-            cropped, which must be non-negative (default=(3. / 4., 4. / 3.)).
-        max_attempts (int, optional): The maximum number of attempts to propose a valid crop_area (default=10).
-            If exceeded, fall back to use center_crop instead. The max_attempts value must be positive.
-
-    Raises:
-        TypeError: If `size` is not of type integer or Sequence[int].
-        TypeError: If `scale` is not of type tuple.
-        TypeError: If `ratio` is not of type tuple.
-        TypeError: If `max_attempts` is not of type integer.
-        ValueError: If `size` is not positive.
-        ValueError: If `scale` is negative.
-        ValueError: If `ratio` is negative.
-        ValueError: If `max_attempts` is not positive.
-        RuntimeError: If given tensor is not a 1D sequence.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> # decode, randomly crop and resize image, keeping aspect ratio
-        >>> transforms_list1 = [vision.SoftDvppDecodeRandomCropResizeJpeg(90)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
-        ...                                                 input_columns=["image"])
-        >>> # decode, randomly crop and resize to landscape style
-        >>> transforms_list2 = [vision.SoftDvppDecodeRandomCropResizeJpeg((80, 100))]
-        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
-        ...                                                     input_columns=["image"])
-    """
-
-    @check_soft_dvpp_decode_random_crop_resize_jpeg
-    def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), max_attempts=10):
-        super().__init__()
-        if isinstance(size, int):
-            size = (size, size)
-        self.size = size
-        self.scale = scale
-        self.ratio = ratio
-        self.max_attempts = max_attempts
-        self.implementation = Implementation.C
-
-    def parse(self):
-        return cde.SoftDvppDecodeRandomCropResizeJpegOperation(self.size, self.scale, self.ratio, self.max_attempts)
-
-
-class SoftDvppDecodeResizeJpeg(TensorOperation):
-    """
-    Decode and resize JPEG image using the simulation algorithm of Ascend series chip DVPP module.
-
-    It is recommended to use this algorithm in the following scenarios:
-    When training, the DVPP of the Ascend chip is not used,
-    and the DVPP of the Ascend chip is used during inference,
-    and the accuracy of inference is lower than the accuracy of training;
-    and the input image size should be in range [32*32, 8192*8192].
-    The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
-    Only images with an even resolution can be output. The output of odd resolution is not supported.
-
-    Args:
-        size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, smaller edge of the image will be resized to this value with
-            the same image aspect ratio.
-            If size is a sequence of length 2, it should be (height, width).
-
-    Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
-        ValueError: If `size` is not positive.
-        RuntimeError: If given tensor is not a 1D sequence.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> # decode and resize image, keeping aspect ratio
-        >>> transforms_list1 = [vision.SoftDvppDecodeResizeJpeg(70)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
-        ...                                                 input_columns=["image"])
-        >>> # decode and resize to portrait style
-        >>> transforms_list2 = [vision.SoftDvppDecodeResizeJpeg((80, 60))]
-        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
-        ...                                                     input_columns=["image"])
-    """
-
-    @check_resize
-    def __init__(self, size):
-        super().__init__()
-        if isinstance(size, int):
-            size = (size,)
-        self.size = size
-        self.implementation = Implementation.C
-
-    def parse(self):
-        return cde.SoftDvppDecodeResizeJpegOperation(self.size)
 
 
 class TenCrop(PyTensorOperation):

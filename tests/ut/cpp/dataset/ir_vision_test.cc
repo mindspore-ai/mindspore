@@ -59,8 +59,6 @@
 #include "minddata/dataset/kernels/ir/vision/rgba_to_rgb_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rgb_to_gray_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
-#include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
-#include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/swap_red_blue_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
 
@@ -333,99 +331,6 @@ TEST_F(MindDataTestIRVision, TestResizeWithBBoxFail) {
   EXPECT_ERROR(rc);
 }
 
-TEST_F(MindDataTestIRVision, TestSoftDvppDecodeRandomCropResizeJpegFail) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestSoftDvppDecodeRandomCropResizeJpegFail with incorrect parameters.";
-
-  Status rc;
-
-  // SoftDvppDecodeRandomCropResizeJpeg: size must only contain positive integers
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_random_crop_resize_jpeg1(
-    new vision::SoftDvppDecodeRandomCropResizeJpegOperation({-500, 600}, {0.08, 1.0}, {3. / 4., 4. / 3.}, 10));
-  rc = soft_dvpp_decode_random_crop_resize_jpeg1->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeRandomCropResizeJpeg: size must only contain positive integers
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_random_crop_resize_jpeg2(
-    new vision::SoftDvppDecodeRandomCropResizeJpegOperation({-500}, {0.08, 1.0}, {3. / 4., 4. / 3.}, 10));
-  rc = soft_dvpp_decode_random_crop_resize_jpeg2->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeRandomCropResizeJpeg: size must be a vector of one or two values
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_random_crop_resize_jpeg3(
-    new vision::SoftDvppDecodeRandomCropResizeJpegOperation({500, 600, 700}, {0.08, 1.0}, {3. / 4., 4. / 3.}, 10));
-  rc = soft_dvpp_decode_random_crop_resize_jpeg3->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeRandomCropResizeJpeg: scale must be greater than or equal to 0
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_random_crop_resize_jpeg4(
-    new vision::SoftDvppDecodeRandomCropResizeJpegOperation({500}, {-0.1, 0.9}, {3. / 4., 4. / 3.}, 1));
-  rc = soft_dvpp_decode_random_crop_resize_jpeg4->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeRandomCropResizeJpeg: scale must be in the format of (min, max)
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_random_crop_resize_jpeg5(
-    new vision::SoftDvppDecodeRandomCropResizeJpegOperation({500}, {0.6, 0.2}, {3. / 4., 4. / 3.}, 1));
-  rc = soft_dvpp_decode_random_crop_resize_jpeg5->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeRandomCropResizeJpeg: scale must be a vector of two values
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_random_crop_resize_jpeg6(
-    new vision::SoftDvppDecodeRandomCropResizeJpegOperation({500}, {0.5, 0.6, 0.7}, {3. / 4., 4. / 3.}, 1));
-  rc = soft_dvpp_decode_random_crop_resize_jpeg6->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeRandomCropResizeJpeg: ratio must be greater than or equal to 0
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_random_crop_resize_jpeg7(
-    new vision::SoftDvppDecodeRandomCropResizeJpegOperation({500}, {0.5, 0.9}, {-0.2, 0.4}, 5));
-  rc = soft_dvpp_decode_random_crop_resize_jpeg7->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeRandomCropResizeJpeg: ratio must be in the format of (min, max)
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_random_crop_resize_jpeg8(
-    new vision::SoftDvppDecodeRandomCropResizeJpegOperation({500}, {0.5, 0.9}, {0.4, 0.2}, 5));
-  rc = soft_dvpp_decode_random_crop_resize_jpeg8->ValidateParams();
-  EXPECT_ERROR(rc);
-  // SoftDvppDecodeRandomCropResizeJpeg: ratio must be a vector of two values
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_random_crop_resize_jpeg9(
-    new vision::SoftDvppDecodeRandomCropResizeJpegOperation({500}, {0.5, 0.9}, {0.1, 0.2, 0.3}, 5));
-  rc = soft_dvpp_decode_random_crop_resize_jpeg9->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeRandomCropResizeJpeg: max_attempts must be greater than or equal to 1
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_random_crop_resize_jpeg10(
-    new vision::SoftDvppDecodeRandomCropResizeJpegOperation({500}, {0.5, 0.9}, {0.1, 0.2}, 0));
-  rc = soft_dvpp_decode_random_crop_resize_jpeg10->ValidateParams();
-  EXPECT_ERROR(rc);
-}
-
-TEST_F(MindDataTestIRVision, TestSoftDvppDecodeResizeJpegFail) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestSoftDvppDecodeResizeJpegFail with incorrect size.";
-
-  Status rc;
-
-  // SoftDvppDecodeResizeJpeg: size must be a vector of one or two values
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_resize_jpeg_op1(new vision::SoftDvppDecodeResizeJpegOperation({}));
-  rc = soft_dvpp_decode_resize_jpeg_op1->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeResizeJpeg: size must be a vector of one or two values
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_resize_jpeg_op2(
-    new vision::SoftDvppDecodeResizeJpegOperation({1, 2, 3}));
-  rc = soft_dvpp_decode_resize_jpeg_op2->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeResizeJpeg: size must only contain positive integers
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_resize_jpeg_op3(
-    new vision::SoftDvppDecodeResizeJpegOperation({20, -20}));
-  rc = soft_dvpp_decode_resize_jpeg_op3->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // SoftDvppDecodeResizeJpeg: size must only contain positive integers
-  std::shared_ptr<TensorOperation> soft_dvpp_decode_resize_jpeg_op4(new vision::SoftDvppDecodeResizeJpegOperation({0}));
-  rc = soft_dvpp_decode_resize_jpeg_op4->ValidateParams();
-  EXPECT_ERROR(rc);
-}
-
 TEST_F(MindDataTestIRVision, TestVisionOperationName) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestVisionOperationName.";
 
@@ -435,10 +340,4 @@ TEST_F(MindDataTestIRVision, TestVisionOperationName) {
   std::shared_ptr<TensorOperation> random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlipOperation>(0.5);
   correct_name = "RandomVerticalFlip";
   EXPECT_EQ(correct_name, random_vertical_flip_op->Name());
-
-  // Create object for the tensor op, and check the name
-  std::shared_ptr<TensorOperation> softDvpp_decode_resize_jpeg_op(
-    new vision::SoftDvppDecodeResizeJpegOperation({1, 1}));
-  correct_name = "SoftDvppDecodeResizeJpeg";
-  EXPECT_EQ(correct_name, softDvpp_decode_resize_jpeg_op->Name());
 }

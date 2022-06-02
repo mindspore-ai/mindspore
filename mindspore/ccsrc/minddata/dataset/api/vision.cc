@@ -75,8 +75,6 @@
 #include "minddata/dataset/kernels/ir/vision/rgba_to_rgb_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
 #include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
-#include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
-#include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/swap_red_blue_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
@@ -1117,41 +1115,6 @@ SlicePatches::SlicePatches(int32_t num_height, int32_t num_width, SliceMode slic
 std::shared_ptr<TensorOperation> SlicePatches::Parse() {
   return std::make_shared<SlicePatchesOperation>(data_->num_height_, data_->num_width_, data_->slice_mode_,
                                                  data_->fill_value_);
-}
-
-// SoftDvppDecodeRandomCropResizeJpeg Transform Operation.
-struct SoftDvppDecodeRandomCropResizeJpeg::Data {
-  Data(const std::vector<int32_t> &size, const std::vector<float> &scale, const std::vector<float> &ratio,
-       int32_t max_attempts)
-      : size_(size), scale_(scale), ratio_(ratio), max_attempts_(max_attempts) {}
-  std::vector<int32_t> size_;
-  std::vector<float> scale_;
-  std::vector<float> ratio_;
-  int32_t max_attempts_;
-};
-
-SoftDvppDecodeRandomCropResizeJpeg::SoftDvppDecodeRandomCropResizeJpeg(const std::vector<int32_t> &size,
-                                                                       const std::vector<float> &scale,
-                                                                       const std::vector<float> &ratio,
-                                                                       int32_t max_attempts)
-    : data_(std::make_shared<Data>(size, scale, ratio, max_attempts)) {}
-
-std::shared_ptr<TensorOperation> SoftDvppDecodeRandomCropResizeJpeg::Parse() {
-  return std::make_shared<SoftDvppDecodeRandomCropResizeJpegOperation>(data_->size_, data_->scale_, data_->ratio_,
-                                                                       data_->max_attempts_);
-}
-
-// SoftDvppDecodeResizeJpeg Transform Operation.
-struct SoftDvppDecodeResizeJpeg::Data {
-  explicit Data(const std::vector<int32_t> &size) : size_(size) {}
-  std::vector<int32_t> size_;
-};
-
-SoftDvppDecodeResizeJpeg::SoftDvppDecodeResizeJpeg(const std::vector<int32_t> &size)
-    : data_(std::make_shared<Data>(size)) {}
-
-std::shared_ptr<TensorOperation> SoftDvppDecodeResizeJpeg::Parse() {
-  return std::make_shared<SoftDvppDecodeResizeJpegOperation>(data_->size_);
 }
 
 // SwapRedBlue Transform Operation.

@@ -70,8 +70,6 @@
 #include "minddata/dataset/kernels/ir/vision/rgb_to_bgr_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
 #include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
-#include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
-#include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/to_tensor_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
@@ -701,32 +699,6 @@ PYBIND_REGISTER(
         return slice_patches;
       }));
   }));
-
-PYBIND_REGISTER(SoftDvppDecodeRandomCropResizeJpegOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::SoftDvppDecodeRandomCropResizeJpegOperation, TensorOperation,
-                                   std::shared_ptr<vision::SoftDvppDecodeRandomCropResizeJpegOperation>>(
-                    *m, "SoftDvppDecodeRandomCropResizeJpegOperation")
-                    .def(py::init([](const std::vector<int32_t> &size, const std::vector<float> &scale,
-                                     const std::vector<float> &ratio, int32_t max_attempts) {
-                      auto soft_dvpp_decode_random_crop_resize_jpeg =
-                        std::make_shared<vision::SoftDvppDecodeRandomCropResizeJpegOperation>(size, scale, ratio,
-                                                                                              max_attempts);
-                      THROW_IF_ERROR(soft_dvpp_decode_random_crop_resize_jpeg->ValidateParams());
-                      return soft_dvpp_decode_random_crop_resize_jpeg;
-                    }));
-                }));
-
-PYBIND_REGISTER(SoftDvppDecodeResizeJpegOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::SoftDvppDecodeResizeJpegOperation, TensorOperation,
-                                   std::shared_ptr<vision::SoftDvppDecodeResizeJpegOperation>>(
-                    *m, "SoftDvppDecodeResizeJpegOperation")
-                    .def(py::init([](const std::vector<int32_t> &size) {
-                      auto soft_dvpp_decode_resize_jpeg =
-                        std::make_shared<vision::SoftDvppDecodeResizeJpegOperation>(size);
-                      THROW_IF_ERROR(soft_dvpp_decode_resize_jpeg->ValidateParams());
-                      return soft_dvpp_decode_resize_jpeg;
-                    }));
-                }));
 
 PYBIND_REGISTER(ToTensorOperation, 1, ([](const py::module *m) {
                   (void)

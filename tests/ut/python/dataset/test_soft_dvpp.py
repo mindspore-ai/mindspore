@@ -13,119 +13,47 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing soft dvpp SoftDvppDecodeResizeJpeg and SoftDvppDecodeRandomCropResizeJpeg in DE
+Test SoftDvppDecodeResizeJpeg and SoftDvppDecodeRandomCropResizeJpeg
 """
-import mindspore.dataset as ds
-import mindspore.dataset.vision as vision
-from mindspore import log as logger
-from util import diff_mse, visualize_image
+import numpy as np
+import pytest
 
-DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
-SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+# SoftDvpp will be deprecated in future so will not be included in transforms.py
+import mindspore.dataset.vision.c_transforms as vision
 
 
-def test_soft_dvpp_decode_resize_jpeg(plot=False):
+def test_soft_dvpp_deprecated_pipeline():
     """
-    Feature: SoftDvppDecodeResizeJpeg op
-    Description: Compare image using SoftDvppDecodeResizeJpeg op with a tuple input with [Decode, Resize] op
-    Expectation: Both outputs are equal to each other
+    Feature: SoftDvppDecodeResizeJpeg and SoftDvppDecodeRandomCropResizeJpeg
+    Description: Test deprecation message and error in pipeline mode
+    Expectation: Raise NotImplementedError
     """
-    logger.info("test_random_decode_resize_op")
+    with pytest.raises(NotImplementedError) as e:
+        vision.SoftDvppDecodeResizeJpeg((256, 512))
+    assert "SoftDvppDecodeResizeJpeg is not supported as of 1.8 version" in str(e.value)
 
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-    resize_op = vision.Resize((256, 512))
-    data1 = data1.map(operations=[decode_op, resize_op], input_columns=["image"])
-
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    soft_dvpp_decode_resize_op = vision.SoftDvppDecodeResizeJpeg((256, 512))
-    data2 = data2.map(operations=soft_dvpp_decode_resize_op, input_columns=["image"])
-
-    num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        if num_iter > 0:
-            break
-        image1 = item1["image"]
-        image2 = item2["image"]
-        mse = diff_mse(image1, image2)
-        assert mse <= 0.02
-        logger.info("random_crop_decode_resize_op_{}, mse: {}".format(num_iter + 1, mse))
-        if plot:
-            visualize_image(image1, image2, mse)
-        num_iter += 1
+    with pytest.raises(NotImplementedError) as e:
+        vision.SoftDvppDecodeRandomCropResizeJpeg((256, 512), (1, 1), (0.5, 0.5))
+    assert "SoftDvppDecodeRandomCropResizeJpeg is not supported as of 1.8 version" in str(e.value)
 
 
-def test_soft_dvpp_decode_random_crop_resize_jpeg(plot=False):
+def test_soft_dvpp_deprecated_eager():
     """
-    Feature: SoftDvppDecodeResizeJpeg op
-    Description: Compare image using SoftDvppDecodeResizeJpeg op with SoftDvppDecodeRandomCropResizeJpeg op
-    Expectation: Both outputs are equal to each other
+    Feature: SoftDvppDecodeResizeJpeg and SoftDvppDecodeRandomCropResizeJpeg
+    Description: Test deprecation message and error in eager mode
+    Expectation: Raise NotImplementedError
     """
-    logger.info("test_random_decode_resize_op")
+    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
 
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    random_crop_decode_resize_op = vision.RandomCropDecodeResize((256, 512), (1, 1), (0.5, 0.5))
-    data1 = data1.map(operations=random_crop_decode_resize_op, input_columns=["image"])
+    with pytest.raises(NotImplementedError) as e:
+        vision.SoftDvppDecodeResizeJpeg((256, 512))(img)
+    assert "SoftDvppDecodeResizeJpeg is not supported as of 1.8 version" in str(e.value)
 
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    soft_dvpp_random_crop_decode_resize_op = vision.SoftDvppDecodeRandomCropResizeJpeg((256, 512), (1, 1), (0.5, 0.5))
-    data2 = data2.map(operations=soft_dvpp_random_crop_decode_resize_op, input_columns=["image"])
-
-    num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        if num_iter > 0:
-            break
-        image1 = item1["image"]
-        image2 = item2["image"]
-        mse = diff_mse(image1, image2)
-        assert mse <= 0.06
-        logger.info("random_crop_decode_resize_op_{}, mse: {}".format(num_iter + 1, mse))
-        if plot:
-            visualize_image(image1, image2, mse)
-        num_iter += 1
-
-
-def test_soft_dvpp_decode_resize_jpeg_supplement(plot=False):
-    """
-    Feature: SoftDvppDecodeResizeJpeg op
-    Description: Compare image using SoftDvppDecodeResizeJpeg op with an int input with [Decode, Resize] op
-    Expectation: Both outputs are equal to each other
-    """
-    logger.info("test_random_decode_resize_op")
-
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-    resize_op = vision.Resize(1134)
-    data1 = data1.map(operations=[decode_op, resize_op], input_columns=["image"])
-
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    soft_dvpp_decode_resize_op = vision.SoftDvppDecodeResizeJpeg(1134)
-    data2 = data2.map(operations=soft_dvpp_decode_resize_op, input_columns=["image"])
-
-    num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        if num_iter > 0:
-            break
-        image1 = item1["image"]
-        image2 = item2["image"]
-        mse = diff_mse(image1, image2)
-        assert mse <= 0.02
-        logger.info("random_crop_decode_resize_op_{}, mse: {}".format(num_iter + 1, mse))
-        if plot:
-            visualize_image(image1, image2, mse)
-        num_iter += 1
+    with pytest.raises(NotImplementedError) as e:
+        vision.SoftDvppDecodeRandomCropResizeJpeg((256, 512), (1, 1), (0.5, 0.5))
+    assert "SoftDvppDecodeRandomCropResizeJpeg is not supported as of 1.8 version" in str(e.value)
 
 
 if __name__ == "__main__":
-    test_soft_dvpp_decode_resize_jpeg(plot=True)
-    test_soft_dvpp_decode_random_crop_resize_jpeg(plot=True)
-    test_soft_dvpp_decode_resize_jpeg_supplement(plot=True)
+    test_soft_dvpp_deprecated_pipeline()
+    test_soft_dvpp_deprecated_eager()
