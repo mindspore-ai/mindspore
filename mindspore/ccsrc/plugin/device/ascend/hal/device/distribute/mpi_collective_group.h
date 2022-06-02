@@ -49,7 +49,7 @@ class MPICollective {
 
  private:
   MPICollective();
-  ~MPICollective() = default;
+  ~MPICollective();
   bool mpi_inited_;
   int rank_id_;
   int local_rank_id_;

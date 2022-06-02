@@ -31,11 +31,21 @@ void MPICollective::FinalizeMPI() {
     (void)MPI_Finalize();
   }
 }
+
+MPICollective::~MPICollective() {
+  int finalized;
+  (void)MPI_Finalized(&finalized);
+  if (finalized == 0) {
+    (void)MPI_Finalize();
+  }
+}
+
 void MPICollective::DestroyHcclComm() {
   for (auto &it : group_comm_) {
     CHECK_RET(static_cast<int32_t>(HcclCommDestroy(it.second)), static_cast<int32_t>(::HcclResult::HCCL_SUCCESS),
               "HcclCommDestroy failed");
   }
+  group_comm_.clear();
 }
 MPICollective &MPICollective::instance() {
   static MPICollective instance = {};
