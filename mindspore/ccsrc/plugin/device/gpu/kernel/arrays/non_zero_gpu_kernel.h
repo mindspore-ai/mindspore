@@ -59,7 +59,6 @@ class NonZeroGpuKernelMod : public NativeGpuKernelMod {
   static std::vector<std::pair<KernelAttr, NonZeroLaunchFunc>> func_list_;
   NonZeroLaunchFunc kernel_func_;
   cudaStream_t cuda_stream_;
-  size_t rank_;
   size_t input_size_;
   size_t data_size_;         // That is, sizeof(DataType).
   size_t index_size_;        // That is, sizeof(IndexType)
