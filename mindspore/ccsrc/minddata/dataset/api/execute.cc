@@ -355,6 +355,74 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
   return Status::OK();
 }
 
+Status PyExecute::operator()(const std::shared_ptr<Tensor> &input_tensor, std::shared_ptr<Tensor> *out) {
+  // Validate input tensors
+  CHECK_FAIL_RETURN_UNEXPECTED(input_tensor->Size() > 0, "Input Tensor has no data.");
+  RETURN_UNEXPECTED_IF_NULL(out);
+  CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'CPU'.");
+
+  if (!ops_created) {
+    CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
+    ops_created = true;
+  }
+
+  if (device_type_ == MapTargetDevice::kCpu) {
+    TensorRow de_tensor_list({input_tensor});
+
+    // Apply transforms on tensor
+    for (auto &t : transforms_rt_) {
+      TensorRow de_output_list;
+      RETURN_IF_NOT_OK(t->Compute(de_tensor_list, &de_output_list));
+      // For next transform
+      de_tensor_list = std::move(de_output_list);
+    }
+    CHECK_FAIL_RETURN_UNEXPECTED(de_tensor_list.size() > 0,
+                                 "[internal] transformation resulted in a tensor with size=0!");
+    *out = std::move(de_tensor_list.getRow())[0];
+  } else {
+    std::string err_msg = "Your input device is not supported. (Option: CPU)";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  return Status::OK();
+}
+
+Status PyExecute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_tensor_list,
+                             std::vector<std::shared_ptr<Tensor>> *out) {
+  // Validate input tensor
+  CHECK_FAIL_RETURN_UNEXPECTED(!input_tensor_list.empty(), "Input Tensor is not valid.");
+  RETURN_UNEXPECTED_IF_NULL(out);
+  out->clear();
+  for (auto &tensor : input_tensor_list) {
+    CHECK_FAIL_RETURN_UNEXPECTED(tensor->Size() > 0, "Input Tensor has no data.");
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'CPU'.");
+
+  if (!ops_created) {
+    CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
+    ops_created = true;
+  }
+
+  if (device_type_ == MapTargetDevice::kCpu) {
+    TensorRow de_tensor_list(input_tensor_list);
+
+    // Apply transforms on tensor
+    for (auto &t : transforms_rt_) {
+      TensorRow de_output_list;
+      RETURN_IF_NOT_OK(t->Compute(de_tensor_list, &de_output_list));
+      // For next transform
+      de_tensor_list = std::move(de_output_list);
+    }
+    *out = std::move(de_tensor_list.getRow());
+    CHECK_FAIL_RETURN_UNEXPECTED(!out->empty(), "Output Tensor is not valid.");
+  } else {
+    std::string err_msg = "Your input device is not supported. (Option: CPU)";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  return Status::OK();
+}
+
 std::vector<uint32_t> AippSizeFilter(const std::vector<uint32_t> &resize_para, const std::vector<uint32_t> &crop_para) {
   std::vector<uint32_t> aipp_size;
 

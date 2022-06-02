@@ -180,6 +180,7 @@ Status Tensor::CreateFromNpString(py::array arr, std::shared_ptr<Tensor> *out) {
   }
   arr.resize({arr.size()});  // flatten the py::array so we can iterate once
   std::vector<std::string> strings;
+  strings.reserve(arr.size());
 
   if (arr.dtype().kind() == 'U') {
     (void)std::for_each(arr.begin(), arr.end(),
