@@ -125,7 +125,6 @@ Element-by-Element Operations
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
-    mindspore.ops.logsumexp
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.pow
@@ -182,6 +181,7 @@ Reduction Operators
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.logsumexp
     mindspore.ops.lp_norm
 
 .. list-table::
