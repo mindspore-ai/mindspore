@@ -1,7 +1,7 @@
 mindspore.ops.adaptive_max_pool2d
 =================================
 
-.. py:function:: mindspore.ops.adaptive_max_pool2d(input_x, output_size, return_indices)
+.. py:function:: mindspore.ops.adaptive_max_pool2d(input_x, output_size, return_indices=False)
 
     对输入的多维数据进行二维的自适应最大池化运算。
 
