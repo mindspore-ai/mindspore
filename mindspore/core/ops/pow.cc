@@ -41,6 +41,9 @@ abstract::ShapePtr PowInferShape(const PrimitivePtr &primitive, const std::vecto
     return std::make_shared<abstract::Shape>(x1_shape, x1_min_shape, x1_max_shape);
   }
   auto broadcast_shape = CalBroadCastShape(x1_shape, x2_shape, prim_name);
+  if (x1_min_shape.empty() || x1_max_shape.empty() || x2_min_shape.empty() || x2_max_shape.empty()) {
+    return std::make_shared<abstract::Shape>(broadcast_shape);
+  }
   auto min_broadcast_shape = CalBroadCastShape(x1_min_shape, x2_min_shape, prim_name);
   auto max_broadcast_shape = CalBroadCastShape(x1_max_shape, x2_max_shape, prim_name);
   return std::make_shared<abstract::Shape>(broadcast_shape, min_broadcast_shape, max_broadcast_shape);
