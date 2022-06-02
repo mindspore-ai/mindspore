@@ -3768,7 +3768,7 @@ class FastGeLU(Primitive):
     Refer to :func:`mindspore.ops.fast_gelu` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)

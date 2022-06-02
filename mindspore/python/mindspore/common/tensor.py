@@ -683,6 +683,9 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same type as the `x`.
 
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
         Examples:
             >>> from mindspore import Tensor
             >>> import numpy as np
@@ -707,6 +710,9 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same type as the `x`.
 
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
         Examples:
             >>> from mindspore import Tensor
             >>> import numpy as np
@@ -730,6 +736,9 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, has the same type as the `x`.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor
