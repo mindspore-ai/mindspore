@@ -149,6 +149,7 @@ from .math_func import (
     inv,
     invert,
     minimum,
+    renorm,
     floor,
     logical_not,
     logical_or,

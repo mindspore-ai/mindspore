@@ -1002,6 +1002,7 @@ tensor_operator_registry.register('tensor_scatter_sub', P.TensorScatterSub)
 tensor_operator_registry.register('tensor_scatter_add', P.TensorScatterAdd)
 tensor_operator_registry.register('bernoulli', bernoulli)
 tensor_operator_registry.register('lp_norm', lp_norm)
+tensor_operator_registry.register('renorm', renorm)
 tensor_operator_registry.register('adaptive_max_pool2d', AdaptiveMaxPool2D)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')

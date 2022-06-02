@@ -97,6 +97,15 @@ bool ParseListIntValue(const mindspore::ValuePtr &value, std::vector<int64_t> *a
   return true;
 }
 
+void ParseFloat(const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
+  auto attr_value = GetValue<float>(value);
+  if (std::isinf(attr_value)) {
+    (*attr_obj)[kJValue] = (attr_value < 0) ? "-inf" : "inf";
+    return;
+  }
+  (*attr_obj)[kJValue] = attr_value;
+}
+
 bool ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value, nlohmann::json *attr_obj) {
   MS_EXCEPTION_IF_NULL(attr_obj);
   if (value == nullptr) {
@@ -132,7 +141,7 @@ bool ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value, n
       (*attr_obj)[kJValue] = GetValue<bool>(value);
       break;
     case ATTR_DTYPE::ATTR_FLOAT32:
-      (*attr_obj)[kJValue] = GetValue<float>(value);
+      ParseFloat(value, attr_obj);
       break;
     case ATTR_DTYPE::ATTR_LIST_INT32: {
       std::vector<int64_t> attr_value;

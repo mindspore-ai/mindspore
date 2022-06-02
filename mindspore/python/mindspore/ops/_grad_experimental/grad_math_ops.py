@@ -22,7 +22,7 @@ import numpy as np
 from ...nn.layer import math
 from .. import functional as F
 from .. import operations as P
-from ..operations.math_ops import Trace, Bernoulli
+from ..operations.math_ops import Trace, Bernoulli, Renorm
 from ..functional import broadcast_gradient_args
 from .._grad.grad_base import bprop_getters
 from .._grad.grad_math_ops import binop_grad_common
@@ -195,6 +195,58 @@ def get_bprop_index_addcmul(self):
             dx2 = F.cast(dx2, dout.dtype)
             dvalue = F.cast(dvalue, dout.dtype)
         return dinput_data, dx1, dx2, dvalue
+
+    return bprop
+
+
+@constexpr
+def renew_dim(shape, dim):
+    """ Re-new dims"""
+    new_dim = dim if dim >= 0 else len(shape) + dim
+    tmp = [i for i in range(len(shape))]
+    _ = tmp.pop(new_dim)
+    return tuple(tmp)
+
+
+@bprop_getters.register(Renorm)
+def get_bprop_renorm(self):
+    """Generate bprop for Renorm """
+    p = int(self.p)
+    ext = 1e-7
+    dim = self.dim
+    max_norm = self.maxnorm
+    greater_op = P.Greater()
+    masked_fill_op = P.MaskedFill()
+    pow_op = P.Pow()
+    abs_op = P.Abs()
+    sign_op = P.Sign()
+    reciprocal_op = P.Reciprocal()
+
+    def bprop(input_x, out, dout):
+        shape = F.shape(input_x)
+        dims = renew_dim(shape, dim)
+        norm = P.LpNorm(dims, p, keep_dims=True)(input_x)
+        grad_out = (input_x * dout)
+        grad_out = grad_out.sum(dims, keepdims=True)
+        if p == 1:
+            sig = sign_op(input_x)
+            norm_bp = sig * grad_out
+        elif p == 2:
+            m = input_x * (grad_out / norm)
+            norm_bp = masked_fill_op(m, norm == 0., 0.)
+        else:
+            abs_ = abs_op(input_x)
+            input_scaled = input_x * pow_op(abs_, (p - 2))
+            pow_ = pow_op(norm, (p - 1))
+            scale_v = grad_out / pow_
+            scale_v = masked_fill_op(scale_v, norm == 0., 0.)
+            norm_bp = input_scaled * scale_v
+
+        v = norm + ext
+        inv_norm = reciprocal_op(v)
+        grad_norm = max_norm * inv_norm * (dout - inv_norm * norm_bp)
+        q = greater_op(norm, max_norm)
+        return (mnp.where(q, grad_norm, dout),)
 
     return bprop
 

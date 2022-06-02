@@ -1075,6 +1075,44 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('lp_norm')(self, axis, p, keep_dims, epsilon)
 
+    def renorm(self, p, dim, maxnorm):
+        """
+        Renormalizes the sub-tensors along dimension `dim`, and each sub-tensor's p-norm should not exceed the
+        'maxnorm'. The values of current sub-tensor don't need change if the p-norm of the sub-tensor is less than
+        `maxnorm`. Otherwise the sub-tensor needs to be modified to the original value of the corresponding position
+        divided by the p-norm of the substensor and then multiplied by `maxnorm`.
+
+        Note:
+            The input must be a tensor.
+
+        Args:
+            p (float): P-norm.
+            dim (int): The dimension that expected to get the slice-tensor.
+            maxnorm (float): Max norm.
+
+        Returns:
+            Tensor, has the same dtype and shape as itself.
+
+        Raises:
+            TypeError: If dtype of `p` is not int.
+            TypeError: If dtype of `dim` is not int.
+            TypeError: If dtype of `maxnorm` is not float32.
+            ValueError: If the value of `p` less than 1.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Example:
+            >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
+            >>> y = x.renorm(p=1, dim=0, maxnorm=5.)
+            >>> print(y)
+            [[1.       1.        1.        1.       ]
+            [1.6666666 1.6666666 1.6666666 1.6666666]
+            [1.6666667 1.6666667 1.6666667 1.6666667]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get("renorm")(self, p, dim, maxnorm)
+
     def matrix_determinant(self):
         """
         Computes the determinant of one or more square matrices.

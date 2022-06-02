@@ -297,6 +297,7 @@ constexpr auto kReduceMaxOpName = "ReduceMax";
 constexpr auto kReduceMeanOpName = "ReduceMean";
 constexpr auto kReduceAnyOpName = "ReduceAny";
 constexpr auto kReduceAllOpName = "ReduceAll";
+constexpr auto kRenormOpName = "Renorm";
 constexpr auto kFusedWeightScaleApplyMomentum = "FusedWeightScaleApplyMomentum";
 constexpr auto kFusedWeightApplyMomentum = "FusedWeightApplyMomentum";
 constexpr auto kFusedScaleApplyMomentum = "FusedScaleApplyMomentum";
