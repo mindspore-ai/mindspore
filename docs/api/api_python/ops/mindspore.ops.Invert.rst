@@ -5,4 +5,4 @@
 
     翻转输入Tensor的所有元素。
 
-    详情请查看 :func:`mindspore.ops.invert` 。
+    详情请查看 :func:`mindspore.ops.invert`。

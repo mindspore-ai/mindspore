@@ -56,6 +56,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
 
     mindspore.ops.fast_gelu
     mindspore.ops.hardshrink
+    mindspore.ops.padding
     mindspore.ops.tanh
 
 损失函数
@@ -119,6 +120,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.inplace_add
     mindspore.ops.inplace_sub
     mindspore.ops.inplace_update
+    mindspore.ops.inv
     mindspore.ops.invert
     mindspore.ops.lerp
     mindspore.ops.log
@@ -302,10 +304,12 @@ Array操作
     mindspore.ops.gather_d
     mindspore.ops.gather_nd
     mindspore.ops.masked_select
+    mindspore.ops.matrix_band_part
     mindspore.ops.matrix_diag
     mindspore.ops.meshgrid
     mindspore.ops.nonzero
     mindspore.ops.one_hot
+    mindspore.ops.padding
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.reshape

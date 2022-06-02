@@ -1247,7 +1247,7 @@ class Tensor(Tensor_):
             out_i = \frac{1}{x_{i} }
 
         Returns:
-            Tensor, has the same type and shape as input shape value.
+            Tensor, has the same type and shape as self tensor.
 
         Raises:
             TypeError: If `x` is not a Tensor.
@@ -1274,7 +1274,7 @@ class Tensor(Tensor_):
             out_i = ~x_{i}
 
         Returns:
-            Tensor, has the same shape as `x`.
+            Tensor, has the same shape as as self tensor.
 
         Raises:
             TypeError: If dtype of `x` is neither int16 nor uint16.
@@ -1303,7 +1303,7 @@ class Tensor(Tensor_):
                 If negative, keep entire upper triangle.
 
         Returns:
-            Tensor, has the same type and shape as input shape value.
+            Tensor, has the same type and shape as self tensor.
 
         Raises:
             TypeError: If dtype of `x` is not one of float16, float32, float64, int32 or int64.
@@ -1340,7 +1340,7 @@ class Tensor(Tensor_):
                 Default: 8.
 
         Returns:
-            Tensor, has the same type and shape as input shape value.
+            Tensor, has the same type and shape as self tensor.
 
         Raises:
             TypeError: If `pad_dim_size` is not an int.
