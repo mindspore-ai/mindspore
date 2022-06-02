@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ from mindspore.train.model import Model
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.callback import Callback
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as deC
+import mindspore.dataset.transforms as deC
 from mindspore import context
 from easydict import EasyDict as edict
 from tests.models.official.nlp.transformer.src.transformer_model import TransformerConfig

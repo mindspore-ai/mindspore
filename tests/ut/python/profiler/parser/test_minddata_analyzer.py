@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import numpy as np
 import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as C
+import mindspore.dataset.transforms as transforms
 import mindspore._c_dataengine as cde
 from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyzer
 
@@ -143,14 +143,16 @@ class TestMinddataProfilingAnalyzer:
 
     def test_analyze_basic(self, tmp_path):
         """
-        Test MindData profiling analyze summary files exist with basic pipeline.
-        Also test basic content (subset of keys and values) from the returned summary result.
+        Feature: MindData Profiling Analyzer
+        Description: Test MindData profiling analyze summary files exist with basic pipeline.
+            Also test basic content (subset of keys and values) from the returned summary result.
+        Expectation: MindData Profiling Analyzer output is as expected
         """
 
         # Create this basic and common linear pipeline
         # Generator -> Map -> Batch -> Repeat -> EpochCtrl
         data1 = ds.GeneratorDataset(self.mysource, ["col1"])
-        type_cast_op = C.TypeCast(mstype.int32)
+        type_cast_op = transforms.TypeCast(mstype.int32)
         data1 = data1.map(operations=type_cast_op, input_columns="col1")
         data1 = data1.batch(16)
         data1 = data1.repeat(2)
@@ -206,13 +208,15 @@ class TestMinddataProfilingAnalyzer:
 
     def test_analyze_sequential_pipelines_invalid(self, tmp_path):
         """
-        Test invalid scenario in which MinddataProfilingAnalyzer is called for two sequential pipelines.
+        Feature: MindData Profiling Analyzer
+        Description: Test invalid scenario in which MinddataProfilingAnalyzer is called for two sequential pipelines.
+        Expectation: MindData Profiling Analyzer output in each pipeline is as expected
         """
 
         # Create the pipeline
         # Generator -> Map -> Batch -> EpochCtrl
         data1 = ds.GeneratorDataset(self.mysource, ["col1"])
-        type_cast_op = C.TypeCast(mstype.int32)
+        type_cast_op = transforms.TypeCast(mstype.int32)
         data1 = data1.map(operations=type_cast_op, input_columns="col1")
         data1 = data1.batch(64)
 

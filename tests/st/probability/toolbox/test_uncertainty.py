@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 # ============================================================================
 """ test uncertainty toolbox """
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.vision.c_transforms as CV
+import mindspore.dataset.transforms as C
+import mindspore.dataset.vision as CV
 import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore import dtype as mstype

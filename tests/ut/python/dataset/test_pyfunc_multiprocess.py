@@ -80,7 +80,6 @@ def create_dataset_pyop_multiproc(num_parallel_workers=None, max_rowsize=16, bat
         lambda x: x,
         vision.HWC2CHW(),
         vision.RandomErasing(0.9, value='random'),
-        vision.CutOut(4, 2, is_hwc=False),
         lambda y: y
     ]
     compose_op = transforms.Compose(transforms_list)

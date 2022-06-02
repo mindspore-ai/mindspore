@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 from PIL import Image
 import mindspore.dataset as de
 from mindspore.mindrecord import FileWriter
-import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset.vision as C
 from src.config import ConfigYOLOV3ResNet18
 
-iter_cnt = 0
 _NUM_BOXES = 50
 np.random.seed(1)
 de.config.set_seed(1)
+
 
 def preprocess_fn(image, box, is_training):
     """Preprocess function for dataset."""
@@ -46,7 +46,6 @@ def preprocess_fn(image, box, is_training):
         num_layers = anchors.shape[0] // 3
         anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
         true_boxes = np.array(true_boxes, dtype='float32')
-        # input_shape = np.array([in_shape, in_shape], dtype='int32')
         input_shape = np.array(in_shape, dtype='int32')
         boxes_xy = (true_boxes[..., 0:2] + true_boxes[..., 2:4]) // 2.
         boxes_wh = true_boxes[..., 2:4] - true_boxes[..., 0:2]

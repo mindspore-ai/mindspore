@@ -19,10 +19,8 @@ import pytest
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.transforms.py_transforms as py_transforms
-import mindspore.dataset.vision.c_transforms as CV
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms as transforms
+import mindspore.dataset.vision as vision
 
 from mindspore import context, nn
 from mindspore.common import dtype as mstype, set_seed
@@ -59,11 +57,11 @@ def create_dataset(data_path, batch_size=32, num_parallel_workers=1):
     shift_nml = -1 * 0.1307 / 0.3081
 
     # Define map operations
-    resize_op = CV.Resize((resize_height, resize_width), interpolation=Inter.LINEAR)
-    rescale_nml_op = CV.Rescale(rescale_nml, shift_nml)
-    rescale_op = CV.Rescale(rescale, shift)
-    hwc2chw_op = CV.HWC2CHW()
-    type_cast_op = C.TypeCast(mstype.int32)
+    resize_op = vision.Resize((resize_height, resize_width), interpolation=Inter.LINEAR)
+    rescale_nml_op = vision.Rescale(rescale_nml, shift_nml)
+    rescale_op = vision.Rescale(rescale, shift)
+    hwc2chw_op = vision.HWC2CHW()
+    type_cast_op = transforms.TypeCast(mstype.int32)
 
     # Apply map operations on images
     mnist_ds = mnist_ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=num_parallel_workers)
@@ -140,20 +138,18 @@ def create_dataset_pyfunc_multiproc(data_path, batch_size=32, num_op_parallel_wo
     # Define dataset with num_parallel_workers=8 for reasonable performance
     data1 = ds.MnistDataset(data_path, num_parallel_workers=8)
 
-    data1 = data1.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
+    data1 = data1.map(operations=[vision.ToType(np.int32)], input_columns="label",
                       num_parallel_workers=num_op_parallel_workers,
                       python_multiprocessing=True, max_rowsize=max_rowsize)
 
     # Setup transforms list which include Python ops
     transforms_list = [
-        py_vision.ToTensor(),
         lambda x: x,
-        py_vision.HWC2CHW(),
-        py_vision.RandomErasing(0.9, value='random'),
-        py_vision.Cutout(4, 2),
+        vision.HWC2CHW(),
+        vision.RandomErasing(0.9, value='random'),
         lambda y: y
     ]
-    compose_op = py_transforms.Compose(transforms_list)
+    compose_op = transforms.Compose(transforms_list)
     data1 = data1.map(operations=compose_op, input_columns="image", num_parallel_workers=num_op_parallel_workers,
                       python_multiprocessing=True, max_rowsize=max_rowsize)
 

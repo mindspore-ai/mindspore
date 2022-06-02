@@ -18,8 +18,8 @@ import sys
 
 import mindspore.context as context
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.vision.c_transforms as CV
+import mindspore.dataset.transforms as C
+import mindspore.dataset.vision as CV
 import mindspore.nn as nn
 from mindspore.common import dtype as mstype
 from mindspore.dataset.vision import Inter

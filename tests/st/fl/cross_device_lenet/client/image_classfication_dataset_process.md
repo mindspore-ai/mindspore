@@ -309,9 +309,8 @@
     import numpy as np
     import os
     import mindspore.dataset as ds
-    import mindspore.dataset.transforms.c_transforms as tC
-    import mindspore.dataset.vision.py_transforms as PV
-    import mindspore.dataset.transforms.py_transforms as PT
+    import mindspore.dataset.vision as vision
+    import mindspore.dataset.transforms as transforms
     import mindspore
 
     def mkdir(path):
@@ -340,16 +339,16 @@
         resize_height, resize_width = img_size[0], img_size[1]  # 32
 
         transform = [
-            PV.Decode(),
-            PV.Grayscale(1),
-            PV.Resize(size=(resize_height, resize_width)),
-            PV.Grayscale(3),
-            PV.ToTensor(),
+            vision.Decode(True),
+            vision.Grayscale(1),
+            vision.Resize(size=(resize_height, resize_width)),
+            vision.Grayscale(3),
+            vision.ToTensor(),
         ]
-        compose = PT.Compose(transform)
+        compose = transforms.Compose(transform)
 
         # apply map operations on images
-        mnist_ds = mnist_ds.map(input_columns="label", operations=tC.TypeCast(mindspore.int32))
+        mnist_ds = mnist_ds.map(input_columns="label", operations=transforms.TypeCast(mindspore.int32))
         mnist_ds = mnist_ds.map(input_columns="image", operations=compose)
 
         # apply DatasetOps

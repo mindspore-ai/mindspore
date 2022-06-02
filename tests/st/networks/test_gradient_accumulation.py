@@ -3,8 +3,8 @@ import os
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as CT
-import mindspore.dataset.vision.c_transforms as CV
+import mindspore.dataset.transforms as CT
+import mindspore.dataset.vision as CV
 import mindspore.nn as nn
 from mindspore import ParameterTuple
 from mindspore import context

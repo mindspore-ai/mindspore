@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import pickle
 import numpy as np
 import mindspore as ms
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as c_transforms
+import mindspore.dataset.transforms as transforms
 
 
 class InputFeatures:
@@ -140,7 +140,7 @@ def create_ms_dataset(data_list, label_list, max_seq_length, tokenizer, batch_si
     if do_shuffle:
         dataset = dataset.shuffle(buffer_size=10000)
 
-    type_cast_op = c_transforms.TypeCast(ms.int32)
+    type_cast_op = transforms.TypeCast(ms.int32)
     dataset = dataset.map(operations=[type_cast_op])
     dataset = dataset.batch(batch_size=batch_size, drop_remainder=drop_remainder)
     return dataset

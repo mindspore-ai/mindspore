@@ -12,52 +12,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+"""
+Test MindData vision utility get_image_size
+"""
 import numpy as np
 import pytest
 from PIL import Image
 
-import mindspore.dataset.vision.utils as vision
-import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset.vision.utils as vision_utils
+import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
 
 def test_get_image_size_output_array():
     """
-    Feature: get_image_num_channels array(after Decode array.shape is HWC)
-    Description: Test get_image_num_channels
+    Feature: get_image_size
+    Description: Test get_image_size array
     Expectation: The returned result is as expected
     """
     expect = [2268, 4032]
     img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
-    input_array = C.Decode()(img)
-    output = vision.get_image_size(input_array)
+    input_array = vision.Decode()(img)
+    output = vision_utils.get_image_size(input_array)
     assert expect == output
 
 
-def test_get_image_num_size_output_img():
+def test_get_image_size_output_img():
     """
-    Feature: get_image_num_channels img(Image.size is [H, W])
-    Description: Test get_image_num_channels
+    Feature: get_image_size
+    Description: Test get_image_size image (Image.size is [H, W])
     Expectation: The returned result is as expected
     """
     expect = [2268, 4032]
     img = Image.open("../data/dataset/apple.jpg")
-    output_size = vision.get_image_size(img)
+    output_size = vision_utils.get_image_size(img)
     assert expect == output_size
 
 
-def test_get_image_num_channels_invalid_input():
+def test_get_image_size_invalid_input():
     """
-    Feature: get_image_num_channels
-    Description: Test get_image_num_channels invalid input
+    Feature: get_image_size
+    Description: Test get_image_size invalid input
     Expectation: Correct error is raised as expected
     """
 
     def test_invalid_input(test_name, image, error, error_msg):
-        logger.info("Test GetImageNumChannels with wrong params: {0}".format(test_name))
+        logger.info("Test GetImageSize with wrong params: {0}".format(test_name))
         with pytest.raises(error) as error_info:
-            vision.get_image_size(image)
+            vision_utils.get_image_size(image)
         assert error_msg in str(error_info.value)
 
     invalid_input = 1
@@ -71,5 +73,5 @@ def test_get_image_num_channels_invalid_input():
 
 if __name__ == "__main__":
     test_get_image_size_output_array()
-    test_get_image_num_size_output_img()
-    test_get_image_num_channels_invalid_input()
+    test_get_image_size_output_img()
+    test_get_image_size_invalid_input()
