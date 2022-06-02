@@ -23,6 +23,7 @@ from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
+from mindspore.ops.operations import _grad_ops as G
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error, \
     _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis
@@ -417,6 +418,44 @@ def get_scatter_op_vmap_rule(prim, axis_size):
                                "but got {}.".format(prim_name, ref_dim))
             out = None
         return (out, ref_dim)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.SliceGrad)
+def get_slice_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `SliceGrad` operation."""
+    if isinstance(prim, str):
+        prim_name = prim
+        prim = Primitive(prim)
+    else:
+        prim_name = prim.name
+
+    def vmap_rule(dy_bdim, x_bdim, begin_bdim, size_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, dy_bdim, x_bdim, begin_bdim, size_bdim)
+        if is_all_none:
+            return result
+
+        dy, dy_dim = dy_bdim
+        x, x_dim = x_bdim
+        begin, begin_dim = begin_bdim
+        size, size_dim = size_bdim
+
+        if begin_dim is not None:
+            _raise_value_error("The source axis of `begin` in {} only supports None currently, "
+                               "but got {}.".format(prim_name, begin_dim))
+        if size_dim is not None:
+            _raise_value_error("The source axis of `size` in {} must be None, but got {}.".format(prim_name, size_dim))
+
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+        x = _bdim_at_front(x, x_dim, axis_size)
+
+        batch_begin = (0,) + begin
+        batch_size = (axis_size,) + size
+
+        out = prim(dy, x, batch_begin, batch_size)
+
+        return out, 0
 
     return vmap_rule
 

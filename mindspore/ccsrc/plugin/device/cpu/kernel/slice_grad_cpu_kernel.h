@@ -68,10 +68,6 @@ class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void FormatArgs(bool stride);
 
   template <typename T>
-  bool SliceGrad4D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-                   T *input_addr, T *output_addr);
-
-  template <typename T>
   bool SliceGrad8D(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
                    T *input_addr, T *output_addr);
 
