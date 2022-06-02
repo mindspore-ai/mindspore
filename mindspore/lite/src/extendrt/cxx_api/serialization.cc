@@ -16,7 +16,6 @@
 #include "include/api/serialization.h"
 #include <fstream>
 #include <sstream>
-#include "cxx_api/graph/graph_data.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/load_mindir/load_model.h"
 #if !defined(_WIN32) && !defined(_WIN64)

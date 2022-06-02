@@ -32,8 +32,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
             ${MINDIR_MODEL_SRC}
             ${MINDIR_KERNEL_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/less_test_kernel_mod.cc)
-            # ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/kernel_mod_mock.cc)
+            ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/less_test_kernel_mod.cc
+            # ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/kernel_mod_mock.cc
+            )
 
     set(FBS_FILES
             ${CCSRC_DIR}/../schema/cipher.fbs

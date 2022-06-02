@@ -17,7 +17,7 @@
 #include <any>
 #include <map>
 #include <type_traits>
-#include "cxx_api/factory.h"
+#include "extendrt/factory.h"
 #include "utils/log_adapter.h"
 
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
