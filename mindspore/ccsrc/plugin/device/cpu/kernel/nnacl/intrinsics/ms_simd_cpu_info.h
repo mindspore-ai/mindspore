@@ -23,6 +23,14 @@
 extern "C" {
 #endif
 
+#if defined(SERVER_INFERENCE) && defined(ENABLE_AVX512)
+#define AVX512_HARDWARE_SELF_AWARENESS_BEGIN if (X86_Avx512_Support()) {
+#define AVX512_HARDWARE_SELF_AWARENESS_END }
+#else
+#define AVX512_HARDWARE_SELF_AWARENESS_BEGIN
+#define AVX512_HARDWARE_SELF_AWARENESS_END
+#endif
+
 typedef enum X86CpuInfoErrorCodeEnum {
   X86CPUINFO_OK = 0,
   X86CPUINFO_PLATFORM_ERR = 1,

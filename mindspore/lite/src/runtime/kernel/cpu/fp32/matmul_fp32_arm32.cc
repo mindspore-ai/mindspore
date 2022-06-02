@@ -21,7 +21,7 @@
 #include "nnacl/fp32/pack_fp32.h"
 
 namespace mindspore::kernel {
-void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
+void MatmulFp32ARM32CPUKernel::InitGlobalVariable() {
   matrix_a_.need_pack = true;
   matrix_b_.need_pack = true;
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major : RowMajor2Col12Major;
@@ -31,12 +31,12 @@ void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
   col_min_unit_ = C4NUM;
 }
 
-int MatmulFp32BaseCPUKernel::PackMatrixAImplOpt() {
+int MatmulFp32ARM32CPUKernel::PackMatrixAImplOpt() {
   MS_LOG(ERROR) << "Matmul: don't support optimized-packing, only support single-thread currently.";
   return RET_ERROR;
 }
 
-int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
+int MatmulFp32ARM32CPUKernel::ParallelRunByBatch(int task_id) const {
   int start_batch = task_id * batch_stride_;
   int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
 
@@ -56,9 +56,9 @@ int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const { return RET_ERROR; }
+int MatmulFp32ARM32CPUKernel::ParallelRunByRow(int task_id) const { return RET_ERROR; }
 
-int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
+int MatmulFp32ARM32CPUKernel::ParallelRunByOC(int task_id) const {
   int start_oc = split_points_[task_id];
   int end_oc = col_step_;
   if (task_id < (thread_count_ - 1)) {
@@ -83,6 +83,6 @@ int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
   return RET_OK;
 }
 
-bool MatmulFp32BaseCPUKernel::CheckThreadCuttingByRow() { return false; }
+bool MatmulFp32ARM32CPUKernel::CheckThreadCuttingByRow() { return false; }
 }  // namespace mindspore::kernel
 #endif

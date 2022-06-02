@@ -19,23 +19,108 @@
 
 #include <vector>
 #include "nnacl/matmul_parameter.h"
+#include "nnacl/intrinsics/ms_simd_cpu_info.h"
+#if defined(ENABLE_AVX512)
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_avx512.h"
+#endif
+
+#if defined(ENABLE_AVX)
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_avx.h"
+#endif
+
+#if defined(ENABLE_SSE)
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_sse.h"
+#endif
+
+#if defined(ENABLE_ARM32)
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_arm32.h"
+#endif
+
+#if defined(ENABLE_ARM64)
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_arm64.h"
+#endif
+
 #include "src/runtime/kernel/cpu/fp32/matmul_fp32_base.h"
 
 namespace mindspore::kernel {
-class MatmulCPUKernel : public MatmulFp32BaseCPUKernel {
+class MatmulCPUKernel : public LiteKernel {
  public:
   explicit MatmulCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : MatmulFp32BaseCPUKernel(parameter, inputs, outputs, ctx) {}
-  ~MatmulCPUKernel() = default;
+      : LiteKernel(parameter, inputs, outputs, ctx) {
+#if defined(ENABLE_AVX512)
+    if (matmul_base_ == nullptr) {
+      AVX512_HARDWARE_SELF_AWARENESS_BEGIN
+      matmul_base_ = new (std::nothrow) MatmulFp32AVX512CPUKernel(parameter, inputs, outputs, ctx);
+      AVX512_HARDWARE_SELF_AWARENESS_END
+    }
+#endif
+
+#if defined(ENABLE_AVX)
+    if (matmul_base_ == nullptr) {
+      matmul_base_ = new (std::nothrow) MatmulFp32AVXCPUKernel(parameter, inputs, outputs, ctx);
+    }
+#endif
+
+#if defined(ENABLE_SSE)
+    if (matmul_base_ == nullptr) {
+      matmul_base_ = new (std::nothrow) MatmulFp32SSECPUKernel(parameter, inputs, outputs, ctx);
+    }
+#endif
+
+#if defined(ENABLE_ARM64)
+    matmul_base_ = new (std::nothrow) MatmulFp32ARM64CPUKernel(parameter, inputs, outputs, ctx);
+#elif defined(ENABLE_ARM32)
+    matmul_base_ = new (std::nothrow) MatmulFp32ARM32CPUKernel(parameter, inputs, outputs, ctx);
+#endif
+
+    if (matmul_base_ == nullptr) {
+      matmul_base_ = new (std::nothrow) MatmulFp32BaseCPUKernel(parameter, inputs, outputs, ctx);
+    }
+  }
+  ~MatmulCPUKernel() {
+    if (matmul_base_ != nullptr) {
+      op_parameter_ = nullptr;  // op_parameter will be freed in LiteKernel
+      delete matmul_base_;
+      matmul_base_ = nullptr;
+    }
+  }
+  void set_in_tensor(lite::Tensor *in_tensor, size_t index) override {
+    MS_ASSERT(index < in_tensors_.size());
+    this->in_tensors_[index] = in_tensor;
+    if (matmul_base_ != nullptr) {
+      matmul_base_->set_in_tensor(in_tensor, index);
+    }
+  }
+
+  void set_out_tensor(lite::Tensor *out_tensor, size_t index) override {
+    MS_ASSERT(index < out_tensors_.size());
+    this->out_tensors_[index] = out_tensor;
+    if (matmul_base_ != nullptr) {
+      matmul_base_->set_out_tensor(out_tensor, index);
+    }
+  }
+
+  // Train API
+  int Train() override {
+    (void)LiteKernel::Train();
+    return matmul_base_->Train();
+  }
+  void SetTrainable(bool trainable) override {
+    LiteKernel::SetTrainable(trainable);
+    return matmul_base_->SetTrainable(trainable);
+  }
+  size_t workspace_size() override {
+    (void)LiteKernel::workspace_size();
+    return matmul_base_->workspace_size();
+  }
+
   int Prepare() override;
   int ReSize() override;
   int Run() override;
 
  private:
-  void InitShapeA();
-  void InitShapeB();
-  int InitBroadcastParams();
+  MatmulFp32BaseCPUKernel *matmul_base_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_MATMUL_FP32_H_

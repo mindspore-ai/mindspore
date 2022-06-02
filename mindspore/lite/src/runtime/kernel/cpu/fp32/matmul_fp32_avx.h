@@ -17,4 +17,25 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_MATMUL_FP32_AVX_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_MATMUL_FP32_AVX_H_
 
+#if defined(ENABLE_AVX)
+#include <vector>
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_base.h"
+namespace mindspore::kernel {
+class MatmulFp32AVXCPUKernel : public MatmulFp32BaseCPUKernel {
+ public:
+  MatmulFp32AVXCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                         const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
+      : MatmulFp32BaseCPUKernel(parameter, inputs, outputs, ctx) {}
+  ~MatmulFp32AVXCPUKernel() = default;
+
+  void InitGlobalVariable() override;
+  int PackMatrixAImplOpt() override;
+  int ParallelRunByBatch(int task_id) const override;
+  int ParallelRunByRow(int task_id) const override;
+  int ParallelRunByOC(int task_id) const override;
+  bool CheckThreadCuttingByRow() override;
+};
+}  // namespace mindspore::kernel
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_MATMUL_FP32_AVX_H_
