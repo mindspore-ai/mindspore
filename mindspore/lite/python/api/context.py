@@ -40,10 +40,9 @@ class Context:
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> context = mslite.Context(thread_num=1, thread_afffinity_mode=1, thread_affinity_core_list=[1, 2], \
-        ...                          enable_parallel=False)
+        >>> context = mslite.Context(thread_num=1, thread_afffinity_mode=1, enable_parallel=False)
         >>> print(context)
-        thread_num: 1, thread_affinity_mode: 1, thread_affinity_core_list: [1, 2], enable_parallel: False, \
+        thread_num: 1, thread_affinity_mode: 1, thread_affinity_core_list: [], enable_parallel: False, \
         device_list: 0, .
     """
 
