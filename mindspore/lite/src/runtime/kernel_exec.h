@@ -90,7 +90,7 @@ class KernelExec {
 
   virtual int Execute(const KernelCallBack &before, const KernelCallBack &after) {
     if (before != nullptr) {
-      if (!before(TensorVectorCast(this->in_tensors()), TensorVectorCast(this->out_tensors()),
+      if (!before(this->in_tensors(), this->out_tensors(),
                   {this->name(), schema::EnumNamePrimitiveType(this->type())})) {
         MS_LOG(WARNING) << "run kernel before_callback failed, name: " << this->name();
       }
@@ -99,7 +99,7 @@ class KernelExec {
     auto ret = DoExecute();
 
     if (after != nullptr) {
-      if (!after(TensorVectorCast(this->in_tensors()), TensorVectorCast(this->out_tensors()),
+      if (!after(this->in_tensors(), this->out_tensors(),
                  {this->name(), schema::EnumNamePrimitiveType(this->type())})) {
         MS_LOG(WARNING) << "run kernel after_callback failed, name: " << this->name();
       }

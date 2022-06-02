@@ -64,8 +64,7 @@ TEST_F(GraphTest, UserSetGraphOutput1) {
   auto outputs = session->GetOutputs();
   for (auto &out_tensor_pair : outputs) {
     string out_name = out_tensor_pair.first;
-    tensor::MSTensor *out_tensor = out_tensor_pair.second;
-
+    lite::Tensor *out_tensor = out_tensor_pair.second;
     void *out_data = malloc(out_tensor->Size());
     out_datas.insert(std::make_pair(out_name, out_data));
 

@@ -62,7 +62,7 @@ class TrainLoop : virtual public session::TrainLoop {
   std::vector<mindspore::session::Metrics *> GetMetrics() override { return metrics_; }
 
  protected:
-  static int LoadData(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *dataset_vec);
+  static int LoadData(std::vector<lite::Tensor *> inputs, dataset::MSTensorVec *dataset_vec);
 
   lite::LiteSession *train_session_ = nullptr;
   unsigned int epoch_ = 0;

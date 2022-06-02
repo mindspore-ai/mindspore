@@ -19,7 +19,6 @@
 
 #include <string>
 #include <vector>
-#include "include/ms_tensor.h"
 #include "include/lite_utils.h"
 #include "include/lite_types.h"
 

@@ -22,7 +22,6 @@
 #include <functional>
 #include <algorithm>
 #include "include/context.h"
-#include "include/ms_tensor.h"
 #include "include/version.h"
 #include "schema/model_generated.h"
 #include "src/common/common.h"
@@ -131,7 +130,7 @@ int Benchmark::GenerateGLTexture(std::map<std::string, GLuint> *input_gl_texture
   return RET_OK;
 }
 
-int Benchmark::FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::tensor::MSTensor *tensor,
+int Benchmark::FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::lite::Tensor *tensor,
                                      std::string name, void *data) {
   MS_ASSERT(gl_texture != nullptr);
   MS_ASSERT(tensor != nullptr);
@@ -334,8 +333,8 @@ int Benchmark::InitContext(const std::shared_ptr<Context> &context) {
   return RET_OK;
 }
 
-tensor::MSTensor *Benchmark::GetTensorByNodeShape(const std::vector<size_t> &node_shape) {
-  std::vector<tensor::MSTensor *> match_tensors;
+lite::Tensor *Benchmark::GetTensorByNodeShape(const std::vector<size_t> &node_shape) {
+  std::vector<lite::Tensor *> match_tensors;
   std::vector<int> shape_vector;
   (void)std::transform(node_shape.begin(), node_shape.end(), std::back_inserter(shape_vector),
                        [](const size_t &value) { return static_cast<int>(value); });
@@ -352,9 +351,9 @@ tensor::MSTensor *Benchmark::GetTensorByNodeShape(const std::vector<size_t> &nod
   return match_tensors.front();
 }
 
-tensor::MSTensor *Benchmark::GetTensorByNameOrShape(const std::string &node_or_tensor_name,
-                                                    const std::vector<size_t> &dims) {
-  tensor::MSTensor *tensor = session_->GetOutputByTensorName(node_or_tensor_name);
+lite::Tensor *Benchmark::GetTensorByNameOrShape(const std::string &node_or_tensor_name,
+                                                const std::vector<size_t> &dims) {
+  lite::Tensor *tensor = session_->GetOutputByTensorName(node_or_tensor_name);
   if (tensor == nullptr) {
     MS_LOG(INFO) << "Cannot find output node: " << node_or_tensor_name
                  << " or node has more than one output tensor, switch to GetOutputByTensorName";
@@ -375,7 +374,7 @@ int Benchmark::CompareOutput() {
 
   for (const auto &calib_tensor : benchmark_data_) {
     std::string tensor_name = calib_tensor.first;
-    tensor::MSTensor *tensor = GetTensorByNameOrShape(tensor_name, calib_tensor.second->shape);
+    lite::Tensor *tensor = GetTensorByNameOrShape(tensor_name, calib_tensor.second->shape);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
       return RET_ERROR;
@@ -393,8 +392,8 @@ int Benchmark::CompareOutput() {
           return RET_ERROR;
         }
 
-        tensor::MSTensor *new_tensor = tensor::MSTensor::CreateTensor(
-          "opengl_output", kNumberTypeFloat, tensor->shape(), hostptr, sizeof(float) * tensor->ElementsNum());
+        lite::Tensor *new_tensor = lite::Tensor::CreateTensor("opengl_output", kNumberTypeFloat, tensor->shape(),
+                                                              hostptr, sizeof(float) * tensor->ElementsNum());
 
         if (new_tensor == nullptr) {
           MS_LOG(ERROR) << "create tensor failed";
@@ -430,7 +429,7 @@ int Benchmark::CompareOutput() {
   return RET_OK;
 }
 
-int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
+int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, lite::Tensor *tensor, float *total_bias,
                                               int *total_size) {
   float bias = 0;
   auto mutableData = tensor->MutableData();
@@ -758,8 +757,8 @@ int Benchmark::RunBenchmark() {
 
 int Benchmark::InitTimeProfilingCallbackParameter() {
   // before callback
-  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+  before_call_back_ = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                          const std::vector<mindspore::lite::Tensor *> &before_outputs,
                           const CallBackParam &call_param) {
     if (before_inputs.empty()) {
       MS_LOG(INFO) << "The num of beforeInputs is empty";
@@ -780,9 +779,8 @@ int Benchmark::InitTimeProfilingCallbackParameter() {
   };
 
   // after callback
-  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                         const CallBackParam &call_param) {
+  after_call_back_ = [&](const std::vector<mindspore::lite::Tensor *> &after_inputs,
+                         const std::vector<mindspore::lite::Tensor *> &after_outputs, const CallBackParam &call_param) {
     uint64_t opEnd = GetTimeUs();
 
     if (after_inputs.empty()) {
@@ -851,8 +849,8 @@ int Benchmark::InitPerfProfilingCallbackParameter() {
   zero.value[0] = 0;
   zero.value[1] = 0;
   // before callback
-  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+  before_call_back_ = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                          const std::vector<mindspore::lite::Tensor *> &before_outputs,
                           const CallBackParam &call_param) {
     if (before_inputs.empty()) {
       MS_LOG(INFO) << "The num of beforeInputs is empty";
@@ -874,9 +872,8 @@ int Benchmark::InitPerfProfilingCallbackParameter() {
   };
 
   // after callback
-  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                         const CallBackParam &call_param) {
+  after_call_back_ = [&](const std::vector<mindspore::lite::Tensor *> &after_inputs,
+                         const std::vector<mindspore::lite::Tensor *> &after_outputs, const CallBackParam &call_param) {
     struct PerfResult res;
     ioctl(perf_fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
     if (read(perf_fd, &res, sizeof(struct PerfResult)) == -1) {
@@ -920,7 +917,7 @@ std::string DataToString(void *data, size_t data_number, size_t print_len = 40) 
   return oss.str();
 }
 
-std::string DumpMSTensor(tensor::MSTensor *tensor) {
+std::string DumpMSTensor(lite::Tensor *tensor) {
   if (tensor == nullptr) {
     return "Tensor is nullptr";
   }
@@ -954,7 +951,7 @@ std::string DumpMSTensor(tensor::MSTensor *tensor) {
   return oss.str();
 }
 #ifndef BENCHMARK_CLIP_JSON
-std::string GenerateOutputFileName(tensor::MSTensor *tensor, const std::string &op_name, const std::string &file_type,
+std::string GenerateOutputFileName(lite::Tensor *tensor, const std::string &op_name, const std::string &file_type,
                                    const size_t &idx) {
   std::string file_name = op_name;
   auto pos = file_name.find_first_of('/');
@@ -980,14 +977,13 @@ std::string GenerateOutputFileName(tensor::MSTensor *tensor, const std::string &
 
 int Benchmark::InitPrintTensorDataCallbackParameter() {
   // before callback
-  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+  before_call_back_ = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                          const std::vector<mindspore::lite::Tensor *> &before_outputs,
                           const CallBackParam &call_param) { return true; };
 
   // after callback
-  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                         const CallBackParam &call_param) {
+  after_call_back_ = [&](const std::vector<mindspore::lite::Tensor *> &after_inputs,
+                         const std::vector<mindspore::lite::Tensor *> &after_outputs, const CallBackParam &call_param) {
     std::cout << "================================================================" << std::endl;
     std::cout << call_param.node_name << " inputs : " << std::endl;
     for (auto ms_tensor : after_inputs) {
@@ -1006,8 +1002,8 @@ int Benchmark::InitPrintTensorDataCallbackParameter() {
 int Benchmark::InitDumpTensorDataCallbackParameter() {
 #ifndef BENCHMARK_CLIP_JSON
   // before callback
-  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+  before_call_back_ = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                          const std::vector<mindspore::lite::Tensor *> &before_outputs,
                           const CallBackParam &call_param) {
     auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
@@ -1029,9 +1025,8 @@ int Benchmark::InitDumpTensorDataCallbackParameter() {
   };
 
   // after callback
-  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                         const CallBackParam &call_param) {
+  after_call_back_ = [&](const std::vector<mindspore::lite::Tensor *> &after_inputs,
+                         const std::vector<mindspore::lite::Tensor *> &after_outputs, const CallBackParam &call_param) {
     auto dump_mode = dump_cfg_json_[dump::kSettings][dump::kMode].get<int>();
     auto input_output_mode = dump_cfg_json_[dump::kSettings][dump::kInputOutput].get<int>();
     auto kernels = dump_cfg_json_[dump::kSettings][dump::kKernels].get<std::vector<std::string>>();
@@ -1063,7 +1058,7 @@ int Benchmark::CheckInputNames() {
   auto input_names = StrSplit(bench_inputs, std::string(DELIM_COMMA));
   std::vector<std::string> ms_input_names(ms_inputs_.size());
   std::transform(ms_inputs_.begin(), ms_inputs_.end(), ms_input_names.begin(),
-                 [](mindspore::tensor::MSTensor *input) { return input->tensor_name(); });
+                 [](mindspore::lite::Tensor *input) { return input->tensor_name(); });
   if (ms_input_names != input_names) {
     MS_LOG(ERROR) << "The input names are not the same as ones of the original model.";
     return RET_ERROR;
@@ -1077,7 +1072,7 @@ int Benchmark::CompareOutputByCosineDistance(float cosine_distance_threshold) {
   int total_size = 0;
   for (const auto &calib_tensor : benchmark_data_) {
     std::string tensor_name = calib_tensor.first;
-    tensor::MSTensor *tensor = session_->GetOutputByTensorName(tensor_name);
+    lite::Tensor *tensor = session_->GetOutputByTensorName(tensor_name);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
       return RET_ERROR;
@@ -1114,7 +1109,7 @@ int Benchmark::CompareOutputByCosineDistance(float cosine_distance_threshold) {
   return RET_OK;
 }
 
-int Benchmark::CompareDataGetTotalCosineDistanceAndSize(const std::string &name, tensor::MSTensor *tensor,
+int Benchmark::CompareDataGetTotalCosineDistanceAndSize(const std::string &name, lite::Tensor *tensor,
                                                         float *total_cosine_distance, int *total_size) {
   float cos = 0;
   auto mutableData = tensor->MutableData();

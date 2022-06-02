@@ -71,7 +71,7 @@ float CalcSparseClassificationAccuracy(T *predictions, int *labels, int batch_si
   return accuracy / (static_cast<float>(batch_size));
 }
 
-float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output) {
+float CalculateSparseClassification(lite::Tensor *input, lite::Tensor *output) {
   if ((input->shape().size() != 1) || (input->data_type() != kNumberTypeInt32) || (output->shape().size() != 2)) {
     MS_LOG(WARNING) << "SparseClassification got a " << input->shape() << "-D input tensor, " << output->shape()
                     << "-D output tensor";
@@ -117,7 +117,7 @@ float CalcOneHotClassificationAccuracy(T *predictions, float *labels, int batch_
   return accuracy / (static_cast<float>(batch_size));
 }
 
-float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *output) {
+float CalculateOneHotClassification(lite::Tensor *input, lite::Tensor *output) {
   if ((input->shape().size() != 2) || (output->shape().size() != 2)) {
     MS_LOG(WARNING) << "OneHotClassification got a " << input->shape() << "-D input tensor, " << output->shape()
                     << "-D output tensor";

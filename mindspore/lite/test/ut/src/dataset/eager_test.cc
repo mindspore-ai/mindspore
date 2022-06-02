@@ -26,7 +26,7 @@
 #include "mindspore/lite/src/common/log_adapter.h"
 #include "include/api/types.h"
 
-using MSTensor = mindspore::tensor::MSTensor;
+using MSTensor = mindspore::lite::Tensor;
 using DETensor = mindspore::tensor::DETensor;
 using mindspore::dataset::vision::Decode;
 using mindspore::dataset::vision::Normalize;

@@ -34,8 +34,8 @@ constexpr int kPrintNum = 10;
 constexpr float kThreshold = 0.9f;
 
 // Definition of callback function after forwarding operator.
-bool after_callback(const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                    const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+bool after_callback(const std::vector<mindspore::lite::Tensor *> &after_inputs,
+                    const std::vector<mindspore::lite::Tensor *> &after_outputs,
                     const mindspore::CallBackParam &call_param) {
   std::cout << call_param.node_name << std::endl;
   for (size_t i = 0; i < after_inputs.size(); i++) {
@@ -92,7 +92,7 @@ void NetRunner::InitAndFigureInputs() {
   }
 }
 
-mindspore::tensor::MSTensor *NetRunner::SearchOutputsForSize(size_t size) const {
+mindspore::lite::Tensor *NetRunner::SearchOutputsForSize(size_t size) const {
   auto outputs = session_->GetOutputs();
   for (auto it = outputs.begin(); it != outputs.end(); ++it) {
     if (it->second->ElementsNum() == size) return it->second;

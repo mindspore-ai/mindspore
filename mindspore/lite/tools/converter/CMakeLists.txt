@@ -141,7 +141,6 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/runtime/tensor_category.cc
         ${SRC_DIR}/runtime/schema_tensor_wrapper.cc
-        ${SRC_DIR}/runtime/ms_tensor.cc
         ${SRC_DIR}/tensorlist.cc
         ${SRC_DIR}/runtime/kernel_registry.cc
         ${SRC_DIR}/registry/register_kernel_impl.cc

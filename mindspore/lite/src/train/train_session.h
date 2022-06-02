@@ -62,33 +62,33 @@ class TrainSession : virtual public lite::LiteSession {
   bool IsEval() override { return !train_mode_; }
   int SetLearningRate(float learning_rate) override;
   float GetLearningRate() override;
-  std::vector<tensor::MSTensor *> GetGradients() const override;
-  std::vector<tensor::MSTensor *> GetOptimizerParams() const override;
-  int SetOptimizerParams(const std::vector<tensor::MSTensor *> &params) override;
-  int ApplyGradients(const std::vector<tensor::MSTensor *> &gradients) override;
+  std::vector<lite::Tensor *> GetGradients() const override;
+  std::vector<lite::Tensor *> GetOptimizerParams() const override;
+  int SetOptimizerParams(const std::vector<lite::Tensor *> &params) override;
+  int ApplyGradients(const std::vector<lite::Tensor *> &gradients) override;
   int SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f) override;
 
   void BindThread(bool if_bind) override { return lite::LiteSession::BindThread(if_bind); }
-  std::vector<tensor::MSTensor *> GetInputs() const override { return lite::LiteSession::GetInputs(); }
-  mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &tensor_name) const override {
+  std::vector<lite::Tensor *> GetInputs() const override { return lite::LiteSession::GetInputs(); }
+  mindspore::lite::Tensor *GetInputsByTensorName(const std::string &tensor_name) const override {
     return lite::LiteSession::GetInputsByTensorName(tensor_name);
   }
-  std::vector<tensor::MSTensor *> GetOutputsByNodeName(const std::string &node_name) const override {
+  std::vector<lite::Tensor *> GetOutputsByNodeName(const std::string &node_name) const override {
     return lite::LiteSession::GetOutputsByNodeName(node_name);
   }
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const override {
+  std::unordered_map<std::string, mindspore::lite::Tensor *> GetOutputs() const override {
     return lite::LiteSession::GetOutputs();
   }
 
   std::vector<std::string> GetOutputTensorNames() const override { return lite::LiteSession::GetOutputTensorNames(); }
-  mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const override {
+  mindspore::lite::Tensor *GetOutputByTensorName(const std::string &tensor_name) const override {
     return lite::LiteSession::GetOutputByTensorName(tensor_name);
   }
-  int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) override;
-  int UpdateWeights(std::vector<tensor::MSTensor *> new_weights) override;
+  int Resize(const std::vector<lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims) override;
+  int UpdateWeights(std::vector<lite::Tensor *> new_weights) override;
 
-  std::vector<tensor::MSTensor *> GetPredictions() const override {
-    std::vector<tensor::MSTensor *> outputs;
+  std::vector<lite::Tensor *> GetPredictions() const override {
+    std::vector<lite::Tensor *> outputs;
     for (auto it = eval_output_tensor_map_.begin(); it != eval_output_tensor_map_.end(); ++it) {
       outputs.push_back(it->second);
     }
@@ -97,9 +97,9 @@ class TrainSession : virtual public lite::LiteSession {
   int Export(const std::string &fb_name, ModelType model_type, QuantizationType quant_type, FormatType,
              std::vector<std::string> out_put_tensor_name = {}) override;
 
-  std::vector<tensor::MSTensor *> GetFeatureMaps() const override;
+  std::vector<lite::Tensor *> GetFeatureMaps() const override;
 
-  int UpdateFeatureMaps(const std::vector<tensor::MSTensor *> &features_map) override;
+  int UpdateFeatureMaps(const std::vector<lite::Tensor *> &features_map) override;
   int FindUseInTensorKernel(std::vector<kernel::KernelExec *> *use_in_tensor_kernels,
                             const std::vector<lite::Tensor *> &kernel_in_tensors,
                             const std::vector<kernel::KernelExec *> &inference_kernels);
@@ -125,16 +125,16 @@ class TrainSession : virtual public lite::LiteSession {
   virtual int InitCallBack();
   std::shared_ptr<Model> model_ = nullptr;
   // TrainCfg train_cfg_;
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_node_map_;
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> orig_output_tensor_map_;
+  std::unordered_map<std::string, std::vector<mindspore::lite::Tensor *>> orig_output_node_map_;
+  std::unordered_map<std::string, mindspore::lite::Tensor *> orig_output_tensor_map_;
   std::vector<std::string> orig_output_tensor_names_;
 
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> eval_output_node_map_;
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> eval_output_tensor_map_;
+  std::unordered_map<std::string, std::vector<mindspore::lite::Tensor *>> eval_output_node_map_;
+  std::unordered_map<std::string, mindspore::lite::Tensor *> eval_output_tensor_map_;
   std::vector<std::string> eval_output_tensor_names_;
 
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> train_output_node_map_;
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> train_output_tensor_map_;
+  std::unordered_map<std::string, std::vector<mindspore::lite::Tensor *>> train_output_node_map_;
+  std::unordered_map<std::string, mindspore::lite::Tensor *> train_output_tensor_map_;
   std::vector<std::string> train_output_tensor_names_;
 
   std::vector<kernel::KernelExec *> inference_kernels_;

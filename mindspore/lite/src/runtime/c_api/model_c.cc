@@ -46,12 +46,12 @@ class ModelC {
  private:
   std::shared_ptr<lite::LiteSession> session_ = nullptr;
   std::shared_ptr<const ContextC> context_ = nullptr;
-  std::map<mindspore::tensor::MSTensor *, LiteTensorImpl *> tensor_map_;
+  std::map<mindspore::lite::Tensor *, LiteTensorImpl *> tensor_map_;
   std::vector<LiteTensorImpl *> inputs_;
   std::vector<LiteTensorImpl *> outputs_;
   Status RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC &after);
-  void ResetTensorData(std::vector<void *> old_data, std::vector<tensor::MSTensor *> tensors);
-  LiteTensorImpl *TensorToTensorImpl(mindspore::tensor::MSTensor *tensor);
+  void ResetTensorData(std::vector<void *> old_data, std::vector<lite::Tensor *> tensors);
+  LiteTensorImpl *TensorToTensorImpl(mindspore::lite::Tensor *tensor);
 };
 
 Status ModelC::Build(const void *model_data, size_t data_size, ModelType model_type, const ContextC *model_context) {
@@ -102,7 +102,7 @@ Status ModelC::Build(const std::string &model_path, ModelType model_type, const 
 }
 
 Status ModelC::Resize(const std::vector<LiteTensorImpl *> &inputs, const std::vector<std::vector<int64_t>> &shapes) {
-  std::vector<tensor::MSTensor *> inner_input;
+  std::vector<lite::Tensor *> inner_input;
   size_t input_num = inputs.size();
   for (size_t i = 0; i < input_num; i++) {
     auto input = inputs[i];
@@ -126,7 +126,7 @@ Status ModelC::Resize(const std::vector<LiteTensorImpl *> &inputs, const std::ve
   return static_cast<StatusCode>(ret);
 }
 
-void ModelC::ResetTensorData(std::vector<void *> old_data, std::vector<tensor::MSTensor *> tensors) {
+void ModelC::ResetTensorData(std::vector<void *> old_data, std::vector<lite::Tensor *> tensors) {
   for (size_t j = 0; j < old_data.size(); j++) {
     tensors.at(j)->set_data(old_data.at(j));
   }
@@ -191,8 +191,8 @@ Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC
   KernelCallBack before_call_back = nullptr;
   KernelCallBack after_call_back = nullptr;
   if (before != nullptr) {
-    before_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                           const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+    before_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                           const std::vector<mindspore::lite::Tensor *> &before_outputs,
                            const CallBackParam &call_param) {
       std::vector<LiteTensorImpl> inputs_impl;
       std::vector<LiteTensorImpl> outputs_impl;
@@ -216,8 +216,8 @@ Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC
     };
   }
   if (after != nullptr) {
-    after_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+    after_call_back = [&](const std::vector<mindspore::lite::Tensor *> &after_inputs,
+                          const std::vector<mindspore::lite::Tensor *> &after_outputs,
                           const CallBackParam &call_param) {
       std::vector<LiteTensorImpl> inputs_impl;
       std::vector<LiteTensorImpl> outputs_impl;
@@ -244,7 +244,7 @@ Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC
   return static_cast<StatusCode>(ret);
 }
 
-LiteTensorImpl *ModelC::TensorToTensorImpl(mindspore::tensor::MSTensor *tensor) {
+LiteTensorImpl *ModelC::TensorToTensorImpl(mindspore::lite::Tensor *tensor) {
   LiteTensorImpl *impl = nullptr;
   auto iter = tensor_map_.find(tensor);
   if (iter != tensor_map_.end()) {
@@ -272,7 +272,7 @@ LiteTensorImpl **ModelC::GetInputs(size_t *input_num) {
   }
   inputs_.clear();
   std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_),
-                 [&](tensor::MSTensor *input) { return TensorToTensorImpl(input); });
+                 [&](lite::Tensor *input) { return TensorToTensorImpl(input); });
   return inputs_.data();
 }
 
@@ -288,7 +288,7 @@ LiteTensorImpl **ModelC::GetOutputs(size_t *output_num) {
   }
   outputs_.clear();
   std::transform(outputs.begin(), outputs.end(), std::back_inserter(outputs_),
-                 [&](std::unordered_map<std::string, mindspore::tensor::MSTensor *>::value_type iter) {
+                 [&](std::unordered_map<std::string, mindspore::lite::Tensor *>::value_type iter) {
                    return TensorToTensorImpl(iter.second);
                  });
   return outputs_.data();

@@ -38,7 +38,7 @@ AccuracyMetrics::AccuracyMetrics(int accuracy_metrics, const std::vector<int> &i
   }
 }
 
-void AccuracyMetrics::Update(std::vector<tensor::MSTensor *> inputs, std::vector<tensor::MSTensor *> outputs) {
+void AccuracyMetrics::Update(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   for (unsigned int i = 0; i < input_indexes_.size(); i++) {
     if ((inputs.size() <= static_cast<unsigned int>(input_indexes_[i])) ||
         (outputs.size() <= static_cast<unsigned int>(output_indexes_[i]))) {

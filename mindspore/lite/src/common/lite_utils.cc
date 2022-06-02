@@ -18,19 +18,16 @@
 #include <algorithm>
 #include <vector>
 #include <string>
-#include <utility>
 #include "src/tensor.h"
-#include "src/common/log_adapter.h"
 #ifndef STRING_KERNEL_CLIP
 #include "src/common/string_utils.h"
 #endif
-#include "tools/common/option.h"
 #include "include/errorcode.h"
 #include "include/version.h"
 
 namespace mindspore {
 namespace lite {
-int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor) {
+int StringsToTensor(const std::vector<std::string> &inputs, Tensor *tensor) {
 #ifndef STRING_KERNEL_CLIP
   if (tensor == nullptr) {
     return RET_PARAM_INVALID;
@@ -48,7 +45,7 @@ int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *
 #endif
 }
 
-std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
+std::vector<std::string> TensorToStrings(const Tensor *tensor) {
 #ifndef STRING_KERNEL_CLIP
   if (tensor == nullptr) {
     return {""};

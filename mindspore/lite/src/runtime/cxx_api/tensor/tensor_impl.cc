@@ -85,7 +85,7 @@ std::shared_ptr<LiteTensorImpl> LiteTensorImpl::StringsToTensorImpl(const std::s
     return nullptr;
   }
   lite_tensor->set_tensor_name(name);
-  auto ret = lite::StringsToMSTensor(str, lite_tensor);
+  auto ret = lite::StringsToTensor(str, lite_tensor);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convert strings to tensor failed.";
     delete lite_tensor;
@@ -109,7 +109,7 @@ std::vector<std::string> LiteTensorImpl::TensorImplToStrings(const std::shared_p
     MS_LOG(ERROR) << "Invalid tensor impl.";
     return empty;
   }
-  return lite::MSTensorToStrings(lite_tensor);
+  return lite::TensorToStrings(lite_tensor);
 }
 #endif
 }  // namespace mindspore

@@ -391,13 +391,5 @@ void Tensor::set_quant_params(const std::vector<LiteQuantParam> quant_params) { 
 std::vector<float> Tensor::quant_clusters() const { return this->quant_clusters_; }
 
 void Tensor::set_quant_clusters(const std::vector<float> &clusters) { this->quant_clusters_ = clusters; }
-
-std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src) {
-  std::vector<tensor::MSTensor *> target(src.size());
-  std::transform(src.begin(), src.end(), target.begin(), [](Tensor *t) { return static_cast<tensor::MSTensor *>(t); });
-  return target;
-}
-
 }  // namespace lite
-
 }  // namespace mindspore

@@ -176,7 +176,7 @@ Status ModelImpl::Build() {
   return kSuccess;
 }
 
-static void ResetTensorData(std::vector<void *> old_data, const std::vector<tensor::MSTensor *> &tensors) {
+static void ResetTensorData(std::vector<void *> old_data, const std::vector<lite::Tensor *> &tensors) {
   for (size_t j = 0; j < old_data.size(); j++) {
     tensors.at(j)->set_data(old_data.at(j));
   }
@@ -186,8 +186,8 @@ Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBac
   KernelCallBack before_call_back = nullptr;
   KernelCallBack after_call_back = nullptr;
   if (before != nullptr) {
-    before_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                           const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+    before_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                           const std::vector<mindspore::lite::Tensor *> &before_outputs,
                            const CallBackParam &call_param) {
       std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs);
       std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs);
@@ -199,8 +199,8 @@ Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBac
   }
 
   if (after != nullptr) {
-    after_call_back = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+    after_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
+                          const std::vector<mindspore::lite::Tensor *> &before_outputs,
                           const CallBackParam &call_param) {
       std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs);
       std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs);
@@ -453,7 +453,7 @@ Status ModelImpl::ApplyGradients(const std::vector<MSTensor> &gradients) {
     MS_LOG(ERROR) << "gradients is null.";
     return kLiteInputParamInvalid;
   }
-  std::vector<tensor::MSTensor *> inner_gradients;
+  std::vector<lite::Tensor *> inner_gradients;
   inner_gradients.resize(gradients.size());
   for (size_t i = 0; i < gradients.size(); i++) {
     auto gradient = gradients[i];
@@ -496,7 +496,7 @@ Status ModelImpl::UpdateFeatureMaps(const std::vector<MSTensor> &new_weights) {
     MS_LOG(ERROR) << "gradients is null.";
     return kLiteInputParamInvalid;
   }
-  std::vector<tensor::MSTensor *> inner_weights;
+  std::vector<lite::Tensor *> inner_weights;
   inner_weights.resize(new_weights.size());
   for (size_t i = 0; i < new_weights.size(); i++) {
     auto new_weight = new_weights[i];
@@ -539,7 +539,7 @@ Status ModelImpl::SetOptimizerParams(const std::vector<MSTensor> &params) {
     MS_LOG(ERROR) << "params is null.";
     return kLiteInputParamInvalid;
   }
-  std::vector<tensor::MSTensor *> inner_params;
+  std::vector<lite::Tensor *> inner_params;
   inner_params.resize(params.size());
   for (size_t i = 0; i < params.size(); i++) {
     auto param = params[i];
@@ -675,7 +675,7 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
     MS_LOG(ERROR) << "The size of inputs is incorrect.";
     return kLiteInputParamInvalid;
   }
-  std::vector<tensor::MSTensor *> inner_input;
+  std::vector<lite::Tensor *> inner_input;
   inner_input.resize(inputs.size());
   std::vector<std::vector<int32_t>> truncated_shape;
   truncated_shape.resize(inputs.size());
@@ -711,7 +711,7 @@ Status ModelImpl::UpdateWeights(const std::vector<MSTensor> &new_weights) {
     MS_LOG(ERROR) << "New weights are empty.";
     return kLiteInputParamInvalid;
   }
-  std::vector<tensor::MSTensor *> inner_weights;
+  std::vector<lite::Tensor *> inner_weights;
   inner_weights.resize(new_weights.size());
   for (size_t i = 0; i < new_weights.size(); i++) {
     auto weight = new_weights[i];

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/ms_tensor.h"
+#include "src/tensor.h"
 #include "tools/common/tensor_util.h"
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
@@ -334,7 +334,7 @@ int GenerateRandomData(size_t size, void *data, int data_type) {
   return RET_OK;
 }
 
-int GenerateRandomData(mindspore::tensor::MSTensor *tensor) {
+int GenerateRandomData(Tensor *tensor) {
   MS_ASSERT(tensor != nullptr);
   auto input_data = tensor->MutableData();
   if (input_data == nullptr) {
@@ -343,7 +343,7 @@ int GenerateRandomData(mindspore::tensor::MSTensor *tensor) {
   }
   int status;
   if (tensor->data_type() == kObjectTypeString) {
-    status = StringsToMSTensor({"you're the best."}, tensor);
+    status = StringsToTensor({"you're the best."}, tensor);
   } else {
     status = GenerateRandomData(tensor->Size(), input_data, static_cast<int>(tensor->data_type()));
   }

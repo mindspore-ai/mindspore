@@ -51,9 +51,9 @@ TransferSession::TransferSession(const char *model_buf_backbone, size_t size_bac
   }
 }
 
-std::vector<tensor::MSTensor *> TransferSession::GetInputs() const { return combined_inputs_; }
+std::vector<lite::Tensor *> TransferSession::GetInputs() const { return combined_inputs_; }
 
-bool TransferSession::CompileFormatTransform(tensor::MSTensor *out, tensor::MSTensor *in, int *mask, size_t mask_len) {
+bool TransferSession::CompileFormatTransform(lite::Tensor *out, lite::Tensor *in, int *mask, size_t mask_len) {
   MS_ASSERT(out->shape().size() == mask_len);
   for (std::size_t dim = 0; dim != out->shape().size(); ++dim) {
     if (in->shape().at(mask[dim]) != out->shape().at(dim)) {
@@ -71,7 +71,7 @@ int TransferSession::CompileTransferGraph() {
   int ret = RET_OK;
   for (auto input : inputs_head) {
     bool match = false;
-    mindspore::tensor::MSTensor *output = nullptr;
+    mindspore::lite::Tensor *output = nullptr;
     for (auto it = outputs_backbone.begin(); it != outputs_backbone.end(); ++it) {
       output = it->second;
       if (output->ElementsNum() == input->ElementsNum() && output->shape().size() == input->shape().size()) {
@@ -104,7 +104,7 @@ int TransferSession::CompileTransferGraph() {
   return ret;
 }
 
-mindspore::tensor::MSTensor *TransferSession::GetInputsByTensorName(const std::string &tensor_name) const {
+mindspore::lite::Tensor *TransferSession::GetInputsByTensorName(const std::string &tensor_name) const {
   /* First look in backbone netwok */
   auto ret = backbone_session_->GetInputsByTensorName(tensor_name);
   /* If not found look in head network */

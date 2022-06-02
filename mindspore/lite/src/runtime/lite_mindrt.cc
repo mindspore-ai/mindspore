@@ -146,7 +146,7 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
   return RET_OK;
 }
 
-int LiteOpActor::ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+int LiteOpActor::ResizeGraphInput(const std::vector<mindspore::lite::Tensor *> &inputs,
                                   const std::vector<std::vector<int>> &dims) {
   for (auto map : *isolate_input_map_) {
     auto isolate_tensor = map.first;

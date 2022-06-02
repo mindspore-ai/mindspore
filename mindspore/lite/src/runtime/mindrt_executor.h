@@ -43,8 +43,7 @@ class MindrtExecutor : public Executor {
           const std::vector<kernel::KernelExec *> &kernels, const KernelCallBack &before = nullptr,
           const KernelCallBack &after = nullptr) override;
 
-  int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
-             const std::vector<std::vector<int>> &dims) override;
+  int Resize(const std::vector<mindspore::lite::Tensor *> &inputs, const std::vector<std::vector<int>> &dims) override;
 
  private:
   int TransferGraphOutput();

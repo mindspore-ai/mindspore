@@ -63,8 +63,8 @@ class OptimizerKernel : public LiteKernel {
     return indices;
   }
 
-  std::vector<tensor::MSTensor *> GetOptimizerParams() const {
-    std::vector<tensor::MSTensor *> params;
+  std::vector<lite::Tensor *> GetOptimizerParams() const {
+    std::vector<lite::Tensor *> params;
     auto indices = GetOptimizerParamsIdxs();
     indices.push_back(lr_idx_);
     for (size_t ix = 0; ix < indices.size(); ix++) {
@@ -77,7 +77,7 @@ class OptimizerKernel : public LiteKernel {
     return params;
   }
 
-  bool SetOptimizerParams(tensor::MSTensor *param) {
+  bool SetOptimizerParams(lite::Tensor *param) {
     if (param == nullptr) {
       return false;
     }

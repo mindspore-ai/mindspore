@@ -57,8 +57,8 @@ class TransferSession : public lite::TrainSession {
   int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
   void BindThread(bool if_bind) override;
-  std::vector<tensor::MSTensor *> GetInputs() const override;
-  mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &tensor_name) const override;
+  std::vector<lite::Tensor *> GetInputs() const override;
+  mindspore::lite::Tensor *GetInputsByTensorName(const std::string &tensor_name) const override;
 
   int CompileTransferGraph();
   int Export(const std::string &fb_name, ModelType model_type, QuantizationType quant_type, FormatType,
@@ -67,12 +67,12 @@ class TransferSession : public lite::TrainSession {
  protected:
   LiteSession *backbone_session_ = nullptr;
   char *lite_model_ = nullptr;
-  std::vector<mindspore::tensor::MSTensor *> combined_inputs_;
-  std::vector<std::pair<mindspore::tensor::MSTensor *, mindspore::tensor::MSTensor *>> backbone_head_map_;
+  std::vector<mindspore::lite::Tensor *> combined_inputs_;
+  std::vector<std::pair<mindspore::lite::Tensor *, mindspore::lite::Tensor *>> backbone_head_map_;
   bool is_valid_ = false;
 
  private:
-  bool CompileFormatTransform(tensor::MSTensor *out, tensor::MSTensor *in, int *mask, size_t mask_len);
+  bool CompileFormatTransform(lite::Tensor *out, lite::Tensor *in, int *mask, size_t mask_len);
   std::unordered_map<size_t, size_t> ConnectionMap();
   bool nchw2nhwc_ = false;
   size_t size_backbone_;

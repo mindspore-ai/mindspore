@@ -42,13 +42,10 @@ namespace schema {
 struct Tensor;
 }  // namespace schema
 
-namespace tensor {
-class MSTensor;
-}  // namespace tensor
-
 namespace lite {
 struct DeviceContext;
 struct LiteQuantParam;
+class Tensor;
 }  // namespace lite
 
 class Allocator;
@@ -75,8 +72,8 @@ struct GPUCallBackParam : CallBackParam {
 };
 
 /// \brief KernelCallBack defined the function pointer for callBack.
-using KernelCallBack = std::function<bool(std::vector<tensor::MSTensor *> inputs,
-                                          std::vector<tensor::MSTensor *> outputs, const CallBackParam &opInfo)>;
+using KernelCallBack = std::function<bool(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs,
+                                          const CallBackParam &opInfo)>;
 
 namespace lite {
 using DeviceContextVector = std::vector<DeviceContext>;
@@ -86,12 +83,12 @@ using DeviceContextVector = std::vector<DeviceContext>;
 /// \param[out] MSTensor.
 ///
 /// \return STATUS as an error code of this interface, STATUS is defined in errorcode.h.
-int MS_API StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor);
+int MS_API StringsToTensor(const std::vector<std::string> &inputs, Tensor *tensor);
 
 /// \brief Get string vector from MSTensor.
 /// \param[in] MSTensor.
 /// \return string vector.
-std::vector<std::string> MS_API MSTensorToStrings(const tensor::MSTensor *tensor);
+std::vector<std::string> MS_API TensorToStrings(const Tensor *tensor);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_

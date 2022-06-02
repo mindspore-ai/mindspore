@@ -24,7 +24,6 @@
 #include <numeric>
 #include <functional>
 #include <atomic>
-#include "include/ms_tensor.h"
 #include "include/api/format.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/common/log_adapter.h"
@@ -53,7 +52,7 @@ struct LiteQuantParam {
   double max{255.0};
 };
 
-class Tensor : public mindspore::tensor::MSTensor {
+class Tensor {
  public:
   Tensor() = default;
 
@@ -68,7 +67,12 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   Tensor &operator=(Tensor &&src) = delete;
 
-  ~Tensor() override;
+  virtual ~Tensor();
+
+  static Tensor *CreateTensor(const std::string &name, TypeId type, const std::vector<int> &shape, const void *data,
+                              size_t data_len);
+  static Tensor *CreateTensorByDeepCopy(const std::string &name, TypeId type, const std::vector<int> &shape,
+                                        const void *data, size_t data_len);
 
   static int CopyTensorData(const Tensor &src_tensor, Tensor *dst_tensor);
 
@@ -76,21 +80,21 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual bool operator==(const Tensor &tensor);
 
-  void set_tensor_name(const std::string &name) override { tensor_name_ = name; }
+  void set_tensor_name(const std::string &name) { tensor_name_ = name; }
 
-  std::string tensor_name() const override { return tensor_name_; }
+  std::string tensor_name() const { return tensor_name_; }
 
-  TypeId data_type() const override { return data_type_; }
+  TypeId data_type() const { return data_type_; }
 
-  void set_data_type(TypeId data_type) override { data_type_ = data_type; }
+  void set_data_type(TypeId data_type) { data_type_ = data_type; }
 
-  std::vector<int> shape() const override { return shape_; }
+  std::vector<int> shape() const { return shape_; }
 
-  void set_shape(const std::vector<int> &shape) override { shape_ = shape; }
+  void set_shape(const std::vector<int> &shape) { shape_ = shape; }
 
   int DimensionSize(size_t index) const;
 
-  int64_t ElementsNum() const override;
+  int64_t ElementsNum() const;
 
   int32_t Batch() const;
 
@@ -103,12 +107,11 @@ class Tensor : public mindspore::tensor::MSTensor {
   int64_t ElementsC4Num() const;
 
   int64_t ElementsC8Num() const;
+  virtual size_t Size() const;
 
-  size_t Size() const override;
+  virtual void set_allocator(AllocatorPtr allocator) { allocator_ = allocator; }
 
-  void set_allocator(AllocatorPtr allocator) override { allocator_ = allocator; }
-
-  AllocatorPtr allocator() const override { return allocator_; }
+  AllocatorPtr allocator() const { return allocator_; }
 
   virtual int MallocData(const AllocatorPtr allocator = nullptr);
 
@@ -118,16 +121,16 @@ class Tensor : public mindspore::tensor::MSTensor {
   // reference-count, e.g, delete the tensor or call the class interface "DecRefCount".
   virtual void FreeData(bool is_force = true);
 
-  void *MutableData() override;
+  virtual void *MutableData();
 
   void *ReallocData();
 
-  void *data() override { return data_; };
+  virtual void *data() { return data_; }
 
   virtual void *data() const { return data_; }
 
   // tensor will hold this data, and free this data in destructor
-  void set_data(void *data) override {
+  virtual void set_data(void *data) {
     this->data_ = data;
     this->own_data_ = true;
   }
@@ -136,9 +139,9 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_category(Category category) { this->category_ = category; }
 
-  void set_format(mindspore::Format format) override { this->format_ = format; }
+  void set_format(mindspore::Format format) { this->format_ = format; }
 
-  mindspore::Format format() const override { return this->format_; }
+  mindspore::Format format() const { return this->format_; }
   virtual int ref_count() const { return ref_count_; }
 
   virtual int init_ref_count() const { return static_cast<int>(this->init_ref_count_); }
@@ -166,15 +169,15 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void ClearQuantParam();
 
-  std::vector<LiteQuantParam> quant_params() const override;
+  std::vector<LiteQuantParam> quant_params() const;
 
-  void set_quant_params(std::vector<LiteQuantParam>) override;
+  void set_quant_params(std::vector<LiteQuantParam>);
 
   std::vector<float> quant_clusters() const;
 
   void set_quant_clusters(const std::vector<float> &clusters);
 
-  bool IsConst() const override {
+  virtual bool IsConst() const {
     return (this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR) && this->data_ != nullptr;
   }
 
@@ -248,8 +251,6 @@ class Tensor : public mindspore::tensor::MSTensor {
   bool own_data_{false};
   float scale_ = 1.0f;
 };
-
-std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src);
 }  // namespace lite
 }  // namespace mindspore
 
