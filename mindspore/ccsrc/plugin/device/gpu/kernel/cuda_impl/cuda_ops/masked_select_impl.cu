@@ -15,11 +15,8 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/masked_select_impl.cuh"
-#include <thrust/transform.h>
-#include <thrust/device_ptr.h>
-#include <thrust/execution_policy.h>
+#include <cub/cub.cuh>
 #include <algorithm>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 struct BoolToSize {
   typedef size_t index_type;
@@ -74,7 +71,6 @@ CUDA_LIB_EXPORT void MaskedSelect(const T *input_ptr, const bool *mask_ptr, size
                                   const std::vector<size_t> i, const std::vector<size_t> j, const std::vector<size_t> o,
                                   T *input_broadcast_ptr, bool *mask_broadcast_ptr,
                                   T *output_ptr, cudaStream_t cuda_stream) {
-  auto device = thrust::cuda::par.on(cuda_stream);
   size_t broadcast_size = o[0] * o[1] * o[2] * o[3] * o[4] * o[5] * o[6];
   const T *last_input = nullptr;
   const bool *last_mask = nullptr;
@@ -97,16 +93,19 @@ CUDA_LIB_EXPORT void MaskedSelect(const T *input_ptr, const bool *mask_ptr, size
     last_mask = mask_ptr;
   }
 
-  auto thrust_mask_ptr = thrust::device_pointer_cast(last_mask);
-  auto thrust_index_ptr = thrust::device_pointer_cast(index_ptr);
-
-  // using scan method to calculate prefix sum of 01 transformed sequence
-  thrust::transform(device, thrust_mask_ptr, thrust_mask_ptr + broadcast_size, thrust_index_ptr, BoolToSize());
-  thrust::inclusive_scan(device, thrust_index_ptr, thrust_index_ptr + broadcast_size, thrust_index_ptr);
+  // using cub to calculate prefix sum of 01 transformed sequence
+  BoolToSize op;
+  cub::TransformInputIterator<size_t, BoolToSize, const bool*> iter(last_mask, op);
+  size_t temp_storage_bytes = 0;
+  (void)cub::DeviceScan::InclusiveSum(nullptr, temp_storage_bytes, iter, index_ptr, broadcast_size, cuda_stream);
+  void *d_temp_storage = nullptr;
+  (void)cudaMalloc(&d_temp_storage, temp_storage_bytes);
+  (void)cub::DeviceScan::InclusiveSum(d_temp_storage, temp_storage_bytes, iter, index_ptr, broadcast_size, cuda_stream);
 
   // Extract the first index to appear and transform into output index
   MaskedSelectKernel<<<GET_BLOCKS(broadcast_size), GET_THREADS, 0, cuda_stream>>>(last_input, index_ptr, output_ptr,
                                                                                   broadcast_size);
+  (void)cudaFree(d_temp_storage);
 }
 
 template CUDA_LIB_EXPORT void MaskedSelect<uint8_t>(const uint8_t *input_ptr, const bool *mask_ptr, size_t *index_ptr,
