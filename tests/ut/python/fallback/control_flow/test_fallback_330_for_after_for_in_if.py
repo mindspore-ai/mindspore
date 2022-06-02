@@ -43,7 +43,6 @@ def test_for_after_for_in_if_1():
     assert res == 8
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_for_after_for_in_if_2():
     """
     Feature: JIT Fallback
@@ -64,7 +63,7 @@ def test_for_after_for_in_if_2():
         for i in range(3):
             y = y + i
 
-        return x, y
+        return Tensor(x), Tensor(y)
 
     res_x, res_y = func3302()
     assert res_x == 4

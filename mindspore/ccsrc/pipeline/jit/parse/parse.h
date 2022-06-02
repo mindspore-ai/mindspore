@@ -313,8 +313,6 @@ class Parser {
   // Return a make tuple for input elements list
   AnfNodePtr GenerateMakeTuple(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &element_nodes);
 
-  void UpdateBlockPyParams(const FunctionBlockPtr &block, const FunctionBlockPtr &pre_block);
-
   // The shared_ptr will be hold by GraphManager, so just hold a weak ref here.
   static FuncGraphWeakPtr top_func_graph_;
   // Python function id, used to indicate whether two CNodes come from the same Python function

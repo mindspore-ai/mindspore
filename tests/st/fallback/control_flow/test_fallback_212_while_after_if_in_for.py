@@ -84,30 +84,6 @@ def test_while_after_if_in_for_tensor_2():
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_while_after_if_in_for_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_while_after_if_in_for():
-        x = np.array([1])
-        y = np.array([10])
-        for _ in range(3):
-            z = Tensor([-2])
-            if Tensor(x) < z:
-                y = 0
-            else:
-                x = y - x
-        while Tensor(y[0]) > Tensor(x[0]):
-            y -= x
-        return Tensor(y)
-    res = control_flow_while_after_if_in_for()
-    assert res == 1
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_while_after_if_in_for_numpy_2():
     """
     Feature: JIT Fallback

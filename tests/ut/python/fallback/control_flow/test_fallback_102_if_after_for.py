@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow if after for scenario"""
-import pytest
 import numpy as np
 from mindspore import Tensor, ms_function, context
 
@@ -79,7 +78,6 @@ def test_if_after_for_tensor_3():
     assert res == 20
 
 
-@pytest.mark.skip(reason="Currently, a can not be parsed in if statement.")
 def test_if_after_for_tensor_zip():
     """
     Feature: JIT Fallback
@@ -90,6 +88,7 @@ def test_if_after_for_tensor_zip():
     def control_flow_for():
         tuple_x = (Tensor(1), Tensor(3), Tensor(5))
         sum_x = Tensor(0)
+        a = Tensor(0)
         for x in zip(tuple_x):
             sum_x += x
             a = x

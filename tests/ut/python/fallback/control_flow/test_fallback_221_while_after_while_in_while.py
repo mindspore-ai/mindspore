@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
-import pytest
 import numpy as np
 from mindspore import Tensor, ms_function, context
 
@@ -67,32 +66,6 @@ def test_while_after_while_in_while_tensor_2():
         return x, y, z
     res = control_flow_while_after_while_in_while()
     assert res == (2, -1, -3)
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_while_after_while_in_while_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_while_after_while_in_while():
-        x = Tensor([-1])
-        y = Tensor([-2])
-        while abs(x) <= abs(y):
-            z = np.array([3, 4, 5])
-            index = 0
-            z_sum = 0
-            while index < len(z):
-                z_sum += z[index]
-                index += 1
-            x = x + Tensor(z_sum)
-        while y < x:
-            y += x
-        return x, y
-    res = control_flow_while_after_while_in_while()
-    assert res == (11, 20)
 
 
 def test_while_after_while_in_while_numpy_2():
