@@ -18,15 +18,15 @@
 #include <vector>
 #include <string>
 #include <memory>
-
 #include "ir/func_graph.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/optimizer/optimizer.h"
+
 #include "backend/common/pass/getitem_tuple.h"
 #include "common/graph_kernel/core/graph_kernel_splitter.h"
 #include "common/graph_kernel/core/eliminate_redundant_output.h"
 #include "common/graph_kernel/core/shape_ops_splitter.h"
 #include "common/graph_kernel/core/update_state_formatter.h"
-#include "common/graph_kernel/core/graph_kernel_pass_manager.h"
 
 #include "tools/graph_kernel/converter/akg/kernel_builder.h"
 #include "tools/graph_kernel/converter/format_recognition.h"
@@ -37,17 +37,21 @@
 namespace mindspore::graphkernel {
 using opt::GetitemTuple;
 using opt::GraphOptimizer;
+constexpr size_t kStagePreProcess = 0;
+constexpr size_t kStageCluster = 1;
+constexpr size_t kStageSplit = 2;
+constexpr size_t kStageBuildKernel = 3;
 
-PassManagerPtr GraphKernelOptimizer::PreProcess() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
+GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
+  auto pm = std::make_shared<GraphKernelPassManagerLite>(kStagePreProcess, "preprocess");
   // Some ops may lose abstract in converter
   pm->Add(std::make_shared<InsertAbstract>(), OptLevel_1);
   pm->Add(std::make_shared<FormatRecognition>(), OptLevel_1);
   return pm;
 }
 
-PassManagerPtr GraphKernelOptimizer::Cluster() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(1, "cluster");
+GkPassManagerPtr GraphKernelOptimizer::Cluster() const {
+  auto pm = std::make_shared<GraphKernelPassManagerLite>(kStageCluster, "cluster");
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderLite>(), OptLevel_1);
 
@@ -59,8 +63,8 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
   return pm;
 }
 
-PassManagerPtr GraphKernelOptimizer::Split() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(2, "split");
+GkPassManagerPtr GraphKernelOptimizer::Split() const {
+  auto pm = std::make_shared<GraphKernelPassManagerLite>(kStageSplit, "split");
   // Make certain nodes redundant so that they are used by only one user,
   // which can avoid unnecessary input-output and get better performance.
   // preprocess for ShapeOpsSplitter
@@ -81,27 +85,39 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   return pm;
 }
 
-PassManagerPtr GraphKernelOptimizer::BuildKernel() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(3, "buildkernel");
+GkPassManagerPtr GraphKernelOptimizer::BuildKernel() const {
+  auto pm = std::make_shared<GraphKernelPassManagerLite>(kStageBuildKernel, "buildkernel");
   // build akg and replace graph kernel nodes
   pm->Add(std::make_shared<KernelBuilder>(), OptLevel_1);
   return pm;
 }
 
-void GraphKernelOptimizer::Run(const FuncGraphPtr &kernel_graph) {
+void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(converter_param_);
   auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
-  optimizer->AddPassManager(PreProcess());
-  optimizer->AddPassManager(Cluster());
-  optimizer->AddPassManager(Split());
-  optimizer->AddPassManager(BuildKernel());
+  std::vector<GkPassManagerPtr> pm_list;
+  (void)pm_list.emplace_back(PreProcess());
+  (void)pm_list.emplace_back(Cluster());
+  (void)pm_list.emplace_back(Split());
+  (void)pm_list.emplace_back(BuildKernel());
 
-  auto mng = kernel_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(kernel_graph, true);
-    kernel_graph->set_manager(mng);
+  for (auto &pm : pm_list) {
+    pm->SetDumpIr(converter_param_->export_mindir);
+    optimizer->AddPassManager(pm);
   }
-  (void)optimizer->Optimize(kernel_graph);
+
+  auto mng = func_graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(func_graph, true);
+    func_graph->set_manager(mng);
+  }
+  (void)optimizer->Optimize(func_graph);
 }
 
-void GraphKernelOptimize(const FuncGraphPtr &kernel_graph) { GraphKernelOptimizer().Run(kernel_graph); }
+void GraphKernelOptimize(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
+  if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    GraphKernelOptimizer(param).Run(func_graph);
+  }
+}
 }  // namespace mindspore::graphkernel
