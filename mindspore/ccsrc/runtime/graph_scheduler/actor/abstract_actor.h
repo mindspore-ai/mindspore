@@ -37,8 +37,10 @@ using mindspore::device::DeviceContext;
 constexpr int kOutputDataFalgInit = 0;
 // Indicates that the output data destination is stack actor, and the output data cannot be reused.
 constexpr int kOutputDataFalgToStack = 1;
+// Indicates that the output data is the batch data, and send data in batches to increase the sending performance.
+constexpr int kOutputDataFalgBatch = 2;
 // Indicates that the output data is the last data in the batch.
-constexpr int kOutputDataFalgLastBatch = 2;
+constexpr int kOutputDataFalgLastBatch = 4;
 
 // The abstract common attributes of actors. The actor inheritance relationship:  OpActor --> AbstractActor -->
 // MemoryAwareActor --> DebugAwareActor --> KernelActor/DataSourceActor/CopyActor/LoopCountActor/OutputActor.
