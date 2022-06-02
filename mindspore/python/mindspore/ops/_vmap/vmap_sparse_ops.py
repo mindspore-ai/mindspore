@@ -15,9 +15,9 @@
 
 """sparse_ops vmap impl."""
 
-from ..operations.sparse_ops import DenseToCSRSparseMatrix, CSRSparseMatrixToSparseTensor
-from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error
+from ..primitive import Primitive
+from ..operations.sparse_ops import DenseToCSRSparseMatrix, CSRSparseMatrixToSparseTensor, CSRSparseMatrixToDense
 
 
 @vmap_rules_getters.register(CSRSparseMatrixToSparseTensor)
@@ -58,6 +58,30 @@ def get_dense_to_csr_sparse_matrix_vmap_rule(prim, axis_size):
             _, indices_dim = indices_bdim
             _raise_value_error("For operator in DenseToCSRSparseMatrix, all axes for inputs should be None, but"
                                " got dense_input_dim: {}, indices_dim: {}.".format(dense_input_dim, indices_dim))
+        return result
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(CSRSparseMatrixToDense)
+def get_csr_sparse_matrix_to_dense_vmap_rule(prim, axis_size):
+    """VmapRule for `CSRSparseMatrixToDense` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(dense_shape_bdim, batch_ptr_bdim, row_ptr_bdim, col_indices_bdim, values_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, dense_shape_bdim, batch_ptr_bdim, row_ptr_bdim,
+                                                      col_indices_bdim, values_bdim)
+        if not is_all_none:
+            _, dense_shape_dim = dense_shape_bdim
+            _, batch_ptr_dim = batch_ptr_bdim
+            _, row_ptr_dim = row_ptr_bdim
+            _, col_indices_dim = col_indices_bdim
+            _, values_dim = values_bdim
+            _raise_value_error("For operator CSRSparseMatrixToDense, all axes for inputs should be None, but got "
+                               "dense_shape_dim: {} batch_ptr_dim: {} row_ptr_dim: {} col_indices_dim: {} and "
+                               "values_dim: {}.".format(dense_shape_dim, batch_ptr_dim, row_ptr_dim, col_indices_dim,
+                                                        values_dim))
         return result
 
     return vmap_rule
