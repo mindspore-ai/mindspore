@@ -248,11 +248,226 @@ def pdist(x, p=2.0):
     return pdist_(x)
 
 
+def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0):
+    r"""
+    The cross entropy loss between input and target.
+
+    The cross entropy support two kind of targets:
+
+    - Class indices (int) in the range :math:`[0, C)` where :math:`C` is the number of classes,
+      the loss with reduction=none can be described as:
+
+      .. math::
+
+          \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
+          l_n = - w_{y_n} \log \frac{\exp(x_{n,y_n})}{\sum_{c=1}^C \exp(x_{n,c})}
+          \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}
+
+      where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
+      N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
+
+      If reduction is not 'none' (default 'mean'), then
+
+      .. math::
+
+          \ell(x, y) = \begin{cases}
+              \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}} l_n, &
+              \text{if reduction} = \text{`mean';}\\
+              \sum_{n=1}^N l_n,  &
+              \text{if reduction} = \text{`sum'.}
+              \end{cases}
+
+    - Probabilities (float) for each class, useful when labels beyond a single class per minibatch item
+      are required, the loss with reduction=none can be described as:
+
+      .. math::
+
+          \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
+          l_n = - \sum_{c=1}^C w_c \log \frac{\exp(x_{n,c})}{\sum_{i=1}^C \exp(x_{n,i})} y_{n,c}
+
+      where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
+      N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
+
+      If reduction is not 'none' (default 'mean'), then
+
+      .. math::
+
+          \ell(x, y) = \begin{cases}
+              \frac{\sum_{n=1}^N l_n}{N}, &
+              \text{if reduction} = \text{`mean';}\\
+              \sum_{n=1}^N l_n,  &
+              \text{if reduction} = \text{`sum'.}
+              \end{cases}
+
+    Args:
+        inputs (Tensor): :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
+            in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
+            `inputs` is expected to be log-probabilities, data type must be float16 or float32.
+        target (Tensor): :math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for
+            high-dimensional loss.
+        weight (Tensor): A rescaling weight applied to the loss of each batch element.
+            If not None, the shape is :math:`(C,)`,
+            data type must be float16 or float32. Default: None.
+        ignore_index (int): Specifies a target value that is ignored
+            and does not contribute to the input gradient. Default: -100
+        reduction (string):  Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
+            Default: 'mean'.
+        label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
+            from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: 0.0.
+
+    Returns:
+        Tensor, the computed loss value.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Example::
+
+        >>> inputs = mindspore.Tensor(np.random.randn(3, 5))
+        >>> target = mindspore.Tensor(np.array([1, 0, 4]))
+        >>> output = ops.cross_entropy(inputs, target)
+
+    """
+    class_dim = 0 if inputs.ndim == 1 else 1
+    if inputs.size == target.size:
+        return _cross_entropy(inputs, target, class_dim, weight, reduction, label_smoothing)
+    return nll_loss(P.LogSoftmax(class_dim)(inputs), target, weight, ignore_index, reduction, label_smoothing)
+
+
+def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', label_smoothing=0.0):
+    """cross entropy inner function"""
+    class_dim = 0 if inputs.ndim == 1 else 1
+    n_classes = inputs.shape[class_dim]
+    inputs = P.LogSoftmax(target_dim)(inputs)
+    if label_smoothing > 0.0:
+        target = target * (1 - label_smoothing) + label_smoothing / n_classes
+
+    if weight is None:
+        weight = P.OnesLike()(inputs)
+
+    if reduction == 'mean':
+        return -(inputs * target * weight).sum() / (inputs.size / n_classes)
+    if reduction == 'sum':
+        return -(inputs * target * weight).sum()
+    return -(inputs * target * weight).sum(class_dim)
+
+
+def nll_loss(inputs, target, weight=None, ignore_index=None, reduction='mean', label_smoothing=0.0):
+    r"""
+    Gets the negative log likelihood loss between inputs and target.
+
+    The nll loss with reduction=none can be described as:
+
+    .. math::
+
+        \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
+        \quad l_{n}=-w_{t_{n}} x_{n, t_{n}},
+        \quad w_{c}=\text { weight }[c] \cdot \mathbb{1}
+        \{c \not= \text{ignore\_index}\},
+
+    where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
+    N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
+
+    If reduction is not 'none' (default 'mean'), then
+
+    .. math::
+
+        \ell(x, t)=\left\{\begin{array}{ll}
+        \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean'; } \\
+        \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
+        \end{array}\right.
+
+    Args:
+        inputs (Tensor): :math:`(N, C)` where `C = number of classes` or :math:`(N, C, H, W)`
+            in case of 2D Loss, or :math:`(N, C, d_1, d_2, ..., d_K)`.
+            `inputs` is expected to be log-probabilities, data type must be float16 or float32.
+        target (Tensor): :math:`(N)` or :math:`(N, d_1, d_2, ..., d_K)` for
+            high-dimensional loss, data type must be int32.
+        weight (Tensor): A rescaling weight applied to the loss of each batch element.
+            If not None, the shape is :math:`(C,)`.
+            The data type must be float16 or float32. Default: None.
+        ignore_index (int): Specifies a target value that is ignored
+            and does not contribute to the input gradient. Default: -100
+        reduction (string):  Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
+            Default: 'mean'.
+        label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
+            from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: 0.0.
+
+    Outputs:
+        Tensor, the computed loss value.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Example::
+
+        >>> inputs = mindspore.Tensor(np.random.randn(3, 5))
+        >>> target = mindspore.Tensor(np.array([1, 0, 4]))
+        >>> output = ops.nll_loss(inputs, target)
+
+    """
+    ndim = inputs.ndim
+    if ndim == 2:
+        ret = _nll_loss(inputs, target, -1, weight, ignore_index, reduction, label_smoothing)
+    elif ndim == 4:
+        ret = _nll_loss(inputs, target, 1, weight, ignore_index, reduction, label_smoothing)
+    else:
+        n = inputs.shape[0]
+        c = inputs.shape[1]
+        out_size = (n,) + inputs.shape[2:]
+        inputs = inputs.view(n, c, 1, -1)
+        target = target.view(n, 1, -1)
+        if reduction != 'none':
+            ret = _nll_loss(inputs, target, 1, weight, ignore_index, reduction, label_smoothing)
+        else:
+            ret = _nll_loss(inputs, target, 1, weight, ignore_index, label_smoothing=label_smoothing)
+            ret = ret.view(out_size)
+    return ret
+
+
+def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, reduction='none', label_smoothing=0.0):
+    """nll loss inner function"""
+    if target.ndim == inputs.ndim - 1:
+        target = target.expand_dims(target_dim)
+    loss = P.Neg()(P.GatherD()(inputs, target_dim, target))
+    smooth_loss = P.Neg()(inputs.sum(axis=target_dim, keepdims=True))
+    if weight is not None:
+        loss_weights = P.Gather()(weight, target, 0)
+        loss = loss * loss_weights
+    else:
+        loss_weights = P.OnesLike()(loss)
+    if ignore_index is not None:
+        non_pad_mask = P.Equal()(target, ignore_index)
+        loss = loss.masked_fill(non_pad_mask, 0.)
+        loss_weights = loss_weights.masked_fill(non_pad_mask, 0.)
+        smooth_loss = smooth_loss.masked_fill(non_pad_mask, 0.)
+    else:
+        loss = loss.squeeze(target_dim)
+        smooth_loss = smooth_loss.squeeze(target_dim)
+
+    if reduction == 'sum':
+        loss = loss.sum()
+        smooth_loss = smooth_loss.sum()
+    elif reduction == 'mean':
+        loss = loss.sum() / loss_weights.sum()
+        smooth_loss = smooth_loss.mean()
+    else:
+        loss = loss.sum(target_dim)
+        smooth_loss = smooth_loss.sum(target_dim)
+
+    eps_i = label_smoothing / inputs.shape[target_dim]
+    loss = (1. - label_smoothing) * loss + eps_i * smooth_loss
+
+    return loss
+
+
 __all__ = [
     'deformable_conv2d',
     'fast_gelu',
     'hardshrink',
     'softsign',
     'pdist',
+    'cross_entropy',
+    'nll_loss'
 ]
 __all__.sort()

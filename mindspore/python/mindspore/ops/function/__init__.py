@@ -197,6 +197,8 @@ from .nn_func import (
     hardshrink,
     softsign,
     pdist,
+    nll_loss,
+    cross_entropy,
 )
 from .linalg_func import (
     svd,

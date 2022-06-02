@@ -58,6 +58,17 @@ Activation Functions
     mindspore.ops.hardshrink
     mindspore.ops.tanh
 
+Loss Functions
+^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.cross_entropy
+    mindspore.ops.nll_loss
+
 Mathematical Operators
 ----------------------
 
