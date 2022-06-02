@@ -1233,11 +1233,14 @@ void FindMatchTopCell(const TopCellInfoPtr &top_cell, const py::args &args, std:
         new_shape.emplace_back(-1);
       }
     }
-    // All shape can not be -1
-    if (std::any_of(new_shape.begin(), new_shape.end(), [](int64_t s) { return s != -1; })) {
+    // All shape can not be -1, and all shape can not be actual.
+    bool is_any_unknown = std::any_of(new_shape.begin(), new_shape.end(), [](int64_t s) { return s == -1; });
+    bool is_any_actual = std::any_of(new_shape.begin(), new_shape.end(), [](int64_t s) { return s != -1; });
+    if (is_any_unknown && is_any_actual) {
       new_args_shape->emplace_back(new_shape);
     } else {
-      MS_LOG(DEBUG) << "Cur shape " << cur_shape << ", elem shape " << elem_shape << ", and new shape is " << new_shape;
+      MS_LOG(DEBUG) << "Not support all shape unknown or actual.Cur shape " << cur_shape << ", elem shape "
+                    << elem_shape << ", and new shape is " << new_shape;
     }
   }
 }
@@ -3166,7 +3169,7 @@ TopCellInfoPtr GradExecutor::ChangeTopCellToDynamicShapeBySetInputs(const TopCel
 
 TopCellInfoPtr GradExecutor::GetTopCellWithDynamicShape(const py::object &cell, const py::args &args, bool is_auto) {
   // Current return nullptr for disable auto dynamic shape feature; Later after a complete test will enable this
-  if (is_auto && py::isinstance<py::none>(cell)) {
+  if (is_auto && !py::isinstance<py::none>(cell)) {
     return nullptr;
   }
   const auto &cell_self_id = GetId(cell);
