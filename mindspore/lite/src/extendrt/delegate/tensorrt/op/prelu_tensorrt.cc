@@ -27,12 +27,12 @@ int PReluTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     return RET_ERROR;
   }
   if (in_tensors.size() != INPUT_SIZE2) {
-    MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
+    MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size() << " : " << op_name_;
     return RET_ERROR;
   }
 
   if (out_tensors.size() != 1) {
-    MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
+    MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size() << " : " << op_name_;
     return RET_ERROR;
   }
   return RET_OK;
@@ -65,12 +65,12 @@ int PReluTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   auto *prelu_layer = network->addParametricReLU(*prelu_input.trt_tensor_, *slope_helper.trt_tensor_);
   if (prelu_layer == nullptr) {
-    MS_LOG(ERROR) << "addParameticReLU failed for TensorRT.";
+    MS_LOG(ERROR) << "addParameticReLU failed for TensorRT : " << op_name_;
     return RET_ERROR;
   }
 
   nvinfer1::ITensor *out_tensor = prelu_layer->getOutput(0);
-  out_tensor->setName((op_name_ + "_" + std::to_string(0)).c_str());
+  out_tensor->setName((op_name_ + "_0").c_str());
   this->AddInnerOutTensors(ITensorHelper{out_tensor, prelu_input.format_, prelu_input.same_format_});
   this->layer_ = prelu_layer;
   return RET_OK;
