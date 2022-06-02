@@ -43,7 +43,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Stack, Unpack, Unsta
                         Squeeze, StridedSlice, Tile, EditDistance, Sort, Transpose, TupleToArray,
                         UnsortedSegmentMin, UnsortedSegmentMax,
                         UnsortedSegmentProd, UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch,
-                        BatchToSpace, SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence,
+                        BatchToSpace, SpaceToBatchND, BatchToSpaceND, BroadcastTo, ReverseSequence,
                         EmbeddingLookup, Unique, GatherD, Identity, Range, MaskedFill, MaskedSelect, SearchSorted,
                         TensorScatterUpdate, TensorScatterMax, TensorScatterMin, TensorScatterAdd, TensorScatterSub,
                         TensorScatterMul, TensorScatterDiv,
@@ -63,7 +63,7 @@ from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerA
                         FusedAdaFactorWithGlobalNorm)
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul,
                        BitwiseAnd, BitwiseOr, Ger,
-                       BitwiseXor, Inv, Invert, ApproximateEqual, InplaceAdd, InplaceSub,
+                       BitwiseXor, Inv, Invert, ApproximateEqual, InplaceAdd, InplaceSub, InplaceUpdate,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd, Cdist, ReduceAny,
                        Cos, Cross, Div, DivNoNan, Equal, EqualCount, Exp, Expm1, Erf, Erfc, Floor, FloorDiv, FloorMod,
                        Ceil, Acosh, Greater, GreaterEqual, Lerp, Less, LessEqual, Log, Log1p, LogicalAnd, Mod,

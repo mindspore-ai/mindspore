@@ -16,6 +16,7 @@
 
 #include "ops/inplace_add.h"
 #include "ops/inplace_sub.h"
+#include "ops/inplace_update.h"
 #include <string>
 #include <algorithm>
 #include <memory>
@@ -88,6 +89,7 @@ TypePtr InplaceOpInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }  // namespace
 void InplaceAdd::set_indices(std::vector<int64_t> indices) { AddAttr(kIndices, api::MakeValue(indices)); }
 void InplaceSub::set_indices(std::vector<int64_t> indices) { AddAttr(kIndices, api::MakeValue(indices)); }
+void InplaceUpdate::set_indices(std::vector<int64_t> indices) { AddAttr(kIndices, api::MakeValue(indices)); }
 
 std::vector<int64_t> InplaceAdd::get_indices() const {
   auto value_ptr = GetAttr(kIndices);
@@ -107,8 +109,18 @@ std::vector<int64_t> InplaceSub::get_indices() const {
   }
 }
 
+std::vector<int64_t> InplaceUpdate::get_indices() const {
+  auto value_ptr = GetAttr(kIndices);
+  if (value_ptr->isa<mindspore::api::ValueSequence>()) {
+    return GetValue<std::vector<int64_t>>(value_ptr);
+  } else {
+    return {GetValue<int64_t>(value_ptr)};
+  }
+}
+
 MIND_API_OPERATOR_IMPL(InplaceAdd, BaseOperator);
 MIND_API_OPERATOR_IMPL(InplaceSub, BaseOperator);
+MIND_API_OPERATOR_IMPL(InplaceUpdate, BaseOperator);
 AbstractBasePtr InplaceOpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   auto dtype = InplaceOpInferType(primitive, input_args);
@@ -117,5 +129,6 @@ AbstractBasePtr InplaceOpInfer(const abstract::AnalysisEnginePtr &, const Primit
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(InplaceAdd, prim::kPrimInplaceAdd, InplaceOpInfer, nullptr, true);
 REGISTER_PRIMITIVE_EVAL_IMPL(InplaceSub, prim::kPrimInplaceSub, InplaceOpInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(InplaceUpdate, prim::kPrimInplaceUpdate, InplaceOpInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

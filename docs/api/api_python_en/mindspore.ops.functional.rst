@@ -105,6 +105,9 @@ Element-by-Element Operations
     mindspore.ops.floor
     mindspore.ops.floor_div
     mindspore.ops.floor_mod
+    mindspore.ops.inplace_add
+    mindspore.ops.inplace_sub
+    mindspore.ops.inplace_update
     mindspore.ops.invert
     mindspore.ops.lerp
     mindspore.ops.log

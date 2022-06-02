@@ -1979,6 +1979,98 @@ class Tensor(Tensor_):
             return tensor_operator_registry.get('cumsum')()(x, axis).astype(dtype, copy=False)
         return tensor_operator_registry.get('cumsum')()(x, axis)
 
+    def inplace_update(self, v, indices):
+        """
+        Update some rows of a tensor with values of v according to the specified indices.
+
+        Args:
+            v (Tensor): A tensor with the same type and same dimension size except the first dimension, which must be
+              the same as the size of indices.
+            indices (Union[int, tuple]): Indices into the left-most dimension determining which rows to be updated.
+
+        Returns:
+            Tensor, with updated values.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> import mindspore
+            >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+            >>> v = Tensor(np.array([[0.1, 0.2], [0.3, 0.4]]), mindspore.float32)
+            >>> indices = (0, 1)
+            >>> output = x.inplace_update(v, indices)
+            >>> print(output)
+            [[0.1 0.2]
+             [0.3 0.4]
+             [5.  6. ]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('inplace_update')(indices)(self, v)
+
+    def inplace_add(self, v, indices):
+        """
+        Add v into specified rows of a tensor according to indices.
+
+        Args:
+            v (Tensor): A tensor with the same type and same dimension size except the first dimension, which must be
+              the same as the size of indices.
+            indices (Union[int, tuple]): Indices into the left-most dimension determining which rows to be added.
+
+        Returns:
+            Tensor, with values after adding.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> import mindspore
+            >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+            >>> v = Tensor(np.array([[0.1, 0.2], [0.3, 0.4]]), mindspore.float32)
+            >>> indices = (0, 1)
+            >>> output = x.inplace_add(v, indices)
+            >>> print(output)
+            [[1.1 2.2]
+             [3.3 4.4]
+             [5.  6. ]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('inplace_add')(indices)(self, v)
+
+    def inplace_sub(self, v, indices):
+        """
+        Subtract v into specified rows of a tensor according to indices.
+        Args:
+            v (Tensor): A tensor with the same type and same dimension size except the first dimension, which must be
+              the same as the size of indices.
+            indices (Union[int, tuple]): Indices into the left-most dimension determining which rows to be subtracted.
+
+        Returns:
+            Tensor, with values after subtracting.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> import mindspore
+            >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+            >>> v = Tensor(np.array([[0.1, 0.2], [0.3, 0.4]]), mindspore.float32)
+            >>> indices = (0, 1)
+            >>> output = x.inplace_sub(v, indices)
+            >>> print(output)
+            [[0.9 1.8]
+             [2.7 3.6]
+             [5.  6. ]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('inplace_sub')(indices)(self, v)
+
     def copy(self):
         """
         Return a copy of the tensor.
