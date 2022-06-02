@@ -30,26 +30,26 @@ DataType
 --------
 
 .. class:: mindspore.dtype
-  
+
   Create a data type object of MindSpore.
-  
+
   The actual path of ``dtype`` is ``/mindspore/common/dtype.py``.
   Run the following command to import the package:
-  
+
   .. code-block::
-  
+
       from mindspore import dtype as mstype
-  
+
   * **Numeric Type**
-  
+
     Currently, MindSpore supports ``Int`` type, ``Uint`` type, ``Float`` type and ``Complex`` type.
     The following table lists the details.
-  
+
     ==============================================   =============================
     Definition                                        Description
     ==============================================   =============================
     ``mindspore.int8`` ,  ``mindspore.byte``         8-bit integer
-    ``mindspore.int16`` ,  ``mindspore.short``       16-bit integer 
+    ``mindspore.int16`` ,  ``mindspore.short``       16-bit integer
     ``mindspore.int32`` ,  ``mindspore.intc``        32-bit integer
     ``mindspore.int64`` ,  ``mindspore.intp``        64-bit integer
     ``mindspore.uint8`` ,  ``mindspore.ubyte``       unsigned 8-bit integer
@@ -62,11 +62,11 @@ DataType
     ``mindspore.complex64``                          64-bit complex number
     ``mindspore.complex128``                         128-bit complex number
     ==============================================   =============================
-  
+
   * **Other Type**
-  
+
     For other defined types, see the following table.
-  
+
     ============================   =================
     Type                            Description
     ============================   =================
@@ -85,14 +85,14 @@ DataType
     ``symbolic_key``                The value of a variable is used as a key of the variable in ``env_type`` .
     ``env_type``                    Used to store the gradient of the free variable of a function, where the key is the ``symbolic_key`` of the free variable's node and the value is the gradient.
     ============================   =================
-  
+
   * **Tree Topology**
-  
+
     The relationships of the above types are as follows:
-  
+
     .. code-block::
-    
-    
+
+
         └─────── number
             │   ├─── bool_
             │   ├─── int_
@@ -194,11 +194,13 @@ Callback
 
     mindspore.Callback
     mindspore.CheckpointConfig
+    mindspore.EarlyStopping
     mindspore.History
     mindspore.LambdaCallback
     mindspore.LearningRateScheduler
     mindspore.LossMonitor
     mindspore.ModelCheckpoint
+    mindspore.ReduceLROnPlateau
     mindspore.RunContext
     mindspore.TimeMonitor
 

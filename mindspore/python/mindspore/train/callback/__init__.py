@@ -31,7 +31,10 @@ from ._landscape import SummaryLandscape
 from ._fl_manager import FederatedLearningManager
 from ._history import History
 from ._lambda_callback import LambdaCallback
+from ._early_stop import EarlyStopping
+from ._reduce_lr_on_plateau import ReduceLROnPlateau
+
 
 __all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint",
            "SummaryCollector", "CheckpointConfig", "RunContext", "LearningRateScheduler", "SummaryLandscape",
-           "FederatedLearningManager", "History", "LambdaCallback"]
+           "FederatedLearningManager", "History", "LambdaCallback", "ReduceLROnPlateau", "EarlyStopping"]

@@ -47,19 +47,19 @@ mindspore.Callback
 
     .. py:method:: step_begin(run_context)
 
-        在每个step开始之前被调用。
+        在每个step开始之前被调用。与 `on_train_step_begin` 和 `on_eval_step_begin` 方法具有兼容性。
 
         **参数：**
 
-        - **run_context** (RunContext) - 包含模型的一些基本信息。与 `on_train_step_begin` 和 `on_eval_step_begin` 方法具有兼容性。
+        - **run_context** (RunContext) - 包含模型的一些基本信息。
 
     .. py:method:: step_end(run_context)
 
-        在每个step完成后被调用。
+        在每个step完成后被调用。与 `on_train_step_end` 和 `on_eval_step_end` 方法具有兼容性。
 
         **参数：**
 
-        - **run_context** (RunContext) - 包含模型的一些基本信息。与 `on_train_step_end` 和 `on_eval_step_end` 方法具有兼容性。
+        - **run_context** (RunContext) - 包含模型的一些基本信息。
 
     .. py:method:: on_train_begin(run_context)
 
@@ -69,7 +69,7 @@ mindspore.Callback
 
         - **run_context** (RunContext) - 包含模型的一些基本信息。
 
-    .. py:method::on_train_end(run_context)
+    .. py:method:: on_train_end(run_context)
 
         网络训练执行结束时调用。
 
@@ -133,7 +133,7 @@ mindspore.Callback
 
         - **run_context** (RunContext) - 包含模型的一些基本信息。
 
-    .. py:method:: on_evalepoch_end(run_context)
+    .. py:method:: on_eval_epoch_end(run_context)
 
         在推理的epoch结束后被调用。
 
