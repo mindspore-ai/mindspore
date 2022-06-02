@@ -680,6 +680,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         set(MSLITE_DEPS_MKLDNN on)
         set(MSLITE_DEPS_LIBEVENT on)
         set(MSLITE_DEPS_PYBIND11 on)
+        set(MSLITE_DEPS_OPENSSL on)
     endif()
 endif()
 

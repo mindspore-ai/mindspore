@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "include/api/graph.h"
-#include "cxx_api/graph/graph_data.h"
+#include "extendrt/cxx_api/graph/graph_data.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

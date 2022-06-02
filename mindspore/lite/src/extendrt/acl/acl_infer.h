@@ -24,11 +24,11 @@
 #include "include/api/graph.h"
 #include "extendrt/acl/model_process.h"
 #include "extendrt/acl/acl_env_guard.h"
-#include "cxx_api/graph/graph_impl.h"
-#include "extendrt/factory.h"
+#include "extendrt/cxx_api/graph/graph_impl.h"
+#include "extendrt/infer_session.h"
 
 namespace mindspore {
-class AclInferSession : public GraphCell::GraphImpl {
+class AclInferSession : public InferSession {
  public:
   AclInferSession();
   ~AclInferSession() override;

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cxx_api/model/model_impl.h"
-#include "cxx_api/dlutils.h"
+#include "extendrt/cxx_api/model/model_impl.h"
+#include "extendrt/cxx_api/dlutils.h"
 
 namespace mindspore {
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
@@ -25,7 +25,7 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
     return ret;
   }
   session_ = InferSession::CreateSession(model_context);
-  return session_->CompileGraph(graph_->graph_data_);
+  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph());
 }
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &model_context) {
@@ -35,7 +35,7 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
     return ret;
   }
   session_ = InferSession::CreateSession(model_context);
-  return session_->CompileGraph(graph_->graph_data_);
+  return session_->CompileGraph(graph_->graph_data_->GetFuncGraph());
 }
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
   return kSuccess;

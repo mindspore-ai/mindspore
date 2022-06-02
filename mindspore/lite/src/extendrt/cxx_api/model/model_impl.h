@@ -24,7 +24,8 @@
 #include "include/api/context.h"
 #include "include/api/model.h"
 #include "include/api/graph.h"
-#include "cxx_api/graph/graph_data.h"
+#include "include/api/serialization.h"
+#include "extendrt/cxx_api/graph/graph_data.h"
 #include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
 #include "extendrt/infer_session.h"
@@ -42,6 +43,7 @@ class ModelImpl {
   Status Preprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs);
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
   Status Predict();
+  Status PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs);
   std::vector<MSTensor> GetInputs();
   std::vector<MSTensor> GetOutputs();
   MSTensor GetInputByTensorName(const std::string &name);

@@ -15,7 +15,7 @@
  */
 #include "include/api/model.h"
 #include "include/api/context.h"
-#include "cxx_api/model/model_impl.h"
+#include "extendrt/cxx_api/model/model_impl.h"
 
 namespace mindspore {
 std::mutex g_impl_init_lock;
@@ -79,7 +79,8 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
   return impl_->Predict(inputs, outputs);
 }
 
-Status Model::PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs) {
+Status Model::PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs,
+                                    const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Failed because this model has not been built.";
     return kMCFailed;
@@ -145,11 +146,6 @@ MSTensor Model::GetOutputByTensorName(const std::vector<char> &name) {
 }
 
 std::vector<MSTensor> Model::GetOutputsByNodeName(const std::vector<char> &node_name) {
-  if (impl_ == nullptr) {
-    MS_LOG(ERROR) << "Model implement is null.";
-    std::vector<MSTensor> empty;
-    return empty;
-  }
-  return impl_->GetOutputsByNodeName(CharToString(node_name));
+  return std::vector<MSTensor>();
 }
 }  // namespace mindspore

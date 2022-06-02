@@ -17,7 +17,7 @@
 #include <algorithm>
 #include "include/api/context.h"
 #include "extendrt/factory.h"
-#include "cxx_api/akg_kernel_register.h"
+#include "extendrt/cxx_api/akg_kernel_register.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/base/base_ref_utils.h"
 #include "backend/common/session/session_factory.h"

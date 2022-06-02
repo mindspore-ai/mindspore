@@ -5,7 +5,6 @@ set(MODEL_LOADER_FRAMEWORK_SRC
 
 set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
         ${MODEL_LOADER_FRAMEWORK_SRC})
-
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     set(ENABLE_CPU on)
     # set(ENABLE_IBVERBS "OFF")
@@ -32,7 +31,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
             ${MINDIR_MODEL_SRC}
             ${MINDIR_KERNEL_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc)
+            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
+            )
 
     set(FBS_FILES
             ${CCSRC_DIR}/../schema/cipher.fbs

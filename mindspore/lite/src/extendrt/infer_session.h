@@ -19,29 +19,31 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include "include/api/context.h"
+#include "include/api/model.h"
+#include "include/api/graph.h"
+#include "include/api/status.h"
+#include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
-#include "ccsrc/backend/common/session/session_basic.h"
 
 namespace mindspore {
 class InferSession : public std::enable_shared_from_this<InferSession> {
  public:
   virtual ~InferSession() = default;
   static std::shared_ptr<InferSession> CreateSession(const std::shared_ptr<Context> context);
-  virtual Status CompileGraph(FuncGraphPtr graph);
-  virtual Status RunGraph();
-  virtual Status Resize(const std::vector<Tensor::TensorPtr> &inputs, const std::vector<std::vector<int64_t>> &dims);
+  virtual Status Init(const std::shared_ptr<Context> context) = 0;
+  virtual Status CompileGraph(FuncGraphPtr graph) = 0;
+  virtual Status RunGraph() = 0;
+  virtual Status Resize(const std::vector<tensor::TensorPtr> &inputs,
+                        const std::vector<std::vector<int64_t>> &dims) = 0;
 
-  virtual std::vector<tensor::TensorPtr> GetOutputs();
-  virtual std::vector<Tensor::TensorPtr> GetInputs();
-  virtual tensor::TensorPtr GetOutputByTensorName(const std::string &tensorName);
-  virtual Tensor::TensorPtr GetInputByTensorName(const std::string &name);
+  virtual std::vector<tensor::TensorPtr> GetOutputs() = 0;
+  virtual std::vector<tensor::TensorPtr> GetInputs() = 0;
+  virtual tensor::TensorPtr GetOutputByTensorName(const std::string &tensorName) = 0;
+  virtual tensor::TensorPtr GetInputByTensorName(const std::string &name) = 0;
 
  protected:
-  InferSession() = default;
-  virtual Status Init(const std::shared_ptr<Context> context);
   FuncGraphPtr graph_;
-  SessionBasicPtr basic_;
-  GraphId graphId_;
 };
 }  // namespace mindspore
 #endif
