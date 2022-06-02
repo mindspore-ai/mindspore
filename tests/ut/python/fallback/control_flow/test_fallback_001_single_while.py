@@ -147,3 +147,38 @@ def test_single_while_builtin_function_max_numpy():
     res_x, res_y = control_flow_while()
     assert res_x == -5
     assert res_y == 3
+
+
+def test_single_while_builtin_function_first_in_while_body():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while():
+        i = 0
+        while i <= 3:
+            i += int(1)
+        return i
+
+    res = control_flow_while()
+    assert res == 4
+
+
+def test_single_while_print_in_while_body():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while():
+        i = 0
+        while i <= 3:
+            i += 1
+            print(i)
+        return i
+
+    res = control_flow_while()
+    assert res == 4
