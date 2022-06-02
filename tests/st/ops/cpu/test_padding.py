@@ -31,6 +31,18 @@ class Net(nn.Cell):
         return self.padding(x)
 
 
+class PaddingDynamicShapeNet(nn.Cell):
+    def __init__(self):
+        super(PaddingDynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.reshape = P.Reshape()
+
+    def construct(self, x, pad_dim_size=4):
+        x_unique, _ = self.unique(x)
+        x_unique = self.reshape(x_unique, (2, 3, 1))
+        return F.padding(x_unique, pad_dim_size)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -108,4 +120,26 @@ def test_padding_vmap(mode):
                                [-123.558815, 0., 0., 0.]],
                               [[257.01694, 0., 0., 0.],
                                [54.194077, 0., 0., 0.]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_padding_dynamic_shape(mode):
+    """
+    Feature: test padding dynamic_shape feature.
+    Description: test padding dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([8., -3., 0., 0., 10., 1., 21., -3., 10., 8.]).astype(np.float32))
+    output = PaddingDynamicShapeNet()(x)
+    expect_output = np.array([[[8., 0, 0, 0],
+                               [-3., 0, 0, 0],
+                               [0., 0, 0, 0]],
+                              [[10., 0, 0, 0],
+                               [1., 0, 0, 0],
+                               [21., 0, 0, 0]]], dtype=np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)

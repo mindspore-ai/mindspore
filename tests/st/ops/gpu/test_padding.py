@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 
 
 class Net(nn.Cell):
@@ -29,6 +30,16 @@ class Net(nn.Cell):
 
     def construct(self, x):
         return self.padding(x)
+
+
+class PaddingDynamicShapeNet(nn.Cell):
+    def __init__(self):
+        super(PaddingDynamicShapeNet, self).__init__()
+        self.test_dynamic = inner.GpuConvertToDynamicShape()
+
+    def construct(self, x, pad_dim_size=4):
+        x = self.test_dynamic(x)
+        return F.padding(x, pad_dim_size)
 
 
 @pytest.mark.level0
@@ -108,4 +119,35 @@ def test_padding_vmap(mode):
                                [-123.558815, 0., 0., 0.]],
                               [[257.01694, 0., 0., 0.],
                                [54.194077, 0., 0., 0.]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_padding_dynamic_shape(mode):
+    """
+    Feature: test padding dynamic_shape feature.
+    Description: test padding dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor(np.array([[[-270.0144],
+                          [19.09283],
+                          [43.96024],
+                          [257.01694]],
+                         [[-104.56876],
+                          [42.85809],
+                          [-123.558815],
+                          [54.194077]]], dtype=np.float32))
+    output = PaddingDynamicShapeNet()(x)
+    expect_output = np.array([[[-270.0144, 0, 0, 0],
+                               [19.09283, 0, 0, 0],
+                               [43.96024, 0, 0, 0],
+                               [257.01694, 0, 0, 0]],
+                              [[-104.56876, 0, 0, 0],
+                               [42.85809, 0, 0, 0],
+                               [-123.558815, 0, 0, 0],
+                               [54.194077, 0, 0, 0]]], dtype=np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)

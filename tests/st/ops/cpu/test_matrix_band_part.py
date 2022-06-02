@@ -15,8 +15,22 @@
 import numpy as np
 import pytest
 
+import mindspore.nn as nn
 from mindspore import Tensor, context
+from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+
+
+class MatrixBandPartDynamicShapeNet(nn.Cell):
+    def __init__(self):
+        super(MatrixBandPartDynamicShapeNet, self).__init__()
+        self.unique = P.Unique()
+        self.reshape = P.Reshape()
+
+    def construct(self, x, lower, upper):
+        x_unique, _ = self.unique(x)
+        x_unique = self.reshape(x_unique, (3, 3))
+        return F.matrix_band_part(x_unique, lower, upper)
 
 
 @pytest.mark.level0
@@ -53,8 +67,8 @@ def test_matrix_band_part(mode, dtype, batch_shape, rows, cols):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_matrix_band_part_vmap(mode):
     """
-        Feature: test inv vmap feature.
-        Description: test inv vmap feature.
+        Feature: test matrix_band_part vmap feature.
+        Description: test matrix_band_part vmap feature.
         Expectation: Success.
     """
     context.set_context(mode=mode, device_target="CPU")
@@ -91,4 +105,23 @@ def test_matrix_band_part_vmap(mode):
                                [[1., 1., 1., 1., 1.],
                                 [1., 1., 1., 1., 1.],
                                 [1., 1., 1., 1., 1.]]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_matrix_band_part_dynamic_shape(mode):
+    """
+    Feature: test matrix_band_part dynamic_shape feature.
+    Description: test matrix_band_part dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="CPU")
+    x = Tensor(np.array([8., -3., 2.1, 2.1, 10., 0., 0., 21., -3., 11., 4., -2., 10., 8.]).astype(np.float32))
+    output = MatrixBandPartDynamicShapeNet()(x, 1, 2)
+    expect_output = np.array([[8., -3., 2.1],
+                              [10., 0., 21.],
+                              [0., 4., -2.]], dtype=np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)

@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 
 
 class MishNet(nn.Cell):
@@ -42,6 +43,19 @@ class MishGradNet(nn.Cell):
     def construct(self, x, dy):
         gout = self.grad(self.network)(x, dy)
         return gout
+
+
+class MishGradDynamicShapeNet(nn.Cell):
+    def __init__(self, network):
+        super(MishGradDynamicShapeNet, self).__init__()
+        self.test_dynamic = inner.GpuConvertToDynamicShape()
+        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.network = network
+
+    def construct(self, x, dy):
+        x = self.test_dynamic(x)
+        dy = self.test_dynamic(dy)
+        return self.grad(self.network)(x, dy)
 
 
 @pytest.mark.level0
@@ -148,3 +162,42 @@ def test_mish_grad_vmap(mode):
                                [[-1.3482721, 0.22441003, 0.05531899],
                                 [-0.41695648, -1.2767013, 0.12779452]]]]).astype(np.float32)
     assert np.allclose(output[0].asnumpy(), expect_output, atol=1e-4, rtol=1e-4, equal_nan=True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_mish_grad_dynamic_shape(mode):
+    """
+    Feature: test mish_grad dynamic_shape feature.
+    Description: test mish_grad dynamic_shape feature.
+    Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor(np.array([[[[1.7641, 0.4002, 0.9787],
+                           [2.2409, 1.8676, -0.9773]],
+                          [[0.9501, -0.1514, -0.1032],
+                           [0.4106, 0.1440, 1.4543]]],
+                         [[[0.7610, 0.1217, 0.4439],
+                           [0.3337, 1.4941, -0.2052]],
+                          [[0.3131, -0.8541, -2.5530],
+                           [0.6536, 0.8644, -0.7422]]]]).astype(np.float32))
+    dout = Tensor(np.array([[[[2.2698, -1.4544, 0.0458],
+                              [-0.1872, 1.5328, 1.4694]],
+                             [[0.1549, 0.3782, -0.8878],
+                              [-1.9808, -0.3479, 0.1563]]],
+                            [[[1.2303, 1.2024, -0.3873],
+                              [-0.3023, -1.0486, -1.4200]],
+                             [[-1.7063, 1.9508, -0.5097],
+                              [-0.4381, -1.2528, 0.7775]]]]).astype(np.float32))
+    output = MishGradDynamicShapeNet(MishNet())(x, dout)
+    expect_output = np.array([[[[2.4551494, -1.2175093, 0.04786031],
+                                [-0.1975334, 1.6502876, 0.098847]],
+                               [[0.16096734, 0.19009684, -0.4737671],
+                                [-1.6688104, -0.24026635, 0.17010784]]],
+                              [[[1.2171272, 0.8138411, -0.33282048],
+                                [-0.24231756, -1.1413976, -0.6648672]],
+                               [[-1.3482721, 0.22441003, 0.05531899],
+                                [-0.41695648, -1.2767013, 0.12779452]]]]).astype(np.float32)
+    np.testing.assert_almost_equal(output[0].asnumpy(), expect_output)

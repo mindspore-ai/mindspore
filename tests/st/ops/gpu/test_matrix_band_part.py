@@ -15,8 +15,20 @@
 import numpy as np
 import pytest
 
+import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
+
+
+class MatrixBandPartDynamicShapeNet(nn.Cell):
+    def __init__(self):
+        super(MatrixBandPartDynamicShapeNet, self).__init__()
+        self.test_dynamic = inner.GpuConvertToDynamicShape()
+
+    def construct(self, x, lower, upper):
+        x = self.test_dynamic(x)
+        return F.matrix_band_part(x, lower, upper)
 
 
 @pytest.mark.level0
@@ -53,9 +65,9 @@ def test_matrix_band_part(mode, dtype, batch_shape, rows, cols):
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_matrix_band_part_vmap(mode):
     """
-        Feature: test inv vmap feature.
-        Description: test inv vmap feature.
-        Expectation: Success.
+    Feature: test matrix_band_part vmap feature.
+    Description: test matrix_band_part vmap feature.
+    Expectation: Success.
     """
     context.set_context(mode=mode, device_target="GPU")
     x = Tensor(np.ones((2, 2, 3, 5)).astype(np.float32))
@@ -91,4 +103,32 @@ def test_matrix_band_part_vmap(mode):
                                [[1., 1., 1., 1., 1.],
                                 [1., 1., 1., 1., 1.],
                                 [1., 1., 1., 1., 1.]]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_matrix_band_part_dynamic_shape(mode):
+    """
+        Feature: test matrix_band_part dynamic_shape feature.
+        Description: test matrix_band_part dynamic_shape feature.
+        Expectation: Success.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    x = Tensor(np.ones((2, 2, 3, 5)).astype(np.float32))
+    output = MatrixBandPartDynamicShapeNet()(x, 1, 1)
+    expect_output = np.array([[[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]]],
+                              [[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]]]], dtype=np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
