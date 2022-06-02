@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <shared_mutex>
 #include "utils/hash_map.h"
 #include "utils/ms_utils.h"
 #include "runtime/device/device_address.h"
@@ -43,6 +44,7 @@ class DeviceTensorStore {
   //  Support value modifiable.
   void Insert(AnfNode *key, const DeviceTensorPtr &value) {
     MS_EXCEPTION_IF_NULL(key);
+    std::unique_lock<std::shared_mutex> lock(map_mutex_);
     const auto &iter = device_tensors_.find(key);
     if (iter == device_tensors_.end()) {
       device_tensors_[key].emplace_back(value);
@@ -60,6 +62,7 @@ class DeviceTensorStore {
 
   void Remove(AnfNode *key) {
     MS_EXCEPTION_IF_NULL(key);
+    std::unique_lock<std::shared_mutex> lock(map_mutex_);
     const auto &iter = device_tensors_.find(key);
     if (iter != device_tensors_.end()) {
       (void)device_tensors_.erase(iter);
@@ -68,6 +71,7 @@ class DeviceTensorStore {
 
   std::vector<DeviceTensorPtr> Fetch(AnfNode *key) const {
     MS_EXCEPTION_IF_NULL(key);
+    std::shared_lock<std::shared_mutex> lock(map_mutex_);
     const auto &iter = device_tensors_.find(key);
     if (iter != device_tensors_.end()) {
       return iter->second;
@@ -79,6 +83,7 @@ class DeviceTensorStore {
 
   DeviceTensor *Fetch(AnfNode *key, DeviceTensorType value_type) const {
     MS_EXCEPTION_IF_NULL(key);
+    std::shared_lock<std::shared_mutex> lock(map_mutex_);
     const auto &iter = device_tensors_.find(key);
     if (iter != device_tensors_.end()) {
       for (const auto &device_tensor : iter->second) {
@@ -91,7 +96,10 @@ class DeviceTensorStore {
     return nullptr;
   }
 
-  void Clear() { device_tensors_.clear(); }
+  void Clear() {
+    std::unique_lock<std::shared_mutex> lock(map_mutex_);
+    device_tensors_.clear();
+  }
 
  private:
   DeviceTensorStore() = default;
@@ -101,6 +109,8 @@ class DeviceTensorStore {
   // The data storage of device tensor. Key is the anf node, value is the vector which may contains the device
   // tensors from different devices.
   mindspore::HashMap<AnfNode *, std::vector<DeviceTensorPtr>> device_tensors_;
+  // Read/Write lock for map.
+  mutable std::shared_mutex map_mutex_;
 };
 }  // namespace runtime
 }  // namespace mindspore

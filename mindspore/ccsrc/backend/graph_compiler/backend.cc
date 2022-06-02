@@ -927,6 +927,7 @@ void MindRTBackend::RunGraphIntergated(const ActorInfo &actor_info, const GraphC
     // TODO(caifubi): Update parameter format for Ascend
     if (!graph->has_flag(kFlagGraphCompiled)) {
       graph_compiler_->CompileGraphImpl(graph, graph_compiler_info.device_contexts_.front());
+      pynative::GraphAdapter::RemoveUnusedValueNodes(graph);
       graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, graph->front_outputs());
       // Clear front outputs
       graph->set_front_outputs({});
