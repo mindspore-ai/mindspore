@@ -477,7 +477,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
 
 bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param) {
   if (param == nullptr) {
-    MS_LOG(ERROR) << "config is nullptr";
+    MS_LOG(ERROR) << "param is nullptr";
     return false;
   }
   auto fmk = param->fmk_type;

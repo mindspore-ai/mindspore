@@ -19,13 +19,13 @@ import mindspore_lite as mslite
 import numpy as np
 
 
-def common_predict(context):
+def common_predict(context, model_path, in_data_path):
     model = mslite.Model()
-    model.build_from_file("mnist.tflite.ms", mslite.ModelType.MINDIR_LITE, context)
+    model.build_from_file(model_path, mslite.ModelType.MINDIR_LITE, context)
 
     inputs = model.get_inputs()
     outputs = model.get_outputs()
-    in_data = np.fromfile("mnist.tflite.ms.bin", dtype=np.float32)
+    in_data = np.fromfile(in_data_path, dtype=np.float32)
     inputs[0].set_data_from_numpy(in_data)
     model.predict(inputs, outputs)
     for output in outputs:
@@ -39,7 +39,9 @@ def test_cpu_inference_01():
     print("cpu_device_info: ", cpu_device_info)
     context = mslite.Context(thread_num=1, thread_affinity_mode=2)
     context.append_device_info(cpu_device_info)
-    common_predict(context)
+    cpu_model_path = "mobilenetv2.ms"
+    cpu_in_data_path = "mobilenetv2.ms.bin"
+    common_predict(context, cpu_model_path, cpu_in_data_path)
 
 
 # ============================ gpu inference ============================
@@ -51,7 +53,9 @@ def test_gpu_inference_01():
     context = mslite.Context(thread_num=1, thread_affinity_mode=2)
     context.append_device_info(gpu_device_info)
     context.append_device_info(cpu_device_info)
-    common_predict(context)
+    gpu_model_path = "mobilenetv2.ms"
+    gpu_in_data_path = "mobilenetv2.ms.bin"
+    common_predict(context, gpu_model_path, gpu_in_data_path)
 
 
 # ============================ ascend inference ============================
@@ -70,7 +74,9 @@ def test_ascend_inference_01():
     context = mslite.Context(thread_num=1, thread_affinity_mode=2)
     context.append_device_info(ascend_device_info)
     context.append_device_info(cpu_device_info)
-    common_predict(context)
+    ascend_model_path = "mnist.tflite.ms"
+    ascend_in_data_path = "mnist.tflite.ms.bin"
+    common_predict(context, ascend_model_path, ascend_in_data_path)
 
 
 # ============================ server inference ============================
@@ -81,10 +87,12 @@ def test_server_inference_01():
     context.append_device_info(cpu_device_info)
     runner_config = mslite.RunnerConfig(context, 4)
     model_parallel_runner = mslite.ModelParallelRunner()
-    model_parallel_runner.init(model_path="mnist.tflite.ms", runner_config=runner_config)
+    cpu_model_path = "mobilenetv2.ms"
+    cpu_in_data_path = "mobilenetv2.ms.bin"
+    model_parallel_runner.init(model_path=cpu_model_path, runner_config=runner_config)
 
     inputs = model_parallel_runner.get_inputs()
-    in_data = np.fromfile("mnist.tflite.ms.bin", dtype=np.float32)
+    in_data = np.fromfile(cpu_in_data_path, dtype=np.float32)
     inputs[0].set_data_from_numpy(in_data)
     outputs = model_parallel_runner.get_outputs()
     model_parallel_runner.predict(inputs, outputs)
