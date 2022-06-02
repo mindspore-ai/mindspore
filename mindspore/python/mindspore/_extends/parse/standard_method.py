@@ -390,10 +390,10 @@ def swapaxes(x, axis1, axis2):
     new_perm = None
     if axis2 + 1 < x.ndim:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
     else:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
     return F.transpose(x, new_perm)
 
@@ -2116,22 +2116,6 @@ def space_to_batch_nd(x, block_shape, paddings):
     Divides spatial dimensions into blocks and combines the block size with the original batch.
 
     Refer to :func:`mindspore.ops.space_to_batch_nd` for more detail.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> block_shape = [2, 2]
-        >>> paddings = [[0, 0], [0, 0]]
-        >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
-        >>> output = input_x.space_to_batch_nd(block_shape, paddings)
-        >>> print(output)
-        [[[[1.]]]
-         [[[2.]]]
-         [[[3.]]]
-         [[[4.]]]]
     """
     return P.SpaceToBatchND(block_shape, paddings)(x)
 
