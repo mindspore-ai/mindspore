@@ -1998,7 +1998,7 @@ def or_(x, y):
 
 def matmul(x, y):
     """Implementation of `matmul` (`@`)."""
-    return x.__matmul__(y)
+    return F.matmul(x, y)
 
 
 def float_bool(x):

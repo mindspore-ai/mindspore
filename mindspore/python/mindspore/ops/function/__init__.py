@@ -200,6 +200,7 @@ from .math_func import (
     truncate_div,
     truncate_mod,
     gumbel_softmax,
+    matmul,
 )
 from .nn_func import (
     adaptive_avgpool2d,
