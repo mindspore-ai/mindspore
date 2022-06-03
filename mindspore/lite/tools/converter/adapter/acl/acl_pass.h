@@ -20,7 +20,7 @@
 #define USE_DEPRECATED_API
 #include <memory>
 #include "backend/common/optimizer/pass.h"
-#include "tools/converter/converter_flags.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore {
 namespace opt {
@@ -29,7 +29,7 @@ using AclPassImplPtr = std::shared_ptr<AclPassImpl>;
 
 class AclPass : public Pass {
  public:
-  explicit AclPass(const converter::Flags &config);
+  explicit AclPass(const std::shared_ptr<ConverterPara> &param);
   ~AclPass() override = default;
 
   bool Run(const FuncGraphPtr &func_graph) override;

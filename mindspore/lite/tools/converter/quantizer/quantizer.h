@@ -24,20 +24,20 @@
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "base/base.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/converter/quant_param_holder.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore::lite::quant {
 class Quantizer {
  public:
-  explicit Quantizer(const converter::Flags &config) : flags_(config) {}
+  explicit Quantizer(const std::shared_ptr<mindspore::ConverterPara> &param) : param_(param) {}
 
   virtual ~Quantizer() = default;
 
   virtual int DoQuantize(FuncGraphPtr func_graph) = 0;
 
  protected:
-  converter::Flags flags_;
+  const std::shared_ptr<mindspore::ConverterPara> param_;
 };
 }  // namespace mindspore::lite::quant
 #endif

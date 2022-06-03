@@ -22,9 +22,9 @@
 #include <vector>
 #include <memory>
 #include "backend/common/optimizer/pass.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/converter/ops/ops_def.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore::opt {

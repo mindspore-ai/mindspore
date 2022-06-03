@@ -37,10 +37,10 @@ enum CallBackType {
 };
 class BiasCorrectionStrategy {
  public:
-  BiasCorrectionStrategy(const converter::Flags &flags, const std::shared_ptr<Calibrator> &calibrator,
+  BiasCorrectionStrategy(const std::shared_ptr<ConverterPara> &param, const std::shared_ptr<Calibrator> &calibrator,
                          const std::shared_ptr<QuantStrategy> &quant_strategy, session::LiteSession *fp32_session,
                          Model *fp32_model, int activation_q_min, int activation_q_max)
-      : flags_(flags),
+      : param_(param),
         calibrator_(calibrator),
         quant_strategy_(quant_strategy),
         fp32_session_(fp32_session),
@@ -119,7 +119,7 @@ class BiasCorrectionStrategy {
   }
 
  private:
-  converter::Flags flags_;
+  const std::shared_ptr<ConverterPara> param_;
   std::shared_ptr<Calibrator> calibrator_{nullptr};
   std::shared_ptr<QuantStrategy> quant_strategy_{nullptr};
   session::LiteSession *fp32_session_{nullptr};

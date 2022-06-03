@@ -42,11 +42,12 @@ constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
 }  // namespace
-STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const converter::Flags &flag) {
+STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph,
+                                           const std::shared_ptr<ConverterPara> &param) {
   MS_ASSERT(func_graph != nullptr);
   auto primitive_adjust_pass = std::make_shared<PrimitiveAdjust>();
   MS_CHECK_TRUE_MSG(primitive_adjust_pass != nullptr, RET_NULL_PTR, "primitive_adjust_pass is nullptr.");
-  primitive_adjust_pass->SetFmkType(flag.fmk);
+  primitive_adjust_pass->SetFmkType(param->fmk_type);
   if (!primitive_adjust_pass->Run(func_graph)) {
     MS_LOG(ERROR) << "primitive adjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
@@ -54,14 +55,14 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const
   }
   auto mindir_adjust_pass = std::make_shared<MindirAdjust>();
   MS_CHECK_TRUE_MSG(mindir_adjust_pass != nullptr, RET_NULL_PTR, "mindir_adjust_pass is nullptr.");
-  mindir_adjust_pass->SetFmkType(flag.fmk);
-  mindir_adjust_pass->SetTrainFlag(flag.trainModel);
+  mindir_adjust_pass->SetFmkType(param->fmk_type);
+  mindir_adjust_pass->SetTrainFlag(param->train_model);
   if (!mindir_adjust_pass->Run(func_graph)) {
     MS_LOG(ERROR) << "MindIr adjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return RET_ERROR;
   }
-  if (!flag.trainModel) {
+  if (!param->train_model) {
     auto cast_op_adjust = std::make_shared<CastOpAdjust>();
     MS_CHECK_TRUE_MSG(cast_op_adjust != nullptr, RET_NULL_PTR, "cast_op_adjust is nullptr.");
     if (!cast_op_adjust->Run(func_graph)) {
@@ -72,7 +73,7 @@ STATUS MindsporeImporter::Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const
   }
   auto mindir_control_flow_adjust = std::make_shared<MindIRControlFlowAdjust>();
   MS_CHECK_TRUE_MSG(mindir_control_flow_adjust != nullptr, RET_NULL_PTR, "mindir_control_flow_adjust is nullptr.");
-  mindir_control_flow_adjust->SetFmkType(flag.fmk);
+  mindir_control_flow_adjust->SetFmkType(param->fmk_type);
   if (!mindir_control_flow_adjust->Run(func_graph)) {
     MS_LOG(ERROR) << "MindIR control flow adjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
@@ -221,35 +222,37 @@ void MindsporeImporter::RemoveUnusedGraphInput(const FuncGraphPtr &func_graph) {
   }
 }
 
-FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag, const void *buff, const size_t &size) {
+FuncGraphPtr MindsporeImporter::ImportMindIR(const std::shared_ptr<ConverterPara> &param, const void *buff,
+                                             const size_t &size) {
   MindIRLoader mindir_loader;
   auto func_graph = mindir_loader.LoadMindIR(buff, size);
-  return CheckAndUpdateFuncGraph(flag, func_graph);
+  return CheckAndUpdateFuncGraph(param, func_graph);
 }
 
-FuncGraphPtr MindsporeImporter::ImportMindIR(const converter::Flags &flag) {
+FuncGraphPtr MindsporeImporter::ImportMindIR(const std::shared_ptr<ConverterPara> &param) {
   FuncGraphPtr func_graph;
-  if (!flag.dec_key.empty()) {
+  if (!param->decrypt_key.empty()) {
     unsigned char key[32];
-    const size_t key_len = Hex2ByteArray(flag.dec_key, key, 32);
+    const size_t key_len = Hex2ByteArray(param->decrypt_key, key, 32);
     if (key_len == 0) {
       return nullptr;
     }
-    MindIRLoader mindir_loader(false, key, key_len, flag.dec_mode, false);
-    func_graph = mindir_loader.LoadMindIR(flag.modelFile);
+    MindIRLoader mindir_loader(false, key, key_len, param->decrypt_mode, false);
+    func_graph = mindir_loader.LoadMindIR(param->model_file);
     auto ret = memset_s(key, sizeof(key), 0, key_len);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memset_s error";
     }
   } else {
     MindIRLoader mindir_loader;
-    func_graph = mindir_loader.LoadMindIR(flag.modelFile);
+    func_graph = mindir_loader.LoadMindIR(param->model_file);
   }
 
-  return CheckAndUpdateFuncGraph(flag, func_graph);
+  return CheckAndUpdateFuncGraph(param, func_graph);
 }
 
-FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const converter::Flags &flag, FuncGraphPtr func_graph) {
+FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const std::shared_ptr<ConverterPara> &param,
+                                                        FuncGraphPtr func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "get funcGraph failed for fmk:MINDIR";
     MS_LOG(ERROR)
@@ -299,12 +302,12 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const converter::Flags &
   MS_LOG(INFO) << "There is no need to adjust and pass graph when in Ascend.";
   return func_graph;
 #endif
-  if ((status = Mindir2AnfAdjust(func_graph, flag)) != RET_OK) {
+  if ((status = Mindir2AnfAdjust(func_graph, param)) != RET_OK) {
     MS_LOG(ERROR) << "Mindir2AnfAdjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, flag.trainModel);
+  auto unify_format = std::make_shared<UnifyFormatToNHWC>(converter::kFmkTypeMs, param->train_model);
   MS_CHECK_TRUE_MSG(unify_format != nullptr, nullptr, "unify_format is nullptr.");
   if (!unify_format->Run(func_graph)) {
     MS_LOG(ERROR) << "Run insert transpose failed.";

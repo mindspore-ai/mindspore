@@ -57,8 +57,8 @@ void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_f
   }
 }
 
-int DoFullQuant(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  auto quantizer = std::make_unique<FullQuantQuantizer>(*config);
+int DoFullQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  auto quantizer = std::make_unique<FullQuantQuantizer>(param);
   if (quantizer == nullptr) {
     MS_LOG(ERROR) << "New FullQuantQuantizer failed";
     return RET_ERROR;
@@ -71,16 +71,16 @@ int DoFullQuant(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   return RET_OK;
 }
 
-int DoWeightQuant(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  double init_scale = config->mixedBitWeightQuantParam.init_scale;
-  if (config->commonQuantParam.bit_num == 0 && config->mixedBitWeightQuantParam.auto_tune) {
+int DoWeightQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  double init_scale = param->mixedBitWeightQuantParam.init_scale;
+  if (param->commonQuantParam.bit_num == 0 && param->mixedBitWeightQuantParam.auto_tune) {
     ParameterOptimizer optimizer;
-    auto status = optimizer.GridSearchForScale(old_graph, const_cast<converter::Flags *>(config), &init_scale);
+    auto status = optimizer.GridSearchForScale(old_graph, param, &init_scale);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Grid search with scale failed.";
       return status;
     }
-    auto quantizer = std::make_unique<WeightQuantizer>(*config);
+    auto quantizer = std::make_unique<WeightQuantizer>(param);
     if (quantizer == nullptr) {
       MS_LOG(ERROR) << "New WeightQuantizer failed";
       return RET_ERROR;
@@ -91,7 +91,7 @@ int DoWeightQuant(const FuncGraphPtr &old_graph, const converter::Flags *config)
       return RET_ERROR;
     }
   } else {
-    auto quantizer = std::make_unique<WeightQuantizer>(*config);
+    auto quantizer = std::make_unique<WeightQuantizer>(param);
     if (quantizer == nullptr) {
       MS_LOG(ERROR) << "New WeightQuantizer failed";
       return RET_ERROR;
@@ -105,8 +105,8 @@ int DoWeightQuant(const FuncGraphPtr &old_graph, const converter::Flags *config)
   return RET_OK;
 }
 
-int DoDynamicQuant(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  auto quantizer = std::make_unique<DynamicQuantizer>(*config);
+int DoDynamicQuant(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  auto quantizer = std::make_unique<DynamicQuantizer>(param);
   if (quantizer == nullptr) {
     MS_LOG(ERROR) << "New DynamicQuantizer failed";
     return RET_ERROR;
@@ -119,8 +119,9 @@ int DoDynamicQuant(const FuncGraphPtr &old_graph, const converter::Flags *config
   return RET_OK;
 }
 
-int DoQuantDebug(const FuncGraphPtr &old_graph, const converter::Flags *config, const SessionModel &origin) {
-  auto quant = CreateSessionByFuncGraph(old_graph, *config, config->commonQuantParam.thread_num);
+int DoQuantDebug(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param,
+                 const SessionModel &origin) {
+  auto quant = CreateSessionByFuncGraph(old_graph, param, param->commonQuantParam.thread_num);
   std::map<std::string, OpParameter *> op_parameters;
   FetchOpParameterFromFuncGraph(old_graph, &op_parameters);
   DebugInfoManager manager;
@@ -129,7 +130,7 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const converter::Flags *config, 
   CHECK_NULL_RETURN(quant.model);
   CHECK_NULL_RETURN(quant.session);
   auto status = manager.CompareOriginWithQuant(
-    origin, quant, op_parameters, config->commonQuantParam.debug_info_save_path, config->dataPreProcessParam);
+    origin, quant, op_parameters, param->commonQuantParam.debug_info_save_path, param->dataPreProcessParam);
   auto free_buffer = [&] {
     delete origin.session;
     delete origin.model;
@@ -152,39 +153,41 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const converter::Flags *config, 
   return RET_OK;
 }
 
-int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE) {
+int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  CHECK_NULL_RETURN(param);
+  if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE) {
     return RET_OK;
   }
   int status;
 
   SessionModel origin;
-  if (config->commonQuantParam.is_debug) {  // Bak fp32 model for debug
-    converter::Flags new_flag = *config;
-    new_flag.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
-    origin = CreateSessionByFuncGraph(old_graph, new_flag, config->commonQuantParam.thread_num);
+  if (param->commonQuantParam.is_debug) {  // Bak fp32 model for debug
+    auto quant_type = param->commonQuantParam.quant_type;
+    param->commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
+    origin = CreateSessionByFuncGraph(old_graph, param, param->commonQuantParam.thread_num);
+    param->commonQuantParam.quant_type = quant_type;
   }
-  if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {  // Full Quantization
-    status = DoFullQuant(old_graph, config);
+  if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {  // Full Quantization
+    status = DoFullQuant(old_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do full quant failed.";
       return status;
     }
-  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {  // Weight Quantization
-    status = DoWeightQuant(old_graph, config);
+  } else if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {  // Weight Quantization
+    status = DoWeightQuant(old_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do weight quant failed.";
       return status;
     }
-  } else if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_DYNAMIC) {  // Dynamic Quantization
-    status = DoDynamicQuant(old_graph, config);
+  } else if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_DYNAMIC) {  // Dynamic Quantization
+    status = DoDynamicQuant(old_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do dynamic quant failed.";
       return status;
     }
   }
-  if (config->commonQuantParam.is_debug) {
-    status = DoQuantDebug(old_graph, config, origin);
+  if (param->commonQuantParam.is_debug) {
+    status = DoQuantDebug(old_graph, param, origin);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do quant debug failed.";
       return status;
@@ -198,7 +201,7 @@ int QuantizationOptimizer::Run(const mindspore::FuncGraphPtr &func_graph) {
   GetFuncGraphs(func_graph, &all_func_graphs);
   // Support for multi-subgraph models
   for (auto &item : all_func_graphs) {
-    auto status = DoSingleGraphQuantize(item, flags_);
+    auto status = DoSingleGraphQuantize(item, param_);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do Quantize failed.";
       return status;

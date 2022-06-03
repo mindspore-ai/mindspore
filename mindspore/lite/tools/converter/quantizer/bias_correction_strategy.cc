@@ -352,8 +352,8 @@ int BiasCorrectionStrategy::Fp32Inference(const KernelCallBack &before_call_back
 int BiasCorrectionStrategy::CreateQuantModel(const FuncGraphPtr &quant_func_graph) {
   // init in8 session
   MS_LOG(INFO) << "create quant session";
-  flags_.commonQuantParam.quant_type = schema::QuantType_QUANT_ALL;
-  auto int8_sm = CreateSessionByFuncGraph(quant_func_graph, flags_, this->flags_.commonQuantParam.thread_num);
+  param_->commonQuantParam.quant_type = schema::QuantType_QUANT_ALL;
+  auto int8_sm = CreateSessionByFuncGraph(quant_func_graph, param_, param_->commonQuantParam.thread_num);
   int8_session_ = int8_sm.session;
   int8_model_ = int8_sm.model;
   CHECK_NULL_RETURN(int8_session_);

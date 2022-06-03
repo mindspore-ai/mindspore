@@ -50,6 +50,7 @@
 #include "tools/converter/graphdef_transform.h"
 #include "src/common/file_utils.h"
 #include "src/common/quant_utils.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore::lite::quant {
 enum WeightQuantType {
@@ -196,8 +197,10 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
 
 std::string NodePrimitiveType(const CNodePtr &cnode);
 
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num);
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph,
+                                      const std::shared_ptr<mindspore::ConverterPara> &param, int thread_num);
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph,
+                                      const std::shared_ptr<mindspore::ConverterPara> &param, int thread_num,
                                       int *size);
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
 

@@ -58,7 +58,6 @@ class Converter:
                                          FLOAT | INT8 | UINT8 | DEFAULT.
         output_data_type (str, optional): Data type of output and output tensors,
                                           default is same with the type defined in model. FLOAT | INT8.
-        export_mindir (str, optional): Whether to export MindIR pb.
         decrypt_key (str, optional): The key used to decrypt the file, expressed in hexadecimal characters.
                                      Only valid when fmkIn is 'MINDIR'.
         decrypt_mode (str, optional): Decryption method for the MindIR file. Only valid when dec_key is set.
@@ -76,9 +75,9 @@ class Converter:
     """
 
     def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file=None, weight_fp16=None,
-                 input_shape=None, input_format=None, input_data_type=None, output_data_type=None, export_mindir=None,
-                 decrypt_key=None, decrypt_mode=None, enable_encryption=None, encrypt_key=None,
-                 pre_infer=None, train_model=None, no_fusion=None):
+                 input_shape=None, input_format=None, input_data_type=None, output_data_type=None, decrypt_key=None,
+                 decrypt_mode=None, enable_encryption=None, encrypt_key=None, pre_infer=None, train_model=None,
+                 no_fusion=None):
         self._converter = _c_lite_wrapper.ConverterBind()
 
     def __str__(self):
@@ -88,7 +87,6 @@ class Converter:
               f"input_format: {self._context.get_input_format()}, " \
               f"input_data_type: {self._context.get_input_data_type()}, " \
               f"output_data_type: {self._context.get_output_data_type()}, " \
-              f"export_mindir: {self._context.get_export_mindir()}, " \
               f"decrypt_key: {self._context.get_decrypt_key()}, " \
               f"decrypt_mode: {self._context.get_decrypt_mode()}, " \
               f"enable_encryption: {self._context.get_enable_encryption()}, " \

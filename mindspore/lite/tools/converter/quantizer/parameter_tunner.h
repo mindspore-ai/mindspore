@@ -19,6 +19,7 @@
 #include <utility>
 #include <map>
 #include <vector>
+#include <memory>
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 #include "tools/converter/export_model.h"
@@ -27,7 +28,7 @@
 #include "include/lite_session.h"
 #include "include/model.h"
 #include "base/base.h"
-#include "tools/converter/converter_flags.h"
+
 namespace mindspore::lite::quant {
 struct InferenceParam {
   size_t rounds;
@@ -41,20 +42,22 @@ class ParameterOptimizer {
 
   ~ParameterOptimizer() = default;
 
-  int GridSearchForScale(const FuncGraphPtr &func_graph, converter::Flags *flags, double *init_scale);
+  int GridSearchForScale(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
+                         double *init_scale);
 
  private:
   MinMax GetFineTuneRange(std::vector<float> *candidate_scales);
 
-  int CloneFuncGraph(const FuncGraphPtr &func_graph, converter::Flags *flags, FuncGraphPtr *func_graph_bak);
+  int CloneFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
+                     FuncGraphPtr *func_graph_bak);
 
-  int WeightQuantModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags,
+  int WeightQuantModelInference(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
                                 session::LiteSession *origin_session, int origin_model_size,
-                                const InferenceParam &param, double *init_scale, std::vector<float> *candidate_scales,
-                                bool is_run_all);
+                                const InferenceParam &infer_param, double *init_scale,
+                                std::vector<float> *candidate_scales, bool is_run_all);
 
-  int OriginModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags, SessionModel *sm,
-                           int *origin_model_size);
+  int OriginModelInference(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
+                           SessionModel *sm, int *origin_model_size);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_PARAMETER_TUNNER_H

@@ -20,39 +20,54 @@
 #define USE_DEPRECATED_API
 #include <memory>
 #include <string>
+#include "include/converter.h"
 #include "include/registry/model_parser.h"
 #include "schema/inner/model_generated.h"
 #include "tools/converter/graphdef_transform.h"
 #include "include/registry/model_parser_registry.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/converter/anf_transform.h"
 #include "tools/converter/converter_context.h"
 #include "tools/common/graph_util.h"
+#include "tools/converter/preprocess/preprocess_param.h"
+#include "tools/converter/quantizer/quant_params.h"
+#include "tools/converter/adapter/acl/common/acl_types.h"
+#include "micro/coder/config.h"
+#include "tools/converter/cxx_api/converter_para.h"
+#include "tools/converter/config_parser/config_file_parser.h"
 
 namespace mindspore {
 namespace lite {
-class Converter {
+constexpr auto kMaxSplitRatio = 10;
+constexpr auto kComputeRate = "computeRate";
+constexpr auto kSplitDevice0 = "device0";
+constexpr auto kSplitDevice1 = "device1";
+
+class ConverterImpl {
  public:
-  Converter() = default;
-  ~Converter() {
+  ConverterImpl() = default;
+  ~ConverterImpl() {
     delete model_parser_;
     this->model_parser_ = nullptr;
   }
-  schema::MetaGraphT *Convert(const std::unique_ptr<converter::Flags> &flag);
-  schema::MetaGraphT *Convert(const std::unique_ptr<converter::Flags> &flag, const void *buf, const size_t &size);
+  schema::MetaGraphT *Convert(const std::shared_ptr<ConverterPara> &param);
+  schema::MetaGraphT *Convert(const std::shared_ptr<ConverterPara> &param, const void *buf, const size_t &size);
 
  private:
-  FuncGraphPtr BuildFuncGraph(const converter::Flags &flag);
-  FuncGraphPtr BuildFuncGraph(const converter::Flags &flag, const void *buf, const size_t &size);
-  schema::MetaGraphT *TransferFuncGraph(const std::unique_ptr<converter::Flags> &flag, FuncGraphPtr func_graph);
+  FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param);
+  FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param, const void *buf, const size_t &size);
+  schema::MetaGraphT *TransferFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
+
+  int InitConfigFile(const std::shared_ptr<ConverterPara> &param);
+  int InitExtendedIntegrationInfo(const std::shared_ptr<ConverterPara> &param,
+                                  const lite::ConfigFileParser &config_file_parser);
+  bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
+  std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
 
  protected:
   converter::ModelParser *model_parser_ = nullptr;
   std::unique_ptr<GraphDefTransform> metagraph_transform_ = std::make_unique<GraphDefTransform>();
   std::unique_ptr<AnfTransform> funcgraph_transform_ = std::make_unique<AnfTransform>();
 };
-
-int RunConverter(int argc, const char **argv);
 }  // namespace lite
 }  // namespace mindspore
 
