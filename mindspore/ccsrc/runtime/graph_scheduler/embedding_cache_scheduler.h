@@ -17,10 +17,13 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_EMBEDDING_CACHE_SCHEDULER_H_
 #define MINDSPORE_CCSRC_RUNTIME_GRAPH_SCHEDULER_EMBEDDING_CACHE_SCHEDULER_H_
 
-#include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
+#include <memory>
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace runtime {
+class EmbeddingCachePrefetchActor;
+
 // EmbeddingCacheScheduler could be used to build, schedule and finalize embedding cache prefetch actor
 // to cache large embedding table of a large recommendation network model. The cache level is:
 // Device Cache->Local Host Cache->Remote Cache. The embedding cache prefetch actor is used to perform Local
@@ -48,7 +51,7 @@ class EmbeddingCacheScheduler {
 
  private:
   // Embedding cache prefetch actor.
-  EmbeddingCachePrefetchActorPtr embedding_cache_prefetch_actor_;
+  std::shared_ptr<EmbeddingCachePrefetchActor> embedding_cache_prefetch_actor_;
 
   // The flag indicates whether the EmbeddingCacheScheduler is initialized.
   bool initialized_{false};

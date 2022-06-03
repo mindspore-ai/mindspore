@@ -73,8 +73,11 @@ class PsEmbeddingCacheInserter {
   // of each subgraph is the same.
   CNodePtr CreateReturnNode(const FuncGraphPtr graph, const AnfNodePtr &output_node) const;
 
-  // Set device target attr to cpu, set graph split label(rank id and node role, such as (0, "MS_SERVER")).
-  void SetNodeAttr(const CNodePtr &node, const std::string &node_role = distributed::kEnvRoleOfServer) const;
+  // Set attr(device target attr and graph split label) for all CNodes.
+  void SetAttrForAllNodes() const;
+
+  // Set device target attr to cpu, set graph split label(rank id and node role, such as (0, "MS_PSERVER")).
+  void SetNodeAttr(const CNodePtr &node, const std::string &node_role = distributed::kEnvRoleOfPServer) const;
 
   // Set attrs for send node, such as:inter process edges, send dst ranks, send dst roles.
   void SetSendNodeAttr(const CNodePtr &send_node, int32_t param_key, const std::string &embedding_cache_op,
@@ -87,7 +90,7 @@ class PsEmbeddingCacheInserter {
   void GetEmbeddingLookupNodes();
 
   // Get parameters enabled embedding cache of origin function graph.
-  void GetCachedParameters();
+  void GetCacheEnableParameters();
 
   // Origin root function graph.
   FuncGraphPtr root_graph_;
