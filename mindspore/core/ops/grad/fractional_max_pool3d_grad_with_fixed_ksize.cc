@@ -134,9 +134,6 @@ abstract::ShapePtr FractionalMaxPool3DGradWithFixedKsizeInferShape(const Primiti
       output_size.push_back(c_dim_);
     }
   }
-  if (std::any_of(output_size.begin(), output_size.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', output_size is not valid.";
-  }
   return std::make_shared<abstract::Shape>(output_size);
 }
 
@@ -162,7 +159,7 @@ TypePtr FractionalMaxPool3DGradWithFixedKsizeInferType(const PrimitivePtr &primi
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(FractionalMaxPool3DGradWithFixedKsize, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FractionalMaxPool3DGradWithFixedKsize, BaseOperator);
 AbstractBasePtr FractionalMaxPool3DGradWithFixedKsizeInfer(const abstract::AnalysisEnginePtr &,
                                                            const PrimitivePtr &primitive,
                                                            const std::vector<AbstractBasePtr> &input_args) {
@@ -170,6 +167,16 @@ AbstractBasePtr FractionalMaxPool3DGradWithFixedKsizeInfer(const abstract::Analy
   auto infer_type = FractionalMaxPool3DGradWithFixedKsizeInferType(primitive, input_args);
   auto infer_shape = FractionalMaxPool3DGradWithFixedKsizeInferShape(primitive, input_args);
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape);
+}
+
+void FractionalMaxPool3DGradWithFixedKsize::Init(const std::string data_format) { set_data_format(data_format); }
+
+void FractionalMaxPool3DGradWithFixedKsize::set_data_format(const std::string data_format) {
+  (void)this->AddAttr(kFormat, api::MakeValue(data_format));
+}
+
+std::string FractionalMaxPool3DGradWithFixedKsize::get_data_format() const {
+  return GetValue<std::string>(GetAttr(kFormat));
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(FractionalMaxPool3DGradWithFixedKsize, prim::kPrimFractionalMaxPool3DGradWithFixedKsize,
