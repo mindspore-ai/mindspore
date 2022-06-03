@@ -32,6 +32,7 @@ from ..operations import _grad_ops as G
 from ..operations import math_ops as math
 from ..operations.math_ops import Igamma, Igammac
 from ..primitive import constexpr
+from ..operations.math_ops import Hypot
 from ..operations.math_ops import ReduceStd
 from ..operations.math_ops import CholeskySolve
 from ..operations.math_ops import AddV2
@@ -596,6 +597,27 @@ def get_bprop_bessel_y1(self):
         dout_dx = bessel_y0(x) - div(out, x)
         dx = dout * dout_dx
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Hypot)
+def get_bprop_hypot(self):
+    """Generate bprop for Hypot"""
+    mul_ = P.Mul()
+    div_ = P.Div()
+
+    def bprop(x1, x2, out, dout):
+        x1_f32 = F.cast(x1, mstype.float32)
+        x2_f32 = F.cast(x2, mstype.float32)
+        out_f32 = F.cast(out, mstype.float32)
+        dout_f32 = F.cast(dout, mstype.float32)
+        dx1 = mul_(div_(x1_f32, out_f32), dout_f32)
+        dx2 = mul_(div_(x2_f32, out_f32), dout_f32)
+        result_dx1, result_dx2 = binop_grad_common(x1_f32, x2_f32, dx1, dx2)
+        result_dx1 = F.cast(result_dx1, F.dtype(x1))
+        result_dx2 = F.cast(result_dx2, F.dtype(x2))
+        return (result_dx1, result_dx2)
 
     return bprop
 

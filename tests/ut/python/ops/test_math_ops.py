@@ -397,6 +397,16 @@ class LdexpFunc(nn.Cell):
         return self.ldexp(x, other)
 
 
+class HypotFunc(nn.Cell):
+    def __init__(self):
+        super(HypotFunc, self).__init__()
+        self.hypot_ = ops.function.hypot
+
+    def construct(self, x1, x2):
+        y = self.hypot_(x1, x2)
+        return y
+
+
 class LogAddExpFunc(nn.Cell):
     def __init__(self):
         super(LogAddExpFunc, self).__init__()
@@ -660,6 +670,10 @@ raise_set = [
     ('AssignAdd_Error', {
         'block': (P.AssignAdd(), {'exception': ValueError}),
         'desc_inputs': [[1]]}),
+    ('Hypot', {
+        'block': HypotFunc(),
+        'desc_inputs': [Tensor(np.array([3, 5, 7]).astype(np.float32)),
+                        Tensor(np.array([4, 12, 24]).astype(np.float32))]}),
     ('Trunc', {
         'block': P.Trunc(),
         'desc_inputs': [Tensor(np.array([[1.1, 2.2, -4.1]], np.float32))],

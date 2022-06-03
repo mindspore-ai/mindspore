@@ -146,6 +146,7 @@ from .math_func import (
     isfinite,
     isnan,
     isclose,
+    hypot,
     same_type_shape,
     gcd,
     log,
