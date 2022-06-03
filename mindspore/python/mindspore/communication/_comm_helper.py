@@ -15,7 +15,6 @@
 """comm_helper"""
 
 import os
-from mindspore import context
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from mindspore import log as logger
 from ._hccl_management import load_lib as hccl_load_lib
@@ -167,15 +166,22 @@ def _not_require_collective_comm_lib():
     Whether collective communication library is required in this training mode.
     For example, scheduler and server do not require actual collective communication in parameter server mode.
     '''
-    device_target = context.get_context("device_target")
-    if device_target == "Ascend":
-        return _is_role_sched() or _is_role_pserver()
-    if device_target == "GPU":
-        # Environment variable PARALLEL_EXCUTE is set by test case and
-        # will be removed after Parameter Server training switches to MindRT.
-        return os.getenv("PARALLEL_EXCUTE") != "ms_ps" and (_is_role_sched() or _is_role_pserver())
-    if device_target == "CPU":
-        return _is_role_sched()
+    # Environment variable PARALLEL_EXCUTE is set by test case and
+    # will be removed after Parameter Server training switches to MindRT.
+    if os.getenv("PARALLEL_EXCUTE") != "ms_ps" and (_is_role_sched() or _is_role_pserver()):
+        return True
+    return False
+
+
+def _check_bypass_rank_id_and_size():
+    '''
+    Whether bypass calling c++ API to get rank id and size, instead, use fake rank id 0 and rank size 1.
+    This returns True when this process is Scheduler node or is Server node in old Parameter Server training mode.
+    '''
+    if _is_role_sched():
+        return True
+    if os.getenv("PARALLEL_EXCUTE") != "ms_ps" and _is_role_pserver():
+        return True
     return False
 
 
@@ -237,7 +243,7 @@ def _get_rank_helper(group, backend):
     Returns:
         Integer. The local rank id of the calling process.
     """
-    if _not_require_collective_comm_lib():
+    if _check_bypass_rank_id_and_size():
         rank_id = 0
         return rank_id
     if backend == Backend.HCCL_MPI:
@@ -305,7 +311,7 @@ def _get_size_helper(group, backend):
         Integer. The rank size of specified group.
     """
     size = None
-    if _not_require_collective_comm_lib():
+    if _check_bypass_rank_id_and_size():
         size = 1
         return size
     if backend == Backend.HCCL_MPI:
