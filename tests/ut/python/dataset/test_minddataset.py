@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -164,7 +164,11 @@ def add_and_remove_nlp_compress_file():
 
 
 def test_nlp_compress_data(add_and_remove_nlp_compress_file):
-    """tutorial for nlp minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test compressing NLP MindDataset
+    Expectation: Output is equal to the expected output
+    """
     data = []
     for row_id in range(16):
         data.append({
@@ -196,7 +200,11 @@ def test_nlp_compress_data(add_and_remove_nlp_compress_file):
 
 
 def test_cv_minddataset_writer_tutorial():
-    """tutorial for cv dataset writer."""
+    """
+    Feature: MindDataset
+    Description: Test MindDataset FileWriter basic usage
+    Expectation: Runs successfully
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
@@ -226,7 +234,11 @@ def test_cv_minddataset_writer_tutorial():
 
 
 def test_cv_minddataset_partition_tutorial(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test partition (using num_shards and shard_id) on MindDataset basic usage
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -249,7 +261,11 @@ def test_cv_minddataset_partition_tutorial(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_partition_num_samples_0(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test partition (using num_shards and shard_id) on MindDataset with num_samples=1
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -275,7 +291,12 @@ def test_cv_minddataset_partition_num_samples_0(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_partition_num_samples_1(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test partition (using num_shards and shard_id) on MindDataset
+        with num_samples > 1 but num_samples <= dataset size
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -301,7 +322,12 @@ def test_cv_minddataset_partition_num_samples_1(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_partition_num_samples_2(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test partition (using num_shards and shard_id) on MindDataset
+        with num_samples > 1 but num_samples > dataset size
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -325,8 +351,14 @@ def test_cv_minddataset_partition_num_samples_2(add_and_remove_cv_file):
     assert partitions(5, 2) == 2
     assert partitions(9, 2) == 2
 
+
 def test_cv_minddataset_partition_num_samples_3(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test partition (using num_shards=1 and shard_id) on MindDataset
+        with num_samples > 1 and num_samples = dataset size
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -342,8 +374,14 @@ def test_cv_minddataset_partition_num_samples_3(add_and_remove_cv_file):
 
     assert num_iter == 5
 
+
 def test_cv_minddataset_partition_tutorial_check_shuffle_result(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test partition (using num_shards=1 and shard_id) on MindDataset
+        and check that the result is not shuffled
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     num_shards = 3
@@ -383,7 +421,12 @@ def test_cv_minddataset_partition_tutorial_check_shuffle_result(add_and_remove_c
 
 
 def test_cv_minddataset_partition_tutorial_check_whole_reshuffle_result_per_epoch(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test partition (using num_shards=1 and shard_id) on MindDataset
+        and check that the whole result under multiple epochs is not shuffled
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -419,7 +462,11 @@ def test_cv_minddataset_partition_tutorial_check_whole_reshuffle_result_per_epoc
 
 
 def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset after Repeat op is applied and check that the result is not shuffled
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -514,7 +561,11 @@ def test_cv_minddataset_check_shuffle_result(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_dataset_size(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test get_dataset_size on MindDataset
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -538,7 +589,11 @@ def test_cv_minddataset_dataset_size(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_repeat_reshuffle(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset where after multiple Map ops and repeat op the result is not shuffled
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -570,7 +625,11 @@ def test_cv_minddataset_repeat_reshuffle(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_batch_size_larger_than_records(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test MindDataset when batch_size in Batch op is larger than records
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -595,7 +654,11 @@ def test_cv_minddataset_batch_size_larger_than_records(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_issue_888(add_and_remove_cv_file):
-    """issue 888 test."""
+    """
+    Feature: MindDataset
+    Description: Test MindDataset by applying Shuffle op followed by Repeat op
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "label"]
     num_readers = 2
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -609,7 +672,11 @@ def test_cv_minddataset_issue_888(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_reader_file_list(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset using list of files
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -633,7 +700,11 @@ def test_cv_minddataset_reader_file_list(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_reader_one_partition(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset using list of one file
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -656,19 +727,23 @@ def test_cv_minddataset_reader_one_partition(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
-    CV1_FILE_NAME = "../data/mindrecord/test_cv_minddataset_reader_two_dataset_1.mindrecord"
-    CV2_FILE_NAME = "../data/mindrecord/test_cv_minddataset_reader_two_dataset_2.mindrecord"
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset using 2 datasets that are written with FileWriter
+    Expectation: Output is equal to the expected output
+    """
+    cv1_file_name = "../data/mindrecord/test_cv_minddataset_reader_two_dataset_1.mindrecord"
+    cv2_file_name = "../data/mindrecord/test_cv_minddataset_reader_two_dataset_2.mindrecord"
     try:
-        if os.path.exists(CV1_FILE_NAME):
-            os.remove(CV1_FILE_NAME)
-        if os.path.exists("{}.db".format(CV1_FILE_NAME)):
-            os.remove("{}.db".format(CV1_FILE_NAME))
-        if os.path.exists(CV2_FILE_NAME):
-            os.remove(CV2_FILE_NAME)
-        if os.path.exists("{}.db".format(CV2_FILE_NAME)):
-            os.remove("{}.db".format(CV2_FILE_NAME))
-        writer = FileWriter(CV1_FILE_NAME, 1)
+        if os.path.exists(cv1_file_name):
+            os.remove(cv1_file_name)
+        if os.path.exists("{}.db".format(cv1_file_name)):
+            os.remove("{}.db".format(cv1_file_name))
+        if os.path.exists(cv2_file_name):
+            os.remove(cv2_file_name)
+        if os.path.exists("{}.db".format(cv2_file_name)):
+            os.remove("{}.db".format(cv2_file_name))
+        writer = FileWriter(cv1_file_name, 1)
         data = get_data(CV_DIR_NAME)
         cv_schema_json = {"id": {"type": "int32"},
                           "file_name": {"type": "string"},
@@ -679,7 +754,7 @@ def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
         writer.write_raw_data(data)
         writer.commit()
 
-        writer = FileWriter(CV2_FILE_NAME, 1)
+        writer = FileWriter(cv2_file_name, 1)
         data = get_data(CV_DIR_NAME)
         cv_schema_json = {"id": {"type": "int32"},
                           "file_name": {"type": "string"},
@@ -692,7 +767,7 @@ def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
         columns_list = ["data", "file_name", "label"]
         num_readers = 4
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-        data_set = ds.MindDataset([file_name + str(x) for x in range(FILES_NUM)] + [CV1_FILE_NAME, CV2_FILE_NAME],
+        data_set = ds.MindDataset([file_name + str(x) for x in range(FILES_NUM)] + [cv1_file_name, cv2_file_name],
                                   columns_list, num_readers)
         assert data_set.get_dataset_size() == 30
         num_iter = 0
@@ -710,29 +785,34 @@ def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
             num_iter += 1
         assert num_iter == 30
     except Exception as error:
-        if os.path.exists(CV1_FILE_NAME):
-            os.remove(CV1_FILE_NAME)
-        if os.path.exists("{}.db".format(CV1_FILE_NAME)):
-            os.remove("{}.db".format(CV1_FILE_NAME))
-        if os.path.exists(CV2_FILE_NAME):
-            os.remove(CV2_FILE_NAME)
-        if os.path.exists("{}.db".format(CV2_FILE_NAME)):
-            os.remove("{}.db".format(CV2_FILE_NAME))
+        if os.path.exists(cv1_file_name):
+            os.remove(cv1_file_name)
+        if os.path.exists("{}.db".format(cv1_file_name)):
+            os.remove("{}.db".format(cv1_file_name))
+        if os.path.exists(cv2_file_name):
+            os.remove(cv2_file_name)
+        if os.path.exists("{}.db".format(cv2_file_name)):
+            os.remove("{}.db".format(cv2_file_name))
         raise error
     else:
-        if os.path.exists(CV1_FILE_NAME):
-            os.remove(CV1_FILE_NAME)
-        if os.path.exists("{}.db".format(CV1_FILE_NAME)):
-            os.remove("{}.db".format(CV1_FILE_NAME))
-        if os.path.exists(CV2_FILE_NAME):
-            os.remove(CV2_FILE_NAME)
-        if os.path.exists("{}.db".format(CV2_FILE_NAME)):
-            os.remove("{}.db".format(CV2_FILE_NAME))
+        if os.path.exists(cv1_file_name):
+            os.remove(cv1_file_name)
+        if os.path.exists("{}.db".format(cv1_file_name)):
+            os.remove("{}.db".format(cv1_file_name))
+        if os.path.exists(cv2_file_name):
+            os.remove(cv2_file_name)
+        if os.path.exists("{}.db".format(cv2_file_name)):
+            os.remove("{}.db".format(cv2_file_name))
 
 
 def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
-    CV1_FILE_NAME = "../data/mindrecord/test_cv_minddataset_reader_two_dataset_partition_1"
-    paths = ["{}{}".format(CV1_FILE_NAME, str(x).rjust(1, '0'))
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset using two datasets that are partitioned into two lists
+    Expectation: Output is equal to the expected output
+    """
+    cv1_file_name = "../data/mindrecord/test_cv_minddataset_reader_two_dataset_partition_1"
+    paths = ["{}{}".format(cv1_file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     try:
         for x in paths:
@@ -740,7 +820,7 @@ def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
                 os.remove("{}".format(x))
             if os.path.exists("{}.db".format(x)):
                 os.remove("{}.db".format(x))
-        writer = FileWriter(CV1_FILE_NAME, FILES_NUM)
+        writer = FileWriter(cv1_file_name, FILES_NUM)
         data = get_data(CV_DIR_NAME)
         cv_schema_json = {"id": {"type": "int32"},
                           "file_name": {"type": "string"},
@@ -755,7 +835,7 @@ def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
         num_readers = 4
         file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
         data_set = ds.MindDataset([file_name + str(x) for x in range(2)] +
-                                  [CV1_FILE_NAME + str(x) for x in range(2, 4)],
+                                  [cv1_file_name + str(x) for x in range(2, 4)],
                                   columns_list, num_readers)
         assert data_set.get_dataset_size() < 20
         num_iter = 0
@@ -784,7 +864,11 @@ def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_reader_basic_tutorial(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test basic read on MindDataset tutorial
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -807,7 +891,11 @@ def test_cv_minddataset_reader_basic_tutorial(add_and_remove_cv_file):
 
 
 def test_nlp_minddataset_reader_basic_tutorial(add_and_remove_nlp_file):
-    """tutorial for nlp minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test basic read on NLP MindDataset tutorial
+    Expectation: Output is equal to the expected output
+    """
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data_set = ds.MindDataset(file_name + "0", None, num_readers)
@@ -836,7 +924,11 @@ def test_nlp_minddataset_reader_basic_tutorial(add_and_remove_nlp_file):
 
 
 def test_cv_minddataset_reader_basic_tutorial_5_epoch(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test basic read on MindDataset tutorial with 5 epochs
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -853,7 +945,11 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_reader_basic_tutorial_5_epoch_with_batch(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test basic read on MindDataset tutorial with 5 epochs after Batch op
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -882,7 +978,11 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch_with_batch(add_and_remove_
 
 
 def test_cv_minddataset_reader_no_columns(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset with no columns_list
+    Expectation: Output is equal to the expected output
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     data_set = ds.MindDataset(file_name + "0")
     assert data_set.get_dataset_size() == 10
@@ -903,7 +1003,11 @@ def test_cv_minddataset_reader_no_columns(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_reader_repeat_tutorial(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset after Repeat op is applied on the dataset
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -1117,6 +1221,11 @@ def inputs(vectors, maxlen=50):
 
 
 def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
+    """
+    Feature: MindDataset
+    Description: Test write multiple bytes and arrays using FileWriter and read them by MindDataset
+    Expectation: Output is equal to the expected output
+    """
     mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     try:
         if os.path.exists("{}".format(mindrecord_file_name)):
@@ -1373,6 +1482,11 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
 
 
 def test_write_with_multi_bytes_and_MindDataset():
+    """
+    Feature: MindDataset
+    Description: Test write multiple bytes using FileWriter and read them by MindDataset
+    Expectation: Output is equal to the expected output
+    """
     mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     try:
         data = [{"file_name": "001.jpg", "label": 43,
@@ -1554,6 +1668,11 @@ def test_write_with_multi_bytes_and_MindDataset():
 
 
 def test_write_with_multi_array_and_MindDataset():
+    """
+    Feature: MindDataset
+    Description: Test write multiple arrays using FileWriter and read them by MindDataset
+    Expectation: Output is equal to the expected output
+    """
     mindrecord_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     try:
         data = [{"source_sos_ids": np.array([1, 2, 3, 4, 5], dtype=np.int64),
@@ -1757,6 +1876,11 @@ def test_write_with_multi_array_and_MindDataset():
 
 
 def test_numpy_generic():
+    """
+    Feature: MindDataset
+    Description: Test write numpy generic data types using FileWriter and read them by MindDataset
+    Expectation: Output is equal to the expected output
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
@@ -1804,6 +1928,12 @@ def test_numpy_generic():
 
 
 def test_write_with_float32_float64_float32_array_float64_array_and_MindDataset():
+    """
+    Feature: MindDataset
+    Description: Test write float32, float64, array of float32, and array of float64 using
+        FileWriter and read them by MindDataset
+    Expectation: Output is equal to the expected output
+    """
     mindrecord_file_name = "test_write_with_float32_float64_float32_array_float64_array_and_MindDataset.mindrecord"
     try:
         data = [{"float32_array": np.array([1.2, 2.78, 3.1234, 4.9871, 5.12341], dtype=np.float32),
@@ -1996,7 +2126,13 @@ def create_multi_mindrecord_files():
                 os.remove("{}".format(filename))
                 os.remove("{}.db".format(filename))
 
+
 def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
+    """
+    Feature: MindDataset
+    Description: Test without and with shuffle args for MindDataset
+    Expectation: Output is equal to the expected output
+    """
     ds.config.set_seed(1)
     datas_all = []
     index = 0
@@ -2233,7 +2369,13 @@ def test_shuffle_with_global_infile_files(create_multi_mindrecord_files):
         shard_count += 1
     assert origin_index != current_index
 
+
 def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_files):
+    """
+    Feature: MindDataset
+    Description: Test distributed MindDataset (with num_shards and shard_id) without and with shuffle args
+    Expectation: Output is equal to the expected output
+    """
     ds.config.set_seed(1)
     datas_all = []
     datas_all_samples = []
@@ -2425,7 +2567,14 @@ def test_distributed_shuffle_with_global_infile_files(create_multi_mindrecord_fi
         shard_count += 1
     assert origin_index != current_index
 
+
 def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
+    """
+    Feature: MindDataset
+    Description: Test distributed MindDataset (with num_shards and shard_id)
+        without and with shuffle args under multiple epochs
+    Expectation: Output is equal to the expected output
+    """
     ds.config.set_seed(1)
     datas_all = []
     datas_all_samples = []
@@ -2588,8 +2737,13 @@ def test_distributed_shuffle_with_multi_epochs(create_multi_mindrecord_files):
     assert datas_epoch2 not in (datas_epoch1, datas_epoch3)
     assert datas_epoch3 not in (datas_epoch2, datas_epoch1)
 
+
 def test_field_is_null_numpy():
-    """add/remove nlp file"""
+    """
+    Feature: MindDataset
+    Description: Test MindDataset when field array_d is null
+    Expectation: Output is equal to the expected output
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     paths = ["{}{}".format(file_name, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
@@ -2655,8 +2809,13 @@ def test_field_is_null_numpy():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_for_loop_dataset_iterator(add_and_remove_nlp_compress_file):
-    """test for loop dataset iterator"""
+    """
+    Feature: MindDataset
+    Description: Test for loop for iterator based on MindDataset
+    Expectation: Output is equal to the expected output
+    """
     data = []
     for row_id in range(16):
         data.append({

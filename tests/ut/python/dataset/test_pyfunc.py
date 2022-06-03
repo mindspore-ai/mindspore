@@ -27,7 +27,9 @@ GENERATE_GOLDEN = False
 
 def test_case_0():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test 1-1 PyFunc : lambda x : x + x
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1-1 PyFunc : lambda x : x + x")
 
@@ -46,7 +48,9 @@ def test_case_0():
 
 def test_case_1():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test 1-n PyFunc : lambda x : (x, x + x)
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1-n PyFunc : lambda x : (x , x + x) ")
 
@@ -69,7 +73,9 @@ def test_case_1():
 
 def test_case_2():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test n-1 PyFunc : lambda x, y : x + y
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test n-1 PyFunc : lambda x, y : x + y ")
 
@@ -91,7 +97,9 @@ def test_case_2():
 
 def test_case_3():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test n-m PyFunc : lambda x, y : (x, x + 1, x + y)
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test n-m PyFunc : lambda x, y : (x , x + 1, x + y)")
 
@@ -117,7 +125,9 @@ def test_case_3():
 
 def test_case_4():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test parallel n-m PyFunc : lambda x, y : (x, x + 1, x + y)
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test Parallel n-m PyFunc : lambda x, y : (x , x + 1, x + y)")
 
@@ -149,7 +159,9 @@ def func_5(x):
 
 def test_case_5():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test 1-1 PyFunc : lambda x : np.ones(x.shape)
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1-1 PyFunc : lambda x: np.ones(x.shape)")
 
@@ -166,7 +178,9 @@ def test_case_5():
 
 def test_case_6():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test PyFunc Compose : (lambda x : x + x), (lambda x : x + x)
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test PyFunc Compose : (lambda x : x + x), (lambda x : x + x)")
 
@@ -185,7 +199,9 @@ def test_case_6():
 
 def test_case_7():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test 1-1 PyFunc with python_multiprocessing=True : lambda x : x + x
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1-1 PyFunc Multiprocess: lambda x : x + x")
 
@@ -211,7 +227,9 @@ def test_case_7():
 
 def test_case_8():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test n-m PyFunc with python_multiprocessing=True : lambda x, y : (x, x + 1, x + y)
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test Multiprocess n-m PyFunc : lambda x, y : (x , x + 1, x + y)")
 
@@ -245,7 +263,9 @@ def test_case_8():
 
 def test_case_9():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test multiple 1-1 PyFunc with python_multiprocessing=True : lambda x : x + x
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test multiple 1-1 PyFunc Multiprocess: lambda x : x + x")
 
@@ -271,7 +291,9 @@ def test_case_9():
 
 def test_case_10():
     """
-    Test PyFunc
+    Feature: PyFunc in Map op
+    Description: Test multiple map with python_multiprocessing=True : lambda x : x + x
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test multiple map with multiprocess: lambda x : x + x")
 
@@ -299,7 +321,9 @@ def test_case_10():
 
 def test_pyfunc_implicit_compose():
     """
-    Test Implicit Compose with pyfunc
+    Feature: PyFunc in Map op
+    Description: Test implicit compose with n-m PyFunc : lambda x, y : (x, x + 1, x + y)
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test n-m PyFunc : lambda x, y : (x , x + 1, x + y)")
 
@@ -324,6 +348,11 @@ def test_pyfunc_implicit_compose():
 
 
 def test_pyfunc_exception():
+    """
+    Feature: PyFunc in Map op
+    Description: Test PyFunc with exception in child pyfunc process
+    Expectation: Exception is received and test ends gracefully
+    """
     logger.info("Test PyFunc Exception Throw: lambda x : raise Exception()")
 
     # Sometimes there are some ITERATORS left in ITERATORS_LIST when run all UTs together,
@@ -371,6 +400,11 @@ def test_pyfunc_exception_multiprocess():
 
 
 def test_func_with_yield_manifest_dataset_01():
+    """
+    Feature: PyFunc in Map op
+    Description: Test PyFunc mapping on ManifestDataset
+    Expectation: Error is raised as expected
+    """
     def pass_func(_):
         for i in range(10):
             yield (np.array([i]),)

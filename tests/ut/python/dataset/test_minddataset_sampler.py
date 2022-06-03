@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -62,7 +62,11 @@ def add_and_remove_cv_file():
 
 
 def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with PKSampler without any columns_list in the dataset
+    Expectation: Output is equal to the expected output
+    """
     num_readers = 4
     sampler = ds.PKSampler(2)
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -82,7 +86,11 @@ def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test basic read MindDataset with PKSampler
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(2)
@@ -105,7 +113,11 @@ def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with PKSampler with shuffle=True
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(3, None, True)
@@ -127,7 +139,12 @@ def test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_pk_sample_shuffle_1(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with PKSampler with shuffle=True and
+        with num_samples larger than get_dataset_size
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(3, None, True, 'label', 5)
@@ -149,7 +166,12 @@ def test_cv_minddataset_pk_sample_shuffle_1(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_pk_sample_shuffle_2(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with PKSampler with shuffle=True and
+        with num_samples larger than get_dataset_size
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(3, None, True, 'label', 10)
@@ -171,7 +193,11 @@ def test_cv_minddataset_pk_sample_shuffle_2(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_pk_sample_out_of_range_0(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with PKSampler with shuffle=True and num_val that is out of range
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(5, None, True)
@@ -192,7 +218,12 @@ def test_cv_minddataset_pk_sample_out_of_range_0(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_pk_sample_out_of_range_1(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with PKSampler with shuffle=True, num_val that is out of range, and
+        num_samples larger than get_dataset_size
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(5, None, True, 'label', 20)
@@ -213,7 +244,12 @@ def test_cv_minddataset_pk_sample_out_of_range_1(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_pk_sample_out_of_range_2(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with PKSampler with shuffle=True, num_val that is out of range, and
+        num_samples that is equal to get_dataset_size
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(5, None, True, 'label', 10)
@@ -234,7 +270,11 @@ def test_cv_minddataset_pk_sample_out_of_range_2(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_subset_random_sample_basic(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test basic read MindDataset with SubsetRandomSampler
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -259,7 +299,11 @@ def test_cv_minddataset_subset_random_sample_basic(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_subset_random_sample_replica(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with SubsetRandomSampler with duplicate index in the indices
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     indices = [1, 2, 2, 5, 7, 9]
@@ -284,7 +328,11 @@ def test_cv_minddataset_subset_random_sample_replica(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_subset_random_sample_empty(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with SubsetRandomSampler with empty indices
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     indices = []
@@ -309,7 +357,11 @@ def test_cv_minddataset_subset_random_sample_empty(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_subset_random_sample_out_of_range(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with SubsetRandomSampler with indices that are out of range
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     indices = [1, 2, 4, 11, 13]
@@ -334,6 +386,11 @@ def test_cv_minddataset_subset_random_sample_out_of_range(add_and_remove_cv_file
 
 
 def test_cv_minddataset_subset_random_sample_negative(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with SubsetRandomSampler with negative indices
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     indices = [1, 2, 4, -1, -2]
@@ -358,6 +415,11 @@ def test_cv_minddataset_subset_random_sample_negative(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_random_sampler_basic(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test basic read MindDataset with RandomSampler
+    Expectation: Output is equal to the expected output
+    """
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -384,6 +446,11 @@ def test_cv_minddataset_random_sampler_basic(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_random_sampler_repeat(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with RandomSampler followed by Repeat op
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -419,6 +486,11 @@ def test_cv_minddataset_random_sampler_repeat(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_random_sampler_replacement(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with RandomSampler with replacement=True
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -441,6 +513,11 @@ def test_cv_minddataset_random_sampler_replacement(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_random_sampler_replacement_false_1(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with RandomSampler with replacement=False and num_samples <= dataset size
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -463,6 +540,11 @@ def test_cv_minddataset_random_sampler_replacement_false_1(add_and_remove_cv_fil
 
 
 def test_cv_minddataset_random_sampler_replacement_false_2(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with RandomSampler with replacement=False and num_samples > dataset size
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -485,6 +567,11 @@ def test_cv_minddataset_random_sampler_replacement_false_2(add_and_remove_cv_fil
 
 
 def test_cv_minddataset_sequential_sampler_basic(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test basic read MindDataset with SequentialSampler
+    Expectation: Output is equal to the expected output
+    """
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -510,6 +597,11 @@ def test_cv_minddataset_sequential_sampler_basic(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_sequential_sampler_offeset(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with SequentialSampler with offset on starting index
+    Expectation: Output is equal to the expected output
+    """
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -536,6 +628,12 @@ def test_cv_minddataset_sequential_sampler_offeset(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_sequential_sampler_exceed_size(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with SequentialSampler with offset on starting index and
+        num_samples > dataset size
+    Expectation: Output is equal to the expected output
+    """
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -562,6 +660,11 @@ def test_cv_minddataset_sequential_sampler_exceed_size(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_split_basic(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test basic read MindDataset after Split op is applied
+    Expectation: Output is equal to the expected output
+    """
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -599,6 +702,11 @@ def test_cv_minddataset_split_basic(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_split_exact_percent(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset after Split op is applied using exact percentages
+    Expectation: Output is equal to the expected output
+    """
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -636,6 +744,11 @@ def test_cv_minddataset_split_exact_percent(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_split_fuzzy_percent(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset after Split op is applied using fuzzy percentages
+    Expectation: Output is equal to the expected output
+    """
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -673,6 +786,11 @@ def test_cv_minddataset_split_fuzzy_percent(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_split_deterministic(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset after deterministic Split op is applied
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -714,6 +832,11 @@ def test_cv_minddataset_split_deterministic(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_split_sharding(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with DistributedSampler after deterministic Split op is applied
+    Expectation: Output is equal to the expected output
+    """
     data = get_data(CV_DIR_NAME, True)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4

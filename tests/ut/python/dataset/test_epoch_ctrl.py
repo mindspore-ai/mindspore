@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,9 @@ def diff_mse(in1, in2):
 
 def test_cifar10():
     """
-    dataset parameter
+    Feature: Epoch Control op
+    Description: Test num_epochs as tuple iterator param for Cifar10Dataset
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test dataset parameter")
     data_dir_10 = "../data/dataset/testCifar10Data"
@@ -70,7 +72,9 @@ def test_cifar10():
 
 def test_decode_op():
     """
-    Test Decode op
+    Feature: Epoch Control op
+    Description: Test num_epochs as dict iterator param for dataset which Decode op has been applied onto it
+    Expectation: Output is equal to the expected output before iterator is stopped, then correct error is raised
     """
     logger.info("test_decode_op")
 
@@ -125,7 +129,9 @@ def generator_1d():
 
 def test_generator_dict_0():
     """
-    test generator dict 0
+    Feature: Epoch Control op
+    Description: Test dict iterator inside the loop declaration for 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -142,7 +148,9 @@ def test_generator_dict_0():
 
 def test_generator_dict_1():
     """
-    test generator dict 1
+    Feature: Epoch Control op
+    Description: Test dict iterator outside the epoch for loop for 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -162,7 +170,9 @@ def test_generator_dict_1():
 
 def test_generator_dict_2():
     """
-    test generator dict 2
+    Feature: Epoch Control op
+    Description: Test dict iterator with num_epochs=-1 for 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output and iterator never shutdown
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -187,7 +197,9 @@ def test_generator_dict_2():
 
 def test_generator_dict_3():
     """
-    test generator dict 3
+    Feature: Epoch Control op
+    Description: Test dict iterator with num_epochs=-1 followed by stop for 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output before stop, then error is raised
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -213,7 +225,10 @@ def test_generator_dict_3():
 
 def test_generator_dict_4():
     """
-    test generator dict 4
+    Feature: Epoch Control op
+    Description: Test dict iterator by fetching data beyond the specified number of epochs for 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output when fetching data under the specified num_epochs,
+        then error is raised due to EOF buffer encountered
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -236,7 +251,11 @@ def test_generator_dict_4():
 
 def test_generator_dict_4_1():
     """
-    test generator dict 4_1
+    Feature: Epoch Control op
+    Description: Test dict iterator by fetching data beyond the specified number of epochs where num_epochs=1 so
+        Epoch Control op will not be injected, using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output when fetching data under the specified num_epochs,
+        then error is raised due to EOF buffer encountered
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -260,7 +279,11 @@ def test_generator_dict_4_1():
 
 def test_generator_dict_4_2():
     """
-    test generator dict 4_2
+    Feature: Epoch Control op
+    Description: Test dict iterator by fetching data beyond the specified number of epochs where num_epochs=1 so
+        Epoch Control op will not be injected, after repeat op with num_repeat=1, using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output when fetching data under the specified num_epochs,
+        then error is raised due to EOF buffer encountered
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -286,7 +309,11 @@ def test_generator_dict_4_2():
 
 def test_generator_dict_5():
     """
-    test generator dict 5
+    Feature: Epoch Control op
+    Description: Test dict iterator by fetching data below (2 loops) then
+        beyond the specified number of epochs using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output when fetching data under the specified num_epochs,
+        then error is raised due to EOF buffer encountered
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -320,7 +347,9 @@ def test_generator_dict_5():
 
 def test_generator_tuple_0():
     """
-    test generator tuple 0
+    Feature: Epoch Control op
+    Description: Test tuple iterator inside the loop declaration for 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -337,7 +366,9 @@ def test_generator_tuple_0():
 
 def test_generator_tuple_1():
     """
-    test generator tuple 1
+    Feature: Epoch Control op
+    Description: Test tuple iterator outside the epoch for loop for 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -357,7 +388,9 @@ def test_generator_tuple_1():
 
 def test_generator_tuple_2():
     """
-    test generator tuple 2
+    Feature: Epoch Control op
+    Description: Test tuple iterator with num_epochs=-1 for 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output and iterator never shutdown
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -381,7 +414,9 @@ def test_generator_tuple_2():
 
 def test_generator_tuple_3():
     """
-    test generator tuple 3
+    Feature: Epoch Control op
+    Description: Test tuple iterator with num_epochs=-1 followed by stop for 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output before stop, then error is raised
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -406,7 +441,10 @@ def test_generator_tuple_3():
 
 def test_generator_tuple_4():
     """
-    test generator tuple 4
+    Feature: Epoch Control op
+    Description: Test tuple iterator by fetching data beyond the specified num_epochs for 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output when fetching data under the specified num_epochs,
+        then error is raised due to EOF buffer encountered
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -429,7 +467,11 @@ def test_generator_tuple_4():
 
 def test_generator_tuple_5():
     """
-    test generator tuple 5
+    Feature: Epoch Control op
+    Description: Test tuple iterator by fetching data below (2 loops) then
+        beyond the specified number of epochs using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output when fetching data under the specified num_epochs,
+        then error is raised due to EOF buffer encountered
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -462,7 +504,11 @@ def test_generator_tuple_5():
 # Test with repeat
 def test_generator_tuple_repeat_1():
     """
-    test generator tuple repeat 1
+    Feature: Epoch Control op
+    Description: Test tuple iterator by applying Repeat op first, next fetching data below (2 loops) then
+        beyond the specified number of epochs using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output when fetching data under the specified num_epochs,
+        then error is raised due to EOF buffer encountered
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -496,7 +542,11 @@ def test_generator_tuple_repeat_1():
 # Test with repeat
 def test_generator_tuple_repeat_repeat_1():
     """
-    test generator tuple repeat repeat 1
+    Feature: Epoch Control op
+    Description: Test tuple iterator by applying Repeat op first twice, next fetching data below (2 loops) then
+        beyond the specified number of epochs using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output when fetching data under the specified num_epochs,
+        then error is raised due to EOF buffer encountered
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -530,7 +580,10 @@ def test_generator_tuple_repeat_repeat_1():
 
 def test_generator_tuple_repeat_repeat_2():
     """
-    test generator tuple repeat repeat 2
+    Feature: Epoch Control op
+    Description: Test tuple iterator with num_epochs=-1 by applying Repeat op first twice, next
+        stop op is called on the iterator using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output before stop is called, then error is raised
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -557,7 +610,10 @@ def test_generator_tuple_repeat_repeat_2():
 
 def test_generator_tuple_repeat_repeat_3():
     """
-    test generator tuple repeat repeat 3
+    Feature: Epoch Control op
+    Description: Test tuple iterator by applying Repeat op first twice, then do 2 loops
+        that the sum of iteration is equal to the specified num_epochs using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -587,7 +643,10 @@ def test_generator_tuple_repeat_repeat_3():
 
 def test_generator_tuple_infinite_repeat_repeat_1():
     """
-    test generator tuple infinite repeat repeat 1
+    Feature: Epoch Control op
+    Description: Test tuple iterator by applying infinite Repeat then Repeat with specified num_repeat,
+        then iterate using iterator using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -610,7 +669,10 @@ def test_generator_tuple_infinite_repeat_repeat_1():
 
 def test_generator_tuple_infinite_repeat_repeat_2():
     """
-    test generator tuple infinite repeat repeat 2
+    Feature: Epoch Control op
+    Description: Test tuple iterator by applying Repeat with specified num_repeat then infinite Repeat,
+        then iterate using iterator using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -633,7 +695,10 @@ def test_generator_tuple_infinite_repeat_repeat_2():
 
 def test_generator_tuple_infinite_repeat_repeat_3():
     """
-    test generator tuple infinite repeat repeat 3
+    Feature: Epoch Control op
+    Description: Test tuple iterator by applying infinite Repeat first twice,
+        then iterate using iterator using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -656,7 +721,10 @@ def test_generator_tuple_infinite_repeat_repeat_3():
 
 def test_generator_tuple_infinite_repeat_repeat_4():
     """
-    test generator tuple infinite repeat repeat 4
+    Feature: Epoch Control op
+    Description: Test tuple iterator with num_epochs=1 by applying infinite Repeat first twice,
+        then iterate using iterator using 1D GeneratorDataset 0-63
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1D Generator : 0 - 63")
 
@@ -679,7 +747,10 @@ def test_generator_tuple_infinite_repeat_repeat_4():
 
 def test_generator_reusedataset():
     """
-    test generator reusedataset
+    Feature: Epoch Control op
+    Description: Test iterator and other op (Repeat/Batch) on 1D GeneratorDataset 0-63 which previously
+        has been applied with iterator and other op (Repeat/Batch)
+    Expectation: Output is equal to the expected output
     """
     logger.info("Test 1D Generator : 0 - 63")
 

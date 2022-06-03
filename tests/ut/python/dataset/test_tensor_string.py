@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@ from mindspore.dataset.text import to_str, to_bytes
 
 
 def test_basic():
+    """
+    Feature: Tensor
+    Description: Test basic Tensor op on NumPy dataset with strings
+    Expectation: Output is equal to the expected output
+    """
     x = np.array([["ab", "cde", "121"], ["x", "km", "789"]], dtype='S')
     n = cde.Tensor(x)
     arr = n.as_array()
@@ -40,6 +45,11 @@ def compare(strings, dtype='S'):
 
 
 def test_generator():
+    """
+    Feature: Tensor
+    Description: Test string tensor with various valid inputs using GeneratorDataset
+    Expectation: Output is equal to the expected output
+    """
     compare(["ab"])
     compare(["", ""])
     compare([""])
@@ -72,6 +82,11 @@ chinese = np.array(["今天天气太好了我们一起去外面玩吧",
 
 
 def test_batching_strings():
+    """
+    Feature: Tensor
+    Description: Test applying Batch op to string tensor using GeneratorDataset
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         for row in chinese:
             yield (np.array(row),)
@@ -84,6 +99,11 @@ def test_batching_strings():
 
 
 def test_map():
+    """
+    Feature: Tensor
+    Description: Test applying Map op split to string tensor using GeneratorDataset
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array(["ab cde 121"], dtype='S'),)
 
@@ -101,6 +121,11 @@ def test_map():
 
 
 def test_map2():
+    """
+    Feature: Tensor
+    Description: Test applying Map op upper to string tensor using GeneratorDataset
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array(["ab cde 121"], dtype='S'),)
 
@@ -117,6 +142,11 @@ def test_map2():
 
 
 def test_tfrecord1():
+    """
+    Feature: Tensor
+    Description: Test string tensor using TFRecordDataset with created schema using "string" type
+    Expectation: Output is equal to the expected output
+    """
     s = ds.Schema()
     s.add_column("line", "string", [])
     s.add_column("words", "string", [-1])
@@ -134,6 +164,11 @@ def test_tfrecord1():
 
 
 def test_tfrecord2():
+    """
+    Feature: Tensor
+    Description: Test string tensor using TFRecordDataset with schema from a file
+    Expectation: Output is equal to the expected output
+    """
     data = ds.TFRecordDataset("../data/dataset/testTextTFRecord/text.tfrecord", shuffle=False,
                               schema='../data/dataset/testTextTFRecord/datasetSchema.json')
     for i, d in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
@@ -146,6 +181,11 @@ def test_tfrecord2():
 
 
 def test_tfrecord3():
+    """
+    Feature: Tensor
+    Description: Test string tensor using TFRecordDataset with created schema using mstype.string type
+    Expectation: Output is equal to the expected output
+    """
     s = ds.Schema()
     s.add_column("line", mstype.string, [])
     s.add_column("words", mstype.string, [-1, 2])
@@ -184,6 +224,11 @@ def create_text_mindrecord():
 
 
 def test_mindrecord():
+    """
+    Feature: Tensor
+    Description: Test string tensor using MindDataset
+    Expectation: Output is equal to the expected output
+    """
     data = ds.MindDataset("../data/dataset/testTextMindRecord/test.mindrecord", shuffle=False)
 
     for i, d in enumerate(data.create_dict_iterator(num_epochs=1, output_numpy=True)):
@@ -228,6 +273,11 @@ def gen_var_cols_2d(num):
 
 
 def test_batch_padding_01():
+    """
+    Feature: Batch Padding
+    Description: Test batch padding where input_shape=[x] and output_shape=[y] in which y > x
+    Expectation: Output is equal to the expected output
+    """
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], b"-2"), "col1d": ([2], b"-1")})
     data1 = data1.repeat(2)
@@ -238,6 +288,12 @@ def test_batch_padding_01():
 
 
 def test_batch_padding_02():
+    """
+    Feature: Batch Padding
+    Description: Test batch padding where padding in one dimension and truncate in the other, in which
+        input_shape=[x1,x2] and output_shape=[y1,y2] and y1 > x1 and y2 < x2
+    Expectation: Output is equal to the expected output
+    """
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], "")})
     data1 = data1.repeat(2)
@@ -247,6 +303,11 @@ def test_batch_padding_02():
 
 
 def test_batch_padding_03():
+    """
+    Feature: Batch Padding
+    Description: Test batch padding using automatic padding for a specific column
+    Expectation: Output is equal to the expected output
+    """
     data1 = ds.GeneratorDataset((lambda: gen_var_col(4)), ["col"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col": (None, "PAD_VALUE")})  # pad automatically
     data1 = data1.repeat(2)
@@ -260,6 +321,11 @@ def test_batch_padding_03():
 
 
 def test_batch_padding_04():
+    """
+    Feature: Batch Padding
+    Description: Test batch padding using default setting for all columns
+    Expectation: Output is equal to the expected output
+    """
     data1 = ds.GeneratorDataset((lambda: gen_var_cols(2)), ["col1", "col2"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={})  # pad automatically
     data1 = data1.repeat(2)
@@ -269,6 +335,11 @@ def test_batch_padding_04():
 
 
 def test_batch_padding_05():
+    """
+    Feature: Batch Padding
+    Description: Test batch padding where None is in different places
+    Expectation: Output is equal to the expected output
+    """
     data1 = ds.GeneratorDataset((lambda: gen_var_cols_2d(3)), ["col1", "col2"])
     data1 = data1.batch(batch_size=3, drop_remainder=False,
                         pad_info={"col2": ([2, None], "-2"), "col1": (None, "-1")})  # pad automatically

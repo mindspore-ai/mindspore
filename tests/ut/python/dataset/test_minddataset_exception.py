@@ -74,7 +74,11 @@ def create_diff_page_size_cv_mindrecord(file_name, files_num):
 
 
 def test_cv_lack_json():
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test MindDataset using json file that does not exist
+    Expectation: Exception is raised as expected
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "file_name", "label"]
@@ -87,7 +91,11 @@ def test_cv_lack_json():
 
 
 def test_cv_lack_mindrecord():
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test MindDataset using mindrecord that does not exist or no permission
+    Expectation: Exception is raised as expected
+    """
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     with pytest.raises(Exception, match="does not exist or permission denied"):
@@ -95,6 +103,11 @@ def test_cv_lack_mindrecord():
 
 
 def test_invalid_mindrecord():
+    """
+    Feature: MindDataset
+    Description: Test MindDataset using invalid file (size of mindrecord file header is larger than the upper limit)
+    Expectation: Exception is raised as expected
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     with open(file_name, 'w') as f:
         f.write('just for test')
@@ -109,6 +122,11 @@ def test_invalid_mindrecord():
 
 
 def test_minddataset_lack_db():
+    """
+    Feature: MindDataset
+    Description: Test MindDataset without .db files
+    Expectation: Exception is raised as expected
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
     os.remove("{}.db".format(file_name))
@@ -140,6 +158,11 @@ def test_cv_minddataset_pk_sample_error_class_column():
 
 
 def test_cv_minddataset_pk_sample_exclusive_shuffle():
+    """
+    Feature: MindDataset
+    Description: Test MindDataset by specifying sampler and shuffle at the same time
+    Expectation: Exception is raised as expected
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "file_name", "label"]
@@ -156,6 +179,11 @@ def test_cv_minddataset_pk_sample_exclusive_shuffle():
 
 
 def test_cv_minddataset_reader_different_schema():
+    """
+    Feature: MindDataset
+    Description: Test MindDataset by including a file that has a different schema from the others
+    Expectation: Exception is raised as expected
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     file_name_1 = file_name + '_1'
     create_cv_mindrecord(file_name, 1)
@@ -177,6 +205,11 @@ def test_cv_minddataset_reader_different_schema():
 
 
 def test_cv_minddataset_reader_different_page_size():
+    """
+    Feature: MindDataset
+    Description: Test MindDataset where one of the files has a different page size
+    Expectation: Exception is raised as expected
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     file_name_1 = file_name + '_1'
     create_cv_mindrecord(file_name, 1)
@@ -199,6 +232,11 @@ def test_cv_minddataset_reader_different_page_size():
 
 
 def test_minddataset_invalidate_num_shards():
+    """
+    Feature: MindDataset
+    Description: Test MindDataset where num_shards is invalid
+    Expectation: Exception is raised as expected
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "label"]
@@ -222,6 +260,11 @@ def test_minddataset_invalidate_num_shards():
 
 
 def test_minddataset_invalidate_shard_id():
+    """
+    Feature: MindDataset
+    Description: Test MindDataset where shard_id is invalid
+    Expectation: Exception is raised as expected
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "label"]
@@ -245,6 +288,11 @@ def test_minddataset_invalidate_shard_id():
 
 
 def test_minddataset_shard_id_bigger_than_num_shard():
+    """
+    Feature: MindDataset
+    Description: Test MindDataset where shard_id is bigger than num_shards
+    Expectation: Exception is raised as expected
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "label"]
@@ -282,7 +330,11 @@ def test_minddataset_shard_id_bigger_than_num_shard():
 
 
 def test_cv_minddataset_partition_num_samples_equals_0():
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test MindDataset where num_samples is invalid
+    Expectation: Exception is raised as expected
+    """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
     create_cv_mindrecord(file_name, 1)
     columns_list = ["data", "label"]
@@ -312,8 +364,11 @@ def test_cv_minddataset_partition_num_samples_equals_0():
 
 
 def test_mindrecord_exception():
-    """tutorial for exception scenario of minderdataset + map would print error info."""
-
+    """
+    Feature: MindDataset
+    Description: Test MindDataset by mapping function that will raise Exception and print error info
+    Expectation: Exception is raised as expected
+    """
     def exception_func(item):
         raise Exception("Error occur!")
 

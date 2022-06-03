@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,9 +45,9 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 
 def test_vad_pipeline1():
     """
-    Feature: Vad
-    Description: test Vad cpp op in pipeline
-    Expectation: equal results from Mindspore and benchmark
+    Feature: Vad op
+    Description: Test Vad op in pipeline
+    Expectation: Equal results from Mindspore and benchmark
     """
     # <1000>
     dataset = ds.NumpySlicesDataset(np.load(DATA_DIR + "single_channel.npy")[np.newaxis, :],
@@ -75,9 +75,9 @@ def test_vad_pipeline1():
 
 def test_vad_pipeline2():
     """
-    Feature: Vad
-    Description: test Vad cpp op in pipeline
-    Expectation: equal results from Mindspore and benchmark
+    Feature: Vad op
+    Description: Test Vad op in pipeline
+    Expectation: Equal results from Mindspore and benchmark
     """
     # <1, 1000> trigger level and time
     dataset = ds.NumpySlicesDataset(np.load(DATA_DIR + "single_channel.npy")
@@ -130,9 +130,9 @@ def test_vad_pipeline2():
 
 def test_vad_pipeline3():
     """
-    Feature: Vad
-    Description: test Vad cpp op in pipeline
-    Expectation: equal results from Mindspore and benchmark
+    Feature: Vad op
+    Description: Test Vad op in pipeline
+    Expectation: Equal results from Mindspore and benchmark
     """
     # <1, 1000> noise
     dataset = ds.NumpySlicesDataset(np.load(DATA_DIR + "single_channel.npy")
@@ -200,9 +200,9 @@ def test_vad_pipeline3():
 
 def test_vad_pipeline_invalid_param1():
     """
-    Feature: Vad
-    Description: test Vad with invalid input parameters
-    Expectation: throw ValueError or TypeError
+    Feature: Vad op
+    Description: Test Vad with invalid input parameters
+    Expectation: Throw ValueError or TypeError
     """
     logger.info("test InverseMelScale op with default values")
     in_data = np.load(DATA_DIR + "single_channel.npy")[np.newaxis, :]
@@ -243,9 +243,9 @@ def test_vad_pipeline_invalid_param1():
 
 def test_vad_pipeline_invalid_param2():
     """
-    Feature: Vad
-    Description: test Vad with invalid input parameters
-    Expectation: throw ValueError or TypeError
+    Feature: Vad op
+    Description: Test Vad with invalid input parameters
+    Expectation: Throw ValueError or TypeError
     """
     logger.info("test InverseMelScale op with default values")
     in_data = np.load(DATA_DIR + "single_channel.npy")[np.newaxis, :]
@@ -283,9 +283,9 @@ def test_vad_pipeline_invalid_param2():
 
 def test_vad_pipeline_invalid_param3():
     """
-    Feature: Vad
-    Description: test Vad with invalid input parameters
-    Expectation: throw ValueError or TypeError
+    Feature: Vad op
+    Description: Test Vad with invalid input parameters
+    Expectation: Throw ValueError or TypeError
     """
     logger.info("test InverseMelScale op with default values")
     in_data = np.load(DATA_DIR + "single_channel.npy")[np.newaxis, :]
@@ -343,9 +343,9 @@ def test_vad_pipeline_invalid_param3():
 
 def test_vad_eager():
     """
-    Feature: Vad
-    Description: test Vad cpp op with eager mode
-    Expectation: equal results from Mindspore and benchmark
+    Feature: Vad op
+    Description: Test Vad op with eager mode
+    Expectation: Equal results from Mindspore and benchmark
     """
     spectrogram = np.load(DATA_DIR + "single_channel.npy")
     out_ms = c_audio.Vad(sample_rate=600)(spectrogram)

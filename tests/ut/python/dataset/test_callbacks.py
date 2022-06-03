@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -223,6 +223,11 @@ def build_test_case_2maps(epochs, steps):
 
 
 def test_callbacks_all_methods():
+    """
+    Feature: Callback
+    Description: Test Map op with 1 callback with various num_epochs and num_steps args combinations
+    Expectation: Output is equal to the expected output
+    """
     logger.info("test_callbacks_all_methods")
 
     build_test_case_1cb(1, 1)
@@ -242,6 +247,11 @@ def test_callbacks_all_methods():
 
 
 def test_callbacks_var_step_size():
+    """
+    Feature: Callback
+    Description: Test Map op with 1 callback with step_size=2 and various num_epochs and num_steps args combinations
+    Expectation: Output is equal to the expected output
+    """
     logger.info("test_callbacks_var_step_size")
 
     build_test_case_1cb(1, 2, 2)
@@ -258,6 +268,11 @@ def test_callbacks_var_step_size():
 
 
 def test_callbacks_all_2cbs():
+    """
+    Feature: Callback
+    Description: Test Map op with 2 callbacks with various num_epochs and num_steps args combinations
+    Expectation: Output is equal to the expected output
+    """
     logger.info("test_callbacks_all_2cbs")
 
     build_test_case_2cbs(4, 1)
@@ -301,6 +316,11 @@ class Net(nn.Cell):
 
 
 def test_callbacks_non_sink():
+    """
+    Feature: Callback
+    Description: Test callbacks with dataset_sink_mode=False in train
+    Expectation: Output is equal to the expected output
+    """
     logger.info("test_callbacks_non_sink")
 
     events = []
@@ -325,6 +345,11 @@ def test_callbacks_non_sink():
 
 
 def test_callbacks_non_sink_batch_size2():
+    """
+    Feature: Callback
+    Description: Test callbacks with dataset_sink_mode=False in train after batch(2) is applied to the dataset
+    Expectation: Output is equal to the expected output
+    """
     logger.info("test_callbacks_non_sink_batch_size2")
 
     events = []
@@ -349,6 +374,11 @@ def test_callbacks_non_sink_batch_size2():
 
 
 def test_callbacks_non_sink_mismatch_size():
+    """
+    Feature: Callback
+    Description: Test callbacks with dataset_sink_mode=False in train with mismatch size
+    Expectation: Exception is raised as expected
+    """
     logger.info("test_callbacks_non_sink_mismatch_size")
     default_timeout = ds.config.get_callback_timeout()
     ds.config.set_callback_timeout(1)
@@ -370,6 +400,11 @@ def test_callbacks_non_sink_mismatch_size():
 
 
 def test_callbacks_validations():
+    """
+    Feature: Callback
+    Description: Test callbacks param in Map op with invalid argument
+    Expectation: Exception is raised as expected
+    """
     logger.info("test_callbacks_validations")
 
     with pytest.raises(Exception) as err:
@@ -397,6 +432,11 @@ def test_callbacks_validations():
 
 
 def test_callbacks_sink_simulation():
+    """
+    Feature: Callback
+    Description: Test callbacks under sink simulation
+    Expectation: Output is equal to the expected output
+    """
     logger.info("test_callback_sink_simulation")
 
     events = []
@@ -424,6 +464,11 @@ def test_callbacks_sink_simulation():
 
 
 def test_callbacks_repeat():
+    """
+    Feature: Callback
+    Description: Test Map op with 1 callback with various num_epochs, num_steps, step_size, and repeat args combinations
+    Expectation: Output is equal to the expected output
+    """
     logger.info("test_callbacks_repeat")
 
     build_test_case_1cb(epochs=2, steps=2, step_size=1, repeat=2)
@@ -453,6 +498,11 @@ def test_callbacks_exceptions():
 
 
 def test_callbacks_train_end():
+    """
+    Feature: Callback
+    Description: Test callback end op under sink simulation
+    Expectation: Runs successfully
+    """
     logger.info("test_callback_sink_simulation")
     # No asserts are needed, just test there is no deadlock or exceptions
     events = []
@@ -469,6 +519,11 @@ def test_callbacks_train_end():
 
 
 def test_callbacks_one_cb():
+    """
+    Feature: Callback
+    Description: Test callbacks with Begin, EpochBegin, EpochEnd, StepBegin, and StepEnd as the args
+    Expectation: Output is equal to the expected output
+    """
     logger.info("test_callbacks_one_cb")
 
     data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
@@ -510,6 +565,11 @@ def test_callbacks_one_cb():
 
 
 def test_clear_callback():
+    """
+    Feature: Callback
+    Description: Test callback is removed for get_dataset_size and output_shape/type
+    Expectation: Output is equal to the expected output
+    """
     logger.info("test_clear_callback")
 
     # this test case will test that callback is removed for get_dataset_size and output_shape/type

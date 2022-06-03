@@ -60,6 +60,11 @@ def gen_var_cols_2d(num):
 
 
 def test_batch_padding_01():
+    """
+    Feature: Batch Padding
+    Description: Test batch padding where input_shape=[x] and output_shape=[y] in which y > x
+    Expectation: Output is equal to the expected output
+    """
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([2, 2], -2), "col1d": ([2], -1)})
     data1 = data1.repeat(2)
@@ -69,6 +74,12 @@ def test_batch_padding_01():
 
 
 def test_batch_padding_02():
+    """
+    Feature: Batch Padding
+    Description: Test batch padding where padding in one dimension and truncate in the other, in which
+        input_shape=[x1,x2] and output_shape=[y1,y2] and y1 > x1 and y2 < x2
+    Expectation: Output is equal to the expected output
+    """
     data1 = ds.GeneratorDataset((lambda: gen_2cols(2)), ["col1d", "col2d"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col2d": ([1, 2], -2)})
     data1 = data1.repeat(2)
@@ -78,6 +89,11 @@ def test_batch_padding_02():
 
 
 def test_batch_padding_03():
+    """
+    Feature: Batch Padding
+    Description: Test batch padding using automatic padding for a specific column
+    Expectation: Output is equal to the expected output
+    """
     data1 = ds.GeneratorDataset((lambda: gen_var_col(4)), ["col"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={"col": (None, -1)})  # pad automatically
     data1 = data1.repeat(2)
@@ -91,6 +107,11 @@ def test_batch_padding_03():
 
 
 def test_batch_padding_04():
+    """
+    Feature: Batch Padding
+    Description: Test batch padding using default setting for all columns
+    Expectation: Output is equal to the expected output
+    """
     data1 = ds.GeneratorDataset((lambda: gen_var_cols(2)), ["col1", "col2"])
     data1 = data1.batch(batch_size=2, drop_remainder=False, pad_info={})  # pad automatically
     data1 = data1.repeat(2)
@@ -100,6 +121,11 @@ def test_batch_padding_04():
 
 
 def test_batch_padding_05():
+    """
+    Feature: Batch Padding
+    Description: Test batch padding where None is in different places
+    Expectation: Output is equal to the expected output
+    """
     data1 = ds.GeneratorDataset((lambda: gen_var_cols_2d(3)), ["col1", "col2"])
     data1 = data1.batch(batch_size=3, drop_remainder=False,
                         pad_info={"col2": ([2, None], -2), "col1": (None, -1)})  # pad automatically

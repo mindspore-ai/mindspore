@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,9 @@ def string_dataset_generator(strings):
 
 def test_to_number_eager():
     """
-    Test ToNumber op is callable
+    Feature: ToNumber op
+    Description: Test ToNumber op in eager mode with valid and invalid tensor input
+    Expectation: Output is equal to the expected output for valid tensor and error is raised otherwise
     """
     input_strings = [["1", "2", "3"], ["4", "5", "6"]]
     op = text.ToNumber(mstype.int8)
@@ -59,6 +61,11 @@ def test_to_number_eager():
 
 
 def test_to_number_typical_case_integral():
+    """
+    Feature: ToNumber op
+    Description: Test ToNumber op with int data type
+    Expectation: Output is equal to the expected output
+    """
     input_strings = [["-121", "14"], ["-2219", "7623"], ["-8162536", "162371864"],
                      ["-1726483716", "98921728421"]]
 
@@ -75,6 +82,11 @@ def test_to_number_typical_case_integral():
 
 
 def test_to_number_typical_case_non_integral():
+    """
+    Feature: ToNumber op
+    Description: Test ToNumber op with float data type
+    Expectation: Output is equal to the expected output
+    """
     input_strings = [["-1.1", "1.4"], ["-2219.321", "7623.453"], ["-816256.234282", "162371864.243243"]]
     epsilons = [0.001, 0.001, 0.0001, 0.0001, 0.0000001, 0.0000001]
 
@@ -105,6 +117,11 @@ def out_of_bounds_error_message_check(dataset, np_type, value_to_cast):
 
 
 def test_to_number_out_of_bounds_integral():
+    """
+    Feature: ToNumber op
+    Description: Test ToNumber op with values that are out of bounds for int range
+    Expectation: Error is raised as expected
+    """
     for np_type, ms_type in zip(np_integral_types, ms_integral_types):
         type_info = np.iinfo(np_type)
         input_strings = [str(type_info.max + 10)]
@@ -119,6 +136,11 @@ def test_to_number_out_of_bounds_integral():
 
 
 def test_to_number_out_of_bounds_non_integral():
+    """
+    Feature: ToNumber op
+    Description: Test ToNumber op with values that are out of bounds for float range
+    Expectation: Error is raised as expected
+    """
     above_range = [str(np.finfo(np.float16).max * 10), str(np.finfo(np.float32).max * 10), "1.8e+308"]
 
     input_strings = [above_range[0]]
@@ -179,6 +201,11 @@ def test_to_number_out_of_bounds_non_integral():
 
 
 def test_to_number_boundaries_integral():
+    """
+    Feature: ToNumber op
+    Description: Test ToNumber op with values that are exactly at the boundaries of the range of int
+    Expectation: Output is equal to the expected output
+    """
     for np_type, ms_type in zip(np_integral_types, ms_integral_types):
         type_info = np.iinfo(np_type)
         input_strings = [str(type_info.max)]
@@ -201,6 +228,11 @@ def test_to_number_boundaries_integral():
 
 
 def test_to_number_invalid_input():
+    """
+    Feature: ToNumber op
+    Description: Test ToNumber op with invalid input string
+    Expectation: Error is raised as expected
+    """
     input_strings = ["a8fa9ds8fa"]
     dataset = ds.GeneratorDataset(string_dataset_generator(input_strings), "strings")
     dataset = dataset.map(operations=text.ToNumber(mstype.int32), input_columns=["strings"])
@@ -212,6 +244,11 @@ def test_to_number_invalid_input():
 
 
 def test_to_number_invalid_type():
+    """
+    Feature: ToNumber op
+    Description: Test ToNumber op to map into an invalid data type
+    Expectation: Error is raised as expected
+    """
     with pytest.raises(TypeError) as info:
         dataset = ds.GeneratorDataset(string_dataset_generator(["a8fa9ds8fa"]), "strings")
         dataset = dataset.map(operations=text.ToNumber(mstype.bool_), input_columns=["strings"])

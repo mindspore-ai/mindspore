@@ -123,7 +123,9 @@ def test_vocab_exception():
 
 def test_lookup_callable():
     """
-    Test lookup is callable
+    Feature: Python text.Vocab class
+    Description: Test Lookup with text.Vocab as the argument
+    Expectation: Output is equal to the expected output
     """
     logger.info("test_lookup_callable")
     vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
@@ -133,6 +135,11 @@ def test_lookup_callable():
 
 
 def test_from_list_tutorial():
+    """
+    Feature: Python text.Vocab class
+    Description: Test from_list() method from text.Vocab basic usage tutorial
+    Expectation: Output is equal to the expected output
+    """
     vocab = text.Vocab.from_list("home IS behind the world ahead !".split(" "), ["<pad>", "<unk>"], True)
     lookup = text.Lookup(vocab, "<unk>")
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
@@ -145,6 +152,11 @@ def test_from_list_tutorial():
 
 
 def test_from_file_tutorial():
+    """
+    Feature: Python text.Vocab class
+    Description: Test from_file() method from text.Vocab basic usage tutorial
+    Expectation: Output is equal to the expected output
+    """
     vocab = text.Vocab.from_file(VOCAB_FILE, ",", None, ["<pad>", "<unk>"], True)
     lookup = text.Lookup(vocab)
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
@@ -157,6 +169,11 @@ def test_from_file_tutorial():
 
 
 def test_from_dict_tutorial():
+    """
+    Feature: Python text.Vocab class
+    Description: Test from_dict() method from text.Vocab basic usage tutorial
+    Expectation: Output is equal to the expected output
+    """
     vocab = text.Vocab.from_dict({"home": 3, "behind": 2, "the": 4, "world": 5, "<unk>": 6})
     lookup = text.Lookup(vocab, "<unk>")  # any unknown token will be mapped to the id of <unk>
     data = ds.TextFileDataset(DATA_FILE, shuffle=False)
@@ -169,6 +186,11 @@ def test_from_dict_tutorial():
 
 
 def test_from_dict_exception():
+    """
+    Feature: Python text.Vocab class
+    Description: Test from_dict() method from text.Vocab with invalid input
+    Expectation: Error is raised as expected
+    """
     try:
         vocab = text.Vocab.from_dict({"home": -1, "behind": 0})
         if not vocab:
@@ -178,6 +200,11 @@ def test_from_dict_exception():
 
 
 def test_from_list():
+    """
+    Feature: Python text.Vocab class
+    Description: Test from_list() method from text.Vocab with various valid input cases and invalid input
+    Expectation: Output is equal to the expected output, except for invalid input cases where correct error is raised
+    """
     def gen(texts):
         for word in texts.split(" "):
             yield (np.array(word, dtype='S'),)
@@ -216,6 +243,11 @@ def test_from_list():
 
 
 def test_from_list_lookup_empty_string():
+    """
+    Feature: Python text.Vocab class
+    Description: Test from_list() with and without empty string in the Lookup op where unknown_token=None
+    Expectation: Output is equal to the expected output when "" in Lookup op and error is raised otherwise
+    """
     # "" is a valid word in vocab, which can be looked up by LookupOp
     vocab = text.Vocab.from_list("home IS behind the world ahead !".split(" "), ["<pad>", ""], True)
     lookup = text.Lookup(vocab, "")
@@ -241,6 +273,11 @@ def test_from_list_lookup_empty_string():
 
 
 def test_from_file():
+    """
+    Feature: Python text.Vocab class
+    Description: Test from_file() method from text.Vocab with various valid and invalid special_tokens and vocab_size
+    Expectation: Output is equal to the expected output for valid parameters and error is raised otherwise
+    """
     def gen(texts):
         for word in texts.split(" "):
             yield (np.array(word, dtype='S'),)
@@ -272,6 +309,11 @@ def test_from_file():
 
 
 def test_lookup_cast_type():
+    """
+    Feature: Python text.Vocab class
+    Description: Test Lookup op cast type with various valid and invalid data types
+    Expectation: Output is equal to the expected output for valid data types and error is raised otherwise
+    """
     def gen(texts):
         for word in texts.split(" "):
             yield (np.array(word, dtype='S'),)

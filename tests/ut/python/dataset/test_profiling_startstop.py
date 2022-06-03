@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -95,7 +95,10 @@ class TestMindDataProfilingStartStop:
 
     def test_profiling_early_stop(self, tmp_path):
         """
-        Test MindData Profiling with Early Stop; profile for some iterations and then stop profiling
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling with early stop; profile for some iterations and then
+            stop profiling
+        Expectation: Runs successfully
         """
         def source1():
             for i in range(8000):
@@ -138,9 +141,10 @@ class TestMindDataProfilingStartStop:
 
     def test_profiling_delayed_start(self, tmp_path):
         """
-        Test MindData Profiling with Delayed Start; profile for subset of iterations
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling with delayed start; profile for subset of iterations
+        Expectation: Runs successfully
         """
-
         def source1():
             for i in range(8000):
                 yield (np.array([i]),)
@@ -181,9 +185,10 @@ class TestMindDataProfilingStartStop:
 
     def test_profiling_multiple_start_stop(self, tmp_path):
         """
-        Test MindData Profiling with Delayed Start and Multiple Start-Stop Sequences
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling with delayed start and multiple start-stop sequences
+        Expectation: Runs successfully
         """
-
         def source1():
             for i in range(8000):
                 yield (np.array([i]),)
@@ -233,7 +238,9 @@ class TestMindDataProfilingStartStop:
 
     def test_profiling_start_start(self):
         """
-        Test MindData Profiling with Start followed by Start - user error scenario
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling with start followed by start
+        Expectation: Error is raised as expected
         """
         # Initialize MindData profiling manager
         self.md_profiler.init()
@@ -252,7 +259,9 @@ class TestMindDataProfilingStartStop:
 
     def test_profiling_stop_stop(self, tmp_path):
         """
-        Test MindData Profiling with Stop followed by Stop - user warning scenario
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling with stop followed by stop
+        Expectation: Warning is produced
         """
         # Initialize MindData profiling manager
         self.md_profiler.init()
@@ -270,7 +279,9 @@ class TestMindDataProfilingStartStop:
 
     def test_profiling_stop_nostart(self):
         """
-        Test MindData Profiling with Stop not without prior Start - user error scenario
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling with stop not without prior start
+        Expectation: Error is raised as expected
         """
         # Initialize MindData profiling manager
         self.md_profiler.init()

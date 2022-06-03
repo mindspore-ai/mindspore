@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,11 @@ from mindspore import context
 DATA_DIR = "../data/dataset/testVOC2012"
 
 def test_noop_pserver():
+    """
+    Feature: No-op mode
+    Description: Test No-op mode support where the MS_ROLE environment is MS_PSERVER
+    Expectation: Runs successfully
+    """
     os.environ['MS_ROLE'] = 'MS_PSERVER'
     context.set_ps_context(enable_ps=True)
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
@@ -34,6 +39,11 @@ def test_noop_pserver():
 
 
 def test_noop_sched():
+    """
+    Feature: No-op mode
+    Description: Test No-op mode support where the MS_ROLE environment is MS_SCHED
+    Expectation: Runs successfully
+    """
     os.environ['MS_ROLE'] = 'MS_SCHED'
     context.set_ps_context(enable_ps=True)
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)

@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,11 @@ GENERATE_GOLDEN = False
 
 
 def test_case_project_single_column():
+    """
+    Feature: Project op
+    Description: Test Project op on a single column
+    Expectation: Output is equal to the expected output
+    """
     columns = ["col_sint32"]
     parameters = {"params": {'columns': columns}}
 
@@ -37,6 +42,11 @@ def test_case_project_single_column():
 
 
 def test_case_project_multiple_columns_in_order():
+    """
+    Feature: Project op
+    Description: Test Project op on multiple columns in order
+    Expectation: Output is equal to the expected output
+    """
     columns = ["col_sint16", "col_float", "col_2d"]
     parameters = {"params": {'columns': columns}}
 
@@ -48,6 +58,11 @@ def test_case_project_multiple_columns_in_order():
 
 
 def test_case_project_multiple_columns_out_of_order():
+    """
+    Feature: Project op
+    Description: Test Project op on multiple columns out of order
+    Expectation: Output is equal to the expected output
+    """
     columns = ["col_3d", "col_sint64", "col_2d"]
     parameters = {"params": {'columns': columns}}
 
@@ -59,6 +74,11 @@ def test_case_project_multiple_columns_out_of_order():
 
 
 def test_case_project_map():
+    """
+    Feature: Project op
+    Description: Test Project op followed by a Map op
+    Expectation: Output is equal to the expected output
+    """
     columns = ["col_3d", "col_sint64", "col_2d"]
     parameters = {"params": {'columns': columns}}
 
@@ -73,6 +93,11 @@ def test_case_project_map():
 
 
 def test_case_map_project():
+    """
+    Feature: Project op
+    Description: Test Project op after a Map op
+    Expectation: Output is equal to the expected output
+    """
     columns = ["col_3d", "col_sint64", "col_2d"]
     parameters = {"params": {'columns': columns}}
 
@@ -88,6 +113,11 @@ def test_case_map_project():
 
 
 def test_case_project_between_maps():
+    """
+    Feature: Project op
+    Description: Test Project op between Map ops (Map -> Project -> Map)
+    Expectation: Output is equal to the expected output
+    """
     columns = ["col_3d", "col_sint64", "col_2d"]
     parameters = {"params": {'columns': columns}}
 
@@ -112,6 +142,11 @@ def test_case_project_between_maps():
 
 
 def test_case_project_repeat():
+    """
+    Feature: Project op
+    Description: Test Project op followed by Repeat op
+    Expectation: Output is equal to the expected output
+    """
     columns = ["col_3d", "col_sint64", "col_2d"]
     parameters = {"params": {'columns': columns}}
 
@@ -126,6 +161,11 @@ def test_case_project_repeat():
 
 
 def test_case_repeat_project():
+    """
+    Feature: Project op
+    Description: Test Project op after a Repeat op
+    Expectation: Output is equal to the expected output
+    """
     columns = ["col_3d", "col_sint64", "col_2d"]
     parameters = {"params": {'columns': columns}}
 
@@ -141,6 +181,11 @@ def test_case_repeat_project():
 
 
 def test_case_map_project_map_project():
+    """
+    Feature: Project op
+    Description: Test Map -> Project -> Map -> Project
+    Expectation: Output is equal to the expected output
+    """
     columns = ["col_3d", "col_sint64", "col_2d"]
     parameters = {"params": {'columns': columns}}
 
@@ -160,8 +205,11 @@ def test_case_map_project_map_project():
 
 
 def test_column_order():
-    """test the output dict has maintained an insertion order."""
-
+    """
+    Feature: Project op
+    Description: Test Project op where the output dict should maintain the insertion order
+    Expectation: Output is equal to the expected output
+    """
     def gen_3_cols(num):
         for i in range(num):
             yield (np.array([i * 3]), np.array([i * 3 + 1]), np.array([i * 3 + 2]))
