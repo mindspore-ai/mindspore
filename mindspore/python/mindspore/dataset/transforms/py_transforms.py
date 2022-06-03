@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import sys
 import numpy as np
 
 from .validators import check_one_hot_op, check_compose_list, check_random_apply, check_transforms_list, \
-    check_compose_call
+    check_compose_call, deprecated_py_transforms
 from . import py_transforms_util as util
 from .c_transforms import TensorOperation
 
@@ -39,6 +39,27 @@ class PyTensorOperation:
     """
     Base Python Tensor Operations class
     """
+
+    @classmethod
+    def from_json(cls, json_string):
+        """
+        Base from_json for Python tensor operations class
+        """
+        json_obj = json.loads(json_string)
+        new_op = cls.__new__(cls)
+        new_op.__dict__ = json_obj
+        if "transforms" in json_obj.keys():
+            # operations which have transforms as input, need to call _from_json() for each transform to deseriallize
+            transforms = []
+            for json_op in json_obj["transforms"]:
+                transforms.append(getattr(
+                    sys.modules.get(json_op.get("python_module")),
+                    json_op.get("tensor_op_name")).from_json(json.dumps(json_op.get("tensor_op_params"))))
+            new_op.transforms = transforms
+        if "output_type" in json_obj.keys():
+            output_type = np.dtype(json_obj["output_type"])
+            new_op.output_type = output_type
+        return new_op
 
     def to_json(self):
         """
@@ -59,31 +80,10 @@ class PyTensorOperation:
             self.__dict__.pop("output_type")
         json_obj["tensor_op_params"] = self.__dict__
         # append transforms to the tensor_op_params of the operation
-        json_obj["tensor_op_params"].update(json_trans)
+        json_obj.get("tensor_op_params").update(json_trans)
         json_obj["tensor_op_name"] = self.__class__.__name__
         json_obj["python_module"] = self.__class__.__module__
         return json.dumps(json_obj)
-
-    @classmethod
-    def from_json(cls, json_string):
-        """
-        Base from_json for Python tensor operations class
-        """
-        json_obj = json.loads(json_string)
-        new_op = cls.__new__(cls)
-        new_op.__dict__ = json_obj
-        if "transforms" in json_obj.keys():
-            # operations which have transforms as input, need to call _from_json() for each transform to deseriallize
-            transforms = []
-            for json_op in json_obj["transforms"]:
-                transforms.append(getattr(
-                    sys.modules[json_op["python_module"]], json_op["tensor_op_name"]).from_json(
-                        json.dumps(json_op["tensor_op_params"])))
-            new_op.transforms = transforms
-        if "output_type" in json_obj.keys():
-            output_type = np.dtype(json_obj["output_type"])
-            new_op.output_type = output_type
-        return new_op
 
 
 class OneHotOp(PyTensorOperation):
@@ -111,6 +111,7 @@ class OneHotOp(PyTensorOperation):
         >>> mnist_dataset = mnist_dataset.map(input_columns=["label"], operations=transform)
     """
 
+    @deprecated_py_transforms("OneHot")
     @check_one_hot_op
     def __init__(self, num_classes, smoothing_rate=0.0):
         self.num_classes = num_classes
@@ -193,6 +194,7 @@ class Compose(PyTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=op_list,  input_columns=["image"])
     """
 
+    @deprecated_py_transforms()
     @check_compose_list
     def __init__(self, transforms):
         self.transforms = transforms
@@ -282,6 +284,7 @@ class RandomApply(PyTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms, input_columns=["image"])
     """
 
+    @deprecated_py_transforms()
     @check_random_apply
     def __init__(self, transforms, prob=0.5):
         self.prob = prob
@@ -327,6 +330,7 @@ class RandomChoice(PyTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms, input_columns=["image"])
     """
 
+    @deprecated_py_transforms()
     @check_transforms_list
     def __init__(self, transforms):
         self.transforms = transforms
@@ -371,6 +375,7 @@ class RandomOrder(PyTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms, input_columns=["image"])
     """
 
+    @deprecated_py_transforms()
     @check_transforms_list
     def __init__(self, transforms):
         self.transforms = transforms

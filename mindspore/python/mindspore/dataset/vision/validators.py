@@ -17,13 +17,13 @@
 import numbers
 from functools import wraps
 import numpy as np
-from mindspore._c_dataengine import TensorOp, TensorOperation
 
+from mindspore._c_dataengine import TensorOp, TensorOperation
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER, \
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
     parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, \
     check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32, check_non_negative_int32, \
-    check_pos_int32
+    check_pos_int32, deprecator_factory
 from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
 
 
@@ -1127,3 +1127,25 @@ def check_auto_augment(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def deprecated_c_vision(substitute_name=None, substitute_module=None):
+    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.vision.c_transforms operator.
+
+    Args:
+        substitute_name (str, optional): The substitute name for deprecated operator.
+        substitute_module (str, optional): The substitute module for deprecated operator.
+    """
+    return deprecator_factory("1.8", "mindspore.dataset.vision.c_transforms", "mindspore.dataset.vision",
+                              substitute_name, substitute_module)
+
+
+def deprecated_py_vision(substitute_name=None, substitute_module=None):
+    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.vision.py_transforms operator.
+
+    Args:
+        substitute_name (str, optional): The substitute name for deprecated operator.
+        substitute_module (str, optional): The substitute module for deprecated operator.
+    """
+    return deprecator_factory("1.8", "mindspore.dataset.vision.py_transforms", "mindspore.dataset.vision",
+                              substitute_name, substitute_module)
