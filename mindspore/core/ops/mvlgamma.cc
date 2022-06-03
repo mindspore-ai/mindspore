@@ -14,34 +14,46 @@
  * limitations under the License.
  */
 
-#include <string>
+#include <algorithm>
 #include <set>
-
+#include <string>
 #include "ops/mvlgamma.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr MvlgammaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
-  return std::make_shared<abstract::Shape>(in_shape);
+  MS_EXCEPTION_IF_NULL(input_args[0]);
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  auto first_input_shape_min = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMinShape];
+  auto first_input_shape_max = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMaxShape];
+  if (first_input_shape_min.empty() || first_input_shape_max.empty()) {
+    return std::make_shared<abstract::Shape>(in_shape);
+  }
+  ShapeVector min_shape = {first_input_shape_min[0]};
+  ShapeVector max_shape = {first_input_shape_max[0]};
+  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
 }
 
-TypePtr MvlgammaInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto input_type = input_args[kInputIndex0]->BuildType();
+TypePtr MvlgammaInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto input_type = input_args[0]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, prim->name());
+  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, primitive->name());
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(Mvlgamma, BaseOperator);
+void Mvlgamma::Init(const int64_t p) { set_p(p); }
+
+void Mvlgamma::set_p(const int64_t p) { (void)this->AddAttr(kP, api::MakeValue(p)); }
+
+int64_t Mvlgamma::get_p() const { return GetValue<int64_t>(GetAttr(kP)); }
+
 AbstractBasePtr MvlgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -52,6 +64,7 @@ AbstractBasePtr MvlgammaInfer(const abstract::AnalysisEnginePtr &, const Primiti
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
+MIND_API_OPERATOR_IMPL(Mvlgamma, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Mvlgamma, prim::kPrimMvlgamma, MvlgammaInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

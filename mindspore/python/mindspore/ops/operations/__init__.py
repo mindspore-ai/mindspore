@@ -47,7 +47,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Stack, Unpack, Unsta
                         EmbeddingLookup, Unique, GatherD, Identity, Range, MaskedFill, MaskedSelect, SearchSorted,
                         TensorScatterUpdate, TensorScatterMax, TensorScatterMin, TensorScatterAdd, TensorScatterSub,
                         TensorScatterMul, TensorScatterDiv, ExtractVolumePatches, LowerBound,
-                        UpperBound, Cummax)
+                        UpperBound, Cummax, Mvlgamma)
 from .comm_ops import (AllGather, AllReduce, NeighborExchange, NeighborExchangeV2, AlltoAll, _AllSwap, ReduceScatter,
                        Broadcast,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
@@ -275,6 +275,7 @@ __all__ = [
     'Multinomial',
     'Gamma',
     'RandomGamma',
+    'Mvlgamma',
     'Poisson',
     'UniformInt',
     'UniformReal',

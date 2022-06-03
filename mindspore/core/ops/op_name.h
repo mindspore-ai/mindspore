@@ -157,6 +157,7 @@ constexpr auto kOutputPaddings = "output_paddings";
 constexpr auto kOutputType = "output_type";
 constexpr auto kOutIdx = "out_idx";
 constexpr auto kOutQuantized = "out_quantized";
+constexpr auto kMvlgammaP = "mvlgamma_p";
 constexpr auto kP = "p";
 constexpr auto kPad = "pad";
 constexpr auto kPadding = "padding";

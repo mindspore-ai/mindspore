@@ -16,9 +16,14 @@
 
 #ifndef MINDSPORE_CORE_OPS_MVLGAMMA_H_
 #define MINDSPORE_CORE_OPS_MVLGAMMA_H_
+#include <map>
+#include <string>
 #include <vector>
 #include <memory>
-
+#include "ops/primitive_c.h"
+#include "ops/op_utils.h"
+#include "abstract/abstract_value.h"
+#include "utils/check_convert_utils.h"
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -32,10 +37,15 @@ class MIND_API Mvlgamma : public BaseOperator {
   MIND_API_BASE_MEMBER(Mvlgamma);
   /// \brief Constructor.
   Mvlgamma() : BaseOperator(kNameMvlgamma) { InitIOName({"x"}, {"y"}); }
+  /// \brief Init.
+  void Init(const int64_t p = 0);
+  /// \brief Set p.
+  void set_p(const int64_t p);
+  int64_t get_p() const;
 };
 
 abstract::AbstractBasePtr MvlgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+                                        const std::vector<AbstractBasePtr> &input_args);
 using PrimMvlgammaPtr = std::shared_ptr<Mvlgamma>;
 }  // namespace ops
 }  // namespace mindspore
