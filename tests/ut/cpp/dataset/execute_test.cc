@@ -2885,3 +2885,20 @@ TEST_F(MindDataTestExecute, TestAdjustSaturationEager) {
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
+
+/// Feature: Posterize
+/// Description: Test executing Posterize op in eager mode 
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestPosterizeEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestPosterizeEager.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto posterize_op = vision::Posterize(1);
+
+  auto transform = Execute({decode, posterize_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}

@@ -254,7 +254,7 @@ def check_erase(method):
     return new_method
 
 
-def check_posterize(method):
+def check_random_posterize(method):
     """A wrapper that wraps a parameter checker around the original function(posterize operation)."""
 
     @wraps(method)
@@ -271,6 +271,19 @@ def check_posterize(method):
                 check_uint8(item, "bits")
             # also checks if min <= max
             check_range(bits, [1, 8])
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_posterize(method):
+    """A wrapper that wraps a parameter checker around the original function(posterize operation)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [bits], _ = parse_user_args(method, *args, **kwargs)
+        type_check(bits, (int,), "bits")
+        check_value(bits, [0, 8], "bits")
         return method(self, *args, **kwargs)
 
     return new_method

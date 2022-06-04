@@ -69,10 +69,10 @@ from .validators import check_adjust_brightness, check_adjust_gamma, check_adjus
     check_mix_up_batch_c, check_normalize, check_normalizepad, check_num_channels, check_pad, check_pad_to_size, \
     check_positive_degrees, check_posterize, check_prob, check_random_adjust_sharpness, check_random_affine, \
     check_random_auto_contrast, check_random_color_adjust, check_random_crop, check_random_erasing, \
-    check_random_perspective, check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, \
-    check_random_solarize, check_range, check_rescale, check_resize, check_resize_interpolation, check_rgb_to_hsv, \
-    check_rotate, check_slice_patches, check_solarize, check_ten_crop, check_trivial_augment_wide, \
-    check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
+    check_random_perspective, check_random_posterize, check_random_resize_crop, check_random_rotation, \
+    check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize, \
+    check_resize_interpolation, check_rgb_to_hsv, check_rotate, check_slice_patches, check_solarize, check_ten_crop, \
+    check_trivial_augment_wide, check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
@@ -1524,6 +1524,29 @@ class PadToSize(ImageTensorOperation):
         return cde.PadToSizeOperation(self.size, self.offset, self.fill_value, self.padding_mode)
 
 
+class Posterize(ImageTensorOperation):
+    """
+    Posterize an image by reducing the number of bits for each color channel.
+
+    Args:
+        bits (int): The number of bits to keep for each channel, should be in range of [0, 8].
+
+    Raises:
+        TypeError: If `bits` is not of type int.
+        ValueError: If `bits` is not in range [0, 8].
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+    """
+
+    @check_posterize
+    def __init__(self, bits):
+        super().__init__()
+        self.bits = bits
+        self.implementation = Implementation.C
+
+    def parse(self):
+        return cde.PosterizeOperation(self.bits)
+
+
 class RandomAdjustSharpness(ImageTensorOperation):
     """
     Randomly adjust the sharpness of the input image with a given probability.
@@ -2562,7 +2585,7 @@ class RandomPosterize(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
-    @check_posterize
+    @check_random_posterize
     def __init__(self, bits=(8, 8)):
         super().__init__()
         self.bits = bits

@@ -43,9 +43,9 @@ Status PosterizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
 
   cv::Mat output_img;
   CHECK_FAIL_RETURN_UNEXPECTED(in_image.depth() == CV_8U || in_image.depth() == CV_8S,
-                               "Posterize: data type of input image should be int, "
+                               "Posterize: data type of input image should be int8 or uint8, "
                                "but got " +
-                                 input->type().ToString());
+                                 input_cv->type().ToString());
   cv::LUT(in_image, lut_vector, output_img);
   std::shared_ptr<CVTensor> result_tensor;
 

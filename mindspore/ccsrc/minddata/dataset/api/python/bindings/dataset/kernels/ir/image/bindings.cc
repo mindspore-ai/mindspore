@@ -44,6 +44,7 @@
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_to_size_ir.h"
+#include "minddata/dataset/kernels/ir/vision/posterize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_adjust_sharpness_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_affine_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_auto_contrast_ir.h"
@@ -367,6 +368,17 @@ PYBIND_REGISTER(
         auto pad_to_size = std::make_shared<vision::PadToSizeOperation>(size, offset, fill_value, padding_mode);
         THROW_IF_ERROR(pad_to_size->ValidateParams());
         return pad_to_size;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  PosterizeOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::PosterizeOperation, TensorOperation, std::shared_ptr<vision::PosterizeOperation>>(
+      *m, "PosterizeOperation")
+      .def(py::init([](uint8_t bits) {
+        auto posterize = std::make_shared<vision::PosterizeOperation>(bits);
+        THROW_IF_ERROR(posterize->ValidateParams());
+        return posterize;
       }));
   }));
 
