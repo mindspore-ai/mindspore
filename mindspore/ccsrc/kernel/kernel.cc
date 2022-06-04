@@ -30,6 +30,40 @@ namespace mindspore {
 namespace kernel {
 constexpr int64_t kInvalidShape = -2;
 
+string KernelTensor::GetAbstractName() const {
+  if (tensor_info_.abstract_base == nullptr) {
+    return "null(no abstract base)";
+  }
+  return tensor_info_.abstract_base->ToString();
+}
+
+bool KernelTensor::IsDynamicShape() const {
+  auto shape = this->GetShapeVector();
+  return std::any_of(shape.cbegin(), shape.cend(), [](auto i) { return i < 0; });
+}
+
+size_t KernelTensor::GetSizeInBytes() const {
+  auto unit_size = GetTypeByte(TypeIdToType(GetDtype()));
+  auto shapes = this->GetShapeVector();
+  if (shapes.size() == 0) {
+    return unit_size;
+  }
+
+  auto cur_size = unit_size;
+  for (const auto val : shapes) {
+    if (val < 0) {
+      MS_LOG_EXCEPTION << "Invalid shape value " << val << " for calculating size. Abstract name: " << GetAbstractName()
+                       << ". Please contact MindSpore support.";
+    }
+    if (val == 0) {
+      MS_LOG_WARNING << "One dim of the shape is 0. Abstract name: " << GetAbstractName() << ".";
+    }
+    cur_size *= val;
+  }
+
+  return cur_size;
+}
+
 TypeId KernelTensor::GetDtype() const {
   if (tensor_info_.abstract_base == nullptr) {
     return TypeId::kTypeUnknown;
