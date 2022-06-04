@@ -37,6 +37,7 @@
 #include "runtime/graph_scheduler/actor/super_kernel_actor.h"
 #include "runtime/graph_scheduler/actor/output_actor.h"
 #include "runtime/graph_scheduler/actor/copy_actor.h"
+#include "runtime/graph_scheduler/actor/fusion/fusion_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/switch_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/gather_actor.h"
 #include "runtime/graph_scheduler/actor/control_flow/entrance_actor.h"
@@ -104,6 +105,7 @@ struct ActorSet {
   // No input kernel actors need be triggered specifically.
   std::vector<AbstractActorPtr> no_input_kernel_actors_;
   std::vector<CopyActorPtr> copy_actors_;
+  std::vector<FusionActorPtr> fusion_actors_;
   LoopCountActorPtr loop_count_actor_{nullptr};
   OutputActorPtr output_actor_{nullptr};
   ControlActorSetPtr control_actors_{nullptr};

@@ -34,13 +34,15 @@ namespace runtime {
 using mindspore::device::DeviceContext;
 
 // The flag of output data.
-constexpr int kOutputDataFalgInit = 0;
+constexpr int kOutputDataFlagInit = 0;
 // Indicates that the output data destination is stack actor, and the output data cannot be reused.
-constexpr int kOutputDataFalgToStack = 1;
+constexpr int kOutputDataFlagToStack = 1;
 // Indicates that the output data is the batch data, and send data in batches to increase the sending performance.
-constexpr int kOutputDataFalgBatch = 2;
+constexpr int kOutputDataFlagBatch = 2;
 // Indicates that the output data is the last data in the batch.
-constexpr int kOutputDataFalgLastBatch = 4;
+constexpr int kOutputDataFlagLastBatch = 4;
+// Indicates that the output data destination is the internal fusion actor, and uses the synchronous sending interface.
+constexpr int kOutputDataFlagToInternalFusion = 8;
 
 // The abstract common attributes of actors. The actor inheritance relationship:  OpActor --> AbstractActor -->
 // MemoryAwareActor --> DebugAwareActor --> KernelActor/DataSourceActor/CopyActor/LoopCountActor/OutputActor.
@@ -52,7 +54,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
         recorder_aid_(recorder_aid),
         input_datas_num_(0),
         input_controls_num_(0),
-        running_dependent_msg_num_(0) {}
+        running_dependent_msg_num_(0),
+        in_fusion_actor_{false} {}
   ~AbstractActor() override = default;
 
   bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
@@ -75,8 +78,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
   const std::vector<std::pair<size_t, AnfNodePtr>> &device_tensor_store_keys() const {
     return device_tensor_store_keys_;
   }
-  const std::vector<AID> &input_data_arrow_aids() const { return input_data_arrow_aids_; }
-  const std::vector<AID> &input_control_arrow_aids() const { return input_control_arrow_aids_; }
+  const std::vector<std::pair<AID, DataArrow *>> &input_data_arrow_aids() const { return input_data_arrow_aids_; }
+  const std::vector<std::pair<AID, ControlArrow *>> &input_control_arrow_aids() const {
+    return input_control_arrow_aids_;
+  }
   const std::map<size_t, std::vector<AnfNodeWeakPtr>> &internal_parameters() const { return internal_parameters_; }
   const mindspore::HashMap<std::string, std::vector<DataArrowPtr>> &batch_output_data_arrows() const {
     return batch_output_data_arrows_;
@@ -139,14 +144,17 @@ class AbstractActor : public OpActor<DeviceTensor> {
   std::map<size_t, std::vector<AnfNodeWeakPtr>> internal_parameters_;
 
   // The dependent input actors.
-  std::vector<AID> input_data_arrow_aids_;
-  std::vector<AID> input_control_arrow_aids_;
+  std::vector<std::pair<AID, DataArrow *>> input_data_arrow_aids_;
+  std::vector<std::pair<AID, ControlArrow *>> input_control_arrow_aids_;
   // The dependent inputs number.
   size_t input_datas_num_;
   size_t input_controls_num_;
 
   // The dependent messages number of actor running.
   int running_dependent_msg_num_;
+
+  // Indicates whether the actor is in fusion actor.
+  bool in_fusion_actor_;
 };
 
 using AbstractActorPtr = std::shared_ptr<AbstractActor>;

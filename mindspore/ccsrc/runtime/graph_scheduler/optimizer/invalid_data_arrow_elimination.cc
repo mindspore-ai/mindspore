@@ -56,9 +56,9 @@ void InvalidDataArrowElimination::Process(ActorSet *const actor_set, AbstractAct
   // The input_data_arrow_aids_ of exit actor will be changed in the ConvertDataArrowToControlArrow, so need copy.
   auto input_data_arrow_aids = exit_actor->input_data_arrow_aids();
   for (auto &input_data_arrow_aid : input_data_arrow_aids) {
-    auto input_actor = FetchActor(input_data_arrow_aid.Name());
+    auto input_actor = FetchActor(input_data_arrow_aid.first.Name());
     MS_EXCEPTION_IF_NULL(input_actor);
-    MS_EXCEPTION_IF_CHECK_FAIL((input_actor != nullptr), (input_data_arrow_aid.Name() + " is nullptr."));
+    MS_EXCEPTION_IF_CHECK_FAIL((input_actor != nullptr), (input_data_arrow_aid.first.Name() + " is nullptr."));
     // Only handle the kernel actor to kernel graph exit actor.
     if (input_actor->type() != KernelTransformType::kKernelActor) {
       continue;

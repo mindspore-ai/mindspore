@@ -34,7 +34,7 @@ class FusionActor : public AbstractActor {
   explicit FusionActor(const std::string &name) : AbstractActor(name, KernelTransformType::kFusionActor, nullptr) {}
   ~FusionActor() override = default;
 
-  const std::vector<AbstractActorPtr> &actors() const { return actors_; }
+  const mindspore::HashMap<std::string, AbstractActorPtr> &actors() const { return actors_; }
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
@@ -44,7 +44,7 @@ class FusionActor : public AbstractActor {
 
   // These actors are not spawned in the ActorMgr, so they do not participate in message interaction, but only internal
   // processing.
-  std::vector<AbstractActorPtr> actors_;
+  mindspore::HashMap<std::string, AbstractActorPtr> actors_;
 
   // std::pair<actor, input_index> used to find the mapping between fusion actor inputs and real actors inputs.
   std::vector<std::pair<AbstractActor *, size_t>> real_input_data_;

@@ -67,6 +67,7 @@ const char kOutputActorNameSuffix[] = "_OutputActor";
 const char kEntranceActorNameSuffix[] = "_EntranceActor";
 const char kExitActorNameSuffix[] = "_ExitActor";
 const char kStackActorNameSuffix[] = "_StackActor";
+const char kFusionActorNameSuffix[] = "_FusionActor";
 
 enum class KernelTransformType {
   kUnknown,
