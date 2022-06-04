@@ -2468,20 +2468,28 @@ class Tensor(Tensor_):
 
     def masked_fill(self, mask, value):
         """
-        Fills elements of self tensor with value where mask is True.
-        The shape of mask must be equal to the shape of the underlying tensor.
+        Fills elements of self tensor with value where mask is True. If `value` is a Tensor of shape :math:`(*B)`,
+        then self tensor shape should be :math:`(*B, *N)`, `mask` shape should be :math:`(*B, *M)`, where `*N` and
+        `*M` should be the same or broadcastable.
+
+        Note:
+            In Ascend, batch dimension input is not supported. Specifically, `value` is required to be equal to be a
+            0-dimensional Tensor or a float number.
 
         Args:
             mask (Tensor[bool]): The boolean mask.
-            value (Union[int, float]): The value to fill in with, which only supports a float or an int number.
+            value (Union[float, Tensor]): The value to fill in with, which dtype is the same as self.
 
         Returns:
             Tensor, has the same type and shape as self.
 
         Raises:
-            TypeError: If mask is not a tensor.
-            TypeError: If mask is not bool.
-            TypeError: If value is neither int nor float number.
+            TypeError: If `mask` is not a Tensor.
+            TypeError: If dtype of `mask` is not bool.
+            ValueError: If the shapes of self tensor and `mask` could not be broadcast.
+            TypeError: If dtype of self tensor or `value` is not one of float16, float32, int8, int32.
+            TypeError: If dtype of `value` is different from that of self.
+            TypeError: If `value` is neither float number nor Tensor.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -2496,13 +2504,11 @@ class Tensor(Tensor_):
             >>> print(a.masked_fill(mask, 0.0))
             [0. 1. 0. 0.]
         """
+        self._init_check()
         if not isinstance(mask, Tensor):
             raise TypeError("For 'Tensor.masked_fill', the type of the argument 'mask' must be Tensor, but "
                             "got {}.".format(type(mask)))
         validator.check_type_name('mask', mask.dtype, [mstype.bool_], "Tensor")
-        mask_shape = validator.infer_out_shape(self.shape, mask.shape)
-        mask = tensor_operator_registry.get('broadcast_to')(mask_shape)(mask)
-        validator.check_value_type('value', value, [int, float], "Tensor")
         return tensor_operator_registry.get("masked_fill")(self, mask, value)
 
     def ptp(self, axis=None, keepdims=False):

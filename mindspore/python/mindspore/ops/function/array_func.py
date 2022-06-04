@@ -2693,28 +2693,33 @@ def masked_select(x, mask):
     return masked_select_(x, mask)
 
 
-def masked_fill(x, mask, value):
+def masked_fill(input_x, mask, value):
     """
-    Fills elements of self tensor with value where mask is True.
+    Fills elements of Tensor with value where mask is True.
 
-    The shapes of `input` and `mask` need to be the same or broadcast.
+    The shapes of `input_x` and `mask` need to be the same or broadcastable. If `value` is a Tensor of shape
+    :math:`(*B)`, then the `input_x` shape should be :math:`(*B, *N)`, `mask` shape should be :math:`(*B, *M)`,
+    where `*N` and `*M` should be the same or broadcastable.
+
+    Note:
+        In Ascend, batch dimension input is not supported. Specifically, `value` is required to be equal to be a
+        0-dimensional Tensor or a float number.
 
     Args:
-        input (Tensor): The source tensor whose data type is one of float16, float32, int8, int32.
+        input_x (Tensor): The source Tensor whose data type is one of float16, float32, int8, int32.
         mask (Tensor[bool]): The boolean mask.
-        value (Union[float, Tensor]): The value to fill in with, which only supports
-          a 0-dimensional tensor or a float number.
+        value (Union[float, Tensor]): The value to fill in with, which dtype is the same as `input_x`.
 
     Returns:
-        Tensor, has the same type and shape as `input`.
+        Tensor, has the same type and shape as `input_x`.
 
     Raises:
-        TypeError: If `input` or `mask` is not a tensor.
-        TypeError: If `value` is neither float number nor tensor.
-        TypeError: If dtype of `input` or `value` is not one of float16, float32, int8, int32.
-        TypeError: If dtype of `value` is different from that of `input`.
         TypeError: If dtype of `mask` is not bool.
-        ValueError: If the shapes of `input` and `mask` could not be broadcast.
+        TypeError: If `input_x` or `mask` is not a Tensor.
+        ValueError: If the shapes of `input_x` and `mask` could not be broadcast.
+        TypeError: If dtype of `input_x` or `value` is not one of float16, float32, int8, int32.
+        TypeError: If dtype of `value` is different from that of `input_x`.
+        TypeError: If `value` is neither float number nor Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2726,7 +2731,7 @@ def masked_fill(x, mask, value):
         >>> print(output)
         [0.5 0.5 3.  0.5]
     """
-    return masked_fill_(x, mask, value)
+    return masked_fill_(input_x, mask, value)
 
 
 def diag(input_x):

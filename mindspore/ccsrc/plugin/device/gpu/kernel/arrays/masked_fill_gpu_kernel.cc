@@ -134,9 +134,9 @@ int MaskedFillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
                       << MAX_DIMS << ", but got input: " << input_shape.size() << ", mask: " << mask_shape.size();
   }
   size_t batch_size = value_shape.size();
-  if (input_shape.size() <= batch_size || mask_shape.size() <= batch_size) {
+  if (input_shape.size() < batch_size || mask_shape.size() < batch_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of input and mask should be greater than value's, but got input: "
+                      << "', the dimension of input and mask should not be less than value's, but got input: "
                       << input_shape.size() << ", mask: " << mask_shape.size() << ", value:" << value_shape.size();
   }
   for (size_t i = 0; i < batch_size; i++) {

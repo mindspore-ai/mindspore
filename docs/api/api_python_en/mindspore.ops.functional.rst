@@ -305,6 +305,7 @@ Array Operation
     mindspore.ops.gather_d
     mindspore.ops.gather_nd
     mindspore.ops.intopk
+    mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
     mindspore.ops.matrix_diag
