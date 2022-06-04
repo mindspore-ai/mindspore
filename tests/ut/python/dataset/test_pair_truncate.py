@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,6 +31,11 @@ def compare(in1, in2, length, out1, out2):
 
 
 def test_callable():
+    """
+    Feature: TruncateSequencePair op
+    Description: Test TruncateSequencePair op using an array of arrays or multiple arrays as the input
+    Expectation: Output is equal to the expected output
+    """
     op = text.TruncateSequencePair(3)
     data = [["1", "2", "3"], ["4", "5"]]
     result_text = op(*data)
@@ -42,6 +47,11 @@ def test_callable():
 
 
 def test_basics():
+    """
+    Feature: TruncateSequencePair op
+    Description: Test TruncateSequencePair op basic usage
+    Expectation: Output is equal to the expected output
+    """
     compare(in1=[1, 2, 3], in2=[4, 5], length=4, out1=[1, 2], out2=[4, 5])
     compare(in1=[1, 2], in2=[4, 5], length=4, out1=[1, 2], out2=[4, 5])
     compare(in1=[1], in2=[4], length=4, out1=[1], out2=[4])
@@ -50,6 +60,11 @@ def test_basics():
 
 
 def test_basics_odd():
+    """
+    Feature: TruncateSequencePair op
+    Description: Test TruncateSequencePair op basic usage when the length is an odd number > 1
+    Expectation: Output is equal to the expected output
+    """
     compare(in1=[1, 2, 3], in2=[4, 5], length=3, out1=[1, 2], out2=[4])
     compare(in1=[1, 2], in2=[4, 5], length=3, out1=[1, 2], out2=[4])
     compare(in1=[1], in2=[4], length=5, out1=[1], out2=[4])
@@ -58,6 +73,11 @@ def test_basics_odd():
 
 
 def test_basics_str():
+    """
+    Feature: TruncateSequencePair op
+    Description: Test TruncateSequencePair op basic usage when the inputs are array of strings
+    Expectation: Output is equal to the expected output
+    """
     compare(in1=[b"1", b"2", b"3"], in2=[4, 5], length=4, out1=[b"1", b"2"], out2=[4, 5])
     compare(in1=[b"1", b"2"], in2=[b"4", b"5"], length=4, out1=[b"1", b"2"], out2=[b"4", b"5"])
     compare(in1=[b"1"], in2=[4], length=4, out1=[b"1"], out2=[4])
@@ -66,6 +86,11 @@ def test_basics_str():
 
 
 def test_exceptions():
+    """
+    Feature: TruncateSequencePair op
+    Description: Test TruncateSequencePair op with length=1
+    Expectation: Output is equal to the expected output
+    """
     compare(in1=[1, 2, 3, 4], in2=[5, 6, 7, 8], length=1, out1=[1], out2=[])
 
 

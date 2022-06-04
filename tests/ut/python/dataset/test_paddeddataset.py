@@ -1,3 +1,18 @@
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from io import BytesIO
 import copy
 import os
@@ -39,13 +54,18 @@ def generator_30():
 
 
 def test_TFRecord_Padded():
-    DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
-    SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+    """
+    Feature: PaddedDataset
+    Description: Test padding PaddedDataset on TFRecordDataset
+    Expectation: Output is equal to the expected output
+    """
+    data_dir = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    schema_dir = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
     result_list = [[159109, 2], [192607, 3], [179251, 4], [1, 5]]
     verify_list = []
     shard_num = 4
     for i in range(shard_num):
-        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"],
+        data = ds.TFRecordDataset(data_dir, schema_dir, columns_list=["image"],
                                   shuffle=False, shard_equal_rows=True)
 
         padded_samples = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(2, np.uint8)},
@@ -64,6 +84,11 @@ def test_TFRecord_Padded():
 
 
 def test_GeneratorDataSet_Padded():
+    """
+    Feature: PaddedDataset
+    Description: Test padding GeneratorDataset with another GeneratorDataset
+    Expectation: Output is equal to the expected output
+    """
     result_list = []
     for i in range(10):
         tem_list = []
@@ -88,6 +113,11 @@ def test_GeneratorDataSet_Padded():
 
 
 def test_Reapeat_afterPadded():
+    """
+    Feature: PaddedDataset
+    Description: Test padding PaddedDataset with another PaddedDataset
+    Expectation: Output is equal to the expected output
+    """
     result_list = [1, 3, 5, 7]
     verify_list = []
 
@@ -112,6 +142,11 @@ def test_Reapeat_afterPadded():
 
 
 def test_bath_afterPadded():
+    """
+    Feature: PaddedDataset
+    Description: Test padding PaddedDataset with another PaddedDataset followed by batch op
+    Expectation: Output is equal to the expected output
+    """
     data1 = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(1, np.uint8)},
              {'image': np.zeros(1, np.uint8)}, {'image': np.zeros(1, np.uint8)},
              {'image': np.zeros(1, np.uint8)}]
@@ -130,6 +165,11 @@ def test_bath_afterPadded():
 
 
 def test_Unevenly_distributed():
+    """
+    Feature: PaddedDataset
+    Description: Test padding PaddedDataset with another PaddedDataset that is unevenly distributed
+    Expectation: Output is equal to the expected output
+    """
     result_list = [[1, 4, 7], [2, 5, 8], [3, 6]]
     verify_list = []
 
@@ -156,6 +196,11 @@ def test_Unevenly_distributed():
 
 
 def test_three_datasets_connected():
+    """
+    Feature: PaddedDataset
+    Description: Test padding 3 connected GeneratorDatasets
+    Expectation: Output is equal to the expected output
+    """
     result_list = []
     for i in range(10):
         tem_list = []
@@ -182,6 +227,11 @@ def test_three_datasets_connected():
 
 
 def test_raise_error():
+    """
+    Feature: PaddedDataset
+    Description: Test padding a PaddedDataset after a batch op with a PaddedDataset, then apply sampler op
+    Expectation: Correct error is raised as expected
+    """
     data1 = [{'image': np.zeros(0, np.uint8)}, {'image': np.zeros(0, np.uint8)},
              {'image': np.zeros(0, np.uint8)}, {'image': np.zeros(0, np.uint8)},
              {'image': np.zeros(0, np.uint8)}]
@@ -214,8 +264,13 @@ def test_raise_error():
         assert excinfo.type == 'ValueError'
 
 def test_imagefolder_error():
-    DATA_DIR = "../data/dataset/testPK/data"
-    data = ds.ImageFolderDataset(DATA_DIR, num_samples=14)
+    """
+    Feature: PaddedDataset
+    Description: Test padding an ImageFolderDataset with num_samples with PaddedDataset
+    Expectation: Error is raised as expected
+    """
+    data_dir = "../data/dataset/testPK/data"
+    data = ds.ImageFolderDataset(data_dir, num_samples=14)
 
     data1 = [{'image': np.zeros(1, np.uint8), 'label': np.array(0, np.int32)},
              {'image': np.zeros(2, np.uint8), 'label': np.array(1, np.int32)},
@@ -232,8 +287,13 @@ def test_imagefolder_error():
         assert excinfo.type == 'ValueError'
 
 def test_imagefolder_padded():
-    DATA_DIR = "../data/dataset/testPK/data"
-    data = ds.ImageFolderDataset(DATA_DIR)
+    """
+    Feature: PaddedDataset
+    Description: Test padding an ImageFolderDataset without num_samples with PaddedDataset
+    Expectation: Output is equal to the expected output
+    """
+    data_dir = "../data/dataset/testPK/data"
+    data = ds.ImageFolderDataset(data_dir)
 
     data1 = [{'image': np.zeros(1, np.uint8), 'label': np.array(0, np.int32)},
              {'image': np.zeros(2, np.uint8), 'label': np.array(1, np.int32)},
@@ -256,11 +316,16 @@ def test_imagefolder_padded():
 
 
 def test_imagefolder_padded_with_decode():
+    """
+    Feature: PaddedDataset
+    Description: Test padding an ImageFolderDataset with PaddedDataset followed by a Decode op
+    Expectation: Output is equal to the expected output
+    """
     num_shards = 5
     count = 0
     for shard_id in range(num_shards):
-        DATA_DIR = "../data/dataset/testPK/data"
-        data = ds.ImageFolderDataset(DATA_DIR)
+        data_dir = "../data/dataset/testPK/data"
+        data = ds.ImageFolderDataset(data_dir)
 
         white_io = BytesIO()
         Image.new('RGB', (224, 224), (255, 255, 255)).save(white_io, 'JPEG')
@@ -285,11 +350,16 @@ def test_imagefolder_padded_with_decode():
 
 
 def test_imagefolder_padded_with_decode_and_get_dataset_size():
+    """
+    Feature: PaddedDataset
+    Description: Test padding an ImageFolderDataset with PaddedDataset followed by get_dataset_size and a Decode op
+    Expectation: Output is equal to the expected output
+    """
     num_shards = 5
     count = 0
     for shard_id in range(num_shards):
-        DATA_DIR = "../data/dataset/testPK/data"
-        data = ds.ImageFolderDataset(DATA_DIR)
+        data_dir = "../data/dataset/testPK/data"
+        data = ds.ImageFolderDataset(data_dir)
 
         white_io = BytesIO()
         Image.new('RGB', (224, 224), (255, 255, 255)).save(white_io, 'JPEG')
@@ -316,6 +386,12 @@ def test_imagefolder_padded_with_decode_and_get_dataset_size():
 
 
 def test_more_shard_padded():
+    """
+    Feature: PaddedDataset
+    Description: Test padding GeneratorDataset with another GeneratorDataset and
+        PaddedDataset with another PaddedDataset with larger num_shards used
+    Expectation: Output is equal to the expected output
+    """
     result_list = []
     for i in range(8):
         result_list.append(1)
@@ -429,6 +505,11 @@ def add_and_remove_cv_file():
 
 
 def test_Mindrecord_Padded(remove_mindrecord_file):
+    """
+    Feature: PaddedDataset
+    Description: Test padding an MindDataset with PaddedDataset
+    Expectation: Output is equal to the expected output
+    """
     result_list = []
     verify_list = [[1, 2], [3, 4], [5, 11], [6, 12], [7, 13], [8, 14], [9], [10]]
     num_readers = 4
@@ -453,7 +534,9 @@ def test_Mindrecord_Padded(remove_mindrecord_file):
 
 def test_clue_padded_and_skip_with_0_samples():
     """
-    Test num_samples param of CLUE dataset
+    Feature: PaddedDataset
+    Description: Test padding a CLUEDataset with PaddedDataset with and without samples
+    Expectation: Output is equal to the expected output except when dataset has no samples, in which error is raised
     """
     TRAIN_FILE = '../data/dataset/testCLUE/afqmc/train.json'
 
@@ -494,6 +577,11 @@ def test_clue_padded_and_skip_with_0_samples():
 
 
 def test_celeba_padded():
+    """
+    Feature: PaddedDataset
+    Description: Test padding an CelebADataset with PaddedDataset
+    Expectation: Output is equal to the expected output
+    """
     data = ds.CelebADataset("../data/dataset/testCelebAData/")
 
     padded_samples = [{'image': np.zeros(1, np.uint8), 'attr': np.zeros(1, np.uint32)}]
@@ -517,6 +605,6 @@ if __name__ == '__main__':
     test_Unevenly_distributed()
     test_three_datasets_connected()
     test_raise_error()
-    test_imagefolden_padded()
+    test_imagefolder_padded()
     test_more_shard_padded()
     test_Mindrecord_Padded(add_and_remove_cv_file)

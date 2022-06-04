@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,11 @@ import mindspore.dataset.transforms as data_trans
 
 
 def test_fillop_basic():
+    """
+    Feature: Fill op
+    Description: Test Fill op basic usage (positive int onto an array of uint8)
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array([4, 5, 6, 7], dtype=np.uint8),)
 
@@ -35,6 +40,11 @@ def test_fillop_basic():
 
 
 def test_fillop_down_type_cast():
+    """
+    Feature: Fill op
+    Description: Test Fill op with a negative number onto an array of unsigned int8
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array([4, 5, 6, 7], dtype=np.uint8),)
 
@@ -48,6 +58,11 @@ def test_fillop_down_type_cast():
 
 
 def test_fillop_up_type_cast():
+    """
+    Feature: Fill op
+    Description: Test Fill op with a int onto an array of floats
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array([4, 5, 6, 7], dtype=np.float),)
 
@@ -61,6 +76,11 @@ def test_fillop_up_type_cast():
 
 
 def test_fillop_string():
+    """
+    Feature: Fill op
+    Description: Test Fill op with a string onto an array of strings
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array(["45555", "45555"], dtype='S'),)
 
@@ -74,6 +94,11 @@ def test_fillop_string():
 
 
 def test_fillop_bytes():
+    """
+    Feature: Fill op
+    Description: Test Fill op with bytes onto an array of strings
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array(["A", "B", "C"], dtype='S'),)
 
@@ -87,6 +112,11 @@ def test_fillop_bytes():
 
 
 def test_fillop_error_handling():
+    """
+    Feature: Fill op
+    Description: Test Fill op with a mismatch data type (string onto an array of ints)
+    Expectation: Error is raised as expected
+    """
     def gen():
         yield (np.array([4, 4, 4, 4]),)
 

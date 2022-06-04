@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,8 +22,12 @@ DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-# test for predicate
 def test_diff_predicate_func():
+    """
+    Feature: Filter op
+    Description: Test Filter op using predicate function as an arg
+    Expectation: Output is equal to the expected output
+    """
     def test_filter(predicate_func):
         transforms = [
             cde.Decode(),
@@ -58,8 +62,12 @@ def generator_1d():
         yield (np.array(i),)
 
 
-# test with GeneratorDataset
 def test_filter_by_generator_with_no():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ["data"])
     dataset_f = dataset.filter(predicate=lambda data: data < 11, num_parallel_workers=4)
     num_iter = 0
@@ -69,8 +77,12 @@ def test_filter_by_generator_with_no():
         num_iter += 1
 
 
-# test with repeatOp before
 def test_filter_by_generator_with_repeat():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Repeat op before
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ["data"])
     dataset_r = dataset.repeat(4)
     dataset_f = dataset_r.filter(predicate=filter_func_ge, num_parallel_workers=4)
@@ -87,8 +99,12 @@ def test_filter_by_generator_with_repeat():
             assert ret_data[index] == expected_rs[ii]
 
 
-# test with repeatOp after
 def test_filter_by_generator_with_repeat_after():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Repeat op after
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ["data"])
     dataset_f = dataset.filter(predicate=filter_func_ge, num_parallel_workers=4)
     dataset_r = dataset_f.repeat(4)
@@ -113,8 +129,12 @@ def filter_func_batch_after(data):
     return data <= 20
 
 
-# test with batchOp before
 def test_filter_by_generator_with_batch():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Batch op before
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ["data"])
     dataset_b = dataset.batch(4)
     dataset_f = dataset_b.filter(predicate=filter_func_batch, num_parallel_workers=4)
@@ -129,8 +149,12 @@ def test_filter_by_generator_with_batch():
     assert ret_data[2][0] == 8
 
 
-# test with batchOp after
 def test_filter_by_generator_with_batch_after():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Batch op after
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ["data"])
     dataset_f = dataset.filter(predicate=filter_func_batch_after, num_parallel_workers=4)
     dataset_b = dataset_f.batch(4)
@@ -149,8 +173,12 @@ def filter_func_shuffle(data):
     return data <= 20
 
 
-# test with batchOp before
 def test_filter_by_generator_with_shuffle():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Shuffle op before
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ["data"])
     dataset_s = dataset.shuffle(4)
     dataset_f = dataset_s.filter(predicate=filter_func_shuffle, num_parallel_workers=4)
@@ -164,8 +192,12 @@ def filter_func_shuffle_after(data):
     return data <= 20
 
 
-# test with batchOp after
 def test_filter_by_generator_with_shuffle_after():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Shuffle op after
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ["data"])
     dataset_f = dataset.filter(predicate=filter_func_shuffle_after, num_parallel_workers=4)
     dataset_s = dataset_f.shuffle(4)
@@ -194,8 +226,12 @@ def filter_func_zip_after(data1):
     return data1 <= 20
 
 
-# test with zipOp before
 def test_filter_by_generator_with_zip():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Zip op before
+    Expectation: Output is equal to the expected output
+    """
     dataset1 = ds.GeneratorDataset(generator_1d_zip1, ["data1"])
     dataset2 = ds.GeneratorDataset(generator_1d_zip2, ["data2"])
     dataz = ds.zip((dataset1, dataset2))
@@ -212,8 +248,12 @@ def test_filter_by_generator_with_zip():
     assert ret_data[5]["data2"] == 105
 
 
-# test with zipOp after
 def test_filter_by_generator_with_zip_after():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Zip op after
+    Expectation: Output is equal to the expected output
+    """
     dataset1 = ds.GeneratorDataset(generator_1d_zip1, ["data1"])
     dataset2 = ds.GeneratorDataset(generator_1d_zip1, ["data2"])
     dt1 = dataset1.filter(predicate=filter_func_zip_after, num_parallel_workers=4)
@@ -258,8 +298,12 @@ def func_map_part(data_col1):
     return data_col1
 
 
-# test with  map
 def test_filter_by_generator_with_map_all_col():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Map op before and Filter op is applied to all input columns
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_mc(12), ["col1", "col2"])
     dataset_map = dataset.map(operations=func_map_part, input_columns=["col1"], output_columns=["col1"])
     # dataset_map = dataset.map(operations=func_map_part)
@@ -274,8 +318,13 @@ def test_filter_by_generator_with_map_all_col():
     assert ret_data[1] == 1
 
 
-# test with  map
 def test_filter_by_generator_with_map_part_col():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Map op before.
+        Filter op is only applied partially to the input columns
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_mc(12), ["col1", "col2"])
     dataset_map = dataset.map(operations=func_map_part, input_columns=["col1"], output_columns=["out1"])
 
@@ -294,8 +343,12 @@ def filter_func_rename(data):
     return data > 8
 
 
-# test with  rename before
 def test_filter_by_generator_with_rename():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Rename op before
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ["data"])
     dataset_b = dataset.rename(input_columns=["data"], output_columns=["col1"])
     dataset_f = dataset_b.filter(predicate=filter_func_rename, num_parallel_workers=4)
@@ -309,7 +362,6 @@ def test_filter_by_generator_with_rename():
     assert ret_data[54] == 63
 
 
-# test input_column
 def filter_func_input_column1(col1, col2):
     _ = col2
     return col1[0] < 8
@@ -324,8 +376,12 @@ def filter_func_input_column3(col1):
     return True
 
 
-# test with  input_columns
 def test_filter_by_generator_with_input_column():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with input columns
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_mc(64), ["col1", "col2"])
     dataset_map = dataset.map(operations=func_map_part, input_columns=["col1"], output_columns=["out1"])
     dataset_f1 = dataset_map.filter(input_columns=["out1", "col2"], predicate=filter_func_input_column1,
@@ -343,7 +399,6 @@ def test_filter_by_generator_with_input_column():
     assert ret_data[7] == 7
 
 
-# test kFilterPartial
 def generator_mc_p0(maxid=20):
     for i in range(maxid):
         yield (np.array([i]), np.array([i + 100]))
@@ -362,8 +417,13 @@ def filter_func_Partial_0(col1, col2, col3, col4):
     return True
 
 
-# test with  row_data_buffer > 1
 def test_filter_by_generator_Partial0():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Zip op before.
+        Filter op is only partially applied on the input columns
+    Expectation: Output is equal to the expected output
+    """
     dataset1 = ds.GeneratorDataset(source=generator_mc_p0(), column_names=["col1", "col2"])
     dataset2 = ds.GeneratorDataset(source=generator_mc_p1(), column_names=["col3", "col4"])
     dataset_zip = ds.zip((dataset1, dataset2))
@@ -375,8 +435,13 @@ def test_filter_by_generator_Partial0():
     assert ret[6] == 12
 
 
-# test with  row_data_buffer > 1
 def test_filter_by_generator_Partial1():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Zip op before and Map op after.
+        Filter op is only partially applied on the input columns
+    Expectation: Output is equal to the expected output
+    """
     dataset1 = ds.GeneratorDataset(source=generator_mc_p0(), column_names=["col1", "col2"])
     dataset2 = ds.GeneratorDataset(source=generator_mc_p1(), column_names=["col3", "col4"])
     dataset_zip = ds.zip((dataset1, dataset2))
@@ -389,8 +454,13 @@ def test_filter_by_generator_Partial1():
     assert ret[6] == 412
 
 
-# test with  row_data_buffer > 1
 def test_filter_by_generator_Partial2():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Zip op after and Map op after the Zip op.
+        Filter op is only partially applied on the input columns
+    Expectation: Output is equal to the expected output
+    """
     dataset1 = ds.GeneratorDataset(source=generator_mc_p0(), column_names=["col1", "col2"])
     dataset2 = ds.GeneratorDataset(source=generator_mc_p1(), column_names=["col3", "col4"])
 
@@ -421,8 +491,13 @@ def generator_big(maxid=20):
         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]]))
 
 
-# test with  row_data_buffer > 1
 def test_filter_by_generator_Partial():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Shuffle op before.
+        Filter op is only partially applied on the input columns
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(source=(lambda: generator_mc(99)), column_names=["col1", "col2"])
     dataset_s = dataset.shuffle(4)
     dataset_f1 = dataset_s.filter(input_columns=["col1", "col2"], predicate=filter_func_Partial, num_parallel_workers=1)
@@ -436,8 +511,12 @@ def filter_func_cifar(col1, col2):
     return col2 % 3 == 0
 
 
-# test with  cifar10
 def test_filte_case_dataset_cifar10():
+    """
+    Feature: Filter op
+    Description: Test Filter op using Cifar10Dataset
+    Expectation: Output is equal to the expected output
+    """
     DATA_DIR_10 = "../data/dataset/testCifar10Data"
     dataset_c = ds.Cifar10Dataset(dataset_dir=DATA_DIR_10, num_samples=100000, shuffle=False)
     dataset_f1 = dataset_c.filter(input_columns=["image", "label"], predicate=filter_func_cifar, num_parallel_workers=1)
@@ -445,8 +524,6 @@ def test_filte_case_dataset_cifar10():
         # in this example, each dictionary has keys "image" and "label"
         assert item["label"] % 3 == 0
 
-
-# column id sort
 
 def generator_sort1(maxid=20):
     for i in range(maxid):
@@ -468,6 +545,11 @@ def filter_func_map_sort(col1, col2, col3):
 
 
 def test_filter_by_generator_with_map_all_sort():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with Zip op before, Filter op is applied to all input columns
+    Expectation: Output is equal to the expected output
+    """
     dataset1 = ds.GeneratorDataset(generator_sort1(10), ["col1", "col2", "col3"])
     dataset2 = ds.GeneratorDataset(generator_sort2(10), ["col4 ", "col5", "col6"])
 
@@ -485,6 +567,11 @@ def test_filter_by_generator_with_map_all_sort():
 
 
 def test_filter_by_generator_get_dataset_size():
+    """
+    Feature: Filter op
+    Description: Test Filter op using GeneratorDataset with get_dataset_size after
+    Expectation: Output is equal to the expected output
+    """
     dataset = ds.GeneratorDataset(generator_1d, ["data"])
     dataset = dataset.filter(predicate=filter_func_shuffle_after, num_parallel_workers=4)
     data_sie = dataset.get_dataset_size()

@@ -25,6 +25,11 @@ from util import dataset_equal
 # via the following lookup table (dict){(83554, 0): 0, (54214, 0): 1, (54214, 1): 2, (65512, 0): 3, (64631, 1): 4}
 
 def test_sequential_sampler(print_res=False):
+    """
+    Feature: SequentialSampler op
+    Description: Test SequentialSampler op with various num_samples and num_repeats args combinations
+    Expectation: Output is equal to the expected output
+    """
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
@@ -48,6 +53,11 @@ def test_sequential_sampler(print_res=False):
 
 
 def test_random_sampler(print_res=False):
+    """
+    Feature: RandomSampler op
+    Description: Test RandomSampler with various replacement, num_samples, and num_repeats args combinations
+    Expectation: Output is equal to the expected output
+    """
     ds.config.set_seed(1234)
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
@@ -72,6 +82,11 @@ def test_random_sampler(print_res=False):
 
 
 def test_random_sampler_multi_iter(print_res=False):
+    """
+    Feature: RandomSampler op
+    Description: Test RandomSampler with multiple iteration based on num_repeats
+    Expectation: Output is equal to the expected output
+    """
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
@@ -93,12 +108,22 @@ def test_random_sampler_multi_iter(print_res=False):
 
 
 def test_sampler_py_api():
+    """
+    Feature: Sampler op
+    Description: Test add_child op of a Sampler op to a Sampler op
+    Expectation: Runs successfully
+    """
     sampler = ds.SequentialSampler().parse()
     sampler1 = ds.RandomSampler().parse()
     sampler1.add_child(sampler)
 
 
 def test_python_sampler():
+    """
+    Feature: Python Sampler op
+    Description: Test Python Sampler op with and without inheritance
+    Expectation: Output is equal to the expected output
+    """
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
@@ -162,6 +187,11 @@ def test_python_sampler():
 
 
 def test_sequential_sampler2():
+    """
+    Feature: SequentialSampler op
+    Description: Test SequentialSampler op with various start_index and num_samples args combinations
+    Expectation: Output is equal to the expected output
+    """
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
@@ -188,6 +218,11 @@ def test_sequential_sampler2():
 
 
 def test_subset_sampler():
+    """
+    Feature: SubsetSampler op
+    Description: Test SubsetSampler op with various indices and num_samples args combinations including invalid ones
+    Expectation: Output is equal to the expected output when input is valid, otherwise exception is raised
+    """
     def test_config(indices, num_samples=None, exception_msg=None):
         def pipeline():
             sampler = ds.SubsetSampler(indices, num_samples)
@@ -245,6 +280,11 @@ def test_subset_sampler():
 
 
 def test_sampler_chain():
+    """
+    Feature: Chained Sampler
+    Description: ManifestDataset with sampler chain; add SequentialSampler as a child for DistributedSampler
+    Expectation: Correct error is raised as expected
+    """
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
@@ -279,6 +319,12 @@ def test_sampler_chain():
 
 
 def test_add_sampler_invalid_input():
+    """
+    Feature: Sampler op
+    Description: Test use_sampler op when the arg is not an instance of a sample and
+        another separate case when num_samples and sampler are specified at the same time in dataset arg
+    Expectation: Correct error is raised as expected
+    """
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     _ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
     data1 = ds.ManifestDataset(manifest_file)
@@ -298,12 +344,22 @@ def test_add_sampler_invalid_input():
 
 
 def test_distributed_sampler_invalid_offset():
+    """
+    Feature: DistributedSampler op
+    Description: Test DistributedSampler op when offset is more than num_shards
+    Expectation: Error is raised as expected
+    """
     with pytest.raises(RuntimeError) as info:
         _ = ds.DistributedSampler(num_shards=4, shard_id=0, shuffle=False, num_samples=None, offset=5).parse()
     assert "DistributedSampler: offset must be no more than num_shards(4)" in str(info.value)
 
 
 def test_sampler_list():
+    """
+    Feature: Sampler op
+    Description: Test various sampler args (int and not int) in ImageFolderDataset
+    Expectation: Output is equal to the expected output when sampler has data type int, otherwise exception is raised
+    """
     data1 = ds.ImageFolderDataset("../data/dataset/testPK/data", sampler=[1, 3, 5])
     data21 = ds.ImageFolderDataset("../data/dataset/testPK/data", shuffle=False).take(2).skip(1)
     data22 = ds.ImageFolderDataset("../data/dataset/testPK/data", shuffle=False).take(4).skip(3)

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,6 +74,12 @@ def split_with_invalid_inputs(d):
 
 
 def test_unmappable_invalid_input():
+    """
+    Feature: Split op
+    Description: Test split op using unmappable dataset (TextFileDataset)
+        with various invalid inputs and applying split op on sharded dataset
+    Expectation: Correct error is raised as expected
+    """
     d = ds.TextFileDataset(text_file_dataset_path)
     split_with_invalid_inputs(d)
 
@@ -84,6 +90,12 @@ def test_unmappable_invalid_input():
 
 
 def test_unmappable_split():
+    """
+    Feature: Split op
+    Description: Test split op using unmappable dataset (TextFileDataset)
+        with absolute rows, exact percentages, and fuzzy percentages as input
+    Expectation: Output is equal to the expected output
+    """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
 
     d = ds.TextFileDataset(text_file_dataset_path, shuffle=False)
@@ -133,6 +145,11 @@ def test_unmappable_split():
 
 
 def test_unmappable_randomize_deterministic():
+    """
+    Feature: Split op
+    Description: Test split op using unmappable dataset (TextFileDataset) with randomization
+    Expectation: Output is equal to the expected output
+    """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
 
     # the labels outputted by ShuffleOp for seed 53 is [0, 2, 1, 4, 3]
@@ -159,6 +176,11 @@ def test_unmappable_randomize_deterministic():
 
 
 def test_unmappable_randomize_repeatable():
+    """
+    Feature: Split op
+    Description: Test split op using unmappable dataset (TextFileDataset) with randomization followed by repeat op
+    Expectation: Output is equal to the expected output
+    """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
 
     # the labels outputted by ShuffleOp for seed 53 is [0, 2, 1, 4, 3]
@@ -188,6 +210,11 @@ def test_unmappable_randomize_repeatable():
 
 
 def test_unmappable_get_dataset_size():
+    """
+    Feature: Split op
+    Description: Test split op using unmappable dataset (TextFileDataset) followed by get_dataset_size
+    Expectation: Output is equal to the expected output
+    """
     d = ds.TextFileDataset(text_file_dataset_path, shuffle=False)
     s1, s2 = d.split([0.8, 0.2])
 
@@ -197,6 +224,12 @@ def test_unmappable_get_dataset_size():
 
 
 def test_unmappable_multi_split():
+    """
+    Feature: Split op
+    Description: Test split op using unmappable dataset (TextFileDataset)
+        with randomization followed by deterministic split or another randomized split
+    Expectation: Output is equal to the expected output
+    """
     original_num_parallel_workers = config_get_set_num_parallel_workers(4)
 
     # the labels outputted by ShuffleOp for seed 53 is [0, 2, 1, 4, 3]
@@ -268,6 +301,12 @@ def test_unmappable_multi_split():
 
 
 def test_mappable_invalid_input():
+    """
+    Feature: Split op
+    Description: Test split op using mappable dataset (ManifestDataset) with invalid inputs and
+        applying split op on sharded dataset
+    Expectation: Error is raised as expected
+    """
     d = ds.ManifestDataset(manifest_file)
     split_with_invalid_inputs(d)
 
@@ -278,6 +317,12 @@ def test_mappable_invalid_input():
 
 
 def test_mappable_split_general():
+    """
+    Feature: Split op
+    Description: Test split op using mappable dataset (ManifestDataset)
+        with absolute rows, exact percentages, and fuzzy percentages
+    Expectation: Output is equal to the expected output
+    """
     d = ds.ManifestDataset(manifest_file, shuffle=False)
     d = d.take(5)
 
@@ -286,11 +331,11 @@ def test_mappable_split_general():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s1_output == [0, 1, 2, 3]
     assert s2_output == [4]
@@ -300,11 +345,11 @@ def test_mappable_split_general():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s1_output == [0, 1, 2, 3]
     assert s2_output == [4]
@@ -314,17 +359,23 @@ def test_mappable_split_general():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s1_output == [0, 1]
     assert s2_output == [2, 3, 4]
 
 
 def test_mappable_split_optimized():
+    """
+    Feature: Split op
+    Description: Test optimized split op using mappable dataset (ManifestDataset)
+        with absolute rows, exact percentages, and fuzzy percentages
+    Expectation: Output is equal to the expected output
+    """
     d = ds.ManifestDataset(manifest_file, shuffle=False)
 
     # absolute rows
@@ -332,11 +383,11 @@ def test_mappable_split_optimized():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s1_output == [0, 1, 2, 3]
     assert s2_output == [4]
@@ -346,11 +397,11 @@ def test_mappable_split_optimized():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s1_output == [0, 1, 2, 3]
     assert s2_output == [4]
@@ -360,17 +411,22 @@ def test_mappable_split_optimized():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s1_output == [0, 1]
     assert s2_output == [2, 3, 4]
 
 
 def test_mappable_randomize_deterministic():
+    """
+    Feature: Split op
+    Description: Test split op using mappable dataset (ManifestDataset) with randomization
+    Expectation: Output is equal to the expected output
+    """
     # the labels outputted by ManifestDataset for seed 53 is [0, 1, 3, 4, 2]
     ds.config.set_seed(53)
 
@@ -380,11 +436,11 @@ def test_mappable_randomize_deterministic():
     for _ in range(10):
         s1_output = []
         for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-            s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+            s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
         s2_output = []
         for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-            s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+            s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
         # note no overlap
         assert s1_output == [0, 1, 3, 4]
@@ -392,6 +448,11 @@ def test_mappable_randomize_deterministic():
 
 
 def test_mappable_randomize_repeatable():
+    """
+    Feature: Split op
+    Description: Test split op using mappable dataset (ManifestDataset) followed by repeat op
+    Expectation: Output is equal to the expected output
+    """
     # the labels outputted by ManifestDataset for seed 53 is [0, 1, 3, 4, 2]
     ds.config.set_seed(53)
 
@@ -404,11 +465,11 @@ def test_mappable_randomize_repeatable():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     # note no overlap
     assert s1_output == [0, 1, 3, 4] * num_epochs
@@ -416,6 +477,11 @@ def test_mappable_randomize_repeatable():
 
 
 def test_mappable_sharding():
+    """
+    Feature: Split op
+    Description: Test split op using mappable dataset (ManifestDataset) followed by sharding the dataset after split
+    Expectation: Output is equal to the expected output
+    """
     # set arbitrary seed for repeatability for shard after split
     # the labels outputted by ManifestDataset for seed 53 is [0, 1, 3, 4, 2]
     ds.config.set_seed(53)
@@ -443,12 +509,12 @@ def test_mappable_sharding():
     # shard 0
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     # shard 1
     d2s1_output = []
     for item in d2s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        d2s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        d2s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     rows_per_shard_per_epoch = 2
     assert len(s1_output) == rows_per_shard_per_epoch * num_epochs
@@ -469,17 +535,22 @@ def test_mappable_sharding():
     # test other split
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     d2s2_output = []
     for item in d2s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        d2s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        d2s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s2_output == [2]
     assert d2s2_output == [2]
 
 
 def test_mappable_get_dataset_size():
+    """
+    Feature: Split op
+    Description: Test split op using mappable dataset (ManifestDataset) followed by get_dataset_size
+    Expectation: Output is equal to the expected output
+    """
     d = ds.ManifestDataset(manifest_file, shuffle=False)
     s1, s2 = d.split([4, 1])
 
@@ -489,6 +560,12 @@ def test_mappable_get_dataset_size():
 
 
 def test_mappable_multi_split():
+    """
+    Feature: Split op
+    Description: Test randomized split op using mappable dataset (ManifestDataset) followed by
+        another split op with and without randomization
+    Expectation: Output is equal to the expected output
+    """
     # the labels outputted by ManifestDataset for seed 53 is [0, 1, 3, 4, 2]
     ds.config.set_seed(53)
 
@@ -499,7 +576,7 @@ def test_mappable_multi_split():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
     assert s1_output == s1_correct_output
 
     # no randomize in second split
@@ -507,15 +584,15 @@ def test_mappable_multi_split():
 
     s1s1_output = []
     for item in s1s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s1s2_output = []
     for item in s1s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s1s3_output = []
     for item in s1s3.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s3_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1s3_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s1s1_output == [s1_correct_output[0]]
     assert s1s2_output == [s1_correct_output[1], s1_correct_output[2]]
@@ -523,7 +600,7 @@ def test_mappable_multi_split():
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
     assert s2_output == [2]
 
     # randomize in second split
@@ -534,15 +611,15 @@ def test_mappable_multi_split():
 
     s1s1_output = []
     for item in s1s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s1s2_output = []
     for item in s1s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s1s3_output = []
     for item in s1s3.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1s3_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1s3_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s1s1_output == [s1_correct_output[random_sampler_ids[0]]]
     assert s1s2_output == [s1_correct_output[random_sampler_ids[1]], s1_correct_output[random_sampler_ids[2]]]
@@ -550,11 +627,16 @@ def test_mappable_multi_split():
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
     assert s2_output == [2]
 
 
 def test_rounding():
+    """
+    Feature: Split op
+    Description: Test split op using mappable dataset (ManifestDataset) with under rounding and over rounding arg
+    Expectation: Output is equal to the expected output
+    """
     d = ds.ManifestDataset(manifest_file, shuffle=False)
 
     # under rounding
@@ -562,11 +644,11 @@ def test_rounding():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s1_output == [0, 1, 2]
     assert s2_output == [3, 4]
@@ -576,15 +658,15 @@ def test_rounding():
 
     s1_output = []
     for item in s1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s1_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s1_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s2_output = []
     for item in s2.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s2_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s2_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     s3_output = []
     for item in s3.create_dict_iterator(num_epochs=1, output_numpy=True):
-        s3_output.append(manifest_map[(item["image"].shape[0], item["label"].item())])
+        s3_output.append(manifest_map.get((item["image"].shape[0], item["label"].item())))
 
     assert s1_output == [0]
     assert s2_output == [1, 2]

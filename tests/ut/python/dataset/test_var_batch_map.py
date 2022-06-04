@@ -19,6 +19,13 @@ from mindspore import log as logger
 
 
 def test_batch_corner_cases():
+    """
+    Feature: Batch op
+    Description: Test batch variations using corner cases:
+        - where batch_size is greater than the entire epoch, with drop equals to both val
+        - where Batch op is done before Repeat op with different drop
+    Expectation: Output is equal to the expected output
+    """
     def gen(num):
         for i in range(num):
             yield (np.array([i]),)
@@ -192,6 +199,11 @@ def test_get_batchsize_on_callable_batchsize():
 
 
 def test_basic_batch_map():
+    """
+    Feature: Batch op
+    Description: Test basic map Batch op with per_batch_map
+    Expectation: Output is equal to the expected output
+    """
     def check_res(arr1, arr2):
         for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
@@ -225,6 +237,11 @@ def test_basic_batch_map():
 
 
 def test_batch_multi_col_map():
+    """
+    Feature: Batch op
+    Description: Test map Batch op with multiple columns input with per_batch_map
+    Expectation: Output is equal to the expected output
+    """
     def check_res(arr1, arr2):
         for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
@@ -274,6 +291,11 @@ def test_batch_multi_col_map():
 
 
 def test_var_batch_multi_col_map():
+    """
+    Feature: Batch op
+    Description: Test Batch op with a function arg for batch_size using multiple columns input with per_batch_map
+    Expectation: Output is equal to the expected output
+    """
     def check_res(arr1, arr2):
         for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
@@ -314,6 +336,11 @@ def test_var_batch_multi_col_map():
 
 
 def test_var_batch_var_resize():
+    """
+    Feature: Batch op
+    Description: Test Batch op with a function arg for batch_size with resize as per_batch_map
+    Expectation: Output is equal to the expected output
+    """
     # fake resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
     def np_psedo_resize(col, batchInfo):
         s = (batchInfo.get_batch_num() + 1) ** 2
@@ -332,6 +359,11 @@ def test_var_batch_var_resize():
 
 
 def test_exception():
+    """
+    Feature: Batch op
+    Description: Test Batch op with bad batch size and bad map function
+    Expectation: Error is raised as expected
+    """
     def gen(num):
         for i in range(num):
             yield (np.array([i]),)
@@ -362,6 +394,11 @@ def test_exception():
 
 
 def test_multi_col_map():
+    """
+    Feature: Batch op
+    Description: Test Batch op with multiple columns with various per_batch_map args with valid and invalid inputs
+    Expectation: Output is equal to the expected output for valid input and error is raised otherwise
+    """
     def gen_2_cols(num):
         for i in range(1, 1 + num):
             yield (np.array([i]), np.array([i ** 2]))
@@ -427,6 +464,11 @@ def test_multi_col_map():
 
 
 def test_exceptions_2():
+    """
+    Feature: Batch op
+    Description: Test Batch op with invalid column name and invalid per_batch_map function argument
+    Expectation: Error is raised as expected
+    """
     def gen(num):
         for i in range(num):
             yield (np.array([i]),)

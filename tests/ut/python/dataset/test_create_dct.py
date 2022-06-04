@@ -32,8 +32,8 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
 
 def test_create_dct_none():
     """
-    Feature: CreateDct
-    Description: Test CreateDct in eager mode
+    Feature: Create DCT transformation
+    Description: Test create_dct in eager mode with no normalization
     Expectation: The returned result is as expected
     """
     expect = np.array([[2.00000000, 1.84775901],
@@ -46,8 +46,8 @@ def test_create_dct_none():
 
 def test_create_dct_ortho():
     """
-    Feature: CreateDct
-    Description: Test CreateDct in eager mode
+    Feature: Create DCT transformation
+    Description: Test create_dct in eager mode with orthogonal normalization
     Expectation: The returned result is as expected
     """
     output = create_dct(1, 3, NormMode.ORTHO)
@@ -59,9 +59,9 @@ def test_create_dct_ortho():
 
 def test_createdct_invalid_input():
     """
-    Feature: CreateDct
-    Description: Error detection
-    Expectation: Return error
+    Feature: Create DCT transformation
+    Description: Test create_dct with invalid inputs
+    Expectation: Error is raised as expected
     """
     def test_invalid_input(test_name, n_mfcc, n_mels, norm, error, error_msg):
         logger.info("Test CreateDct with bad input: {0}".format(test_name))

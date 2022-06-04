@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,11 @@ MP_FILE = "../data/dataset/jiebadict/jieba.dict.utf8"
 
 
 def test_on_tokenized_line():
+    """
+    Feature: Python text.Vocab class
+    Description: Test Lookup op on tokenized line using JiebaTokenizer with special_tokens
+    Expectation: Output is equal to the expected output
+    """
     data = ds.TextFileDataset("../data/dataset/testVocab/lines.txt", shuffle=False)
     jieba_op = text.JiebaTokenizer(HMM_FILE, MP_FILE, mode=text.JiebaMode.MP)
     with open(VOCAB_FILE, 'r') as f:
@@ -43,6 +48,11 @@ def test_on_tokenized_line():
 
 
 def test_on_tokenized_line_with_no_special_tokens():
+    """
+    Feature: Python text.Vocab class
+    Description: Test Lookup op on tokenized line using JiebaTokenizer without special_tokens
+    Expectation: Output is equal to the expected output
+    """
     data = ds.TextFileDataset("../data/dataset/testVocab/lines.txt", shuffle=False)
     jieba_op = text.JiebaTokenizer(HMM_FILE, MP_FILE, mode=text.JiebaMode.MP)
     with open(VOCAB_FILE, 'r') as f:

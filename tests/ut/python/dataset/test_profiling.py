@@ -118,9 +118,10 @@ class TestMinddataProfilingManager:
 
     def test_profiling_simple_pipeline(self, tmp_path):
         """
-        Generator -> Shuffle -> Batch
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling simple pipeline (Generator -> Shuffle -> Batch)
+        Expectation: Runs successfully
         """
-
         source = [(np.array([x]),) for x in range(1024)]
         data1 = ds.GeneratorDataset(source, ["data"])
         data1 = data1.shuffle(64)
@@ -161,11 +162,15 @@ class TestMinddataProfilingManager:
 
     def test_profiling_complex_pipeline(self, tmp_path):
         """
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling complex pipeline:
+
         Generator -> Map     ->
                                  -> Zip
         TFReader  -> Shuffle ->
-        """
 
+        Expectation: Runs successfully
+        """
         source = [(np.array([x]),) for x in range(1024)]
         data1 = ds.GeneratorDataset(source, ["gen"])
         data1 = data1.map(operations=[(lambda x: x + 1)], input_columns=["gen"])
@@ -207,12 +212,15 @@ class TestMinddataProfilingManager:
 
     def test_profiling_inline_ops_pipeline1(self, tmp_path):
         """
-        Test pipeline with inline ops: Concat and EpochCtrl
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling pipeline with inline ops (Concat and EpochCtrl):
+
         Generator ->
                      Concat -> EpochCtrl
         Generator ->
-        """
 
+        Expectation: Runs successfully
+        """
         # In source1 dataset: Number of rows is 3; its values are 0, 1, 2
         def source1():
             for i in range(3):
@@ -267,10 +275,11 @@ class TestMinddataProfilingManager:
 
     def test_profiling_inline_ops_pipeline2(self, tmp_path):
         """
-        Test pipeline with many inline ops
-        Generator -> Rename -> Skip -> Repeat -> Take
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling pipeline with many inline ops
+            (Generator -> Rename -> Skip -> Repeat -> Take)
+        Expectation: Runs successfully
         """
-
         # In source1 dataset: Number of rows is 10; its values are 0, 1, 2, 3, 4, 5 ... 9
         def source1():
             for i in range(10):
@@ -314,7 +323,9 @@ class TestMinddataProfilingManager:
 
     def test_profiling_sampling_interval(self, tmp_path):
         """
-        Test non-default monitor sampling interval
+        Feature: MindData Profiling Manager
+        Description: Test non-default monitor sampling interval
+        Expectation: Runs successfully
         """
         interval_origin = ds.config.get_monitor_sampling_interval()
 
@@ -349,10 +360,11 @@ class TestMinddataProfilingManager:
 
     def test_profiling_basic_pipeline(self, tmp_path):
         """
-        Test with this basic pipeline
-        Generator -> Map -> Batch -> Repeat -> EpochCtrl
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling pipeline with basic pipeline
+            (Generator -> Map -> Batch -> Repeat -> EpochCtrl)
+        Expectation: Runs successfully
         """
-
         def source1():
             for i in range(8000):
                 yield (np.array([i]),)
@@ -402,10 +414,11 @@ class TestMinddataProfilingManager:
 
     def test_profiling_cifar10_pipeline(self, tmp_path):
         """
-        Test with this common pipeline with Cifar10
-        Cifar10 -> Map -> Map -> Batch -> Repeat
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling with common pipeline with Cifar10
+            (Cifar10 -> Map -> Map -> Batch -> Repeat)
+        Expectation: Runs successfully
         """
-
         # Create this common pipeline
         # Cifar10 -> Map -> Map -> Batch -> Repeat
         DATA_DIR_10 = "../data/dataset/testCifar10Data"
@@ -455,12 +468,13 @@ class TestMinddataProfilingManager:
 
     def test_profiling_seq_pipelines_epochctrl3(self, tmp_path):
         """
-        Test with these 2 sequential pipelines:
-        1) Generator -> Batch -> EpochCtrl
-        2) Generator -> Batch
-        Note: This is a simplification of the user scenario to use the same pipeline for training and then evaluation.
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling with these 2 sequential pipelines
+            1) Generator -> Batch -> EpochCtrl
+            2) Generator -> Batch
+            Note: This is a simplification of the user scenario to use the same pipeline for train and then eval
+        Expectation: Runs successfully
         """
-
         source = [(np.array([x]),) for x in range(64)]
         data1 = ds.GeneratorDataset(source, ["data"])
         data1 = data1.batch(32)
@@ -510,11 +524,12 @@ class TestMinddataProfilingManager:
 
     def test_profiling_seq_pipelines_epochctrl2(self, tmp_path):
         """
-        Test with these 2 sequential pipelines:
-        1) Generator -> Batch
-        2) Generator -> Batch -> EpochCtrl
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling with these 2 sequential pipelines
+            1) Generator -> Batch
+            2) Generator -> Batch -> EpochCtrl
+        Expectation: Runs successfully
         """
-
         source = [(np.array([x]),) for x in range(64)]
         data2 = ds.GeneratorDataset(source, ["data"])
         data2 = data2.batch(16)
@@ -564,11 +579,12 @@ class TestMinddataProfilingManager:
 
     def test_profiling_seq_pipelines_repeat(self, tmp_path):
         """
-        Test with these 2 sequential pipelines:
-        1) Generator -> Batch
-        2) Generator -> Batch -> Repeat
+        Feature: MindData Profiling Manager
+        Description: Test MindData profiling with these 2 sequential pipelines
+            1) Generator -> Batch
+            2) Generator -> Batch -> Repeat
+        Expectation: Runs successfully
         """
-
         source = [(np.array([x]),) for x in range(64)]
         data2 = ds.GeneratorDataset(source, ["data"])
         data2 = data2.batch(16)

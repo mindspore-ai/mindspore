@@ -92,6 +92,7 @@
 "mindspore/tests/ut/python/dataset/test_batch.py"                                                       "broad-except"
 "mindspore/tests/ut/python/dataset/test_config.py"                                                      "broad-except"
 "mindspore/tests/ut/python/dataset/test_minddataset.py"                                                 "redefined-outer-name"
+"mindspore/tests/ut/python/dataset/test_minddataset.py"                                                 "unused-variable"
 "mindspore/tests/ut/python/dataset/test_minddataset_sampler.py"                                         "redefined-outer-name"
 "mindspore/tests/ut/python/dataset/test_serdes_dataset.py"                                              "redefined-outer-name"
 "mindspore/tests/ut/python/dataset/test_serdes_dataset.py"                                              "unused-import"

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,18 +33,33 @@ def slice_compare(array, indexing, expected_array):
 
 
 def test_slice_all():
+    """
+    Feature: Slice op
+    Description: Test Slice op for whole array (using None, ellipsis, and boolean for Slice op arg)
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([1, 2, 3, 4, 5], None, [1, 2, 3, 4, 5])
     slice_compare([1, 2, 3, 4, 5], ..., [1, 2, 3, 4, 5])
     slice_compare([1, 2, 3, 4, 5], True, [1, 2, 3, 4, 5])
 
 
 def test_slice_single_index():
+    """
+    Feature: Slice op
+    Description: Test Slice op with a single index
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([1, 2, 3, 4, 5], 0, [1])
     slice_compare([1, 2, 3, 4, 5], -3, [3])
     slice_compare([1, 2, 3, 4, 5], [0], [1])
 
 
 def test_slice_indices_multidim():
+    """
+    Feature: Slice op
+    Description: Test Slice op using a multi dimension arg
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([[1, 2, 3, 4, 5]], [[0], [0]], 1)
     slice_compare([[1, 2, 3, 4, 5]], [[0], [0, 3]], [[1, 4]])
     slice_compare([[1, 2, 3, 4, 5]], [0], [[1, 2, 3, 4, 5]])
@@ -52,6 +67,11 @@ def test_slice_indices_multidim():
 
 
 def test_slice_list_index():
+    """
+    Feature: Slice op
+    Description: Test Slice op using list of indices as the arg
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([1, 2, 3, 4, 5], [0, 1, 4], [1, 2, 5])
     slice_compare([1, 2, 3, 4, 5], [4, 1, 0], [5, 2, 1])
     slice_compare([1, 2, 3, 4, 5], [-1, 1, 0], [5, 2, 1])
@@ -60,12 +80,22 @@ def test_slice_list_index():
 
 
 def test_slice_index_and_slice():
+    """
+    Feature: Slice op
+    Description: Test Slice op where the arg is a list containing slice op
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([[1, 2, 3, 4, 5]], [slice(0, 1), [4]], [[5]])
     slice_compare([[1, 2, 3, 4, 5]], [[0], slice(0, 2)], [[1, 2]])
     slice_compare([[1, 2, 3, 4], [5, 6, 7, 8]], [[1], slice(2, 4, 1)], [[7, 8]])
 
 
 def test_slice_slice_obj_1s():
+    """
+    Feature: Slice op
+    Description: Test Slice op where the arg consists of slice op with 1 object
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([1, 2, 3, 4, 5], slice(1), [1])
     slice_compare([1, 2, 3, 4, 5], slice(4), [1, 2, 3, 4])
     slice_compare([[1, 2, 3, 4], [5, 6, 7, 8]], [slice(2), slice(2)], [[1, 2], [5, 6]])
@@ -73,6 +103,11 @@ def test_slice_slice_obj_1s():
 
 
 def test_slice_slice_obj_2s():
+    """
+    Feature: Slice op
+    Description: Test Slice op where the arg consists of slice op with 2 objects
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([1, 2, 3, 4, 5], slice(0, 2), [1, 2])
     slice_compare([1, 2, 3, 4, 5], slice(2, 4), [3, 4])
     slice_compare([[1, 2, 3, 4], [5, 6, 7, 8]], [slice(0, 2), slice(1, 2)], [[2], [6]])
@@ -80,6 +115,12 @@ def test_slice_slice_obj_2s():
 
 
 def test_slice_slice_obj_2s_multidim():
+    """
+    Feature: Slice op
+    Description: Test Slice using multi dimension array and Slice op has multi dimension
+        arg that consists of slice with 2 objects in the arg
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([[1, 2, 3, 4, 5]], [slice(0, 1)], [[1, 2, 3, 4, 5]])
     slice_compare([[1, 2, 3, 4, 5]], [slice(0, 1), slice(4)], [[1, 2, 3, 4]])
     slice_compare([[1, 2, 3, 4, 5]], [slice(0, 1), slice(0, 3)], [[1, 2, 3]])
@@ -89,7 +130,9 @@ def test_slice_slice_obj_2s_multidim():
 
 def test_slice_slice_obj_3s():
     """
-    Test passing in all parameters to the slice objects
+    Feature: Slice op
+    Description: Test Slice op where the arg consists of slice op with 3 objects
+    Expectation: Output is equal to the expected output
     """
     slice_compare([1, 2, 3, 4, 5], slice(0, 2, 1), [1, 2])
     slice_compare([1, 2, 3, 4, 5], slice(0, 4, 1), [1, 2, 3, 4])
@@ -109,6 +152,11 @@ def test_slice_slice_obj_3s():
 
 
 def test_slice_obj_3s_double():
+    """
+    Feature: Slice op
+    Description: Test Slice op where the arg consists of slice op with 3 objects using an array of doubles
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([1., 2., 3., 4., 5.], slice(0, 2, 1), [1., 2.])
     slice_compare([1., 2., 3., 4., 5.], slice(0, 4, 1), [1., 2., 3., 4.])
     slice_compare([1., 2., 3., 4., 5.], slice(0, 5, 2), [1., 3., 5.])
@@ -120,7 +168,9 @@ def test_slice_obj_3s_double():
 
 def test_out_of_bounds_slicing():
     """
-    Test passing indices outside of the input to the slice objects
+    Feature: Slice op
+    Description: Test Slice op with indices outside of the input to the arg
+    Expectation: Output is equal to the expected output
     """
     slice_compare([1, 2, 3, 4, 5], slice(-15, -1), [1, 2, 3, 4])
     slice_compare([1, 2, 3, 4, 5], slice(-15, 15), [1, 2, 3, 4, 5])
@@ -129,7 +179,9 @@ def test_out_of_bounds_slicing():
 
 def test_slice_multiple_rows():
     """
-    Test passing in multiple rows
+    Feature: Slice op
+    Description: Test Slice op with multiple rows
+    Expectation: Output is equal to the expected output
     """
     dataset = [[1], [3, 4, 5], [1, 2], [1, 2, 3, 4, 5, 6, 7]]
     exp_dataset = [[], [4, 5], [2], [2, 3, 4]]
@@ -147,7 +199,9 @@ def test_slice_multiple_rows():
 
 def test_slice_none_and_ellipsis():
     """
-    Test passing None and Ellipsis to Slice
+    Feature: Slice op
+    Description: Test Slice op by passing None and Ellipsis in the arg
+    Expectation: Output is equal to the expected output
     """
     dataset = [[1], [3, 4, 5], [1, 2], [1, 2, 3, 4, 5, 6, 7]]
     exp_dataset = [[1], [3, 4, 5], [1, 2], [1, 2, 3, 4, 5, 6, 7]]
@@ -168,6 +222,11 @@ def test_slice_none_and_ellipsis():
 
 
 def test_slice_obj_neg():
+    """
+    Feature: Slice op
+    Description: Test Slice op with indices outside of the input (negative int) to the arg
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([1, 2, 3, 4, 5], slice(-1, -5, -1), [5, 4, 3, 2])
     slice_compare([1, 2, 3, 4, 5], slice(-1), [1, 2, 3, 4])
     slice_compare([1, 2, 3, 4, 5], slice(-2), [1, 2, 3])
@@ -177,11 +236,21 @@ def test_slice_obj_neg():
 
 
 def test_slice_all_str():
+    """
+    Feature: Slice op
+    Description: Test Slice op for whole array of strings (using None and ellipsis for the arg)
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([b"1", b"2", b"3", b"4", b"5"], None, [b"1", b"2", b"3", b"4", b"5"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], ..., [b"1", b"2", b"3", b"4", b"5"])
 
 
 def test_slice_single_index_str():
+    """
+    Feature: Slice op
+    Description: Test Slice op with a single index for array of strings
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([b"1", b"2", b"3", b"4", b"5"], [0, 1], [b"1", b"2"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], [0, 1], [b"1", b"2"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], [4], [b"5"])
@@ -190,11 +259,21 @@ def test_slice_single_index_str():
 
 
 def test_slice_indexes_multidim_str():
+    """
+    Feature: Slice op
+    Description: Test Slice op for array of strings using a multi dimensional arg
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([[b"1", b"2", b"3", b"4", b"5"]], [[0], 0], [[b"1"]])
     slice_compare([[b"1", b"2", b"3", b"4", b"5"]], [[0], [0, 1]], [[b"1", b"2"]])
 
 
 def test_slice_list_index_str():
+    """
+    Feature: Slice op
+    Description: Test Slice op for array of strings with list of indices as the arg
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([b"1", b"2", b"3", b"4", b"5"], [0, 1, 4], [b"1", b"2", b"5"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], [4, 1, 0], [b"5", b"2", b"1"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], [3, 3, 3], [b"4", b"4", b"4"])
@@ -202,6 +281,11 @@ def test_slice_list_index_str():
 
 # test str index object here
 def test_slice_index_and_slice_str():
+    """
+    Feature: Slice op
+    Description: Test Slice op for array of strings where the arg is a list containing slice op
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([[b"1", b"2", b"3", b"4", b"5"]], [slice(0, 1), 4], [[b"5"]])
     slice_compare([[b"1", b"2", b"3", b"4", b"5"]], [[0], slice(0, 2)], [[b"1", b"2"]])
     slice_compare([[b"1", b"2", b"3", b"4"], [b"5", b"6", b"7", b"8"]], [[1], slice(2, 4, 1)],
@@ -209,6 +293,11 @@ def test_slice_index_and_slice_str():
 
 
 def test_slice_slice_obj_1s_str():
+    """
+    Feature: Slice op
+    Description: Test Slice op for array of strings where the arg consists of slice op with 1 object
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(1), [b"1"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(4), [b"1", b"2", b"3", b"4"])
     slice_compare([[b"1", b"2", b"3", b"4"], [b"5", b"6", b"7", b"8"]],
@@ -217,6 +306,11 @@ def test_slice_slice_obj_1s_str():
 
 
 def test_slice_slice_obj_2s_str():
+    """
+    Feature: Slice op
+    Description: Test Slice op for array of strings where the arg consists of slice op with 2 objects
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(0, 2), [b"1", b"2"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(2, 4), [b"3", b"4"])
     slice_compare([[b"1", b"2", b"3", b"4"], [b"5", b"6", b"7", b"8"]],
@@ -224,6 +318,12 @@ def test_slice_slice_obj_2s_str():
 
 
 def test_slice_slice_obj_2s_multidim_str():
+    """
+    Feature: Slice op
+    Description: Test Slice using multi dimension array of strings and Slice op has multi dimension
+        arg that consists of slice with 2 objects in the arg
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([[b"1", b"2", b"3", b"4", b"5"]], [slice(0, 1)], [[b"1", b"2", b"3", b"4", b"5"]])
     slice_compare([[b"1", b"2", b"3", b"4", b"5"]], [slice(0, 1), slice(4)],
                   [[b"1", b"2", b"3", b"4"]])
@@ -236,7 +336,9 @@ def test_slice_slice_obj_2s_multidim_str():
 
 def test_slice_slice_obj_3s_str():
     """
-    Test passing in all parameters to the slice objects
+    Feature: Slice op
+    Description: Test Slice op for array of strings where the arg consists of slice op with 3 objects
+    Expectation: Output is equal to the expected output
     """
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(0, 2, 1), [b"1", b"2"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(0, 4, 1), [b"1", b"2", b"3", b"4"])
@@ -260,6 +362,11 @@ def test_slice_slice_obj_3s_str():
 
 
 def test_slice_obj_neg_str():
+    """
+    Feature: Slice op
+    Description: Test Slice op for array of strings with indices outside of the input (negative int) to the arg
+    Expectation: Output is equal to the expected output
+    """
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(-1, -5, -1), [b"5", b"4", b"3", b"2"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(-1), [b"1", b"2", b"3", b"4"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(-2), [b"1", b"2", b"3"])
@@ -270,7 +377,9 @@ def test_slice_obj_neg_str():
 
 def test_out_of_bounds_slicing_str():
     """
-    Test passing indices outside of the input to the slice objects
+    Feature: Slice op
+    Description: Test Slice op for array of strings with indices outside of the input to the arg
+    Expectation: Output is equal to the expected output
     """
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(-15, -1), [b"1", b"2", b"3", b"4"])
     slice_compare([b"1", b"2", b"3", b"4", b"5"], slice(-15, 15), [b"1", b"2", b"3", b"4", b"5"])
@@ -286,7 +395,9 @@ def test_out_of_bounds_slicing_str():
 
 def test_slice_exceptions():
     """
-    Test passing in invalid parameters
+    Feature: Slice op
+    Description: Test Slice op with invalid parameters
+    Expectation: Correct error is raised as expected
     """
     with pytest.raises(RuntimeError) as info:
         slice_compare([b"1", b"2", b"3", b"4", b"5"], [5], [b"1", b"2", b"3", b"4", b"5"])

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,11 @@ import mindspore.dataset.transforms as data_trans
 
 
 def test_concatenate_op_all():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op with all input parameters provided
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array([5., 6., 7., 8.], dtype=np.float),)
 
@@ -39,6 +44,11 @@ def test_concatenate_op_all():
 
 
 def test_concatenate_op_none():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op with none of the input parameters provided
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array([5., 6., 7., 8.], dtype=np.float),)
 
@@ -51,6 +61,11 @@ def test_concatenate_op_none():
 
 
 def test_concatenate_op_string():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op on array of strings
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array(["ss", "ad"], dtype='S'),)
 
@@ -66,6 +81,11 @@ def test_concatenate_op_string():
 
 
 def test_concatenate_op_multi_input_string():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op on multi dimension array of strings
+    Expectation: Output is equal to the expected output
+    """
     prepend_tensor = np.array(["dw", "df"], dtype='S')
     append_tensor = np.array(["dwsdf", "df"], dtype='S')
 
@@ -82,6 +102,11 @@ def test_concatenate_op_multi_input_string():
 
 
 def test_concatenate_op_multi_input_numeric():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op on multi dimension array of ints
+    Expectation: Output is equal to the expected output
+    """
     prepend_tensor = np.array([3, 5])
 
     data = ([[1, 2]], [[3, 4]])
@@ -97,6 +122,12 @@ def test_concatenate_op_multi_input_numeric():
 
 
 def test_concatenate_op_type_mismatch():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op where the data type of the original array dataset (float) has a mismatch
+        data type with tensor that will be concatenated (string)
+    Expectation: Error is raised as expected
+    """
     def gen():
         yield (np.array([3, 4], dtype=np.float),)
 
@@ -112,6 +143,12 @@ def test_concatenate_op_type_mismatch():
 
 
 def test_concatenate_op_type_mismatch2():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op where the data type of the original array dataset (string) has a mismatch
+        data type with tensor that will be concatenated (float)
+    Expectation: Error is raised as expected
+    """
     def gen():
         yield (np.array(["ss", "ad"], dtype='S'),)
 
@@ -127,6 +164,11 @@ def test_concatenate_op_type_mismatch2():
 
 
 def test_concatenate_op_incorrect_dim():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op using original dataset with incorrect dimension
+    Expectation: Error is raised as expected
+    """
     def gen():
         yield (np.array([["ss", "ad"], ["ss", "ad"]], dtype='S'),)
 
@@ -142,12 +184,22 @@ def test_concatenate_op_incorrect_dim():
 
 
 def test_concatenate_op_wrong_axis():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op using wrong axis argument
+    Expectation: Error is raised as expected
+    """
     with pytest.raises(ValueError) as error_info:
         data_trans.Concatenate(2)
     assert "only 1D concatenation supported." in str(error_info.value)
 
 
 def test_concatenate_op_negative_axis():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op using negative axis argument
+    Expectation: Output is equal to the expected output
+    """
     def gen():
         yield (np.array([5., 6., 7., 8.], dtype=np.float),)
 
@@ -163,6 +215,11 @@ def test_concatenate_op_negative_axis():
 
 
 def test_concatenate_op_incorrect_input_dim():
+    """
+    Feature: Concatenate op
+    Description: Test Concatenate op using array that we would like to concatenate with incorrect dimensions
+    Expectation: Error is raised as expected
+    """
     prepend_tensor = np.array([["ss", "ad"], ["ss", "ad"]], dtype='S')
 
     with pytest.raises(ValueError) as error_info:

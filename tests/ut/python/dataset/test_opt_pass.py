@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@ import mindspore.dataset as ds
 # map dataset with columns order arguments should produce a ProjectOp over MapOp
 # This test does not utilize the compiling passes at this time.
 def test_map_reorder0():
+    """
+    Feature: Map op
+    Description: Test Map op by applying operation lambda x: x on GeneratorDataset
+    Expectation: Output is equal to the expected output
+    """
     def generator_mc(maxid=1):
         for _ in range(maxid):
             yield (np.array([0]), np.array([1]))
@@ -39,6 +44,11 @@ def test_map_reorder0():
 # map dataset with columns order arguments should produce a ProjectOp over MapOp
 # This test does not utilize the compiling passes at this time.
 def test_map_reorder1():
+    """
+    Feature: Map op
+    Description: Test Map op on 2 mapped GeneratorDatasets that are zipped
+    Expectation: Output is equal to the expected output
+    """
     def generator_mc(maxid=1):
         for _ in range(maxid):
             yield (np.array([0]), np.array([1]), np.array([2]))
@@ -59,6 +69,11 @@ def test_map_reorder1():
 # TFRecordDataset with global shuffle should produce a ShuffleOp over TfReaderOp.
 # This test does not utilize the compiling passes at this time.
 def test_shuffle():
+    """
+    Feature: Shuffle op
+    Description: Test one dataset with Shuffle.GLOBAL with another dataset with Shuffle.FILES followed by shuffle op
+    Expectation: Both datasets should be equal
+    """
     FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
     SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 
@@ -98,4 +113,4 @@ def test_shuffle():
 if __name__ == "__main__":
     test_map_reorder0()
     test_map_reorder1()
-    test_global_shuffle()
+    test_shuffle()

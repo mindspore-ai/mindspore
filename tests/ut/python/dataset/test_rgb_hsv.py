@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ def generate_numpy_random_rgb(shape):
 
 
 def test_rgb_hsv_hwc():
+    """
+    Feature: RgbToHsv and HsvToRgb ops
+    Description: Test RgbToHsv and HsvToRgb utilities with an image in HWC format
+    Expectation: Output is equal to the expected output
+    """
     rgb_flat = generate_numpy_random_rgb((64, 3)).astype(np.float32)
     rgb_np = rgb_flat.reshape((8, 8, 3))
     hsv_base = np.array([
@@ -62,6 +67,11 @@ def test_rgb_hsv_hwc():
 
 
 def test_rgb_hsv_batch_hwc():
+    """
+    Feature: RgbToHsv and HsvToRgb ops
+    Description: Test RgbToHsv and HsvToRgb utilities with a batch of images in HWC format
+    Expectation: Output is equal to the expected output
+    """
     rgb_flat = generate_numpy_random_rgb((64, 3)).astype(np.float32)
     rgb_np = rgb_flat.reshape((4, 2, 8, 3))
     hsv_base = np.array([
@@ -87,6 +97,11 @@ def test_rgb_hsv_batch_hwc():
 
 
 def test_rgb_hsv_chw():
+    """
+    Feature: RgbToHsv and HsvToRgb ops
+    Description: Test RgbToHsv and HsvToRgb utilities with an image in CHW format
+    Expectation: Output is equal to the expected output
+    """
     rgb_flat = generate_numpy_random_rgb((64, 3)).astype(np.float32)
     rgb_np = rgb_flat.reshape((3, 8, 8))
     hsv_base = np.array([
@@ -110,6 +125,11 @@ def test_rgb_hsv_chw():
 
 
 def test_rgb_hsv_batch_chw():
+    """
+    Feature: RgbToHsv and HsvToRgb ops
+    Description: Test RgbToHsv and HsvToRgb utilities with a batch of images in HWC format
+    Expectation: Output is equal to the expected output
+    """
     rgb_flat = generate_numpy_random_rgb((64, 3)).astype(np.float32)
     rgb_imgs = rgb_flat.reshape((4, 3, 2, 8))
     hsv_base_imgs = np.array([
@@ -132,6 +152,11 @@ def test_rgb_hsv_batch_chw():
 
 
 def test_rgb_hsv_pipeline():
+    """
+    Feature: RgbToHsv and HsvToRgb ops
+    Description: Test RgbToHsv and HsvToRgb ops in data pipeline
+    Expectation: Output is equal to the expected output
+    """
     # First dataset
     transforms1 = [
         vision.Decode(True),

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,11 @@ def pad_compare(array, pad_shape, pad_value, res):
 
 
 def test_pad_end_basics():
+    """
+    Feature: PadEnd op
+    Description: Test PadEnd op basic usage with array of ints
+    Expectation: Output is equal to the expected output
+    """
     pad_compare([1, 2], [3], -1, [1, 2, -1])
     pad_compare([1, 2, 3], [3], -1, [1, 2, 3])
     pad_compare([1, 2, 3], [2], -1, [1, 2])
@@ -42,6 +47,11 @@ def test_pad_end_basics():
 
 
 def test_pad_end_str():
+    """
+    Feature: PadEnd op
+    Description: Test PadEnd op basic usage with array of strings
+    Expectation: Output is equal to the expected output
+    """
     pad_compare([b"1", b"2"], [3], b"-1", [b"1", b"2", b"-1"])
     pad_compare([b"1", b"2", b"3"], [3], b"-1", [b"1", b"2", b"3"])
     pad_compare([b"1", b"2", b"3"], [2], b"-1", [b"1", b"2"])
@@ -49,6 +59,11 @@ def test_pad_end_str():
 
 
 def test_pad_end_exceptions():
+    """
+    Feature: PadEnd op
+    Description: Test PadEnd op with invalid inputs
+    Expectation: Correct error is raised as expected
+    """
     with pytest.raises(RuntimeError) as info:
         pad_compare([1, 2], [3], "-1", [])
     assert "pad_value and item of dataset are not of the same type" in str(info.value)

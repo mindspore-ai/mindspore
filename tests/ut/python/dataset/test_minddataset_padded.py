@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -107,7 +107,11 @@ def add_and_remove_nlp_file():
 
 
 def test_cv_minddataset_reader_basic_padded_samples(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test basic read on MindDataset with padded_sample
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["label", "file_name", "data"]
 
     data = get_data(CV_DIR_NAME)
@@ -135,7 +139,11 @@ def test_cv_minddataset_reader_basic_padded_samples(add_and_remove_cv_file):
     assert num_iter == 15
 
 def test_cv_minddataset_reader_basic_padded_samples_type_cast(add_and_remove_cv_file):
-    """tutorial for cv minderdataset."""
+    """
+    Feature: MindDataset
+    Description: Test basic read on MindDataset with padded_sample which file_name requires type cast
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["label", "file_name", "data"]
 
     data = get_data(CV_DIR_NAME)
@@ -164,7 +172,11 @@ def test_cv_minddataset_reader_basic_padded_samples_type_cast(add_and_remove_cv_
 
 
 def test_cv_minddataset_partition_padded_samples(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset with padded_sample and partition (num_shards and shard_id)
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
 
     data = get_data(CV_DIR_NAME)
@@ -205,7 +217,12 @@ def test_cv_minddataset_partition_padded_samples(add_and_remove_cv_file):
 
 
 def test_cv_minddataset_partition_padded_samples_multi_epoch(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset with padded_sample and partition (num_shards and shard_id),
+        performed under multiple epochs
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["data", "file_name", "label"]
 
     data = get_data(CV_DIR_NAME)
@@ -278,7 +295,12 @@ def test_cv_minddataset_partition_padded_samples_multi_epoch(add_and_remove_cv_f
 
 
 def test_cv_minddataset_partition_padded_samples_no_dividsible(add_and_remove_cv_file):
-    """tutorial for cv minddataset."""
+    """
+    Feature: MindDataset
+    Description: Test read on MindDataset with padded_sample and partition (num_shards and shard_id),
+        where num_padded is not divisible
+    Expectation: Error is raised as expected
+    """
     columns_list = ["data", "file_name", "label"]
 
     data = get_data(CV_DIR_NAME)
@@ -305,6 +327,12 @@ def test_cv_minddataset_partition_padded_samples_no_dividsible(add_and_remove_cv
 
 
 def test_cv_minddataset_partition_padded_samples_dataset_size_no_divisible(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test get_dataset_size during MindDataset read with padded_sample and partition
+        (num_shards and shard_id), where num_padded is not divisible
+    Expectation: Error is raised as expected
+    """
     columns_list = ["data", "file_name", "label"]
 
     data = get_data(CV_DIR_NAME)
@@ -328,6 +356,12 @@ def test_cv_minddataset_partition_padded_samples_dataset_size_no_divisible(add_a
 
 
 def test_cv_minddataset_partition_padded_samples_no_equal_column_list(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with padded_sample and partition
+        (num_shards and shard_id), where padded_sample does not match columns_list
+    Expectation: Error is raised as expected
+    """
     columns_list = ["data", "file_name", "label"]
 
     data = get_data(CV_DIR_NAME)
@@ -355,6 +389,12 @@ def test_cv_minddataset_partition_padded_samples_no_equal_column_list(add_and_re
 
 
 def test_cv_minddataset_partition_padded_samples_no_column_list(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with padded_sample and partition
+        (num_shards and shard_id), where there is no columns_list
+    Expectation: Error is raised as expected
+    """
     data = get_data(CV_DIR_NAME)
     padded_sample = data[0]
     padded_sample['label'] = -2
@@ -380,6 +420,12 @@ def test_cv_minddataset_partition_padded_samples_no_column_list(add_and_remove_c
 
 
 def test_cv_minddataset_partition_padded_samples_no_num_padded(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with padded_sample and partition
+        (num_shards and shard_id), where there is no num_padded
+    Expectation: Error is raised as expected
+    """
     columns_list = ["data", "file_name", "label"]
     data = get_data(CV_DIR_NAME)
     padded_sample = data[0]
@@ -404,6 +450,12 @@ def test_cv_minddataset_partition_padded_samples_no_num_padded(add_and_remove_cv
 
 
 def test_cv_minddataset_partition_padded_samples_no_padded_samples(add_and_remove_cv_file):
+    """
+    Feature: MindDataset
+    Description: Test read MindDataset with padded_sample and partition
+        (num_shards and shard_id), where there is no padded_sample
+    Expectation: Error is raised as expected
+    """
     columns_list = ["data", "file_name", "label"]
     data = get_data(CV_DIR_NAME)
     padded_sample = data[0]
@@ -428,6 +480,11 @@ def test_cv_minddataset_partition_padded_samples_no_padded_samples(add_and_remov
 
 
 def test_nlp_minddataset_reader_basic_padded_samples(add_and_remove_nlp_file):
+    """
+    Feature: MindDataset
+    Description: Test basic read MindDataset with padded_sample from raw data of aclImdb dataset
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["input_ids", "id", "rating"]
 
     data = [x for x in get_nlp_data(NLP_FILE_POS, NLP_FILE_VOCAB, 10)]
@@ -469,6 +526,11 @@ def test_nlp_minddataset_reader_basic_padded_samples(add_and_remove_nlp_file):
 
 
 def test_nlp_minddataset_reader_basic_padded_samples_multi_epoch(add_and_remove_nlp_file):
+    """
+    Feature: MindDataset
+    Description: Test basic read MindDataset with padded_sample from raw data of aclImdb dataset under multiple epochs
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["input_ids", "id", "rating"]
 
     data = [x for x in get_nlp_data(NLP_FILE_POS, NLP_FILE_VOCAB, 10)]
@@ -535,6 +597,12 @@ def test_nlp_minddataset_reader_basic_padded_samples_multi_epoch(add_and_remove_
 
 
 def test_nlp_minddataset_reader_basic_padded_samples_check_whole_reshuffle_result_per_epoch(add_and_remove_nlp_file):
+    """
+    Feature: MindDataset
+    Description: Test basic read MindDataset with padded_sample from raw data of aclImdb dataset
+        by checking whole result_per_epoch to ensure there is no reshuffling
+    Expectation: Output is equal to the expected output
+    """
     columns_list = ["input_ids", "id", "rating"]
 
     padded_sample = {}
