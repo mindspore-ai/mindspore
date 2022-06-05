@@ -194,6 +194,7 @@ constexpr auto kLRN = "LRN";
 constexpr auto kGridSampler2D = "GridSampler2D";
 constexpr auto kGridSampler2DGrad = "GridSampler2DGrad";
 constexpr auto kAdaptiveMaxPool2D = "AdaptiveMaxPool2D";
+constexpr auto kUpsampleTrilinear3D = "UpsampleTrilinear3D";
 
 // CSRTensor
 constexpr auto kMakeCSRTensor = "MakeCSRTensor";
@@ -676,6 +677,7 @@ GVAR_DEF(PrimitivePtr, kPrimGridSampler2D, std::make_shared<Primitive>(kGridSamp
 GVAR_DEF(PrimitivePtr, kPrimGridSampler2DGrad, std::make_shared<Primitive>(kGridSampler2DGrad));
 GVAR_DEF(PrimitivePtr, kPrimPdist, std::make_shared<Primitive>("Pdist"));
 GVAR_DEF(PrimitivePtr, kPrimRenorm, std::make_shared<Primitive>(kRenorm));
+GVAR_DEF(PrimitivePtr, kPrimUpsampleTrilinear3D, std::make_shared<Primitive>("UpsampleTrilinear3D"));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));
