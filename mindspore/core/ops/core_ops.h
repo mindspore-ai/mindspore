@@ -279,6 +279,7 @@ constexpr auto kSparseMatrixNNZ = "SparseMatrixNNZ";
 
 // Sparse Grad ops
 constexpr auto kSparseAddGrad = "SparseAddGrad";
+constexpr auto kSparseTensorDenseAdd = "SparseTensorDenseAdd";
 
 // Meta Function Graph
 constexpr auto kJ = "J";
@@ -881,6 +882,7 @@ GVAR_DEF(PrimitivePtr, kPrimSparseMatrixNNZ, std::make_shared<Primitive>(kSparse
 
 // Sparse Grad ops
 GVAR_DEF(PrimitivePtr, kPrimSparseAddGrad, std::make_shared<Primitive>(kSparseAddGrad));
+GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseAdd, std::make_shared<Primitive>(kSparseTensorDenseAdd));
 
 // TensorList
 GVAR_DEF(PrimitivePtr, kPrimTensorListFromTensor, std::make_shared<Primitive>("TensorListFromTensor"));

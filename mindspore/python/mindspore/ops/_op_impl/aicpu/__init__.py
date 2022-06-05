@@ -101,6 +101,7 @@ from .reverse_sequence import _reverse_sequence_aicpu
 from .matrix_inverse import _matrix_inverse_aicpu
 from .matrix_determinant import _matrix_determinant_aicpu
 from .log_matrix_determinant import _log_matrix_determinant_aicpu
+from .sparse_tensor_dense_add import _sparse_tensor_dense_add_aicpu
 from .lstsq import _lstsq_aicpu
 from .crop_and_resize import _crop_and_resize_aicpu
 from .crop_and_resize_grad_boxes import _crop_and_resize_grad_boxes_aicpu

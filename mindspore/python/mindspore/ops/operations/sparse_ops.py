@@ -89,6 +89,53 @@ class SparseToDense(PrimitiveWithInfer):
         return out
 
 
+class SparseTensorDenseAdd(Primitive):
+    """
+    Add a sparse tensor and a dense tensor to get a dense tensor.
+
+    Inputs:
+        - **x1_indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
+          Support int32, int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
+        - **x1_values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
+          The shape should be :math:`(n,)`.
+        - **x1_shape** (tuple(int)) - A positive int tuple which specifies the shape of sparse tensor,
+          should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
+        -**x2** (Tensor)- A dense Tensor, the dtype is same as `values`.
+
+    Returns:
+        Tensor, add result of sparse tensor and dense tensor. The dtype is same as `values`,
+        and the shape is `x1_shape`.
+
+    Raises:
+        TypeError: If the dtype of `x1_indices` and 'x1_shape' is neither int32 nor int64.
+        ValueError: If `x1_shape`, shape of `x1_indices`, shape of `x1_values` and shape
+        of 'x2' don't meet the parameter description.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as ops
+        >>> from mindspore.common import dtype as mstype
+        >>> x1_indices = Tensor([[0, 0], [0, 1]], dtype=mstype.int64)
+        >>> x1_values = Tensor([1, 1], dtype=mstype.float32)
+        >>> x1_shape = Tensor([3, 3], dtype=mstype.int64)
+        >>> x2= Tensor([[1, 1, 1], [1, 1, 1], [1, 1, 1]], dtype=mstype.float32)
+        >>> sparse_tensor_dense_add = ops.SparseTensorDenseAdd()
+        >>> out = sparse_tensor_dense_add(x1_indices, x1_values, x1_shape, x2)
+        >>> print(out)
+        [[2. 2. 1.]
+         [1. 1. 1.]
+         [1. 1. 1.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseTensorDenseAdd."""
+        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
+
+
 class SparseTensorDenseMatmul(Primitive):
     """
     Multiplies sparse matrix `A` by dense matrix `B`.
