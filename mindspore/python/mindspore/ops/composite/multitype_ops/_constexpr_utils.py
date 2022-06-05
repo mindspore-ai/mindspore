@@ -28,6 +28,7 @@ from ....common.tensor import Tensor
 from ....common._register_for_tensor import tensor_operator_registry
 from ....ops import _utils as op_utils
 from ...._checkparam import Validator as validator
+from ... import operations as P
 
 ALL_TENSOR = 0
 NO_TENSOR = 1
@@ -129,6 +130,8 @@ def _deep_tensor_to_nparray(array_like):
 
 @constexpr
 def check_range(x, dim_size):
+    if dim_size == -1:
+        return x
     if isinstance(x, int) and not isinstance(x, bool):
         if x >= dim_size or x < -dim_size:
             raise IndexError(f'index {x} is out of bounds for dimension with size {dim_size}')
@@ -479,13 +482,18 @@ def convert_scalar_to_tensor(data_shape, data_dtype, indices_shape, value, op_ty
     return Tensor(np.full(updates_shape, value), dtype=data_dtype)
 
 
-@constexpr
-def generate_updates_shape(data_shape, index_shape, op_type):
+def generate_updates_shape(data_shape, index_shape, op_type, is_dynamic):
     """Generate updates shape for 'tensor setitem'."""
     if op_type == SET_ITEM_BY_ONE_TENSOR:
-        updates_shape = index_shape + data_shape[1:]
+        if is_dynamic:
+            updates_shape = P.Concat(-1)((index_shape, data_shape[1:]))
+        else:
+            updates_shape = index_shape + data_shape[1:]
     else:
-        updates_shape = index_shape[:-1] + data_shape[index_shape[-1]:]
+        if is_dynamic:
+            updates_shape = P.Concat(-1)((index_shape[:-1], data_shape[index_shape[-1]:]))
+        else:
+            updates_shape = index_shape[:-1] + data_shape[index_shape[-1]:]
     return updates_shape
 
 
@@ -641,7 +649,12 @@ def get_stride_info_from_tuple(data_shape, tuple_index):
         begin_strides.append(0)
         end_strides.append(data_shape[index])
         step_strides.append(1)
-    return tuple(begin_strides), tuple(end_strides), tuple(step_strides), shrink_axis
+    strides_v = {
+        'begin': tuple(begin_strides),
+        'end': tuple(end_strides),
+        'step': tuple(step_strides)
+    }
+    return strides_v, shrink_axis
 
 
 @constexpr
@@ -665,6 +678,8 @@ def normalize_start(start, dim_size):
     """
     if start is None:
         return 0
+    if dim_size == -1:
+        return start
     if start < 0:
         return 0 if start < -dim_size else start % dim_size
     return start if start < dim_size else dim_size
@@ -676,8 +691,12 @@ def normalize_stop(stop, dim_size):
     Normalize `stop` according to the number of dimensions (`dim_size`).
     If the number of dimensions is not given, return the original input directly.
     """
+    if stop is None and dim_size == -1:
+        raise IndexError("Not Support stop is None when dim is dynamic")
     if stop is None:
         return dim_size
+    if dim_size == -1:
+        return stop
     if stop < 0:
         return 0 if stop < -dim_size else stop % dim_size
     return stop if stop < dim_size else dim_size
@@ -753,6 +772,8 @@ def sequence_to_index(sequence, dim_size):
     if not sequence:
         return False
     if all(isinstance(i, bool) for i in sequence):
+        if dim_size == -1:
+            raise IndexError("Not supported to take the subscript of dynamic shape tensor using Boolean type")
         seq_size = len(sequence)
         if seq_size != dim_size:
             raise IndexError(f'dimension is {dim_size} but corresponding boolean dimension is {seq_size}')
