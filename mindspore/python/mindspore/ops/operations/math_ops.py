@@ -300,7 +300,7 @@ class Addcmul(Primitive):
         ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1*x2)`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
