@@ -155,6 +155,7 @@ from .math_func import (
     logical_or,
     logical_and,
     logsumexp,
+    outer,
     sin,
     cos,
     tan,

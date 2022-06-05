@@ -417,6 +417,15 @@ class MvFunc(nn.Cell):
         return self.mv(mat, vec)
 
 
+class OuterFunc(nn.Cell):
+    def __init__(self):
+        super(OuterFunc, self).__init__()
+        self.outer = ops.outer
+
+    def construct(self, x1, x2):
+        return self.outer(x1, x2)
+
+
 class Exp2Func(nn.Cell):
     def __init__(self):
         super(Exp2Func, self).__init__()
@@ -527,6 +536,14 @@ test_case_math_ops = [
         'desc_bprop': [Tensor(np.array([[3., 4.], [1., 6.], [1., 3.]])),
                        Tensor(np.array([1., 2.]))],
     }),
+    ('Outer', {
+        'block': OuterFunc(),
+        'desc_inputs': [Tensor(np.array([1., 2., 3.])),
+                        Tensor(np.array([1., 2., 3.]))],
+        'desc_bprop': [Tensor(np.array([1., 2., 3.])),
+                       Tensor(np.array([1., 2., 3.]))],
+        'skip': ['backward']
+    }),
     ('Exp2', {
         'block': Exp2Func(),
         'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16))],
@@ -608,6 +625,11 @@ raise_set = [
         'block': IgammaGradA(),
         'desc_inputs': [Tensor(np.array([1.1, 2.2, 8.1, 2.1], np.float32)),
                         Tensor(np.array([0.2, 1.2, 2.1, 3.4], np.float32))],
+        'skip': ['backward']}),
+    ('Outer_Error', {
+        'block': (OuterFunc(), {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.array([[1., 1.], [1., 2.], [1., 3.]]), dtype=ms.float32),
+                        Tensor(np.array([1, 2, 3]), dtype=ms.int32)],
         'skip': ['backward']}),
     ('Deg2rad_1_Error', {
         'block': (lambda x: Deg2radNet(), {'exception': TypeError}),
