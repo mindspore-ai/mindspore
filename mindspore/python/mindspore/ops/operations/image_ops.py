@@ -1045,3 +1045,88 @@ class ScaleAndTranslate(Primitive):
         validator.check_string(kernel_type, ["lanczos1", "lanczos3", "lanczos5", "gaussian", "box", "triangle",
                                              "keyscubic", "mitchellcubic"], "kernel_type", self.name)
         validator.check_value_type("antialias", antialias, [bool], self.name)
+
+
+class CombinedNonMaxSuppression(Primitive):
+    r"""
+    Greedily selects a subset of bounding boxes in descending order of score.
+
+    Args:
+        clip_boxes (bool): If true, assume the box coordinates are between [0, 1] and clip the output boxes
+            if they fall beyond [0, 1]. If false, do not do clipping and output the box coordinates as it is.
+            Defaults to true.
+        pad_per_class (bool): If false, the output nmsed boxes, scores and classes are padded/clipped to max_total_size.
+            If true, the output nmsed boxes, scores and classes are padded to be of length
+            max_size_per_class * num_classes, unless it exceeds max_total_size in which case it is clipped to
+            max_total_size. Defaults to false.
+
+    Inputs:
+        - **boxes** (Tensor) - A Tensor of type float32 and shape (batch_size, num_boxes, q, 4).
+          If q is 1 then same boxes are used for all classes otherwise,
+          if q is equal to number of classes, class-specific boxes are used.
+        - **scores** (Tensor) - A Tensor of type float32 and shape (batch_size, num_boxes, num_classes)
+          representing a single score corresponding to each box (each row of boxes).
+        - **max_output_size_per_class** - A 0D Tensor of type int32, representing the max number of boxes to be
+          selected by non max suppression per class.
+        - **max_total_size** - A 0D Tensor of type int32, representing the maximum number of boxes retained over all
+          classes.
+        - **iou_threshold** - A 0-D float32 tensor representing the threshold for deciding whether
+          boxes overlap too much with respect to IOU, and iou_threshold must be equal or greater
+          than 0 and be equal or smaller than 1.
+        - **score_threshold** - A 0-D float32 tensor representing the threshold for deciding when to remove
+          boxes based on score.
+
+    Outputs:
+        - **nmsed_boxes** - A Tensor of float32 with shape of (batch_size, num_detection, 4), which contains
+          the non-max suppressed boxes.
+        - **nmsed_scores** - A Tensor of float32 with shape of (batch_size, num_detection), which contains score
+          of boxes.
+        - **nmsed_classes** - A Tensor of float32 with shape of (batch_size, num_detection), which contains classes
+          of boxes.
+        - **valid_detections** A Tensor of int32 with shape of (batch_size,), which indicates the number of valid
+          detections of each batch.
+
+    Raises:
+        TypeError: If the dtype of `boxes` `scores` `iou_threshold` `score threshold` are not float32.
+        TypeError: If the dtype of `max_output_size_per_class` and `max_total_size` are not int32.
+        ValueError: If `boxes`is not 4D.
+        ValueError: If `max_output_size_per_class`, `max_total_size`, `iou_threshold` and `score threshold` are not 0D.
+        ValueError: If shape[0] of `boxes` is not same with shape[0] of `scores`.
+        ValueError: If `scores` is not 3D.
+        ValueError: If shape[1] of `boxes` is not same with shape[1] of the `scores`.
+        ValueError: If shape[2] of `boxes` is not same with shape[2] of `scores` or 1
+        ValueError: If `max_total_size` < 0.
+        ValueError: If `max_output_size_per_class` < 0.
+        ValueError: If `iou_threshold` not in [0,1].
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> boxes = Tensor(np.array([[[[200, 100, 150, 100]],
+        ...                           [[220, 120, 150, 100]],
+        ...                           [[190, 110, 150, 100]],
+        ...                           [[210, 112, 150, 100]]]])).astype('float32')
+        >>> scores = Tensor(np.array([[[0.2000, 0.7000, 0.1000], [0.1000, 0.8000, 0.1000], [0.3000, 0.6000, 0.1000],
+        ...                            [0.0500, 0.9000, 0.0500]]])).astype('float32')
+        >>> max_output_size_per_class = Tensor(4, mstype.int32)
+        >>> max_total_size = Tensor(1, mstype.int32)
+        >>> iou_threshold = Tensor(0, mstype.float32)
+        >>> score_threshold = Tensor(0, mstype.float32)
+        >>> net = P.CombinedNonMaxSuppression()
+        >>> out = net(boxes, scores, max_output_size_per_class, max_total_size, iou_threshold, score_threshold)
+        >>> print(out)
+        (Tensor(shape=[1, 1, 4], dtype=Float32, value= [[[1.00000000e+00, 1.00000000e+00, 1.00000000e+00,
+                                                          1.00000000e+00]]]),
+        Tensor(shape=[1, 1], dtype=Float32, value= [[ 8.99999976e-01]]),
+        Tensor(shape=[1, 1], dtype=Float32, value= [[ 1.00000000e+00]]),
+        Tensor(shape=[1], dtype=Int32, value= [1]))
+    """
+
+    @prim_attr_register
+    def __init__(self, pad_per_class=False, clip_boxes=True):
+        """Initialize CombinedNonMaxSuppression"""
+        self.pad_per_class = validator.check_value_type("pad_per_class", pad_per_class, [bool], self.name)
+        self.add_prim_attr('pad_per_class', self.pad_per_class)
+        self.clip_boxes = validator.check_value_type("clip_boxes", clip_boxes, [bool], self.name)
+        self.add_prim_attr('clip_boxes', self.clip_boxes)

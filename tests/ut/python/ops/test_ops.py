@@ -29,7 +29,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.function.math_func import matrix_exp
 from mindspore.ops.function.math_func import sinc
 from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes, AdjustHue, AdjustContrastv2, \
-                                               AdjustSaturation
+                                               AdjustSaturation, CombinedNonMaxSuppression
 from mindspore.ops.operations.image_ops import ExtractGlimpse
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
@@ -4013,6 +4013,17 @@ test_case_image_ops = [
                         Tensor([3, 4], mstype.int32), Tensor([5, 6], mstype.float32),
                         Tensor([0.1, 0.8], mstype.float32)],
         'desc_bprop': [Tensor(np.random.rand(2, 2, 2, 4), mstype.float32)]}),
+    ('CombinedNonMaxSuppression', {
+        'block': CombinedNonMaxSuppression(),
+        'desc_inputs': [Tensor(np.array([[[[200, 100, 150, 100]], [[220, 120, 150, 100]], [[190, 110, 150, 100]],
+                                          [[210, 112, 150, 100]]]]).astype(np.float32)),
+                        Tensor(np.array([[[0.2000, 0.7000, 0.1000], [0.1000, 0.8000, 0.1000],
+                                          [0.3000, 0.6000, 0.1000], [0.0500, 0.9000, 0.0500]]]).astype(np.float32)),
+                        Tensor(4, mstype.int32),
+                        Tensor(1, mstype.int32),
+                        Tensor(0, mstype.float32),
+                        Tensor(0, mstype.float32)],
+        'skip': ['backward']}),
 ]
 
 test_case_other_ops = [

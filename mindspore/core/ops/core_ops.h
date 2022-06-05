@@ -1237,6 +1237,7 @@ GVAR_DEF(PrimitivePtr, kPrimAdjustSaturation, std::make_shared<Primitive>(kAdjus
 GVAR_DEF(PrimitivePtr, kPrimCompareAndBitpack, std::make_shared<Primitive>(kCompareAndBitpack));
 GVAR_DEF(PrimitivePtr, kPrimScaleAndTranslate, std::make_shared<Primitive>("ScaleAndTranslate"));
 GVAR_DEF(PrimitivePtr, kPrimScaleAndTranslateGrad, std::make_shared<Primitive>("ScaleAndTranslateGrad"));
+GVAR_DEF(PrimitivePtr, kPrimCombinedNonMaxSuppression, std::make_shared<Primitive>("CombinedNonMaxSuppression"))
 
 // Statements
 GVAR_DEF(PrimitivePtr, kPrimReturn, std::make_shared<Primitive>(kReturn));
