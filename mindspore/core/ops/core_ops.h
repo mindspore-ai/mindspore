@@ -1113,6 +1113,10 @@ GVAR_DEF(PrimitivePtr, kPrimKMeansCentroids, std::make_shared<Primitive>("KMeans
 GVAR_DEF(PrimitivePtr, kPrimAdamApplyOne, std::make_shared<Primitive>("AdamApplyOne"));
 GVAR_DEF(PrimitivePtr, kPrimAdamApplyOneAssign, std::make_shared<Primitive>("AdamApplyOneAssign"));
 
+// AdamApplyOneWithDecay
+GVAR_DEF(PrimitivePtr, kPrimAdamApplyOneWithDecay, std::make_shared<Primitive>("AdamApplyOneWithDecay"));
+GVAR_DEF(PrimitivePtr, kPrimAdamApplyOneWithDecayAssign, std::make_shared<Primitive>("AdamApplyOneWithDecayAssign"));
+
 // OCR Ops
 GVAR_DEF(PrimitivePtr, kPrimOCRRecognitionPreHandle, std::make_shared<Primitive>("OCRRecognitionPreHandle"));
 
