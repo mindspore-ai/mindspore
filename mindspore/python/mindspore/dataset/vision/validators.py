@@ -24,7 +24,7 @@ from mindspore.dataset.core.validator_helpers import check_value, check_uint8, F
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
     parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, UINT8_MIN, check_value_normalize_std, \
     check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32, check_non_negative_int32, \
-    check_pos_int32, check_tensor_op, deprecator_factory
+    check_pos_int32, check_int32, check_tensor_op, deprecator_factory
 from mindspore.dataset.transforms.validators import check_transform_op_type
 from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
 
@@ -720,6 +720,40 @@ def check_pad_to_size(method):
 
         check_fill_value(fill_value)
         type_check(padding_mode, (Border,), "padding_mode")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_perspective(method):
+    """Wrapper method to check the parameters of Perspective."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [start_points, end_points, interpolation], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check_list(start_points, (list, tuple), "start_points")
+        type_check_list(end_points, (list, tuple), "end_points")
+
+        if len(start_points) != 4:
+            raise TypeError("start_points should be a list or tuple of length 4.")
+        for i, element in enumerate(start_points):
+            type_check(element, (list, tuple), "start_points[{}]".format(i))
+            if len(start_points[i]) != 2:
+                raise TypeError("start_points[{}] should be a list or tuple of length 2.".format(i))
+            check_int32(element[0], "start_points[{}][0]".format(i))
+            check_int32(element[1], "start_points[{}][1]".format(i))
+        if len(end_points) != 4:
+            raise TypeError("end_points should be a list or tuple of length 4.")
+        for i, element in enumerate(end_points):
+            type_check(element, (list, tuple), "end_points[{}]".format(i))
+            if len(end_points[i]) != 2:
+                raise TypeError("end_points[{}] should be a list or tuple of length 2.".format(i))
+            check_int32(element[0], "end_points[{}][0]".format(i))
+            check_int32(element[1], "end_points[{}][1]".format(i))
+
+        type_check(interpolation, (Inter,), "interpolation")
 
         return method(self, *args, **kwargs)
 

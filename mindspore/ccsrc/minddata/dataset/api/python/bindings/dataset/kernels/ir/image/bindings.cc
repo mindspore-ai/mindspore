@@ -47,6 +47,7 @@
 #include "minddata/dataset/kernels/ir/vision/normalize_pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_ir.h"
 #include "minddata/dataset/kernels/ir/vision/pad_to_size_ir.h"
+#include "minddata/dataset/kernels/ir/vision/perspective_ir.h"
 #include "minddata/dataset/kernels/ir/vision/posterize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rand_augment_ir.h"
 #include "minddata/dataset/kernels/ir/vision/random_adjust_sharpness_ir.h"
@@ -407,6 +408,18 @@ PYBIND_REGISTER(
         auto pad_to_size = std::make_shared<vision::PadToSizeOperation>(size, offset, fill_value, padding_mode);
         THROW_IF_ERROR(pad_to_size->ValidateParams());
         return pad_to_size;
+      }));
+  }));
+
+PYBIND_REGISTER(
+  PerspectiveOperation, 1, ([](const py::module *m) {
+    (void)py::class_<vision::PerspectiveOperation, TensorOperation, std::shared_ptr<vision::PerspectiveOperation>>(
+      *m, "PerspectiveOperation", "Tensor operation to apply perspective transformations on an image.")
+      .def(py::init([](const std::vector<std::vector<int32_t>> &start_points,
+                       const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation) {
+        auto perspective = std::make_shared<vision::PerspectiveOperation>(start_points, end_points, interpolation);
+        THROW_IF_ERROR(perspective->ValidateParams());
+        return perspective;
       }));
   }));
 

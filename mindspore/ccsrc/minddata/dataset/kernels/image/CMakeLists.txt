@@ -33,6 +33,7 @@ add_library(kernels-image OBJECT
     normalize_pad_op.cc
     pad_op.cc
     pad_to_size_op.cc
+    perspective_op.cc
     posterize_op.cc
     rand_augment_op.cc
     random_adjust_sharpness_op.cc

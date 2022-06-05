@@ -431,6 +431,18 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t kernel_size_x,
                     int32_t kernel_size_y, float sigma_x, float sigma_y);
 
+/// \brief Apply perspective transformation on input image.
+/// \param[in] input Input Tensor.
+/// \param[out] output Transformed Tensor.
+/// \param[in] start_points List containing four lists of two integers corresponding to four
+///     corners [top-left, top-right, bottom-right, bottom-left] of the original image.
+/// \param[in] end_points List containing four lists of two integers corresponding to four
+///     corners [top-left, top-right, bottom-right, bottom-left] of the transformed image.
+/// \param[in] interpolation Method of interpolation.
+Status Perspective(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                   const std::vector<std::vector<int32_t>> &start_points,
+                   const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation);
+
 /// \brief Slice tensor to multiple patches.
 /// \param[in] input Input Tensor
 /// \param[out] output Vector of Output Tensor

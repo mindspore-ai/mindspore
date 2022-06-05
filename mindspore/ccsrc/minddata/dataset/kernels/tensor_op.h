@@ -86,6 +86,7 @@ constexpr char kNormalizeOp[] = "NormalizeOp";
 constexpr char kNormalizePadOp[] = "NormalizePadOp";
 constexpr char kPadOp[] = "PadOp";
 constexpr char kPadToSizeOp[] = "PadToSizeOp";
+constexpr char kPerspectiveOp[] = "PerspectiveOp";
 constexpr char kRandAugmentOp[] = "RandAugmentOp";
 constexpr char kRandomAdjustSharpnessOp[] = "RandomAdjustSharpnessOp";
 constexpr char kRandomAffineOp[] = "RandomAffineOp";

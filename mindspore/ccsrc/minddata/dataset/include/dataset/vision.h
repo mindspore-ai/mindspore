@@ -716,6 +716,48 @@ class DATASET_API PadToSize final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Perform perspective transform on the image.
+class MS_API Perspective final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] start_points List containing four lists of two integers corresponding to four
+  ///     corners [top-left, top-right, bottom-right, bottom-left] of the original image.
+  /// \param[in] end_points List containing four lists of two integers corresponding to four
+  ///     corners [top-left, top-right, bottom-right, bottom-left] of the transformed image.
+  /// \param[in] interpolation An enum for the mode of interpolation. Default: InterpolationMode::kLinear.
+  ///     - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
+  ///     - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
+  ///     - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
+  ///     - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
+  ///     - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     std::vector<std::vector<int32_t>> start_points = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+  ///     std::vector<std::vector<int32_t>> end_points = {{0, 2}, {2, 0}, {2, 2}, {0, 2}};
+  ///     auto perspective_op = vision::Perspective(start_points, end_points, InterpolationMode::kLinear);
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, perspective_op},  // operations
+  ///                            {"image"});                   // input columns
+  /// \endcode
+  Perspective(const std::vector<std::vector<int32_t>> &start_points,
+              const std::vector<std::vector<int32_t>> &end_points, InterpolationMode interpolation);
+
+  /// \brief Destructor.
+  ~Perspective() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Posterize an image by reducing the number of bits for each color channel.
 class DATASET_API Posterize final : public TensorTransform {
  public:

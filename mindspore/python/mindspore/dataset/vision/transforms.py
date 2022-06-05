@@ -67,13 +67,14 @@ from .validators import check_adjust_brightness, check_adjust_contrast, check_ad
     check_auto_contrast, check_bounding_box_augment_cpp, check_center_crop, check_convert_color, check_crop, \
     check_cut_mix_batch_c, check_cutout_new, check_decode, check_erase, check_five_crop, check_gaussian_blur, \
     check_hsv_to_rgb, check_linear_transform, check_mix_up, check_mix_up_batch_c, check_normalize, \
-    check_normalizepad, check_num_channels, check_pad, check_pad_to_size, check_positive_degrees, check_posterize, \
-    check_prob, check_rand_augment, check_random_adjust_sharpness, check_random_affine, check_random_auto_contrast, \
-    check_random_color_adjust, check_random_crop, check_random_erasing, check_random_perspective, \
-    check_random_posterize, check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, \
-    check_random_solarize, check_range, check_rescale, check_resize, check_resize_interpolation, check_resized_crop, \
-    check_rgb_to_hsv, check_rotate, check_slice_patches, check_solarize, check_ten_crop, check_trivial_augment_wide, \
-    check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
+    check_normalizepad, check_num_channels, check_pad, check_pad_to_size, check_perspective, check_positive_degrees, \
+    check_posterize, check_prob, check_rand_augment, check_random_adjust_sharpness, check_random_affine, \
+    check_random_auto_contrast, check_random_color_adjust, check_random_crop, check_random_erasing, \
+    check_random_perspective, check_random_posterize, check_random_resize_crop, check_random_rotation, \
+    check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize,  \
+    check_resize_interpolation, check_resized_crop, check_rgb_to_hsv, check_rotate, check_slice_patches, \
+    check_solarize, check_ten_crop, check_trivial_augment_wide, check_uniform_augment, check_to_tensor, \
+    FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
@@ -1693,6 +1694,86 @@ class PadToSize(ImageTensorOperation):
 
     def parse(self):
         return cde.PadToSizeOperation(self.size, self.offset, self.fill_value, self.padding_mode)
+
+
+class Perspective(ImageTensorOperation, PyTensorOperation):
+    """
+    Apply perspective transformation on input image.
+
+    Args:
+        start_points (Sequence[Sequence[int, int]]): List containing four lists of two integers corresponding to four
+            corners [top-left, top-right, bottom-right, bottom-left] of the original image.
+        end_points (Sequence[Sequence[int, int]]): List containing four lists of two integers corresponding to four
+            corners [top-left, top-right, bottom-right, bottom-left] of the transformed image.
+        interpolation (Inter, optional): Method of interpolation. It can be Inter.BILINEAR, Inter.LINEAR,
+            Inter.NEAREST, Inter.AREA, Inter.PILCUBIC, Inter.CUBIC or Inter.BICUBIC. Default: Inter.BILINEAR.
+
+            - Inter.BILINEAR, bilinear interpolation.
+            - Inter.LINEAR, bilinear interpolation, here is the same as Inter.BILINEAR.
+            - Inter.NEAREST, nearest-neighbor interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
+            - Inter.CUBIC: means the interpolation method is bicubic interpolation, here is the same as Inter.BICUBIC.
+            - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in pillow, input
+              should be in 3 channels format.(PIL input is not supported)
+            - Inter.AREA, area interpolation.(PIL input is not supported)
+
+    Raises:
+        TypeError: If `start_points` is not of type Sequence[Sequence[int, int]] of length 4.
+        TypeError: If element in `start_points` is not of type Sequence[int, int] of length 2.
+        TypeError: If `end_points` is not of type Sequence[Sequence[int, int]] of length 4.
+        TypeError: If element in `end_points` is not of type Sequence[int, int] of length 2.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.dataset.transforms import Compose
+        >>> from mindspore.dataset.vision import Inter
+        >>>
+        >>> start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
+        >>> end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
+        >>> transforms_list = Compose([vision.Decode(),
+        ...                            vision.Perspective(start_points, end_points, Inter.BILINEAR)])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
+    """
+
+    @check_perspective
+    def __init__(self, start_points, end_points, interpolation=Inter.BILINEAR):
+        super().__init__()
+        self.start_points = start_points
+        self.end_points = end_points
+        self.c_interpolation = None
+        self.py_interpolation = None
+        if interpolation in [Inter.PILCUBIC, Inter.AREA]:
+            self.c_interpolation = Inter.to_c_type(interpolation)
+        elif interpolation == Inter.ANTIALIAS:
+            self.py_interpolation = Inter.to_python_type(interpolation)
+        else:
+            self.c_interpolation = Inter.to_c_type(interpolation)
+            self.py_interpolation = Inter.to_python_type(interpolation)
+
+    def parse(self):
+        if self.c_interpolation is None:
+            raise TypeError("Current Interpolation is not supported with NumPy input.")
+        return cde.PerspectiveOperation(self.start_points, self.end_points, self.c_interpolation)
+
+    def execute_py(self, img):
+        """
+        Execute method.
+
+        Args:
+            img (PIL Image): Image to be perspectived.
+
+        Returns:
+            PIL Image, perspectived image.
+        """
+        if self.py_interpolation is None:
+            raise TypeError("Current Interpolation is not supported with PIL input.")
+        return util.perspective(img, self.start_points, self.end_points, self.py_interpolation)
 
 
 class Posterize(ImageTensorOperation):

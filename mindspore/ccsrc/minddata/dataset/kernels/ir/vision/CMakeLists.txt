@@ -29,6 +29,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         normalize_pad_ir.cc
         pad_ir.cc
         pad_to_size_ir.cc
+        perspective_ir.cc
         posterize_ir.cc
         rand_augment_ir.cc
         random_adjust_sharpness_ir.cc

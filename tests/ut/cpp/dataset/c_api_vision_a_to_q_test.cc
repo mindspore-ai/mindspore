@@ -2660,3 +2660,92 @@ TEST_F(MindDataTestPipeline, TestAdjustContrastParamCheck) {
   // Expect failure: invalid value of AdjustContrast
   EXPECT_EQ(iter1, nullptr);
 }
+
+
+/// Feature: Perspective
+/// Description: Test Perspective pipeline
+/// Expectation: The returned result is as expected
+TEST_F(MindDataTestPipeline, TestPerspective){
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPerspective.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::vector<std::vector<int32_t>> src = {{0, 200}, {400, 200}, {400, 0}, {0, 0}};
+  std::vector<std::vector<int32_t>> dst = {{0, 180}, {400, 180}, {400, 0}, {0, 0}};
+
+  auto perspective_op = vision::Perspective(src, dst, InterpolationMode::kLinear);
+
+  // Create a Map operation on ds
+  ds = ds->Map({perspective_op});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+  EXPECT_EQ(i, 20);
+
+  iter->Stop();
+}
+
+/// Feature: Perspective
+/// Description: test Perspective with invalid input
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestPipeline, TestPerspectiveParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPosterizeParamCheck.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Case 1: invalid start point lists
+  // Create objects for the tensor ops
+  std::vector<std::vector<int32_t>> src = {{0, 200}, {400, 200}, {400, 0}, {0}};
+  std::vector<std::vector<int32_t>> dst = {{0, 200}, {400, 200}, {400, 0}, {0, 0}};
+
+  auto perspective = vision::Perspective(src, dst, InterpolationMode::kLinear);
+  ds = ds->Map({perspective});
+  EXPECT_NE(ds, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid value of Perspective
+  EXPECT_EQ(iter, nullptr);
+
+  // Case 2: invalid end point lists
+  // Create objects for the tensor ops
+  std::vector<std::vector<int32_t>> src1 = {{0, 200}, {400, 200}, {400, 0}, {0, 0}};
+  std::vector<std::vector<int32_t>> dst1 = {{0, 200}, {400, 180}, {400}, {0, 0}};
+  auto perspective1 = vision::Perspective(src1, dst1, InterpolationMode::kLinear);
+  ds = ds->Map({perspective1});
+  EXPECT_NE(ds, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds->CreateIterator();
+  // Expect failure: invalid value of Perspective
+  EXPECT_EQ(iter1, nullptr);
+}
