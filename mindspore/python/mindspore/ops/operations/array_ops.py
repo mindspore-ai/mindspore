@@ -4285,6 +4285,11 @@ class ScatterUpdate(Primitive):
         [[2. 1.2  1.]
          [3. 1.2  1.]]
     """
+    __mindspore_signature__ = (
+        sig.make_sig('x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('updates', dtype=sig.sig_dtype.T)
+    )
 
     @prim_attr_register
     def __init__(self, use_locking=True):
