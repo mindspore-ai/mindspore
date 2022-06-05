@@ -110,6 +110,23 @@ class MS_CORE_API CheckAndConvertUtils {
                               int64_t match_value, const std::string &prim_name = "");
 
   template <typename T>
+  static std::vector<T> CheckPositiveVectorExcludeZero(const std::string &arg_name, const std::vector<T> &arg_value,
+                                                       const std::string &prim_name) {
+    std::ostringstream buffer;
+    buffer << "For primitive[" << prim_name << "], the attribute[" << arg_name
+           << "] should be a vector with all positive item. but got [";
+    if (std::any_of(arg_value.begin(), arg_value.end(), [](T item) { return item <= T(0); })) {
+      for (auto item : arg_value) {
+        buffer << item << ", ";
+      }
+      buffer << "].";
+      MS_EXCEPTION(ValueError) << buffer.str();
+    }
+
+    return arg_value;
+  }
+
+  template <typename T>
   static T CheckValue(const std::string &arg_name, T arg_value, CompareEnum compare_operator, T match_value,
                       const std::string &prim_name) {
     auto iter = kCompareMap<T>.find(compare_operator);

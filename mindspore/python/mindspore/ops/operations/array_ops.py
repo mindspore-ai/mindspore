@@ -467,6 +467,106 @@ class IsInstance(PrimitiveWithInfer):
         return out
 
 
+class Col2Im(Primitive):
+    r"""
+    Combines an array of sliding local blocks into a large containing tensor.
+
+    Consider a batched :attr:`input` tensor containing sliding local blocks,
+    e.g., patches of images, of shape :math:`(N, C, \prod(\text{kernel_size}), L)`,
+    where :math:`N` is batch dimension, :math:`C` is channel dimension,
+    :math:`\prod(\text{kernel_size})` is the block size, and
+    :math:`L` is the total number of blocks. This operation combines these
+    local blocks into the large :attr:`output` tensor of
+    shape :math:`(N, C, \text{output_size}[0], \text{output_size}[1], \dots)`
+    by summing the overlapping values.
+
+    .. math::
+        L = \prod_d \left\lfloor\frac{\text{output_size}[d] + 2 \times \text{padding}[d] %
+            - \text{dilation}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{stride}[d]} + 1\right\rfloor,
+
+    where :math:`d` is over all spatial dimensions.
+
+    :attr:`output_size` describes the spatial shape of the large containing
+    tensor of the sliding local blocks. It is useful to resolve the ambiguity
+    when multiple input shapes map to same number of sliding blocks, e.g.,
+    with ``stride > 0``.
+
+    The :attr:`padding`, :attr:`stride` and :attr:`dilation` arguments specify
+    how the sliding blocks are retrieved.
+
+    :attr:`stride` controls the stride for the sliding blocks.
+
+    :attr:`padding` controls the amount of implicit zero-paddings on both
+    sides for :attr:`padding` number of points for each dimension before
+    reshaping.
+
+    :attr:`dilation` controls the spacing between the kernel points.
+
+    Args:
+        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+            for height and width. If type is int, it means that height equal with width. Must be specified.
+        dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
+        padding (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
+        stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 0.
+
+    Inputs:
+        - **x** (Tensor) - 4D tensor with data type float16 or float32.
+        - **output_size** (Tensor) - 1D tensor with 2 elements of data type int32.
+
+    Outputs:
+        Tensor, a 4-D Tensor with same type of input `x`.
+
+    Supported Platforms:
+
+    Raises:
+        TypeError: If :attr:`kernel_size`, `dilation`, `padding`, `stride` data type is not in
+            Union[int, tuple[int], list[int]].
+        ValueError: If :attr:`kernel_size`, `dilation`, `padding`, `stride` value is not
+            greater than zero or elements number more than 2.
+        ValueError: If x.shape[2] != kernel_size[0] * kernel_size[1].
+        ValueError: If x.shape[3] does not match the calculated number of sliding blocks.
+
+    Examples:
+        >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
+        >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
+        >>> col2im = P.Col2Im(kernel_size=[2, 2], dilation=[2, 2], padding=[2, 2], stride=[2, 2])
+        >>> y = col2im(x, output_size)
+        >>> print(y.shape)
+        (16, 16, 8, 8)
+    """
+    @prim_attr_register
+    def __init__(self, kernel_size, dilation=1, padding=0, stride=1):
+        """Initialize Col2Im."""
+        self.add_prim_attr("cust_aicpu", self.name)
+        self.init_prim_io_names(inputs=['x', 'output_size'], outputs=['y'])
+        validator.check_value_type('kernel_size', kernel_size, [int, list, tuple], self.name)
+        validator.check_value_type('dilation', dilation, [int, list, tuple], self.name)
+        validator.check_value_type('padding', padding, [int, list, tuple], self.name)
+        validator.check_value_type('stride', stride, [int, list, tuple], self.name)
+
+        self.kernel_size = (kernel_size, kernel_size) if isinstance(kernel_size, int) else kernel_size
+        self.dilation = (dilation, dilation) if isinstance(dilation, int) else dilation
+        self.padding = (padding, padding) if isinstance(padding, int) else padding
+        self.stride = (stride, stride) if isinstance(stride, int) else stride
+
+        validator.check("kernel_size size", len(self.kernel_size), "", 2, Rel.EQ, self.name)
+        validator.check_positive_int_sequence(self.kernel_size, "kernel_size", self.name)
+        validator.check("dilation size", len(self.dilation), "", 2, Rel.EQ, self.name)
+        validator.check_positive_int_sequence(self.dilation, "dilation", self.name)
+        validator.check("padding size", len(self.padding), "", 2, Rel.EQ, self.name)
+        validator.check_non_negative_int_sequence(self.padding, "padding", self.name)
+        validator.check("stride size", len(self.stride), "", 2, Rel.EQ, self.name)
+        validator.check_positive_int_sequence(self.stride, "stride", self.name)
+
+        self.add_prim_attr('kernel_size', self.kernel_size)
+        self.add_prim_attr('dilation', self.dilation)
+        self.add_prim_attr('padding', self.padding)
+        self.add_prim_attr('stride', self.stride)
+
+
 class Reshape(PrimitiveWithInfer):
     """
     Rearranges the input Tensor based on the given shape.

@@ -1,0 +1,124 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <set>
+#include <map>
+#include <string>
+#include <vector>
+#include <memory>
+
+#include "ops/csr_sparse_matrix_to_sparse_tensor.h"
+#include "abstract/dshape.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "utils/tensor_construct_utils.h"
+
+namespace mindspore {
+namespace ops {
+namespace {
+TuplePtr CSRSparseMatrixToSparseTensorInferType(const PrimitivePtr &prim,
+                                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto x_dense_shape_type = input_args[kInputIndex0]->BuildType();
+  auto x_batch_pointers_type = input_args[kInputIndex1]->BuildType();
+  auto x_row_pointers_type = input_args[kInputIndex2]->BuildType();
+  auto x_col_indices_type = input_args[kInputIndex3]->BuildType();
+  auto x_values_type = input_args[kInputIndex4]->BuildType();
+  const std::set<TypePtr> common_valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dense_shape", x_dense_shape_type, {kInt32, kInt64}, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_batch_pointers", x_batch_pointers_type, {kInt32, kInt64},
+                                                   prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_row_pointers", x_row_pointers_type, {kInt32, kInt64},
+                                                   prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_col_indices", x_col_indices_type, {kInt32, kInt64}, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x_values", x_values_type, common_valid_types, prim->name());
+  std::vector<TypePtr> types_list = {input_args[0]->BuildType(), input_args[4]->BuildType(),
+                                     input_args[0]->BuildType()};
+  return std::make_shared<Tuple>(types_list);
+}
+
+abstract::TupleShapePtr CSRSparseMatrixToSparseTensorInferShape(const PrimitivePtr &primitive,
+                                                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kZero = 0;
+  const int64_t kOne = 1;
+  const int64_t kDefalutRank = 2;
+  const int64_t kBatchRank = 3;
+  std::vector<int64_t> x_dense_shape_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  const int64_t rank_x = x_dense_shape_shape[kZero];
+  if (rank_x != kDefalutRank && rank_x != kBatchRank) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input dense_shape should "
+                             << "have rank 2 or 3, but got " << rank_x << ".";
+  }
+  auto prim_name = primitive->name();
+  auto x_batch_pointers_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto x_row_pointers_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto x_col_indices_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
+  auto x_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  const int64_t x_dense_shape_rank = x_dense_shape_shape.size();
+  const int64_t x_batch_pointers_rank = x_batch_pointers_shape.size();
+  const int64_t x_row_pointers_rank = x_row_pointers_shape.size();
+  const int64_t x_col_indices_rank = x_col_indices_shape.size();
+  const int64_t x_values_rank = x_values_shape.size();
+  if (x_dense_shape_rank != kOne || x_batch_pointers_rank != kOne || x_row_pointers_rank != kOne ||
+      x_col_indices_rank != kOne || x_values_rank != kOne) {
+    MS_EXCEPTION(ValueError) << "For CSRSparseMatrixToSparseTensor, input x_dense_shape should be a 1-D tensor"
+                             << ", input x_batch_pointers should be a 1-D tensor"
+                             << ", input x_row_pointers should be a 1-D tensor"
+                             << ", input x_col_indices should be a 1-D tensor"
+                             << ", input x_values should be a 1-D tensor"
+                             << ", while dim0 = " << x_dense_shape_shape.size()
+                             << ", dim1 = " << x_batch_pointers_shape.size()
+                             << ", dim2 = " << x_row_pointers_shape.size() << ", dim3 = " << x_col_indices_shape.size()
+                             << ", dim4 = " << x_values_shape.size();
+  }
+  if (x_col_indices_shape[kZero] != x_values_shape[kZero]) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name
+                             << ", first dimsize of `x_col_indices` and first dimsize of `x_values` should be the same"
+                             << ", while x_col_indices_shape[0] is " << x_col_indices_shape[kZero]
+                             << ", x_values_shape[0] is " << x_values_shape[kZero];
+  }
+  ShapeVector indices_shape = {x_values_shape[kZero], rank_x};
+  ShapeVector values_shape = {x_values_shape[kZero]};
+  ShapeVector dense_shape_shape = {rank_x};
+  std::vector<BaseShapePtr> shapes_list;
+  (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(indices_shape));
+  (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(values_shape));
+  (void)shapes_list.emplace_back(std::make_shared<abstract::Shape>(dense_shape_shape));
+  return std::make_shared<abstract::TupleShape>(shapes_list);
+}
+}  // namespace
+
+MIND_API_OPERATOR_IMPL(CSRSparseMatrixToSparseTensor, BaseOperator);
+AbstractBasePtr CSRSparseMatrixToSparseTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 5;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infer_type = CSRSparseMatrixToSparseTensorInferType(primitive, input_args);
+  auto infer_shape = CSRSparseMatrixToSparseTensorInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(CSRSparseMatrixToSparseTensor, prim::kPrimCSRSparseMatrixToSparseTensor,
+                             CSRSparseMatrixToSparseTensorInfer, nullptr, true);
+}  // namespace ops
+}  // namespace mindspore

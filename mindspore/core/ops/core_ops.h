@@ -161,6 +161,7 @@ constexpr auto kIndexFill = "IndexFill";
 constexpr auto kMeshgrid = "Meshgrid";
 constexpr auto kScatterNdMax = "ScatterNdMax";
 constexpr auto kScatterNdMin = "ScatterNdMin";
+constexpr auto kCSRSparseMatrixToSparseTensor = "CSRSparseMatrixToSparseTensor";
 
 // NN
 constexpr auto kFractionalMaxPool3DWithFixedKsize = "FractionalMaxPool3DWithFixedKsize";
@@ -287,8 +288,8 @@ GVAR_DEF(PrimitivePtr, kPrimEqualCount, std::make_shared<Primitive>("EqualCount"
 GVAR_DEF(PrimitivePtr, kPrimApproximateEqual, std::make_shared<Primitive>("ApproximateEqual"));
 
 GVAR_DEF(PrimitivePtr, kPrimDistribute, std::make_shared<Primitive>("distribute"));
-GVAR_DEF(PrimitivePtr, kPrimIm2Col, std::make_shared<Primitive>("im2col"));
-GVAR_DEF(PrimitivePtr, kPrimCol2Im, std::make_shared<Primitive>("col2im"));
+GVAR_DEF(PrimitivePtr, kPrimIm2Col, std::make_shared<Primitive>("Im2Col"));
+GVAR_DEF(PrimitivePtr, kPrimCol2Im, std::make_shared<Primitive>("Col2Im"));
 GVAR_DEF(PrimitivePtr, kPrimIm2ColV1, std::make_shared<Primitive>("im2col_v1"));
 GVAR_DEF(PrimitivePtr, kPrimCol2ImV1, std::make_shared<Primitive>("col2im_v1"));
 
@@ -747,6 +748,7 @@ GVAR_DEF(PrimitivePtr, kPrimCSRDiv, std::make_shared<Primitive>(kCSRDiv));
 GVAR_DEF(PrimitivePtr, kPrimSparseMatrixAdd, std::make_shared<Primitive>(kSparseMatrixAdd));
 GVAR_DEF(PrimitivePtr, kPrimSparseAdd, std::make_shared<Primitive>(kSparseAdd));
 GVAR_DEF(PrimitivePtr, kPrimDenseToCSRSparseMatrix, std::make_shared<Primitive>("DenseToCSRSparseMatrix"));
+GVAR_DEF(PrimitivePtr, kPrimCSRSparseMatrixToSparseTensor, std::make_shared<Primitive>(kCSRSparseMatrixToSparseTensor));
 
 // TensorList
 GVAR_DEF(PrimitivePtr, kPrimTensorListFromTensor, std::make_shared<Primitive>("TensorListFromTensor"));

@@ -280,12 +280,12 @@ TEST_F(TestOps, TransposeTest) {
 }
 
 TEST_F(TestOps, Im2ColTest) {
-  auto prim = std::make_shared<Primitive>("im2col");
+  auto prim = std::make_shared<Primitive>("Im2Col");
   ASSERT_EQ(prim->name(), kPrimIm2Col->name());
 }
 
 TEST_F(TestOps, Col2ImTest) {
-  auto prim = std::make_shared<Primitive>("col2im");
+  auto prim = std::make_shared<Primitive>("Col2Im");
   ASSERT_EQ(prim->name(), kPrimCol2Im->name());
 }
 
