@@ -43,6 +43,8 @@ void FusionActor::Run(OpContext<DeviceTensor> *const context) {
     MS_EXCEPTION_IF_NULL(real_input_control);
     real_input_control->RunOpControl(from_aid, context);
   }
+
+  EraseInput(context);
 }
 }  // namespace runtime
 }  // namespace mindspore

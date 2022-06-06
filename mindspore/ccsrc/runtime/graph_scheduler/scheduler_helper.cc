@@ -355,6 +355,15 @@ void SchedulerHelper::FuseDataArrowsToBatchDataArrow(AbstractActor *const actor)
   }
 }
 
+void SchedulerHelper::AddDependency(AbstractActor *const actor, const AbstractActor *dependent_actor) {
+  MS_EXCEPTION_IF_NULL(actor);
+  MS_EXCEPTION_IF_NULL(dependent_actor);
+  // For example, ActorA->dependent_actor->actor, the expanded dependent actors of actor are dependent_actor and ActorA.
+  (void)actor->dependent_actors_.insert(dependent_actor->GetAID().Name());
+  (void)actor->dependent_actors_.insert(dependent_actor->dependent_actors_.begin(),
+                                        dependent_actor->dependent_actors_.end());
+}
+
 FusionActorPtr SchedulerHelper::BuildMultiActors(const std::vector<AbstractActorPtr> &actors) {
   if (actors.size() <= 1) {
     MS_LOG(EXCEPTION) << "The fusion actor size must be greater than 1.";
