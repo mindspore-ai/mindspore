@@ -261,7 +261,7 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
 
           \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
           l_n = - w_{y_n} \log \frac{\exp(x_{n,y_n})}{\sum_{c=1}^C \exp(x_{n,c})}
-          \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}
+          \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}
 
       where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
       N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
@@ -271,7 +271,7 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
       .. math::
 
           \ell(x, y) = \begin{cases}
-              \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}} l_n, &
+              \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}} l_n, &
               \text{if reduction} = \text{`mean';}\\
               \sum_{n=1}^N l_n,  &
               \text{if reduction} = \text{`sum'.}
@@ -363,7 +363,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=None, reduction='mean', l
         \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
         \quad l_{n}=-w_{t_{n}} x_{n, t_{n}},
         \quad w_{c}=\text { weight }[c] \cdot \mathbb{1}
-        \{c \not= \text{ignore\_index}\},
+        \{c \not= \text{ignore_index}\},
 
     where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
     N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
@@ -441,19 +441,16 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
         loss = loss.masked_fill(non_pad_mask, 0.)
         loss_weights = loss_weights.masked_fill(non_pad_mask, 0.)
         smooth_loss = smooth_loss.masked_fill(non_pad_mask, 0.)
-    else:
-        loss = loss.squeeze(target_dim)
-        smooth_loss = smooth_loss.squeeze(target_dim)
+
+    loss = loss.squeeze(target_dim)
+    smooth_loss = smooth_loss.squeeze(target_dim)
 
     if reduction == 'sum':
         loss = loss.sum()
         smooth_loss = smooth_loss.sum()
-    elif reduction == 'mean':
+    if reduction == 'mean':
         loss = loss.sum() / loss_weights.sum()
         smooth_loss = smooth_loss.mean()
-    else:
-        loss = loss.sum(target_dim)
-        smooth_loss = smooth_loss.sum(target_dim)
 
     eps_i = label_smoothing / inputs.shape[target_dim]
     loss = (1. - label_smoothing) * loss + eps_i * smooth_loss

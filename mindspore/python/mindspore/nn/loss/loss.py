@@ -1602,7 +1602,7 @@ class NLLLoss(LossBase):
 
         \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
         \quad l_{n}=-w_{t_{n}} x_{n, t_{n}},
-        \quad w_{c}=\text { weight }[c] \cdot 1
+        \quad w_{c}=\text { weight }[c] \cdot \mathbb{1}\{c \not= \text{ignore_index}\}
 
     where :math:`x` is the logits, :math:`t` is the labels, :math:`w` is the weight,
     N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
@@ -1683,7 +1683,7 @@ class CrossEntropyLoss(LossBase):
 
           \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
           l_n = - w_{y_n} \log \frac{\exp(x_{n,y_n})}{\sum_{c=1}^C \exp(x_{n,c})}
-          \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}
+          \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}
 
       where :math:`x` is the inputs, :math:`t` is the target, :math:`w` is the weight,
       N is the batch size, :math:`c` belonging to [0, C-1] is class index, where :math:`C` is the number of classes.
@@ -1693,7 +1693,7 @@ class CrossEntropyLoss(LossBase):
       .. math::
 
           \ell(x, y) = \begin{cases}
-              \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}} l_n, &
+              \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}} l_n, &
               \text{if reduction} = \text{`mean';}\\
               \sum_{n=1}^N l_n,  &
               \text{if reduction} = \text{`sum'.}

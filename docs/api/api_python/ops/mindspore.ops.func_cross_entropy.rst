@@ -13,7 +13,7 @@
 
           \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad
           l_n = - w_{y_n} \log \frac{\exp(x_{n,y_n})}{\sum_{c=1}^C \exp(x_{n,c})}
-          \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}
+          \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}
 
       其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为[0, C-1]，表示类索引，其中 :math:`C` 表示类的数量。
 
@@ -22,7 +22,7 @@
       .. math::
 
           \ell(x, y) = \begin{cases}
-              \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}} l_n, &
+              \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}} l_n, &
               \text{if reduction} = \text{'mean';}\\
               \sum_{n=1}^N l_n,  &
               \text{if reduction} = \text{'sum'.}
