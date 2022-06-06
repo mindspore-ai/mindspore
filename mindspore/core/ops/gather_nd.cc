@@ -29,13 +29,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr GatherNdInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
@@ -73,14 +67,13 @@ abstract::ShapePtr GatherNdInferShape(const PrimitivePtr &primitive, const std::
 }
 
 TypePtr GatherNdInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &arg) { return arg == nullptr; })) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', the input args userd for infer shape and type, can not be a nullptr.";
-  }
-  std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
+  std::set<TypePtr> int_types = {kInt32, kInt64};
   auto x_type = input_args[kInputIndex0]->BuildType();
   auto indices_type = input_args[kInputIndex1]->BuildType();
+  std::set<TypePtr> check_list(common_valid_types_with_complex);
+  check_list.insert(kBool);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indices_type, int_types, "GatherNd");
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, check_list, "GatherNd");
   return x_type;
 }
 }  // namespace
@@ -89,10 +82,8 @@ MIND_API_OPERATOR_IMPL(GatherNd, BaseOperator);
 AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
   const int64_t kInputNum = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, kInputNum,
-                                           prim_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
   auto infer_type = GatherNdInferType(primitive, input_args);
   auto infer_shape = GatherNdInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);

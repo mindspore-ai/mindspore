@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/scatter_nd_update_cpu_kernel.h"
+#include <complex>
 #include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "include/common/thread_pool.h"
@@ -27,11 +28,11 @@ constexpr size_t kScatterNdUpdateOutputsNum = 1;
 constexpr size_t kMinIndiceRank = 2;
 constexpr char kKernelName[] = "ScatterNdUpdate";
 
-template <typename T>
-bool Compute(const ComputeParams<T> *params, const size_t start, const size_t end) {
+template <typename T, typename S>
+bool Compute(const ComputeParams<T, S> *params, const size_t start, const size_t end) {
   MS_EXCEPTION_IF_NULL(params);
   T *x = params->x_;
-  int *indices = params->indices_;
+  S *indices = params->indices_;
   T *updates = params->updates_;
   std::vector<size_t> *out_strides = params->out_strides_;
   MS_EXCEPTION_IF_NULL(x);
@@ -66,6 +67,12 @@ bool Compute(const ComputeParams<T> *params, const size_t start, const size_t en
   }
   return true;
 }
+
+#define COMPUTE_CASE(DTYPE, TYPE1, TYPE2, inputs, outputs) \
+  case (DTYPE): {                                          \
+    LaunchKernel<TYPE2, TYPE1>(inputs, outputs);           \
+    break;                                                 \
+  }
 }  // namespace
 
 void ScatterUpdateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -121,7 +128,61 @@ void ScatterUpdateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     out_strides_.push_back(out_stride);
   }
   reverse(out_strides_.begin(), out_strides_.end());
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  dtype_value = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  dtype_shape = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+}
+
+template <typename T>
+void ScatterUpdateCpuKernelMod::LaunchTypeChoose(const std::vector<kernel::AddressPtr> &inputs,
+                                                 const std::vector<kernel::AddressPtr> &outputs) {
+  switch (dtype_value) {
+    case kNumberTypeFloat16:
+      LaunchKernel<float16, T>(inputs, outputs);
+      break;
+    case kNumberTypeFloat32:
+      LaunchKernel<float, T>(inputs, outputs);
+      break;
+    case kNumberTypeFloat64:
+      LaunchKernel<double, T>(inputs, outputs);
+      break;
+    case kNumberTypeInt8:
+      LaunchKernel<int8_t, T>(inputs, outputs);
+      break;
+    case kNumberTypeInt16:
+      LaunchKernel<int16_t, T>(inputs, outputs);
+      break;
+    case kNumberTypeInt32:
+      LaunchKernel<int, T>(inputs, outputs);
+      break;
+    case kNumberTypeInt64:
+      LaunchKernel<int64_t, T>(inputs, outputs);
+      break;
+    case kNumberTypeUInt8:
+      LaunchKernel<uint8_t, T>(inputs, outputs);
+      break;
+    case kNumberTypeUInt16:
+      LaunchKernel<uint16_t, T>(inputs, outputs);
+      break;
+    case kNumberTypeUInt32:
+      LaunchKernel<uint32_t, T>(inputs, outputs);
+      break;
+    case kNumberTypeUInt64:
+      LaunchKernel<uint64_t, T>(inputs, outputs);
+    case kNumberTypeComplex64:
+      LaunchKernel<std::complex<float>, T>(inputs, outputs);
+      break;
+    case kNumberTypeComplex128:
+      LaunchKernel<std::complex<double>, T>(inputs, outputs);
+      break;
+    case kNumberTypeBool:
+      LaunchKernel<bool, T>(inputs, outputs);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << "', the dtype of 'input_x' should be float16, float32, float64, int8, int16, int32, "
+                           "int64, uint8, uint16, uint32, uint64, complex64 or complex128.but got "
+                        << TypeIdLabel(dtype_value);
+  }
 }
 
 bool ScatterUpdateCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -129,40 +190,26 @@ bool ScatterUpdateCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterNdUpdateInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterNdUpdateOutputsNum, kernel_name_);
-  switch (dtype_) {
-    case kNumberTypeFloat16:
-      LaunchKernel<float16>(inputs, outputs);
-      break;
-    case kNumberTypeFloat32:
-      LaunchKernel<float>(inputs, outputs);
-      break;
-    case kNumberTypeFloat64:
-      LaunchKernel<double>(inputs, outputs);
-      break;
+  switch (dtype_shape) {
     case kNumberTypeInt32:
-      LaunchKernel<int>(inputs, outputs);
-      break;
+      LaunchTypeChoose<int32_t>(inputs, outputs);
+      return true;
     case kNumberTypeInt64:
-      LaunchKernel<int64_t>(inputs, outputs);
-      break;
-    case kNumberTypeBool:
-      LaunchKernel<bool>(inputs, outputs);
-      break;
+      LaunchTypeChoose<int64_t>(inputs, outputs);
+      return true;
     default:
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dtype of 'input_x' must be float16, float32, float64, int32 or int64, but got "
-                        << TypeIdLabel(dtype_);
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'input_indices' should be int32, int64. "
+                        << TypeIdLabel(dtype_shape);
   }
-  return true;
 }
 
-template <typename T>
+template <typename T, typename S>
 void ScatterUpdateCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<kernel::AddressPtr> &outputs) {
   T *x = reinterpret_cast<T *>(ScatterUpdateRealData(inputs, outputs));
-  ComputeParams<T> params;
+  ComputeParams<T, S> params;
   params.x_ = x;
-  params.indices_ = reinterpret_cast<int *>(inputs[1]->addr);
+  params.indices_ = reinterpret_cast<S *>(inputs[1]->addr);
   params.updates_ = reinterpret_cast<T *>(inputs[2]->addr);
   params.x_mem_size_ = inputs[0]->size;
   params.unit_size_ = unit_size_;
@@ -172,20 +219,9 @@ void ScatterUpdateCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   std::vector<common::Task> tasks;
   size_t start = 0;
   int status = 0;
-  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
-  size_t once_compute_size = (num_units_ + max_thread_num - 1) / max_thread_num;
-  while (start < num_units_) {
-    size_t end = (start + once_compute_size) > num_units_ ? num_units_ : (start + once_compute_size);
-    auto task = [&params, start, end, &status]() {
-      if (!Compute<T>(&params, start, end)) {
-        status = -1;
-      }
-      return common::SUCCESS;
-    };
-    (void)tasks.emplace_back(task);
-    start += once_compute_size;
+  if (!Compute<T, S>(&params, start, num_units_)) {
+    status = -1;
   }
-  ParallelLaunch(tasks);
   if (status == -1) {
     MS_LOG(EXCEPTION) << "Some errors occurred! The error message is as above";
   }

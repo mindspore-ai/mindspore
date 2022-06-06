@@ -43,6 +43,9 @@ from .gather_grad import _gather_grad_aicpu
 from .gather_d_grad_v2 import _gather_d_grad_v2_aicpu
 from .gather_d import _gather_d_aicpu
 from .hamming_window import _hamming_window_aicpu
+from .gather_nd import _gather_nd_aicpu
+from .scatter_nd import _scatter_nd_aicpu
+from .scatter_nd_update import _scatter_nd_update_aicpu
 from .scatter import _scatter_aicpu
 from .exp import _exp_aicpu
 from .expm1 import _expm1_aicpu

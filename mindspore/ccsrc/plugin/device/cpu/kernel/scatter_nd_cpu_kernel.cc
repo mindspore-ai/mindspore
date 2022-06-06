@@ -54,6 +54,11 @@ void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, 
         MS_LOG(EXCEPTION) << "For '" << kKernelName
                           << "', each element in 'indices' must be greater than or equal to 0, but got " << index;
       }
+      if (index > SizeToInt(content->shape[j])) {
+        MS_LOG(EXCEPTION) << "For '" << kKernelName
+                          << "', each element in 'indices' should be smaller than the value of shape, but got " << index
+                          << " and got the value of shape " << content->shape[j];
+      }
       offset += index * out_strides->at(j) * params->unit_size_;
     }
     auto task = [&target, &updates, &params, offset, i](size_t update_start, size_t update_end) {
@@ -70,17 +75,14 @@ void ScatterNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   Check(kernel_node);
-  auto shape_ori = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  auto indices_shape_ori = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto updates_shape_ori = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  if (AnfAlgo::IsShapesDynamic({shape_ori, indices_shape_ori, updates_shape_ori})) {
+  shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto updates_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  if (AnfAlgo::IsShapesDynamic({shape, indices_shape, updates_shape})) {
     return;
   }
-  auto shape = Convert2SizeT(shape_ori);
-  auto indices_shape = Convert2SizeT(indices_shape_ori);
-  auto updates_shape = Convert2SizeT(updates_shape_ori);
   auto indices_unit_rank = indices_shape.back();
-  if (indices_unit_rank > shape.size()) {
+  if (indices_unit_rank > static_cast<int64_t>(shape.size())) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the value of last dimension of 'indices' must be less than "
                          "or equal to the dimension of 'shape', but got  the value of last dimension of 'indices': "
@@ -150,13 +152,9 @@ bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   params.unit_size_ = unit_size_;
   params.indices_unit_rank_ = indices_unit_rank_;
   params.out_strides_ = &out_strides_;
-
-  auto task = [this, &params](size_t start, size_t end) {
-    for (size_t idx = start; idx < end; idx++) {
-      Compute<S, T>(this, &params, idx, idx + 1);
-    }
-  };
-  ParallelLaunchAutoSearch(task, num_units_, this, &parallel_search_info_);
+  for (size_t idx = 0; idx < num_units_; idx++) {
+    Compute<S, T>(this, &params, idx, idx + 1);
+  }
   return true;
 }
 
@@ -215,6 +213,14 @@ std::vector<std::pair<KernelAttr, ScatterNdCpuKernelMod::ScatterNdFunc>> Scatter
    &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
    &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, complex64>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, complex64>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, complex128>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, complex128>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kNumberTypeFloat64)
@@ -334,7 +340,31 @@ std::vector<std::pair<KernelAttr, ScatterNdCpuKernelMod::ScatterNdFunc>> Scatter
      .AddInputAttr(kNumberTypeUInt8)
      .AddInputAttr(kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeUInt8),
-   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint8_t>}};
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, complex64>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, complex64>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &ScatterNdCpuKernelMod::LaunchKernel<int32_t, complex128>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &ScatterNdCpuKernelMod::LaunchKernel<int64_t, complex128>}};
 
 std::vector<KernelAttr> ScatterNdCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

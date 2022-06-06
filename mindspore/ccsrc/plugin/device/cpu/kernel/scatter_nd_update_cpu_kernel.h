@@ -25,16 +25,23 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
+template <typename T, typename S>
 struct ComputeParams {
   T *x_{nullptr};
-  int *indices_{nullptr};
+  S *indices_{nullptr};
   T *updates_{nullptr};
   size_t unit_size_{0};
   size_t indices_unit_rank_{0};
   std::vector<size_t> *out_strides_{nullptr};
   size_t x_mem_size_{0};
 };
+
+#define ADD_KERNEL(t1, t2)         \
+  KernelAttr()                     \
+    .AddInputAttr(kNumberType##t1) \
+    .AddInputAttr(kNumberType##t2) \
+    .AddInputAttr(kNumberType##t1) \
+    .AddOutputAttr(kNumberType##t1)
 
 class ScatterUpdateCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
@@ -51,11 +58,15 @@ class ScatterUpdateCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                                       const std::vector<kernel::AddressPtr> &outputs) = 0;
 
  private:
-  template <typename T>
+  template <typename T, typename S>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
-  TypeId dtype_{kTypeUnknown};
-  size_t unit_size_{0};
+  template <typename T>
+  void LaunchTypeChoose(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
+  TypeId dtype_value{kTypeUnknown};
+  TypeId dtype_shape{kTypeUnknown};
+  int unit_size_{0};
   size_t num_units_{0};
   size_t indices_unit_rank_{0};
   std::vector<size_t> out_strides_;
@@ -64,29 +75,16 @@ class ScatterUpdateCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 class ScatterNdUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
  public:
   std::vector<KernelAttr> GetOpSupport() override {
-    static const std::vector<KernelAttr> support_list = {KernelAttr()
-                                                           .AddInputAttr(kNumberTypeFloat32)
-                                                           .AddInputAttr(kNumberTypeInt32)
-                                                           .AddInputAttr(kNumberTypeFloat32)
-                                                           .AddOutputAttr(kNumberTypeFloat32),
-
-                                                         KernelAttr()
-                                                           .AddInputAttr(kNumberTypeFloat64)
-                                                           .AddInputAttr(kNumberTypeInt32)
-                                                           .AddInputAttr(kNumberTypeFloat64)
-                                                           .AddOutputAttr(kNumberTypeFloat64),
-
-                                                         KernelAttr()
-                                                           .AddInputAttr(kNumberTypeInt32)
-                                                           .AddInputAttr(kNumberTypeInt32)
-                                                           .AddInputAttr(kNumberTypeInt32)
-                                                           .AddOutputAttr(kNumberTypeInt32),
-
-                                                         KernelAttr()
-                                                           .AddInputAttr(kNumberTypeInt64)
-                                                           .AddInputAttr(kNumberTypeInt32)
-                                                           .AddInputAttr(kNumberTypeInt64)
-                                                           .AddOutputAttr(kNumberTypeInt64)};
+    static std::vector<KernelAttr> support_list = {
+      ADD_KERNEL(Float32, Int32),    ADD_KERNEL(Float16, Int32),   ADD_KERNEL(Float64, Int32),
+      ADD_KERNEL(Int8, Int32),       ADD_KERNEL(Int16, Int32),     ADD_KERNEL(Int32, Int32),
+      ADD_KERNEL(Int64, Int32),      ADD_KERNEL(UInt8, Int32),     ADD_KERNEL(UInt16, Int32),
+      ADD_KERNEL(UInt32, Int32),     ADD_KERNEL(UInt64, Int32),    ADD_KERNEL(Complex64, Int32),
+      ADD_KERNEL(Complex128, Int32), ADD_KERNEL(Float32, Int64),   ADD_KERNEL(Float16, Int64),
+      ADD_KERNEL(Float64, Int64),    ADD_KERNEL(Int8, Int64),      ADD_KERNEL(Int16, Int64),
+      ADD_KERNEL(Int32, Int64),      ADD_KERNEL(Int64, Int64),     ADD_KERNEL(UInt8, Int64),
+      ADD_KERNEL(UInt16, Int64),     ADD_KERNEL(UInt32, Int64),    ADD_KERNEL(UInt64, Int64),
+      ADD_KERNEL(Complex64, Int64),  ADD_KERNEL(Complex128, Int64)};
     return support_list;
   }
 

@@ -84,10 +84,10 @@ TypePtr ScatterNdArithmeticInferType(const PrimitivePtr &primitive, const std::v
   auto indices_dtype = input_args[kInputIndex1]->BuildType();
   auto updates_dtype = input_args[kInputIndex2]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indices_dtype, {kInt32, kInt64}, prim_name);
-  std::map<std::string, TypePtr> type_dict = {{"input_x type", input_x_dtype}, {"updates type", updates_dtype}};
+  std::map<std::string, TypePtr> type_dict = {{"input_x", input_x_dtype}, {"updates", updates_dtype}};
   // Only ScatterNdUpdate supports boolean type
   if (prim_name == prim::kPrimScatterNdUpdate->name()) {
-    return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_bool, prim_name);
+    return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_complex_and_bool, prim_name);
   }
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types, prim_name);
 }
