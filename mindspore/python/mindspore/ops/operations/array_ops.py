@@ -4233,7 +4233,7 @@ class GatherNd(Primitive):
         self.init_prim_io_names(inputs=['input_x', 'indices'], outputs=['y'])
 
 
-class ScatterUpdate(_ScatterOpDynamic):
+class ScatterUpdate(Primitive):
     r"""
     Updates tensor values by using input indices and value.
 
@@ -4266,6 +4266,7 @@ class ScatterUpdate(_ScatterOpDynamic):
     Raises:
         TypeError: If `use_locking` is not a bool.
         TypeError: If `indices` is not an int32 or an int64.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
 
