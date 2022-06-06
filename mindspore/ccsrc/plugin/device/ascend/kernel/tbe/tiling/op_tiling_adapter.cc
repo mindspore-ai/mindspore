@@ -167,6 +167,7 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
   MS_EXCEPTION_IF_NULL(kernel_mod);
   bool has_output = common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, node);
   bool has_workspace = common::AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, node);
+  constexpr size_t kAlignBtyes = 32;
   // set atomic compile info
   if (has_output || has_workspace) {
     std::string atomic_compile_info = kernel_mod->GetAtomicCompileInfo();
@@ -183,7 +184,7 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
     auto output_mem_size = kernel_mod->GetOutputSizeList();
     for (auto index : output_indexs) {
       auto output_size =
-        static_cast<int64_t>((output_mem_size.at(index) + kMemAlignSize - 1) / kMemAlignSize * kMemAlignSize);
+        static_cast<int64_t>((output_mem_size.at(index) + kAlignBtyes - 1) / kAlignBtyes * kAlignBtyes);
       auto output = (*op_desc)->MutableOutputDesc(index);
       MS_EXCEPTION_IF_NULL(output);
       ::ge::TensorUtils::SetSize(*output, output_size);
@@ -201,8 +202,7 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
     std::map<int64_t, int64_t> clean_size_list;
     auto workspace_indexes = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicWorkspaceIndexs);
     for (const auto &index : workspace_indexes) {
-      auto clean_item =
-        static_cast<int64_t>((workspace_list.at(index) + kMemAlignSize - 1) / kMemAlignSize * kMemAlignSize);
+      auto clean_item = static_cast<int64_t>((workspace_list.at(index) + kAlignBtyes - 1) / kAlignBtyes * kAlignBtyes);
       clean_size_list.insert(std::make_pair(static_cast<int64_t>(index), clean_item));
     }
     workspace_info.insert(std::make_pair((*op_desc)->GetName(), clean_size_list));
