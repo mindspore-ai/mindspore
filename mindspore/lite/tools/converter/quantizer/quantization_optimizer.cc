@@ -144,19 +144,20 @@ lite::LiteModel *ParseLiteModel(const FuncGraphPtr &func_graph, const std::share
   builder.Finish(offset);
   schema::FinishMetaGraphBuffer(builder, offset);
   int size = builder.GetSize();
-  auto content = builder.GetBufferPointer();
+  auto content = reinterpret_cast<const char *>(builder.GetBufferPointer());
   if (content == nullptr) {
     MS_LOG(ERROR) << "GetBufferPointer nullptr";
     return static_cast<LiteModel *>(nullptr);
   }
-  return static_cast<LiteModel *>(LiteModel::Import((const char *)content, size));
+  return static_cast<LiteModel *>(LiteModel::Import(content, size));
 }
 
 int DoQuantDebug(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param,
-                 const std::shared_ptr<mindspore::Model> &origin_model, mindspore::lite::LiteModel *origin_lite_model) {
+                 const std::shared_ptr<mindspore::Model> &origin_model,
+                 const mindspore::lite::LiteModel *origin_lite_model) {
   auto quant_model = std::make_shared<mindspore::Model>();
   CHECK_NULL_RETURN(quant_model);
-  int size = 0;
+  size_t size = 0;
   auto ret = BuildModelByFuncGraph(quant_model, old_graph, param, &size);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Build model failed";
@@ -168,7 +169,11 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterP
 
   auto quant_lite_model = ParseLiteModel(old_graph, param);
   if (quant_lite_model == nullptr) {
-    MS_LOG(ERROR) << "Parse lite model failed";
+    MS_LOG(ERROR) << "Parse quant lite model failed";
+    return RET_ERROR;
+  }
+  if (origin_lite_model == nullptr) {
+    MS_LOG(ERROR) << "Origin lite model nullptr.";
     return RET_ERROR;
   }
   auto status = manager.CompareOriginWithQuant(origin_model, quant_model, op_parameters, param, *origin_lite_model,
@@ -216,7 +221,7 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<C
     param->commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
     origin = std::make_shared<mindspore::Model>();
     CHECK_NULL_RETURN(origin);
-    int size = 0;
+    size_t size = 0;
     auto ret = BuildModelByFuncGraph(origin, old_graph, param, &size);
     param->commonQuantParam.quant_type = quant_type;
     if (ret != kSuccess) {

@@ -313,7 +313,7 @@ int BiasCorrectionStrategy::Int8Inference(const MSKernelCallBack &before_call_ba
     MS_LOG(ERROR) << "New model failed.";
     return RET_ERROR;
   }
-  int size = 0;
+  size_t size = 0;
   auto ret = BuildModelByFuncGraph(int8_model, quant_func_graph, param_, &size);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Build error.";
@@ -624,8 +624,8 @@ MSKernelCallBack BiasCorrectionStrategy::GetNVGPUInt8AfterCallBack() {
     // Calculate the difference between original and quantified
     // Calculate output per channel means
     std::vector<float> dequant_op_output_ch_mean;
-    auto ret = CalculatePerChannelMeans<float>(reinterpret_cast<const float *>(tensor.Data().get()),
-                                               tensor.ElementNum(), tensor.Shape(), &dequant_op_output_ch_mean);
+    auto ret = CalculatePerChannelMeans<float>(static_cast<const float *>(tensor.Data().get()), tensor.ElementNum(),
+                                               tensor.Shape(), &dequant_op_output_ch_mean);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Calculate Per channel means failed.";
       return false;

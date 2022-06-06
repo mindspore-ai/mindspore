@@ -33,16 +33,16 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
   MS_ASSERT(new_state != nullptr);
   MS_ASSERT(bit_count != nullptr);
   MS_ASSERT(symbol_table != nullptr);
-  const int table_size = 1 << table_log;
-  const int table_mask = table_size - 1;
+  const size_t table_size = 1 << table_log;
+  const size_t table_mask = table_size - 1;
   int step = ((table_size >> 1) + (table_size >> kTableExtend) + kTableExtend);
-  int pos = 0;
+  size_t pos = 0;
   for (int sym = 0; sym < symbol_frequency_count; sym++) {
     for (uint32_t i = 0; i < symbol_frequency[sym]; i++) {
       symbol_table[pos] = sym;
-      pos = static_cast<size_t>(pos + step) & table_mask;
+      pos = (pos + step) & table_mask;
       while (pos > table_mask) {
-        pos = static_cast<size_t>(pos + step) & table_mask;
+        pos = (pos + step) & table_mask;
       }
     }
   }
@@ -52,7 +52,7 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
   // defensive copy to not mutate frequency:
   std::vector<uint32_t> frequency(symbol_frequency, symbol_frequency + symbol_frequency_count);
 
-  for (int i = 0; i < table_size; i++) {
+  for (size_t i = 0; i < table_size; i++) {
     uint16_t sym = symbol_table[i];
     uint32_t x = frequency[sym];
     frequency[sym] += 1;

@@ -41,7 +41,8 @@ class BiasCorrectionStrategy {
  public:
   BiasCorrectionStrategy(const std::shared_ptr<ConverterPara> &param, const std::shared_ptr<Calibrator> &calibrator,
                          const std::shared_ptr<QuantStrategy> &quant_strategy,
-                         std::shared_ptr<mindspore::Model> fp32_ms_model, int activation_q_min, int activation_q_max)
+                         const std::shared_ptr<mindspore::Model> fp32_ms_model, int activation_q_min,
+                         int activation_q_max)
       : param_(param),
         calibrator_(calibrator),
         quant_strategy_(quant_strategy),
@@ -107,7 +108,7 @@ class BiasCorrectionStrategy {
 
   template <typename T>
   int CalculatePerChannelMeans(const T *tensor_data, size_t elem_count, std::vector<int64_t> shapes,
-                               std::vector<float> *per_channel_mean) {
+                               std::vector<float> *per_channel_mean) const {
     CHECK_NULL_RETURN(tensor_data);
     MS_CHECK_GT(elem_count, 0, RET_ERROR);
     // suppose the activation format: NHWC

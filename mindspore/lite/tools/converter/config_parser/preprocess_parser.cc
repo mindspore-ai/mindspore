@@ -309,7 +309,7 @@ int PreprocessParser::ReadDirectory(const std::string &path, std::vector<std::st
       break;
     }
     struct dirent *de = readdir(dp);
-    if (de == NULL) {
+    if (de == nullptr) {
       break;
     }
     file_names->push_back(std::string(de->d_name));

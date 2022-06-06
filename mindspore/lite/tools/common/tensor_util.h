@@ -27,8 +27,8 @@
 #include <random>
 #include <cfloat>
 #include "schema/inner/model_generated.h"
-#include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
+#include "src/common/log_adapter.h"
 #include "ir/dtype/type_id.h"
 #include "ir/tensor.h"
 #include "src/common/utils.h"
@@ -129,7 +129,7 @@ float CompareDataByCosineDistance(const std::shared_ptr<mindspore::Model> &origi
       return RET_ERROR;
     }
     auto out_data = reinterpret_cast<const T *>(out_tensor.Data().get());
-    auto cos = mindspore::lite::GetCosSimilarity<T>(calib_data, out_data, out_tensor.ElementNum());
+    auto cos = mindspore::lite::GetCosSimilarity<T>(calib_data, out_data, static_cast<size_t>(out_tensor.ElementNum()));
     total_cos += cos;
     MS_LOG(INFO) << "tensor_name:" << calib_tensor.Name() << " cos_sim: " << mean_error
                  << " error_count:" << error_count;

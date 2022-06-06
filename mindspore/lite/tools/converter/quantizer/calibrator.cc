@@ -173,7 +173,7 @@ int Calibrator::CollectDataDistribution(
     if (tensor.IsConst() || tensor.DataType() != DataType::kNumberTypeFloat32) {
       continue;
     }
-    const auto *tensor_data = reinterpret_cast<const float *>(tensor.Data().get());
+    const auto *tensor_data = static_cast<const float *>(tensor.Data().get());
     if (tensor_data == nullptr) {
       MS_LOG(ERROR) << tensor.Name() << " tensor_data is nullptr.";
       return RET_ERROR;

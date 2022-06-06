@@ -628,7 +628,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "New model failed.";
     return RET_ERROR;
   }
-  int size = 0;
+  size_t size = 0;
   auto ret = BuildModelByFuncGraph(fp32_ms_model_, func_graph, param_, &size);
   if (ret != mindspore::kSuccess) {
     MS_LOG(ERROR) << "Build model failed.";
