@@ -50,6 +50,7 @@ CNodePtr BuildBindInAxisTupleInput(const AnfNodePtr &input, const ValuePtr &in_a
     auto in_axis_value = in_axis_value_sequence == nullptr ? in_axis : (*in_axis_value_sequence)[i];
     CNodePtr cur_make_tuple = nullptr;
     if (input_abs_element->isa<abstract::AbstractTuple>()) {
+      tuple_getitem_cnode->set_abstract(input_abs_element);
       cur_make_tuple = BuildBindInAxisTupleInput(tuple_getitem_cnode, in_axis_value, fg);
     } else {
       std::vector<AnfNodePtr> cur_make_tuple_inputs;
