@@ -91,7 +91,8 @@ std::string Primitive::GetAttrsText() const {
     } else {
       oss << ", ";
     }
-    oss << attr.first << "=" << attr.second->DumpText();
+    const std::string value = attr.second == nullptr ? "" : attr.second->DumpText();
+    oss << attr.first << "=" << value;
   }
   oss << "]";
 

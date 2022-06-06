@@ -28,13 +28,6 @@ namespace {
 constexpr size_t kReduceSmallVectorSize = 200000;
 constexpr size_t kReduceInputsNum = 1;
 constexpr size_t kReduceOutputsNum = 1;
-constexpr auto kReduceMeanName = "ReduceMean";
-constexpr auto kReduceMaxName = "ReduceMax";
-constexpr auto kReduceSumName = "ReduceSum";
-constexpr auto kReduceMinName = "ReduceMin";
-constexpr auto kReduceProdName = "ReduceProd";
-constexpr auto kReduceAllName = "ReduceAll";
-constexpr auto kReduceAnyName = "ReduceAny";
 
 template <typename T>
 class ReduceCpuKernelFunc : public DeprecatedCpuKernelFunc {
@@ -93,14 +86,22 @@ void ReduceCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   UpdateAxis(prim, kernel_node, kernel_name_, &axis_);
-  size_t dimension = input_shape_.size();
-  (void)std::transform(axis_.begin(), axis_.end(), axis_.begin(),
-                       [dimension](const auto &a) { return a < 0 ? dimension + a : a; });
-  sort(axis_.begin(), axis_.end());
   // Delete the duplicate axis.
   auto last = std::unique(axis_.begin(), axis_.end());
   axis_.erase(last, axis_.end());
-  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  int64_t dimension = SizeToLong(input_shape_.size());
+  if (axis_.size() > LongToSize(dimension)) {
+    MS_LOG(EXCEPTION) << "For reduce, the axis is " << axis_
+                      << ", it's elements number is more than the input dimension " << dimension;
+  }
+  (void)std::transform(axis_.begin(), axis_.end(), axis_.begin(), [dimension](const auto &a) {
+    if (a < -dimension || a >= dimension) {
+      MS_LOG(EXCEPTION) << "For reduce, the each axis element should be in [" << -dimension << ", " << dimension
+                        << "), but got " << a;
+    }
+    return a < 0 ? dimension + a : a;
+  });
+  sort(axis_.begin(), axis_.end());
 
   if constexpr (std::is_same<T, bool>::value) {
     if (kernel_name_ == prim::kPrimReduceAll->name()) {
@@ -125,7 +126,7 @@ void ReduceCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
     } else if (kernel_name_ == prim::kPrimReduceMean->name()) {
       reduce_type_ = ReduceFuncType::kReduceMeanType;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
-    } else if (kernel_name == "ReduceProd") {
+    } else if (kernel_name_ == prim::kPrimReduceProd->name()) {
       reduce_type_ = ReduceFuncType::kReduceProdType;
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out *= input[pos]; };
     } else {
@@ -260,35 +261,35 @@ std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeReduceFunc() {
 }
 using SpecializeReduceFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>>> kernel_attr_list = {
-  {kReduceMeanName,
+  {prim::kPrimReduceMean->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
-  {kReduceMaxName,
+  {prim::kPrimReduceMax->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
-  {kReduceSumName,
+  {prim::kPrimReduceSum->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}},
-  {kReduceMinName,
+  {prim::kPrimReduceMin->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
-  {kReduceProdName,
+  {prim::kPrimReduceProd->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
-  {kReduceAllName,
+  {prim::kPrimReduceAll->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}},
-  {kReduceAnyName,
+  {prim::kPrimReduceAny->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}}};
 }  // namespace
 
@@ -318,18 +319,18 @@ void ReduceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceMean,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceMeanName); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceMean->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceMax,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceMaxName); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceMax->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceSum,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceSumName); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceSum->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceMin,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceMinName); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceMin->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceProd,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceProdName); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceProd->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceAll,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceAllName); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceAll->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceAny,
-                                 []() { return std::make_shared<ReduceCpuKernelMod>(kReduceAnyName); });
+                                 []() { return std::make_shared<ReduceCpuKernelMod>(prim::kPrimReduceAny->name()); });
 }  // namespace kernel
 }  // namespace mindspore

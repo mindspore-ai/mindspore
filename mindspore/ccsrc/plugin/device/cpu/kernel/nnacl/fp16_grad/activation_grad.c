@@ -51,9 +51,9 @@ int Relu6Fp16Grad(const float16_t *src0, const float16_t *src1, int length, floa
   for (; i <= length - C8NUM; i += C8NUM) {
     float16x8_t src1_8 = vld1q_f16(src1 + i);
     float16x8_t src0_8 = vld1q_f16(src0 + i);
-    float16x8_t max_8 = vmaxq_f16(src1_8, zero_8);
-    float16x8_t min_max_8 = vminq_f16(max_8, six_8);
-    uint16x8_t mask_8 = vceqq_f16(min_max_8, src1_8);
+    uint16x8_t gt_8 = vcgtq_f16(src1_8, zero_8);
+    uint16x8_t le_8 = vcleq_f16(src1_8, six_8);
+    uint16x8_t mask_8 = vandq_u16(gt_8, le_8);
     float16x8_t dst_8 = vbslq_f16(mask_8, src0_8, zero_8);
     vst1q_f16(dst + i, dst_8);
   }

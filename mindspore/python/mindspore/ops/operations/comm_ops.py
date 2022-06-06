@@ -114,8 +114,8 @@ class AllReduce(PrimitiveWithInfer):
         <https://www.mindspore.cn/docs/en/master/api_python/mindspore.ops.html#communication-operator>`_.
 
     Args:
-        op (str): Specifies an operation used for element-wise reductions,
-                  like sum, max, and min. Default: ReduceOp.SUM.
+        op (str): Specifies an operation used for element-wise reductions, like sum, max, and min.
+                  On the CPU, only 'sum' is supported. Default: ReduceOp.SUM.
         group (str): The communication group to work on. Default: "GlobalComm.WORLD_COMM_GROUP".
 
     Inputs:
@@ -131,7 +131,7 @@ class AllReduce(PrimitiveWithInfer):
         ValueError: If the `op` is "prod".
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn

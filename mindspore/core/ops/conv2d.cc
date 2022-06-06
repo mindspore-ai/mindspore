@@ -61,7 +61,9 @@ void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape) {
 
 int64_t CheckAttrPositiveInt64(const std::string &op, const ValuePtr &attr, const std::string &attr_name) {
   MS_EXCEPTION_IF_NULL(attr);
-  int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+  auto attr_value = attr->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(attr_value);
+  int64_t attr_val = attr_value->value();
   if (attr_val <= 0) {
     MS_LOG(EXCEPTION) << "For '" << op << "', '" << attr_name << "' should be greater than 0, but got: " << attr_val
                       << ".";
