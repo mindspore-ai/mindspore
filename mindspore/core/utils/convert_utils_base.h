@@ -19,6 +19,8 @@
 
 #include <limits>
 #include <memory>
+#include <vector>
+#include <algorithm>
 
 #include "utils/log_adapter.h"
 
@@ -62,6 +64,13 @@ inline size_t LongToSize(int64_t u) {
     MS_LOG(EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
   }
   return static_cast<size_t>(u);
+}
+
+inline std::vector<size_t> LongVecToSizeVec(const std::vector<int64_t> &vec) {
+  std::vector<size_t> result;
+  result.reserve(vec.size());
+  (void)std::transform(vec.begin(), vec.end(), result.begin(), LongToSize);
+  return result;
 }
 
 inline size_t FloatToSize(float u) {

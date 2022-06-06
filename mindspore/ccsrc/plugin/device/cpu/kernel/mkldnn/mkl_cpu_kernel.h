@@ -241,9 +241,18 @@ class MKLCpuKernelMod : public NativeCpuKernelMod {
   void AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, bool alloc = false);
   void SetArgumentHandle(int arg_key, void *ptr);
   dnnl::memory::format_tag GetDefaultFormatTag(const dnnl::memory::dims &dims) const;
-  dnnl::memory::desc GetDefaultMemDesc(const std::vector<size_t> &shape) const;
   dnnl::memory::desc GetExactMemDesc(const std::vector<size_t> &shape,
                                      dnnl::memory::data_type type = dnnl::memory::data_type::f32) const;
+  dnnl::memory::desc GetExactMemDesc(const std::vector<int64_t> &shape,
+                                     dnnl::memory::data_type type = dnnl::memory::data_type::f32) const {
+    return GetExactMemDesc(LongVecToSizeVec(shape), type);
+  }
+  dnnl::memory::desc GetDefaultMemDesc(const std::vector<size_t> &shape) const {
+    return GetExactMemDesc(shape, dnnl::memory::data_type::f32);
+  }
+  dnnl::memory::desc GetDefaultMemDesc(const std::vector<int64_t> &shape) const {
+    return GetExactMemDesc(LongVecToSizeVec(shape), dnnl::memory::data_type::f32);
+  }
   void ExecutePrimitive();
   inline dnnl::memory::desc formatted_md(const dnnl::memory::dims &dimensions, dnnl::memory::format_tag layout) const {
     MS_LOG(DEBUG) << "begin to invoke constructor of dnnl::memory::desc";

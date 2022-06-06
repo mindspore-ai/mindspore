@@ -358,18 +358,6 @@ dnnl::memory::format_tag MKLCpuKernelMod::GetDefaultFormatTag(const dnnl::memory
   return tag_vec[rank - 1];
 }
 
-dnnl::memory::desc MKLCpuKernelMod::GetDefaultMemDesc(const std::vector<size_t> &shape) const {
-  dnnl::memory::dims dims;
-  if (shape.empty()) {
-    (void)dims.insert(dims.end(), 1);
-  } else {
-    (void)dims.insert(dims.end(), shape.begin(), shape.end());
-  }
-  dnnl::memory::format_tag mem_tag = GetDefaultFormatTag(dims);
-  auto mem_desc = CreateDesc<dnnl::memory::desc>(dims, dnnl::memory::data_type::f32, mem_tag);
-  return mem_desc;
-}
-
 dnnl::memory::desc MKLCpuKernelMod::GetExactMemDesc(const std::vector<size_t> &shape,
                                                     dnnl::memory::data_type type) const {
   dnnl::memory::dims dims;
