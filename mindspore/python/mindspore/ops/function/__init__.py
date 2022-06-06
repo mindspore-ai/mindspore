@@ -142,6 +142,7 @@ from .math_func import (
     maximum,
     logaddexp,
     logaddexp2,
+    ldexp,
     mv,
     inplace_add,
     inplace_sub,

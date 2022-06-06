@@ -388,6 +388,15 @@ class ErfcNet(nn.Cell):
         return self.erfc(x)
 
 
+class LdexpFunc(nn.Cell):
+    def __init__(self):
+        super(LdexpFunc, self).__init__()
+        self.ldexp = ops.ldexp
+
+    def construct(self, x, other):
+        return self.ldexp(x, other)
+
+
 class LogAddExpFunc(nn.Cell):
     def __init__(self):
         super(LogAddExpFunc, self).__init__()
@@ -519,6 +528,12 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
         'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
     }),
+    ('Ldexp', {
+        'block': LdexpFunc(),
+        'desc_inputs': [Tensor(np.array([1.]), dtype=ms.float32),
+                        Tensor(np.array([1, 2, 3, 4]), dtype=ms.int32)],
+        'skip': ['backward']
+    }),
     ('LogAddExp2', {
         'block': LogAddExp2Func(),
         'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
@@ -584,6 +599,16 @@ def test_exec():
 
 
 raise_set = [
+    ('Ldexp_Error1', {
+        'block': (LdexpFunc(), {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.array([[1., 1.], [1., 2.], [1., 3.]]), dtype=ms.float32),
+                        Tensor(np.array([1, 2, 3]), dtype=ms.int32)],
+        'skip': ['backward']}),
+    ('Ldexp_Error2', {
+        'block': (LdexpFunc(), {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.random.randn(5, 2), dtype=mstype.float16),
+                        Tensor(np.random.randn(5), dtype=mstype.float16)],
+        'skip': ['backward']}),
     ('StridedSlice_1_Error', {
         'block': (lambda x: P.StridedSlice(begin_mask="1"), {'exception': TypeError}),
         'desc_inputs': [0]}),
