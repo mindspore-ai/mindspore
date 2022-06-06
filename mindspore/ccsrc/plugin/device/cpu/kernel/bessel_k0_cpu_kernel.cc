@@ -43,16 +43,17 @@ const double B[] = {
   8.57403401741422608519E-9,  -4.66048989768794782956E-8,  2.76681363944501510342E-7,  -1.83175552271911948767E-6,
   1.39498137188764993662E-5,  -1.28495495816278026384E-4,  1.56988388573005337491E-3,  -3.14481013119645005427E-2,
   2.44030308206595545468E0};
+
+const double ZERO = 0.0;
+const double C1 = 8.0;
+const double C2 = 2.0;
+const double C3 = 5.0;
+const int DEG1 = 10;
+const int DEG2 = 25;
 }  // namespace
 
 double BesselK0CpuKernelMod::k0(double x) {
   double y, z;
-  const double ZERO = 0.0;
-  const double C1 = 8.0;
-  const double C2 = 2.0;
-  const double C3 = 5.0;
-  const int DEG1 = 10;
-  const int DEG2 = 25;
 
   if (x == ZERO) {
     return INFINITY;
@@ -151,12 +152,6 @@ MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, BesselK0, BesselK0CpuKernelMod);
 
 double BesselK0eCpuKernelMod::k0e(double x) {
   double y;
-  const double ZERO = 0.0;
-  const double C1 = 8.0;
-  const double C2 = 2.0;
-  const double C3 = 5.0;
-  const int DEG1 = 10;
-  const int DEG2 = 25;
 
   if (x == ZERO) {
     return INFINITY;
