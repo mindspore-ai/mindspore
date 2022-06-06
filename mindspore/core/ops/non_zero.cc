@@ -27,15 +27,17 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr size_t kNonZeroInputMinDim = 1;
+constexpr size_t kNonZeroInputMaxDim = 7;
 constexpr int64_t kNonZeroInputNum = 1;
 
 abstract::ShapePtr NonZeroInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto x_shape = x_shape_map[kMaxShape].empty() ? x_shape_map[kShape] : x_shape_map[kMaxShape];
-  if (x_shape.size() < kNonZeroInputMinDim) {
-    MS_EXCEPTION(ValueError) << "For NonZero, the dimension of input argument[x] must greater or equal to "
-                             << kNonZeroInputMinDim << ", but got " << x_shape.size() << ".";
-  }
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x'", x_shape.size(), kGreaterEqual, kNonZeroInputMinDim,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x'", x_shape.size(), kLessEqual, kNonZeroInputMaxDim,
+                                           prim_name);
 
   auto x_num = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>());
 

@@ -64,16 +64,14 @@ int NonZeroGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   auto shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(input_shape_),
                        [](int64_t x) { return x < 0 ? 0 : LongToSize(x); });
-  rank_ = input_shape_.size();
   input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies{});
   if (input_size_ == 0) {
     return KRET_UNKNOWN_SHAPE;
   }
 
   input_size_list_.push_back(input_size_ * data_size_);
-  workspace_size_list_.push_back(input_size_ * sizeof(size_t));
-  workspace_size_list_.push_back(rank_ * sizeof(size_t));
-  output_size_list_.push_back(input_size_ * rank_ * index_size_);
+  workspace_size_list_.push_back(sizeof(size_t));
+  output_size_list_.push_back(input_size_ * input_shape_.size() * index_size_);
   return KRET_OK;
 }
 
@@ -85,35 +83,29 @@ bool NonZeroGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
     return true;
   }
   auto input_ptr = GetDeviceAddress<DataType>(inputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(input_ptr);
-  auto index_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
-  MS_EXCEPTION_IF_NULL(index_ptr);
-  auto shape_ptr = GetDeviceAddress<size_t>(workspace, kIndex1);
-  MS_EXCEPTION_IF_NULL(shape_ptr);
+  auto output_size_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
   auto output_ptr = GetDeviceAddress<IndexType>(outputs, kIndex0);
-  MS_EXCEPTION_IF_NULL(output_ptr);
 
-  // Copy input shape to device.
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(shape_ptr, input_shape_.data(), rank_ * sizeof(size_t), cudaMemcpyHostToDevice, cuda_stream_),
-    "NonZero cudaMemcpyAsync failed.");
+  if (input_ptr == nullptr || output_size_ptr == nullptr || output_ptr == nullptr) {
+    return false;
+  }
 
-  NonZero(input_ptr, index_ptr, shape_ptr, output_ptr, input_size_, rank_, cuda_stream_);
+  NonZero(input_ptr, output_ptr, output_size_ptr, input_shape_, input_size_, device_id_, cuda_stream_);
   auto err = cudaGetLastError();
   if (err != cudaSuccess) {
     MS_LOG(EXCEPTION) << "Nonzero kernel failed : " << cudaGetErrorString(err);
   }
 
-  // The last element of index_ptr is the final output size of NonZero.
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&real_output_size_, index_ptr + input_size_ - 1, sizeof(int64_t),
-                                                     cudaMemcpyDeviceToHost, cuda_stream_),
-                                     "NonZero cudaMemcpyAsync failed.");
+  // Update the final output size of NonZero.
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(&real_output_size_, output_size_ptr, sizeof(size_t), cudaMemcpyDeviceToHost, cuda_stream_),
+    "NonZero cudaMemcpyAsync failed.");
   return true;
 }
 
 void NonZeroGpuKernelMod::SyncData() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "NonZero cudaStreamSynchronized failed");
-  std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_), SizeToLong(rank_)};
+  std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_), SizeToLong(input_shape_.size())};
   outputs_[kIndex0]->SetShapeVector(new_output_shape);
 }
 

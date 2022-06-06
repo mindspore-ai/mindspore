@@ -16,83 +16,145 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/non_zero_impl.cuh"
 #include <cub/cub.cuh>
-#include <algorithm>
+
+constexpr size_t kNonZeroMaxDim = 7;
+
+struct TensorShape {
+  size_t data[kNonZeroMaxDim];
+  size_t rank;
+};
 
 template <typename DataType>
 struct IsZero {
   __host__ __device__ __forceinline__ size_t operator()(const DataType &x) const { return x == DataType(0) ? 0 : 1; }
 };
 
+// Inspired by cub library
 template <typename IndexType>
-__global__ void NonZeroKernel(const size_t *index_ptr, const size_t *shape_ptr, IndexType *output_ptr,
-                              size_t input_size, size_t rank) {
-  for (size_t tid = blockIdx.x * blockDim.x + threadIdx.x; tid < input_size; tid += blockDim.x * gridDim.x) {
-    bool is_write = (tid != 0 && index_ptr[tid] != index_ptr[tid - 1]) || (tid == 0 && index_ptr[tid]);
-    if (is_write) {
-      size_t fill_index = index_ptr[tid] * rank - 1;
-      size_t fill_value = tid;
-      for (size_t i = 0; i < rank; i++) {
-        size_t base = shape_ptr[rank - 1 - i];
-        output_ptr[fill_index] = fill_value % base;
-        fill_index--;
-        fill_value /= base;
-      }
+class NonZeroOutputIterator {
+ public:
+  // Required iterator traits
+  typedef NonZeroOutputIterator self_type;
+  typedef std::ptrdiff_t difference_type;
+  typedef void value_type;
+  typedef void *pointer;
+  typedef IndexType &reference;
+
+#if (THRUST_VERSION >= 100700)
+  // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
+  typedef
+    typename thrust::detail::iterator_facade_category<thrust::any_system_tag, thrust::random_access_traversal_tag,
+                                                      value_type,
+                                                      reference>::type iterator_category;  ///< The iterator category
+#else
+  typedef std::random_access_iterator_tag iterator_category;  ///< The iterator category
+#endif  // THRUST_VERSION
+
+  NonZeroOutputIterator(IndexType *ptr, size_t rank) : ptr_(ptr), rank_(rank) {}
+
+  template <typename Distance>
+  __host__ __device__ __forceinline__ reference operator[](Distance n) const {
+    // To avoid data conflict in NonZeroKernel.
+    return *(ptr_ + rank_ * n);
+  }
+
+ private:
+  IndexType *ptr_;
+  const size_t rank_;
+};
+
+template <typename IndexType>
+__global__ void NonZeroKernel(IndexType *output_ptr, const size_t *output_size_ptr, const TensorShape shape) {
+  for (size_t tid = blockIdx.x * blockDim.x + threadIdx.x; tid < *output_size_ptr; tid += blockDim.x * gridDim.x) {
+    size_t fill_value = output_ptr[tid * shape.rank];
+    for (size_t i = 0, j = shape.rank, k = (tid + 1) * shape.rank; i < shape.rank; ++i) {
+      size_t base = shape.data[--j];
+      output_ptr[--k] = fill_value % base;
+      fill_value /= base;
     }
   }
 }
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void NonZero(const DataType *input_ptr, size_t *index_ptr, size_t *shape_ptr, IndexType *output_ptr,
-                             size_t input_size, size_t rank, cudaStream_t cuda_stream) {
-  cub::TransformInputIterator<size_t, IsZero<DataType>, const DataType *> iter(input_ptr, IsZero<DataType>());
-  void *d_temp_storage = NULL;
+CUDA_LIB_EXPORT void NonZero(const DataType *input_ptr, IndexType *output_ptr, size_t *output_size_ptr,
+                             const std::vector<size_t> &input_shape, size_t input_size, const uint32_t &device_id,
+                             cudaStream_t cuda_stream) {
+  // Set the index (1-D base) for non-zero elements and place them into output.
+  // To support in place operation later, we use custom output iterator,
+  // which is inspired by cub library. And output_size_ptr stores the number of non-zero elements.
+  void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
-  (void)cub::DeviceScan::InclusiveSum(nullptr, temp_storage_bytes, iter, index_ptr, input_size, cuda_stream);
+  cub::CountingInputIterator<IndexType> count_iter(0);
+  cub::TransformInputIterator<size_t, IsZero<DataType>, const DataType *> trans_iter(input_ptr, IsZero<DataType>());
+  NonZeroOutputIterator<IndexType> out_iter(output_ptr, input_shape.size());
+  (void)cub::DeviceSelect::Flagged(nullptr, temp_storage_bytes, count_iter, trans_iter, out_iter, output_size_ptr,
+                                   input_size, cuda_stream);
   (void)cudaMalloc(&d_temp_storage, temp_storage_bytes);
-  (void)cub::DeviceScan::InclusiveSum(d_temp_storage, temp_storage_bytes, iter, index_ptr, input_size, cuda_stream);
+  (void)cub::DeviceSelect::Flagged(d_temp_storage, temp_storage_bytes, count_iter, trans_iter, out_iter,
+                                   output_size_ptr, input_size, cuda_stream);
 
-  // Extract the first index to appear and transform into output index,
-  // e.g., [0, 0, 1, 2, 2, 2] -> [(1, 2), (2, 3)] -> [(0, 0, 2), (0, 1, 0)] when shape is (2, 1, 3)
-  NonZeroKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(index_ptr, shape_ptr, output_ptr, input_size,
-                                                                         rank);
+  if (input_shape.size() > 1) {
+    TensorShape shape;
+    shape.rank = input_shape.size();
+    for (size_t i = 0; i < input_shape.size(); i++) {
+      shape.data[i] = input_shape[i];
+    }
+    // Transform output index (1-D base) to N-D base in place.
+    // e.g., [0, 2, 3] -> [(0, 0), (1, 0), (1, 1)] when shape is (2, 2)
+    NonZeroKernel<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+      output_ptr, output_size_ptr, shape);
+  }
+
   // Since cudaGetLastError can return the last error from a runtime call,
   // we catch the error in Launch function.
   (void)cudaFree(d_temp_storage);
 }
 
-template CUDA_LIB_EXPORT void NonZero<bool, int64_t>(const bool *input_ptr, size_t *index_ptr, size_t *shape_ptr,
-                                                     int64_t *output_ptr, size_t input_size, size_t rank,
+template CUDA_LIB_EXPORT void NonZero<bool, int64_t>(const bool *input_ptr, int64_t *output_ptr,
+                                                     size_t *output_size_ptr, const std::vector<size_t> &input_shape,
+                                                     size_t input_size, const uint32_t &device_id,
                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<uint8_t, int64_t>(const uint8_t *input_ptr, size_t *index_ptr, size_t *shape_ptr,
-                                                        int64_t *output_ptr, size_t input_size, size_t rank,
+template CUDA_LIB_EXPORT void NonZero<uint8_t, int64_t>(const uint8_t *input_ptr, int64_t *output_ptr,
+                                                        size_t *output_size_ptr, const std::vector<size_t> &input_shape,
+                                                        size_t input_size, const uint32_t &device_id,
                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<uint16_t, int64_t>(const uint16_t *input_ptr, size_t *index_ptr,
-                                                         size_t *shape_ptr, int64_t *output_ptr, size_t input_size,
-                                                         size_t rank, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<uint32_t, int64_t>(const uint32_t *input_ptr, size_t *index_ptr,
-                                                         size_t *shape_ptr, int64_t *output_ptr, size_t input_size,
-                                                         size_t rank, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<uint64_t, int64_t>(const uint64_t *input_ptr, size_t *index_ptr,
-                                                         size_t *shape_ptr, int64_t *output_ptr, size_t input_size,
-                                                         size_t rank, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<int8_t, int64_t>(const int8_t *input_ptr, size_t *index_ptr, size_t *shape_ptr,
-                                                       int64_t *output_ptr, size_t input_size, size_t rank,
+template CUDA_LIB_EXPORT void NonZero<uint16_t, int64_t>(const uint16_t *input_ptr, int64_t *output_ptr,
+                                                         size_t *output_size_ptr,
+                                                         const std::vector<size_t> &input_shape, size_t input_size,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void NonZero<uint32_t, int64_t>(const uint32_t *input_ptr, int64_t *output_ptr,
+                                                         size_t *output_size_ptr,
+                                                         const std::vector<size_t> &input_shape, size_t input_size,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void NonZero<uint64_t, int64_t>(const uint64_t *input_ptr, int64_t *output_ptr,
+                                                         size_t *output_size_ptr,
+                                                         const std::vector<size_t> &input_shape, size_t input_size,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void NonZero<int8_t, int64_t>(const int8_t *input_ptr, int64_t *output_ptr,
+                                                       size_t *output_size_ptr, const std::vector<size_t> &input_shape,
+                                                       size_t input_size, const uint32_t &device_id,
                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<int16_t, int64_t>(const int16_t *input_ptr, size_t *index_ptr, size_t *shape_ptr,
-                                                        int64_t *output_ptr, size_t input_size, size_t rank,
+template CUDA_LIB_EXPORT void NonZero<int16_t, int64_t>(const int16_t *input_ptr, int64_t *output_ptr,
+                                                        size_t *output_size_ptr, const std::vector<size_t> &input_shape,
+                                                        size_t input_size, const uint32_t &device_id,
                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<int32_t, int64_t>(const int32_t *input_ptr, size_t *index_ptr, size_t *shape_ptr,
-                                                        int64_t *output_ptr, size_t input_size, size_t rank,
+template CUDA_LIB_EXPORT void NonZero<int32_t, int64_t>(const int32_t *input_ptr, int64_t *output_ptr,
+                                                        size_t *output_size_ptr, const std::vector<size_t> &input_shape,
+                                                        size_t input_size, const uint32_t &device_id,
                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<int64_t, int64_t>(const int64_t *input_ptr, size_t *index_ptr, size_t *shape_ptr,
-                                                        int64_t *output_ptr, size_t input_size, size_t rank,
+template CUDA_LIB_EXPORT void NonZero<int64_t, int64_t>(const int64_t *input_ptr, int64_t *output_ptr,
+                                                        size_t *output_size_ptr, const std::vector<size_t> &input_shape,
+                                                        size_t input_size, const uint32_t &device_id,
                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<half, int64_t>(const half *input_ptr, size_t *index_ptr, size_t *shape_ptr,
-                                                     int64_t *output_ptr, size_t input_size, size_t rank,
+template CUDA_LIB_EXPORT void NonZero<half, int64_t>(const half *input_ptr, int64_t *output_ptr,
+                                                     size_t *output_size_ptr, const std::vector<size_t> &input_shape,
+                                                     size_t input_size, const uint32_t &device_id,
                                                      cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<float, int64_t>(const float *input_ptr, size_t *index_ptr, size_t *shape_ptr,
-                                                      int64_t *output_ptr, size_t input_size, size_t rank,
+template CUDA_LIB_EXPORT void NonZero<float, int64_t>(const float *input_ptr, int64_t *output_ptr,
+                                                      size_t *output_size_ptr, const std::vector<size_t> &input_shape,
+                                                      size_t input_size, const uint32_t &device_id,
                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void NonZero<double, int64_t>(const double *input_ptr, size_t *index_ptr, size_t *shape_ptr,
-                                                       int64_t *output_ptr, size_t input_size, size_t rank,
+template CUDA_LIB_EXPORT void NonZero<double, int64_t>(const double *input_ptr, int64_t *output_ptr,
+                                                       size_t *output_size_ptr, const std::vector<size_t> &input_shape,
+                                                       size_t input_size, const uint32_t &device_id,
                                                        cudaStream_t cuda_stream);

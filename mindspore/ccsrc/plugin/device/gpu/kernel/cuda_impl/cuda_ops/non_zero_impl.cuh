@@ -17,10 +17,12 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_NON_ZERO_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_NON_ZERO_IMPL_CUH_
 
+#include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename DataType, typename IndexType>
-CUDA_LIB_EXPORT void NonZero(const DataType *input_ptr, size_t *index_ptr, size_t *shape_ptr, IndexType *output_ptr,
-                             size_t input_size, size_t rank, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void NonZero(const DataType *input_ptr, IndexType *output_ptr, size_t *output_size_ptr,
+                             const std::vector<size_t> &input_shape, size_t input_size, const uint32_t &device_id,
+                             cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_NON_ZERO_IMPL_CUH_
