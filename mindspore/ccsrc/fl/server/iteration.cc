@@ -179,6 +179,7 @@ void Iteration::SetIterationRunning() {
   if (instance_name_.empty()) {
     MS_LOG(WARNING) << "instance name is empty";
     instance_name_ = "instance_" + start_time_.time_str_mill;
+    ps::PSContext::instance()->set_instance_name(instance_name_);
   }
   global_iter_timer_->Start(std::chrono::milliseconds(global_iteration_time_window_));
 }

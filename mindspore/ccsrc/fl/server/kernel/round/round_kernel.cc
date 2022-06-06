@@ -114,8 +114,6 @@ void RoundKernel::Summarize() {
   if (name_ == "updateModel" && accept_client_num() > 0) {
     MS_LOG(INFO) << "Client Upload avg Loss: " << (upload_loss_ / accept_client_num());
   }
-  RecordSendData(send_data_time_, send_data_);
-  RecordReceiveData(receive_data_time_, receive_data_);
 }
 
 size_t RoundKernel::total_client_num() const { return total_client_num_; }
