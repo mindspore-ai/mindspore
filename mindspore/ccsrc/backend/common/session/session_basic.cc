@@ -1314,7 +1314,7 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
   std::ostringstream buf;
   auto prim = common::AnfAlgo::GetCNodePrimitive(kernel);
   MS_EXCEPTION_IF_NULL(prim);
-  buf << prim->id();
+  buf << prim->name();
   bool has_const_input = false;
   for (size_t i = 0; i < input_tensors.size(); ++i) {
     auto &tensor = input_tensors[i];
