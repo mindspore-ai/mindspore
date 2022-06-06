@@ -27,11 +27,17 @@
 #define MS_F32X16_GETI(src, i) src[i]
 #endif
 
+#pragma GCC push_options
+#pragma GCC target("avx512f")
+
 #define MS_FLOAT32X16 __m512
+#define MS_FLOAT512_F32 __m512
 #define MS_INT32X16 __m512i
+#define MS_INT512_EPI32 __m512i
 #define MS_MASK512_TYPE __mmask16
 #define MS_LD512_F32 _mm512_loadu_ps
 #define MS_LD512_EPI32(src) _mm512_loadu_si512((__m512i const *)(src))
+#define MS_LD512_HALF_EPI32(src) _mm256_loadu_si256((__m256i const *)(src))
 #define MS_ADD512_F32 _mm512_add_ps
 #define MS_ADD512_EPI32 _mm512_add_epi32
 #define MS_MOV512_F32 _mm512_set1_ps
@@ -39,6 +45,7 @@
 #define MS_MLA512_F32(src1, src2, src3) _mm512_fmadd_ps(src2, src3, src1)
 #define MS_ST512_F32 _mm512_storeu_ps
 #define MS_ST512_EPI32(src1, src2) _mm512_storeu_si512((__m512i *)(src1), src2)
+#define MS_ST512_HALF_EPI32(src1, src2) _mm256_storeu_si256((__m256i *)(src1), src2)
 #define MS_SUB512_F32 _mm512_sub_ps
 #define MS_SUB512_EPI32 _mm512_sub_epi32
 #define MS_MAX512_F32 _mm512_max_ps
@@ -103,6 +110,8 @@ static inline float MS_GET_SUM512_F32(__m512 src) {
 
 #define MS512_INT32_TO_FLOAT32(src) _mm512_cvtepi32_ps(src)
 #define MS512_FLOAT32_TO_INT32(src) _mm512_cvttps_epi32(src)
+#define MS512_FLOAT16_TO_FLOAT32(src) _mm512_cvtph_ps(src)
+#define MS512_FLOAT32_TO_FLOAT16(src1, src2) _mm512_cvtps_ph(src1, src2)
 
 #define MS512_INT64_TO_FLOAT32(src) _mm512_cvtepi64_ps(src)
 #define MS512_FLOAT32_TO_INT64(src) _mm512_cvttps_epi64(src)
@@ -184,6 +193,8 @@ static inline MS_FLOAT32X16 MS_TANHX16_F32(MS_FLOAT32X16 src) {
   return MS_MIN512_F32(MS_MAX512_F32(MS_DIV512_F32(a, b), neg), pos);
 }
 
+#define MS_TANH512_F32 MS_TANHX16_F32
+
 #define MS_LOAD512X8_F32(src, input_ptr, num)               \
   MS_FLOAT32X16 src##1 = MS_LD512_F32(input_ptr);           \
   MS_FLOAT32X16 src##2 = MS_LD512_F32(input_ptr + 1 * num); \
@@ -231,4 +242,7 @@ static inline MS_FLOAT32X16 MS_TANHX16_F32(MS_FLOAT32X16 src) {
   MS_FLOAT32X16 dst##2 = _mm512_setzero_ps(); \
   MS_FLOAT32X16 dst##3 = _mm512_setzero_ps(); \
   MS_FLOAT32X16 dst##4 = _mm512_setzero_ps();
+
+#pragma GCC pop_options
+
 #endif  // MINDSPORE_NNACL_AVX512_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_

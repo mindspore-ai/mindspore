@@ -18,21 +18,21 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/layer_norm_fp32_avx512.h"
+#endif
 
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdLayerNormMeanAndSquareCoreCalc(block_size, block_num, src, num, mean, square_mean, index) \
-  do {                                                                                                \
-    MS_FLOAT_32xN(block_num) sum_##block_num = MS_MOVN_F32(block_size, 0.0f);                         \
-    MS_FLOAT_32xN(block_num) square_sum_##block_num = MS_MOVN_F32(block_size, 0.0f);                  \
-    for (int block_max_size = num - block_num + 1; index < block_max_size; index += block_num) {      \
-      MS_FLOAT_32xN(block_num) value = MS_LD_F32(block_size, src + index);                            \
-      MS_FLOAT_32xN(block_num) square_value = MS_MUL_F32(block_size, value, value);                   \
-      sum_##block_num = MS_ADD_F32(block_size, sum_##block_num, value);                               \
-      square_sum_##block_num = MS_ADD_F32(block_size, square_sum_##block_num, square_value);          \
-    }                                                                                                 \
-    *mean += MS_GET_SUM_F32(block_size, sum_##block_num);                                             \
-    square_mean += MS_GET_SUM_F32(block_size, square_sum_##block_num);                                \
-  } while (0)
+#ifdef ENABLE_AVX
+#include "nnacl/avx/layer_norm_fp32_avx.h"
+#endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/sse/layer_norm_fp32_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/layer_norm_fp32_neon.h"
+#endif
 
 int LayerNormMeanAndSquare(const float *src, int num, float *mean, float *variance) {
   if (num <= 0) {
@@ -41,7 +41,7 @@ int LayerNormMeanAndSquare(const float *src, int num, float *mean, float *varian
   int index = 0;
   float square_mean = 0.f;
 
-  MS_SIMD_RUN_NO_SCALAR(SimdLayerNormMeanAndSquareCoreCalc, src, num, mean, square_mean, index);
+  SIMD_RUN_NO_SCALAR(LayerNormMeanAndSquare, index, src, num, mean, &square_mean);
 
   for (; index < num; index++) {
     *mean += src[index];
@@ -53,26 +53,11 @@ int LayerNormMeanAndSquare(const float *src, int num, float *mean, float *varian
   return NNACL_OK;
 }
 
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdLayerNormGammaAndBetaCoreCalc(block_size, block_num, dst, src, gamma, beta, num, mean, deno, index) \
-  do {                                                                                                          \
-    MS_FLOAT_32xN(block_num) mean_##block_num = MS_MOVN_F32(block_size, mean);                                  \
-    MS_FLOAT_32xN(block_num) deno_##block_num = MS_MOVN_F32(block_size, deno);                                  \
-    for (int block_max_size = num - block_num + 1; index < block_max_size; index += block_num) {                \
-      MS_FLOAT_32xN(block_num) value = MS_LD_F32(block_size, src + index);                                      \
-      MS_FLOAT_32xN(block_num) out_value = MS_SUB_F32(block_size, value, mean_##block_num);                     \
-      out_value = MS_MUL_F32(block_size, out_value, deno_##block_num);                                          \
-      out_value = MS_FMADD_F32(block_size, out_value, MS_LD_F32(block_size, gamma + index),                     \
-                               MS_LD_F32(block_size, beta + index));                                            \
-      MS_ST_F32(block_size, dst + index, out_value);                                                            \
-    }                                                                                                           \
-  } while (0)
-
 void LayerNormGammaAndBeta(float *dst, const float *src, const float *gamma_data, const float *beta_data, int num,
                            const float mean, const float deno) {
   int index = 0;
 
-  MS_SIMD_RUN_NO_SCALAR(SimdLayerNormGammaAndBetaCoreCalc, dst, src, gamma_data, beta_data, num, mean, deno, index);
+  SIMD_RUN_NO_SCALAR(LayerNormGammaAndBeta, index, dst, src, gamma_data, beta_data, num, mean, deno);
 
   for (; index < num; index++) {
     dst[index] = (src[index] - mean) * (deno);

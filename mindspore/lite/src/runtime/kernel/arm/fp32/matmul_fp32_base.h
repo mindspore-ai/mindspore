@@ -42,7 +42,11 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   }
   ~MatmulFp32BaseCPUKernel() override;
   int Prepare() override;
+  int FullConnectionPrepare();
+  int MatmulPrepare();
   int ReSize() override;
+  int FullConnectionReSize();
+  int MatmulReSize();
   int Run() override;
 
   using ParallelRun = int (MatmulFp32BaseCPUKernel::*)(int task_id) const;
@@ -58,25 +62,28 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
     float *pack_ptr{nullptr};
   };
 
-  int ParallelRunByRow(int task_id) const;
-  int ParallelRunByOC(int task_id) const;
-  int ParallelRunByBatch(int task_id) const;
+  virtual int ParallelRunByRow(int task_id) const;
+  virtual int ParallelRunByOC(int task_id) const;
+  virtual int ParallelRunByBatch(int task_id) const;
   int ParallelRunIsNotPackByBatch(int task_id) const;
   int BackupConstMatrix(MatrixInfo *matrix_info, int index);
-  void InitGlobalVariable();
+  virtual void InitGlobalVariable();
   int PackMatrixA();
   int PackMatrixB();
   int PackMatrixAImpl();
   int PackMatrixBImpl();
-  int PackMatrixAImplOpt();
+  virtual int PackMatrixAImplOpt();
   int PackBiasMatrix();
   void FreePackedMatrixA();
   void FreePackedMatrixB();
   int InitParameter();
   int InitTmpOutBuffer();
   int GetThreadCuttingPolicy();
-  bool CheckThreadCuttingByRow();
+  virtual bool CheckThreadCuttingByRow();
   void GetThreadCuttingInfoByRow();
+  void InitShapeA();
+  void InitShapeB();
+  int InitBroadcastParams();
 
  protected:
   MatMulParameter *params_ = nullptr;
@@ -86,7 +93,6 @@ class MatmulFp32BaseCPUKernel : public InnerKernel {
   std::vector<int> a_offset_;
   std::vector<int> b_offset_;
 
- private:
   int col_tile_ = 0;
   int row_tile_ = 0;
   int batch_stride_ = 0;

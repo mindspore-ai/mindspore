@@ -17,25 +17,23 @@
 #include <math.h>
 #include <float.h>
 #include "nnacl/fp32/exp_fp32.h"
+#include "nnacl/errorcode.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/softmax_fp32_avx512.h"
+#endif
 
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdSoftmaxNormCoreCalc1(block_size, block_num, src, cur_batch_offset, max, channel, index)  \
-  if (channel >= block_num * block_num) {                                                            \
-    MS_FLOAT_32xN(block_num) max##block_num = MS_MOVN_F32(block_size, max);                          \
-    for (int block_max_size = channel - block_num + 1; index < block_max_size; index += block_num) { \
-      MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, src + cur_batch_offset + index);        \
-      max##block_num = MS_MAX_F32(block_size, max##block_num, input);                                \
-    }                                                                                                \
-    max = MS_GET_MAX_F32(block_size, max##block_num);                                                \
-  }
+#ifdef ENABLE_AVX
+#include "nnacl/avx/softmax_fp32_avx.h"
+#endif
 
-#define SimdSoftmaxNormCoreCalc2(block_size, block_num, src, dst, cur_batch_offset, max, channel, index) \
-  for (int block_max_size = channel - block_num + 1; index < block_max_size; index += block_num) {       \
-    MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, src + cur_batch_offset + index);              \
-    MS_FLOAT_32xN(block_num) output = MS_SUB_F32(block_size, input, MS_MOVN_F32(block_size, max));       \
-    MS_ST_F32(block_size, dst + cur_batch_offset + index, output);                                       \
-  }
+#ifdef ENABLE_SSE
+#include "nnacl/sse/softmax_fp32_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/softmax_fp32_neon.h"
+#endif
 
 void SoftmaxNorm(const float *src, float *dst, int batch, int channel) {
   int cur_batch_offset = 0;
@@ -43,7 +41,7 @@ void SoftmaxNorm(const float *src, float *dst, int batch, int channel) {
     int index = 0;
     float max = -FLT_MAX;
 
-    MS_SIMD_RUN_NO_SCALAR(SimdSoftmaxNormCoreCalc1, src, cur_batch_offset, max, channel, index);
+    SIMD_RUN_NO_SCALAR(SoftmaxNormGetMax, index, src, cur_batch_offset, &max, channel);
     for (; index < channel; index++) {
       float input = src[cur_batch_offset + index];
       if (input > max) {
@@ -52,7 +50,7 @@ void SoftmaxNorm(const float *src, float *dst, int batch, int channel) {
     }
 
     index = 0;
-    MS_SIMD_RUN_NO_SCALAR(SimdSoftmaxNormCoreCalc2, src, dst, cur_batch_offset, max, channel, index);
+    SIMD_RUN_NO_SCALAR(SoftmaxNormCalcNorm, index, src, dst, cur_batch_offset, max, channel);
     for (; index < channel; index++) {
       int offset = cur_batch_offset + index;
       dst[offset] = src[offset] - max;
@@ -60,38 +58,14 @@ void SoftmaxNorm(const float *src, float *dst, int batch, int channel) {
   }
 }
 
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define SimdSoftmaxLastAxisCoreCalc1(block_size, block_num, src, dst, cur_batch_offset, max, exp_sum, channel, index) \
-  do {                                                                                                                \
-    MS_FLOAT_32xN(block_num) sum##block_num = MS_MOVN_F32(block_size, 0.0f);                                          \
-    for (int block_max_size = channel - block_num + 1; index < block_max_size; index += block_num) {                  \
-      MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, src + cur_batch_offset + index);                         \
-      MS_FLOAT_32xN(block_num) output = MS_SUB_F32(block_size, input, MS_MOVN_F32(block_size, max));                  \
-      MS_FLOAT_32xN(block_num) exp_out = MS_EXP_F32(block_size, output);                                              \
-      sum##block_num = MS_ADD_F32(block_size, sum##block_num, exp_out);                                               \
-      MS_ST_F32(block_size, dst + cur_batch_offset + index, exp_out);                                                 \
-    }                                                                                                                 \
-    exp_sum += MS_GET_SUM_F32(block_size, sum##block_num);                                                            \
-  } while (0)
-
-#define SimdSoftmaxLastAxisCoreCalc2(block_size, block_num, src, dst, cur_batch_offset, exp_sum, channel, index) \
-  do {                                                                                                           \
-    MS_FLOAT_32xN(block_num) exp_sum##block_num = MS_MOVN_F32(block_size, exp_sum);                              \
-    for (int block_max_size = channel - block_num + 1; index < block_max_size; index += block_num) {             \
-      MS_FLOAT_32xN(block_num) input = MS_LD_F32(block_size, src + cur_batch_offset + index);                    \
-      MS_FLOAT_32xN(block_num) output = MS_MUL_F32(block_size, input, exp_sum##block_num);                       \
-      MS_ST_F32(block_size, dst + cur_batch_offset + index, output);                                             \
-    }                                                                                                            \
-  } while (0)
-
-void SoftmaxLastAxis(const float *src, float *dst, int batch, int channel) {
+int SoftmaxLastAxis(const float *src, float *dst, int batch, int channel) {
   int cur_batch_offset = 0;
   for (int i = 0; i < batch; i++, cur_batch_offset += channel) {
     int index = 0;
 
     // get channel's max value
     float max = -FLT_MAX;
-    MS_SIMD_RUN_NO_SCALAR(SimdSoftmaxNormCoreCalc1, src, cur_batch_offset, max, channel, index);
+    SIMD_RUN_NO_SCALAR(SoftmaxNormGetMax, index, src, cur_batch_offset, &max, channel);
     for (; index < channel; index++) {
       float input = src[cur_batch_offset + index];
       if (input > max) {
@@ -102,7 +76,7 @@ void SoftmaxLastAxis(const float *src, float *dst, int batch, int channel) {
     // get channel's exp sum value
     float exp_sum = 0.0f;
     index = 0;
-    MS_SIMD_RUN_NO_SCALAR(SimdSoftmaxLastAxisCoreCalc1, src, dst, cur_batch_offset, max, exp_sum, channel, index);
+    SIMD_RUN_NO_SCALAR(SoftmaxLastAxisGetExpSum, index, src, dst, cur_batch_offset, max, &exp_sum, channel);
     for (; index < channel; index++) {
       int offset = cur_batch_offset + index;
       float exp_out = simd_exp32_f32(src[offset] - max);
@@ -111,13 +85,15 @@ void SoftmaxLastAxis(const float *src, float *dst, int batch, int channel) {
     }
 
     // get result
-    index = 0;
+    MS_CHECK_TRUE_RET(exp_sum != 0, NNACL_ERR);
     exp_sum = 1.0f / exp_sum;
-    MS_SIMD_RUN_NO_SCALAR(SimdSoftmaxLastAxisCoreCalc2, dst, dst, cur_batch_offset, exp_sum, channel, index);
+    index = 0;
+    SIMD_RUN_NO_SCALAR(SoftmaxLastAxisGetResult, index, dst, dst, cur_batch_offset, exp_sum, channel);
     for (; index < channel; index++) {
       dst[cur_batch_offset + index] = dst[cur_batch_offset + index] * exp_sum;
     }
   }
+  return NNACL_OK;
 }
 
 // output = exp(input) / reduce_sum(exp(input), axis)

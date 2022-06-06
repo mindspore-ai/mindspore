@@ -18,15 +18,15 @@
 #include <algorithm>
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
-#include "src/runtime/kernel/arm/fp32/matmul_fp32_arm32.h"
-#include "src/runtime/kernel/arm/fp32/matmul_fp32_arm64.h"
-#include "src/runtime/kernel/arm/fp32/matmul_fp32_sse.h"
-#include "src/runtime/kernel/arm/fp32/matmul_fp32_avx.h"
-#include "src/runtime/kernel/arm/fp32/matmul_fp32_avx512.h"
-#include "src/runtime/kernel/arm/fp32/matmul_fp32_common.h"
 #include "nnacl/fp32/pack_fp32_opt.h"
 
+using mindspore::lite::kCHWDimNumber;
+using mindspore::lite::kHWDimNumber;
+using mindspore::lite::kNCHWDimNumber;
+using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
+using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_MatMulFusion;
 
 namespace mindspore::kernel {
 int MatmulRun(void *cdata, int task_id, float, float) {
@@ -57,6 +57,70 @@ MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
     lite::PackWeightManager::GetInstance()->Free(matrix_b_.pack_ptr);
   }
 }
+
+void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
+  matrix_a_.need_pack = true;
+  matrix_b_.need_pack = true;
+  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major : RowMajor2Col12Major;
+  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8Major : RowMajor2Row8Major;
+  row_tile_ = C12NUM;
+  col_tile_ = C8NUM;
+  col_min_unit_ = C8NUM;
+}
+
+int MatmulFp32BaseCPUKernel::PackMatrixAImplOpt() {
+  MS_LOG(ERROR) << "Matmul: don't support optimized-packing, only support single-thread currently.";
+  return RET_ERROR;
+}
+
+int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
+  int start_batch = task_id * batch_stride_;
+  int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
+
+  for (int index = start_batch; index < end_batch; ++index) {
+    const float *a = matrix_a_.pack_ptr + a_offset_[index] * params_->row_align_ * params_->deep_;
+    const float *b = matrix_b_.pack_ptr + b_offset_[index] * params_->deep_ * params_->col_align_;
+    float *c = output_data_ + index * params_->row_ * col_step_;
+
+    auto bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr;
+    if (params_->row_ == 1) {
+      MatVecMulFp32Block8(a, b, c, bias, params_->act_type_, params_->deep_, col_step_);
+    } else {
+      MatMulOpt(a, b, c, bias, params_->act_type_, params_->deep_, params_->row_, col_step_, params_->col_,
+                OutType_Nhwc);
+    }
+  }
+  return RET_OK;
+}
+
+int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const { return RET_ERROR; }
+
+int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
+  int start_oc = split_points_[task_id];
+  int end_oc = col_step_;
+  if (task_id < (thread_count_ - 1)) {
+    end_oc = split_points_[task_id + 1];
+  }
+  int compute_oc = end_oc - start_oc;
+  if (compute_oc <= 0) {
+    return RET_OK;
+  }
+  for (int i = 0; i < params_->batch; ++i) {
+    auto a = matrix_a_.pack_ptr + a_offset_[i] * params_->row_align_ * params_->deep_;
+    auto b = matrix_b_.pack_ptr + b_offset_[i] * params_->deep_ * params_->col_align_ + start_oc * params_->deep_;
+    auto c = output_data_ + i * params_->row_ * col_step_ + start_oc;
+    auto bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr + start_oc;
+    if (params_->row_ == 1) {
+      MatVecMulFp32Block8(a, b, c, bias, params_->act_type_, params_->deep_, compute_oc);
+    } else {
+      MatMulOpt(a, b, c, bias, params_->act_type_, params_->deep_, params_->row_, compute_oc, params_->col_,
+                OutType_Nhwc);
+    }
+  }
+  return RET_OK;
+}
+
+bool MatmulFp32BaseCPUKernel::CheckThreadCuttingByRow() { return false; }
 
 int MatmulFp32BaseCPUKernel::BackupConstMatrix(MatrixInfo *matrix_info, int index) {
   MS_CHECK_TRUE_MSG(index < static_cast<int>(in_tensors_.size()), RET_ERROR, "matrix is not existing.");
@@ -274,6 +338,94 @@ int MatmulFp32BaseCPUKernel::Prepare() {
   return RET_OK;
 }
 
+int MatmulFp32BaseCPUKernel::FullConnectionPrepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  params_->a_const_ = in_tensors_[kInputIndex]->IsConst() && !op_parameter_->is_train_session_;
+  params_->b_const_ = in_tensors_[kWeightIndex]->IsConst() && !op_parameter_->is_train_session_;
+
+  if (params_->a_const_ || InferShapeDone()) {
+    auto a_shape = in_tensors_.at(0)->shape();
+    CHECK_LESS_RETURN(a_shape.size(), C2NUM);
+    params_->row_ = a_shape[0];
+    params_->deep_ = a_shape[1];
+  }
+
+  if (params_->b_const_ || InferShapeDone()) {
+    auto b_shape = in_tensors_.at(1)->shape();
+    CHECK_LESS_RETURN(b_shape.size(), C2NUM);
+    params_->col_ = b_shape[0];
+    params_->deep_ = b_shape[1];
+  }
+
+  params_->batch = 1;
+  a_offset_.resize(params_->batch, 0);
+  b_offset_.resize(params_->batch, 0);
+  a_batch_ = 1;
+  b_batch_ = 1;
+  params_->a_transpose_ = false;
+  params_->b_transpose_ = true;
+
+  auto ret = MatmulFp32BaseCPUKernel::Prepare();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return FullConnectionReSize();
+}
+
+void MatmulFp32BaseCPUKernel::InitShapeA() {
+  auto a_shape = in_tensors_[kInputIndex]->shape();
+  int batch = 1;
+  MS_CHECK_TRUE_RET_VOID(a_shape.size() >= C2NUM);
+  for (size_t i = 0; i < a_shape.size() - C2NUM; ++i) {
+    batch *= a_shape[i];
+  }
+  a_batch_ = batch;
+  params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - 1] : a_shape[a_shape.size() - C2NUM];
+  params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - C2NUM] : a_shape[a_shape.size() - 1];
+}
+
+void MatmulFp32BaseCPUKernel::InitShapeB() {
+  auto b_shape = in_tensors_[kWeightIndex]->shape();
+  int batch = 1;
+  MS_CHECK_TRUE_RET_VOID(b_shape.size() >= C2NUM);
+  for (size_t i = 0; i < b_shape.size() - C2NUM; ++i) {
+    batch *= b_shape[i];
+  }
+  b_batch_ = batch;
+  params_->col_ = params_->b_transpose_ ? b_shape[b_shape.size() - C2NUM] : b_shape[b_shape.size() - 1];
+  params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - C2NUM];
+}
+
+int MatmulFp32BaseCPUKernel::MatmulPrepare() {
+  CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
+  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  params_->a_const_ = in_tensors_[kInputIndex]->IsConst() && !op_parameter_->is_train_session_;
+  params_->b_const_ = in_tensors_[kWeightIndex]->IsConst() && !op_parameter_->is_train_session_;
+
+  if (params_->a_const_ || InferShapeDone()) {
+    InitShapeA();
+  }
+
+  if (params_->b_const_ || InferShapeDone()) {
+    InitShapeB();
+  }
+
+  auto ret = MatmulFp32BaseCPUKernel::Prepare();
+  if (ret != RET_OK) {
+    return ret;
+  }
+
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return MatmulReSize();
+}
+
 int MatmulFp32BaseCPUKernel::ReSize() {
   auto ret = InitParameter();
   MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Init parameters failed.");
@@ -296,6 +448,94 @@ int MatmulFp32BaseCPUKernel::ReSize() {
     return ret;
   }
   return RET_OK;
+}
+
+int MatmulFp32BaseCPUKernel::InitBroadcastParams() {
+  auto a_shape = in_tensors_[kInputIndex]->shape();
+  if (a_shape.size() < kNCHWDimNumber) {
+    size_t add_nums = kNCHWDimNumber - a_shape.size();
+    for (size_t i = 0; i < add_nums; ++i) {
+      a_shape.insert(a_shape.begin(), 1);
+    }
+  }
+  auto b_shape = in_tensors_[kWeightIndex]->shape();
+  if (b_shape.size() < kNCHWDimNumber) {
+    size_t add_nums = kNCHWDimNumber - b_shape.size();
+    for (size_t i = 0; i < add_nums; ++i) {
+      b_shape.insert(b_shape.begin(), 1);
+    }
+  }
+
+  int batch_sizes[MAX_SHAPE_SIZE] = {0};
+  int a_batch_sizes[MAX_SHAPE_SIZE] = {0};
+  int b_batch_sizes[MAX_SHAPE_SIZE] = {0};
+  for (int i = a_shape.size() - kCHWDimNumber; i >= 0; --i) {
+    if (static_cast<int>(a_shape.size() - kCHWDimNumber) == i) {
+      batch_sizes[i] = std::max(a_shape[i], b_shape[i]);
+      a_batch_sizes[i] = a_shape[i];
+      b_batch_sizes[i] = b_shape[i];
+    } else {
+      batch_sizes[i] = batch_sizes[i + 1] * std::max(a_shape[i], b_shape[i]);
+      a_batch_sizes[i] = a_batch_sizes[i + 1] * a_shape[i];
+      b_batch_sizes[i] = b_batch_sizes[i + 1] * b_shape[i];
+    }
+  }
+
+  int out_batch = 1;
+  for (size_t i = 0; i < a_shape.size() - kHWDimNumber; ++i) {
+    int max_v = MSMAX(a_shape[i], b_shape[i]);
+    int min_v = MSMIN(a_shape[i], b_shape[i]) > 0 ? MSMIN(a_shape[i], b_shape[i]) : 1;
+    out_batch *= max_v;
+    if (max_v != min_v && max_v % min_v != 0) {
+      MS_LOG(ERROR) << "matmul don't support broadcast for dimension " << a_shape << " and " << b_shape;
+      return RET_ERROR;
+    }
+  }
+  params_->batch = out_batch;
+
+  a_offset_.resize(params_->batch, 0);
+  b_offset_.resize(params_->batch, 0);
+  for (int i = 0; i < params_->batch; ++i) {
+    int delta = i;
+    int a_offset = 0;
+    int b_offset = 0;
+    for (size_t j = 0; j < a_shape.size() - kHWDimNumber; ++j) {
+      if (j > 0) {
+        delta = delta % batch_sizes[j];
+      }
+      if (j < (a_shape.size() - kCHWDimNumber)) {
+        a_offset += (delta / batch_sizes[j + 1] * a_shape[j] / std::max(a_shape[j], b_shape[j])) * a_batch_sizes[j + 1];
+        b_offset += (delta / batch_sizes[j + 1] * b_shape[j] / std::max(a_shape[j], b_shape[j])) * b_batch_sizes[j + 1];
+      } else {
+        a_offset += (delta * a_shape[j] / std::max(a_shape[j], b_shape[j]));
+        b_offset += (delta * b_shape[j] / std::max(a_shape[j], b_shape[j]));
+      }
+    }
+    a_offset_[i] = a_offset;
+    b_offset_[i] = b_offset;
+  }
+
+  return RET_OK;
+}
+
+int MatmulFp32BaseCPUKernel::MatmulReSize() {
+  InitShapeA();
+  InitShapeB();
+  (void)InitBroadcastParams();
+
+  return MatmulFp32BaseCPUKernel::ReSize();
+}
+
+int MatmulFp32BaseCPUKernel::FullConnectionReSize() {
+  int row = 1;
+  for (size_t i = 0; i < out_tensors_.at(0)->shape().size() - 1; ++i) {
+    row *= (out_tensors_.at(0)->shape())[i];
+  }
+  params_->row_ = row;
+  params_->col_ = out_tensors_.at(0)->shape().back();
+  params_->deep_ = (in_tensors_.at(1)->shape()).at(1);
+
+  return MatmulFp32BaseCPUKernel::ReSize();
 }
 
 int MatmulFp32BaseCPUKernel::InitParameter() {

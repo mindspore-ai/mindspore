@@ -18,7 +18,7 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 
-#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
 typedef MS_FLOAT32X4 (*PowerSimdFun)(MS_FLOAT32X4 x, const float *exponent);
 
 MS_FLOAT32X4 OptimizedPowerSimd(MS_FLOAT32X4 x, const float *exponent) {
@@ -62,23 +62,23 @@ float OptimizedPowerScalar(float x, const float *exponent) {
 
 void PowerBroadCast(const float *input, const float *exponent, float *output, int len, float scale, float shift) {
   PowerScalarFun PowerScalarFun_ = NULL;
-#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   PowerSimdFun PowerSimdFun_ = NULL;
 #endif
 
   if (CheckInteger(*exponent)) {
-#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
     PowerSimdFun_ = OptimizedPowerSimd;
 #endif
     PowerScalarFun_ = OptimizedPowerScalar;
   } else {
-#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
     PowerSimdFun_ = StdPowerSimd;
 #endif
     PowerScalarFun_ = StdPowerScalar;
   }
   int i = 0;
-#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   int len_c4 = DOWN_ROUND(len, C4NUM);
   MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale);
   MS_FLOAT32X4 shift_4 = MS_MOVQ_F32(shift);
@@ -95,7 +95,7 @@ void PowerBroadCast(const float *input, const float *exponent, float *output, in
 void PowerSingle(const float *input, const float *exponent, float *output, int len, float scale, float shift) {
   int i = 0;
   PowerScalarFun PowerScalarFun_ = NULL;
-#if defined(ENABLE_ARM) || defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   int len_c4 = DOWN_ROUND(len, C4NUM);
   MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale);
   MS_FLOAT32X4 shift_4 = MS_MOVQ_F32(shift);
