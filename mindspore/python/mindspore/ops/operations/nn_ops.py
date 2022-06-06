@@ -5259,20 +5259,20 @@ class KLDivLoss(Primitive):
     r"""
     Computes the Kullback-Leibler divergence between the logits and the labels.
 
-    The updating formulas of KLDivLoss algorithm are as follows,
+    For tensors of the same shape :math:`x` and :math:`target`,
+    the updating formulas of KLDivLoss algorithm are as follows,
 
     .. math::
-        L = \{l_1,\dots,l_N\}^\top, \quad
-        l_n = target_n \cdot (\log target_n - x_n)
+        L(x, target) = target \cdot (\log target - x)
 
     Then,
 
     .. math::
         \ell(x, target) = \begin{cases}
-        L, & \text{if reduction} = \text{'none';}\\
-        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-        \operatorname{batchmean}(L), & \text{if reduction} = \text{'batchmean';}\\
-        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        L(x, target), & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L(x, target)), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L(x, target)) / x.\operatorname{shape}[0], & \text{if reduction} = \text{'batchmean';}\\
+        \operatorname{sum}(L(x, target)),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     where :math:`x` represents `logits`.
@@ -5280,14 +5280,17 @@ class KLDivLoss(Primitive):
     :math:`\ell(x, target)` represents `output`.
 
     Note:
-        Setting `reduction` to 'mean' is not currently supported on Ascend.
         On Ascend, float64 dtype is not currently supported.
-        Setting `reduction` to 'batchmean' is not currently supported on GPU.
-        The output aligns with the mathematical definition only when `reduction` is set to 'batchmean'.
+        The output aligns with the mathematical definition of KL divergence
+        only when `reduction` is set to 'batchmean'.
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
-            Its value must be one of 'none', 'mean', 'batchmean' or 'sum'. Default: 'mean'.
+            Default: 'mean'.
+
+            - On Ascend, the value of `reduction` must be one of 'batchmean', 'none' or 'sum'.
+            - On GPU, the value of `reduction` must be one of 'mean', 'none' or 'sum'.
+            - On CPU, the value of `reduction` must be one of 'mean', 'batchmean', 'none' or 'sum'.
 
     Inputs:
         - **logits** (Tensor) - The input Tensor. The data type must be float16, float32 or float64.
