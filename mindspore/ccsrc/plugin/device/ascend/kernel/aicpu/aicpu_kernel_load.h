@@ -64,13 +64,15 @@ class AicpuOpKernelLoad {
   bool ReadBytesFromBinaryFile(const std::string &file_name, std::vector<char> *buffer) const;
   bool GetSoNeedLoadPath(std::string *file_path) const;
   bool PackageBinaryFile(const std::string &so_name, std::map<std::string, OpKernelBinPtr> *so_name_with_bin_info);
-  bool CacheBinaryFileToDevice(const uintptr_t &resource_id, std::vector<void *> *allocated_mem, void **batch_args);
+  bool CacheBinaryFileToDevice(const uintptr_t &resource_id, std::vector<void *> *allocated_mem,
+                               BatchLoadOpFromBufArgs *batch_args);
 
   std::map<std::string, std::string> so_name_and_realpath_map_;
   std::map<uintptr_t, std::map<std::string, OpKernelBinPtr>> cust_aicpu_so_;
   std::mutex cust_aicpu_mutex_;
   std::vector<rtStream_t> stream_list_;
   std::vector<std::vector<void *>> allocated_mem_list_;
+  std::vector<BatchLoadOpFromBufArgs> batch_args_;
 };
 }  // namespace kernel
 }  // namespace mindspore

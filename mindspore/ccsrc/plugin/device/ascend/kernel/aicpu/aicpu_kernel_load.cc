@@ -205,7 +205,7 @@ bool AicpuOpKernelLoad::LoadAicpuKernelSo(const AnfNodePtr &node,
 }
 
 bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, std::vector<void *> *allocated_mem,
-                                                void **batch_args) {
+                                                BatchLoadOpFromBufArgs *batch_args) {
   auto it = cust_aicpu_so_.find(resource_id);
   if (it == cust_aicpu_so_.end()) {
     MS_LOG(ERROR) << "Context id:" << resource_id << " is invalid.";
@@ -270,24 +270,8 @@ bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, st
     return false;
   }
 
-  BatchLoadOpFromBufArgs batch_cust_so;
-  batch_cust_so.soNum = v_cust_so.size();
-  batch_cust_so.args = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(args));
-
-  uint32_t batch_args_size = sizeof(BatchLoadOpFromBufArgs);
-  status = rtMalloc(batch_args, batch_args_size, RT_MEMORY_HBM);
-  if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rtMalloc failed, size:" << batch_args_size << ", ret = 0x" << status;
-    return false;
-  }
-  allocated_mem->emplace_back(*batch_args);
-  status = rtMemcpy(*batch_args, batch_args_size, static_cast<void *>(&batch_cust_so), batch_args_size,
-                    RT_MEMCPY_HOST_TO_DEVICE);
-  if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Call rtMemcpy failed, ret = 0x" << status;
-    return false;
-  }
-
+  batch_args->soNum = v_cust_so.size();
+  batch_args->args = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(args));
   return true;
 }
 
@@ -313,8 +297,8 @@ bool AicpuOpKernelLoad::LaunchAicpuKernelSo() {
   }
 
   std::vector<void *> allocated_mem;
-  void *batch_args = nullptr;
-  uint32_t batch_args_size = sizeof(BatchLoadOpFromBufArgs);
+  batch_args_.push_back({});
+  auto &batch_args = *batch_args_.rbegin();
   bool ret = CacheBinaryFileToDevice(resource_id, &allocated_mem, &batch_args);
   allocated_mem_list_.emplace_back(std::move(allocated_mem));
   if (!ret) {
@@ -331,7 +315,8 @@ bool AicpuOpKernelLoad::LaunchAicpuKernelSo() {
   stream_list_.emplace_back(stream);
   // launch "batchLoadsoFrombuf" event to device.
   std::string load_event(kBatchLoadBuf);
-  status = rtCpuKernelLaunch(nullptr, load_event.c_str(), 1, batch_args, batch_args_size, nullptr, stream);
+  status = rtCpuKernelLaunch(nullptr, load_event.c_str(), 1, reinterpret_cast<void *>(&batch_args),
+                             sizeof(BatchLoadOpFromBufArgs), nullptr, stream);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rtCpuKernelLaunch failed, ret = 0x" << status;
     return false;
