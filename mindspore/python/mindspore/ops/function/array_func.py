@@ -1375,7 +1375,7 @@ def scatter_nd_add(input_x, indices, updates, use_locking=False):
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
             The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        indices (Tensor): The index to do min operation whose data type must be mindspore.int32.
+        indices (Tensor): The index to do min operation whose data type must be mindspore.int32 or mindspore.int64.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor doing the addition operation with `input_x`,
             the data type is same as `input_x`, the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
@@ -1386,7 +1386,7 @@ def scatter_nd_add(input_x, indices, updates, use_locking=False):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or an int64.
         ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
@@ -1451,7 +1451,7 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
             The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        indices (Tensor): The index of input tensor, with int32 data type.
+        indices (Tensor): The index of input tensor, with int32 or int64 data type.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor doing the subtraction operation with `input_x`, has the same type as input.
             The shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
@@ -1462,7 +1462,7 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or int64.
         ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
@@ -1528,7 +1528,7 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
             The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
-        indices (Tensor): The index to do div operation whose data type must be mindspore.int32.
+        indices (Tensor): The index to do div operation whose data type must be mindspore.int32 or mindspore.int64.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor to do the div operation with `input_x`.
             The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
@@ -1539,7 +1539,7 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or an int64.
         ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
@@ -1606,7 +1606,7 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
             The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
-        indices (Tensor): The index to do min operation whose data type must be mindspore.int32.
+        indices (Tensor): The index to do min operation whose data type must be mindspore.int32 or mindspore.int64.
             The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
         updates (Tensor): The tensor to do the min operation with `input_x`.
             The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
@@ -1617,7 +1617,7 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or an int64.
         ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.

@@ -346,6 +346,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimStack, R{ops::StackInfer, nullptr, true}},
     {prim::kPrimRpcRecv, R{ops::RpcRecvInfer, nullptr, true}},
     {prim::kPrimRpcSend, R{ops::RpcSendInfer, nullptr, true}},
+    {prim::kPrimAdamApplyOne, R{InferImplAdamApplyOne, nullptr, true}},
   };
   return prim_backend_eval_implement_map;
 }

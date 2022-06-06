@@ -25,6 +25,12 @@
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
 #include "utils/shape_utils.h"
+#include "ops/real_div.h"
+#include "ops/add.h"
+#include "ops/mul.h"
+#include "ops/sub.h"
+#include "ops/square.h"
+#include "ops/assign.h"
 
 namespace {
 constexpr auto kRankSize = "rank_size";
@@ -956,6 +962,48 @@ AbstractBasePtr InferImplTensorMove(const AnalysisEnginePtr &, const PrimitivePt
   auto output = args_spec_list[0];
   MS_EXCEPTION_IF_NULL(output);
   return output;
+}
+AbstractBasePtr InferImplAdamApplyOne(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  // An object of a subclass of AbstractBase
+  constexpr auto kAdamApplyOneNum = 10;
+  constexpr auto kAdamInputNum1 = 1;
+  constexpr auto kAdamInputNum2 = 2;
+  constexpr auto kAdamInputNum3 = 3;
+  constexpr auto kAdamInputNum4 = 4;
+  constexpr auto kAdamInputNum5 = 5;
+  constexpr auto kAdamInputNum6 = 6;
+  constexpr auto kAdamInputNum7 = 7;
+  constexpr auto kAdamInputNum8 = 8;
+  constexpr auto kAdamInputNum9 = 9;
+
+  CheckArgsSize(primitive->name(), args_spec_list, kAdamApplyOneNum);
+  auto input0 = args_spec_list[0];
+  auto input1 = args_spec_list[kAdamInputNum1];
+  auto input2 = args_spec_list[kAdamInputNum2];
+  auto input3 = args_spec_list[kAdamInputNum3];
+  auto input4 = args_spec_list[kAdamInputNum4];
+  auto mul0_x = args_spec_list[kAdamInputNum5];
+  auto mul1_x = args_spec_list[kAdamInputNum6];
+  auto mul2_x = args_spec_list[kAdamInputNum7];
+  auto mul3_x = args_spec_list[kAdamInputNum8];
+  auto add2_y = args_spec_list[kAdamInputNum9];
+
+  auto square0 = ops::SquareInfer(nullptr, primitive, {input0});
+  auto mul1 = ops::MulInfer(nullptr, primitive, {mul1_x, input0});
+  auto mul0 = ops::MulInfer(nullptr, primitive, {mul0_x, input2});
+  auto mul2 = ops::MulInfer(nullptr, primitive, {mul2_x, input1});
+  auto mul3 = ops::MulInfer(nullptr, primitive, {mul3_x, square0});
+  auto add0 = ops::AddInfer(nullptr, primitive, {mul0, mul1});
+  auto add1 = ops::AddInfer(nullptr, primitive, {mul2, mul3});
+  auto sqrt0 = InferImplSqrt(nullptr, primitive, {add1});
+  auto add2 = ops::AddInfer(nullptr, primitive, {add2_y, sqrt0});
+  auto true_div0 = ops::RealDivInfer(nullptr, primitive, {add0, add2});
+  auto mul4 = ops::MulInfer(nullptr, primitive, {input4, true_div0});
+  auto sub0 = ops::SubInfer(nullptr, primitive, {input3, mul4});
+
+  AbstractBasePtrList rets = {add1, add0, sub0};
+  return std::make_shared<AbstractTuple>(rets);
 }
 }  // namespace abstract
 }  // namespace mindspore
