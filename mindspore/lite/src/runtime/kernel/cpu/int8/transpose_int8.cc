@@ -53,4 +53,5 @@ int TransposeInt8CPUKernel::DoTransposeMultiThread(int task_id) {
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Transpose, LiteKernelCreator<TransposeInt8CPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Transpose, LiteKernelCreator<TransposeInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_Transpose, LiteKernelCreator<TransposeInt8CPUKernel>)
 }  // namespace mindspore::kernel

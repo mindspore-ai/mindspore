@@ -47,5 +47,6 @@ REG_KERNEL(kCPU, kNumberTypeInt32, PrimType_Inner_ShapeFusion, LiteKernelCreator
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimType_Inner_ShapeFusion, LiteKernelCreator<ShapeFusionCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimType_Inner_ShapeFusion, LiteKernelCreator<ShapeFusionCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimType_Inner_ShapeFusion, LiteKernelCreator<ShapeFusionCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeUInt8, PrimType_Inner_ShapeFusion, LiteKernelCreator<ShapeFusionCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt64, PrimType_Inner_ShapeFusion, LiteKernelCreator<ShapeFusionCPUKernel>)
 }  // namespace mindspore::kernel
