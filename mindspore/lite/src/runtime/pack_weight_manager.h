@@ -28,16 +28,19 @@ class PackWeightManager {
  public:
   static PackWeightManager *GetInstance();
   ~PackWeightManager() = default;
-  STATUS InitByBuf(const char *model_buf, size_t model_size, int numa_id = -1);
+  STATUS InitPackWeight(const char *model_buf, size_t model_size, int numa_id = -1);
+  STATUS InitPackWeightByBuf(const char *model_buf, size_t model_size);
   char *GetNumaModelBuf(const char *model_buf, int numa_id);
   STATUS StoreOriginTensorData(Model *model);
   void *GetPackData(const void *tensor_data, const size_t size, bool *is_packed);
   void Free(void *tensor_data);
+  bool IsCopyTensor(int op_type);
 
  private:
   void *MallocData(size_t size);
   void FreeData(void *tensor_data);
   PackWeightManager() = default;
+  bool is_parallel_ = false;
 #ifdef SHARING_MODEL_WEIGHT
   std::shared_ptr<PackWeight> pack_weight_ = nullptr;
 #endif

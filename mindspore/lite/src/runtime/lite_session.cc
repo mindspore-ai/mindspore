@@ -1736,6 +1736,8 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
   }
+  auto status = lite::PackWeightManager::GetInstance()->InitPackWeightByBuf(model_buf, buf_size);
+  MS_CHECK_FALSE_MSG(status != RET_OK, RET_ERROR, "InitPackWeightByBuf failed.");
   auto ret = CompileGraph(model);
   model->buf = nullptr;
   if (buf_model_type == mindspore::ModelType::kMindIR) {
@@ -1763,7 +1765,6 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
   }
-
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
   auto ret = CompileGraph(model);
   if (ret != lite::RET_OK) {
@@ -1789,6 +1790,8 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
     delete[] model_buf;
     return RET_ERROR;
   }
+  auto status = lite::PackWeightManager::GetInstance()->InitPackWeightByBuf(model_buf, model_size);
+  MS_CHECK_FALSE_MSG(status != RET_OK, RET_ERROR, "InitPackWeightByBuf failed.");
 
   (reinterpret_cast<lite::LiteModel *>(model))->set_keep_model_buf(true);
   auto ret = CompileGraph(model);

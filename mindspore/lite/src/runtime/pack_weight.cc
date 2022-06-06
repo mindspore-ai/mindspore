@@ -16,8 +16,9 @@
 #include "src/runtime/pack_weight.h"
 #include "src/runtime/dynamic_mem_allocator.h"
 namespace mindspore::lite {
-STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id) {
+STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id, bool copy_buf) {
   MS_CHECK_TRUE_MSG(model_buf != nullptr, RET_ERROR, "model buf is nullptr in pack weight manager.");
+  copy_buf_ = copy_buf;
   if (model_buf_map_.find(model_buf) != model_buf_map_.end() &&
       find(numa_model_buf_[model_buf].begin(), numa_model_buf_[model_buf].end(), numa_id) !=
         numa_model_buf_[model_buf].end()) {
@@ -25,27 +26,37 @@ STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_si
     return RET_OK;
   }
   // model buf and weight use same allocator, create in weight pack manager
-  auto allocator = std::make_shared<DynamicMemAllocator>(numa_id);
+  std::shared_ptr<Allocator> allocator = nullptr;
+#ifdef BFC_MEMORY
+  allocator = std::make_shared<DynamicMemAllocator>(numa_id);
+#else
+  allocator = std::make_shared<DefaultAllocator>();
+#endif
   if (allocator == nullptr) {
     MS_LOG(ERROR) << "allocator is nullptr in pack weight manager.";
     return RET_ERROR;
   }
-  auto new_model_buf = static_cast<char *>(allocator->Malloc(model_size));
-  if (new_model_buf == nullptr) {
-    MS_LOG(ERROR) << "new model buf is nullptr in pack weight manager.";
-    return RET_ERROR;
-  }
-  memcpy(new_model_buf, model_buf, model_size);
-  numa_model_buf_[model_buf] = {numa_id};
   auto *model_const_weight = new (std::nothrow) ModelConstWeight();
   if (model_const_weight == nullptr) {
     MS_LOG(ERROR) << "model const weight is nullptr.";
     return RET_ERROR;
   }
-  model_const_weight->numa_id = numa_id;
-  buf_model_weight_[new_model_buf] = model_const_weight;
-  buf_model_weight_[new_model_buf]->allocator = allocator;
-  model_buf_map_.insert(std::make_pair(model_buf, new_model_buf));
+  if (copy_buf_) {
+    auto new_model_buf = static_cast<char *>(allocator->Malloc(model_size));
+    if (new_model_buf == nullptr) {
+      MS_LOG(ERROR) << "new model buf is nullptr in pack weight manager.";
+      return RET_ERROR;
+    }
+    memcpy(new_model_buf, model_buf, model_size);
+    numa_model_buf_[model_buf] = {numa_id};
+    buf_model_weight_[new_model_buf] = model_const_weight;
+    buf_model_weight_[new_model_buf]->allocator = allocator;
+    model_const_weight->numa_id = numa_id;
+    model_buf_map_.insert(std::make_pair(model_buf, new_model_buf));
+  } else {
+    buf_model_weight_[model_buf] = model_const_weight;
+    buf_model_weight_[model_buf]->allocator = allocator;
+  }
   return RET_OK;
 }
 
@@ -106,6 +117,7 @@ void PackWeight::FreePackedWeight(ModelConstWeight *weight) {
   for (auto &origin_and_packed_pair : weight->origin_and_packed_pair) {
     auto &packed_data = origin_and_packed_pair.second;
     auto allocator = weight->allocator;
+    MS_CHECK_TRUE_RET_VOID(allocator != nullptr);
     if (packed_data != nullptr) {
       allocator->Free(packed_data);
       packed_data = nullptr;
@@ -120,15 +132,17 @@ PackWeight::~PackWeight() {
     FreePackedWeight(item.second);
   }
   // free model buf
-  for (auto &item : buf_model_weight_) {
-    auto model_buf = const_cast<char *>(item.first);
-    auto &allocator = item.second->allocator;
-    allocator->Free(model_buf);
-    if (item.second != nullptr) {
-      delete item.second;
-      item.second = nullptr;
+  if (copy_buf_) {
+    for (auto &item : buf_model_weight_) {
+      auto model_buf = const_cast<char *>(item.first);
+      if (item.second != nullptr) {
+        auto &allocator = item.second->allocator;
+        allocator->Free(model_buf);
+        delete item.second;
+        item.second = nullptr;
+      }
     }
+    buf_model_weight_.clear();
   }
-  buf_model_weight_.clear();
 }
 }  // namespace mindspore::lite
