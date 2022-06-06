@@ -23,11 +23,11 @@ mindspore.nn.ReflectionPad2d
 
     **输入：**
 
-    - **x** (Tensor) - 输入Tensor, shape为:math:`(C, H_in, W_in)`或:math:`(N, C, H_in, W_in)`。
+    - **x** (Tensor) - 输入Tensor, shape为 :math:`(C, H_in, W_in)` 或 :math:`(N, C, H_in, W_in)`。
 
     **输出：**
 
-    Tensor，填充后的Tensor, shape为:math:`(C, H_out, W_out)`或:math:`(N, C, H_out, W_out)`。其中:math:`H_out = H_in + pad_up + pad_down`,:math:`W_out = W_in + pad_left + pad_right, H_out = H_in`
+    Tensor，填充后的Tensor, shape为 :math:`(C, H_out, W_out)` 或 :math:`(N, C, H_out, W_out)`。其中 :math:`H_out = H_in + pad_up + pad_down`,:math:`W_out = W_in + pad_left + pad_right, H_out = H_in`
 
     - 对 `x` 使用对称轴进行对称复制的方式进行填充（复制时不包括对称轴）。例如 `x` 为[[[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]]， `paddings` 为(1, 1, 2, 0)，则输出为[[[[7., 6., 7., 8., 7.], [4., 3., 4., 5., 4.], [1., 0., 1., 2., 1.], [4., 3., 4., 5., 4.], [7., 6., 7., 8., 7.]]]]。
 

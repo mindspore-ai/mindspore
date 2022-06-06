@@ -7,7 +7,7 @@ mindspore.nn.CrossEntropyLoss
 
     cross_entropy方法支持两种不同的目标值(target):
 
-    - 类别索引 (int)，取值范围为:math:`[0, C)` 其中 :math:`C` 为类别数，当reduction为'none'时，交叉熵损失公式如下：
+    - 类别索引 (int)，取值范围为 :math:`[0, C)` 其中 :math:`C` 为类别数，当reduction为'none'时，交叉熵损失公式如下：
 
       .. math::
 
@@ -23,9 +23,9 @@ mindspore.nn.CrossEntropyLoss
 
           \ell(x, y) = \begin{cases}
               \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore\_index}\}} l_n, &
-              \text{if reduction} = \text{`mean';}\\
+              \text{if reduction} = \text{'mean';}\\
               \sum_{n=1}^N l_n,  &
-              \text{if reduction} = \text{`sum'.}
+              \text{if reduction} = \text{'sum'.}
               \end{cases}
 
     - 类别概率 (float)，用于目标值为多个类别标签的情况。当reduction为'none'时，交叉熵损失公式如下：
@@ -43,9 +43,9 @@ mindspore.nn.CrossEntropyLoss
 
           \ell(x, y) = \begin{cases}
               \frac{\sum_{n=1}^N l_n}{N}, &
-              \text{if reduction} = \text{`mean';}\\
+              \text{if reduction} = \text{'mean';}\\
               \sum_{n=1}^N l_n,  &
-              \text{if reduction} = \text{`sum'.}
+              \text{if reduction} = \text{'sum'.}
               \end{cases}
 
     **参数：**
@@ -58,12 +58,11 @@ mindspore.nn.CrossEntropyLoss
     **输入：**
 
     - **logits** (Tensor) - 输入预测值，shape为 :math:`(N, C)` 或 :math:`(N, C, H, W)`
-      (针对二维数据), 或 :math:`(N, C, d_1, d_2, ..., d_K)`(针对高维数据)。
-      `inputs` 需为对数概率。数据类型仅支持float32或float16。
-    - **labels** (Tensor): 输入目标值，shape为 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)`(针对高维数据)。
-      数据类型仅支持int32。
+      (针对二维数据), 或 :math:`(N, C, d_1, d_2, ..., d_K)` (针对高维数据)。`inputs` 需为对数概率。数据类型仅支持float32或float16。
+    - **labels** (Tensor) - 输入目标值，shape为 :math:`(N)` 或 :math:`(N, d_1, d_2, ..., d_K)`
+      (针对高维数据)。数据类型仅支持int32。
 
-    **输出：**
+    **返回：**
 
     Tensor，一个数据类型与logits相同的Tensor。
 

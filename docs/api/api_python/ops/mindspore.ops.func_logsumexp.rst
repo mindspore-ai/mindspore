@@ -1,7 +1,7 @@
 mindspore.ops.logsumexp
 =======================
 
-.. py:function:: mindspore.ops.logsumexp(x, aixs, keep_dims=False)
+.. py:function:: mindspore.ops.logsumexp(x, axis, keep_dims=False)
 
     求Tensor的对数指数和。
 
@@ -15,8 +15,8 @@ mindspore.ops.logsumexp
     **参数：**
 
     - **x** (Tensor) - 任意维度的输入Tensor。数据类型为float16或float32。
-    - **axis** (Union[int, tuple(int), list(int)]): 需要reduce的维度，输入为 `()` 时reduce所有维度。
-    - **keep_dims** (bool): 是否保留reduce的维度。若设为True，则计算后指定的axis的长度为1，否则不保留该维度。默认值：False。
+    - **axis** (Union[int, tuple(int), list(int)]) - 需要reduce的维度，输入为 `()` 时reduce所有维度。
+    - **keep_dims** (bool) - 是否保留reduce的维度。若设为True，则计算后指定的axis的长度为1，否则不保留该维度。默认值：False。
 
     **返回：**
 
