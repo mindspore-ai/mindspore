@@ -451,7 +451,9 @@ void ControlActor::UpdateDynamicShapeInParameter() {
       continue;
     }
 
-    auto shape = input_device_tensors_[i]->host_shape();
+    auto node = input_device_tensors_[i]->GetNodeIndex().first;
+    MS_EXCEPTION_IF_NULL(node);
+    auto shape = trans::GetRuntimePaddingShape(node, 0);
     std::vector<size_t> shape_tmp;
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), IntToSize);
 
