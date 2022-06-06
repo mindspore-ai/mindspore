@@ -184,7 +184,7 @@ STATUS WeightDecoder::SparseDecompress(const SchemaTensorWrapper &src_tensor, Te
   MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
   size_t bit_num = static_cast<size_t>(src_tensor.handler()->quantParams()->Get(0)->numBits());
 
-  std::string str(reinterpret_cast<const char *>(src_tensor.data()), src_tensor.length());
+  std::string str(static_cast<const char *>(src_tensor.data()), src_tensor.length());
   auto bit_vec = StringToBitVector(str);
   size_t index = 0;
   // parse coor_best_bit
@@ -206,7 +206,7 @@ STATUS WeightDecoder::SparseDecompress(const SchemaTensorWrapper &src_tensor, Te
     unique_value_cnt |= bit << static_cast<size_t>((bit_num - i - 1));
   }
   if (unique_value_cnt == 0) {
-    unique_value_cnt = 1 << bit_num;
+    unique_value_cnt = 1u << bit_num;
   }
   // parse unique_values
   std::vector<int> unique_values;
@@ -217,7 +217,7 @@ STATUS WeightDecoder::SparseDecompress(const SchemaTensorWrapper &src_tensor, Te
       unique_value |= bit << static_cast<size_t>((bit_num - j - 1));
     }
     // unsigned to signed
-    unique_values.push_back(unique_value - (1 << static_cast<size_t>((bit_num - 1))));
+    unique_values.push_back(unique_value - (1u << static_cast<size_t>((bit_num - 1))));
   }
   // parse index
   std::vector<size_t> unique_value_index_vec;
@@ -291,7 +291,7 @@ STATUS WeightDecoder::IndexingDecompress(const SchemaTensorWrapper &src_tensor, 
   MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
   auto bit_num = src_tensor.handler()->quantParams()->Get(0)->numBits();
 
-  std::string str(reinterpret_cast<const char *>(src_tensor.data()), src_tensor.length());
+  std::string str(static_cast<const char *>(src_tensor.data()), src_tensor.length());
   auto bit_vec = StringToBitVector(str);
   size_t index = 0;
   // parse unique_value_cnt
@@ -301,7 +301,7 @@ STATUS WeightDecoder::IndexingDecompress(const SchemaTensorWrapper &src_tensor, 
     unique_value_cnt |= bit << static_cast<size_t>((bit_num - i - 1));
   }
   if (unique_value_cnt == 0) {
-    unique_value_cnt = 1 << bit_num;
+    unique_value_cnt = 1u << bit_num;
   }
   // parse unique_value_set
   std::vector<int> unique_values;
@@ -312,7 +312,7 @@ STATUS WeightDecoder::IndexingDecompress(const SchemaTensorWrapper &src_tensor, 
       unique_value |= bit << static_cast<size_t>((bit_num - j - 1));
     }
     // unsigned to signed
-    unique_values.push_back(unique_value - (1 << static_cast<size_t>((bit_num - 1))));
+    unique_values.push_back(unique_value - (1u << static_cast<size_t>((bit_num - 1))));
   }
   // parse index
   std::vector<size_t> unique_value_index_vec;
@@ -455,11 +455,11 @@ bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {
   return need_bit_unpack;
 }
 
-int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
-                               const std::string &model_version, bool float_mode) {
+int WeightDecoder::DequantNode(const OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors,
+                               TypeId dst_data_type, const std::string &model_version, bool float_mode) {
 #ifndef WEIGHT_DECODE_CLIP
-  if (op_parameter->quant_type_ != schema::QuantType_QUANT_WEIGHT &&
-      !(op_parameter->quant_type_ == schema::QuantType_QUANT_ALL && float_mode)) {
+  if (op_parameter->quant_type_ != static_cast<int>(schema::QuantType_QUANT_WEIGHT) &&
+      !(op_parameter->quant_type_ == static_cast<int>(schema::QuantType_QUANT_ALL) && float_mode)) {
     return RET_OK;
   }
   int index = 0;

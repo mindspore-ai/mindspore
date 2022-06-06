@@ -62,9 +62,10 @@ int ParameterOptimizer::CloneFuncGraph(const FuncGraphPtr &func_graph, const std
 
 int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph,
                                                   const std::shared_ptr<ConverterPara> &param,
-                                                  std::shared_ptr<mindspore::Model> origin_model, int origin_model_size,
-                                                  const InferenceParam &infer_param, double *init_scale,
-                                                  std::vector<float> *candidate_scales, bool is_run_all) {
+                                                  std::shared_ptr<mindspore::Model> origin_model,
+                                                  size_t origin_model_size, const InferenceParam &infer_param,
+                                                  double *init_scale, std::vector<float> *candidate_scales,
+                                                  bool is_run_all) {
   CHECK_NULL_RETURN(param);
   CHECK_NULL_RETURN(origin_model);
   CHECK_NULL_RETURN(init_scale);
@@ -96,7 +97,7 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
     }
 
     MS_LOG(INFO) << "create quant session";
-    int weight_quant_size = 0;
+    size_t weight_quant_size = 0;
     auto weight_quant_model = std::make_shared<mindspore::Model>();
     CHECK_NULL_RETURN(weight_quant_model);
     auto build_status = BuildModelByFuncGraph(weight_quant_model, func_graph_bak, param, &weight_quant_size);
@@ -159,7 +160,7 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
 int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph,
                                              const std::shared_ptr<ConverterPara> &param,
                                              const std::shared_ptr<mindspore::Model> &origin_model,
-                                             int *origin_model_size) {
+                                             size_t *origin_model_size) {
   CHECK_NULL_RETURN(param);
   CHECK_NULL_RETURN(origin_model);
   CHECK_NULL_RETURN(origin_model_size);
@@ -206,7 +207,7 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, const
   double default_init_scale = *init_scale;
 
   auto origin_model = std::make_shared<mindspore::Model>();
-  int origin_model_size;
+  size_t origin_model_size;
   auto ret = OriginModelInference(func_graph, param, origin_model, &origin_model_size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Origin Model Inference failed.";

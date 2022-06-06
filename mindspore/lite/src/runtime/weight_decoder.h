@@ -40,7 +40,7 @@ namespace mindspore::lite {
 
 class WeightDecoder {
  public:
-  static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
+  static int DequantNode(const OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
                          const std::string &model_version, bool float_mode);
   static int DecompressTensor(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 

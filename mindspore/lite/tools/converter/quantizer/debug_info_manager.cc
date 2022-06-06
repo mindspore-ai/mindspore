@@ -293,10 +293,10 @@ int DebugInfoManager::SetQuantStaticInfo(const std::vector<mindspore::lite::Tens
   return RET_OK;
 }
 
-int DebugInfoManager::AddOriginInfo(const mindspore::MSCallBackParam &call_back_param, bool is_input, int tensor_index,
-                                    mindspore::lite::Tensor *origin_tensor, const quant::DebugMode &debug_mode) {
+int DebugInfoManager::AddOriginInfo(const mindspore::MSCallBackParam &call_back_param, bool is_input,
+                                    size_t tensor_index, const mindspore::lite::Tensor *origin_tensor,
+                                    const quant::DebugMode &debug_mode) {
   CHECK_NULL_RETURN(origin_tensor);
-
   if (call_back_param.node_type == schema::EnumNamePrimitiveType(schema::PrimitiveType_QuantDTypeCast)) {
     return RET_OK;
   }
@@ -331,7 +331,7 @@ int DebugInfoManager::AddOriginInfo(const mindspore::MSCallBackParam &call_back_
 
 int DebugInfoManager::AddComparedInfo(const mindspore::MSCallBackParam &call_back_param,
                                       const std::vector<mindspore::lite::Tensor *> &inputs, OpParameter *op_parameter,
-                                      bool is_input, int tensor_index, mindspore::lite::Tensor *compared_tensor,
+                                      bool is_input, size_t tensor_index, mindspore::lite::Tensor *compared_tensor,
                                       const quant::DebugMode &debug_mode) {
   CHECK_NULL_RETURN(op_parameter);
   CHECK_NULL_RETURN(compared_tensor);
@@ -439,8 +439,7 @@ int DebugInfoManager::GetConstTensor(const std::map<std::string, mindspore::sche
 }
 
 MSKernelCallBack DebugInfoManager::GetOriginBeforeCallBack(
-  const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-  const std::map<std::string, OpParameter *> &op_parameters, const quant::DebugMode &debug_mode) {
+  const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map, const quant::DebugMode &debug_mode) {
   auto before_callback = [&](const std::vector<mindspore::MSTensor> &inputs,
                              const std::vector<mindspore::MSTensor> &outputs, const MSCallBackParam &call_param) {
     for (size_t i = 0; i < inputs.size(); ++i) {
@@ -521,7 +520,7 @@ MSKernelCallBack DebugInfoManager::GetBeforeCallBack(
   const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
   const std::map<std::string, OpParameter *> &op_parameters, bool is_origin, const quant::DebugMode &debug_mode) {
   if (is_origin) {
-    return GetOriginBeforeCallBack(input_tensor_map, op_parameters, debug_mode);
+    return GetOriginBeforeCallBack(input_tensor_map, debug_mode);
   } else {
     return GetQuantBeforeCallBack(input_tensor_map, op_parameters, debug_mode);
   }
@@ -702,7 +701,7 @@ int DebugInfoManager::StatisticsDataPerRound(
   const std::shared_ptr<mindspore::Model> &origin, const std::shared_ptr<mindspore::Model> &quant,
   const std::map<std::string, OpParameter *> &op_parameters, const std::shared_ptr<ConverterPara> &param,
   const std::map<std::string, mindspore::schema::Tensor *> &origin_input_tensor_map,
-  const std::map<std::string, mindspore::schema::Tensor *> &quant_input_tensor_map, const int &round) {
+  const std::map<std::string, mindspore::schema::Tensor *> &quant_input_tensor_map, const size_t &round) {
   int ret;
   auto data_preprocess = param->dataPreProcessParam;
   for (auto tensor : origin->GetInputs()) {
@@ -763,7 +762,7 @@ void DebugInfoManager::CollectQuantParam(const mindspore::lite::LiteModel &quant
   }
 }
 
-std::string DebugInfoManager::CreateFilePath(const std::string &dir_path, const std::string &file_name) {
+std::string DebugInfoManager::CreateFilePath(const std::string &dir_path, const std::string &file_name) const {
   auto real_path = RealPath(dir_path.c_str());
   std::string file_path = real_path + FILE_SEPARATOR + file_name;
   return file_path;
@@ -792,8 +791,8 @@ int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Mo
   }
   auto data_preprocess = param->dataPreProcessParam;
   // When the calibration data set does not exist, use 1 round of random numbers for comparison
-  int rounds = data_preprocess.calibrate_size > 0 ? data_preprocess.calibrate_size : 1;
-  for (int round = 0; round < rounds; round++) {
+  size_t rounds = data_preprocess.calibrate_size > 0 ? data_preprocess.calibrate_size : 1;
+  for (size_t round = 0; round < rounds; round++) {
     ret = StatisticsDataPerRound(origin, quant, op_parameters, param, origin_input_tensor_map, quant_input_tensor_map,
                                  round);
     if (ret != RET_OK) {

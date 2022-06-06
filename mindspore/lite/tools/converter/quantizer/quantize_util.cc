@@ -255,7 +255,7 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
 }
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
-                             const std::shared_ptr<ConverterPara> &param, int *size) {
+                             const std::shared_ptr<ConverterPara> &param, size_t *size) {
   auto meta_graph = Export(func_graph, true, true);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta_graph failed";
@@ -698,7 +698,7 @@ int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive
   return RET_OK;
 }
 
-int DeQuantData(mindspore::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim) {
+int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim) {
   return DeQuantData(reinterpret_cast<const int8_t *>(tensor->Data().get()), tensor->ElementNum(),
                      tensor->QuantParams(), dequant_data, preferred_dim);
 }

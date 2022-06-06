@@ -93,12 +93,13 @@ class DebugInfoManager {
                              const mindspore::lite::LiteModel &quant_lite_model);
 
  private:
-  int AddOriginInfo(const mindspore::MSCallBackParam &call_back_param, bool is_input, int tensor_index,
-                    mindspore::lite::Tensor *origin_tensor, const quant::DebugMode &debug_mode);
+  int AddOriginInfo(const mindspore::MSCallBackParam &call_back_param, bool is_input, size_t tensor_index,
+                    const mindspore::lite::Tensor *origin_tensor, const quant::DebugMode &debug_mode);
 
   int AddComparedInfo(const mindspore::MSCallBackParam &call_back_param,
                       const std::vector<mindspore::lite::Tensor *> &inputs, OpParameter *op_parameter, bool is_input,
-                      int tensor_index, mindspore::lite::Tensor *compared_tensor, const quant::DebugMode &debug_mode);
+                      size_t tensor_index, mindspore::lite::Tensor *compared_tensor,
+                      const quant::DebugMode &debug_mode);
 
   void PrintAllDebugInfo();
 
@@ -132,7 +133,6 @@ class DebugInfoManager {
                                      const quant::DebugMode &debug_mode);
 
   MSKernelCallBack GetOriginBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                                           const std::map<std::string, OpParameter *> &op_parameters,
                                            const quant::DebugMode &debug_mode);
 
   MSKernelCallBack GetQuantBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
@@ -162,9 +162,9 @@ class DebugInfoManager {
                              const std::map<std::string, OpParameter *> &op_parameters,
                              const std::shared_ptr<ConverterPara> &param,
                              const std::map<string, schema::Tensor *> &origin_input_tensor_map,
-                             const std::map<string, schema::Tensor *> &quant_input_tensor_map, const int &round);
+                             const std::map<string, schema::Tensor *> &quant_input_tensor_map, const size_t &round);
 
-  std::string CreateFilePath(const std::string &dir_path, const std::string &file_name);
+  std::string CreateFilePath(const std::string &dir_path, const std::string &file_name) const;
 
   std::vector<LiteQuantParam> ConvertTensorsQuantParam(const mindspore::schema::Tensor *src_tensor);
 

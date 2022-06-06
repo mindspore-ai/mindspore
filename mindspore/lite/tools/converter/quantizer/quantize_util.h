@@ -96,7 +96,7 @@ std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
 int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive);
 
-int DeQuantData(mindspore::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim = 0);
+int DeQuantData(const mindspore::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim = 0);
 
 int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input);
 
@@ -184,7 +184,7 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
 std::string NodePrimitiveType(const CNodePtr &cnode);
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
-                             const std::shared_ptr<mindspore::ConverterPara> &param, int *size);
+                             const std::shared_ptr<mindspore::ConverterPara> &param, size_t *size);
 
 mindspore::lite::Tensor *MSTensorToLiteTensor(const mindspore::MSTensor &tensor);
 

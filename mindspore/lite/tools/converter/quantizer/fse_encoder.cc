@@ -42,7 +42,7 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
   CHECK_NULL_RETURN(delta_state);
   CHECK_NULL_RETURN(symbol_table);
   CHECK_NULL_RETURN(coding_table);
-  const size_t tablesize = 1 << table_log;
+  const size_t tablesize = 1 << static_cast<size_t>(table_log);
   size_t tablemask = tablesize - 1;
   size_t step = ((tablesize >> 1) + (tablesize >> kFseTableExtendSize) + kFseTableExtendSize);
   size_t pos = 0;
