@@ -15,6 +15,8 @@
  */
 
 #include "runtime/graph_scheduler/embedding_cache_scheduler.h"
+#include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
+
 #include <string>
 #include <memory>
 

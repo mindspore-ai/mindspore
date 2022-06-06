@@ -107,10 +107,10 @@ SendRecvPair CreateSenderReceiverPair(uint32_t worker_rank, uint32_t server_rank
 
 // Get cache operation service id which is used to decide which set of cache services to request.
 // The server side executes the corresponding service according to this id.
-int64_t GetCacheOpsServiceId(const std::string &cache_operation, int32_t param_key) {
-  static mindspore::HashMap<std::string, int64_t> cache_ops_to_index;
+int32_t GetCacheOpsServiceId(const std::string &cache_operation, int32_t param_key) {
+  static mindspore::HashMap<std::string, int32_t> cache_ops_to_index;
   if (cache_ops_to_index.empty()) {
-    int64_t cnt = 0;
+    int32_t cnt = 0;
     for (const auto &cache_op : distributed::kEmbeddingCacheOps) {
       cache_ops_to_index[cache_op] = cnt++;
     }
@@ -121,7 +121,7 @@ int64_t GetCacheOpsServiceId(const std::string &cache_operation, int32_t param_k
     MS_LOG(EXCEPTION) << "Can not find index for cache operation: " << cache_operation;
   }
 
-  int64_t id = SizeToLong(distributed::kEmbeddingCacheOps.size()) * IntToLong(param_key) + iter->second;
+  int32_t id = SizeToInt(distributed::kEmbeddingCacheOps.size()) * param_key + iter->second;
   return id;
 }
 
@@ -1141,10 +1141,10 @@ bool EmbeddingCachePrefetchActor::SendToRemote(const std::string &cache_operatio
   std::vector<ShapeVector> shapes = {{ids_num}, {ids_num, SizeToLong(embedding_dim)}, {1}};
   std::vector<TypeId> data_types = {kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeInt64};
 
-  int64_t service_id = GetCacheOpsServiceId(cache_operation, param_key);
+  int32_t service_id = GetCacheOpsServiceId(cache_operation, param_key);
   AddressPtrList data_list = {std::make_shared<Address>(const_cast<void *>(keys), keys_len),
                               std::make_shared<Address>(const_cast<void *>(values), values_len),
-                              std::make_shared<Address>(&service_id, sizeof(int64_t))};
+                              std::make_shared<Address>(&service_id, sizeof(int32_t))};
 
   // Send data.
   return sender->Send(shapes, data_types, data_list);
