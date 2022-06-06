@@ -323,6 +323,7 @@ constexpr auto kSearchRange = "search_range";
 constexpr auto kSearchStep = "search_step";
 constexpr auto kWithOffset = "with_offset";
 constexpr auto kLinearSumAssignment = "linear_sum_assignment";
+constexpr auto kNbins = "nbins";
 
 enum Index : size_t {
   kInputIndex0 = 0,
