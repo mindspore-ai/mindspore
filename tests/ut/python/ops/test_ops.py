@@ -66,6 +66,7 @@ from mindspore.ops.operations.array_ops import NonZero
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix
+from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore._c_expression import security
@@ -3600,6 +3601,10 @@ test_case_other_ops = [
         'block': P.KLDivLoss('none'),
         'desc_inputs': [Tensor(np.random.rand(2, 4, 8, 16).astype(np.float32)),
                         Tensor(np.random.rand(2, 4, 8, 16).astype(np.float32))],
+        'skip': ['backward']}),
+    ('BlackmanWindow', {
+        'block': BlackmanWindow(periodic=True, dtype=mstype.float32),
+        'desc_inputs': [Tensor(np.array(5).astype(np.int32))],
         'skip': ['backward']}),
 ]
 
