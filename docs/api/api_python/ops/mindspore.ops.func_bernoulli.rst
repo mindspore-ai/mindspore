@@ -1,5 +1,5 @@
 ﻿mindspore.ops.Bernoulli
-======================
+=======================
 
 .. py:class:: mindspore.ops.Bernoulli(x, p=0.5, seed=-1)
 

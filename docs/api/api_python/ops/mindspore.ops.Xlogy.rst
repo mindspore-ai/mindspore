@@ -23,4 +23,4 @@
 
     - **TypeError** - 如果 `x` 和 `y` 不是数值型、bool或Tensor。
     - **TypeError** - 如果 `x` 和 `y` 的数据类型不是float16、float32或float64。
-    - **TypeError** - 如果 `x` 不能广播到与 `y` 的shape一致。
+    - **ValueError** - 如果 `x` 不能广播到与 `y` 的shape一致。

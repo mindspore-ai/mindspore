@@ -16,11 +16,11 @@ mindspore.nn.Softmin
 
     **参数：**
 
-    **axis** (Union[int, tuple[int]]) - 指定Softmin运算的轴axis，假设输入 `x` 的维度为x.ndim，则axis的范围为 `[-x.ndim, x.ndim)` ，-1表示最后一个维度。默认值：-1。
+    - **axis** (Union[int, tuple[int]]) - 指定Softmin运算的轴axis，假设输入 `x` 的维度为x.ndim，则axis的范围为 `[-x.ndim, x.ndim)` ，-1表示最后一个维度。默认值：-1。
 
     **输入：**
 
-    **x** (Tensor) - 用于计算Softmin函数的Tensor，数据类型为float16或float32。
+    - **x** (Tensor) - 用于计算Softmin函数的Tensor，数据类型为float16或float32。
 
     **输出：**
 
