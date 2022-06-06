@@ -114,13 +114,8 @@ echo 'run c api ut test'
 ./lite-test --gtest_filter="TensorCTest.*"
 ./lite-test --gtest_filter="ContextCTest.*"
 
-echo "lite Python API ut test"
 mindspore_lite_whl=`ls ${CUR_DIR}/../../../output/*.whl`
-if [ ! -f "${mindspore_lite_whl}" ]; then
-  echo -e "\e[31mPython-API Whl not found, so lite Python API ut test will not be run. \e[0m"
-else
-  export PYTHONPATH=${CUR_DIR}/../build/package/:${PYTHONPATH}
-
+if [[ -f "${mindspore_lite_whl}" || "$MSLITE_ENABLE_SERVER_INFERENCE" = on ]]; then
   # prepare model and inputdata for Python-API ut test
   if [ ! -e mobilenetv2.ms ]; then
     MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"
@@ -134,6 +129,13 @@ else
     cp mobilenetv2/*.ms.bin ./mobilenetv2.ms.bin
     rm -rf mobilenetv2.tar.gz mobilenetv2/
   fi
+fi
+
+echo "lite Python API ut test"
+if [ ! -f "${mindspore_lite_whl}" ]; then
+  echo -e "\e[31mPython-API Whl not found, so lite Python API ut test will not be run. \e[0m"
+else
+  export PYTHONPATH=${CUR_DIR}/../build/package/:${PYTHONPATH}
 
   # run Python-API ut test
   pytest ${CUR_DIR}/ut/python/test_inference_api.py -s
@@ -151,3 +153,7 @@ else
   fi
 fi
 
+if [ "$MSLITE_ENABLE_SERVER_INFERENCE" = on ];then
+  echo 'run ModelParallelRunner api ut test'
+  ./lite-test --gtest_filter="ModelParallelRunnerTest.*"
+fi

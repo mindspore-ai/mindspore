@@ -30,6 +30,9 @@ file(GLOB_RECURSE TEST_UT_SRC
         ${TEST_DIR}/ut/src/api/context_c_test.cc
         ${TEST_DIR}/ut/src/api/tensor_c_test.cc
         )
+if(MSLITE_ENABLE_SERVER_INFERENCE)
+    list(APPEND TEST_UT_SRC ${TEST_DIR}/ut/src/api/model_parallel_runner_test.cc)
+endif()
 
 if(MSLITE_ENABLE_SERVER_INFERENCE)
     list(REMOVE_ITEM TEST_UT_SRC ${TEST_DIR}/st/mindrt_parallel_runtime_test.cc)
