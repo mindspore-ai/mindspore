@@ -24,7 +24,6 @@
 #include "src/common/file_utils.h"
 #include "src/runtime/lite_session.h"
 #include "tools/common/meta_graph_serializer.h"
-#include "include/version.h"
 
 namespace mindspore {
 class SubGraphTest : public mindspore::CommonTest {
@@ -309,7 +308,7 @@ TEST_F(SubGraphTest, RecursiveSubGraphTest) {
     meta_graph->subGraph.emplace_back(std::move(sub_graph_2));
   }
   meta_graph->name = "graph";
-  meta_graph->version = lite::Version();
+  meta_graph->version = Version();
   //  -----------------------------------------------------------------------
   lite::MetaGraphSerializer::Save(
     *meta_graph, "/mnt/data/workspace/OpenAI/Huawei/mindspore/mindspore/lite/my_test/models/recursive_subgraph");

@@ -116,7 +116,7 @@ TEST_F(LiteMindRtTest, ActorThreadPoolTest) {
   auto pool = ActorThreadPool::CreateThreadPool(40);
   std::vector<AID> actors;
   for (size_t i = 0; i < 200; i++) {
-    AID t1 = Spawn(ActorReference(new TestActor(to_string(i), pool, i)));
+    AID t1 = Spawn(ActorReference(new TestActor(std::to_string(i), pool, i)));
     actors.emplace_back(t1);
   }
 

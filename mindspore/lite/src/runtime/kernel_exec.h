@@ -37,8 +37,10 @@
 #include "src/runtime/lite_kernel.h"
 #include "include/api/delegate.h"
 #include "extendrt/mindir_loader/abstract_kernel.h"
+#include "include/lite_types.h"
 
 using mindspore::infer::Abstractkernel;
+using mindspore::lite::KernelCallBack;
 
 namespace mindspore::kernel {
 enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kDelegate, kKernelArch_MIN = kCPU, kKernelArch_MAX = kAPU };

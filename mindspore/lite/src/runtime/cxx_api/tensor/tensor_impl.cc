@@ -24,7 +24,7 @@
 #include <functional>
 #include "src/runtime/cxx_api/tensor_utils.h"
 #include "src/tensor.h"
-#include "include/lite_utils.h"
+#include "src/common/string_utils.h"
 
 namespace mindspore {
 using mindspore::lite::RET_OK;
@@ -85,7 +85,12 @@ std::shared_ptr<LiteTensorImpl> LiteTensorImpl::StringsToTensorImpl(const std::s
     return nullptr;
   }
   lite_tensor->set_tensor_name(name);
-  auto ret = lite::StringsToTensor(str, lite_tensor);
+  std::vector<lite::StringPack> all_pack;
+  for (auto &input : str) {
+    lite::StringPack pack = {static_cast<int>(input.length()), input.data()};
+    all_pack.push_back(pack);
+  }
+  auto ret = lite::WriteStringsToTensor(lite_tensor, all_pack);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convert strings to tensor failed.";
     delete lite_tensor;
@@ -109,7 +114,14 @@ std::vector<std::string> LiteTensorImpl::TensorImplToStrings(const std::shared_p
     MS_LOG(ERROR) << "Invalid tensor impl.";
     return empty;
   }
-  return lite::TensorToStrings(lite_tensor);
+  const void *ptr = lite_tensor->data();
+  std::vector<lite::StringPack> all_pack = lite::ParseStringBuffer(ptr);
+  std::vector<std::string> result(all_pack.size());
+  std::transform(all_pack.begin(), all_pack.end(), result.begin(), [](lite::StringPack &pack) {
+    std::string str(pack.data, pack.len);
+    return str;
+  });
+  return result;
 }
 #endif
 }  // namespace mindspore

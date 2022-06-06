@@ -27,7 +27,6 @@
 #include "include/api/types.h"
 #include "include/api/status.h"
 #include "include/errorcode.h"
-#include "include/lite_utils.h"
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
 #include "ir/api_tensor_impl.h"

@@ -23,7 +23,6 @@
 #include "src/common/log_adapter.h"
 #include "tools/common/option.h"
 #include "include/errorcode.h"
-#include "include/lite_utils.h"
 
 namespace mindspore {
 namespace lite {

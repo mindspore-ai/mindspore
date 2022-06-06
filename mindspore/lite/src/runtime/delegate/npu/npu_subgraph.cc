@@ -24,7 +24,6 @@
 #include "include/graph/op/const_defs.h"
 #include "include/graph/model.h"
 #include "include/hiai_ir_build.h"
-#include "include/version.h"
 #include "src/common/utils.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 namespace mindspore {
@@ -127,7 +126,7 @@ std::shared_ptr<domi::ModelBufferData> NPUSubGraph::BuildIRModel() {
     return nullptr;
   }
   graph.SetInputs(subgraph_input_ops_).SetOutputs(subgraph_output_ops_);
-  ge::Model model(GetOMModelName(), mindspore::lite::Version());
+  ge::Model model(GetOMModelName(), mindspore::Version());
   model.SetGraph(graph);
   domi::HiaiIrBuild ir_build;
   auto om_model_buff = std::make_shared<domi::ModelBufferData>();

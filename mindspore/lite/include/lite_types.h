@@ -13,11 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_LITE_INCLUDE_LITE_TYPES_H_
 #define MINDSPORE_LITE_INCLUDE_LITE_TYPES_H_
 
-namespace mindspore::lite {
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace mindspore {
+class Allocator;
+using AllocatorPtr = std::shared_ptr<Allocator>;
+
+class Delegate;
+using DelegatePtr = std::shared_ptr<Delegate>;
+
+namespace lite {
+class Tensor;
+
 /// \brief CpuBindMode defined for holding bind cpu strategy argument.
 typedef enum {
   NO_BIND,    /**< no bind */
@@ -50,5 +63,19 @@ typedef enum {
   MT_INFERENCE /**< Only the Inference part of the compiled model is serialized */
 } ModelType;
 
-}  // namespace mindspore::lite
+/// \brief CallBackParam defined input arguments for callBack function.
+struct CallBackParam {
+  std::string node_name; /**< node name argument */
+  std::string node_type; /**< node type argument */
+};
+
+struct GPUCallBackParam : CallBackParam {
+  double execute_time{-1.f};
+};
+
+/// \brief KernelCallBack defined the function pointer for callBack.
+using KernelCallBack = std::function<bool(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs,
+                                          const CallBackParam &opInfo)>;
+}  // namespace lite
+}  // namespace mindspore
 #endif  // MINDSPORE_LITE_INCLUDE_LITE_TYPES_H_

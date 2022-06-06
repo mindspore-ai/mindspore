@@ -15,6 +15,5 @@
  */
 
 #include "tools/cropper/cropper.h"
-#include "include/version.h"
 
 int main(int argc, const char **argv) { return mindspore::lite::cropper::RunCropper(argc, argv); }

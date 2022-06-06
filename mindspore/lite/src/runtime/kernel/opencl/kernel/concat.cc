@@ -272,7 +272,7 @@ int ConcatOpenCLKernel::Prepare() {
   } else if (out_image_info.C <= 1024) {  // outC <= 1024
     build_options_ext.emplace_back(" -DOUTCTMPSIZE=1024");
   } else {
-    build_options_ext.emplace_back(" -DOUTCTMPSIZE=" + to_string(out_image_info.C));
+    build_options_ext.emplace_back(" -DOUTCTMPSIZE=" + std::to_string(out_image_info.C));
   }
 
   ret = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options_ext);

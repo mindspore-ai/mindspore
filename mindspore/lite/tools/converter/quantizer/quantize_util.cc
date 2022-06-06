@@ -24,7 +24,6 @@
 #include <set>
 #include <functional>
 #include "tools/common/graph_util.h"
-#include "include/version.h"
 #include "ops/fusion/mat_mul_fusion.h"
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/gather.h"

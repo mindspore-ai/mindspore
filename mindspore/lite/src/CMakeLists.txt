@@ -108,7 +108,6 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/log.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/common/lite_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc

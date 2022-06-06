@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_INCLUDE_ERRORCODE_H_
 
 #include <string>
-#include "include/lite_utils.h"
 
 namespace mindspore {
 namespace lite {

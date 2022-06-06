@@ -22,7 +22,6 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "include/model.h"
-#include "include/version.h"
 #include "schema/model_generated.h"
 #include "src/common/common.h"
 #include "src/common/log_adapter.h"

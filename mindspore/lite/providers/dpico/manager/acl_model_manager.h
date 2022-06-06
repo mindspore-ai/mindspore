@@ -25,11 +25,11 @@
 #include "include/api/types.h"
 #include "include/svp_acl_base.h"
 #include "include/svp_acl_mdl.h"
-#include "include/lite_utils.h"
 #include "manager/acl_context_manager.h"
 #include "manager/custom_config_manager.h"
 #include "common/custom_enum.h"
 #include "include/schema/model_generated.h"
+#include "include/lite_types.h"
 
 namespace mindspore {
 namespace lite {

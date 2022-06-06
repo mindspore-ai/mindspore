@@ -60,7 +60,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
                                                float *total_cosine_distance, int *total_size);
   void InitContext(const std::shared_ptr<mindspore::Context> &context);
 
-  int CompileGraph(ModelType model_type, const std::shared_ptr<Context> &context, const std::string &model_name);
+  int CompileGraph(mindspore::ModelType model_type, const std::shared_ptr<Context> &context,
+                   const std::string &model_name);
 
   int GenerateGLTexture(std::map<std::string, GLuint> *inputGlTexture);
 

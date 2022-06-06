@@ -78,8 +78,6 @@ size_t GetRefCount(schema::MetaGraphT *graphT, uint32_t tensorIdx);
 
 std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schema::QuantParamT> &srcQuantParam);
 
-int GenerateRandomData(mindspore::lite::Tensor *tensors);
-
 int GenerateRandomData(mindspore::MSTensor *tensors);
 
 int GenerateRandomData(size_t size, void *data, int data_type);

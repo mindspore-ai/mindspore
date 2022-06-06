@@ -18,7 +18,6 @@
 #include "schema/inner/model_generated.h"
 #include "src/runtime/lite_session.h"
 #include "ir/dtype/type_id.h"
-#include "include/version.h"
 
 using mindspore::kernel::KernelExec;
 using mindspore::kernel::KernelKey;
@@ -35,7 +34,7 @@ class SchedulerTest : public mindspore::CommonTest {
 TEST_F(SchedulerTest, TestConstructSubGraphsTwoBranch) {
   auto meta_graph = std::make_shared<mindspore::schema::MetaGraphT>();
   meta_graph->name = "graph";
-  meta_graph->version = mindspore::lite::Version();
+  meta_graph->version = mindspore::Version();
 
   auto split = std::make_unique<mindspore::schema::CNodeT>();
   split->inputIndex = {0};
@@ -178,7 +177,7 @@ TEST_F(SchedulerTest, TestConstructSubGraphsTwoBranch) {
 TEST_F(SchedulerTest, TestConstructSubGraphsThreeBranch) {
   auto meta_graph = std::make_shared<mindspore::schema::MetaGraphT>();
   meta_graph->name = "graph";
-  meta_graph->version = mindspore::lite::Version();
+  meta_graph->version = mindspore::Version();
 
   auto split = std::make_unique<mindspore::schema::CNodeT>();
   split->inputIndex = {0};
@@ -362,7 +361,7 @@ TEST_F(SchedulerTest, TestConstructSubGraphsThreeBranch) {
 TEST_F(SchedulerTest, TestScheduleInt32OpToFp16Subgraph) {
   auto meta_graph = std::make_shared<mindspore::schema::MetaGraphT>();
   meta_graph->name = "graph";
-  meta_graph->version = mindspore::lite::Version();
+  meta_graph->version = mindspore::Version();
 
   auto cast = std::make_unique<mindspore::schema::CNodeT>();
   cast->inputIndex = {0, 1};

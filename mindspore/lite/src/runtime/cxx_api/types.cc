@@ -22,7 +22,6 @@
 #include "include/api/dual_abi_helper.h"
 #include "src/runtime/cxx_api/tensor/tensor_impl.h"
 #include "src/common/log_adapter.h"
-#include "include/version.h"
 
 namespace mindspore {
 class Buffer::Impl {
@@ -477,5 +476,8 @@ bool Buffer::SetData(const void *data, size_t data_len) {
   return impl_->SetData(data, data_len);
 }
 
-std::vector<char> CharVersion() { return StringToChar(lite::Version()); }
+std::vector<char> CharVersion() {
+  std::string version = VERSION_STR;
+  return StringToChar("MindSpore Lite " + version);
+}
 }  // namespace mindspore

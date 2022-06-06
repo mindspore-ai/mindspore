@@ -156,7 +156,7 @@ bool DeviceTypePriority(const lite::Context *context, int device_type1, int devi
   if (context == nullptr) {
     return false;
   }
-  DeviceContextVector device_infos = context->device_list_;
+  std::vector<DeviceContext> device_infos = context->device_list_;
   for (DeviceContext device_info : device_infos) {
     if (device_info.device_type_ == device_type1) {
       return true;

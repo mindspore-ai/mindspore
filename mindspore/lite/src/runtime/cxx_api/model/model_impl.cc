@@ -180,12 +180,12 @@ static void ResetTensorData(std::vector<void *> old_data, const std::vector<lite
 }
 
 Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  KernelCallBack before_call_back = nullptr;
-  KernelCallBack after_call_back = nullptr;
+  lite::KernelCallBack before_call_back = nullptr;
+  lite::KernelCallBack after_call_back = nullptr;
   if (before != nullptr) {
     before_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
                            const std::vector<mindspore::lite::Tensor *> &before_outputs,
-                           const CallBackParam &call_param) {
+                           const lite::CallBackParam &call_param) {
       std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs);
       std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs);
       MSCallBackParam mscall_param;
@@ -198,7 +198,7 @@ Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBac
   if (after != nullptr) {
     after_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
                           const std::vector<mindspore::lite::Tensor *> &before_outputs,
-                          const CallBackParam &call_param) {
+                          const lite::CallBackParam &call_param) {
       std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs);
       std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs);
       MSCallBackParam mscall_param;

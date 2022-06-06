@@ -86,7 +86,7 @@ void ConstructConfig() {
 
 void ConstructModel(schema::MetaGraphT *meta_graph) {
   meta_graph->name = "mix_data_type_graph";
-  meta_graph->version = mindspore::lite::Version();
+  meta_graph->version = mindspore::Version();
 
   auto cos = std::make_unique<mindspore::schema::CNodeT>();
   cos->inputIndex = {0};
