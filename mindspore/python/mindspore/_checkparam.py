@@ -272,6 +272,20 @@ class Validator:
         return check_number(arg_value, 0, Rel.GT, int, arg_name, prim_name)
 
     @staticmethod
+    def check_positive_int_sequence(sequence, arg_name=None, prim_name=None):
+        """
+        Check argument is positive sequence, which mean all element > 0 in sequence.
+
+        Usage:
+        - sequence = check_positive_int_sequence(sequence)
+        - sequence = check_positive_int_sequence(sequence, "dims")
+        """
+        for idx, element in enumerate(sequence):
+            arg_idx = '{}[{}]'.format(arg_name if arg_name else 'arg_name', idx)
+            check_number(element, 0, Rel.GT, int, arg_idx, prim_name)
+        return sequence
+
+    @staticmethod
     def check_negative_int(arg_value, arg_name=None, prim_name=None):
         """
         Check argument is negative integer, which mean arg_value < 0.
@@ -303,6 +317,20 @@ class Validator:
         - number = check_non_negative_int(number, "bias")
         """
         return check_number(arg_value, 0, Rel.GE, int, arg_name, prim_name)
+
+    @staticmethod
+    def check_non_negative_int_sequence(sequence, arg_name=None, prim_name=None):
+        """
+        Check argument is positive sequence, which mean all element >= 0 in sequence.
+
+        Usage:
+        - sequence = check_non_negative_int_sequence(sequence)
+        - sequence = check_non_negative_int_sequence(sequence, "dims")
+        """
+        for idx, element in enumerate(sequence):
+            arg_idx = '{}[{}]'.format(arg_name if arg_name else 'arg_name', idx)
+            check_number(element, 0, Rel.GE, int, arg_idx, prim_name)
+        return sequence
 
     @staticmethod
     def check_float(arg_value, value, rel, arg_name=None, prim_name=None):

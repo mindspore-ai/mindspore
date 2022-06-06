@@ -187,6 +187,75 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
         return out
 
 
+class CSRSparseMatrixToSparseTensor(Primitive):
+    """
+    Converts a CSR sparse matrix(maybe batched) to its sparse tensor form.
+
+    Inputs:
+        - **x_dense_shape** (Tensor) - A 1-D Tensor. It represents the dense form shape of
+          the input CSR sparse matrix, the shape of which should be :math:`(2,)` or :math:`(3,)`.
+        - **x_batch_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix is of
+          batch size `n`, it should have shape :math:`(n+1,)`, while the `i`-th element of which stores
+          acummulated counts of non-zero values of the first `i - 1` batches.
+        - **x_row_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix is of
+          batch size `n` and row number `m`, it can be divided into `n` parts, each part of length
+          `m + 1`. The `i`-th element of each :math:`(m+1,)` vector stores acummulated counts of
+          non-zero values of the first `i - 1` rows in the corresponding batch.
+        - **x_col_indices** (Tensor) - A 1-D Tensor. It represents column indices of the non-zero values
+          in the input CSR sparse matrix.
+        - **x_values** (Tensor) - A 1-D Tensor. It represents all the non-zero values in the
+          input CSR sparse matrix.
+
+    Outputs:
+        - **indices** (Tensor) - A 2-D Tensor. It represents the position of the non-zero element
+          in the sparse tensor.
+        - **values** (Tensor) - A 1-D Tensor. It represents the value corresponding to the position
+          in the `indices`, the shape of which should be :math:`(N,)`.
+        - **dense_shape** (Tensor) - A 1-D Tensor. It represents the dense form shape of
+          the sparse tensor. Its shape should be :math:`(2,)` or :math:`(3,)`.
+
+    Raises:
+        TypeError: If the dtype of `x_dense_shape` or `x_batch_pointers` or `x_row_pointers` or
+                   `x_col_indices` is not int32 or int64.
+        TypeError: If the dtype of `x_values` is not float32, float64, complex64 or complex128.
+        ValueError: If `x_dense_shape` or `x_batch_pointers` or `x_row_pointers` or `x_values` or
+                   `x_dense_shape` is not a 1-D tensor.
+        ValueError: If rank of `x_dense_shape` is not 2 or 3.
+        ValueError: If shape of `x_col_indices` is not corresponding to shape of `x_values`.
+
+    Supported Platforms:
+
+    Examples:
+        >>> x_dense_shape = Tensor(np.array([2, 2, 4]).astype(np.int64))
+        >>> x_batch_pointers = Tensor(np.array([0, 3, 6]).astype(np.int64))
+        >>> x_row_pointers = Tensor(np.array([0, 1, 3, 0, 1, 3]).astype(np.int64))
+        >>> x_col_indices = Tensor(np.array([1, 2, 3, 1, 2, 3]).astype(np.int64))
+        >>> x_values = Tensor(np.array([1, 4, 3, 1, 4, 3]).astype(np.float32))
+        >>> csr_sparse_matrix_to_sparse_tensor = ops.CSRSparseMatrixToSparseTensor()
+        >>> out = csr_sparse_matrix_to_sparse_tensor(x_dense_shape, x_batch_pointers, x_row_pointers,
+                                                     x_col_indices, x_values)
+        >>> print(out[0])
+        [[0 0 1]
+         [0 1 2]
+         [0 1 3]
+         [1 0 1]
+         [1 1 2]
+         [1 1 3]]
+        >>> print(out[1])
+        [1. 4. 3. 1. 4. 3.]
+        >>> print(out[2])
+        [2 2 4]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize CSRSparseMatrixToSparseTensor."""
+        self.add_prim_attr("cust_aicpu", self.name)
+        self.init_prim_io_names(inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers',
+                                        'x_col_indices', 'x_values'],
+                                outputs=['indices', 'values', 'dense_shape'])
+
+
 class DenseToCSRSparseMatrix(Primitive):
     """
     Converts a dense matrix(maybe batched) to its CSR sparse form.
