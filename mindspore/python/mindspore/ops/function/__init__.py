@@ -229,6 +229,9 @@ from .sparse_func import (
     dense_to_sparse_coo,
     dense_to_sparse_csr,
 )
+from .random_func import (
+    standard_laplace,
+)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -237,4 +240,5 @@ __all__.extend(math_func.__all__)
 __all__.extend(nn_func.__all__)
 __all__.extend(linalg_func.__all__)
 __all__.extend(sparse_func.__all__)
+__all__.extend(random_func.__all__)
 __all__.sort()
