@@ -25,7 +25,7 @@
 #ifdef ENABLE_TDTQUE
 #include "acl/acl_tdt.h"
 #include "tdt/status.h"
-#include "minddata/dataset/engine/tdt/tdt_handle.h"
+#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_handle.h"
 #endif
 
 namespace mindspore {

@@ -120,7 +120,7 @@ if(NOT ENABLE_SECURITY)
     add_dependencies(engine-perf core)
 endif()
 if(ENABLE_TDTQUE)
-    add_dependencies(engine-tdt core)
+    add_dependencies(engine-device-queue core)
 endif()
 
 # for proto/cache_grpc.pb.h dependency
@@ -204,7 +204,11 @@ if(ENABLE_TDTQUE)
     if(NOT ENABLE_SECURITY)
         set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-perf>)
     endif()
+    set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-device-queue>)
+    # tdt impl
     set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-tdt>)
+    # host queue impl
+    set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-host-queue>)
 else()
     if(NOT ENABLE_SECURITY)
         set(dataengine_submodules ${dataengine_submodules} $<TARGET_OBJECTS:engine-perf>)

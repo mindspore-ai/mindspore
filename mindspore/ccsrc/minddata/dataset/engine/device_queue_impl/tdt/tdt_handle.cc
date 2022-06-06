@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/engine/tdt/tdt_handle.h"
+#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_handle.h"
 
 // Implementation code for TdtHandle moved from 'tdt_handle.cc' to 'tdt_handle.h';
 // This is a workaround for cyclic dependency problem between dataset and core

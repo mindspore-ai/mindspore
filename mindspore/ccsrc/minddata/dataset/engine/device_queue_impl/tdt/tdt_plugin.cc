@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/engine/tdt/tdt_plugin.h"
+#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_plugin.h"
 #include "utils/ms_utils.h"
 #ifndef ENABLE_SECURITY
 #include "minddata/dataset/engine/perf/profiling.h"
@@ -25,9 +25,7 @@
 
 namespace mindspore {
 namespace dataset {
-constexpr auto kUnknownErrorString = "Unknown error occurred";
-
-TdtPlugin::TdtPlugin(const std::string &channel_name, int32_t device_id) {
+TdtPlugin::TdtPlugin(const std::string &channel_name, int32_t device_id) : DeviceQueueBase(channel_name, device_id) {
   // init ErrorManager, 0 means success
   if (ErrorManager::GetInstance().Init() != 0) {
     MS_LOG(WARNING) << "[Internal Error] Init ErrorManager failed.";
@@ -54,10 +52,8 @@ TdtPlugin::~TdtPlugin() {
   }
 }
 
-Status TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_name, bool profiling, int32_t &time,
-                           acltdtTensorType tdt_type) {
-  MS_LOG(DEBUG) << "TDT channel name is " << channel_name << ".";
-
+Status TdtPlugin::hostPush(TensorRow ts_row, bool profiling, int32_t *time, acltdtTensorType tdt_type) {
+  MS_LOG(DEBUG) << "TDT channel name is " << channel_name_ << ".";
   acltdtDataset *acl_dataset = nullptr;
 #ifndef ENABLE_SECURITY
   double start_time;
@@ -78,8 +74,8 @@ Status TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_n
   if (acltdtGetDatasetSize(acl_dataset) > 0) {
     acltdtDataItem *item0 = acltdtGetDataItem(acl_dataset, 0);
     std::string item_type;
-    RETURN_IF_NOT_OK(ParseType(acltdtGetDataTypeFromItem(item0), item_type));
-    if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name, acltdtGetDataAddrFromItem(item0),
+    RETURN_IF_NOT_OK(ParseType(acltdtGetDataTypeFromItem(item0), &item_type));
+    if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, acltdtGetDataAddrFromItem(item0),
                                                         acltdtGetDataSizeFromItem(item0), item_type)) {
       RETURN_STATUS_UNEXPECTED("PrefetchData failed in when pre-processing sending data.");
     }
@@ -94,62 +90,18 @@ Status TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channel_n
 #ifndef ENABLE_SECURITY
   if (profiling) {
     double end_time = ProfilingTime::GetCurMilliSecond();
-    time = (int32_t)(end_time - start_time);
+    *time = static_cast<int32_t>(end_time - start_time);
   }
 #endif
   return Status::OK();
 }
 
-Status TdtPlugin::getTdtType(DataType d_type, aclDataType &datatype) {
-  switch (d_type.value()) {
-    case DataType::DE_BOOL:
-      datatype = ACL_BOOL;
-      break;
-    case DataType::DE_INT8:
-      datatype = ACL_INT8;
-      break;
-    case DataType::DE_UINT8:
-      datatype = ACL_UINT8;
-      break;
-    case DataType::DE_INT16:
-      datatype = ACL_INT16;
-      break;
-    case DataType::DE_UINT16:
-      datatype = ACL_UINT16;
-      break;
-    case DataType::DE_INT32:
-      datatype = ACL_INT32;
-      break;
-    case DataType::DE_UINT32:
-      datatype = ACL_UINT32;
-      break;
-    case DataType::DE_FLOAT16:
-      datatype = ACL_FLOAT16;
-      break;
-    case DataType::DE_FLOAT32:
-      datatype = ACL_FLOAT;
-      break;
-    case DataType::DE_FLOAT64:
-      datatype = ACL_DOUBLE;
-      break;
-    case DataType::DE_INT64:
-      datatype = ACL_INT64;
-      break;
-    case DataType::DE_UINT64:
-      datatype = ACL_UINT64;
-      break;
-    default:
-      RETURN_STATUS_UNEXPECTED("Invalid data, got unexpected data type.");
-  }
-  return Status::OK();
-}
-
-Status TdtPlugin::ParseType(const aclDataType &acl_data_type, std::string &data_type) {
+Status TdtPlugin::ParseType(const aclDataType &acl_data_type, std::string *data_type) {
   auto type_iter = parse_map.find(acl_data_type);
   if (type_iter == parse_map.end()) {
     RETURN_STATUS_UNEXPECTED("Got unsupported acl datatype: " + std::to_string(acl_data_type));
   }
-  data_type = type_iter->second;
+  *data_type = type_iter->second;
   return Status::OK();
 }
 
@@ -187,7 +139,7 @@ Status TdtPlugin::AssembleTensor2AclDataset(acltdtTensorType tdt_type, const Ten
   for (auto ts : ts_row) {
     aclDataType datatype;
     acltdtDataItem *acl_data = nullptr;
-    RETURN_IF_NOT_OK(getTdtType(ts->type(), datatype));
+    RETURN_IF_NOT_OK(GetAclDataType(ts->type(), &datatype));
 
     TensorShape tsShape = ts->shape();
     std::string dataShapes = "[";
@@ -233,18 +185,12 @@ Status TdtPlugin::DestroyAclDataset(acltdtDataset *acl_dataset, bool include_dat
       }
     }
   }
+
   if (acltdtDestroyDataset(acl_dataset) != ACL_SUCCESS) {
     ReportErrorMessage();
     RETURN_STATUS_UNEXPECTED("Destroy tdt dataset failed when send data.");
   }
   return Status::OK();
-}
-
-void TdtPlugin::ReportErrorMessage() {
-  const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
-  if (!error_message.empty() && error_message.find(kUnknownErrorString) == std::string::npos) {
-    MS_LOG(ERROR) << "Ascend error occurred, error message:\n" << error_message;
-  }
 }
 }  // namespace dataset
 }  // namespace mindspore

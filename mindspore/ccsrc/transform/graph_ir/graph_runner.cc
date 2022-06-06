@@ -193,10 +193,14 @@ Status GraphRunner::RunGraphAsync(const RunOptions &options, const std::vector<G
 
   // call ge::RunGraphAsync() to exec a graph;
   std::vector<GeTensor> ge_inputs;
-
-  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(ge_inputs),
-                       [](const GeTensorPtr &i) { return *i; });
-
+#ifdef ENABLE_D
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ConfigManager::GetInstance().dataset_mode() != DS_SINK_MODE) {
+    (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(ge_inputs),
+                         [](const GeTensorPtr &i) { return *i; });
+  }
+#endif
   MS_LOG(INFO) << "Run the graph in GE with " << ge_inputs.size() << " inputs";
 
   struct timeval start_time, end_time;
@@ -224,8 +228,6 @@ Status GraphRunner::RunGraphAsync(const RunOptions &options, const std::vector<G
     condition.notify_all();
     return;
   };
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() == "ge") {
     if (sess_ == nullptr) {
       MS_LOG(ERROR) << "The GE session is null, can't run the graph!";

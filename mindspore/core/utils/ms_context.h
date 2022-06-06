@@ -28,11 +28,13 @@
 #include "utils/ms_utils.h"
 #ifdef ENABLE_TDTQUE
 #include "pybind11/pybind11.h"
-#include "mindspore/ccsrc/minddata/dataset/engine/tdt/tdt_handle.h"
+#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_handle.h"
 using mindspore::dataset::TdtHandle;
 #endif
 #ifndef NO_DLIB
 #include "acl/acl_tdt.h"
+#include "runtime/dev.h"
+#include "runtime/config.h"
 #endif
 
 namespace mindspore {
@@ -92,6 +94,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE,
   MS_CTX_ENABLE_MEM_SCHEDULER,
   MS_CTX_ENABLE_RECOVERY,
+  MS_CTX_ENABLE_GE_HETEROGENOUS,
   MS_CTX_DISABLE_FORMAT_TRANSFORM,
   MS_CTX_TYPE_BOOL_END,
 

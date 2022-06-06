@@ -61,7 +61,11 @@ DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, i
 #endif
 #ifdef ENABLE_TDTQUE
   ascend_keep_waiting_ = true;
-  tdtInstancePtr = std::make_shared<TdtPlugin>(channel_name_, device_id_);
+  if (kIsHeterogeneous) {
+    tdtInstancePtr = std::make_shared<HostQueueImpl>(channel_name_, device_id_);
+  } else {
+    tdtInstancePtr = std::make_shared<TdtPlugin>(channel_name_, device_id_);
+  }
 #endif
 #ifdef ENABLE_DUMP_IR
   md_channel_info_ = std::make_shared<MDChannelInfo>(channel_name_);
@@ -152,7 +156,7 @@ Status DeviceQueueOp::operator()() {
         }
       }
     }
-    if (tdtInstancePtr->acl_handle_ == nullptr) {
+    if (!kIsHeterogeneous && tdtInstancePtr->acl_handle_ == nullptr) {
       RETURN_STATUS_UNEXPECTED(
         "[Internal ERROR] Create channel for sending data failed, please check DEVICE ID setting.");
     }
@@ -232,7 +236,7 @@ Status DeviceQueueOp::SendDataToAscend() {
 #endif
       PrintBeginInfoWhenFirstBatch(first_push_flag_);
       // when training stopped, handle might have been destroyed immediately
-      if (tdtInstancePtr->acl_handle_ == nullptr) {
+      if (!kIsHeterogeneous && tdtInstancePtr->acl_handle_ == nullptr) {
         MS_LOG(WARNING) << "Thread has already been terminated.";
         is_break_loop = true;
         continue;
@@ -269,8 +273,8 @@ Status DeviceQueueOp::SendDataToAscend() {
     }
     if (curr_row.eoe() && send_epoch_end_) {
       TensorRow dummy_row;
-      auto status = tdtInstancePtr->hostPush(dummy_row, true, channel_name_, is_profiling_enable, tdt_cost,
-                                             ACL_TENSOR_DATA_END_OF_SEQUENCE);
+      auto status =
+        tdtInstancePtr->hostPush(dummy_row, is_profiling_enable, &tdt_cost, ACL_TENSOR_DATA_END_OF_SEQUENCE);
 
       RETURN_IF_NOT_OK(CheckPushStatus(status, stop_send_, &send_finished_, &is_break_loop));
       MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
@@ -317,7 +321,7 @@ void DeviceQueueOp::LimitSendingBatches(int64_t send_batch, int64_t *sending_num
 }
 
 Status DeviceQueueOp::SendRowToTdt(TensorRow curr_row, bool is_profiling_enable, int32_t *tdt_cost) {
-  auto status = tdtInstancePtr->hostPush(curr_row, true, channel_name_, is_profiling_enable, *tdt_cost);
+  auto status = tdtInstancePtr->hostPush(curr_row, is_profiling_enable, tdt_cost);
   if (status != Status::OK()) {
     if (stop_send_) {
       MS_LOG(INFO) << "stop_send received";

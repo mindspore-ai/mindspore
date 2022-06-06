@@ -11,7 +11,7 @@ endif()
 add_subdirectory(cache)
 
 if(ENABLE_TDTQUE)
-    add_subdirectory(tdt)
+    add_subdirectory(device_queue_impl)
 endif()
 
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
@@ -69,5 +69,5 @@ if(NOT ENABLE_SECURITY)
 endif()
 
 if(ENABLE_TDTQUE)
-    add_dependencies(engine engine-tdt)
+    add_dependencies(engine engine-device-queue)
 endif()

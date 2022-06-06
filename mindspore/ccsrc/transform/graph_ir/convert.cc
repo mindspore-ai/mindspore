@@ -39,6 +39,7 @@
 #include "ops/elewise_calculation_ops.h"
 #include "ops/math_ops.h"
 #include "ops/save_ops.h"
+#include "ops/data_flow_ops.h"
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_adapter_desc.h"
 
@@ -266,6 +267,10 @@ void DfGraphConvertor::MakeDatasetHandler(const std::string &name, const size_t 
     // use iterator_getnext op with output_name instead of data op in BuildGraph.
     if (dataset_iter_getnext_ != nullptr) {
       out_handle_cache_[it.get()] = OutHandler(dataset_iter_getnext_, "y" + std::to_string(getnext_idx));
+    }
+    // heterogeneous getnextfromqueue op with output_name instead of data op in BuildGraph.
+    if (get_next_from_queue_ != nullptr) {
+      out_handle_cache_[it.get()] = OutHandler(get_next_from_queue_, "y" + std::to_string(getnext_idx));
     }
   }
 }
@@ -572,25 +577,43 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
     }
   }
 
+#ifdef ENABLE_D
   // Create dataset iterator and iterator_getnext node
   if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
     DatasetGraphParam param = ConfigManager::GetInstance().dataset_param();
     MS_LOG(INFO) << "Dataset param is " << param.ToString() << ".";
-    // GetNext
-    auto iter_getnext_op = make_shared<::ge::op::GetNext>("get_next_tmp");
     std::vector<enum ::ge::DataType> getnext_types;
     const auto &origin_ge_types = param.ge_types();
     (void)std::transform(
       origin_ge_types.begin(), origin_ge_types.end(), std::back_inserter(getnext_types),
       [](int64_t t_num) -> enum ::ge::DataType { return static_cast<enum ::ge::DataType>(t_num); });
-    (void)iter_getnext_op->set_attr_output_types(getnext_types);
-    (void)iter_getnext_op->set_attr_output_shapes(param.shapes());
-    (void)iter_getnext_op->set_attr_channel_name(param.queue_name());
+    if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+      // QueueData
+      auto queue_data = make_shared<::ge::op::QueueData>("queue_data");
+      (void)queue_data->set_attr_output_types(getnext_types);
+      (void)queue_data->set_attr_output_shapes(param.shapes());
+      (void)queue_data->set_attr_queue_name(param.queue_name());
+      (void)queue_data->set_attr_index(0);
+      queue_data_ = queue_data;
 
-    // save iter_getnext_op for later use
-    dataset_iter_getnext_ = iter_getnext_op;
+      // get next from queue
+      auto get_next_from_queue = make_shared<::ge::op::GetNextFromQueue>("get_next_from_queue");
+      (void)get_next_from_queue->set_attr_output_types(getnext_types);
+      (void)get_next_from_queue->set_attr_output_shapes(param.shapes());
+      get_next_from_queue_ = get_next_from_queue;
+      get_next_from_queue_->SetInput("x", *queue_data_);
+    } else {
+      // GetNext
+      auto iter_getnext_op = make_shared<::ge::op::GetNext>("get_next_tmp");
+      (void)iter_getnext_op->set_attr_output_types(getnext_types);
+      (void)iter_getnext_op->set_attr_output_shapes(param.shapes());
+      (void)iter_getnext_op->set_attr_channel_name(param.queue_name());
+
+      // save iter_getnext_op for later use
+      dataset_iter_getnext_ = iter_getnext_op;
+    }
   }
-
+#endif
   // return the data flow graph
   return *this;
 }
@@ -720,19 +743,36 @@ void DfGraphConvertor::TraceOutputFromParameter(const AnfNodePtr &anf_out) {
   return;
 }
 
-void SetupDatasetIterGetNextNode(const OperatorPtr &op) {
+void DfGraphConvertor::SetupDatasetIterGetNextNode() {
   if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
     DatasetGraphParam param = ConfigManager::GetInstance().dataset_param();
     size_t output_num = param.ge_types().size();
     MS_LOG(INFO) << "Set iterator_getnext op's output num = " << output_num << ".";
-    // set iterator_getnext op's output num
-    shared_ptr<::ge::op::GetNext> iter_getnext = std::static_pointer_cast<::ge::op::GetNext>(op);
-    (void)iter_getnext->create_dynamic_output_y(static_cast<unsigned int>(output_num));
 
-    for (uint32_t i = 0; i < output_num; i++) {
-      ::ge::TensorDesc desc(GeShape(param.shapes()[i]), ::ge::FORMAT_NCHW, (::ge::DataType)param.ge_types()[i]);
-      // we don't SetRealDimCnt here since GE do not use this output's real-dim
-      (void)iter_getnext->update_dynamic_output_desc_y((i), desc);
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+      MS_EXCEPTION_IF_NULL(get_next_from_queue_);
+      // set iterator_getnext op's output num
+      MS_LOG(INFO) << "SetupDatasetQueueGetNextNode " << get_next_from_queue_->GetName();
+      shared_ptr<::ge::op::GetNextFromQueue> iter_getnext =
+        std::static_pointer_cast<::ge::op::GetNextFromQueue>(get_next_from_queue_);
+      (void)iter_getnext->create_dynamic_output_y(static_cast<unsigned int>(output_num));
+      for (uint32_t i = 0; i < output_num; i++) {
+        ::ge::TensorDesc desc(GeShape(param.shapes()[i]), ::ge::FORMAT_NCHW, (::ge::DataType)param.ge_types()[i]);
+        // we don't SetRealDimCnt here since GE do not use this output's real-dim
+        (void)iter_getnext->update_dynamic_output_desc_y((i), desc);
+      }
+    } else {
+      MS_EXCEPTION_IF_NULL(dataset_iter_getnext_);
+      // set iterator_getnext op's output num
+      shared_ptr<::ge::op::GetNext> iter_getnext = std::static_pointer_cast<::ge::op::GetNext>(dataset_iter_getnext_);
+      (void)iter_getnext->create_dynamic_output_y(static_cast<unsigned int>(output_num));
+      for (uint32_t i = 0; i < output_num; i++) {
+        ::ge::TensorDesc desc(GeShape(param.shapes()[i]), ::ge::FORMAT_NCHW, (::ge::DataType)param.ge_types()[i]);
+        // we don't SetRealDimCnt here since GE do not use this output's real-dim
+        (void)iter_getnext->update_dynamic_output_desc_y((i), desc);
+      }
     }
   }
   return;
@@ -1488,47 +1528,15 @@ void DfGraphConvertor::UpdateTupleOutCache() {
   }
 }
 
-DfGraphConvertor &DfGraphConvertor::BuildGraph() {
-  SetupDatasetIterGetNextNode(dataset_iter_getnext_);
-
-  if (error_ != SUCCESS) {
-    return *this;
-  }
-
-  GetCallNodeInputs(cur_while_node_);
-  // Case node set input.
-  std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
-  for (auto &it : nodes) {
-    if (it->isa<CNode>() && IsCaseNode(it->cast<CNodePtr>())) {
-      auto node = it->cast<CNodePtr>();
-      auto input_node = node->input(0)->cast<CNodePtr>();
-      GetCaseNodeInput(node, input_node);
-    }
-  }
-
-  // update tuple_out_handle_cache_
-  UpdateTupleOutCache();
-
-  // set up dependencies
-  MS_LOG(DEBUG) << "set up dependencies";
-  nodes = GetOrderedCNodes(anf_graph_);
-  for (auto &it : nodes) {
-    SetNodeInput(it);
-    SetOpControlInput(it);
-    SetSubgraph(it);
-    UpdateOpDesc(it);
-  }
-
-  if (error_ == SUCCESS) {
-    df_graph_ = make_shared<DfGraph>(anf_graph_->ToString());
-  } else {
-    return *this;
-  }
-
-  // set graph input according to the order from anf graph
-  std::vector<Operator> inputs;
+void DfGraphConvertor::SetGraphInputs(std::vector<Operator> *inputs) {
   if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
-    inputs.push_back(*dataset_iter_getnext_);
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+      inputs->push_back(*queue_data_);
+    } else {
+      inputs->push_back(*dataset_iter_getnext_);
+    }
   } else {
     auto params = anf_graph_->parameters();
     if (use_inputs_) {
@@ -1558,22 +1566,63 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
         MS_LOG(INFO) << "add not var input " << it->ToString() << ", index " << index;
         if (op == nullptr) {
           MS_LOG(ERROR) << "Convert graph failed!";
-          return *this;
+          return;
         }
         UpdateDataOpDesc(it, op);
 
         MS_LOG(INFO) << "add input " << it->ToString() << ", index " << index;
         (void)std::static_pointer_cast<Data>(op)->set_attr_index(index++);
-        inputs.push_back(*op);
+        inputs->push_back(*op);
       } else if (vars_[name] != nullptr) {
         MS_LOG(INFO) << "add var input " << it->ToString();
         auto op = Convert(it);
         MS_EXCEPTION_IF_NULL(op);
         UpdateConstOpDesc(it, vars_[name]);
-        inputs.push_back(*op);
+        inputs->push_back(*op);
       }
     }
   }
+}
+
+DfGraphConvertor &DfGraphConvertor::BuildGraph() {
+  SetupDatasetIterGetNextNode();
+
+  if (error_ != SUCCESS) {
+    return *this;
+  }
+
+  GetCallNodeInputs(cur_while_node_);
+  // Case node set input.
+  std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
+  for (auto &it : nodes) {
+    if (it != nullptr && it->isa<CNode>() && IsCaseNode(it->cast<CNodePtr>())) {
+      auto node = it->cast<CNodePtr>();
+      auto input_node = node->input(0)->cast<CNodePtr>();
+      GetCaseNodeInput(node, input_node);
+    }
+  }
+
+  // update tuple_out_handle_cache_
+  UpdateTupleOutCache();
+  // set up dependencies
+  MS_LOG(DEBUG) << "set up dependencies";
+  nodes = GetOrderedCNodes(anf_graph_);
+  for (auto &it : nodes) {
+    SetNodeInput(it);
+    SetOpControlInput(it);
+    SetSubgraph(it);
+    UpdateOpDesc(it);
+  }
+
+  if (error_ == SUCCESS) {
+    df_graph_ = make_shared<DfGraph>(anf_graph_->ToString());
+  } else {
+    return *this;
+  }
+
+  // set graph input according to the order from anf graph
+  std::vector<Operator> inputs;
+  SetGraphInputs(&inputs);
 
   MS_LOG(DEBUG) << "trace output";
   if (cur_while_node_ == nullptr) {

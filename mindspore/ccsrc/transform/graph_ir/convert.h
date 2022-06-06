@@ -117,7 +117,6 @@ class DfGraphConvertor {
   }
 
   DfGraphConvertor &ConvertAllNode();
-  bool SetGraphInputs(const std::vector<Operator> &inputs);
   DfGraphConvertor &BuildGraph();
   DfGraphConvertor &InitParam(const TensorOrderMap &tensors);
   DfGraphConvertor &GenerateCheckpointGraph();
@@ -209,8 +208,10 @@ class DfGraphConvertor {
   void SetTupleOpInput(const OpAdapterPtr &adpt, const CNodePtr &node, const AnfNodePtr &pred, const OperatorPtr &src,
                        int index);
   void UpdateTupleOutCache(void);
+  void SetGraphInputs(std::vector<Operator> *inputs);
   AnfNodePtr TransformConstOp(const CNodePtr &node, AnfNodePtr pred);
   AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
+  void SetupDatasetIterGetNextNode();
 
   void ConvertWhileNode(const CNodePtr &node);
   void CacheWhileGraph(const CNodePtr &cnode);
@@ -255,6 +256,8 @@ class DfGraphConvertor {
   std::vector<OperatorPtr> broadcast_ops_;
   std::vector<AnfNodePtr> inputs_;
   OperatorPtr dataset_iter_getnext_;
+  OperatorPtr queue_data_;
+  OperatorPtr get_next_from_queue_;
   Status error_ = SUCCESS;
   bool training_ = false;
   bool distribute_ = false;
