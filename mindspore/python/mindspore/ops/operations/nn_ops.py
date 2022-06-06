@@ -7680,27 +7680,10 @@ class InTopK(PrimitiveWithInfer):
     r"""
     Determines whether the targets are in the top `k` predictions.
 
-    Args:
-        k (int): Specifies the number of top elements to be used for computing precision.
-
-    Inputs:
-        - **x1** (Tensor) - A 2D Tensor defines the predictions of a batch of samples with float16 or float32
-          data type.
-        - **x2** (Tensor) - A 1D Tensor defines the labels of a batch of samples with int32 data type. The size of x2
-          must be equal to x1's first dimension. The values of `x2` can not be negative and
-          must be equal to or less than index of x1's second dimension.
-
-    Outputs:
-        Tensor has 1 dimension of type bool and the same shape with `x2`. For labeling sample `i` in `x2`,
-        if the label in the first `k` predictions for sample `i` is in `x1`, then the value is True, otherwise False.
-
-    Raises:
-        TypeError: If `k` is not an int.
-        TypeError: If `x1` or `x2` is not a Tensor.
-        TypeError: If dtype of `x1` is neither float16 nor float32.
+    Refer to :func:`mindspore.ops.tanh` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor(np.array([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]]), mindspore.float32)

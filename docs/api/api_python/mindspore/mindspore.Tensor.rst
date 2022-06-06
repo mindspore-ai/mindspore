@@ -593,6 +593,21 @@ mindspore.Tensor
         - **TypeError** - `indices` 不是int或tuple。
         - **TypeError** - `indices` 是元组，但是其中的元素不是int。
 
+    .. py:method:: intopk(x, k)
+
+        判断目标标签是否在前 `k` 个预测中。
+
+        更多细节参考 :func:`mindspore.ops.intopk`。
+
+        **参数：**
+
+        **x** (Tensor) - 1维Tensor，样本的标签。数据类型为int32。 `x` 的大小必须与该Tensor第一维度的大小相同。 `x` 取值不可为负且必须小于或等于该Tensor第二维度的大小。
+        **k** (int32) - 指定在最后一维上参与比较的top元素的数量。
+
+        **返回：**
+
+        1维的bool类型Tensor，与 `x` shape相同。对于 `x` 中的样本标签 `i`，如果它在该Tensor的前 `k` 个预测值中，则输出值为True，否则为False。
+
     .. py:method:: item(index=None)
 
         获取Tensor中指定索引的元素。
@@ -1508,3 +1523,4 @@ mindspore.Tensor
 
         Tensor，具有与入参 `shape` 相同的维度。
     
+
