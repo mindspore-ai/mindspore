@@ -17,6 +17,7 @@
 
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN
+from ...common.tensor import Tensor
 
 
 def adaptive_avgpool2d(x, output_size):
@@ -109,6 +110,7 @@ def adaptive_avgpool2d(x, output_size):
     return adaptive_avgpool2d_(x)
 
 
+slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
 softsign_ = P.Softsign()
 hardswish_ = P.HSwish()
@@ -404,6 +406,98 @@ def pdist(x, p=2.0):
     """
     pdist_ = NN.Pdist(p=p)
     return pdist_(x)
+
+
+def pad(input_x, paddings):
+    r"""
+    Pads the input tensor according to the paddings.
+
+    The formula to calculate the shape of the output tensor is as follows,
+
+    .. math::
+        \begin{aligned}
+            &\text{ input_x_shape} = (N_{1},N_{2},...,N_{n}) \\
+            &\begin{aligned}
+                \text{output_shape = }(&N_{1}+paddings[0,0]+paddings[0,1], \\
+                                 & N_{2}+paddings[1,0]+paddings[1,1], \\
+                                 &... , \\
+                                 & N_{n}+paddings[n-1,0]+paddings[n-1,1])
+            \end{aligned}
+        \end{aligned}
+
+    Args:
+        input_x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+        paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
+            paddings are int type. For the input in `D` th dimension, paddings[D, 0] indicates how many sizes to be
+            extended(if this value > 0) or clipped(if this value < 0) ahead of the input tensor in the `D` th
+            dimension, and paddings[D, 1] indicates how many sizes to be extended(if this value > 0) or
+            clipped(if this value < 0) behind the input tensor in the `D` th dimension.
+
+    Returns:
+        Tensor, the tensor after padding.
+
+    Raises:
+        TypeError: If `paddings` is not a tuple.
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If shape of `paddings` is not :math:`(N, 2)`.
+        ValueError: If paddings.size is not equal to 2 * len(input_x).
+        ValueError: If the calculated output shape contains zero or negative dimension.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> paddings = ((1, 2), (2, 1))
+        >>> output = ops.pad(input_x, paddings)
+        >>> print(output)
+        [[ 0.   0.   0.   0.   0.   0. ]
+         [ 0.   0.  -0.1  0.3  3.6  0. ]
+         [ 0.   0.   0.4  0.5 -3.2  0. ]
+         [ 0.   0.   0.   0.   0.   0. ]
+         [ 0.   0.   0.   0.   0.   0. ]]
+    """
+    if not isinstance(input_x, Tensor):
+        raise TypeError(f"For 'pad', the type of 'input_x' must be Tensor, but got {type(input_x)}.")
+    if not isinstance(paddings, tuple):
+        raise TypeError(f"For 'pad', the type of 'paddings' must be tuple, but got {type(paddings)}.")
+    for _, pd in enumerate(paddings):
+        if not isinstance(pd, (list, tuple)) or len(pd) != 2 or not isinstance(pd[0], int) or \
+                not isinstance(pd[1], int):
+            raise TypeError(f"For 'pad', each element in 'paddings' must be a list or tuple of 2 int, but got {pd}.")
+    x_shape = input_x.shape
+    if len(x_shape) != len(paddings):
+        raise ValueError(f"For 'pad', the size of paddings must be 2 * {len(x_shape)}, but got {2 * len(paddings)}")
+    pad_all_non_negative = True
+    pad_all_non_positive = True
+    slice_begin = []
+    slice_size = []
+    non_negative_padding = []
+    for i, pd in enumerate(paddings):
+        sz = x_shape[i] + pd[0]
+        if sz <= 0:
+            raise ValueError(f"For 'pad', input_x_shape[{i}] + paddings[{i}, 0] is {sz}, which is <= 0 and causes "
+                             f"the output shape invalid.")
+        sz = sz + pd[1]
+        if sz <= 0:
+            raise ValueError(f"For 'pad', input_x_shape[{i}] + paddings[{i}, 0] + paddings[{i}, 1] is {sz}, which is "
+                             f"<= 0 and causes the output shape invalid.")
+        slice_size.append(sz)
+        if pd[0] < 0:
+            slice_begin.append(abs(pd[0]))
+        else:
+            slice_begin.append(0)
+        if pd[0] < 0 or pd[1] < 0:
+            pad_all_non_negative = False
+        if pd[0] > 0 or pd[1] > 0:
+            pad_all_non_positive = False
+        non_negative_padding.append((max(0, pd[0]), max(0, pd[1])))
+    if pad_all_non_negative:
+        return P.Pad(paddings)(input_x)
+    if pad_all_non_positive:
+        return slice_(input_x, slice_begin, slice_size)
+    out = P.Pad(tuple(non_negative_padding))(input_x)
+    return slice_(out, slice_begin, slice_size)
 
 
 def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0):
@@ -741,6 +835,7 @@ __all__ = [
     'hardswish',
     'softsign',
     'pdist',
+    'pad',
     'cross_entropy',
     'grid_sample',
     'nll_loss'
