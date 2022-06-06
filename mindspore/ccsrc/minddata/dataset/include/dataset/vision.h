@@ -452,9 +452,10 @@ class MS_API Pad final : public TensorTransform {
   ///    - BorderType.kEdge, means it pads with the last value on the edge
   ///    - BorderType.kReflect, means it reflects the values on the edge omitting the last value of edge
   ///    - BorderType.kSymmetric, means it reflects the values on the edge repeating the last value of edge
-  /// \note The behaviour when padding is a sequence of length 2 will change from padding left/top with
-  ///     the first value and right/bottom with the second to left/right with the first and top/bottom with
-  ///     the second in the future.
+  /// \note The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+  ///     the first value and right/bottom with the second, to padding left/right with the first one
+  ///     and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
+  ///     left, top, right and bottom respectively.
   /// \par Example
   /// \code
   ///     /* Define operations */
@@ -689,6 +690,10 @@ class MS_API RandomCrop final : public TensorTransform {
   ///   - BorderType::kReflect, Reflect the values on the edge omitting the last value of edge.
   ///   - BorderType::kSymmetric, Reflect the values on the edge repeating the last value of edge.
   /// \note If the input image is more than one, then make sure that the image size is the same.
+  /// \note The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+  ///     the first value and right/bottom with the second, to padding left/right with the first one
+  ///     and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
+  ///     left, top, right and bottom respectively.
   /// \par Example
   /// \code
   ///     /* Define operations */
@@ -787,6 +792,10 @@ class MS_API RandomCropWithBBox final : public TensorTransform {
   ///   - BorderType::kEdge, Fill the border with the last value on the edge.
   ///   - BorderType::kReflect, Reflect the values on the edge omitting the last value of edge.
   ///   - BorderType::kSymmetric, Reflect the values on the edge repeating the last value of edge.
+  /// \note The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+  ///     the first value and right/bottom with the second, to padding left/right with the first one
+  ///     and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
+  ///     left, top, right and bottom respectively.
   /// \par Example
   /// \code
   ///     /* Define operations */
