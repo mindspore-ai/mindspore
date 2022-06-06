@@ -42,6 +42,15 @@ struct DataArrow {
 };
 using DataArrowPtr = std::shared_ptr<DataArrow>;
 
+// OpActor control route.
+struct ControlArrow {
+  explicit ControlArrow(const AID &to_op_id) : to_op_id_(to_op_id), flag_{0} {}
+  AID to_op_id_;
+  // Used to indicate the attribute of control arrow.
+  int flag_;
+};
+using ControlArrowPtr = std::shared_ptr<ControlArrow>;
+
 // OpActor data.
 template <typename T>
 struct OpData {
@@ -106,7 +115,7 @@ class OpActor : public ActorBase {
   virtual void RunOpControl(AID *input_control, OpContext<T> *context = nullptr) {}
 
   const std::vector<DataArrowPtr> &output_data_arrows() const { return output_data_arrows_; }
-  const std::vector<AID> &output_control_arrows() const { return output_control_arrows_; }
+  const std::vector<ControlArrowPtr> &output_control_arrows() const { return output_control_arrows_; }
 
  protected:
   // The op data.
@@ -115,7 +124,7 @@ class OpActor : public ActorBase {
 
   // The op controls.
   mindspore::HashMap<int, std::vector<AID *>> input_op_controls_;
-  std::vector<AID> output_control_arrows_;
+  std::vector<ControlArrowPtr> output_control_arrows_;
 };
 }  // namespace mindspore
 

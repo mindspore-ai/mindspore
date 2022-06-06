@@ -71,10 +71,16 @@ class SchedulerHelper {
   // Fuse the data arrows to batch data arrow for the same destination actor.
   static void FuseDataArrowsToBatchDataArrow(AbstractActor *const actor);
 
+  // Fuse the actors to a fusion actor.
+  static FusionActorPtr BuildMultiActors(const std::vector<AbstractActorPtr> &actors);
+  static void AddArrowForFusionActor(FusionActor *fusion_actor);
+
   // Check whether the actor set is valid.
   static void CheckActorValid(const ActorSet *actor_set);
 
   static void DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs);
+
+  static size_t fusion_actor_index_;
 };
 }  // namespace runtime
 }  // namespace mindspore

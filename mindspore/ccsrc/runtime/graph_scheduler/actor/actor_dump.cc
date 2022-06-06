@@ -43,7 +43,7 @@ void DumpBaseInputInfo(const AbstractActor *actor, std::ofstream &ofs) {
   if (actor->input_data_arrow_aids().size() > 0) {
     ofs << "\t\tinput_data_arrow_actors:" << actor->input_data_arrow_aids().size() << "\n ";
     for (const auto &input_data_arrow_aid : actor->input_data_arrow_aids()) {
-      ofs << "\t\t\tfrom_actor_name:" << input_data_arrow_aid.Name() << "\n";
+      ofs << "\t\t\tfrom_actor_name:" << input_data_arrow_aid.first.Name() << "\n";
     }
   }
 
@@ -51,7 +51,7 @@ void DumpBaseInputInfo(const AbstractActor *actor, std::ofstream &ofs) {
   if (actor->input_control_arrow_aids().size() > 0) {
     ofs << "\t\tinput_control_arrow_actors:" << actor->input_control_arrow_aids().size() << "\n ";
     for (const auto &input_control_arrow_aid : actor->input_control_arrow_aids()) {
-      ofs << "\t\t\tfrom_actor_name:" << input_control_arrow_aid.Name() << "\n";
+      ofs << "\t\t\tfrom_actor_name:" << input_control_arrow_aid.first.Name() << "\n";
     }
   }
 }
@@ -87,7 +87,7 @@ void DumpBaseOutputInfo(const AbstractActor *actor, std::ofstream &ofs) {
       auto data_arrow = actor->output_data_arrows()[i];
       auto output_node = actor->output_data_nodes()[i];
       MS_EXCEPTION_IF_NULL(data_arrow);
-      if (data_arrow->flag_ != kOutputDataFalgBatch) {
+      if (data_arrow->flag_ != kOutputDataFlagBatch) {
         std::string node_name = (output_node != nullptr) ? GetSplitName(output_node->fullname_with_scope()) : "";
         ofs << "\t\t\tfrom_output_node:" << node_name << "\tfrom_output_index:" << data_arrow->from_output_index_
             << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
@@ -100,8 +100,10 @@ void DumpBaseOutputInfo(const AbstractActor *actor, std::ofstream &ofs) {
   const auto &output_control_arrows = actor->output_control_arrows();
   if (output_control_arrows.size() > 0) {
     ofs << "\t\toutput_control_arrows:" << output_control_arrows.size() << "\n ";
-    for (const auto &aid : output_control_arrows) {
-      ofs << "\t\t\tto_actor_name:" << aid.Name() << "\n";
+    for (const auto &output_control_arrow : output_control_arrows) {
+      MS_EXCEPTION_IF_NULL(output_control_arrow);
+      ofs << "\t\t\tto_actor_name:" << output_control_arrow->to_op_id_.Name()
+          << "\tflag:" << output_control_arrow->flag_ << "\n";
     }
   }
 }

@@ -24,6 +24,8 @@
 
 namespace mindspore {
 namespace runtime {
+size_t SchedulerHelper::fusion_actor_index_ = 0;
+
 std::vector<AbstractActorPtr> SchedulerHelper::CollectActors(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
   std::vector<AbstractActorPtr> actors;
@@ -107,7 +109,7 @@ void SchedulerHelper::AddDataArrow(AbstractActor *const from_actor, AbstractActo
   (void)from_actor->output_data_arrows_.emplace_back(data_arrow);
   (void)from_actor->output_data_nodes_.emplace_back(from_kernel);
   to_actor->input_datas_num_++;
-  (void)to_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
+  (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), data_arrow.get()));
 
   if (from_kernel == nullptr) {
     return;
@@ -137,7 +139,7 @@ void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActo
   (void)from_actor->output_data_arrows_.insert(from_actor->output_data_arrows_.begin(), result_arrow);
   (void)from_actor->output_data_nodes_.insert(from_actor->output_data_nodes_.begin(), from_kernel);
   to_actor->input_datas_num_++;
-  (void)to_actor->input_data_arrow_aids_.emplace_back(from_actor->GetAID());
+  (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), result_arrow.get()));
 
   auto device_tensor = AnfAlgo::GetMutableOutputAddr(from_kernel, from_output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
@@ -153,9 +155,10 @@ void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractA
   MS_EXCEPTION_IF_NULL(to_actor);
 
   // Check the control arrow whether exists.
-  auto iter = std::find_if(
-    from_actor->output_control_arrows_.begin(), from_actor->output_control_arrows_.end(),
-    [&to_actor](const auto &output_control_arrow) { return output_control_arrow.Name() == to_actor->GetAID().Name(); });
+  auto iter = std::find_if(from_actor->output_control_arrows_.begin(), from_actor->output_control_arrows_.end(),
+                           [&to_actor](const auto &output_control_arrow) {
+                             return output_control_arrow->to_op_id_.Name() == to_actor->GetAID().Name();
+                           });
   if (iter != from_actor->output_control_arrows_.end()) {
     // The stack actor can only link the single control arrow.
     if (to_actor->type_ == KernelTransformType::kStackActor) {
@@ -165,9 +168,10 @@ void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractA
     return;
   }
 
-  (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
+  auto control_arrow = std::make_shared<ControlArrow>(to_actor->GetAID());
+  (void)from_actor->output_control_arrows_.emplace_back(control_arrow);
   to_actor->input_controls_num_++;
-  (void)to_actor->input_control_arrow_aids_.emplace_back(from_actor->GetAID());
+  (void)to_actor->input_control_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), control_arrow.get()));
 }
 
 void SchedulerHelper::AddPartialArrow(ControlActor *const from_actor, ControlActor *const to_actor, size_t from_index,
@@ -192,7 +196,8 @@ void SchedulerHelper::AddLoopBodyControlArrow(AbstractActor *from_actor, Entranc
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_LOG(DEBUG) << "Link loop body control arrow from:" << from_actor->GetAID() << " to actor:" << to_actor->GetAID();
-  (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
+  auto control_arrow = std::make_shared<ControlArrow>(to_actor->GetAID());
+  (void)from_actor->output_control_arrows_.emplace_back(control_arrow);
   to_actor->loop_body_input_controls_nums_++;
   (void)to_actor->loop_body_input_control_arrow_aids_.emplace_back(from_actor->GetAID());
 }
@@ -213,7 +218,7 @@ void SchedulerHelper::AddDataArrowForExitActor(ExitActor *const exit_actor, Abst
                 << " to actor:" << to_actor->GetAID() << " to index:" << to_index;
   auto data_arrow = std::make_shared<DataArrow>(from_index, to_actor->GetAID(), to_index);
   (void)exit_actor->output_branch_data_arrows_[branch_id].emplace_back(data_arrow);
-  (void)to_actor->input_data_arrow_aids_.emplace_back(exit_actor->GetAID());
+  (void)to_actor->input_data_arrow_aids_.emplace_back(std::make_pair(exit_actor->GetAID(), data_arrow.get()));
 }
 
 void SchedulerHelper::AddPartialArrowForExitActor(ExitActor *const exit_actor, ControlActor *const to_actor,
@@ -234,7 +239,7 @@ void SchedulerHelper::AddControlArrowForExitActor(ExitActor *from_actor, Abstrac
   MS_LOG(DEBUG) << "Link control arrow from:" << from_actor->GetAID() << " to:" << to_actor->GetAID();
   (void)from_actor->output_branch_control_arrows_[branch_id].emplace_back(to_actor->GetAID());
   to_actor->input_controls_num_++;
-  (void)to_actor->input_control_arrow_aids_.emplace_back(from_actor->GetAID());
+  (void)to_actor->input_control_arrow_aids_.emplace_back(std::make_pair(from_actor->GetAID(), nullptr));
 }
 
 void SchedulerHelper::AddFormalParameterDeviceTensor(ControlActor *const from_actor, size_t from_index,
@@ -288,7 +293,7 @@ void SchedulerHelper::ConvertDataArrowToControlArrow(AbstractActor *const from_a
   // Erase the input data arrow aid in to actor.
   bool to_actor_erase = false;
   for (auto iter = to_actor->input_data_arrow_aids_.begin(); iter != to_actor->input_data_arrow_aids_.end(); ++iter) {
-    if (*iter == from_actor->GetAID()) {
+    if ((*iter).first == from_actor->GetAID()) {
       (void)to_actor->input_data_arrow_aids_.erase(iter);
       to_actor_erase = true;
       to_actor->input_datas_num_--;
@@ -344,8 +349,68 @@ void SchedulerHelper::FuseDataArrowsToBatchDataArrow(AbstractActor *const actor)
     auto &to_op_name = data_arrow->to_op_id_.Name();
     // The output data cannot be reused whose destination is stack actor, and cannot to be fused.
     if ((to_actor_count[to_op_name] > 1) && (to_op_name.find(kStackActorNameSuffix) == std::string::npos)) {
-      data_arrow->flag_ = kOutputDataFalgBatch;
+      data_arrow->flag_ = kOutputDataFlagBatch;
       (void)actor->batch_output_data_arrows_[to_op_name].emplace_back(data_arrow);
+    }
+  }
+}
+
+FusionActorPtr SchedulerHelper::BuildMultiActors(const std::vector<AbstractActorPtr> &actors) {
+  if (actors.size() <= 1) {
+    MS_LOG(EXCEPTION) << "The fusion actor size must be greater than 1.";
+  }
+
+  std::string fusion_actor_name = std::to_string(++fusion_actor_index_) + kFusionActorNameSuffix;
+  auto fusion_actor = std::make_shared<FusionActor>(fusion_actor_name);
+  for (auto &actor : actors) {
+    MS_EXCEPTION_IF_NULL(actor);
+    actor->in_fusion_actor_ = true;
+    fusion_actor->actors_[actor->GetAID().Name()] = actor;
+  }
+  return fusion_actor;
+}
+
+void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
+  MS_EXCEPTION_IF_NULL(fusion_actor);
+  for (auto &actor_iter : fusion_actor->actors_) {
+    auto &actor = actor_iter.second;
+    MS_EXCEPTION_IF_NULL(actor);
+    // Link data arrow of fusion actor by the input data arrow of real actor.
+    for (auto &input_data_arrow_aid : actor->input_data_arrow_aids_) {
+      auto input_data_arrow = input_data_arrow_aid.second;
+      MS_EXCEPTION_IF_NULL(input_data_arrow);
+      // Mark the kOutputDataFlagToInternalFusion flag when the input data arrow is the Internal actor in fusion actor.
+      if (fusion_actor->actors_.count(input_data_arrow_aid.first.Name()) > 0) {
+        input_data_arrow->flag_ = kOutputDataFlagToInternalFusion;
+        continue;
+      }
+
+      // The ActorB is in fusion actor and the input ActorA is on the outside of fusion actor, then change
+      // 'ActorA->ActorB' to 'ActorA->FusionActor'.
+      (void)fusion_actor->real_input_data_.emplace_back(std::make_pair(actor.get(), input_data_arrow->to_input_index_));
+      input_data_arrow->to_op_id_ = fusion_actor->GetAID();
+      input_data_arrow->to_input_index_ = fusion_actor->input_data_arrow_aids_.size();
+      (void)fusion_actor->input_data_arrow_aids_.emplace_back(
+        std::make_pair(input_data_arrow_aid.first, input_data_arrow));
+    }
+
+    // Link control arrow of fusion actor by the input control arrow of real actor.
+    for (auto &input_control_arrow_aid : actor->input_control_arrow_aids_) {
+      auto input_control_arrow = input_control_arrow_aid.second;
+      MS_EXCEPTION_IF_NULL(input_control_arrow);
+      // Mark the kOutputDataFlagToInternalFusion flag when the input control arrow is the Internal actor in fusion
+      // actor.
+      if (fusion_actor->actors_.count(input_control_arrow_aid.first.Name()) > 0) {
+        input_control_arrow->flag_ = kOutputDataFlagToInternalFusion;
+        continue;
+      }
+
+      // The ActorB is in fusion actor and the input ActorA is on the outside of fusion actor, then change
+      // 'ActorA->ActorB' to 'ActorA->FusionActor'.
+      (void)fusion_actor->real_input_controls_.emplace_back(actor.get());
+      input_control_arrow->to_op_id_ = fusion_actor->GetAID();
+      (void)fusion_actor->input_control_arrow_aids_.emplace_back(
+        std::make_pair(input_control_arrow_aid.first, input_control_arrow));
     }
   }
 }
@@ -463,7 +528,7 @@ bool CheckControlActorValid(const ActorSet *actor_set) {
     const auto &input_control_aids = stack_actor->input_control_arrow_aids();
     std::set<AID> aid_set;
     (void)std::for_each(input_control_aids.begin(), input_control_aids.end(),
-                        [&aid_set](const auto &aid) { (void)aid_set.emplace(aid); });
+                        [&aid_set](const auto &input_control_aid) { (void)aid_set.emplace(input_control_aid.first); });
     if (aid_set.size() != input_control_aids.size()) {
       MS_LOG(WARNING) << "Stack actor:" << stack_actor->GetAID() << " has duplicate control arrows.";
     }

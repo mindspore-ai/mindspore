@@ -23,6 +23,7 @@
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
 #include "runtime/graph_scheduler/optimizer/invalid_data_arrow_elimination.h"
 #include "runtime/graph_scheduler/optimizer/batch_data_arrow_fusion.h"
+#include "runtime/graph_scheduler/optimizer/multi_actor_fusion.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "mindrt/src/actor/actormgr.h"
 #include "mindrt/include/async/async.h"
@@ -1557,7 +1558,7 @@ void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph
 
       // inputs of to_allreduce_actor  --> from_send_actor
       for (auto &input_aid : parallel_actor->input_data_arrow_aids_) {
-        auto input_actor = dynamic_cast<KernelActor *>(FetchActor(input_aid.Name()));
+        auto input_actor = dynamic_cast<KernelActor *>(FetchActor(input_aid.first.Name()));
         if (input_actor != nullptr) {
           SchedulerHelper::AddControlArrow(input_actor, send_actor);
         }
@@ -1877,7 +1878,8 @@ void GraphScheduler::LinkControlArrowForLoopCountActor(LoopCountActor *loop_coun
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
   loop_count_actor->data_prepare_aid_ = actor_set->data_prepare_actor_->GetAID();
   actor_set->data_prepare_actor_->input_controls_num_++;
-  (void)actor_set->data_prepare_actor_->input_control_arrow_aids_.emplace_back(loop_count_actor->GetAID());
+  (void)actor_set->data_prepare_actor_->input_control_arrow_aids_.emplace_back(
+    std::pair(loop_count_actor->GetAID(), nullptr));
 }
 
 void GraphScheduler::LinkControlArrowForOutputActor(OutputActor *output_actor, const ActorSet *actor_set) {

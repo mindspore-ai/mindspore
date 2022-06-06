@@ -94,7 +94,8 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
   // Send output control.
   auto from_aid = const_cast<AID *>(&GetAID());
   for (auto &output_control : output_control_arrows_) {
-    ActorDispatcher::Send(output_control, &OpActor::RunOpControl, from_aid, context);
+    MS_EXCEPTION_IF_NULL(output_control);
+    ActorDispatcher::Send(output_control->to_op_id_, &OpActor::RunOpControl, from_aid, context);
   }
 
   // Send to EntranceActor to clear the data which are generated in the loop body execution.

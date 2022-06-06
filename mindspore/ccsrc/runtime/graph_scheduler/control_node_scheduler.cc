@@ -1105,7 +1105,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     if (copy_actor->input_control_arrow_aids_.empty()) {
       MS_LOG(EXCEPTION) << "Invalid copy actor:" << copy_actor->GetAID();
     }
-    auto from_actor = FetchActor(copy_actor->input_control_arrow_aids_[0].Name());
+    auto from_actor = FetchActor(copy_actor->input_control_arrow_aids_[0].first.Name());
     MS_EXCEPTION_IF_NULL(from_actor);
     auto kernel_actor = dynamic_cast<KernelActor *>(from_actor);
     MS_EXCEPTION_IF_NULL(kernel_actor);
@@ -1318,8 +1318,10 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
       }
       from_actor = FetchActor(parser->FetchGroupNameByKernelGraph(graph) + kExitActorNameSuffix);
       MS_EXCEPTION_IF_NULL(from_actor);
-      if (find(from_actor->output_control_arrows_.begin(), from_actor->output_control_arrows_.end(),
-               to_actor->GetAID()) != from_actor->output_control_arrows_.end()) {
+      if (std::find_if(from_actor->output_control_arrows_.begin(), from_actor->output_control_arrows_.end(),
+                       [&to_actor](auto &output_control_arrow) {
+                         return output_control_arrow->to_op_id_.Name() == to_actor->GetAID().Name();
+                       }) != from_actor->output_control_arrows_.end()) {
         MS_LOG(DEBUG) << "Link auto monad control from actor:" << from_actor->GetAID()
                       << " to actor:" << to_actor->GetAID() << " is already exist.";
         continue;
