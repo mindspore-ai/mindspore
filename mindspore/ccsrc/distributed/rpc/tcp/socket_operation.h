@@ -82,8 +82,8 @@ class SocketOperation {
   virtual int SendMessage(Connection *connection, struct msghdr *sendMsg, size_t totalSendLen, size_t *sendLen) = 0;
 
   // Handle connect and connected events.
-  virtual void NewConnEventHandler(void *context) = 0;
-  virtual void ConnEstablishedEventHandler(void *context) = 0;
+  virtual void NewConnEventHandler(int fd, uint32_t events, void *context) = 0;
+  virtual void ConnEstablishedEventHandler(int fd, uint32_t events, void *context) = 0;
 };
 }  // namespace rpc
 }  // namespace distributed

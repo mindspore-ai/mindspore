@@ -158,13 +158,13 @@ void TCPSocketOperation::Close(Connection *connection) {
 }
 
 // accept new conn event handle
-void TCPSocketOperation::NewConnEventHandler(void *context) {
+void TCPSocketOperation::NewConnEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
   conn->state = ConnectionState::kConnected;
   return;
 }
 
-void TCPSocketOperation::ConnEstablishedEventHandler(void *context) {
+void TCPSocketOperation::ConnEstablishedEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
   conn->state = ConnectionState::kConnected;
   return;

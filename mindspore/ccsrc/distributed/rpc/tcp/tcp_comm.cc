@@ -43,7 +43,7 @@ void ConnectedEventHandler(int fd, uint32_t events, void *context) {
   uint32_t error = events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP);
   int soError = 0;
   Connection *conn = reinterpret_cast<Connection *>(context);
-  conn->socket_operation->ConnEstablishedEventHandler(context);
+  conn->socket_operation->ConnEstablishedEventHandler(fd, events, context);
   if (conn->state == ConnectionState::kDisconnecting) {
     DoDisconnect(fd, conn, error, soError);
     return;

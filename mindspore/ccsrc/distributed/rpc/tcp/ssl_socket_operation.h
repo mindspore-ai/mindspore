@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DISTRIBUTED_RPC_TCP_TCP_SOCKET_OPERATION_H_
-#define MINDSPORE_CCSRC_DISTRIBUTED_RPC_TCP_TCP_SOCKET_OPERATION_H_
+#ifndef MINDSPORE_CCSRC_DISTRIBUTED_RPC_SSL_SSL_SOCKET_OPERATION_H_
+#define MINDSPORE_CCSRC_DISTRIBUTED_RPC_SSL_SSL_SOCKET_OPERATION_H_
 
+#include <openssl/ssl.h>
 #include "distributed/rpc/tcp/connection.h"
 #include "distributed/rpc/tcp/socket_operation.h"
 
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-class TCPSocketOperation : public SocketOperation {
+class SSLSocketOperation : public SocketOperation {
  public:
   ssize_t ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) override;
   int Receive(Connection *connection, char *recvBuf, size_t totRecvLen, size_t *recvLen) override;
@@ -35,6 +36,14 @@ class TCPSocketOperation : public SocketOperation {
 
   void NewConnEventHandler(int fd, uint32_t events, void *context) override;
   void ConnEstablishedEventHandler(int fd, uint32_t events, void *context) override;
+
+ private:
+  // Handshake for the ssl protocol.
+  void Handshake(int fd, Connection *conn);
+
+  // The ssl related data structures.
+  SSL_CTX *ssl_ctx_;
+  SSL *ssl_;
 };
 }  // namespace rpc
 }  // namespace distributed

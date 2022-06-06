@@ -82,7 +82,7 @@ void SocketEventHandler(int fd, uint32_t events, void *context) {
 void NewConnectEventHandler(int fd, uint32_t events, void *context) {
   int retval = 0;
   Connection *conn = reinterpret_cast<Connection *>(context);
-  conn->socket_operation->NewConnEventHandler(context);
+  conn->socket_operation->NewConnEventHandler(fd, events, context);
 
   if (conn->state == ConnectionState::kDisconnecting) {
     conn->Disconnect(fd);
