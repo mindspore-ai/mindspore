@@ -82,10 +82,10 @@ int SparseMatirxAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     }
     output_size_list_.clear();
     auto max_out_size = std::min(input_size_list_[kAIndicesIdx] + input_size_list_[kBIndicesIdx], dense_size_);
-    output_size_list_.emplace_back(input_size_list_[0]);
-    output_size_list_.emplace_back(max_out_size);
-    output_size_list_.emplace_back(max_out_size / GetTypeByte(TypeIdToType(types_[kAIndicesIdx])) *
-                                   GetTypeByte(TypeIdToType(types_[kAValuesIdx])));
+    (void)output_size_list_.emplace_back(input_size_list_[0]);
+    (void)output_size_list_.emplace_back(max_out_size);
+    (void)output_size_list_.emplace_back(max_out_size / GetTypeByte(TypeIdToType(types_[kAIndicesIdx])) *
+                                         GetTypeByte(TypeIdToType(types_[kAValuesIdx])));
   }
   return ret;
 }
@@ -118,14 +118,14 @@ bool SparseMatirxAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   c_indptr[0] = 0;
   std::set<T> index_set;
   size_t c_idx = 0;
-  T a_v = 0;
-  T b_v = 0;
+  S a_v = 0;
+  S b_v = 0;
   size_t a_v_idx = 0;
   size_t b_v_idx = 0;
   auto task = [this, &a_indptr, &a_indices, &a_values, &b_indptr, &b_indices, &b_values, &alpha, &beta, &c_indptr,
                &c_indices, &c_values, &index_set, &c_idx, &a_v, &b_v, &a_v_idx, &b_v_idx](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      size_t max_mask_len = a_indptr[i + 1] - a_indptr[i] + b_indptr[i + 1] - b_indptr[i];
+      size_t max_mask_len = static_cast<size_t>(a_indptr[i + 1] - a_indptr[i] + b_indptr[i + 1] - b_indptr[i]);
       // Masks for recording the valid location.
       std::vector<bool> mask_a(max_mask_len, false);
       std::vector<bool> mask_b(max_mask_len, false);
@@ -139,17 +139,17 @@ bool SparseMatirxAddCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
       }
       // index_set.size() are the valid numbers to set indptr.
       c_indptr[i + 1] = c_indptr[i] + static_cast<T>(index_set.size());
-      for (auto it = index_set.begin(); it != index_set.end(); it++) {
-        if (mask_a[*it]) {
+      for (auto it = index_set.cbegin(); it != index_set.cend(); it++) {
+        if (mask_a[static_cast<size_t>(*it)]) {
           // Independent cursor for indeices to get value. Increase the cursor once used.
           a_v = a_values[a_v_idx];
           a_v_idx++;
         }
-        if (mask_b[*it]) {
+        if (mask_b[static_cast<T>(*it)]) {
           b_v = b_values[b_v_idx];
           b_v_idx++;
         }
-        c_values[c_idx] = alpha[0] * a_v + beta[0] * b_v;
+        c_values[c_idx] = alpha[IntToSize(0)] * a_v + beta[IntToSize(0)] * b_v;
         c_indices[c_idx] = *it;
         c_idx++;
         b_v = 0;  // Reset the tmp value, real number or zero.

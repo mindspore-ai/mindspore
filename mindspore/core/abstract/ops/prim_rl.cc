@@ -57,16 +57,16 @@ AbstractBasePtr InferImplTensorArrayStack(const AnalysisEnginePtr &, const Primi
     auto max_shape_ = ele_shape;
     auto min_shape_ = ele_shape;
     auto out_shape_ = ele_shape;
-    (void)max_shape_.insert(max_shape_.begin(), kMaxElement);
-    (void)min_shape_.insert(min_shape_.begin(), 1);
-    (void)out_shape_.insert(out_shape_.begin(), -1);
+    (void)max_shape_.insert(max_shape_.cbegin(), kMaxElement);
+    (void)min_shape_.insert(min_shape_.cbegin(), 1);
+    (void)out_shape_.insert(out_shape_.cbegin(), -1);
     ShapeVector out_shape = out_shape_;
     ShapeVector min_shape = min_shape_;
     ShapeVector max_shape = max_shape_;
     output = std::make_shared<AbstractTensor>(type, std::make_shared<Shape>(out_shape, min_shape, max_shape));
   } else {
     auto out_shape_ = ele_shape;
-    (void)out_shape_.insert(out_shape_.begin(), size);
+    (void)out_shape_.insert(out_shape_.cbegin(), size);
     ShapeVector out_shape = out_shape_;
     output = std::make_shared<AbstractTensor>(type, std::make_shared<Shape>(out_shape));
   }

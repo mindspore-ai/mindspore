@@ -49,8 +49,8 @@ class TensorsQueue {
   virtual void CopyTensor(const mindspore::kernel::AddressPtr &dst, const mindspore::kernel::AddressPtr &src);
   virtual void CopyTensor(const mindspore::kernel::AddressPtr &dst, const mindspore::kernel::AddressPtr &src,
                           void *stream);
-  virtual bool Get(const mindspore::kernel::AddressPtrList &outputs, const bool &pop_after_get);
-  virtual bool Get(const mindspore::kernel::AddressPtrList &outputs, const bool &pop_after_get, void *stream);
+  virtual bool Get(const mindspore::kernel::AddressPtrList &dev_addr, const bool &pop_after_get);
+  virtual bool Get(const mindspore::kernel::AddressPtrList &dev_addr, const bool &pop_after_get, void *stream);
 
   // Common functions for TensorsQueue which are device independent.
   virtual void Clear();

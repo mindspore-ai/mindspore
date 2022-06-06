@@ -163,7 +163,7 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
         shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
       tensor_size = std::max(tensor_size, type_size);
     }
-    input_size_list_.emplace_back(tensor_size);
+    (void)input_size_list_.emplace_back(tensor_size);
   }
 
   output_size_list_.clear();
@@ -186,7 +186,7 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
         shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
       tensor_size = std::max(tensor_size, type_size);
     }
-    output_size_list_.emplace_back(tensor_size);
+    (void)output_size_list_.emplace_back(tensor_size);
   }
   return ret;
 }
