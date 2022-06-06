@@ -20,13 +20,18 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <functional>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/pad_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/avg_pool3d_helper_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_impl.cuh"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kAvgPool = "AvgPool";
+constexpr auto kAvgPool3D = "AvgPool3D";
+
 template <typename T>
 class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
@@ -49,8 +54,10 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         pad_left_(0),
         n_(0),
         c_(0),
+        divisor_override_(0),
         pad_value_(0),
         is_null_input_(false),
+        ceil_mode_(false),
         kernel_name_("Pooling"),
         input_size_(0),
         output_size_(0),
@@ -71,13 +78,38 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                 cudnnPoolingForward(cudnn_handle_, pooling_descriptor_, &alpha, input_descriptor_,
                                                     input_addr, &beta, output_descriptor_, output_addr),
                                 "cudnnPoolingForward failed");
+
+    if (divisor_override_ != 0) {
+      T *work_addr = GetDeviceAddress<T>(workspace, 0);
+      size_t output_num = output_size_ / sizeof(T);
+      int64_t size = std::accumulate(kernel_size_.begin(), kernel_size_.end(), 1, std::multiplies<int64_t>());
+      T divisor = static_cast<T>(LongToFloat(size) / LongToFloat(divisor_override_));
+      std::vector<T> divisor_value(output_num, divisor);
+      CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+        cudaMemcpyAsync(work_addr, divisor_value.data(), output_size_, cudaMemcpyHostToDevice,
+                        reinterpret_cast<cudaStream_t>(stream_ptr)),
+        "cudaMemcpyAsync failed.");
+      if (ceil_mode_) {
+        CalRealKernelSize(output_shape_exclude_nc_, kernel_size_, edge_kernel_, work_addr, 0,
+                          reinterpret_cast<cudaStream_t>(stream_ptr));
+      }
+      ElewiseArith(output_num, BROADCAST_TYPE_MUL, output_addr, work_addr, output_addr,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
     return true;
   }
+
   bool Init(const CNodePtr &kernel_node) {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
     (void)CheckParam(kernel_node);
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    if (kernel_name_ == kAvgPool3D) {
+      divisor_override_ = GetAttr<int64_t>(kernel_node, "divisor_override");
+      ceil_mode_ = GetAttr<bool>(kernel_node, "ceil_mode");
+    }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
     auto format_attr = GetAttr<std::string>(kernel_node, "format");
@@ -123,6 +155,7 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     } else if (dim == kDim3DShapeSize) {
       SetPad3D(kernel_node);
     }
+    edge_kernel_ = GetEdgeKernelSize(kernel_node);
     InitSizeLists();
     return true;
   }
@@ -157,6 +190,7 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
+    workspace_size_list_.push_back(output_size_);
   }
 
  private:
@@ -169,14 +203,22 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   void SetPoolingMode(const CNodePtr &kernel_node) {
     mode_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    if (mode_ == "AvgPool" || mode_ == "AvgPool3D") {
-      pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING;
+    auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    bool include = false;
+    if (prim->HasAttr("count_include_pad")) {
+      include = GetAttr<bool>(kernel_node, "count_include_pad");
+    }
+    if (mode_ == kAvgPool || mode_ == kAvgPool3D) {
+      pooling_mode_ =
+        include ? CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING : CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING;
       pad_value_ = 0.0;
     } else {
       pooling_mode_ = CUDNN_POOLING_MAX;
       pad_value_ = kSignedMinFloat;
     }
   }
+
   void SetPad(const CNodePtr &kernel_node) {
     auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);
@@ -281,12 +323,66 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                 "cudnnSetPoolingNdDescriptor failed");
   }
 
+  std::vector<int64_t> GetEdgeKernelSize(const CNodePtr &kernel_node) {
+    if (!ceil_mode_ && divisor_override_ == 0) {
+      return {};
+    }
+
+    const size_t k3dSizeLowerLimit = 5;
+    const size_t kIdxD = 2;
+    const size_t kIdxH = 3;
+    const size_t kIdxW = 4;
+    const size_t kScale = 2;
+    std::vector<int64_t> edge_kernel;
+    std::vector<int64_t> kernel_size = GetAttr<std::vector<int64_t>>(kernel_node, "kernel_size");
+    std::vector<int64_t> strides = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
+    std::vector<int64_t> pad = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
+    if (kernel_size.size() != k3dSizeLowerLimit) {
+      MS_LOG(EXCEPTION) << "kernel_size must be " << k3dSizeLowerLimit << "D, but got " << kernel_size.size();
+    }
+    if (strides.size() != k3dSizeLowerLimit) {
+      MS_LOG(EXCEPTION) << "strides must be " << k3dSizeLowerLimit << "D, but got " << strides.size();
+    }
+    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    kernel_size_ = {kernel_size[kIdxD], kernel_size[kIdxH], kernel_size[kIdxW]};
+    std::vector<int64_t> stride = {strides[kIdxD], strides[kIdxH], strides[kIdxW]};
+    std::vector<int64_t> shape_exclude_nc = {SizeToLong(input_shape[kIdxD]), SizeToLong(input_shape[kIdxH]),
+                                             SizeToLong(input_shape[kIdxW])};
+    (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_exclude_nc_),
+                         SizeToLong);
+
+    const size_t dim = shape_exclude_nc.size();
+    if (pad.size() != dim * kScale) {
+      MS_LOG(EXCEPTION) << "pad_list must be " << (dim * kScale) << "D, but got " << pad.size() << "D!";
+    }
+
+    for (size_t i = 0; i < dim; ++i) {
+      size_t l_index = kScale * i;
+      size_t r_index = kScale * i + 1;
+
+      int64_t len = shape_exclude_nc[i] + pad[l_index] + pad[r_index] - kernel_size_[i];
+      int64_t padding_iv = FloatToLong(std::ceil(LongToFloat(len) / LongToFloat(stride[i]))) * stride[i] - len;
+      int64_t padding_r = pad[r_index] + padding_iv;
+      if (padding_r > pad[r_index] && padding_r < kernel_size_[i]) {
+        edge_kernel.push_back(kernel_size_[i] - padding_iv);
+      } else {
+        edge_kernel.push_back(kernel_size_[i]);
+      }
+    }
+    return edge_kernel;
+  }
+
   cudnnHandle_t cudnn_handle_;
   cudnnTensorDescriptor_t input_descriptor_;
   cudnnTensorDescriptor_t output_descriptor_;
   cudnnPoolingDescriptor_t pooling_descriptor_;
   cudnnPoolingMode_t pooling_mode_ = CUDNN_POOLING_MAX;
   std::vector<int> stride_;
+  std::vector<int64_t> kernel_size_;
+  std::vector<int64_t> shape_exclude_nc_;
+  std::vector<int64_t> edge_kernel_;
+  std::vector<int64_t> output_shape_exclude_nc_;
   std::string mode_;
   std::string pad_mode_;
   std::string data_format_ = kOpFormat_NCHW;
@@ -304,8 +400,10 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   int pad_left_;
   int n_;
   int c_;
+  int64_t divisor_override_;
   float pad_value_;
   bool is_null_input_;
+  bool ceil_mode_;
   std::string kernel_name_;
   size_t input_size_;
   size_t output_size_;

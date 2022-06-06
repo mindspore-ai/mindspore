@@ -251,6 +251,7 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
     }
     return GetValue<T>(attr);
   }
+
   template <typename T>
   inline T GetAttrWithDefault(const CNodePtr &kernel_node, const std::string &key, const T &value) const {
     const PrimitivePtr &prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);

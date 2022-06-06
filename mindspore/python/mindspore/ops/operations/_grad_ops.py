@@ -1046,12 +1046,13 @@ def _get_max_pool3d_grad_pads_by_pad_mode(input_shape, kernel_size, strides, pad
     return pads
 
 
-class MaxPool3DGrad(PrimitiveWithInfer):
+class MaxPool3DGrad(Primitive):
     """Gradients of the max pool3d operation."""
 
     @prim_attr_register
     def __init__(self, kernel_size=(1, 1, 1, 1, 1), strides=(1, 1, 1, 1, 1),
                  pad_mode='VALID', pad_list=0, data_format="NCDHW"):
+        self.init_prim_io_names(inputs=['x_origin', 'out_origin', 'grad'], outputs=['output'])
         validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
@@ -1079,15 +1080,6 @@ class MaxPool3DGrad(PrimitiveWithInfer):
             for item in self.pad_list:
                 validator.check_non_negative_int(item, 'pad_list item', self.name)
         self.add_prim_attr("pad_list", self.pad_list)
-
-    def infer_shape(self, x_shape, y_shape, grad_shape):
-        validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
-        return x_shape
-
-    def infer_dtype(self, x_dtype, y_dtype, grad_dtype):
-        args = {'x_dtype': x_dtype, 'y_dtype': y_dtype, 'grad_dtype': grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        return x_dtype
 
 
 class MaxPool3DGradGrad(PrimitiveWithInfer):

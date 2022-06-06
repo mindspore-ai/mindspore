@@ -532,6 +532,7 @@ GVAR_DEF(PrimitivePtr, kPrimPSROIPoolingGrad, std::make_shared<Primitive>("PSROI
 GVAR_DEF(PrimitivePtr, kPrimROIPooling, std::make_shared<Primitive>("ROIPooling"));
 GVAR_DEF(PrimitivePtr, kPrimMaxPool, std::make_shared<Primitive>("MaxPool"));
 GVAR_DEF(PrimitivePtr, kPrimMaxPoolGrad, std::make_shared<Primitive>("MaxPoolGrad"));
+GVAR_DEF(PrimitivePtr, kPrimMaxPool3DGrad, std::make_shared<Primitive>("MaxPool3DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimMaxPoolV1, std::make_shared<Primitive>("MaxPoolV1"));
 GVAR_DEF(PrimitivePtr, kPrimMaxPoolGradV1, std::make_shared<Primitive>("MaxPoolGradV1"));
 GVAR_DEF(PrimitivePtr, kPrimMaxPoolWithArgmax, std::make_shared<Primitive>("MaxPoolWithArgmax"));

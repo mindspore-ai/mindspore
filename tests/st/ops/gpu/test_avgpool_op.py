@@ -341,3 +341,62 @@ def test_avgpool_grad_vmap():
     nest_vmap = vmap(vmap(net, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
     out = nest_vmap(x, sens)
     assert out[0].shape == (6, 3, 1, 1, 6, 6)
+
+
+class DynamicShapeAvgPool3DGrad(nn.Cell):
+    def __init__(self, net, axis=0):
+        super(DynamicShapeAvgPool3DGrad, self).__init__()
+        self.net = net
+        self.unique = P.Unique()
+        self.gather = P.Gather()
+        self.axis = axis
+
+    def construct(self, x_shape, sens, indices):
+        unique_indices, _ = self.unique(indices)
+        sens = self.gather(sens, unique_indices, self.axis)
+        return self.net(x_shape, sens)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_avgpool3d_grad_dynamic_shape():
+    """
+    Feature: AvgPool3dGrad dynamic test.
+    Description: Run unique and gather ops before AvgPool3dGrad.
+    Expectation: success.
+    """
+    x_shape = (1, 3, 2, 3, 4)
+    x = Tensor(np.arange(reduce(lambda x, y: x * y, x_shape))).reshape(x_shape).astype(np.float32)
+    avgpool = AvgPool(dim=3, kernel_size=2, strides=1, pad_mode='VALID')
+    expect_output = np.array([[[[[8.5, 9.5, 10.5],
+                                 [12.5, 13.5, 14.5]]],
+                               [[[32.5, 33.5, 34.5],
+                                 [36.5, 37.5, 38.5]]],
+                               [[[56.5, 57.5, 58.5],
+                                 [60.5, 61.5, 62.5]]]]]).astype(np.float32)
+
+    avgpool_grad = AvgPoolGrad(avgpool)
+    net = DynamicShapeAvgPool3DGrad(avgpool_grad)
+    sens = Tensor(expect_output) + 1
+    indices = Tensor(np.array([0]).astype(np.int32))
+    actual_grad = net(x, sens, indices)
+    expect_grad = np.array([[[[[1.1875, 2.5, 2.75, 1.4375],
+                               [2.875, 6., 6.5, 3.375],
+                               [1.6875, 3.5, 3.75, 1.9375]],
+                              [[1.1875, 2.5, 2.75, 1.4375],
+                               [2.875, 6., 6.5, 3.375],
+                               [1.6875, 3.5, 3.75, 1.9375]]],
+                             [[[4.1875, 8.5, 8.75, 4.4375],
+                               [8.875, 18., 18.5, 9.375],
+                               [4.6875, 9.5, 9.75, 4.9375]],
+                              [[4.1875, 8.5, 8.75, 4.4375],
+                               [8.875, 18., 18.5, 9.375],
+                               [4.6875, 9.5, 9.75, 4.9375]]],
+                             [[[7.1875, 14.5, 14.75, 7.4375],
+                               [14.875, 30., 30.5, 15.375],
+                               [7.6875, 15.5, 15.75, 7.9375]],
+                              [[7.1875, 14.5, 14.75, 7.4375],
+                               [14.875, 30., 30.5, 15.375],
+                               [7.6875, 15.5, 15.75, 7.9375]]]]]).astype(np.float32)
+    assert np.allclose(actual_grad[0].asnumpy(), expect_grad)

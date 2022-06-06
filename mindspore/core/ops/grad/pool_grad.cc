@@ -15,11 +15,26 @@
  */
 
 #include "ops/grad/pool_grad.h"
+#include <cctype>
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+static std::map<std::string, int64_t> pad_map = {
+  {"CALCULATED", PadMode::PAD},
+  {"PAD", PadMode::PAD},
+  {"SAME", PadMode::SAME},
+  {"VALID", PadMode::VALID},
+};
+
+static std::map<std::string, int64_t> dataformat_map = {
+  {"NCHW", Format::NCHW},
+  {"NHWC", Format::NHWC},
+  {"NCDHW", Format::NCDHW},
+  {"NDHWC", Format::NDHWC},
+};
+
 MIND_API_OPERATOR_IMPL(PoolGrad, BaseOperator);
 std::vector<int64_t> PoolGrad::_grad_check_vector(const std::string &arg_name, std::vector<int64_t> arg_val,
                                                   const std::string &op_name) {
@@ -91,13 +106,31 @@ std::vector<int64_t> PoolGrad::get_strides() const {
 PadMode PoolGrad::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
   MS_EXCEPTION_IF_NULL(value_ptr);
-  return PadMode(GetValue<int64_t>(value_ptr));
+  if (!value_ptr->isa<mindspore::api::StringImm>()) {
+    return PadMode(GetValue<int64_t>(value_ptr));
+  }
+  auto attr_value_str = GetValue<std::string>(value_ptr);
+  std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  auto iter = pad_map.find(attr_value_str);
+  if (iter == pad_map.end()) {
+    MS_LOG(EXCEPTION) << "Invalid pad mode " << attr_value_str << " use CALCULATED, PAD, VALID or SAME";
+  }
+  return PadMode(iter->second);
 }
 
 Format PoolGrad::get_format() const {
   auto value_ptr = GetAttr(kFormat);
   MS_EXCEPTION_IF_NULL(value_ptr);
-  return Format(GetValue<int64_t>(value_ptr));
+  if (!value_ptr->isa<mindspore::api::StringImm>()) {
+    return Format(GetValue<int64_t>(value_ptr));
+  }
+  auto attr_value_str = GetValue<std::string>(value_ptr);
+  std::transform(attr_value_str.begin(), attr_value_str.end(), attr_value_str.begin(), toupper);
+  auto iter = dataformat_map.find(attr_value_str);
+  if (iter == dataformat_map.end()) {
+    MS_LOG(EXCEPTION) << "Invalid format " << attr_value_str << " use NCHW, NHWC NCDHW or NDHWC";
+  }
+  return Format(iter->second);
 }
 
 REGISTER_PRIMITIVE_C(kNamePoolGrad, PoolGrad);
