@@ -194,6 +194,8 @@ Padding Layer
     mindspore.nn.ConstantPad1d
     mindspore.nn.ConstantPad2d
     mindspore.nn.ConstantPad3d
+    mindspore.nn.ReflectionPad1d
+    mindspore.nn.ReflectionPad2d
     mindspore.nn.ZeroPad2d
 
 Loss Function
