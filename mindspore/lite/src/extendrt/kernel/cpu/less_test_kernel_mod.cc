@@ -17,16 +17,11 @@
 #include <vector>
 #include <memory>
 
-#include "extendrt/mindir_loader/mindir_model/less_test_kernel_mod.h"
+#include "extendrt/kernel/cpu/less_test_kernel_mod.h"
 
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore::kernel {
-// bool LessTestKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-//                 const std::vector<AddressPtr> &outputs) {
-//     return true;
-// }
-
 bool LessTestKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   return true;
