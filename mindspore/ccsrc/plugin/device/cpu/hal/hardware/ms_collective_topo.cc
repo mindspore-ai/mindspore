@@ -104,7 +104,7 @@ bool TopologyNode::Finalize() {
 
 bool TopologyNode::SendAsync(size_t rank_id, void *data, size_t size) {
   if (tcp_clients_.find(rank_id) == tcp_clients_.end()) {
-    MS_LOG(ERROR) << "Cann not find tcp client for rank id: " << rank_id;
+    MS_LOG(ERROR) << "Cann not find tcp client for rank id: " << rank_id << ", local rank: " << rank_id_;
     return false;
   }
   auto &tcp_client = tcp_clients_[rank_id];
@@ -125,11 +125,11 @@ bool TopologyNode::SendAsync(size_t rank_id, void *data, size_t size) {
 bool TopologyNode::WaitForSend(size_t rank_id) {
   // Wait for all the pending data to be sent to the destination of specified rank id.
   if (tcp_clients_.find(rank_id) == tcp_clients_.end()) {
-    MS_LOG(ERROR) << "Can not find tcp client for rank id: " << rank_id;
+    MS_LOG(ERROR) << "Can not find tcp client for rank id: " << rank_id << ", local rank: " << rank_id_;
     return false;
   }
   if (node_addresses_.find(rank_id) == node_addresses_.end()) {
-    MS_LOG(ERROR) << "Can not find the address for rank id: " << rank_id;
+    MS_LOG(ERROR) << "Can not find the address for rank id: " << rank_id << ", local rank: " << rank_id_;
   }
   auto &tcp_client = tcp_clients_[rank_id];
   MS_EXCEPTION_IF_NULL(tcp_client);
@@ -152,11 +152,15 @@ bool TopologyNode::Receive(size_t rank_id, MessageBase **message, size_t timeout
     MS_EXCEPTION_IF_NULL(message);
     MS_EXCEPTION_IF_NULL(recv_msg);
     *message = recv_msg;
+  } else {
+    MS_LOG(ERROR) << "Failed to receive message from rank: " << rank_id << ", local rank: " << rank_id_;
   }
   return rt;
 }
 
 size_t TopologyNode::rank_id() { return rank_id_; }
+
+size_t TopologyNode::rank_size() { return total_node_num_; }
 
 MessageBase *const TopologyNode::HandleMessage(MessageBase *const message) {
   MS_EXCEPTION_IF_NULL(message);
