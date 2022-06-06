@@ -263,6 +263,13 @@ __global__ void TanKernel(const half *input, half *output, const size_t count) {
   return;
 }
 template <typename T>
+__global__ void TanKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = tan(input[i]);
+  }
+  return;
+}
+template <typename T>
 __global__ void AsinKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = asinf(input[i]);
@@ -1465,6 +1472,8 @@ template CUDA_LIB_EXPORT void Imag<float>(const Complex<float> *input, float *ou
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Conj<float>(const Complex<float> *input, Complex<float> *output, const size_t count,
                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tan<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                  const size_t count, cudaStream_t cuda_stream);
 
 // complex128
 template CUDA_LIB_EXPORT void Real<double>(const Complex<double> *input, double *output, const size_t count,
@@ -1473,6 +1482,8 @@ template CUDA_LIB_EXPORT void Imag<double>(const Complex<double> *input, double 
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Conj<double>(const Complex<double> *input, Complex<double> *output, const size_t count,
                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Tan<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
 
 // bool
 template CUDA_LIB_EXPORT void Real<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);

@@ -107,17 +107,13 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeValid("segment_ids type", ids_ptr, ids_type_set, prim_name);
 
   /* check num_segments */
-  auto num_segments = input_args[kInputIndex2];
-  auto num_ptr = num_segments->BuildType();
+  auto num_ptr = input_args[kInputIndex2]->BuildType();
   MS_EXCEPTION_IF_NULL(num_ptr);
   std::set<TypePtr> num_type_set = {kInt32, kInt64};
 
-  if (num_segments->isa<abstract::AbstractTensor>()) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("segment_ids type", num_ptr, num_type_set, prim_name);
-  } else if (num_segments->isa<abstract::AbstractScalar>()) {
-    auto num = num_segments->cast<abstract::AbstractScalarPtr>();
-    auto n_value_ptr = num->BuildValue();
-    if (!n_value_ptr->isa<Int64Imm>() && !!n_value_ptr->isa<Int32Imm>()) {
+  if (num_ptr->isa<TensorType>()) {
+    auto num_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+    if (num_shape.size() != 0) {
       MS_EXCEPTION(TypeError) << "For '" << prim_name
                               << "', num_segments must be an integer, but got: " << num_ptr->ToString() << ".";
     }
