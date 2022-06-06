@@ -36,6 +36,7 @@ shape_ = P.Shape()
 rank_ = P.Rank()
 tensor_shape_ = P.TensorShape()
 reshape_ = P.Reshape()
+flatten_ = P.Flatten()
 tensor_slice = P.Slice()
 expand_dims_ = P.ExpandDims()
 transpose_ = P.Transpose()
@@ -783,6 +784,33 @@ def reshape(input_x, input_shape):
          [ 0.5 -3.2]]
     """
     return reshape_(input_x, input_shape)
+
+
+def flatten(input_x):
+    r"""
+    Flattens a tensor without changing its batch size on the 0-th axis.
+
+    Args:
+        input_x (Tensor): Tensor of shape :math:`(N, \ldots)` to be flattened, where :math:`N` is batch size.
+
+    Returns:
+        Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
+        the product of the remaining dimension.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If length of shape of `input_x` is less than 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
+        >>> output = ops.flatten(input_x)
+        >>> print(output.shape)
+        (1, 24)
+    """
+    return flatten_(input_x)
 
 
 @constexpr
@@ -2702,6 +2730,7 @@ __all__ = [
     'range',
     'reshape',
     'reshape_',
+    'flatten',
     'tensor_slice',
     'slice',
     'scalar_cast',

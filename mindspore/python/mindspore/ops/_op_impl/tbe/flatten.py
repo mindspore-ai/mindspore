@@ -23,6 +23,8 @@ flatten_op_info = TBERegOp("Flatten") \
     .compute_cost(10) \
     .kernel_name("flatten") \
     .partial_flag(True) \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .attr("axis", "optional", "int", "all", "1") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \

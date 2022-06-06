@@ -45,6 +45,7 @@ from .array_func import (
     rank,
     reshape,
     reshape_,
+    flatten,
     tensor_slice,
     slice,
     scalar_to_array,

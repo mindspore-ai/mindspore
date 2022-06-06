@@ -314,6 +314,7 @@ Array操作
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.reshape
+    mindspore.ops.flatten
     mindspore.ops.scatter_nd
     mindspore.ops.select
     mindspore.ops.shape

@@ -18,8 +18,10 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 class NetFlatten(nn.Cell):
@@ -140,4 +142,74 @@ def test_last_flatten():
     flatten = NetLastFlatten()
     output = flatten(x)
     assert (output.asnumpy() == expect).all()
-    
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_flatten_tensor_interface():
+    """
+    Feature: test_flatten_tensor_interface.
+    Description: test cases for tensor interface
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+
+    in_np = np.random.randn(1, 16, 3, 1).astype(np.float32)
+    in_tensor = Tensor(in_np)
+
+    output_ms = in_tensor.flatten()
+    output_np = in_np.flatten()
+
+    np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_flatten_functional_interface():
+    """
+    Feature: test_flatten_functional_interface.
+    Description: test cases for functional interface.
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+
+    in_np = np.random.randn(1, 16, 3, 1).astype(np.float32)
+    in_tensor = Tensor(in_np)
+
+    output_ms = F.flatten(in_tensor)
+    output_np = np.reshape(in_np, (1, 48))
+
+    np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
+
+
+def flatten_graph(x):
+    return P.Flatten()(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_flatten_vmap():
+    """
+    Feature: test flatten vmap.
+    Description: test cases for vmap.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+
+    np.random.seed(0)
+    in_np = np.random.rand(3, 4, 5).astype(np.float32)
+    output_np = np.reshape(in_np, (3, 20))
+
+    in_tensor = Tensor(in_np)
+    vmap_round_net = ops.vmap(flatten_graph)
+    output = vmap_round_net(in_tensor)
+    np.testing.assert_allclose(output.asnumpy(), output_np, rtol=1e-3)
+
+
+if __name__ == "__main__":
+    test_flatten_tensor_interface()
+    test_flatten_functional_interface()
+    test_flatten_vmap()

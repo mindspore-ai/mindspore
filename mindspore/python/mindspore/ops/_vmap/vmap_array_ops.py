@@ -197,6 +197,23 @@ def get_reshape_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Flatten)
+def get_flatten_vmap_rule(prim, axis_size):
+    """VmapRule for `Flatten` operation."""
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        output = prim(x)
+        return (output, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.Select)
 def get_select_vmap_rule(prim, axis_size):
     """VmapRule for 'Select' operation."""
