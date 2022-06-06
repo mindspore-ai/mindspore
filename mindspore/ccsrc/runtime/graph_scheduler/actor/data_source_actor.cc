@@ -295,5 +295,33 @@ bool HostQueueDataSourceActor::IsSameDeviceType() const {
   }
   return true;
 }
+
+void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
+  for (auto &data_node : data_nodes_) {
+    if (!AnfAlgo::OutputAddrExist(data_node, 0)) {
+      continue;
+    }
+    auto old_address = AnfAlgo::GetMutableOutputAddr(data_node, 0);
+    MS_EXCEPTION_IF_NULL(old_address);
+    if (old_address->GetPtr() == nullptr) {
+      // The Address memory is already freed.
+      continue;
+    }
+    // If the address from input tensor and the address is not used by runtime.
+    if (old_address->original_ref_count() == SIZE_MAX && !old_address->is_ptr_persisted()) {
+      auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+        {old_address->device_name(), old_address->device_id()});
+      MS_EXCEPTION_IF_NULL(device_context);
+      auto new_address = device_context->CreateDeviceAddress(nullptr, old_address->GetSize(), old_address->format(),
+                                                             old_address->type_id(), old_address->host_shape());
+      MS_EXCEPTION_IF_NULL(new_address);
+      new_address->set_original_ref_count(old_address->original_ref_count());
+      new_address->ResetRefCount();
+      auto [node, index] = old_address->GetNodeIndex();
+      new_address->SetNodeIndex(node, index);
+      AnfAlgo::SetOutputAddr(new_address, 0, data_node.get());
+    }
+  }
+}
 }  // namespace runtime
 }  // namespace mindspore
