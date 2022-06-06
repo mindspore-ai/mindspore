@@ -77,11 +77,16 @@ class UnravelIndex(Primitive):
     Converts an array of flat indices into a tuple of coordinate arrays.
 
     Inputs:
-        - **input_indices** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **input_dims** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **indices** (Tensor) - Must be one of the following types: int32, int64.
+          whose elements are indices into the flattened version of an array of dimensions dims.
+          The dimension of 'indices' must be 0-D or 1-D.
+        - **dims** (Tensor) - Must have the same type as indices.
+          The shape of the array to use for unraveling indices.
+          The dimension of 'dims' must be 1-D.
 
     Outputs:
-        Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+        - **y** (Tensor) - Has the same type as indices.
+          The dimension of 'y' can be 2-D or 1-D(if indices is 0D).
 
     Raises:
         TypeError: The data type of input0 need be same with input1.
@@ -91,7 +96,7 @@ class UnravelIndex(Primitive):
         ValueError: All dimensions must be greater than 0.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Example:
         >>> indices = Tensor(np.array([2, 5]), mindspore.int32)
@@ -101,7 +106,6 @@ class UnravelIndex(Primitive):
         [[0 2]
          [1 2]]
     """
-
     @prim_attr_register
     def __init__(self):
         """Initialize Shape"""
