@@ -137,9 +137,11 @@ bool Conv1DInOutAdjust::Run(const FuncGraphPtr &func_graph) {
     auto input_node = cnode->input(1);
     auto unsqueeze = NewUnsqueezeOpNode(func_graph, input_node, axis, cnode->fullname_with_scope() + "_unsqueeze");
     MS_CHECK_TRUE_MSG(unsqueeze != nullptr, false, "New unsqueeze node failed.");
+    unsqueeze->set_abstract(input_node->abstract()->Clone());
     manager->SetEdge(cnode, SECOND_INPUT, unsqueeze);
     auto squeeze = NewSqueezeOpNode(func_graph, cnode, axis);
     MS_CHECK_TRUE_MSG(squeeze != nullptr, false, "New squeeze node failed.");
+    squeeze->set_abstract(cnode->abstract()->Clone());
     (void)manager->Replace(cnode, squeeze);
 
     MS_ASSERT(cnode->inputs().size() > kConvWeightIndex);

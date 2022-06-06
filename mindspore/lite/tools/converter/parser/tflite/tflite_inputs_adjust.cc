@@ -186,11 +186,20 @@ bool TfliteInputsAdjust::Run(const FuncGraphPtr &graph) {
       continue;
     }
 
-    if (opt::CheckPrimitiveType(cnode, prim::kPrimSplit) && cnode->inputs().size() == split_inputs_size) {
+    if (opt::CheckPrimitiveType(cnode, prim::kPrimSplit)) {
       // axis, input, ??? => input, axis
-      if (RET_OK != ReorderCnodeInputs(cnode.get(), {2, 1})) {
-        MS_LOG(ERROR) << "Reorder split inputs failed";
+      if (cnode->inputs().size() == split_inputs_size &&
+          ReorderCnodeInputs(cnode.get(), {THIRD_INPUT, SECOND_INPUT}) != RET_OK) {
+        MS_LOG(ERROR) << "Reorder split inputs failed.";
         return false;
+      }
+      auto manager = Manage(graph, true);
+      MS_CHECK_TRUE_RET(manager != nullptr, false);
+      // Remove constant inputs that has been converted to an attribute: axis for split and split_num/axis for splitv.
+      for (int idx = THIRD_INPUT; idx < static_cast<int>(cnode->inputs().size()); idx++) {
+        auto umanod = NewValueNode(std::make_shared<UMonad>());
+        MS_CHECK_TRUE_RET(umanod != nullptr, false);
+        manager->SetEdge(cnode, idx, umanod);
       }
       continue;
     }

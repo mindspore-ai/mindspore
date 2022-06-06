@@ -17,6 +17,33 @@
 #include "nnacl/infer/split_infer.h"
 #include "nnacl/infer/infer_register.h"
 
+int UpdateSplitSize(const TensorC *const *inputs, size_t inputs_size, SplitParameter *param) {
+  // get split size from the second input.
+  if (inputs_size == DIMENSION_2D && inputs[SECOND_INPUT]->data_ != NULL) {
+    if (inputs[SECOND_INPUT]->data_type_ != kNumberTypeInt32) {
+      return NNACL_ERR;
+    }
+    int split_count = 1;
+    for (size_t i = 0; i < inputs[SECOND_INPUT]->shape_size_; i++) {
+      split_count *= inputs[SECOND_INPUT]->shape_[i];
+    }
+    param->split_count_ = split_count;
+    for (size_t i = 0; i < split_count; i++) {
+      param->split_sizes_[i] = ((int *)(inputs[SECOND_INPUT]->data_))[i];
+    }
+  }
+  if (param->split_count_ == 0) {
+    const TensorC *input = inputs[0];
+    if (input->shape_[param->split_dim_] % param->num_split_ != 0) {
+      return NNACL_ERR;
+    }
+    for (int i = 0; i < param->num_split_; ++i) {
+      param->split_sizes_[i] = input->shape_[param->split_dim_] / param->num_split_;
+    }
+  }
+  return NNACL_OK;
+}
+
 int SetSplitOutputShape(const TensorC *input, TensorC **outputs, SplitParameter *param) {
   for (int i = 0; i < param->num_split_; ++i) {
     int output_shape[MAX_SHAPE_SIZE];
@@ -76,15 +103,12 @@ int SplitInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   if ((int)(outputs_size) != num_split) {
     return NNACL_ERR;
   }
-  if (param->split_count_ == 0) {
-    if (input->shape_[split_dim] % num_split != 0) {
-      return NNACL_ERR;
-    }
-    for (int i = 0; i < num_split; ++i) {
-      param->split_sizes_[i] = input->shape_[split_dim] / num_split;
-    }
+
+  int ret = UpdateSplitSize(inputs, inputs_size, param);
+  if (ret != NNACL_OK) {
+    return ret;
   }
-  int ret = SetSplitOutputShape(input, outputs, param);
+  ret = SetSplitOutputShape(input, outputs, param);
   if (ret != NNACL_OK) {
     return ret;
   }
