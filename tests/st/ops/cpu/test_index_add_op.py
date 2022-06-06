@@ -371,7 +371,7 @@ def vmap_case():
     expect = np.array([[1.5, 2, 4], [4.5, 5, 7], [7.5, 8, 10]], dtype=np.float32)
     assert np.allclose(output.asnumpy(), expect)
 
-    # batch dimension of x and y is same, batch dimension > axis
+    # batch dimension of x and y is same, batch dimension > axis > 0
     x = Parameter(Tensor(np.array([[[1, 1], [1, 1]],
                                    [[2, 2], [2, 2]],
                                    [[3, 3], [3, 3]]], dtype=np.float32)))
@@ -381,6 +381,13 @@ def vmap_case():
     expect = np.array([[[1, 1.5], [2, 2.5]],
                        [[2, 2], [2, 2]],
                        [[4.5, 5], [5.5, 6]]], dtype=np.float32)
+    assert np.allclose(output.asnumpy(), expect)
+
+    # batch dimension of x and y is same, 0 > batch dimension > axis
+    x = Parameter(Tensor(np.array([[[1, 1], [1, 1]],
+                                   [[2, 2], [2, 2]],
+                                   [[3, 3], [3, 3]]], dtype=np.float32)))
+    output = WrapNet(Net(-2), x, (-1, None, -1), -1)(indices, y)
     assert np.allclose(output.asnumpy(), expect)
 
 
