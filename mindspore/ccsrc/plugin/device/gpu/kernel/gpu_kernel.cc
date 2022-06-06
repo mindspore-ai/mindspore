@@ -105,6 +105,10 @@ bool NativeGpuKernelMod::CheckSupport(const std::string &kernel_name, const Kern
   auto kernel_attrs = GetAllSupportedList(kernel_name);
   bool is_match;
   std::tie(is_match, std::ignore) = MatchKernelAttr(kernel_attr_to_check, kernel_attrs);
+
+  if (kernel_attrs[0].GetSkipCheck()) {
+    is_match = true;
+  }
   return is_match;
 }
 
