@@ -22,6 +22,8 @@ from mindspore.ops.primitive import constexpr
 from ..operations.array_ops import UniqueConsecutive
 from ..operations.array_ops import NonZero, MatrixDiagV3
 from ..operations.array_ops import Fills
+from ..operations.array_ops import ScatterNdMax
+from ..operations.array_ops import ScatterNdMul
 from ..operations.nn_ops import AdaptiveMaxPool2D
 from ...common import Tensor
 
@@ -1532,6 +1534,78 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
     return scatter_nd_sub_inner(input_x, indices, updates)
 
 
+def scatter_nd_mul(input_x, indices, updates, use_locking=False):
+    r"""
+    Applies sparse multiplication to individual values or slices in a tensor.
+
+    Using given values to update parameter value through the multiplication operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    `input_x` has rank P and `indices` has rank Q, where `Q >= 2`.
+
+    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
+
+    The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of `input_x`.
+
+    `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
+    :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
+
+    Args:
+        input_x (Parameter): The target tensor, with data type of Parameter.
+            The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
+        indices (Tensor): The index to do multiplication operation whose data type must be mindspore.int32.
+            The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
+        updates (Tensor): The tensor to do the multiplication operation with `input_x`.
+            The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+
+    Returns:
+        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `indices` is not an int32.
+        TypeError: If dtype of `input_x` and `updates` are not the same.
+        ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
+        >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
+        >>> scatter_nd_mul = ops.ScatterNdMul()
+        >>> output = scatter_nd_mul(input_x, indices, updates)
+        >>> print(output)
+        [ 1. 16. 18.  4. 35.  6.  7. 72.]
+        >>> input_x = Parameter(Tensor(np.ones((4, 4, 4)), mindspore.int32))
+        >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+        ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
+        >>> output = ops.scatter_nd_mul(input_x, indices, updates)
+        >>> print(output)
+        [[[1 1 1 1]
+          [2 2 2 2]
+          [3 3 3 3]
+          [4 4 4 4]]
+         [[1 1 1 1]
+          [1 1 1 1]
+          [1 1 1 1]
+          [1 1 1 1]]
+         [[5 5 5 5]
+          [6 6 6 6]
+          [7 7 7 7]
+          [8 8 8 8]]
+         [[1 1 1 1]
+          [1 1 1 1]
+          [1 1 1 1]
+          [1 1 1 1]]]
+    """
+    scatter_nd_mul_inner = ScatterNdMul(use_locking)
+    return scatter_nd_mul_inner(input_x, indices, updates)
+
+
 def scatter_nd_div(input_x, indices, updates, use_locking=False):
     r"""
     Applying sparse division to individual values or slices in a tensor.
@@ -1608,6 +1682,77 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
     """
     scatter_nd_div_inner = P.ScatterNdDiv(use_locking)
     return scatter_nd_div_inner(input_x, indices, updates)
+
+
+def scatter_nd_max(input_x, indices, updates, use_locking=False):
+    r"""
+    Applying sparse maximum to individual values or slices in a tensor.
+
+    Using given values to update parameter value through the max operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    `input_x` has rank P and `indices` has rank Q where `Q >= 2`.
+
+    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
+
+    The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of `input_x`.
+
+    `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
+    :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
+
+    Args:
+        input_x (Parameter): The target tensor, with data type of Parameter.
+            The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
+        indices (Tensor): The index to do maximum operation whose data type must be mindspore.int32.
+            The rank of indices must be at least 2 and `indices.shape[-1] <= len(shape)`.
+        updates (Tensor): The tensor to do the max operation with `input_x`.
+            The data type is same as `input_x`, and the shape is `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+
+    Returns:
+        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `indices` is not an int32.
+        TypeError: If dtype of `input_x` and `updates` are not the same.
+        ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.ones(8) * 10, mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
+        >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
+        >>> output = ops.scatter_nd_max(input_x, indices, updates, False)
+        >>> print(output)
+        [ 1. 8. 6.  4. 7.  6.  7. 9.]
+        >>> input_x = Parameter(Tensor(np.ones((4, 4, 4)) * 10, mindspore.int32))
+        >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+        ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
+        >>> output = ops.scatter_nd_max(input_x, indices, updates, False)
+        >>> print(output)
+        [[[1 1 1 1]
+          [2 2 2 2]
+          [3 3 3 3]
+          [4 4 4 4]]
+         [[1 1 1 1]
+          [1 1 1 1]
+          [1 1 1 1]
+          [1 1 1 1]]
+         [[5 5 5 5]
+          [6 6 6 6]
+          [7 7 7 7]
+          [8 8 8 8]]
+         [[1 1 1 1]
+          [1 1 1 1]
+          [1 1 1 1]
+          [1 1 1 1]]]
+    """
+    scatter_nd_max_inner = ScatterNdMax(use_locking)
+    return scatter_nd_max_inner(input_x, indices, updates)
 
 
 def scatter_nd_min(input_x, indices, updates, use_locking=False):
@@ -2799,7 +2944,9 @@ __all__ = [
     'scatter_nd',
     'scatter_nd_add',
     'scatter_nd_sub',
+    'scatter_nd_mul',
     'scatter_nd_div',
+    'scatter_nd_max',
     'scatter_nd_min',
     'tensor_scatter_add',
     'tensor_scatter_sub',

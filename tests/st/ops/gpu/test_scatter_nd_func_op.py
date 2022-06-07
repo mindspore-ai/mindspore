@@ -21,6 +21,8 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 import mindspore.common.dtype as mstype
 import mindspore.ops as ops
+from mindspore.ops.operations.array_ops import ScatterNdMul
+from mindspore.ops.operations.array_ops import ScatterNdMax
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -28,9 +30,9 @@ func_map = {
     "update": ops.ScatterNdUpdate,
     "add": ops.ScatterNdAdd,
     "sub": ops.ScatterNdSub,
-    "mul": ops.ScatterNdMul,
+    "mul": ScatterNdMul,
     "div": ops.ScatterNdDiv,
-    "max": ops.ScatterNdMax,
+    "max": ScatterNdMax,
     "min": ops.ScatterNdMin,
 }
 

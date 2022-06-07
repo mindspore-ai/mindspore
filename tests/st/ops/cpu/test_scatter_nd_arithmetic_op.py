@@ -18,13 +18,14 @@ import numpy as np
 import mindspore.nn as nn
 import mindspore.ops as ops
 import mindspore.ops.operations as P
+from mindspore.ops.operations.array_ops import ScatterNdMul
 import mindspore.context as context
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor, Parameter
 from mindspore.ops.functional import vmap
 
 func_map = {
-    "mul": ops.ScatterNdMul,
+    "mul": ScatterNdMul,
     "add": ops.ScatterNdAdd,
     "sub": ops.ScatterNdSub,
     "div": ops.ScatterNdDiv,

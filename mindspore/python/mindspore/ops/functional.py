@@ -66,8 +66,6 @@ tensor_range = P.Range()
 if not security.enable_security():
     print_ = P.Print()
 squeeze = P.Squeeze()
-scatter_nd_mul = P.ScatterNdMul()
-scatter_nd_max = P.ScatterNdMax()
 tensor_scatter_update = P.TensorScatterUpdate()
 tensor_scatter_max = P.TensorScatterMax()
 scatter_nd_update = P.ScatterNdUpdate()
