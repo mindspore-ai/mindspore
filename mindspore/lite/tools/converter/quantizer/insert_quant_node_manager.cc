@@ -172,7 +172,7 @@ int InsertQuantNodeManager::InsertDynamicQuantWithIndex(const FuncGraphPtr &grap
   primitive->set_dst_type(dst_type_);
   primitive->set_symmetric(symmetric_);
   auto dynamic_quant_cnode = graph->NewCNode(primitive_c, {cnode->input(index)});
-  auto name = cnode->fullname_with_scope() + "_dynamic_cast_node_" + to_string(index);
+  auto name = cnode->fullname_with_scope() + "_dynamic_cast_node_" + std::to_string(index);
   dynamic_quant_cnode->set_fullname_with_scope(name);
   CHECK_NULL_RETURN(cnode->abstract());
   auto abstract = cnode->abstract()->Clone();

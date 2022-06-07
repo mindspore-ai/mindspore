@@ -25,6 +25,7 @@
 #include <functional>
 #include <atomic>
 #include "include/api/format.h"
+#include "include/lite_types.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"

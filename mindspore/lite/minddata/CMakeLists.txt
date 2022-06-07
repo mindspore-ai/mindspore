@@ -114,7 +114,6 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
         ${TOP_DIR}/mindspore/lite/src/tensor.cc
         ${TOP_DIR}/mindspore/lite/src/common/utils.cc
         ${TOP_DIR}/mindspore/lite/src/common/string_util.cc
-        ${TOP_DIR}/mindspore/lite/src/common/lite_utils.cc
         ${CORE_DIR}/utils/status.cc
         ${MINDDATA_DIR}/api/datasets.cc
         ${MINDDATA_DIR}/kernels/data/data_utils.cc

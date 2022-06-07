@@ -126,7 +126,6 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/common/context_util.cc
         ${SRC_DIR}/common/graph_util.cc
         ${SRC_DIR}/common/string_util.cc
-        ${SRC_DIR}/common/lite_utils.cc
         ${SRC_DIR}/common/log.cc
         ${SRC_DIR}/common/prim_util.cc
         ${SRC_DIR}/common/tensor_util.cc

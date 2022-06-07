@@ -19,52 +19,50 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "include/lite_utils.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace schema {
+struct Tensor;
+}  // namespace schema
+namespace lite {
 typedef enum { ModelType_MSLite, ModelType_MindIR } LiteModelType;
 
 // LiteGraph can be considered as a light weight and subset of FuncGraph, it can not support the advanced expression of
 // FuncGraph, e.g., non-tail recursive.
-struct MS_API LiteGraph {
+struct LiteGraph {
   struct Node {
     std::string name_;
     std::string op_type_;
     int node_type_;
     const void *primitive_ = nullptr;
     std::shared_ptr<void> base_operator_ = nullptr;
-    Uint32Vector input_indices_;
-    Uint32Vector output_indices_;
+    std::vector<uint32_t> input_indices_;
+    std::vector<uint32_t> output_indices_;
     int quant_type_;
     int device_type_ = -1;
   };
-  using NodePtrVector = std::vector<Node *>;
   struct SubGraph {
     std::string name_;
-    Uint32Vector input_indices_;
-    Uint32Vector output_indices_;
-    Uint32Vector node_indices_;
-    Uint32Vector tensor_indices_;
+    std::vector<uint32_t> input_indices_;
+    std::vector<uint32_t> output_indices_;
+    std::vector<uint32_t> node_indices_;
+    std::vector<uint32_t> tensor_indices_;
   };
-  using SubGraphPtrVector = std::vector<SubGraph *>;
   std::string name_;
   std::string version_;
-  Uint32Vector input_indices_;
-  Uint32Vector output_indices_;
+  std::vector<uint32_t> input_indices_;
+  std::vector<uint32_t> output_indices_;
   std::vector<mindspore::schema::Tensor *> all_tensors_;
-  NodePtrVector all_nodes_;
-  SubGraphPtrVector sub_graphs_;
+  std::vector<Node *> all_nodes_;
+  std::vector<SubGraph *> sub_graphs_;
 #ifdef ENABLE_MODEL_OBF
-  using NodeStatVector = Uint32Vector;
-  using PrimTypeVector = Uint32Vector;
-  using PrimVector = std::vector<unsigned char *>;
-  PrimTypeVector all_prims_type_;
-  NodeStatVector all_nodes_stat_;
+  std::vector<uint32_t> all_prims_type_;
+  std::vector<uint32_t> all_nodes_stat_;
   bool model_obfuscated_ = false;
-  PrimVector deobf_prims_;
+  std::vector<unsigned char *> deobf_prims_;
 #endif
 };
-struct MS_API Model {
+struct Model {
   LiteGraph graph_;
   char *buf = nullptr;
   size_t buf_size_ = 0;
@@ -91,6 +89,7 @@ struct MS_API Model {
   /// \brief Model destruct, free all memory
   virtual ~Model() = default;
 };
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INCLUDE_MODEL_H_

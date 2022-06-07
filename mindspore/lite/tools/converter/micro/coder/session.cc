@@ -234,10 +234,10 @@ int CoderSession::CreateOpCoders() {
     }
     // set op_coder's inputs && outputs info
     std::vector<uint32_t> input_indices;
-    Uint32Vector node_input_indices = node->input_indices_;
+    std::vector<uint32_t> node_input_indices = node->input_indices_;
     input_indices.insert(input_indices.end(), node_input_indices.begin(), node_input_indices.end());
     std::vector<uint32_t> output_indices;
-    Uint32Vector node_output_indices = node->output_indices_;
+    std::vector<uint32_t> node_output_indices = node->output_indices_;
     output_indices.insert(output_indices.end(), node_output_indices.begin(), node_output_indices.end());
 
     std::vector<lite::Tensor *> inputs;

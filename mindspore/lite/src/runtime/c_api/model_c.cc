@@ -193,7 +193,7 @@ Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC
   if (before != nullptr) {
     before_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
                            const std::vector<mindspore::lite::Tensor *> &before_outputs,
-                           const CallBackParam &call_param) {
+                           const lite::CallBackParam &call_param) {
       std::vector<LiteTensorImpl> inputs_impl;
       std::vector<LiteTensorImpl> outputs_impl;
       std::vector<MSTensorHandle> op_inputs;
@@ -218,7 +218,7 @@ Status ModelC::RunGraph(const MSKernelCallBackC &before, const MSKernelCallBackC
   if (after != nullptr) {
     after_call_back = [&](const std::vector<mindspore::lite::Tensor *> &after_inputs,
                           const std::vector<mindspore::lite::Tensor *> &after_outputs,
-                          const CallBackParam &call_param) {
+                          const lite::CallBackParam &call_param) {
       std::vector<LiteTensorImpl> inputs_impl;
       std::vector<LiteTensorImpl> outputs_impl;
       std::vector<MSTensorHandle> op_inputs;

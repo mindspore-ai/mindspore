@@ -386,7 +386,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
   actors.reserve(kernels.size());
   for (auto &kernel : kernels) {
     /* make subgraph name (actor name) unique */
-    kernel->set_name(kernel->name() + "_" + to_string(actor_count++));
+    kernel->set_name(kernel->name() + "_" + std::to_string(actor_count++));
     std::shared_ptr<LiteOpActor> actor = CreateActor(kernel, ctx);
     if (actor == nullptr) {
       MS_LOG(ERROR) << "create LiteOpActor failed: " << kernel->name();

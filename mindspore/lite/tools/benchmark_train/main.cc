@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include <fstream>
 #include "tools/benchmark_train/net_train.h"
-#include "include/version.h"
 
 void PrintMem() {
   std::string proc_file = "/proc/" + std::to_string(getpid()) + "/status";

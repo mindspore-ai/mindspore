@@ -19,7 +19,6 @@
 
 #include <string>
 #include <vector>
-#include "include/lite_utils.h"
 #include "include/lite_types.h"
 
 namespace mindspore::lite {
@@ -76,7 +75,7 @@ struct Context {
   bool enable_parallel_ = false;
   std::vector<int> affinity_core_list_; /**< explicitly specify the core to be bound. priority use affinity core list */
   AllocatorPtr allocator = nullptr;
-  DeviceContextVector device_list_ = {{DT_CPU, {{false, MID_CPU}}}};
+  std::vector<DeviceContext> device_list_ = {{DT_CPU, {{false, MID_CPU}}}};
   DelegatePtr delegate = nullptr;
   bool float_mode = false; /**< convert full quant model to float model */
 };

@@ -24,7 +24,6 @@
 #include <vector>
 #include "backend/common/optimizer/optimizer.h"
 #include "include/errorcode.h"
-#include "include/version.h"
 #include "ir/func_graph.h"
 #include "tools/lite_exporter/anf_exporter.h"
 #include "tools/converter/graphdef_transform.h"

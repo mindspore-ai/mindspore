@@ -17,7 +17,6 @@
 #include <vector>
 #include "src/runtime/runtime_convert.h"
 #include "tools/common/string_util.h"
-#include "include/version.h"
 #include "tools/converter/converter.h"
 #include "tools/converter/cxx_api/converter_para.h"
 

@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OBFUSCATOR_INCLUDE_DEOBFUSCATOR_H_
 #define MINDSPORE_LITE_TOOLS_OBFUSCATOR_INCLUDE_DEOBFUSCATOR_H_
 
+#include <vector>
 #include "src/common/common.h"
 #include "include/model.h"
 
@@ -24,11 +25,10 @@
 
 namespace mindspore::lite {
 struct DeObfuscator {
-  Uint32Vector junk_tensor_Indices_;
-  Uint32Vector junk_node_Indices_;
-  Uint32Vector masking_values_;
-  using PrimTypeVector = Vector<schema::PrimitiveType>;
-  PrimTypeVector all_prims_type_;
+  std::vector<uint32_t> junk_tensor_Indices_;
+  std::vector<uint32_t> junk_node_Indices_;
+  std::vector<uint32_t> masking_values_;
+  std::vector<schema::PrimitiveType> all_prims_type_;
   unsigned char *obf_meta_data_;
   uint32_t all_tensor_size_;
   uint32_t all_node_size_;

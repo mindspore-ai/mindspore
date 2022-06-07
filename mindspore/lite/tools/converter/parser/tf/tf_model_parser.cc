@@ -56,8 +56,8 @@ AnfNodePtr GetAnfNode(const std::string &name, const std::unordered_map<std::str
   auto flat_anf_name = TensorFlowUtils::GetFlattenNodeName(name);
   if (anf_node_map.find(flat_anf_name) != anf_node_map.end()) {
     ret = anf_node_map.at(flat_anf_name);
-  } else if (anf_node_map.find(name + ":" + to_string(index)) != anf_node_map.end()) {
-    ret = anf_node_map.at(flat_anf_name + ":" + to_string(index));
+  } else if (anf_node_map.find(name + ":" + std::to_string(index)) != anf_node_map.end()) {
+    ret = anf_node_map.at(flat_anf_name + ":" + std::to_string(index));
   }
   return ret;
 }
@@ -997,7 +997,7 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
   }
   node_output_num_[node_def.name()] = output_size;
   for (int i = 0; i < output_size; i++) {
-    node_output_num_[node_def.name() + ":" + to_string(i)] = 1;
+    node_output_num_[node_def.name() + ":" + std::to_string(i)] = 1;
   }
   auto value_node = NewValueNode(primitive_c);
   if (value_node == nullptr) {

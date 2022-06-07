@@ -15,6 +15,7 @@
  */
 
 #include "src/mapper_config_parser.h"
+#include <algorithm>
 #include <stack>
 #include <unordered_set>
 #include "common/op_enum.h"

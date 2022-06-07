@@ -388,7 +388,7 @@ void BenchmarkUnifiedApi::UpdateDistributionName(const std::shared_ptr<mindspore
     return;
   }
 
-  *name = name->replace(replace_pos, sizeof('.'), to_string(rank_id) + ".");
+  *name = name->replace(replace_pos, sizeof('.'), std::to_string(rank_id) + ".");
 
   MS_LOG(INFO) << "Update distribution info: " << *name;
   std::cout << "Update distribution info: " << *name << std::endl;
@@ -1037,7 +1037,7 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
 }
 #endif
 
-int BenchmarkUnifiedApi::CompileGraph(ModelType model_type, const std::shared_ptr<Context> &context,
+int BenchmarkUnifiedApi::CompileGraph(mindspore::ModelType model_type, const std::shared_ptr<Context> &context,
                                       const std::string &model_name) {
   Key dec_key;
   if (!flags_->decrypt_key_str_.empty()) {

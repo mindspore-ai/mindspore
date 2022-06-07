@@ -799,28 +799,28 @@ int NetTrain::PrintResult(const std::vector<std::string> &title,
     }
     columns.push_back(iter.first);
 
-    stringBuf[kField1] = to_string(iter.second.second / flags_->epochs_);
+    stringBuf[kField1] = std::to_string(iter.second.second / flags_->epochs_);
     len = stringBuf[kField1].length();
     if (len > columnLenMax.at(kField1)) {
       columnLenMax.at(kField1) = len + kPrintOffset;
     }
     columns.emplace_back(stringBuf[kField1]);
 
-    stringBuf[kField2] = to_string(iter.second.second / op_cost_total_);
+    stringBuf[kField2] = std::to_string(iter.second.second / op_cost_total_);
     len = stringBuf[kField2].length();
     if (len > columnLenMax.at(kField2)) {
       columnLenMax.at(kField2) = len + kPrintOffset;
     }
     columns.emplace_back(stringBuf[kField2]);
 
-    stringBuf[kField3] = to_string(iter.second.first);
+    stringBuf[kField3] = std::to_string(iter.second.first);
     len = stringBuf[kField3].length();
     if (len > columnLenMax.at(kField3)) {
       columnLenMax.at(kField3) = len + kPrintOffset;
     }
     columns.emplace_back(stringBuf[kField3]);
 
-    stringBuf[kField4] = to_string(iter.second.second);
+    stringBuf[kField4] = std::to_string(iter.second.second);
     len = stringBuf[kField4].length();
     if (len > columnLenMax.at(kField4)) {
       columnLenMax.at(kField4) = len + kPrintOffset;

@@ -334,27 +334,6 @@ int GenerateRandomData(size_t size, void *data, int data_type) {
   return RET_OK;
 }
 
-int GenerateRandomData(Tensor *tensor) {
-  MS_ASSERT(tensor != nullptr);
-  auto input_data = tensor->MutableData();
-  if (input_data == nullptr) {
-    MS_LOG(ERROR) << "MallocData for inTensor failed";
-    return RET_ERROR;
-  }
-  int status;
-  if (tensor->data_type() == kObjectTypeString) {
-    status = StringsToTensor({"you're the best."}, tensor);
-  } else {
-    status = GenerateRandomData(tensor->Size(), input_data, static_cast<int>(tensor->data_type()));
-  }
-  if (status != RET_OK) {
-    std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
-    MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
-    return status;
-  }
-  return RET_OK;
-}
-
 int GenerateRandomData(mindspore::MSTensor *tensor) {
   MS_ASSERT(tensor != nullptr);
   auto input_data = tensor->MutableData();
