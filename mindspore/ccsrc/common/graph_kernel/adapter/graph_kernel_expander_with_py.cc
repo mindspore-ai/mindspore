@@ -56,6 +56,8 @@ std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
     {kGPUDevice, OpLevel_0, prim::kPrimLogSoftmaxGrad},
     {kGPUDevice, OpLevel_1, prim::kPrimMatMul},
     {kGPUDevice, OpLevel_1, prim::kPrimReduceMean},
+    {kGPUDevice, OpLevel_1, prim::kPrimArgMaxWithValue},
+    {kGPUDevice, OpLevel_1, prim::kPrimArgMinWithValue},
     {kGPUDevice, OpLevel_0, prim::kPrimRelu},
     {kGPUDevice, OpLevel_0, prim::kPrimReluGrad},
     {kGPUDevice, OpLevel_0, prim::kPrimSigmoid},
