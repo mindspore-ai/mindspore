@@ -36,19 +36,18 @@ void LogSoftmax::Init(const int64_t axis) { this->set_axis(axis); }
 
 abstract::ShapePtr LogSoftmaxInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  (void)CheckAndConvertUtils::CheckInteger("log_softmax infer", int64_t(input_args.size()), kEqual, 1, op_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  const auto op_name = primitive->name();
+  const auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   if (shape_map.empty()) {
     // Scalar input, has no shape
     return std::make_shared<abstract::Shape>(std::vector<int64_t>());
   }
-  auto in_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
-  auto rank = SizeToLong(in_shape.size());
+  const auto in_shape = shape_map[kShape];
+  const auto min_shape = shape_map[kMinShape];
+  const auto max_shape = shape_map[kMaxShape];
+  const auto rank = SizeToLong(in_shape.size());
+  (void)CheckAndConvertUtils::CheckValue<int64_t>("dimension of 'logits'", rank, kGreaterEqual, 1, op_name);
   CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeLeft, {-rank, rank}, op_name);
   if (min_shape.size() != 0 && max_shape.size() != 0) {
     return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
@@ -58,20 +57,18 @@ abstract::ShapePtr LogSoftmaxInferShape(const PrimitivePtr &primitive, const std
 
 TypePtr LogSoftmaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto op_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("log_softmax infer", int64_t(input_args.size()), kEqual, 1, op_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
+  const auto op_name = prim->name();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  return CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, op_name);
+  return CheckAndConvertUtils::CheckTensorTypeValid("logits", input_args[kInputIndex0]->BuildType(), valid_types,
+                                                    op_name);
 }
 
 AbstractBasePtr LogSoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
-  for (auto item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  return abstract::MakeAbstract(LogSoftmaxInferShape(primitive, input_args),
-                                LogSoftmaxInferType(primitive, input_args));
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, 1, primitive->name());
+  auto type = LogSoftmaxInferType(primitive, input_args);
+  auto shape = LogSoftmaxInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(LogSoftmax, prim::kPrimLogSoftmax, LogSoftmaxInfer, nullptr, true);
 }  // namespace ops
