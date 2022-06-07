@@ -46,6 +46,8 @@ struct StandardPrimitiveImplReg {
 using PrimitiveEvalImplMap =
   mindspore::HashMap<PrimitivePtr, StandardPrimitiveImplReg, PrimitiveHasher, PrimitiveEqual>;
 
+using PrimShapeDependMap = mindspore::HashMap<std::string, std::set<int64_t>>;
+
 MS_CORE_API PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap();
 
 MS_CORE_API PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap();
@@ -76,6 +78,19 @@ class RegisterStandardPrimitiveEvalHelper {
     return std::dynamic_pointer_cast<ops::PrimitiveC>(out.impl());                                         \
   }                                                                                                        \
   ops::OpPrimCRegisterHelper primc_gen_##name(#name, GetDefaultPrimC##name);
+
+MS_CORE_API void RegisterHostDependsImpl(const std::string &name, const std::set<int64_t> &host_depends);
+
+class RegisterHostDependsHelper {
+ public:
+  RegisterHostDependsHelper(const std::string &name, const std::set<int64_t> &depends) {
+    RegisterHostDependsImpl(name, depends);
+  }
+  ~RegisterHostDependsHelper() = default;
+};
+
+#define REGISTER_HOST_DEPENDS(name, depends) \
+  static auto helper_host_depends_##name = abstract::RegisterHostDependsHelper(name, depends);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_

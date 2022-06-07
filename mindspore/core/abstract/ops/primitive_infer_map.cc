@@ -48,12 +48,10 @@
 
 namespace mindspore {
 namespace abstract {
-std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_num) {
+PrimShapeDependMap &GetHostDependsMap() {
   using ShapeSet = std::set<int64_t>;
-  using PrimShapeDependMap = mindspore::HashMap<std::string, ShapeSet>;
   static const auto &kOneHot = prim::kPrimOneHot->name();
   static const auto &kDropoutGenMask = prim::kPrimDropoutGenMask->name();
-  static const auto &kTranspose = prim::kPrimTranspose->name();
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
   static const auto &kStridedSliceGrad = prim::kPrimStridedSliceGrad->name();
   static const auto &kReduceSum = prim::kPrimReduceSum->name();
@@ -77,7 +75,6 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
   static const auto &kCol2Im = prim::kPrimCol2Im->name();
   static const auto &kTile = prim::kPrimTile->name();
-  static const auto &kSlice = prim::kPrimSlice->name();
   static const auto &kNonDeterministicInts = prim::kPrimNonDeterministicInts->name();
   static const auto &kSliceGrad = prim::kPrimSliceGrad->name();
   static const auto &kReshape = prim::kPrimReshape->name();
@@ -92,59 +89,61 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kSegmentMin = prim::kPrimSegmentMin->name();
   static const auto &kSegmentSum = prim::kPrimSegmentSum->name();
   static const auto &kBlackmanWindow = prim::kPrimBlackmanWindow->name();
-  // Common dynamic shape depends.
-  static const PrimShapeDependMap dynamic_shape_depends{{kSegmentMax, ShapeSet{1}},
-                                                        {kSegmentMin, ShapeSet{1}},
-                                                        {kSegmentSum, ShapeSet{1}},
-                                                        {kUnsortedSegmentSum, ShapeSet{2}},
-                                                        {kFractionalAvgPoolGrad, ShapeSet{0}},
-                                                        {kUnsortedSegmentMin, ShapeSet{2}},
-                                                        {kUnsortedSegmentMax, ShapeSet{2}},
-                                                        {kUnsortedSegmentProd, ShapeSet{2}},
-                                                        {kMatrixDiagV3, ShapeSet{1, 2, 3, 4}},
-                                                        {kMatrixDiagPartV3, ShapeSet{1, 2}},
-                                                        {kMatrixSetDiagV3, ShapeSet{2}},
-                                                        {kGather, ShapeSet{2}},
-                                                        {kGatherV2, ShapeSet{2}},
-                                                        {kGatherD, ShapeSet{1}},
-                                                        {kSparseGatherV2, ShapeSet{2}},
-                                                        {kRange, ShapeSet{0, 1, 2}},
-                                                        {kRangeV2, ShapeSet{0, 1, 2}},
-                                                        {kConv2DBackpropFilter, ShapeSet{2}},
-                                                        {kConv2DBackpropInput, ShapeSet{2}},
-                                                        {kCol2Im, ShapeSet{1}},
-                                                        {kOneHot, ShapeSet{1, 3}},
-                                                        {kDropoutGenMask, ShapeSet{0}},
-                                                        {kStridedSlice, ShapeSet{1, 2, 3}},
-                                                        {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
-                                                        {kTile, ShapeSet{1}},
-                                                        {kReshape, ShapeSet{1}},
-                                                        {kScatterNd, ShapeSet{2}},
-                                                        {kSlice, ShapeSet{1, 2}},
-                                                        {kSliceGrad, ShapeSet{2, 3}},
-                                                        {kFillV2, ShapeSet{0}},
-                                                        {kRandomPoisson, ShapeSet{0}},
-                                                        {kDynamicBroadcastTo, ShapeSet{1}},
-                                                        {kNonDeterministicInts, ShapeSet{0}},
-                                                        {kReduceSum, ShapeSet{1}},
-                                                        {kTruncatedNormal, ShapeSet{0}},
-                                                        {kRaggedRange, ShapeSet{0, 1, 2}},
-                                                        {kTransposeNOD, ShapeSet{1}},
-                                                        {kSparseSegmentMean, ShapeSet{2}},
-                                                        {kResizeLinear1D, ShapeSet{1}},
-                                                        {kBlackmanWindow, ShapeSet{0}}};
+  // Common host depends.
+  static PrimShapeDependMap host_depends{{kSegmentMax, ShapeSet{1}},
+                                         {kSegmentMin, ShapeSet{1}},
+                                         {kSegmentSum, ShapeSet{1}},
+                                         {kUnsortedSegmentSum, ShapeSet{2}},
+                                         {kFractionalAvgPoolGrad, ShapeSet{0}},
+                                         {kUnsortedSegmentMin, ShapeSet{2}},
+                                         {kUnsortedSegmentMax, ShapeSet{2}},
+                                         {kUnsortedSegmentProd, ShapeSet{2}},
+                                         {kMatrixDiagV3, ShapeSet{1, 2, 3, 4}},
+                                         {kMatrixDiagPartV3, ShapeSet{1, 2}},
+                                         {kMatrixSetDiagV3, ShapeSet{2}},
+                                         {kGather, ShapeSet{2}},
+                                         {kGatherV2, ShapeSet{2}},
+                                         {kGatherD, ShapeSet{1}},
+                                         {kSparseGatherV2, ShapeSet{2}},
+                                         {kRange, ShapeSet{0, 1, 2}},
+                                         {kRangeV2, ShapeSet{0, 1, 2}},
+                                         {kConv2DBackpropFilter, ShapeSet{2}},
+                                         {kConv2DBackpropInput, ShapeSet{2}},
+                                         {kCol2Im, ShapeSet{1}},
+                                         {kOneHot, ShapeSet{1, 3}},
+                                         {kDropoutGenMask, ShapeSet{0}},
+                                         {kStridedSlice, ShapeSet{1, 2, 3}},
+                                         {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
+                                         {kTile, ShapeSet{1}},
+                                         {kReshape, ShapeSet{1}},
+                                         {kScatterNd, ShapeSet{2}},
+                                         {kSliceGrad, ShapeSet{2, 3}},
+                                         {kFillV2, ShapeSet{0}},
+                                         {kRandomPoisson, ShapeSet{0}},
+                                         {kDynamicBroadcastTo, ShapeSet{1}},
+                                         {kNonDeterministicInts, ShapeSet{0}},
+                                         {kReduceSum, ShapeSet{1}},
+                                         {kTruncatedNormal, ShapeSet{0}},
+                                         {kRaggedRange, ShapeSet{0, 1, 2}},
+                                         {kTransposeNOD, ShapeSet{1}},
+                                         {kSparseSegmentMean, ShapeSet{2}},
+                                         {kResizeLinear1D, ShapeSet{1}},
+                                         {kBlackmanWindow, ShapeSet{0}}};
+  return host_depends;
+}
 
+std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_num) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   // Special dynamic shape depends for Ascend.
-  if (device == kAscendDevice && prim_name == kTranspose) {
+  if (device == kAscendDevice && prim_name == prim::kPrimTranspose->name()) {
     return {1};
   }
 
-  auto iter = dynamic_shape_depends.find(prim_name);
-  if (iter != dynamic_shape_depends.end()) {
-    ShapeSet res;
+  auto iter = GetHostDependsMap().find(prim_name);
+  if (iter != GetHostDependsMap().end()) {
+    std::set<int64_t> res;
     const auto &ori = iter->second;
     (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),
                        [&](int64_t idx) { return idx < SizeToLong(input_num); });
@@ -162,6 +161,11 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->ToString();
   return GetDependsFormMap(prim_name, cnode->inputs().size() - 1);
+}
+
+void RegisterHostDependsImpl(const std::string &prim_name, const std::set<int64_t> &host_depends) {
+  auto &host_depends_map = GetHostDependsMap();
+  host_depends_map[prim_name] = host_depends;
 }
 
 PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
