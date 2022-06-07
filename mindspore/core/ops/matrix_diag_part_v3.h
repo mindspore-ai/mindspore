@@ -35,6 +35,12 @@ class MIND_API MatrixDiagPartV3 : public BaseOperator {
   MIND_API_BASE_MEMBER(MatrixDiagPartV3);
   /// \brief Constructor.
   MatrixDiagPartV3() : BaseOperator(kNameMatrixDiagPartV3) { InitIOName({"x", "k", "padding_value"}, {"y"}); }
+
+  void Init(const std::string &align = "RIGHT_LEFT");
+
+  void set_align(const std::string &align);
+
+  std::string get_align() const;
 };
 
 abstract::AbstractBasePtr MatrixDiagPartV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
