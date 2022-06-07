@@ -582,3 +582,5 @@ from .p_s_r_o_i_pooling import _p_s_r_o_i_pooling_tbe
 from .p_s_r_o_i_pooling_grad import _p_s_r_o_i_pooling_grad_tbe
 from .renorm import _renorm_tbe
 from .adam_apply_one_ds import _adam_apply_one_ds_tbe
+from .adaptive_max_pool2d import _adaptive_max_pool2d_tbe
+from .pooling import _pooling_tbe
