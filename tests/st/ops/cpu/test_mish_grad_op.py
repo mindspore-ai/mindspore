@@ -182,5 +182,5 @@ def test_mish_grad_dynamic_shape(mode):
     output = MishGradDynamicShapeNet(MishNet())(x, dout)
     expect_output = np.array([[18.000065, 0.12141099, 0.],
                               [12., 1.0490363, 2.1],
-                              [11., 4.218619, 0.21672803]], dtype=np.float32)
-    np.testing.assert_almost_equal(output[0].asnumpy(), expect_output)
+                              [11., 4.218617, 0.2167282]], dtype=np.float32)
+    assert np.allclose(output[0].asnumpy(), expect_output, atol=1e-4, rtol=1e-4, equal_nan=True)
