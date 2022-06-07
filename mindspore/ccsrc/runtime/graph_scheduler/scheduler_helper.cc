@@ -349,7 +349,7 @@ void SchedulerHelper::FuseDataArrowsToBatchDataArrow(AbstractActor *const actor)
     auto &to_op_name = data_arrow->to_op_id_.Name();
     // The output data cannot be reused whose destination is stack actor, and cannot to be fused.
     if ((to_actor_count[to_op_name] > 1) && (to_op_name.find(kStackActorNameSuffix) == std::string::npos)) {
-      data_arrow->flag_ = kOutputDataFlagBatch;
+      SET_FLAG(data_arrow->flag_, kOutputDataFlagBatch);
       (void)actor->batch_output_data_arrows_[to_op_name].emplace_back(data_arrow);
     }
   }
@@ -364,7 +364,26 @@ void SchedulerHelper::AddDependency(AbstractActor *const actor, const AbstractAc
                                         dependent_actor->dependent_actors_.end());
 }
 
-FusionActorPtr SchedulerHelper::BuildMultiActors(const std::vector<AbstractActorPtr> &actors) {
+bool SchedulerHelper::CheckDependency(const std::vector<AbstractActorPtr> &output_actors) {
+  if (output_actors.size() <= 1) {
+    return true;
+  }
+
+  for (size_t i = 1; i < output_actors.size(); ++i) {
+    auto &pre_actor = output_actors[i - 1];
+    auto &actor = output_actors[i];
+    MS_EXCEPTION_IF_NULL(pre_actor);
+    MS_EXCEPTION_IF_NULL(actor);
+    // The outputs have no dependencies.
+    if (actor->dependent_actors_.count(pre_actor->GetAID().Name()) == 0) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+FusionActorPtr SchedulerHelper::BuildFusionActor(const std::vector<AbstractActorPtr> &actors) {
   if (actors.size() <= 1) {
     MS_LOG(EXCEPTION) << "The fusion actor size must be greater than 1.";
   }
@@ -390,7 +409,7 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
       MS_EXCEPTION_IF_NULL(input_data_arrow);
       // Mark the kOutputDataFlagToInternalFusion flag when the input data arrow is the Internal actor in fusion actor.
       if (fusion_actor->actors_.count(input_data_arrow_aid.first.Name()) > 0) {
-        input_data_arrow->flag_ = kOutputDataFlagToInternalFusion;
+        SET_FLAG(input_data_arrow->flag_, kOutputDataFlagToInternalFusion);
         continue;
       }
 
@@ -410,7 +429,7 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
       // Mark the kOutputDataFlagToInternalFusion flag when the input control arrow is the Internal actor in fusion
       // actor.
       if (fusion_actor->actors_.count(input_control_arrow_aid.first.Name()) > 0) {
-        input_control_arrow->flag_ = kOutputDataFlagToInternalFusion;
+        SET_FLAG(input_control_arrow->flag_, kOutputDataFlagToInternalFusion);
         continue;
       }
 
@@ -619,6 +638,7 @@ void SchedulerHelper::DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs
   DumpCopyActors(actor_set->copy_actors_, ofs);
   DumpLoopCountActor(actor_set->loop_count_actor_, ofs);
   DumpOutputActor(actor_set->output_actor_, ofs);
+  DumpFusionActors(actor_set->fusion_actors_, ofs);
   DumpControlActors(actor_set->control_actors_, ofs);
   DumpCustomActors(actor_set->custom_actors_, ofs);
 }

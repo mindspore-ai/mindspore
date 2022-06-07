@@ -16,6 +16,7 @@
 
 #include "runtime/graph_scheduler/optimizer/multi_actor_fusion.h"
 #include <vector>
+#include <queue>
 #include "runtime/graph_scheduler/scheduler_helper.h"
 
 namespace mindspore {
@@ -34,6 +35,7 @@ void MultiActorFusion::Process(ActorSet *const actor_set, AbstractActor *const) 
     return;
   }
 
+  // Build all the fusion actors.
   FuseMultiActors(actor_set);
 
   // Link fusion actor.
@@ -126,22 +128,101 @@ bool MultiActorFusion::AddDependency(
   return true;
 }
 
-void MultiActorFusion::FuseMultiActors(ActorSet *const actor_set) {
-  MS_EXCEPTION_IF_NULL(actor_set);
-  // Build all the fusion actors.
-  std::vector<AbstractActorPtr> actors;
-  for (auto &kernel_actor : actor_set->kernel_actors_) {
-    MS_EXCEPTION_IF_NULL(kernel_actor);
-    (void)actors.emplace_back(kernel_actor);
-    if (actors.size() % kActorFusionMaxNum == 0) {
-      auto fusion_actor = SchedulerHelper::BuildMultiActors(actors);
-      (void)actor_set->fusion_actors_.emplace_back(fusion_actor);
-      actors.clear();
+namespace {
+bool GetDependentActors(std::vector<AbstractActorPtr> *const output_actors, const AbstractActorPtr &actor,
+                        mindspore::HashMap<std::string, AbstractActorPtr> *const need_processed_actors) {
+  MS_EXCEPTION_IF_NULL(output_actors);
+  MS_EXCEPTION_IF_NULL(actor);
+  MS_EXCEPTION_IF_NULL(need_processed_actors);
+
+  // Get all the output actors.
+  for (auto &output_data_arrow : actor->output_data_arrows()) {
+    MS_EXCEPTION_IF_NULL(output_data_arrow);
+    auto iter = need_processed_actors->find(output_data_arrow->to_op_id_.Name());
+    if (iter != need_processed_actors->end()) {
+      (void)output_actors->emplace_back(iter->second);
+      (void)need_processed_actors->erase(iter);
     }
   }
-  if (actors.size() > 1) {
-    auto fusion_actor = SchedulerHelper::BuildMultiActors(actors);
-    (void)actor_set->fusion_actors_.emplace_back(fusion_actor);
+  for (auto &output_control_arrow : actor->output_control_arrows()) {
+    MS_EXCEPTION_IF_NULL(output_control_arrow);
+    auto iter = need_processed_actors->find(output_control_arrow->to_op_id_.Name());
+    if (iter != need_processed_actors->end()) {
+      (void)output_actors->emplace_back(iter->second);
+      (void)need_processed_actors->erase(iter);
+    }
+  }
+
+  return SchedulerHelper::CheckDependency(*output_actors);
+}
+
+FusionActorPtr BuildFusionActorBySeed(const AbstractActorPtr &seed_actor,
+                                      std::queue<AbstractActorPtr> *const origin_seed_actors,
+                                      mindspore::HashMap<std::string, AbstractActorPtr> *const need_processed_actors) {
+  MS_EXCEPTION_IF_NULL(seed_actor);
+  MS_EXCEPTION_IF_NULL(origin_seed_actors);
+  MS_EXCEPTION_IF_NULL(need_processed_actors);
+  std::vector<AbstractActorPtr> need_fused_actors;
+
+  std::queue<AbstractActorPtr> current_seed_actors;
+  current_seed_actors.push(seed_actor);
+  while (!current_seed_actors.empty()) {
+    auto &current_seed_actor = current_seed_actors.front();
+    current_seed_actors.pop();
+    (void)need_fused_actors.emplace_back(current_seed_actor);
+
+    // Get the outputs of seed actor. If they have dependencies, continue processing. Otherwise, add the output to
+    // origin_seed_actors.
+    std::vector<AbstractActorPtr> output_actors;
+    bool has_dependency = GetDependentActors(&output_actors, current_seed_actor, need_processed_actors);
+    for (auto &output_actor : output_actors) {
+      if (has_dependency) {
+        current_seed_actors.push(output_actor);
+      } else {
+        origin_seed_actors->push(output_actor);
+      }
+    }
+    output_actors.clear();
+  }
+
+  if (need_fused_actors.size() > 1) {
+    return SchedulerHelper::BuildFusionActor(need_fused_actors);
+  } else {
+    return nullptr;
+  }
+}
+}  // namespace
+
+void MultiActorFusion::FuseMultiActors(ActorSet *const actor_set) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
+
+  auto actors = SchedulerHelper::CollectActors(actor_set);
+  mindspore::HashMap<std::string, AbstractActorPtr> need_processed_actors;
+  for (auto &actor : actors) {
+    MS_EXCEPTION_IF_NULL(actor);
+    need_processed_actors[actor->GetAID().Name()] = actor;
+  }
+
+  // Get the initial seed actors from the outputs of data prepare actor.
+  std::queue<AbstractActorPtr> seed_actors;
+  for (auto &output_control_arrow : actor_set->data_prepare_actor_->output_control_arrows()) {
+    MS_EXCEPTION_IF_NULL(output_control_arrow);
+    auto iter = need_processed_actors.find(output_control_arrow->to_op_id_.Name());
+    if (iter != need_processed_actors.end()) {
+      seed_actors.push(iter->second);
+      (void)need_processed_actors.erase(iter);
+    }
+  }
+
+  while (!seed_actors.empty()) {
+    auto &seed_actor = seed_actors.front();
+    seed_actors.pop();
+    MS_EXCEPTION_IF_NULL(seed_actor);
+    auto fusion_actor = BuildFusionActorBySeed(seed_actor, &seed_actors, &need_processed_actors);
+    if (fusion_actor != nullptr) {
+      (void)actor_set->fusion_actors_.emplace_back(fusion_actor);
+    }
   }
 }
 }  // namespace runtime

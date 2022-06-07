@@ -124,18 +124,23 @@ void AbstractActor::InitOutputData() {
     int output_data_flag = (is_to_stack == true) ? kOutputDataFlagToStack : kOutputDataFlagInit;
 
     // Add the batch output data.
-    if (data_arrow->flag_ == kOutputDataFlagBatch) {
+    if (TEST_FLAG(data_arrow->flag_, kOutputDataFlagBatch)) {
       if (is_to_stack) {
         MS_LOG(EXCEPTION) << "Not support the batch output data to stack actor.";
       }
       (void)batch_output_data_[to_op_name].emplace_back(data.get());
 
-      output_data_flag = kOutputDataFlagBatch;
+      SET_FLAG(output_data_flag, kOutputDataFlagBatch);
       // Identify whether the output data flag is kOutputDataFlagLastBatch.
       ++(batch_op_count[to_op_name]);
       if (batch_op_count[to_op_name] == batch_output_data_arrows_[to_op_name].size()) {
-        output_data_flag = kOutputDataFlagLastBatch;
+        SET_FLAG(output_data_flag, kOutputDataFlagLastBatch);
       }
+    }
+
+    // Add the internal fusion flag.
+    if (TEST_FLAG(data_arrow->flag_, kOutputDataFlagToInternalFusion)) {
+      SET_FLAG(output_data_flag, kOutputDataFlagToInternalFusion);
     }
 
     // Add the output data.
@@ -161,18 +166,31 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
     UpdateOutputData(output_data.first.get(), output_data_arrows_[output_data_arrow_index],
                      output_data_nodes_[output_data_arrow_index], context);
 
-    if (output_data.second == kOutputDataFlagLastBatch) {
+    if (TEST_FLAG(output_data.second, kOutputDataFlagLastBatch)) {
       // Send batch output data. As the data need update, so all data must be collected completely before sending.
-      ActorDispatcher::Send(to_op_id, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()], context);
-    } else if (output_data.second == kOutputDataFlagToStack) {
+      if (TEST_FLAG(output_data.second, kOutputDataFlagToInternalFusion)) {
+        ActorDispatcher::SendSync(to_op_id, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()],
+                                  context);
+      } else {
+        ActorDispatcher::Send(to_op_id, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()], context);
+      }
+    } else if (TEST_FLAG(output_data.second, kOutputDataFlagToStack)) {
       // Create a new op data for stack actor.
       auto to_stack_data =
         std::make_unique<OpData<DeviceTensor>>(to_op_id, output_data.first->data_, output_data.first->index_);
       (void)to_stack_data_.emplace_back(std::move(to_stack_data));
-      ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
-    } else if (output_data.second != kOutputDataFlagBatch) {
+      if (TEST_FLAG(output_data.second, kOutputDataFlagToInternalFusion)) {
+        ActorDispatcher::SendSync(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
+      } else {
+        ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
+      }
+    } else if (!TEST_FLAG(output_data.second, kOutputDataFlagBatch)) {
       // The batch output data only send when the output flag is kOutputDataFlagLastBatch.
-      ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);
+      if (TEST_FLAG(output_data.second, kOutputDataFlagToInternalFusion)) {
+        ActorDispatcher::SendSync(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);
+      } else {
+        ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);
+      }
     }
     ++output_data_arrow_index;
   }
@@ -182,7 +200,11 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
     auto from_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
       MS_EXCEPTION_IF_NULL(output_control);
-      ActorDispatcher::Send(output_control->to_op_id_, &OpActor::RunOpControl, from_aid, context);
+      if (TEST_FLAG(output_control->flag_, kOutputDataFlagToInternalFusion)) {
+        ActorDispatcher::SendSync(output_control->to_op_id_, &OpActor::RunOpControl, from_aid, context);
+      } else {
+        ActorDispatcher::Send(output_control->to_op_id_, &OpActor::RunOpControl, from_aid, context);
+      }
     }
   }
 

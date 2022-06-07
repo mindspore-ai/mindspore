@@ -87,6 +87,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
   const mindspore::HashMap<std::string, std::vector<DataArrowPtr>> &batch_output_data_arrows() const {
     return batch_output_data_arrows_;
   }
+  bool in_fusion_actor() const { return in_fusion_actor_; }
   const std::unordered_set<std::string> &dependent_actors() const { return dependent_actors_; }
 
  protected:

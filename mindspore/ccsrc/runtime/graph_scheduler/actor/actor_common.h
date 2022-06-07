@@ -97,6 +97,10 @@ enum class KernelTransformType {
   kFusionActor
 };
 
+#define SET_FLAG(value, flag) ((value) = ((value) | (flag)))
+#define TEST_FLAG(value, flag) (((value) & (flag)) == (flag))
+#define CLEAR_FLAG(value, flag) ((value) = ((value) & (~flag)))
+
 #define SET_OPCONTEXT_FAIL_RET_WITH_ERROR(op_context, message) \
   {                                                            \
     (op_context).error_info_ = message;                        \
