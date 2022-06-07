@@ -11,7 +11,7 @@ mindspore.nn.NLLLoss
         \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
         \quad l_{n}=-w_{t_{n}} x_{n, t_{n}},
         \quad w_{c}=\text { weight }[c] \cdot \mathbb{1}
-        \{c \not= \text{ignore\_index}\},
+        \{c \not= \text{ignore_index}\},
 
     其中， :math:`x` 表示预测值， :math:`t` 表示目标值， :math:`w` 表示权重，N表示batch size， :math:`c` 限定范围为[0, C-1]，表示类索引，其中 :math:`C` 表示类的数量。
 
