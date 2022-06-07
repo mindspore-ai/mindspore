@@ -60,12 +60,11 @@ class HookHandle:
 
         Examples:
             >>> import numpy as np
-            >>> import mindspore
+            >>> import mindspore as ms
             >>> import mindspore.nn as nn
             >>> from mindspore import Tensor
-            >>> from mindspore import set_context, PYNATIVE_MODE
             >>> from mindspore.ops import GradOperation
-            >>> set_context(mode=PYNATIVE_MODE)
+            >>> ms.set_context(mode=ms.PYNATIVE_MODE)
             >>> def forward_pre_hook_fn(cell_id, inputs):
             ...     print("forward inputs: ", inputs)
             ...

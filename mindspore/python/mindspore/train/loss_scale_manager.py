@@ -56,19 +56,20 @@ class FixedLossScaleManager(LossScaleManager):
             not executed when overflow occurs. Default: True.
 
     Examples:
-        >>> from mindspore import Model, nn, FixedLossScaleManager
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>>
         >>> net = Net()
         >>> #1) Drop the parameter update if there is an overflow
-        >>> loss_scale_manager = FixedLossScaleManager()
+        >>> loss_scale_manager = ms.FixedLossScaleManager()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
+        >>> model = ms.Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
         >>>
         >>> #2) Execute parameter update even if overflow occurs
         >>> loss_scale = 1024.0
-        >>> loss_scale_manager = FixedLossScaleManager(loss_scale, False)
+        >>> loss_scale_manager = ms.FixedLossScaleManager(loss_scale, False)
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9, loss_scale=loss_scale)
-        >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
+        >>> model = ms.Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
     """
     def __init__(self, loss_scale=128.0, drop_overflow_update=True):
         if loss_scale < 1:
@@ -130,12 +131,13 @@ class DynamicLossScaleManager(LossScaleManager):
         scale_window (int): Maximum continuous normal steps when there is no overflow. Default: 2000.
 
     Examples:
-        >>> from mindspore import Model, nn, DynamicLossScaleManager
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>>
         >>> net = Net()
-        >>> loss_scale_manager = DynamicLossScaleManager()
+        >>> loss_scale_manager = ms.DynamicLossScaleManager()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
+        >>> model = ms.Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
     """
     def __init__(self,
                  init_loss_scale=2 ** 24,

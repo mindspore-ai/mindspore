@@ -94,10 +94,10 @@ class Callback:
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Model, nn
-        >>> from mindspore import Callback
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>> from mindspore import dataset as ds
-        >>> class Print_info(Callback):
+        >>> class Print_info(ms.Callback):
         ...     def step_end(self, run_context):
         ...         cb_params = run_context.original_args()
         ...         print("step_num: ", cb_params.cur_step_num)
@@ -108,7 +108,7 @@ class Callback:
         >>> net = nn.Dense(10, 5)
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
         >>> model.train(1, dataset, callbacks=print_cb)
         step_num: 2
     """

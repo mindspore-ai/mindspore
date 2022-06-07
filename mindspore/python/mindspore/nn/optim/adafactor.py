@@ -253,7 +253,8 @@ class AdaFactor(Optimizer):
         ``Ascend``
 
     Examples:
-        >>> from mindspore import nn, Model
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>>
         >>> net = Net()
         >>> #1) Parameters use the default learning rate with None and weight decay with 0.
@@ -264,7 +265,7 @@ class AdaFactor(Optimizer):
         >>> group_params = [{'params': [all_params[0]]}, {'params': [all_params[1]]}]
         >>> optim = nn.AdaFactor(group_params, learning_rate=0.1, weight_decay=0.0, relative_step=False)
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
     """
     _support_parallel_optimizer = True
 

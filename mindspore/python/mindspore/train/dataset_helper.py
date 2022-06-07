@@ -159,15 +159,15 @@ def connect_network_with_dataset(network, dataset_helper):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import DatasetHelper
-        >>> from mindspore import DatasetHelper, nn, connect_network_with_dataset
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>> from mindspore import dataset as ds
         >>>
         >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
         >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
-        >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
+        >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> net = nn.Dense(10, 5)
-        >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)
+        >>> net_with_get_next = ms.connect_network_with_dataset(net, dataset_helper)
     """
     dataset_iter = dataset_helper.iter
     dataset = dataset_iter.dataset
@@ -241,12 +241,13 @@ class DatasetHelper:
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import DatasetHelper, nn
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>> from mindspore import dataset as ds
         >>>
         >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
         >>> train_dataset = ds.NumpySlicesDataset(data=data).batch(32)
-        >>> set_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
+        >>> set_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=False)
         >>>
         >>> net = nn.Dense(10, 5)
         >>> # Object of DatasetHelper is iterable
@@ -297,10 +298,10 @@ class DatasetHelper:
         Get the types and shapes from dataset on the current configuration.
 
         Examples:
-            >>> from mindspore import DatasetHelper
+            >>> import mindspore as ms
             >>>
             >>> train_dataset = create_custom_dataset()
-            >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
+            >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True)
             >>>
             >>> types, shapes = dataset_helper.types_shapes()
         """
@@ -311,10 +312,10 @@ class DatasetHelper:
         Get sink_size for each iteration.
 
         Examples:
-            >>> from mindspore import DatasetHelper
+            >>> import mindspore as ms
             >>>
             >>> train_dataset = create_custom_dataset()
-            >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True, sink_size=-1)
+            >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True, sink_size=-1)
             >>>
             >>> # if sink_size==-1, then will return the full size of source dataset.
             >>> sink_size = dataset_helper.sink_size()
@@ -349,12 +350,12 @@ class DatasetHelper:
         Return the minimum and maximum data length of dynamic source dataset.
 
         Examples:
-            >>> from mindspore import DatasetHelper
+            >>> import mindspore as ms
             >>>
             >>> train_dataset = create_custom_dataset()
             >>> # config dynamic shape
             >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": [None]})
-            >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
+            >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True)
             >>>
             >>> min_shapes, max_shapes = dataset_helper.dynamic_min_max_shapes()
         """

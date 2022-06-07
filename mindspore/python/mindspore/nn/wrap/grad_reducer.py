@@ -313,17 +313,16 @@ class DistributedGradReducer(Cell):
         >>> # on mindspore.cn and focus on the contents of these three parts: Configuring Distributed Environment
         >>> # Variables, Calling the Collective Communication Library, Running The Script.
         >>> import numpy as np
+        >>> import mindspore as ms
         >>> from mindspore.communication import init
         >>> from mindspore import ops
-        >>> from mindspore import set_context, reset_auto_parallel_context, set_auto_parallel_context, GRAPH_MODE
-        >>> from mindspore import ParallelMode
         >>> from mindspore import Parameter, Tensor
         >>> from mindspore import nn
         >>>
-        >>> set_context(mode=GRAPH_MODE)
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()
-        >>> reset_auto_parallel_context()
-        >>> set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
+        >>> ms.reset_auto_parallel_context()
+        >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.DATA_PARALLEL)
         >>>
         >>> class TrainingWrapper(nn.Cell):
         ...     def __init__(self, network, optimizer, sens=1.0):
@@ -338,7 +337,7 @@ class DistributedGradReducer(Cell):
         ...         self.grad_reducer = None
         ...         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
         ...         self.depend = ops.Depend()
-        ...         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
+        ...         if self.parallel_mode in [ms.ParallelMode.DATA_PARALLEL, ms.ParallelMode.HYBRID_PARALLEL]:
         ...             self.reducer_flag = True
         ...         if self.reducer_flag:
         ...             mean = context.get_auto_parallel_context("gradients_mean")

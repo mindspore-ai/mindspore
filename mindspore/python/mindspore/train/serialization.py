@@ -285,10 +285,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                    and `async_save` are not bool type. If the parameter ckpt_file_name is not string type.
 
     Examples:
-        >>> from mindspore import save_checkpoint
+        >>> import mindspore as ms
         >>>
         >>> net = Net()
-        >>> save_checkpoint(net, "lenet.ckpt")
+        >>> ms.save_checkpoint(net, "lenet.ckpt")
     """
     ckpt_file_name = _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name)
     integrated_save = Validator.check_bool(integrated_save)
@@ -398,13 +398,14 @@ def load(file_name, **kwargs):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, export, load
+        >>> from mindspore import Tensor
         >>>
         >>> net = nn.Conv2d(1, 1, kernel_size=3, weight_init="ones")
         >>> input_tensor = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
-        >>> export(net, input_tensor, file_name="net", file_format="MINDIR")
-        >>> graph = load("net.mindir")
+        >>> ms.export(net, input_tensor, file_name="net", file_format="MINDIR")
+        >>> graph = ms.load("net.mindir")
         >>> net = nn.GraphCell(graph)
         >>> output = net(input_tensor)
         >>> print(output)
@@ -479,10 +480,10 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         TypeError: The type of `specify_prefix` or `filter_prefix` is incorrect.
 
     Examples:
-        >>> from mindspore import load_checkpoint
+        >>> import mindspore as ms
         >>>
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
-        >>> param_dict = load_checkpoint(ckpt_file_name, filter_prefix="conv1", specify_prefix="conv", )
+        >>> param_dict = ms.load_checkpoint(ckpt_file_name, filter_prefix="conv1", specify_prefix="conv", )
         >>> print(param_dict["conv2.weight"])
         Parameter (name=conv2.weight, shape=(16, 6, 5, 5), dtype=Float32, requires_grad=True)
     """
@@ -644,12 +645,12 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         TypeError: Argument is not a Cell, or parameter_dict is not a Parameter dictionary.
 
     Examples:
-        >>> from mindspore import load_checkpoint, load_param_into_net
+        >>> import mindspore as ms
         >>>
         >>> net = Net()
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
-        >>> param_dict = load_checkpoint(ckpt_file_name, filter_prefix="conv1")
-        >>> param_not_load = load_param_into_net(net, param_dict)
+        >>> param_dict = ms.load_checkpoint(ckpt_file_name, filter_prefix="conv1")
+        >>> param_not_load = ms.load_param_into_net(net, param_dict)
         >>> print(param_not_load)
         ['conv1.weight']
     """
@@ -861,12 +862,13 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
               Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
 
     Examples:
+        >>> import mindspore as ms
         >>> import numpy as np
-        >>> from mindspore import export, Tensor
+        >>> from mindspore import Tensor
         >>>
         >>> net = LeNet()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
-        >>> export(net, input_tensor, file_name='lenet', file_format='MINDIR')
+        >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     if check_input_dataset(*inputs, dataset_type=mindspore.dataset.Dataset):
@@ -1231,10 +1233,11 @@ def parse_print(print_file_name):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> from mindspore import nn
-        >>> from mindspore import Tensor, set_context, GRAPH_MODE
-        >>> set_context(mode=GRAPH_MODE, print_file_path='log.data')
+        >>> from mindspore import Tensor
+        >>> ms.set_context(mode=ms.GRAPH_MODE, print_file_path='log.data')
         >>> class PrintInputTensor(nn.Cell):
         ...         def __init__(self):
         ...             super().__init__()
@@ -1508,7 +1511,8 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Tensor, merge_sliced_parameter, Parameter
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor, Parameter
         >>>
         >>> sliced_parameters = [
         ...                      Parameter(Tensor(np.array([0.00023915, 0.00013939, -0.00098059])),
@@ -1519,7 +1523,7 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         ...                                "network.embedding_table"),
         ...                      Parameter(Tensor(np.array([0.00084451, 0.00089960, -0.00010431])),
         ...                                "network.embedding_table")]
-        >>> merged_parameter = merge_sliced_parameter(sliced_parameters)
+        >>> merged_parameter = ms.merge_sliced_parameter(sliced_parameters)
         >>> print(merged_parameter)
         Parameter (name=network.embedding_table, shape=(12,), dtype=Float64, requires_grad=True)
     """

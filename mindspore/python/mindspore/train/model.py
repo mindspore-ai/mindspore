@@ -147,7 +147,8 @@ class Model:
             If you want to config boost mode by yourself, you can set boost_config_dict as `boost.py`.
 
     Examples:
-        >>> from mindspore import Model, nn
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, num_class=10, num_channel=1):
@@ -173,7 +174,7 @@ class Model:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None)
         >>> # For details about how to build the dataset, please refer to the function `create_dataset` in tutorial
         >>> # document on the official website:
         >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
@@ -935,16 +936,18 @@ class Model:
                                  Default: 0.
 
         Examples:
-            >>> from mindspore import Model, nn, FixedLossScaleManager
+            >>> import mindspore as ms
+            >>> from mindspore import nn
             >>>
             >>> # For details about how to build the dataset, please refer to the tutorial
             >>> # document on the official website.
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-            >>> loss_scale_manager = FixedLossScaleManager()
+            >>> loss_scale_manager = ms.FixedLossScaleManager()
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-            >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
+            >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None,
+                                 loss_scale_manager=loss_scale_manager)
             >>> model.train(2, dataset)
         """
         Validator.check_bool(dataset_sink_mode)
@@ -1064,7 +1067,8 @@ class Model:
                                  Default: 0.
 
         Examples:
-            >>> from mindspore import Model, nn, FixedLossScaleManager
+            >>> import mindspore as ms
+            >>> from mindspore import nn
             >>>
             >>> # For details about how to build the dataset, please refer to the tutorial
             >>> # document on the official website.
@@ -1073,7 +1077,7 @@ class Model:
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-            >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics="accuracy")
+            >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics="accuracy")
             >>> model.fit(2, train_dataset, valid_dataset)
         """
 
@@ -1156,16 +1160,18 @@ class Model:
                                             the combine like graph phase.
 
         Examples:
-            >>> from mindspore import Model, nn, FixedLossScaleManager
+            >>> import mindspore as ms
+            >>> from mindspore import nn
             >>>
             >>> # For details about how to build the dataset, please refer to the tutorial
             >>> # document on the official website.
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-            >>> loss_scale_manager = FixedLossScaleManager()
+            >>> loss_scale_manager = ms.FixedLossScaleManager()
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-            >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
+            >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None,
+                                 loss_scale_manager=loss_scale_manager)
             >>> model.build(dataset, epoch=2)
             >>> model.train(2, dataset)
         """
@@ -1305,14 +1311,15 @@ class Model:
             the model in the test mode.
 
         Examples:
-            >>> from mindspore import Model, nn
+            >>> import mindspore as ms
+            >>> from mindspore import nn
             >>>
             >>> # For details about how to build the dataset, please refer to the tutorial
             >>> # document on the official website.
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-            >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
+            >>> model = ms.Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
             >>> acc = model.eval(dataset, dataset_sink_mode=False)
         """
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
@@ -1368,10 +1375,10 @@ class Model:
         Examples:
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> from mindspore import Model, Tensor
+            >>> from mindspore import Tensor
             >>>
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), ms.float32)
-            >>> model = Model(Net())
+            >>> model = ms.Model(Net())
             >>> result = model.predict(input_data)
         """
         self._predict_network.set_train(False)
@@ -1452,22 +1459,22 @@ class Model:
             >>> # mindspore.cn.
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> from mindspore import Model, set_context, Tensor, nn, FixedLossScaleManager, GRAPH_MODE
-            >>> from mindspore import ParallelMode, set_auto_parallel_context
+            >>> from mindspore import Tensor, nn
             >>> from mindspore.communication import init
             >>>
-            >>> set_context(mode=GRAPH_MODE)
+            >>> ms.set_context(mode=ms.GRAPH_MODE)
             >>> init()
-            >>> set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+            >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL)
             >>>
             >>> # For details about how to build the dataset, please refer to the tutorial
             >>> # document on the official website.
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-            >>> loss_scale_manager = FixedLossScaleManager()
+            >>> loss_scale_manager = ms.FixedLossScaleManager()
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-            >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
+            >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None,
+                                 loss_scale_manager=loss_scale_manager)
             >>> layout_dict = model.infer_train_layout(dataset)
         """
         self._infer_train_check(train_dataset, dataset_sink_mode, sink_size)
@@ -1508,15 +1515,14 @@ class Model:
             >>> # mindspore.cn.
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> from mindspore import Model, set_context, Tensor, GRAPH_MODE
-            >>> from mindspore import ParallelMode, set_auto_parallel_context
+            >>> from mindspore import Tensor
             >>> from mindspore.communication import init
             >>>
-            >>> set_context(mode=GRAPH_MODE)
+            >>> ms.set_context(mode=ms.GRAPH_MODE)
             >>> init()
-            >>> set_auto_parallel_context(full_batch=True, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+            >>> ms.set_auto_parallel_context(full_batch=True, parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL)
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), ms.float32)
-            >>> model = Model(Net())
+            >>> model = ms.Model(Net())
             >>> predict_map = model.infer_predict_layout(input_data)
         """
         if context.get_context("mode") != context.GRAPH_MODE:

@@ -33,7 +33,8 @@ class LearningRateScheduler(Callback):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import Model
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>> from mindspore import LearningRateScheduler
         >>> import mindspore.nn as nn
         >>> from mindspore import dataset as ds
@@ -48,7 +49,7 @@ class LearningRateScheduler(Callback):
         >>> net = nn.Dense(10, 5)
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), learning_rate=lr, momentum=momentum)
-        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
         ...
         >>> data = {"x": np.float32(np.random.rand(64, 10)), "y": np.random.randint(0, 5, (64,))}
         >>> dataset = ds.NumpySlicesDataset(data=data).batch(32)

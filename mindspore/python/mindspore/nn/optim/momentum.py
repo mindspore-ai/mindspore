@@ -165,7 +165,8 @@ class Momentum(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import nn, Model
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
@@ -185,7 +186,7 @@ class Momentum(Optimizer):
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     @opt_init_args_register
     def __init__(self, params, learning_rate, momentum, weight_decay=0.0, loss_scale=1.0, use_nesterov=False):

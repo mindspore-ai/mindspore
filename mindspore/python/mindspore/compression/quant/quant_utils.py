@@ -361,7 +361,7 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
             nor in `quant_new_params`.
 
     Examples:
-        >>> from mindspore import load_checkpoint
+        >>> import mindspore as ms
         >>> from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net
         >>> class LeNet5(nn.Cell):
         ...     def __init__(self, num_class=10, channel=1):
@@ -393,7 +393,7 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
         ...
         >>> net = LeNet5()
         >>> ckpt_file_name = "./checkpoint/LeNet5_noquant-1_32.ckpt"
-        >>> param_dict = load_checkpoint(ckpt_file_name)
+        >>> param_dict = ms.load_checkpoint(ckpt_file_name)
         >>> load_nonquant_param_into_quant_net(net, param_dict)
     """
     if quant_new_params is not None and not isinstance(quant_new_params, list):

@@ -104,8 +104,8 @@ class CheckpointConfig:
         ValueError: If input parameter is not the correct type.
 
     Examples:
-        >>> from mindspore import Model, nn
-        >>> from mindspore import ModelCheckpoint, CheckpointConfig
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>> from mindspore.common.initializer import Normal
         >>>
         >>> class LeNet5(nn.Cell):
@@ -132,11 +132,11 @@ class CheckpointConfig:
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
         >>> optim = nn.Momentum(net.trainable_params(), 0.01, 0.9)
-        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
         >>> data_path = './MNIST_Data'
         >>> dataset = create_dataset(data_path)
-        >>> config = CheckpointConfig(saved_network=net)
-        >>> ckpoint_cb = ModelCheckpoint(prefix='LeNet5', directory='./checkpoint', config=config)
+        >>> config = ms.CheckpointConfig(saved_network=net)
+        >>> ckpoint_cb = ms.ModelCheckpoint(prefix='LeNet5', directory='./checkpoint', config=config)
         >>> model.train(10, dataset, callbacks=ckpoint_cb)
     """
 

@@ -44,8 +44,7 @@ class SparseToDense(Cell):
         >>> import mindspore as ms
         >>> from mindspore import Tensor, COOTensor
         >>> import mindspore.nn as nn
-        >>> from mindspore import set_context, PYNATIVE_MODE
-        >>> set_context(mode=PYNATIVE_MODE)
+        >>> ms.set_context(mode=ms.PYNATIVE_MODE)
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.int32)
         >>> dense_shape = (3, 4)

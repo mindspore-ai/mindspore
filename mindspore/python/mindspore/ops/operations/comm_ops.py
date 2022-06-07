@@ -213,12 +213,13 @@ class AllGather(PrimitiveWithInfer):
     Examples:
         >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn
         >>> import numpy as np
+        >>> import mindspore as ms
         >>> import mindspore.ops as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
-        >>> from mindspore import Tensor, set_context, GRAPH_MODE
+        >>> from mindspore import Tensor
         >>>
-        >>> set_context(mode=GRAPH_MODE)
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -412,14 +413,15 @@ class ReduceScatter(PrimitiveWithInfer):
 
     Examples:
         >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn
-        >>> from mindspore import Tensor, set_context, GRAPH_MODE
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor
         >>> from mindspore.communication import init
         >>> from mindspore.ops import ReduceOp
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
         >>> import numpy as np
         >>>
-        >>> set_context(mode=GRAPH_MODE)
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -555,14 +557,14 @@ class Broadcast(PrimitiveWithInfer):
         >>> # Please refer to the Programming Guide > Distributed Training -> Distributed Parallel Usage Example
         >>> # on mindspore.cn and focus on the contents of these three parts: Configuring Distributed Environment
         >>> # Variables, Calling the Collective Communication Library, Running The Script.
+        >>> import mindspore as ms
         >>> from mindspore import Tensor
-        >>> from mindspore import set_context, GRAPH_MODE
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
         >>> import numpy as np
         >>>
-        >>> set_context(mode=GRAPH_MODE)
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> init()
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -689,7 +691,6 @@ class NeighborExchange(Primitive):
         >>> import os
         >>> import mindspore as ms
         >>> from mindspore import Tensor
-        >>> from mindspore import set_context, GRAPH_MODE
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
@@ -705,7 +706,7 @@ class NeighborExchange(Primitive):
         ...     def construct(self, x):
         ...         out = self.neighborexchange((x,))
         ...
-        >>> set_context(mode=GRAPH_MODE, device_target='Ascend')
+        >>> ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
         >>> init()
         >>> net = Net()
         >>> input_x = Tensor(np.ones([3, 3]), dtype = ms.float32)
@@ -766,7 +767,6 @@ class AlltoAll(PrimitiveWithInfer):
         >>> import os
         >>> import mindspore as ms
         >>> from mindspore import Tensor
-        >>> from mindspore import set_context, GRAPH_MODE
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
@@ -780,7 +780,7 @@ class AlltoAll(PrimitiveWithInfer):
         ...         out = self.alltoall(x)
         ...         return out
         ...
-        >>> set_context(mode=GRAPH_MODE, device_target='Ascend')
+        >>> ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
         >>> init()
         >>> net = Net()
         >>> rank_id = int(os.getenv("RANK_ID"))
@@ -860,7 +860,6 @@ class NeighborExchangeV2(Primitive):
         >>> import os
         >>> import mindspore as ms
         >>> from mindspore import Tensor
-        >>> from mindspore import set_context, GRAPH_MODE
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
@@ -878,7 +877,7 @@ class NeighborExchangeV2(Primitive):
         ...         out = self.neighborexchangev2(x)
         ...         return out
         ...
-        >>> set_context(mode=GRAPH_MODE, device_target='Ascend')
+        >>> ms.set_context(mode=ms.GRAPH_MODE, device_target='Ascend')
         >>> init()
         >>> input_x = Tensor(np.ones([1, 1, 2, 2]), dtype = ms.float32)
         >>> net = Net()
