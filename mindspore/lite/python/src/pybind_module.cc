@@ -18,14 +18,18 @@
 namespace mindspore::lite {
 namespace py = pybind11;
 
-void ModelPyBind(const py::module &m);
 void ContextPyBind(const py::module &m);
+void ConverterPyBind(const py::module &m);
+void ModelPyBind(const py::module &m);
 void TensorPyBind(const py::module &m);
 
 PYBIND11_MODULE(_c_lite_wrapper, m) {
   m.doc() = "MindSpore Lite";
-  ModelPyBind(m);
   ContextPyBind(m);
+#ifdef ENABLE_CONVERTER
+  ConverterPyBind(m);
+#endif
+  ModelPyBind(m);
   TensorPyBind(m);
 }
 }  // namespace mindspore::lite

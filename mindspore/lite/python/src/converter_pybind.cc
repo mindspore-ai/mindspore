@@ -54,12 +54,12 @@ void ConverterPyBind(const py::module &m) {
     .def("get_enable_encryption", &Converter::GetEnableEncryption)
     .def("set_encrypt_key", &Converter::SetEncryptKey)
     .def("get_encrypt_key", &Converter::GetEncryptKey)
-    .def("set_pre_infer", &Converter::SetInfer)
-    .def("get_pre_infer", &Converter::GetInfer)
+    .def("set_infer", &Converter::SetInfer)
+    .def("get_infer", &Converter::GetInfer)
     .def("set_train_model", &Converter::SetTrainModel)
     .def("get_train_model", &Converter::GetTrainModel)
     .def("set_no_fusion", &Converter::SetNoFusion)
     .def("get_no_fusion", &Converter::GetNoFusion)
-    .def("converter", &Converter::Convert);
+    .def("converter", py::overload_cast<>(&Converter::Convert));
 }
 }  // namespace mindspore::lite

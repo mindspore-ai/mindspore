@@ -28,7 +28,15 @@ if(Python3_FOUND)
       target_link_libraries(_c_lite_wrapper PRIVATE mindspore::glog)
     endif()
     if(MSLITE_ENABLE_CONVERTER)
-      target_link_libraries(_c_lite_wrapper PRIVATE mindspore_converter)
+      target_link_libraries(_c_lite_wrapper PRIVATE
+              -Wl,-no-as-need
+              mindspore_core
+              mslite_converter_plugin
+              mindspore::opencv_core
+              mindspore::opencv_imgcodecs
+              mindspore::opencv_imgproc
+              mindspore_converter
+              )
     endif()
   else()
     message(WARNING "NumPy not found, so Python API will not be compiled.")

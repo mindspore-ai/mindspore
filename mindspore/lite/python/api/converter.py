@@ -15,8 +15,13 @@
 """
 Converter API.
 """
+
+import os
 from enum import Enum
+
+from ._checkparam import check_isinstance, check_input_shape
 from .lib import _c_lite_wrapper
+from .tensor import DataType, Format, data_type_py_cxx_map, data_type_cxx_py_map, format_py_cxx_map, format_cxx_py_map
 
 __all__ = ['FmkType', 'Converter']
 
@@ -25,12 +30,12 @@ class FmkType(Enum):
     """
     The FmkType is used to define Input model framework type.
     """
-    kFmkTypeTf = 0
-    kFmkTypeCaffe = 1
-    kFmkTypeOnnx = 2
-    kFmkTypeMs = 3
-    kFmkTypeTflite = 4
-    kFmkTypePytorch = 5
+    TF = 0
+    CAFFE = 1
+    ONNX = 2
+    MINDIR = 3
+    TFLITE = 4
+    PYTORCH = 5
 
 
 class Converter:
@@ -38,70 +43,159 @@ class Converter:
     Converter is used to convert third-party models.
 
     Args:
-        fmk_type(Enum): Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX.
-        model_file (str): Input model file.
-                          TF: *.pb | TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx.
-        output_file (list): Output model file path. Will add .ms automatically.
-        weight_file (str, optional): Input model weight file. Needed when fmk is CAFFE. CAFFE: *.caffemodel,
+        fmk_type (FmkType): Input model framework type. Options: FmkType.TF | FmkType.CAFFE | FmkType.ONNX |
+            FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH.
+        model_file (str): Input model file. e.g. "/home/user/model.prototxt". Options:
+            TF: *.pb | CAFFE: *.prototxt | ONNX: *.onnx | MINDIR: *.mindir | TFLITE: *.tflite | PYTORCH *.pt or *.pth.
+        output_file (str): Output model file path. Will add .ms automatically.
+            e.g. "/home/user/model.prototxt", it will generate the model named model.prototxt.ms in /home/user/
+        weight_file (str, optional): Input model weight file. Needed only when fmk_type is CAFFE, default: "".
+            e.g. "/home/user/model.caffemodel".
         config_file (str, optional): Configuration for post-training, offline split op to parallel,
-                                     disable op fusion ability and set plugin so path.
-        weight_fp16 (list, optional): Serialize const tensor in Float16 data type,
-                                      only effective for const tensor in Float32 data type. on | off.
-        input_shape (list, optional): Set the dimension of the model input,
-                                      the order of input dimensions is consistent with the original model.
-                                      For some models, the model structure can be further optimized,
-                                      but the transformed model may lose the characteristics of dynamic shape.
-                                      e.g. inTensor1:1,32,32,32;inTensor2:1,1,32,32,4.
-        input_format (str, optional): Assign the input format of exported model. Only Valid for 4-dimensional input.
-                                      NHWC | NCHW", "NHWC.
-        input_data_type (str, optional): Data type of input tensors, default is same with the type defined in model.
-                                         FLOAT | INT8 | UINT8 | DEFAULT.
-        output_data_type (str, optional): Data type of output and output tensors,
-                                          default is same with the type defined in model. FLOAT | INT8.
-        export_mindir (str, optional): Whether to export MindIR pb.
+            disable op fusion ability and set plugin so path e.g. "/home/user/model.cfg", default: "".
+        weight_fp16 (bool, optional): Serialize const tensor in Float16 data type,
+            only effective for const tensor in Float32 data type. True | False, default: False.
+        input_shape (dict{string:list[int]}, optional): Set the dimension of the model input,
+            the order of input dimensions is consistent with the original model. For some models, the model structure
+            can be further optimized, but the transformed model may lose the characteristics of dynamic shape.
+            e.g. {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}, default: {}.
+        input_format (Format, optional): Assign the input format of exported model. Only Valid for 4-dimensional input.
+            Options: Format.NHWC | Format.NCHW, default: Format.NHWC.
+        input_data_type (DataType, optional): Data type of input tensors, default is same with the type defined in
+            model, default: DataType.FLOAT32.
+        output_data_type (DataType, optional): Data type of output and output tensors,
+            default is same with the type defined in model, default: DataType.FLOAT32.
+        export_mindir (bool, optional): Whether to export MindIR pb. True | False, default: False.
         decrypt_key (str, optional): The key used to decrypt the file, expressed in hexadecimal characters.
-                                     Only valid when fmkIn is 'MINDIR'.
+            Only valid when fmk_type is MINDIR, default: "".
         decrypt_mode (str, optional): Decryption method for the MindIR file. Only valid when dec_key is set.
-                                      AES-GCM | AES-CBC, default: AES-GCM.
-        enable_encryption (str, optional): Whether to export the encryption model.
+            "AES-GCM" | "AES-CBC", default: "AES-GCM".
+        enable_encryption (str, optional): Whether to export the encryption model. True | False, default: False.
         encrypt_key (str, optional): The key used to encrypt the file, expressed in hexadecimal characters.
-                                     Only support AES-GCM and the key length is 16.
-        pre_infer (str, optional): Whether to do pre-inference after convert.
-        train_model (str, optional): whether the model is going to be trained on device. true | false. default: false.
-        no_fusion(bool, optional): Avoid fusion optimization true|false, default: false.
+            Only support AES-GCM and the key length is 16, default: "".
+        infer (bool, optional): Whether to do pre-inference after convert. True | False, default: False.
+        train_model (bool, optional): whether the model is going to be trained on device. True | False, default: False.
+        no_fusion(bool, optional): Avoid fusion optimization. True | False, default: False.
+
+    Raises:
+        TypeError: type of input parameters are invalid.
+        ValueError: value of input parameters are invalid.
+        RuntimeError: file path does not exist
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "mobilenetv2.tflite", "mobilenetv2.tflite")
+        >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "mobilenetv2.tflite", "mobilenetv2.tflite")
+        >>> print(converter)
+        config_file: , weight_fp16: False, input_shape: {}, input_format: Format.NHWC, \
+        input_data_type: DataType.FLOAT32, output_data_type: DataType.FLOAT32, export_mindir: False, decrypt_key: , \
+        decrypt_mode: , enable_encryption: False, encrypt_key: , infer: False, train_model: False, no_fusion: False.
     """
 
-    def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file=None, weight_fp16=None,
-                 input_shape=None, input_format=None, input_data_type=None, output_data_type=None, export_mindir=None,
-                 decrypt_key=None, decrypt_mode=None, enable_encryption=None, encrypt_key=None,
-                 pre_infer=None, train_model=None, no_fusion=None):
-        self._converter = _c_lite_wrapper.ConverterBind()
+    def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False,
+                 input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32,
+                 output_data_type=DataType.FLOAT32, export_mindir=False,
+                 decrypt_key="", decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="",
+                 infer=False, train_model=False, no_fusion=False):
+        check_isinstance("fmk_type", fmk_type, FmkType)
+        check_isinstance("model_file", model_file, str)
+        check_isinstance("output_file", output_file, str)
+        check_isinstance("weight_file", weight_file, str)
+        check_isinstance("config_file", config_file, str)
+        check_isinstance("weight_fp16", weight_fp16, bool)
+        check_input_shape("input_shape", input_shape, enable_none=True)
+        check_isinstance("input_format", input_format, Format)
+        check_isinstance("input_data_type", input_data_type, DataType)
+        check_isinstance("output_data_type", output_data_type, DataType)
+        check_isinstance("export_mindir", export_mindir, bool)
+        check_isinstance("decrypt_key", decrypt_key, str)
+        check_isinstance("decrypt_mode", decrypt_mode, str)
+        check_isinstance("enable_encryption", enable_encryption, bool)
+        check_isinstance("encrypt_key", encrypt_key, str)
+        check_isinstance("infer", infer, bool)
+        check_isinstance("train_model", train_model, bool)
+        check_isinstance("no_fusion", no_fusion, bool)
+        if not os.path.exists(model_file):
+            raise RuntimeError(f"Converter's init failed, model_file does not exist!")
+        if weight_file != "":
+            if not os.path.exists(weight_file):
+                raise RuntimeError(f"Converter's init failed, weight_file does not exist!")
+        if config_file != "":
+            if not os.path.exists(config_file):
+                raise RuntimeError(f"Converter's init failed, config_file does not exist!")
+        if input_format not in [Format.NCHW, Format.NHWC]:
+            raise ValueError(f"Converter's init failed, input_format must be NCHW or NHWC.")
+        if decrypt_mode not in ["AES-GCM", "AES-CBC"]:
+            raise ValueError(f"Converter's init failed, decrypt_mode must be AES-GCM or AES-CBC.")
+        input_shape_ = {} if input_shape is None else input_shape
+
+        fmk_type_py_cxx_map = {
+            FmkType.TF: _c_lite_wrapper.FmkType.kFmkTypeTf,
+            FmkType.CAFFE: _c_lite_wrapper.FmkType.kFmkTypeCaffe,
+            FmkType.ONNX: _c_lite_wrapper.FmkType.kFmkTypeOnnx,
+            FmkType.MINDIR: _c_lite_wrapper.FmkType.kFmkTypeMs,
+            FmkType.TFLITE: _c_lite_wrapper.FmkType.kFmkTypeTflite,
+            FmkType.PYTORCH: _c_lite_wrapper.FmkType.kFmkTypePytorch,
+        }
+        self._converter = _c_lite_wrapper.ConverterBind(fmk_type_py_cxx_map.get(fmk_type), model_file, output_file,
+                                                        weight_file)
+        if config_file != "":
+            self._converter.set_config_file(config_file)
+        if weight_fp16:
+            self._converter.set_weight_fp16(weight_fp16)
+        if input_shape is not None:
+            self._converter.set_input_shape(input_shape_)
+        if input_format != Format.NHWC:
+            self._converter.set_input_format(format_py_cxx_map.get(input_format))
+        if input_data_type != DataType.FLOAT32:
+            self._converter.set_input_data_type(data_type_py_cxx_map.get(input_data_type))
+        if output_data_type != DataType.FLOAT32:
+            self._converter.set_output_data_type(data_type_py_cxx_map.get(output_data_type))
+        if export_mindir:
+            self._converter.set_export_mindir(export_mindir)
+        if decrypt_key != "":
+            self._converter.set_decrypt_key(decrypt_key)
+        if decrypt_mode != "AES-GCM":
+            self._converter.set_decrypt_mode(decrypt_mode)
+        if enable_encryption:
+            self._converter.set_enable_encryption(enable_encryption)
+        if encrypt_key != "":
+            self._converter.set_encrypt_key(encrypt_key)
+        if infer:
+            self._converter.set_infer(infer)
+        if train_model:
+            self._converter.set_train_model(train_model)
+        if no_fusion:
+            self._converter.set_no_fusion(no_fusion)
 
     def __str__(self):
-        res = f"config_file: {self._context.get_config_file()}, " \
-              f"weight_fp16: {self._context.get_weight_fp16()}, " \
-              f"input_shape: {self._context.get_input_shape()}, " \
-              f"input_format: {self._context.get_input_format()}, " \
-              f"input_data_type: {self._context.get_input_data_type()}, " \
-              f"output_data_type: {self._context.get_output_data_type()}, " \
-              f"export_mindir: {self._context.get_export_mindir()}, " \
-              f"decrypt_key: {self._context.get_decrypt_key()}, " \
-              f"decrypt_mode: {self._context.get_decrypt_mode()}, " \
-              f"enable_encryption: {self._context.get_enable_encryption()}, " \
-              f"encrypt_key: {self._context.get_encrypt_key()}, " \
-              f"pre_infer: {self._context.get_pre_infer()}, " \
-              f"train_model: {self._context.get_train_model()}, " \
-              f"no_fusion: {self._context.get_no_fusion()}."
+        res = f"config_file: {self._converter.get_config_file()}, " \
+              f"weight_fp16: {self._converter.get_weight_fp16()}, " \
+              f"input_shape: {self._converter.get_input_shape()}, " \
+              f"input_format: {format_cxx_py_map.get(self._converter.get_input_format())}, " \
+              f"input_data_type: {data_type_cxx_py_map.get(self._converter.get_input_data_type())}, " \
+              f"output_data_type: {data_type_cxx_py_map.get(self._converter.get_output_data_type())}, " \
+              f"export_mindir: {self._converter.get_export_mindir()}, " \
+              f"decrypt_key: {self._converter.get_decrypt_key()}, " \
+              f"decrypt_mode: {self._converter.get_decrypt_mode()}, " \
+              f"enable_encryption: {self._converter.get_enable_encryption()}, " \
+              f"encrypt_key: {self._converter.get_encrypt_key()}, " \
+              f"infer: {self._converter.get_infer()}, " \
+              f"train_model: {self._converter.get_train_model()}, " \
+              f"no_fusion: {self._converter.get_no_fusion()}."
         return res
 
     def converter(self):
         """
-        Converter is used to convert third-party models.
+        Converter is used to convert a third-party model to a MindSpore model.
+
+        Raises:
+            RuntimeError: converter model failed.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "mobilenetv2.tflite", "mobilenetv2.tflite")
+            >>> converter.converter()
         """
-        ret = self._converter.converter
+        ret = self._converter.converter()
         if not ret.IsOk():
-            raise RuntimeError(f"build_from_file failed! Error is {ret.ToString()}")
+            raise RuntimeError(f"Converter model failed! Error is {ret.ToString()}")
