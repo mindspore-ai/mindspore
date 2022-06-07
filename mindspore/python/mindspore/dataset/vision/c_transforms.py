@@ -2504,16 +2504,6 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
 
     Supported Platforms:
         ``CPU``
-
-    Examples:
-        >>> # decode, randomly crop and resize image, keeping aspect ratio
-        >>> transforms_list1 = [c_vision.SoftDvppDecodeRandomCropResizeJpeg(90)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
-        ...                                                 input_columns=["image"])
-        >>> # decode, randomly crop and resize to landscape style
-        >>> transforms_list2 = [c_vision.SoftDvppDecodeRandomCropResizeJpeg((80, 100))]
-        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
-        ...                                                     input_columns=["image"])
     """
 
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.), max_attempts=10):
@@ -2553,16 +2543,6 @@ class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
 
     Supported Platforms:
         ``CPU``
-
-    Examples:
-        >>> # decode and resize image, keeping aspect ratio
-        >>> transforms_list1 = [c_vision.SoftDvppDecodeResizeJpeg(70)]
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list1,
-        ...                                                 input_columns=["image"])
-        >>> # decode and resize to portrait style
-        >>> transforms_list2 = [c_vision.SoftDvppDecodeResizeJpeg((80, 60))]
-        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list2,
-        ...                                                     input_columns=["image"])
     """
 
     def __init__(self, size):
