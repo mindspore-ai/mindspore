@@ -31,6 +31,7 @@ using mindspore::schema::PrimitiveType_ReduceFusion;
 using mindspore::schema::ReduceMode;
 using mindspore::schema::ReduceMode_ReduceAll;
 using mindspore::schema::ReduceMode_ReduceASum;
+using mindspore::schema::ReduceMode_ReduceL2;
 using mindspore::schema::ReduceMode_ReduceMax;
 using mindspore::schema::ReduceMode_ReduceMean;
 using mindspore::schema::ReduceMode_ReduceMin;
@@ -219,7 +220,8 @@ void ReduceCPUKernel::InitialKernelList() {
                                   {ReduceMode_ReduceProd, ReduceProd, IntReduceProd, nullptr},
                                   {ReduceMode_ReduceSumSquare, ReduceSum, IntReduceSum, nullptr},
                                   {ReduceMode_ReduceASum, ReduceSum, IntReduceSum, nullptr},
-                                  {ReduceMode_ReduceAll, nullptr, nullptr, ReduceAll}};
+                                  {ReduceMode_ReduceAll, nullptr, nullptr, ReduceAll},
+                                  {ReduceMode_ReduceL2, ReduceL2Norm, nullptr, nullptr}};
   size_t list_len = sizeof(func_list) / sizeof(ReduceKernelList);
   for (size_t i = 0; i < list_len; ++i) {
     if (mode_ == func_list[i].type_) {

@@ -45,6 +45,8 @@ int IntReduceProd(int outer_size, int inner_size, int axis_size, const int *src_
                   int thread_num);
 int ReduceSumSquare(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
                     int thread_num);
+int ReduceL2Norm(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+                 int thread_num);
 int ReduceAll(int outer_size, int inner_size, int axis_size, const bool *src_data, bool *dst_data, int tid,
               int thread_num);
 int ReduceSumDim2Axis0(size_t col_size, size_t col_len, size_t row_len, const float *src_data, float *dst_data);

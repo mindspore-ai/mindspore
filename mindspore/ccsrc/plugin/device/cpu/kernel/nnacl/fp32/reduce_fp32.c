@@ -103,6 +103,12 @@ RegReduceOp(ReduceProd, float);
 #define ReduceSumSquarePostDeal outer_dst[k] = tmp;
 RegReduceOp(ReduceSumSquare, float);
 
+// ReduceL2Norm
+#define ReduceL2NormPreDeal float tmp = 0;
+#define ReduceL2NormMidCalc tmp += (inner_src[i * inner_size] * inner_src[i * inner_size]);
+#define ReduceL2NormPostDeal outer_dst[k] = sqrt(tmp);
+RegReduceOp(ReduceL2Norm, float);
+
 // IntReduceSum
 #define IntReduceSumPreDeal int tmp = 0;
 #define IntReduceSumMidCalc tmp += inner_src[i * inner_size];

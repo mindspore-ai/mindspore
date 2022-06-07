@@ -258,6 +258,7 @@
 #define MS_MIN32_EPI32(value1, value2) ((value1) < (value2) ? (value1) : (value2))
 #define MS_MAX32_F32(value1, value2) (fmax((value1), (value2)))
 #define MS_MAX32_EPI32(value1, value2) ((value1) > (value2) ? (value1) : (value2))
+#define MS_SQRT32_F32(value) (sqrt(value))
 
 static inline float simd_exp32_f32(float data) {
   typedef union {
