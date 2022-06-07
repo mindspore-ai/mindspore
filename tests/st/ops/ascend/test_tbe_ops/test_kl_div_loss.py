@@ -117,8 +117,8 @@ def test_kl_div_loss_vmap(reduction):
         return F.stack(output)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    x = Tensor(np.random.rand(16, 16, 16).astype(np.float32))
-    target = Tensor(np.random.rand(16, 16, 16).astype(np.float32))
+    x = Tensor(np.random.rand(4, 4, 4).astype(np.float32))
+    target = Tensor(np.random.rand(4, 4, 4).astype(np.float32))
 
     vmap_kl_div_loss = vmap(
         vmap(cal_kl_div_loss, in_axes=(1, 1), out_axes=0),
