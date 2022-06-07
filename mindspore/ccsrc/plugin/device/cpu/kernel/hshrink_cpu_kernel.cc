@@ -18,13 +18,18 @@
 #include <algorithm>
 #include "mindspore/core/ops/hshrink.h"
 #include "plugin/factory/ms_factory.h"
+#include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kHShrinkInputsNum = 1;
 constexpr size_t kHShrinkOutputsNum = 1;
+
+const std::vector<KernelAttr> kernel_attr = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}};
 }  // namespace
+
 bool HShrinkCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
@@ -41,46 +46,42 @@ bool HShrinkCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   }
   lambd_ = kernel_ptr->get_lambd();
 
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  auto input_type_id = inputs[0]->GetDtype();
+  if (input_type_id != kNumberTypeFloat32) {
+    MS_LOG(ERROR) << "HShrink kernel does not support " << TypeIdToString(input_type_id);
     return false;
   }
-
+  unit_size_ = sizeof(float);
   return true;
 }
 
-template <typename T>
-bool HShrinkCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
+int HShrinkCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
+    return ret;
+  }
+  input_elements_ = input_size_list_[0] / unit_size_;
+  return KRET_OK;
+}
+
+bool HShrinkCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                 const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kHShrinkInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kHShrinkOutputsNum, kernel_name_);
-  auto *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto *input = reinterpret_cast<float *>(inputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
+  auto *output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
-  size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
-  const float &lambd = this->lambd_;
-  auto task = [input, output, &lambd](size_t start, size_t end) {
-    const T positive_lambd = static_cast<T>(lambd);
-    const T negative_lambd = static_cast<T>(-1 * lambd);
-    const T zero = static_cast<T>(0);
-    for (size_t i = start; i < end; i++) {
-      output[i] = (input[i] >= negative_lambd && input[i] <= positive_lambd) ? zero : input[i];
-    }
-  };
-  ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
+  auto task = [input, output, this](size_t start, size_t end) { HShrink(input, (end - start), output, this->lambd_); };
+  ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
   return true;
 }
 
-const std::vector<std::pair<KernelAttr, HShrinkCpuKernelMod::KernelRunFunc>> &HShrinkCpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, HShrinkCpuKernelMod::KernelRunFunc>> func_list = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     &HShrinkCpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-     &HShrinkCpuKernelMod::LaunchKernel<float16>},
-  };
-  return func_list;
-}
+std::vector<KernelAttr> HShrinkCpuKernelMod::GetOpSupport() { return kernel_attr; }
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, HShrink, HShrinkCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

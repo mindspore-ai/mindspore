@@ -94,6 +94,7 @@
 #define MS_BLEND128_EPI32(src1, src2, src3) _mm_blendv_epi8(src1, src2, src3)
 #define MS_CAST_F32_S32(src) _mm_castsi128_ps(src)
 #define MS_DIV128_EPI32(src1, src2) _mm_cvttps_epi32(MS_DIV128_F32(_mm_cvtepi32_ps(src1), _mm_cvtepi32_ps(src2)))
+#define MS_AND128_MASK(src1, src2) _mm_and_ps(src1, src2)
 
 #ifdef ENABLE_AVX  // only enable sse, dont support fma instruction.
 #define MS_FMADD128_F32(src1, src2, src3) _mm_fmadd_ps(src1, src2, src3)

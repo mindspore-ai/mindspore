@@ -74,6 +74,7 @@
 #define MS_BLEND256_F32(src1, src2, src3) _mm256_blendv_ps(src1, src2, src3)
 #define MS_BLEND256_EPI32(src1, src2, src3) _mm256_blendv_epi8(src1, src2, src3)
 #define MS_CAST256_F32_S32(src) _mm256_castsi256_ps(src)
+#define MS_AND256_MASK(src1, src2) _mm256_and_ps(src1, src2)
 
 static inline float MS_GET_MAX256_F32(__m256 src) {
   float result = MS_F32X8_GETI(src, 0);

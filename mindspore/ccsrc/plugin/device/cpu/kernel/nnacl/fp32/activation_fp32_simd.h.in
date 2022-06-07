@@ -158,6 +158,17 @@ static inline int Celu@SIMD_INSTRUCTION@(int index, const float *src, int length
     return index;
 }
 
+static inline int HShrink@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst, float lambd) {
+    const float neg_lambd = -1 * lambd;
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 src_tmp = SIMD_LD_F32(src + index);
+        SIMD_MASK mask0 = SIMD_CMPLE_F32(src_tmp, SIMD_MOV_F32(lambd));
+        SIMD_MASK mask1 = SIMD_CMPLE_F32(SIMD_MOV_F32(neg_lambd), src_tmp);
+        SIMD_MASK mask = SIMD_AND_MASK(mask0, mask1);
+        SIMD_ST_F32(dst + index, SIMD_BLEND_F32(src_tmp, SIMD_MOV_F32(0.0f), mask));
+    }
+    return index;
+}
 @SIMD_INSTRUCTION_END@
 #ifdef __cplusplus
 }

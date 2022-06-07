@@ -86,6 +86,7 @@
 #define MS_GET_MAX512_F32(src) _mm512_reduce_max_ps(src)
 #define MS_GET_MIN512_F32(src) _mm512_reduce_min_ps(src)
 #define MS_GET_SUM512_F32(src) _mm512_reduce_add_ps(src)
+#define MS_AND512_MASK(src1, src2) _mm512_kand(src1, src2)
 
 #define MS_DIV512_EPI32(src1, src2) \
   _mm512_cvttps_epi32(MS_DIV512_F32(_mm512_cvtepi32_ps(src1), _mm512_cvtepi32_ps(src2)))

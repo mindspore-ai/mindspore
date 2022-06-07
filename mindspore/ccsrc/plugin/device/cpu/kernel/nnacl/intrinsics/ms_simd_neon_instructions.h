@@ -94,6 +94,7 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #define MS_BLEND128_F32(src1, src2, src3) vbslq_f32(src3, src2, src1)
 #define MS_BLEND128_EPI32(src1, src2, src3) vbslq_s32(src3, src2, src1)
 #define MS_CAST_F32_S32(src) vreinterpretq_f32_s32(src)
+#define MS_AND128_MASK(src1, src2) vandq_u32(src1, src2)
 
 #ifdef ENABLE_ARM64
 #define MS_GET_MAX128_F32 vmaxvq_f32
