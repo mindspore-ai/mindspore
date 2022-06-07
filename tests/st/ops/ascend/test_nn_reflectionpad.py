@@ -37,7 +37,8 @@ class Net2d(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_ascend
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_reflection_pad_1d():
     """
@@ -80,7 +81,8 @@ def test_reflection_pad_1d():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_ascend
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_reflection_pad_2d():
     r"""
