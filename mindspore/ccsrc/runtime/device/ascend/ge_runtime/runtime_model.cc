@@ -93,15 +93,19 @@ void RuntimeModel::InitStream(const std::shared_ptr<DavinciModel> &davinci_model
   }
 }
 
-void RuntimeModel::InitEvent(uint32_t event_num) {
+void RuntimeModel::InitEvent(uint32_t event_num, rtStream_t model_stream) {
   MS_LOG(INFO) << "Event number: " << event_num;
   for (uint32_t i = 0; i < event_num; ++i) {
     rtEvent_t rt_event;
-    rtError_t rt_ret = rtEventCreate(&rt_event);
+    rtError_t rt_ret = rtEventCreateWithFlag(&rt_event, RT_EVENT_DDSYNC_NS);
     if (rt_ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rt api rtEventCreate failed, ret: " << rt_ret;
     }
     event_list_.push_back(rt_event);
+    rt_ret = rtEventReset(rt_event, model_stream);
+    if (rt_ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Call rt api rtEventReset failed, ret: " << rt_ret;
+    }
   }
 }
 
@@ -147,7 +151,7 @@ void RuntimeModel::InitResource(const std::shared_ptr<DavinciModel> &davinci_mod
   MS_LOG(INFO) << "rtStreamCreate end";
 
   InitStream(davinci_model);
-  InitEvent(davinci_model->GetEventNum());
+  InitEvent(davinci_model->GetEventNum(), rt_model_stream_);
   InitLabel(davinci_model);
 
   MS_LOG(INFO) << "InitResource success";
