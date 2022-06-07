@@ -344,7 +344,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   std::vector<uint32_t> GetAllReduceSplitIndex();
   virtual std::string GetCommWorldGroup() { return std::string(); }
   void DumpGraphs(const std::vector<KernelGraphPtr> &graphs);
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   void CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const;
   void GetBatchElements(const AnfNodePtr &kernel_node) const;
   void InitPsWorker(const KernelGraphPtr &kernel_graph);

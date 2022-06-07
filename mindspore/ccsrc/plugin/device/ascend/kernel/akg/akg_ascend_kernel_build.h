@@ -23,6 +23,7 @@
 #include <map>
 #include "ir/anf.h"
 #include "kernel/akg/akg_kernel_build.h"
+#include "kernel/akg/akg_kernel_build_manager.h"
 
 namespace mindspore {
 namespace kernel {
@@ -39,6 +40,8 @@ class AkgAscendKernelBuilder : public AkgKernelBuilder {
                        const AnfNodePtr &anf_node) override;
   void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
 };
+
+REG_AKG_KERNEL_BUILDER(kAscendDevice, AkgAscendKernelBuilder);
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -150,7 +150,7 @@ void IntHandler(int, siginfo_t *, void *) {
 }
 #endif
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
 bool SendFinishTransform(const std::string &actor_set_name) {
   auto node = ClusterContext::instance()->node();
   MS_EXCEPTION_IF_NULL(node);
@@ -479,7 +479,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   Optimize(actor_set);
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   if (ClusterContext::instance()->initialized() && RecoveryContext::GetInstance()->enable_recovery()) {
     while (!SendFinishTransform(graph_compiler_info.name_)) {
       MS_LOG(WARNING) << "Send finish transform graph failed.";
@@ -570,7 +570,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   const size_t kSecondsToMilliseconds = 1000;
   SetActorExecutionStrategy(actor_set, strategy, (end_time - start_time) * kSecondsToMilliseconds);
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   DoDisasterRecovery(actor_set->name_);
 #endif
 }

@@ -239,7 +239,7 @@ void DumpInit(uint32_t device_id) {
   json_parser.CopyHcclJsonToDir(device_id);
   json_parser.CopyMSCfgJsonToDir(device_id);
   if (json_parser.async_dump_enabled()) {
-#ifdef ENABLE_D
+#if !(defined(ENABLE_TEST) || defined(ENABLE_TESTCASES))
     // register callback to adx
     if (json_parser.FileFormatIsNpy()) {
       AdxRegDumpProcessCallBack(DumpDataCallBack);

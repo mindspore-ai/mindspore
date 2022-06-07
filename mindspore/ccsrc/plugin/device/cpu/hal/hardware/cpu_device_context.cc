@@ -18,7 +18,9 @@
 #include <string>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
+#ifdef ENABLE_AKG
 #include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
+#endif
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "kernel/kernel_build_info.h"
@@ -40,7 +42,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "profiler/device/cpu/cpu_profiling.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
 #endif
 #ifndef ENABLE_SECURITY
@@ -368,7 +370,7 @@ bool CPUDeviceContext::LoadCollectiveCommLib() {
     collective_comm_lib_ = instance_func();
     MS_EXCEPTION_IF_NULL(collective_comm_lib_);
   } else {
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
     collective_comm_lib_ = &MsCollectiveCommLib::GetInstance();
     MS_EXCEPTION_IF_NULL(collective_comm_lib_);
 #endif

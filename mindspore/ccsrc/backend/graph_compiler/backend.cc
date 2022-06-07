@@ -40,16 +40,13 @@
 #include "runtime/pynative/graph_adapter.h"
 #include "distributed/recovery/recovery_context.h"
 #include "include/common/utils/scoped_long_running.h"
-#ifdef ENABLE_D
-#include "include/common/utils/callbacks_ge.h"
-#endif
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
 #include "ps/ps_context.h"
 #endif
 
@@ -352,7 +349,7 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
   const session::SessionPtr &exe_session = ((target != target_device_ && !target.empty()) ? other_sess_ : target_sess_);
   MS_EXCEPTION_IF_NULL(exe_session);
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
   // If in PS mode, must use sync mode to run graph in case that the weights on server are not updated in the last step.
   if (ps::PSContext::instance()->is_ps_mode()) {
     exe_session->RunGraph(g, inputs, &outputs);
