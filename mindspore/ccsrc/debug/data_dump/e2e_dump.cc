@@ -428,7 +428,7 @@ void E2eDump::DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::str
   TypeId type;
   TypeId device_type;
   auto addr = GetParameterInfo(anf_node, NOT_NULL(&int_shapes), NOT_NULL(&type), NOT_NULL(&device_type));
-  if (addr == nullptr) {
+  if (addr == nullptr || addr->GetPtr() == nullptr) {
     MS_LOG(DEBUG) << "Skip node: " << node_name << ". Parameter data is not available for mindRT.";
     return;
   }
