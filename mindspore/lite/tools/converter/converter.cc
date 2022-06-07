@@ -24,7 +24,6 @@
 #include "tools/common/meta_graph_serializer.h"
 #include "tools/lite_exporter/anf_exporter.h"
 #include "include/version.h"
-#include "common/graph_kernel/graph_kernel_flags.h"
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #ifdef SUPPORT_TRAIN
 #include "src/train/train_populate_parameter.h"
@@ -202,9 +201,7 @@ schema::MetaGraphT *ConverterImpl::TransferFuncGraph(const std::shared_ptr<Conve
                                                      FuncGraphPtr func_graph) {
   MS_CHECK_TRUE_MSG(metagraph_transform_ != nullptr, nullptr, "metagraph_transform_ init failed");
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
-  if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
-    graphkernel::GraphKernelOptimize(func_graph);
-  }
+  graphkernel::GraphKernelOptimize(func_graph, param);
 #endif
 
   // protobuf -> flatbuffer
