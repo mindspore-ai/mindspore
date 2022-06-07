@@ -39,6 +39,18 @@ class MultipleInputSingleOutputNet(nn.Cell):
         return out
 
 
+class MultipleInputMultipleOutputNet(nn.Cell):
+    def __init__(self):
+        super(MultipleInputMultipleOutputNet, self).__init__()
+        self.sin = P.Sin()
+        self.cos = P.Cos()
+
+    def construct(self, x, y):
+        out1 = self.sin(x)
+        out2 = self.cos(y)
+        return out1, out2
+
+
 class SingleInputSingleOutputNet(nn.Cell):
     def __init__(self):
         super(SingleInputSingleOutputNet, self).__init__()
@@ -174,3 +186,75 @@ def test_derivative_multiple_input_single_output_graph_mode():
     out_primals, out_series = derivative(net, primals, order)
     assert np.allclose(out_primals.asnumpy(), expected_primals, atol=1.e-4)
     assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_jet_construct_graph_mode():
+    """
+    Features: Function jet
+    Description: Test jet in construct with multiple inputs in graph mode.
+    Expectation: No exception.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, net):
+            super(Net, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            res_primals, res_series = jet(self.net, x, y)
+            return res_primals, res_series
+
+    primals = Tensor([2., 2.])
+    series = Tensor([[1., 1.], [0., 0.], [0., 0.]])
+    net = SingleInputSingleOutputWithScalarNet()
+    hod_net = Net(net)
+    expected_primals = np.array([10.328085, 10.328085]).astype(np.float32)
+    expected_series = np.array([[-3.1220534, -3.1220534], [6.0652323, 6.0652323],
+                                [-18.06463, -18.06463]]).astype(np.float32)
+    out_primals, out_series = hod_net(primals, series)
+    assert np.allclose(out_primals.asnumpy(), expected_primals, atol=1.e-4)
+    assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_derivative_construct_graph_mode():
+    """
+    Features: Function derivative
+    Description: Test derivative in construct with multiple inputs in graph mode.
+    Expectation: No exception.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self, net, order):
+            super(Net, self).__init__()
+            self.net = net
+            self.order = order
+
+        def construct(self, x, y):
+            res_primals, res_series = derivative(self.net, (x, y), self.order)
+            return res_primals, res_series
+
+    primals_x = Tensor([1., 1.])
+    primals_y = Tensor([1., 1.])
+    net = MultipleInputMultipleOutputNet()
+    hod_net = Net(net, order=3)
+    expected_primals_x = np.array([0.841470957, 0.841470957]).astype(np.float32)
+    expected_primals_y = np.array([0.540302277, 0.540302277]).astype(np.float32)
+    expected_series_x = np.array([-0.540302277, -0.540302277]).astype(np.float32)
+    expected_series_y = np.array([0.841470957, 0.841470957]).astype(np.float32)
+    out_primals, out_series = hod_net(primals_x, primals_y)
+    assert np.allclose(out_primals[0].asnumpy(), expected_primals_x, atol=1.e-4)
+    assert np.allclose(out_primals[1].asnumpy(), expected_primals_y, atol=1.e-4)
+    assert np.allclose(out_series[0].asnumpy(), expected_series_x, atol=1.e-4)
+    assert np.allclose(out_series[1].asnumpy(), expected_series_y, atol=1.e-4)
