@@ -187,7 +187,7 @@ void AscendProfiler::Finalize() const {
 }
 
 void AscendProfiler::GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id,
-                                           KernelType kernel_type) {
+                                           const KernelType kernel_type) {
   uint32_t stream_id;
   uint32_t task_id;
   uint32_t rt_model_id = 0;

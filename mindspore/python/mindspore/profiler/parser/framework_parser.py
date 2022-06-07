@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Thr parser for parsing framework files."""
+"""The parser for parsing framework files."""
 import csv
 import os
 import re
@@ -41,14 +41,13 @@ FILE_DATA_STRUCT_DICT = {
     FileDataType.TASK_DESC_INFO.value: TASK_DESC_STRUCT
 }
 
-
 COL_NAMES = ['task_id', 'stream_id', 'block_dim', 'full_op_name', 'op_name', 'op_type', 'subgraph', 'op_info']
 OpData = namedtuple('OpData', field_names=COL_NAMES)
 
 
 class FrameworkParser:
     """
-    Thr parser for parsing framework files.
+    The parser for parsing framework files.
 
     Args:
         profiling_path (str): The profiling path which should contain CANN profiling data.
@@ -408,14 +407,15 @@ class FrameworkParser:
 
 class GpuFrameWorkParser:
     """
-    Thr parser for parsing framework files.
+    The parser for parsing framework files.
 
     Args:
         output_path (str): The profiling path which should contain GPU profiling data.
         dev_id (str): The device ID.
     """
+
     def __init__(self, output_path, dev_id, op_names):
-        """Thr parser for parsing framework files."""
+        """The parser for parsing framework files."""
         self._dev_id = dev_id
         self._output_path = output_path
         self.op_names = op_names
@@ -423,14 +423,18 @@ class GpuFrameWorkParser:
         self.framework_list = []
         self.op_detail = {}
         self.operation_info = {}
-        self.detail_info_dir = []
+        self.activity_info_dir = []
         self.framework_info_dir = []
+        self.cpu_detail_info_dir = []
+        self.gpu_detail_info_dir = []
+        self.op_execute_times = {}
 
     def parse(self):
         """Parse op performance data."""
         self.get_device_target_filename()
         self.get_framework_summary()
-        self.get_op_detail_info()
+        self.get_cpu_op_detail_info()
+        self.get_activity_op_info()
         if isinstance(self.op_names, str):
             self.combine_performance_data(self.op_names)
         elif isinstance(self.op_names, list):
@@ -455,9 +459,9 @@ class GpuFrameWorkParser:
                     if item not in self.framework_list:
                         self.framework_list.append(item)
 
-    def get_op_detail_info(self):
-        """Get op detail data."""
-        for filename in self.detail_info_dir:
+    def get_cpu_op_detail_info(self):
+        """Get cpu operators detail data."""
+        for filename in self.cpu_detail_info_dir:
             op_side = filename.split('_')[0]
             op_detail_file_path = os.path.join(self._output_path, filename)
             op_detail_file_path = validate_and_normalize_path(op_detail_file_path)
@@ -469,6 +473,48 @@ class GpuFrameWorkParser:
                         # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
                         self.op_detail[line_info[2]] = [line_info[4], line_info[5], line_info[6], op_side]
 
+    def get_execute_times(self):
+        """Get gpu operators execute times."""
+        if self.gpu_detail_info_dir:
+            gpu_op_detail_file_path = os.path.join(self._output_path, self.gpu_detail_info_dir[0])
+            gpu_op_detail_file_path = validate_and_normalize_path(gpu_op_detail_file_path)
+            with open(gpu_op_detail_file_path, 'r') as fp:
+                op_detail_info = fp.readlines()
+                for line_info in op_detail_info[1:]:
+                    line_info = line_info.strip(' ').strip('\n').split(',')
+                    self.op_execute_times[line_info[2]] = line_info[4]
+
+    def get_activity_op_info(self):
+        """Get op detail data."""
+        all_file = os.listdir(self._output_path)
+        for file_name in all_file:
+            if file_name.startswith('gpu_op_detail') and file_name.endswith(f'{self._dev_id}.csv'):
+                self.gpu_detail_info_dir.append(file_name)
+        if not self.gpu_detail_info_dir and self.activity_info_dir:
+            raise RuntimeError(f'The output file <%s> is not found.' % self.gpu_detail_info_dir)
+        self.get_execute_times()
+        for filename in self.activity_info_dir:
+            op_side = filename.split('_')[0]
+            activity_file_path = os.path.join(self._output_path, filename)
+            activity_file_path = validate_and_normalize_path(activity_file_path)
+            with open(activity_file_path, 'r') as file:
+                activity_info = file.readlines()
+                for line_info in activity_info[1:]:
+                    line_info = line_info.strip(' ').strip('\n').replace(', ', ';').split(',')
+                    op_name = line_info[2].split('/')[-1]
+                    op_occurrences = int(self.op_execute_times.get(op_name))
+                    op_total_time = float(line_info[-4])
+                    if not self.op_detail.get(op_name):
+                        # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
+                        self.op_detail[op_name] = [op_occurrences, op_total_time,
+                                                   round(op_total_time/op_occurrences, 4), op_side]
+                    else:
+                        self.op_detail.get(op_name)[1] += op_total_time
+                        self.op_detail.get(op_name)[2] = self.op_detail.get(op_name)[1] / self.op_detail.get(op_name)[0]
+                        self.op_detail[op_name] = [self.op_detail.get(op_name)[0],
+                                                   round(self.op_detail.get(op_name)[1], 4),
+                                                   round(self.op_detail.get(op_name)[2], 4), op_side]
+
     def combine_performance_data(self, op_name):
         """Combine operator detail info with framework info."""
         unique_op_info = []
@@ -477,6 +523,8 @@ class GpuFrameWorkParser:
         factor = 1000  # convert time unit from ms to us.
         for line_info in self.framework_list:
             op_detail = self.op_detail.get(line_info[1])
+            if not op_detail:
+                continue
             if op_name in line_info and line_info[3] == op_detail[3]:
                 op_side = line_info[3]
                 op_shape = '{}:{}'.format(op_side, ','.join(line_info[2]))
@@ -487,7 +535,7 @@ class GpuFrameWorkParser:
                     # Classify according to the operator information of the same shape.
                     op_shape_dict.get(op_shape)[0] += op_occurrences
                     op_shape_dict.get(op_shape)[1] += op_total_time
-                    op_shape_dict.get(op_shape)[2] += op_shape_dict.get(op_shape)[1] / op_shape_dict.get(op_shape)[0]
+                    op_shape_dict.get(op_shape)[2] = op_shape_dict.get(op_shape)[1] / op_shape_dict.get(op_shape)[0]
                     op_shape_dict[op_shape] = [op_shape_dict.get(op_shape)[0], round(op_shape_dict.get(op_shape)[1], 4),
                                                round(op_shape_dict.get(op_shape)[2], 4), op_side]
                 else:
@@ -510,31 +558,37 @@ class GpuFrameWorkParser:
         if unique_op_info:
             self.operation_info[op_name] = unique_op_info
         else:
-            logger.warning(f'The information of {op_name} is not found. Please verify that the operator name is correct'
-                           f' or the operator is used in the network.')
+            raise RuntimeError(f'The information of <{op_name}> is not found. Please verify that the operator name is'
+                               f' correct or the operator is used in the network.')
 
     def get_device_target_filename(self):
         """Get device target filename."""
         gpu_framework_file = f'gpu_framework_{self._dev_id}.txt'
         cpu_framework_file = f'cpu_framework_{self._dev_id}.txt'
-        gpu_op_detail_file = f'gpu_op_detail_info_{self._dev_id}.csv'
+        gpu_activity_file = f'gpu_activity_data_{self._dev_id}.csv'
         cpu_op_detail_file = f'cpu_op_detail_info_{self._dev_id}.csv'
         all_file = os.listdir(self._output_path)
         if not all_file:
             raise RuntimeError(f'No profiler file is found in the path <%s>. '
                                f'Check whether the profiler path is correct.' % self._output_path)
-        if gpu_op_detail_file in all_file and gpu_framework_file not in all_file:
+        if gpu_activity_file in all_file and gpu_framework_file not in all_file:
             raise RuntimeError(f'The output file <%s> is not found.' % gpu_framework_file)
         if cpu_op_detail_file in all_file and cpu_framework_file not in all_file:
             raise RuntimeError(f'The output file <%s> is not found.' % cpu_framework_file)
-        if gpu_op_detail_file not in all_file and cpu_op_detail_file not in all_file:
+        if gpu_framework_file in all_file and gpu_activity_file not in all_file:
+            raise RuntimeError(f'The output file <%s> is not found.' % gpu_activity_file)
+        if cpu_framework_file in all_file and cpu_op_detail_file not in all_file:
+            raise RuntimeError(f'The output file <%s> is not found.' % cpu_op_detail_file)
+        if gpu_activity_file not in all_file and cpu_op_detail_file not in all_file:
             raise RuntimeError(f'The profiling data of this card which device_id is equal to {self._dev_id} does not'
                                f' exist. Check whether device_id is correct.')
         for file_name in all_file:
-            if file_name.endswith(f'detail_info_{self._dev_id}.csv'):
-                self.detail_info_dir.append(file_name)
+            if file_name.endswith(f'activity_data_{self._dev_id}.csv'):
+                self.activity_info_dir.append(file_name)
             if file_name.endswith(f'framework_{self._dev_id}.txt'):
                 self.framework_info_dir.append(file_name)
+            if file_name.startswith('cpu_op_detail') and file_name.endswith(f'{self._dev_id}.csv'):
+                self.cpu_detail_info_dir.append(file_name)
 
 
 class DynamicFrameWorkParser:
@@ -545,6 +599,7 @@ class DynamicFrameWorkParser:
         output_path (str): The profiling path which should contain Ascend profiling data.
         rank_id (int): The rank ID.
     """
+
     def __init__(self, output_path, rank_id):
         """Initialization of parsing framework data."""
         self._output_path = output_path
@@ -590,11 +645,13 @@ class DynamicFrameWorkParser:
         timeline_origin_file_path = os.path.join(self._output_path, timeline_origin_file_name)
         timeline_origin_file_path = validate_and_normalize_path(timeline_origin_file_path)
         aicpu_file_path = os.path.join(self._output_path, aicpu_file_name)
+
         def read_file(file_path):
             """Read file data."""
             with open(file_path, 'r') as fp:
                 file_info = fp.readlines()[1:]
                 return file_info
+
         timeline_info = read_file(timeline_origin_file_path)
         for line_info in timeline_info:
             line_info = line_info.strip('\n').split(',')

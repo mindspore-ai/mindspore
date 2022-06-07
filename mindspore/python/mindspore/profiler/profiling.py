@@ -139,6 +139,7 @@ class Profiler:
         self._dev_id = None
         self._cpu_profiler = None
         self._gpu_profiler = None
+        self._md_profiler = None
         self._init_time = None
         self._ascend_job_id = ''
         self._job_id_env = None
@@ -158,10 +159,6 @@ class Profiler:
         self._ascend_dynamic_status = False
         self._cpu_dynamic_status = False
         self._gpu_dynamic_status = False
-
-        # Setup and start MindData Profiling
-        self._md_profiler = cde.GlobalContext.profiling_manager()
-        self._md_profiler.init()
         self._decide_device_target(kwargs)
         if self.start_profile:
             self.start()
@@ -211,14 +208,24 @@ class Profiler:
         if device_id and not isinstance(device_id, int):
             raise TypeError(f"For 'Profiler.op_analyse()', the parameter device_id must be int, "
                             f"but got type {type(device_id)}")
+        online_device_id = int(self._dev_id)
         self._dev_id = self._dev_id if device_id is None else device_id
         if self._dev_id is None:
             self._dev_id = 0
         if not isinstance(op_name, str) and not isinstance(op_name, list):
             raise TypeError(f"For 'Profiler.op_analyse()', the parameter op_name must be str or list, "
                             f"but got type {type(op_name)}")
+        if not op_name:
+            raise TypeError(f"For 'Profiler.op_analyse()', the parameter op_name cannot be "", '' or [].")
         parser = GpuFrameWorkParser(self._output_path, self._dev_id, op_name)
         op_info = parser.parse()
+        if self._rank_size > 1:
+            if online_device_id == int(self._dev_id):
+                return op_info
+            if online_device_id != int(self._dev_id):
+                message = f"For 'Profiler.op_analyse()', the parameter device_id is equal to {self._dev_id}, but the " \
+                          f"current device id is {online_device_id}, so no operator performance information is queried."
+                return message
         return op_info
 
     def _decide_device_target(self, kwargs):
@@ -249,6 +256,9 @@ class Profiler:
 
     def _gpu_profiler_init(self, kwargs):
         """Gpu profiler init."""
+        # Setup and start MindData Profiling
+        self._md_profiler = cde.GlobalContext.profiling_manager()
+        self._md_profiler.init()
         if context.get_context("mode") == context.PYNATIVE_MODE:
             raise RuntimeError("Pynative model is not supported on GPU currently.")
         self._parse_parameter_for_gpu(kwargs)
@@ -262,6 +272,9 @@ class Profiler:
 
     def _ascend_profiler_init(self, kwargs):
         """Ascend profiler init."""
+        # Setup and start MindData Profiling
+        self._md_profiler = cde.GlobalContext.profiling_manager()
+        self._md_profiler.init()
         self._init_time = int(time.time() * 10000000)
         logger.info("Profiling: profiling init time: %d", self._init_time)
         self._parse_parameter_for_ascend(kwargs)
@@ -383,10 +396,7 @@ class Profiler:
         """
         Collect and analyze training performance data, support calls during and after training. The example shows above.
         """
-        if Profiler._has_analysed:
-            msg = "Do not analyze twice in the profiler."
-            raise RuntimeError(msg)
-        Profiler._has_analysed = True
+        Profiler._has_initialized = False
         self._cpu_dynamic_status = self._cpu_profiler.dynamic_status()
         _environment_check()
 
@@ -674,12 +684,13 @@ class Profiler:
         if self._is_offline_parser():
             return
 
-        self._md_profiler.start()
         self._cpu_profiler.step_profiling_enable(True)
 
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
+            self._md_profiler.start()
             self._gpu_profiler.step_profiling_enable(True)
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
+            self._md_profiler.start()
             if context.get_context("mode") == context.PYNATIVE_MODE:
                 self._ascend_pynative_start()
             else:

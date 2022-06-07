@@ -122,11 +122,11 @@ void ProfilingReporter::ReportStepPoint(const std::vector<std::shared_ptr<StepPo
 }
 
 void ProfilingReporter::DynamicNodeReport(const CNodePtr &node, uint32_t stream_id, uint32_t task_id,
-                                          KernelType kernel_type) {
+                                          const KernelType kernel_type) {
   ReportTask(node, stream_id, task_id, kernel_type);
   ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_INPUT);
   ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_OUTPUT);
-  MS_LOG(INFO) << "Profiling report one dynamic node data finish.";
+  MS_LOG(INFO) << "Profiling report one dynamic node <" << node->fullname_with_scope() << "> data finish.";
 }
 
 const CNodePtr ProfilingReporter::GetCNode(const std::string &name) const {

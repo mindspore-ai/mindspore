@@ -64,7 +64,7 @@ class ProfilingReporter {
   ~ProfilingReporter() = default;
 
   void ReportTasks();
-  void DynamicNodeReport(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, KernelType kernel_type);
+  void DynamicNodeReport(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, const KernelType kernel_type);
   void ReportStepPoint(const vector<std::shared_ptr<StepPointDesc>> &points);
 
  private:

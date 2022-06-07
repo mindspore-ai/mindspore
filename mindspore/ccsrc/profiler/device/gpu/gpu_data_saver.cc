@@ -290,6 +290,7 @@ void GpuDataSaver::WriteStepTraceAsyncLaunchKernel(const std::string &saver_base
   ofs.close();
   ChangeFileMode(file_path);
   MS_LOG(INFO) << "Write step trace infos into file: " << file_path;
+  op_timestamps_map_.clear();
 }
 
 void GpuDataSaver::WriteStepTrace(const std::string &saver_base_dir) {
@@ -336,6 +337,7 @@ void GpuDataSaver::WriteStepTrace(const std::string &saver_base_dir) {
   ofs.close();
   ChangeFileMode(file_path);
   MS_LOG(INFO) << "Write step trace infos into file: " << file_path;
+  op_timestamps_map_.clear();
 }
 
 void GpuDataSaver::WriteStartTime(const std::string &saver_base_dir, const BaseTime &start_time) {

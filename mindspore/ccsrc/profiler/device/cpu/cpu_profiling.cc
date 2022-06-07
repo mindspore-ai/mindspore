@@ -194,7 +194,15 @@ void CPUProfiler::SaveProfileData() {
   }
 }
 
-void CPUProfiler::ClearInst() { op_info_map_.clear(); }
+void CPUProfiler::ClearInst() {
+  op_info_map_.clear();
+  all_step_start_end_info_.clear();
+  step_start_end_info_vector_.clear();
+  all_kernel_info_.clear();
+  init_flag_ = false;
+  enable_flag_ = false;
+  has_find = false;
+}
 
 REGISTER_PYBIND_DEFINE(CPUProfiler_, ([](const py::module *m) {
                          (void)py::class_<CPUProfiler, std::shared_ptr<CPUProfiler>>(*m, "CPUProfiler")
