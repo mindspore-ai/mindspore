@@ -257,6 +257,7 @@ Linear Algebraic Operators
     mindspore.ops.matmul
     mindspore.ops.cdist
     mindspore.ops.ger
+    mindspore.ops.renorm
 
 Tensor Operation Operators
 --------------------------
