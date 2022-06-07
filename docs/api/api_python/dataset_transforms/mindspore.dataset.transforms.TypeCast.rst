@@ -1,7 +1,7 @@
-mindspore.dataset.transforms.c_transforms.TypeCast
-==================================================
+mindspore.dataset.transforms.TypeCast
+=====================================
 
-.. py:class:: mindspore.dataset.transforms.c_transforms.TypeCast(data_type)
+.. py:class:: mindspore.dataset.transforms.TypeCast(data_type)
 
     将输入的Tensor转换为指定的数据类型。
 

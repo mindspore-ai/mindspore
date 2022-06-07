@@ -1,7 +1,7 @@
-mindspore.dataset.transforms.c_transforms.Unique
-================================================
+mindspore.dataset.transforms.Unique
+===================================
 
-.. py:class:: mindspore.dataset.transforms.c_transforms.Unique()
+.. py:class:: mindspore.dataset.transforms.Unique()
 
     对输入张量进行唯一运算，每次只支持对一个数据列进行变换。
 

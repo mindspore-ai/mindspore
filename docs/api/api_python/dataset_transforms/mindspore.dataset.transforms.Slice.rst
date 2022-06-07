@@ -1,7 +1,7 @@
-mindspore.dataset.transforms.c_transforms.Slice
-===============================================
+mindspore.dataset.transforms.Slice
+==================================
 
-.. py:class:: mindspore.dataset.transforms.c_transforms.Slice(*slices)
+.. py:class:: mindspore.dataset.transforms.Slice(*slices)
 
     对Tensor进行切片操作，功能类似于NumPy的索引(目前只支持1D形状的Tensor)。
 

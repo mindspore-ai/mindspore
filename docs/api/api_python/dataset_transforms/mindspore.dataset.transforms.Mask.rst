@@ -1,7 +1,7 @@
-mindspore.dataset.transforms.c_transforms.Mask
-==============================================
+mindspore.dataset.transforms.Mask
+=================================
 
-.. py:class:: mindspore.dataset.transforms.c_transforms.Mask(operator, constant, dtype=mstype.bool_)
+.. py:class:: mindspore.dataset.transforms.Mask(operator, constant, dtype=mstype.bool_)
 
     用给条件判断输入Tensor的内容，并返回一个掩码Tensor。Tensor中任何符合条件的元素都将被标记为True，否则为False。
 

@@ -1,7 +1,7 @@
-mindspore.dataset.transforms.c_transforms.PadEnd
-================================================
+mindspore.dataset.transforms.PadEnd
+===================================
 
-.. py:class:: mindspore.dataset.transforms.c_transforms.PadEnd(pad_shape, pad_value=None)
+.. py:class:: mindspore.dataset.transforms.PadEnd(pad_shape, pad_value=None)
 
     对输入Tensor进行填充，要求 `pad_shape` 与输入Tensor的维度保持一致。
 
