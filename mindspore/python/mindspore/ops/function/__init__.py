@@ -135,6 +135,7 @@ from .math_func import (
     ne,
     isfinite,
     isnan,
+    isclose,
     same_type_shape,
     log,
     log_matrix_determinant,
