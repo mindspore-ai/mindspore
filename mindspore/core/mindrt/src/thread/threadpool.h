@@ -46,7 +46,8 @@ constexpr int kDefaultKernelSpinCount = 3000;
 constexpr int kMinSpinCount = 1;
 constexpr int kDefaultFrequency = 1;
 constexpr float kMaxScale = 1.;
-constexpr size_t kMaxHqueueSize = 8196;
+constexpr size_t kMaxHqueueSize = 8192;
+constexpr size_t kMinActorRunOther = 2;
 /* Thread status */
 constexpr int kThreadBusy = 0;  // busy, the thread is running task
 constexpr int kThreadHeld = 1;  // held, the thread has been marked as occupied
@@ -88,7 +89,7 @@ class Worker {
   bool available();
   // assigns task first before running
   virtual bool RunLocalKernelTask();
-  virtual bool RunOtherKernelTask();
+  virtual void RunOtherKernelTask();
   // try to run a single task
   bool TryRunTask(TaskSplit *task_split);
   // set max spin count before running
@@ -134,6 +135,8 @@ class Worker {
   std::mutex mutex_;
   std::condition_variable cond_var_;
 
+  std::atomic<Task *> task_{nullptr};
+  std::atomic_int task_id_{0};
   float lhs_scale_{0.};
   float rhs_scale_{kMaxScale};
   int frequency_{kDefaultFrequency};
