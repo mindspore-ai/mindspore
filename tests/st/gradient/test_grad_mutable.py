@@ -527,3 +527,143 @@ def test_grad_mutable_tuple_tensor_ms_function():
                         [1.9, 1.9, 1.9],
                         [1.5, 1.5, 1.5]]).astype(np.float32)]
     assert compare(output, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_grad_mutable_unused_tuple_tensor():
+    """
+    Feature: Set Constants mutable.
+    Description: Get gradient with respect to tuple tensor input which is unused by backend nodes.
+    Expectation: Get the correct gradients.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.sub = P.Sub()
+
+        def construct(self, t):
+            x1 = t[0]
+            x2 = t[1]
+            output = x1 + self.sub(x1, x2)
+            return x1, x2, output
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = GradOperation()
+
+        def construct(self, z):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(z)
+
+    t = mutable((Tensor([[4.0, 6.0, 6.0], [4.0, 6.0, 6.0]], dtype=mstype.float32),
+                 Tensor([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=mstype.float32),
+                 Tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=mstype.float32)))
+    output = GradNetWrtX(Net())(t)
+    assert isinstance(output, tuple)
+    expect = [np.array([[3., 3., 3.],
+                        [3., 3., 3.]]).astype(np.float32),
+              np.array([[0., 0., 0.],
+                        [0., 0., 0.]]).astype(np.float32),
+              np.array([[0., 0., 0.],
+                        [0., 0., 0.]]).astype(np.float32)]
+    assert compare(output, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_grad_mutable_unused_list_tensor():
+    """
+    Feature: Set Constants mutable.
+    Description: Get gradient with respect to dict tensor input which is unused by backend nodes.
+    Expectation: Get the correct gradients.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.sub = P.Sub()
+
+        def construct(self, t):
+            x1 = t[0]
+            t[1] = Tensor([[3.0, 6.0, 6.0], [3.0, 6.0, 6.0]], dtype=mstype.float32)
+            x2 = t[1]
+            output = x1 + self.sub(x1, x2)
+            return x1, x2, output
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = GradOperation()
+
+        def construct(self, z):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(z)
+
+    t = mutable([Tensor([[4.0, 6.0, 6.0], [4.0, 6.0, 6.0]], dtype=mstype.float32),
+                 Tensor([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=mstype.float32),
+                 Tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=mstype.float32)])
+    output = GradNetWrtX(Net())(t)
+    assert isinstance(output, tuple)
+    expect = [np.array([[3., 3., 3.],
+                        [3., 3., 3.]]).astype(np.float32),
+              np.array([[0., 0., 0.],
+                        [0., 0., 0.]]).astype(np.float32),
+              np.array([[0., 0., 0.],
+                        [0., 0., 0.]]).astype(np.float32)]
+    assert compare(output, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_grad_mutable_unused_dict_tensor():
+    """
+    Feature: Set Constants mutable.
+    Description: Get gradient with respect to dict tensor input which is unused by backend nodes.
+    Expectation: Get the correct gradients.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.sub = P.Sub()
+
+        def construct(self, t):
+            x1 = t['x1']
+            t['x2'] = Tensor([[3.0, 6.0, 6.0], [3.0, 6.0, 6.0]], dtype=mstype.float32)
+            x2 = t['x2']
+            output = x1 + self.sub(x1, x2)
+            return x1, x2, output
+
+    class GradNetWrtX(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtX, self).__init__()
+            self.net = net
+            self.grad_op = GradOperation()
+
+        def construct(self, z):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(z)
+
+    t = mutable({'x1': Tensor([[4.0, 6.0, 6.0], [4.0, 6.0, 6.0]], dtype=mstype.float32),
+                 'x2': Tensor([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]], dtype=mstype.float32),
+                 'x3': Tensor([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=mstype.float32)})
+    output = GradNetWrtX(Net())(t)
+    assert isinstance(output, tuple)
+    expect = [np.array([[3., 3., 3.],
+                        [3., 3., 3.]]).astype(np.float32),
+              np.array([[0., 0., 0.],
+                        [0., 0., 0.]]).astype(np.float32),
+              np.array([[0., 0., 0.],
+                        [0., 0., 0.]]).astype(np.float32)]
+    assert compare(output, expect)
