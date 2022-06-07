@@ -523,9 +523,11 @@ class CutOut(TensorOperation):
 
     Raises:
         TypeError: If `length` is not of type integer.
+        TypeError: If `is_hwc` is not of type bool.
         TypeError: If `num_patches` is not of type integer.
         ValueError: If `length` is less than or equal 0.
         ValueError: If `num_patches` is less than or equal 0.
+        RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -2847,7 +2849,7 @@ class RandomVerticalFlip(TensorOperation, PyTensorOperation):
     Randomly flip the input image vertically with a given probability.
 
     Args:
-        prob (float, optional): Probability of the image being flipped (default=0.5).
+        prob (float, optional): Probability of the image being flipped. Default=0.5.
 
     Raises:
         TypeError: If `prob` is not of type float.
@@ -2920,6 +2922,9 @@ class Rescale(TensorOperation):
     Rescale the input image with the given rescale and shift. This operator will rescale the input image
     with: output = image * rescale + shift.
 
+    Note:
+        This operation supports running on Ascend or GPU platforms by Offload.
+
     Args:
         rescale (float): Rescale factor.
         shift (float): Shift factor.
@@ -2929,7 +2934,7 @@ class Rescale(TensorOperation):
         TypeError: If `shift` is not of type float.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``Ascend`` ``GPU``
 
     Examples:
         >>> transforms_list = [vision.Decode(), vision.Rescale(1.0 / 255.0, -1.0)]
@@ -2961,20 +2966,14 @@ class Resize(TensorOperation, PyTensorOperation):
            It can be any of [Inter.BILINEAR, Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC,
            Inter.ANTIALIAS].
 
-            - Inter.BILINEAR, means interpolation method is bilinear interpolation.
-
-            - Inter.LINEAR, means interpolation method is bilinear interpolation, here is the same as Inter.BILINEAR.
-
-            - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
-
-            - Inter.BICUBIC, means interpolation method is bicubic interpolation.
-
-            - Inter.AREA, means interpolation method is pixel area interpolation.
-
-            - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in Pillow, input
-              should be in 3 channels format.
-
-            - Inter.ANTIALIAS, means antialias interpolation.
+            - Inter.BILINEAR, bilinear interpolation.
+            - Inter.LINEAR, bilinear interpolation, here is the same as Inter.BILINEAR.
+            - Inter.NEAREST, nearest-neighbor interpolation.
+            - Inter.BICUBIC, bicubic interpolation.
+            - Inter.AREA, pixel area interpolation.
+            - Inter.PILCUBIC, bicubic interpolation like implemented in Pillow, only valid when the input is
+              a 3-channel image in the numpy.ndarray format.
+            - Inter.ANTIALIAS, antialias interpolation.
 
     Raises:
         TypeError: If `size` is not of type int or Sequence[int].
@@ -3085,6 +3084,9 @@ class RgbToHsv(PyTensorOperation):
     Args:
         is_hwc (bool): If True, means the input image is in shape of (H, W, C) or (N, H, W, C).
             Otherwise, it is in shape of (C, H, W) or (N, C, H, W). Default: False.
+
+    Raises:
+        TypeError: If `is_hwc` is not of type bool.
 
     Supported Platforms:
         ``CPU``
@@ -3303,7 +3305,7 @@ class TenCrop(PyTensorOperation):
 
 class ToNumpy(PyTensorOperation):
     """
-    Convert the PIL input image to NumPy array.
+    Convert the PIL input image to numpy.ndarray image.
 
     Supported Platforms:
         ``CPU``
@@ -3385,11 +3387,11 @@ class ToPIL(PyTensorOperation):
 
 class ToTensor(TensorOperation, PyTensorOperation):
     """
-    Rescale of pixel value range from [0, 255] to [0.0, 1.0] and change the shape from (H, W, C) to (C, H, W).
-    Also convert the input PIL Image or numpy.ndarray to numpy.ndarray of the desired dtype.
+    Convert the input PIL Image or numpy.ndarray to numpy.ndarray of the desired dtype, rescale the pixel value
+    range from [0, 255] to [0.0, 1.0] and change the shape from (H, W, C) to (C, H, W).
 
     Args:
-        output_type (mindspore.dtype or numpy.dtype, optional): The desired dtype of the output image.
+        output_type (Union[mindspore.dtype, numpy.dtype], optional): The desired dtype of the output image.
             Default: :class:`numpy.float32`.
 
     Raises:
@@ -3427,18 +3429,19 @@ class ToTensor(TensorOperation, PyTensorOperation):
 
 class ToType(TypeCast):
     """
-    Tensor operation to cast to a given MindSpore data type or NumPy data type.
-    Note: This operation is an alias for TypeCast operation.
+    Cast the input to a given MindSpore data type or NumPy data type.
+
+    It is the same as that of :class:`mindspore.dataset.transforms.TypeCast`.
 
     Note:
         This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
-        data_type (mindspore.dtype or numpy.dtype): mindspore.dtype or numpy.dtype (e.g. :class:`numpy.float32`)
-        to be cast to.
+        data_type (Union[mindspore.dtype, numpy.dtype]): The desired data type of the output image,
+            such as :class:`numpy.float32`.
 
     Raises:
-        TypeError: If `data_type` is not of MindSpore data type bool, int, float, string or type :class:`numpy.ndarray`.
+        TypeError: If `data_type` is not of type :class:`mindspore.dtype` or :class:`numpy.dtype`.
 
     Supported Platforms:
         ``CPU`` ``Ascend`` ``GPU``

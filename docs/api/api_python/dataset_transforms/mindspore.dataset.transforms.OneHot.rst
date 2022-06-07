@@ -1,9 +1,9 @@
-mindspore.dataset.transforms.py_transforms.OneHotOp
-===================================================
+mindspore.dataset.transforms.OneHot
+===================================
 
-.. py:class:: mindspore.dataset.transforms.py_transforms.OneHotOp(num_classes, smoothing_rate=0.0)
+.. py:class:: mindspore.dataset.transforms.OneHot(num_classes, smoothing_rate=0.0)
 
-    将Tensor进行OneHot编码，可以进一步对标签进行平滑处理。
+    将Tensor进行OneHot编码。
 
     **参数：**
 
@@ -11,7 +11,9 @@ mindspore.dataset.transforms.py_transforms.OneHotOp
     - **smoothing_rate** (float，可选) - 标签平滑的系数，默认值：0.0。
 
     **异常：**
-      
+
     - **TypeError** - 参数 `num_classes` 类型不为int。
     - **TypeError** - 参数 `smoothing_rate` 类型不为float。
     - **ValueError** - 参数 `smoothing_rate` 取值范围不为[0.0, 1.0]。
+    - **RuntimeError** - 输入Tensor的数据类型不为int。
+    - **RuntimeError** - 参数Tensor的shape不是1-D。

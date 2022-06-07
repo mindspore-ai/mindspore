@@ -1,7 +1,7 @@
-mindspore.dataset.transforms.c_transforms.Fill
-==============================================
+mindspore.dataset.transforms.Fill
+=================================
 
-.. py:class:: mindspore.dataset.transforms.c_transforms.Fill(fill_value)
+.. py:class:: mindspore.dataset.transforms.Fill(fill_value)
 
     将Tensor的所有元素都赋值为指定的值，输出Tensor将与输入Tensor具有与具有相同的shape和数据类型。
 

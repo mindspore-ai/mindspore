@@ -1,7 +1,7 @@
-mindspore.dataset.transforms.c_transforms.Concatenate
-=====================================================
+mindspore.dataset.transforms.Concatenate
+========================================
 
-.. py:class:: mindspore.dataset.transforms.c_transforms.Concatenate(axis=0, prepend=None, append=None)
+.. py:class:: mindspore.dataset.transforms.Concatenate(axis=0, prepend=None, append=None)
 
     在Tensor的某一个轴上进行元素拼接。
 

@@ -1,19 +1,19 @@
 mindspore.dataset.transforms
 ============================
 
-此模块用于通用数据增强，包括 `c_transforms` 和 `py_transforms` 两个子模块。
-
-`c_transforms` 是一个高性能数据增强模块，基于C++实现。
-
-而 `py_transforms` 提供了一种基于Python和NumPy的实现方式。
+此模块用于通用数据增强，其中一部分增强操作是用C++实现的，具有较好的高性能，另一部分是基于Python实现，使用了NumPy模块作为支持。
 
 在API示例中，常用的模块导入方法如下：
 
 .. code-block::
 
     import mindspore.dataset as ds
-    import mindspore.dataset.vision.c_transforms as c_vision
-    import mindspore.dataset.vision.py_transforms as py_vision
+    import mindspore.dataset.transforms as transforms
+
+注意：旧的API导入方式已经过时且会逐步废弃，因此推荐使用上面的方式，但目前仍可按以下方式导入：
+
+.. code-block::
+
     from mindspore.dataset.transforms import c_transforms
     from mindspore.dataset.transforms import py_transforms
 
@@ -22,38 +22,34 @@ mindspore.dataset.transforms
 - TensorOperation，所有C++实现的数据处理操作的基类。
 - PyTensorOperation，所有Python实现的数据处理操作的基类。
 
-mindspore.dataset.transforms.c_transforms
------------------------------------------
+Transforms
+----------
 
 .. mscnautosummary::
     :toctree: dataset_transforms
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.dataset.transforms.c_transforms.Compose
-    mindspore.dataset.transforms.c_transforms.Concatenate
-    mindspore.dataset.transforms.c_transforms.Duplicate
-    mindspore.dataset.transforms.c_transforms.Fill
-    mindspore.dataset.transforms.c_transforms.Mask
-    mindspore.dataset.transforms.c_transforms.OneHot
-    mindspore.dataset.transforms.c_transforms.PadEnd
-    mindspore.dataset.transforms.c_transforms.RandomApply
-    mindspore.dataset.transforms.c_transforms.RandomChoice
-    mindspore.dataset.transforms.c_transforms.Relational
-    mindspore.dataset.transforms.c_transforms.Slice
-    mindspore.dataset.transforms.c_transforms.TypeCast
-    mindspore.dataset.transforms.c_transforms.Unique
+    mindspore.dataset.transforms.Compose
+    mindspore.dataset.transforms.Concatenate
+    mindspore.dataset.transforms.Duplicate
+    mindspore.dataset.transforms.Fill
+    mindspore.dataset.transforms.Mask
+    mindspore.dataset.transforms.OneHot
+    mindspore.dataset.transforms.PadEnd
+    mindspore.dataset.transforms.RandomApply
+    mindspore.dataset.transforms.RandomChoice
+    mindspore.dataset.transforms.RandomOrder
+    mindspore.dataset.transforms.Slice
+    mindspore.dataset.transforms.TypeCast
+    mindspore.dataset.transforms.Unique
 
-mindspore.dataset.transforms.py_transforms
-------------------------------------------
+Others
+------
 
 .. mscnautosummary::
     :toctree: dataset_transforms
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.dataset.transforms.py_transforms.Compose
-    mindspore.dataset.transforms.py_transforms.OneHotOp
-    mindspore.dataset.transforms.py_transforms.RandomApply
-    mindspore.dataset.transforms.py_transforms.RandomChoice
-    mindspore.dataset.transforms.py_transforms.RandomOrder
+    mindspore.dataset.transforms.Relational

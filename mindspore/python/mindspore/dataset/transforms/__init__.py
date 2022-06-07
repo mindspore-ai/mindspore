@@ -21,7 +21,7 @@ Common imported modules in corresponding API examples are as follows:
 .. code-block::
 
     import mindspore.dataset as ds
-    import mindspore.dataset.transforms
+    import mindspore.dataset.transforms as transforms
 
 Alternative and equivalent imported transforms is as follows:
 
