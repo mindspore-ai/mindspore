@@ -961,6 +961,7 @@ class Model:
             raise ValueError("Parameter server mode does not support 'data_sink_mode=True'.")
 
         Validator.check_is_int(sink_size)
+        Validator.check_non_negative_int(epoch)
         Validator.check_non_negative_int(initial_epoch)
         if initial_epoch >= epoch:
             raise ValueError(f"For 'Model.train', the parameter 'epoch' must bigger than parameter 'initial_epoch',"
@@ -1016,7 +1017,7 @@ class Model:
                                        "when using customized callbacks." % (cb_name, invalid_methods_names))
                     else:
                         raise ValueError("For %s callback, %s methods may not be supported in later version, "
-                                         "Use methods prefixed with 'on_train' or 'on_eval' instead when"
+                                         "Use methods prefixed with 'on_train' or 'on_eval' instead when "
                                          "using customized callbacks." % (cb_name, invalid_methods_names))
 
     def fit(self, epoch, train_dataset, valid_dataset=None, valid_frequency=1, callbacks=None,
@@ -1092,9 +1093,10 @@ class Model:
             raise ValueError("Parameter server mode does not support 'data_sink_mode=True'.")
 
         Validator.check_is_int(sink_size)
+        Validator.check_non_negative_int(epoch)
         Validator.check_non_negative_int(initial_epoch)
         if initial_epoch >= epoch:
-            raise ValueError(f"For 'Model.train', the parameter 'epoch' must bigger than parameter 'initial_epoch',"
+            raise ValueError(f"For 'Model.fit', the parameter 'epoch' must bigger than parameter 'initial_epoch',"
                              f" but got the parameter 'epoch' is {epoch}, 'initial_epoch' is {initial_epoch}.")
         dataset_size = train_dataset.get_dataset_size()
         if dataset_size == 0:
@@ -1108,8 +1110,8 @@ class Model:
         _device_number_check(self._parallel_mode, self._device_number)
 
         if not isinstance(valid_frequency, (int, list)):
-            raise ValueError(f"For 'Model.fit', the type of 'valid_frequency' must be a list or a integer, but got"
-                             "type {type(validation_freq)}.")
+            raise ValueError(f"For 'Model.fit', the type of 'valid_frequency' must be a list or a integer, but got "
+                             f"type {type(valid_frequency)}.")
 
         if valid_dataset and not self._metric_fns:
             raise ValueError("For 'Model.fit', if valid_dataset is not None, the model argument 'metrics' can not be"

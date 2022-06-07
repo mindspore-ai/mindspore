@@ -84,7 +84,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.GRUCell
     mindspore.nn.LSTM
     mindspore.nn.LSTMCell
-    
+
 嵌入层
 -----------------
 
@@ -233,6 +233,7 @@ Dropout层
 
     mindspore.nn.Adagrad
     mindspore.nn.Adam
+    mindspore.nn.AdaMax
     mindspore.nn.AdamOffload
     mindspore.nn.AdamWeightDecay
     mindspore.nn.AdaSumByDeltaWeightWrapCell
@@ -296,12 +297,12 @@ LearningRateSchedule类
 .. code-block::
 
     import mindspore.nn as nn
-    
+
     min_lr = 0.01
     max_lr = 0.1
     decay_steps = 4
     cosine_decay_lr = nn.CosineDecayLR(min_lr, max_lr, decay_steps)
-    
+
     net = Net()
     optim = nn.Momentum(net.trainable_params(), learning_rate=cosine_decay_lr, momentum=0.9)
 
@@ -325,18 +326,18 @@ Dynamic LR函数
 .. code-block::
 
     import mindspore.nn as nn
-    
+
     min_lr = 0.01
     max_lr = 0.1
     total_step = 6
     step_per_epoch = 1
     decay_epoch = 4
-    
+
     lr= nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
-    
+
     net = Net()
     optim = nn.Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
-    
+
 .. mscnplatformautosummary::
     :toctree: nn
     :nosignatures:
