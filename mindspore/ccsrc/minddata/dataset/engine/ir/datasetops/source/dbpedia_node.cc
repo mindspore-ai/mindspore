@@ -129,9 +129,13 @@ Status DBpediaNode::WalkAllFiles(const std::string &dataset_dir, const std::stri
     dataset_files->push_back(file_path.ToString());
   } else {
     Path file_path_1 = dir / train_file_name;
-    dataset_files->push_back(file_path_1.ToString());
+    if (file_path_1.Exists()) {
+      dataset_files->push_back(file_path_1.ToString());
+    }
     Path file_path_2 = dir / test_file_name;
-    dataset_files->push_back(file_path_2.ToString());
+    if (file_path_2.Exists()) {
+      dataset_files->push_back(file_path_2.ToString());
+    }
   }
   return Status::OK();
 }
