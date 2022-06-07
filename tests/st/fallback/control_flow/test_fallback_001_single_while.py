@@ -88,24 +88,6 @@ def test_single_while_3():
     assert res == 7
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_single_while_5():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_while():
-        i = 0
-        while i <= 3:
-            i += int(1)
-        return i
-
-    res = control_flow_while()
-    assert res == 3
-
-
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training

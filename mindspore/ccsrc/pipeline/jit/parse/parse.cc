@@ -1184,7 +1184,7 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   if (namespace_info.size() == namespace_info_size) {
     auto syntax_support = namespace_info[flag_index].cast<int32_t>();
     SymbolPtr symbol = std::make_shared<Symbol>(namespace_info[symbol_index].cast<std::string>());
-    if (syntax_support == SYNTAX_UNSUPPORTED_NAMESPACE && name_id == symbol->name()) {
+    if (syntax_support != SYNTAX_SUPPORTED && name_id == symbol->name()) {
       call_cnode->set_interpret(true);
       call_cnode = HandleInterpret(block, call_cnode, node);
     }
