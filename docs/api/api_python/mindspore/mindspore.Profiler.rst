@@ -20,7 +20,7 @@ mindspore.Profiler
 
         收集和分析训练的性能数据，支持在训练中和训练后调用。样例如上所示。
 
-    .. py:method:: op_analyse(op_name, device_id)
+    .. py:method:: op_analyse(op_name, device_id=None)
 
         获取primitive类型的算子性能数据。
 
@@ -33,7 +33,7 @@ mindspore.Profiler
 
         - **TypeError** – op_name参数类型不正确。
         - **TypeError** – device_id参数类型不正确。
-        - **RuntimeError** – 在Ascend上使用该接口获取性能数据。
+        - **RunTimeError** – 在Ascend上使用该接口获取性能数据。
 
         **支持平台：**
 

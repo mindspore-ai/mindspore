@@ -18,7 +18,7 @@ mindspore.ops.scatter_update
     - **indices** (Tensor) - 指定更新操作的索引。数据类型为int32或者int64。如果索引中存在重复项，则更新的顺序无法得知。
     - **updates** (Tensor) - 指定与 `input_x` 更新操作的Tensor，其数据类型与 `input_x` 相同，shape为 `indices.shape + input_x.shape[1:]` 。
 
-    **输出：**
+    **返回：**
 
     Tensor，shape和数据类型与输入 `input_x` 相同。
 
