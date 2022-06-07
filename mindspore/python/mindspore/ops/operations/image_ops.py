@@ -463,3 +463,48 @@ class CropAndResizeGradBoxes(Primitive):
         validator.check_value_type("method", method, [str], self.name)
         validator.check_string(method, ["bilinear"], "method", self.name)
         self.method = method
+
+
+class ResizeLinear1D(Primitive):
+    r"""
+    Using the linear interpolate method resize the input tensor 'x'.
+
+    Args:
+        coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
+            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
+
+    Inputs:
+        - **x** (Tensor) - A 3-D tensor which to resize, with shape [batch, channel, width]. Must be one of the
+            following types: uint8, int8, int16, int32, int64, float16, float32, double.
+        - **size** (Tensor) - A 1-D int64 Tensor, describes the size of the output tensor.
+
+    Outputs:
+        A 3-D tensor which shape is [batch, channel, new_width] with type: float32.
+
+    Raises:
+        TypeError: If dtype of `x` is not in the support list.
+        TypeError: If `size` is not a 1-D int64_t tensor.
+        TypeError: If `coordinate_transformation_mode` is not a string.
+        TypeError: If `coordinate_transformation_mode` is not in the support list.
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> input = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
+        >>> size = Tensor([6], mindspore.int32)
+        >>> resize_linear_1d = ops.ResizeLinear1D(coordinate_transformation_mode="align_corners")
+        >>> output = resize_linear_1d(x=input, size=size)
+        >>> print(output)
+        [[[1. 1.4 1.8 2.2 2.6 3.]
+          [4. 4.4 4.8 5.2 5.6 6.]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, coordinate_transformation_mode="align_corners"):
+        """Initialize ResizeLinear1D."""
+        self.init_prim_io_names(inputs=["x", "sizes"], outputs=["output"])
+        validator.check_value_type(
+            "coordinate_transformation_mode", coordinate_transformation_mode, [str], self.name)
+        validator.check_string(coordinate_transformation_mode, ["align_corners", "half_pixel", "asymmetric"],
+                               "coordinate_transformation_mode", self.name)
