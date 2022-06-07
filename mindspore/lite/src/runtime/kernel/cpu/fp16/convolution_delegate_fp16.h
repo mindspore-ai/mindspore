@@ -61,11 +61,25 @@ class ConvolutionDelegateFP16CPUKernel : public LiteKernel {
     return fp16_conv_kernel_->workspace_size();
   }
 
+  void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) override {
+    this->in_tensors_ = in_tensors;
+    if (fp16_conv_kernel_ != nullptr) {
+      fp16_conv_kernel_->set_in_tensors(in_tensors);
+    }
+  }
+
   void set_in_tensor(lite::Tensor *in_tensor, size_t index) override {
     MS_ASSERT(index < in_tensors_.size());
     this->in_tensors_[index] = in_tensor;
     if (fp16_conv_kernel_ != nullptr) {
       fp16_conv_kernel_->set_in_tensor(in_tensor, index);
+    }
+  }
+
+  void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) override {
+    this->out_tensors_ = out_tensors;
+    if (fp16_conv_kernel_ != nullptr) {
+      fp16_conv_kernel_->set_out_tensors(out_tensors);
     }
   }
 
