@@ -264,6 +264,7 @@ def get_inplace_ops_vmap_rule(prim, axis_size):
             v = mnp.moveaxis(v, v_dim, -1)
         out = prim(x, v)
         return (out, out.ndim - 1)
+
     return vmap_rule
 
 
@@ -346,11 +347,17 @@ def get_index_add_vmap_rule(prim, axis_size):
         if x_dim is None:
             return axis
         # case2: batch exists
-        if axis < -x_ndim or x_dim >= x_ndim:
-            raise ValueError("'axis' of 'IndexAdd' should be in range [{}, {}), but got {}"\
-                .format(-x_ndim, x_ndim, axis))
+        x_ndim_orig = x_ndim - 1
+        if x_dim < -x_ndim or x_dim >= x_ndim:
+            raise ValueError("The batch dimension of 'x' in 'IndexAdd' must be in range [{}, {}), but got {}"
+                             .format(-x_ndim, x_ndim, x_dim))
+        if x_dim < 0:
+            x_dim = x_dim + x_ndim
+        if axis < -x_ndim_orig or axis >= x_ndim_orig:
+            raise ValueError("'axis' of 'IndexAdd' must be in range [{}, {}), but got {}"
+                             .format(-x_ndim_orig, x_ndim_orig, axis))
         if axis < 0:
-            axis = axis + x_ndim
+            axis = axis + x_ndim_orig
         if x_dim > axis:
             return axis
         return axis + 1
