@@ -5333,7 +5333,7 @@ class Trunc(Primitive):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> trunc = ops.Trunc()
@@ -5345,6 +5345,7 @@ class Trunc(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Trunc"""
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 
 class Igamma(Primitive):
