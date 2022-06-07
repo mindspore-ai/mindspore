@@ -316,6 +316,18 @@ void AddVirtualAssignAdd(const FuncGraphPtr &root) {
   }
 }
 
+bool SliceSort(const CNodePtr &cnode1, const CNodePtr &cnode2) {
+  if (IsPrimitiveCNode(cnode1, prim::kPrimStridedSlice) && IsPrimitiveCNode(cnode2, prim::kPrimStridedSlice)) {
+    auto slice_index1 = cnode1->GetPrimalAttr(SLICE_INDEX);
+    auto slice_index2 = cnode2->GetPrimalAttr(SLICE_INDEX);
+    return slice_index1 < slice_index2;
+  }
+  if (IsPrimitiveCNode(cnode1, prim::kPrimStridedSlice)) {
+    return false;
+  }
+  return true;
+}
+
 bool CompFunc(const AnfNodePtr &node1, const AnfNodePtr &node2) {
   MS_EXCEPTION_IF_NULL(node1);
   MS_EXCEPTION_IF_NULL(node2);
@@ -331,7 +343,7 @@ bool CompFunc(const AnfNodePtr &node1, const AnfNodePtr &node2) {
   auto micro2_value = GetValue<int64_t>(micro2);
   if (micro1_value == micro2_value) {
     if (IsPrimitiveCNode(node1, prim::kPrimStridedSlice) || IsPrimitiveCNode(node2, prim::kPrimStridedSlice)) {
-      return true;
+      return SliceSort(cnode1, cnode2);
     }
     auto prim1 = GetCNodePrimitive(cnode1);
     auto prim2 = GetCNodePrimitive(cnode2);
@@ -673,6 +685,7 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
                    std::vector<AnfNodePtr> *forward_params, std::vector<AnfNodePtr> *backward_params,
                    std::vector<AnfNodePtr> *allreduce_params, const FuncGraphPtr &root) {
   std::list<ValuePtr> name_list = {};
+  int64_t slice_index = 0;
   for (auto &node : root->nodes()) {
     if (!node->isa<CNode>()) {
       continue;
@@ -705,6 +718,10 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
       }
     } else {
       if (cnode->HasPrimalAttr(PIPELINE_BEGIN)) {
+        if (IsPrimitiveCNode(cnode, prim::kPrimStridedSlice)) {
+          cnode->AddPrimalAttr(SLICE_INDEX, MakeValue(slice_index));
+          slice_index += 1;
+        }
         forward_start->push_back(node);
       }
       if (cnode->HasPrimalAttr(PIPELINE_END)) {
