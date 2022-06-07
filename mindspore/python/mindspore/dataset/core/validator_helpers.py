@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import os
 import numpy as np
 
 import mindspore._c_dataengine as cde
+from mindspore import log as logger
 
 # POS_INT_MIN is used to limit values from starting from 0
 POS_INT_MIN = 1
@@ -705,7 +706,7 @@ def check_gnn_list_of_pair_or_ndarray(param, param_name):
             if not len(pair) == 2:
                 raise ValueError("Each member in {0} must be a pair which means length == 2. Got length {1}".format(
                     param_names[idx], len(pair)))
-            column_names = ["node_list[{0}], number #{1} element".format(idx, i+1) for i in range(len(pair))]
+            column_names = ["node_list[{0}], number #{1} element".format(idx, i + 1) for i in range(len(pair))]
             type_check_list(pair, (int,), column_names)
     elif isinstance(param, np.ndarray):
         if param.ndim != 2:
@@ -768,3 +769,36 @@ def check_dataset_num_shards_shard_id(num_shards, shard_id):
         check_pos_int32(num_shards, "num_shards")
         if shard_id >= num_shards:
             raise ValueError("shard_id should be less than num_shards.")
+
+
+def deprecator_factory(version, old_module, new_module, substitute_name=None, substitute_module=None):
+    """Decorator factory function for deprecated operator to log deprecation warning message.
+
+    Args:
+        version (str): Version that the operator is deprecated.
+        old_module (str): Old module for deprecated operator.
+        new_module (str): New module for deprecated operator.
+        substitute_name (str, optional): The substitute name for deprecated operator.
+        substitute_module (str, optional): The substitute module for deprecated operator.
+    """
+
+    def decorator(op):
+        def wrapper(*args, **kwargs):
+            # Get operator class name for operator class which applies decorator to __init__()
+            name = str(op).split()[1].split(".")[0]
+            # Build message
+            message = f"'{name}' from " + f"{old_module}" + f" is deprecated from version " f"{version}" + \
+                      " and will be removed in a future version."
+            message += f" Use '{substitute_name}'" if substitute_name else f" Use '{name}'"
+            message += f" from {substitute_module} instead." if substitute_module \
+                else f" from " f"{new_module}" + "  instead."
+
+            # Log warning message
+            logger.warning(message)
+
+            ret = op(*args, **kwargs)
+            return ret
+
+        return wrapper
+
+    return decorator

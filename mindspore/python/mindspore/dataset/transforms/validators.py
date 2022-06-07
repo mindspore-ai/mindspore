@@ -19,9 +19,8 @@ import inspect
 import numpy as np
 
 from mindspore._c_expression import typing
-
 from ..core.validator_helpers import parse_user_args, type_check, check_pos_int64, check_value, check_positive, \
-    check_tensor_op, type_check_list
+    check_tensor_op, type_check_list, deprecator_factory
 
 # POS_INT_MIN is used to limit values from starting from 0
 POS_INT_MIN = 1
@@ -359,3 +358,25 @@ def invalidate_callable(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def deprecated_c_transforms(substitute_name=None, substitute_module=None):
+    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.transforms.c_transforms operator.
+
+    Args:
+        substitute_name (str, optional): The substitute name for deprecated operator.
+        substitute_module (str, optional): The substitute module for deprecated operator.
+    """
+    return deprecator_factory("1.8", "mindspore.dataset.transforms.c_transforms", "mindspore.dataset.transforms",
+                              substitute_name, substitute_module)
+
+
+def deprecated_py_transforms(substitute_name=None, substitute_module=None):
+    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.transforms.py_transforms operator.
+
+    Args:
+        substitute_name (str, optional): The substitute name for deprecated operator.
+        substitute_module (str, optional): The substitute module for deprecated operator.
+    """
+    return deprecator_factory("1.8", "mindspore.dataset.transforms.py_transforms", "mindspore.dataset.transforms",
+                              substitute_name, substitute_module)

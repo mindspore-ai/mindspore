@@ -150,7 +150,7 @@ def test_map_text_and_data_transforms():
     assert res == [4, 5, 3, 6, 7, 2]
 
 
-def test_map_mix_vision_tranforms():
+def test_map_mix_vision_transforms():
     """
     Feature: Map op
     Description: Test Map op with mixing of old legacy vision c/py_transforms and new unified vision transforms

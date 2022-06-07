@@ -54,7 +54,7 @@ from .validators import check_prob, check_crop, check_center_crop, check_resize_
     check_uniform_augment_cpp, check_convert_color, check_random_resize_crop, check_random_auto_contrast, \
     check_random_adjust_sharpness, check_auto_augment, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
-    check_random_solarize, check_positive_degrees, FLOAT_MAX_INTEGER, \
+    check_random_solarize, check_positive_degrees, FLOAT_MAX_INTEGER, deprecated_c_vision, \
     check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches, check_adjust_gamma
 
 
@@ -166,6 +166,7 @@ class AdjustGamma(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_adjust_gamma
     def __init__(self, gamma, gain=1):
         self.gamma = gamma
@@ -227,6 +228,7 @@ class AutoAugment(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_auto_augment
     def __init__(self, policy=AutoAugmentPolicy.IMAGENET, interpolation=Inter.NEAREST, fill_value=0):
         self.policy = policy
@@ -236,7 +238,8 @@ class AutoAugment(ImageTensorOperation):
         self.fill_value = fill_value
 
     def parse(self):
-        return cde.AutoAugmentOperation(DE_C_AUTO_AUGMENT_POLICY[self.policy], DE_C_INTER_MODE[self.interpolation],
+        return cde.AutoAugmentOperation(DE_C_AUTO_AUGMENT_POLICY.get(self.policy),
+                                        DE_C_INTER_MODE.get(self.interpolation),
                                         self.fill_value)
 
 
@@ -267,6 +270,7 @@ class AutoContrast(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_auto_contrast
     def __init__(self, cutoff=0.0, ignore=None):
         if ignore is None:
@@ -310,6 +314,7 @@ class BoundingBoxAugment(ImageTensorOperation):
         ...                                                 column_order=["image", "bbox"])
     """
 
+    @deprecated_c_vision()
     @check_bounding_box_augment_cpp
     def __init__(self, transform, ratio=0.3):
         self.ratio = ratio
@@ -353,6 +358,7 @@ class CenterCrop(ImageTensorOperation):
         ...                                                     input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_center_crop
     def __init__(self, size):
         if isinstance(size, int):
@@ -429,12 +435,13 @@ class ConvertColor(ImageTensorOperation):
         ...                                                     input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_convert_color
     def __init__(self, convert_mode):
         self.convert_mode = convert_mode
 
     def parse(self):
-        return cde.ConvertColorOperation(DE_C_CONVERT_COLOR_MODE[self.convert_mode])
+        return cde.ConvertColorOperation(DE_C_CONVERT_COLOR_MODE.get(self.convert_mode))
 
 
 class Crop(ImageTensorOperation):
@@ -467,6 +474,7 @@ class Crop(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_crop
     def __init__(self, coordinates, size):
         if isinstance(size, int):
@@ -511,6 +519,7 @@ class CutMixBatch(ImageTensorOperation):
         ...                                                 input_columns=["image", "label"])
     """
 
+    @deprecated_c_vision()
     @check_cut_mix_batch_c
     def __init__(self, image_batch_format, alpha=1.0, prob=1.0):
         self.image_batch_format = image_batch_format.value
@@ -518,7 +527,7 @@ class CutMixBatch(ImageTensorOperation):
         self.prob = prob
 
     def parse(self):
-        return cde.CutMixBatchOperation(DE_C_IMAGE_BATCH_FORMAT[self.image_batch_format], self.alpha, self.prob)
+        return cde.CutMixBatchOperation(DE_C_IMAGE_BATCH_FORMAT.get(self.image_batch_format), self.alpha, self.prob)
 
 
 class CutOut(ImageTensorOperation):
@@ -545,6 +554,7 @@ class CutOut(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_cutout
     def __init__(self, length, num_patches=1):
         self.length = length
@@ -575,6 +585,7 @@ class Decode(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     def __init__(self, rgb=True):
         self.rgb = rgb
 
@@ -615,6 +626,10 @@ class Equalize(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
+    def __init__(self):
+        super().__init__()
+
     def parse(self):
         return cde.EqualizeOperation()
 
@@ -648,6 +663,7 @@ class GaussianBlur(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_gaussian_blur
     def __init__(self, kernel_size, sigma=None):
         if isinstance(kernel_size, int):
@@ -679,6 +695,10 @@ class HorizontalFlip(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
+    def __init__(self):
+        super().__init__()
+
     def parse(self):
         return cde.HorizontalFlipOperation()
 
@@ -705,6 +725,10 @@ class HWC2CHW(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
+    def __init__(self):
+        super().__init__()
+
     def parse(self):
         return cde.HwcToChwOperation()
 
@@ -724,6 +748,10 @@ class Invert(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+
+    @deprecated_c_vision()
+    def __init__(self):
+        super().__init__()
 
     def parse(self):
         return cde.InvertOperation()
@@ -761,6 +789,7 @@ class MixUpBatch(ImageTensorOperation):
         ...                                                 input_columns=["image", "label"])
     """
 
+    @deprecated_c_vision()
     @check_mix_up_batch_c
     def __init__(self, alpha=1.0):
         self.alpha = alpha
@@ -801,6 +830,7 @@ class Normalize(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_normalize_c
     def __init__(self, mean, std):
         self.mean = mean
@@ -842,6 +872,7 @@ class NormalizePad(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_normalizepad_c
     def __init__(self, mean, std, dtype="float32"):
         self.mean = mean
@@ -903,6 +934,7 @@ class Pad(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_pad
     def __init__(self, padding, fill_value=0, padding_mode=Border.CONSTANT):
         padding = parse_padding(padding)
@@ -913,7 +945,7 @@ class Pad(ImageTensorOperation):
         self.padding_mode = padding_mode
 
     def parse(self):
-        return cde.PadOperation(self.padding, self.fill_value, DE_C_BORDER_TYPE[self.padding_mode])
+        return cde.PadOperation(self.padding, self.fill_value, DE_C_BORDER_TYPE.get(self.padding_mode))
 
 
 class RandomAdjustSharpness(ImageTensorOperation):
@@ -943,6 +975,7 @@ class RandomAdjustSharpness(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_adjust_sharpness
     def __init__(self, degree, prob=0.5):
         self.prob = prob
@@ -1022,6 +1055,7 @@ class RandomAffine(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_affine
     def __init__(self, degrees, translate=None, scale=None, shear=None, resample=Inter.NEAREST, fill_value=0):
         # Parameter checking
@@ -1056,7 +1090,7 @@ class RandomAffine(ImageTensorOperation):
         self.translate = translate
         self.scale_ = scale
         self.shear = shear
-        self.resample = DE_C_INTER_MODE[resample]
+        self.resample = DE_C_INTER_MODE.get(resample)
         self.fill_value = fill_value
 
     def parse(self):
@@ -1094,6 +1128,7 @@ class RandomAutoContrast(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_auto_contrast
     def __init__(self, cutoff=0.0, ignore=None, prob=0.5):
         if ignore is None:
@@ -1132,6 +1167,7 @@ class RandomColor(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
         self.degrees = degrees
@@ -1188,6 +1224,7 @@ class RandomColorAdjust(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_color_adjust
     def __init__(self, brightness=(1, 1), contrast=(1, 1), saturation=(1, 1), hue=(0, 0)):
         brightness = self.__expand_values(brightness)
@@ -1201,6 +1238,9 @@ class RandomColorAdjust(ImageTensorOperation):
         self.saturation = saturation
         self.hue = hue
 
+    def parse(self):
+        return cde.RandomColorAdjustOperation(self.brightness, self.contrast, self.saturation, self.hue)
+
     def __expand_values(self, value, center=1, bound=(0, FLOAT_MAX_INTEGER), non_negative=True):
         """Expand input value for vision adjustment factor."""
         if isinstance(value, numbers.Number):
@@ -1209,9 +1249,6 @@ class RandomColorAdjust(ImageTensorOperation):
                 value[0] = max(0, value[0])
             check_range(value, bound)
         return (value[0], value[1])
-
-    def parse(self):
-        return cde.RandomColorAdjustOperation(self.brightness, self.contrast, self.saturation, self.hue)
 
 
 class RandomCrop(ImageTensorOperation):
@@ -1282,6 +1319,7 @@ class RandomCrop(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_crop
     def __init__(self, size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=Border.CONSTANT):
         if isinstance(size, int):
@@ -1300,7 +1338,7 @@ class RandomCrop(ImageTensorOperation):
         self.padding_mode = padding_mode.value
 
     def parse(self):
-        border_type = DE_C_BORDER_TYPE[self.padding_mode]
+        border_type = DE_C_BORDER_TYPE.get(self.padding_mode)
         return cde.RandomCropOperation(self.size, self.padding, self.pad_if_needed, self.fill_value, border_type)
 
 
@@ -1360,6 +1398,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_resize_crop
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                  interpolation=Inter.BILINEAR, max_attempts=10):
@@ -1371,11 +1410,6 @@ class RandomCropDecodeResize(ImageTensorOperation):
         self.interpolation = interpolation
         self.max_attempts = max_attempts
 
-    def parse(self):
-        return cde.RandomCropDecodeResizeOperation(self.size, self.scale, self.ratio,
-                                                   DE_C_INTER_MODE[self.interpolation],
-                                                   self.max_attempts)
-
     def __call__(self, img):
         if not isinstance(img, np.ndarray):
             raise TypeError(
@@ -1384,6 +1418,11 @@ class RandomCropDecodeResize(ImageTensorOperation):
             raise TypeError("Input should be an encoded image with uint8 type in 1-D NumPy format, " +
                             "got format:{}, dtype:{}.".format(type(img), img.dtype.type))
         return super().__call__(img)
+
+    def parse(self):
+        return cde.RandomCropDecodeResizeOperation(self.size, self.scale, self.ratio,
+                                                   DE_C_INTER_MODE.get(self.interpolation),
+                                                   self.max_attempts)
 
 
 class RandomCropWithBBox(ImageTensorOperation):
@@ -1448,6 +1487,7 @@ class RandomCropWithBBox(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_crop
     def __init__(self, size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=Border.CONSTANT):
         if isinstance(size, int):
@@ -1467,7 +1507,7 @@ class RandomCropWithBBox(ImageTensorOperation):
         self.padding_mode = padding_mode.value
 
     def parse(self):
-        border_type = DE_C_BORDER_TYPE[self.padding_mode]
+        border_type = DE_C_BORDER_TYPE.get(self.padding_mode)
         return cde.RandomCropWithBBoxOperation(self.size, self.padding, self.pad_if_needed, self.fill_value,
                                                border_type)
 
@@ -1494,6 +1534,7 @@ class RandomEqualize(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -1526,6 +1567,7 @@ class RandomHorizontalFlip(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -1555,6 +1597,7 @@ class RandomHorizontalFlipWithBBox(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -1584,6 +1627,7 @@ class RandomInvert(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -1614,6 +1658,7 @@ class RandomLighting(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_alpha
     def __init__(self, alpha=0.05):
         self.alpha = alpha
@@ -1647,6 +1692,7 @@ class RandomPosterize(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_posterize
     def __init__(self, bits=(8, 8)):
         self.bits = bits
@@ -1715,6 +1761,7 @@ class RandomResizedCrop(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_resize_crop
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                  interpolation=Inter.BILINEAR, max_attempts=10):
@@ -1727,8 +1774,8 @@ class RandomResizedCrop(ImageTensorOperation):
         self.max_attempts = max_attempts
 
     def parse(self):
-        return cde.RandomResizedCropOperation(self.size, self.scale, self.ratio, DE_C_INTER_MODE[self.interpolation],
-                                              self.max_attempts)
+        return cde.RandomResizedCropOperation(self.size, self.scale, self.ratio,
+                                              DE_C_INTER_MODE.get(self.interpolation), self.max_attempts)
 
 
 class RandomResizedCropWithBBox(ImageTensorOperation):
@@ -1779,6 +1826,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_resize_crop
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                  interpolation=Inter.BILINEAR, max_attempts=10):
@@ -1792,7 +1840,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
 
     def parse(self):
         return cde.RandomResizedCropWithBBoxOperation(self.size, self.scale, self.ratio,
-                                                      DE_C_INTER_MODE[self.interpolation], self.max_attempts)
+                                                      DE_C_INTER_MODE.get(self.interpolation), self.max_attempts)
 
 
 class RandomResize(ImageTensorOperation):
@@ -1823,6 +1871,7 @@ class RandomResize(ImageTensorOperation):
         ...                                                     input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_resize
     def __init__(self, size):
         self.size = size
@@ -1863,6 +1912,7 @@ class RandomResizeWithBBox(ImageTensorOperation):
         ...                                                     input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_resize
     def __init__(self, size):
         self.size = size
@@ -1926,6 +1976,7 @@ class RandomRotation(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_rotation
     def __init__(self, degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0):
         if isinstance(degrees, (int, float)):
@@ -1949,7 +2000,7 @@ class RandomRotation(ImageTensorOperation):
         self.fill_value = fill_value
 
     def parse(self):
-        return cde.RandomRotationOperation(self.degrees, DE_C_INTER_MODE[self.resample], self.expand, self.center,
+        return cde.RandomRotationOperation(self.degrees, DE_C_INTER_MODE.get(self.resample), self.expand, self.center,
                                            self.fill_value)
 
 
@@ -1980,6 +2031,7 @@ class RandomSelectSubpolicy(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_select_subpolicy_op
     def __init__(self, policy):
         self.policy = policy
@@ -2024,6 +2076,7 @@ class RandomSharpness(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
         self.degrees = degrees
@@ -2056,6 +2109,7 @@ class RandomSolarize(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_random_solarize
     def __init__(self, threshold=(0, 255)):
         self.threshold = threshold
@@ -2088,6 +2142,7 @@ class RandomVerticalFlip(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -2117,6 +2172,7 @@ class RandomVerticalFlipWithBBox(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -2150,6 +2206,7 @@ class Rescale(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_rescale
     def __init__(self, rescale, shift):
         self.rescale = rescale
@@ -2199,6 +2256,7 @@ class Resize(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_resize_interpolation
     def __init__(self, size, interpolation=Inter.LINEAR):
         if isinstance(size, int):
@@ -2207,7 +2265,7 @@ class Resize(ImageTensorOperation):
         self.interpolation = interpolation
 
     def parse(self):
-        return cde.ResizeOperation(self.size, DE_C_INTER_MODE[self.interpolation])
+        return cde.ResizeOperation(self.size, DE_C_INTER_MODE.get(self.interpolation))
 
 
 class ResizeWithBBox(ImageTensorOperation):
@@ -2246,6 +2304,7 @@ class ResizeWithBBox(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_resize_interpolation
     def __init__(self, size, interpolation=Inter.LINEAR):
         self.size = size
@@ -2255,7 +2314,7 @@ class ResizeWithBBox(ImageTensorOperation):
         size = self.size
         if isinstance(size, int):
             size = (size,)
-        return cde.ResizeWithBBoxOperation(size, DE_C_INTER_MODE[self.interpolation])
+        return cde.ResizeWithBBoxOperation(size, DE_C_INTER_MODE.get(self.interpolation))
 
 
 class RgbToBgr(ImageTensorOperation):
@@ -2277,6 +2336,10 @@ class RgbToBgr(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+
+    @deprecated_c_vision("ConvertColor")
+    def __init__(self):
+        super().__init__()
 
     def parse(self):
         return cde.RgbToBgrOperation()
@@ -2329,6 +2392,7 @@ class Rotate(ImageTensorOperation):
         ...                                                 input_columns=["image"])
     """
 
+    @deprecated_c_vision()
     @check_rotate
     def __init__(self, degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0):
         if isinstance(degrees, (int, float)):
@@ -2344,7 +2408,7 @@ class Rotate(ImageTensorOperation):
         self.fill_value = fill_value
 
     def parse(self):
-        return cde.RotateOperation(self.degrees, DE_C_INTER_MODE[self.resample], self.expand, self.center,
+        return cde.RotateOperation(self.degrees, DE_C_INTER_MODE.get(self.resample), self.expand, self.center,
                                    self.fill_value)
 
 
@@ -2390,6 +2454,7 @@ class SlicePatches(ImageTensorOperation):
         ...                                                 output_columns=cols, column_order=cols)
     """
 
+    @deprecated_c_vision()
     @check_slice_patches
     def __init__(self, num_height=1, num_width=1, slice_mode=SliceMode.PAD, fill_value=0):
         self.num_height = num_height
@@ -2399,7 +2464,7 @@ class SlicePatches(ImageTensorOperation):
 
     def parse(self):
         return cde.SlicePatchesOperation(self.num_height, self.num_width,
-                                         DE_C_SLICE_MODE[self.slice_mode], self.fill_value)
+                                         DE_C_SLICE_MODE.get(self.slice_mode), self.fill_value)
 
 
 class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
@@ -2541,6 +2606,7 @@ class UniformAugment(ImageTensorOperation):
         ...                                                   num_parallel_workers=1)
     """
 
+    @deprecated_c_vision()
     @check_uniform_augment_cpp
     def __init__(self, transforms, num_ops=2):
         self.transforms = transforms
@@ -2571,6 +2637,10 @@ class VerticalFlip(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+
+    @deprecated_c_vision()
+    def __init__(self):
+        super().__init__()
 
     def parse(self):
         return cde.VerticalFlipOperation()

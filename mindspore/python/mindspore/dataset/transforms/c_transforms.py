@@ -22,7 +22,7 @@ from mindspore.common import dtype as mstype
 import mindspore._c_dataengine as cde
 
 from .validators import check_num_classes, check_ms_type, check_fill_value, check_slice_option, check_slice_op, \
-    check_mask_op, check_pad_end, check_concat_type, check_random_transform_ops, check_plugin
+    check_mask_op, check_pad_end, check_concat_type, check_random_transform_ops, check_plugin, deprecated_c_transforms
 from ..core.datatypes import mstype_to_detype
 
 
@@ -81,6 +81,7 @@ class OneHot(TensorOperation):
         >>> mnist_dataset = mnist_dataset.map(operations=onehot_op, input_columns=["label"])
     """
 
+    @deprecated_c_transforms()
     @check_num_classes
     def __init__(self, num_classes):
         self.num_classes = num_classes
@@ -118,6 +119,7 @@ class Fill(TensorOperation):
         >>> # [[3], [3], [3], [3], [3]]
     """
 
+    @deprecated_c_transforms()
     @check_fill_value
     def __init__(self, fill_value):
         self.fill_value = cde.Tensor(np.array(fill_value))
@@ -156,6 +158,7 @@ class TypeCast(TensorOperation):
         >>> dataset = dataset.map(operations=type_cast_op)
     """
 
+    @deprecated_c_transforms()
     @check_ms_type
     def __init__(self, data_type):
         data_type = mstype_to_detype(data_type)
@@ -233,6 +236,7 @@ class Slice(TensorOperation):
         >>> # +---------|
     """
 
+    @deprecated_c_transforms()
     @check_slice_op
     def __init__(self, *slices):
         slice_input_ = list(slices)
@@ -309,6 +313,7 @@ class Mask(TensorOperation):
         >>> # +--------------------+
     """
 
+    @deprecated_c_transforms()
     @check_mask_op
     def __init__(self, operator, constant, dtype=mstype.bool_):
         self.operator = operator
@@ -316,7 +321,7 @@ class Mask(TensorOperation):
         self.constant = cde.Tensor(np.array(constant))
 
     def parse(self):
-        return cde.MaskOperation(DE_C_RELATIONAL[self.operator], self.constant, self.dtype)
+        return cde.MaskOperation(DE_C_RELATIONAL.get(self.operator), self.constant, self.dtype)
 
 
 class PadEnd(TensorOperation):
@@ -355,6 +360,7 @@ class PadEnd(TensorOperation):
         >>> # +------------|
     """
 
+    @deprecated_c_transforms()
     @check_pad_end
     def __init__(self, pad_shape, pad_value=None):
         self.pad_shape = cde.TensorShape(pad_shape)
@@ -393,6 +399,7 @@ class Concatenate(TensorOperation):
         >>> dataset = dataset.map(operations=concatenate_op)
     """
 
+    @deprecated_c_transforms()
     @check_concat_type
     def __init__(self, axis=0, prepend=None, append=None):
         self.axis = axis
@@ -431,6 +438,10 @@ class Duplicate(TensorOperation):
         >>> # | [1,2,3] | [1,2,3] |
         >>> # +---------+---------+
     """
+
+    @deprecated_c_transforms()
+    def __init__(self):
+        super().__init__()
 
     def parse(self):
         return cde.DuplicateOperation()
@@ -475,6 +486,10 @@ class Unique(TensorOperation):
         >>> # +---------+-----------------+---------+
     """
 
+    @deprecated_c_transforms()
+    def __init__(self):
+        super().__init__()
+
     def parse(self):
         return cde.UniqueOperation()
 
@@ -500,6 +515,7 @@ class Compose(TensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=compose)
     """
 
+    @deprecated_c_transforms()
     @check_random_transform_ops
     def __init__(self, transforms):
         self.transforms = transforms
@@ -538,6 +554,7 @@ class RandomApply(TensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=rand_apply)
     """
 
+    @deprecated_c_transforms()
     @check_random_transform_ops
     def __init__(self, transforms, prob=0.5):
         self.transforms = transforms
@@ -574,6 +591,7 @@ class RandomChoice(TensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=rand_choice)
     """
 
+    @deprecated_c_transforms()
     @check_random_transform_ops
     def __init__(self, transforms):
         self.transforms = transforms
@@ -610,6 +628,7 @@ class Plugin(TensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=plugin)
     """
 
+    @deprecated_c_transforms()
     @check_plugin
     def __init__(self, lib_path, func_name, user_args=None):
         self.lib_path = lib_path

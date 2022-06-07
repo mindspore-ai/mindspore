@@ -35,7 +35,7 @@ from .validators import check_adjust_gamma, check_alpha, check_auto_contrast, ch
     check_normalizepad_py, check_num_channels, check_pad, check_positive_degrees, check_prob, check_random_affine, \
     check_random_color_adjust, check_random_crop, check_random_erasing, check_random_perspective, \
     check_random_resize_crop, check_random_rotation, check_resize_interpolation, check_rgb_to_bgr, check_rgb_to_hsv, \
-    check_ten_crop, check_uniform_augment_py
+    check_ten_crop, check_uniform_augment_py, deprecated_py_vision
 
 DE_PY_BORDER_TYPE = {Border.CONSTANT: 'constant',
                      Border.EDGE: 'edge',
@@ -82,6 +82,7 @@ class AdjustGamma(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_adjust_gamma
     def __init__(self, gamma, gain=1.0):
         self.gamma = gamma
@@ -137,6 +138,7 @@ class AutoContrast(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_auto_contrast
     def __init__(self, cutoff=0.0, ignore=None):
         self.cutoff = cutoff
@@ -184,6 +186,7 @@ class CenterCrop(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_center_crop
     def __init__(self, size):
         self.size = size
@@ -234,6 +237,7 @@ class Cutout(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision("CutOut")
     @check_cutout
     def __init__(self, length, num_patches=1):
         self.length = length
@@ -290,6 +294,7 @@ class Decode(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     def __init__(self):
         self.random = False
 
@@ -327,6 +332,7 @@ class Equalize(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     def __init__(self):
         self.random = False
 
@@ -373,6 +379,7 @@ class FiveCrop(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_five_crop
     def __init__(self, size):
         self.size = size
@@ -418,6 +425,7 @@ class Grayscale(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_num_channels
     def __init__(self, num_output_channels=1):
         self.num_output_channels = num_output_channels
@@ -462,6 +470,7 @@ class HsvToRgb(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_hsv_to_rgb
     def __init__(self, is_hwc=False):
         self.is_hwc = is_hwc
@@ -501,6 +510,7 @@ class HWC2CHW(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     def __init__(self):
         self.random = False
 
@@ -535,6 +545,7 @@ class Invert(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     def __init__(self):
         self.random = False
 
@@ -588,6 +599,7 @@ class LinearTransformation(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_linear_transform
     def __init__(self, transformation_matrix, mean_vector):
         self.transformation_matrix = transformation_matrix
@@ -648,6 +660,7 @@ class MixUp(py_transforms.PyTensorOperation):
         ...     input_columns=["image", "label"])
     """
 
+    @deprecated_py_vision()
     @check_mix_up
     def __init__(self, batch_size, alpha, is_single=True):
         self.image = 0
@@ -720,6 +733,7 @@ class Normalize(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_normalize_py
     def __init__(self, mean, std):
         self.mean = mean
@@ -787,6 +801,7 @@ class NormalizePad(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_normalizepad_py
     def __init__(self, mean, std, dtype="float32"):
         self.mean = mean
@@ -859,11 +874,12 @@ class Pad(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_pad
     def __init__(self, padding, fill_value=0, padding_mode=Border.CONSTANT):
         self.padding = parse_padding(padding)
         self.fill_value = fill_value
-        self.padding_mode = DE_PY_BORDER_TYPE[padding_mode]
+        self.padding_mode = DE_PY_BORDER_TYPE.get(padding_mode)
         self.random = False
 
     def __call__(self, img):
@@ -942,6 +958,7 @@ class RandomAffine(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_random_affine
     def __init__(self, degrees, translate=None, scale=None, shear=None, resample=Inter.NEAREST, fill_value=0):
         if shear is not None:
@@ -1012,6 +1029,7 @@ class RandomColor(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
         self.degrees = degrees
@@ -1079,6 +1097,7 @@ class RandomColorAdjust(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_random_color_adjust
     def __init__(self, brightness=(1, 1), contrast=(1, 1), saturation=(1, 1), hue=(0, 0)):
         self.brightness = brightness
@@ -1158,6 +1177,7 @@ class RandomCrop(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_random_crop
     def __init__(self, size, padding=None, pad_if_needed=False, fill_value=0, padding_mode=Border.CONSTANT):
         if padding is None:
@@ -1168,7 +1188,7 @@ class RandomCrop(py_transforms.PyTensorOperation):
         self.padding = padding
         self.pad_if_needed = pad_if_needed
         self.fill_value = fill_value
-        self.padding_mode = DE_PY_BORDER_TYPE[padding_mode]
+        self.padding_mode = DE_PY_BORDER_TYPE.get(padding_mode)
 
     def __call__(self, img):
         """
@@ -1233,6 +1253,7 @@ class RandomErasing(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_random_erasing
     def __init__(self, prob=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False, max_attempts=10):
         self.prob = prob
@@ -1285,6 +1306,7 @@ class RandomGrayscale(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_prob
     def __init__(self, prob=0.1):
         self.prob = prob
@@ -1338,6 +1360,7 @@ class RandomHorizontalFlip(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -1381,6 +1404,7 @@ class RandomLighting(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_alpha
     def __init__(self, alpha=0.05):
         self.alpha = alpha
@@ -1434,6 +1458,7 @@ class RandomPerspective(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_random_perspective
     def __init__(self, distortion_scale=0.5, prob=0.5, interpolation=Inter.BICUBIC):
         self.distortion_scale = distortion_scale
@@ -1507,6 +1532,7 @@ class RandomResizedCrop(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_random_resize_crop
     def __init__(self, size, scale=(0.08, 1.0), ratio=(3. / 4., 4. / 3.),
                  interpolation=Inter.BILINEAR, max_attempts=10):
@@ -1580,6 +1606,7 @@ class RandomRotation(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_random_rotation
     def __init__(self, degrees, resample=Inter.NEAREST, expand=False, center=None, fill_value=0):
         self.degrees = degrees
@@ -1630,6 +1657,7 @@ class RandomSharpness(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
         self.degrees = degrees
@@ -1674,6 +1702,7 @@ class RandomVerticalFlip(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
@@ -1727,6 +1756,7 @@ class Resize(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_resize_interpolation
     def __init__(self, size, interpolation=Inter.BILINEAR):
         self.size = size
@@ -1772,6 +1802,7 @@ class RgbToBgr(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision("ConvertColor")
     @check_rgb_to_bgr
     def __init__(self, is_hwc=False):
         self.is_hwc = is_hwc
@@ -1816,6 +1847,7 @@ class RgbToHsv(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_rgb_to_hsv
     def __init__(self, is_hwc=False):
         self.is_hwc = is_hwc
@@ -1866,6 +1898,7 @@ class TenCrop(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_ten_crop
     def __init__(self, size, use_vertical_flip=False):
         if isinstance(size, int):
@@ -1913,6 +1946,7 @@ class ToPIL(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     def __init__(self):
         self.random = False
 
@@ -1957,6 +1991,7 @@ class ToTensor(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     def __init__(self, output_type=np.float32):
         self.output_type = output_type
         self.random = False
@@ -2000,6 +2035,7 @@ class ToType(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision("TypeCast", "mindspore.dataset.transforms")
     def __init__(self, output_type):
         self.output_type = output_type
         self.random = False
@@ -2053,6 +2089,7 @@ class UniformAugment(py_transforms.PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
+    @deprecated_py_vision()
     @check_uniform_augment_py
     def __init__(self, transforms, num_ops=2):
         self.transforms = transforms
