@@ -406,6 +406,16 @@ void EliminateNodesFromGraph(CNode *node, const std::set<AnfNodePtr> &eliminate_
       // If input is an eliminate node, replace it by its real input.
       const auto &real_input = FetchRealNodeByNopNode(input);
       MS_EXCEPTION_IF_NULL(real_input);
+
+      // Since the output of previous node will be cached, the cache needs to be updated after eliminating the nopnode.
+      auto kernel_info = node->kernel_info();
+      if (kernel_info) {
+        auto runtime_cache = kernel_info->runtime_cache();
+        if (runtime_cache.runtime_cache().is_valid()) {
+          runtime_cache.runtime_cache().update_prev_node_output(
+            new_inputs.size() - 1, common::AnfAlgo::VisitKernelWithReturnType(real_input, 0));
+        }
+      }
       new_inputs.emplace_back(real_input);
     }
     const auto &cnode = input->cast<CNodePtr>();
@@ -413,6 +423,19 @@ void EliminateNodesFromGraph(CNode *node, const std::set<AnfNodePtr> &eliminate_
     EliminateNodesFromGraph(cnode.get(), eliminate_nodes, checked_nodes);
   }
   node->set_inputs(new_inputs);
+}
+
+// Check whether a cnode has a monad input.
+bool HasMonadInput(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &inputs = cnode->inputs();
+  for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (HasAbstractMonad(input)) {
+      return true;
+    }
+  }
+  return false;
 }
 }  // namespace
 
@@ -430,8 +453,9 @@ void EliminateNopNode(KernelGraph *graph) {
   // Collect all the nopnodes that can be eliminated.
   for (const auto &cnode : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
-    // Nopnode as graph output cannot be eliminated.
-    if ((!common::AnfAlgo::IsNopNode(cnode)) || (graph_outputs.find({cnode, 0}) != graph_outputs.end())) {
+    // Nopnode as graph output or has side effect cannot be eliminated.
+    if ((!common::AnfAlgo::IsNopNode(cnode)) || (graph_outputs.find({cnode, 0}) != graph_outputs.end()) ||
+        HasMonadInput(cnode)) {
       new_execution_order.emplace_back(cnode);
       continue;
     }
