@@ -1470,7 +1470,6 @@ def test_if_by_if_forward_all_const_branch():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_if_const_grad():
@@ -1506,7 +1505,6 @@ def test_if_const_grad():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_if_by_if_const_grad():
@@ -1546,7 +1544,6 @@ def test_if_by_if_const_grad():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_while_const_grad():
@@ -1580,7 +1577,6 @@ def test_while_const_grad():
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_if_by_while_const_grad():

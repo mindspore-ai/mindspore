@@ -17,6 +17,7 @@
 #include "abstract/abstract_function.h"
 
 #include <vector>
+#include <algorithm>
 #include "utils/hashing.h"
 #include "ops/core_ops.h"
 
@@ -143,7 +144,14 @@ bool AbstractFuncUnion::operator==(const AbstractFunction &other) const {
   if (func_list_.size() != other_union->func_list_.size()) {
     return false;
   }
-  return func_list_ == other_union->func_list_;
+
+  for (auto &item : other_union->func_list_) {
+    auto it = std::find_if(func_list_.begin(), func_list_.end(), [&item](const auto &abs) { return *item == *abs; });
+    if (it == func_list_.end()) {
+      return false;
+    }
+  }
+  return true;
 }
 
 std::size_t AbstractFuncUnion::hash() const {
@@ -242,13 +250,30 @@ bool PartialAbstractClosure::operator==(const AbstractFunction &other) const {
     return false;
   }
   auto other_partial = static_cast<const PartialAbstractClosure *>(&other);
-  if (fn_ != other_partial->fn_) {
+  if (!(*fn_ == *other_partial->fn_)) {
+    MS_LOG(DEBUG) << "Fn: " << fn_->ToString() << " other: " << other_partial->fn_->ToString();
     return false;
   }
   if (args_spec_list_.size() != other_partial->args_spec_list_.size()) {
+    MS_LOG(DEBUG) << "Size: " << args_spec_list_.size() << " other: " << other_partial->args_spec_list_.size();
     return false;
   }
-  return args_spec_list_ == other_partial->args_spec_list_;
+  for (std::size_t i = 0; i < args_spec_list_.size(); i++) {
+    if (args_spec_list_[i]->isa<AbstractFunction>()) {
+      if (!(*args_spec_list_[i] == *other_partial->args_spec_list_[i])) {
+        MS_LOG(DEBUG) << "Fn: [" << i << "] " << args_spec_list_[i]->ToString()
+                      << " other: " << other_partial->args_spec_list_[i]->ToString();
+        return false;
+      }
+    } else {
+      if (!(args_spec_list_[i] == other_partial->args_spec_list_[i])) {
+        MS_LOG(DEBUG) << "Fn: [" << i << "] " << args_spec_list_[i]->ToString()
+                      << " other: " << other_partial->args_spec_list_[i]->ToString();
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 std::size_t PartialAbstractClosure::hash() const {
