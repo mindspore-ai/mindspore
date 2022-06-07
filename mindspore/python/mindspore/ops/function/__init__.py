@@ -198,7 +198,8 @@ from .math_func import (
     isreal,
     rad2deg,
     truncate_div,
-    truncate_mod
+    truncate_mod,
+    gumbel_softmax,
 )
 from .nn_func import (
     deformable_conv2d,
