@@ -1901,13 +1901,14 @@ def matrix_determinant(x):
 
     Args:
         x (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, and the last two
-          dimensions must be the same size.
+          dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
        y (Tensor): The shape is `x_shape[:-2]`, the dtype is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` not float32, float64, complex64 or complex128.
         ValueError: If the last two dimensions of `x` is not same size.
         ValueError: If the dimension of `x` is less than 2.
 
@@ -1929,7 +1930,7 @@ def log_matrix_determinant(x):
 
     Args:
         x (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, and the last two
-          dimensions must be the same size.
+          dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
        sign (Tensor): The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
@@ -1938,6 +1939,7 @@ def log_matrix_determinant(x):
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` not float32, float64, complex64 or complex128.
         ValueError: If the last two dimensions of `x` is not same size.
         ValueError: If the dimension of `x` is less than 2.
 

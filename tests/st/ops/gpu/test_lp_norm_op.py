@@ -108,7 +108,7 @@ def test_lp_norm_op(data_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
-def test_lerp_vmap_gpu(data_type):
+def test_lp_norm_vmap_gpu(data_type):
     """
     Feature: test LpNorm vmap on GPU.
     Description: inputs(input_x) with batch.

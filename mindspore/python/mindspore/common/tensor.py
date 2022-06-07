@@ -1131,10 +1131,11 @@ class Tensor(Tensor_):
         Computes the determinant of one or more square matrices.
 
         Returns:
-            y (Tensor): The shape is `x_shape[:-2]`, the dtype is same as self tensor.
+            y (Tensor): The shape is `x_shape[:-2]`, the dtype is same as self tensor. `x` refer to self tensor.
 
         Raises:
             TypeError: If self tensor is not a Tensor.
+            TypeError: If dtype of self tensor not float32, float64, complex64 or complex128.
             ValueError: If the last two dimensions of self tensor is not same size.
             ValueError: If the dimension of self tensor is less than 2.
 
@@ -1156,12 +1157,13 @@ class Tensor(Tensor_):
 
         Returns:
             sign (Tensor): The signs of the log determinants. The shape is `x_shape[:-2]`,
-                the dtype is same as self tensor.
+                the dtype is same as self tensor. `x` refer to self tensor.
             y (Tensor): The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same
-                as self tensor.
+                as self tensor. `x` refer to self tensor.
 
         Raises:
             TypeError: If self tensor is not a Tensor.
+            TypeError: If dtype of self tensor not float32, float64, complex64 or complex128.
             ValueError: If the last two dimensions of self tensor is not same size.
             ValueError: If the dimension of self tensor is less than 2.
 
@@ -1766,10 +1768,10 @@ class Tensor(Tensor_):
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 

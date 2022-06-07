@@ -311,6 +311,37 @@ HOST_DEVICE inline T abs(const Complex<T> &z) {
   return std::abs(std::complex<T>(z));
 #endif
 }
+
+template <typename T>
+HOST_DEVICE inline Complex<T> log(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::log(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::log(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
+HOST_DEVICE inline Complex<T> exp(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::exp(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::exp(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
+HOST_DEVICE inline bool isfinite(const Complex<T> &z) {
+  return std::isfinite(z.real()) || std::isfinite(z.imag());
+}
 }  // namespace utils
 }  // namespace mindspore
 
@@ -320,5 +351,4 @@ namespace std {
 template <typename T>
 class numeric_limits<mindspore::utils::Complex<T>> : public numeric_limits<T> {};
 }  // namespace std
-
 #endif  // MINDSPORE_CCSRC_UTILS_COPLEX_H_
