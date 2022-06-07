@@ -18,6 +18,7 @@
 
 #include <map>
 #include <set>
+#include <vector>
 #include <string>
 #include <memory>
 #include "include/common/utils/python_adapter.h"
@@ -37,7 +38,9 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
     abstract
       ? std::make_shared<PyExpander>(std::static_pointer_cast<Callback>(std::make_shared<CallbackImplWithInferShape>()))
       : std::make_shared<PyExpander>(Callback::Instance());
-  if (IsComplexOp(node)) return ComplexOpDecorator::Creator(expander);
+  if (IsComplexOp(node)) {
+    return ComplexOpDecorator::Creator(expander);
+  }
 
   constexpr size_t kAssignInputIdx = 1;
   constexpr size_t kLambOptimizerInputIdx = 12;
@@ -54,7 +57,7 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
     {prim::kPrimAdamWeightDecay->name(), {OpUMonadExpanderDeco::GetCreator(kAdamWeightDecayInputIdx)}},
     {prim::kPrimDropout->name(), {DropoutExpanderDeco::Creator}},
   };
-  auto iter = creators.find(GetCNodePrimitive(node)->name());
+  const auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
     return WrapExpander(expander, iter->second);
   }
@@ -62,10 +65,16 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
 }
 
 bool CanExpandFallback(const AnfNodePtr &node) {
-  if (!node->isa<CNode>()) return false;
-  if (common::AnfAlgo::IsDynamicShape(node) && common::GetEnv("MS_DEV_EXPANDER_FALLBACK_DYNAMIC") != "on") return false;
-  if (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "off") return false;
-  static std::vector<OpWithLevel> expander_fallback_ops_with_level = {
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  if (common::AnfAlgo::IsDynamicShape(node) && common::GetEnv("MS_DEV_EXPANDER_FALLBACK_DYNAMIC") != "on") {
+    return false;
+  }
+  if (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "off") {
+    return false;
+  }
+  static const std::vector<OpWithLevel> expander_fallback_ops_with_level = {
     {kAllTarget, OpLevel_0, prim::kPrimEqualCount},
     {kAllTarget, OpLevel_0, prim::kPrimSoftsign},
     {kAllTarget, OpLevel_0, prim::kPrimSquare},
@@ -122,20 +131,24 @@ bool CanExpandFallback(const AnfNodePtr &node) {
     {kAllTarget, OpLevel_1, prim::kPrimMinimumGrad},
     {kAllTarget, OpLevel_1, prim::kPrimTanhGrad},
   };
-  auto op_level = (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "1") ? 1 : 0;
+  unsigned int op_level = (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "1") ? 1 : 0;
   auto ops = GkUtils::GetValidOps(expander_fallback_ops_with_level, op_level, {}, {}, {});
   return std::any_of(ops.begin(), ops.end(),
                      [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
 }
 
 FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &kernel_node)> &func) {
-  if (!CanExpandFallback(node)) return nullptr;
+  if (!CanExpandFallback(node)) {
+    return nullptr;
+  }
   auto expand_fg = GetCNodeFuncGraph(GetExpander(node)->Run(node));
   if (expand_fg != nullptr) {
     auto todos = TopoSort(expand_fg->get_return());
     for (const auto &n : todos) {
       auto cnode = n->cast<CNodePtr>();
-      if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) continue;
+      if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) {
+        continue;
+      }
       auto suc = func(cnode);
       if (!suc) {
         MS_LOG(DEBUG) << "Expanding core ops [" << cnode->fullname_with_scope() << "] failed.";
@@ -163,7 +176,7 @@ void ConvertAttrToInput(const FuncGraphPtr &graph) {
                                                               {prim::kPrimReduceMax->name(), {1}},
                                                               {prim::kPrimReduceSum->name(), {1}},
                                                               {prim::kPrimTranspose->name(), {1}}};
-    if (attr2input_map.count(primitive->name())) {
+    if (attr2input_map.count(primitive->name()) != 0) {
       auto input_names = primitive->GetAttr(kAttrInputNames);
       auto cnode = dyn_cast<CNode>(node);
       AnfNodePtrList inputs = cnode->inputs();
@@ -172,7 +185,7 @@ void ConvertAttrToInput(const FuncGraphPtr &graph) {
       auto attrs_map = attr2input_map[primitive->name()];
       size_t j = 1;
       for (size_t i = 0; i < input_names_vec.size(); ++i) {
-        if (attrs_map.count(i)) {
+        if (attrs_map.count(i) != 0) {
           auto value = primitive->GetAttr(input_names_vec[i]);
           auto value_node = std::make_shared<ValueNode>(value);
           value_node->set_abstract(value->ToAbstract());
@@ -193,7 +206,9 @@ void ConvertAttrToInput(const FuncGraphPtr &graph) {
 
 AnfNodePtr AttrToInputDeco::Run(const AnfNodePtr &node) {
   auto new_node = decorated_->Run(node);
-  if (new_node == nullptr) return nullptr;
+  if (new_node == nullptr) {
+    return nullptr;
+  }
   auto new_cnode = dyn_cast<CNode>(new_node);
   auto expand_fg = GetCNodeFuncGraph(new_cnode);
   ConvertAttrToInput(expand_fg);

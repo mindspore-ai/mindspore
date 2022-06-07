@@ -15,9 +15,6 @@
  */
 #ifndef MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_ADAPTER_EXPANDER_H_
 #define MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_ADAPTER_EXPANDER_H_
-#include <vector>
-#include <string>
-#include <unordered_set>
 #include <memory>
 #include "common/graph_kernel/core/expander.h"
 #include "ir/func_graph.h"
@@ -59,7 +56,7 @@ class COMMON_EXPORT AttrToInputDeco : public ExpanderDecorator {
 /**
  * Get the Expander which is used to expand a cnode to a funcgraph which composite same function with core ops.
  */
-COMMON_EXPORT ExpanderPtr GetExpander(const AnfNodePtr &, bool abstract = true);
+COMMON_EXPORT ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract = true);
 
 /**
  * Inline the expanded func graph to main graph.

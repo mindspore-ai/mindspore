@@ -207,7 +207,7 @@ bool AtomicAddCheckerAscend::SuitableForAtomicAdd(const AnfNodePtr &node) {
   for (size_t i = 0; i < src_shape_vec.size(); ++i) {
     auto dim = src_shape_vec[i];
     if (dim != 1) {
-      if (reduce_axis_set.count(i)) {
+      if (reduce_axis_set.count(i) != 0) {
         start_with_reduce = true;
       }
       break;
@@ -222,7 +222,7 @@ bool AtomicAddCheckerAscend::SuitableForAtomicAdd(const AnfNodePtr &node) {
   auto start_non_reduce_dim = 1LL;
   for (size_t i = 0; i < src_shape_vec.size(); ++i) {
     auto dim = src_shape_vec[i];
-    if (reduce_axis_set.count(i)) {
+    if (reduce_axis_set.count(i) != 0) {
       break;
     }
     start_non_reduce_dim = start_non_reduce_dim * dim;

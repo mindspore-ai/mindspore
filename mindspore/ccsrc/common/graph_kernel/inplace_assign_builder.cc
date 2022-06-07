@@ -246,9 +246,11 @@ std::vector<InplaceAssignUserInfo> InplaceAssignBuilder::FindOriginCNodeUsers(
     for (const auto &node_index : users) {
       // 1. First, find TupleGetItem nodes.
       const auto &user_node = node_index.first;
-      if (!IsPrimitiveCNode(user_node, prim::kPrimTupleGetItem)) continue;
+      if (!IsPrimitiveCNode(user_node, prim::kPrimTupleGetItem)) {
+        continue;
+      }
       auto item_idx = GetItemIdx(user_node);
-      auto iter = real_indices_and_input_node.find(item_idx);
+      const auto iter = real_indices_and_input_node.find(item_idx);
       if (iter != real_indices_and_input_node.end()) {
         (void)getitem_user_nodes.emplace_back(user_node, iter->second);
       }
@@ -271,7 +273,7 @@ std::vector<InplaceAssignUserInfo> InplaceAssignBuilder::FindOriginCNodeUsers(
 void InplaceAssignBuilder::ProcessOriginCNodeUser(
   const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
   const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &info_and_inplace_assignee_addr,
-  const FuncGraphManagerPtr &mng) {
+  const FuncGraphManagerPtr &mng) const {
   // 1. Find users.
   auto user_nodes = FindOriginCNodeUsers(main_graph, composite_node, info_and_inplace_assignee_addr, mng);
   for (const auto &iter : user_nodes) {

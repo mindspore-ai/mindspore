@@ -144,8 +144,12 @@ class CostModelSplitSchemer : public SplitSchemer {
   }
 
   virtual bool IsValidKernelNode(const AnfNodePtr &node) const {
-    if (!node->isa<CNode>()) return false;
-    if (AnfUtils::IsRealKernel(node)) return true;
+    if (!node->isa<CNode>()) {
+      return false;
+    }
+    if (AnfUtils::IsRealKernel(node)) {
+      return true;
+    }
     return false;
   }
 
@@ -193,9 +197,13 @@ class CostModelSplitSchemer : public SplitSchemer {
   // assign virtual node to the same group of its input.
   virtual void GroupVirtualNodes() {
     for (const auto &node : topo_all_nodes_) {
-      if (node_group_.count(node)) continue;
+      if (node_group_.count(node) != 0) {
+        continue;
+      }
       auto cnode = node->cast<CNodePtr>();
-      if (cnode == nullptr) continue;
+      if (cnode == nullptr) {
+        continue;
+      }
       bool found = false;
       for (const auto &input : cnode->inputs()) {
         auto iter = node_group_.find(input);

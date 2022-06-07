@@ -34,7 +34,9 @@ class GraphKernelExpanderWithPy : public GraphKernelExpander {
   std::vector<PrimitivePtr> InitOpList() override;
   ExpanderPtr InitExpander(const AnfNodePtr &node) override;
   bool CanExpand(const CNodePtr &node) const override {
-    if (IsComplexOp(node)) return true;
+    if (IsComplexOp(node)) {
+      return true;
+    }
     return GraphKernelExpander::CanExpand(node);
   }
 };

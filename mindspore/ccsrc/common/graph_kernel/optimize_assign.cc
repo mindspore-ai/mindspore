@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ std::map<size_t, AnfNodePtr> FindAssignAndOutputVal(const CNodePtr &fg_cnode) {
       auto assign_parameter = out->cast<CNodePtr>()->input(1);
       auto iter = std::find(inputs.begin() + 1, inputs.end(), assign_val);
       if (iter != inputs.end()) {
-        size_t assign_val_index = iter - inputs.begin();
+        size_t assign_val_index = static_cast<size_t>(iter - inputs.begin());
         auto assign_to = ParameterToInput(assign_parameter);
         if (assign_to != nullptr && assign_val_index > 0) {
           output_replace_map[assign_val_index - 1] = assign_to;
@@ -122,7 +122,9 @@ void UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const AnfNodePtr &
   MS_EXCEPTION_IF_NULL(mng);
   for (const auto &getitem_iter : mng->node_users()[cnode]) {
     auto getitem = getitem_iter.first;
-    if (GetitemIndex(getitem) != removed_index) continue;
+    if (GetitemIndex(getitem) != removed_index) {
+      continue;
+    }
     auto getitem_users = mng->node_users()[getitem];  // get a copy of getitem's users before replacing
 
     for (const auto &getitem_user_iter : getitem_users) {
@@ -146,13 +148,17 @@ bool RepalceOutputByParameter(const FuncGraphPtr &func_graph) {
 
   bool changed = false;
   for (const auto &n : todos) {
-    if (!common::AnfAlgo::IsGraphKernel(n)) continue;
+    if (!common::AnfAlgo::IsGraphKernel(n)) {
+      continue;
+    }
     auto cnode = n->cast<CNodePtr>();
     auto replaceable_nodes = FindAssignAndOutputVal(cnode);
-    if (replaceable_nodes.empty()) continue;
+    if (replaceable_nodes.empty()) {
+      continue;
+    }
     changed = true;
-    for (const auto &iter : replaceable_nodes) {
-      UpdateUsersOfGraphKernel(func_graph, cnode, iter.second, static_cast<int64_t>(iter.first));
+    for (const auto &[index, node] : replaceable_nodes) {
+      UpdateUsersOfGraphKernel(func_graph, cnode, node, static_cast<int64_t>(index));
     }
   }
   return changed;
@@ -164,7 +170,9 @@ bool ReplaceAssignByInplaceAssignInGraphkernel(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   bool changed = false;
   for (const auto &n : todos) {
-    if (!common::AnfAlgo::CheckPrimitiveType(n, prim::kPrimAssign)) continue;
+    if (!common::AnfAlgo::CheckPrimitiveType(n, prim::kPrimAssign)) {
+      continue;
+    }
     changed = true;
     auto cnode = n->cast<CNodePtr>();
     AnfNodePtrList inputs = {NewValueNode(prim::kPrimInplaceAssign), cnode->input(1), cnode->input(2), cnode->input(2)};
@@ -194,7 +202,9 @@ bool RepalceAssignByInplaceAssign(const FuncGraphPtr &func_graph) {
 
   auto changed = false;
   for (const auto &n : todos) {
-    if (!common::AnfAlgo::IsGraphKernel(n)) continue;
+    if (!common::AnfAlgo::IsGraphKernel(n)) {
+      continue;
+    }
     auto graph_kernel_fg = common::AnfAlgo::GetCNodeFuncGraphPtr(n);
     MS_EXCEPTION_IF_NULL(graph_kernel_fg);
     changed = ReplaceAssignByInplaceAssignInGraphkernel(graph_kernel_fg) || changed;
