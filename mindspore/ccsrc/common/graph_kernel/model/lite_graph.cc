@@ -43,13 +43,17 @@ std::string LiteGraph::ToString(bool reset_node_name) const {
   os << name_ << "(";
   for (size_t i = 0; i < inputs_.size(); i++) {
     os << inputs_[i]->debug_name();
-    if (i != inputs_.size() - 1) os << ", ";
+    if (i != inputs_.size() - 1) {
+      os << ", ";
+    }
   }
   os << ") -> ";
   auto &outputs = GetOutputs();
   for (size_t i = 0; i < outputs.size(); i++) {
     os << outputs[i]->debug_name();
-    if (i != outputs.size() - 1) os << ", ";
+    if (i != outputs.size() - 1) {
+      os << ", ";
+    }
   }
   os << " {\n";
   for (const NodePtr &op : ops_) {
@@ -86,7 +90,9 @@ const NodePtrList &LiteGraph::GetOrderedNodes() {
     stack.pop_back();
     res.push_back(cur);
     for (auto &input : cur->inputs()) {
-      if (input->NodeType() != NType::Primitive) continue;
+      if (input->NodeType() != NType::Primitive) {
+        continue;
+      }
       --outdegrees[input];
       if (outdegrees[input] == 0) {
         stack.push_back(input);

@@ -28,7 +28,7 @@ class InsertPadOps : public opt::Pass {
  public:
   InsertPadOps() : Pass("insert_pad_ops") {}
   ~InsertPadOps() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
+  bool Run(const FuncGraphPtr &func_graph) override;
 };
 using InsertPadOpsPtr = std::shared_ptr<InsertPadOps>;
 }  // namespace mindspore::graphkernel

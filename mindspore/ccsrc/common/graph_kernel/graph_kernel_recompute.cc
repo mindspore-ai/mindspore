@@ -187,7 +187,7 @@ void ElimRedundantInputsAndGraphParameters(const FuncGraphPtr &func_graph, AnfNo
   }
   AnfNodePtrList new_parameter, new_inputs;
   for (size_t i = 0; i < ori_parameter.size(); ++i) {
-    if (used_param.count(ori_parameter[i])) {
+    if (used_param.count(ori_parameter[i]) != 0) {
       new_parameter.push_back(ori_parameter[i]);
       new_inputs.push_back((*inputs)[i]);
     }
@@ -344,7 +344,7 @@ OutPosLinkList AutoRecompute::JudegeTargetAndCaptureSource(const AnfNodePtr &nod
 
   // Direct users include long term users and short term users.
   // If the short term user is graph kernel composite node, it may be absorb and reduce the local peak memory.
-  for (auto user : direct_users) {
+  for (const auto &user : direct_users) {
     if (long_term_users.count(user) == 0 && common::AnfAlgo::IsGraphKernel(user)) {
       (void)target_link_infos.emplace_back(user, user_edge_pos[user], EdgeLifeTimeType::ShortTerm);
     }
@@ -557,7 +557,7 @@ std::pair<FuncGraphPtr, AnfNodePtrList> GraphKernelRecompute::CloneGraph(const C
   if (new_outputs.size() + 1 == output_node->size()) {
     return {new_funcgraph, inputs};
   }
-  (void)new_outputs.insert(new_outputs.begin(), output_node->input(0));
+  (void)new_outputs.insert(new_outputs.cbegin(), output_node->input(0));
   auto new_output_node = new_funcgraph->NewCNode(new_outputs);
   // use the old abstract, since the new_funcgraph will be deleted in later process.
   new_output_node->set_abstract(output_node->abstract());
@@ -617,7 +617,7 @@ void GraphKernelRecompute::LinkIntoTargetFuncGraph(
     }
   }
   AnfNodePtrList new_node_inputs = {gt_node->input(0)};
-  (void)new_node_inputs.insert(new_node_inputs.end(), new_inputs.begin(), new_inputs.end());
+  (void)new_node_inputs.insert(new_node_inputs.cend(), new_inputs.cbegin(), new_inputs.cend());
   gt->set_parameters(new_parameters);
   gt_node->set_inputs(new_node_inputs);
   AnfNodePtrList outputs;
@@ -639,7 +639,7 @@ void GraphKernelRecompute::Process(const Candidate &candidate) {
     new_funcgraph = BasicClone(gs);
     auto source_cnode = candidate.source_graph->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(source_cnode);
-    (void)inputs.insert(inputs.end(), source_cnode->inputs().begin() + 1, source_cnode->inputs().end());
+    (void)inputs.insert(inputs.cend(), source_cnode->inputs().cbegin() + 1, source_cnode->inputs().cend());
     edge_match_func = [](const Candidate &match_candidate, const AnfNodePtr &to_match) -> std::pair<bool, size_t> {
       if (match_candidate.source_graph == to_match) {
         return std::make_pair(true, 0);
@@ -677,7 +677,7 @@ void GraphKernelRecompute::Process(const Candidate &candidate) {
 
 bool GraphKernelRecompute::Run(const FuncGraphPtr &func_graph) {
   int repeat_times = 2;
-  while (repeat_times--) {
+  while ((repeat_times--) != 0) {
     AutoRecompute recompute;
     candidates_ = recompute.Run(func_graph);
     if (candidates_.empty()) {

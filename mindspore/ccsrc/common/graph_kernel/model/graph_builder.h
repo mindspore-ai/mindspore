@@ -75,7 +75,6 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
       default:
         MS_LOG(EXCEPTION) << "The input data type should be int, uint, float or bool, But Get :"
                           << TypeIdToString(type_id);
-        break;
     }
     return Value(const_input);
   }
