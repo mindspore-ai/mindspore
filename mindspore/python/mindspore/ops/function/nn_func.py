@@ -132,6 +132,13 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
     r"""
     Computes a 2D deformable convolution given 4D `x`, `weight` and `offsets` tensors.
 
+    Note:
+        For Ascend platform, only support cases when `in_channels` can be divisible by 8, `deformable_groups` is 1
+        and `offsets` value is float which needs to contain a decimal part. For example: `x` is
+        `(batch, 2, in_height, in_width)`, or `deformable_groups` is 2, or `offsets` assign with 'numpy.ones()'
+        function, none of these scenarios are supported.
+        This is an experimental interface that is subject to change or deletion.
+
     Args:
         x (Tensor): A 4D tensor of input image. With the format "NCHW" or "NHWC", the data is stored in the order of:
             :math:`(batch, in_channels, in_height, in_width)` when the format is "NCHW".
