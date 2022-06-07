@@ -290,10 +290,12 @@ std::string ComputeGraphNode::GetMetadata(const std::string &name, uint32_t time
 
 std::vector<std::string> ComputeGraphNode::GetHostNames(const std::string &role) {
   auto retval = RetrieveMessageFromMSN(std::to_string(static_cast<int>(MessageName::kGetHostNames)), role);
-  MS_EXCEPTION_IF_NULL(retval);
-
-  nlohmann::json hostnames = nlohmann::json::parse(*retval);
-  return hostnames.at(kHostNames).get<std::vector<std::string>>();
+  if (retval != nullptr) {
+    nlohmann::json hostnames = nlohmann::json::parse(*retval);
+    return hostnames.at(kHostNames).get<std::vector<std::string>>();
+  } else {
+    return std::vector<std::string>();
+  }
 }
 
 std::shared_ptr<std::string> ComputeGraphNode::RetrieveMessageFromMSN(const std::string &msg_name,
