@@ -72,7 +72,6 @@ class ModelWorker {
   bool need_init_resize_ = true;
   std::shared_ptr<mindspore::Model> model_ = nullptr;
   std::mutex mtx_worker_;
-  bool need_copy_output_ = true;
   std::atomic_bool available_ = true;
   std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
   std::vector<MSTensor> origin_worker_inputs_;

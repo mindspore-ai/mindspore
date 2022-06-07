@@ -104,8 +104,12 @@ public class Main {
         }
 
         // init input tensor
-        inputs = new ArrayList<>();
-        MSTensor input = runner.getInputs().get(0);
+        inputs = runner.getInputs();
+        if (inputs.size() != 1) {
+            System.err.println("inputs size is wrong.");
+            return;
+        }
+        MSTensor input = inputs.get(0);
         if (input.getDataType() != DataType.kNumberTypeFloat32) {
             System.err.println("Input tensor data type is not float, the data type is " + input.getDataType());
             return;
@@ -114,12 +118,20 @@ public class Main {
         int elementNums = input.elementsNum();
         float[] randomData = generateArray(elementNums);
         ByteBuffer inputData = floatArrayToByteBuffer(randomData);
-        // create input MSTensor
-        MSTensor inputTensor = MSTensor.createTensor(input.tensorName(), DataType.kNumberTypeFloat32,input.getShape(), inputData);
-        inputs.add(inputTensor);
+        input.setData(inputData);
 
         // init output
-        outputs = new ArrayList<>();
+        outputs = runner.getOutputs();
+        if (outputs.size() != 1) {
+            System.err.println("outputs size is wrong.");
+            return;
+        }
+        MSTensor output = outputs.get(0);
+        int outputElementNums = output.elementsNum();
+        float[] outputRandomData = generateArray(outputElementNums);
+        ByteBuffer outputData = floatArrayToByteBuffer(outputRandomData);
+        output.setData(outputData);
+
 
         // runner do predict
         ret = runner.predict(inputs,outputs);
@@ -130,6 +142,7 @@ public class Main {
             return;
         }
         System.out.println("========== model parallel runner predict success ==========");
+        config.free();
         freeTensor();
         runner.free();
     }
