@@ -22,8 +22,8 @@ from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.train.serialization import export, load
 
-ZERO = Tensor([0], mstype.int32)
-ONE = Tensor([1], mstype.int32)
+ZERO = Tensor([0], mstype.float32)
+ONE = Tensor([1], mstype.float32)
 
 
 class RecrusiveNet(nn.Cell):
