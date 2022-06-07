@@ -164,7 +164,8 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("_set_dataset_mode_config", &mindspore::ConfigManager::SetDatasetModeConfig, "API for set dataset mode.");
   (void)m.def("init_pipeline", &mindspore::pipeline::InitPipeline, "Init Pipeline.");
 
-  (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, "Export Graph.");
+  (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, py::arg("file_name"), py::arg("model_type"),
+              py::arg("phase"), py::arg("encrypt") = py::none(), py::arg("key") = nullptr, "Export Graph.");
   (void)m.def("load_mindir", &mindspore::pipeline::LoadMindIR, py::arg("file_name"), py::arg("dec_key") = nullptr,
               py::arg("key_len") = py::int_(0), py::arg("dec_mode") = py::str("AES-GCM"), "Load model as Graph.");
 

@@ -48,7 +48,8 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, const std::string &phase);
 
-void ExportDFGraph(const std::string &file_name, const std::string &phase);
+void ExportDFGraph(const std::string &file_name, const std::string &phase, const py::function encrypt = py::none(),
+                   char *key = nullptr);
 }  // namespace pipeline
 }  // namespace mindspore
 

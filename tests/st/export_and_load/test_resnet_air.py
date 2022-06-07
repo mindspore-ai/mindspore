@@ -322,6 +322,12 @@ def resnet50(num_classes):
     return ResNet(ResidualBlock, [3, 4, 6, 3], num_classes)
 
 
+def encrypt_func(model_stream, key):
+    plain_data = BytesIO()
+    plain_data.write(model_stream)
+    return plain_data.getvalue()
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -331,6 +337,26 @@ def test_export_resnet_air():
     inputs = Tensor(np.ones([1, 3, 224, 224]).astype(np.float32) * 0.01)
     file_name = "resnet"
     export(net, inputs, file_name=file_name, file_format='AIR')
+    file_name += ".air"
+    assert os.path.exists(file_name)
+    os.remove(file_name)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_export_resnet_with_encryption():
+    """
+    Feature: Export encrypted LeNet to MindIR
+    Description: Test export API to save network with encryption into MindIR
+    Expectation: save successfully
+    """
+    net = resnet50(10)
+    inputs = Tensor(np.ones([1, 3, 224, 224]).astype(np.float32) * 0.01)
+    file_name = "resnet"
+    export(net, inputs, file_name=file_name, file_format='AIR',
+           enc_key=b'123456789', enc_mode=encrypt_func)
     file_name += ".air"
     assert os.path.exists(file_name)
     os.remove(file_name)

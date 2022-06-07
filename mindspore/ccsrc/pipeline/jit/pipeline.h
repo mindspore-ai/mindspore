@@ -180,7 +180,9 @@ void ClearResAtexit();
 void ReleaseGeTsd();
 void MemoryRecycle();
 
-void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase);
+void ExportGraph(const std::string &file_name, const std::string &model_type, const std::string &phase,
+                 const py::object encrypt = py::none(), char *key = nullptr);
+
 FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode);
 
 // init and exec dataset sub graph

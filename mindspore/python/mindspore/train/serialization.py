@@ -425,8 +425,8 @@ def load(file_name, **kwargs):
 
     logger.info("Execute the process of loading mindir.")
     if 'dec_key' in kwargs.keys():
-        dec_key = Validator.check_isinstance('dec_key', kwargs['dec_key'], bytes)
-        dec_mode = 'AES-GCM'
+        dec_key = Validator.check_isinstance('dec_key', kwargs.get('dec_key'), bytes)
+        dec_mode = "AES-GCM"
         if 'dec_mode' in kwargs.keys():
             dec_mode = Validator.check_isinstance('dec_mode', kwargs.get('dec_mode'), str)
         graph = load_mindir(file_name, dec_key=dec_key, key_len=len(dec_key), dec_mode=dec_mode)
@@ -890,14 +890,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
     file_name = os.path.realpath(file_name)
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
     if 'enc_key' in kwargs.keys():
-        if file_format != 'MINDIR':
-            raise ValueError(f"For 'export', 'enc_key' can be passed in only when 'file_format' == 'MINDIR',"
-                             f" but got 'file_format' {file_format}.")
-
-        enc_key = Validator.check_isinstance('enc_key', kwargs['enc_key'], bytes)
-        enc_mode = 'AES-GCM'
-        if 'enc_mode' in kwargs.keys():
-            enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
+        enc_key, enc_mode = _check_key_mode_type(file_format, **kwargs)
         dataset = kwargs.get('dataset')
         _export(net, file_name, file_format, *inputs, enc_key=enc_key, enc_mode=enc_mode, dataset=dataset)
     else:
@@ -924,37 +917,72 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
         net.set_train(mode=False)
 
     if file_format == 'AIR':
-        phase_name = 'export.air'
-        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name)
-        if not file_name.endswith('.air'):
-            file_name += ".air"
-        if os.path.exists(file_name):
-            os.chmod(file_name, stat.S_IWUSR)
-        if "/" in file_name:
-            real_path = os.path.realpath(file_name[:file_name.rfind("/")])
-            os.makedirs(real_path, exist_ok=True)
-        _executor.export(file_name, graph_id)
-        os.chmod(file_name, stat.S_IRUSR)
+        _save_air(net, file_name, *inputs, **kwargs)
     elif file_format == 'ONNX':
-        total_size = _calculation_net_size(net)
-        if total_size > PROTO_LIMIT_SIZE:
-            raise RuntimeError('Export onnx model failed. Network size is: {}G, it exceeded the protobuf: {}G limit.'
-                               .format(total_size / 1024 / 1024, PROTO_LIMIT_SIZE / 1024 / 1024))
-        phase_name = 'export.onnx'
-        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
-        onnx_stream = _executor._get_func_graph_proto(net, graph_id)
-        if not file_name.endswith('.onnx'):
-            file_name += ".onnx"
-        if os.path.exists(file_name):
-            os.chmod(file_name, stat.S_IWUSR)
-        with open(file_name, 'wb') as f:
-            f.write(onnx_stream)
-            os.chmod(file_name, stat.S_IRUSR)
+        _save_onnx(net, file_name, *inputs, **kwargs)
     elif file_format == 'MINDIR':
         _save_mindir(net, file_name, *inputs, **kwargs)
 
     if is_dump_onnx_in_training:
         net.set_train(mode=True)
+
+
+def _check_key_mode_type(file_format, **kwargs):
+    """check enc_key and enc_mode are valid"""
+    enc_key = Validator.check_isinstance('enc_key', kwargs.get('enc_key'), bytes)
+    enc_mode = kwargs.get('enc_mode')
+
+    if file_format in ('AIR', 'ONNX'):
+        if callable(enc_mode):
+            return enc_key, enc_mode
+        enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
+        raise RuntimeError(f"AIR/ONNX only support customized encryption, but got {enc_mode}.")
+
+    enc_mode = 'AES-GCM'
+    if 'enc_mode' in kwargs.keys():
+        enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
+    if enc_mode in ('AES-CBC', 'AES-GCM'):
+        return enc_key, enc_mode
+    raise RuntimeError(f"MindIR only support AES-GCM/AES-CBC encryption, but got {enc_mode}")
+
+
+def _save_air(net, file_name, *inputs, **kwargs):
+    """Save AIR format file."""
+    phase_name = 'export.air'
+    graph_id, _ = _executor.compile(net, *inputs, phase=phase_name)
+    if not file_name.endswith('.air'):
+        file_name += ".air"
+    if os.path.exists(file_name):
+        os.chmod(file_name, stat.S_IWUSR)
+    if "/" in file_name:
+        real_path = os.path.realpath(file_name[:file_name.rfind("/")])
+        os.makedirs(real_path, exist_ok=True)
+    if 'enc_key' in kwargs.keys() and 'enc_mode' in kwargs.keys():
+        _executor.export(file_name, graph_id, enc_key=kwargs.get('enc_key'), encrypt_func=kwargs.get('enc_mode'))
+    else:
+        _executor.export(file_name, graph_id)
+    os.chmod(file_name, stat.S_IRUSR)
+
+
+def _save_onnx(net, file_name, *inputs, **kwargs):
+    """Save ONNX format file."""
+    total_size = _calculation_net_size(net)
+    if total_size > PROTO_LIMIT_SIZE:
+        raise RuntimeError('Export onnx model failed. Network size is: {}G, it exceeded the protobuf: {}G limit.'
+                           .format(total_size / 1024 / 1024, PROTO_LIMIT_SIZE / 1024 / 1024))
+    phase_name = 'export.onnx'
+    graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
+    onnx_stream = _executor._get_func_graph_proto(net, graph_id)
+    if 'enc_key' in kwargs.keys() and 'enc_mode' in kwargs.keys():
+        enc_mode = kwargs.get('enc_mode')
+        onnx_stream = enc_mode(onnx_stream, kwargs.get('enc_key'))
+    if not file_name.endswith('.onnx'):
+        file_name += ".onnx"
+    if os.path.exists(file_name):
+        os.chmod(file_name, stat.S_IWUSR)
+    with open(file_name, 'wb') as f:
+        f.write(onnx_stream)
+        os.chmod(file_name, stat.S_IRUSR)
 
 
 def _generate_front_info_for_param_data_file(is_encrypt, kwargs):
@@ -963,8 +991,8 @@ def _generate_front_info_for_param_data_file(is_encrypt, kwargs):
     front_info += check_code.to_bytes(1, byteorder=sys.byteorder)
     front_info += bytes(63)
     if is_encrypt():
-        front_info = _encrypt(front_info, len(front_info), kwargs['enc_key'],
-                              len(kwargs['enc_key']), kwargs['enc_mode'])
+        front_info = _encrypt(front_info, len(front_info), kwargs.get('enc_key'),
+                              len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
     return front_info
 
 
@@ -1047,7 +1075,6 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
                                       len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
             f.write(write_data)
 
-        # save graph
         graph_file_name = os.path.join(dirname, file_prefix + "_graph.mindir")
         if os.path.exists(graph_file_name):
             os.chmod(graph_file_name, stat.S_IWUSR)
@@ -1056,8 +1083,7 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
             model_string = model.SerializeToString()
             if is_encrypt():
                 model_string = _encrypt(model_string, len(model_string), kwargs.get('enc_key'),
-                                        len(kwargs.get('enc_key')),
-                                        kwargs.get('enc_mode'))
+                                        len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
             model_file.write(model_string)
             os.chmod(graph_file_name, stat.S_IRUSR)
 
@@ -1118,8 +1144,8 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
         os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR)
         model_string = model.SerializeToString()
         if is_encrypt():
-            model_string = _encrypt(model_string, len(model_string), kwargs.get('enc_key'), len(kwargs.get('enc_key')),
-                                    kwargs.get('enc_mode'))
+            model_string = _encrypt(model_string, len(model_string), kwargs.get('enc_key'),
+                                    len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
         f.write(model_string)
         os.chmod(file_name, stat.S_IRUSR)
 
