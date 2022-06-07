@@ -24,18 +24,12 @@ Common imported modules in corresponding API examples are as follows:
     import mindspore.dataset.vision as vision
     import mindspore.dataset.vision.utils as utils
 
-Alternative and equivalent imported vision is as follows:
-
-.. code-block::
-
-    import mindspore.dataset.vision.transforms as vision
-
 Note: Legacy c_transforms and py_transforms are deprecated but can still be imported as follows:
 
 .. code-block::
 
     import mindspore.dataset.vision.c_transforms as c_vision
-    import mindspore.dataset.vision.c_transforms as py_vision
+    import mindspore.dataset.vision.py_transforms as py_vision
 
 Descriptions of common data processing terms are as follows:
 

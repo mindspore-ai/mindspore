@@ -791,7 +791,7 @@ def deprecator_factory(version, old_module, new_module, substitute_name=None, su
                       " and will be removed in a future version."
             message += f" Use '{substitute_name}'" if substitute_name else f" Use '{name}'"
             message += f" from {substitute_module} instead." if substitute_module \
-                else f" from " f"{new_module}" + "  instead."
+                else f" from " f"{new_module}" + " instead."
 
             # Log warning message
             logger.warning(message)
