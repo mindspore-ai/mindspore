@@ -486,6 +486,7 @@ constexpr char SRC_RANK[] = "src_rank";
 constexpr char PIPELINE_PARAM[] = "pipeline_param";
 constexpr char PIPELINE_END[] = "pipeline_end";
 constexpr char PIPELINE_BEGIN[] = "pipeline_begin";
+constexpr char SLICE_INDEX[] = "slice_index";
 constexpr char MAIN_GRAPH[] = "main_graph";
 constexpr char SR_TAG[] = "sr_tag";
 constexpr char NEED_GRAD[] = "need_grad";
