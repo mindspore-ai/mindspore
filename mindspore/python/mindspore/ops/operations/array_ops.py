@@ -5784,56 +5784,7 @@ class BatchToSpaceND(Primitive):
     r"""
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
-    This operation will divide batch dimension N into blocks with block_shape, the output tensor's N dimension
-    is the corresponding number of blocks after division. The output tensor's H, W dimension is the product of
-    original H, W dimension and block_shape with given amount to crop from dimension, respectively.
-
-    Args:
-        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
-            than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
-            number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the same,
-            equal to `block_shape`. M must be 2.
-        crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 subtraction list,
-            each containing 2 int value.
-            All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
-            input dimension i+2. It is required that
-
-            :math:`input\_shape[i+2]*block\_shape[i] > crops[i][0]+crops[i][1]`
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor, dimension 0 must be divisible by
-          product of `block_shape`. The data type is float16 or float32.
-
-    Outputs:
-        Tensor, the output tensor with the same type as input. Assume input shape is (n, c, h, w) with block_shape
-        and crops. The output shape will be (n', c', h', w'), where
-
-        :math:`n' = n//(block\_shape[0]*block\_shape[1])`
-
-        :math:`c' = c`
-
-        :math:`h' = h*block\_shape[0]-crops[0][0]-crops[0][1]`
-
-        :math:`w' = w*block\_shape[1]-crops[1][0]-crops[1][1]`
-
-    Raises:
-        TypeError: If `block_shape` is not one of list, tuple, int.
-        TypeError: If `crops` is neither list nor tuple.
-        ValueError: If length of `block_shape` or `crops` is not equal to 2.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> block_shape = [2, 2]
-        >>> crops = [[0, 0], [0, 0]]
-        >>> batch_to_space_nd = ops.BatchToSpaceND(block_shape, crops)
-        >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
-        >>> output = batch_to_space_nd(input_x)
-        >>> print(output)
-        [[[[1.  2.]
-           [3.  4.]]]]
-
+    Refer to :func:`mindspore.ops.batch_to_space_nd` for more detail.
     """
 
     @prim_attr_register
