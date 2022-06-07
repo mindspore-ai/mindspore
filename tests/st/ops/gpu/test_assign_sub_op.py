@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
@@ -38,27 +39,20 @@ class AssignSub(nn.Cell):
 def test_assign_sub():
     """
     Feature: assign sub kernel
-    Description: test the assign sub.
-    Expectation: match to expect.
+    Description: test assignsub
+    Expectation: just test
     """
-    expect1 = np.array([[[[0., 0., 0.],
-                          [0., 0., 0.],
-                          [0., 0., 0.]],
-                         [[0., 0., 0.],
-                          [0., 0., 0.],
-                          [0., 0., 0.]],
-                         [[0., 0., 0.],
-                          [0., 0., 0.],
-                          [0., 0., 0.]]]])
-    expect2 = np.array([[[[0, -1, -2.],
-                          [-3, -4, -5.],
-                          [-6, -7, -8.]],
-                         [[-9, -10, -11.],
-                          [-12, -13, -14.],
-                          [-15, -16, -17.]],
-                         [[-18, -19, -20.],
-                          [-21, -22, -23.],
-                          [-24, -25, -26.]]]])
+    expect1 = np.zeros([1, 3, 3, 3])
+    expect2 = np.array([[[[0, -1, -2],
+                          [-3, -4, -5],
+                          [-6, -7, -8]],
+                         [[-9, -10, -11],
+                          [-12, -13, -14],
+                          [-15, -16, -17]],
+                         [[-18, -19, -20],
+                          [-21, -22, -23],
+                          [-24, -25, -26]]]])
+
     x1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
     y1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
 
@@ -80,3 +74,46 @@ def test_assign_sub():
     sub = AssignSub(output1)
     output2 = sub(y2)
     assert (output2.asnumpy() == expect2).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_assign_sub_float16():
+    """
+    Feature: None
+    Description: test assignsub float16
+    Expectation: just test
+    """
+    expect3 = np.zeros([1, 3, 3, 3])
+    expect4 = np.array([[[[0, -1, -2],
+                          [-3, -4, -5],
+                          [-6, -7, -8]],
+                         [[-9, -10, -11],
+                          [-12, -13, -14],
+                          [-15, -16, -17]],
+                         [[-18, -19, -20],
+                          [-21, -22, -23],
+                          [-24, -25, -26]]]])
+
+    x1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float16))
+    y1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float16))
+
+    x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float16))
+    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float16))
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    sub = AssignSub(x1)
+    output1 = sub(y1)
+    assert (output1.asnumpy() == expect3).all()
+    sub = AssignSub(output1)
+    output2 = sub(y1)
+    assert (output2.asnumpy() == expect4).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    sub = AssignSub(x2)
+    output1 = sub(y2)
+    assert (output1.asnumpy() == expect3).all()
+    sub = AssignSub(output1)
+    output2 = sub(y2)
+    assert (output2.asnumpy() == expect4).all()

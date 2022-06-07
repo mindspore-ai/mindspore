@@ -440,7 +440,7 @@ class AssignSub(Primitive):
     Refer to :func:`mindspore.ops.assign_sub` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):

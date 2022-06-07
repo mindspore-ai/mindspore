@@ -17,61 +17,80 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_ASSIGN_SUB_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_ASSIGN_SUB_GPU_KERNEL_H_
 
-#include <cuda_runtime_api.h>
 #include <vector>
+#include <string>
+#include <memory>
+#include <algorithm>
+#include <functional>
 #include <map>
+#include <utility>
+#include <iostream>
+#include "mindspore/core/ops/assign_sub.h"
+#include "kernel/common_utils.h"
+#include "include/curand.h"
+#include "abstract/utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/assign_sub_impl.cuh"
 namespace mindspore {
 namespace kernel {
-template <typename T>
 class AssignSubFwdGpuKernelMod : public NativeGpuKernelMod {
  public:
-  AssignSubFwdGpuKernelMod() : input_elements_(0) {}
+  AssignSubFwdGpuKernelMod() { ResetResource(); }
   ~AssignSubFwdGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    T *input_addr2 = GetDeviceAddress<T>(inputs, 1);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-
-    CalAssignSub(input_elements_, input_addr, input_addr2, output_addr, device_id_,
-                 reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
+    if (is_null_input_) {
+      return true;
+    }
+    stream_ptr_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-            const std::vector<KernelTensorPtr> &outputs) {
-    kernel_name_ = base_operator->name();
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-    return true;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
+  std::vector<KernelAttr> GetOpSupport() override;
+
+  void ResetResource() noexcept {
+    is_null_input_ = false;
+    input_size_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-    int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-    if (ret != 0) {
-      return ret;
-    }
-    if (input_size_list_.size() != 2) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 2.";
-      return KRET_RESIZE_FAILED;
-    }
-    if (input_size_list_[0] != input_size_list_[1]) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "' input data size must be same.";
-      return KRET_RESIZE_FAILED;
-    }
-    input_elements_ = input_size_list_[0] / sizeof(T);
-
-    return KRET_OK;
+ protected:
+  void InitSizeLists() {
+    input_size_list_.push_back(input_size_);
+    input_size_list_.push_back(input_size_);
+    output_size_list_.push_back(input_size_);
   }
 
  private:
-  size_t input_elements_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  using AssignSubFunc = std::function<bool(AssignSubFwdGpuKernelMod *, const std::vector<AddressPtr> &,
+                                           const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+
+ private:
+  bool is_null_input_;
+  int64_t input_size_;
+  int64_t input_elements_;
+  std::string kernel_name_{"AssignSub"};
+  BaseOperatorPtr kernel_ptr_{nullptr};
+  AssignSubFunc kernel_func_{};
+  void *stream_ptr_{nullptr};
+  static std::vector<std::pair<KernelAttr, AssignSubFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_ASSIGN_SUB_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_MATH_ASSIGN_SUB_GPU_KERNEL_H_

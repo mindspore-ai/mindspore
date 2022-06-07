@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ASSIGN_SUB_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ASSIGN_SUB_IMPL_CUH_
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 #include "include/cuda_fp16.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalAssignSub(const size_t size, T *ref, const T *value, T *output, const uint32_t device_id,
-                                  cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void CalAssignSub(const size_t size, T *ref, const T *value, T *output,
+                                  const uint32_t device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ASSIGN_SUB_IMPL_CUH_
