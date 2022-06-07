@@ -232,8 +232,8 @@ class Parameter(Tensor_):
     def _not_init_data():
         is_worker_or_server = (_is_role_worker() or _is_role_pserver()) and not _enable_distributed_mindrt()
         if not _is_fl_mode() and (is_worker_or_server or _is_role_sched() or _is_in_parallel_mode()):
-            return true
-        return false
+            return True
+        return False
 
     @staticmethod
     def _get_parameter_new_args(data):
