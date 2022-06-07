@@ -20,7 +20,7 @@ mindspore.nn.probability.transforms.TransformToBNN
         - **dnn_layer_type** (Cell) - 要转换为 BNN 层的 DNN 层的类型。可选值为 nn.Dense 和 nn.Conv2d。
         - **bnn_layer_type** (Cell) - 要转换到的 BNN 层的类型。可选值是 DenseReparam 和 ConvReparam。
         - **get_args** – 从 DNN 层获得的参数。默认值：None。
-        - **add_args** (dict) - 添加到 BNN 层的新参数。请注意， add_args 中的参数不得与 get_args 中的参数重复。默认值：None。
+        - **add_args** (dict) - 添加到 BNN 层的新参数。请注意， `add_args` 中的参数不得与 `get_args` 中的参数重复。默认值：None。
 
         **返回：**
 
@@ -28,12 +28,14 @@ mindspore.nn.probability.transforms.TransformToBNN
 
     .. py:method:: transform_to_bnn_model(get_dense_args=lambda dp: {"in_channels": dp.in_channels, "has_bias": dp.has_bias, "out_channels": dp.out_channels, "activation": dp.activation}, get_conv_args=lambda dp: {"in_channels": dp.in_channels, "out_channels": dp.out_channels, "pad_mode": dp.pad_mode, "kernel_size": dp.kernel_size, "stride": dp.stride, "has_bias": dp.has_bias, "padding": dp.padding, "dilation": dp.dilation, "group": dp.group}, add_dense_args=None, add_conv_args=None)    
 
+        将整个DNN模型转换为BNN模型，并通过TrainOneStepCell封装BNN模型。
+
         **参数：**
 
         - **get_dense_args** - 从 DNN 全连接层获得的参数。默认值：lambda dp：{"in_channels"：dp.in_channels，"out_channels"：dp.out_channels，"has_bias"：dp.has_bias}。
         - **get_conv_args** - 从 DNN 卷积层获得的参数。默认值：lambda dp：{"in_channels"：dp.in_channels，"out_channels"：dp.out_channels，"pad_mode"：dp.pad_mode，"kernel_size"：dp.kernel_size，"stride”：dp.stride，"has_bias"： dp.has_bias}。 
-        - **add_dense_args** (dict) - 添加到 BNN 全连接层的新参数。请注意， add_dense_args 中的参数不得与 get_dense_args 中的参数重复。默认值：None。
-        - **add_conv_args** (dict) - 添加到 BNN 卷积层的新参数。请注意， add_conv_args 中的参数不得与 get_conv_args 中的参数重复。默认值：None。
+        - **add_dense_args** (dict) - 添加到 BNN 全连接层的新参数。请注意， `add_dense_args` 中的参数不得与 `get_dense_args` 中的参数重复。默认值：None。
+        - **add_conv_args** (dict) - 添加到 BNN 卷积层的新参数。请注意， `add_conv_args` 中的参数不得与 `get_conv_args` 中的参数重复。默认值：None。
 
         **返回：**
 

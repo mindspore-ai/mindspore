@@ -18,7 +18,7 @@ mindspore.nn.probability.infer.ELBO
     **输入：**
 
     - **input_data** （Tuple）- (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor))。 
-    - **target_data** （Tensor）- 目标 Tensor 的 shape 是(N,)。
+    - **target_data** （Tensor）- 目标 Tensor 的 shape 是 :math:`(N,)`。
 
     **输出：**
 

@@ -7,7 +7,7 @@ mindspore.nn.probability.bnn_layers.NormalPrior
 
     **参数：**
 
-    - **dtype** (mindspore.dtype) – 用于定义输出 Tensor 的数据类型的参数。默认值：mindspore.float32。 
+    - **dtype** (:class:`mindspore.dtype`) – 用于定义输出 Tensor 的数据类型的参数。默认值：mindspore.float32。 
     - **mean** (int, float) - 正态分布的平均值。默认值：0。
     - **std** (int, float) - 正态分布的标准差。默认值：0.1。
 
