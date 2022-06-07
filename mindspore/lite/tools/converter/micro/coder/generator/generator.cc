@@ -88,19 +88,110 @@ int Generator::CodeSourceCMakeFile() {
   return RET_OK;
 }
 
+int Generator::CodeDataCFile() {
+  std::string cfile = net_main_file_path_ + "data.c";
+  std::ofstream cofs(cfile);
+  MS_CHECK_TRUE(!cofs.bad(), "filed to open file");
+  MS_LOG(INFO) << "write " << cfile;
+  cofs << g_hwLicense;
+  cofs << "#include \"data.h\"\n";
+
+  auto inputs_num = ctx_->graph_inputs().size();
+  auto outputs_num = ctx_->graph_outputs().size();
+
+  cofs << "#define NET_INPUTS_NUM " << inputs_num << "\n";
+  cofs << "#define NET_OUTPUTS_NUM " << outputs_num << "\n";
+  std::stringstream data_def;
+  std::stringstream calib_data_def;
+  std::stringstream input_tensors_def;
+  std::stringstream output_tensors_def;
+  std::stringstream calib_input_tensors_def;
+  std::stringstream calib_output_tensors_def;
+  for (size_t i = 0; i < inputs_num; i++) {
+    Tensor *tensor = ctx_->graph_inputs()[i];
+    cofs << "#define NET_INPUT" << i << "_SIZE " << tensor->ElementsNum() << "\n";
+    data_def << "float input" << i << "_data[NET_INPUT" << 0 << "_SIZE];\n";
+    calib_data_def << "float calib_input" << i << "_data[NET_INPUT" << 0 << "_SIZE] = {};\n";
+    input_tensors_def << "  {\n"
+                      << "    \"" << tensor->tensor_name() << "\",\n"
+                      << "    NET_INPUT" << i << "_SIZE,\n"
+                      << "    NET_INPUT" << i << "_SIZE * sizeof(float),\n"
+                      << "    input" << i << "_data,\n"
+                      << "  },\n";
+    calib_input_tensors_def << "  {\n"
+                            << "    \"" << tensor->tensor_name() << "\",\n"
+                            << "    NET_INPUT" << i << "_SIZE,\n"
+                            << "    NET_INPUT" << i << "_SIZE * sizeof(float),\n"
+                            << "    calib_input" << i << "_data,\n"
+                            << "  },\n";
+  }
+  for (size_t i = 0; i < outputs_num; i++) {
+    Tensor *tensor = ctx_->graph_outputs()[i];
+    cofs << "#define NET_OUTPUT" << i << "_SIZE " << tensor->ElementsNum() << "\n";
+    data_def << "float output" << i << "_data[NET_OUTPUT" << 0 << "_SIZE];\n";
+    calib_data_def << "float calib_output" << i << "_data[NET_OUTPUT" << 0 << "_SIZE] = {};\n";
+    output_tensors_def << "  {\n"
+                       << "    \"" << tensor->tensor_name() << "\",\n"
+                       << "    NET_OUTPUT" << i << "_SIZE,\n"
+                       << "    NET_OUTPUT" << i << "_SIZE * sizeof(float),\n"
+                       << "    output" << i << "_data,\n"
+                       << "  },\n";
+    calib_output_tensors_def << "  {\n"
+                             << "    \"" << tensor->tensor_name() << "\",\n"
+                             << "    NET_OUTPUT" << i << "_SIZE,\n"
+                             << "    NET_OUTPUT" << i << "_SIZE * sizeof(float),\n"
+                             << "    calib_output" << i << "_data,\n"
+                             << "  },\n";
+  }
+
+  cofs << "\n" << data_def.str() << calib_data_def.str();
+  cofs << "\nTensor inputs_tensors[NET_INPUTS_NUM] = {\n" << input_tensors_def.str() << "};\n";
+  cofs << "\nTensor outputs_tensors[NET_OUTPUTS_NUM] = {\n" << output_tensors_def.str() << "};\n";
+  cofs << "\nTensor calib_inputs_tensors[NET_INPUTS_NUM] = {\n" << calib_input_tensors_def.str() << "};\n";
+  cofs << "\nTensor calib_outputs_tensors[NET_OUTPUTS_NUM] = {\n" << calib_output_tensors_def.str() << "};\n";
+
+  cofs << "TensorArray g_inputs = {inputs_tensors, NET_INPUTS_NUM};\n";
+  cofs << "TensorArray g_outputs = {outputs_tensors, NET_OUTPUTS_NUM};\n";
+  cofs << "TensorArray g_calib_inputs = {calib_inputs_tensors, NET_INPUTS_NUM};\n";
+  cofs << "TensorArray g_calib_outputs = {calib_outputs_tensors, NET_OUTPUTS_NUM};\n";
+
+  cofs.close();
+  return RET_OK;
+}
+
 int Generator::CodeStaticContent() {
+  std::string bench_cmake_lists_txt = bench_cmake_lists;
+  std::string calib_header_txt = calib_header;
+  std::string calib_source_txt = calib_source;
+  std::string load_input_h_txt = load_input_h;
+  std::string load_input_c_txt = load_input_c;
+  std::string benchmark_source_txt = benchmark_source;
+  std::string src_cmake_lists_txt = src_cmake_lists;
+  std::string context_header_txt = context_header;
+  std::string context_source_txt = context_source;
+  std::string tensor_header_txt = tensor_header;
+  std::string tensor_source_txt = tensor_source;
+  if (config_->target() == kARM32M) {
+    bench_cmake_lists_txt = bench_cmake_lists_cortex;
+    calib_header_txt = calib_header_cortex;
+    calib_source_txt = calib_source_cortex;
+    load_input_h_txt = load_input_h_cortex;
+    load_input_c_txt = load_input_c_cortex;
+    benchmark_source_txt = benchmark_source_cortex;
+    context_source_txt = context_source_cortex;
+  }
   std::vector<std::pair<std::string, std::string>> const_blocks = {
     {config_->code_path() + "/" + "CMakeLists.txt", bench_cmake_lists_txt},
-    {net_main_file_path_ + "calib_output.h", calib_header},
-    {net_main_file_path_ + "calib_output.c", calib_source},
-    {net_main_file_path_ + "load_input.h", load_input_h},
-    {net_main_file_path_ + "load_input.c", load_input_c},
-    {net_main_file_path_ + "benchmark.c", benchmark_source},
+    {net_main_file_path_ + "calib_output.h", calib_header_txt},
+    {net_main_file_path_ + "calib_output.c", calib_source_txt},
+    {net_main_file_path_ + "load_input.h", load_input_h_txt},
+    {net_main_file_path_ + "load_input.c", load_input_c_txt},
+    {net_main_file_path_ + "benchmark.c", benchmark_source_txt},
     {net_src_file_path_ + "CMakeLists.txt", src_cmake_lists_txt},
-    {net_src_file_path_ + "context.h", context_header},
-    {net_src_file_path_ + "context.c", context_source},
-    {net_src_file_path_ + "tensor.h", tensor_header},
-    {net_src_file_path_ + "tensor.c", tensor_source}};
+    {net_src_file_path_ + "context.h", context_header_txt},
+    {net_src_file_path_ + "context.c", context_source_txt},
+    {net_src_file_path_ + "tensor.h", tensor_header_txt},
+    {net_src_file_path_ + "tensor.c", tensor_source_txt}};
 
   if (config_->support_parallel()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + kThreadWrapper, thread_header));
@@ -108,6 +199,13 @@ int Generator::CodeStaticContent() {
   if (config_->debug_mode()) {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.h", debug_utils_h));
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.c", debug_utils_c));
+  }
+  if (config_->target() == kARM32M) {
+    const_blocks.emplace_back(std::make_pair(net_main_file_path_ + "data.h", data_h_cortex));
+    const_blocks.emplace_back(
+      std::make_pair(config_->code_path() + "/" + "cortex-m7.toolchain.cmake", cortex_m7_toolchain));
+    const_blocks.emplace_back(std::make_pair(config_->code_path() + "/" + "build.sh", cortex_build_sh));
+    MS_CHECK_RET_CODE(CodeDataCFile(), "code data c file failed.");
   }
   for (const auto &static_block : const_blocks) {
     std::string file_name = static_block.first;

@@ -30,6 +30,7 @@ list(REMOVE_ITEM KERNEL_SRC ${NNACL_DIR}/infer/shape_fusion_infer.c)
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
 add_library(nnacl_static STATIC ${KERNEL_SRC})
+set_target_properties(nnacl_static PROPERITES OUTPUT_NAME "nnacl")
 target_compile_options(nnacl_static PRIVATE -fPIC)
 
 target_link_options(nnacl_static PRIVATE -Wl,-z,relro,-z,now,-z,noexecstack)

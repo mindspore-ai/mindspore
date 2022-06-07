@@ -84,7 +84,7 @@ function Run_x86_codegen() {
       # 1. build benchmark
       mkdir -p ${output_file}/build && cd ${output_file}/build || exit 1
       cmake -DPKG_PATH=${x86_path}/mindspore-lite-${version}-linux-x64 ${output_file} >> $4
-      make >> $4
+      make || return 1
       # 2. run benchmark
       echo "net file: ${output_file}/src/net.bin" >> $4
       echo "./benchmark ${models_path}/input_output/input/${model_name}.ms.bin ${output_file}/src/net.bin 1 ${models_path}/input_output/output/${model_name}.ms.out ${thread_num} ${bind_mode}" >> $4
@@ -93,6 +93,128 @@ function Run_x86_codegen() {
           run_result='x86_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
       else
           run_result='x86_codegen'${suffix}': '${model_name}' failed'; echo ${run_result} >> $5;
+          return 1;
+      fi
+    done < $3
+}
+
+function Run_cortex_m_codegen() {
+    # $1:buildPath $2:modelPath $3:models_list $4:logFile $5:resultFile $6:micro_cofig
+    local bind_mode thread_num suffix run_result
+    rm -rf $1
+    mkdir -p $1
+
+    if [[ "X$STM32_DEMO_PATH" == "X" ]]; then
+      echo "error: to run cortex-m ci, you need to set STM32_DEMO_PATH to declare the path of STM32 project."
+      exit 1
+    fi
+    if [[ "X$STM32_CUBE_PROG_PATH" == "X" ]]; then
+      echo "error: to run cortex-m ci, you need to set STM32_CUBE_PROG_PATH to declare the path of STM32CubeProgrammer."
+      exit 1
+    fi
+
+    # Unzip x86 runtime and converter
+    cd ${x86_path} || exit 1
+    tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
+
+    cp tools/converter/converter/converter_lite ./ || exit 1
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib
+
+    while read line; do
+      if [[ $line == \#* || $line == "" ]]; then
+        continue
+      fi
+      model_info=`echo ${line} | awk -F ' ' '{print $1}'`
+      model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
+      model_type=${model_name##*.}
+      case $model_type in
+        pb)
+          model_fmk="TF"
+          ;;
+        tflite)
+          model_fmk="TFLITE"
+          ;;
+        onnx)
+          model_fmk="ONNX"
+          ;;
+        mindir)
+          model_fmk="MINDIR"
+          ;;
+        *)
+          model_type="caffe"
+          model_fmk="CAFFE"
+          ;;
+      esac
+      # set parameters
+      model_file=$2"/"${model_name}
+      weight_file=""
+      if [[ $model_fmk == "CAFFE" ]]; then
+        model_file=${model_file}".prototxt"
+        weight_file=${model_file%.*}".caffemodel"
+      fi
+      stm_demo_file=$1"/stm32f767/"
+      [ -n "${stm_demo_file}" ] && rm -rf ${stm_demo_file}
+      cp -r ${STM32_DEMO_PATH}/stm32f767 $1/
+      # output_file=$1"/stm32f767/"${model_name}
+      output_file=$1"/stm32f767/gen_output"
+      quant_type=""
+      config_file=$6
+      spec_shapes=""
+      train_model="false"
+      in_dtype="DEFAULT"
+      out_dtype="DEFAULT"
+
+      # start running converter
+      cd ${x86_path}/mindspore-lite-${version}-linux-x64/ || exit 1
+      echo ${model_name} >> "$4"
+      echo './converter_lite  --fmk='${model_fmk}' --modelFile='${model_file}' --weightFile='${weight_file}' --outputFile='${output_file}\
+        ' --inputDataType='${in_dtype}' --outputDataType='${out_dtype}' --inputShape='${spec_shapes}\
+        ' --configFile='${config_file}' --trainModel='${train_model} >> "$4"
+      ./converter_lite  --fmk=${model_fmk} --modelFile=${model_file} --weightFile=${weight_file} --outputFile=${output_file}\
+        --inputDataType=${in_dtype} --outputDataType=${out_dtype} --inputShape=${spec_shapes}\
+        --configFile=${config_file} --trainModel=${train_model} >> "$4"
+      if [ $? = 0 ]; then
+          converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
+      else
+          converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
+          return 1;
+      fi
+
+      bind_mode=""
+      thread_num=""
+      suffix=""
+      if [[ $3 =~ "parallel" ]]; then
+          bind_mode="0"
+          thread_num="4"
+          suffix="_parallel"
+      fi
+      echo ${model_name} >> "$4"
+
+      # 1. build benchmark
+      mkdir -p ${output_file}/build || exit 1
+      cp ${cortex_path}/mindspore-lite-${version}-cortex-m7.tar.gz ${output_file}/build/ || exit 1
+      cd ${output_file} || exit 1
+      in_data=`cat ${models_path}/input_output/input/${model_name}.ms.in.txt`
+      out_data=`cat ${models_path}/input_output/output/${model_name}.ms.out.txt`
+      sed -i "s/float calib_input0_data\[NET_INPUT0_SIZE\] = {};/float calib_input0_data\[NET_INPUT0_SIZE\] = {${in_data}};/g" benchmark/data.c
+      sed -i "s/float calib_output0_data\[NET_OUTPUT0_SIZE\] = {};/float calib_output0_data\[NET_OUTPUT0_SIZE\] = {${out_data}};/g" benchmark/data.c
+      bash build.sh || exit 1
+      cd ${stm_demo_file} || exit 1
+      [ -n "${stm_demo_file}" ] && rm -rf ${stm_demo_file}/build
+      sed -i "s/LITE_PACK =/LITE_PACK = mindspore-lite-${version}-cortex-m7/g" Makefile
+      make >> "$4" || return 1
+
+      # 2. run benchmark
+      bash ${STM32_CUBE_PROG_PATH}/bin/STM32_Programmer.sh -c port=SWD -w build/test_767_01.bin 0x08000000 -s 0x08000000 || exit 1
+      sleep 3
+      bash ${STM32_CUBE_PROG_PATH}/bin/STM32_Programmer.sh -c port=SWD model=HOTPLUG --upload 0x20000000 0x1 ret.bin  || exit 1
+      calib_ret=`cat ret.bin`
+      if [[ ${calib_ret} = 1 ]];then
+          run_result='cortex_codegen'${suffix}': '${model_name}' pass'; echo ${run_result} >> $5
+      else
+          run_result='cortex_codegen'${suffix}': '${model_name}' failed'; echo ${run_result} >> $5;
+          echo "return is "${calib_ret} >> $5;
           return 1;
       fi
     done < $3
@@ -208,7 +330,7 @@ function Run_arm_codegen() {
                 -DPLATFORM_${platform}=ON \
                 -DPKG_PATH=${PKG_PATH} $1/${model_name}
           make -j4
-      } >> $4
+      } >> $4  || return 1
 
       benchmark_dir="$1/codegen_test_$7"
       rm -rf "$benchmark_dir"
@@ -289,6 +411,7 @@ done
 x86_path=${release_path}/centos_x86
 arm32_path=${release_path}/android_aarch32/npu
 arm64_path=${release_path}/android_aarch64/npu
+cortex_path=${release_path}/cortex-m
 file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
@@ -299,6 +422,7 @@ if [[ ${level} == "level1" ]]; then
 fi
 # Set model-list
 models_codegen_config=${basepath}/../${config_folder}/models_codegen.cfg
+models_cortex_codegen_config=${basepath}/../${config_folder}/models_codegen_cortex.cfg
 models_codegen_parallel_config=${basepath}/../${config_folder}/models_codegen_parallel.cfg
 
 #micro config
@@ -306,13 +430,14 @@ micro_x86_config=${basepath}/../${config_folder}/micro/micro_x86.cfg
 micro_x86_parallel_config=${basepath}/../${config_folder}/micro/micro_x86_parallel.cfg
 micro_arm64_config=${basepath}/../${config_folder}/micro/micro_arm64.cfg
 micro_arm32A_config=${basepath}/../${config_folder}/micro/micro_arm32A.cfg
+micro_cortex_config=${basepath}/../${config_folder}/micro/micro_cortex_m.cfg
 
 # Set models and build path
 build_path_x86=${basepath}/codegen_build_x86
 build_path_parallel=${basepath}/codegen_build_parallel
 build_path_arm64=${basepath}/codegen_build_arm64
 build_path_arm32=${basepath}/codegen_build_arm32
-
+build_path_cortex=${basepath}/codegen_build_cortex
 
 # Write converter result to temp file
 run_converter_log_file=${basepath}/run_converter_log.txt
@@ -332,6 +457,8 @@ run_x86_codegen_log_file=${basepath}/run_x86_codegen_log.txt
 echo 'run x86 codegen logs: ' > ${run_x86_codegen_log_file}
 run_x86_codegen_parallel_log_file=${basepath}/run_x86_codegen_parallel_log.txt
 echo 'run x86 codegen parallel logs: ' > ${run_x86_codegen_parallel_log_file}
+run_cortex_codegen_log_file=${basepath}/run_cortex_codegen_log.txt
+echo 'run cortex_codegen logs: ' > ${run_cortex_codegen_log_file}
 
 echo "input backend is ${backend}"
 backend=${backend:-"all"}
@@ -369,6 +496,14 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" 
 #    Run_arm32_codegen_PID=$!
 #    sleep 1
 fi
+if [[ $backend == "cortex_codegen" ]]; then
+    # Run on codegen
+    echo "start Run cortex codegen ..."
+    Run_cortex_m_codegen ${build_path_cortex} ${models_path} ${models_cortex_codegen_config} ${run_cortex_codegen_log_file} ${run_benchmark_result_file} ${micro_cortex_config}
+    Run_cortex_codegen_status=$?
+#    Run_arm64_codegen_PID=$!
+#    sleep 1
+fi
 
 if [[ $backend == "all" || $backend == "codegen" || $backend == "x86_codegen" ]]; then
 #    wait ${Run_x86_codegen_PID}
@@ -403,6 +538,15 @@ if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" 
     if [[ ${Run_arm32_codegen_status} != 0 ]];then
         echo "Run_arm32_codegen failed"
         cat ${run_arm32_fp32_codegen_log_file}
+        isFailed=1
+    fi
+fi
+if [[ $backend == "cortex_codegen" ]]; then
+#    wait ${Run_arm32_codegen_PID}
+#    Run_arm32_codegen_status=$?
+    if [[ ${Run_cortex_codegen_status} != 0 ]];then
+        echo "Run_cortex_codegen failed"
+        cat ${run_cortex_codegen_log_file}
         isFailed=1
     fi
 fi
