@@ -77,8 +77,13 @@ void PynativeProfiler::ClearInst() { pynative_op_info_.clear(); }
 void PynativeProfiler::OpDataProducerEnd() {}
 
 void PynativeProfiler::OpDataProducerBegin(AscendKernelRuntime *runtime_instance_, void *stream,
-                                           std::thread::id thread_id, const std::string &op_name) {
+                                           std::thread::id thread_id, const std::string &op_name,
+                                           bool is_dynamic_shape) {
   if (enable_flag_ == false) {
+    return;
+  }
+  if (is_dynamic_shape) {
+    MS_LOG(EXCEPTION) << "Dynamic shape is not supported in pynative mode.";
     return;
   }
   MS_EXCEPTION_IF_NULL(runtime_instance_);
@@ -107,11 +112,14 @@ void PynativeProfiler::OpDataProducerBegin(AscendKernelRuntime *runtime_instance
 
 void PynativeProfiler::StepProfilingEnable(const bool enable_flag) { enable_flag_ = enable_flag; }
 
-void PynativeProfiler::OpDataProducerEnd(std::thread::id thread_id) {
+void PynativeProfiler::OpDataProducerEnd(std::thread::id thread_id, bool is_dynamic_shape) {
   if (enable_flag_ == false) {
     return;
   }
-
+  if (is_dynamic_shape) {
+    MS_LOG(EXCEPTION) << "Dynamic shape is not supported in pynative mode.";
+    return;
+  }
   if (thread_op_info_map_.find(thread_id) == thread_op_info_map_.end()) {
     MS_LOG(WARNING) << "Pynative profiling, the start time of op is null"
                     << ", please call the OpDataProducerBegin function first.";

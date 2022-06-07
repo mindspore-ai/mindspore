@@ -310,6 +310,11 @@ void CPUDeviceContext::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
+  if (kernel_graph->is_dynamic_shape()) {
+    profiler_inst->SetNetDynamicShapeStatus();
+  }
   if (!kernel_graph->is_from_single_op()) {
     // Remove reorder after PS feature finish adapting push/pull in auto_monad.
     auto execution_order = kernel_graph->execution_order();
