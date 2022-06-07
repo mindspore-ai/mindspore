@@ -5875,7 +5875,7 @@ class Renorm(Primitive):
     Refer to :func::`mindspore.ops.renorm` for more detail.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Example:
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
