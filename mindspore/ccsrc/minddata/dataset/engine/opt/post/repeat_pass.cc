@@ -154,7 +154,7 @@ Status RepeatPass::VisitAfter(std::shared_ptr<CacheNode> node, bool *const modif
 
   // if we are a cache within a repeat path of the tree, then adjust the total repeats and total epochs for cached ops.
   // So that those cached nodes become 1-time use (up to eoe), never repeated.  Instead
-  // the repeating behaviours shall be invoked against the cache op.
+  // the repeating behaviors shall be invoked against the cache op.
   std::shared_ptr<DatasetNode> cached_node = PopFromCachedNodeStack();
   while (cached_node != nullptr) {
     int32_t cached_op_total_repeats = cached_node->GetTotalRepeats() / num_repeats_;

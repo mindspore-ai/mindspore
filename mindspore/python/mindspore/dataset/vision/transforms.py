@@ -1214,7 +1214,7 @@ class Pad(TensorOperation, PyTensorOperation):
               value of edge.
 
     Note:
-        The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+        The behavior when `padding` is a sequence of length 2 will change from padding left/top with
         the first value and right/bottom with the second, to padding left/right with the first one
         and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
         left, top, right and bottom respectively.
@@ -1718,7 +1718,7 @@ class RandomCrop(TensorOperation, PyTensorOperation):
               value of edge.
 
     Note:
-        The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+        The behavior when `padding` is a sequence of length 2 will change from padding left/top with
         the first value and right/bottom with the second, to padding left/right with the first one
         and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
         left, top, right and bottom respectively.
@@ -1903,7 +1903,7 @@ class RandomCropWithBBox(TensorOperation):
               value of edge.
 
     Note:
-        The behaviour when `padding` is a sequence of length 2 will change from padding left/top with
+        The behavior when `padding` is a sequence of length 2 will change from padding left/top with
         the first value and right/bottom with the second, to padding left/right with the first one
         and top/bottom with the second in the future. Or you can pass in a 4-element sequence to specify
         left, top, right and bottom respectively.

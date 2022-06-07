@@ -76,7 +76,7 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   // This is temporary code.
   // Because the randomness of its tensor operations is not known in TensorOperation form until we convert them
   // to TensorOp, we need to check the randomness here.
-  // When TensorOperation captures the randomness behaviour, remove this code
+  // When TensorOperation captures the randomness behavior, remove this code
   // and the temporary code in CacheValidation pre pass in IR optimizer.
   if (IsDescendantOfCache()) {
     auto itr = std::find_if(tensor_ops.begin(), tensor_ops.end(), [](const auto &it) { return !it->Deterministic(); });

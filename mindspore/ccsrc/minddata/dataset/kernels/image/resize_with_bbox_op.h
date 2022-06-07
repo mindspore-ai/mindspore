@@ -42,7 +42,7 @@ class ResizeWithBBoxOp : public ResizeOp {
 
   // Use in execute mode
   // ResizeWithBBoxOp is inherited from ResizeOp and this function has been overridden by ResizeOp,
-  // thus we need to change the behaviour back to basic class (TensorOp).
+  // thus we need to change the behavior back to basic class (TensorOp).
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override {
     return TensorOp::Compute(input, output);
   }

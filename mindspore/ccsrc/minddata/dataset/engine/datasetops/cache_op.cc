@@ -197,8 +197,8 @@ Status CacheOp::EoeReceived(int32_t worker_id) {
 // Base-class override for handling cases when an eof is received.
 Status CacheOp::EofReceived(int32_t worker_id) {
   // eofReceived is overloaded because we want to manually handle this eof.
-  // Specifically, the default behaviour is to pack it and flow it up to the next connection.
-  // In this case, we want a no-op behaviour so that we can perform correct action.
+  // Specifically, the default behavior is to pack it and flow it up to the next connection.
+  // In this case, we want a no-op behavior so that we can perform correct action.
   return Status::OK();
 }
 

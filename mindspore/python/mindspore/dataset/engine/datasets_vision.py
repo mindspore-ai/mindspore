@@ -656,7 +656,7 @@ class Cifar10Dataset(MappableDataset, VisionBaseDataset):
 
     About CIFAR-10 dataset:
 
-    The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes,
+    The CIFAR-10 dataset consists of 60000 32x32 color images in 10 classes,
     with 6000 images per class. There are 50000 training images and 10000 test images.
     The 10 different classes represent airplanes, cars, birds, cats, deer, dogs, frogs, horses, ships, and trucks.
 
@@ -921,8 +921,8 @@ class CityscapesDataset(MappableDataset, VisionBaseDataset):
 
     About Cityscapes dataset:
 
-    The Cityscapes dataset consists of 5000 colour images with high quality dense pixel annotations and
-    19998 colour images with coarser polygonal annotations in 50 cities. There are 30 classes in this
+    The Cityscapes dataset consists of 5000 color images with high quality dense pixel annotations and
+    19998 color images with coarser polygonal annotations in 50 cities. There are 30 classes in this
     dataset and the polygonal annotations include dense semantic segmentation and instance segmentation
     for vehicle and people.
 
@@ -1866,7 +1866,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
 
     About Flickr8k dataset:
 
-    The Flickr8k dataset consists of 8092 colour images. There are 40460 annotations in the Flickr8k.token.txt,
+    The Flickr8k dataset consists of 8092 color images. There are 40460 annotations in the Flickr8k.token.txt,
     each image has 5 annotations.
 
     You can unzip the dataset files into the following directory structure and read by MindSpore's API.
@@ -1901,7 +1901,7 @@ class FlickrDataset(MappableDataset, VisionBaseDataset):
 
     About Flickr30k dataset:
 
-    The Flickr30k dataset consists of 31783 colour images. There are 158915 annotations in
+    The Flickr30k dataset consists of 31783 color images. There are 158915 annotations in
     the results_20130124.token, each image has 5 annotations.
 
     You can unzip the dataset files into the following directory structure and read by MindSpore's API.
@@ -3845,7 +3845,7 @@ class SBDataset(GeneratorDataset):
 
     About Semantic Boundaries Dataset:
 
-    The Semantic Boundaries Dataset consists of 11355 colour images. There are 8498 images' name in the train.txt,
+    The Semantic Boundaries Dataset consists of 11355 color images. There are 8498 images' name in the train.txt,
     2857 images' name in the val.txt and 5623 images' name in the train_noval.txt. The category cls/
     contains the Segmentation and Boundaries results of category-level, the category inst/ catains the
     Segmentation and Boundaries results of instance-level.
