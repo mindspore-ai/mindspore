@@ -69,12 +69,6 @@ bool ClusterContext::Initialize() {
     return true;
   }
 
-  // MindSpore cluster does not support PyNative mode.
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    MS_LOG(EXCEPTION) << "PyNative mode is not supported in MindSpore cluster.";
-    return false;
-  }
-
   // Step 1: Initialize cluster configuration.
   InitClusterConfig();
 
@@ -219,6 +213,13 @@ void ClusterContext::InitNodeRole() {
   node_role_ = common::GetEnv(kEnvRole);
   if (kValidRoleName.count(node_role_) == 0) {
     MS_LOG(EXCEPTION) << "Role name '" << node_role_ << "' is invalid. " << kDetailedFailureReason;
+    return;
+  }
+
+  // If node role is valid, judge the execution mode.
+  // MindSpore cluster does not support PyNative mode.
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    MS_LOG(EXCEPTION) << "PyNative mode is not supported in MindSpore cluster.";
     return;
   }
 
