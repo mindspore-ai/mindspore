@@ -85,29 +85,41 @@ class ReflectionPad1d(_ReflectionPadNd):
     r"""
     Using a given padding to do reflection pad on the last dimension of the given tensor.
 
-        Args:
-            padding (union[int, tuple]): The padding size to pad the last dimension of input tensor.
+    Args:
+        padding (union[int, tuple]): The padding size to pad the last dimension of input tensor.
             If padding is an integer: all directions will be padded with the same size.
             If padding is a tuple: uses (pad_left, pad_right, pad_up, pad_down) to pad.
 
-        Inputs:
-            Tensor, 2D or 3D
+    Inputs:
+        Tensor, 2D or 3D
 
-        Outputs:
-            Tensor, after padding.
-            Suppose the tensor has dimension (N, C, W_in), the padded dimension will become (N, C, W_out),
-                where W_out = W_in + pad_left + pad_right
+    Outputs:
+        Tensor, after padding.
+        Suppose the tensor has dimension (N, C, W_in), the padded dimension will become (N, C, W_out),
+            where W_out = W_in + pad_left + pad_right
 
-        Raises:
-            TypeError: If 'padding' is not a tuple or int.
-            TypeError: If there is an element in 'padding' that is not int64.
-            ValueError: If the length of 'padding' is not divisible by 2.
-            ValueError: If there is an element in 'padding' that is negative.
-            ValueError: If the there is a dimension mismatch between the padding and the tensor.
+    Raises:
+        TypeError: If 'padding' is not a tuple or int.
+        TypeError: If there is an element in 'padding' that is not int64.
+        ValueError: If the length of 'padding' is not divisible by 2.
+        ValueError: If there is an element in 'padding' that is negative.
+        ValueError: If the there is a dimension mismatch between the padding and the tensor.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.nn import ReflectionPad1d
+        >>> x = Tensor(np.array([[[0, 1, 2, 3], [4, 5, 6, 7]]]).astype(np.float32))
+        >>> # padding is tuple
+        >>> padding = (3, 1)
+        >>> pad1d = ReflectionPad1d(padding)
+        >>> out = pad1d(x)
+        >>> print(out)
+        [[[3. 2. 1. 0. 1. 2. 3. 2.]
+          [7. 6. 5. 4. 5. 6. 7. 6.]]]
     """
 
     def __init__(self, padding):
@@ -120,29 +132,44 @@ class ReflectionPad2d(_ReflectionPadNd):
     r"""
     Using a given padding to do reflection pad on the last dimension of the given tensor.
 
-        Args:
-            padding (union[int, tuple]): The padding size to pad the last dimension of input tensor.
+    Args:
+        padding (union[int, tuple]): The padding size to pad the last dimension of input tensor.
             If padding is an integer: all directions will be padded with the same size.
             If padding is a tuple: uses (pad_left, pad_right, pad_up, pad_down) to pad.
 
-        Inputs:
-            Tensor, 3D or 4D
+    Inputs:
+        Tensor, 3D or 4D
 
-        Output:
-            Tensor, after padding.
-            Suppose the tensor has dimension (N, C, H_in, W_in), the padded dimension will become (N, C, H_out, W_out),
-                where W_out = W_in + pad_left + pad_right, H_out = H_in + pad_up + pad_down
+    Output:
+        Tensor, after padding.
+        Suppose the tensor has dimension (N, C, H_in, W_in), the padded dimension will become (N, C, H_out, W_out),
+            where W_out = W_in + pad_left + pad_right, H_out = H_in + pad_up + pad_down
 
-        Raises:
-            TypeError: If 'padding' is not a tuple or int.
-            TypeError: If there is an element in 'padding' that is not int64.
-            ValueError: If the length of 'padding' is not divisible by 2.
-            ValueError: If there is an element in 'padding' that is negative.
-            ValueError: If the there is a dimension mismatch between the padding and the tensor.
+    Raises:
+        TypeError: If 'padding' is not a tuple or int.
+        TypeError: If there is an element in 'padding' that is not int64.
+        ValueError: If the length of 'padding' is not divisible by 2.
+        ValueError: If there is an element in 'padding' that is negative.
+        ValueError: If the there is a dimension mismatch between the padding and the tensor.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
+    Example:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.nn import ReflectionPad2d
+        >>> x = Tensor(np.array([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]).astype(np.float32))
+        >>> # padding is tuple
+        >>> padding = (1, 1, 2, 0)
+        >>> pad2d = ReflectionPad2d(padding)
+        >>> out = pad2d(x)
+        >>> print(out)
+        [[[7. 6. 7. 8. 7.]
+          [4. 3. 4. 5. 4.]
+          [1. 0. 1. 2. 1.]
+          [4. 3. 4. 5. 4.]
+          [7. 6. 7. 8. 7.]]]
     """
 
     def __init__(self, padding):
