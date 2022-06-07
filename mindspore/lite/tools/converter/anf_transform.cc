@@ -92,6 +92,7 @@
 #include "tools/converter/adapter/acl/acl_pass.h"
 #include "src/common/log_util.h"
 #include "tools/optimizer/fusion/groupnorm_fusion.h"
+#include "tools/optimizer/fusion/mul_reduce_fusion.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -229,6 +230,12 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
   optimizer->AddPassManager(fusion_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run op fusion failed.";
+    return RET_ERROR;
+  }
+  auto mul_reduce_fusion = std::make_shared<opt::MulReduceFusion>();  // the pass needs to check the return value.
+  MS_CHECK_TRUE_MSG(mul_reduce_fusion != nullptr, RET_ERROR, "mul-reduce-fusion create failed.");
+  if (!mul_reduce_fusion->Run(old_graph)) {
+    MS_LOG(ERROR) << "mul-reduce-fusion running failed.";
     return RET_ERROR;
   }
   return RET_OK;

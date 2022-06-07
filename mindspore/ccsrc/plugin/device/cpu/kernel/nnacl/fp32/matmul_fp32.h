@@ -112,6 +112,8 @@ void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, 
 
 void GemmIsNotPackOptimize(const float *a, const float *b, float *c, const float *bias, int m, int k, int act_type);
 
+void MatVecMulNoPackFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int64_t depth,
+                         int64_t cur_col, int64_t col);
 #ifdef ENABLE_ARM64
 void GemmIsNotPackByRow(const float *a, const float *b, float *c, const float *bias, int start_row, int end_row,
                         int deep, int act_type);
