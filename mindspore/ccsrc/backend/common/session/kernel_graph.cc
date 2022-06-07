@@ -1101,11 +1101,11 @@ void KernelGraph::AddInternalOutput(const AnfNodePtr &front_node, const AnfNodeP
     return;
   }
   MS_LOG(INFO) << "Add internal node " << node->DebugString() << " with front node " << front_node->DebugString();
-  front_to_internal_outputs_map_[front_node] = node;
-  SetInternalOutputAttr(node);
   if (common::AnfAlgo::CheckPrimitiveType(front_node, prim::kPrimTupleGetItem)) {
     output_idx = common::AnfAlgo::GetTupleGetItemOutIndex(front_node->cast<CNodePtr>());
   }
+  front_to_internal_outputs_map_[front_node] = {node, output_idx};
+  SetInternalOutputAttr(node);
   internal_outputs_to_front_map_[node][output_idx] = std::pair<AnfNodePtr, bool>(front_node, unique_target);
 }
 
@@ -1152,7 +1152,7 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
   internal_outputs_to_front_map_.erase(iter);
   // Move all front nodes to new node mapping.
   for (const auto &front_node_iter : front_nodes) {
-    front_to_internal_outputs_map_[front_node_iter.second.first] = new_node;
+    front_to_internal_outputs_map_[front_node_iter.second.first] = {new_node, front_node_iter.first};
   }
   internal_outputs_to_front_map_[new_node] = std::move(front_nodes);
   SetInternalOutputAttr(new_node);
@@ -1199,7 +1199,7 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
     (void)internal_outputs_to_front_map_.erase(iter);
   }
   // We should do 'erase' before 'insert', since the 'iter' may be invalidated after new item added.
-  front_to_internal_outputs_map_[front_node_pair.first] = new_node;
+  front_to_internal_outputs_map_[front_node_pair.first] = {new_node, dst_output_idx};
   internal_outputs_to_front_map_[new_node][dst_output_idx] = std::move(front_node_pair);
   SetInternalOutputAttr(new_node);
 }
@@ -1293,12 +1293,12 @@ AnfWithOutIndex KernelGraph::GetFrontNodeWithIndexByGraphOutput(
   return AnfWithOutIndex();
 }
 
-AnfNodePtr KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const {
+AnfWithOutIndex KernelGraph::GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const {
   auto iter = front_to_internal_outputs_map_.find(front_node);
   if (iter != front_to_internal_outputs_map_.end()) {
     return iter->second;
   }
-  return nullptr;
+  return {nullptr, 0};
 }
 
 AnfWithOutIndex KernelGraph::GetGraphOutputByFrontNode(const AnfWithOutIndex &front_node) const {

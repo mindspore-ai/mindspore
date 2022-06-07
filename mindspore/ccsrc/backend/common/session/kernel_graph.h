@@ -253,7 +253,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node, size_t src_output_idx,
                              size_t dst_output_idx);
   void ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr &new_node);
-  AnfNodePtr GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const;
+  AnfWithOutIndex GetInternalOutputByFrontNode(const AnfNodePtr &front_node) const;
   bool IsInternalOutput(const AnfNodePtr &node, size_t output_idx) const;
   bool IsInternalOutput(const AnfNodePtr &node) const;
   bool IsUniqueTargetInternalOutput(const AnfNodePtr &node, size_t output_idx) const;
@@ -530,7 +530,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   std::map<AnfWithOutIndex, AnfWithOutIndex> graph_output_to_front_node_map_;
   std::map<AnfWithOutIndex, AnfWithOutIndex> front_node_to_graph_output_map_;
 
-  mindspore::HashMap<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
+  mindspore::HashMap<AnfNodePtr, AnfWithOutIndex> front_to_internal_outputs_map_;
   mindspore::HashMap<AnfNodePtr, mindspore::HashMap<size_t, std::pair<AnfNodePtr, bool>>>
     internal_outputs_to_front_map_;
   mindspore::HashMap<AnfNodePtr, mindspore::HashMap<size_t, tensor::TensorPtr>> internal_outputs_tensor_map_;

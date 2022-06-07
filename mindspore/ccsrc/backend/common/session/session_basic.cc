@@ -612,12 +612,13 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
     return;
   }
   MS_LOG(INFO) << "Init parameter with pre graph output node: " << out_node->DebugString();
-  auto ref_node = node_graph->GetInternalOutputByFrontNode(out_node);
+  auto ref_node_with_index = node_graph->GetInternalOutputByFrontNode(out_node);
+  auto ref_node = ref_node_with_index.first;
   if (ref_node == nullptr) {
     MS_LOG(INFO) << "No corresponding internal output for output node";
     return;
   }
-  size_t output_idx = 0;
+  size_t output_idx = ref_node_with_index.second;
   if (common::AnfAlgo::CheckPrimitiveType(out_node, prim::kPrimTupleGetItem)) {
     output_idx = common::AnfAlgo::GetTupleGetItemOutIndex(out_node->cast<CNodePtr>());
   }

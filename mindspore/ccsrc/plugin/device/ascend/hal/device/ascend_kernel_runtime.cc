@@ -296,9 +296,6 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 
   (void)ResetDevice(device_id);
   current_graph_ = nullptr;
-  if (common::UseMPI()) {
-    HcclCollectiveGroup::instance().FinalizeCollective();
-  }
   initialized_ = false;
   MS_LOG(INFO) << "Ascend finalize end";
 }
