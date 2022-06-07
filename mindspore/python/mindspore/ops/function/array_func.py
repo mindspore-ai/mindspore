@@ -1963,6 +1963,7 @@ def tensor_scatter_min(input_x, indices, updates):
         the corresponding `updates` will not be hw to `input_x`.
 
     Args:
+        input_x (Tensor): The input tensor. The dimension of input_x must be no less than indices.shape[-1].
         indices (Tensor): The index of input tensor whose data type is int32 or int64.
             The rank must be at least 2.
         updates (Tensor): The tensor to update the input tensor, has the same type as input,
