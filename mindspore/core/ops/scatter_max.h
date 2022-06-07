@@ -30,9 +30,6 @@ class MIND_API ScatterMax : public BaseOperator {
   /// \brief Constructor.
   ScatterMax() : BaseOperator(kNameScatterMax) { InitIOName({"input_x", "indices", "updates"}, {"output"}); }
 };
-
-abstract::AbstractBasePtr ScatterMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

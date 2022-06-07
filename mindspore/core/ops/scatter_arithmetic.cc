@@ -19,6 +19,8 @@
 #include <set>
 #include <string>
 #include "ops/scatter_update.h"
+#include "ops/scatter_min.h"
+#include "ops/scatter_max.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -88,5 +90,11 @@ AbstractBasePtr ScatterArithmeticInfer(const abstract::AnalysisEnginePtr &, cons
 
 MIND_API_OPERATOR_IMPL(ScatterUpdate, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(ScatterUpdate, prim::kPrimScatterUpdate, ScatterArithmeticInfer, nullptr, true);
+
+MIND_API_OPERATOR_IMPL(ScatterMin, BaseOperator);
+REGISTER_PRIMITIVE_EVAL_IMPL(ScatterMin, prim::kPrimScatterMin, ScatterArithmeticInfer, nullptr, true);
+
+MIND_API_OPERATOR_IMPL(ScatterMax, BaseOperator);
+REGISTER_PRIMITIVE_EVAL_IMPL(ScatterMax, prim::kPrimScatterMax, ScatterArithmeticInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

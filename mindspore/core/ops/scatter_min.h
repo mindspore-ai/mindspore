@@ -30,9 +30,6 @@ class MIND_API ScatterMin : public BaseOperator {
   /// \brief Constructor.
   ScatterMin() : BaseOperator(kNameScatterMin) { InitIOName({"input_x", "indices", "updates"}, {"output"}); }
 };
-
-abstract::AbstractBasePtr ScatterMinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
