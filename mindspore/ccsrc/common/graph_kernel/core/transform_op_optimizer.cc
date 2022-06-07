@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/graph_kernel/transform_op_optimizer.h"
+#include "common/graph_kernel/core/transform_op_optimizer.h"
 #include <algorithm>
-#include <iostream>
 #include <vector>
 #include <queue>
 #include <memory>
@@ -25,27 +24,24 @@
 #include <string>
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/graph_utils.h"
-#include "include/common/debug/common.h"
-#include "kernel/common_utils.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "common/graph_kernel/graph_kernel_helper.h"
+#include "utils/anf_utils.h"
 #include "common/graph_kernel/model/lite_graph.h"
 #include "common/graph_kernel/model/op_register.h"
 #include "common/graph_kernel/core/graph_builder.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 
+// See https://gitee.com/mindspore/mindspore/issues/I3UW79 for more details of the algorithm.
 namespace mindspore::graphkernel {
 namespace {
-enum FormatType { kFormatUnknown, kFormatA, kFormatB };
-enum TransOpType { kTransAB, kTransBA };
+enum class FormatType { kFormatUnknown, kFormatA, kFormatB };
+enum class TransOpType { kTransAB, kTransBA };
 struct Edge {
   size_t to;
   size_t capacity;
 };
 
 struct Vertex {
-  FormatType format{kFormatB};
+  FormatType format{FormatType::kFormatB};
   size_t depth{0};
   std::vector<size_t> out_edges;
 };
@@ -88,7 +84,9 @@ class MinCut {
   }
 
   size_t DfsMaxFlow(size_t node, size_t flow) {
-    if (node == sink_id_) return flow;
+    if (node == sink_id_) {
+      return flow;
+    }
     size_t max_flow = 0;
     for (size_t e_id : nodes_[node].out_edges) {
       if ((edges_[e_id].capacity > 0) && (nodes_[node].depth + 1 == nodes_[edges_[e_id].to].depth)) {
@@ -111,9 +109,9 @@ class MinCut {
   }
 
   void SetFormat(size_t node_id) {
-    nodes_[node_id].format = kFormatA;
+    nodes_[node_id].format = FormatType::kFormatA;
     for (size_t i : nodes_[node_id].out_edges) {
-      if (edges_[i].capacity > 0 && nodes_[edges_[i].to].format != kFormatA) {
+      if (edges_[i].capacity > 0 && nodes_[edges_[i].to].format != FormatType::kFormatA) {
         SetFormat(edges_[i].to);
       }
     }
@@ -123,9 +121,9 @@ class MinCut {
     for (size_t i = 0; i < origin_nodes_num_; ++i) {
       // link the source node to the nodes with FormatA,
       // link the nodes with FormatB to the sink node.
-      if (original_nodes[i].second == kFormatA) {
+      if (original_nodes[i].second == FormatType::kFormatA) {
         AddEdge(source_id_, original_nodes[i].first, INF, 0);
-      } else if (original_nodes[i].second == kFormatB) {
+      } else if (original_nodes[i].second == FormatType::kFormatB) {
         AddEdge(original_nodes[i].first, sink_id_, INF, 0);
       }
       // each nodes was split into two part, input part and output part.
@@ -142,8 +140,9 @@ class MinCut {
   MinCut(const std::vector<std::pair<size_t, FormatType>> &original_nodes,
          const std::vector<std::pair<size_t, size_t>> &original_edges)
       : origin_nodes_num_(original_nodes.size()),
-        sink_id_(2 * original_nodes.size() + 1),  // source_id_ is 0
-        nodes_(2 * original_nodes.size() + 2),    // double nodes, and source_node/sink_node
+        source_id_(0),
+        sink_id_(2 * original_nodes.size() + 1),
+        nodes_(2 * original_nodes.size() + 2),  // double nodes, and source_node/sink_node
         original_edges_(original_edges) {
     BuildGraph(original_nodes);
   }
@@ -158,10 +157,11 @@ class MinCut {
     std::vector<std::pair<size_t, TransOpType>> one_node_ops;
     for (size_t i = 1; i <= origin_nodes_num_; ++i) {
       auto tmpi = i;  // to evade pclint warning "for statement index variable modified in body."
-      if (nodes_[i].format == kFormatA && nodes_[i + origin_nodes_num_].format != kFormatA) {
-        (void)one_node_ops.emplace_back(tmpi, kTransAB);
-      } else if (nodes_[i].format != kFormatA && nodes_[i + origin_nodes_num_].format == kFormatA) {
-        (void)one_node_ops.emplace_back(tmpi, kTransBA);
+      if (nodes_[i].format == FormatType::kFormatA && nodes_[i + origin_nodes_num_].format != FormatType::kFormatA) {
+        (void)one_node_ops.emplace_back(tmpi, TransOpType::kTransAB);
+      } else if (nodes_[i].format != FormatType::kFormatA &&
+                 nodes_[i + origin_nodes_num_].format == FormatType::kFormatA) {
+        (void)one_node_ops.emplace_back(tmpi, TransOpType::kTransBA);
       }
     }
     return one_node_ops;
@@ -170,10 +170,12 @@ class MinCut {
   std::vector<std::pair<std::pair<size_t, size_t>, TransOpType>> GetTwoNodeOps() const {
     std::vector<std::pair<std::pair<size_t, size_t>, TransOpType>> two_node_ops;
     for (auto i : original_edges_) {
-      if (nodes_[i.first + origin_nodes_num_].format == kFormatA && nodes_[i.second].format != kFormatA) {
-        (void)two_node_ops.emplace_back(i, kTransAB);
-      } else if (nodes_[i.first + origin_nodes_num_].format != kFormatA && nodes_[i.second].format == kFormatA) {
-        (void)two_node_ops.emplace_back(i, kTransBA);
+      if (nodes_[i.first + origin_nodes_num_].format == FormatType::kFormatA &&
+          nodes_[i.second].format != FormatType::kFormatA) {
+        (void)two_node_ops.emplace_back(i, TransOpType::kTransAB);
+      } else if (nodes_[i.first + origin_nodes_num_].format != FormatType::kFormatA &&
+                 nodes_[i.second].format == FormatType::kFormatA) {
+        (void)two_node_ops.emplace_back(i, TransOpType::kTransBA);
       }
     }
     return two_node_ops;
@@ -181,7 +183,7 @@ class MinCut {
 
  private:
   size_t origin_nodes_num_;
-  size_t source_id_{0};
+  size_t source_id_;
   size_t sink_id_;
   std::vector<Vertex> nodes_;
   std::vector<Edge> edges_;
@@ -191,12 +193,12 @@ class MinCut {
 
 using inner::LiteGraph;
 using inner::LiteGraphPtr;
-using inner::Node;
 using inner::NodePtr;
 using inner::NodePtrList;
 using inner::NType;
 using inner::PrimOp;
 using inner::PrimOpPtr;
+using NodeWithIndex = std::pair<NodePtr, int>;
 
 class TransformOp {
  public:
@@ -248,14 +250,10 @@ class TransformOp {
 };
 
 bool IsFlexibleOp(const NodePtr &node) {
-  static const std::set<std::string> format_flexible_ops = {
-    "Abs",  "Add",     "Sub",     "Mul",   "Round",   "Cast",         "Neg",  "Exp",       "Log",
-    "Pow",  "Minimum", "Maximum", "Rsqrt", "Sqrt",    "Reciprocal",   "Tanh", "Sin",       "Cos",
-    "Asin", "ACos",    "RealDiv", "Equal", "Greater", "GreaterEqual", "Less", "LessEqual", "Sign"};
   if (node->NodeType() != NType::Primitive) {
     return false;
   }
-  if (format_flexible_ops.count(node->As<PrimOp>()->op()) == 0) {
+  if (node->As<PrimOp>()->compute_type() != PrimOp::ComputeType::ELEMWISE) {
     return false;
   }
   // check the input and output formats are all the same, except ConstValue.
@@ -267,31 +265,38 @@ bool IsFlexibleOp(const NodePtr &node) {
   return true;
 }
 
+constexpr int kOutputIndex = -1;
 class Mutator {
  public:
-  explicit Mutator(const NodePtr &node) : op_checker_(node), basenode_(node), ori_node_(1) {}
+  explicit Mutator(const NodePtr &node, const NodePtrList &ops)
+      : op_checker_(node), basenode_(node), ordered_nodes_(ops), ori_node_(1) {}
   ~Mutator() = default;
 
-  bool Run() {
+  bool Run(std::set<NodePtr> *changed_nodes) {
     VisitNode(basenode_);
-    if (flexible_ops_.empty()) return false;
+    if (flexible_ops_.empty()) {
+      return false;
+    }
     // remove transform ops in litegraph
     RemoveTransOp();
     GenFormatGraph();
-    RebuildLiteGraph();
+    RebuildLiteGraph(changed_nodes);
+    (void)changed_nodes->insert(flexible_ops_.begin(), flexible_ops_.end());
     return true;
   }
 
  private:
   // visit nodes bidirectionally
   void VisitNode(const NodePtr &node) {
-    if (visited_.count(node) > 0) return;
+    if (visited_.count(node) > 0) {
+      return;
+    }
     (void)visited_.insert(node);
     if (op_checker_.IsTransformOp(node)) {
       (void)trans_ops_.insert(node);
     } else if (!IsFlexibleOp(node)) {
       if (node->NodeType() != NType::Output) {
-        fmt_type[{node, -1}] = op_checker_.GetFormatType(node->format);
+        fmt_type[{node, kOutputIndex}] = op_checker_.GetFormatType(node->format);
       }
       if (node->NodeType() != NType::Parameter) {
         for (size_t i = 0; i < node->inputs().size(); i++) {
@@ -304,7 +309,7 @@ class Mutator {
       return;
     } else {
       (void)flexible_ops_.insert(node);
-      fmt_type[{node, -1}] = FormatType::kFormatUnknown;
+      fmt_type[{node, kOutputIndex}] = FormatType::kFormatUnknown;
     }
 
     for (auto &input : node->inputs()) {
@@ -329,41 +334,46 @@ class Mutator {
 
   void GenFormatGraph() {
     for (auto &node : visited_) {
-      if (node->NodeType() == NType::Parameter) continue;
+      if (node->NodeType() == NType::Parameter) {
+        continue;
+      }
       bool is_flexible = (flexible_ops_.find(node) != flexible_ops_.end());
       size_t cur_id = 0;
       if (is_flexible) {
-        cur_id = GetId({node, -1});
+        cur_id = GetId({node, kOutputIndex});
       }
       for (size_t i = 0; i < node->inputs().size(); i++) {
-        if (visited_.count(node->input(i)) == 0) continue;
+        if (visited_.count(node->input(i)) == 0) {
+          continue;
+        }
         if (!is_flexible) {
           cur_id = GetId({node, SizeToInt(i)});
         }
-        auto input_id = GetId({node->input(i), -1});
+        auto input_id = GetId({node->input(i), kOutputIndex});
         (void)graph_edges_.emplace_back(input_id, cur_id);
       }
     }
   }
 
-  void RebuildLiteGraph() {
+  void RebuildLiteGraph(std::set<NodePtr> *changed_nodes) {
     MinCut min_cut(graph_vertex_, graph_edges_);
     min_cut.Run();
     for (auto [node_id, trans_type] : min_cut.GetOneNodeOps()) {
-      if (ori_node_[node_id].second != -1) {
+      if (ori_node_[node_id].second != kOutputIndex) {
         MS_LOG(EXCEPTION) << "OneNodeOp should be the output edge. node_id:" << node_id
                           << " index:" << ori_node_[node_id].second;
       }
       auto trans_op = op_checker_.GenTransformOp(trans_type);
       ori_node_[node_id].first->ReplaceWith(trans_op);
       trans_op->SetInputs({ori_node_[node_id].first});
+      (void)changed_nodes->insert(trans_op);
     }
 
     std::map<size_t, NodePtr> trans_op_cache;
     for (auto [edge, trans_type] : min_cut.GetTwoNodeOps()) {
       auto node_id_from = edge.first;
       auto node_id_to = edge.second;
-      if (ori_node_[node_id_from].second != -1) {
+      if (ori_node_[node_id_from].second != kOutputIndex) {
         MS_LOG(EXCEPTION) << "node_from should be the output edge. node_id:" << node_id_from
                           << " index:" << ori_node_[node_id_from].second;
       }
@@ -373,6 +383,7 @@ class Mutator {
       if (trans_op == nullptr) {
         trans_op = op_checker_.GenTransformOp(trans_type);
         trans_op->SetInputs({node_from});
+        (void)changed_nodes->insert(trans_op);
       }
       if (ori_node_[node_id_to].second >= 0) {
         node_to->SetInput(IntToSize(ori_node_[node_id_to].second), trans_op);
@@ -386,51 +397,56 @@ class Mutator {
     }
   }
 
-  size_t GetId(const std::pair<NodePtr, int> &node) {
+  size_t GetId(const NodeWithIndex &node_with_index) {
     // the nodes are indexed from 1 in the MinCut model.
-    auto &id = node_id_[node];
+    auto &id = node_id_[node_with_index];
     if (id == 0) {
       id = node_id_.size();
-      ori_node_.push_back(node);
+      ori_node_.push_back(node_with_index);
       // set format_type for new id.
-      (void)graph_vertex_.emplace_back(id, fmt_type[node]);
+      (void)graph_vertex_.emplace_back(id, fmt_type[node_with_index]);
     }
     return id;
   }
 
   TransformOp op_checker_;
   NodePtr basenode_;
+  const NodePtrList &ordered_nodes_;
   std::set<NodePtr> flexible_ops_;
   std::set<NodePtr> trans_ops_;
   std::set<NodePtr> visited_;
 
-  std::map<std::pair<NodePtr, int>, FormatType> fmt_type;
-  std::map<std::pair<NodePtr, int>, size_t> node_id_;
-  std::vector<std::pair<NodePtr, int>> ori_node_;
+  std::map<NodeWithIndex, FormatType> fmt_type;
+  std::map<NodeWithIndex, size_t> node_id_;
+  std::vector<NodeWithIndex> ori_node_;
   std::vector<std::pair<size_t, FormatType>> graph_vertex_;
   std::vector<std::pair<size_t, size_t>> graph_edges_;
 };
 
 bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const std::string &trans_op_name) {
-  ori_trans_op_num_ = 0;
   auto &ops = litegraph->ops();
   bool changed = true;
   auto check_is_trans_op = [&trans_op_name](const NodePtr &node) { return node->As<PrimOp>()->op() == trans_op_name; };
   auto ori_trans_op_num = std::count_if(ops.begin(), ops.end(), check_is_trans_op);
+  std::set<NodePtr> nodes_may_change;
   for (auto &op : ops) {
     if (check_is_trans_op(op) && !op->inputs().empty() && op->input(0)->format != op->format) {
-      auto mutator = Mutator(op);
-      changed = mutator.Run() || changed;
+      auto mutator = Mutator(op, ops);
+      changed = mutator.Run(&nodes_may_change) || changed;
     }
   }
-  if (!changed) return false;
+  if (!changed) {
+    return false;
+  }
   auto &new_ops = litegraph->GetOrderedNodes();
   auto new_trans_op_num = std::count_if(new_ops.begin(), new_ops.end(), check_is_trans_op);
   if (new_trans_op_num >= ori_trans_op_num) {
     return false;
   }
   for (auto &op : new_ops) {
-    op->SetBaseInfo(op->As<PrimOp>()->Infer(op->inputs(), op->attrs()));
+    if (nodes_may_change.count(op) != 0) {
+      op->SetBaseInfo(op->As<PrimOp>()->Infer(op->inputs(), op->attrs()));
+    }
   }
   return true;
 }
@@ -441,13 +457,17 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &kernel_graph) {
   auto todos = TopoSort(kernel_graph->get_return());
   bool changed = false;
   for (auto node : todos) {
-    if (!common::AnfAlgo::IsGraphKernel(node)) continue;
-    auto sub_func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
+    if (!AnfUtils::IsGraphKernel(node)) {
+      continue;
+    }
+    auto sub_func_graph = GetCNodeFuncGraph(node);
     auto litegraph = GkUtils::AnfGraph2LiteGraph(sub_func_graph);
     if (Process(litegraph)) {
       changed = true;
       auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(litegraph, Callback::Instance());
-      if (new_funcgraph == nullptr) continue;
+      if (new_funcgraph == nullptr) {
+        continue;
+      }
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());

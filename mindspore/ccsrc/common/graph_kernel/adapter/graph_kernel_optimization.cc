@@ -49,7 +49,7 @@
 #include "common/graph_kernel/uss_atomic_add.h"
 #include "backend/common/pass/getitem_tuple.h"
 #include "common/graph_kernel/core/graph_kernel_pass_manager.h"
-#include "common/graph_kernel/transform_op_optimizer.h"
+#include "common/graph_kernel/core/transform_op_optimizer.h"
 #include "common/graph_kernel/rewrite_output_shape.h"
 #include "common/graph_kernel/graph_kernel_recompute.h"
 #include "common/graph_kernel/reduce_fake_out_mem.h"
@@ -137,8 +137,7 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
   pm->Add(std::make_shared<GraphKernelCSE>(), OptLevel_2);
 
   // Eliminate unnecessary transform ops
-  auto level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_trans_op_optimize);
-  pm->Add(std::make_shared<TransformOpOptimizer>(), level, is_gpu);
+  pm->Add(std::make_shared<TransformOpOptimizer>(), OptLevel_2, is_gpu || is_cpu);
   return pm;
 }
 

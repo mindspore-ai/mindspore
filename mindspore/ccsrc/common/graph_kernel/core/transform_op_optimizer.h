@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ class TransformOpOptimizer : public opt::Pass {
  private:
   bool Process(const inner::LiteGraphPtr &litegraph, const std::string &trans_op_name = "Transpose");
   bool IsFlexibleOp(const inner::NodePtr &node);
-  size_t ori_trans_op_num_{0};
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_TRANSFORM_OP_OPTIMIZER_H_
