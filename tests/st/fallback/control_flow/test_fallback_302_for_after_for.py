@@ -50,7 +50,11 @@ def test_for_after_for_2():
     assert res_y == 6
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_for_after_for_3():
     """
     Feature: JIT Fallback
@@ -61,10 +65,10 @@ def test_for_after_for_3():
     @ms_function
     def func():
         y = np.array([5, 6, 7])
+        k = 0
         for i in (0, 1.1, 2.2):
-            k = int(i)
-            y[k] = k + 2
-
+            k = k + int(i)
+        y = y - k
         z = Tensor(y)
         out = 0
         for i in z:
