@@ -21,10 +21,10 @@
 #include <memory>
 #include "include/api/status.h"
 #include "include/api/graph.h"
-#include "cxx_api/graph/graph_impl.h"
+#include "extendrt/cxx_api/graph/graph_impl.h"
 #include "backend/common/session/session_basic.h"
 #include "ir/anf.h"
-#include "cxx_api/model/model_impl.h"
+#include "extendrt/cxx_api/model/model_impl.h"
 
 namespace mindspore {
 class GPUInferSession : public InferSession {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cxx_api/graph/graph_data.h"
+#include "extendrt/cxx_api/graph/graph_data.h"
 #include "utils/log_adapter.h"
 #ifdef ENABLE_ACL
 #include "framework/common/helper/model_helper.h"

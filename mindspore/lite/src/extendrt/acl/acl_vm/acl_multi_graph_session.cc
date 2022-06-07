@@ -23,7 +23,7 @@
 #include "extendrt/acl/model_converter.h"
 #include "extendrt/acl/acl_model_options.h"
 #include "extendrt/acl/acl_vm/ms_tensor_ref.h"
-#include "cxx_api/graph/graph_data.h"
+#include "extendrt/cxx_api/graph/graph_data.h"
 
 namespace mindspore::session {
 void MultiGraphAclSession::Init(uint32_t device_id) { InitExecutor(kDavinciMultiGraphInferenceDevice, device_id); }
