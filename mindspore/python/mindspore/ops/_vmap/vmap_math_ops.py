@@ -20,8 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from mindspore.common import Tensor
-from mindspore.ops.operations.math_ops import Lerp
-from mindspore.ops.operations.math_ops import LpNorm
+from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import linalg_ops
 from mindspore.ops.operations import _grad_ops as G
 from ..primitive import Primitive
@@ -90,7 +89,7 @@ def get_broadcast_binary_op_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(Lerp)
+@vmap_rules_getters.register(math_ops.Lerp)
 def get_lerp_vamp_rule(prim, axis_size):
     """VmapRule for ternary operations with broadcasting, such as `Lerp` ."""
 
@@ -415,7 +414,7 @@ def get_svd_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(LpNorm)
+@vmap_rules_getters.register(math_ops.LpNorm)
 def get_lp_norm_vmap_rule(prim, axis_size):
     """VmapRule for 'LpNorm' operation."""
     axis = prim.axis
@@ -431,7 +430,7 @@ def get_lp_norm_vmap_rule(prim, axis_size):
         x_ndim = F.rank(x)
         # LpNorm is a reduction class op, so just reuse the common function.
         batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
-        lp_norm_op = LpNorm(batch_axis, p, keep_dims, epsilon)
+        lp_norm_op = math_ops.LpNorm(batch_axis, p, keep_dims, epsilon)
         out = lp_norm_op(x)
         out_dim = _get_reduce_out_dim(keep_dims, x_dim, x_ndim, batch_axis)
         return out, out_dim
@@ -460,21 +459,65 @@ def get_renorm_rule(prim, axis_size):
             des_dim = actual_axis - 1
             x = mnp.moveaxis(x, src_dim, des_dim)
             from_shape = F.shape(x)
-            to_shape = from_shape[:actual_axis-1] + \
-                       (from_shape[actual_axis-1]*from_shape[actual_axis],) + from_shape[actual_axis+1:]
+            to_shape = from_shape[:actual_axis - 1] + \
+                       (from_shape[actual_axis - 1] * from_shape[actual_axis],) + from_shape[actual_axis + 1:]
         else:
             actual_axis = origin_axis
             des_dim = actual_axis + 1
             x = mnp.moveaxis(x, src_dim, des_dim)
             from_shape = F.shape(x)
             to_shape = from_shape[:actual_axis] + \
-                       (from_shape[actual_axis]*from_shape[actual_axis+1],) + from_shape[actual_axis+2:]
+                       (from_shape[actual_axis] * from_shape[actual_axis + 1],) + from_shape[actual_axis + 2:]
         x = F.reshape(x, to_shape)
         op = P.Renorm(int(pnorm), origin_axis, maxnorm)
         out = op(x)
         out = F.reshape(out, from_shape)
         out = mnp.moveaxis(out, des_dim, src_dim)
         return (out, batch_dim)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(math_ops.MatrixDeterminant)
+def get_matrix_determinant_vmap_rule(prim, axis_size):
+    """VmapRule for `MatrixDeterminant` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x_ndim = F.rank(x)
+        if x_ndim - 2 <= x_dim:
+            x = _bdim_at_front(x, x_dim, axis_size)
+            out = prim(x)
+            return out, 0
+        out = prim(x)
+        return out, x_dim
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(math_ops.LogMatrixDeterminant)
+def get_log_matrix_determinant_vmap_rule(prim, axis_size):
+    """VmapRule for `LogMatrixDeterminant` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x_ndim = F.rank(x)
+        if x_ndim - 2 <= x_dim:
+            x = _bdim_at_front(x, x_dim, axis_size)
+            sign, determinant = prim(x)
+            return (sign, 0), (determinant, 0)
+        sign, determinant = prim(x)
+        return (sign, x_dim), (determinant, x_dim)
 
     return vmap_rule
 

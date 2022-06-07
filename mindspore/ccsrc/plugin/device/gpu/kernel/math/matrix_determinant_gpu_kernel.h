@@ -65,11 +65,9 @@ class MatrixDeterminantGpuKernelMod : public NativeGpuKernelMod {
   size_t m_{1};
   size_t batch_size_{1};
   size_t input_elements_{};
-  size_t output_elements_{};
   void *cuda_stream_{nullptr};
   cublasHandle_t cublas_handle_{nullptr};
   std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
   MatrixDeterminantFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, MatrixDeterminantFunc>> func_list_;
 };

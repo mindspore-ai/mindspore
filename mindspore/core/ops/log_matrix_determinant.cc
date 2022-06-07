@@ -31,19 +31,23 @@ abstract::TupleShapePtr LogMatrixDeterminantInferShape(const PrimitivePtr &primi
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_rank = SizeToLong(x_shape.size());
-  const constexpr int64_t kNumber1 = 1;
-  const constexpr int64_t kNumber2 = 2;
-  CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
-  CheckAndConvertUtils::Check("row size", x_shape[x_rank - kNumber1], kEqual, x_shape[x_rank - kNumber2], prim_name);
-  CheckAndConvertUtils::CheckInteger("row size", x_shape[x_rank - kNumber1], kGreaterEqual, kNumber2, prim_name);
-  CheckAndConvertUtils::CheckInteger("column size", x_shape[x_rank - kNumber2], kGreaterEqual, kNumber2, prim_name);
-  std::vector<int64_t> shape(x_shape.begin(), (x_shape.end() - kNumber2));
+  constexpr int64_t number1 = 1;
+  constexpr int64_t number2 = 2;
+  constexpr int64_t dy_shape_placeholder = -1;
+  CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, number2, prim_name);
+  std::vector<int64_t> shape(x_shape.begin(), (x_shape.end() - number2));
   abstract::ShapePtr out_shape = std::make_shared<abstract::Shape>(shape);
+  if (x_shape[x_rank - number1] == dy_shape_placeholder || x_shape[x_rank - number2] == dy_shape_placeholder) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
+  }
+  CheckAndConvertUtils::Check("row size", x_shape[x_rank - number1], kEqual, x_shape[x_rank - number2], prim_name);
+  CheckAndConvertUtils::CheckInteger("row size", x_shape[x_rank - number1], kGreaterEqual, number2, prim_name);
+  CheckAndConvertUtils::CheckInteger("column size", x_shape[x_rank - number2], kGreaterEqual, number2, prim_name);
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape, out_shape});
 }
 
 TuplePtr LogMatrixDeterminantInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   auto x_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, x_type});

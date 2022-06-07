@@ -21,6 +21,7 @@
 #include <algorithm>
 #include "abstract/utils.h"
 #include "kernel/common_utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/determinant_by_lu_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
 
@@ -68,18 +69,11 @@ int MatrixDeterminantGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_shape_.clear();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
-  is_null_input_ = (input_elements_ == 0);
+  is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input shape");
   if (is_null_input_) {
     return KRET_OK;
   }
-
-  // For log_matrix_determinant, there are two outputs, but shapes are equal.
-  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
-  output_shape_.clear();
-  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
-  output_elements_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
   constexpr size_t last_two_dims = 2;
-
   // Ignore last two dims <--> Inner [M, M]
   batch_size_ = 1;
   for (size_t i = 0; i < (input_shape_.size() - last_two_dims); ++i) {
@@ -94,7 +88,7 @@ template <typename T>
 bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs) {
-  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
+  auto input = GetDeviceAddress<T>(inputs, kIndex0);
   // For Lu factorization will inplace input data to be output.
   auto middle_lu_output = GetDeviceAddress<T>(workspace, kIndex0);
   auto batch_lu_device_address = GetDeviceAddress<T *>(workspace, kIndex1);
@@ -136,18 +130,29 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
     "MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
   CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetStream(cublas_handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                        "For MatrixDeterminantGpuKernelMod cublasSetStream Fail");
-  if (std::is_same<T, float>::value) {
+  if constexpr (std::is_same_v<T, float>) {
     CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
       cublasSgetrfBatched(cublas_handle_, SizeToInt(m_), reinterpret_cast<float **>(batch_lu_device_address),
                           SizeToInt(m_), pivot, info, SizeToInt(batch_size_)),
       "MatrixDeterminantGpuKernelMod cublasSgetrfBatched Fail");
-  } else if (std::is_same<T, double>::value) {
+  } else if constexpr (std::is_same_v<T, double>) {
     CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
       cublasDgetrfBatched(cublas_handle_, SizeToInt(m_), reinterpret_cast<double **>(batch_lu_device_address),
                           SizeToInt(m_), pivot, info, SizeToInt(batch_size_)),
       "MatrixDeterminantGpuKernelMod cublasDgetrfBatched Fail");
+  } else if constexpr (std::is_same_v<T, utils::Complex<float>>) {
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
+      cublasCgetrfBatched(cublas_handle_, SizeToInt(m_), reinterpret_cast<cuComplex **>(batch_lu_device_address),
+                          SizeToInt(m_), pivot, info, SizeToInt(batch_size_)),
+      "MatrixDeterminantGpuKernelMod cublasCgetrfBatched Fail");
+  } else if constexpr (std::is_same_v<T, utils::Complex<double>>) {
+    CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
+      cublasZgetrfBatched(cublas_handle_, SizeToInt(m_), reinterpret_cast<cuDoubleComplex **>(batch_lu_device_address),
+                          SizeToInt(m_), pivot, info, SizeToInt(batch_size_)),
+      "MatrixDeterminantGpuKernelMod cublasZgetrfBatched Fail");
   } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's the input data type must be float or double.";
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', it's the input data type must be float32, float64, complex64 or complex128.";
     return false;
   }
   int host_info;
@@ -161,10 +166,10 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   }
   // Compute the determinant (-1)^s * prod(diag(U)), s is the order of the permutation in pivots and U is the result of
   // LU factorization.
-  auto sign_output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  auto sign_output = GetDeviceAddress<T>(outputs, kIndex0);
   if (is_sign_log_determinant_) {
     // For LogMatrixDeterminant, two output -->(sign determinant, log_abs_determinant)
-    auto log_determinant_output = reinterpret_cast<T *>(outputs.at(kIndex1)->addr);
+    auto log_determinant_output = GetDeviceAddress<T>(outputs, kIndex1);
     // For LogMatrixDeterminant, only one output -->(determinant)
     CalculateDeterminantByLu(middle_lu_output, pivot, SizeToInt(m_), SizeToInt(batch_size_), is_sign_log_determinant_,
                              log_determinant_output, sign_output, device_id_,
@@ -186,11 +191,25 @@ std::vector<std::pair<KernelAttr, MatrixDeterminantGpuKernelMod::MatrixDetermina
      &MatrixDeterminantGpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &MatrixDeterminantGpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     &MatrixDeterminantGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     &MatrixDeterminantGpuKernelMod::LaunchKernel<utils::Complex<double>>},
     // LogMatrixDeterminant's launch kernel
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &MatrixDeterminantGpuKernelMod::LaunchKernel<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &MatrixDeterminantGpuKernelMod::LaunchKernel<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &MatrixDeterminantGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &MatrixDeterminantGpuKernelMod::LaunchKernel<utils::Complex<double>>},
 };
 
 void MatrixDeterminantGpuKernelMod::InitWorkSpaceSizeList() {

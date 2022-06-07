@@ -16,6 +16,10 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/determinant_by_lu_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 __inline__ __device__ int PermutationOrder(int m, const int *per_batch_pivot) {
   int permutation_order = 0;
@@ -27,13 +31,33 @@ __inline__ __device__ int PermutationOrder(int m, const int *per_batch_pivot) {
 }
 
 template <typename T>
+__inline__ __device__ T CalInFiniteValue(const T sum_abs_log_det) {
+  constexpr T template_zero = static_cast<T>(0);
+  T result = sum_abs_log_det > template_zero ? -log(template_zero) : log(template_zero);
+  return result;
+}
+
+template <>
+__inline__ __device__ Complex<float> CalInFiniteValue(const Complex<float> sum_abs_log_det) {
+  Complex<float> template_zero = static_cast<Complex<float>>(0);
+  Complex<float> result = sum_abs_log_det.real() > template_zero.real() ? -log(template_zero) : log(template_zero);
+  return result;
+}
+
+template <>
+__inline__ __device__ Complex<double> CalInFiniteValue(const Complex<double> sum_abs_log_det) {
+  Complex<double> template_zero = static_cast<Complex<double>>(0);
+  Complex<double> result = sum_abs_log_det.real() > template_zero.real() ? -log(template_zero) : log(template_zero);
+  return result;
+}
+
+template <typename T>
 __global__ void CalculateDeterminantByLuKernel(const T *lu_input, const int *pivot, int m, int batch_size,
                                                bool is_sign_log_determinant, T *determinant_output, T *sign_output) {
   for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < (batch_size); index += blockDim.x * gridDim.x) {
     const int permutation_order = PermutationOrder(m, pivot + index * m);
-    int prod_sign = permutation_order % 2 ? (-1) : 1;
-    T template_zero = static_cast<T>(0);
-    T sum_abs_log_det = template_zero;
+    T prod_sign = permutation_order % 2 ? (-1) : 1;
+    T sum_abs_log_det = 0;
     int matrix_size = m * m;
     int stride = m + 1;
     size_t lu_i_index = matrix_size * index;
@@ -45,7 +69,7 @@ __global__ void CalculateDeterminantByLuKernel(const T *lu_input, const int *piv
     }
     if (!isfinite(sum_abs_log_det)) {
       prod_sign = 0;
-      sum_abs_log_det = sum_abs_log_det > 0 ? -log(template_zero) : log(template_zero);
+      sum_abs_log_det = CalInFiniteValue(sum_abs_log_det);
     }
     if (is_sign_log_determinant) {
       sign_output[index] = prod_sign;
@@ -74,3 +98,12 @@ template CUDA_LIB_EXPORT void CalculateDeterminantByLu<double>(const double *lu_
                                                                int batch_size, bool is_sign_log_determinant,
                                                                double *determinant_output, double *sign_output,
                                                                const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalculateDeterminantByLu<Complex<float>>(
+  const Complex<float> *lu_input, const int *pivot, int m, int batch_size, bool is_sign_log_determinant,
+  Complex<float> *determinant_output, Complex<float> *sign_output, const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalculateDeterminantByLu<Complex<double>>(
+  const Complex<double> *lu_input, const int *pivot, int m, int batch_size, bool is_sign_log_determinant,
+  Complex<double> *determinant_output, Complex<double> *sign_output, const uint32_t &device_id,
+  cudaStream_t cuda_stream);
