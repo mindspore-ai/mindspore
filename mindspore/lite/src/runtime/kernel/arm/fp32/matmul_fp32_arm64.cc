@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 namespace {
 constexpr int64_t kPackAMinUnitNum = 1 << 14;
 }  // namespace
-void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
+void MatmulFp32ARM64CPUKernel::InitGlobalVariable() {
   matrix_a_.need_pack = true;
   matrix_b_.need_pack = true;
   matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major : RowMajor2Col12Major;
@@ -36,7 +36,7 @@ void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
   col_min_unit_ = C8NUM;
 }
 
-int MatmulFp32BaseCPUKernel::PackMatrixAImplOpt() {
+int MatmulFp32ARM64CPUKernel::PackMatrixAImplOpt() {
   auto src_ptr =
     matrix_a_.has_origin ? matrix_a_.origin_ptr : reinterpret_cast<float *>(in_tensors_[FIRST_INPUT]->data());
   MS_CHECK_TRUE_MSG(src_ptr != nullptr, RET_ERROR, "matrix-a source ptr is a nullptr.");
@@ -79,7 +79,7 @@ int MatmulFp32BaseCPUKernel::PackMatrixAImplOpt() {
   return ParallelLaunch(this->ms_context_, Pack, nullptr, thread_count);
 }
 
-int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
+int MatmulFp32ARM64CPUKernel::ParallelRunByBatch(int task_id) const {
   int start_batch = task_id * batch_stride_;
   int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
 
@@ -99,7 +99,7 @@ int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const {
+int MatmulFp32ARM64CPUKernel::ParallelRunByRow(int task_id) const {
   int start_row = split_points_[task_id];
   int end_row = row_num_;
   if (task_id < (thread_count_ - 1)) {
@@ -114,7 +114,7 @@ int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const {
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
+int MatmulFp32ARM64CPUKernel::ParallelRunByOC(int task_id) const {
   int start_oc = split_points_[task_id];
   int end_oc = col_step_;
   if (task_id < (thread_count_ - 1)) {
@@ -140,7 +140,7 @@ int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
   return RET_OK;
 }
 
-bool MatmulFp32BaseCPUKernel::CheckThreadCuttingByRow() {
+bool MatmulFp32ARM64CPUKernel::CheckThreadCuttingByRow() {
   if (b_batch_ != C1NUM) {
     return false;
   }

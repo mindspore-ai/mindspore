@@ -27,7 +27,9 @@
 #endif
 
 #define MS_FLOAT32X8 __m256
+#define MS_FLOAT256_F32 __m256
 #define MS_INT32X8 __m256i
+#define MS_INT256_EPI32 __m256i
 #define MS_MASK256_TYPE MS_FLOAT32X8
 #define MS_LD256_F32 _mm256_loadu_ps
 #define MS_LD256_EPI32(src) _mm256_loadu_si256((__m256i const *)(src))
@@ -240,6 +242,8 @@ static inline MS_FLOAT32X8 MS_TANHX8_F32(MS_FLOAT32X8 src) {
     data2);
   return MS_MIN256_F32(MS_MAX256_F32(MS_DIV256_F32(a, b), neg), pos);
 }
+
+#define MS_TANH256_F32 MS_TANHX8_F32
 
 #define MS_FMADD256X8_F32(src, weight, dst)       \
   dst##1 = MS_MLA256_F32(dst##1, src##1, weight); \

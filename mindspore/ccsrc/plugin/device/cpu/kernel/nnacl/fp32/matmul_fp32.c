@@ -16,7 +16,24 @@
 
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/fp32/matmul_avx512_fp32.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/matmul_fp32_avx512.h"
+#endif
+
+#ifdef ENABLE_AVX
+#include "nnacl/avx/matmul_fp32_avx.h"
+#endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/sse/matmul_fp32_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/matmul_fp32_neon.h"
+#endif
 
 void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; ++r) {
@@ -936,6 +953,7 @@ void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, 
     c[ci] = value;
   }
 }
+#endif
 
 void MatVecMulFp32Block8(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
                          int col) {
@@ -947,19 +965,19 @@ void MatVecMulFp32Block8(const float *a, const float *b, float *c, const float *
     float32x4_t value1 = vdupq_n_f32(0.0f);
     for (int di = 0; di < depth; ++di, b += C8NUM) {
       value0 += vdupq_n_f32(a[di]) * vld1q_f32(b);
-      value1 += vdupq_n_f32(a[di]) * vld1q_f32(b + 4);
+      value1 += vdupq_n_f32(a[di]) * vld1q_f32(b + C4NUM);
     }
     if (bias != NULL) {
-      value0 += vld1q_f32(bias[ci]);
-      value1 += vld1q_f32(bias[ci + 4]);
+      value0 += vld1q_f32(bias + ci);
+      value1 += vld1q_f32(bias + ci + C4NUM);
     }
     if (act_type == ActType_Relu || act_type == ActType_Relu6) {
-      value0 = vmaxq_f32(value0, 0.0f);
-      value1 = vmaxq_f32(value1, 0.0f);
+      value0 = vmaxq_f32(value0, vdupq_n_f32(0.0f));
+      value1 = vmaxq_f32(value1, vdupq_n_f32(0.0f));
     }
     if (act_type == ActType_Relu6) {
-      value0 = vminq_f32(value0, 6.0f);
-      value1 = vminq_f32(value1, 6.0f);
+      value0 = vminq_f32(value0, vdupq_n_f32(6.0f));
+      value1 = vminq_f32(value1, vdupq_n_f32(6.0f));
     }
     vst1q_f32(c, value0);
     vst1q_f32(c + 4, value1);
@@ -992,7 +1010,6 @@ void MatVecMulFp32Block8(const float *a, const float *b, float *c, const float *
   }
   memcpy(c, value, res * sizeof(float));
 }
-#endif
 
 #ifdef ENABLE_ARM32
 void MatVecMulFp32Block4(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
@@ -2176,44 +2193,8 @@ void MatVecMulRowxColKernel(float *dst, const float *src, const float *weight, c
 // act_type must be 0, 1, 2. 0: no_act, 1: relu, 3: relu6.
 void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, int row, int deep, int act_type) {
   int index = 0;
-#ifdef ENABLE_AVX512
-  __m512 down_threshold512 = _mm512_setzero_ps();
-  __m512 up_threshold512 = _mm512_set1_ps(C6NUM);
-  __m512 b_data16 = _mm512_set1_ps(b[0]);
-  __m512 bias_data16 = _mm512_set1_ps(bias[0]);
-  for (; index < row - C16NUM; index += C16NUM) {
-    __m512 a_data = _mm512_loadu_ps(a + index);
-    __m512 dst = b_data16 * a_data + bias_data16;
-    ActCompute(512, down_threshold512, up_threshold512);
-    _mm512_storeu_ps(c + index, dst);
-  }
-#endif
 
-#ifdef ENABLE_AVX
-  __m256 down_threshold256 = _mm256_setzero_ps();
-  __m256 up_threshold256 = _mm256_set1_ps(C6NUM);
-  __m256 b_data8 = _mm256_set1_ps(b[0]);
-  __m256 bias_data8 = _mm256_set1_ps(bias[0]);
-  for (; index < row - C8NUM; index += C8NUM) {
-    __m256 a_data = _mm256_loadu_ps(a + index);
-    __m256 dst = b_data8 * a_data + bias_data8;
-    ActCompute(256, down_threshold256, up_threshold256);
-    _mm256_storeu_ps(c + index, dst);
-  }
-#endif
-
-#if defined(ENABLE_SSE) || defined(ENABLE_ARM)
-  MS_FLOAT32X4 down_threshold128 = MS_MOVQ_F32(0);
-  MS_FLOAT32X4 up_threshold128 = MS_MOVQ_F32(C6NUM);
-  MS_FLOAT32X4 b_data4 = MS_MOVQ_F32(b[0]);
-  MS_FLOAT32X4 bias_data4 = MS_MOVQ_F32(bias[0]);
-  for (; index < row - C4NUM; index += C4NUM) {
-    MS_FLOAT32X4 a_data = MS_LDQ_F32(a + index);
-    MS_FLOAT32X4 dst = MS_ADD128_F32(MS_MUL128_F32(b_data4, a_data), bias_data4);
-    ActCompute(128, down_threshold128, up_threshold128);
-    MS_STQ_F32(c + index, dst);
-  }
-#endif
+  SIMD_RUN_NO_SCALAR(GemmIsNotPack, index, a, b, c, bias, row, deep, act_type);
 
   for (; index < row; ++index) {
     float dst = a[index] * b[0] + bias[0];
@@ -2226,41 +2207,9 @@ void GemmIsNotPack(const float *a, const float *b, float *c, const float *bias, 
 void GemmIsNotPackOptimize(const float *a, const float *b, float *c, const float *bias, int m, int k, int act_type) {
   // gemm dot is [m, k] * [k, 1] ==>> [m, 1]
   int m_index = 0;
-#ifdef ENABLE_AVX512
-  // block 8
-  MS_FLOAT32X8 down_threshold256 = _mm256_setzero_ps();
-  MS_FLOAT32X8 up_threshold256 = _mm256_set1_ps(C6NUM);
-  for (; m_index <= m - C8NUM; m_index += C8NUM) {
-    int k_index = 0;
-    MS_FLOAT32X8 dst = MS_MOV256_F32(bias[0]);
-    MS_SET_ZERO512X8_F32(dst16_)
-    for (; k_index <= k - C16NUM; k_index += C16NUM) {
-      __m512 weight = _mm512_loadu_ps(b + k_index);
-      MS_LOAD512X8_F32(src, a + m_index * k + k_index, k)
-      MS_FMADD512X8_F32(src, weight, dst16_)
-    }
-    MS_F32X8_GETI(dst, 0) += MS_REDUCE_ADD512_F32(dst16_1);
-    MS_F32X8_GETI(dst, 1) += MS_REDUCE_ADD512_F32(dst16_2);
-    MS_F32X8_GETI(dst, C2NUM) += MS_REDUCE_ADD512_F32(dst16_3);
-    MS_F32X8_GETI(dst, C3NUM) += MS_REDUCE_ADD512_F32(dst16_4);
-    MS_F32X8_GETI(dst, C4NUM) += MS_REDUCE_ADD512_F32(dst16_5);
-    MS_F32X8_GETI(dst, C5NUM) += MS_REDUCE_ADD512_F32(dst16_6);
-    MS_F32X8_GETI(dst, C6NUM) += MS_REDUCE_ADD512_F32(dst16_7);
-    MS_F32X8_GETI(dst, C7NUM) += MS_REDUCE_ADD512_F32(dst16_8);
-    for (; k_index < k; k_index++) {
-      MS_F32X8_GETI(dst, 0) += b[k_index] * a[m_index * k + k_index];
-      MS_F32X8_GETI(dst, 1) += b[k_index] * a[m_index * k + k_index + k];
-      MS_F32X8_GETI(dst, C2NUM) += b[k_index] * a[m_index * k + k_index + C2NUM * k];
-      MS_F32X8_GETI(dst, C3NUM) += b[k_index] * a[m_index * k + k_index + C3NUM * k];
-      MS_F32X8_GETI(dst, C4NUM) += b[k_index] * a[m_index * k + k_index + C4NUM * k];
-      MS_F32X8_GETI(dst, C5NUM) += b[k_index] * a[m_index * k + k_index + C5NUM * k];
-      MS_F32X8_GETI(dst, C6NUM) += b[k_index] * a[m_index * k + k_index + C6NUM * k];
-      MS_F32X8_GETI(dst, C7NUM) += b[k_index] * a[m_index * k + k_index + C7NUM * k];
-    }
-    ActCompute(256, down_threshold256, up_threshold256);
-    MS_ST256_F32(c + m_index, dst);
-  }
-#endif
+
+  SIMD_RUN_AVX512(GemmIsNotPackOptimize, m_index, a, b, c, bias, m, k, act_type);
+
 #ifdef ENABLE_AVX
   // block 4
   MS_FLOAT32X4 down_threshold128 = MS_MOVQ_F32(0);
@@ -2293,24 +2242,10 @@ void GemmIsNotPackOptimize(const float *a, const float *b, float *c, const float
   for (; m_index < m; m_index++) {
     float dst = bias[0];
     int k_index = 0;
-#ifdef ENABLE_AVX512
-    __m512 dst1 = _mm512_setzero_ps();
-    for (; k_index <= k - C16NUM; k_index += C16NUM) {
-      __m512 weight = _mm512_loadu_ps(b + k_index);
-      __m512 a1 = _mm512_loadu_ps(a + m_index * k + k_index);
-      dst1 = _mm512_fmadd_ps(weight, a1, dst1);
-    }
-    dst += _mm512_reduce_add_ps(dst1);
-#endif
-#ifdef ENABLE_AVX
-    __m256 dst2 = _mm256_setzero_ps();
-    for (; k_index <= k - C8NUM; k_index += C8NUM) {
-      __m256 weight = _mm256_loadu_ps(b + k_index);
-      __m256 src = _mm256_loadu_ps(a + m_index * k + k_index);
-      dst2 = _mm256_fmadd_ps(weight, src, dst2);
-    }
-    dst += MS_REDUCE_ADD256_F32(dst2);
-#endif
+
+    SIMD_RUN_AVX512(GemmIsNotPackOptimizeCore, k_index, a + m_index * k, b, k, &dst);
+    SIMD_RUN_AVX(GemmIsNotPackOptimizeCore, k_index, a + m_index * k, b, k, &dst);
+
     for (; k_index < k; k_index++) {
       dst += b[k_index] * a[m_index * k + k_index];
     }

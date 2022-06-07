@@ -17,4 +17,25 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_ARM64_H
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_ARM64_H
 
+#ifdef ENABLE_ARM64
+#include <vector>
+#include "src/runtime/kernel/arm/fp32/matmul_fp32_base.h"
+namespace mindspore::kernel {
+class MatmulFp32ARM64CPUKernel : public MatmulFp32BaseCPUKernel {
+ public:
+  MatmulFp32ARM64CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                           const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
+      : MatmulFp32BaseCPUKernel(parameter, inputs, outputs, ctx) {}
+  ~MatmulFp32ARM64CPUKernel() = default;
+
+  void InitGlobalVariable() override;
+  int PackMatrixAImplOpt() override;
+  int ParallelRunByBatch(int task_id) const override;
+  int ParallelRunByRow(int task_id) const override;
+  int ParallelRunByOC(int task_id) const override;
+  bool CheckThreadCuttingByRow() override;
+};
+}  // namespace mindspore::kernel
+#endif
+
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_ARM64_H

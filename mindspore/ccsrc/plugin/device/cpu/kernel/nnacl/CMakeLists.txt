@@ -3,6 +3,42 @@ project(nnacl)
 set(NNACL_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${NNACL_DIR}/..)
 
+set(NNACL_SIMD_DIR ${CMAKE_BINARY_DIR}/src/nnacl)
+include_directories(${NNACL_SIMD_DIR}/..)
+file(GLOB SIMD_CONFIG_HEADER
+    ${NNACL_DIR}/base/*_simd.h.in
+    ${NNACL_DIR}/fp32/*_simd.h.in
+)
+
+function(generate_simd_code SIMD_INSTRUCTION SIMD_BLOCK_NUM SIMD_TARGET)
+    string(TOLOWER ${SIMD_INSTRUCTION} SIMD_INSTRUCTION_LOWER)
+    set(SIMD_DEFINE "#define MS_SIMD_${SIMD_INSTRUCTION}")
+    set(SIMD_UNDEF "#undef MS_SIMD_${SIMD_INSTRUCTION}")
+    set(SIMD_DEF_INSTRUCTION "#define MS_SIMD_INSTRUCTION MS_SIMD_${SIMD_INSTRUCTION}_INSTRUCTION")
+    set(SIMD_UNDEF_INSTRUCTION "#undef MS_SIMD_INSTRUCTION")
+    set(SIMD_DEF_BLOCK_NUM "#define BLOCK_NUM ${SIMD_BLOCK_NUM}")
+    set(SIMD_UNDEF_BLOCK_NUM "#undef BLOCK_NUM")
+    if(SIMD_INSTRUCTION_LOWER STREQUAL "neon")
+        set(SIMD_TARGET_BEGIN "")
+        set(SIMD_TARGET_END "")
+    else()
+        set(SIMD_TARGET_BEGIN "#pragma GCC push_options\n#pragma GCC target(${SIMD_TARGET})")
+        set(SIMD_TARGET_END "#pragma GCC pop_options")
+    endif()
+
+    set(SIMD_INSTRUCTION_BEGIN "${SIMD_TARGET_BEGIN}\n${SIMD_DEF_INSTRUCTION}\n${SIMD_DEF_BLOCK_NUM}\n${SIMD_DEFINE}")
+    set(SIMD_INSTRUCTION_END "${SIMD_UNDEF_INSTRUCTION}\n${SIMD_UNDEF_BLOCK_NUM}\n${SIMD_TARGET_END}\n${SIMD_UNDEF}")
+    foreach(simd_config_file ${SIMD_CONFIG_HEADER})
+        string(REGEX MATCHALL "[0-9A-Za-z_]*_simd.h.in" tmp1 ${simd_config_file})
+        string(REGEX REPLACE "_simd.h.in" "_${SIMD_INSTRUCTION_LOWER}.h" tmp2 ${tmp1})
+        configure_file(${simd_config_file} ${NNACL_SIMD_DIR}/${SIMD_INSTRUCTION_LOWER}/${tmp2})
+    endforeach()
+endfunction()
+generate_simd_code(NEON 4 \"\")
+generate_simd_code(SSE 4 \"sse4.1\")
+generate_simd_code(AVX 8 "\"avx\", \"avx2\"")
+generate_simd_code(AVX512 16 \"avx512f\")
+
 if(ENABLE_CPU)
     set(CMAKE_C_FLAGS "-Wno-attributes ${CMAKE_C_FLAGS}")
 endif()
@@ -19,14 +55,11 @@ if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
 endif()
 
 if(NOT MSVC)
-    if("${X86_64_SIMD}" STREQUAL "avx")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2 -mfma")
-    endif()
-    if("${X86_64_SIMD}" STREQUAL "avx512")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2 -mfma -mavx512f")
-    endif()
-    if("${X86_64_SIMD}" STREQUAL "sse")
+    if("${X86_64_SIMD}" STREQUAL "sse" OR "${X86_64_SIMD}" STREQUAL "avx" OR "${X86_64_SIMD}" STREQUAL "avx512")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1")
+    endif()
+    if("${X86_64_SIMD}" STREQUAL "avx" OR "${X86_64_SIMD}" STREQUAL "avx512")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx -mavx2 -mfma")
     endif()
 endif()
 
@@ -120,6 +153,13 @@ if("${X86_64_SIMD}" STREQUAL "avx512")
         file(GLOB HPC_SRC ${NNACL_DIR}/experiment/HPC-generator/gemm_avx512/*.c)
         set_property(SOURCE ${HPC_SRC} PROPERTY LANGUAGE C)
     endif()
+
+    set(MS_X86_AVX512_SRC ${HPC_SRC}
+                          ${NNACL_DIR}/fp32/matmul_avx512_fp32.c)
+
+    set_source_files_properties(${MS_X86_AVX512_SRC} PROPERTIES LANGUAGE C
+        COMPILE_FLAGS "${CMAKE_C_FLAGS} -mavx512f")
+
 endif()
 
 if(APPLE)
@@ -129,7 +169,7 @@ endif()
 ########################### build nnacl library ########################
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
-add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC} ${HPC_SRC})
+add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC} ${MS_X86_AVX512_SRC})
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     target_compile_definitions(nnacl_mid PRIVATE ENABLE_DEBUG)
@@ -145,7 +185,6 @@ if(ENABLE_CPU)
         target_compile_definitions(nnacl_mid PRIVATE ENABLE_SSE ENABLE_AVX)
     elseif("${X86_64_SIMD}" STREQUAL "avx512")
         target_compile_definitions(nnacl_mid PRIVATE ENABLE_SSE ENABLE_AVX ENABLE_AVX512)
-        target_compile_options(nnacl_mid PRIVATE -mavx512f)
     endif()
     target_compile_options(nnacl_mid PRIVATE -fPIC)
     add_library(nnacl SHARED $<TARGET_OBJECTS:nnacl_mid>)

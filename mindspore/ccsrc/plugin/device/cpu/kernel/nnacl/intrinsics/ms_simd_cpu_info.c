@@ -30,12 +30,33 @@ struct X86CpuInfoContext {
   bool avx512_flag_;
 };
 
-struct X86CpuInfoContext g_x86_cpu_info_context_;
+static struct X86CpuInfoContext g_x86_cpu_info_context_;
 
 inline const bool X86_Fma_Support(void) { return g_x86_cpu_info_context_.fma_flag_; }
-inline const bool X86_Sse_Support(void) { return g_x86_cpu_info_context_.sse4_1_flag_; }
-inline const bool X86_Avx_Support(void) { return g_x86_cpu_info_context_.avx2_flag_; }
-inline const bool X86_Avx512_Support(void) { return g_x86_cpu_info_context_.avx512_flag_; }
+
+inline const bool X86_Sse_Support(void) {
+#ifdef ENABLE_SSE
+  return g_x86_cpu_info_context_.sse4_1_flag_;
+#else
+  return false;
+#endif
+}
+
+inline const bool X86_Avx_Support(void) {
+#ifdef ENABLE_AVX
+  return g_x86_cpu_info_context_.avx2_flag_;
+#else
+  return false;
+#endif
+}
+
+inline const bool X86_Avx512_Support(void) {
+#ifdef ENABLE_AVX512
+  return g_x86_cpu_info_context_.avx512_flag_;
+#else
+  return false;
+#endif
+}
 
 void ExecuteCpuIdCmd(DWORD cmd_code, DWORD *eax_data, DWORD *ebx_data, DWORD *ecx_data, DWORD *edx_data) {
   DWORD deax, debx, decx, dedx;
@@ -96,7 +117,7 @@ X86CpuInfoErrorCodeEnum IntelX86InstructionSetSupportCheck(void) {
   if (IntelX86CpuInfoInit() != NNACL_OK) {
     return X86CPUINFO_PLATFORM_ERR;
   }
-#ifdef ENABLE_AVX512
+#if defined(ENABLE_AVX512) && !defined(AVX512_HARDWARE_SELF_AWARENESS)
   if (!X86_Avx512_Support()) {
     return X86CPUINFO_AVX512_ERR;
   }
