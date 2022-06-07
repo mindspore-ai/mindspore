@@ -4064,7 +4064,7 @@ class Eye(Primitive):
         self.init_prim_io_names(inputs=['n', 'm', 't'], outputs=['output'])
 
 
-class ScatterNd(PrimitiveWithInfer):
+class ScatterNd(Primitive):
     r"""
     Scatters a tensor into a new tensor depending on the specified indices.
 
@@ -4141,24 +4141,6 @@ class ScatterNd(PrimitiveWithInfer):
     def __init__(self):
         """Initialize ScatterNd"""
         self.init_prim_io_names(inputs=['indices', 'update', 'shape'], outputs=['output'])
-
-    def __infer__(self, indices, update, shape):
-        shp = shape['value']
-        validator.check_subclass("update_dtype", update['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_dtype_valid("indices", indices['dtype'], [mstype.int32, mstype.int64], self.name)
-        validator.check_value_type("shape", shp, [tuple], self.name)
-        for i, x in enumerate(shp):
-            validator.check_positive_int(x, f'shape[{i}]', self.name)
-
-        indices_shape, update_shape = indices["shape"], update["shape"]
-        if indices_shape[0] != update_shape[0]:
-            raise ValueError(f"For '{self.name}', the first shape of 'indices' must be the same as the first shape of "
-                             f"'updates', but got the first shape of 'indices': {indices_shape[0]}, "
-                             f"the first shape of 'updates': {update_shape[0]}.")
-
-        return {'shape': shp,
-                'dtype': update['dtype'],
-                'value': None}
 
 
 class ResizeNearestNeighbor(Primitive):

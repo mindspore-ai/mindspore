@@ -18,6 +18,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 
 
 class Net(nn.Cell):
@@ -38,6 +39,7 @@ def scatternd_net(indices, update, _shape, expect):
     assert np.all(diff < error)
     assert np.all(-diff < error)
 
+
 def scatternd_positive(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -54,6 +56,7 @@ def scatternd_positive(nptype):
     expect = np.array([[0., 5.3],
                        [0., 1.1]]).astype(nptype)
     scatternd_net(arr_indices, arr_update, shape, expect)
+
 
 def scatternd_negative(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -72,6 +75,7 @@ def scatternd_negative(nptype):
                        [-21.4, -3.1]]).astype(nptype)
     scatternd_net(arr_indices, arr_update, shape, expect)
 
+
 def scatternd_positive_uint(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -89,54 +93,143 @@ def scatternd_positive_uint(nptype):
                        [0., 1.]]).astype(nptype)
     scatternd_net(arr_indices, arr_update, shape, expect)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_float64():
+    """
+    Feature: ScatterNd
+    Description: statternd with float64 dtype
+    Expectation: success
+    """
     scatternd_positive(np.float64)
     scatternd_negative(np.float64)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_float32():
+    """
+    Feature: ScatterNd
+    Description: statternd with flaot32 dtype
+    Expectation: success
+    """
     scatternd_positive(np.float32)
     scatternd_negative(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_int64():
+    """
+    Feature: ScatterNd
+    Description: statternd with int64 dtype
+    Expectation: success
+    """
     scatternd_positive(np.int64)
     scatternd_negative(np.int64)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_int16():
+    """
+    Feature: ScatterNd
+    Description: statternd with int16 dtype
+    Expectation: success
+    """
     scatternd_positive(np.int16)
     scatternd_negative(np.int16)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_uint64():
+    """
+    Feature: ScatterNd
+    Description: statternd positive value of uint64 dtype
+    Expectation: success
+    """
     scatternd_positive_uint(np.uint64)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_uint32():
+    """
+    Feature: ScatterNd
+    Description: statternd positive value of uint32 dtype
+    Expectation: success
+    """
     scatternd_positive_uint(np.uint32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_uint16():
+    """
+    Feature: ScatterNd
+    Description: statternd positive value of uint16 dtype
+    Expectation: success
+    """
     scatternd_positive_uint(np.uint16)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_scatternd_uint8():
+    """
+    Feature: ScatterNd
+    Description: statternd positive value of uint8 dtype
+    Expectation: success
+    """
     scatternd_positive_uint(np.uint8)
+
+
+def vmap_1_batch():
+    def calc(indices, updates, shape):
+        return Net(shape)(indices, updates)
+
+    def vmap_calc(indices, updates, shape):
+        return vmap(calc, in_axes=(0, 0, None))(indices, updates, shape)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    indices1 = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int32)
+    update1 = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(np.float32)
+    expect1 = np.array([[0., 5.3],
+                        [0., 1.1]]).astype(np.float32)
+    indices2 = np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]]).astype(np.int32)
+    update2 = np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(np.float32)
+    expect2 = np.array([[0., 0.],
+                        [-21.4, -3.1]]).astype(np.float32)
+    indices = np.stack([indices1, indices2])
+    updates = np.stack([update1, update2])
+    shape = (2, 2, 2)
+    expect = np.stack([expect1, expect2])
+    output = vmap_calc(Tensor(indices), Tensor(updates), shape).asnumpy()
+
+    error = np.ones(shape=output.shape) * 1.0e-6
+    diff = output - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatternd_vmap():
+    """
+    Feature: ScatterNd
+    Description: statternd vmap with 1 batch dim
+    Expectation: success
+    """
+    vmap_1_batch()

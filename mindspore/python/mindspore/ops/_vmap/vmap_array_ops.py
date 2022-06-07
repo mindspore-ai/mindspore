@@ -15,7 +15,9 @@
 
 """array_ops vmap impl."""
 
+import numpy as np
 import mindspore.numpy as mnp
+from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
@@ -235,6 +237,80 @@ def get_select_vmap_rule(prim, axis_size):
 
         return (out, 0)
 
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.ScatterNd)
+def get_scatter_nd_vmap_rule(prim, axis_size):
+    """
+    VmapRule for `ScatterNd` operation.
+
+    An example for the rule:
+    --- inputs info
+        indices.shape = [10, 3, 2, 2]
+        updates.shape = [10, 3, 2, 5]
+        shape         = [10, 6, 4, 5]
+    the first dim (10) is batch.
+    the shape without batch dim are:
+        indices.shape = [3, 2, 2]
+        updates.shape = [3, 2, 5]
+        shape         = [6, 4, 5]
+    --- step 1
+    Change the `shape` to `[60, 4, 5]`, set the indices `offset` to 6 (original first dim).
+    Since there's a constraint `updates.shape = indices.shape[:-1] + shape[indices.shape[-1]:]` in the `ScatterNd` op,
+    so the `shape` with a batch dim is invalid, but its first dim can be changed.
+    --- step 2
+    Generate an constant offset tensor for the indices, which `indices_offset.shape = [10, 1, 1, 2]`,
+    for i in [0, 10), set `indices_offset[i, :, :, 0] = i * offset`.
+    The output batch dim was concat by original 0-axis, so the indices should be offset.
+    Only the 0-dim of output is changed, so only the `indices_offset[i,:,:,0]` is set, and the `indices_offset[i,:,:,1]`
+    is leave as zero.
+    --- step 3
+    Add the `indices_offset` with `indices`.
+    --- step 4
+    Call `ScatterNd` with new `indices`, old `updates`, and new `shape (60, 4, 5)`.
+    --- step 5
+    Reshape the output tensor to `[10, 6, 4, 5]`
+    """
+    @constexpr
+    def _refine_shape(shape):
+        offset = shape[1]
+        return (shape[0] * shape[1],) + tuple(shape[2:]), offset
+
+    @constexpr
+    def _gen_indices_offset(shape, offset):
+        # original rank(indices.shape) is required >= 2, so indices with batch dim's rank >= 3.
+        shape = [shape[0]] + [1] * (len(shape) - 2) + [shape[-1]]
+        val = np.zeros(shape, np.int32)  # the dtype will be changed when creating Tensor
+        val = np.reshape(val, (shape[0], shape[-1]))
+        for i in range(shape[0]):
+            val[i, 0] = i * offset
+        return np.reshape(val, shape)
+
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(indices_bdim, updates_bdim, shape_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, indices_bdim, updates_bdim, shape_bdim)
+        if is_all_none:
+            return result
+        indices, indices_dim = indices_bdim
+        updates, updates_dim = updates_bdim
+        shape, shape_dim = shape_bdim
+        if shape_dim is not None:
+            _raise_value_error("The source axis of `shape` in `{}` must be None, "
+                               "but got {}.".format(prim.name, shape_dim))
+        indices = _bdim_at_front(indices, indices_dim, axis_size)
+        updates = _bdim_at_front(updates, updates_dim, axis_size)
+        new_shape, offset = _refine_shape(shape)
+        indices_shape = F.shape(indices)
+        indices_dtype = F.dtype(indices)
+        offset_val = _gen_indices_offset(indices_shape, offset)
+        indices_offset = Tensor(offset_val, indices_dtype)
+        new_indices = P.Add()(indices, indices_offset)
+        out = prim(new_indices, updates, new_shape)
+        real_out = P.Reshape()(out, shape)
+        return (real_out, 0)
     return vmap_rule
 
 
