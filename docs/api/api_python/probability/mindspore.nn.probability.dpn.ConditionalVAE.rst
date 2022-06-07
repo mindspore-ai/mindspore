@@ -7,7 +7,7 @@ mindspore.nn.probability.dpn.ConditionalVAE
     与 VAE 的区别在于 CVAE 使用标签信息。有关更多详细信息，请参阅 `基于深度条件生成模型学习结构化输出表示 <http://papers.nips.cc/paper/5775-learning-structured-output-representation-using-deep-conditional-generative-models>`_。
 
     .. note::
-        定义编码器和解码器时，编码器的输出 Tensor 和解码器的输入 Tensor 的 shape 必须是(N, hidden_size)。潜在大小必须小于或等于隐藏大小。
+        定义编码器和解码器时，编码器的输出 Tensor 和解码器的输入 Tensor 的 shape 必须是 :math:`(N, hidden_size)`。潜在大小必须小于或等于隐藏大小。
 
     **参数：**
 
@@ -19,8 +19,8 @@ mindspore.nn.probability.dpn.ConditionalVAE
 
     **输入：**
 
-    - **input_x** (Tensor) - 输入 Tensor 的 shape 是(N,C,H,W)，与编码器的输入相同。 
-    - **input_y** (Tensor) - 目标数据的 Tensor，shape 为(N,)_。
+    - **input_x** (Tensor) - 输入 Tensor 的 shape 是 :math:`(N, C, H, W)`，与编码器的输入相同。 
+    - **input_y** (Tensor) - 目标数据的 Tensor，shape 为 :math:`(N,)`。
 
     **输出：**
 

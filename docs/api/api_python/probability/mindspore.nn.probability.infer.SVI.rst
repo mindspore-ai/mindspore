@@ -10,8 +10,8 @@ mindspore.nn.probability.infer.SVI
 
     **参数：**
 
-    - **net_with_loss** (Cell) - 具有损失函数的单元格。 
-    - **optimizer** (Cell) - 更新权重的优化器。 
+    - **net_with_loss** (Cell) - 具有损失函数的单元格。
+    - **optimizer** (Cell) - 更新权重的优化器。
 
     .. py:method:: get_train_loss()
 
