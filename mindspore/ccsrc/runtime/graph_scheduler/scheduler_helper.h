@@ -71,6 +71,8 @@ class SchedulerHelper {
   // Fuse the data arrows to batch data arrow for the same destination actor.
   static void FuseDataArrowsToBatchDataArrow(AbstractActor *const actor);
 
+  static void AddDependency(AbstractActor *const actor, const AbstractActor *dependent_actor);
+
   // Fuse the actors to a fusion actor.
   static FusionActorPtr BuildMultiActors(const std::vector<AbstractActorPtr> &actors);
   static void AddArrowForFusionActor(FusionActor *fusion_actor);

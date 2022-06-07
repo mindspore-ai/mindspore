@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <set>
+#include <unordered_set>
 #include <map>
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
@@ -86,6 +87,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
   const mindspore::HashMap<std::string, std::vector<DataArrowPtr>> &batch_output_data_arrows() const {
     return batch_output_data_arrows_;
   }
+  const std::unordered_set<std::string> &dependent_actors() const { return dependent_actors_; }
 
  protected:
   friend class GraphScheduler;
@@ -155,6 +157,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // Indicates whether the actor is in fusion actor.
   bool in_fusion_actor_;
+
+  // All actors that the actor depends on for execution, the dependent actors are expanded by the input data and input
+  // controls. For example, ActorA->ActorB->ActorC, the expanded dependent actors of ActorC are ActorA and ActorB.
+  std::unordered_set<std::string> dependent_actors_;
 };
 
 using AbstractActorPtr = std::shared_ptr<AbstractActor>;

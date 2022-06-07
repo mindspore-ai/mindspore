@@ -19,6 +19,8 @@
 
 #include <memory>
 #include <utility>
+#include <string>
+#include <set>
 #include "runtime/graph_scheduler/optimizer/optimizer.h"
 
 namespace mindspore {
@@ -31,6 +33,13 @@ class MultiActorFusion : public ActorPass {
 
  protected:
   void Process(ActorSet *const actor_set, AbstractActor *const actor) override;
+
+ private:
+  bool AnalyzeDependency(const ActorSet *actor_set);
+  bool AddDependency(std::pair<AbstractActor *, bool> *const actor_info,
+                     mindspore::HashMap<std::string, std::pair<AbstractActor *, bool>> *const actor_infos);
+
+  void FuseMultiActors(ActorSet *const actor_set);
 };
 }  // namespace runtime
 }  // namespace mindspore
