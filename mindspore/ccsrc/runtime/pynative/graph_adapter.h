@@ -28,6 +28,7 @@ class GraphAdapter {
                                          const std::vector<tensor::TensorPtr> &input_tensors);
   static void GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph);
   static void ClearForwardOutputValueNodeDeviceAddress(const KernelGraphPtr &graph);
+  static void RemoveUnusedValueNodes(const KernelGraphPtr &graph);
 };
 }  // namespace mindspore::pynative
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_GRAPH_ADAPTER_H_

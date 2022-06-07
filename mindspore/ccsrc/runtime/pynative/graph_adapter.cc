@@ -48,7 +48,56 @@ tensor::TensorPtr GetTensorFromValueNode(const AnfNodePtr &node) {
   auto tensor = value->cast<tensor::TensorPtr>();
   return tensor;
 }
+
+HashMap<ValueNodePtr, size_t> GetGraphValueNodeRefCounts(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  HashMap<ValueNodePtr, size_t> value_node_ref_counts;
+  // For example:
+  //   %1 MakeTuple(V1, V2)
+  //   %2 TupleGetItem(0, %1)
+  //   %3 Kernel(%2)
+  // V2 is not used by kernel. Need to remove.
+  auto execution_nodes = graph->execution_order();
+  for (auto &node : execution_nodes) {
+    std::vector<session::KernelWithIndex> real_inputs;
+    common::AnfAlgo::GetRealInputs(node, &real_inputs);
+    for (auto &real_input : real_inputs) {
+      auto input = real_input.first;
+      MS_EXCEPTION_IF_NULL(input);
+      if (input->isa<ValueNode>()) {
+        auto value_node = input->cast<ValueNodePtr>();
+        value_node_ref_counts[value_node] += 1;
+      }
+    }
+  }
+
+  // ValueNodes as graph outputs
+  auto outputs = common::AnfAlgo::GetAllOutput(graph->output());
+  for (auto &output : outputs) {
+    MS_EXCEPTION_IF_NULL(output);
+    if (output->isa<ValueNode>()) {
+      auto value_node = output->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      value_node_ref_counts[value_node] += 1;
+    }
+  }
+
+  return value_node_ref_counts;
+}
 }  // namespace
+
+void GraphAdapter::RemoveUnusedValueNodes(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto value_node_ref_counts = GetGraphValueNodeRefCounts(graph);
+  for (const auto &value_node : graph->graph_value_nodes()) {
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto iter = value_node_ref_counts.find(value_node);
+    if (iter == value_node_ref_counts.end()) {
+      MS_LOG(DEBUG) << "Remove unused ValueNode " << value_node->DebugString();
+      graph->RemoveNodeFromGraph(value_node);
+    }
+  }
+}
 
 void GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -71,42 +120,34 @@ void GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(const KernelGraphPtr
 void GraphAdapter::GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   HashMap<std::string, size_t> tensor_counts;
-  auto execution_nodes = graph->execution_order();
-  for (auto &node : execution_nodes) {
-    std::vector<session::KernelWithIndex> real_inputs;
-    common::AnfAlgo::GetRealInputs(node, &real_inputs);
-    for (auto &real_input : real_inputs) {
-      auto forward_output_tensor = GetTensorFromValueNode(real_input.first);
-      if (forward_output_tensor == nullptr || !forward_output_tensor->is_forward_output()) {
-        continue;
-      }
-      tensor_counts[forward_output_tensor->id()] += 1;
-    }
-  }
+  HashMap<ValueNodePtr, size_t> value_node_ref_counts = GetGraphValueNodeRefCounts(graph);
 
-  std::vector<size_t> value_node_ref_count;
+  std::vector<size_t> value_node_ref_count_list;
   std::vector<bool> value_node_forward_output_flags;
   for (auto &value_node : graph->graph_value_nodes()) {
+    MS_EXCEPTION_IF_NULL(value_node);
     auto tensor = GetTensorFromValueNode(value_node);
     if (tensor == nullptr || !tensor->is_forward_output()) {
-      value_node_ref_count.emplace_back(SIZE_MAX);
-      value_node_forward_output_flags.emplace_back(false);
-      continue;
-    }
-    auto iter = tensor_counts.find(tensor->id());
-    if (iter == tensor_counts.end()) {
-      // The tensor is in bp graph but not used.
-      // e.g. %1-MakeTuple(T1, T2) -> TupleGetItem(%1, 0). T2 is not used.
-      MS_LOG(DEBUG) << "Tensor " << tensor->ToString() << " is not found in value node";
-      value_node_ref_count.emplace_back(SIZE_MAX);
+      value_node_ref_count_list.emplace_back(SIZE_MAX);
       value_node_forward_output_flags.emplace_back(false);
       continue;
     }
 
-    value_node_ref_count.emplace_back(iter->second);
+    auto iter = value_node_ref_counts.find(value_node);
+    if (iter == value_node_ref_counts.end()) {
+      // The value_node is in bp graph but not used.
+      // e.g. %1-MakeTuple(T1, T2) -> TupleGetItem(%1, 0). T2 is not used.
+      MS_LOG(DEBUG) << "ValueNode " << value_node->ToString() << " is not used in graph";
+      value_node_ref_count_list.emplace_back(SIZE_MAX);
+      value_node_forward_output_flags.emplace_back(false);
+      continue;
+    }
+
+    value_node_ref_count_list.emplace_back(iter->second);
     value_node_forward_output_flags.emplace_back(true);
+    MS_LOG(DEBUG) << "ValueNode " << value_node->DebugString() << " ref_count " << iter->second;
   }
-  graph->set_attr(kAttrBpropValueNodeRefCount, MakeValue(value_node_ref_count));
+  graph->set_attr(kAttrBpropValueNodeRefCount, MakeValue(value_node_ref_count_list));
   graph->set_attr(kAttrValueNodeForwardOuputFlags, MakeValue(value_node_forward_output_flags));
 }
 
@@ -140,12 +181,12 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph) 
       continue;
     }
 
+    auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
+    MS_EXCEPTION_IF_NULL(front_node);
     if (device_address->GetDeviceType() != device::DeviceType::kCPU) {
       address_ref_count[device_address] += value_node_ref_count;
-      device_address->set_from_tensor(tensor);
+      device_address->AddHeldByNode(front_node->cast<ValueNodePtr>());
     }
-
-    auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     runtime::DeviceTensorStore::GetInstance().Insert(front_node.get(), device_address);
   }
 

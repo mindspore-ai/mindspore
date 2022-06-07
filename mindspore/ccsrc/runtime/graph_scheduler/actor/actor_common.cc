@@ -25,6 +25,26 @@ namespace runtime {
 bool ActorDispatcher::is_multi_thread_execution_ = true;
 bool ActorDispatcher::is_memory_allocation_sync_ = true;
 
+namespace {
+void FreeValueNodeMemory(const std::vector<std::weak_ptr<ValueNode>> &held_by_nodes, DeviceTensor *device_tensor) {
+  MS_EXCEPTION_IF_NULL(device_tensor);
+  device_tensor->ClearHeldByNodes();
+  device_tensor->set_original_ref_count(SIZE_MAX);
+  device_tensor->ResetRefCount();
+
+  for (auto &node : held_by_nodes) {
+    auto value_node = node.lock();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensor->set_device_address(nullptr);
+    runtime::DeviceTensorStore::GetInstance().Remove(value_node.get());
+  }
+}
+}  // namespace
+
 void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num) {
   MS_EXCEPTION_IF_NULL(actor_thread_num);
   MS_EXCEPTION_IF_NULL(actor_and_kernel_thread_num);
@@ -227,24 +247,15 @@ void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext
     // The static reference count is decremented to zero to free memory, and reset to the original count.
     device_tensor->DecreaseRefCount();
     if (device_tensor->ref_count() == 0) {
+      device_tensor->ResetRefCount();
       if (device_tensor->GetPtr() != nullptr) {
-        auto from_tensors = device_tensor->from_tensors();
-        if (from_tensors.empty()) {
+        auto held_by_nodes = device_tensor->held_by_nodes();
+        if (held_by_nodes.empty()) {
           FreeMemory(device_tensor, device_context);
         } else {
-          std::for_each(from_tensors.begin(), from_tensors.end(), [](const std::weak_ptr<tensor::Tensor> &t) {
-            auto tensor = t.lock();
-            if (tensor != nullptr) {
-              tensor->set_device_address(nullptr);
-            }
-          });
-          device_tensor->clear_from_tensors();
-          // Reset device address status
-          device_tensor->set_original_ref_count(SIZE_MAX);
-          device_tensor->ResetRefCount();
+          FreeValueNodeMemory(held_by_nodes, device_tensor);
         }
       }
-      device_tensor->ResetRefCount();
     }
   } else if (device_tensor->dynamic_ref_count() != INT32_MAX) {
     // The dynamic reference count is decremented to zero to free memory.

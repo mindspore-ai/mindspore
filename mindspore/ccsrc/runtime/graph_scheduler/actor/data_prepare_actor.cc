@@ -558,6 +558,9 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
       MS_LOG(WARNING) << "Tensor is null";
       return;
     }
+    if (tensor->is_forward_output()) {
+      continue;
+    }
 
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(node, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);
