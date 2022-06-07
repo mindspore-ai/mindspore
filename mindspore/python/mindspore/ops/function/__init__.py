@@ -209,6 +209,7 @@ from .nn_func import (
     pdist,
     nll_loss,
     cross_entropy,
+    grid_sample,
 )
 from .linalg_func import (
     svd,

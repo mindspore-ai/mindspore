@@ -9283,10 +9283,10 @@ class GridSampler3D(Primitive):
         ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU`` ``GPU``
 
     Examples:
-        >>> gridsampler = ops.GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+        >>> gridsampler = GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
         >>> input_x = Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(-0.2, 1, 0.1).reshape((2, 2, 1, 1, 3)).astype(np.float32))
         >>> output = gridsampler(input_x, grid)
@@ -9308,6 +9308,9 @@ class GridSampler3D(Primitive):
         validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
         validator.check_bool(align_corners, 'align_corners', self.name)
         self.init_prim_io_names(inputs=['input_x', 'grid'], outputs=['output'])
+        self.add_prim_attr('interpolation_mode', interpolation_mode)
+        self.add_prim_attr('padding_mode', padding_mode)
+        self.add_prim_attr('align_corners', align_corners)
 
 
 class FractionalMaxPool(Primitive):
@@ -9785,8 +9788,8 @@ class GridSampler2D(Primitive):
         ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
-        ``Ascend````CPU``
-        >>> gridsampler = ops.GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
+        ``Ascend````CPU````GPU``
+        >>> gridsampler = GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
         >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(-9, 9, 0.5).reshape((2, 3, 3, 2)).astype(np.float32))
         >>> output = gridsampler(input_x, grid)
@@ -9812,6 +9815,9 @@ class GridSampler2D(Primitive):
         validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
         validator.check_bool(align_corners, 'align_corners', self.name)
         self.init_prim_io_names(inputs=['input', 'grid'], outputs=['output'])
+        self.add_prim_attr('interpolation_mode', interpolation_mode)
+        self.add_prim_attr('padding_mode', padding_mode)
+        self.add_prim_attr('align_corners', align_corners)
 
 
 class Pdist(Primitive):

@@ -58,6 +58,7 @@ from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedK
 from mindspore.ops.operations.nn_ops import FractionalAvgPool
 from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
 from mindspore.ops.operations.nn_ops import GridSampler2D
+from mindspore.ops.operations.nn_ops import GridSampler3D
 from mindspore.ops.operations.nn_ops import NthElement
 from mindspore.ops.operations.nn_ops import PSROIPooling
 from mindspore.ops.operations.nn_ops import AvgPoolV1
@@ -2714,7 +2715,7 @@ test_case_nn_ops = [
                         Tensor(0.99, mstype.float32)],
         'skip': ['backward']}),
     ('GridSampler3D', {
-        'block': P.GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=False),
+        'block': GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=False),
         'desc_inputs': [Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32)),
                         Tensor(np.arange(-0.2, 1, 0.1).reshape((2, 2, 1, 1, 3)).astype(np.float32))],
         'desc_bprop': [Tensor(np.arange(-1, 1, 0.25).reshape((2, 2, 2, 1, 1)).astype(np.float32))]}),

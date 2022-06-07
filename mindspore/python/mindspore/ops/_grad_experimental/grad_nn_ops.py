@@ -17,6 +17,7 @@
 """Define the grad rules of neural network related operations."""
 from mindspore import Tensor
 from mindspore.ops.operations.nn_ops import GridSampler2D
+from mindspore.ops.operations.nn_ops import GridSampler3D
 from mindspore.ops.primitive import constexpr
 from mindspore.common import dtype as mstype
 from .._grad.grad_base import bprop_getters
@@ -105,7 +106,7 @@ def get_bprop_celu(self):
     return bprop
 
 
-@bprop_getters.register(P.GridSampler3D)
+@bprop_getters.register(GridSampler3D)
 def get_bprop_grid_sampler_3d(self):
     """Grad definition for `GridSampler3D` operation."""
     grad = G.GridSampler3DGrad(self.interpolation_mode, self.padding_mode, self.align_corners)

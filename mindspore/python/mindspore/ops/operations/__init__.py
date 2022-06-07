@@ -98,7 +98,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2, ApplyAdagradDA,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink,
-                     ApplyAdamWithAmsgrad, GridSampler3D)
+                     ApplyAdamWithAmsgrad)
 from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, PopulationCount, UpdateState, Load,
                         CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PullWeight, PushWeight,
@@ -131,7 +131,6 @@ __all__ = [
     'HSVToRGB',
     'CeLU',
     'Ger',
-    'GridSampler3D',
     'Unique',
     'ReverseSequence',
     'Sort',
