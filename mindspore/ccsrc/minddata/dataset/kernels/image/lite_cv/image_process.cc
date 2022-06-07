@@ -400,7 +400,7 @@ bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h) {
     return false;
   }
   if (dst.IsEmpty()) {
-    (void)dst.Init(dst_w, dst_h, src.channel_, LDataType::UINT8);
+    dst.Init(dst_w, dst_h, src.channel_, LDataType::UINT8);
     if (dst.IsEmpty()) {
       return false;
     }
@@ -611,7 +611,7 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
     return false;
   }
 
-  const uint8_t *src_ptr = (const uint8_t *)src;
+  const uint8_t *src_ptr = reinterpret_cast<const uint8_t *>(src.data_ptr_);
   float *dst_ptr = reinterpret_cast<float *>(dst.data_ptr_);
   int64_t total_size = src.height_ * src.width_ * src.channel_;
   int64_t x = 0;

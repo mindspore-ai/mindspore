@@ -34,10 +34,10 @@
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
-#define MAX_PIXEL_VALUE 255
-
 namespace mindspore {
 namespace dataset {
+constexpr int32_t kMaxPixelValue = 255;
+
 void JpegErrorExitCustom(j_common_ptr cinfo);
 
 struct JpegErrorManagerCustom {

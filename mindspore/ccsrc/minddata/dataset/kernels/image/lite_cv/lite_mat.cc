@@ -250,7 +250,7 @@ void LiteMat::Init(int width, int height, int channel, const LDataType &data_typ
     return;
   }
   if (align_memory) {
-    c_step_ = ((height_ * width_ * elem_size_ + ALIGN - 1) & (-ALIGN)) / elem_size_;
+    c_step_ = ((height_ * width_ * elem_size_ + kAlign - 1) & (-kAlign)) / elem_size_;
   } else {
     c_step_ = height_ * width_;
   }
@@ -305,14 +305,14 @@ void LiteMat::Release() {
 }
 
 void *LiteMat::AlignMalloc(unsigned int size) {
-  unsigned int length = sizeof(void *) + ALIGN - 1;
+  unsigned int length = sizeof(void *) + kAlign - 1;
   if (size > std::numeric_limits<uint32_t>::max() - length) {
     return nullptr;
   }
   void *p_raw = reinterpret_cast<void *>(malloc(size + length));
   if (p_raw) {
     release_flag_ = true;
-    void **p_algin = reinterpret_cast<void **>(((size_t)(p_raw) + length) & ~(ALIGN - 1));
+    void **p_algin = reinterpret_cast<void **>(((size_t)(p_raw) + length) & ~(kAlign - 1));
     p_algin[-1] = p_raw;
     return p_algin;
   }

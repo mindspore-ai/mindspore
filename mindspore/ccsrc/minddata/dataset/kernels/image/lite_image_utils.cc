@@ -107,13 +107,13 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
         const int k = scanline_ptr[cmyk_pixel + 3];
         int r, g, b;
         if (cinfo->saw_Adobe_marker) {
-          r = (k * c) / MAX_PIXEL_VALUE;
-          g = (k * m) / MAX_PIXEL_VALUE;
-          b = (k * y) / MAX_PIXEL_VALUE;
+          r = (k * c) / kMaxPixelValue;
+          g = (k * m) / kMaxPixelValue;
+          b = (k * y) / kMaxPixelValue;
         } else {
-          r = (MAX_PIXEL_VALUE - c) * (MAX_PIXEL_VALUE - k) / MAX_PIXEL_VALUE;
-          g = (MAX_PIXEL_VALUE - m) * (MAX_PIXEL_VALUE - k) / MAX_PIXEL_VALUE;
-          b = (MAX_PIXEL_VALUE - y) * (MAX_PIXEL_VALUE - k) / MAX_PIXEL_VALUE;
+          r = (kMaxPixelValue - c) * (kMaxPixelValue - k) / kMaxPixelValue;
+          g = (kMaxPixelValue - m) * (kMaxPixelValue - k) / kMaxPixelValue;
+          b = (kMaxPixelValue - y) * (kMaxPixelValue - k) / kMaxPixelValue;
         }
         constexpr int buffer_rgb_val_size = 3;
         constexpr int channel_red = 0;
@@ -367,6 +367,9 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 
 Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t output_height,
               int32_t output_width, double fx, double fy, InterpolationMode mode) {
+  if (mode != InterpolationMode::kLinear) {
+    RETURN_STATUS_UNEXPECTED("Resize: Only Liner interpolation is supported currently.");
+  }
   if (input->Rank() != 3 && input->Rank() != 2) {
     RETURN_STATUS_UNEXPECTED("Resize: input image is not in shape of <H,W,C> or <H,W>");
   }
