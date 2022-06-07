@@ -1208,8 +1208,7 @@ int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
         std::lock_guard<std::mutex> _l(op_times_mutex_);
         float cost = static_cast<float>(opEnd - op_start_times_by_name_[call_param.node_name]) / kFloatMSEC;
         if (flags_->device_ == "GPU") {
-          auto gpu_param = reinterpret_cast<const GPUCallBackParam &>(call_param);
-          cost = static_cast<float>(gpu_param.execute_time);
+          cost = static_cast<float>(call_param.execute_time);
         }
         op_cost_total_ += cost;
         op_times_by_type_[call_param.node_type].first++;
@@ -1257,8 +1256,7 @@ int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
 
       float cost = static_cast<float>(opEnd - op_begin_) / kFloatMSEC;
       if (flags_->device_ == "GPU") {
-        auto gpu_param = reinterpret_cast<const GPUCallBackParam &>(call_param);
-        cost = static_cast<float>(gpu_param.execute_time);
+        cost = static_cast<float>(call_param.execute_time);
       }
       op_cost_total_ += cost;
       op_times_by_type_[call_param.node_type].first++;

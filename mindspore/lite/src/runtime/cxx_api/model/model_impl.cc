@@ -185,26 +185,20 @@ Status ModelImpl::RunGraph(const MSKernelCallBack &before, const MSKernelCallBac
   if (before != nullptr) {
     before_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
                            const std::vector<mindspore::lite::Tensor *> &before_outputs,
-                           const lite::CallBackParam &call_param) {
+                           const MSCallBackParam &call_param) {
       std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs);
       std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs);
-      MSCallBackParam mscall_param;
-      mscall_param.node_name = call_param.node_name;
-      mscall_param.node_type = call_param.node_type;
-      return before(inputs, outputs, mscall_param);
+      return before(inputs, outputs, call_param);
     };
   }
 
   if (after != nullptr) {
     after_call_back = [&](const std::vector<mindspore::lite::Tensor *> &before_inputs,
                           const std::vector<mindspore::lite::Tensor *> &before_outputs,
-                          const lite::CallBackParam &call_param) {
+                          const MSCallBackParam &call_param) {
       std::vector<MSTensor> inputs = LiteTensorsToMSTensors(before_inputs);
       std::vector<MSTensor> outputs = LiteTensorsToMSTensors(before_outputs);
-      MSCallBackParam mscall_param;
-      mscall_param.node_name = call_param.node_name;
-      mscall_param.node_type = call_param.node_type;
-      return after(inputs, outputs, mscall_param);
+      return after(inputs, outputs, call_param);
     };
   }
   auto ret = session_->RunGraph(before_call_back, after_call_back);

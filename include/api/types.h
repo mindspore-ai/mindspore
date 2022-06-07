@@ -364,6 +364,7 @@ constexpr char kDecModeAesGcm[] = "AES-GCM";
 struct MSCallBackParam {
   std::string node_name; /**< node name argument */
   std::string node_type; /**< node type argument */
+  double execute_time;   /**< gpu execute time */
 };
 
 /// \brief KernelCallBack defined the function pointer for callBack.
