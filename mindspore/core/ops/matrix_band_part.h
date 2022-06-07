@@ -25,6 +25,38 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatrixBandPart = "MatrixBandPart";
+constexpr int64_t kXMinShapeSize = 2;
+
+template <typename T>
+std::vector<T> GetExpandedShape(const std::vector<T> &shape) {
+  if (shape.size() == 0) {
+    return {1, 1};
+  }
+  size_t expanded_dim_num = 0;
+  size_t visit_count = 0;
+  for (auto it = shape.end() - 1; it >= shape.begin(); it--) {
+    visit_count++;
+    if (*it != 1 && visit_count == 1) {
+      expanded_dim_num += kXMinShapeSize;
+      break;
+    }
+    if (*it != 1) {
+      expanded_dim_num++;
+    }
+    if (it == shape.begin() || visit_count == kXMinShapeSize) {
+      break;
+    }
+  }
+  if (shape.size() < kXMinShapeSize && expanded_dim_num < kXMinShapeSize) {
+    expanded_dim_num++;
+  }
+  auto expanded_shape = shape;
+  for (size_t i = 0; i < expanded_dim_num; ++i) {
+    expanded_shape.emplace_back(1);
+  }
+  return expanded_shape;
+}
+
 class MIND_API MatrixBandPart : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixBandPart);

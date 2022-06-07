@@ -806,7 +806,7 @@ mindspore.Tensor
 
         **异常：**
 
-    	- **TypeError** - 当前Tensor的数据类型不为float16、float32或int32。
+        - **TypeError** - 当前Tensor的数据类型不为float16、float32或int32。
 
     .. py:method:: invert()
 
@@ -823,17 +823,19 @@ mindspore.Tensor
 
         **异常：**
 
-    	- **TypeError** - 当前Tensor的数据类型不为int16或uint16。
+        - **TypeError** - 当前Tensor的数据类型不为int16或uint16。
 
     .. py:method:: matrix_band_part(lower, upper)
 
-        将当前Tensor每个中心带外的所有位置设置为零。
+        将当前Tensor的每个中心带外的所有位置设置为0。
+
+        当前Tensor、 `lower` 和 `upper` 三者的shapes必须相同或能够广播。
 
 
         **参数：**
 
-        - **lower** (int) - 要保留的子对角线数。`lower` 的数据类型必须是int32或int64。如果为负数，则保留整个下三角形。
-    	- **upper** (int) - 要保留的子对角线数。`upper` 的数据类型必须是int32或int64。如果为负数，则保留整个上三角形。
+        - **lower** (Union[int, Tensor]) - 要保留的子对角线数。其数据类型必须是int32或int64。如果为负数，则保留整个下三角形。
+        - **upper** (Union[int, Tensor]) - 要保留的子对角线数。其数据类型必须是int32或int64。如果为负数，则保留整个上三角形。
 
         **返回：**
 
@@ -842,9 +844,12 @@ mindspore.Tensor
         **异常：**
 
         - **TypeError** - 当前Tensor的数据类型不是float16、float32、float64、int32或int64。
-    	- **TypeError** - 输入的 `lower` 的数据类型不是int32或int64。
-    	- **TypeError** - 输入的 `upper` 的数据类型不是int32或int64。
+        - **TypeError** - `lower` 不是一个数值或者Tensor。
+        - **TypeError** - `upper` 不是一个数值或者Tensor。
+        - **TypeError** - `lower` 的数据类型不是int32或int64。
+        - **TypeError** - `upper` 的数据类型不是int32或int64。
         - **ValueError** - 当前Tensor的shape不是大于或等于2维。
+        - **ValueError** - 当前Tensor、 `lower` 和 `upper` 三者的shapes不能广播。
 
     .. py:method:: padding(pad_dim_size=8)
 
@@ -861,8 +866,8 @@ mindspore.Tensor
 
         **异常：**
 
-    	- **TypeError** - `pad_dim_size` 的数据类型不是int。
-    	- **ValueError** - `pad_dim_size` 的值小于1。
+        - **TypeError** - `pad_dim_size` 的数据类型不是int。
+        - **ValueError** - `pad_dim_size` 的值小于1。
         - **ValueError** - 当前Tensor的最后一个维度不等于1。
 
     .. py:method:: max(axis=None, keepdims=False, initial=None, where=True)

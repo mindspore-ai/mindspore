@@ -273,6 +273,7 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
     --- step 5
     Reshape the output tensor to `[10, 6, 4, 5]`
     """
+
     @constexpr
     def _refine_shape(shape):
         offset = shape[1]
@@ -312,6 +313,7 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
         out = prim(new_indices, updates, new_shape)
         real_out = P.Reshape()(out, shape)
         return (real_out, 0)
+
     return vmap_rule
 
 
@@ -624,6 +626,28 @@ def get_matrix_band_part_vmap_rule(prim, axis_size):
     if isinstance(prim, str):
         prim = Primitive(prim)
 
+    @constexpr
+    def _get_expanded_shape(shape):
+        if not shape:
+            return 1, 1
+        expanded_dim_num = 0
+        visit_count = 0
+        for dim in shape[::-1]:
+            visit_count += 1
+            if dim != 1 and visit_count == 1:
+                expanded_dim_num += 2
+                break
+            if dim != 1:
+                expanded_dim_num += 1
+            if visit_count == 2:
+                break
+        if len(shape) < 2 and expanded_dim_num < 2:
+            expanded_dim_num += 1
+        expanded_shape = shape
+        for _ in range(expanded_dim_num):
+            expanded_shape += (1,)
+        return expanded_shape
+
     def vmap_rule(x_bdim, lower_bdim, upper_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, lower_bdim, upper_bdim)
         if is_all_none:
@@ -632,13 +656,36 @@ def get_matrix_band_part_vmap_rule(prim, axis_size):
         x, x_dim = x_bdim
         lower, lower_dim = lower_bdim
         upper, upper_dim = upper_bdim
-        if lower_dim is not None:
-            _raise_value_error("The source axis of `lower` in `P.array_ops.MatrixBandPart` currently does not support"
-                               "setting to None, but got {}.".format(lower_dim))
-        if upper_dim is not None:
-            _raise_value_error("The source axis of `upper` in `P.array_ops.MatrixBandPart` currently does not support"
-                               "setting to None, but got {}.".format(upper_dim))
+        if F.rank(x) < 2:
+            _raise_value_error(
+                "For '{}', the dims of input x must be greater than or equal to 2D, but got {}.".format(prim.name,
+                                                                                                        F.rank(x)))
         x = _bdim_at_front(x, x_dim, axis_size)
+        if isinstance(lower, Tensor):
+            lower = _bdim_at_front(lower, lower_dim, 1)
+        if isinstance(upper, Tensor):
+            upper = _bdim_at_front(upper, upper_dim, 1)
+
+        x_shape = F.shape(x)
+        lower_shape = ()
+        upper_shape = ()
+        if isinstance(lower, Tensor):
+            lower_shape = _get_expanded_shape(F.shape(lower))
+        if isinstance(upper, Tensor):
+            upper_shape = _get_expanded_shape(F.shape(upper))
+
+        if isinstance(lower, Tensor):
+            x = _handle_broadcasting(x, x_shape, lower_shape)
+            lower = _handle_broadcasting(lower, lower_shape, x_shape)
+        if isinstance(lower, Tensor) and isinstance(upper, Tensor):
+            lower_shape = F.shape(lower)
+            lower = _handle_broadcasting(lower, lower_shape, upper_shape)
+            upper = _handle_broadcasting(upper, upper_shape, lower_shape)
+        if isinstance(upper, Tensor):
+            upper_shape = F.shape(upper)
+            upper = _handle_broadcasting(upper, upper_shape, x_shape)
+            x = _handle_broadcasting(x, x_shape, upper_shape)
+
         out = prim(x, lower, upper)
         return (out, 0)
 
@@ -885,7 +932,7 @@ def get_gather_vmap_rule(prim, axis_size):
     @constexpr
     def get_x_dst_shape(x_shape, axis):
         target_axis_size = x_shape[axis + 1]
-        x_dst_shape = x_shape[0:axis] + (axis_size * target_axis_size,) + x_shape[axis+2:]
+        x_dst_shape = x_shape[0:axis] + (axis_size * target_axis_size,) + x_shape[axis + 2:]
         max_axis_size = axis_size * target_axis_size
 
         return target_axis_size, x_dst_shape, max_axis_size
@@ -942,8 +989,10 @@ def get_gather_vmap_rule(prim, axis_size):
         output = prim(x, indices, axis)
 
         return (output, axis)
+
     return vmap_rule
 
+
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
-get_unsupported_dynamic_vmap_rule =\
+get_unsupported_dynamic_vmap_rule = \
     vmap_rules_getters.register(UniqueConsecutive)(get_unsupported_dynamic_vmap_rule)

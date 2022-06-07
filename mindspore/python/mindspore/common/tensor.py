@@ -1263,23 +1263,21 @@ class Tensor(Tensor_):
 
     def inv(self):
         r"""
-        Computes Reciprocal of input tensor element-wise.
+        Computes Reciprocal of this Tensor element-wise.
 
         .. math::
             out_i = \frac{1}{x_{i} }
 
         Returns:
-            Tensor, has the same type and shape as self tensor.
+            Tensor, has the same type and shape as self Tensor.
 
         Raises:
-            TypeError: If `x` is not a Tensor.
-            TypeError: If dtype of `x` is not one of float16, float32, int32.
+            TypeError: If dtype of this Tensor is not one of float16, float32, int32.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> from mindspore.ops import functional as F
             >>> x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
             >>> output = x.inv()
             >>> print(output)
@@ -1290,22 +1288,21 @@ class Tensor(Tensor_):
 
     def invert(self):
         r"""
-        Flips all bits of input tensor element-wise.
+        Flips all bits of this Tensor element-wise.
 
         .. math::
             out_i = ~x_{i}
 
         Returns:
-            Tensor, has the same shape as as self tensor.
+            Tensor, has the same shape as as self Tensor.
 
         Raises:
-            TypeError: If dtype of `x` is neither int16 nor uint16.
+            TypeError: If dtype of this Tensor is neither int16 nor uint16.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> from mindspore.ops import functional as F
             >>> x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
             >>> output = x.invert()
             >>> print(output)
@@ -1318,26 +1315,30 @@ class Tensor(Tensor_):
         r"""
         Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
+        The shapes of this Tensor, `lower` and `upper` need to be the same or broadcast.
+
         Args:
-            lower (int): Number of subdiagonals to keep. It must be int32 or int64.
+            lower (Union[int, Tensor]): Number of subdiagonals to keep. The data type must be int32 or int64.
                 If negative, keep entire lower triangle.
-            upper (int): Number of superdiagonals to keep. It must be int32 or int64.
+            upper (Union[int, Tensor]): Number of superdiagonals to keep. The data type must be int32 or int64.
                 If negative, keep entire upper triangle.
 
         Returns:
-            Tensor, has the same type and shape as self tensor.
+            Tensor, has the same type and shape as self Tensor.
 
         Raises:
             TypeError: If dtype of `x` is not one of float16, float32, float64, int32 or int64.
-            TypeError: If dtype of `lower` is not int32 or int64.
-            TypeError: If dtype of `upper` is not int32 or int64.
+            TypeError: If `lower` is neither a number nor a Tensor.
+            TypeError: If `upper` is neither a number nor a Tensor.
+            TypeError: If dtype of `lower` is neither int32 nor a int64.
+            TypeError: If dtype of `upper` is neither int32 nor a int64.
             ValueError: If the shape of `x` is not greater than or equal to 2D.
+            ValueError: If the shapes of `x`, `lower` and `upper` could not be broadcast.
 
         Supported Platforms:
             ``GPU`` ``CPU``
 
         Examples:
-            >>> from mindspore.ops import functional as F
             >>> x = Tensor(np.ones([2, 4, 4]).astype(np.float32))
             >>> output = x.matrix_band_part(2, 1)
             >>> print(output)
@@ -1353,27 +1354,26 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('matrix_band_part')(self, lower, upper)
 
-    def padding(self, pad_dim_size):
+    def padding(self, pad_dim_size=8):
         r"""
-        Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
+        Extends the last dimension of this Tensor from 1 to pad_dim_size, by filling with 0.
 
         Args:
-            pad_dim_size (int): The value of the last dimension of `x` to be extended, which must be positive.
+            pad_dim_size (int): The value of the last dimension of this Tensor to be extended, which must be positive.
                 Default: 8.
 
         Returns:
-            Tensor, has the same type and shape as self tensor.
+            Tensor, has the same type and shape as self Tensor.
 
         Raises:
             TypeError: If `pad_dim_size` is not an int.
             ValueError: If `pad_dim_size` is less than 1.
-            ValueError: If last dim of `x` is not equal to 1.
+            ValueError: If last dim of this Tensor is not equal to 1.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> from mindspore.ops import functional as F
             >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
             >>> pad_dim_size = 4
             >>> output = x.padding(pad_dim_size)
