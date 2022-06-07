@@ -49,6 +49,9 @@ class MIND_API BaseOperator : public api::Primitive {
   explicit BaseOperator(const std::string &name);
   PrimitiveCPtr GetPrim();
 
+  void set_batch_rank(int64_t batch_rank);
+  int64_t get_batch_rank() const;
+
  protected:
   void InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name);
 };

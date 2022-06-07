@@ -25,6 +25,48 @@ from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_u
     get_unary_grad_vmap_rule
 
 
+@vmap_rules_getters.register(P.ApplyProximalAdagrad)
+def get_apply_proximal_adagrad_rule(prim, axis_size):
+    """VmapRule for `ApplyProximalAdagrad` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    prim.add_prim_attr('batch_rank', batch_rank)
+    prim_name = prim.name
+
+    def vmap_rule(var_bdim, accum_bdim, lr_bdim, l1_bdim, l2_bdim, grad_bdim, u_monad):
+        var, var_dim = var_bdim
+        accum, accum_dim = accum_bdim
+        lr, lr_dim = lr_bdim
+        l1, l1_dim = l1_bdim
+        l2, l2_dim = l2_bdim
+        grad, grad_dim = grad_bdim
+
+        if var_dim is None:
+            if any(dim is not None for dim in [accum_dim, lr_dim, l1_dim, l2_dim, grad_dim]):
+                ValueError("The source axis of `var` is None, but the source "
+                           "axis of `accum/lr/l1/l2/grad` is not None. The execution order of "
+                           "operator `{}` cannot be guaranteed.".format(prim_name))
+            out = prim(var, accum, lr, l1, l2, grad, u_monad)
+            return (out, None)
+
+        if var_dim != 0 or accum_dim != var_dim:
+            raise ValueError("For `{}`, the source axis of `var` must be equal to `accum`, and not equal to 0, "
+                             "but got the source axis of `var`: {}, `accum`: {}.".format(prim_name, var_dim, accum_dim))
+
+        lr = _bdim_at_front(lr, lr_dim, axis_size)
+        l1 = _bdim_at_front(l1, l1_dim, axis_size)
+        l2 = _bdim_at_front(l2, l2_dim, axis_size)
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+
+        out = prim(var, accum, lr, l1, l2, grad, u_monad)
+        return (out, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.BiasAdd)
 def get_bias_add_vmap_rule(prim, axis_size):
     """VmapRule for `BiasAdd` operation."""

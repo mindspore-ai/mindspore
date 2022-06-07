@@ -60,6 +60,8 @@ class ApplyProximalAdagradCpuKernelMod : public NativeCpuKernelMod {
   }
 
  private:
+  int64_t batch_rank_;
+  int64_t batch_size_;
   int unit_size_;
   size_t input_elements_;
 };

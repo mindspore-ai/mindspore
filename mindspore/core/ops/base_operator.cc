@@ -16,6 +16,7 @@
 
 #include "ops/base_operator.h"
 #include "ops/primitive_c.h"
+#include "ops/op_name.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
@@ -27,6 +28,17 @@ PrimitiveCPtr BaseOperator::GetPrim() {
   PrimitiveCPtr res = std::dynamic_pointer_cast<PrimitiveC>(impl_);
   return res;
 }
+
+void BaseOperator::set_batch_rank(int64_t batch_rank) { (void)this->AddAttr(kBatchRank, api::MakeValue(batch_rank)); }
+
+int64_t BaseOperator::get_batch_rank() const {
+  if (this->HasAttr(kBatchRank)) {
+    auto value_ptr = this->GetAttr(kBatchRank);
+    return GetValue<int64_t>(value_ptr);
+  }
+  return 0;
+}
+
 void BaseOperator::InitIOName(const std::vector<std::string> &inputs_name,
                               const std::vector<std::string> &outputs_name) {
   (void)AddAttr("input_names", api::MakeValue(inputs_name));
