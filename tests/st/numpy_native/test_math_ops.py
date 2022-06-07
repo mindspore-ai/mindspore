@@ -1733,7 +1733,7 @@ def onp_convolve(mode):
     return a, b, c, d, e
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_convolve():
@@ -2659,7 +2659,7 @@ def onp_correlate(a, v):
     return a, b, c, d
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_correlate():

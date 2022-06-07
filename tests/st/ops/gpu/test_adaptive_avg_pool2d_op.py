@@ -47,7 +47,7 @@ class GradNet(nn.Cell):
         return self.adaptive_avg_pool2d_grad(x, dy)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_normal():
@@ -58,7 +58,7 @@ def test_net_normal():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_single():
@@ -69,7 +69,7 @@ def test_net_single():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_none():
@@ -80,7 +80,7 @@ def test_net_none():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_value():

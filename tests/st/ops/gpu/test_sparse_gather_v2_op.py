@@ -31,7 +31,7 @@ class SparseGatherNet(nn.Cell):
         return self.gather(x, indices, 1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather0():
@@ -696,7 +696,7 @@ class SparseGatherNet1(nn.Cell):
         return self.gather(x, indices, -1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather1():
@@ -745,7 +745,7 @@ class SparseGatherNet2(nn.Cell):
         return self.gather(x, indices, 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather2():
@@ -785,7 +785,7 @@ class SparseGatherDynamicNet(nn.Cell):
         return self.gather(out, indices, 0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_d():
@@ -829,7 +829,7 @@ class SparseGatherDynamicNet2(nn.Cell):
         return (out_1, out_2)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_d_two_inputs():

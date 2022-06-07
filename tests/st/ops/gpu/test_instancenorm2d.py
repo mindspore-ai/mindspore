@@ -43,7 +43,7 @@ class Net(nn.Cell):
         shape = F.shape(x)
         return F.reshape(self.ops(F.reshape(x, (1, -1, shape[2], shape[3]))), shape)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_InstanceNorm2d_fp32():

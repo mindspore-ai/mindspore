@@ -21,7 +21,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acos_fp32():
@@ -30,7 +30,7 @@ def test_acos_fp32():
     output_np = np.arccos(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_acos_fp16():

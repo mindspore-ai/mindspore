@@ -36,7 +36,7 @@ def generate_test_data(num_classes, batch_size, sampled):
     return weights_s, biases_s, hidden_acts_s, sampled_values
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sampled_softmax_loss_assigned_sampler():
@@ -96,7 +96,7 @@ def test_sampled_softmax_loss_assigned_sampler():
     case_remove_accidental_hits()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sampled_softmax_loss_none_sampler():

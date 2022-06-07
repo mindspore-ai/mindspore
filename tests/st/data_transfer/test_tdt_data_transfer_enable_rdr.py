@@ -44,7 +44,7 @@ def test_train_with_Ascend():
     test_train("Ascend")
 
 @security_off_wrap
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_with_GPU():

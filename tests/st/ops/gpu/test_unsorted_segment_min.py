@@ -35,7 +35,7 @@ class UnsortedSegmentMinNet(nn.Cell):
         return self.unsorted_segment_min(data, ids, self.num_segments)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1d_int32():
@@ -49,7 +49,7 @@ def test_1d_int32():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_2d_int32():
@@ -68,7 +68,7 @@ def test_2d_int32():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_float16():
@@ -107,7 +107,7 @@ def test_3d_float16():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_float32():
@@ -223,7 +223,7 @@ class UnsortedSegmentMinDynNet(nn.Cell):
         return self.unsorted_segment_min(data, ids, self.num_segments)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_float32_ab_dyn():
@@ -255,7 +255,7 @@ def test_3d_float32_ab_dyn():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_float32_a_dyn():
@@ -327,7 +327,7 @@ def test_3d_float32_a_dyn():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_float32_b_dyn():

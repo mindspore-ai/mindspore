@@ -40,7 +40,7 @@ class NetConv3dTranspose(nn.Cell):
         return self.conv_trans(x, w)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_conv3d_transpose():

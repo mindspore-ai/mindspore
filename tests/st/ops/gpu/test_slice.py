@@ -31,7 +31,7 @@ class Slice(nn.Cell):
         return self.slice(x, (0, 1, 0), (2, 1, 3))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_slice():
@@ -55,7 +55,7 @@ class SliceNet(nn.Cell):
         return self.slice(x, (0, 11, 0, 0), (32, 7, 224, 224))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_slice_4d():
@@ -94,7 +94,7 @@ def test_slice_5d():
     assert (output_ms.asnumpy() == output_np).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_slice_float64():

@@ -34,7 +34,7 @@ class Net(nn.Cell):
         return self.KLDivLoss(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_binary_cross_entropy_loss():
@@ -61,7 +61,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_binary_cross_entropy_loss_grad():

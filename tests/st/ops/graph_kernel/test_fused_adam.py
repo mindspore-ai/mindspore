@@ -217,7 +217,7 @@ def test_adam_side_effect():
                        rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adam_gpu():
@@ -232,7 +232,7 @@ def test_adam_ascend():
     test_adam()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adam_weight_decay_gpu():
@@ -247,7 +247,7 @@ def test_adam_weight_decay_ascend():
     test_adam_weight_decay()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_adam_side_effect_gpu():

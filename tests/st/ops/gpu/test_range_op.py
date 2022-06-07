@@ -33,7 +33,7 @@ class RangeNet(nn.Cell):
         return self.range(start, limit, delta)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_precision_end_equals_last_element():
@@ -65,7 +65,7 @@ def test_range_precision_end_equals_last_element():
     np_expected = np.arange(-12000, -12053, -1, dtype=np.float32)
     np.testing.assert_allclose(ms_out, np_expected, rtol=1e-5)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_int():
@@ -89,7 +89,7 @@ def test_range_int():
     np_expected = np.array([3, -2, -7])
     np.testing.assert_array_equal(ms_out, np_expected)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_float():
@@ -123,7 +123,7 @@ def test_range_invalid_max_output_length():
         _ = P.Range(None)
         _ = P.Range('5')
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_range_invalid_input():

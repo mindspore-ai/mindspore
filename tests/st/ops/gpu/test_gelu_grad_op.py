@@ -45,7 +45,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelugrad():
@@ -62,7 +62,7 @@ def test_gelugrad():
               0.34266686, 0.57757664, 0.04707306, 0.51536125]
     assert np.allclose(output[0].asnumpy(), expect)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelugrad_fp16():

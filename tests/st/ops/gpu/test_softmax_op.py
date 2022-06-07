@@ -34,7 +34,7 @@ class NetSoftmax(nn.Cell):
         return self.softmax1(x), self.softmax2(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softmax():
@@ -87,7 +87,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softmax_4d():

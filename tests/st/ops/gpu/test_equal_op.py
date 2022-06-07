@@ -136,7 +136,7 @@ def test_equal():
         assert output.shape == expect[i].shape
         print('test [%d/%d] passed!' % (i, len(x)))
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_notequal():
@@ -182,7 +182,7 @@ def test_notequal():
         assert output.shape == expect[i].shape
         print('test [%d/%d] passed!' % (i, len(x)))
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_greaterqual():
@@ -233,7 +233,7 @@ def test_greaterqual():
         print('test [%d/%d] passed!' % (i, len(x)))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_equal_dynamic_shape():

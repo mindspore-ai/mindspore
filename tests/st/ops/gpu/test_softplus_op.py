@@ -37,7 +37,7 @@ def SoftplusCompute(x):
     return np.log(1 + np.exp(x))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softplus_1d():
@@ -51,7 +51,7 @@ def test_softplus_1d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softplus_2d():
@@ -65,7 +65,7 @@ def test_softplus_2d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softplus_4d():
@@ -79,7 +79,7 @@ def test_softplus_4d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softplus_neg():
@@ -92,7 +92,7 @@ def test_softplus_neg():
 
     assert np.allclose(y_np, y_ms.asnumpy())
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softplus_4d_fp16():

@@ -49,7 +49,7 @@ def test_1D():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_2D():
@@ -69,7 +69,7 @@ def test_2D():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3D():
@@ -126,7 +126,7 @@ class UnsortedSegmentSumDynNet(nn.Cell):
         return self.unsorted_segment_sum(data, ids, self.num_segments)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dyn_ab():
@@ -180,7 +180,7 @@ def test_dyn_ab():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dyn_a():
@@ -246,7 +246,7 @@ def test_dyn_a():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dyn_b():

@@ -45,7 +45,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softplusgrad():
@@ -63,7 +63,7 @@ def test_softplusgrad():
     expect = dy * np.exp(x) / (1 + np.exp(x))
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_softplusgrad_fp16():

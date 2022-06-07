@@ -33,7 +33,7 @@ class TestTimeDistributed(nn.Cell):
         return self.time_distributed(inputs)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_conv2d():
@@ -48,7 +48,7 @@ def test_time_distributed_conv2d():
     print("Conv2D layer wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_maxpool2d():
@@ -63,7 +63,7 @@ def test_time_distributed_maxpool2d():
     print("MaxPooling2D layer wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_dense():
@@ -78,7 +78,7 @@ def test_time_distributed_dense():
     print("Dense layer wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_dense_with_reshape_axis_not_first():
@@ -93,7 +93,7 @@ def test_time_distributed_dense_with_reshape_axis_not_first():
     print("Dense layer wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_argmax():
@@ -108,7 +108,7 @@ def test_time_distributed_argmax():
     print("Argmax op wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_flatten():
@@ -123,7 +123,7 @@ def test_time_distributed_flatten():
     print("Flatten op wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_conv2d_no_reshape_axis():
@@ -138,7 +138,7 @@ def test_time_distributed_conv2d_no_reshape_axis():
     print("Conv2D layer with no reshape axis wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_maxpool2d_no_reshape_axis():
@@ -153,7 +153,7 @@ def test_time_distributed_maxpool2d_no_reshape_axis():
     print("MaxPooling2D layer with no reshape axis wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_dense_no_reshape_axis():
@@ -168,7 +168,7 @@ def test_time_distributed_dense_no_reshape_axis():
     print("Dense layer with no reshape axis wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_argmax_no_reshape_axis():
@@ -183,7 +183,7 @@ def test_time_distributed_argmax_no_reshape_axis():
     print("Argmax op with no reshape axis wrapped successful")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_time_distributed_flatten_no_reshape_axis():

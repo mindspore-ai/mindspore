@@ -30,7 +30,7 @@ class NetElu(nn.Cell):
         return self.elu(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_elu_fp16():
@@ -50,7 +50,7 @@ def test_elu_fp16():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_elu_fp32():

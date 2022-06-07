@@ -40,7 +40,7 @@ class MomentumFusionNet(nn.Cell):
         return self.op(self.var, self.accum, self.lr, g, self.moment)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_momentum_fusion():

@@ -73,14 +73,14 @@ def test_relu_grad_grad_float16():
     relu_grad_grad_base(np.float16, 1e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_grad_grad_float32():
     relu_grad_grad_base(np.float32, 1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_relu_grad_grad_float64():

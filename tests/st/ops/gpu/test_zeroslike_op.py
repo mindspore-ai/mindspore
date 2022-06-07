@@ -31,7 +31,7 @@ class NetZerosLike(nn.Cell):
         return self.zeros_like(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ZerosLike():
@@ -135,7 +135,7 @@ def test_zeros_like_dynamic_float16():
     expected = np.zeros([3, 4, 1, 2, 5])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeros_like_dynamic_float32():
@@ -144,7 +144,7 @@ def test_zeros_like_dynamic_float32():
     expected = np.zeros([3, 7, 3])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeros_like_dynamic_float64():
@@ -153,7 +153,7 @@ def test_zeros_like_dynamic_float64():
     expected = np.zeros([2, 1, 1])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_zeros_like_dynamic_multiple_inputs():

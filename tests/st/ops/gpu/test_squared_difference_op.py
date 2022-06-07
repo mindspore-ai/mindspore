@@ -30,7 +30,7 @@ class SquaredDifference(nn.Cell):
         return self.squaredDiff(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nobroadcast_f16():
@@ -45,7 +45,7 @@ def test_nobroadcast_f16():
     assert np.all(output == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nobroadcast_f32():
@@ -60,7 +60,7 @@ def test_nobroadcast_f32():
     assert np.all(output == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nobroadcast_int32():
@@ -75,7 +75,7 @@ def test_nobroadcast_int32():
     assert np.all(output == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_int32():
@@ -90,7 +90,7 @@ def test_broadcast_int32():
     assert np.all(output == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_f32():
@@ -105,7 +105,7 @@ def test_broadcast_f32():
     assert np.all(output == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_f16():
@@ -120,7 +120,7 @@ def test_broadcast_f16():
     assert np.all(output == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_bool():
@@ -137,7 +137,7 @@ def test_broadcast_bool():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nobroadcast_bool():
@@ -154,7 +154,7 @@ def test_nobroadcast_bool():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_int32_f16():
@@ -171,7 +171,7 @@ def test_broadcast_int32_f16():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_int32_f32():
@@ -188,7 +188,7 @@ def test_broadcast_int32_f32():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nobroadcast_int32_f16():
@@ -205,7 +205,7 @@ def test_nobroadcast_int32_f16():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nobroadcast_int32_f32():
@@ -222,7 +222,7 @@ def test_nobroadcast_int32_f32():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_f32_scalar_tensor():
@@ -237,7 +237,7 @@ def test_broadcast_f32_scalar_tensor():
     assert np.all(output == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_f32_tensor_tensor():
@@ -252,7 +252,7 @@ def test_broadcast_f32_tensor_tensor():
     assert np.all(output == expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_f32_tensor_tensor_dim_over_7():
@@ -267,7 +267,7 @@ def test_broadcast_f32_tensor_tensor_dim_over_7():
         assert True
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_f32_tensor_tensor_cannot_brocast():
@@ -282,7 +282,7 @@ def test_broadcast_f32_tensor_tensor_cannot_brocast():
         assert True
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_int_f32_precision():
@@ -299,7 +299,7 @@ def test_broadcast_int_f32_precision():
     assert np.all(double_thousand < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_type_error():

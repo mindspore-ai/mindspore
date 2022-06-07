@@ -46,7 +46,7 @@ class NetUniqueDynamic(nn.Cell):
         return x_unique, x_idx, x_split
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_1d():
@@ -60,7 +60,7 @@ def test_unique_1d():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_1d_float():
@@ -74,7 +74,7 @@ def test_unique_1d_float():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_1d_sorted():
@@ -88,7 +88,7 @@ def test_unique_1d_sorted():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_zeros():
@@ -102,7 +102,7 @@ def test_unique_zeros():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_large():
@@ -120,7 +120,7 @@ def test_unique_large():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_1d_half():
@@ -134,7 +134,7 @@ def test_unique_1d_half():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_1d_sorted_half():
@@ -148,7 +148,7 @@ def test_unique_1d_sorted_half():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_zeros_half():
@@ -162,7 +162,7 @@ def test_unique_zeros_half():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_large_half():
@@ -180,7 +180,7 @@ def test_unique_large_half():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_1d_int32():
@@ -194,7 +194,7 @@ def test_unique_1d_int32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_1d_sorted_int32():
@@ -208,7 +208,7 @@ def test_unique_1d_sorted_int32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_zeros_int32():
@@ -222,7 +222,7 @@ def test_unique_zeros_int32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_large_int32():
@@ -240,7 +240,7 @@ def test_unique_large_int32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_dynamic():
@@ -269,7 +269,7 @@ def test_unique_dynamic():
         assert (out.asnumpy() == expt_split2[i]).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_1d_int64():
@@ -285,7 +285,7 @@ def test_unique_1d_int64():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_1d_sorted_int64():
@@ -299,7 +299,7 @@ def test_unique_1d_sorted_int64():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_zeros_int64():
@@ -313,7 +313,7 @@ def test_unique_zeros_int64():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_unique_large_int64():

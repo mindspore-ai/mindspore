@@ -32,7 +32,7 @@ class GatherNet(nn.Cell):
     def construct(self, x, index):
         return self.gather(x, self.dim, index)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_pynative_fp32_int32():
@@ -46,7 +46,7 @@ def test_gather_pynative_fp32_int32():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_pynative_fp32_int64():
@@ -60,7 +60,7 @@ def test_gather_pynative_fp32_int64():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_pynative_fp16_int32():
@@ -74,7 +74,7 @@ def test_gather_pynative_fp16_int32():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gather_pynative_fp16_int64():

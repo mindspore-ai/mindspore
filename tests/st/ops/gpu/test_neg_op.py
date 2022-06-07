@@ -69,13 +69,13 @@ def neg(nptype):
 def test_neg_float16():
     neg(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_neg_float32():
     neg(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_neg_float64():

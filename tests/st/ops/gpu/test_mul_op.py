@@ -128,13 +128,13 @@ def mul(nptype):
     assert np.all(diff4 < error4)
     assert output4.shape == expect4.shape
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mul_float64():
     mul(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mul_float32():
@@ -199,13 +199,13 @@ def mul_dynamic(nptype):
     assert np.all(diff2 < error2)
     assert output2.shape == expect2.shape
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mul_dynamic_float64():
     mul_dynamic(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_mul_dynamic_float32():

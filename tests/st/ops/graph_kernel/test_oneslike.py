@@ -41,14 +41,14 @@ def test_basic(shape, dtype, nptype):
     output = get_output(shape, dtype, nptype, True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 1.e-4, 1.e-7)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_basic((2, 16), mstype.float16, np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_2():

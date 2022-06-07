@@ -32,7 +32,7 @@ class Net(nn.Cell):
         return self.apply_gradient_descent(self.var, alpha, delta)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_apply_gradient_descent_float32():
@@ -59,7 +59,7 @@ def test_apply_gradient_descent_float32():
     np.testing.assert_almost_equal(net.var.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_apply_gradient_descent_float16():

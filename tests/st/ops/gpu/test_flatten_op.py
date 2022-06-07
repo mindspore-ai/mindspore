@@ -76,7 +76,7 @@ class NetLastFlatten(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_flatten():
@@ -93,7 +93,7 @@ def test_flatten():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_all_flatten():
@@ -127,7 +127,7 @@ def test_first_flatten():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_last_flatten():

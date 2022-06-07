@@ -43,7 +43,7 @@ def np_result(d_batch_mean, d_batch_std, x, batch_mean, batch_std):
     return dx
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_fold_grad1():
@@ -61,7 +61,7 @@ def test_batchnorm_fold_grad1():
     assert np.allclose(dx.asnumpy(), expect, rtol=1.e-7, atol=1.e-7)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_fold_grad2():
@@ -79,7 +79,7 @@ def test_batchnorm_fold_grad2():
     assert np.allclose(dx.asnumpy(), expect, rtol=1.e-7, atol=1.e-7)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchnorm_fold_grad_freeze():

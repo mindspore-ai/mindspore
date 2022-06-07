@@ -107,7 +107,7 @@ def LayerNormGradGradReference(x, dy, gamma, epsilon, grad_dx_np, grad_dg_np, gr
     return d_x, d_dy, d_gamma
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernormgradgrad0():
@@ -184,7 +184,7 @@ def test_layernormgradgrad1():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernormgradgrad2():
@@ -298,7 +298,7 @@ def test_layernormgradgrad4():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernormgradgrad5():
@@ -523,7 +523,7 @@ def test_layernormgradgrad10():
     assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernormgradgrad11():

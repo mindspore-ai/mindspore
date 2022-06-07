@@ -117,7 +117,7 @@ class ReduceMax(nn.Cell):
                 P.ReduceMax(self.keep_dims8)(self.x8, self.axis8))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ReduceMax():
@@ -196,7 +196,7 @@ class ReduceMaxDynamic(nn.Cell):
         dynamic_x = self.test_dynamic(self.x)
         return self.reducemax(dynamic_x, self.axis)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reduce_max_dynamic():
@@ -224,7 +224,7 @@ class ReduceMaxTypeNet(nn.Cell):
     def construct(self):
         return P.ReduceMax(self.keep_dims0)(self.x0, self.axis0)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reduce_max_float64():

@@ -35,7 +35,7 @@ class Net(nn.Cell):
         return self.op(x, batch_var, moving_var)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_correction_mul():

@@ -58,7 +58,7 @@ class RCWM_1D(nn.Cell):
         return self.RCWM_1D(x)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_3D():
@@ -72,7 +72,7 @@ def test_RCWM_3D():
     assert output2.shape == expect2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_count_out():
@@ -87,7 +87,7 @@ def test_RCWM_count_out():
     assert output2.shape == expect2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_count_in():
@@ -102,7 +102,7 @@ def test_RCWM_count_in():
     assert output2.shape == expect2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_1D():

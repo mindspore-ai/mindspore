@@ -170,7 +170,7 @@ class ReduceSum(nn.Cell):
                 P.ReduceSum(self.keep_dims14)(self.x14, self.axis14))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ReduceSum():
@@ -316,7 +316,7 @@ class ReduceSumTypeNet(nn.Cell):
     def construct(self):
         return P.ReduceSum(self.keep_dims0)(self.x0, self.axis0)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reduce_sum_float64():

@@ -81,7 +81,7 @@ def rmspropcented_numpy(variable, gradients, mean_gradients, mean_square, moment
     return variable, gradients, mean_gradients, mean_square, moment
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_rmsprop():
@@ -142,7 +142,7 @@ def test_rmsprop():
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_rmspropcenter():

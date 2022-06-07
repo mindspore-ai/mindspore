@@ -32,7 +32,7 @@ class NetFlattenGrad(nn.Cell):
         return self.flattengrad(x, self.type)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_flatten_grad():

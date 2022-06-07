@@ -236,73 +236,73 @@ def transpose_d2(nptype):
     assert (output_1.asnumpy() == expect_1).all()
     assert (output_2.asnumpy() == expect_2).all()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_float32():
     transpose1(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_float16():
     transpose1(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_int32():
     transpose1(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_int64():
     transpose1(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_dynamic_int64():
     transpose_d(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_dynamic_two_inputs_int64():
     transpose_d2(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_dynamic_float32():
     transpose_d(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_dynamic_float16():
     transpose_d(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_dynamic_int32():
     transpose_d(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_dynamic_two_inputs_float32():
     transpose_d2(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_dynamic_two_inputs_float16():
     transpose_d2(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_transpose_dynamic_two_inputs_int32():

@@ -75,13 +75,13 @@ def DepthToSpace_pynative(nptype, block_size=2, input_shape=(1, 12, 1, 1)):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_graph_float32():
     DepthToSpace(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_graph_float16():
@@ -135,13 +135,13 @@ def test_depthtospace_graph_uint32():
 def test_depthtospace_graph_uint64():
     DepthToSpace(np.uint64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_pynative_float32():
     DepthToSpace_pynative(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_depthtospace_pynative_float16():

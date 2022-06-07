@@ -125,7 +125,7 @@ class VmapNet(nn.Cell):
         return vmap(self.net, self.in_axes, self.out_axes)(self.inputx, indices, updates)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_small_float32():
@@ -159,7 +159,7 @@ def test_scatter_func_small_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_input_updated():
@@ -199,7 +199,7 @@ def test_scatter_func_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_large_shape_float32():
@@ -370,7 +370,7 @@ def test_scatter_func_large_shape_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_small_float32_use_locking_false():
@@ -404,7 +404,7 @@ def test_scatter_func_small_float32_use_locking_false():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_input_less_than_1_float32():
@@ -469,7 +469,7 @@ def test_scatter_func_input_less_than_1_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_float16():
@@ -557,7 +557,7 @@ def test_scatter_func_large_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_disordered_float16():
@@ -607,7 +607,7 @@ def test_scatter_func_disordered_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_large_int32():
@@ -661,7 +661,7 @@ def test_scatter_func_large_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_disordered_int32():
@@ -711,7 +711,7 @@ def test_scatter_func_disordered_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_disordered_dynamic_int32():
@@ -757,7 +757,7 @@ def test_scatter_func_disordered_dynamic_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_disordered_dynamic_int8():
@@ -791,7 +791,7 @@ def test_scatter_func_disordered_dynamic_int8():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_disordered_dynamic_uint8():
@@ -821,7 +821,7 @@ def test_scatter_func_disordered_dynamic_uint8():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_input_less_than_1_dynamic_float32():
@@ -880,7 +880,7 @@ def test_scatter_func_input_less_than_1_dynamic_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_dynamic_two_inputs():

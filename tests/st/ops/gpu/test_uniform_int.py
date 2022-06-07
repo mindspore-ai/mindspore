@@ -32,7 +32,7 @@ class Net(nn.Cell):
     def construct(self, a, b):
         return self.uniformint(self.shape, a, b)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_1D():

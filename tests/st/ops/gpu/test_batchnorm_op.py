@@ -47,7 +47,7 @@ class Grad(Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_forward():
@@ -101,7 +101,7 @@ def test_train_forward():
     output = bn_net(Tensor(x))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_backward():
@@ -137,7 +137,7 @@ def test_train_backward():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_stats_false_forward():
@@ -181,7 +181,7 @@ def test_train_stats_false_forward():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_infer_backward():
@@ -229,7 +229,7 @@ class GradByListNet(Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1d_train():
@@ -298,7 +298,7 @@ def test_1d_train():
         assert np.allclose(bn_net.bn1.moving_variance.asnumpy(), data[6], atol=1.0e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1d_eval():

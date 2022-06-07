@@ -30,7 +30,7 @@ class Net(Cell):
         return self.norm_grad(x, out, dout)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_l2normalize_grad():

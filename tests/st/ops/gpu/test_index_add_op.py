@@ -35,7 +35,7 @@ class NetIndexAdd(nn.Cell):
         return z
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add():
@@ -117,7 +117,7 @@ def index_add_forward(nptype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_float16():
@@ -132,7 +132,7 @@ def test_index_add_float16():
     index_add_forward(np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_int32():
@@ -192,7 +192,7 @@ def test_index_add_float64():
     index_add_forward(np.float64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_int16():
@@ -207,7 +207,7 @@ def test_index_add_int16():
     index_add_forward(np.int16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_invalid_inputs():
@@ -288,7 +288,7 @@ def index_add_grad_with_type(nptype):
     np.testing.assert_array_equal(ygrad.asnumpy(), expect_ygrad)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_float64():
@@ -303,7 +303,7 @@ def test_index_add_grad_float64():
     index_add_grad_with_type(np.float64)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_float32():
@@ -348,7 +348,7 @@ def test_index_add_grad_int32():
     index_add_grad_with_type(np.int32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_int16():

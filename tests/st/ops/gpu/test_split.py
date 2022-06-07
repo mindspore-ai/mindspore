@@ -64,14 +64,14 @@ def test_split_basic_float16():
     split_basic(np.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_split_basic_float32():
     split_basic(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_split_basic_float64():
@@ -106,7 +106,7 @@ def test_split_basic_bool():
     split_basic(np.bool)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_split_4d():
@@ -120,7 +120,7 @@ def test_split_4d():
         assert (out.asnumpy() == y[i]).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_split_dynamic():
@@ -134,7 +134,7 @@ def test_split_dynamic():
         assert (out.asnumpy() == x[i]).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_split_dynamic_axis1():
@@ -149,7 +149,7 @@ def test_split_dynamic_axis1():
         assert (out.asnumpy() == y[i]).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_split_dynamic_axis2():
@@ -164,7 +164,7 @@ def test_split_dynamic_axis2():
         assert (out.asnumpy() == y[i]).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_split_invalid_input():

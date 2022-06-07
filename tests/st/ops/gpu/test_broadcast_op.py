@@ -21,7 +21,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nobroadcast():
@@ -92,7 +92,7 @@ def test_nobroadcast():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nobroadcast_fp16():
@@ -155,7 +155,7 @@ def test_nobroadcast_fp16():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast():
@@ -226,7 +226,7 @@ def test_broadcast():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_diff_dims():
@@ -357,7 +357,7 @@ def test_broadcast_diff_dims_float64():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_fp16():
@@ -420,7 +420,7 @@ def test_broadcast_fp16():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_divnonan_int8():
@@ -440,7 +440,7 @@ def test_divnonan_int8():
     assert np.allclose(output_ms.asnumpy(), x2_np_zero)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_divnonan_uint8():

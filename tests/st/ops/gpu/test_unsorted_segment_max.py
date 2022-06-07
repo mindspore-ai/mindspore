@@ -35,7 +35,7 @@ class UnsortedSegmentMaxNet(nn.Cell):
         return self.unsorted_segment_max(data, ids, self.num_segments)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1d_int32():
@@ -49,7 +49,7 @@ def test_1d_int32():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_2d_int32():
@@ -68,7 +68,7 @@ def test_2d_int32():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_float16_int64():
@@ -107,7 +107,7 @@ def test_3d_float16_int64():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_float32_int64():
@@ -136,7 +136,7 @@ def test_3d_float32_int64():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_single_init():
@@ -223,7 +223,7 @@ class UnsortedSegmentMaxDynNet(nn.Cell):
         return self.unsorted_segment_max(data, ids, self.num_segments)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_float32_dyn_ab():
@@ -261,7 +261,7 @@ def test_3d_float32_dyn_ab():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_single_init_dyn_a():
@@ -333,7 +333,7 @@ def test_3d_single_init_dyn_a():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_single_init_dyn_b():

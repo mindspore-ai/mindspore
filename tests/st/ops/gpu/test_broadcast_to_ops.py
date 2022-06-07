@@ -21,7 +21,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast():
@@ -69,7 +69,7 @@ def test_broadcast():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_broadcast_dyn_init():

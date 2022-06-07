@@ -35,19 +35,19 @@ def sqrt(nptype):
 def test_sqrt_float16():
     sqrt(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sqrt_float32():
     sqrt(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sqrt_float64():
     sqrt(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_rsqrt():

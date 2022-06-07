@@ -116,14 +116,14 @@ def test_dtype_float16():
     dtype_with_testcase(ms.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dtype_float32():
     dtype_with_testcase(ms.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dtype_float64():
@@ -186,14 +186,14 @@ def test_dynamic_dtype_float16():
     dtype_dynamic_with_testcase(ms.float16)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_dtype_float32():
     dtype_dynamic_with_testcase(ms.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dynamic_dtype_float64():

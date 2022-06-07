@@ -47,7 +47,7 @@ class GradData(nn.Cell):
         return self.grad(self.network)(probs, indices, labels, input_lengths)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ctcloss():

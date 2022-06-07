@@ -85,7 +85,7 @@ def test_case_2():
     output_np = output[0].asnumpy().copy()
     assert np.allclose(expect_np, output_np, 1.e-2, 1.e-2)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_case_1():
@@ -93,7 +93,7 @@ def test_gpu_case_1():
     context.set_context(graph_kernel_flags="--enable_low_precision=true --disable_pass=highlevelopt2.atomic_clean")
     test_case_1()
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_case_2():

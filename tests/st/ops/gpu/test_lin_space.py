@@ -34,7 +34,7 @@ class LinSpaceNet(Cell):
         return output
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lin_space_1():
@@ -51,7 +51,7 @@ def test_lin_space_1():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lin_shape_2():
@@ -68,7 +68,7 @@ def test_lin_shape_2():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lin_shape_3():
@@ -84,7 +84,7 @@ def test_lin_shape_3():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_lin_shape_4():

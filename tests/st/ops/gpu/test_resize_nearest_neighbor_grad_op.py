@@ -38,7 +38,7 @@ class ResizeNearestNeighborGradAlignCornerF(nn.Cell):
         return self.ResizeNearestNeighborGradAlignCornerF(dy, size)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ResizeNearestNeighborGradAlignCornerT():
@@ -62,7 +62,7 @@ def test_ResizeNearestNeighborGradAlignCornerT():
     output = rnn(Tensor(dy), size)
     assert np.all(output.asnumpy() == expect)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_ResizeNearestNeighborGradAlignCornerF():

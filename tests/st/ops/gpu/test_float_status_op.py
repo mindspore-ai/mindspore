@@ -64,7 +64,7 @@ x2 = np.array([[np.inf, 1, 88.0, 0]]).astype(np.float32)
 x3 = np.array([[1, 2], [3, 4], [5.0, 88.0]]).astype(np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
@@ -88,7 +88,7 @@ def test_status(dtype):
     assert output3.asnumpy()[0] == expect3
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
@@ -112,7 +112,7 @@ def test_nan(dtype):
     assert (output3.asnumpy() == expect3).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
@@ -136,7 +136,7 @@ def test_inf(dtype):
     assert (output3.asnumpy() == expect3).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])

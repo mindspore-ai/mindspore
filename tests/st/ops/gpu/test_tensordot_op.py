@@ -43,7 +43,7 @@ class GradNetwork(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_dot_fp32():
@@ -167,7 +167,7 @@ def test_tensor_dot_fp16():
     assert np.allclose(ms_result_np, np_result, rtol=1e-3, atol=6e0)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_dot_outer():
@@ -188,7 +188,7 @@ def test_tensor_dot_outer():
     np.testing.assert_array_almost_equal(ms_result_np, np_result)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_dot_reverse_axes():
@@ -265,7 +265,7 @@ def test_tensor_dot_reverse_axes():
     np.testing.assert_array_almost_equal(ms_result_np, expected_result)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_tensor_dot_backprop():

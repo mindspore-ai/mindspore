@@ -144,7 +144,7 @@ class NetWorkSliceStep(Cell):
         return ret1, ret2
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 # ascend op stridedslice has bug, and has not been fixed.
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

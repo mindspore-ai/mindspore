@@ -64,13 +64,13 @@ def SpaceToDepth_pynative(nptype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_float32():
     SpaceToDepth(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_spacetodepth_graph_float16():
@@ -124,13 +124,13 @@ def test_spacetodepth_graph_uint32():
 def test_spacetodepth_graph_uint64():
     SpaceToDepth(np.uint64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_spacetodepth_pynative_float32():
     SpaceToDepth_pynative(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_spacetodepth_pynative_float16():
@@ -148,13 +148,13 @@ def test_spacetodepth_pynative_int32():
 def test_spacetodepth_pynative_int64():
     SpaceToDepth_pynative(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_spacetodepth_pynative_int8():
     SpaceToDepth_pynative(np.int8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_spacetodepth_pynative_int16():

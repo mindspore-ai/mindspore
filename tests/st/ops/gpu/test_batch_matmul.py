@@ -32,7 +32,7 @@ class BatchMatMulNet(nn.Cell):
     def construct(self, x, y):
         return self.batch_matmul(x, y)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_4d():
@@ -54,7 +54,7 @@ def test_4d():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_4d_float64():
@@ -76,7 +76,7 @@ def test_4d_float64():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_4d_transpose_a():
@@ -98,7 +98,7 @@ def test_4d_transpose_a():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_4d_transpose_b():
@@ -120,7 +120,7 @@ def test_4d_transpose_b():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_4d_transpose_ab():
@@ -142,7 +142,7 @@ def test_4d_transpose_ab():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_4D_fp16():
@@ -176,7 +176,7 @@ class BatchMatMul_d(nn.Cell):
         return self.batch_matmul(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_batchmatmul_dynamic():

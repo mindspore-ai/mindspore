@@ -102,13 +102,13 @@ def strided_slice(nptype):
                           [[[2122.]]]]]]]).astype(nptype)
     assert np.allclose(y.asnumpy(), expect)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_float64():
     strided_slice(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_float32():
@@ -138,7 +138,7 @@ def test_strided_slice_int32():
 def test_strided_slice_int16():
     strided_slice(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_int8():

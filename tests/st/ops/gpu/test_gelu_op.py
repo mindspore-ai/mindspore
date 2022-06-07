@@ -37,7 +37,7 @@ def GeluCompute(x):
     return 0.5 * x * (1.0 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x * x * x)))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelu_1d():
@@ -51,7 +51,7 @@ def test_gelu_1d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelu_2d():
@@ -65,7 +65,7 @@ def test_gelu_2d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelu_4d():
@@ -79,7 +79,7 @@ def test_gelu_4d():
     assert np.allclose(y_np, y_ms.asnumpy())
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelu_neg():
@@ -92,7 +92,7 @@ def test_gelu_neg():
 
     assert np.allclose(y_np, y_ms.asnumpy())
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelu_4d_fp16():

@@ -84,7 +84,7 @@ def test_gelu_grad():
     assert res
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelu_gpu():
@@ -100,7 +100,7 @@ def test_gelu_ascend():
     test_gelu()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelu_grad_gpu():

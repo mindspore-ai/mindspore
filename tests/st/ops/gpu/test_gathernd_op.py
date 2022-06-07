@@ -40,7 +40,7 @@ def gathernd0(nptype):
 
     assert np.array_equal(output.asnumpy(), expect)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gathernd0_float64():
@@ -116,13 +116,13 @@ def gathernd1(nptype):
 
     assert np.array_equal(output.asnumpy(), expect)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gathernd1_float64():
     gathernd1(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gathernd1_float32():
@@ -175,13 +175,13 @@ def gathernd2(nptype):
 
     assert np.array_equal(output.asnumpy(), expect)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gathernd2_float64():
     gathernd2(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gathernd2_float32():
@@ -225,7 +225,7 @@ def test_gathernd_bool():
 
     assert np.array_equal(output.asnumpy(), expect)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gathernd_indices_int64():

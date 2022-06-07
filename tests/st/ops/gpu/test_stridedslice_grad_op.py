@@ -239,73 +239,73 @@ def strided_slice_grad(nptype):
                             [0., 0., 0., 0., 0.]]]]]]]).astype(nptype)
     assert np.allclose(dx[0].asnumpy(), expect)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_float64():
     strided_slice_grad(np.float64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_float32():
     strided_slice_grad(np.float32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_float16():
     strided_slice_grad(np.float16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_int64():
     strided_slice_grad(np.int64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_int32():
     strided_slice_grad(np.int32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_int16():
     strided_slice_grad(np.int16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_int8():
     strided_slice_grad(np.int8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_uint64():
     strided_slice_grad(np.uint64)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_uint32():
     strided_slice_grad(np.uint32)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_uint16():
     strided_slice_grad(np.uint16)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_uint8():
     strided_slice_grad(np.uint8)
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_strided_slice_grad_bool():
