@@ -899,6 +899,36 @@ class MS_API PhaseVocoder final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Resample TensorTransform.
+/// \notes Resample a signal from one frequency to another. A sampling method can be given.
+class MS_API Resample : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] orig_freq The original frequency of the signal, which must be positive (default=16000).
+  /// \param[in] new_freq The desired frequency, which must be positive (default=16000).
+  /// \param[in] resample_method The resampling method, which can be ResampleMethod::kSincInterpolation
+  ///     and ResampleMethod::kKaiserWindow (default=ResampleMethod::kSincInterpolation).
+  /// \param[in] lowpass_filter_width Controls the sharpness of the filter, more means sharper but less efficient,
+  ///     which must be positive (default=6).
+  /// \param[in] rolloff The roll-off frequency of the filter, as a fraction of the Nyquist. Lower values
+  ///     reduce anti-aliasing, but also reduce some of the highest frequencies, range: (0, 1] (default=0.99).
+  /// \param[in] beta The shape parameter used for kaiser window (default=14.769656459379492).
+  explicit Resample(float orig_freq = 16000, float new_freq = 16000,
+                    ResampleMethod resample_method = ResampleMethod::kSincInterpolation,
+                    int32_t lowpass_filter_width = 6, float rolloff = 0.99, float beta = 14.769656459379492);
+
+  /// \brief Destructor.
+  ~Resample() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply RIAA vinyl playback equalization.
 class MS_API RiaaBiquad final : public TensorTransform {
  public:

@@ -55,6 +55,7 @@
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phase_vocoder_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
+#include "minddata/dataset/audio/ir/kernels/resample_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
 #include "minddata/dataset/audio/ir/kernels/spectral_centroid_ir.h"
@@ -498,6 +499,26 @@ PYBIND_REGISTER(
         return phase_vocoder;
       }));
   }));
+
+PYBIND_REGISTER(ResampleMethod, 0, ([](const py::module *m) {
+                  (void)py::enum_<ResampleMethod>(*m, "ResampleMethod", py::arithmetic())
+                    .value("DE_RESAMPLE_SINC_INTERPOLATION", ResampleMethod::kSincInterpolation)
+                    .value("DE_RESAMPLE_KAISER_WINDOW", ResampleMethod::kKaiserWindow)
+                    .export_values();
+                }));
+
+PYBIND_REGISTER(ResampleOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<audio::ResampleOperation, TensorOperation, std::shared_ptr<audio::ResampleOperation>>(
+                      *m, "ResampleOperation")
+                      .def(py::init([](float orig_freq, float new_freq, ResampleMethod resample_method,
+                                       int32_t lowpass_filter_width, float rolloff, float beta) {
+                        auto resample = std::make_shared<audio::ResampleOperation>(orig_freq, new_freq, resample_method,
+                                                                                   lowpass_filter_width, rolloff, beta);
+                        THROW_IF_ERROR(resample->ValidateParams());
+                        return resample;
+                      }));
+                }));
 
 PYBIND_REGISTER(
   RiaaBiquadOperation, 1, ([](const py::module *m) {

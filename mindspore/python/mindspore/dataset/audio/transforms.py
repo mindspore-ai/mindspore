@@ -23,14 +23,14 @@ import numpy as np
 
 import mindspore._c_dataengine as cde
 from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, MelType, Modulation, NormType, \
-    ScaleType, WindowType
+    ResampleMethod, ScaleType, WindowType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
     check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_griffin_lim, \
     check_highpass_biquad, check_inverse_mel_scale, check_lfilter, check_lowpass_biquad, check_magphase, \
     check_mask_along_axis, check_mask_along_axis_iid, check_masking, check_mel_scale, check_mu_law_coding, \
-    check_overdrive, check_phase_vocoder, check_phaser, check_riaa_biquad, check_sliding_window_cmn, \
+    check_overdrive, check_phase_vocoder, check_phaser, check_resample, check_riaa_biquad, check_sliding_window_cmn, \
     check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, check_vad, check_vol
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import TensorOperation
@@ -1467,6 +1467,54 @@ class PhaseVocoder(AudioTensorOperation):
 
     def parse(self):
         return cde.PhaseVocoderOperation(self.rate, self.phase_advance)
+
+
+DE_C_RESAMPLE_METHOD = {ResampleMethod.SINC_INTERPOLATION: cde.ResampleMethod.DE_RESAMPLE_SINC_INTERPOLATION,
+                        ResampleMethod.KAISER_WINDOW: cde.ResampleMethod.DE_RESAMPLE_KAISER_WINDOW}
+
+
+class Resample(AudioTensorOperation):
+    """
+    Resample a signal from one frequency to another. A resample method can be given.
+
+    Args:
+        orig_freq (float, optional): The original frequency of the signal, which must be positive (default=16000).
+        new_freq (float, optional): The desired frequency, which must be positive (default=16000).
+        resample_method (ResampleMethod, optional): The resample method, which can be
+            ResampleMethod.SINC_INTERPOLATION and ResampleMethod.KAISER_WINDOW
+            (default=ResampleMethod.SINC_INTERPOLATION).
+        lowpass_filter_width (int, optional): Controls the shaperness of the filter, more means sharper but less
+            efficient, which must be positive (default=6).
+        rolloff (float, optional): The roll-off frequency of the filter, as a fraction of the Nyquist. Lower values
+            reduce anti-aliasing, but also reduce some of the highest frequencies, range: (0, 1] (default=0.99).
+        beta (float, optional): The shape parameter used for kaiser window (default=None, will use 14.769656459379492).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.random([1, 30])
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.Resample(orig_freq=48000, new_freq=16000,
+        ...                              resample_method=ResampleMethod.SINC_INTERPOLATION,
+        ...                              lowpass_filter_width=6, rolloff=0.99, beta=None)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_resample
+    def __init__(self, orig_freq=16000, new_freq=16000, resample_method=ResampleMethod.SINC_INTERPOLATION,
+                 lowpass_filter_width=6, rolloff=0.99, beta=None):
+        super().__init__()
+        self.orig_freq = orig_freq
+        self.new_freq = new_freq
+        self.resample_method = resample_method
+        self.lowpass_filter_width = lowpass_filter_width
+        self.rolloff = rolloff
+        kaiser_beta = 14.769656459379492
+        self.beta = beta if beta is not None else kaiser_beta
+
+    def parse(self):
+        return cde.ResampleOperation(self.orig_freq, self.new_freq, DE_C_RESAMPLE_METHOD.get(self.resample_method),
+                                     self.lowpass_filter_width, self.rolloff, self.beta)
 
 
 class RiaaBiquad(AudioTensorOperation):

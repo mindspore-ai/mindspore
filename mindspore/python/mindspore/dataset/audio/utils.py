@@ -157,6 +157,19 @@ class NormType(str, Enum):
     NONE: str = "none"
 
 
+class ResampleMethod(str, Enum):
+    """
+    Resample method
+
+    Possible enumeration values are: ResampleMethod.SINC_INTERPOLATION, ResampleMethod.KAISER_WINDOW.
+
+    - ResampleMethod.SINC_INTERPOLATION: means it resample the tensor with sinc interpolation.
+    - ResampleMethod.KAISER_WINDOW: means it resample the tensor with kaiser window.
+    """
+    SINC_INTERPOLATION: str = "sinc_interpolation"
+    KAISER_WINDOW: str = "kaiser_window"
+
+
 class ScaleType(str, Enum):
     """
     Scale Types.

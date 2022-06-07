@@ -278,6 +278,12 @@ enum class MS_API FadeShape {
   kHalfSine = 4,     ///< Fade shape is half_sine mode.
 };
 
+/// \brief Sample method for audio resample.
+enum class MS_API ResampleMethod {
+  kSincInterpolation = 0,  ///< Resample audio by sinc interpolation method
+  kKaiserWindow = 1,       ///< Resample audio by Kaiser window
+};
+
 /// \brief Convenience function to check bitmask for a 32bit int
 /// \param[in] bits a 32bit int to be tested
 /// \param[in] bitMask a 32bit int representing bit mask

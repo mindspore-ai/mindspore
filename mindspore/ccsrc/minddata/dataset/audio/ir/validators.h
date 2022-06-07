@@ -90,4 +90,4 @@ Status ValidateVectorSameSize(const std::string &op_name, const std::string &vec
 }
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ADUIO_IR_VALIDATORS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_IR_VALIDATORS_H_

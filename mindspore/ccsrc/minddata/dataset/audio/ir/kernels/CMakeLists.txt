@@ -37,6 +37,7 @@ add_library(audio-ir-kernels OBJECT
         overdrive_ir.cc
         phase_vocoder_ir.cc
         phaser_ir.cc
+        resample_ir.cc
         riaa_biquad_ir.cc
         sliding_window_cmn_ir.cc
         spectral_centroid_ir.cc

@@ -2542,3 +2542,69 @@ TEST_F(MindDataTestExecute, TestMaskAlongAxis) {
   Status status = transform(input_tensor, &input_tensor);
   EXPECT_TRUE(status.IsOk());
 }
+
+/// Feature: Resample.
+/// Description: test Resample in eager mode.
+/// Expectation: the data is processed successfully.
+TEST_F(MindDataTestExecute, TestResampleEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestResampleEager.";
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(
+    std::vector<double>({9.1553e-05, 6.1035e-05, 6.1035e-05, -2.1362e-04, -1.8311e-04, -1.8311e-04}),
+    TensorShape({1, 6}), &input));
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  int orig_freq = 6;
+  int new_freq = 2;
+  ResampleMethod resample_method = ResampleMethod::kSincInterpolation;
+  std::shared_ptr<TensorTransform> resample_01 =
+    std::make_shared<audio::Resample>(orig_freq, new_freq, resample_method);
+  mindspore::dataset::Execute Transform_01({resample_01});
+  Status res_01 = Transform_01(input_01, &input_01);
+  EXPECT_TRUE(res_01.IsOk());
+
+  ASSERT_OK(Tensor::CreateFromVector(std::vector<double>({9.1553e-05, 6.1035e-05, 6.1035e-05, -2.1362e-04, -1.8311e-04,
+                                                          -1.8311e-04, 3.6597e-03, 5.5943e-05, 2.3598e-4, 3.5948e-4}),
+                                     TensorShape({2, 5}), &input));
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  resample_method = ResampleMethod::kKaiserWindow;
+  std::shared_ptr<TensorTransform> resample_02 =
+    std::make_shared<audio::Resample>(orig_freq, new_freq, resample_method);
+  mindspore::dataset::Execute Transform_02({resample_02});
+  Status res_02 = Transform_02(input_02, &input_02);
+  EXPECT_TRUE(res_02.IsOk());
+}
+
+/// Feature: Resample
+/// Description: test wrong input args of Resample
+/// Expectation: get false status
+TEST_F(MindDataTestExecute, TestResampleWithInvalidArg) {
+   MS_LOG(INFO) << "Doing MindDataTestExecute-TestResampleInvalidArgs.";
+  std::shared_ptr<Tensor> input;
+  TensorShape s = TensorShape({1, 6});
+  ASSERT_OK(Tensor::CreateFromVector(
+    std::vector<double>({1.4695e-05, 6.1035e-05, 1.4266e-05, -2.1362e-04, -1.8311e-04, -2.3511e-04}), s, &input));
+  auto input_01 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  int orig_freq = 0;
+  int new_freq = 2;
+  ResampleMethod resample_method = ResampleMethod::kSincInterpolation;
+  std::shared_ptr<TensorTransform> resample_01 =
+    std::make_shared<audio::Resample>(orig_freq, new_freq, resample_method);
+  mindspore::dataset::Execute Transform_01({resample_01});
+  Status res_01 = Transform_01(input_01, &input_01);
+  // Expect failure, orig_freq can not be zero.
+  EXPECT_FALSE(res_01.IsOk());
+
+  s = TensorShape({1, 7});
+  ASSERT_OK(Tensor::CreateFromVector(
+    std::vector<double>({1.2207e-04, 0.8090e-05, 6.1035e-05, 0.5878e-05, -2.1362e-04, -1.8311e-04, -1.8311e-04}), s,
+    &input));
+  auto input_02 = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  orig_freq = 1;
+  new_freq = -1;
+  std::shared_ptr<TensorTransform> resample_02 =
+    std::make_shared<audio::Resample>(orig_freq, new_freq, resample_method);
+  mindspore::dataset::Execute Transform_02({resample_02});
+  Status res_02 = Transform_02(input_02, &input_02);
+  // Expect failure, new_freq can not be negative.
+  EXPECT_FALSE(res_02.IsOk());
+}

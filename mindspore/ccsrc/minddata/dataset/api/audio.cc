@@ -51,6 +51,7 @@
 #include "minddata/dataset/audio/ir/kernels/overdrive_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phase_vocoder_ir.h"
 #include "minddata/dataset/audio/ir/kernels/phaser_ir.h"
+#include "minddata/dataset/audio/ir/kernels/resample_ir.h"
 #include "minddata/dataset/audio/ir/kernels/riaa_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/sliding_window_cmn_ir.h"
 #include "minddata/dataset/audio/ir/kernels/spectral_centroid_ir.h"
@@ -718,6 +719,33 @@ std::shared_ptr<TensorOperation> PhaseVocoder::Parse() {
     return nullptr;
   }
   return std::make_shared<PhaseVocoderOperation>(data_->rate_, phase_advance);
+}
+
+// Resample Transform Operation.
+struct Resample::Data {
+  Data(float orig_freq, float new_freq, ResampleMethod resample_method, int32_t lowpass_filter_width, float rolloff,
+       float beta)
+      : orig_freq_(orig_freq),
+        new_freq_(new_freq),
+        resample_method_(resample_method),
+        lowpass_filter_width_(lowpass_filter_width),
+        rolloff_(rolloff),
+        beta_(beta) {}
+  float orig_freq_;
+  float new_freq_;
+  ResampleMethod resample_method_;
+  int32_t lowpass_filter_width_;
+  float rolloff_;
+  float beta_;
+};
+
+Resample::Resample(float orig_freq, float new_freq, ResampleMethod resample_method, int32_t lowpass_filter_width,
+                   float rolloff, float beta)
+    : data_(std::make_shared<Data>(orig_freq, new_freq, resample_method, lowpass_filter_width, rolloff, beta)) {}
+
+std::shared_ptr<TensorOperation> Resample::Parse() {
+  return std::make_shared<ResampleOperation>(data_->orig_freq_, data_->new_freq_, data_->resample_method_,
+                                             data_->lowpass_filter_width_, data_->rolloff_, data_->beta_);
 }
 
 // RiaaBiquad Transform Operation.
