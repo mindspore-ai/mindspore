@@ -1487,5 +1487,52 @@ AbstractBasePtr InferImplTensorCopySlices(const AnalysisEnginePtr &, const Primi
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   return std::make_shared<AbstractTensor>(input->element(), input->shape());
 }
+
+AbstractBasePtr InferImplOCRRecognitionPreHandle(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  const size_t size_expected = 5;
+  const int64_t universe_min_batch = 16;
+  const int64_t universe_max_batch = 256;
+  const int64_t image_h = 64;
+  const int64_t image_w = 512;
+  const int64_t images_min_batch = 4;
+  const int64_t images_max_batch = 256;
+  const int64_t images_channels = 3;
+  CheckArgsSize(op_name, args_spec_list, size_expected);
+  ValuePtr format_value = primitive->GetAttr("format");
+  std::string format = GetValue<std::string>(format_value);
+
+  ShapeVector universe_shp;
+  ShapeVector universe_min_shp;
+  ShapeVector universe_max_shp;
+
+  universe_shp.emplace_back(Shape::SHP_ANY);
+  universe_min_shp.emplace_back(universe_min_batch);
+  universe_max_shp.emplace_back(universe_max_batch);
+
+  auto universe_abstract =
+    std::make_shared<AbstractTensor>(kInt32, std::make_shared<Shape>(universe_shp, universe_min_shp, universe_max_shp));
+
+  ShapeVector r_shp = {Shape::SHP_ANY, image_h, image_w};
+  ShapeVector r_max_shp = {images_max_batch, image_h, image_w};
+  ShapeVector r_min_shp = {images_min_batch, image_h, image_w};
+
+  if (format == "NHWC") {
+    r_shp.emplace(r_shp.end(), images_channels);
+    r_max_shp.emplace(r_max_shp.end(), images_channels);
+    r_min_shp.emplace(r_min_shp.end(), images_channels);
+  } else {
+    r_shp.emplace(r_shp.begin() + 1, images_channels);
+    r_max_shp.emplace(r_max_shp.begin() + 1, images_channels);
+    r_min_shp.emplace(r_min_shp.begin() + 1, images_channels);
+  }
+
+  auto r_batched_abstract =
+    std::make_shared<AbstractTensor>(kUInt8, std::make_shared<Shape>(r_shp, r_min_shp, r_max_shp));
+
+  AbstractBasePtrList elements = {r_batched_abstract, universe_abstract, universe_abstract, universe_abstract};
+  return std::make_shared<AbstractTuple>(elements);
+}
 }  // namespace abstract
 }  // namespace mindspore
