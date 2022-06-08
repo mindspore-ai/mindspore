@@ -285,6 +285,7 @@ constexpr auto kAffine = "affine";
 constexpr auto kNumGroups = "num_groups";
 constexpr auto kIndexing = "indexing";
 constexpr auto kModulated = "modulated";
+constexpr auto kAdjoint = "adjoint";
 
 enum Index : size_t {
   kInputIndex0 = 0,
