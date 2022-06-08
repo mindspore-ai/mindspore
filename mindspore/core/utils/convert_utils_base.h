@@ -69,7 +69,7 @@ inline size_t LongToSize(int64_t u) {
 inline std::vector<size_t> LongVecToSizeVec(const std::vector<int64_t> &vec) {
   std::vector<size_t> result;
   result.reserve(vec.size());
-  (void)std::transform(vec.begin(), vec.end(), result.begin(), LongToSize);
+  (void)std::transform(vec.begin(), vec.end(), std::back_inserter(result), LongToSize);
   return result;
 }
 
