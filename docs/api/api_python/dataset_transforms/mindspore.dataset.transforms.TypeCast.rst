@@ -9,8 +9,8 @@ mindspore.dataset.transforms.TypeCast
 
     **参数：**
 
-    - **data_type** (mindspore.dtype) - 指定要转换的数据类型。
+    - **data_type** (Union[mindspore.dtype, numpy.dtype]) - 指定要转换的数据类型。
 
     **异常：**
       
-    - **TypeError** - 参数 `data_type` 类型不为MindSpore支持的数据类型 :class:`mindspore.dtype` 。
+    - **TypeError** - 当 `data_type` 的类型不为 :class:`mindspore.dtype` 或 :class:`numpy.dtype` 。
