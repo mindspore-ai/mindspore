@@ -373,15 +373,8 @@ bool MSANFModelParser::SetNodeAbstractFromAttrProto(const mind_ir::AttributeProt
 }
 
 void MSANFModelParser::SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &node_proto, const CNodePtr &cnode_ptr) {
-  auto prim = GetCNodePrimitive(cnode_ptr);
-  auto prim_to_add_attr = prim;
+  auto prim_to_add_attr = GetCNodePrimitiveWithoutDoSignature(cnode_ptr);
   if (prim_to_add_attr != nullptr) {
-    if (prim->isa<prim::DoSignaturePrimitive>()) {
-      auto func = prim->cast<prim::DoSignaturePrimitivePtr>()->function();
-      if (func != nullptr && func->isa<Primitive>()) {
-        prim_to_add_attr = func->cast<PrimitivePtr>();
-      }
-    }
     prim_to_add_attr->set_attr("is_load", MakeValue(true));
   }
   for (int i = 0; i < node_proto.attribute_size(); ++i) {
@@ -393,7 +386,8 @@ void MSANFModelParser::SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &nod
         continue;
       }
       if (prim_to_add_attr != nullptr && !GetAttrValueForCNode(prim_to_add_attr, attr_proto)) {
-        MS_LOG(ERROR) << "Parse prim: " << prim->ToString() << " attributes error: " << attr_proto.DebugString();
+        MS_LOG(ERROR) << "Parse prim: " << prim_to_add_attr->ToString()
+                      << ", attributes error: " << attr_proto.DebugString();
       }
     } else {
       // ref_attr_name is removed in newer versions.
@@ -402,7 +396,8 @@ void MSANFModelParser::SetCNodePrimAttrAndAbstract(const mind_ir::NodeProto &nod
         continue;
       }
       if (prim_to_add_attr != nullptr && !SetPrimitiveAttrWithType(prim_to_add_attr, attr_proto)) {
-        MS_LOG(ERROR) << "Parse prim: " << prim->ToString() << " attributes error: " << attr_proto.DebugString();
+        MS_LOG(ERROR) << "Parse prim: " << prim_to_add_attr->ToString()
+                      << ", attributes error: " << attr_proto.DebugString();
       }
     }
   }
@@ -1690,17 +1685,11 @@ bool MSANFModelParser::BuildPrimitiveNode(const mind_ir::PrimitiveProto &primiti
       prim->set_instance_name(prim_type);
     }
   }
-  prim->set_attr("is_load", MakeValue(true));
 
   // Set primitive attributes
-  auto prim_to_add_attr = prim;
-  if (prim->isa<prim::DoSignaturePrimitive>()) {
-    auto func = prim->cast<prim::DoSignaturePrimitivePtr>()->function();
-    if (func != nullptr && func->isa<Primitive>()) {
-      prim_to_add_attr = func->cast<PrimitivePtr>();
-    }
-    prim_to_add_attr->set_attr("is_load", MakeValue(true));
-  }
+  auto prim_to_add_attr = GetValueWithoutDoSignature(prim)->cast<PrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(prim_to_add_attr);
+  prim_to_add_attr->set_attr("is_load", MakeValue(true));
   for (int i = 0; i < primitive_proto.attribute_size(); ++i) {
     const mind_ir::AttributeProto &attr_proto = primitive_proto.attribute(i);
     if (!SetPrimitiveAttrWithType(prim_to_add_attr, attr_proto)) {

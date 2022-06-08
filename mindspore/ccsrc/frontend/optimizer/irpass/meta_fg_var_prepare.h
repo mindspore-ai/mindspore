@@ -33,9 +33,6 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-// get metagraph of value node
-MetaFuncGraphPtr GetMetaFuncGraphOfValueNode(const AnfNodePtr &node);
-
 class Matcher {
  public:
   Matcher() {}
@@ -59,7 +56,11 @@ class MetaFgMatcher : public Matcher {
     if (node == nullptr) {
       return false;
     }
-    auto meta_func_graph_ptr = GetMetaFuncGraphOfValueNode(node);
+    auto value = GetValueWithoutDoSignature(node);
+    if (value == nullptr) {
+      return false;
+    }
+    auto meta_func_graph_ptr = value->cast<MetaFuncGraphPtr>();
     if (meta_func_graph_ptr == nullptr) {
       return false;
     }

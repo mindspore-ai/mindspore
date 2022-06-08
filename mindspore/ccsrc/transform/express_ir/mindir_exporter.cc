@@ -218,11 +218,9 @@ bool IrExportBuilder::BuildPrimitives() {
     prim_proto->set_name(it->second);
     prim_proto->set_op_type(prim->name());
 
-    if (prim->isa<prim::DoSignaturePrimitive>()) {
-      auto func = prim->cast<prim::DoSignaturePrimitivePtr>()->function();
-      if (func != nullptr && func->isa<Primitive>()) {
-        prim = func->cast<PrimitivePtr>();
-      }
+    auto real_prim = GetValueWithoutDoSignature(prim)->cast<PrimitivePtr>();
+    if (real_prim != nullptr) {
+      prim = real_prim;
     }
 
     // Set primitive attributes

@@ -264,10 +264,10 @@ class ForwardValueAndGrad(Cell):
         if not isinstance(get_by_list, bool):
             raise TypeError(f"For 'ForwardValueAndGrad', "
                             f"the type of 'get_by_list' must be bool, but got '{type(get_by_list)}'")
-        if get_by_list and not isinstance(weights, ParameterTuple):
+        if get_by_list and not isinstance(weights, (ParameterTuple, tuple, list)):
             raise TypeError(f"For 'ForwardValueAndGrad', "
                             f"when 'get_by_list' is set to True, the argument 'weights' must be "
-                            f"ParameterTuple type, but got '{type(weights)}'")
+                            f"Parameters array, but got '{type(weights)}'")
         self.network = network
         if isinstance(network, Cell):
             self.network.set_grad()

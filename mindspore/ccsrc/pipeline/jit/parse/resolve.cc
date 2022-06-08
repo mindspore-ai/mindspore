@@ -242,13 +242,15 @@ bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, A
     }
     MS_LOG(DEBUG) << "Add param graph:" << func_graph->ToString() << ", " << param->DebugString();
     output = param;
+    *node = output;
+    return true;
   } else if (py::hasattr(obj, "__parameter_tuple__")) {
     auto tuple = obj.cast<py::tuple>();
     std::vector<AnfNodePtr> args;
     args.push_back(NewValueNode(prim::kPrimMakeTuple));
-    for (size_t it = 0; it < tuple.size(); ++it) {
+    for (size_t i = 0; i < tuple.size(); ++i) {
       AnfNodePtr out = nullptr;
-      bool success = ResolveObjectToNode(origin_node, tuple[it], &out);
+      bool success = ResolveObjectToNode(origin_node, tuple[i], &out);
       if (!success) {
         MS_LOG(ERROR) << "Resolve object to node failed";
         return false;
@@ -258,26 +260,53 @@ bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, A
     // The ParameterTuple will not be added in order list,
     // since we don't want to deal with its RefTensor elements during auto_monad procedure.
     output = NewCNode(std::move(args), func_graph);
-  } else {
-    ValuePtr convert_result = nullptr;
-    // When the cell is set recomputed, it should not use old scope from cache.
-    auto scope = origin_node->scope();
-    bool has_recompute_scope = (scope == nullptr) ? false : scope->name().find(kAttrRecompute) == 0;
-    bool converted =
-      ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve(), nullptr, has_recompute_scope);
-    if (!converted) {
-      MS_LOG(ERROR) << "Convert data failed";
-      return false;
+    *node = output;
+    return true;
+  } else if ((py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) && py::len(obj) != 0) {
+    auto tuple = obj.cast<py::tuple>();
+    std::vector<AnfNodePtr> args;
+    args.push_back(NewValueNode(prim::kPrimMakeTuple));
+    bool all_parameter_sequence = true;
+    for (size_t i = 0; i < tuple.size(); ++i) {
+      if (!py::hasattr(tuple[i], "__parameter__") || !py::isinstance<tensor::MetaTensor>(tuple[i])) {
+        all_parameter_sequence = false;
+        break;
+      }
+      AnfNodePtr out = nullptr;
+      bool success = ResolveObjectToNode(origin_node, tuple[i], &out);
+      if (!success) {
+        MS_LOG(ERROR) << "Resolve object to node failed";
+        return false;
+      }
+      args.push_back(out);
     }
-    MS_EXCEPTION_IF_NULL(convert_result);
-    if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
-      UpdateDebugInfo(convert_result->cast<FuncGraphPtr>(), origin_node->scope(), origin_node->debug_info());
+    if (all_parameter_sequence) {
+      // The Parameter tuple/list will not be added in order list,
+      // since we don't want to deal with its RefTensor elements during auto_monad procedure.
+      output = NewCNode(std::move(args), func_graph);
+      *node = output;
+      return true;
     }
-    ConvertLoadedGraph(func_graph, convert_result);
-    output = NewValueNode(convert_result);
-    if (convert_result->isa<tensor::Tensor>()) {
-      output = GetMixedPrecisionCastHelp(func_graph, output);
-    }
+  }
+
+  // When the cell is set recomputed, it should not use old scope from cache.
+  auto scope = origin_node->scope();
+  bool has_recompute_scope = (scope == nullptr) ? false : scope->name().find(kAttrRecompute) == 0;
+  ValuePtr convert_result = nullptr;
+  bool converted =
+    ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve(), nullptr, has_recompute_scope);
+  if (!converted) {
+    MS_LOG(ERROR) << "Convert data failed";
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(convert_result);
+  if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
+    UpdateDebugInfo(convert_result->cast<FuncGraphPtr>(), origin_node->scope(), origin_node->debug_info());
+  }
+  ConvertLoadedGraph(func_graph, convert_result);
+  output = NewValueNode(convert_result);
+  if (convert_result->isa<tensor::Tensor>()) {
+    output = GetMixedPrecisionCastHelp(func_graph, output);
   }
   *node = output;
   return true;

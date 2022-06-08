@@ -249,6 +249,58 @@ PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node) {
   return nullptr;
 }
 
+// Return the function Primitive if DoSignaturePrimitive,
+// otherwise return the Primitive directly.
+PrimitivePtr GetPrimitiveWithoutDoSignature(const AnfNodePtr &node) {
+  const auto &do_signature_prim = GetValueNode<prim::DoSignaturePrimitivePtr>(node);
+  if (do_signature_prim != nullptr) {
+    return dyn_cast<Primitive>(do_signature_prim->function());
+  }
+  return GetValueNode<PrimitivePtr>(node);
+}
+
+// Check the first input of CNode.
+// Return the function Primitive if DoSignaturePrimitive,
+// otherwise return the Primitive directly.
+PrimitivePtr GetCNodePrimitiveWithoutDoSignature(const AnfNodePtr &node) {
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode == nullptr || cnode->size() == 0) {
+    return nullptr;
+  }
+  return GetPrimitiveWithoutDoSignature(cnode->input(0));
+}
+
+// Return the function value if DoSignaturePrimitive,
+// otherwise return the value directly.
+ValuePtr GetValueWithoutDoSignature(const ValuePtr &value) {
+  auto do_signature_prim = dyn_cast<prim::DoSignaturePrimitive>(value);
+  if (do_signature_prim != nullptr) {
+    return do_signature_prim->function();
+  }
+  return value;
+}
+
+// Return the function value if DoSignaturePrimitive,
+// otherwise return the value directly.
+ValuePtr GetValueWithoutDoSignature(const AnfNodePtr &node) {
+  auto value = GetValueNode(node);
+  if (value == nullptr) {
+    return nullptr;
+  }
+  return GetValueWithoutDoSignature(value);
+}
+
+// Check the first input of CNode.
+// Return the function value if DoSignaturePrimitive,
+// otherwise return the value directly.
+ValuePtr GetCNodeValueWithoutDoSignature(const AnfNodePtr &node) {
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode == nullptr || cnode->size() == 0) {
+    return nullptr;
+  }
+  return GetValueWithoutDoSignature(cnode->input(0));
+}
+
 std::string GetCNodeFuncName(const CNodePtr cnode) {
   if (cnode->inputs().empty()) {
     return "";

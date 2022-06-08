@@ -229,7 +229,6 @@ def test_grad_parameter_tuple(mode):
     GradCellWithParameterTuple(TestCell2(x1, x2))(z)
 
 
-@pytest.mark.skip(reason='Not support list or tuple of parameters as GradOperation inputs by now')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_grad_parameter_list_or_tuple(mode):
     """

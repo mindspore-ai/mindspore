@@ -201,21 +201,10 @@ class OrderEnforcer {
     return IsPrimitiveCNode(node, prim::kPrimExpandDims) || IsPrimitiveCNode(node, prim::kPrimBatchNormGrad);
   }
 
-  // Gets primitive if the node is a primitive value node.
-  PrimitivePtr GetPrimitive(const AnfNodePtr &node) {
-    PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
-    auto do_sig = dyn_cast<mindspore::prim::DoSignaturePrimitive>(prim);
-    if (do_sig) {
-      auto val = do_sig->function();
-      return dyn_cast<Primitive>(val);
-    }
-    return prim;
-  }
-
   bool IsSpecialParallelPrimitive(const AnfNodePtr &node) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    auto prim = GetPrimitive(cnode->input(0));
+    auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
     if (prim == nullptr) {
       return false;
     }

@@ -1071,14 +1071,33 @@ static S GetValue(const ValuePtr &value) {
 
 MS_CORE_API std::string GetCNodeFuncName(CNodePtr cnode);
 
-// used to get FuncGraphPtr from a cnode first input
+// Used to get FuncGraphPtr from a cnode first input
 MS_CORE_API FuncGraphPtr GetCNodeFuncGraph(const AnfNodePtr &node);
 
-// used to check whether an AnfNode is a cnode with a kind of Primitive as first input
+// Used to check whether an AnfNode is a cnode with a kind of Primitive as first input
 MS_CORE_API bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value = nullptr);
 
-// used to get PrimitivePtr from a cnode first input
+// Used to get PrimitivePtr from a cnode first input
 MS_CORE_API PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
+
+// Return the function Primitive if DoSignaturePrimitive,
+// otherwise return the Primitive directly.
+MS_CORE_API PrimitivePtr GetPrimitiveWithoutDoSignature(const AnfNodePtr &node);
+// Check the first input of CNode.
+// Return the function Primitive if DoSignaturePrimitive,
+// otherwise return the Primitive directly.
+MS_CORE_API PrimitivePtr GetCNodePrimitiveWithoutDoSignature(const AnfNodePtr &node);
+
+// Return the function value if DoSignaturePrimitive,
+// otherwise return the value directly.
+MS_CORE_API ValuePtr GetValueWithoutDoSignature(const ValuePtr &value);
+// Return the function value if DoSignaturePrimitive,
+// otherwise return the value directly.
+MS_CORE_API ValuePtr GetValueWithoutDoSignature(const AnfNodePtr &node);
+// Check the first input of CNode.
+// Return the function value if DoSignaturePrimitive,
+// otherwise return the value directly.
+MS_CORE_API ValuePtr GetCNodeValueWithoutDoSignature(const AnfNodePtr &node);
 
 /// \brief Used to check whether the given node is a ValueNode with some Primitive value.
 ///

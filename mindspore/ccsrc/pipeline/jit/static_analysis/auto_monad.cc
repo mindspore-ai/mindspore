@@ -139,25 +139,6 @@ bool IsKeepRef(const PrimitivePtr &prim) {
          IsPrimitiveEquals(prim, prim::kPrimPull);
 }
 
-// Gets primitive if the node is a primitive value node.
-PrimitivePtr GetPrimitive(const AnfNodePtr &node) {
-  PrimitivePtr prim = GetValueNode<PrimitivePtr>(node);
-  auto do_sig = dyn_cast<mindspore::prim::DoSignaturePrimitive>(prim);
-  if (do_sig) {
-    auto val = do_sig->function();
-    return dyn_cast<Primitive>(val);
-  }
-  return prim;
-}
-
-// Gets primitive from the given cnode, return nullptr if cnode.inputs[0] is not a primitive.
-PrimitivePtr GetPrimitive(const CNodePtr &cnode) {
-  if (cnode == nullptr || cnode->inputs().empty()) {
-    return nullptr;
-  }
-  return GetPrimitive(cnode->input(0));
-}
-
 // Gets func_graph from the given cnode, return nullptr if it is not a func graph call.
 FuncGraphPtr GetFuncGraph(const CNodePtr &cnode) {
   if (cnode != nullptr && !cnode->inputs().empty()) {
@@ -620,7 +601,7 @@ class SideEffectFinder {
   EffectInfo TraceTupleCNodeEffectInfo(const CNodePtr &cnode, std::stack<int64_t> *tuple_indexes) {
     MS_EXCEPTION_IF_NULL(tuple_indexes);
     MS_EXCEPTION_IF_NULL(cnode);
-    auto prim = GetPrimitive(cnode);
+    auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
     // Trace MakeTuple.
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
       if (tuple_indexes->empty()) {
@@ -724,7 +705,7 @@ class SideEffectFinder {
   // Trace a cnode for effect info.
   EffectInfo TraceEffectInfo(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cnode);
-    auto prim = GetPrimitive(cnode);
+    auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
     if (IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
       // Special handling for Switch primitive.
       return TraceSwitchEffectInfo(cnode);
@@ -778,7 +759,7 @@ class SideEffectFinder {
     return {EffectInfo::kDetected, false, false, false};
   }
 
-  // Trace an ANFNode for effect info.
+  // Trace an AnfNode for effect info.
   EffectInfo TraceEffectInfo(const AnfNodePtr &node) {
     if (node != nullptr) {
       // Trace cnode.
@@ -794,7 +775,7 @@ class SideEffectFinder {
       }
 
       // Trace primitive.
-      auto prim = GetPrimitive(node);
+      auto prim = GetPrimitiveWithoutDoSignature(node);
       if (prim != nullptr) {
         return GetPrimEffectInfo(prim);
       }
@@ -886,7 +867,7 @@ class SideEffectFinder {
   // Detect effect info by depth first search.
   EffectInfo DetectEffectInfo(const CNodePtr &cnode) {
     // For primitive, get effect info from its attributes and inputs.
-    auto prim = GetPrimitive(cnode);
+    auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
     if (prim != nullptr) {
       // Skip 'return' cnode.
       if (IsPrimitiveEquals(prim, prim::kPrimReturn)) {
