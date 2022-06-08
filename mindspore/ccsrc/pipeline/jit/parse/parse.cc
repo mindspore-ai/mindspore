@@ -1935,6 +1935,13 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
   AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
   MS_EXCEPTION_IF_NULL(iter_node);
+  bool interpret_without_internal =
+    IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret) && !iter_node->interpret_internal_type();
+  if (iter_node->interpret() || interpret_without_internal) {
+    MS_EXCEPTION(TypeError) << "Parsing syntax 'for x in xs', xs can not be interpret node but got "
+                            << iter_node->DebugString()
+                            << ".\nNodeInfo: " << trace::GetDebugInfo(iter_node->debug_info());
+  }
   // Generate node for loop count and convert it to tensor, to make the loop not unroll
   CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len, iter_node});
   FunctionBlockPtr header_block = GenerateBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
