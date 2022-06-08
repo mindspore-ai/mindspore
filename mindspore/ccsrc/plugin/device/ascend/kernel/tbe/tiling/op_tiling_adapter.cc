@@ -63,6 +63,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"TransposeNOD", "Transpose"},
     {"IndexAdd", "InplaceIndexAdd"},
     {"KLDivLoss", "KLDiv"},
+    {"Unstack", "Unpack"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {
@@ -330,7 +331,16 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   auto outputs_ptr = op_info_ptr->outputs_ptr();
   for (const auto &out_item : outputs_ptr) {
     MS_EXCEPTION_IF_NULL(out_item);
-    output_names_.emplace_back(out_item->name());
+    if (out_item->param_type() == PARAM_DYNAMIC && outputs_ptr.size() == 1) {
+      std::string output_name;
+      auto real_outputs_size = common::AnfAlgo::GetOutputTensorNum(node);
+      for (size_t i = 0; i < real_outputs_size; i++) {
+        output_name = out_item->name() + "_dynamic_" + std::to_string(i);
+        output_names_.emplace_back(output_name);
+      }
+    } else {
+      output_names_.emplace_back(out_item->name());
+    }
   }
 }
 

@@ -398,6 +398,7 @@ from .square_sum_all_ds import _square_sum_all_ds_tbe
 from .pack import _pack_tbe
 from .pack_ds import _pack_ds_tbe
 from .unpack import _unpack_tbe
+from .unpack_ds import _unpack_ds_tbe
 from .scatter_update import _scatter_update_tbe
 from .prelu import _prelu_tbe
 from .prelu_grad import _prelu_grad_tbe
