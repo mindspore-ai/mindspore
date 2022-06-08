@@ -192,6 +192,19 @@ build_python_wheel_package() {
       cp ${INSTALL_PREFIX}/${pkg_name}/tools/converter/lib/*.so* package/mindspore_lite/lib/
     fi
     cp python/*.so package/mindspore_lite/lib/
+    mkdir -pv package/mindspore_lite/include/registry/
+    if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/include/api" ]; then
+      cp -rf ${INSTALL_PREFIX}/${pkg_name}/runtime/include/api package/mindspore_lite/include/
+    fi
+    if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/include/mindapi" ]; then
+      cp -rf ${INSTALL_PREFIX}/${pkg_name}/runtime/include/mindapi package/mindspore_lite/include/
+    fi
+    if [ -f "${INSTALL_PREFIX}/${pkg_name}/tools/converter/include/registry/converter_context.h" ]; then
+      cp ${INSTALL_PREFIX}/${pkg_name}/tools/converter/include/registry/converter_context.h package/mindspore_lite/include/registry/
+    fi
+    if [ -f "${INSTALL_PREFIX}/${pkg_name}/tools/converter/include/converter.h" ]; then
+      cp ${INSTALL_PREFIX}/${pkg_name}/tools/converter/include/converter.h package/mindspore_lite/include/
+    fi
     cp .commit_id package/mindspore_lite/
     echo "__version__ = '${VERSION_STR}'" > package/mindspore_lite/version.py
     cp ../python/setup.py  package/
