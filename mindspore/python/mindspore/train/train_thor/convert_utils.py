@@ -110,7 +110,8 @@ class ConvertNetUtils:
                                     has_bias=has_bias, weight_init=weight)
         return new_subcell
 
-    def _need_change(self, subcell, prefix):
+    @staticmethod
+    def _need_change(subcell, prefix):
         """for thor layers, need to change"""
         if isinstance(subcell, (nn.Dense, nn.Conv2d)) and subcell.weight.requires_grad:
             if "rpn_with_loss.rpn_convs_list." in prefix.lower() or "wide" in prefix.lower():

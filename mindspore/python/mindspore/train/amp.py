@@ -189,7 +189,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
     level, enable_boost = _check_level(level, boost_level)
 
     _check_kwargs(kwargs)
-    config = dict(_config_level[level], **kwargs)
+    config = dict(_config_level.get(level), **kwargs)
 
     if config["cast_model_type"] == mstype.float16:
         network.to_float(mstype.float16)
