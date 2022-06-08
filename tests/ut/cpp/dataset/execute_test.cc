@@ -583,7 +583,7 @@ TEST_F(MindDataTestExecute, TestResizeWithBBox) {
   // Test Compute(Tensor, Tensor) method of ResizeWithBBox
   auto transform = Execute({decode_op, resizewithbbox_op});
 
-  // Expect fail since Compute(Tensor, Tensor) is not a valid behaviour for this Op,
+  // Expect fail since Compute(Tensor, Tensor) is not a valid behavior for this Op,
   // while Compute(TensorRow, TensorRow) is the correct one.
   Status rc = transform(image, &image);
   EXPECT_FALSE(rc.IsOk());

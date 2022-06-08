@@ -27,10 +27,10 @@ namespace dataset {
 const bool DecodeOp::kDefRgbFormat = true;
 
 DecodeOp::DecodeOp(bool rgb) : is_rgb_format_(rgb) {
-  if (is_rgb_format_) {  // RGB colour mode
-    MS_LOG(DEBUG) << "Decode colour mode is RGB.";
+  if (is_rgb_format_) {  // RGB color mode
+    MS_LOG(DEBUG) << "Decode color mode is RGB.";
   } else {
-    MS_LOG(DEBUG) << "Decode colour mode is BGR.";
+    MS_LOG(DEBUG) << "Decode color mode is BGR.";
   }
 }
 
@@ -41,9 +41,9 @@ Status DecodeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     RETURN_STATUS_UNEXPECTED("Decode: invalid input shape, only support 1D input, got rank: " +
                              std::to_string(input->Rank()));
   }
-  if (is_rgb_format_) {  // RGB colour mode
+  if (is_rgb_format_) {  // RGB color mode
     return Decode(input, output);
-  } else {  // BGR colour mode
+  } else {  // BGR color mode
     RETURN_STATUS_UNEXPECTED(
       "Decode: only support Decoded into RGB image, check input parameter 'rgb' first, its value should be 'True'.");
   }
