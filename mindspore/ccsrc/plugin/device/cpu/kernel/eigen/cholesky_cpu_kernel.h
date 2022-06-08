@@ -49,6 +49,8 @@ class CholeskyCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, CholeskyFunc>> func_list_;
   CholeskyFunc kernel_func_;
 
+  bool flag_{true};
+  bool upper_{false};
   bool lower_{true};
   bool clean_{true};
   size_t outer_batch_{1};

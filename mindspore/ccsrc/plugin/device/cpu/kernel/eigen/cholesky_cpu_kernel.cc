@@ -65,6 +65,10 @@ void CholeskyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   InitMatrixInfo(input_shape, &input_row_, &input_col_);
   auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
   InitMatrixInfo(output_shape, &output_row_, &output_col_);
+  if (common::AnfAlgo::HasNodeAttr("upper", kernel_node)) {
+    flag_ = false;
+    upper_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "upper");
+  }
   // If clean attribute exits, we will remain rand triangular data by clean flag, otherwise clean it to zero.
   if (common::AnfAlgo::HasNodeAttr(CLEAN, kernel_node)) {
     clean_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, CLEAN);
@@ -93,17 +97,25 @@ bool CholeskyCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     Map<Matrix<T, RowMajor>> input(input_value, input_row_, input_col_);
     Map<Matrix<T, RowMajor>> output(output_value, output_row_, output_col_);
     (void)llt.compute(input);
-    if (clean_) {
-      if (lower_) {
+    if (flag_) {
+      if (clean_) {
+        if (lower_) {
+          output = llt.matrixL();
+        } else {
+          output = llt.matrixU();
+        }
+      } else {
+        if (lower_) {
+          output = llt.matrixLLT();
+        } else {
+          output = llt.matrixLLT().transpose();
+        }
+      }
+    } else {
+      if (!upper_) {
         output = llt.matrixL();
       } else {
         output = llt.matrixU();
-      }
-    } else {
-      if (lower_) {
-        output = llt.matrixLLT();
-      } else {
-        output = llt.matrixLLT().transpose();
       }
     }
   }

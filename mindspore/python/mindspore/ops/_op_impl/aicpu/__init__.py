@@ -201,3 +201,4 @@ from .segment_sum import _segment_sum_aicpu
 from .scatter_nd_max import _scatter_nd_max_aicpu
 from .conj import _conj_aicpu
 from .scatter_nd_min import _scatter_nd_min_aicpu
+from .cholesky import _cholesky_aicpu
