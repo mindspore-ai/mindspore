@@ -2434,6 +2434,13 @@ def isnan(x):
     return isnan_(x)
 
 
+def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
+    """
+    Returns a boolean tensor where two tensors are element-wise equal within a tolerance.
+    """
+    return P.IsClose(rtol=rtol, atol=atol, equal_nan=equal_nan)(x1, x2)
+
+
 def isreal(x):
     """
     Returns a new tensor with boolean elements representing whether each element of `x` is real-valued.
@@ -3360,6 +3367,7 @@ __all__ = [
     'inplace_sub',
     'isfinite',
     'isnan',
+    'isclose',
     'isreal',
     'log',
     'log_matrix_determinant',

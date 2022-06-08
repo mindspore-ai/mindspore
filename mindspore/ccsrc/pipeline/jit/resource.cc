@@ -225,6 +225,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"choose", std::string("choose")},                                  // P.Select()
        {"diagonal", std::string("diagonal")},                              // P.Eye()
        {"matrix_diag", std::string("matrix_diag")},                        // matrix_diag()
+       {"isclose", std::string("isclose")},                                // P.IsClose()
        {"inv", std::string("inv")},                                        // inv()
        {"invert", std::string("invert")},                                  // invert()
        {"matrix_band_part", std::string("matrix_band_part")},              // matrix_band_part()

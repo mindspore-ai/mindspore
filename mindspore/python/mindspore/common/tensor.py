@@ -1254,6 +1254,13 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('matrix_diag')(self, k, num_rows, num_cols, padding_value, align)
 
+    def isclose(self, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
+        """
+        Returns a boolean tensor where two tensors are element-wise equal within a tolerance.
+        """
+        self._init_check()
+        return tensor_operator_registry.get('isclose')(self, x2, rtol, atol, equal_nan)
+
     def inv(self):
         r"""
         Computes Reciprocal of input tensor element-wise.
