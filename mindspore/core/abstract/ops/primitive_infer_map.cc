@@ -86,6 +86,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kFillV2 = prim::kPrimFillV2->name();
   static const auto &kFractionalAvgPoolGrad = prim::kPrimFractionalAvgPoolGrad->name();
   static const auto &kTransposeNOD = prim::kPrimTransposeNOD->name();
+  static const auto &kResizeLinear1D = prim::kPrimResizeLinear1D->name();
   static const auto &kSparseSegmentMean = prim::kPrimSparseSegmentMean->name();
   static const auto &kSegmentMax = prim::kPrimSegmentMax->name();
   static const auto &kSegmentMin = prim::kPrimSegmentMin->name();
@@ -130,6 +131,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kRaggedRange, ShapeSet{0, 1, 2}},
                                                         {kTransposeNOD, ShapeSet{1}},
                                                         {kSparseSegmentMean, ShapeSet{2}},
+                                                        {kResizeLinear1D, ShapeSet{1}},
                                                         {kBlackmanWindow, ShapeSet{0}}};
 
   auto ms_context = MsContext::GetInstance();
