@@ -29,5 +29,5 @@ mindspore.nn.Threshold
 
     **异常：**
 
-    **TypeError** - `threshold` 不是浮点数或整数。
-    **TypeError** - `value` 不是浮点数或整数。
+    - **TypeError** - `threshold` 不是浮点数或整数。
+    - **TypeError** - `value` 不是浮点数或整数。
