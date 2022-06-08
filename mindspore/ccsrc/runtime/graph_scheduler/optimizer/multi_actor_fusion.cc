@@ -51,7 +51,13 @@ bool MultiActorFusion::AnalyzeDependency(const ActorSet *actor_set) {
   mindspore::HashMap<std::string, std::pair<AbstractActor *, bool>> actor_infos;
   for (auto &actor : need_processed_actors) {
     MS_EXCEPTION_IF_NULL(actor);
-    actor_infos[actor->GetAID().Name()] = std::make_pair(actor.get(), false);
+    if ((actor->type() == KernelTransformType::kDataPrepareActor) ||
+        (actor->type() == KernelTransformType::kLoopCountActor) ||
+        (actor->type() == KernelTransformType::kOutputActor)) {
+      actor_infos[actor->GetAID().Name()] = std::make_pair(actor.get(), true);
+    } else {
+      actor_infos[actor->GetAID().Name()] = std::make_pair(actor.get(), false);
+    }
   }
 
   std::vector<AbstractActorPtr> unprocessed_actors;
@@ -201,7 +207,11 @@ void MultiActorFusion::FuseMultiActors(ActorSet *const actor_set) {
   mindspore::HashMap<std::string, AbstractActorPtr> need_processed_actors;
   for (auto &actor : actors) {
     MS_EXCEPTION_IF_NULL(actor);
-    need_processed_actors[actor->GetAID().Name()] = actor;
+    if ((actor->type() != KernelTransformType::kDataPrepareActor) &&
+        (actor->type() != KernelTransformType::kLoopCountActor) &&
+        (actor->type() != KernelTransformType::kOutputActor)) {
+      need_processed_actors[actor->GetAID().Name()] = actor;
+    }
   }
 
   // Get the initial seed actors from the outputs of data prepare actor.

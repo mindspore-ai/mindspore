@@ -139,8 +139,8 @@ void AbstractActor::InitOutputData() {
     }
 
     // Add the internal fusion flag.
-    if (TEST_FLAG(data_arrow->flag_, kOutputDataFlagToInternalFusion)) {
-      SET_FLAG(output_data_flag, kOutputDataFlagToInternalFusion);
+    if (TEST_FLAG(data_arrow->flag_, kOutputDataFlagBetweenFusion)) {
+      SET_FLAG(output_data_flag, kOutputDataFlagBetweenFusion);
     }
 
     // Add the output data.
@@ -161,15 +161,20 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   size_t output_data_arrow_index = 0;
   for (auto &output_data : output_data_) {
     MS_EXCEPTION_IF_NULL(output_data.first);
-    MS_EXCEPTION_IF_NULL(output_data_arrows_[output_data_arrow_index]);
     auto &to_op_id = output_data.first->op_id_;
-    UpdateOutputData(output_data.first.get(), output_data_arrows_[output_data_arrow_index],
-                     output_data_nodes_[output_data_arrow_index], context);
+    auto &output_data_arrow = output_data_arrows_[output_data_arrow_index];
+    UpdateOutputData(output_data.first.get(), output_data_arrow, output_data_nodes_[output_data_arrow_index], context);
+    // The index of output data will be modified the real actor input index in the fusion actor, so need recovery the
+    // fusion actor index before sending output data to the fusion actor.
+    if (TEST_FLAG(output_data.second, kOutputDataFlagToFusion)) {
+      output_data.first->index_ = data_arrow_to_fusion_actor_indexs_.at(output_data_arrow.get());
+    }
 
     if (TEST_FLAG(output_data.second, kOutputDataFlagLastBatch)) {
       // Send batch output data. As the data need update, so all data must be collected completely before sending.
-      if (TEST_FLAG(output_data.second, kOutputDataFlagToInternalFusion)) {
-        ActorDispatcher::SendSync(to_op_id, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()],
+      if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
+        const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
+        ActorDispatcher::SendSync(to_actor, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()],
                                   context);
       } else {
         ActorDispatcher::Send(to_op_id, &AbstractActor::RunBatchOpData, &batch_output_data_[to_op_id.Name()], context);
@@ -179,15 +184,17 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
       auto to_stack_data =
         std::make_unique<OpData<DeviceTensor>>(to_op_id, output_data.first->data_, output_data.first->index_);
       (void)to_stack_data_.emplace_back(std::move(to_stack_data));
-      if (TEST_FLAG(output_data.second, kOutputDataFlagToInternalFusion)) {
-        ActorDispatcher::SendSync(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
+      if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
+        const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
+        ActorDispatcher::SendSync(to_actor, &OpActor::RunOpData, to_stack_data_.back().get(), context);
       } else {
         ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, to_stack_data_.back().get(), context);
       }
     } else if (!TEST_FLAG(output_data.second, kOutputDataFlagBatch)) {
       // The batch output data only send when the output flag is kOutputDataFlagLastBatch.
-      if (TEST_FLAG(output_data.second, kOutputDataFlagToInternalFusion)) {
-        ActorDispatcher::SendSync(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);
+      if (TEST_FLAG(output_data.second, kOutputDataFlagBetweenFusion)) {
+        const auto &to_actor = FetchSubActorInFusionActor(to_op_id.Name());
+        ActorDispatcher::SendSync(to_actor, &OpActor::RunOpData, output_data.first.get(), context);
       } else {
         ActorDispatcher::Send(to_op_id, &OpActor::RunOpData, output_data.first.get(), context);
       }
@@ -200,8 +207,9 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
     auto from_aid = const_cast<AID *>(&GetAID());
     for (auto &output_control : output_control_arrows_) {
       MS_EXCEPTION_IF_NULL(output_control);
-      if (TEST_FLAG(output_control->flag_, kOutputDataFlagToInternalFusion)) {
-        ActorDispatcher::SendSync(output_control->to_op_id_, &OpActor::RunOpControl, from_aid, context);
+      if (TEST_FLAG(output_control->flag_, kOutputDataFlagBetweenFusion)) {
+        const auto &to_actor = FetchSubActorInFusionActor(output_control->to_op_id_.Name());
+        ActorDispatcher::SendSync(to_actor, &OpActor::RunOpControl, from_aid, context);
       } else {
         ActorDispatcher::Send(output_control->to_op_id_, &OpActor::RunOpControl, from_aid, context);
       }
@@ -216,6 +224,14 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
       (type_ < KernelTransformType::kSwitchActor)) {
     SET_OPCONTEXT_SUCCESS_RET((*context));
   }
+}
+
+AbstractActor *AbstractActor::FetchSubActorInFusionActor(const std::string &sub_actor_name) {
+  if (parent_fusion_actor_ == nullptr) {
+    return nullptr;
+  }
+  const auto &sub_actors = parent_fusion_actor_->FetchSubActors();
+  return (sub_actors.at(sub_actor_name)).get();
 }
 }  // namespace runtime
 }  // namespace mindspore

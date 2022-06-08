@@ -197,6 +197,13 @@ class ActorDispatcher {
     (actor->*method)(std::forward<Args1>(args)...);
   }
 
+  template <typename T, typename... Args0, typename... Args1>
+  static void SendSync(OpActor<DeviceTensor> *to_actor, void (T::*method)(Args0...), Args1 &&... args) {
+    T *actor = static_cast<T *>(to_actor);
+    MS_EXCEPTION_IF_NULL(actor);
+    (actor->*method)(std::forward<Args1>(args)...);
+  }
+
   static void is_multi_thread_execution(bool is_multi_thread_execution) {
     is_multi_thread_execution_ = is_multi_thread_execution;
   }

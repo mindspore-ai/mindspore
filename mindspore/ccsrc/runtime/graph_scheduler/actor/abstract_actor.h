@@ -43,7 +43,9 @@ constexpr int kOutputDataFlagBatch = 2;
 // Indicates that the output data is the last data in the batch.
 constexpr int kOutputDataFlagLastBatch = 4;
 // Indicates that the output data destination is the internal fusion actor, and uses the synchronous sending interface.
-constexpr int kOutputDataFlagToInternalFusion = 8;
+constexpr int kOutputDataFlagBetweenFusion = 8;
+// Indicates that the output data destination is the fusion actor, and needs to use the fusion output index.
+constexpr int kOutputDataFlagToFusion = 16;
 
 // The abstract common attributes of actors. The actor inheritance relationship:  OpActor --> AbstractActor -->
 // MemoryAwareActor --> DebugAwareActor --> KernelActor/DataSourceActor/CopyActor/LoopCountActor/OutputActor.
@@ -56,7 +58,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
         input_datas_num_(0),
         input_controls_num_(0),
         running_dependent_msg_num_(0),
-        in_fusion_actor_{false} {}
+        parent_fusion_actor_{nullptr} {}
   ~AbstractActor() override = default;
 
   bool IsActive(int msg_num) override { return msg_num >= running_dependent_msg_num_ ? true : false; }
@@ -87,7 +89,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
   const mindspore::HashMap<std::string, std::vector<DataArrowPtr>> &batch_output_data_arrows() const {
     return batch_output_data_arrows_;
   }
-  bool in_fusion_actor() const { return in_fusion_actor_; }
+  AbstractActor *parent_fusion_actor() const { return parent_fusion_actor_; }
   const std::unordered_set<std::string> &dependent_actors() const { return dependent_actors_; }
 
  protected:
@@ -113,6 +115,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
   // Send recorder info to recorder actor.
   virtual void SendRecorderInfo(OpContext<DeviceTensor> *const context) const {}
 
+  // Fetch the sub actor in the fusion actor by the name.
+  AbstractActor *FetchSubActorInFusionActor(const std::string &sub_actor_name);
+  virtual mindspore::HashMap<std::string, std::shared_ptr<AbstractActor>> FetchSubActors() const { return {}; }
+
   KernelTransformType type_;
 
   // The device interface.
@@ -125,6 +131,8 @@ class AbstractActor : public OpActor<DeviceTensor> {
   std::vector<AnfNodePtr> output_data_nodes_;
   // The second of pair indicates the output data falg. See constant prefixed with kOutputDataFalg for details.
   std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, int>> output_data_;
+  // Record the fusion output index for output data arrow.
+  mindspore::HashMap<DataArrow *, size_t> data_arrow_to_fusion_actor_indexs_;
   // Used to send batch data in the message which RunBatchOpData needs, the key is the actor name of destination actor.
   mindspore::HashMap<std::string, std::vector<OpData<DeviceTensor> *>> batch_output_data_;
   mindspore::HashMap<std::string, std::vector<DataArrowPtr>> batch_output_data_arrows_;
@@ -157,7 +165,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
   int running_dependent_msg_num_;
 
   // Indicates whether the actor is in fusion actor.
-  bool in_fusion_actor_;
+  AbstractActor *parent_fusion_actor_;
 
   // All actors that the actor depends on for execution, the dependent actors are expanded by the input data and input
   // controls. For example, ActorA->ActorB->ActorC, the expanded dependent actors of ActorC are ActorA and ActorB.

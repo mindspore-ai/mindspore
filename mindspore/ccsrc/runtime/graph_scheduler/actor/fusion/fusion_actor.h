@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <unordered_set>
 #include "utils/hash_map.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "runtime/graph_scheduler/actor/abstract_actor.h"
@@ -31,27 +32,39 @@ namespace runtime {
 // fuse to the FusionActor.
 class FusionActor : public AbstractActor {
  public:
-  explicit FusionActor(const std::string &name) : AbstractActor(name, KernelTransformType::kFusionActor, nullptr) {}
+  explicit FusionActor(const std::string &name)
+      : AbstractActor(name, KernelTransformType::kFusionActor, nullptr), recv_input_controls_num_(0) {}
   ~FusionActor() override = default;
 
-  const mindspore::HashMap<std::string, AbstractActorPtr> &actors() const { return actors_; }
+  // The actor run when receive the input data.
+  void RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) override;
+  // The actor run when receive the input control.
+  void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
+
+  const mindspore::HashMap<std::string, AbstractActorPtr> &sub_actors() const { return sub_actors_; }
   const std::vector<std::pair<AbstractActor *, size_t>> &real_input_data() const { return real_input_data_; }
-  const std::vector<AbstractActor *> &real_input_controls() const { return real_input_controls_; }
+  const mindspore::HashMap<std::string, std::vector<AbstractActor *>> &real_input_controls() const {
+    return real_input_controls_;
+  }
 
  protected:
-  void Run(OpContext<DeviceTensor> *const context) override;
+  mindspore::HashMap<std::string, AbstractActorPtr> FetchSubActors() const override { return sub_actors_; }
 
  private:
   friend class SchedulerHelper;
 
   // These actors are not spawned in the ActorMgr, so they do not participate in message interaction, but only internal
   // processing.
-  mindspore::HashMap<std::string, AbstractActorPtr> actors_;
+  mindspore::HashMap<std::string, AbstractActorPtr> sub_actors_;
 
   // std::pair<actor, input_index> used to find the mapping between fusion actor inputs and real actors inputs.
   std::vector<std::pair<AbstractActor *, size_t>> real_input_data_;
   // Used to record the input controls info of the real actors.
-  std::vector<AbstractActor *> real_input_controls_;
+  mindspore::HashMap<std::string, std::vector<AbstractActor *>> real_input_controls_;
+
+  // Record the received input control info.
+  std::unordered_set<std::string> recv_input_control_actors_;
+  size_t recv_input_controls_num_;
 };
 
 using FusionActorPtr = std::shared_ptr<FusionActor>;
