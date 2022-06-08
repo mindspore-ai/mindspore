@@ -66,4 +66,5 @@ REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Sin, UnaryTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Cos, UnaryTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Ceil, UnaryTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Floor, UnaryTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalNot, UnaryTensorRT)
 }  // namespace mindspore::lite

@@ -45,6 +45,7 @@ class UnaryTensorRT : public TensorRTOp {
     {schema::PrimitiveType_Cos, nvinfer1::UnaryOperation::kCOS},
     {schema::PrimitiveType_Ceil, nvinfer1::UnaryOperation::kCEIL},
     {schema::PrimitiveType_Floor, nvinfer1::UnaryOperation::kFLOOR},
+    {schema::PrimitiveType_LogicalNot, nvinfer1::UnaryOperation::kNOT},
   };
   nvinfer1::UnaryOperation unary_op_;
 };
