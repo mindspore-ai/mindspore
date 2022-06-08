@@ -19,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -133,3 +134,36 @@ def test_net2():
                              [2.44, 2.44, 2.44, 2.44],
                              [2.68, 2.68, 2.68, 2.68]]]))
     assert np.allclose(output.asnumpy(), expect_out)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+
+def test_biasadd_vmap():
+    """
+    Feature: biasadd vmap test on cpu.
+    Description: test the rightness of basic biasadd vmap
+    Expectation: use vmap rule's result equal to manually batched.
+    """
+
+    def cal_biasadd(x, bias):
+        return P.BiasAdd(data_format="NCHW")(x, bias)
+
+    vmap_biasadd = vmap(cal_biasadd, in_axes=(0, 0))
+    x = Tensor(np.array([[[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
+                         [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]]).astype(np.float16))
+    bias = Tensor(np.array([[0, 1], [1, 2]]).astype(np.float16))
+    output = vmap_biasadd(x, bias)
+    expect_out = np.array([[[[1, 2],
+                             [4, 5]],
+                            [[5, 6],
+                             [8, 9]]],
+                           [[[10, 11],
+                             [13, 14]],
+                            [[14, 15],
+                             [17, 18]]]]).astype(np.float16)
+    assert np.allclose(output.asnumpy(), expect_out)
+
+if __name__ == '__main__':
+    test_biasadd_vmap()

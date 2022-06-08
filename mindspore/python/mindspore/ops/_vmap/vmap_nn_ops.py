@@ -122,71 +122,87 @@ def get_bias_add_vmap_rule(prim, axis_size):
     add_op = P.Add()
 
     @constexpr
-    def _get_bias_broadcast_shape(x_shape, bias_shape, bias_dim, data_format):
-        """Get the broadcast shape for bias and use it in 'BiasAdd' VmapRule."""
-        bias_rank = len(bias_shape)
-        if bias_dim is None and bias_rank == 1:
-            bias_batch = 1
-            bias_channel = bias_shape[0]
-        elif bias_dim is not None and bias_rank == 2:
-            bias_batch = bias_shape[0]
-            bias_channel = bias_shape[1]
-        else:
-            raise ValueError("The rank of 'bias' in 'BiasAdd' operator is invalid, which is rank: {}"
-                             " with bias_dim: {}.".format(bias_rank, bias_dim))
+    def get_channal_pos_in_x(d_format):
+        return d_format.find('C') + 1
 
-        # The 'Biasadd' operator supports 2-5 dimensions input, and another 'batch' dimension is added to the front in
-        # vmap scenario.
-        x_min_rank = 3
-        x_max_rank = 5
-        if data_format == "NCDHW":
-            x_max_rank += 1
-        x_rank = len(x_shape)
+    @constexpr
+    def get_bias_dst_shape(x_shape, n_dims, d_format, has_b_dim: bool):
+        pos = get_channal_pos_in_x(d_format)
 
-        if x_rank < x_min_rank or x_rank > x_max_rank:
-            raise ValueError("For primitive[BiasAdd] in vmap, the dims of input_x must be in [x_min_rank, {}"
-                             "], but got {}.".format(x_max_rank, x_rank))
-
-        if data_format == "NHWC":
-            # In the 'NHWC' data format ('BN**C' actually), the last dimension is channel axis.
-            x_channel = x_shape[-1]
-            if x_channel != bias_channel:
-                raise ValueError("For 'BiadAdd, bias_channel must be equal to x_channel, "
-                                 "but got date format: {}, got bias_channel: {}, "
-                                 "x_channel: {}.".format(data_format, bias_channel, x_channel))
-            if bias_dim is None:
-                bias_broadcast_shape = (1,) * (x_rank - bias_rank) + (bias_channel,)
+        bias_shape = []
+        for i in range(n_dims):
+            if i != pos:
+                bias_shape.append(1)
             else:
-                bias_broadcast_shape = (bias_batch,) + (1,) * (x_rank - bias_rank) + (bias_channel,)
-        else:
-            # In the 'NCHW' or 'NCDHW' data format ('BNC**' actually), the third dimension is channel axis.
-            x_channel = x_shape[2]
-            if x_channel != bias_channel:
-                raise ValueError("For 'BiadAdd, bias_channel must be equal to x_channel, but got date format: "
-                                 "{}, got bias_channel: {}, x_channel: {}." \
-                                 .format(data_format, bias_channel, x_channel))
-            bias_broadcast_shape = (bias_batch, 1, bias_channel)
-            if x_rank == x_min_rank:
-                return bias_broadcast_shape
-            bias_broadcast_shape = bias_broadcast_shape + (1,) * (x_rank - x_min_rank)
-        return bias_broadcast_shape
+                bias_shape.append(x_shape[i])
 
-    def vmap_rule(input_bdim, bias_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, input_bdim, bias_bdim)
+        if has_b_dim:
+            bias_shape[0] = axis_size
+
+        return tuple(bias_shape)
+
+    def vmap_rule(x_bdim, bias_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, bias_bdim)
         if is_all_none:
             return result
 
-        input_x, x_dim = input_bdim
-        bias, bias_dim = bias_bdim
-        input_x = _bdim_at_front(input_x, x_dim, axis_size)
-        if bias_dim is not None:
-            bias = _bdim_at_front(bias, bias_dim, axis_size)
-        x_shape = F.shape(input_x)
-        bias_shape = F.shape(bias)
-        bias_broadcast_shape = _get_bias_broadcast_shape(x_shape, bias_shape, bias_dim, data_format)
-        bias = F.reshape(bias, bias_broadcast_shape)
-        out = add_op(input_x, bias)
-        return (out, 0)
+        x, x_dim = x_bdim
+        b, b_dim = bias_bdim
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        has_b_dim = False
+        if b_dim is not None:
+            b = _bdim_at_front(b, b_dim, axis_size)
+            has_b_dim = True
+
+        x_shape = x.shape
+        n_dims = len(x_shape)
+        b_shape = get_bias_dst_shape(x_shape, n_dims, data_format, has_b_dim)
+
+        b = b.reshape(b_shape)
+        result = add_op(x, b)
+
+        return (result, 0)
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.BiasAddGrad)
+def get_bias_add_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `BiasAddGrad` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+        data_format = "NCHW"
+    else:
+        data_format = prim.data_format
+
+    @constexpr
+    def get_channal_pos(d_format):
+        return d_format.find('C') + 1
+
+    @constexpr
+    def get_axis_for_reduce(x_shape_rank, data_format):
+        channal_pos = get_channal_pos(data_format)
+        axis_list = ()
+        for i in range(1, x_shape_rank):
+            if channal_pos == i:
+                continue
+            axis_list += (i,)
+
+        return axis_list
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_shape_rank = len(x.shape)
+
+        axis_for_reduce = get_axis_for_reduce(x_shape_rank, data_format)
+
+        result = x.sum(axis=axis_for_reduce)
+        return (result, 0)
 
     return vmap_rule
 
