@@ -220,13 +220,14 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
       return kLiteError;
     }
   }
+  bool need_copy_output = true;
   auto model_output = model_->GetOutputs();
   for (size_t i = 0; i < outputs->size(); i++) {
     if (outputs->at(i).MutableData() != nullptr) {
       /* user set graph-output-tensor from outside */
       model_output[i].SetData(outputs->at(i).MutableData());
       model_output[i].SetAllocator(nullptr);
-      need_copy_output_ = false;
+      need_copy_output = false;
     }
   }
   for (size_t i = 0; i < inputs.size(); i++) {
@@ -242,7 +243,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   for (size_t i = 0; i < model_input.size(); i++) {
     model_input[i].SetData(nullptr);
   }
-  if (need_copy_output_) {
+  if (need_copy_output) {
     status = CopyOutputTensor(model_output, outputs);
     if (status != kSuccess) {
       available_ = true;
