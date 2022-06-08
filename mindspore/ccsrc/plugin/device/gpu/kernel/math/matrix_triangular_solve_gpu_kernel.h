@@ -24,7 +24,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/kernel_constants.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/gpu_kernel_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -74,20 +74,10 @@ class MatrixTriangularSolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       // In order to convert row major matrix b(batch, m, n) to col major matrix b'(batch, m, n),
       // the following operation is equivalent to:
       // b' = b.tarnspose(batch, n, m).reshape(batch, m, n)
-      size_t host_transpose_b_shape[kShape3D] = {batch_, m_, n_};
-      size_t host_transpose_b_axis[kShape3D] = {kDim0, kDim2, kDim1};
       auto dev_transpose_b_shape = GetDeviceAddress<size_t>(workspace, kIndexBTransposeShape);
       auto dev_transpose_b_axis = GetDeviceAddress<size_t>(workspace, kIndexBTransposeAxis);
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(dev_transpose_b_shape, host_transpose_b_shape, kShape3D * sizeof(T *),
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "memcpy input a axis workspace failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(dev_transpose_b_axis, host_transpose_b_axis, kShape3D * sizeof(T *),
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "memcpy input b axis workspace failed");
-      CalTranspose(batched_b_size, inputb_addr, dev_transpose_b_shape, dev_transpose_b_axis, kShape3D, dst,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
+      MatrixTransposeND(inputb_addr, {batch_, m_, n_}, {kDim0, kDim2, kDim1}, dev_transpose_b_shape,
+                        dev_transpose_b_axis, dst, reinterpret_cast<cudaStream_t>(stream_ptr), kernel_name_);
     }
 
     // index calculation
@@ -127,20 +117,10 @@ class MatrixTriangularSolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       // in order to convert col major matrix x'(m x n) to row major matrix x'(m x n),
       // the following operation is equivalent to:
       // x = x'.reshape(n, m).T
-      size_t host_transpose_b_shape[kShape3D] = {batch_, n_, m_};
-      size_t host_transpose_b_axis[kShape3D] = {kDim0, kDim2, kDim1};
       auto dev_transpose_b_shape = GetDeviceAddress<size_t>(workspace, kIndexBTransposeShape);
       auto dev_transpose_b_axis = GetDeviceAddress<size_t>(workspace, kIndexBTransposeAxis);
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(dev_transpose_b_shape, host_transpose_b_shape, kShape3D * sizeof(T *),
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "memcpy input a axis workspace failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(dev_transpose_b_axis, host_transpose_b_axis, kShape3D * sizeof(T *),
-                                                 cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                 "memcpy input b axis workspace failed");
-      CalTranspose(batched_b_size, dst, dev_transpose_b_shape, dev_transpose_b_axis, kShape3D, output_addr,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
+      MatrixTransposeND(dst, {batch_, n_, m_}, {kDim0, kDim2, kDim1}, dev_transpose_b_shape, dev_transpose_b_axis,
+                        output_addr, reinterpret_cast<cudaStream_t>(stream_ptr), kernel_name_);
     }
     return true;
   }
