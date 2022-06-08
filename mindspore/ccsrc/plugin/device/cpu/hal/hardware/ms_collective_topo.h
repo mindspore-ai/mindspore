@@ -58,6 +58,8 @@ class TopologyNode {
 
   size_t rank_id();
 
+  size_t rank_size();
+
  private:
   // Handle the message received by the tcp server.
   MessageBase *const HandleMessage(MessageBase *const message);
