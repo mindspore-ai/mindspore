@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import os
 import ast
 import inspect
 
@@ -432,3 +433,38 @@ def test_replace_one_to_multi():
     assert len(new_relu_node.get_targets()) == 1
     assert len(relu2.get_normalized_args().values()) == 1
     assert new_relu_node.get_targets()[0] == list(relu2.get_normalized_args().values())[0]
+
+
+def test_set_saved_file_name():
+    """
+    Feature: Python api set_saved_file_name and get_saved_file_name of SymbolTree of Rewrite.
+    Description: Call set_saved_file_name to set the filename used to save the network.
+                 Call get_saved_file_name to get the filename used to save the network.
+    Expectation: Success.
+    """
+    stree, _, _, _ = create_symbol_tree()
+
+    stree.set_saved_file_name("new_network.py")
+    new_file_name = stree.get_saved_file_name()
+    assert new_file_name == "new_network.py"
+
+    stree.set_saved_file_name("new_network_01")
+    new_file_name = stree.get_saved_file_name()
+    assert new_file_name == "new_network_01.py"
+
+
+def test_save_network_to_file():
+    """
+    Feature: Python api save_network_to_file of SymbolTree of Rewrite.
+    Description: Call save_network_to_file to save the network to a file.
+    Expectation: Success.
+    """
+    stree, bn, relu1, relu2 = create_symbol_tree()
+    stree.set_node_arg_by_node(relu2, 0, bn)
+    stree.erase_node(relu1)
+
+    stree.set_saved_file_name("new_network.py")
+    stree.save_network_to_file()
+    assert os.path.exists("./new_network.py")
+
+    os.system("rm -f new_network.py")

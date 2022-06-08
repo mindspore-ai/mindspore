@@ -253,8 +253,29 @@ class SymbolTree:
     def get_network(self) -> Cell:
         """
         Get modified network.
+        The source code of network is saved to a file, the default file name is `network_define.py`.
 
         Returns:
             A network object.
         """
         return self._symbol_tree.get_network()
+
+    def set_saved_file_name(self, file_name: str):
+        """
+        Set the name of the file used to save the network.
+
+        Args:
+            file_name (str): filename to be set.
+        """
+        Validator.check_value_type("file_name", file_name, [str], "Saving network")
+        self._symbol_tree.set_saved_file_name(file_name)
+
+    def get_saved_file_name(self):
+        """Gets the filename used to save the network."""
+        return self._symbol_tree.get_saved_file_name()
+
+    def save_network_to_file(self):
+        """
+        Save the modified network to a file. Default file name is `network_define.py`.
+        """
+        self._symbol_tree.save_network_to_file()

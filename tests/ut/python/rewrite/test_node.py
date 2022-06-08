@@ -128,3 +128,51 @@ def test_create_by_cell3():
         "h": ScopedValue.create_variable_value(1),
         "cool_boy": ScopedValue.create_naming_value('Naroto'),
     }
+
+
+def test_create_by_cell4():
+    """
+    Feature: Python api create_call_buildin_op of Node of Rewrite.
+    Description: Call create_call_buildin_op to create a CallCell node.
+    Expectation: Success.
+    """
+    node = Node.create_call_buildin_op(FakeCell3(), None, [ScopedValue.create_naming_value('x')],
+                                       ScopedValue.create_naming_value('new_conv'),
+                                       [ScopedValue.create_naming_value('x'), ScopedValue.create_naming_value("x"),
+                                        ScopedValue.create_naming_value('x'), ScopedValue.create_naming_value("x")],
+                                       {"h": ScopedValue.create_variable_value([1]),
+                                        "f": ScopedValue.create_variable_value((2,)),
+                                        "cool_boy": ScopedValue.create_naming_value('Naroto')}, 'new_conv')
+    assert node.get_normalized_args() == {
+        "a": ScopedValue.create_naming_value('x'),
+        "b": ScopedValue.create_naming_value('x'),
+        "args_2": ScopedValue.create_naming_value('x'),
+        "args_3": ScopedValue.create_naming_value('x'),
+        "f": ScopedValue.create_variable_value((2,)),
+        "h": ScopedValue.create_variable_value([1]),
+        "cool_boy": ScopedValue.create_naming_value('Naroto'),
+    }
+
+
+def test_create_by_cell5():
+    """
+    Feature: Python api create_call_buildin_op of Node of Rewrite.
+    Description: Call create_call_buildin_op to create a CallCell node.
+    Expectation: Success.
+    """
+    node = Node.create_call_buildin_op(FakeCell3(), None, [ScopedValue.create_naming_value('x')],
+                                       ScopedValue.create_naming_value('new_conv'),
+                                       [ScopedValue.create_variable_value((4,)), ScopedValue.create_variable_value(5),
+                                        ScopedValue.create_variable_value([5]), ScopedValue.create_naming_value("x")],
+                                       {"h": ScopedValue.create_variable_value(1),
+                                        "f": ScopedValue.create_variable_value(2),
+                                        "cool_boy": ScopedValue.create_naming_value('Naroto')}, 'new_conv')
+    assert node.get_normalized_args() == {
+        "a": ScopedValue.create_variable_value((4,)),
+        "b": ScopedValue.create_variable_value(5),
+        "args_2": ScopedValue.create_variable_value([5]),
+        "args_3": ScopedValue.create_naming_value('x'),
+        "f": ScopedValue.create_variable_value(2),
+        "h": ScopedValue.create_variable_value(1),
+        "cool_boy": ScopedValue.create_naming_value('Naroto'),
+    }

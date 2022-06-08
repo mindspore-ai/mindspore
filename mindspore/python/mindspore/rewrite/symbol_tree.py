@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """SymbolTree class define of Rewrite according to forward function of a network."""
+import stat
 from typing import Optional, Union, Tuple, Any
 import os
 import sys
 import ast
-import tempfile
+import importlib
 import astunparse
 
 from mindspore.nn import Cell
@@ -176,6 +177,7 @@ class SymbolTree(Observer, Observable):
 
         self._tmp_file_limits = 20
         self._tmp_files = []
+        self._saved_file_name = "./network_define.py"
 
     def __del__(self):
         for tmp_file in self._tmp_files:
@@ -923,6 +925,27 @@ class SymbolTree(Observer, Observable):
         cls = self._get_cls_through_file()
         return cls(self._global_vars)
 
+    def set_saved_file_name(self, file_name: str):
+        """Sets the filename used to save the network."""
+        if file_name.endswith(".py"):
+            self._saved_file_name = file_name
+        else:
+            self._saved_file_name = file_name + ".py"
+
+    def get_saved_file_name(self):
+        """Gets the filename used to save the network."""
+        return self._saved_file_name
+
+    def save_network_to_file(self):
+        """Save the modified network to a file."""
+        abs_path = os.path.abspath(self._saved_file_name)
+        if os.path.isfile(abs_path):
+            os.remove(abs_path)
+        with os.fdopen(os.open(self._saved_file_name, os.O_WRONLY | os.O_CREAT, stat.S_IRWXU), 'wb') as f:
+            source = self.get_code()
+            f.write(source.encode('utf-8'))
+            f.flush()
+
     def _remove_unused_import(self):
         """remove unused import in self._module_ast"""
         str_checker = StrChecker(self._module_ast)
@@ -1177,19 +1200,12 @@ class SymbolTree(Observer, Observable):
         Returns:
             A class handle.
         """
-        source = self.get_code()
-        tmp_file = tempfile.NamedTemporaryFile(suffix='.py')
-        tmp_file.write(source.encode('utf8'))
-        tmp_file.flush()
-        tmp_file_name = tmp_file.name
-        if len(self._tmp_files) >= self._tmp_file_limits:
-            raise RuntimeError(f"Too many tmp file generated, it may caused by calling get_network method too much "
-                               f"times. Only support open {self._tmp_file_limits} tmp file at most now!")
-        self._tmp_files.append(tmp_file)
-        tmp_module_path, tmp_module_file = os.path.split(tmp_file_name)
+        self.save_network_to_file()
+        tmp_module_path, tmp_module_file = os.path.split(self._saved_file_name)
         tmp_module_name = tmp_module_file[:-3]
         sys.path.append(tmp_module_path)
-        tmp_module = __import__(tmp_module_name)
+        tmp_module = importlib.import_module(tmp_module_name)
+        importlib.reload(tmp_module)
         network_cls = getattr(tmp_module, self._opt_cls_name)
         if network_cls is None:
             raise RuntimeError("Can not find network class:", self._opt_cls_name)
