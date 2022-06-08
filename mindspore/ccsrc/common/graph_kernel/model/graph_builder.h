@@ -55,6 +55,7 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
 
   NodePtr ReduceSum(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims = false) const;
   NodePtr ReduceMax(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims = false) const;
+  NodePtr ReduceMin(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims = false) const;
 
   template <typename T>
   NodePtr Const(T input, const TypeId &type_id) const {

@@ -43,6 +43,16 @@ class ComplexOpDecorator : public ExpanderDecorator {
   AnfNodePtr Run(const AnfNodePtr &node) override;
 };
 
+class ArgWithValueDeco : public ExpanderDecorator {
+ public:
+  explicit ArgWithValueDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~ArgWithValueDeco() override = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<ArgWithValueDeco>(decorated));
+  }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
+};
+
 class COMMON_EXPORT AttrToInputDeco : public ExpanderDecorator {
  public:
   explicit AttrToInputDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}

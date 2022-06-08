@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <utility>
 #include "include/common/utils/python_adapter.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "common/graph_kernel/split_umonad.h"
@@ -56,6 +57,8 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
     {prim::kPrimAdam->name(), {OpUMonadExpanderDeco::GetCreator(kAdamInputIdx)}},
     {prim::kPrimAdamWeightDecay->name(), {OpUMonadExpanderDeco::GetCreator(kAdamWeightDecayInputIdx)}},
     {prim::kPrimDropout->name(), {DropoutExpanderDeco::Creator}},
+    {prim::kPrimArgMaxWithValue->name(), {ArgWithValueDeco::Creator}},
+    {prim::kPrimArgMinWithValue->name(), {ArgWithValueDeco::Creator}},
   };
   const auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
@@ -295,6 +298,28 @@ AnfNodePtr ComplexOpDecorator::Run(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(prim);
   cnode->set_input(0, NewValueNode(std::make_shared<Primitive>("C" + prim->name(), prim->attrs())));
   return decorated_->Run(cnode);
+}
+
+// Used for ArgMaxWithValue(ArgMinWithValue) which output is tuple(index,value)
+// Currently only expand it when output[1] has users and output[0] has no users
+// In this case, ArgMaxWithValue(ArgMinWithValue) can be converted to ReduceMax(ReduceMin)
+// If output[0] has users, expanding is not allowed
+AnfNodePtr ArgWithValueDeco::Run(const AnfNodePtr &node) {
+  auto mng = GkUtils::GetFuncGraphManager(node->func_graph());
+  bool res = false;
+  if (auto iter = mng->node_users().find(node); iter != mng->node_users().end()) {
+    auto output_info_list = iter->second;
+    res = std::all_of(output_info_list.begin(), output_info_list.end(), [](const std::pair<AnfNodePtr, int> &info) {
+      if (IsPrimitiveCNode(info.first, prim::kPrimTupleGetItem)) {
+        const auto &cnode = info.first->cast<CNodePtr>();
+        auto value_ptr = GetValueNode(cnode->input(kInputNodeOutputIndexInTupleGetItem));
+        MS_EXCEPTION_IF_NULL(value_ptr);
+        return GetValue<int64_t>(value_ptr) == 1;
+      }
+      return false;
+    });
+  }
+  return res ? decorated_->Run(node) : nullptr;
 }
 
 void InlineExpandFuncGraph(const AnfNodePtr &expanding_node, const FuncGraphPtr &expanded_graph) {

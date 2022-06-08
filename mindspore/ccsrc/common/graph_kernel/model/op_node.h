@@ -117,6 +117,16 @@ class ReduceOp : public PrimOp {
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
 };
 
+class ArgReduceOp : public ReduceOp {
+ public:
+  explicit ArgReduceOp(const std::string &op) : ReduceOp(op) {}
+  ~ArgReduceOp() = default;
+
+ protected:
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &attrs) override;
+};
+
 class OpaqueOp : public PrimOp {
  public:
   explicit OpaqueOp(const std::string &op) : PrimOp(op, ComputeType::OPAQUE) {}

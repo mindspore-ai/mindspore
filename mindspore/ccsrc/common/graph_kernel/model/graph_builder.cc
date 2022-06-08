@@ -42,4 +42,9 @@ NodePtr GraphBuilder::ReduceMax(const NodePtr &input, const std::vector<int64_t>
   auto keep_dims_value = MakeValue(keep_dims);
   return Emit("ReduceMax", {input}, {{"axis", reduce_axis}, {"keep_dims", keep_dims_value}});
 }
+NodePtr GraphBuilder::ReduceMin(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims) const {
+  auto reduce_axis = MakeValue(axis);
+  auto keep_dims_value = MakeValue(keep_dims);
+  return Emit("ReduceMin", {input}, {{"axis", reduce_axis}, {"keep_dims", keep_dims_value}});
+}
 }  // namespace mindspore::graphkernel::inner

@@ -100,8 +100,8 @@ OP_REGISTER("Tile", BroadcastOp);
 OP_REGISTER("ReduceSum", ReduceOp);
 OP_REGISTER("ReduceMax", ReduceOp);
 OP_REGISTER("ReduceMin", ReduceOp);
-OP_REGISTER("Argmax", ReduceOp);
-OP_REGISTER("Argmin", ReduceOp);
+OP_REGISTER("Argmax", ArgReduceOp);
+OP_REGISTER("Argmin", ArgReduceOp);
 // opaque ops
 OP_REGISTER("_opaque", OpaqueOp);  // default opaque node
 OP_REGISTER("Transpose", TransposeOp);

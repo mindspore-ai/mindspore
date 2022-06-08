@@ -358,6 +358,32 @@ DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &) {
   return it == inputs.end() ? kOpFormat_DEFAULT : (*it)->format;
 }
 
+std::vector<DShape> ArgReduceOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+  CHECK_ATTR(attrs, "axis");
+  auto axis = GetListInt(attrs.find("axis")->second);
+  const auto &input_shape = inputs[0]->shape;
+  int64_t size = SizeToLong(input_shape.size());
+  std::vector<int64_t> real_axis;
+  (void)std::transform(axis.begin(), axis.end(), std::back_inserter(real_axis),
+                       [&size](const int64_t &x) { return x < 0 ? (x + size) : x; });
+
+  DShape new_shape;
+  for (size_t i = 0; i < input_shape.size(); i++) {
+    if (std::find(real_axis.begin(), real_axis.end(), SizeToLong(i)) == real_axis.end()) {
+      (void)new_shape.emplace_back(input_shape[i]);
+    }
+  }
+  if (new_shape.empty()) {
+    (void)new_shape.emplace_back(1);
+  }
+  return {new_shape};
+}
+
+std::vector<TypeId> ArgReduceOp::InferType(const NodePtrList &, const DAttrs &attrs) {
+  CHECK_ATTR(attrs, "output_type");
+  return {attrs.find("output_type")->second->cast<TypePtr>()->type_id()};
+}
+
 DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
   // only support NCHW/NHWC now
   if (inputs[0]->shape.size() != 4) return kOpFormat_DEFAULT;
