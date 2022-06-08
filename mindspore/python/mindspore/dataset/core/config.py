@@ -67,6 +67,9 @@ def _init_device_info():
     numa_enable_env = os.getenv("DATASET_ENABLE_NUMA", None)
     if numa_enable_env and numa_enable_env.strip() == 'True':
         numa_enable = True
+    numa_enable_env = os.getenv("MS_ENABLE_NUMA", None)
+    if numa_enable_env and numa_enable_env.strip() == 'True':
+        numa_enable = True
     if context.get_context("device_target") == "GPU":
         rank_id = _get_global_rank()
         parallel_mode = auto_parallel_context().get_parallel_mode()

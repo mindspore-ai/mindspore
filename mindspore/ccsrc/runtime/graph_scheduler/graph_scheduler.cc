@@ -60,12 +60,19 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindspore/core/utils/file_utils.h"
 
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+#include "utils/numa_interface.h"
+#endif
+
 namespace mindspore {
 namespace runtime {
 using distributed::cluster::ClusterContext;
 using distributed::collective::CollectiveManager;
 using distributed::recovery::RecoveryContext;
 namespace {
+constexpr char kNumaEnableEnv[] = "MS_ENABLE_NUMA";
+constexpr char kNumaEnableEnv2[] = "DATASET_ENABLE_NUMA";
+
 bool IsNeedInsertCopyActor(const DeviceContext *from_device_context, const DeviceContext *to_device_context) {
   MS_EXCEPTION_IF_NULL(from_device_context);
   MS_EXCEPTION_IF_NULL(to_device_context);
@@ -359,6 +366,7 @@ void GraphScheduler::Initialize() {
   }
   init_ = true;
 
+  BindNumaNode();
   (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kDeviceDataSourceActor,
                                       &GraphScheduler::LinkDataArrowForBaseActor);
   (void)kKernelTypeToLinkFunc.emplace(KernelTransformType::kHostDataSourceActor,
@@ -2233,6 +2241,31 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
                     << ", front node: " << backend_front_map.second->DebugString();
     }
   }
+}
+
+void GraphScheduler::BindNumaNode() {
+  auto numa_enable = common::GetEnv(kNumaEnableEnv);
+  auto numa_enable2 = common::GetEnv(kNumaEnableEnv2);
+  if ((numa_enable.empty() || numa_enable != "1") && (numa_enable2.empty() || numa_enable2 != "1")) {
+    return;
+  }
+
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && !defined(ENABLE_ANDROID)
+  uint32_t rank_id = CommManager::GetInstance().GetRank();
+  MS_LOG(INFO) << "Bind numa node for rank " << rank_id;
+  if (numa_handle_ == nullptr) {
+    numa_handle_ = GetNumaAdapterHandle();
+    if (numa_handle_ == nullptr) {
+      MS_LOG(EXCEPTION) << "Load numa library failed.";
+    }
+  }
+
+  auto ret = NumaBind(numa_handle_.get(), rank_id);
+  if (ret != StatusCode::kSuccess) {
+    MS_LOG(EXCEPTION) << "Bind numa node failed, ret = " << ret.GetErrDescription();
+  }
+  MS_LOG(INFO) << "Numa bind memory and cpu successful.";
+#endif
 }
 }  // namespace runtime
 }  // namespace mindspore

@@ -13,33 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_NUMA_INTERFACE_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_NUMA_INTERFACE_H_
+#ifndef MINDSPORE_CORE_UTILS_NUMA_INTERFACE_H_
+#define MINDSPORE_CORE_UTILS_NUMA_INTERFACE_H_
 
-#include "minddata/dataset/util/log_adapter.h"
-#include "minddata/dataset/util/status.h"
+#include <memory>
+#include "include/api/status.h"
+#include "utils/visible.h"
 
 namespace mindspore {
-namespace dataset {
-struct bitmask {
-  uint64_t size;
-  uint64_t *maskp;
-};
-
-// Now we separate the link from _c_dataengine with numa,
+// Now we separate the link from mindspore binary with numa,
 // and we use dlopen("libnuma") instead. This function will
 // return a handle which you can do NumaBind and ReleaseLibrary.
-void *GetNumaAdapterHandle();
+MS_CORE_API std::shared_ptr<void> GetNumaAdapterHandle();
 
 // Totally this function will do:
 // 1. Get function pointer of numa api
 // 2. Do numa_bind
-Status NumaBind(void *handle, const int32_t &rank_id);
-
-// Release the numa handle for avoid memory leak, we should
-// not allow handle is nullptr before we use it.
-void ReleaseLibrary(void *handle);
-}  // namespace dataset
+MS_CORE_API Status NumaBind(void *handle, const int32_t &rank_id);
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_NUMA_INTERFACE_H_
+#endif  // MINDSPORE_CORE_UTILS_NUMA_INTERFACE_H_

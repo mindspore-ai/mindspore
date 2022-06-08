@@ -189,6 +189,9 @@ class BACKEND_EXPORT GraphScheduler {
   void DumpActor(const ActorSet *actor_set, const GraphCompilerInfo &graph_compiler_info) const;
   void DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const;
 
+  // bind thread pool to same numa node
+  void BindNumaNode();
+
   // The global maps, only be cleared in the deconstruction.
   mindspore::HashMap<ActorInfo, ActorSetPtr> actors_;
 
@@ -214,6 +217,8 @@ class BACKEND_EXPORT GraphScheduler {
 
   // Whether actor running by the persistent execution order.
   bool execution_order_running_{false};
+  // numa library handle
+  std::shared_ptr<void> numa_handle_{};
 
   bool init_{false};
 };

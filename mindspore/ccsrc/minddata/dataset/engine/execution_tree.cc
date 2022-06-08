@@ -20,7 +20,7 @@
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
-#include "minddata/dataset/util/numa_interface.h"
+#include "mindspore/core/utils/numa_interface.h"
 #endif
 #include "minddata/dataset/util/task_manager.h"
 #include "minddata/dataset/util/service.h"
@@ -45,9 +45,7 @@ ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit) {
 ExecutionTree::~ExecutionTree() {
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   if (numa_enable_) {
-    if (handle_ != nullptr) {
-      ReleaseLibrary(handle_);
-    }
+    handle_ = nullptr;
   }
 #if defined(ENABLE_TDTQUE)
   DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root_.get());
@@ -162,7 +160,7 @@ Status ExecutionTree::Launch() {
         RETURN_STATUS_UNEXPECTED("Numa package (libnuma.so) not found.");
       }
     }
-    RETURN_IF_NOT_OK(NumaBind(handle_, rank_id_));
+    RETURN_IF_NOT_OK(NumaBind(handle_.get(), rank_id_));
     MS_LOG(INFO) << "Numa bind memory and cpu successful.";
   }
 #endif
