@@ -42,7 +42,7 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
   common::SetEnv(kEnvMetaServerPort, server_port.c_str());
 
-  size_t total_node_num = 4;
+  size_t total_node_num = 2;
   std::vector<std::shared_ptr<ComputeGraphNode>> cgns;
   MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(msn.Initialize());
@@ -209,7 +209,7 @@ TEST_F(TestDynamicNetworking, MetaServerNodeRecovery) {
 
   constexpr char kEnvMSRole[] = "MS_ROLE";
   common::SetEnv(kEnvMSRole, "MS_SCHED");
-  size_t total_node_num = 4;
+  size_t total_node_num = 2;
   MetaServerNode msn("meta_server_node", "scheduler", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
@@ -274,7 +274,7 @@ TEST_F(TestDynamicNetworking, HeartbeatTimeout) {
   constexpr char kEnvMSRole[] = "MS_ROLE";
   common::SetEnv(kEnvMSRole, "MS_SCHED");
 
-  size_t total_node_num = 4;
+  size_t total_node_num = 2;
   uint64_t timeout = 4;
   MetaServerNode msn("meta_server_node", "scheduler", total_node_num, timeout);
   ASSERT_TRUE(msn.Initialize());
@@ -332,7 +332,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
   common::SetEnv(kEnvMetaServerPort, server_port.c_str());
 
-  size_t total_node_num = 4;
+  size_t total_node_num = 2;
   std::vector<pid_t> cgns;
 
   // Start the compute graph nodes firstly.
@@ -348,7 +348,7 @@ TEST_F(TestDynamicNetworking, ReconnectToMetaServerDuringReg) {
       while (!cgn->Initialized()) {
         sleep(1);
       }
-      sleep(3);
+      sleep(1);
       cgn->Finalize(true);
       return;
     } else {
@@ -476,8 +476,8 @@ TEST_F(TestDynamicNetworking, GetHostNames) {
   common::SetEnv(kEnvMetaServerPort, server_port.c_str());
   common::SetEnv(recovery::kEnvEnableRecovery, "0");
 
-  size_t total_node_num = 4;
-  size_t total_node_group_0_num = 3;
+  size_t total_node_num = 3;
+  size_t total_node_group_0_num = 2;
   size_t total_node_group_1_num = 1;
   std::string worker_group_0 = "worker_group_0";
   std::string worker_group_1 = "worker_group_1";

@@ -40,7 +40,7 @@ class TestPersistStorage : public UT::Common {
 /// Description: Modify part of the Embedding table content, persist it to the file, and read it from the file again.
 /// Expectation: The content after persistent recovery is consistent with expectations.
 TEST_F(TestPersistStorage, test_embedding_storage) {
-  int vocab = 800000;
+  int vocab = 8000;
   int emb_dim = 80;
   int total_dim = vocab * emb_dim;
 
