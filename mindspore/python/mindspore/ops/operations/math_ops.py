@@ -3600,8 +3600,8 @@ class EqualCount(PrimitiveWithInfer):
         return x_dtype
 
 
-class NotEqual(_LogicBinaryOp):
-    r"""
+class NotEqual(Primitive):
+    """
     Computes the non-equivalence of two tensors element-wise.
 
     Refer to :func:`mindspore.ops.ne` for more detail.
@@ -3623,9 +3623,12 @@ class NotEqual(_LogicBinaryOp):
         >>> print(output)
         [False False  True]
     """
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
 
-    def infer_dtype(self, x_dtype, y_dtype):
-        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type + (mstype.bool_,), self.name)
+    @prim_attr_register
+    def __init__(self):
+        """Initialize NotEqual"""
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
 
 
 class Greater(PrimitiveWithCheck):
