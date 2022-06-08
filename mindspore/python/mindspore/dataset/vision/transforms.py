@@ -560,8 +560,8 @@ class Decode(TensorOperation, PyTensorOperation):
 
     Raises:
         RuntimeError: If given tensor is not a 1D sequence.
-        ValueError: If the input is not raw image bytes.
-        ValueError: If the input image is already decoded.
+        RuntimeError: If the input is not raw image bytes.
+        RuntimeError: If the input image is already decoded.
 
     Supported Platforms:
         ``CPU``
@@ -816,6 +816,9 @@ class HsvToRgb(PyTensorOperation):
     Args:
         is_hwc (bool): If True, means the input image is in shape of (H, W, C) or (N, H, W, C).
             Otherwise, it is in shape of (C, H, W) or (N, C, H, W). Default: False.
+
+    Raises:
+        TypeError: If `is_hwc` is not of type bool.
 
     Supported Platforms:
         ``CPU``
@@ -1114,6 +1117,7 @@ class Normalize(TensorOperation):
     Raises:
         TypeError: If `mean` is not of type sequence.
         TypeError: If `std` is not of type sequence.
+        TypeError: If `is_hwc` is not of type bool.
         ValueError: If `mean` is not in range [0.0, 255.0].
         ValueError: If `mean` is not in range (0.0, 255.0].
 
@@ -1157,6 +1161,7 @@ class NormalizePad(TensorOperation):
         TypeError: If `mean` is not of type sequence.
         TypeError: If `std` is not of type sequence.
         TypeError: If `dtype` is not of type string.
+        TypeError: If `is_hwc` is not of type bool.
         ValueError: If `mean` is not in range [0.0, 255.0].
         ValueError: If `mean` is not in range (0.0, 255.0].
 
