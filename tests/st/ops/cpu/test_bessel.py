@@ -37,7 +37,7 @@ def test_bessel_j0(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_j0(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -57,7 +57,7 @@ def test_bessel_j1(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_j1(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -77,7 +77,7 @@ def test_bessel_i0(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_i0(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -97,7 +97,7 @@ def test_bessel_i0e(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_i0e(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -117,7 +117,7 @@ def test_bessel_k0(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_k0(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -137,7 +137,7 @@ def test_bessel_k0e(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_k0e(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -157,7 +157,7 @@ def test_bessel_y0(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_y0(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -177,7 +177,7 @@ def test_bessel_y1(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_y1(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -197,7 +197,7 @@ def test_bessel_i1(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_i1(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -217,7 +217,7 @@ def test_bessel_i1e(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_i1e(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -237,7 +237,7 @@ def test_bessel_k1(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_k1(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
 
 
@@ -257,5 +257,5 @@ def test_bessel_k1e(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_k1e(x)
-    diff = output.asnumpy() - expect
+    diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)
