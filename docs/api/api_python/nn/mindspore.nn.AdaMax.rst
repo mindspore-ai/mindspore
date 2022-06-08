@@ -1,3 +1,6 @@
+mindspore.nn.AdaMax
+===================
+
 .. py:class:: mindspore.nn.AdaMax(*args, **kwargs)
 
     AdaMax算法是基于无穷范数的Adam的一种变体。
