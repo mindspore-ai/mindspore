@@ -47,6 +47,16 @@ class MIND_API InstanceNorm : public BaseOperator {
   ///
   /// \return a value.
   float get_epsilon() const;
+
+  /// \brief Method to set momentum attribute.
+  ///
+  /// \param[in] momentum Define a value added to the denominator for numerical stability.
+  void set_momentum(const float momentum);
+
+  /// \brief Method to get momentum attribute.
+  ///
+  /// \return a value.
+  float get_momentum() const;
 };
 }  // namespace ops
 }  // namespace mindspore

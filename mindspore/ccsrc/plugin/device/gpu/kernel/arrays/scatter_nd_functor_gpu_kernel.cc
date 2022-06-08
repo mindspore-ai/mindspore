@@ -110,6 +110,9 @@ int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") ||
                    CHECK_SHAPE_NULL(indices_shape, kernel_name_, "indices") ||
                    CHECK_SHAPE_NULL(updates_shape, kernel_name_, "updates");
+  if (is_null_input_) {
+    return KRET_OK;
+  }
 
   if (indices_shape.size() < kMinIndiceRank) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'indices' must be at least 2, but got "
