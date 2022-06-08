@@ -370,9 +370,9 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
 
           \ell(x, y) = \begin{cases}
               \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}} l_n, &
-              \text{if reduction} = \text{`mean';}\\
+              \text{if reduction} = \text{'mean',}\\
               \sum_{n=1}^N l_n,  &
-              \text{if reduction} = \text{`sum'.}
+              \text{if reduction} = \text{'sum'.}
               \end{cases}
 
     - Probabilities (float) for each class, useful when labels beyond a single class per minibatch item
@@ -392,9 +392,9 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
 
           \ell(x, y) = \begin{cases}
               \frac{\sum_{n=1}^N l_n}{N}, &
-              \text{if reduction} = \text{`mean';}\\
+              \text{if reduction} = \text{'mean',}\\
               \sum_{n=1}^N l_n,  &
-              \text{if reduction} = \text{`sum'.}
+              \text{if reduction} = \text{'sum'.}
               \end{cases}
 
     Args:
@@ -408,7 +408,7 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
             data type must be float16 or float32. Default: None.
         ignore_index (int): Specifies a target value that is ignored
             and does not contribute to the input gradient. Default: -100
-        reduction (string):  Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
+        reduction (str):  Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
             Default: 'mean'.
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: 0.0.
@@ -419,12 +419,16 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example::
+    Examples:
 
+        >>> # Case 1: Indices labels
         >>> inputs = mindspore.Tensor(np.random.randn(3, 5))
         >>> target = mindspore.Tensor(np.array([1, 0, 4]))
         >>> output = ops.cross_entropy(inputs, target)
-
+        >>> # Case 2: Probability labels
+        >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
+        >>> target = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
+        >>> output = ops.cross_entropy(inputs, target)
     """
     class_dim = 0 if inputs.ndim == 1 else 1
     if inputs.size == target.size:
@@ -450,7 +454,7 @@ def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', la
     return -(inputs * target * weight).sum(class_dim)
 
 
-def nll_loss(inputs, target, weight=None, ignore_index=None, reduction='mean', label_smoothing=0.0):
+def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0):
     r"""
     Gets the negative log likelihood loss between inputs and target.
 
@@ -471,7 +475,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=None, reduction='mean', l
     .. math::
 
         \ell(x, t)=\left\{\begin{array}{ll}
-        \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean'; } \\
+        \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean', } \\
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
         \end{array}\right.
 
@@ -486,7 +490,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=None, reduction='mean', l
             The data type must be float16 or float32. Default: None.
         ignore_index (int): Specifies a target value that is ignored
             and does not contribute to the input gradient. Default: -100
-        reduction (string):  Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
+        reduction (str):  Apply specific reduction method to the output: 'none', 'mean', or 'sum'.
             Default: 'mean'.
         label_smoothing (float): Label smoothing values, a regularization tool used to prevent the model
             from overfitting when calculating Loss. The value range is [0.0, 1.0]. Default value: 0.0.
@@ -497,7 +501,7 @@ def nll_loss(inputs, target, weight=None, ignore_index=None, reduction='mean', l
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Example::
+    Examples:
 
         >>> inputs = mindspore.Tensor(np.random.randn(3, 5))
         >>> target = mindspore.Tensor(np.array([1, 0, 4]))

@@ -5,7 +5,7 @@ mindspore.nn.CrossEntropyLoss
 
     计算预测值和目标值之间的交叉熵损失。
 
-    cross_entropy方法支持两种不同的目标值(target):
+    CrossEntropyLoss支持两种不同的目标值(target):
 
     - 类别索引 (int)，取值范围为 :math:`[0, C)` 其中 :math:`C` 为类别数，当reduction为'none'时，交叉熵损失公式如下：
 
@@ -23,7 +23,7 @@ mindspore.nn.CrossEntropyLoss
 
           \ell(x, y) = \begin{cases}
               \sum_{n=1}^N \frac{1}{\sum_{n=1}^N w_{y_n} \cdot \mathbb{1}\{y_n \not= \text{ignore_index}\}} l_n, &
-              \text{if reduction} = \text{'mean';}\\
+              \text{if reduction} = \text{'mean',}\\
               \sum_{n=1}^N l_n,  &
               \text{if reduction} = \text{'sum'.}
               \end{cases}
@@ -43,7 +43,7 @@ mindspore.nn.CrossEntropyLoss
 
           \ell(x, y) = \begin{cases}
               \frac{\sum_{n=1}^N l_n}{N}, &
-              \text{if reduction} = \text{'mean';}\\
+              \text{if reduction} = \text{'mean',}\\
               \sum_{n=1}^N l_n,  &
               \text{if reduction} = \text{'sum'.}
               \end{cases}
@@ -52,7 +52,7 @@ mindspore.nn.CrossEntropyLoss
 
     - **weight** (Tensor): 指定各类别的权重。若值不为None，则shape为 (C,)。数据类型仅支持float32或float16。默认值: None。
     - **ignore_index** (int): 指定target中需要忽略的值(一般为填充值)，使其不对梯度产生影响。默认值: -100。
-    - **reduction** (string): 指定应用于输出结果的计算方式，比如'none'、'mean'、'sum'。默认值：'mean'。
+    - **reduction** (str): 指定应用于输出结果的计算方式，比如'none'、'mean'、'sum'。默认值：'mean'。
     - **label_smoothing** (float): 标签平滑值，用于计算Loss时防止模型过拟合的正则化手段。取值范围为[0.0, 1.0]。 默认值: 0.0。
 
     **输入：**

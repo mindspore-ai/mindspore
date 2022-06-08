@@ -19,7 +19,7 @@ mindspore.nn.NLLLoss
 
     .. math::
         \ell(x, t)=L=\left\{\begin{array}{ll}
-        \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean'; } \\
+        \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean', } \\
         \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
         \end{array}\right.
 
@@ -27,7 +27,7 @@ mindspore.nn.NLLLoss
 
     - **weight** (Tensor) - 指定各类别的权重。若值不为None，则shape为 (C,)。数据类型仅支持float32或float16。默认值: None。
     - **ignore_index** (int) - 指定target中需要忽略的值(一般为填充值)，使其不对梯度产生影响。默认值: -100。
-    - **reduction** (string) - 指定应用于输出结果的计算方式，比如'none'、'mean'、'sum'，默认值：'mean'。
+    - **reduction** (str) - 指定应用于输出结果的计算方式，比如'none'、'mean'、'sum'，默认值：'mean'。
 
     **输入：**
 
