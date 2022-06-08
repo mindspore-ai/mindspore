@@ -14,14 +14,14 @@
 # ============================================================================
 
 """nn_ops vmap impl."""
-
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import nn_ops as NN
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, _bdim_at_front, \
+from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, \
+    _bdim_at_front, _bdim_at_back, \
     get_unary_grad_vmap_rule, _raise_value_error
 
 
@@ -119,7 +119,7 @@ def get_bias_add_vmap_rule(prim, axis_size):
             x_channel = x_shape[2]
             if x_channel != bias_channel:
                 raise ValueError("For 'BiadAdd, bias_channel must be equal to x_channel, but got date format: "
-                                 "{}, got bias_channel: {}, x_channel: {}."\
+                                 "{}, got bias_channel: {}, x_channel: {}." \
                                  .format(data_format, bias_channel, x_channel))
             bias_broadcast_shape = (bias_batch, 1, bias_channel)
             if x_rank == x_min_rank:
@@ -151,6 +151,10 @@ def get_bias_add_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.Dropout3D)
 def get_dropout_nd_vmap_rule(prim, axis_size):
     """VmapRule for 'DropoutND' operation."""
+    prim_name = prim.name
+    dropout_nd_dim = 4
+    if prim_name == "Dropout3D":
+        dropout_nd_dim = 5
 
     def vmap_rule(x_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim)
@@ -159,7 +163,16 @@ def get_dropout_nd_vmap_rule(prim, axis_size):
 
         x, x_dim = x_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
-        output, mask = prim(x)
+        x_ndim = F.rank(x)
+        if x_ndim > dropout_nd_dim:
+            x_ori_shape = F.shape(x)
+            x = F.reshape(x, (-1,) + x_ori_shape[2:x_ndim])
+            output, mask = prim(x)
+            output = F.reshape(output, x_ori_shape)
+            mask = F.reshape(mask, x_ori_shape)
+        else:
+            output, mask = prim(x)
+
         return (output, 0), (mask, 0)
 
     return vmap_rule
@@ -325,6 +338,66 @@ def get_kl_div_loss_vmap_rule(prim, axis_size):
             raise RuntimeError("For KLDivLoss vmap, reduction should be one of "
                                "['none', 'mean', 'batchmean', 'sum'], but got '{}'".format(prim_reduction))
         return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(NN.LRN)
+def get_lrn_vmap_rule(prim, axis_size):
+    """VmapRule for `LRN` operation."""
+    lrn_default_dim = 4
+    lrn_pre_remain_dim = 3
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        input_x, input_x_dim = x_bdim
+        # Move axis to last dim
+        x = _bdim_at_back(input_x, input_x_dim, axis_size)
+        x_ndim = F.rank(x)
+        if x_ndim > lrn_default_dim:
+            x_ori_shape = F.shape(x)
+            x = F.reshape(x, x_ori_shape[:lrn_pre_remain_dim] + (-1,))
+            out = prim(x)
+            out = F.reshape(out, x_ori_shape)
+        else:
+            out = prim(x)
+        return out, x_ndim - 1
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.LRNGrad)
+def get_lrn_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `LRNGrad` operation."""
+    lrn_default_dim = 4
+    lrn_pre_remain_dim = 3
+
+    def vmap_rule(dout_bdim, x_bdim, out_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, dout_bdim, x_bdim, out_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        dy, dy_dim = dout_bdim
+        y, y_dim = out_bdim
+        # Move axis to last dim
+        x = _bdim_at_back(x, x_dim, axis_size)
+        dy = _bdim_at_back(dy, dy_dim, axis_size)
+        y = _bdim_at_back(y, y_dim, axis_size)
+        x_ndim = F.rank(x)
+        if x_ndim > lrn_default_dim:
+            x_ori_shape = F.shape(x)
+            dy_ori_shape = F.shape(dy)
+            y_ori_shape = F.shape(y)
+            x = F.reshape(x, x_ori_shape[:lrn_pre_remain_dim] + (-1,))
+            dy = F.reshape(dy, dy_ori_shape[:lrn_pre_remain_dim] + (-1,))
+            y = F.reshape(y, y_ori_shape[:lrn_pre_remain_dim] + (-1,))
+            dx = prim(dy, x, y)
+            dx = F.reshape(dx, x_ori_shape)
+        else:
+            dx = prim(dy, x, y)
+        return dx, x_ndim - 1
 
     return vmap_rule
 

@@ -16,8 +16,11 @@
 import numpy as np
 import pytest
 import mindspore.nn as nn
-from mindspore import Tensor, context
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
+from mindspore import Tensor
+from mindspore import context
+from mindspore.common import dtype as ms_type
 
 
 class MishNet(nn.Cell):
@@ -28,6 +31,17 @@ class MishNet(nn.Cell):
     def construct(self, x):
         output = self.mish(x)
         return output
+
+
+class MishVMapNet(nn.Cell):
+    def __init__(self, forward_net, in_axes, out_axes):
+        super(MishVMapNet, self).__init__()
+        self.net = forward_net
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+
+    def construct(self, input_x):
+        return vmap(self.net, self.in_axes, self.out_axes)(input_x)
 
 
 def mish_np_bencmark(x):
@@ -65,3 +79,53 @@ def test_mish(data_shape, data_type):
     context.set_context(mode=context.PYNATIVE_MODE)
     output = mish(Tensor(x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_mish_vmap():
+    """
+    Feature: Test Mish Vmap on CPU.
+    Description: The output shape match to input shape.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    data_shape = (10, 4, 5, 7)
+    data_type = np.float32
+    input_x = np.random.random(data_shape).astype(data_type)
+    error = 1e-6
+    benchmark_output = mish_np_bencmark(input_x)
+    mish = MishNet()
+    in_axes = 0
+    out_axes = 0
+    output = MishVMapNet(mish, in_axes, out_axes)(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_mish_dy_shape():
+    """
+    Feature: Test Mish Dynamic Shape.
+    Description: The output shape match to input shape.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    ms_data_type = ms_type.float32
+    data_type = np.float32
+    data_shape = (4, 5, 7)
+    x = np.random.random(data_shape).astype(data_type)
+    loss = 1e-6
+    benchmark_output = mish_np_bencmark(x)
+    mish = MishNet()
+    input_dyn = Tensor(shape=[4, 5, None], dtype=ms_data_type)
+    mish.set_inputs(input_dyn)
+    output = mish(Tensor(x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=loss, atol=loss)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    input_dyn = Tensor(shape=[4, 5, None], dtype=ms_data_type)
+    mish.set_inputs(input_dyn)
+    output = mish(Tensor(x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=loss, atol=loss)
