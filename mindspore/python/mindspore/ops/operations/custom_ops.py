@@ -29,7 +29,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import DataType
 from mindspore import log as logger
 from mindspore import ops
-from ._ms_hybrid import determine_variable_usage
+from ._ms_kernel import determine_variable_usage
 from ._custom_grad import autodiff_bprop
 from ._pyfunc_registry import add_pyfunc
 
@@ -107,7 +107,7 @@ class Custom(ops.PrimitiveWithInfer):
               1. A AKG operator implementation function, which can use ir builder/tvm compute/hybrid grammar.
               2. A TBE operator implementation function.
               3. A pure python function
-              4. An ms_hybrid decorated function written by the Hybrid DSL.
+              4. An ms_kernel decorated function written by the Hybrid DSL.
 
             - str: If func is of str type, then str should be a path of file along with a function name.
               This could be used when func_type is "aot" or "julia".
@@ -260,7 +260,7 @@ class Custom(ops.PrimitiveWithInfer):
     Examples:
         >>> import mindspore.ops as ops
         >>> import numpy as np
-        >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType, ms_hybrid
+        >>> from mindspore.ops import CustomRegOp, custom_info_register, DataType, ms_kernel
         >>> from mindspore.common import dtype as mstype
         >>> from mindspore.nn import Cell
         >>> input_x = Tensor(np.ones([16, 16]).astype(np.float32))
@@ -270,8 +270,8 @@ class Custom(ops.PrimitiveWithInfer):
         >>> # This is the default func_type in Custom,
         >>> # and both out_shape and out_dtype can be None(default value).
         >>> # In this case, the input func must be a function written in the Hybrid DSL
-        >>> # and decorated by @ms_hybrid.
-        >>> @ms_hybrid
+        >>> # and decorated by @ms_kernel.
+        >>> @ms_kernel
         ... def outer_product_script(a, b):
         ...     c = output_tensor(a.shape, a.dtype)
         ...     for i0 in range(a.shape[0]):
@@ -402,7 +402,7 @@ class Custom(ops.PrimitiveWithInfer):
         self.imply_path = ""
         self.func_source_str = ""
         self._func_compile_attrs = {}
-        self._is_ms_hybrid = False
+        self._is_ms_kernel = False
 
         self._check_func()
         self._update_func_info()
@@ -488,20 +488,20 @@ class Custom(ops.PrimitiveWithInfer):
         elif self.func_type == "julia":
             self._check_julia_func()
         elif self.func_type == "hybrid":
-            if not hasattr(self.func, "ms_hybrid_flag"):
-                raise TypeError("{}, 'func' must be a function decorated by ms_hybrid".format(self.log_prefix))
-            self._is_ms_hybrid = True
+            if not hasattr(self.func, "ms_kernel_flag"):
+                raise TypeError("{}, 'func' must be a function decorated by ms_kernel".format(self.log_prefix))
+            self._is_ms_kernel = True
             self._func_compile_attrs = getattr(self.func, "compile_attrs", {})
         elif self.func_type == "akg":
-            if hasattr(self.func, "ms_hybrid_flag"):
+            if hasattr(self.func, "ms_kernel_flag"):
                 logger.warning("{}. To have a better user experience, the mode hybrid is suggested "
-                               "for the input function with decorator @ms_hybrid. "
+                               "for the input function with decorator @ms_kernel. "
                                "To enable this mode, set the 'func_type' to be \"hybrid\"".format(self.log_prefix))
         elif self.func_type == "pyfunc":
-            if hasattr(self.func, "ms_hybrid_flag"):
-                logger.warning("{}. Now you are using the function with decorator @ms_hybrid in the mode pyfunc. "
+            if hasattr(self.func, "ms_kernel_flag"):
+                logger.warning("{}. Now you are using the function with decorator @ms_kernel in the mode pyfunc. "
                                "The kernel will be executed as a native python function, which might lead to "
-                               "low efficiency. To accelerate the kernel, set the 'func_type' to be \"ms_hybrid\""
+                               "low efficiency. To accelerate the kernel, set the 'func_type' to be \"hybrid\""
                                .format(self.log_prefix))
         else:
             if not callable(self.func):
@@ -524,7 +524,7 @@ class Custom(ops.PrimitiveWithInfer):
             if index != -1:
                 self.func_source_str = self.func_source_str[index:]
 
-            if self._is_ms_hybrid:
+            if self._is_ms_kernel:
                 # static check for the Hybrid DSL in hybrid
                 root = ast.parse(self.func_source_str)
                 inplace_assign_output = determine_variable_usage(root, self.func_name)
@@ -848,7 +848,7 @@ class Custom(ops.PrimitiveWithInfer):
 
     def _auto_infer(self, *args):
         """
-        the automatic infer function for functions with @ms_hybrid decorator
+        the automatic infer function for functions with @ms_kernel decorator
         """
         fake_input = []
         enable_infer_value = True
@@ -893,7 +893,7 @@ class Custom(ops.PrimitiveWithInfer):
 
         # deal with the case of ms script
         # enable auto infer function if any infer information is missing
-        if self._is_ms_hybrid and (infer_dtype is None or infer_shape is None):
+        if self._is_ms_kernel and (infer_dtype is None or infer_shape is None):
             logger.warning("{}, 'out_shape' or 'out_dtype' is None, infer the output shape and output dtype "
                            "automatically. There might be some Python RuntimeWarning but it wouldn't influence the "
                            "result.".format(self.log_prefix))

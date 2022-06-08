@@ -19,10 +19,10 @@ import numpy as np
 from mindspore import context, Tensor
 from mindspore.nn import Cell
 import mindspore.ops as ops
-from mindspore.ops import ms_hybrid
+from mindspore.ops import ms_kernel
 
 
-@ms_hybrid
+@ms_kernel
 def dtype_and_cast_example(a, b):
     """
     test function for dtype and cast in Hybrid DSL
@@ -38,7 +38,7 @@ def dtype_and_cast_example(a, b):
     return c
 
 
-@ms_hybrid
+@ms_kernel
 def allocate_and_math_intrin_example(a, b):
     """
     test function for allocate and math function in Hybrid DSL
@@ -53,7 +53,7 @@ def allocate_and_math_intrin_example(a, b):
     return c
 
 
-@ms_hybrid
+@ms_kernel
 def grid_example(a, b):
     """
     test function for grid in Hybrid DSL
@@ -77,7 +77,7 @@ class TestMsHybridDSL(Cell):
         return self.program(x, y)
 
 
-def ms_hybrid_cast_with_infer():
+def ms_kernel_cast_with_infer():
     """
     test case Custom Op with functions written in Hybrid DSL and infer functions
     """
@@ -93,7 +93,7 @@ def ms_hybrid_cast_with_infer():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-def ms_hybrid_cast_without_infer():
+def ms_kernel_cast_without_infer():
     """
     test case Custom Op with functions written in Hybrid DSL and without infer functions
     """
@@ -109,7 +109,7 @@ def ms_hybrid_cast_without_infer():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-def ms_hybrid_cast_pyfunc():
+def ms_kernel_cast_pyfunc():
     """
     test case Custom Op with functions written in Hybrid DSL and func_type pyfunc
     """
@@ -125,7 +125,7 @@ def ms_hybrid_cast_pyfunc():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-def ms_hybrid_allocate():
+def ms_kernel_allocate():
     """
     test case Custom Op with functions written in Hybrid DSL about math functions and allocate
     """
@@ -141,7 +141,7 @@ def ms_hybrid_allocate():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-def ms_hybrid_allocate_cpu():
+def ms_kernel_allocate_cpu():
     """
     test case Custom Op with functions written in Hybrid DSL about math functions and allocate
     for cpu, we test fp32 to avoid env diff in support of data types.
@@ -158,7 +158,7 @@ def ms_hybrid_allocate_cpu():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-def ms_hybrid_grid():
+def ms_kernel_grid():
     """
     test case Custom Op with functions written in Hybrid DSL about grid
     """
@@ -174,7 +174,7 @@ def ms_hybrid_grid():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-def ms_hybrid_grid_cpu():
+def ms_kernel_grid_cpu():
     """
     test case Custom Op with functions written in Hybrid DSL about grid
     """
@@ -194,79 +194,79 @@ def ms_hybrid_grid_cpu():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_ms_hybrid_ascend_graph_mode():
+def test_ms_kernel_ascend_graph_mode():
     """
-    Feature: test case for Custom op with func_type="ms_hybrid"
-    Description: ascend test case, Python DSL with ms_hybrid decorator in GRAPH_MODE.
+    Feature: test case for Custom op with func_type="ms_kernel"
+    Description: ascend test case, Python DSL with ms_kernel decorator in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    ms_hybrid_cast_pyfunc()
-    ms_hybrid_cast_with_infer()
-    ms_hybrid_cast_without_infer()
-    ms_hybrid_allocate()
-    ms_hybrid_grid()
+    ms_kernel_cast_pyfunc()
+    ms_kernel_cast_with_infer()
+    ms_kernel_cast_without_infer()
+    ms_kernel_allocate()
+    ms_kernel_grid()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_ms_hybrid_ascend_pynative_mode():
+def test_ms_kernel_ascend_pynative_mode():
     """
-    Feature: test case for Custom op with func_type="ms_hybrid"
-    Description: ascend test case, Python DSL with ms_hybrid decorator in PYNATIVE_MODE.
+    Feature: test case for Custom op with func_type="ms_kernel"
+    Description: ascend test case, Python DSL with ms_kernel decorator in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    ms_hybrid_cast_pyfunc()
-    ms_hybrid_cast_with_infer()
-    ms_hybrid_cast_without_infer()
-    ms_hybrid_allocate()
-    ms_hybrid_grid()
+    ms_kernel_cast_pyfunc()
+    ms_kernel_cast_with_infer()
+    ms_kernel_cast_without_infer()
+    ms_kernel_allocate()
+    ms_kernel_grid()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_ms_hybrid_gpu_graph_mode():
+def test_ms_kernel_gpu_graph_mode():
     """
-    Feature: test case for Custom op with func_type="ms_hybrid"
-    Description: gpu test case, Python DSL with ms_hybrid decorator in GRAPH_MODE.
+    Feature: test case for Custom op with func_type="ms_kernel"
+    Description: gpu test case, Python DSL with ms_kernel decorator in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    ms_hybrid_cast_pyfunc()
-    ms_hybrid_cast_with_infer()
-    ms_hybrid_cast_without_infer()
-    ms_hybrid_allocate()
-    ms_hybrid_grid()
+    ms_kernel_cast_pyfunc()
+    ms_kernel_cast_with_infer()
+    ms_kernel_cast_without_infer()
+    ms_kernel_allocate()
+    ms_kernel_grid()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_ms_hybrid_gpu_pynative_mode():
+def test_ms_kernel_gpu_pynative_mode():
     """
-    Feature: test case for Custom op with func_type="ms_hybrid"
-    Description: gpu test case, Python DSL with ms_hybrid decorator in PYNATIVE_MODE.
+    Feature: test case for Custom op with func_type="ms_kernel"
+    Description: gpu test case, Python DSL with ms_kernel decorator in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    ms_hybrid_cast_pyfunc()
-    ms_hybrid_cast_with_infer()
-    ms_hybrid_cast_without_infer()
-    ms_hybrid_allocate()
-    ms_hybrid_grid()
+    ms_kernel_cast_pyfunc()
+    ms_kernel_cast_with_infer()
+    ms_kernel_cast_without_infer()
+    ms_kernel_allocate()
+    ms_kernel_grid()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_ms_hybrid_cpu_graph_mode():
+def test_ms_kernel_cpu_graph_mode():
     """
-    Feature: test case for Custom op with func_type="ms_hybrid"
-    Description: cpu test case, Python DSL with ms_hybrid decorator in GRAPH_MODE.
+    Feature: test case for Custom op with func_type="ms_kernel"
+    Description: cpu test case, Python DSL with ms_kernel decorator in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
     if platform.system().lower() in {"windows", "darwin"}:
@@ -274,22 +274,22 @@ def test_ms_hybrid_cpu_graph_mode():
         pass
     else:
         context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-        ms_hybrid_allocate_cpu()
-        ms_hybrid_grid_cpu()
+        ms_kernel_allocate_cpu()
+        ms_kernel_grid_cpu()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_ms_hybrid_cpu_pynative_mode():
+def test_ms_kernel_cpu_pynative_mode():
     """
-    Feature: test case for Custom op with func_type="ms_hybrid"
-    Description: cpu test case, Python DSL with ms_hybrid decorator in PYNATIVE_MODE.
+    Feature: test case for Custom op with func_type="ms_kernel"
+    Description: cpu test case, Python DSL with ms_kernel decorator in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
     if platform.system().lower() in {"windows", "darwin"}:
         pass
     else:
         context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-        ms_hybrid_allocate_cpu()
-        ms_hybrid_grid_cpu()
+        ms_kernel_allocate_cpu()
+        ms_kernel_grid_cpu()

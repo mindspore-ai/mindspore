@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""ms_hybrid decorator and related util functions"""
+"""ms_kernel decorator and related util functions"""
 
 import ast
 import json
 from functools import wraps
 from itertools import product
 import numpy
-from mindspore import context
+from mindspore import context, log
 
 
 def _allocate(shape, dtype='float32', scope='global'):
@@ -86,15 +86,15 @@ def _erf(x):
     p = 0.3275911
 
     # A&S formula 7.1.26
-    t = 1.0/(1.0 + p*x)
-    y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*numpy.exp(-x*x)
-    return sign*y  # erf(-x) = -erf(x)
+    t = 1.0 / (1.0 + p * x)
+    y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * numpy.exp(-x * x)
+    return sign * y  # erf(-x) = -erf(x)
 
 
 def _grid(extents):
     extents_list = []
     for ext in extents:
-        extents_list.append(range(ext))
+        extents_list.append(list(range(ext)))
     return product(*extents_list)
 
 
@@ -120,88 +120,91 @@ class WithStub:
         return self
 
 
-INTRIN_BUFFER = {
-    'allocate': _allocate,
-    'output_tensor': _allocate
-}
-
-INTRIN_LOOP = {
-    'range': range,
-    'grid': _grid,
-}
-
-INTRIN_WITH_SCOPE = {
-    'attr': WithStub(),
-    'block_realize': WithStub(),
-}
-
-INTRIN_UNARY_OP = {
-    'sqrt': numpy.sqrt,
-    'sign': numpy.sign,
-    'log': numpy.log,
-    'tanh': numpy.tanh,
-    'exp': numpy.exp,
-    'abs': numpy.abs,
-    'int32': numpy.int32,
-    'float16': numpy.float16,
-    'float32': numpy.float32,
-}
-
-INTRIN_BINARY_OP = {
-    'power': numpy.power,
-}
-
-INTRIN_GLOBALS = {
-    **INTRIN_BUFFER,
-    **INTRIN_LOOP,
-    **INTRIN_WITH_SCOPE,
-    **INTRIN_UNARY_OP,
-    **INTRIN_BINARY_OP,
-}
-
-INTRIN_GENERAL_UNARY_OP = {
-    'rsqrt': _rsqrt,
-    'erf': _erf,
-    'isnan': numpy.isnan,
-    'int8': numpy.int8,
-    'int16': numpy.int16,
-    'int64': numpy.int64,
-    'float64': numpy.float64,
-    'sin': numpy.sin,
-    'cos': numpy.cos,
-    'isinf': numpy.isinf,
-    'isfinite': numpy.isfinite,
-    'atan': numpy.arctan,
-    'atan2': numpy.arctan2,
-    'expm1': numpy.expm1,
-    'floor': numpy.floor,
-    'ceil': numpy.ceil,
-    'trunc': numpy.trunc,
-    'round': numpy.round,
-}
-
-INTRIN_CPU_NOT_SUPPORT = ["atan2", "expm1", "float16"]
-
-INTRIN_GENERAL_BINARY_OP = {
-    'ceil_div': lambda a, b: (a + b - 1) // b,
-}
-
-INTRIN_GENERAL = {
-    **INTRIN_GENERAL_UNARY_OP,
-    **INTRIN_GENERAL_BINARY_OP
-}
-
-INTRIN_RUNTIME = {
-    **INTRIN_GLOBALS,
-    **INTRIN_GENERAL
-}
-
-
 class VariableUsage(ast.NodeVisitor):
     """
     The ast visitor to perform static check for the source code,
     and determine the index of inplace assign outputs
     """
+
+    intrin_buffer = {
+        'allocate': _allocate,
+        'output_tensor': _allocate
+    }
+
+    intrin_loop = {
+        'range': range,
+        'serial': range,
+        'vectorize': range,
+        'parallel': range,
+        'reduce': range,
+        'grid': _grid,
+    }
+
+    intrin_with_scope = {
+        'attr': WithStub(),
+        'block_realize': WithStub(),
+    }
+
+    intrin_unary_op = {
+        'sqrt': numpy.sqrt,
+        'sign': numpy.sign,
+        'log': numpy.log,
+        'tanh': numpy.tanh,
+        'exp': numpy.exp,
+        'abs': numpy.abs,
+        'int32': numpy.int32,
+        'float16': numpy.float16,
+        'float32': numpy.float32,
+    }
+
+    intrin_bin_op = {
+        'power': numpy.power,
+    }
+
+    intrin_globals = {
+        **intrin_buffer,
+        **intrin_loop,
+        **intrin_with_scope,
+        **intrin_unary_op,
+        **intrin_bin_op,
+    }
+
+    intrin_general_unary_op = {
+        'rsqrt': _rsqrt,
+        'erf': _erf,
+        'isnan': numpy.isnan,
+        'int8': numpy.int8,
+        'int16': numpy.int16,
+        'int64': numpy.int64,
+        'float64': numpy.float64,
+        'sin': numpy.sin,
+        'cos': numpy.cos,
+        'isinf': numpy.isinf,
+        'isfinite': numpy.isfinite,
+        'atan': numpy.arctan,
+        'atan2': numpy.arctan2,
+        'expm1': numpy.expm1,
+        'floor': numpy.floor,
+        'ceil': numpy.ceil,
+        'trunc': numpy.trunc,
+        'round': numpy.round,
+    }
+
+    intrin_cpu_not_support = ["atan2", "expm1", "float16"]
+
+    intrin_general_bin_op = {
+        'ceil_div': lambda a, b: (a + b - 1) // b,
+    }
+
+    intrin_general = {
+        **intrin_general_unary_op,
+        **intrin_general_bin_op
+    }
+
+    intrin_runtime = {
+        **intrin_globals,
+        **intrin_general
+    }
 
     def __init__(self, func_name):
         self.func_name = func_name
@@ -276,27 +279,27 @@ class VariableUsage(ast.NodeVisitor):
         """
         Ast visitor for Call
 
-        Check the func call used in the DSL. Only those in INTRIN_RUNTIME are supported for now.
+        Check the func call used in the DSL. Only those in intrin_runtime are supported for now.
         """
 
         func_id = node.func.id
-        if not (func_id in list(INTRIN_RUNTIME.keys()) +
-                ['max', 'min', 'len', 'ms_hybrid']):
+        if not (func_id in list(VariableUsage.intrin_runtime.keys()) +
+                ['max', 'min', 'len', 'ms_kernel']):
             raise ValueError(
                 "In the function {} written in the Hybrid DSL, function call id {} "
                 "not in intrinsics' list".format(self.func_name, func_id))
-        if (self.device == "Ascend" and func_id in list(INTRIN_GENERAL.keys())) or \
-                (self.device == "CPU" and func_id in INTRIN_CPU_NOT_SUPPORT):
+        if (self.device == "Ascend" and func_id in list(VariableUsage.intrin_general.keys())) or \
+                (self.device == "CPU" and func_id in VariableUsage.intrin_cpu_not_support):
             raise ValueError(
                 "In the function {} written in the Hybrid DSL, function {} is not available on the "
                 "device {}".format(self.func_name, func_id, self.device))
-        if func_id in list(INTRIN_UNARY_OP.keys()) + list(INTRIN_GENERAL_UNARY_OP.keys()) + list(INTRIN_LOOP.keys()) \
+        if func_id in list(VariableUsage.intrin_unary_op.keys()) + list(VariableUsage.intrin_general_unary_op.keys()) \
                 and len(node.args) != 1:
             raise TypeError(
                 "In the function {} written in the Hybrid DSL, function {} "
                 "expects one input, but get {}".format(self.func_name, func_id, len(node.args)))
-        if func_id in list(INTRIN_BINARY_OP.keys()) + list(INTRIN_GENERAL_BINARY_OP.keys()) + \
-                list(INTRIN_BUFFER.keys()) and len(node.args) != 2:
+        if func_id in list(VariableUsage.intrin_bin_op.keys()) + list(VariableUsage.intrin_general_bin_op.keys()) + \
+                list(VariableUsage.intrin_buffer.keys()) and len(node.args) != 2:
             raise TypeError(
                 "In the function {} written in the Hybrid DSL, function {} "
                 "expects two inputs, but get {}".format(self.func_name, func_id, len(node.args)))
@@ -470,10 +473,10 @@ def determine_variable_usage(root, func_name):
     return visitor.inplace_assign_output
 
 
-def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
+def ms_kernel(fn=None, reg_info=None, compile_attrs=None):
     """
     The decorator of the Hybrid DSL function for the Custom Op.
-    When a function written by the Hybrid DSL is decorated by ms_hybrid,
+    When a function written by the Hybrid DSL is decorated by ms_kernel,
     it can be run as a usual Python function.
     Also, this function can be used in the api Custom and to create a Custom op, with func_type
     "hybrid" or "pyfunc". Creating a custom op with mode "hybrid" by the Hybrid DSL function
@@ -495,7 +498,7 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
     Examples:
         >>> import numpy as np
         >>> from mindspore import ops, Tensor
-        >>> from mindspore.ops import ms_hybrid, DataType, CustomRegOp
+        >>> from mindspore.ops import ms_kernel, DataType, CustomRegOp
         ...
         >>> # Create a dict for the compile flags.
         >>> attrs = {
@@ -516,9 +519,9 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
         >>> input_x = np.ones([4, 4]).astype(np.float32)
         >>> input_y = np.ones([4, 4]).astype(np.float32)
         ...
-        >>> # Write a Hybrid DSL function through the decorator @ms_hybrid.
+        >>> # Write a Hybrid DSL function through the decorator @ms_kernel.
         >>> # We can also pass the compile attrs and the reg info through the decorator.
-        >>> @ms_hybrid(reg_info=op_gpu_info, compile_attrs=attrs)
+        >>> @ms_kernel(reg_info=op_gpu_info, compile_attrs=attrs)
         ... def outer_product(a, b):
         ...     c = output_tensor(a.shape, a.dtype)
         ...
@@ -544,21 +547,25 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
         compile_attrs = {}
 
     if not isinstance(compile_attrs, dict):
-        raise TypeError("The input 'compile_attrs' of @ms_hybrid must be a dict, "
+        raise TypeError("The input 'compile_attrs' of @ms_kernel must be a dict, "
                         "but get a {}".format(type(compile_attrs)))
 
     for key in compile_attrs.keys():
         if not isinstance(key, str):
-            raise TypeError("The key of 'compile_attrs' of @ms_hybrid must be a str, "
+            raise TypeError("The key of 'compile_attrs' of @ms_kernel must be a str, "
                             "but get a {}".format(type(key)))
 
     if reg_info is not None and not isinstance(reg_info, (str, dict, tuple)):
         raise TypeError(
-            "The input 'reg_info' of @ms_hybrid should be one of "
+            "The input 'reg_info' of @ms_kernel should be one of "
             "str, dict and tuple, but get a {}".format(type(reg_info)))
 
-    def wrap_ms_hybrid(func):
-        setattr(func, "ms_hybrid_flag", True)
+    def wrap_ms_kernel(func):
+        setattr(func, "ms_kernel_flag", True)
+
+        # we enable ml scheduler automatically for ms_kernel function
+        compile_attrs["enable_mlsched"] = True
+
         setattr(func, "compile_attrs", json.dumps(compile_attrs))
         if reg_info is not None:
             setattr(func, "reg_info", reg_info)
@@ -566,12 +573,25 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
         @wraps(func)
         def _patch_intrins_to_runtime(*args):
             _globals = func.__globals__
-            for elem in list(INTRIN_RUNTIME.keys()):
-                _globals[elem] = INTRIN_RUNTIME[elem]
+            for elem in list(VariableUsage.intrin_runtime.keys()):
+                _globals[elem] = VariableUsage.intrin_runtime[elem]
             return func(*args)
 
         return _patch_intrins_to_runtime
 
     if fn is not None:
-        return wrap_ms_hybrid(fn)
-    return wrap_ms_hybrid
+        return wrap_ms_kernel(fn)
+    return wrap_ms_kernel
+
+
+def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
+    """
+    Same as docarator ms_kernel. ms_hybrid will be deprecated in the future.
+    Please use ms_kernel instead.
+
+    Supported Platforms:
+        Deprecated
+    """
+    log.warning("'ms_hybrid' is deprecated from version 1.8 and "
+                "will be removed in a future version, use 'ms_kernel' instead.")
+    return ms_kernel(fn, reg_info, compile_attrs)
