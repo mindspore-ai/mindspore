@@ -33,7 +33,7 @@ static inline int64_t GemmIsNotPack@SIMD_INSTRUCTION@(int64_t index, const float
   SIMD_F32 bias_data16 = SIMD_MOV_F32(bias[0]);
   for (int block_max_size = row - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_F32 a_data = SIMD_LD_F32(a + index);
-    SIMD_F32 dst = b_data16 * a_data + bias_data16;
+    SIMD_F32 dst = SIMD_FMADD_F32(b_data16, a_data, bias_data16);
     if (act_type != 0) {
       dst = SIMD_MAX_F32(dst, down_threshold);
       if (act_type == 3) {
