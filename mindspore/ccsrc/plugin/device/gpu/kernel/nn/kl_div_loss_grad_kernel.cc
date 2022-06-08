@@ -23,7 +23,6 @@ MS_REG_GPU_KERNEL_ONE(KLDivLossGrad,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
-                        .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       KLDivLossGradGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(KLDivLossGrad,
@@ -31,7 +30,6 @@ MS_REG_GPU_KERNEL_ONE(KLDivLossGrad,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
                       KLDivLossGradGpuKernelMod, half)
 }  // namespace kernel

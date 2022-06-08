@@ -37,18 +37,17 @@ class KLDivLossGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    T *input_x = GetDeviceAddress<T>(inputs, 0);
-    T *input_y = GetDeviceAddress<T>(inputs, 1);
-    T *dloss = GetDeviceAddress<T>(inputs, 2);
-    T *dx = GetDeviceAddress<T>(outputs, 0);
-    T *dy = GetDeviceAddress<T>(outputs, 1);
-    KLDivLossGrad(input_size_, reduction_, input_x, input_y, dloss, dx, dy, reinterpret_cast<cudaStream_t>(stream_ptr));
+    T *dloss = GetDeviceAddress<T>(inputs, kIndex0);
+    T *input_x = GetDeviceAddress<T>(inputs, kIndex1);
+    T *input_y = GetDeviceAddress<T>(inputs, kIndex2);
+    T *dx = GetDeviceAddress<T>(outputs, kIndex0);
+    KLDivLossGrad(input_size_, reduction_, input_x, input_y, dloss, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
     kernel_node_ = kernel_node;
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
@@ -66,15 +65,14 @@ class KLDivLossGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
  protected:
   void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(input_size_ * sizeof(T));
     if (reduction_ == ReductionMode::kNone) {
       input_size_list_.push_back(input_size_ * sizeof(T));
     } else {
       input_size_list_.push_back(sizeof(T));
     }
+    input_size_list_.push_back(input_size_ * sizeof(T));
+    input_size_list_.push_back(input_size_ * sizeof(T));
+    output_size_list_.push_back(input_size_ * sizeof(T));
   }
 
  private:

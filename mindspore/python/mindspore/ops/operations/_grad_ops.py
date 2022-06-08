@@ -158,14 +158,14 @@ class KLDivLossGrad(PrimitiveWithInfer):
     def __init__(self, reduction='mean'):
         self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
 
-    def infer_shape(self, x_shape, y_shape, doutput_shape):
+    def infer_shape(self, doutput_shape, x_shape, y_shape):
         validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
-        return x_shape, y_shape
+        return x_shape
 
-    def infer_dtype(self, x_type, y_type, doutput_type):
+    def infer_dtype(self, doutput_type, x_type, y_type):
         args = {'x_type': x_type, 'y_type': y_type, 'doutput_type': doutput_type}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
-        return x_type, y_type
+        return x_type
 
 
 class BinaryCrossEntropyGrad(PrimitiveWithInfer):
