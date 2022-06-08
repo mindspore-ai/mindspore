@@ -1456,13 +1456,18 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     // input image
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
 
-    // validate rank
-    if (input_cv->Rank() == 1 || input_cv->mat().dims > MIN_IMAGE_RANK) {
-      std::string err_msg = "Pad: input shape is not <H,W,C> or <H, W>, got rank: " + std::to_string(input_cv->Rank());
-      if (input_cv->Rank() == 1) {
-        err_msg = err_msg + ", may need to do Decode operation first.";
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Pad: load image failed.");
+    }
+
+    // validate rank and number channels
+    RETURN_IF_NOT_OK(ValidateImageRank("Pad", input_cv->Rank()));
+    if (input_cv->Rank() == DEFAULT_IMAGE_RANK) {
+      if (input_cv->shape()[CHANNEL_INDEX_HWC] != DEFAULT_IMAGE_CHANNELS &&
+          input_cv->shape()[CHANNEL_INDEX_HWC] != MIN_IMAGE_CHANNELS) {
+        RETURN_STATUS_UNEXPECTED("Pad: number of channels for input tensor can only be 1 or 3, got channel: " +
+                                 std::to_string(input_cv->shape()[CHANNEL_INDEX_HWC]));
       }
-      RETURN_STATUS_UNEXPECTED(err_msg);
     }
 
     // get the border type in openCV
@@ -1470,7 +1475,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     // output image
     cv::Mat out_image;
     if (b_type == cv::BORDER_CONSTANT) {
-      cv::Scalar fill_color = cv::Scalar(fill_b, fill_g, fill_r);
+      cv::Scalar fill_color = cv::Scalar(fill_r, fill_g, fill_b);
       cv::copyMakeBorder(input_cv->mat(), out_image, pad_top, pad_bottom, pad_left, pad_right, b_type, fill_color);
     } else {
       cv::copyMakeBorder(input_cv->mat(), out_image, pad_top, pad_bottom, pad_left, pad_right, b_type);
@@ -1795,10 +1800,11 @@ Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::share
 }
 
 Status ValidateImageRank(const std::string &op_name, int32_t rank) {
-  if (rank != 2 && rank != 3) {
-    std::string err_msg = op_name + ": image shape is not <H,W,C> or <H, W>, but got rank:" + std::to_string(rank);
+  if (rank != MIN_IMAGE_RANK && rank != DEFAULT_IMAGE_RANK) {
+    std::string err_msg =
+      op_name + ": input tensor is not in shape of <H,W> or <H,W,C>, but got rank: " + std::to_string(rank);
     if (rank == 1) {
-      err_msg = err_msg + ", may need to do Decode operation first.";
+      err_msg = err_msg + ". You may need to perform Decode first.";
     }
     RETURN_STATUS_UNEXPECTED(err_msg);
   }

@@ -309,16 +309,15 @@ def test_eager_exceptions_normalize():
 
 def test_eager_exceptions_pad():
     """
-    Feature: Pad op
-    Description: Exception eager support test for Pad Python implementation
-    Expectation: Error input image is detected
+    Feature: Pad
+    Description: Test Pad with invalid input of string
+    Expectation: Raise RuntimeError
     """
     try:
         img = "../data/dataset/apple.jpg"
         _ = vision.Pad(padding=4)(img)
-        assert False
     except RuntimeError as e:
-        assert "tensor should be in shape of <H,W,C> or <H,W>" in str(e)
+        assert "load image failed" in str(e)
 
 
 if __name__ == '__main__':

@@ -526,8 +526,8 @@ def test_random_crop_08_py():
 
 def test_random_crop_09():
     """
-    Feature: RandomCrop op
-    Description: Test RandomCrop op with invalid type of input image format
+    Feature: RandomCrop
+    Description: Test RandomCrop with invalid image format
     Expectation: RuntimeError is raised
     """
 
@@ -546,10 +546,8 @@ def test_random_crop_09():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             pass
-    error_msg = \
-        "Unexpected error. map operation: [RandomCrop] failed. Pad: input shape is not <H,W,C> or <H, W>, got rank: 3"
+    error_msg = "number of channels for input tensor can only be 1 or 3"
     assert error_msg in str(error_info.value)
-
 
 
 def test_random_crop_comp(plot=False):
