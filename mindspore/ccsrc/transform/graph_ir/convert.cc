@@ -1738,6 +1738,11 @@ bool DfGraphConvertor::IsControlEdgeNode(const AnfNodePtr &node) {
 }
 
 OperatorPtr DfGraphConvertor::ToOperatorPtr(const AnfNodePtr &node) {
+  auto real_node = GetRealOpNode(node);
+  if (IsValueNode<Primitive>(real_node) || IsPrimitiveCNode(real_node, prim::kPrimLoad) ||
+      IsPrimitiveCNode(real_node, prim::kPrimUpdateState)) {
+    return nullptr;
+  }
   auto op = Convert(GetRealOpNode(node));
   if (op == nullptr) {
     MS_LOG(ERROR) << "Convert real op node to operator failed, " << node->ToString();
@@ -1886,6 +1891,7 @@ void DfGraphConvertor::SetOpControlInput(const AnfNodePtr &node) {
   for (auto &item : control_edges) {
     (void)item.dest_op->AddControlInput(*item.src_op);
   }
+  control_edge_cache_.clear();
 }
 
 const std::vector<std::string> trans_var_list = {string(kNameAssign), string(kNameAssignAdd), string(kNameAssignSub)};
@@ -2495,7 +2501,15 @@ AnfNodePtr DfGraphConvertor::TraceTupleGetItem(const CNodePtr &node, uint64_t *i
 
 AnfNodePtr DfGraphConvertor::TraceDepend(const CNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
-  if (cnode->inputs().size() < 3) {  // "Depend" primitive have 3 inputs
+  if (cnode->inputs().size() != 3) {  // "Depend" primitive have 3 inputs
+    MS_LOG(EXCEPTION) << "length of inputs of depend is not equal to 3";
+  }
+  return cnode->inputs()[1];
+}
+
+AnfNodePtr DfGraphConvertor::TraceLoad(const CNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode->inputs().size() < 3) {  // "Load" primitive have 3 inputs
     MS_LOG(EXCEPTION) << "length of inputs of depend is less than 3";
   }
   return cnode->inputs()[1];
@@ -2561,7 +2575,7 @@ OutHandler DfGraphConvertor::GetHandler(const AnfNodePtr &node, const std::stack
 // get the real operator through maketuple tuple_getitem depend
 OutHandler DfGraphConvertor::TraceRealOp(AnfNodePtr node) {
   bool flag = IsPrimitiveCNode(node, prim::kPrimTupleGetItem) || IsPrimitiveCNode(node, prim::kPrimMakeTuple) ||
-              IsPrimitiveCNode(node, prim::kPrimDepend);
+              IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad);
   std::stack<uint64_t> index_stack;
   auto draw_index = node.get();
   while (flag) {
@@ -2582,6 +2596,9 @@ OutHandler DfGraphConvertor::TraceRealOp(AnfNodePtr node) {
       }
     } else if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
       node = TraceDepend(node->cast<CNodePtr>());
+      flag = true;
+    } else if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
+      node = TraceLoad(node->cast<CNodePtr>());
       flag = true;
     }
   }

@@ -154,6 +154,7 @@ class DfGraphConvertor {
   AnfNodePtr TraceTupleGetItem(const CNodePtr &node, uint64_t *index);
   AnfNodePtr TraceMakeTuple(const CNodePtr &node, uint64_t index);
   AnfNodePtr TraceDepend(const CNodePtr &node);
+  AnfNodePtr TraceLoad(const CNodePtr &node);
   OutHandler TraceRealOp(AnfNodePtr node);
   OutHandler GetHandler(const AnfNodePtr &node);
   OutHandler GetHandler(const AnfNodePtr &node, const std::stack<uint64_t> &index_stack, AnfNode *const draw_index);
