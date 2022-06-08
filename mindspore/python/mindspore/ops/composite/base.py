@@ -169,7 +169,7 @@ class GradOperation(GradOperation_):
        to get the gradients with respect to all inputs and given parameters: `gradient_function(x, y)`.
 
     To be noticed, for above gradient functions, the returned gradient result may vary for grad result element number:
-    A single value if only one result, a tuple for multiple results, or a empty tuple for no result.
+    A single value if only one result, a tuple for multiple results, or an empty tuple for no result.
 
     We can configure the sensitivity(gradient with respect to output) by setting `sens_param` as True and
     passing an extra sensitivity input to the gradient function, the sensitivity input should has the
