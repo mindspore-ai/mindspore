@@ -2702,38 +2702,12 @@ class ApplyMomentum(Primitive):
     Refer to the paper `On the importance of initialization and momentum in deep
     learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_  for more details.
 
-    .. math::
-            v_{t+1} = v_{t} \times u + gradients
-
-    If use_nesterov is True:
-
-    .. math::
-            p_{t+1} =  p_{t} - (grad \times lr + v_{t+1} \times u \times lr)
-
-    If use_nesterov is False:
-
-    .. math::
-            p_{t+1} = p_{t} - lr \times v_{t+1}
-
-    Here: where grad, lr, p, v and u denote the gradients, learning_rate, params, moments, and momentum respectively.
-
     Inputs of `variable`, `accumulation` and `gradient` comply with the implicit type conversion rules
     to make the data types consistent.
     If they have different data types, the lower priority data type will be converted to
     the relatively highest priority data type.
 
     Refer to :class:`mindspore.nn.Momentum` for more details about the formula and usage.
-
-    Note:
-        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
-        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
-
-        When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
-        but the gradient centralization can only be applied to the parameters of the convolution layer.
-        If the parameters of the non-convolution layer are set to True, an error will be reported.
-
-        To improve parameter groups performance, the customized order of parameters can be supported.
 
     Args:
         use_locking (bool): Whether to enable a lock to protect the variable and accumulation tensors
