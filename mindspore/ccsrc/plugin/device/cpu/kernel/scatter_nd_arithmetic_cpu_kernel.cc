@@ -116,12 +116,8 @@ std::pair<bool, ScatterNdArithmeticCpuKernelMod::ComputeFunc<T>> ScatterNdArithm
     {prim::kPrimScatterNdDiv->name(), [](const T &a, const T &b) { return RealDiv(a, b); }},
     {prim::kPrimScatterNdAdd->name(), [](const T &a, const T &b) { return a + b; }},
     {prim::kPrimScatterNdSub->name(), [](const T &a, const T &b) { return a - b; }},
-    {prim::kPrimTensorScatterAdd->name(), [](const T &a, const T &b) { return a + b; }},
-    {prim::kPrimTensorScatterSub->name(), [](const T &a, const T &b) { return a - b; }},
     {prim::kPrimTensorScatterDiv->name(), [](const T &a, const T &b) { return RealDiv(a, b); }},
-    {prim::kPrimTensorScatterMul->name(), [](const T &a, const T &b) { return a * b; }},
-    {prim::kPrimTensorScatterMax->name(), [](const T &a, const T &b) { return std::max(a, b); }},
-    {prim::kPrimTensorScatterMin->name(), [](const T &a, const T &b) { return std::min(a, b); }}};
+    {prim::kPrimTensorScatterMul->name(), [](const T &a, const T &b) { return a * b; }}};
   auto func_iter = scatter_nd_arithmetic_func_map.find(kernel_name_);
   if (func_iter == scatter_nd_arithmetic_func_map.end()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
@@ -274,11 +270,7 @@ MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdAdd, ScatterNdArithmeticCpuKe
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdSub, ScatterNdArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdMul, ScatterNdArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ScatterNdDiv, ScatterNdArithmeticCpuKernelMod);
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterAdd, ScatterNdArithmeticCpuKernelMod);
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterSub, ScatterNdArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterDiv, ScatterNdArithmeticCpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterMul, ScatterNdArithmeticCpuKernelMod);
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterMax, ScatterNdArithmeticCpuKernelMod);
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterMin, ScatterNdArithmeticCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
