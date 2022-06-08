@@ -87,7 +87,7 @@ void DumpBaseOutputInfo(const AbstractActor *actor, std::ofstream &ofs) {
       auto data_arrow = actor->output_data_arrows()[i];
       auto output_node = actor->output_data_nodes()[i];
       MS_EXCEPTION_IF_NULL(data_arrow);
-      if (data_arrow->flag_ != kOutputDataFlagBatch) {
+      if (!TEST_FLAG(data_arrow->flag_, kOutputDataFlagBatch)) {
         std::string node_name = (output_node != nullptr) ? GetSplitName(output_node->fullname_with_scope()) : "";
         ofs << "\t\t\tfrom_output_node:" << node_name << "\tfrom_output_index:" << data_arrow->from_output_index_
             << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
@@ -110,6 +110,7 @@ void DumpBaseOutputInfo(const AbstractActor *actor, std::ofstream &ofs) {
 
 void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\t\tis_in_fusion_actor:" << actor->in_fusion_actor() << "\n ";
   // Dump device context.
   if (actor->device_contexts().size() > 0) {
     ofs << "\t\tdevice_contexts:" << actor->device_contexts().size() << "\n ";
@@ -135,6 +136,14 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
         ofs << "\t\t\toutput_index:" << internal_parameter_iter.first
             << "\tinternal_parameter:" << internal_parameter->DebugString() << "\n";
       }
+    }
+  }
+
+  // Dump dependent actors.
+  if (actor->dependent_actors().size() > 0) {
+    ofs << "\t\tdependent_actors:" << actor->dependent_actors().size() << "\n ";
+    for (auto &dependent_actor : actor->dependent_actors()) {
+      ofs << "\t\t\tdependent_actor_name:" << dependent_actor;
     }
   }
 }
@@ -254,6 +263,33 @@ void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
 
   ofs << "\t\tis_need_update_output_size:" << actor->is_need_update_output_size() << "\n ";
   ofs << "\n";
+}
+
+void DumpFusionActor(const FusionActor *actor, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor);
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tsub actors num:" << actor->actors().size() << "\n";
+  for (auto &sub_actor : actor->actors()) {
+    ofs << "\t\tsub_actor_name:" << sub_actor.first << "\n";
+  }
+
+  DumpAbstractActor(actor, ofs);
+
+  if (actor->real_input_data().size() > 0) {
+    ofs << "\t\treal_input_data:" << actor->real_input_data().size() << "\n";
+    for (auto &real_input_data : actor->real_input_data()) {
+      MS_EXCEPTION_IF_NULL(real_input_data.first);
+      ofs << "\t\t\treal_input_data_actor:" << real_input_data.first->GetAID().Name()
+          << "\tinput_index:" << real_input_data.second << "\n";
+    }
+  }
+
+  if (actor->real_input_controls().size() > 0) {
+    ofs << "\t\treal_input_cpntrols:" << actor->real_input_controls().size() << "\n";
+    for (auto &real_input_control : actor->real_input_controls()) {
+      MS_EXCEPTION_IF_NULL(real_input_control);
+      ofs << "\t\t\treal_input_control_actor:" << real_input_control->GetAID().Name() << "\n";
+    }
+  }
 }
 
 void DumpFormalParameterDeviceTensor(const ControlActor *actor, std::ofstream &ofs) {
@@ -574,6 +610,13 @@ void DumpCopyActors(const std::vector<CopyActorPtr> &actors, std::ofstream &ofs)
   ofs << "\n\n[Copy actors:" << actors.size() << "]\n";
   for (const auto &copy_actor : actors) {
     DumpCopyActor(copy_actor.get(), ofs);
+  }
+}
+
+void DumpFusionActors(const std::vector<FusionActorPtr> &actors, std::ofstream &ofs) {
+  ofs << "\n\n[Fusion actors:" << actors.size() << "]\n";
+  for (const auto &fusion_actor : actors) {
+    DumpFusionActor(fusion_actor.get(), ofs);
   }
 }
 

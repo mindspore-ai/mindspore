@@ -35,6 +35,8 @@ class FusionActor : public AbstractActor {
   ~FusionActor() override = default;
 
   const mindspore::HashMap<std::string, AbstractActorPtr> &actors() const { return actors_; }
+  const std::vector<std::pair<AbstractActor *, size_t>> &real_input_data() const { return real_input_data_; }
+  const std::vector<AbstractActor *> &real_input_controls() const { return real_input_controls_; }
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
