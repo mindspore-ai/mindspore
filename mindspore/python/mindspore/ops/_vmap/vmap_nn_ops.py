@@ -22,7 +22,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, _bdim_at_front, \
-    get_unary_grad_vmap_rule
+    get_unary_grad_vmap_rule, _raise_value_error
 
 
 @vmap_rules_getters.register(P.ApplyProximalAdagrad)
@@ -239,6 +239,35 @@ def get_pdist_vmap_rule(prim, axis_size):
         x = _bdim_at_front(x, x_dim, axis_size)
         out = prim(x)
         return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.AdaptiveAvgPool2D)
+def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
+    """VmapRule for `AdaptiveAvgPool2D` operation."""
+    chw_reverse_index = -3
+    hw_reverse_index = -2
+
+    def vmap_rule(input_bdim, output_size_bdimm):
+        is_all_none, result = vmap_general_preprocess(prim, input_bdim, output_size_bdimm)
+        if is_all_none:
+            return result
+
+        input_x, x_dim = input_bdim
+        output_size, output_size_dim = output_size_bdimm
+        input_x = _bdim_at_front(input_x, x_dim, axis_size)
+        if output_size_dim is not None:
+            _raise_value_error("The source axis of `output_size` in `{}` must be None, "
+                               "but got {}.".format(prim.name, output_size_dim))
+        x_shape = F.shape(input_x)
+        input_shape = (x_shape[0] * x_shape[1],) + x_shape[chw_reverse_index:]
+        input_x = F.reshape(input_x, input_shape)
+        out = prim(output_size)(input_x)
+        out_shape = F.shape(out)
+        real_out_shape = x_shape[:hw_reverse_index] + out_shape[hw_reverse_index:]
+        out = F.reshape(out, real_out_shape)
+        return (out, 0)
 
     return vmap_rule
 

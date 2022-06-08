@@ -3839,7 +3839,21 @@ class Tensor(Tensor_):
         r"""
         Determines whether the targets are in the top `k` predictions.
 
-        Refer to :func:`mindspore.ops.intopk` for more detail.
+        Args:
+            x (Tensor): A 1D Tensor defines the labels of a batch of samples with int32 data type. The size of `x`
+                must be equal to the first dimension of self tensor. The values of `x` can not be negative and
+                must be equal to or less than index of the second dimension of self tensor.
+            k (int): Specifies the number of top elements to be used for computing precision along the last dimension.
+
+        Returns:
+            Tensor has 1 dimension of type bool and the same shape with `x`. For labeling sample `i` in `x`,
+            if the label in the first `k` predictions for sample `i` is in self tensor, then the value is True,
+            otherwise False.
+
+        Raises:
+            TypeError: If `k` is not an int.
+            TypeError: If `x` is not a Tensor.
+            TypeError: If dtype of self tensor is neither float16 nor float32.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -3851,12 +3865,74 @@ class Tensor(Tensor_):
             >>> print(output)
             [ True  False]
         """
+        self._init_check()
         if not isinstance(x, Tensor):
             raise TypeError("For 'Tensor.intopk', the type of the argument 'x' must be Tensor, but "
                             "got {}.".format(type(x)))
         validator.check_type_name('x', x.dtype, [mstype.float16, mstype.float32], "Tensor")
         validator.check_value_type("k", k, [int], "Tensor")
         return tensor_operator_registry.get('intopk')(self, x, k)
+
+    def adaptive_avgpool2d(self, output_size):
+        """
+        2D adaptive average pooling for temporal data.
+
+        Refer to :func:`mindspore.ops.adaptive_avgpool2d` for more detail.
+
+        Args:
+            output_size (Union[int, tuple]): The target output size is H x W.
+                `ouput_size` can be a tuple consisted of int type H and W, or a single H for H x H, or None.
+                If it is None, it means the output size is the same as the input size.
+
+        Returns:
+            Tensor, with the same type as the input.
+
+        Raises:
+            ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
+            TypeError: If `input_x` is not a Tensor.
+            TypeError: If dtype of `input_x` is not float16, float32 or float64.
+            ValueError: If the dimension of `input_x` is less than or equal to the dimension of `output_size`.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> # case 1: output_size=(None, 2)
+            >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+            ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+            ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
+            >>> output = input_x.adaptive_avgpool2d((None, 2))
+            >>> print(output)
+            [[[1.5 2.5]
+            [4.5 5.5]
+            [7.5 8.5]]
+            [[1.5 2.5]
+            [4.5 5.5]
+            [7.5 8.5]]
+            [[1.5 2.5]
+            [4.5 5.5]
+            [7.5 8.5]]]
+            >>> # case 2: output_size=2
+            >>> output = input_x.adaptive_avgpool2d(2)
+            >>> print(output)
+            [[[3. 4.]
+            [6. 7.]]
+            [[3. 4.]
+            [6. 7.]]
+            [[3. 4.]
+            [6. 7.]]]
+            >>> # case 3: output_size=(1, 2)
+            >>> output = input_x.adaptive_avgpool2d((1, 2))
+            >>> print(output)
+            [[[4.5 5.5]]
+            [[4.5 5.5]]
+            [[4.5 5.5]]]
+        """
+        self._init_check()
+        validator.check_value_type("output_size", output_size, [int, tuple], "Tensor")
+        if isinstance(output_size, tuple):
+            validator.check_int(len(output_size), 2, Rel.EQ, "length of output_size", Tensor)
+        return tensor_operator_registry.get("adaptive_avgpool2d")(self, output_size)
 
 
 class RowTensor(RowTensor_):

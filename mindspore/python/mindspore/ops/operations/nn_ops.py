@@ -170,56 +170,9 @@ class Flatten(Primitive):
 
 class AdaptiveAvgPool2D(PrimitiveWithInfer):
     r"""
-    AdaptiveAvgPool2D operation.
+    2D adaptive average pooling for temporal data.
 
-    This operator applies a 2D adaptive average pooling to an input signal composed of multiple input planes.
-    That is, for any input size, the size of the specified output is H x W.
-    The number of output features is equal to the number of input planes.
-
-    The input and output data format can be "NCHW" and "CHW". N is the batch size, C is the number of channels,
-    H is the feature height, and W is the feature width.
-
-    For avg adaptive pool2d:
-
-    ..  math::
-        \begin{align}
-        h_{start} &= floor(i * H_{in} / H_{out})\\
-        h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\
-        w_{start} &= floor(j * W_{in} / W_{out})\\
-        w_{end} &= ceil((j + 1) * W_{in} / W_{out})\\
-        Output(i,j) &= \frac{\sum Input[h_{start}:h_{end}, w_{start}:w_{end}]}{(h_{end}- h_{start})
-        * (w_{end}- w_{start})}
-        \end{align}
-
-    Args:
-        output_size (Union[int, tuple]): The target output size is H x W.
-            ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
-            which means the output size is the same as the input.
-
-    Inputs:
-        - **input_x** (Tensor) - The input of AdaptiveAvgPool2D, which is a 3D or 4D tensor,
-          with float16, float32 or float64 data type.
-
-    Outputs:
-        Tensor, with the same type as the `input_x`.
-
-        Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
-
-    .. math::
-
-        out\_shape = \begin{cases}
-        input\_x\_shape[-2] + output\_size[1], & \text{if output_size is (None, w);}\\
-        output\_size[0] + input\_x\_shape[-1], & \text{if output_size is (h, None);}\\
-        input\_x\_shape[-2:], & \text{if output_size is (None, None);}\\
-        (h, h), & \text{if output_size is h;}\\
-        (h, w), & \text{if output_size is (h, w)}
-        \end{cases}
-
-    Raises:
-        ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
-        TypeError: If `input_x` is not a tensor.
-        TypeError: If dtype of `input_x` is not float16, float32 nor float64.
-        ValueError: If the dimension of `input_x` is less than or equal to the dimension of `output_size`.
+    Refer to :func:`mindspore.ops.adaptive_avgpool2d` for more detail.
 
     Supported Platforms:
         ``GPU``

@@ -203,6 +203,7 @@ from .math_func import (
     gumbel_softmax,
 )
 from .nn_func import (
+    adaptive_avgpool2d,
     deformable_conv2d,
     fast_gelu,
     hardshrink,

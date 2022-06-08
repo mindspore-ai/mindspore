@@ -44,6 +44,7 @@ Neural Network
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.adaptive_avgpool2d
     mindspore.ops.pdist
 
 Activation Functions
