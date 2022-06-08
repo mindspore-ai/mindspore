@@ -43,6 +43,10 @@ std::string GetCustomType(const schema::Primitive *primitive) {
 
 Status KernelInterfaceRegistry::CustomReg(const std::string &provider, const std::string &type,
                                           const KernelInterfaceCreator creator) {
+  if (creator == nullptr) {
+    MS_LOG(ERROR) << "custom kernel interface creator is nullptr.";
+    return kLiteNullptr;
+  }
   auto provider_iter = custom_creators_.find(provider);
   if (provider_iter == custom_creators_.end() && custom_creators_.size() >= kMaxProviderNum) {
     MS_LOG(ERROR) << "register too many provider!";
@@ -111,6 +115,10 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetCustomKerne
     }
     auto creator_iter = provider_iter->second.find(type);
     if (creator_iter != provider_iter->second.end()) {
+      if (creator_iter->second == nullptr) {
+        MS_LOG(ERROR) << "custom kernel interface creator is nullptr.";
+        return nullptr;
+      }
       kernel_interface = creator_iter->second();
       custom_kernels_[provider][type] = kernel_interface;
       return kernel_interface;
@@ -159,6 +167,10 @@ std::shared_ptr<kernel::KernelInterface> KernelInterfaceRegistry::GetKernelInter
 }
 
 Status KernelInterfaceRegistry::Reg(const std::string &provider, int op_type, const KernelInterfaceCreator creator) {
+  if (creator == nullptr) {
+    MS_LOG(ERROR) << "kernel interface creator is nullptr.";
+    return kLiteNullptr;
+  }
   if (op_type <= PrimitiveType_MIN || op_type > PrimitiveType_MAX) {
     MS_LOG(ERROR) << "reg op_type invalid!op_type: " << op_type << ", max value: " << PrimitiveType_MAX;
     return kLiteParamInvalid;
