@@ -43,6 +43,7 @@
 #include "pipeline/jit/base.h"
 #include "include/common/debug/common.h"
 #include "include/common/debug/anf_dump_utils.h"
+#include "mindspore/core/utils/file_utils.h"
 
 using mindspore::tensor::TensorPy;
 

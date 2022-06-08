@@ -58,6 +58,7 @@
 #include "distributed/cluster/dummy_cluster_context.h"
 #endif
 #include "abstract/ops/primitive_infer_map.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace runtime {

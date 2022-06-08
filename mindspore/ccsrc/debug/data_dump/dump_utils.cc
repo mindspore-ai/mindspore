@@ -28,6 +28,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/debug/common.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
+#include "mindspore/core/utils/file_utils.h"
 
 using mindspore::runtime::DeviceTensorStore;
 

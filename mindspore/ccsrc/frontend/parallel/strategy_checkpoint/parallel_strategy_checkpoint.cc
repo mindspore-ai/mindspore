@@ -25,6 +25,7 @@
 #include "utils/log_adapter.h"
 #include "include/common/debug/common.h"
 #include "proto/node_strategy.pb.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace parallel {

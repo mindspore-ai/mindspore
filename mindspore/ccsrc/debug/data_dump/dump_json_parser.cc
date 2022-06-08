@@ -25,6 +25,7 @@
 #include "debug/data_dump/npy_header.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "include/common/utils/comm_manager.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace {
 constexpr auto kCommonDumpSettings = "common_dump_settings";

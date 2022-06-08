@@ -24,6 +24,7 @@
 #include "include/common/debug/dump_proto.h"
 #include "include/common/debug/common.h"
 #include "include/common/debug/rdr/recorder_manager.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace protobuf {

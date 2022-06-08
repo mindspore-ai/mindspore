@@ -22,7 +22,11 @@
 #include <sstream>
 
 #include "./securec.h"
-#include "utils/file_utils.h"
+#ifndef BUILD_LITE
+#include "mindspore/core/utils/file_utils.h"
+#else
+#include "mindspore/lite/src/common/file_utils.h"
+#endif
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/log_adapter.h"
 

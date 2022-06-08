@@ -21,6 +21,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/utils.h"
 #include "include/common/debug/rdr/recorder_manager.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace {

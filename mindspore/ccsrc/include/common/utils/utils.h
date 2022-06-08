@@ -871,19 +871,6 @@ const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
 // Key is the output index while the value is input index which will be used as the reference of output.
 using OutputInputRefMap = std::map<size_t, size_t>;
 
-static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
-  if (access(file_name.c_str(), F_OK) == -1) {
-    return;
-  }
-  try {
-    if (chmod(common::SafeCStr(file_name), mode) != 0) {
-      MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
-    }
-  } catch (std::exception &e) {
-    MS_LOG(WARNING) << "File `" << file_name << "` change mode failed! May be not exist.";
-  }
-}
-
 static inline uint64_t GetCurrentUSec() {
   struct timeval tv;
   int ret = gettimeofday(&tv, nullptr);

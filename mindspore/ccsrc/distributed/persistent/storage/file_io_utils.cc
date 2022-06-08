@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <fstream>
 
-#include "include/common/utils/utils.h"
+#include "mindspore/core/utils/file_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 

@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_COMMON_FILE_UTILS_H_
 #define MINDSPORE_LITE_SRC_COMMON_FILE_UTILS_H_
 
+#include <sys/stat.h>
+#include <unistd.h>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -84,6 +86,15 @@ inline int WriteToBin(const std::string &file_path, void *data, const size_t siz
 std::string GetDirectory(const std::string &path);
 
 bool ParserPathAndModelName(const std::string &output_path, std::string *save_path, std::string *model_name);
+
+static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
+  if (access(file_name.c_str(), F_OK) == -1) {
+    return;
+  }
+  if (chmod(file_name.c_str(), mode) != 0) {
+    MS_LOG(WARNING) << "Change file `" << file_name << "` to mode " << std::oct << mode << " fail.";
+  }
+}
 }  // namespace lite
 }  // namespace mindspore
 

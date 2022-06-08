@@ -21,6 +21,11 @@
 #include "minddata/dataset/core/pybind_support.h"
 #include "utils/file_utils.h"
 #include "include/common/utils/utils.h"
+#ifndef BUILD_LITE
+#include "mindspore/core/utils/file_utils.h"
+#else
+#include "mindspore/lite/src/common/file_utils.h"
+#endif
 
 namespace mindspore {
 namespace dataset {

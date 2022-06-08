@@ -21,6 +21,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/anf_dump_utils.h"
 #include "include/common/debug/common.h"
+#include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 void CPUE2eDump::DumpCNodeData(const CNodePtr &node, uint32_t graph_id) {
