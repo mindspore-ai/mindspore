@@ -30,6 +30,8 @@ namespace mindspore {
 namespace dataset {
 class DeviceResource;
 class TensorOp;
+class Tensor;
+
 // class to run tensor operations in eager mode
 class MS_API Execute {
  public:
@@ -140,7 +142,7 @@ class MS_API Execute {
   /// \brief The function to generate AIPP configuration.
   std::string AippCfgGenerator();
 
- private:
+ protected:
   /// \brief The function to convert TensorTransforms into TensorOperations and then build TensorOps.
   Status BuildTransforms();
 
@@ -163,6 +165,24 @@ class MS_API Execute {
   bool ops_created{false};
 };
 
+class PyExecute : public Execute {
+ public:
+  // inherit base class constructors
+  using Execute::Execute;
+
+  /// \brief Callable function to execute the TensorTransform in eager mode (only cpu).
+  /// \param[in] input_tensor A tensor to be transformed.
+  /// \param[out] out Result tensor after transform.
+  /// \return Status error code, returns OK if no error encountered.
+  Status operator()(const std::shared_ptr<Tensor> &input_tensor, std::shared_ptr<Tensor> *out);
+
+  /// \brief Callable function to execute the TensorTransform in eager mode (only cpu).
+  /// \param[in] input_tensor_list List of Tensors to be transformed.
+  /// \param[out] out Result tensors list after transform.
+  /// \return Status error code, returns OK if no error encountered.
+  Status operator()(const std::vector<std::shared_ptr<Tensor>> &input_tensor_list,
+                    std::vector<std::shared_ptr<Tensor>> *out);
+};
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_EXECUTE_H_
