@@ -91,16 +91,15 @@ class ReflectionPad1d(_ReflectionPadNd):
             If padding is a tuple: uses (pad_left, pad_right, pad_up, pad_down) to pad.
 
     Inputs:
-        Tensor, 2D or 3D
+        x (Tensor): 2D or 3D, shape: :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
-        Tensor, after padding.
-        Suppose the tensor has dimension (N, C, W_in), the padded dimension will become (N, C, W_out),
-            where W_out = W_in + pad_left + pad_right
+        Tensor, after padding. Shape: :math:`(C, W_{out})` or :math:`(N, C, W_{out})`,
+        where :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
 
     Raises:
         TypeError: If 'padding' is not a tuple or int.
-        TypeError: If there is an element in 'padding' that is not int64.
+        TypeError: If there is an element in 'padding' that is not int.
         ValueError: If the length of 'padding' is not divisible by 2.
         ValueError: If there is an element in 'padding' that is negative.
         ValueError: If the there is a dimension mismatch between the padding and the tensor.
@@ -138,16 +137,15 @@ class ReflectionPad2d(_ReflectionPadNd):
             If padding is a tuple: uses (pad_left, pad_right, pad_up, pad_down) to pad.
 
     Inputs:
-        Tensor, 3D or 4D
+        x (Tensor): 3D or 4D, shape: :math:`(C, H_{in}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`.
 
-    Output:
-        Tensor, after padding.
-        Suppose the tensor has dimension (N, C, H_in, W_in), the padded dimension will become (N, C, H_out, W_out),
-            where W_out = W_in + pad_left + pad_right, H_out = H_in + pad_up + pad_down
+    Outputs:
+        Tensor, after padding. Shape: :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`,
+        where :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`,  :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`.
 
     Raises:
         TypeError: If 'padding' is not a tuple or int.
-        TypeError: If there is an element in 'padding' that is not int64.
+        TypeError: If there is an element in 'padding' that is not int.
         ValueError: If the length of 'padding' is not divisible by 2.
         ValueError: If there is an element in 'padding' that is negative.
         ValueError: If the there is a dimension mismatch between the padding and the tensor.
