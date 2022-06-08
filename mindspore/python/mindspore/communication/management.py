@@ -13,7 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Communication management API"""
+import os
 from mindspore import context
+from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_role_sched
 from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
@@ -29,9 +31,8 @@ __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
 DEFAULT_WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
 
 
-def _set_rank_grom_mpi():
+def _set_rank_from_mpi():
     """Set environment variable according to OMPI"""
-    import os
     ompi_rank_id = os.getenv("OMPI_COMM_WORLD_RANK")
     ompi_device_id = os.getenv("OMPI_COMM_WORLD_LOCAL_RANK")
     ompi_rank_size = os.getenv("OMPI_COMM_WORLD_SIZE")
@@ -42,7 +43,7 @@ def _set_rank_grom_mpi():
     if ompi_rank_size:
         os.environ["RANK_SIZE"] = ompi_rank_size
 
-_set_rank_grom_mpi()
+_set_rank_from_mpi()
 
 
 def _get_group(group):
@@ -61,7 +62,6 @@ def _check_parallel_envs():
     """
     if not GlobalComm.CHECK_ENVS:
         return
-    import os
     rank_id_str = os.getenv("RANK_ID")
     if not rank_id_str:
         raise RuntimeError("Environment variables RANK_ID has not been exported, please export variables 'RANK_ID'.")
@@ -126,6 +126,11 @@ def init(backend_name=None):
                         "but got the type : {}".format(type(backend_name)))
 
     if backend_name == "hccl":
+        if _is_ps_mode() and os.getenv("PARALLEL_EXCUTE") == "ms_ps":
+            # Use MindSpore cluster to build network for Parameter Server traning.
+            init_cluster()
+            if _is_role_sched() or _is_role_pserver():
+                raise RuntimeError("Parameter server and scheduler should use 'CPU' as backend instead of 'Ascend'")
         if device_target != "Ascend":
             raise RuntimeError("For 'init', the argument  'backend_name' should be 'Ascend' to init hccl, "
                                "but got {}".format(device_target))
