@@ -189,6 +189,7 @@ def _save_weight(checkpoint_dir, model_name, iteration, params):
     else:
         logger.warning(f"Checkpoint dir: '{checkpoint_dir}' is not existed.")
 
+
 def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
     """Execute the process of saving checkpoint into file."""
     try:
@@ -234,7 +235,7 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
                         cipher_data += _encrypt(plain_data, len(plain_data), enc_key, len(enc_key), enc_mode)
                     f.write(cipher_data)
 
-        os.chmod(ckpt_file_name, stat.S_IRUSR)
+                os.chmod(ckpt_file_name, stat.S_IRUSR)
 
     except BaseException as e:
         logger.critical("Failed to save the checkpoint file %s. Maybe don't have the permission to write files, "
