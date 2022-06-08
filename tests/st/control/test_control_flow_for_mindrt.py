@@ -15,7 +15,8 @@
 import numpy as np
 import pytest
 import mindspore
-from mindspore import context, nn, ops, Tensor, Parameter
+from mindspore import context, nn, ops, Tensor, Parameter, ms_function
+from mindspore.ops import functional as F
 
 
 class Net(nn.Cell):
@@ -61,3 +62,26 @@ def test_repeat_control_arrow_for_stack_actor():
     out = net(x)
     result = 10
     assert out == result
+
+
+@ms_function
+def switch_op(x, y):
+    z1 = y + 1
+    z2 = Tensor(5, mindspore.int32)
+    return F.switch(x, z1, z2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_switch_op():
+    """
+    Feature: Runtime.
+    Description: Test switch op.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(False, mindspore.bool_)
+    y = Tensor(1, mindspore.int32)
+    out = switch_op(x, y)
+    assert out == 5
