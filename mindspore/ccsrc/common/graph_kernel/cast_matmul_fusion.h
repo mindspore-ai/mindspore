@@ -27,7 +27,7 @@ class CastMatmulFusion : public opt::Pass {
  public:
   CastMatmulFusion() : Pass("cast_matmul_fusion") {}
   ~CastMatmulFusion() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
+  bool Run(const FuncGraphPtr &func_graph) override;
 };
 using OptimizeMatmulPtr = std::shared_ptr<CastMatmulFusion>;
 }  // namespace mindspore::graphkernel

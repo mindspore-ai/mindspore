@@ -17,7 +17,6 @@
 #include "common/graph_kernel/core/graph_kernel_expander.h"
 
 #include <string>
-#include <utility>
 #include <vector>
 #include <algorithm>
 
@@ -26,7 +25,7 @@
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
-AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node, const std::string &name) {
+AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node, const std::string &name) const {
   auto new_fg = GetCNodeFuncGraph(node);
   new_fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(name));
   auto main_graph = node->func_graph();

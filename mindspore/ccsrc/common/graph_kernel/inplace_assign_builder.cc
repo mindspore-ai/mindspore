@@ -94,7 +94,8 @@ void InplaceAssignBuilder::CorrectKernelBuildInfo(
 }
 
 void InplaceAssignBuilder::CreateAssignNodeAndCorrectReturn(
-  const FuncGraphPtr &sub_graph, const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &parameters_infos) {
+  const FuncGraphPtr &sub_graph,
+  const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &parameters_infos) const {
   std::map<size_t, size_t> target_indices;
   for (size_t i = 0; i < parameters_infos.size(); ++i) {
     target_indices[parameters_infos[i].first.real_output_index + 1] = i;
@@ -106,9 +107,11 @@ void InplaceAssignBuilder::CreateAssignNodeAndCorrectReturn(
     auto output_cnode = output->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(output_cnode);
     for (size_t i = 1; i < output_cnode->inputs().size(); ++i) {
-      auto iter = target_indices.find(i);
-      if (iter == target_indices.end()) continue;
-      auto inplace = CreateAssign(sub_graph, parameters_infos, iter->second);
+      std::map<size_t, size_t>::const_iterator cur_input = target_indices.find(i);
+      if (cur_input == target_indices.end()) {
+        continue;
+      }
+      auto inplace = CreateAssign(sub_graph, parameters_infos, cur_input->second);
       output_cnode->set_input(i, inplace);
     }
   } else if (parameters_infos.size() == 1) {
@@ -122,7 +125,7 @@ CNodePtr InplaceAssignBuilder::InsertUpdateState(const FuncGraphPtr &main_graph,
   auto u = NewValueNode(kUMonad);
   u->set_abstract(kUMonad->ToAbstract());
   AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u};
-  (void)update_state_inputs.insert(update_state_inputs.end(), nodes.begin(), nodes.end());
+  (void)update_state_inputs.insert(update_state_inputs.end(), nodes.cbegin(), nodes.cend());
   auto update_state_cnode = main_graph->NewCNode(update_state_inputs);
   update_state_cnode->set_abstract(kUMonad->ToAbstract());
   main_graph->AddNode(update_state_cnode);

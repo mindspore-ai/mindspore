@@ -25,7 +25,7 @@
 namespace mindspore::graphkernel {
 ExpanderPtr WrapExpander(const ExpanderPtr &base, const ExpanderCreatorFuncList &deco_creators) {
   ExpanderPtr result = base;
-  for (auto it = deco_creators.rbegin(); it != deco_creators.rend(); it++) {
+  for (auto it = deco_creators.rbegin(); it != deco_creators.rend(); ++it) {
     result = (*it)(result);
   }
   return result;
@@ -56,9 +56,11 @@ AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
   auto new_fg = ExpandToGraph(cnode);
   auto res = new_fg ? "success" : "failed";
   MS_LOG(DEBUG) << "Expanding node " << res << " : " << node->fullname_with_scope();
-  if (new_fg == nullptr) return nullptr;
+  if (new_fg == nullptr) {
+    return nullptr;
+  }
   AnfNodePtrList inputs = {NewValueNode(new_fg)};
-  inputs.insert(inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  (void)inputs.insert(inputs.end(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
   return node->func_graph()->NewCNode(inputs);
 }
 

@@ -53,7 +53,8 @@ class InplaceAssignBuilder : public opt::Pass {
                                             TypeId dst_type);
   CNodePtr InsertUpdateState(const FuncGraphPtr &main_graph, const AnfNodePtrList &nodes) const;
   void CreateAssignNodeAndCorrectReturn(
-    const FuncGraphPtr &sub_graph, const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &parameters_infos);
+    const FuncGraphPtr &sub_graph,
+    const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &parameters_infos) const;
   virtual void ProcessOriginCNode(
     const AnfNodePtr &composite_node,
     const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &info_and_inplace_assignee_addr);

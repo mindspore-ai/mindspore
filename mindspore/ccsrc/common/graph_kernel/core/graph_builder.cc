@@ -41,9 +41,13 @@ AnfNodePtrList FindOutputs(const AnfNodePtrList &nodes, const AnfNodePtrToAnfNod
   auto &users = mng->node_users();
   for (auto &node : nodes) {
     // only CNode can be an output.
-    if (!node->isa<CNode>()) continue;
+    if (!node->isa<CNode>()) {
+      continue;
+    }
     auto iter = users.find(node);
-    if (iter == users.end()) continue;
+    if (iter == users.end()) {
+      continue;
+    }
     auto &node_users = iter->second;
     // if any user of the `node` is not in the nodes list, the `node` is an output.
     if (std::any_of(std::begin(node_users), std::end(node_users),
@@ -75,7 +79,9 @@ bool InlineInnerFuncGraph(const FuncGraphPtr &fg) {
   auto cnodes = fg->GetOrderedCnodes();
   for (const auto &n : cnodes) {
     auto graph_kernel_g = GetCNodeFuncGraph(n);
-    if (graph_kernel_g == nullptr) continue;
+    if (graph_kernel_g == nullptr) {
+      continue;
+    }
     AnfNodePtrList inp(n->inputs().begin() + 1, n->inputs().end());
     auto out = InlineClone(graph_kernel_g, fg, inp, n->input(0)->scope());
     (void)mng->Replace(n, out);
@@ -111,17 +117,21 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
     for (size_t i = 1; i < inputs.size(); ++i) {
       const auto &tnode = inputs[i];
       auto tensor = GetValueNode<tensor::TensorPtr>(tnode);
-      if (tensor == nullptr) continue;
+      if (tensor == nullptr) {
+        continue;
+      }
       // data is nullptr means uninitialized.
       if (tensor->data().const_data() == nullptr || tensor->DataSize() > 1) {
         (void)value_nodes.insert(tnode);
       }
     }
   }
-  if (value_nodes.empty()) return false;
+  if (value_nodes.empty()) {
+    return false;
+  }
   auto mng = fg->manager();
   MS_EXCEPTION_IF_NULL(mng);
-  for (auto &vnode : value_nodes) {
+  for (const auto &vnode : value_nodes) {
     auto parameter = fg->add_parameter();
     parameter->set_abstract(vnode->abstract());
     parameter->set_kernel_info(vnode->kernel_info_ptr());
@@ -206,7 +216,7 @@ void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList
   }
   AnfNodePtrList new_parameter, new_inputs{(*inputs)[0]};
   for (size_t i = 0; i < ori_parameter.size(); ++i) {
-    if (used_param.count(ori_parameter[i])) {
+    if (used_param.count(ori_parameter[i]) > 0) {
       new_parameter.push_back(ori_parameter[i]);
       new_inputs.push_back((*inputs)[i + 1]);
     }
@@ -274,7 +284,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildSingleGraphFromNod
 
 AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg, const AnfNodePtrList &inputs) {
   std::vector<AnfNodePtr> fn_inputs{NewValueNode(sub_fg)};
-  (void)fn_inputs.insert(fn_inputs.end(), inputs.begin(), inputs.end());
+  (void)fn_inputs.insert(fn_inputs.end(), inputs.cbegin(), inputs.cend());
   EliminateRedundantParameters(sub_fg, &fn_inputs);
   auto fuse_cnode = main_fg->NewCNode(fn_inputs);
   fuse_cnode->set_abstract(sub_fg->output()->abstract());

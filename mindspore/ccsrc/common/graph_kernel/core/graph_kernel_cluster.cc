@@ -117,7 +117,9 @@ bool GraphKernelCluster::IsClusterableOp(const AnfNodePtr &node) {
   if (AnfUtils::IsGraphKernel(node)) {
     auto sub_graph = GetCNodeFuncGraph(node);
     if (auto type = sub_graph->get_attr("composite_type")) {
-      if (GetValue<std::string>(type) == "inplace_assign_builder") return false;
+      if (GetValue<std::string>(type) == "inplace_assign_builder") {
+        return false;
+      }
     }
     return true;
   }
@@ -197,7 +199,9 @@ class Graph {
   void Merge(const std::vector<size_t> &candidates) {
     size_t min_id = *std::min_element(candidates.begin(), candidates.end());
     for (auto id : candidates) {
-      if (id == min_id) continue;
+      if (id == min_id) {
+        continue;
+      }
       clusters_[min_id].Merge(&clusters_[id]);
     }
   }
@@ -230,7 +234,7 @@ class Graph {
  private:
   void RefreshInputs(size_t i) {
     auto &inputs = clusters_[i].inputs_;
-    for (auto iter = inputs.begin(); iter != inputs.end();) {
+    for (auto iter = inputs.cbegin(); iter != inputs.cend();) {
       size_t new_id = Find(*iter);
       if (new_id != *iter) {
         iter = inputs.erase(iter);
@@ -243,14 +247,16 @@ class Graph {
   }
 
   void DepthFirstSearch(size_t cluster_id, const VisitFunc &visitor) {
-    if (clusters_[cluster_id].seed_ >= seen_) return;
+    if (clusters_[cluster_id].seed_ >= seen_) {
+      return;
+    }
     clusters_[cluster_id].seed_ = seen_;
     if (visitor(cluster_id) != FOLLOW) {
       return;
     }
     // traverse inputs in descending order.
     const auto &inputs = GetInputs(cluster_id);
-    for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
+    for (auto iter = inputs.crbegin(); iter != inputs.crend(); ++iter) {
       DepthFirstSearch(*iter, visitor);
     }
   }
@@ -269,9 +275,11 @@ class CircleChecker {
       return;
     }
     candidates_.clear();
-    candidates_.insert(candidates->begin(), candidates->end());
-    for (auto iter = candidates->begin(); iter != candidates->end(); ++iter) {
-      if (!candidates_.count(*iter)) continue;
+    candidates_.insert(candidates->cbegin(), candidates->cend());
+    for (auto iter = candidates->cbegin(); iter != candidates->cend(); ++iter) {
+      if (candidates_.count(*iter) == 0) {
+        continue;
+      }
       circle_nodes_.clear();
       if (CheckCircle(*iter)) {
         RemoveCircleNodesFromCandidates();
@@ -300,15 +308,17 @@ class CircleChecker {
     const auto &inputs = graph_->GetInputs(basenode);
     std::set<size_t> visited_circle_nodes;
     for (auto x : inputs) {
-      if (candidates_.count(x)) continue;
+      if (candidates_.count(x) > 0) {
+        continue;
+      }
       bool has_circle = false;
       std::set<size_t> done;
       auto vis_func = [this, &has_circle, &done, &visited_circle_nodes](size_t node_id) {
-        if (done.count(node_id) || acyclic_nodes_.count(node_id) || visited_circle_nodes.count(node_id)) {
+        if (done.count(node_id) > 0 || acyclic_nodes_.count(node_id) > 0 || visited_circle_nodes.count(node_id) > 0) {
           return EXCLUDE;
         }
         (void)done.insert(node_id);
-        if (candidates_.count(node_id)) {
+        if (candidates_.count(node_id) > 0) {
           has_circle = true;
           circle_nodes_.push_back(node_id);
           return EXCLUDE;
@@ -317,9 +327,9 @@ class CircleChecker {
       };
       graph_->Dfs(x, vis_func);
       if (has_circle) {
-        visited_circle_nodes.insert(done.begin(), done.end());
+        visited_circle_nodes.insert(done.cbegin(), done.cend());
       } else {
-        acyclic_nodes_.insert(done.begin(), done.end());
+        acyclic_nodes_.insert(done.cbegin(), done.cend());
       }
     }
     return !circle_nodes_.empty();
@@ -328,7 +338,7 @@ class CircleChecker {
   // remove all circle nodes from candidates
   void RemoveCircleNodesFromCandidates() {
     auto remove_from_candidates = [this](size_t node_id) {
-      if (candidates_.count(node_id)) {
+      if (candidates_.count(node_id) > 0) {
         (void)candidates_.erase(node_id);
         return FOLLOW;
       }
@@ -378,7 +388,9 @@ bool GraphKernelCluster::Process(const FuncGraphPtr &func_graph) {
     CircleChecker circle_checker(graph_);
     circle_checker.RemoveCircle(&candidates);
     RemoveWildGetitem(&candidates);
-    if (candidates.empty()) continue;
+    if (candidates.empty()) {
+      continue;
+    }
     // merge candidates into one cluster
     graph_->Merge(candidates);
   }
@@ -389,7 +401,9 @@ bool GraphKernelCluster::Process(const FuncGraphPtr &func_graph) {
     auto node_without_getitem = std::count_if(clusters[i].begin(), clusters[i].end(), [this](size_t node_id) {
       return !IsPrimitiveCNode(this->nodes_[node_id], prim::kPrimTupleGetItem);
     });
-    if (node_without_getitem == 0) continue;
+    if (node_without_getitem == 0) {
+      continue;
+    }
     if (node_without_getitem == 1) {
       // Do not cluster a single GraphKernel again.
       // Do not cluster a single Assign.
@@ -444,7 +458,7 @@ void GraphKernelCluster::RemoveWildGetitem(std::vector<size_t> *candidates) {
   bool changed = false;
   std::set<size_t> candidates_set(candidates->begin(), candidates->end());
 
-  for (auto iter = candidates_set.begin(); iter != candidates_set.end();) {
+  for (auto iter = candidates_set.cbegin(); iter != candidates_set.cend();) {
     size_t cluster_id = *iter;
     if (IsPrimitiveCNode(nodes_[cluster_id], prim::kPrimTupleGetItem)) {
       const auto &inputs = graph_->GetInputs(cluster_id);
@@ -453,8 +467,8 @@ void GraphKernelCluster::RemoveWildGetitem(std::vector<size_t> *candidates) {
         candidates->clear();
         return;
       }
-      auto prev_id = *(inputs.begin());
-      if (!candidates_set.count(prev_id)) {
+      auto prev_id = *(inputs.cbegin());
+      if (candidates_set.count(prev_id) == 0) {
         iter = candidates_set.erase(iter);
         changed = true;
         continue;
