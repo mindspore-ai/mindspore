@@ -19,9 +19,9 @@
 
 namespace mindspore::graphkernel::inner {
 void Node::SetBaseInfo(const NodeBaseList &baseinfo) {
-  this->shape = std::move(baseinfo[0].shape);
-  this->type = std::move(baseinfo[0].type);
-  this->format = std::move(baseinfo[0].format);
+  this->shape = baseinfo[0].shape;
+  this->type = baseinfo[0].type;
+  this->format = baseinfo[0].format;
 }
 
 std::string Node::ToString() const {
@@ -29,7 +29,9 @@ std::string Node::ToString() const {
   oss << debug_name() << "[";
   for (size_t i = 0; i < shape.size(); i++) {
     oss << shape[i];
-    if (i + 1 < shape.size()) oss << ",";
+    if (i + 1 < shape.size()) {
+      oss << ",";
+    }
   }
   oss << "]{" << TypeIdToString(type) << "x" << format << "}";
   return oss.str();
@@ -71,17 +73,19 @@ void Node::ClearInputs() noexcept {
 }
 
 void Node::ReplaceWith(const NodePtr &other_node) {
-  if (this->users_.empty()) return;
+  if (this->users_.empty()) {
+    return;
+  }
   // the users_ will be changed, so we copy the users before traversal
   auto users = this->users_;
   for (auto &user : users) {
-    for (auto idx : user.second) {
+    for (const auto &idx : user.second) {
       user.first->SetInput(idx, other_node);
     }
   }
 }
 
-void Node::RemoveUser(Node *user, size_t index) {
+void Node::RemoveUser(Node *const user, size_t index) {
   if (auto iter = users_.find(user); iter != users_.end()) {
     (void)iter->second.erase(index);
     if (iter->second.empty()) {

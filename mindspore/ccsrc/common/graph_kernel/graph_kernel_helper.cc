@@ -75,7 +75,7 @@ bool GenJson(const AnfNodePtrList &op_nodes, const std::pair<AnfNodePtrList, Anf
     *address_node_map = akg_kernel_json_generator.address_node_map();
   }
   std::string fused_name;
-  std::for_each(op_nodes.begin(), op_nodes.end(), [&fused_name](const AnfNodePtr &node) {
+  (void)std::for_each(op_nodes.begin(), op_nodes.end(), [&fused_name](const AnfNodePtr &node) {
     (void)fused_name.append(common::AnfAlgo::GetCNodeName(node)).append("_");
   });
   MS_LOG(DEBUG) << "Collect fusion json: " << fused_name;
@@ -416,7 +416,7 @@ void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfN
   }
   AnfNodePtrList new_inputs = {NewValueNode(common::AnfAlgo::GetCNodePrimitive(cnode)->Clone())};
   auto inputs = cnode->inputs();
-  new_inputs.insert(new_inputs.end(), inputs.begin() + 1, inputs.end());
+  (void)new_inputs.insert(new_inputs.cend(), inputs.cbegin() + 1, inputs.cend());
   cnode->set_inputs(new_inputs);
 
   // Set attr secondly.

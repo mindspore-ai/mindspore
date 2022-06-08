@@ -161,7 +161,7 @@ void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, bool left
   func_graph->AddNode(pad_cnode);
 
   ShapeVector tail;
-  (void)tail.insert(tail.begin(), tail_shape.begin(), tail_shape.end());
+  (void)tail.insert(tail.cbegin(), tail_shape.cbegin(), tail_shape.cend());
   ShapeVector head(tail_shape.size(), 0);
 
   SetNodeAttrSafely("head", MakeValue(head), pad_cnode);
@@ -170,7 +170,7 @@ void InsertPad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, bool left
   std::vector<TypeId> pad_type = {common::AnfAlgo::GetPrevNodeOutputInferDataType(matmul, 0)};
 
   ShapeVector abs_shape;
-  (void)abs_shape.insert(abs_shape.begin(), pad_shape.begin(), pad_shape.end());
+  (void)abs_shape.insert(abs_shape.cbegin(), pad_shape.cbegin(), pad_shape.cend());
   auto abs_shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(abs_shape));
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(pad_type[0]), abs_shape_ptr);
   pad_cnode->set_abstract(abstract);
@@ -195,12 +195,12 @@ void InsertUnpad(const CNodePtr &matmul, const FuncGraphPtr &func_graph, const F
   auto unpad_cnode = func_graph->NewCNode(unpad_inp);
   func_graph->AddNode(unpad_cnode);
   ShapeVector tail;
-  (void)tail.insert(tail.begin(), tail_shape.begin(), tail_shape.end());
+  (void)tail.insert(tail.cbegin(), tail_shape.cbegin(), tail_shape.cend());
   SetNodeAttrSafely("tail", MakeValue(tail), unpad_cnode);
   std::vector<TypeId> unpad_type = {common::AnfAlgo::GetOutputInferDataType(matmul, 0)};
 
   ShapeVector abs_shape;
-  (void)abs_shape.insert(abs_shape.begin(), unpad_shape.begin(), unpad_shape.end());
+  (void)abs_shape.insert(abs_shape.cbegin(), unpad_shape.cbegin(), unpad_shape.cend());
   auto abs_shape_ptr = std::make_shared<abstract::Shape>(abstract::Shape(abs_shape));
   auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(unpad_type[0]), abs_shape_ptr);
   unpad_cnode->set_abstract(abstract);
@@ -243,13 +243,17 @@ bool InsertPadUnpad(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   bool changed = false;
   for (const auto &n : todos) {
-    if (!common::AnfAlgo::CheckPrimitiveType(n, prim::kPrimMatMul)) continue;
+    if (!common::AnfAlgo::CheckPrimitiveType(n, prim::kPrimMatMul)) {
+      continue;
+    }
     auto mm_cnode = n->cast<CNodePtr>();
     vec pad_shape_a, pad_shape_b, tail_shape_a, tail_shape_b, tail_shape_unpad, unpad_shape;
     bool pad_K{false}, pad_M{false}, pad_N{false};
     std::tie(pad_K, pad_M, pad_N) =
       NeedPad(mm_cnode, &pad_shape_a, &pad_shape_b, &unpad_shape, &tail_shape_a, &tail_shape_b, &tail_shape_unpad);
-    if (!pad_K && !pad_M && !pad_N) continue;
+    if (!pad_K && !pad_M && !pad_N) {
+      continue;
+    }
     if (pad_K || pad_M) {
       InsertPad(mm_cnode, func_graph, true, pad_shape_a, tail_shape_a);
     }
@@ -286,7 +290,9 @@ bool InsertPadOps::Run(const FuncGraphPtr &func_graph) {
   auto changed = false;
   auto nodes = TopoSort(func_graph->get_return());
   for (auto node : nodes) {
-    if (!common::AnfAlgo::IsGraphKernel(node)) continue;
+    if (!common::AnfAlgo::IsGraphKernel(node)) {
+      continue;
+    }
     auto graph_kernel_fg = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
     MS_EXCEPTION_IF_NULL(graph_kernel_fg);
     changed = InsertPadUnpad(graph_kernel_fg) || changed;

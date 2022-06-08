@@ -105,10 +105,10 @@ class GraphKernelRecompute : public opt::Pass {
  private:
   void Process(const Candidate &candidate);
   std::pair<FuncGraphPtr, AnfNodePtrList> CloneGraph(const CNodePtr &source_graph,
-                                                     const AnfNodePtrList &recompute_edge);
+                                                     const AnfNodePtrList &recompute_edges);
   void LinkIntoTargetFuncGraph(
     const Candidate &candidate, const FuncGraphPtr &cloned_func, const AnfNodePtrList &cloned_inputs,
-    const std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> &match_func);
+    const std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> &edge_match_func);
 
   std::vector<Candidate> candidates_;
 };
