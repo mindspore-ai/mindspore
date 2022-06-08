@@ -247,7 +247,7 @@ class TryCatchGuard {
 class MS_CORE_API LogWriter {
  public:
   using ExceptionHandler = void (*)(ExceptionType, const std::string &);
-  using TraceProvider = std::function<void(std::ostringstream &oss)>;
+  using TraceProvider = std::function<void(std::ostringstream &oss, bool add_title)>;
 
   LogWriter(const LocationInfo &location, MsLogLevel log_level, SubModuleId submodule,
             ExceptionType excp_type = NoExceptionType)
@@ -272,6 +272,7 @@ class MS_CORE_API LogWriter {
 
  private:
   void OutputLog(const std::ostringstream &msg) const;
+  void RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const;
 
   LocationInfo location_;
   MsLogLevel log_level_;

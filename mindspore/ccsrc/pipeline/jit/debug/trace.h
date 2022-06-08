@@ -46,7 +46,7 @@ void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg);
 void TraceEvalCNodeLeave();
 TraceCNodeEvalStack &GetCNodeDebugStack();
 TraceGraphEvalStack &GetCurrentGraphEvalStack();
-void GetTraceStackInfo(std::ostringstream &oss);
+void GetTraceStackInfo(std::ostringstream &oss, bool add_title = false);
 std::string GetAbstractStr(const abstract::AbstractBasePtr &abs);
 void ClearTraceStack();
 }  // namespace trace
