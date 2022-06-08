@@ -44,6 +44,7 @@ from mindspore.common.api import _cell_graph_executor as _executor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
+from mindspore.common.initializer import One
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.compression.export import quant_export
 from mindspore.parallel._cell_wrapper import get_allgather_cell
@@ -51,7 +52,9 @@ from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_
 from mindspore.parallel._tensor import _reshape_param_data
 from mindspore.parallel._tensor import _reshape_param_data_with_weight
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
+from mindspore.train._utils import read_proto
 from .._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file
+
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
                      "Int32": mstype.int32, "UInt32": mstype.uint32, "Int64": mstype.int64, "UInt64": mstype.uint64,
@@ -61,6 +64,10 @@ tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype
 tensor_to_np_type = {"Int8": np.int8, "UInt8": np.uint8, "Int16": np.int16, "UInt16": np.uint16,
                      "Int32": np.int32, "UInt32": np.uint32, "Int64": np.int64, "UInt64": np.uint64,
                      "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_}
+
+mindir_to_tensor_type = {1: mstype.float32, 2: mstype.uint8, 3: mstype.int8, 4: mstype.uint16,
+                         5: mstype.int16, 6: mstype.int32, 7: mstype.int64, 10: mstype.float16,
+                         11: mstype.float64, 12: mstype.uint32, 13: mstype.uint64}
 
 _ckpt_mutex = Lock()
 
@@ -1788,3 +1795,87 @@ def _calculation_net_size(net):
         data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
 
     return data_total
+
+
+def _get_mindir_inputs(file_name):
+    """
+    Get MindIR file's inputs include shape and type, the data in inputs ars meaningless.
+
+    Note:
+        1. Parsing encrypted MindIR file is not supported.
+        2. Parsing dynamic shape MindIR file is not supported.
+
+    Args:
+        file_name (str): MindIR file name.
+
+    Returns:
+        Tensor, list(Tensor), the input of MindIR model file.
+
+    Raises:
+        ValueError: If the parameter file_name is not `str`.
+        RuntimeError: If the input of MindIR model is not tensor type or has no dims.
+
+    Examples:
+        >>> input_tensor = _get_mindir_inputs("lenet.mindir")
+    """
+    Validator.check_file_name_by_regular(file_name)
+    file_name = os.path.realpath(file_name)
+    model = read_proto(file_name)
+    input_tensor = []
+
+    for ele_input in model.graph.input:
+        input_shape = []
+        if not hasattr(ele_input, "tensor") or not hasattr(ele_input.tensor[0], "dims"):
+            raise RuntimeError("MindIR's inputs has no tensor or tensor has no dims, please check MindIR file.")
+
+        for ele_shape in ele_input.tensor[0].dims:
+            input_shape.append(ele_shape)
+        if -1 in input_shape:
+            raise RuntimeError(f"MindIR input's shape is: {input_shape}, dynamic shape is not supported.")
+
+        mindir_type = ele_input.tensor[0].data_type
+        if mindir_type not in mindir_to_tensor_type:
+            raise RuntimeError(f"MindIR input's type: {mindir_type} is not supported.")
+
+        input_type = mindir_to_tensor_type.get(mindir_type)
+        input_tensor.append(Tensor(shape=input_shape, dtype=input_type, init=One()))
+
+    if not input_tensor:
+        logger.warning("The MindIR model has no input, return None.")
+        return None
+    return input_tensor[0] if len(input_tensor) == 1 else input_tensor
+
+
+def convert_model(mindir_file, convert_file, file_format):
+    """
+    Convert mindir model to other format model. Current version only support convert to 'ONNX' format.
+
+    Note:
+        This function is a demo feature, it may be modify in a future version.
+
+    Args:
+        mindir_file (str): MindIR file name.
+        convert_file (str): Convert model file name.
+        file_format (str): Convert model's format, current version only supports 'ONNX'.
+
+    Raises:
+        ValueError: If the parameter `mindir_file` is not `str`.
+        ValueError: If the parameter `convert_file` is not `str`.
+        ValueError: If the parameter `file_format` is not 'ONNX'.
+
+    Examples:
+        >>> convert_model("lenet.mindir", "lenet.onnx", "ONNX")
+    """
+    Validator.check_file_name_by_regular(mindir_file)
+    Validator.check_file_name_by_regular(convert_file)
+    supported_formats = ["ONNX"]
+    if file_format not in supported_formats:
+        raise ValueError(f"For 'convert_model', 'file_format' must be one of {supported_formats},"
+                         f"but got {file_format}.")
+    net_input = _get_mindir_inputs(mindir_file)
+    graph = load(mindir_file)
+    net = nn.GraphCell(graph)
+    if isinstance(net_input, Tensor):
+        export(net, net_input, file_name=convert_file, file_format=file_format)
+    else:
+        export(net, *net_input, file_name=convert_file, file_format=file_format)
