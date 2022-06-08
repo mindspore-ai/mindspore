@@ -335,22 +335,11 @@ DShape BroadcastShape(const NodePtrList &inputs, bool to_nz = false) {
 }
 
 std::vector<DShape> ElemwiseOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
-  if (std::all_of(inputs.begin(), inputs.end(), [](const NodePtr &input) {
-        return input->format == kOpFormat_DEFAULT || input->format == kOpFormat_NHWC || input->format == kOpFormat_NCHW;
-      })) {
-    return PrimOp::InferShape(inputs, attrs);
-  }
-  if (std::all_of(inputs.begin(), inputs.end(), [](const NodePtr &input) {
-        return input->format == kOpFormat_DEFAULT || input->format == kOpFormat_NHWC ||
-               input->format == kOpFormat_NCHW || input->format == kOpFormat_FRAC_NZ;
-      })) {
+  if (std::any_of(inputs.begin(), inputs.end(),
+                  [](const NodePtr &input) { return input->format == kOpFormat_FRAC_NZ; })) {
     return {BroadcastShape(inputs, true)};
   }
-  std::string inputs_format;
-  for (const auto &input : inputs) {
-    static_cast<void>(inputs_format.append(" ").append(input->format));
-  }
-  MS_LOG(EXCEPTION) << "Unsupported inputs format: " << inputs_format;
+  return PrimOp::InferShape(inputs, attrs);
 }
 
 DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &) {
@@ -405,6 +394,91 @@ std::vector<DShape> UnPadAkgOp::InferShape(const NodePtrList &inputs, const DAtt
     (void)output.emplace_back(shape0[i] - unpad_after[i]);
   }
   return {output};
+}
+
+std::vector<DShape> Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+  // get the output shape when format is NHWC/NCHW
+  if (inputs[0]->shape.size() == 4) {
+    return OpaqueOp::InferShape(inputs, attrs);
+  }
+
+  // get the output shape when format is NCHWc
+  std::vector<int64_t> data_shape = inputs[0]->shape;
+  std::vector<int64_t> weight_shape = inputs[1]->shape;
+  auto n = data_shape[0];
+  auto i_h = data_shape[2];
+  auto i_w = data_shape[3];
+  auto c_o_o = weight_shape[0];
+  auto k_h = weight_shape[2];
+  auto k_w = weight_shape[3];
+  auto c_o_i = weight_shape[5];
+
+  CHECK_ATTR(attrs, "stride");
+  CHECK_ATTR(attrs, "dilation");
+
+  std::vector<int64_t> strides = GetListInt(attrs.find("stride")->second);
+  std::vector<int64_t> dilations = GetListInt(attrs.find("dilation")->second);
+
+  auto d_h = dilations[0];
+  auto d_w = dilations[1];
+  auto s_h = strides[0];
+  auto s_w = strides[1];
+  auto k_h_d = (k_h - 1) * d_h + 1;
+  auto k_w_d = (k_w - 1) * d_w + 1;
+  auto o_h = (i_h - k_h_d) / s_h + 1;
+  auto o_w = (i_w - k_w_d) / s_w + 1;
+
+  std::vector<int64_t> output_shape{n, c_o_o, o_h, o_w, c_o_i};
+  return {output_shape};
+}
+
+std::vector<TypeId> Conv2dOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
+  if (inputs[0]->shape.size() == 4) {
+    return PrimOp::InferType(inputs, attrs);
+  }
+  return {inputs[0]->type};
+}
+
+DFormat Conv2dOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
+  if (inputs[0]->shape.size() == 4) {
+    return PrimOp::InferFormat(inputs, attrs);
+  }
+  CHECK_ATTR(attrs, "conv_out_format");
+  return GetValue<std::string>(attrs.find("conv_out_format")->second);
+}
+
+std::vector<DShape> LayoutTransformOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+  CHECK_ATTR(attrs, "src_format");
+  CHECK_ATTR(attrs, "dst_format");
+  auto src_format = GetValue<std::string>(attrs.find("src_format")->second);
+  auto dst_format = GetValue<std::string>(attrs.find("dst_format")->second);
+  if (src_format == kOpFormat_NHWC) {
+    std::vector<int64_t> data_shape = inputs[0]->shape;
+    auto n = data_shape[0];
+    auto h = data_shape[1];
+    auto w = data_shape[2];
+    auto c = data_shape[3];
+    auto c_o_i = std::stol(dst_format.substr(4, dst_format.size() - 5));
+    if (c_o_i == 0) {
+      c_o_i = 1;
+    }
+    auto c_o_o = c / c_o_i;
+    std::vector<int64_t> output_shape{n, c_o_o, h, w, c_o_i};
+    return {output_shape};
+  }
+  if (dst_format == kOpFormat_NHWC) {
+    std::vector<int64_t> data_shape = inputs[0]->shape;
+    auto n = data_shape[0];
+    auto c_o_o = data_shape[1];
+    auto h = data_shape[2];
+    auto w = data_shape[3];
+    auto c_o_i = data_shape[4];
+    auto c = c_o_o * c_o_i;
+    std::vector<int64_t> output_shape{n, h, w, c};
+    return {output_shape};
+  }
+  MS_LOG(EXCEPTION) << "LayoutTransform only support transform between NHWC and NCHWnC now, but src_format is ["
+                    << src_format << "] and dst_format is [" << dst_format << "].";
 }
 
 void ComplexOp::Check(const NodePtrList &inputs, const DAttrs &) {

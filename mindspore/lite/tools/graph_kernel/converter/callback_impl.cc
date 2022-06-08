@@ -109,6 +109,11 @@ TypeId CallbackImpl::GetOutputInferType(const AnfNodePtr &node, size_t i) {
 std::string CallbackImpl::GetInputFormat(const AnfNodePtr &node, size_t i) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  if (IsPrimitiveCNode(cnode, prim::kPrimLayoutTransform)) {
+    auto prim = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(prim);
+    return GetValue<std::string>(prim->GetAttr("src_format"));
+  }
   if (!cnode->input(i + 1)->isa<CNode>()) {
     if (cnode->HasAttr(kOutputsFormat)) {
       auto out_format = GetValue<std::vector<std::string>>(cnode->GetAttr(kOutputsFormat))[0];

@@ -105,6 +105,7 @@ OP_REGISTER("Argmin", ReduceOp);
 // opaque ops
 OP_REGISTER("_opaque", OpaqueOp);  // default opaque node
 OP_REGISTER("Transpose", TransposeOp);
+OP_REGISTER("LayoutTransform", LayoutTransformOp);
 OP_REGISTER("MatMul", OpaqueOp);
 OP_REGISTER("PadAkg", PadAkgOp);
 OP_REGISTER("UnPadAkg", UnPadAkgOp);
@@ -116,7 +117,7 @@ OP_REGISTER("TensorScatterAdd", OpaqueOp);
 OP_REGISTER("Gather", OpaqueOp);
 OP_REGISTER("GatherNd", OpaqueOp);
 OP_REGISTER("UnsortedSegmentSum", OpaqueOp);
-OP_REGISTER("Conv2D", OpaqueOp);
+OP_REGISTER("Conv2D", Conv2dOp);
 OP_REGISTER("TransData", OpaqueOp);
 OP_REGISTER("ElemAny", ElemAnyOp);
 // virtual ops
