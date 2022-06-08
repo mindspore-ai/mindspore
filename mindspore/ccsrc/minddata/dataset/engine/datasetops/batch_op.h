@@ -282,7 +282,7 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   int32_t start_batch_size_;
   const bool drop_;                                     // bool for whether to drop remainder or not
   const bool pad_;                                      // bool for whether to perform padding on tensor
-  const std::vector<std::string> in_col_names_;         // input column name for per_batch_map
+  std::vector<std::string> in_col_names_;               // input column name for per_batch_map
   std::vector<std::string> out_col_names_;              // output column name for per_batch_map
   PadInfo pad_info_;                                    // column names to perform padding on
   std::unique_ptr<ChildIterator> child_iterator_;       // child iterator for fetching TensorRows 1 by 1
