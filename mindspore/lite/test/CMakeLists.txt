@@ -22,6 +22,7 @@ file(GLOB_RECURSE TEST_UT_SRC
         ${TEST_DIR}/ut/src/infer_test.cc
         ${TEST_DIR}/ut/src/utils_test.cc
         ${TEST_DIR}/ut/src/scheduler_test.cc
+        ${TEST_DIR}/ut/src/runtime/dynamic_mem_manager_test.cc
         ${TEST_DIR}/ut/src/registry/registry_test.cc
         ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
         ${TEST_DIR}/st/multiple_device_test.cc
