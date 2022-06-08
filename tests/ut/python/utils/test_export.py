@@ -14,6 +14,7 @@
 # ============================================================================
 """Test export"""
 import os
+from io import BytesIO
 import numpy as np
 
 import mindspore.nn as nn
@@ -77,6 +78,7 @@ def create_dataset():
 
     return mnist_ds
 
+
 class LeNet5(nn.Cell):
     def __init__(self):
         super(LeNet5, self).__init__()
@@ -133,6 +135,12 @@ class TrainOneStepCell(nn.Cell):
         return self.optimizer(grads)
 
 
+def encrypt_func(model_stream, key):
+    plain_data = BytesIO()
+    plain_data.write(model_stream)
+    return plain_data.getvalue()
+
+
 def test_export_lenet_grad_mindir():
     """
     Feature: Export LeNet to MindIR
@@ -166,5 +174,24 @@ def test_export_lenet_with_dataset():
 
     export(network, dataset, file_name=file_name, file_format='MINDIR')
     verify_name = file_name + ".mindir"
+    assert os.path.exists(verify_name)
+    os.remove(verify_name)
+
+
+def test_export_lenet_onnx_with_encryption():
+    """
+    Feature: Export encrypted LeNet to MindIR
+    Description: Test export API to save network with encryption into MindIR
+    Expectation: save successfully
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    network = LeNet5()
+    network.set_train()
+    file_name = "lenet_preprocess"
+
+    input_tensor = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    export(network, input_tensor, file_name=file_name, file_format='ONNX',
+           enc_key=b'123456789', enc_mode=encrypt_func)
+    verify_name = file_name + ".onnx"
     assert os.path.exists(verify_name)
     os.remove(verify_name)

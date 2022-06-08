@@ -1214,7 +1214,7 @@ class _CellGraphExecutor:
             graph_proto = obj.get_func_graph_proto()
         return graph_proto
 
-    def export(self, file_name, graph_id):
+    def export(self, file_name, graph_id, enc_key=None, encrypt_func=None):
         """
         Export graph.
 
@@ -1223,7 +1223,7 @@ class _CellGraphExecutor:
             graph_id (str): id of graph to be exported
         """
         from .._c_expression import export_graph
-        export_graph(file_name, 'AIR', graph_id)
+        export_graph(file_name, 'AIR', graph_id, encrypt_func, enc_key)
 
     def fetch_info_for_quant_export(self, exec_id):
         """Get graph proto from pipeline."""

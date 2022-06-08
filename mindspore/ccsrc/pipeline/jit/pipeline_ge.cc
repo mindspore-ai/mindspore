@@ -17,6 +17,7 @@
 #include "pipeline/jit/pipeline_ge.h"
 
 #include <sstream>
+#include <fstream>
 #include <map>
 #include <cstdlib>
 #include <algorithm>
@@ -25,10 +26,12 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "ir/tensor.h"
 #include "include/transform/graph_ir/utils.h"
+#include "graph/model.h"
 #include "include/common/debug/draw.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
+#include "include/common/utils/python_adapter.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -549,7 +552,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const
   }
 }
 
-void ExportDFGraph(const std::string &file_name, const std::string &phase) {
+void ExportDFGraph(const std::string &file_name, const std::string &phase, const py::function encrypt, char *key) {
   MS_LOG(DEBUG) << "Export graph begin.";
   transform::DfGraphWrapperPtr wrap_ptr = transform::GetGraphByName(phase);
   if (wrap_ptr == nullptr) {
@@ -562,9 +565,43 @@ void ExportDFGraph(const std::string &file_name, const std::string &phase) {
     MS_LOG(ERROR) << "Graph is null!";
     return;
   }
+  if (key != nullptr) {
+    if (py::isinstance<py::none>(encrypt)) {
+      MS_LOG(ERROR) << "ERROR: encrypt is not a function";
+      return;
+    }
+    // get model stream
+    ge::Model model("", "");
+    model.SetGraph(*ge_graph);
+    ge::Buffer model_data;
+    auto ge_ret = model.Save(model_data);
+    if (ge_ret != ge::SUCCESS) {
+      MS_LOG(ERROR) << "ERROR: GE model save fail";
+      return;
+    }
+    // convert model and key into py::bytes
+    const std::string str(reinterpret_cast<char *>(model_data.GetData()), model_data.GetSize());
+    py::bytes model_bytes(str);
+    py::bytes key_bytes(key);
 
-  if (ge_graph->SaveToFile(file_name) != 0) {
-    MS_LOG(EXCEPTION) << "Export air model failed.";
+    // call python encrypt func
+    py::bytes encrypted_model_stream = encrypt(model_bytes, key_bytes);
+    if (encrypted_model_stream == py::none()) {
+      MS_LOG(ERROR) << "ERROR: Model encrypt fail";
+      return;
+    }
+    // save to file
+    std::ofstream ofs(file_name);
+    if (!ofs.is_open()) {
+      MS_LOG(ERROR) << "ERROR: Open File '" << file_name << "' failed!";
+      return;
+    }
+    ofs << std::string(encrypted_model_stream);
+    ofs.close();
+  } else {
+    if (ge_graph->SaveToFile(file_name) != 0) {
+      MS_LOG(EXCEPTION) << "Export air model failed.";
+    }
   }
   MS_LOG(INFO) << "Export air model finish.";
 }

@@ -28,6 +28,7 @@
 
 #include "utils/hash_map.h"
 #include "pybind_api/pybind_patch.h"
+#include "pybind11/pybind11.h"
 #include "ir/param_info.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -1554,9 +1555,10 @@ uint32_t GetHcclRankSize() {
   return rank_size;
 }
 
-void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase) {
+void ExportGraph(const std::string &file_name, const std::string &model_type, const std::string &phase,
+                 const py::object encrypt, char *key) {
 #ifdef ENABLE_D
-  ExportDFGraph(file_name, phase);
+  ExportDFGraph(file_name, phase, encrypt, key);
 #else
   MS_EXCEPTION(ValueError) << "Only support export file in 'AIR' format with Ascend backend.";
 #endif
