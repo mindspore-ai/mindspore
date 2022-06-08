@@ -24,9 +24,9 @@
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "common/graph_kernel/adapter/fake_abstract_shape.h"
-#if ENABLE_D
+#ifdef ENABLE_D
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
-#elif ENABLE_GPU
+#elif defined(ENABLE_GPU)
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #endif
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
@@ -210,21 +210,21 @@ void CallbackImpl::SetEmptyKernelInfo(const AnfNodePtr &node) {
 void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-#if ENABLE_D
+#ifdef ENABLE_D
   if (GetTargetFromContext() == kCPUDevice) {
     cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
     device::cpu::SetKernelInfo(cnode);
   } else {
     device::ascend::SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
   }
-#elif ENABLE_GPU
+#elif defined(ENABLE_GPU)
   cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
   if (GetTargetFromContext() == kCPUDevice) {
     device::cpu::SetKernelInfo(cnode);
   } else {
     device::gpu::SetKernelInfo(cnode);
   }
-#elif ENABLE_CPU
+#elif defined(ENABLE_CPU)
   cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
   device::cpu::SetKernelInfo(cnode);
 #endif
@@ -246,21 +246,23 @@ TypeId CallbackImplWithInferShape::GetOutputType(const AnfNodePtr &node, size_t 
   return CallbackImpl::GetOutputInferType(node, i);
 }
 
-std::string CallbackImplWithInferShape::GetInputFormat(const AnfNodePtr &node, size_t i) { return kOpFormat_DEFAULT; }
+std::string CallbackImplWithInferShape::GetInputFormat(const AnfNodePtr &, size_t) { return kOpFormat_DEFAULT; }
 
-std::string CallbackImplWithInferShape::GetOutputFormat(const AnfNodePtr &node, size_t i) { return kOpFormat_DEFAULT; }
+std::string CallbackImplWithInferShape::GetOutputFormat(const AnfNodePtr &, size_t) { return kOpFormat_DEFAULT; }
 
 void CallbackImplWithInferShape::SetBasicNodeKernelInfo(const AnfNodePtr &node,
                                                         const std::vector<inner::NodeBase> &outputs_info) {
   node->set_kernel_info(std::make_shared<device::KernelInfo>());
-  if (node->cast<CNodePtr>() != nullptr) return;
-  std::vector<std::string> output_formats;
-  std::vector<TypeId> output_types;
-  AbstractBasePtrList abs_list;
+  if (node->cast<CNodePtr>() != nullptr) {
+    return;
+  }
   bool has_fake_abstract = false;
+  std::vector<TypeId> output_types;
+  std::vector<std::string> output_formats;
+  AbstractBasePtrList abs_list;
   for (size_t i = 0; i < outputs_info.size(); ++i) {
-    output_formats.push_back(outputs_info[i].format);
     output_types.push_back(outputs_info[i].type);
+    output_formats.push_back(outputs_info[i].format);
     ShapeVector abs_shape;
     if (outputs_info[i].format != kOpFormat_DEFAULT) {
       abs_shape = GetFakeAbstractShape(outputs_info[i].shape, outputs_info[i].format);
@@ -268,8 +270,7 @@ void CallbackImplWithInferShape::SetBasicNodeKernelInfo(const AnfNodePtr &node,
     } else {
       abs_shape = outputs_info[i].shape;
     }
-    auto abs_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(outputs_info[i].type), abs_shape);
-    abs_list.push_back(abs_tensor);
+    abs_list.push_back(std::make_shared<abstract::AbstractTensor>(TypeIdToType(outputs_info[i].type), abs_shape));
   }
   if (has_fake_abstract) {
     if (abs_list.size() == 1) {
@@ -285,7 +286,7 @@ void CallbackImplWithInferShape::SetBasicNodeKernelInfo(const AnfNodePtr &node,
   AnfAlgo::SetSelectKernelBuildInfo(info_builder.Build(), node.get());
 }
 
-std::string CallbackImplWithInferShape::GetProcessor(const AnfNodePtr &node) {
+std::string CallbackImplWithInferShape::GetProcessor(const AnfNodePtr &) {
   return kernel::GetStrProcessorFromContext();
 }
 }  // namespace mindspore::graphkernel

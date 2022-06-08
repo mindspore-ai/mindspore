@@ -151,7 +151,9 @@ std::vector<std::pair<AnfNodePtr, int>> StitchAtomicCleanInserter::FindInnerCNod
 }
 
 std::pair<bool, InplaceAssignerInfo> StitchAtomicCleanInserter::IsStitchWithAtomic(const AnfNodePtr &anf_node) {
-  if (!common::AnfAlgo::IsGraphKernel(anf_node)) return {false, InplaceAssignerInfo()};
+  if (!common::AnfAlgo::IsGraphKernel(anf_node)) {
+    return {false, InplaceAssignerInfo()};
+  }
   auto node = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(node);
   auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);

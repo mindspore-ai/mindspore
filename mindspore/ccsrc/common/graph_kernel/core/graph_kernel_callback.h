@@ -164,7 +164,7 @@ class COMMON_EXPORT Callback {
 
 class CallbackImplRegister {
  public:
-  explicit CallbackImplRegister(const std::function<CallbackPtr()> &fn) { Callback::RegImpl(fn()); }
+  explicit CallbackImplRegister(const std::function<CallbackPtr()> &fn) noexcept { Callback::RegImpl(fn()); }
   ~CallbackImplRegister() = default;
 
  protected:

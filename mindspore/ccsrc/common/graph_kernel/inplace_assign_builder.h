@@ -60,7 +60,7 @@ class InplaceAssignBuilder : public opt::Pass {
   virtual void ProcessOriginCNodeUser(
     const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
     const std::vector<std::pair<InplaceAssignerInfo, AnfNodePtr>> &info_and_inplace_assignee_addr,
-    const FuncGraphManagerPtr &mng);
+    const FuncGraphManagerPtr &mng) const;
   virtual void SetTargetAttrs(const CNodePtr &) {}
 
  private:

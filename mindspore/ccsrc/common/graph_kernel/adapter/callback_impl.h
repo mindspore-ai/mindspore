@@ -47,9 +47,9 @@ class COMMON_EXPORT CallbackImplWithInferShape : public CallbackImpl {
   ShapeVector GetOutputShape(const AnfNodePtr &node, size_t i) override;
   TypeId GetInputType(const AnfNodePtr &node, size_t i) override;
   TypeId GetOutputType(const AnfNodePtr &node, size_t i) override;
-  std::string GetInputFormat(const AnfNodePtr &node, size_t i) override;
-  std::string GetOutputFormat(const AnfNodePtr &node, size_t i) override;
-  std::string GetProcessor(const AnfNodePtr &node) override;
+  std::string GetInputFormat(const AnfNodePtr &, size_t) override;
+  std::string GetOutputFormat(const AnfNodePtr &, size_t) override;
+  std::string GetProcessor(const AnfNodePtr &) override;
   void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
 };
 }  // namespace mindspore::graphkernel
