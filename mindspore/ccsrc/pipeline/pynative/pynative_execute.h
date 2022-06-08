@@ -430,9 +430,9 @@ class ForwardExecutor {
   void SetDynamicInput(const py::object &cell, const py::args &args);
   void SetFeedDynamicInputAbs(const py::object &cell, const py::args &args);
   py::object GetDynamicInput(const py::object &actual_input);
-  bool IsFirstCell() const { return cell_depth_ == 0; }
-  void IncreaseCellDepth() { ++cell_depth_; }
-  void DecreaseCellDepth() { --cell_depth_; }
+  bool IsFirstCell() const { return forward_cell_stack_.empty(); }
+  void PushForwardCell(const py::object &cell) { forward_cell_stack_.push(cell); }
+  void PopForwardCell() { forward_cell_stack_.pop(); }
 
  private:
   GradExecutorPtr grad() const;
@@ -468,14 +468,14 @@ class ForwardExecutor {
                               const py::object &obj);
 
  private:
-  uint32_t cell_depth_{0};
+  bool lazy_build_{false};
+  std::string last_target_{"Unknown"};
   GradExecutorWeakPtr grad_executor_;
+  DynamicShapeInfoPtr dynamic_shape_info_ptr_{nullptr};
+  std::stack<py::object> forward_cell_stack_;
   PrimAbsCache prim_abs_list_;
   ImplicitCastCache implicit_cast_map_;
   mindspore::HashMap<std::string, abstract::AbstractBasePtr> node_abs_map_;
-  bool lazy_build_{false};
-  std::string last_target_{"Unknown"};
-  DynamicShapeInfoPtr dynamic_shape_info_ptr_{nullptr};
 };
 
 class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
