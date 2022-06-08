@@ -2104,6 +2104,7 @@ class Tensor(Tensor_):
     def inplace_sub(self, v, indices):
         """
         Subtract v into specified rows of a tensor according to indices.
+
         Args:
             v (Tensor): A tensor with the same type and same dimension size except the first dimension, which must be
               the same as the size of indices.
