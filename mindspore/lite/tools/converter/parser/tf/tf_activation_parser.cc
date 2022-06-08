@@ -29,7 +29,10 @@ PrimitiveCPtr TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
                                         std::vector<std::string> *inputs, int *output_size) {
   auto prim = std::make_unique<ops::Activation>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-  if (tf_op.op() == "Relu") {
+  if (tf_op.op() == "Elu") {
+    prim->set_activation_type(mindspore::ActivationType::ELU);
+    prim->set_alpha(1.0);
+  } else if (tf_op.op() == "Relu") {
     prim->set_activation_type(mindspore::ActivationType::RELU);
     prim->set_min_val(0);
     prim->set_max_val(FLT_MAX);
@@ -67,6 +70,7 @@ PrimitiveCPtr TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
   return prim->GetPrim();
 }
 
+TFNodeRegistrar g_tfEluParser("Elu", new TFActivationParser());
 TFNodeRegistrar g_tfReluParser("Relu", new TFActivationParser());
 TFNodeRegistrar g_tfRelu6Parser("Relu6", new TFActivationParser());
 TFNodeRegistrar g_tfSigmoidParser("Sigmoid", new TFActivationParser());
