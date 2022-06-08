@@ -114,6 +114,9 @@ echo 'run c api ut test'
 ./lite-test --gtest_filter="TensorCTest.*"
 ./lite-test --gtest_filter="ContextCTest.*"
 
+echo 'run bfc memory ut test'
+./lite-test --gtest_filter="DynamicMemManagerTest.*"
+
 echo "lite Python API ut test"
 mindspore_lite_whl=`ls ${CUR_DIR}/../../../output/*.whl`
 if [ ! -f "${mindspore_lite_whl}" ]; then
