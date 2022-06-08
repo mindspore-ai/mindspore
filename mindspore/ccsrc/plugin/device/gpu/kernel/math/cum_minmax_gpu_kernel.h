@@ -28,22 +28,17 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kCummin = "Cummin";
-constexpr auto kCummax = "Cummax";
-constexpr auto kUnKnown = "UnKnown";
 class CumMinMaxGpuKernelMod : public NativeGpuKernelMod {
  public:
   CumMinMaxGpuKernelMod() = default;
-  explicit CumMinMaxGpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  explicit CumMinMaxGpuKernelMod(const CumOpType &cum_op_type) : cum_op_type_(cum_op_type) {}
   ~CumMinMaxGpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  int Resize(
-    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-    const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
@@ -53,7 +48,6 @@ class CumMinMaxGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void ResetResource() noexcept;
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
@@ -61,16 +55,13 @@ class CumMinMaxGpuKernelMod : public NativeGpuKernelMod {
   using CumMinMaxLaunchFunc =
     std::function<bool(CumMinMaxGpuKernelMod *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                        const std::vector<AddressPtr> &, void *)>;
-  static std::map<std::string, std::vector<std::pair<KernelAttr, CumMinMaxLaunchFunc>>> func_list_;
-  CumOpType cum_op_type_;
+  static std::map<CumOpType, std::vector<std::pair<KernelAttr, CumMinMaxLaunchFunc>>> func_list_;
+  CumOpType cum_op_type_{CUM_OP_INVALID_TYPE};
   CumMinMaxLaunchFunc kernel_func_;
-  size_t t_size_{0};  // Equal to sizeof(T).
-  size_t s_size_{0};  // Equal to sizeof(S).
+  int64_t axis_{0};
   size_t inner_size_{1};
-  size_t outer_size_{1};
   size_t axis_size_{1};
   size_t element_size_{1};
-  std::string kernel_type_{kUnKnown};
 };
 }  // namespace kernel
 }  // namespace mindspore

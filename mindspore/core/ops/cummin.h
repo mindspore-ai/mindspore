@@ -30,7 +30,13 @@ constexpr auto kNameCummin = "Cummin";
 class MIND_API Cummin : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Cummin);
-  Cummin() : BaseOperator(kNameCummin) { InitIOName({"x"}, {"y"}); }
+  Cummin() : BaseOperator(kNameCummin) { InitIOName({"x"}, {"y", "indices"}); }
+
+  void Init(const int64_t &axis);
+
+  void set_axis(const int64_t &axis);
+
+  int64_t get_axis() const;
 };
 
 abstract::AbstractBasePtr CumminInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

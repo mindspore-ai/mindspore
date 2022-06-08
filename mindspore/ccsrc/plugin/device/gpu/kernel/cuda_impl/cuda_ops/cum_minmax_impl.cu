@@ -14,179 +14,195 @@
  * limitations under the License.
  */
 
-#include "cum_minmax_impl.cuh"
-#include <thrust/transform.h>
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cum_minmax_impl.cuh"
+#include <cub/cub.cuh>
 #include <thrust/functional.h>
-#include <thrust/device_ptr.h>
-#include <thrust/execution_policy.h>
 #include <algorithm>
 #include "include/cuda_fp16.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
-template <typename T>
-__device__ bool IsNan(const T &x) {
+template <typename DataType>
+__device__ bool IsNan(const DataType &x) {
   return isnan(x);
 }
 
 __device__ bool IsNan(const half &x) { return __hisnan(x); }
 
-template <typename T, typename OP>
-struct binary_op {
-  const T *input_ptr_;
+template <typename DataType, typename OP>
+struct BinaryOp {
+  const DataType *input_ptr_;
   size_t axis_inner_size_;
   size_t axis_size_;
   size_t inner_size_;
   OP op;
 
-  __device__ size_t operator()(const size_t &lhs, const size_t &rhs) const {
-    if (rhs % axis_size_) {
-      size_t batch_idx = rhs / axis_size_;
-      size_t axis_idx = rhs - batch_idx * axis_size_;
-      size_t outer_idx = batch_idx / inner_size_;
-      size_t inner_idx = batch_idx - outer_idx * inner_size_;
-      size_t fix_part = outer_idx * axis_inner_size_ + inner_idx;
-      size_t lhs_idx = fix_part + lhs * inner_size_;
-      size_t rhs_idx = fix_part + axis_idx * inner_size_;
-      return IsNan(input_ptr_[lhs_idx]) || op(input_ptr_[lhs_idx], input_ptr_[rhs_idx]) ? lhs : axis_idx;
+  __device__ size_t operator()(const size_t &pre_trans_idx, const size_t &trans_idx) const {
+    size_t axis_idx = trans_idx % axis_size_;
+    if (axis_idx == 0) {
+      return axis_idx;
     } else {
-      return 0;
+      size_t axis_inner_idx = trans_idx % axis_inner_size_;
+      size_t outer_part = trans_idx - axis_inner_idx;
+      size_t inner_idx = axis_inner_idx / axis_size_;
+      size_t pre_axis_idx = pre_trans_idx % axis_size_;
+      DataType lhs = input_ptr_[outer_part + pre_axis_idx * inner_size_ + inner_idx];
+      DataType rhs = input_ptr_[outer_part + axis_idx * inner_size_ + inner_idx];
+      return IsNan(rhs) || (!IsNan(lhs) && op(rhs, lhs)) ? trans_idx : pre_trans_idx;
     }
   }
 };
 
-template <typename T, typename S>
-__global__ void DecodeKernel(const T *input_ptr, const size_t *workspace_ptr, T *value_ptr, S *index_ptr,
-                             size_t element_size, size_t axis_inner_size, size_t axis_size, size_t inner_size) {
+template <typename DataType, typename IndexType>
+__global__ void ArgMinMaxKernel(const DataType *input_ptr, const size_t *workspace_ptr, DataType *value_ptr,
+                                IndexType *index_ptr, size_t element_size, size_t axis_inner_size, size_t axis_size,
+                                size_t inner_size) {
   for (size_t tid = blockIdx.x * blockDim.x + threadIdx.x; tid < element_size; tid += blockDim.x * gridDim.x) {
-    size_t batch_idx = tid / axis_size;
-    size_t axis_idx = tid - batch_idx * axis_size;
-    size_t outer_idx = batch_idx / inner_size;
-    size_t inner_idx = batch_idx - outer_idx * inner_size;
-    size_t fix_part = outer_idx * axis_inner_size + inner_idx;
-    size_t real_idx = fix_part + axis_idx * inner_size;
-    size_t cum_idx = fix_part + workspace_ptr[tid] * inner_size;
-    value_ptr[real_idx] = input_ptr[cum_idx];
-    index_ptr[real_idx] = static_cast<S>(workspace_ptr[tid]);
+    size_t axis_inner_idx = tid % axis_inner_size;
+    size_t outer_part = tid - axis_inner_idx;
+    size_t axis_idx = axis_inner_idx % axis_size;
+    size_t inner_idx = axis_inner_idx / axis_size;
+    size_t real_idx = outer_part + axis_idx * inner_size + inner_idx;
+    size_t real_arg = workspace_ptr[tid] % axis_size;
+    value_ptr[real_idx] = input_ptr[outer_part + real_arg * inner_size + inner_idx];
+    index_ptr[real_idx] = static_cast<IndexType>(real_arg);
   }
 }
 
-template <typename T, typename S>
-void CumMinMax(enum CumOpType op_type, const T *input_ptr, size_t *workspace_ptr, T *value_ptr, S *index_ptr,
-               size_t element_size, size_t axis_size, size_t inner_size, cudaStream_t cuda_stream) {
+template <typename DataType, typename IndexType>
+void CumMinMax(CumOpType cum_op_type, const DataType *input_ptr, size_t *workspace_ptr, DataType *value_ptr,
+               IndexType *index_ptr, size_t element_size, size_t axis_size, size_t inner_size,
+               const uint32_t &device_id, cudaStream_t cuda_stream) {
   // Cummin/Cummax cuda algorithm:
-  // 1. Generate a sequence from 0 to element_size-1;
-  // 2. Using thrust:inclusive_scan to get the cumulative maximum/minimum result of transposed array.
-  //    Note that 1. Segmentation of array is done within binary_op of inclusive_scan;
+  // 1. Generate a counting iterator from 0 to element_size-1;
+  // 2. Using inclusive scan api to get the cumulative maximum/minimum result of transposed array.
+  //    Note that 1. Segmentation of array is done within scan_op of inclusive scan api;
   //              2. it's not necessary to directly transpose the original array, but using the mapping rule;
-  // 3. Restore the transposed array using DecodeKernel, and also with the help of mapping rule.
-  auto device = thrust::cuda::par.on(cuda_stream);
-  auto thrust_ptr = thrust::device_pointer_cast(workspace_ptr);
-  thrust::sequence(device, thrust_ptr, thrust_ptr + element_size);
+  // 3. Restore the transposed array using ArgMinMaxKernel, and also with the help of mapping rule.
   auto axis_inner_size = axis_size * inner_size;
-  switch (op_type) {
+  void *d_temp_storage = nullptr;
+  size_t temp_storage_bytes = 0;
+  cub::CountingInputIterator<size_t> count_iter(0);
+  switch (cum_op_type) {
     case CUMMIN: {
-      binary_op<T, thrust::less<T>> op{input_ptr, axis_inner_size, axis_size, inner_size};
-      thrust::inclusive_scan(device, thrust_ptr, thrust_ptr + element_size, thrust_ptr, op);
+      BinaryOp<DataType, thrust::less_equal<DataType>> scan_op{input_ptr, axis_inner_size, axis_size, inner_size};
+      cub::DeviceScan::InclusiveScan(nullptr, temp_storage_bytes, count_iter, workspace_ptr, scan_op, element_size,
+                                     cuda_stream);
+      (void)cudaMalloc(&d_temp_storage, temp_storage_bytes);
+      cub::DeviceScan::InclusiveScan(d_temp_storage, temp_storage_bytes, count_iter, workspace_ptr, scan_op,
+                                     element_size, cuda_stream);
       break;
     }
     case CUMMAX: {
-      binary_op<T, thrust::greater<T>> op{input_ptr, axis_inner_size, axis_size, inner_size};
-      thrust::inclusive_scan(device, thrust_ptr, thrust_ptr + element_size, thrust_ptr, op);
+      BinaryOp<DataType, thrust::greater_equal<DataType>> scan_op{input_ptr, axis_inner_size, axis_size, inner_size};
+      cub::DeviceScan::InclusiveScan(nullptr, temp_storage_bytes, count_iter, workspace_ptr, scan_op, element_size,
+                                     cuda_stream);
+      (void)cudaMalloc(&d_temp_storage, temp_storage_bytes);
+      cub::DeviceScan::InclusiveScan(d_temp_storage, temp_storage_bytes, count_iter, workspace_ptr, scan_op,
+                                     element_size, cuda_stream);
       break;
     }
     default:
       break;
   }
 
-  DecodeKernel<<<GET_BLOCKS(element_size), GET_THREADS, 0, cuda_stream>>>(
+  ArgMinMaxKernel<<<CUDA_BLOCKS(device_id, element_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input_ptr, workspace_ptr, value_ptr, index_ptr, element_size, axis_inner_size, axis_size, inner_size);
+
+  // Since cudaGetLastError can return the last error from a runtime call,
+  // we catch the error in Launch function.
+  (void)cudaFree(d_temp_storage);
 }
 
-template CUDA_LIB_EXPORT void CumMinMax<int8_t, int32_t>(enum CumOpType op_type, const int8_t *input_ptr,
+template CUDA_LIB_EXPORT void CumMinMax<int8_t, int32_t>(CumOpType cum_op_type, const int8_t *input_ptr,
                                                          size_t *workspace_ptr, int8_t *value_ptr, int32_t *index_ptr,
                                                          size_t element_size, size_t axis_size, size_t inner_size,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<int16_t, int32_t>(enum CumOpType op_type, const int16_t *input_ptr,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<int16_t, int32_t>(CumOpType cum_op_type, const int16_t *input_ptr,
                                                           size_t *workspace_ptr, int16_t *value_ptr, int32_t *index_ptr,
                                                           size_t element_size, size_t axis_size, size_t inner_size,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<int32_t, int32_t>(enum CumOpType op_type, const int32_t *input_ptr,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<int32_t, int32_t>(CumOpType cum_op_type, const int32_t *input_ptr,
                                                           size_t *workspace_ptr, int32_t *value_ptr, int32_t *index_ptr,
                                                           size_t element_size, size_t axis_size, size_t inner_size,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<int64_t, int32_t>(enum CumOpType op_type, const int64_t *input_ptr,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<int64_t, int32_t>(CumOpType cum_op_type, const int64_t *input_ptr,
                                                           size_t *workspace_ptr, int64_t *value_ptr, int32_t *index_ptr,
                                                           size_t element_size, size_t axis_size, size_t inner_size,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<uint8_t, int32_t>(enum CumOpType op_type, const uint8_t *input_ptr,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<uint8_t, int32_t>(CumOpType cum_op_type, const uint8_t *input_ptr,
                                                           size_t *workspace_ptr, uint8_t *value_ptr, int32_t *index_ptr,
                                                           size_t element_size, size_t axis_size, size_t inner_size,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<uint16_t, int32_t>(enum CumOpType op_type, const uint16_t *input_ptr,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<uint16_t, int32_t>(CumOpType cum_op_type, const uint16_t *input_ptr,
                                                            size_t *workspace_ptr, uint16_t *value_ptr,
                                                            int32_t *index_ptr, size_t element_size, size_t axis_size,
-                                                           size_t inner_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<uint32_t, int32_t>(enum CumOpType op_type, const uint32_t *input_ptr,
+                                                           size_t inner_size, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<uint32_t, int32_t>(CumOpType cum_op_type, const uint32_t *input_ptr,
                                                            size_t *workspace_ptr, uint32_t *value_ptr,
                                                            int32_t *index_ptr, size_t element_size, size_t axis_size,
-                                                           size_t inner_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<uint64_t, int32_t>(enum CumOpType op_type, const uint64_t *input_ptr,
+                                                           size_t inner_size, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<uint64_t, int32_t>(CumOpType cum_op_type, const uint64_t *input_ptr,
                                                            size_t *workspace_ptr, uint64_t *value_ptr,
                                                            int32_t *index_ptr, size_t element_size, size_t axis_size,
-                                                           size_t inner_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<half, int32_t>(enum CumOpType op_type, const half *input_ptr,
+                                                           size_t inner_size, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<half, int32_t>(CumOpType cum_op_type, const half *input_ptr,
                                                        size_t *workspace_ptr, half *value_ptr, int32_t *index_ptr,
                                                        size_t element_size, size_t axis_size, size_t inner_size,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<float, int32_t>(enum CumOpType op_type, const float *input_ptr,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<float, int32_t>(CumOpType cum_op_type, const float *input_ptr,
                                                         size_t *workspace_ptr, float *value_ptr, int32_t *index_ptr,
                                                         size_t element_size, size_t axis_size, size_t inner_size,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<double, int32_t>(enum CumOpType op_type, const double *input_ptr,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<double, int32_t>(CumOpType cum_op_type, const double *input_ptr,
                                                          size_t *workspace_ptr, double *value_ptr, int32_t *index_ptr,
                                                          size_t element_size, size_t axis_size, size_t inner_size,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<int8_t, int64_t>(enum CumOpType op_type, const int8_t *input_ptr,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<int8_t, int64_t>(CumOpType cum_op_type, const int8_t *input_ptr,
                                                          size_t *workspace_ptr, int8_t *value_ptr, int64_t *index_ptr,
                                                          size_t element_size, size_t axis_size, size_t inner_size,
-                                                         cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<int16_t, int64_t>(enum CumOpType op_type, const int16_t *input_ptr,
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<int16_t, int64_t>(CumOpType cum_op_type, const int16_t *input_ptr,
                                                           size_t *workspace_ptr, int16_t *value_ptr, int64_t *index_ptr,
                                                           size_t element_size, size_t axis_size, size_t inner_size,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<int32_t, int64_t>(enum CumOpType op_type, const int32_t *input_ptr,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<int32_t, int64_t>(CumOpType cum_op_type, const int32_t *input_ptr,
                                                           size_t *workspace_ptr, int32_t *value_ptr, int64_t *index_ptr,
                                                           size_t element_size, size_t axis_size, size_t inner_size,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<int64_t, int64_t>(enum CumOpType op_type, const int64_t *input_ptr,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<int64_t, int64_t>(CumOpType cum_op_type, const int64_t *input_ptr,
                                                           size_t *workspace_ptr, int64_t *value_ptr, int64_t *index_ptr,
                                                           size_t element_size, size_t axis_size, size_t inner_size,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<uint8_t, int64_t>(enum CumOpType op_type, const uint8_t *input_ptr,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<uint8_t, int64_t>(CumOpType cum_op_type, const uint8_t *input_ptr,
                                                           size_t *workspace_ptr, uint8_t *value_ptr, int64_t *index_ptr,
                                                           size_t element_size, size_t axis_size, size_t inner_size,
-                                                          cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<uint16_t, int64_t>(enum CumOpType op_type, const uint16_t *input_ptr,
+                                                          const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<uint16_t, int64_t>(CumOpType cum_op_type, const uint16_t *input_ptr,
                                                            size_t *workspace_ptr, uint16_t *value_ptr,
                                                            int64_t *index_ptr, size_t element_size, size_t axis_size,
-                                                           size_t inner_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<uint32_t, int64_t>(enum CumOpType op_type, const uint32_t *input_ptr,
+                                                           size_t inner_size, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<uint32_t, int64_t>(CumOpType cum_op_type, const uint32_t *input_ptr,
                                                            size_t *workspace_ptr, uint32_t *value_ptr,
                                                            int64_t *index_ptr, size_t element_size, size_t axis_size,
-                                                           size_t inner_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<uint64_t, int64_t>(enum CumOpType op_type, const uint64_t *input_ptr,
+                                                           size_t inner_size, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<uint64_t, int64_t>(CumOpType cum_op_type, const uint64_t *input_ptr,
                                                            size_t *workspace_ptr, uint64_t *value_ptr,
                                                            int64_t *index_ptr, size_t element_size, size_t axis_size,
-                                                           size_t inner_size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<half, int64_t>(enum CumOpType op_type, const half *input_ptr,
+                                                           size_t inner_size, const uint32_t &device_id,
+                                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<half, int64_t>(CumOpType cum_op_type, const half *input_ptr,
                                                        size_t *workspace_ptr, half *value_ptr, int64_t *index_ptr,
                                                        size_t element_size, size_t axis_size, size_t inner_size,
-                                                       cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<float, int64_t>(enum CumOpType op_type, const float *input_ptr,
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<float, int64_t>(CumOpType cum_op_type, const float *input_ptr,
                                                         size_t *workspace_ptr, float *value_ptr, int64_t *index_ptr,
                                                         size_t element_size, size_t axis_size, size_t inner_size,
-                                                        cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CumMinMax<double, int64_t>(enum CumOpType op_type, const double *input_ptr,
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CumMinMax<double, int64_t>(CumOpType cum_op_type, const double *input_ptr,
                                                          size_t *workspace_ptr, double *value_ptr, int64_t *index_ptr,
                                                          size_t element_size, size_t axis_size, size_t inner_size,
-                                                         cudaStream_t cuda_stream);
+                                                         const uint32_t &device_id, cudaStream_t cuda_stream);
