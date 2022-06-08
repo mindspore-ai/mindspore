@@ -49,8 +49,7 @@ def test_deformable_conv2d():
                          [[-1.2452881, -1.0579522]]]]).astype(np.float32)
     offsets = Tensor(offsets, mstype.float32)
     out = deformable_conv2d(x, weight, offsets, (kh, kw), (1, 1, stride_h, stride_w), (pad_h, pad_h, pad_w, pad_w),
-                            data_format="NCHW", dilations=(1, 1, dilation_h, dilation_w),
-                            deformable_groups=deformable_group)
+                            dilations=(1, 1, dilation_h, dilation_w), deformable_groups=deformable_group)
     # expected output: [1, 1, 1, 2]
     expected = np.array([[[[-0.00852099, -0.09671781]]]]).astype(np.float32)
     assert np.allclose(out.asnumpy(), expected)
