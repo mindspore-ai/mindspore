@@ -42,10 +42,14 @@ int SmoothL1LossCPUKernel::DoExecute(size_t task_id) {
   const size_t length = in_tensors_.at(kPredictIdx)->ElementsNum();
 
   size_t stride = UP_DIV(length, thread_count_);
-  size_t count = MSMIN(stride, length - stride * task_id);
+  int count = MSMIN(stride, length - stride * task_id);
+  if (count <= 0) {
+    MS_LOG(INFO) << "thread segment count is less than or equal to 0, will skip.";
+    return RET_OK;
+  }
 
   size_t start = stride * task_id;
-  size_t end = start + count;
+  size_t end = start + static_cast<size_t>(count);
 
   const float zero = 0.0f;
   const float half = 0.5f;
