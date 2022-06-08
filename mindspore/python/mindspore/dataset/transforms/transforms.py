@@ -902,7 +902,7 @@ class TypeCast(TensorOperation):
 
     Args:
         data_type (Union[mindspore.dtype, numpy.dtype]): mindspore.dtype or numpy.dtype (e.g. :class:`numpy.float32`)
-        to be cast to.
+            to be cast to.
 
     Raises:
         TypeError: If `data_type` is not of MindSpore data type bool, int, float, string or type :class:`numpy.dtype`.

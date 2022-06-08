@@ -137,6 +137,7 @@ DE_C_CONVERT_COLOR_MODE = {ConvertMode.COLOR_BGR2BGRA: cde.ConvertMode.DE_COLOR_
 class AdjustGamma(ImageTensorOperation):
     r"""
     Apply gamma correction on input image. Input image is expected to be in [..., H, W, C] or [H, W] format.
+
     .. math::
         I_{\text{out}} = 255 \times \text{gain} \times \left(\frac{I_{\text{in}}}{255}\right)^{\gamma}
 
