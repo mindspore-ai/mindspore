@@ -424,7 +424,8 @@ class Adam(Optimizer):
         ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
-        >>> from mindspore import nn, Model
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
@@ -444,7 +445,7 @@ class Adam(Optimizer):
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
     """
 
     @opt_init_args_register
@@ -660,7 +661,8 @@ class AdamWeightDecay(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import nn, Model
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
@@ -678,7 +680,7 @@ class AdamWeightDecay(Optimizer):
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
    """
     _support_parallel_optimizer = True
 
@@ -831,7 +833,8 @@ class AdamOffload(Optimizer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore import nn, Model
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
@@ -849,7 +852,7 @@ class AdamOffload(Optimizer):
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
     """
 
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,

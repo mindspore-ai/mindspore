@@ -212,11 +212,11 @@ def grad(fn, grad_position=0, sens_param=False):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> from mindspore import set_context, GRAPH_MODE
         >>> from mindspore import Tensor
         >>> from mindspore.ops.functional import grad
-        >>> set_context(mode=GRAPH_MODE)
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y, z):
         ...         return x*y*z
@@ -310,11 +310,11 @@ def jet(fn, primals, series):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
-        >>> from mindspore import set_context, GRAPH_MODE
+        >>> import mindspore as ms
         >>> import mindspore.ops as P
         >>> from mindspore import Tensor
         >>> from mindspore.ops.functional import jet
-        >>> set_context(mode=GRAPH_MODE)
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()
@@ -417,12 +417,12 @@ def derivative(fn, primals, order):
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> from mindspore import set_context, GRAPH_MODE
         >>> import mindspore.ops as P
         >>> from mindspore import Tensor
         >>> from mindspore.ops.functional import derivative
-        >>> set_context(mode=GRAPH_MODE)
+        >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super().__init__()

@@ -355,12 +355,11 @@ class HookBackward(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
+        >>> import mindspore as ms
         >>> from mindspore import ops
         >>> from mindspore import Tensor
-        >>> from mindspore import set_context, PYNATIVE_MODE
         >>> from mindspore.ops import GradOperation
-        >>> set_context(mode=PYNATIVE_MODE)
+        >>> ms.set_context(mode=ms.PYNATIVE_MODE)
         >>> def hook_fn(grad):
         ...     print(grad)
         ...
@@ -375,7 +374,7 @@ class HookBackward(PrimitiveWithInfer):
         >>> def backward(x, y):
         ...     return grad_all(hook_test)(x, y)
         ...
-        >>> output = backward(Tensor(1, mindspore.float32), Tensor(2, mindspore.float32))
+        >>> output = backward(Tensor(1, ms.float32), Tensor(2, ms.float32))
         (Tensor(shape=[], dtype=Float32, value= 2),)
         >>> print(output)
         (Tensor(shape=[], dtype=Float32, value= 4), Tensor(shape=[], dtype=Float32, value= 4))

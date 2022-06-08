@@ -221,7 +221,8 @@ class FTRL(Optimizer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> from mindspore import nn, Model
+        >>> import mindspore as ms
+        >>> from mindspore import nn
         >>>
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
@@ -241,7 +242,7 @@ class FTRL(Optimizer):
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> model = Model(net, loss_fn=loss, optimizer=optim)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
     """
 
     @opt_init_args_register

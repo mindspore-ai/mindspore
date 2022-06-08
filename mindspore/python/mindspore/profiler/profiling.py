@@ -83,8 +83,8 @@ class Profiler:
 
     Examples:
         >>> import numpy as np
+        >>> import mindspore as ms
         >>> from mindspore import nn
-        >>> from mindspore import Model, set_context, GRAPH_MODE
         >>> import mindspore.dataset as ds
         >>> from mindspore import Profiler
         >>>
@@ -104,12 +104,12 @@ class Profiler:
         ...     optimizer = nn.Momentum(net.trainable_params(), 1, 0.9)
         ...     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         ...     data = ds.GeneratorDataset(generator, ["data", "label"])
-        ...     model = Model(net, loss, optimizer)
+        ...     model = ms.Model(net, loss, optimizer)
         ...     model.train(1, data)
         >>>
         >>> if __name__ == '__main__':
         ...     # If the device_target is GPU, set the device_target to "GPU"
-        ...     set_context(mode=GRAPH_MODE, device_target="Ascend")
+        ...     ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         ...
         ...     # Init Profiler
         ...     # Note that the Profiler should be initialized before model.train

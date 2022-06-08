@@ -2389,11 +2389,11 @@ lenet_quant.mindir
 <td>
 
 ```python
->>> from mindspore import export
+>>> import mindspore as ms
 >>>
 >>> network = LeNetQuant()
 >>> inputs = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32)
->>> export(network, inputs, file_name="lenet_quant", file_format='MINDIR', quant_mode='AUTO')
+>>> ms.export(network, inputs, file_name="lenet_quant", file_format='MINDIR', quant_mode='AUTO')
 lenet_quant.mindir
 ```
 

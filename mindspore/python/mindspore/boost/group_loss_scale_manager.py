@@ -44,7 +44,8 @@ class GroupLossScaleManager(Cell):
         ``Ascend``
 
     Examples:
-        >>> from mindspore import boost, Model, nn
+        >>> import mindspore as ms
+        >>> from mindspore import boost, nn
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, enhanced_amp, num_class=10, num_channel=1):
@@ -85,7 +86,7 @@ class GroupLossScaleManager(Cell):
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> boost_config_dict = {"boost": {"mode": "manual", "less_bn": False, "grad_freeze": False, "adasum": False, \
         >>>                      "grad_accumulation": False, "dim_reduce": False, "loss_scale_group": True}}
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager, \
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager, \
         >>>               boost_level="O1", boost_config_dict=boost_config_dict)
         >>> # For details about how to build the dataset, please refer to the function `create_dataset` in tutorial
         >>> # document on the official website:

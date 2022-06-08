@@ -544,26 +544,26 @@ def set_auto_parallel_context(**kwargs):
         ValueError: If input key is not attribute in auto parallel context.
 
     Examples:
-        >>> from mindspore import set_auto_parallel_context
-        >>> set_auto_parallel_context(device_num=8)
-        >>> set_auto_parallel_context(global_rank=0)
-        >>> set_auto_parallel_context(gradients_mean=True)
-        >>> set_auto_parallel_context(gradient_fp32_sync=False)
-        >>> set_auto_parallel_context(parallel_mode="auto_parallel")
-        >>> set_auto_parallel_context(search_mode="dynamic_programming")
-        >>> set_auto_parallel_context(auto_parallel_search_mode="dynamic_programming")
-        >>> set_auto_parallel_context(parameter_broadcast=False)
-        >>> set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
-        >>> set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
-        >>> set_auto_parallel_context(dataset_strategy=((1, 8), (1, 8)))
-        >>> set_auto_parallel_context(enable_parallel_optimizer=False)
-        >>> set_auto_parallel_context(enable_alltoall=False)
-        >>> set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
-        >>> set_auto_parallel_context(pipeline_stages=2)
+        >>> import mindspore as ms
+        >>> ms.set_auto_parallel_context(device_num=8)
+        >>> ms.set_auto_parallel_context(global_rank=0)
+        >>> ms.set_auto_parallel_context(gradients_mean=True)
+        >>> ms.set_auto_parallel_context(gradient_fp32_sync=False)
+        >>> ms.set_auto_parallel_context(parallel_mode="auto_parallel")
+        >>> ms.set_auto_parallel_context(search_mode="dynamic_programming")
+        >>> ms.set_auto_parallel_context(auto_parallel_search_mode="dynamic_programming")
+        >>> ms.set_auto_parallel_context(parameter_broadcast=False)
+        >>> ms.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
+        >>> ms.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
+        >>> ms.set_auto_parallel_context(dataset_strategy=((1, 8), (1, 8)))
+        >>> ms.set_auto_parallel_context(enable_parallel_optimizer=False)
+        >>> ms.set_auto_parallel_context(enable_alltoall=False)
+        >>> ms.set_auto_parallel_context(all_reduce_fusion_config=[8, 160])
+        >>> ms.set_auto_parallel_context(pipeline_stages=2)
         >>> parallel_config = {"gradient_accumulation_shard": True, "parallel_optimizer_threshold": 24}
-        >>> set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
+        >>> ms.set_auto_parallel_context(parallel_optimizer_config=parallel_config, enable_parallel_optimizer=True)
         >>> config = {"allreduce": {"mode": "size", "config": 32}, "allgather": {"mode": "size", "config": 32}}
-        >>> set_auto_parallel_context(comm_fusion=config)
+        >>> ms.set_auto_parallel_context(comm_fusion=config)
     """
     _set_auto_parallel_context(**kwargs)
 
@@ -582,9 +582,9 @@ def get_auto_parallel_context(attr_key):
         ValueError: If input key is not attribute in auto parallel context.
 
     Examples:
-        >>> from mindspore import get_auto_parallel_context
-        >>> parallel_mode = get_auto_parallel_context("parallel_mode")
-        >>> dataset_strategy = get_auto_parallel_context("dataset_strategy")
+        >>> import mindspore as ms
+        >>> parallel_mode = ms.get_auto_parallel_context("parallel_mode")
+        >>> dataset_strategy = ms.get_auto_parallel_context("dataset_strategy")
     """
     return _get_auto_parallel_context(attr_key)
 
@@ -847,28 +847,28 @@ def set_context(**kwargs):
         ValueError: If input key is not an attribute in context.
 
     Examples:
-        >>> from mindspore import set_context, PYNATIVE_MODE
-        >>> set_context(mode=PYNATIVE_MODE)
-        >>> set_context(precompile_only=True)
-        >>> set_context(device_target="Ascend")
-        >>> set_context(device_id=0)
-        >>> set_context(save_graphs=True, save_graphs_path="./model.ms")
-        >>> set_context(enable_reduce_precision=True)
-        >>> set_context(enable_graph_kernel=True)
-        >>> set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")
-        >>> set_context(reserve_class_name_in_scope=True)
-        >>> set_context(variable_memory_max_size="6GB")
-        >>> set_context(check_bprop=True)
-        >>> set_context(max_device_memory="3.5GB")
-        >>> set_context(mempool_block_size="1GB")
-        >>> set_context(print_file_path="print.pb")
-        >>> set_context(max_call_depth=80)
-        >>> set_context(env_config_path="./env_config.json")
-        >>> set_context(auto_tune_mode="GA,RL")
-        >>> set_context(grad_for_scalar=True)
-        >>> set_context(enable_compile_cache=True, compile_cache_path="./cache.ms")
-        >>> set_context(pynative_synchronize=True)
-        >>> set_context(runtime_num_threads=10)
+        >>> import mindspore as ms
+        >>> ms.set_context(mode=ms.PYNATIVE_MODE)
+        >>> ms.set_context(precompile_only=True)
+        >>> ms.set_context(device_target="Ascend")
+        >>> ms.set_context(device_id=0)
+        >>> ms.set_context(save_graphs=True, save_graphs_path="./model.ms")
+        >>> ms.set_context(enable_reduce_precision=True)
+        >>> ms.set_context(enable_graph_kernel=True)
+        >>> ms.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")
+        >>> ms.set_context(reserve_class_name_in_scope=True)
+        >>> ms.set_context(variable_memory_max_size="6GB")
+        >>> ms.set_context(check_bprop=True)
+        >>> ms.set_context(max_device_memory="3.5GB")
+        >>> ms.set_context(mempool_block_size="1GB")
+        >>> ms.set_context(print_file_path="print.pb")
+        >>> ms.set_context(max_call_depth=80)
+        >>> ms.set_context(env_config_path="./env_config.json")
+        >>> ms.set_context(auto_tune_mode="GA,RL")
+        >>> ms.set_context(grad_for_scalar=True)
+        >>> ms.set_context(enable_compile_cache=True, compile_cache_path="./cache.ms")
+        >>> ms.set_context(pynative_synchronize=True)
+        >>> ms.set_context(runtime_num_threads=10)
     """
     ctx = _context()
     # set device target first
@@ -918,9 +918,9 @@ def get_context(attr_key):
     Raises:
         ValueError: If input key is not an attribute in context.
     Examples:
-        >>> from mindspore import get_context
-        >>> get_context("device_target")
-        >>> get_context("device_id")
+        >>> import mindspore as ms
+        >>> ms.get_context("device_target")
+        >>> ms.get_context("device_id")
     """
     ctx = _context()
     device = ctx.get_param(ms_ctx_param.device_target)
@@ -1009,8 +1009,8 @@ def set_ps_context(**kwargs):
         ValueError: If input key is not the attribute in parameter server training mode context.
 
     Examples:
-        >>> from mindspore import set_ps_context
-        >>> set_ps_context(enable_ps=True, enable_ssl=True, client_password='123456', server_password='123456')
+        >>> import mindspore as ms
+        >>> ms.set_ps_context(enable_ps=True, enable_ssl=True, client_password='123456', server_password='123456')
     """
     _set_ps_context(**kwargs)
 
@@ -1031,8 +1031,8 @@ def get_ps_context(attr_key):
         ValueError: If input key is not attribute in auto parallel context.
 
     Examples:
-        >>> from mindspore import get_ps_context
-        >>> get_ps_context("enable_ps")
+        >>> import mindspore as ms
+        >>> ms.get_ps_context("enable_ps")
     """
     return _get_ps_context(attr_key)
 
@@ -1233,8 +1233,8 @@ def set_fl_context(**kwargs):
         ValueError: If input key is not the attribute in federated learning mode context.
 
     Examples:
-        >>> from mindspore import set_fl_context
-        >>> set_fl_context(enable_fl=True, server_mode='FEDERATED_LEARNING')
+        >>> import mindspore as ms
+        >>> ms.set_fl_context(enable_fl=True, server_mode='FEDERATED_LEARNING')
     """
     _set_ps_context(**kwargs)
 
@@ -1254,7 +1254,7 @@ def get_fl_context(attr_key):
         ValueError: If input key is not attribute in federated learning mode context.
 
     Examples:
-        >>> from mindspore import get_fl_context
-        >>> get_fl_context("server_mode")
+        >>> import mindspore as ms
+        >>> ms.get_fl_context("server_mode")
     """
     return _get_ps_context(attr_key)

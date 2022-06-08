@@ -277,11 +277,10 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch):
 
     Examples:
         >>> # Create a synchronization callback
-        >>>
+        >>> import mindspore as ms
         >>> from mindspore.dataset import sync_wait_for_dataset
-        >>> from mindspore import Callback
         >>>
-        >>> class SyncForDataset(Callback):
+        >>> class SyncForDataset(ms.Callback):
         ...     def __init__(self):
         ...         super(SyncForDataset, self).__init__()
         ...     def epoch_begin(self, run_context):

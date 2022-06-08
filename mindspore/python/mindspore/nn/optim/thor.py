@@ -334,11 +334,8 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> import mindspore as ms
         >>> from mindspore.nn import thor
-        >>> from mindspore import Model
-        >>> from mindspore import FixedLossScaleManager
-        >>> from mindspore import LossMonitor
-        >>> from mindspore import ConvertModelUtils
         >>> from mindspore import nn
         >>> from mindspore import Tensor
         >>>
@@ -347,13 +344,13 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
         >>> temp = Tensor([4e-4, 1e-4, 1e-5, 1e-5], mstype.float32)
         >>> optim = thor(net, learning_rate=temp, damping=temp, momentum=0.9, loss_scale=128, frequency=4)
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-        >>> loss_scale = FixedLossScaleManager(128, drop_overflow_update=False)
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, loss_scale_manager=loss_scale, metrics={'acc'},
+        >>> loss_scale = ms.FixedLossScaleManager(128, drop_overflow_update=False)
+        >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, loss_scale_manager=loss_scale, metrics={'acc'},
         ...               amp_level="O2", keep_batchnorm_fp32=False)
-        >>> model = ConvertModelUtils.convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=optim,
+        >>> model = ms.ConvertModelUtils.convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=optim,
         ...                                                 loss_scale_manager=loss_scale, metrics={'acc'},
         ...                                                 amp_level="O2", keep_batchnorm_fp32=False)
-        >>> loss_cb = LossMonitor()
+        >>> loss_cb = ms.LossMonitor()
         >>> model.train(1, dataset, callbacks=loss_cb, sink_size=4, dataset_sink_mode=True)
 
     """
