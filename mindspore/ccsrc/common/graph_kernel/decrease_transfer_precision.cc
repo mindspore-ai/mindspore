@@ -141,7 +141,7 @@ bool DecreaseTransferPrecision::Run(const FuncGraphPtr &func_graph) {
 }
 
 bool DecreaseTransferPrecision::ProcessFather(const FuncGraphPtr &, const AnfNodePtr &node, bool is_tuple_out,
-                                              size_t index) {
+                                              size_t index) const {
   auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(gk_graph);
   auto mng = gk_graph->manager();
@@ -231,7 +231,7 @@ bool DecreaseTransferPrecision::ProcessFather(const FuncGraphPtr &, const AnfNod
   }
 }
 
-bool DecreaseTransferPrecision::ProcessSon(const FuncGraphPtr &, const AnfNodePtr &node, size_t index) {
+bool DecreaseTransferPrecision::ProcessSon(const FuncGraphPtr &, const AnfNodePtr &node, size_t index) const {
   auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(gk_graph);
   auto mng = gk_graph->manager();

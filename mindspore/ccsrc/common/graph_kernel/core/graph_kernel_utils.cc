@@ -62,7 +62,7 @@ AnfNodePtrList GkUtils::SpreadTuples(const AnfNodePtrList &nodes, size_t begin_i
       auto mt = nodes[i]->cast<CNodePtr>();
       // recursively spread all inner tuples.
       auto mt_inputs = SpreadTuples(mt->inputs(), 1);
-      (void)result.insert(result.end(), mt_inputs.begin(), mt_inputs.end());
+      (void)result.insert(result.cend(), mt_inputs.cbegin(), mt_inputs.cend());
     } else {
       result.push_back(nodes[i]);
     }
@@ -95,7 +95,7 @@ std::vector<PrimitivePtr> GkUtils::GetValidOps(const std::vector<OpWithLevel> &o
     auto iter = std::remove_if(ops.begin(), ops.end(), [&disable_ops](const PrimitivePtr &p) {
       return std::find(disable_ops.begin(), disable_ops.end(), p->name()) != disable_ops.end();
     });
-    (void)ops.erase(iter, ops.end());
+    (void)ops.erase(iter, ops.cend());
   }
   return ops;
 }
@@ -154,7 +154,9 @@ bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto prim = GetCNodePrimitive(node);
   auto target = Callback::Instance()->GetTargetFromContext();
-  if (prim == nullptr) return false;
+  if (prim == nullptr) {
+    return false;
+  }
   // Heterogeneous computing is not support yet
   // so if node's primitive_target is inconsistent with target from context
   // the node cannot be added to the cluster list.
@@ -228,13 +230,13 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, 
     auto primitive = std::make_shared<Primitive>(op->op(), op->attrs());
     auto prim = GetOpsPrim(primitive->name());
     if (prim != nullptr) {
-      primitive->AddAttr(kAttrInputNames, prim->GetAttr(kAttrInputNames));
-      primitive->AddAttr(kAttrOutputNames, prim->GetAttr(kAttrOutputNames));
+      (void)primitive->AddAttr(kAttrInputNames, prim->GetAttr(kAttrInputNames));
+      (void)primitive->AddAttr(kAttrOutputNames, prim->GetAttr(kAttrOutputNames));
     }
     AnfNodePtrList inputs = {NewValueNode(primitive)};
     (void)std::transform(op->inputs().begin(), op->inputs().end(), std::back_inserter(inputs),
                          [&node_map, &cb](const inner::NodePtr &inp) -> AnfNodePtr {
-                           auto iter = node_map.find(inp);
+                           const auto iter = node_map.find(inp);
                            if (iter != node_map.end()) {
                              return iter->second;
                            } else {
@@ -295,14 +297,18 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
   // set ops
   for (auto node : todos) {
     auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr) continue;
-    if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) break;
+    if (cnode == nullptr) {
+      continue;
+    }
+    if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+      break;
+    }
     auto prim = GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(prim);
     inner::NodePtrList inputs;
     (void)std::transform(cnode->inputs().begin() + 1, cnode->inputs().end(), std::back_inserter(inputs),
                          [&node_map, &gb](const AnfNodePtr &no) {
-                           auto iter = node_map.find(no);
+                           const auto iter = node_map.find(no);
                            if (iter != node_map.end()) {
                              return iter->second;
                            } else {
@@ -348,8 +354,10 @@ void GkUtils::UpdateFuncGraphManager(const FuncGraphManagerPtr &mng, const FuncG
 
 PrimitivePtr GkUtils::GetOpsPrim(const std::string &name) {
   auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-  auto iter = op_primc_fns.find(name);
-  if (iter == op_primc_fns.end()) return nullptr;
+  auto const iter = op_primc_fns.find(name);
+  if (iter == op_primc_fns.end()) {
+    return nullptr;
+  }
   return iter->second();
 }
 }  // namespace mindspore::graphkernel

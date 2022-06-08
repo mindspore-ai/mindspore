@@ -63,10 +63,7 @@ bool IsRecomputeOp(const nlohmann::json &op_desc, const std::set<std::string> &r
     return false;
   }
   std::string tensor_name = output_descs[0][kJsonKeyTensorName];
-  if (recompute_ops.count(tensor_name)) {
-    return true;
-  }
-  return false;
+  return recompute_ops.count(tensor_name) > 0;
 }
 
 CNodePtr NewRecomputeNode(const AnfNodePtr &orig_node, std::map<AnfNodePtr, AnfNodePtr> *node_map) {
@@ -95,7 +92,9 @@ CNodePtr NewRecomputeNode(const AnfNodePtr &orig_node, std::map<AnfNodePtr, AnfN
 
 void SetStitchAttr(const nlohmann::json &op_desc, const StitchInfo &info, const CNodePtr &node) {
   std::vector<nlohmann::json> output_descs = op_desc[kJsonKeyOutputDesc];
-  if (output_descs.empty() || output_descs[0].find(kJsonKeyTensorName) == output_descs[0].end()) return;
+  if (output_descs.empty() || output_descs[0].find(kJsonKeyTensorName) == output_descs[0].end()) {
+    return;
+  }
   std::string tensor_name = output_descs[0][kJsonKeyTensorName];
   if (std::find(info.stitch_ops.begin(), info.stitch_ops.end(), tensor_name) != info.stitch_ops.end()) {
     AnfUtils::SetNodeAttr(kAttrStitch, MakeValue("common"), node);
@@ -115,7 +114,9 @@ void ConnectRecomputeOps(AnfNodePtrList *res_graphs, const AnfNodePtr &orig_regi
     auto cnode = node->cast<CNodePtr>();
     auto inputs = cnode->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
-      if (inputs[i] != orig_region_root) continue;
+      if (inputs[i] != orig_region_root) {
+        continue;
+      }
       cnode->set_input(i, cp_region_root);
     }
   }
@@ -182,7 +183,9 @@ void TraverseFuncGraphFromCNode(const CNodePtr &cnode, const std::function<void(
     que.pop();
     callback(ft_node);
     auto ft_cnode = ft_node->cast<CNodePtr>();
-    if (ft_cnode == nullptr) continue;
+    if (ft_cnode == nullptr) {
+      continue;
+    }
     for (const auto &in_node : ft_cnode->inputs()) {
       if (visited.count(in_node) == 0) {
         que.push(in_node);
@@ -200,10 +203,12 @@ inline void TraverseFuncGraph(const FuncGraphPtr &root, const std::function<void
 class Area {
  public:
   explicit Area(const AnfNodePtrList &anf_arr) {
-    nodes_.insert(anf_arr.begin(), anf_arr.end());
+    nodes_.insert(anf_arr.cbegin(), anf_arr.cend());
     for (auto &node : anf_arr) {
       auto cnode = node->cast<CNodePtr>();
-      if (cnode == nullptr) continue;
+      if (cnode == nullptr) {
+        continue;
+      }
       const auto &inputs = cnode->inputs();
       if (std::any_of(inputs.begin(), inputs.end(), [this](const AnfNodePtr &node) { return IsExternalCNode(node); })) {
         (void)spy_cnodes_.emplace_back(node);
@@ -221,7 +226,9 @@ class Area {
       MS_EXCEPTION_IF_NULL(cnode);
       for (size_t i = 1; i < cnode->inputs().size(); ++i) {
         AnfNodePtr in_node = cnode->input(i);
-        if (!IsExternalCNode(in_node)) continue;
+        if (!IsExternalCNode(in_node)) {
+          continue;
+        }
         auto it = node_param_map.find(in_node);
         if (it == node_param_map.end()) {
           auto new_param = std::make_shared<Parameter>(func_graph);
@@ -311,7 +318,9 @@ class AreaGraph {
   // Input node_groups: A group list, each element is a AnfNode list representing the node set in this group.
   static AreaGraphPtr BuildAreaGraph(const std::vector<AnfNodePtrList> &node_groups) {
     auto area_graph = std::make_shared<AreaGraph>(node_groups);
-    if (area_graph == nullptr) return nullptr;
+    if (area_graph == nullptr) {
+      return nullptr;
+    }
     if (!area_graph->TopoSort()) {
       MS_LOG(WARNING) << "The groups have a cycle. The first node is " << node_groups[0][0]->fullname_with_scope();
       return nullptr;
@@ -360,10 +369,14 @@ class AreaGraph {
         MS_EXCEPTION_IF_NULL(cnode);
         size_t v = node_area_map_[spy];
         for (auto &in_node : cnode->inputs()) {
-          if (!in_node->isa<CNode>()) continue;
+          if (!in_node->isa<CNode>()) {
+            continue;
+          }
           // area edge u -> v
           size_t u = node_area_map_[in_node];
-          if (u == v) continue;
+          if (u == v) {
+            continue;
+          }
           areas_[u].AddTraitor(in_node);
           if (std::find(edge_prev_[v].begin(), edge_prev_[v].end(), u) == edge_prev_[v].end()) {
             (void)edge_prev_[v].emplace_back(u);
@@ -385,14 +398,18 @@ class AreaGraph {
       }
     }
     for (size_t i = 0; i < out_degree.size(); ++i) {
-      if (out_degree[i] == 0) que.push(i);
+      if (out_degree[i] == 0) {
+        que.push(i);
+      }
     }
     while (!que.empty()) {
       size_t u = que.front();
       que.pop();
       (void)topo_order_.emplace_back(u);
       for (size_t i : edge_prev_[u]) {
-        if (--out_degree[i] == 0) que.push(i);
+        if (--out_degree[i] == 0) {
+          que.push(i);
+        }
       }
     }
     std::reverse(topo_order_.begin(), topo_order_.end());
@@ -525,7 +542,9 @@ class Splitter {
       auto sub_func_graph = GetCNodeFuncGraph(cnode);
       auto callback = [&cnode, &sub_func_graph, this](const AnfNodePtr &node) {
         auto param = node->cast<ParameterPtr>();
-        if (param == nullptr) return;
+        if (param == nullptr) {
+          return;
+        }
         auto it = this->param_to_main_graph_node_map_.find(param);
         if (it != this->param_to_main_graph_node_map_.end()) {
           auto input = it->second;
@@ -596,7 +615,9 @@ class Splitter {
 
     TraverseFuncGraph(main_func_graph_, [&replace_map](const AnfNodePtr &node) {
       auto cnode = node->cast<CNodePtr>();
-      if (cnode == nullptr) return;
+      if (cnode == nullptr) {
+        return;
+      }
       for (size_t i = 1; i < cnode->inputs().size(); ++i) {
         auto input_node = cnode->input(i);
         auto iter = replace_map.find(input_node);
@@ -630,10 +651,14 @@ class Splitter {
     mindspore::HashMap<AnfNodePtr, AnfNodePtr> old_valuenode_and_param_map;
     for (auto sub_node : area.nodes()) {
       auto sub_cnode = sub_node->cast<CNodePtr>();
-      if (sub_cnode == nullptr) continue;
+      if (sub_cnode == nullptr) {
+        continue;
+      }
       for (size_t i = 1; i < sub_cnode->inputs().size(); ++i) {
         auto in_node = sub_cnode->input(i);
-        if (in_node->isa<CNode>()) continue;
+        if (in_node->isa<CNode>()) {
+          continue;
+        }
         auto it = old_valuenode_and_param_map.find(in_node);
         if (it != old_valuenode_and_param_map.end()) {
           sub_cnode->set_input(i, it->second);
