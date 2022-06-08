@@ -4,7 +4,7 @@ mindspore.ops.pdist
 .. py:function:: mindspore.ops.pdist(x, p=2.0)
 
     计算输入中每对行向量之间的p-范数距离。如果输入 `x` 的shape为 :math:`(N, M)`，那么输出就是一个shape为 :math:`(N * (N - 1) / 2,)` 的Tensor。
-    如果 `x` 的shape为 :math:`(*B, N, M)`，那么输出就是一个shape为 :math:`(*B, N * (N - 1) / 2)` 的Tensor。
+    如果输入 `x` 的shape为 :math:`(*B, N, M)`，那么输出就是一个shape为 :math:`(*B, N * (N - 1) / 2)` 的Tensor。
 
     .. math::
         y[n] = \sqrt[p]{{\mid x_{i} - x_{j} \mid}^p}

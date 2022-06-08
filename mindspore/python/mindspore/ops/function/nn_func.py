@@ -310,7 +310,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
 def pdist(x, p=2.0):
     r"""
     Computes the p-norm distance between each pair of row vectors in the input. If `x` is a 2D Tensor of
-    shape :math:`(N, M)`, then `output` must be a 1D Tensor of shape :math:`(N * (N - 1) / 2,)`. If `x` id a
+    shape :math:`(N, M)`, then `output` must be a 1D Tensor of shape :math:`(N * (N - 1) / 2,)`. If `x` is a
     Tensor of shape :math:`(*B, N, M)`, then `output` must be a Tensor of shape :math:`(*B, N * (N - 1) / 2)`.
 
     .. math::
@@ -319,7 +319,7 @@ def pdist(x, p=2.0):
     where :math:`x_{i}, x_{j}` are two different row vectors in the input.
 
     Args:
-        x (Tensor) - Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size, one-dim or multi-dim.
+        x (Tensor): Input tensor of shape :math:`(*B, N, M)`. :math:`*B` is batch size, one-dim or multi-dim.
             dtype: float16, float32 or float64.
         p (float): p value for the p-norm distance to calculate between each vector pair. :math:`p∈[0,∞]`. Default: 2.0.
 
