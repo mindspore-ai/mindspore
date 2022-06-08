@@ -59,9 +59,9 @@ class ModelPool {
   std::shared_ptr<Context> GetUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config);
   Status SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Context> &context);
 
-  Status SetModelBindMode(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
+  Status SetModelBindMode(std::vector<std::vector<int>> *all_worker_bind_list, std::vector<int> *numa_node_id,
                           std::shared_ptr<Context> model_context);
-  Status SetNumaBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
+  Status SetNumaBindStrategy(std::vector<std::vector<int>> *all_worker_bind_list, std::vector<int> *numa_node_id,
                              int thread_num);
   void SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
                        int thread_num);
@@ -85,6 +85,11 @@ class ModelPool {
 
   void UpdateFreeTaskId(size_t id);
 
+  Status DistinguishPhysicalAndLogicalByNuma(const std::vector<int> &physical_core_list,
+                                             const std::vector<int> &logical_core_list);
+
+  std::vector<std::vector<int>> numa_physical_cores_;
+  std::vector<std::vector<int>> numa_logical_cores_;
   std::vector<std::thread> worker_thread_vec_;
   std::vector<MSTensor> model_pool_inputs_;
   std::vector<MSTensor> model_pool_outputs_;
