@@ -20,6 +20,7 @@
 #include <iomanip>
 #include <optional>
 #include <fstream>
+#include <string>
 #include "utils/system/env.h"
 #include "utils/system/file_system.h"
 #include "utils/log_adapter.h"
@@ -27,6 +28,56 @@
 #include "include/common/utils/utils.h"
 
 namespace mindspore {
+bool Common::NeedMapping(const std::string &origin_name) {
+#if defined(SYSTEM_ENV_POSIX)
+  if (origin_name.length() > NAME_MAX) {
+    return true;
+  } else {
+    return false;
+  }
+#endif
+  return false;
+}
+
+std::string Common::GetRandomStr() {
+  unsigned int seed = static_cast<unsigned int>(GetTimeStamp());
+  std::string npy_suffix = ".npy";
+  std::string random_name = std::to_string(rand_r(&seed)) + npy_suffix;
+  return random_name;
+}
+
+void Common::MappingName(const std::string &input_path, std::optional<std::string> *prefix_path,
+                         std::optional<std::string> *origin_name, std::optional<std::string> *mapped_name) {
+  FileUtils::SplitDirAndFileName(input_path, prefix_path, origin_name);
+  if (!prefix_path->has_value() || !origin_name->has_value()) {
+    MS_LOG(ERROR) << "Cannot get prefix_path or file_name from: " << input_path;
+    return;
+  }
+  auto origin_name_str = origin_name->value();
+  if (!NeedMapping(origin_name_str)) {
+    MS_EXCEPTION_IF_NULL(mapped_name);
+    *mapped_name = origin_name_str;
+    return;
+  }
+  MS_LOG(INFO) << "The file name: " << input_path << " is too long, change it to a random string.";
+  // name, max_loop is used to avoid the foreverloop.
+  size_t loop_count = 0;
+  size_t max_loop = 2;
+  std::string file_path;
+  while (loop_count < max_loop) {
+    loop_count += 1;
+    *mapped_name = GetRandomStr();
+    file_path = prefix_path->value() + "/" + mapped_name->value();
+    if (FileExists(file_path)) {
+      continue;
+    }
+    return;
+  }
+  MS_LOG(WARNING) << "Random strings are repeated, which may lead to coverring the old data! File path is: "
+                  << file_path;
+  return;
+}
+
 std::optional<std::string> Common::CreatePrefixPath(const std::string &input_path, const bool support_relative_path) {
   std::optional<std::string> prefix_path;
   std::optional<std::string> file_name;
@@ -308,6 +359,12 @@ bool Common::GetDebugExitSuccess() { return exit_success_; }
 void Common::DebugTerminate(bool val, bool exit_success) {
   debugger_terminate_ = val;
   exit_success_ = exit_success;
+}
+
+uint64_t Common::GetTimeStamp() {
+  auto cur_sys_time = std::chrono::system_clock::now();
+  uint64_t timestamp = std::chrono::duration_cast<std::chrono::microseconds>(cur_sys_time.time_since_epoch()).count();
+  return timestamp;
 }
 
 struct GlogLogDirRegister {

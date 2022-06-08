@@ -102,7 +102,7 @@ std::string GenDataFilePath(const CNodePtr &node, const std::string &kernel_name
                             size_t slot, bool is_input) {
   std::string op_type = common::AnfAlgo::GetCNodeName(node);
   std::string op_name = GetOpNameWithoutScope(kernel_name);
-  uint64_t timestamp = GetTimeStamp();
+  uint64_t timestamp = Common::GetTimeStamp();
   uint32_t task_id = 0;
   uint32_t stream_id = 0;
   if (E2eDump::IsDeviceTargetAscend()) {
@@ -205,7 +205,7 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     if (IsDeviceTargetAscend()) {
       stream_id = AnfAlgo::GetStreamId(node);
     }
-    uint64_t timestamp = GetTimeStamp();
+    uint64_t timestamp = Common::GetTimeStamp();
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output." +
                             std::to_string(j);
@@ -306,7 +306,7 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     auto type = common::AnfAlgo::GetOutputInferDataType(input, index);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
-    uint64_t timestamp = GetTimeStamp();
+    uint64_t timestamp = Common::GetTimeStamp();
     uint32_t task_id = 0;
     uint32_t stream_id = 0;
     if (IsDeviceTargetAscend()) {
@@ -389,7 +389,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   ShapeVector int_shapes;
   GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes), trans_flag);
   auto type = common::AnfAlgo::GetOutputInferDataType(anf_node, output_index);
-  uint64_t timestamp = GetTimeStamp();
+  uint64_t timestamp = Common::GetTimeStamp();
   uint32_t task_id = 0;
   uint32_t stream_id = 0;
   std::string file_path = dump_path + "/Parameter." + dump_name + '.' + std::to_string(task_id) + '.' +
@@ -432,7 +432,7 @@ void E2eDump::DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::str
     MS_LOG(DEBUG) << "Skip node: " << node_name << ". Parameter data is not available for mindRT.";
     return;
   }
-  uint64_t timestamp = GetTimeStamp();
+  uint64_t timestamp = Common::GetTimeStamp();
   uint32_t task_id = 0;
   uint32_t stream_id = 0;
   std::string file_path = dump_path + "/Parameter." + node_name + '.' + std::to_string(task_id) + '.' +

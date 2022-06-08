@@ -128,12 +128,6 @@ void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &ad
   }
 }
 
-uint64_t GetTimeStamp() {
-  auto cur_sys_time = std::chrono::system_clock::now();
-  uint64_t timestamp = std::chrono::duration_cast<std::chrono::microseconds>(cur_sys_time.time_since_epoch()).count();
-  return timestamp;
-}
-
 /*
  * Feature group: Dump.
  * Target device group: Ascend, GPU, CPU.

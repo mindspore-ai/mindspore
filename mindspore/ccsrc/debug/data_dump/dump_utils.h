@@ -42,8 +42,6 @@ const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVect
 
 void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &addr, const ShapeVector &int_shapes,
                    const TypeId &type, bool trans_flag = false);
-// Get time stamp since epoch in microseconds
-uint64_t GetTimeStamp();
 std::string GetOpNameWithoutScope(const std::string &fullname_with_scope, const std::string &separator = "--");
 
 // dump target string into file
