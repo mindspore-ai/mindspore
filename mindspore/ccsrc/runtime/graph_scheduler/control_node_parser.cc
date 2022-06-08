@@ -1198,6 +1198,18 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
 
   // Create device tensors for those value nodes which direct return by a return node.
   for (const auto &control_node : control_nodes) {
+    if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch)) {
+      auto input_with_indexs = FetchInputNodeByCNode(control_node);
+      for (size_t i = 0; i < input_with_indexs.size(); ++i) {
+        MS_EXCEPTION_IF_NULL(input_with_indexs[i].first);
+        if (IsFrontValueNode(input_with_indexs[i])) {
+          CreateDeviceTensorForFrontNode(input_with_indexs[i], default_context);
+          (void)front_value_nodes_.emplace(input_with_indexs[i], default_context);
+        }
+      }
+      continue;
+    }
+
     if ((!common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) &&
         (!common::AnfAlgo::IsCallNode(control_node))) {
       continue;
@@ -1379,8 +1391,11 @@ void ControlNodeParser::ParseControlNodeParameter(const std::vector<AnfNodePtr> 
       if (inputs.size() != kSwitchInputNum) {
         MS_LOG(EXCEPTION) << "Invalid switch node:" << common::AnfAlgo::GetNodeDebugString(control_node);
       }
-      if (inputs[kSwitchCondPos]->isa<Parameter>()) {
-        (void)control_node_parameters_.emplace_back(inputs[kSwitchCondPos], 0);
+      for (size_t i = 0; i < inputs.size(); ++i) {
+        MS_EXCEPTION_IF_NULL(inputs[i]);
+        if (inputs[i]->isa<Parameter>()) {
+          (void)control_node_parameters_.emplace_back(inputs[i], 0);
+        }
       }
     } else if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {
       if (inputs.size() != kSwitchLayerInputNum) {
