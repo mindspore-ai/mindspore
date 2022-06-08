@@ -901,11 +901,11 @@ class TypeCast(TensorOperation):
         This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
-        data_type (mindspore.dtype or numpy.dtype): mindspore.dtype or numpy.dtype (e.g. :class:`numpy.float32`)
+        data_type (Union[mindspore.dtype, numpy.dtype]): mindspore.dtype or numpy.dtype (e.g. :class:`numpy.float32`)
         to be cast to.
 
     Raises:
-        TypeError: If `data_type` is not of MindSpore data type bool, int, float, string or type :class:`numpy.ndarray`.
+        TypeError: If `data_type` is not of MindSpore data type bool, int, float, string or type :class:`numpy.dtype`.
 
     Supported Platforms:
         ``CPU`` ``Ascend`` ``GPU``

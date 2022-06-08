@@ -24,7 +24,7 @@ Transforms
     mindspore.dataset.vision.Equalize
     mindspore.dataset.vision.FiveCrop
     mindspore.dataset.vision.GaussianBlur
-    mindspore.dataset.vision.GrayScale
+    mindspore.dataset.vision.Grayscale
     mindspore.dataset.vision.HorizontalFlip
     mindspore.dataset.vision.HsvToRgb
     mindspore.dataset.vision.HWC2CHW
