@@ -1560,7 +1560,7 @@ void Debugger::LoadSingleParameterMindRT(const AnfNodePtr &node) {
   TypeId device_type;
   ShapeVector int_shapes;
   auto device_addr = GetParameterInfo(node, NOT_NULL(&int_shapes), NOT_NULL(&type), NOT_NULL(&device_type));
-  if (device_addr == nullptr) {
+  if (device_addr == nullptr || device_addr->GetPtr() == nullptr) {
     MS_LOG(DEBUG) << "Skip node: " << node_name << ". Parameter data is not available for mindRT.";
     return;
   }

@@ -18,6 +18,8 @@
 
 #include <memory>
 #include <map>
+#include "utils/system/env.h"
+#include "utils/system/file_system.h"
 #include "utils/file_utils.h"
 #include "include/common/debug/common.h"
 #include "debug/debug_services.h"
@@ -52,7 +54,9 @@ bool CsvWriter::OpenFile(const std::string &path, const std::string &header) {
   }
   // try to open file
   std::string file_path_value = file_path.value();
-  bool first_time_opening = file_path_str_ != path;
+  std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
+  MS_EXCEPTION_IF_NULL(fs);
+  bool first_time_opening = !fs->FileExist(file_path_value);
   ChangeFileMode(file_path_value, S_IWUSR);
   if (first_time_opening) {
     // remove any possible output from previous runs
