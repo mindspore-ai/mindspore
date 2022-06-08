@@ -239,3 +239,4 @@ from .cholesky_solve import _cholesky_solve_aicpu
 from .sparse_apply_adagrad_da import _sparse_apply_adagrad_da_aicpu
 from .addcdiv import _addcdiv_aicpu
 from . left_shift import _left_shift_aicpu
+from .unique_consecutive import _unique_consecutive_aicpu
