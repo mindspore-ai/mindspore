@@ -6852,6 +6852,57 @@ class TensorScatterDiv(_TensorScatterOp):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
 
 
+class ListDiff(Primitive):
+    r"""Computes the difference between two lists of numbers.
+
+    Given a list `x` and a list `y`, this operation returns a list `out` that
+    represents all values that are in `x` but not in `y`. The returned list `out`
+    is sorted in the same order that the numbers appear in `x` (duplicates are
+    preserved). This operation also returns a list `idx` that represents the
+    position of each `out` element in `x`. In other words:
+
+    `out[i] = x[idx[i]] for i in [0, 1, ..., len(out) - 1]`
+
+    Inputs:
+        - **x**: A 1-D `Tensor`. Values to keep. type support list [float16, float32,
+          float64, uint8, uint16, int8, int16, int32, int64]
+        - **y**: A 1-D `Tensor`. Must have the same type as `x`. 1-D. Values to remove.
+
+    Outputs:
+        - **out**: A 1-D `Tensor`. Has the same type as `x`.
+        - **idx**: A 1-D `Tensor` of type `out_idx`.
+
+    Raises:
+        ValueError: If `x` or `y` shape is not 1D.
+        TypeError: If `x` or `y` is not a Tensor.
+        TypeError: If `x` or `y` datetype not in support list.
+        TypeError: If `x` has different data type with `y`.
+        TypeError: If attr `out_idx` not in [mstype.int32, mstype.int64].
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.arange(1, 7, 1), dtype=mstype.int32) # [1, 2, 3, 4, 5, 6]
+        >>> y = Tensor([1, 3, 5], dtype=mstype.int32)
+        >>> op = ops.ListDiff() # out_idx default is mstype.int32
+        >>> out, idx = op(x, y)
+        >>> print(out)
+        [2 4 6]
+        >>> print(idx)
+        [1 3 5]
+    """
+
+    @prim_attr_register
+    def __init__(self, out_idx=mstype.int32):
+        """Initialize ListDiff"""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['out', 'idx'])
+        validator.check_value_type("out_idx", out_idx, [mstype.Type], self.name)
+        validator.check("out_idx", out_idx, "", [mstype.int32, mstype.int64], Rel.IN, self.name, excp_cls=TypeError)
+        self.out_idx = out_idx
+        self.add_prim_attr('out_idx', out_idx)
+
+
 class SplitV(Primitive):
     r"""
     Splits the input tensor into num_split tensors along the given dimension.
