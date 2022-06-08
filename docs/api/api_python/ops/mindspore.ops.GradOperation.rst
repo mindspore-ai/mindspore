@@ -46,9 +46,9 @@ mindspore.ops.GradOperation
     4. 用 `net` 的输入作为参数调用梯度函数，得到关于所有输入和给定参数的梯度：`gradient_function(x, y)` 。
 
     注意：对于上面产生的梯度函数，其返回值会因返回梯度的数量不同而出现差异：
-    1. 如果仅有一个梯度结果，返回单独值；
-    2. 如果有多个梯度结果，返回tuple；
-    3. 如果没有任何梯度结果，返回空tuple；
+    1. 如果仅有一个梯度结果，返回单独值。
+    2. 如果有多个梯度结果，返回tuple。
+    3. 如果没有任何梯度结果，返回空tuple。
 
     我们可以设置 `sens_param` 等于True来配置灵敏度（关于输出的梯度），向梯度函数传递一个额外的灵敏度输入值。这个输入值必须与 `net` 的输出具有相同的形状和类型（见样例中的 `GradNetWrtXYWithSensParam` ）。
 
@@ -63,7 +63,7 @@ mindspore.ops.GradOperation
     **参数：**
 
     - **get_all** (bool) -  计算梯度，如果等于False，获得第一个输入的梯度，如果等于True，获得所有输入的梯度。默认值：False。
-    - **get_by_list** (bool) -  如果 `get_all` 和 `get_by_list` 都等于False，则得到第一个输入的梯度。如果等于True，获得所有参数变量的梯度。如果 `get_all` 和 `get_by_list` 都等于True，则同时得到输入和参数变量的梯度，输出形式为((输入的梯度)，(参数变量的梯度))。默认值：False。
+    - **get_by_list** (bool) -  如果 `get_all` 和 `get_by_list` 都等于False，则得到第一个输入的梯度。如果等于True，获得所有Parameter自由变量的梯度。如果 `get_all` 和 `get_by_list` 都等于True，则同时得到输入和Parameter自由变量的梯度，输出形式为(“所有输入的梯度”，“所有Parameter自由变量的梯度”)。默认值：False。
     - **sens_param** (bool) -  是否在输入中配置灵敏度（关于输出的梯度）。如果sens_param等于False，自动添加一个 `ones_like(output)` 灵敏度。如果sensor_param等于True，灵敏度（输出的梯度），必须通过location参数或key-value pair参数来传递，如果是通过key-value pair参数传递value，那么key必须为sens。默认值：False。
 
     **返回：**
