@@ -25,7 +25,6 @@ from . import (
     math_func,
     nn_func,
     linalg_func,
-    clip_func,
 )
 from .array_func import (
     unique,
@@ -217,9 +216,6 @@ from .nn_func import (
 from .linalg_func import (
     svd,
 )
-from .clip_func import (
-    clip_by_norm,
-)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -227,5 +223,4 @@ __all__.extend(parameter_func.__all__)
 __all__.extend(math_func.__all__)
 __all__.extend(nn_func.__all__)
 __all__.extend(linalg_func.__all__)
-__all__.extend(clip_func.__all__)
 __all__.sort()

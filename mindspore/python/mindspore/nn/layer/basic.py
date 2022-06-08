@@ -23,7 +23,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops.functional import identity
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr, Primitive
 from mindspore.common.parameter import Parameter
@@ -448,44 +447,10 @@ class ClipByNorm(Cell):
     def __init__(self, axis=None):
         """Initialize ClipByNorm."""
         super(ClipByNorm, self).__init__()
-        if axis is None:
-            axis = ()
-        if isinstance(axis, tuple):
-            for idx, item in enumerate(axis):
-                Validator.check_value_type("axis[%d]" % idx, item, [int], self.cls_name)
-        self.axis = Validator.check_value_type('axis', axis, [int, tuple], self.cls_name)
-        self.reduce_sum = P.ReduceSum(keep_dims=True)
-        self.select_ = P.Select()
-        self.greater_ = P.Greater()
-        self.cast = P.Cast()
-        self.sqrt = P.Sqrt()
-        self.max_op = P.Maximum()
-        self.shape = P.Shape()
-        self.reshape = P.Reshape()
-        self.fill = P.Fill()
-        self.expand_dims = P.ExpandDims()
-        self.dtype = P.DType()
+        self.clip_by_norm = inner.ClipByNorm(axis)
 
     def construct(self, x, clip_norm):
-        mul_x = F.square(x)
-        l2sum = self.cast(self.reduce_sum(mul_x, self.axis), mstype.float32)
-        cond = self.greater_(l2sum, 0)
-        ones_ = self.fill(self.dtype(cond), self.shape(cond), 1.0)
-        l2sum_safe = self.select_(cond, l2sum, self.cast(ones_, self.dtype(l2sum)))
-        l2norm = self.select_(cond, self.sqrt(l2sum_safe), l2sum)
-
-        _dtype_check(self.dtype(x), self.cls_name)
-        if _is_equal_one(clip_norm):
-            intermediate = x
-        else:
-            intermediate = x * clip_norm
-
-        max_norm = self.max_op(l2norm, clip_norm)
-        if _need_reduce_all(self.axis):
-            max_norm = self.expand_dims(max_norm, -1)
-        values_clip = self.cast(intermediate, mstype.float32) / max_norm
-        values_clip = self.reshape(values_clip, self.shape(x))
-        values_clip = identity(values_clip)
+        values_clip = self.clip_by_norm(x, clip_norm)
         return values_clip
 
 

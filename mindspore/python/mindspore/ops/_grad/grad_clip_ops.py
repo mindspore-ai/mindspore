@@ -17,14 +17,14 @@
 """Define the grad rules of clip operations."""
 from .grad_base import bprop_getters
 from .. import operations as P
-from ..operations import clip_ops
+from ..operations import _inner_ops as inner
+from ..operations import _grad_ops as G
 from ...common import dtype as mstype
 from .._grad.grad_math_ops import _sum_grad
 from .._grad.grad_math_ops import binop_grad_common
-from ..operations import _grad_ops as G
 
 
-@bprop_getters.register(clip_ops.ClipByNorm)
+@bprop_getters.register(inner.ClipByNorm)
 def get_bprop_clip_by_norm(self):
     """Grad definition for `ClipByNorm` operation."""
     neg_op = P.Neg()
