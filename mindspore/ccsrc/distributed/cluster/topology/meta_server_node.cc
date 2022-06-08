@@ -17,6 +17,7 @@
 #include <functional>
 #include <algorithm>
 #include <string>
+#include <vector>
 #include "proto/topology.pb.h"
 #include "distributed/rpc/tcp/constants.h"
 #include "distributed/cluster/topology/utils.h"
@@ -143,11 +144,13 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   const auto &node_id = registration.node_id();
   const auto &host_name = registration.host_name();
   const auto &role = registration.role();
+  const auto &rank_id = registration.rank_id();
   std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) == nodes_.end()) {
     std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
     node_info->host_name = host_name;
     node_info->role = role;
+    node_info->rank_id = rank_id;
     node_info->state = NodeState::kRegistered;
     time(&(node_info->last_update));
     nodes_[node_id] = node_info;
@@ -281,14 +284,29 @@ MessageBase *const MetaServerNode::ProcessGetHostNames(MessageBase *const messag
     auto node_role = message->body;
 
     // Collect all the hostnames from nodes info.
+    std::vector<std::string> tmp_hostnames(nodes_.size(), "");
     std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
+
+    // The hostnames must are sorted strictly by the rank id.
     for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
       auto node_info = iter->second;
       if (node_info->role != node_role) {
         continue;
       }
       MS_EXCEPTION_IF_NULL(node_info);
-      hostnames.push_back(node_info->host_name);
+      if (node_info->rank_id >= 0) {
+        tmp_hostnames[node_info->rank_id] = node_info->host_name;
+      } else {
+        MS_LOG(ERROR) << "Invalid rank id: " << node_info->rank_id << " for node: " << node_info->node_id;
+        continue;
+      }
+    }
+
+    // The hostname of the node whose role name not match is empty, and should be skipped.
+    for (size_t i = 0; i < tmp_hostnames.size(); ++i) {
+      if (tmp_hostnames[i] != "") {
+        hostnames.push_back(tmp_hostnames[i]);
+      }
     }
   }
 

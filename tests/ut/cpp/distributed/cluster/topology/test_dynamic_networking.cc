@@ -490,6 +490,7 @@ TEST_F(TestDynamicNetworking, GetHostNames) {
   common::SetEnv(kEnvMSRole, worker_group_0.c_str());
   for (size_t i = 0; i < total_node_group_0_num; ++i) {
     auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1), worker_group_0);
+    cgn->set_rank_id(i);
     ASSERT_TRUE(cgn->Initialize());
     cgns.push_back(cgn);
   }
@@ -497,6 +498,7 @@ TEST_F(TestDynamicNetworking, GetHostNames) {
   common::SetEnv(kEnvMSRole, worker_group_1.c_str());
   for (size_t i = total_node_group_0_num; i < total_node_num; ++i) {
     auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1), worker_group_1);
+    cgn->set_rank_id(i);
     ASSERT_TRUE(cgn->Initialize());
     cgns.push_back(cgn);
   }
