@@ -99,7 +99,7 @@ from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSpa
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
                      ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, AdaptiveAvgPool2D, SoftShrink,
                      ApplyAdamWithAmsgrad)
-from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
+from .other_ops import (Assign, IOU, BartlettWindow, BoundingBoxDecode, BoundingBoxEncode,
                         ConfusionMatrix, PopulationCount, UpdateState, Load,
                         CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PullWeight, PushWeight,
                         PushMetrics, StartFLJob, UpdateModel, GetModel, PyFunc, ExchangeKeys, GetKeys,
@@ -328,6 +328,7 @@ __all__ = [
     'SameTypeShape',
     'CheckBprop',
     'CheckValid',
+    'BartlettWindow',
     'BoundingBoxEncode',
     'BoundingBoxDecode',
     'L2Normalize',
