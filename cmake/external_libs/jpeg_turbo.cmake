@@ -24,23 +24,24 @@ set(CMAKE_OPTION -DCMAKE_BUILD_TYPE=Release -DCMAKE_SKIP_RPATH=TRUE -DWITH_SIMD=
 if(BUILD_LITE)
     set(jpeg_turbo_USE_STATIC_LIBS OFF)
     set(JPEG_TURBO_PATCHE ${TOP_DIR}/third_party/patch/jpeg_turbo/jpeg_turbo.patch001)
-    if(PLATFORM_ARM64)
-        set(CMAKE_OPTION  -DCMAKE_TOOLCHAIN_FILE=$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake
-                          -DANDROID_NATIVE_API_LEVEL=19
-                          -DANDROID_NDK=$ENV{ANDROID_NDK}
-                          -DANDROID_ABI=arm64-v8a
-                          -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang
-                          -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+    if(ANDROID_NDK)  #  compile android on x86_64 env
+        if(PLATFORM_ARM64)
+            set(CMAKE_OPTION  -DCMAKE_TOOLCHAIN_FILE=$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake
+                              -DANDROID_NATIVE_API_LEVEL=19
+                              -DANDROID_NDK=$ENV{ANDROID_NDK}
+                              -DANDROID_ABI=arm64-v8a
+                              -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang
+                              -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+        endif()
+        if(PLATFORM_ARM32)
+            set(CMAKE_OPTION  -DCMAKE_TOOLCHAIN_FILE=$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake
+                              -DANDROID_NATIVE_API_LEVEL=19
+                              -DANDROID_NDK=$ENV{ANDROID_NDK}
+                              -DANDROID_ABI=armeabi-v7a
+                              -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang
+                              -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+        endif()
     endif()
-    if(PLATFORM_ARM32)
-        set(CMAKE_OPTION  -DCMAKE_TOOLCHAIN_FILE=$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake
-                          -DANDROID_NATIVE_API_LEVEL=19
-                          -DANDROID_NDK=$ENV{ANDROID_NDK}
-                          -DANDROID_ABI=armeabi-v7a
-                          -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang
-                          -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
-    endif()
-
 endif()
 
 mindspore_add_pkg(jpeg_turbo

@@ -32,7 +32,7 @@ set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark)
 set(MINDSPORE_LITE_TRAIN_LIB_NAME libmindspore-lite-train)
 set(BENCHMARK_TRAIN_NAME benchmark_train)
 set(BENCHMARK_TRAIN_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark_train)
-file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
+file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so*)
 
 include(${TOP_DIR}/cmake/package_micro.cmake)
 

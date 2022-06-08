@@ -18,7 +18,13 @@
 #define MINDSPORE_LITE_SRC_COMMON_FILE_UTILS_H_
 
 #include <sys/stat.h>
+#if (defined(_WIN32) || defined(_WIN64)) && defined(_MSC_VER)
+#define F_OK 0
+using mode_t = int;
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
