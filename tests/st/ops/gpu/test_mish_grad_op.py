@@ -200,4 +200,4 @@ def test_mish_grad_dynamic_shape(mode):
                                 [-0.24231756, -1.1413976, -0.6648672]],
                                [[-1.3482721, 0.22441003, 0.05531899],
                                 [-0.41695648, -1.2767013, 0.12779452]]]]).astype(np.float32)
-    np.testing.assert_almost_equal(output[0].asnumpy(), expect_output)
+    assert np.allclose(output[0].asnumpy(), expect_output, atol=1e-4, rtol=1e-4, equal_nan=True)
