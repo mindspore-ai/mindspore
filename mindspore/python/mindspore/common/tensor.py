@@ -1095,9 +1095,6 @@ class Tensor(Tensor_):
         `maxnorm`. Otherwise the sub-tensor needs to be modified to the original value of the corresponding position
         divided by the p-norm of the substensor and then multiplied by `maxnorm`.
 
-        Note:
-            The input must be a tensor.
-
         Args:
             p (float): P-norm.
             dim (int): The dimension that expected to get the slice-tensor.
