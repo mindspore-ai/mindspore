@@ -25,7 +25,6 @@ from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error, \
     _handle_broadcasting, get_unsupported_dynamic_vmap_rule, _broadcast_by_axis
 from ..operations.array_ops import Fills
-from ..operations.array_ops import ScatterNdMax
 from ..operations.array_ops import UniqueConsecutive
 
 
@@ -322,6 +321,7 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ScatterNdAdd)
 @vmap_rules_getters.register(P.ScatterNdSub)
 @vmap_rules_getters.register(P.ScatterNdMin)
+@vmap_rules_getters.register(P.ScatterNdMax)
 @vmap_rules_getters.register(P.ScatterNdDiv)
 @vmap_rules_getters.register(P.ScatterUpdate)
 def get_scatter_op_vmap_rule(prim, axis_size):
@@ -334,11 +334,12 @@ def get_scatter_op_vmap_rule(prim, axis_size):
     sactter_func_map = {
         "ScatterAdd": P.ScatterNdAdd,
         "ScatterMin": P.ScatterNdMin,
-        "ScatterMax": ScatterNdMax,
+        "ScatterMax": P.ScatterNdMax,
         "ScatterDiv": P.ScatterNdDiv,
         "ScatterNdAdd": P.ScatterNdAdd,
         "ScatterNdSub": P.ScatterNdSub,
         "ScatterNdMin": P.ScatterNdMin,
+        "ScatterNdMax": P.ScatterNdMax,
         "ScatterNdDiv": P.ScatterNdDiv,
         "ScatterUpdate": P.ScatterNdUpdate
     }
