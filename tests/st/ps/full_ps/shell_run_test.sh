@@ -23,8 +23,8 @@ export MS_WORKER_NUM=$3
 export MS_SERVER_NUM=$4
 export MS_SCHED_HOST=$5
 export MS_SCHED_PORT=$6
-
 export MS_ROLE=MS_SCHED
+export fusion=True
 for((i=0;i<1;i++));
 do
   rm -rf ${execute_path}/sched_$i/

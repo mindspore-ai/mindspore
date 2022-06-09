@@ -27,9 +27,10 @@ from mindspore.nn.metrics import Accuracy
 from mindspore.train import Model
 from mindspore.train.callback import LossMonitor
 from mindspore.common.initializer import TruncatedNormal
+from mindspore.communication.management import init
 
 parser = argparse.ArgumentParser(description='test_ps_lenet')
-parser.add_argument("--device_target", type=str, default="Ascend")
+parser.add_argument("--device_target", type=str, default="GPU")
 parser.add_argument("--dataset_path", type=str, default="/home/workspace/mindspore_dataset/mnist")
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -122,6 +123,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     return mnist_ds
 
 if __name__ == "__main__":
+    init()
     network = LeNet5(10)
     network.set_param_ps()
     net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")

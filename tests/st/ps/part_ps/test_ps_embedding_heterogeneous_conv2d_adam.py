@@ -36,9 +36,10 @@ import mindspore.ops.operations as op
 from mindspore.common.parameter import Parameter
 from mindspore.train import Model
 from mindspore.common import set_seed
+from mindspore.communication.management import init
 
 parser = argparse.ArgumentParser(description='test_ps_lenet')
-parser.add_argument("--device_target", type=str, default="Ascend")
+parser.add_argument("--device_target", type=str, default="GPU")
 parser.add_argument("--dataset_path", type=str, default="/home/workspace/mindspore_dataset/mnist")
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -180,5 +181,6 @@ class NetFactory:
 
 
 if __name__ == "__main__":
+    init()
     fact = NetFactory()
     fact.part_cmp()

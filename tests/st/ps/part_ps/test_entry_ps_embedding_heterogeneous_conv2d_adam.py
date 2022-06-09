@@ -13,11 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
 
 
 def test_ps_embedding_heterogeneous_conv2d_adam():
     return_code = os.system(
-        "bash shell_run_test.sh Ascend /home/workspace/mindspore_dataset/mnist 1 1 127.0.0.1 8085"
+        "bash shell_run_test.sh GPU /home/workspace/mindspore_dataset/mnist 1 1 127.0.0.1 8085"
     )
     assert return_code == 0

@@ -13,13 +13,8 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_cmp_sparse_embedding():
-    return_code = os.system("bash shell_run_test.sh Ascend 1 1 127.0.0.1 8081")
+    return_code = os.system("bash shell_run_test.sh GPU 1 1 127.0.0.1 8081")
     assert return_code == 0
