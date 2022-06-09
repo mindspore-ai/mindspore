@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_RUNTIME_AKG_KERNEL_H_
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_RUNTIME_AKG_KERNEL_H_
+#include <map>
 #include <vector>
 #include <string>
 #include "src/runtime/lite_kernel.h"
@@ -55,6 +56,7 @@ class AkgKernel : public LiteKernel {
   void *kernel_func_{nullptr};
   std::string kernel_name_;
   int nthread_{0};
+  std::map<size_t, std::vector<float>> const_inputs_;
   AkgParallelLambda cached_akg_lambda_ = nullptr;
   void *cached_runtimeargs_ = nullptr;
 };

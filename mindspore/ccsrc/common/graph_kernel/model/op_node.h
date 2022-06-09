@@ -152,6 +152,19 @@ class TransposeOp : public OpaqueOp {
   DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
 
+class LayoutTransformOp : public OpaqueOp {
+ public:
+  explicit LayoutTransformOp(const std::string &op) : OpaqueOp(op) {}
+  ~LayoutTransformOp() = default;
+
+ protected:
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &) override { return {inputs[0]->type}; }
+  DFormat InferFormat(const NodePtrList &, const DAttrs &attrs) override {
+    return GetValue<std::string>(attrs.find("dst_format")->second);
+  }
+};
+
 class ElemAnyOp : public OpaqueOp {
  public:
   explicit ElemAnyOp(const std::string &op) : OpaqueOp(op) {}
@@ -180,6 +193,17 @@ class UnPadAkgOp : public OpaqueOp {
  protected:
   std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &) override { return {inputs[0]->type}; }
+};
+
+class Conv2dOp : public OpaqueOp {
+ public:
+  explicit Conv2dOp(const std::string &op) : OpaqueOp(op) {}
+  ~Conv2dOp() = default;
+
+ protected:
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &attrs) override;
+  DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
 
 class CImagRealOp : public ElemwiseOp {

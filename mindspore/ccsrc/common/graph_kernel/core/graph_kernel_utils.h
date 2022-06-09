@@ -34,6 +34,7 @@ constexpr auto kOutputsFormat = "outputs_format";
 
 GVAR_DEF(PrimitivePtr, kPrimFloatStatus, std::make_shared<Primitive>("FloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimElemAny, std::make_shared<Primitive>("ElemAny"));
+GVAR_DEF(PrimitivePtr, kPrimLayoutTransform, std::make_shared<Primitive>("LayoutTransform"));
 
 using OpWithLevel = std::tuple<std::string, unsigned int, PrimitivePtr>;
 

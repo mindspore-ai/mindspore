@@ -27,8 +27,8 @@ NodePtr GraphBuilder::BroadcastTo(const NodePtr &input, const ShapeVector &shape
   return Emit("BroadcastTo", {input}, {{"shape", shape_value}});
 }
 
-NodePtr GraphBuilder::Transpose(const NodePtr &input, const ShapeVector &shape) const {
-  auto perm_value = MakeValue(shape);
+NodePtr GraphBuilder::Transpose(const NodePtr &input, const ShapeVector &perm) const {
+  auto perm_value = MakeValue(perm);
   return Emit("Transpose", {input}, {{"perm", perm_value}});
 }
 
