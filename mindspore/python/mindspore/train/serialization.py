@@ -1856,7 +1856,7 @@ def convert_model(mindir_file, convert_file, file_format):
     Args:
         mindir_file (str): MindIR file name.
         convert_file (str): Convert model file name.
-        file_format (str): Convert model's format, current version only supports 'ONNX'.
+        file_format (str): Convert model's format, current version only supports "ONNX".
 
     Raises:
         ValueError: If the parameter `mindir_file` is not `str`.
@@ -1868,10 +1868,8 @@ def convert_model(mindir_file, convert_file, file_format):
     """
     Validator.check_file_name_by_regular(mindir_file)
     Validator.check_file_name_by_regular(convert_file)
-    supported_formats = ["ONNX"]
-    if file_format not in supported_formats:
-        raise ValueError(f"For 'convert_model', 'file_format' must be one of {supported_formats},"
-                         f"but got {file_format}.")
+    if file_format != "ONNX":
+        raise ValueError(f"For 'convert_model', 'file_format' must be 'ONNX', but got {file_format}.")
     net_input = _get_mindir_inputs(mindir_file)
     graph = load(mindir_file)
     net = nn.GraphCell(graph)
