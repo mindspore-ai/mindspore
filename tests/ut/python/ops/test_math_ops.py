@@ -464,6 +464,15 @@ class IsRealFunc(nn.Cell):
         return y
 
 
+class LcmFunc(nn.Cell):
+    def __init__(self):
+        super(LcmFunc, self).__init__()
+        self.lcm = ops.function.lcm
+
+    def construct(self, x1, x2):
+        return self.lcm(x1, x2)
+
+
 class Rad2degNet(nn.Cell):
     def __init__(self):
         super(Rad2degNet, self).__init__()
@@ -632,6 +641,11 @@ raise_set = [
         'block': Zeta(),
         'desc_inputs': [Tensor(np.array([1, 1, 1, 1], np.float32)),
                         Tensor([0.5, 0.5, 0.5, 0.5], mstype.float32)]}),
+    ('Lcm', {
+        'block': LcmFunc(),
+        'desc_inputs': [Tensor(np.array([2, 5, 8]).astype(np.int32)),
+                        Tensor(np.array([4, 3, 12]).astype(np.int32))],
+        'skip': ['backward']}),
     ('Igamma', {
         'block': Igamma(),
         'desc_inputs': [Tensor(np.array([1.1, 2.2, -4.1], np.float32)),

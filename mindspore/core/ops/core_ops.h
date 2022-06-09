@@ -803,6 +803,7 @@ GVAR_DEF(PrimitivePtr, kPrimReduceProd, std::make_shared<Primitive>("ReduceProd"
 GVAR_DEF(PrimitivePtr, kPrimReduceStd, std::make_shared<Primitive>(kReduceStd));
 GVAR_DEF(PrimitivePtr, kPrimCentralization, std::make_shared<Primitive>("Centralization"));
 GVAR_DEF(PrimitivePtr, kPrimNeg, std::make_shared<Primitive>(kNeg));
+GVAR_DEF(PrimitivePtr, kPrimLcm, std::make_shared<Primitive>("Lcm"));
 GVAR_DEF(PrimitivePtr, kPrimSin, std::make_shared<Primitive>("Sin"));
 GVAR_DEF(PrimitivePtr, kPrimCos, std::make_shared<Primitive>(kCos));
 GVAR_DEF(PrimitivePtr, kPrimSub, std::make_shared<Primitive>(kSub));

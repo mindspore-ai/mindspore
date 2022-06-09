@@ -49,6 +49,7 @@ from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import ScatterNdMax
+from mindspore.ops.operations.math_ops import Lcm
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.array_ops import RangeV2
 from mindspore.ops.operations.array_ops import ListDiff
@@ -1499,6 +1500,11 @@ test_case_math_ops = [
         'block': P.Less(),
         'desc_inputs': [[2, 1, 4, 5], [2, 1, 4, 5]],
         'desc_bprop': [Tensor(np.zeros((2, 1, 4, 5), np.bool_))],
+        'skip': ['backward']}),
+    ('Lcm', {
+        'block': Lcm(),
+        'desc_inputs': [Tensor(np.array([3, 4, 5]).astype(np.int64)),
+                        Tensor(np.array([4, 5, 6]).astype(np.int64))],
         'skip': ['backward']}),
     ('RealDiv_0', {
         'block': P.RealDiv(),

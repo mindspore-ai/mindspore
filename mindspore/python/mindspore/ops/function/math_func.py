@@ -23,7 +23,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from ..operations.math_ops import (Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
-                                   BesselK1e, Renorm)
+                                   BesselK1e, Renorm, Lcm)
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ..._c_expression import Tensor as Tensor_
@@ -2793,6 +2793,39 @@ def mv(mat, vec):
     out = out.T
     out = out[0]
     return out
+
+
+def lcm(x1, x2):
+    """
+    Computes least common multiplier of input tensors element-wise.
+    The shape of two inputs should be broadcastable, and data type of them should be
+    one of: int32, int64
+
+    Inputs:
+        - **x1** (Tensor) - The first input tensor.
+        - **x2** (Tensor) - The second input tensor.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is one
+        with higher digits in the two inputs.
+
+    Raises:
+        TypeError: If data type `x1` or `x2` is not int32 or int64.
+        ValueError: If shape of two inputs are not broadcastable.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([7, 8, 9]))
+        >>> x2 = Tensor(np.array([14, 6, 12]))
+        >>> y = ops.lcm(x1, x2)
+        >>> print(y)
+        [14 24 36]
+    """
+
+    lcm_ = Lcm()
+    return lcm_(x1, x2)
 
 
 def cdist(x, y, p=2.0):
