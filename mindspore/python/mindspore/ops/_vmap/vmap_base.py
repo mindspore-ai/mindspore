@@ -207,6 +207,25 @@ def _bdim_at_front(x, src, axis_size):
     return mnp.moveaxis(x, src, 0)
 
 
+def _bdim_at_back(x, src, axis_size):
+    """
+    Moves source axes of an array to the last, and other axes remain in their original order. If the source axes
+    is 'None', broadcasts the array at foremost axis with axis_size.
+
+    Args:
+        x (Tensor or Scalar): The input tensor or scalar. The data type should be one of the following types: float16,
+            float32, int32, int8, uint8, bool.
+        src (int or None): The source axis needs to be moved.
+        axis_size (int): The size of the last axis to be broadcast.
+
+    Returns:
+        Tensor, array with moved axes.
+    """
+    if src is None:
+        return _broadcast_by_axis(x, -1, axis_size)
+    return mnp.moveaxis(x, src, -1)
+
+
 def get_assign_vmap_rule(prim, axis_size):
     """VmapRule for `Assign*` operations, such as `Assign` and `AssignAdd`."""
     if isinstance(prim, str):
