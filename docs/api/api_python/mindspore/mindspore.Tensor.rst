@@ -235,49 +235,17 @@ mindspore.Tensor
 
         - **ValueError** - 输入Tensor和任一 `choices` 无法广播。
 
-    .. py:method:: cdist(input_y, p=2.0)
+    .. py:method:: ceil()
 
-        计算两个tensor的p-范数距离。
-
-        **参数：**
-
-        - **input_y** (tensor) - 。输入的向量。
-        - **p** (float) - P -范数距离的P值，P∈[0，∞]。默认值:2.0。
+        向上取整。
 
         **返回：**
 
-        Tensor。p-范数距离，数据类型与输入一致。
+        Tensor。向上取整的结果。
 
         **异常：**
 
-        - **TypeError** - 如果输入参数 `input_y` 不是Tensor类型。
-        - **TypeError** - 如果当前Tensor或输入参数 `input_y` 的数据类型不是float16或者float32。
-        - **TypeError** - 如果参数 `p` 不是一个float值。
-        - **ValueError** - 如果参数 `p` 是负数。
-        - **ValueError** - 如果当前Tensor的维度信息与输入参数 `input_y` 不相同。
-        - **ValueError** - 如果当前Tensor或输入参数 `input_y` 不是2维或3维。
-
-    .. py:method:: celu(alpha=1.0)
-        
-        celu激活函数，按输入元素计算输出，公式定义如下：
-        
-        .. math::
-            \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
-            
-        **参数：**
-        
-        - **alpha** (float) - celu公式定义的阈值 :math:`\alpha` 。默认值：1.0。
-        
-        **返回：**
-        
-        Tensor，shape和数据类型与输入相同。
-        
-        **异常：**
-        
-        - **TypeError** - `alpha` 不是float。
-        - **ValueError** - `alpha` 的值为零。
-        - **TypeError** - `x` 不是tensor。
-        - **TypeError** - `x` 的dtype既不是float16也不是float32。
+        - **TypeError** - 如果当前Tensor的数据类型不是float16或者float32。
 
     .. py:method:: clip(xmin, xmax, dtype=None)
 

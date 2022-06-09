@@ -439,6 +439,7 @@ class Tensor(Tensor_):
         self.assign_value_cpp(value)
         return self
 
+
     def item(self, index=None):
         """
         Get the item at the specified index of the tensor.
@@ -612,38 +613,6 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
 
-    def cdist(self, input_y, p=2.0):
-        """
-        Computes batched the p-norm distance between each pair of the two collections of row vectors.
-
-        Args:
-            input_y (Tensor): as the same dtype as `self`, Input tensor of shape :math:`(B, R, M)`.
-            p (float): P value for the p-norm distance to calculate between each vector pair, P ∈ [0,∞]. Default: 2.0.
-
-        Returns:
-            ensor, has the same dtype as `input_y`, which shape is :math:`(B, P, R)`.
-
-        Supported Platforms:
-            ``Ascend`` ``CPU``
-
-        Raises:
-            TypeError: If `input_y` is not a Tensor.
-            TypeError: If dtype of `self` or `input_y` is neither float16 nor float32.
-            TypeError: If `p` is not a float.
-            ValueError: If `p` is a negative float.
-            ValueError: If dimension of `self` is not the same as `input_y`.
-            ValueError: If dimension of `self` or `input_y` is neither 2 nor 3.
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> a = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
-            >>> y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
-            >>> output = a.cdist(y)
-            >>> print(output)
-        """
-
-        self._init_check()
-        return tensor_operator_registry.get('cdist')(p)(self, input_y)
 
     def view(self, *shape):
         """
@@ -1012,6 +981,26 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('abs')()(self)
+
+    def ceil(self):
+        """
+        Rounds a tensor up to the closest integer element-wise.
+
+        Returns:
+            Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor([1.1, 2.5, -1.5]).astype("float32")
+            >>> output = a.ceil()
+            >>> print(output)
+            [ 2.  3. -1.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('ceil')()(self)
 
     def lerp(self, end, weight):
         """
@@ -3604,45 +3593,6 @@ class Tensor(Tensor_):
 
         s, _, _ = svd_op(full_matrices, compute_uv)(self)
         return s
-
-    def celu(self, alpha=1.0):
-        r"""
-        Computes celu (Continuously differentiable exponential linear units) of input tensors element-wise.
-
-        The formula is defined as follows:
-
-        .. math::
-            \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
-
-        It returns :math:`\max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))` element-wise.
-
-        The picture about celu looks like this `celu <https://arxiv.org/abs/1704.07483>`_.
-
-        Args:
-            alpha (float): The :math:`\alpha` value for the Celu formulation. Default: 1.0
-
-        Returns:
-            Tensor, has the same shape and data type as self.
-
-        Raises:
-            TypeError: If `alpha` is not a float.
-            ValueError: If `alpha` has the value of 0.
-            TypeError: If `x` is not a Tensor.
-            TypeError: If dtype of `x` is neither float16 nor float32.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> import mindspore as ms
-            >>> from mindspore import Tensor
-            >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
-            >>> print(x.celu())
-            [-0.86466473 -0.63212055  1.          2.        ]
-        """
-        self._init_check()
-        return tensor_operator_registry.get('celu')(alpha)(self)
 
     def hardshrink(self, lambd=0.5):
         r"""

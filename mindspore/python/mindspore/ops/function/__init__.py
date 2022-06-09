@@ -186,6 +186,7 @@ from .math_func import (
     erf,
     erfc,
     cdist,
+    ceil,
     bernoulli,
     bessel_i0,
     bessel_i0e,
