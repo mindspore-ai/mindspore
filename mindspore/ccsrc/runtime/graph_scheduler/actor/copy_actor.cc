@@ -55,6 +55,7 @@ void CopyActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   if (ActorDispatcher::get_is_memory_allocation_sync()) {
     ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &output_device_tensor_,
                               device_contexts_[kOutputDeviceContextIndex], context, GetAID());
+    OnMemoryAllocFinish(context);
   } else {
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &output_device_tensor_,
                           device_contexts_[kOutputDeviceContextIndex], context, GetAID());

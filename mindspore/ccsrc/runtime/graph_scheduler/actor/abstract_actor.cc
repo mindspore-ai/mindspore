@@ -143,6 +143,11 @@ void AbstractActor::InitOutputData() {
       SET_FLAG(output_data_flag, kOutputDataFlagBetweenFusion);
     }
 
+    // Add the fusion flag.
+    if (TEST_FLAG(data_arrow->flag_, kOutputDataFlagToFusion)) {
+      SET_FLAG(output_data_flag, kOutputDataFlagToFusion);
+    }
+
     // Add the output data.
     (void)output_data_.emplace_back(std::make_pair(std::move(data), output_data_flag));
   }
@@ -230,8 +235,7 @@ AbstractActor *AbstractActor::FetchSubActorInFusionActor(const std::string &sub_
   if (parent_fusion_actor_ == nullptr) {
     return nullptr;
   }
-  const auto &sub_actors = parent_fusion_actor_->FetchSubActors();
-  return (sub_actors.at(sub_actor_name)).get();
+  return (parent_fusion_actor_->sub_actors_[sub_actor_name]).get();
 }
 }  // namespace runtime
 }  // namespace mindspore

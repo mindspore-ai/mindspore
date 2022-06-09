@@ -509,9 +509,12 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
   for (auto actor : actors) {
+    MS_EXCEPTION_IF_NULL(actor);
     // The sub actors in the fusion actor do not participate in message interaction.
     if (actor->parent_fusion_actor_ == nullptr) {
       (void)actor_manager->Spawn(actor);
+    } else {
+      actor->Init();
     }
   }
 
@@ -764,6 +767,7 @@ void GraphScheduler::Optimize(const ActorSetPtr &actor_set) {
   MS_EXCEPTION_IF_NULL(optimizer);
   optimizer->AddPass(std::make_shared<InvalidDataArrowElimination>());
   optimizer->AddPass(std::make_shared<BatchDataArrowFusion>());
+  optimizer->AddPass(std::make_shared<MultiActorFusion>());
   optimizer->Optimize(actor_set);
 }
 

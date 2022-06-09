@@ -40,16 +40,13 @@ namespace runtime {
  * memory after the dump (for GPU and ascend kernel-by-kernel).
  */
 void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_info_,
-                       const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context,
-                       const AID *from_aid) {
+                       const DeviceContext *device_context, OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
-  MS_EXCEPTION_IF_NULL(from_aid);
+  std::lock_guard<std::mutex> locker(debug_mutex_);
 
   if (!node->isa<CNode>()) {
-    // Call back to the from actor to process after debug finished.
-    ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
     return;
   }
   const auto &cnode = node->cast<CNodePtr>();
@@ -93,9 +90,6 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
     exec_order_ += 1;
 #endif
   }
-
-  // Call back to the from actor to process after debug finished.
-  ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 
 /*
@@ -105,11 +99,12 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
  * Description: Load data for online debugger and dump graph for e2e dump mode (Ascend super kernel mode).
  */
 void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext *device_context,
-                               OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
+                               OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(op_context);
-  MS_EXCEPTION_IF_NULL(from_aid);
+  std::lock_guard<std::mutex> locker(debug_mutex_);
+
   MS_LOG(DEBUG) << "Super kernel debug for graph: " << graph->graph_id() << ".";
 #ifdef ENABLE_DEBUGGER
   auto debugger = Debugger::GetInstance();
@@ -122,8 +117,6 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
   SuperKernelE2eDump(graph);
 
 #endif
-  // Call back to the from actor to process after debug finished.
-  ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 
 /*
@@ -135,9 +128,10 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
 void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
                                   const std::vector<AnfNodePtr> &origin_parameters_order,
                                   std::vector<DeviceContext *> device_contexts,
-                                  OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
+                                  OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(op_context);
-  MS_EXCEPTION_IF_NULL(from_aid);
+  std::lock_guard<std::mutex> locker(debug_mutex_);
+
   MS_LOG(DEBUG) << "Debug on step begin.";
 #ifdef ENABLE_DEBUGGER
   if (!graphs.empty()) {
@@ -165,8 +159,6 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
     }
   }
 #endif
-  // Call back to the from actor to process after debug finished.
-  ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 
 /*
@@ -176,9 +168,10 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
  * Description: Dump parameters and constants and update dump iter for CPU. Call PostExecuteGraph Debugger for GPU and
  * Ascend and update step number of online debugger GPU.
  */
-void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *from_aid) {
+void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const AID *) {
   MS_EXCEPTION_IF_NULL(op_context);
-  MS_EXCEPTION_IF_NULL(from_aid);
+  std::lock_guard<std::mutex> locker(debug_mutex_);
+
   MS_LOG(DEBUG) << "Debug on step end.";
 #ifndef ENABLE_SECURITY
   if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
@@ -200,9 +193,6 @@ void DebugActor::DebugOnStepEnd(OpContext<DeviceTensor> *const op_context, const
   DumpJsonParser::GetInstance().UpdateDumpIter();
 #endif
 #endif
-
-  // Call back to the from actor to process after debug finished.
-  ActorDispatcher::Send(*from_aid, &DebugAwareActor::OnDebugFinish, op_context);
 }
 }  // namespace runtime
 }  // namespace mindspore

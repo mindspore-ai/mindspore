@@ -24,9 +24,7 @@ namespace mindspore {
 namespace runtime {
 namespace {
 void OnMemoryAllocFinish(const AID &from_aid, OpContext<DeviceTensor> *const op_context) {
-  if (ActorDispatcher::get_is_memory_allocation_sync()) {
-    ActorDispatcher::SendSync(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
-  } else {
+  if (!ActorDispatcher::get_is_memory_allocation_sync()) {
     ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
   }
 }

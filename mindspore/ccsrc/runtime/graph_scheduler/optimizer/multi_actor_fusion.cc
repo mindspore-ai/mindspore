@@ -21,17 +21,26 @@
 
 namespace mindspore {
 namespace runtime {
-constexpr size_t kActorFusionMaxNum = 2;
+namespace {
+bool SupportFusion(const AbstractActorPtr &actor) {
+  MS_EXCEPTION_IF_NULL(actor);
+  if ((actor->type() == KernelTransformType::kDeviceDataSourceActor) ||
+      (actor->type() == KernelTransformType::kHostDataSourceActor) ||
+      (actor->type() == KernelTransformType::kKernelActor) ||
+      (actor->type() == KernelTransformType::kSuperKernelActor) || (actor->type() == KernelTransformType::kCopyActor)) {
+    return true;
+  }
+  return false;
+}
+}  // namespace
+
+// The max actors num in fusion actor.
+constexpr size_t kActorFusionMaxNum = 1000;
 
 void MultiActorFusion::Process(ActorSet *const actor_set, AbstractActor *const) {
   MS_EXCEPTION_IF_NULL(actor_set);
-  if ((actor_set->control_actors_ != nullptr) || (!actor_set->custom_actors_.empty())) {
-    return;
-  }
-
-  if (!AnalyzeDependency(actor_set)) {
-    MS_LOG(INFO) << "The dependency of " << actor_set->name_
-                 << " is too complicated and the pass MultiActorFusion is skipped.";
+  if ((!actor_set->custom_actors_.empty()) || (!actor_set->copy_actors_.empty()) ||
+      (!actor_set->super_kernel_actors_.empty())) {
     return;
   }
 
@@ -51,9 +60,7 @@ bool MultiActorFusion::AnalyzeDependency(const ActorSet *actor_set) {
   mindspore::HashMap<std::string, std::pair<AbstractActor *, bool>> actor_infos;
   for (auto &actor : need_processed_actors) {
     MS_EXCEPTION_IF_NULL(actor);
-    if ((actor->type() == KernelTransformType::kDataPrepareActor) ||
-        (actor->type() == KernelTransformType::kLoopCountActor) ||
-        (actor->type() == KernelTransformType::kOutputActor)) {
+    if (!SupportFusion(actor)) {
       actor_infos[actor->GetAID().Name()] = std::make_pair(actor.get(), true);
     } else {
       actor_infos[actor->GetAID().Name()] = std::make_pair(actor.get(), false);
@@ -141,35 +148,54 @@ bool GetDependentActors(std::vector<AbstractActorPtr> *const output_actors, cons
   MS_EXCEPTION_IF_NULL(actor);
   MS_EXCEPTION_IF_NULL(need_processed_actors);
 
-  // Get all the output actors.
+  // Get all the output actors by output data.
+  bool is_need_processed = true;
   for (auto &output_data_arrow : actor->output_data_arrows()) {
     MS_EXCEPTION_IF_NULL(output_data_arrow);
+    // Skip the repeated output.
+    if (std::find_if(output_actors->begin(), output_actors->end(), [&output_data_arrow](auto &output_actor) {
+          return output_data_arrow->to_op_id_.Name() == output_actor->GetAID().Name();
+        }) != output_actors->end()) {
+      continue;
+    }
     auto iter = need_processed_actors->find(output_data_arrow->to_op_id_.Name());
     if (iter != need_processed_actors->end()) {
       (void)output_actors->emplace_back(iter->second);
       (void)need_processed_actors->erase(iter);
+    } else {
+      is_need_processed = false;
     }
   }
+  // Get all the output actors by output control.
   for (auto &output_control_arrow : actor->output_control_arrows()) {
     MS_EXCEPTION_IF_NULL(output_control_arrow);
+    // Skip the repeated output.
+    if (std::find_if(output_actors->begin(), output_actors->end(), [&output_control_arrow](auto &output_actor) {
+          return output_control_arrow->to_op_id_.Name() == output_actor->GetAID().Name();
+        }) != output_actors->end()) {
+      continue;
+    }
     auto iter = need_processed_actors->find(output_control_arrow->to_op_id_.Name());
     if (iter != need_processed_actors->end()) {
       (void)output_actors->emplace_back(iter->second);
       (void)need_processed_actors->erase(iter);
+    } else {
+      is_need_processed = false;
     }
   }
 
-  return SchedulerHelper::CheckDependency(*output_actors);
+  return (is_need_processed && (output_actors->size() == 1));
 }
 
-FusionActorPtr BuildFusionActorBySeed(const AbstractActorPtr &seed_actor,
-                                      std::queue<AbstractActorPtr> *const origin_seed_actors,
-                                      mindspore::HashMap<std::string, AbstractActorPtr> *const need_processed_actors) {
+std::vector<FusionActorPtr> BuildFusionActorBySeed(
+  const AbstractActorPtr &seed_actor, std::queue<AbstractActorPtr> *const origin_seed_actors,
+  mindspore::HashMap<std::string, AbstractActorPtr> *const need_processed_actors) {
   MS_EXCEPTION_IF_NULL(seed_actor);
   MS_EXCEPTION_IF_NULL(origin_seed_actors);
   MS_EXCEPTION_IF_NULL(need_processed_actors);
-  std::vector<AbstractActorPtr> need_fused_actors;
 
+  // Get the actors need be fused.
+  std::vector<AbstractActorPtr> need_fused_actors;
   std::queue<AbstractActorPtr> current_seed_actors;
   current_seed_actors.push(seed_actor);
   while (!current_seed_actors.empty()) {
@@ -191,11 +217,23 @@ FusionActorPtr BuildFusionActorBySeed(const AbstractActorPtr &seed_actor,
     output_actors.clear();
   }
 
-  if (need_fused_actors.size() > 1) {
-    return SchedulerHelper::BuildFusionActor(need_fused_actors);
-  } else {
-    return nullptr;
+  // Build the fusion actors.
+  std::vector<FusionActorPtr> output_fused_actors;
+  std::vector<AbstractActorPtr> sub_fused_actors;
+  size_t i = 0;
+  for (; i < (need_fused_actors.size() / kActorFusionMaxNum); ++i) {
+    auto first = need_fused_actors.begin() + kActorFusionMaxNum * i;
+    auto end = need_fused_actors.begin() + kActorFusionMaxNum * (i + 1);
+    sub_fused_actors.assign(first, end);
+    (void)output_fused_actors.emplace_back(SchedulerHelper::BuildFusionActor(sub_fused_actors));
+    sub_fused_actors.clear();
   }
+  sub_fused_actors.assign(need_fused_actors.begin() + kActorFusionMaxNum * i, need_fused_actors.end());
+  if (sub_fused_actors.size() > 1) {
+    (void)output_fused_actors.emplace_back(SchedulerHelper::BuildFusionActor(sub_fused_actors));
+  }
+
+  return output_fused_actors;
 }
 }  // namespace
 
@@ -207,9 +245,7 @@ void MultiActorFusion::FuseMultiActors(ActorSet *const actor_set) {
   mindspore::HashMap<std::string, AbstractActorPtr> need_processed_actors;
   for (auto &actor : actors) {
     MS_EXCEPTION_IF_NULL(actor);
-    if ((actor->type() != KernelTransformType::kDataPrepareActor) &&
-        (actor->type() != KernelTransformType::kLoopCountActor) &&
-        (actor->type() != KernelTransformType::kOutputActor)) {
+    if (SupportFusion(actor)) {
       need_processed_actors[actor->GetAID().Name()] = actor;
     }
   }
@@ -229,8 +265,8 @@ void MultiActorFusion::FuseMultiActors(ActorSet *const actor_set) {
     auto &seed_actor = seed_actors.front();
     seed_actors.pop();
     MS_EXCEPTION_IF_NULL(seed_actor);
-    auto fusion_actor = BuildFusionActorBySeed(seed_actor, &seed_actors, &need_processed_actors);
-    if (fusion_actor != nullptr) {
+    auto fusion_actors = BuildFusionActorBySeed(seed_actor, &seed_actors, &need_processed_actors);
+    for (auto &fusion_actor : fusion_actors) {
       (void)actor_set->fusion_actors_.emplace_back(fusion_actor);
     }
   }

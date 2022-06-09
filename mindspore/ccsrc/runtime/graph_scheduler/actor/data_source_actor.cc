@@ -106,6 +106,7 @@ void DeviceQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *con
   if (ActorDispatcher::get_is_memory_allocation_sync()) {
     ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors,
                               device_contexts_[0], context, GetAID());
+    OnMemoryAllocFinish(context);
   } else {
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors,
                           device_contexts_[0], context, GetAID());
@@ -167,8 +168,9 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 }
 
 void DeviceQueueDataSourceActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  ActorDispatcher::Send(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_contexts_[0], context,
-                        &GetAID());
+  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, data_kernel_, &launch_info_, device_contexts_[0], context,
+                            &GetAID());
+  OnDebugFinish(context);
 }
 
 void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const context) const {
@@ -201,6 +203,7 @@ void HostQueueDataSourceActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const
       ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateBatchMemory, &device_tensors,
                                 &device_contexts_, context, GetAID());
     }
+    OnMemoryAllocFinish(context);
   } else {
     if (IsSameDeviceType()) {
       ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &device_tensors,
