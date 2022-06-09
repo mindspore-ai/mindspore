@@ -158,7 +158,7 @@ Status DvppDecodeVideoOperation::ValidateParams() {
   height = size_[0];
   width = size_[1];
 
-  if ((width <= kFrameWidthMin) || (width > kFrameWidthMax)) {
+  if ((width < kFrameWidthMin) || (width > kFrameWidthMax)) {
     std::string err_msg = "DvppDecodeVideo: video frame width " + std::to_string(width) +
                           " is invalid, the legal range is [" + std::to_string(kFrameWidthMin) + ", " +
                           std::to_string(kFrameWidthMax) + "]";
