@@ -585,3 +585,7 @@ from .adam_apply_one_ds import _adam_apply_one_ds_tbe
 from .adam_apply_one_with_decay_ds import _adam_apply_one_with_decay_ds_tbe
 from .adaptive_max_pool2d import _adaptive_max_pool2d_tbe
 from .pooling import _pooling_tbe
+from .hard_swish import _hard_swish_tbe
+from .hard_swish_grad import _hard_swish_grad_tbe
+from .hard_swish_ds import _hard_swish_ds_tbe
+from .hard_swish_grad_ds import _hard_swish_grad_ds_tbe

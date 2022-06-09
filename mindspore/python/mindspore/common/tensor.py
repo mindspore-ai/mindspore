@@ -3724,6 +3724,34 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('hardshrink')(lambd)(self)
 
+    def hardswish(self):
+        r"""
+        Hard swish activation function.
+
+        Calculate Hard Swish for each element of input.
+
+        Refer to :func:`mindspore.ops.hardswish` for more detail.
+
+        Returns:
+            Tensor, with the same type and shape as the input.
+
+        Raises:
+            TypeError: If dtype of input is neither float16 nor float32.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor([-1, -2, 0, 2, 1]).astype("float16")
+            >>> output = a.hardswish()
+            >>> print(output)
+            [-0.3333  -0.3333  0  1.666  0.6665]
+        """
+
+        self._init_check()
+        return tensor_operator_registry.get('hardswish')()(self)
+
     def soft_shrink(self, lambd=0.5):
         """
         Apply the soft shrink function for a tensor. Calculates the output according to the input elements.

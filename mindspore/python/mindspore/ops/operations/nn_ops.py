@@ -820,29 +820,10 @@ class HSwish(PrimitiveWithInfer):
     r"""
     Hard swish activation function.
 
-    Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
-
-    Hard swish is defined as:
-
-    .. math::
-
-        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
-
-    where :math:`x_i` is an element of the input Tensor.
-
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input_x`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+    Refer to :func:`mindspore.ops.hardswish` for more detail.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> hswish = ops.HSwish()

@@ -1543,6 +1543,34 @@ def adaptive_avgpool2d(x, output_size):
     return F.adaptive_avgpool2d(x, output_size)
 
 
+def hardswish(x):
+    r"""
+    Hard swish activation function.
+
+    Calculate Hard Swish for each element of input.
+
+    Args:
+        x (Tensor): Input tensor.
+
+    Returns:
+        Tensor, with the same type and shape as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.array([-1, -2, 0, 2, 1])
+        >>> print(x.hardswish())
+        [-0.3333  -0.3333  0  1.666  0.6665]
+    """
+    return P.HSwish()(x)
+
+
 def getitem(data, index):
     """Implementation of `getitem`."""
     return data.__getitem__(index)

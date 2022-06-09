@@ -191,6 +191,7 @@ def get_in_top_k_vmap_rule(prim, axis_size):
 
 @vmap_rules_getters.register(G.FastGeLUGrad)
 @vmap_rules_getters.register(G.HShrinkGrad)
+@vmap_rules_getters.register(G.HSwishGrad)
 @vmap_rules_getters.register(G.SoftShrinkGrad)
 def get_fast_gelu_grad_vmap_rule(prim, axis_size):
     """VmapRule for common activation grad operation."""
