@@ -117,7 +117,7 @@ void LiteExitOpActor::AsyncOutput(OpContext<Tensor> *context) {
       continue;
     }
     auto data = outputs_data_.at(i);
-    Async(to_op_id, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
+    Async(to_op_id, get_actor_mgr(), &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
   }
 }
 

@@ -27,6 +27,7 @@
 #include "src/lite_mindrt.h"
 #include "src/executor.h"
 #include "include/lite_session.h"
+#include "mindrt/src/actor/actormgr.h"
 
 namespace mindspore::lite {
 class MindrtExecutor : public Executor {
@@ -34,7 +35,7 @@ class MindrtExecutor : public Executor {
   explicit MindrtExecutor(std::unordered_map<Tensor *, Tensor *> *output_map,
                           std::unordered_map<Tensor *, Tensor *> *input_map)
       : isolate_output_map_(output_map), isolate_input_map_(input_map) {}
-  virtual ~MindrtExecutor() { MindrtTerminate(op_actors_); }
+  virtual ~MindrtExecutor() { MindrtTerminate(op_actors_, actor_mgr_); }
 
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels, const std::vector<Tensor *> &inputs,
               const std::vector<Tensor *> &outputs, lite::InnerContext *ctx) override;
@@ -62,6 +63,7 @@ class MindrtExecutor : public Executor {
   std::vector<OpDataPtr<Tensor>> output_data_;
   std::unordered_map<Tensor *, Tensor *> *isolate_output_map_;
   std::unordered_map<Tensor *, Tensor *> *isolate_input_map_;
+  std::shared_ptr<ActorMgr> actor_mgr_;
 };
 
 }  // namespace mindspore::lite

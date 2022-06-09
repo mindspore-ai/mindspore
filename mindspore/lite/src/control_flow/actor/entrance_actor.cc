@@ -78,7 +78,8 @@ void LiteEntranceOpActor::AsyncOutput(OpContext<Tensor> *context) {
 
   for (size_t i = 0; i < output_data_arrows_.size(); i++) {
     auto data = outputs_data_.at(i);
-    Async(output_data_arrows_[i]->to_op_id_, &mindspore::OpActor<Tensor>::RunOpData, data.get(), context);
+    Async(output_data_arrows_[i]->to_op_id_, get_actor_mgr(), &mindspore::OpActor<Tensor>::RunOpData, data.get(),
+          context);
   }
 }
 

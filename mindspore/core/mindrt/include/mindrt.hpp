@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_MINDRT_HPP_H_
 #define MINDSPORE_CORE_MINDRT_INCLUDE_MINDRT_HPP_H_
 
+#include <memory>
 #include <string>
 #include "mindrt/include/actor/actor.h"
 
@@ -45,7 +46,7 @@ ActorReference GetActor(const AID &actor);
 void Await(const AID &actor);
 
 // brief  Terminate the actor  to exit
-void Terminate(const AID &actor);
+void Terminate(const AID &actor, const std::shared_ptr<ActorMgr> &actor_mgr = nullptr);
 
 // brief  Terminate all actors
 void TerminateAll();
