@@ -36,8 +36,7 @@ import gc
 import time
 import uuid
 import multiprocessing
-from multiprocessing.pool import RUN, TERMINATE
-from enum import Enum
+from enum import Enum, IntEnum
 from importlib import import_module
 import sys
 import threading
@@ -64,7 +63,7 @@ from mindspore.parallel._utils import _get_device_num
 from . import samplers
 from .iterators import DictIterator, TupleIterator, DummyIterator, check_iterator_cleanup, _set_iterator_cleanup, \
     ITERATORS_LIST, _unset_iterator_cleanup
-from .queue import _SharedQueue
+
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_device_send, check_take, check_output_shape, check_project, \
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
@@ -345,50 +344,6 @@ class Dataset:
         self._class_indexing = None
         self._sync = False
 
-    def create_ir_tree(self):
-        """
-        Internal method to build an IR tree.
-
-        Returns:
-            DatasetNode, the root node of the IR tree.
-            Dataset, the root dataset of the IR tree.
-        """
-        parent = self.parent
-        self.parent = []
-        dataset = copy.deepcopy(self)
-        global _OP_NAME
-        _OP_NAME = Dataset._get_operator_id(dataset)
-        ir_tree = dataset.parse_tree()
-        self.parent = parent
-        _init_device_info()
-        return ir_tree, dataset
-
-    def close_pool(self):
-        """
-        Close multiprocessing pool in dataset. If you are familiar with multiprocessing library, you can regard this
-        as a destructor for a processingPool object.
-        """
-        # del all the SharedQueue when close the pool
-        if hasattr(self, 'process_pool') and self.process_pool is not None:
-            self.process_pool.close_pool()
-            self.process_pool.delete_shared_memory()
-        for child in self.children:
-            child.close_pool()
-
-    def notify_watchdog(self):
-        """
-        Close watchdog thread in dataset. Now GeneratorDataset/map/batch will use a thread named watch_dog to monitor
-        multiprocess, for get_dataset_size/output_shapes/output_types/get_col_name/num_classes, we need notify_watchdog
-        to close watch_dog thread manually.
-        """
-        if hasattr(self, 'sample_fn') and self.sample_fn is not None:
-            if self.sample_fn.multi_process:
-                self.sample_fn._abort_watchdog()  # pylint: disable=W0212
-        if hasattr(self, 'process_pool') and self.process_pool is not None:
-            self.process_pool.abort_watchdog()
-        for child in self.children:
-            child.notify_watchdog()
-
     @staticmethod
     def _get_operator_id(dataset):
         """
@@ -423,6 +378,24 @@ class Dataset:
             global _OP_PROCESS
             _OP_PROCESS.update(generator_process)
         return op_name
+
+    def create_ir_tree(self):
+        """
+        Internal method to build an IR tree.
+
+        Returns:
+            DatasetNode, the root node of the IR tree.
+            Dataset, the root dataset of the IR tree.
+        """
+        parent = self.parent
+        self.parent = []
+        dataset = copy.deepcopy(self)
+        global _OP_NAME
+        _OP_NAME = Dataset._get_operator_id(dataset)
+        ir_tree = dataset.parse_tree()
+        self.parent = parent
+        _init_device_info()
+        return ir_tree, dataset
 
     def parse_tree(self):
         """
@@ -1572,8 +1545,7 @@ class Dataset:
         if self._col_names is None:
             runtime_getter = self._init_tree_getters()
             self._col_names = runtime_getter[0].GetColumnNames()
-            runtime_getter[2].close_pool()
-            runtime_getter[2].notify_watchdog()
+
         return self._col_names
 
     @check_output_shape
@@ -1616,8 +1588,6 @@ class Dataset:
         runtime_getter = self._init_tree_getters()
         self.runtime_context = runtime_getter[1]
         output_shapes = runtime_getter[0].GetOutputShapes(estimate)
-        runtime_getter[2].close_pool()
-        runtime_getter[2].notify_watchdog()
         del self.runtime_context
 
         if estimate:
@@ -1643,8 +1613,7 @@ class Dataset:
             # of runtime_context. We found this hang problem only occur on output_types and output_shapes.
             self.runtime_context = runtime_getter[1]
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
-            runtime_getter[2].close_pool()
-            runtime_getter[2].notify_watchdog()
+
             del self.runtime_context
         return self.saved_output_types
 
@@ -1662,8 +1631,7 @@ class Dataset:
         if self.dataset_size is None:
             runtime_getter = self.__init_size_getter()
             self.dataset_size = runtime_getter[0].GetDatasetSize(False)
-            runtime_getter[2].close_pool()
-            runtime_getter[2].notify_watchdog()
+
         return self.dataset_size
 
     @deprecated("1.5")
@@ -1810,8 +1778,7 @@ class Dataset:
         if self._num_classes is None:
             runtime_getter = self._init_tree_getters()
             self._num_classes = runtime_getter[0].GetNumClasses()
-            runtime_getter[2].close_pool()
-            runtime_getter[2].notify_watchdog()
+
         if self._num_classes == -1:
             return None
         return self._num_classes
@@ -2471,6 +2438,11 @@ class BatchDataset(UnionBaseDataset):
         self.process_pool = None
         self.max_rowsize = max_rowsize
 
+    def __del__(self):
+        if hasattr(self, "process_pool") and self.process_pool is not None:
+            self.process_pool.terminate()
+            del self.process_pool
+
     def parse(self, children=None):
         return cde.BatchNode(children[0], self.batch_size, self.drop_remainder, self.pad, self.input_columns,
                              self.output_columns, self.column_order, self.batch_size_func, self.per_batch_map,
@@ -2793,7 +2765,7 @@ class _PythonCallable:
     def __call__(self, *args):
         if self.pool.is_running() and check_iterator_cleanup() is False:
             try:
-                return self.pool.execute(self.py_callable, self.idx, *args)
+                return self.pool.execute(self.idx, *args)
             except multiprocessing.TimeoutError:
                 return self.py_callable(*args)
         # Invoke original Python callable in master process in case the pool is gone.
@@ -2801,6 +2773,220 @@ class _PythonCallable:
 
     def to_json(self):
         return self.py_callable.to_json()
+
+
+class Pipe:
+    """
+    Class to handle communication between the master process and the worker processes.
+    """
+
+    class Control(IntEnum):
+        DATA = 0
+        SHM = 1
+        ACK = 2
+        TERMINATE = 3
+        ERROR = 4
+
+    def __init__(self, shared_memory=False, max_rowsize=16):
+        self.parent_pipe, self.child_pipe = multiprocessing.Pipe()
+        self.shared_memory = shared_memory
+
+        # change max_rowsize in MB into bytes
+        self.seg_size = max_rowsize * 1024 * 1024
+        # pipe can hold up to 65,636 bytes at a time
+        self.min_shared_mem = 10000
+        self.print_error = True
+        if self.shared_memory:
+            try:
+                self.shm = multiprocessing.Array("b", self.seg_size)
+            except Exception:
+                raise RuntimeError(
+                    f"Error allocating {self.seg_size} bytes. This might be caused by insufficient shared memory,"
+                    f" and the recommended size is at least 5 GB.")
+
+    def prepare_data(self, data):
+        """
+        Prepare data to be sent via the pipe. If shared memory is enabled, data will be written to a shared buffer
+        and use the pipe to send the meta data.
+        Args:
+            data: tuple of input data to be sent
+        """
+        if not isinstance(data, tuple):
+            data = (data,)
+        data_list = []
+        start_bytes = 0
+        for d in data:
+            if self.shared_memory and (isinstance(d, np.ndarray) and d.size > self.min_shared_mem
+                                       and start_bytes + d.nbytes < self.seg_size):
+                # need to convert start_bytes to offset in array
+                start_offset = start_bytes
+                dest = np.ndarray(d.shape, d.dtype, buffer=self.shm.get_obj(), offset=start_offset)
+                np.copyto(dest, d)
+                # round to multiples of 8 bytes (8, 16, 24, ...)
+                num_bytes = 8 * ((d.nbytes + 7) // 8)
+                start_bytes += num_bytes
+                data_list.append((Pipe.Control.SHM, num_bytes, d.dtype, d.shape))
+            else:
+                if self.shared_memory and isinstance(d, np.ndarray) and d.size > self.min_shared_mem:
+                    # Only print out error the first time it happens
+                    if self.print_error:
+                        logger.warning(
+                            f"Using shared memory, but rowsize is larger than allocated memory {self.seg_size} bytes,"
+                            f" current rowsize {start_bytes + d.nbytes} bytes.")
+                        self.print_error = False
+                data_list.append((Pipe.Control.DATA, d))
+        return data_list
+
+    def parse_received_data(self, data):
+        """
+        Parse data received data from the pipe.
+        If shared memory is used, data will be copied from the the shared buffer.
+        Args:
+            data: tuple of data
+
+        Returns:
+            tuple of parsed data
+        """
+        row = []
+        start_bytes = 0
+        for x in data:
+            if x[0] == Pipe.Control.SHM:
+                num_bytes = x[1]
+                dtype = x[2]
+                shape = x[3]
+                start_offset = start_bytes
+                data = np.ndarray(shape, dtype, buffer=self.shm.get_obj(), offset=start_offset)
+                start_bytes += num_bytes
+                row.append(data)
+            elif x[0] == Pipe.Control.DATA:
+                row.append(x[1])
+            else:
+                raise RuntimeError(f"Invalid control signal {x[0]}")
+        return row
+
+    def master_send(self, func_index, data):
+        data_list = self.prepare_data(data)
+        self.parent_pipe.send((func_index, tuple(data_list)))
+
+    def master_receive(self):
+        result = self.parent_pipe.recv()
+        if isinstance(result, ExceptionHandler):
+            return result
+        row = self.parse_received_data(result)
+        return tuple(row)
+
+    def master_close(self):
+        self.parent_pipe.send(Pipe.Control.TERMINATE)
+        try:
+            self.parent_pipe.recv()
+        except ConnectionResetError:
+            # Child process is terminated before sending the ack
+            pass
+        self.parent_pipe.close()
+
+    def worker_send(self, data):
+        if isinstance(data, ExceptionHandler):
+            self.child_pipe.send(data)
+            return
+        data_list = self.prepare_data(data)
+        self.child_pipe.send(tuple(data_list))
+
+    def worker_receive(self):
+        result = self.child_pipe.recv()
+        if result == Pipe.Control.TERMINATE:
+            return None
+        if len(result) != 2:
+            raise RuntimeError(f"Corrupted data. Worker received {len(result)} elements, it should be 2.")
+        func_index, data = result[0], result[1]
+        row = self.parse_received_data(data)
+        return func_index, tuple(row)
+
+    def worker_close(self):
+        self.child_pipe.send(Pipe.Control.ACK)
+        self.child_pipe.close()
+
+
+def _main_process_already_exit():
+    """
+    Judge whether main process already exit.
+    """
+    ppid = os.getppid()
+
+    if (platform.system().lower() != 'windows' and
+            not _PythonMultiprocessing.is_process_alive(ppid)):
+        return True
+    return False
+
+
+def _worker_loop(operations, pipe):
+    """
+    Multiprocess worker process loop.
+    """
+
+    def _ignore_sigint():
+        """
+        We need to ignore sigint signal here so subprocesses can exit normally and clear.
+        """
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+    # close the parent's end of the pipe
+    pipe.parent_pipe.close()
+
+    while not _main_process_already_exit():
+        _ignore_sigint()
+
+        result = pipe.worker_receive()
+        if result is None:
+            pipe.worker_close()
+            return
+        (idx, input_tensors) = result
+        try:
+            output_tensors = operations[idx](*input_tensors)
+
+            pipe.worker_send(output_tensors)
+        except Exception:
+            pipe.worker_send(ExceptionHandler(where="in map(or batch) worker and execute Python function"))
+            return
+
+
+def worker_target(operations):
+    return lambda pipe: _worker_loop(operations, pipe)
+
+
+class _MPWorker(multiprocessing.Process):
+    """
+    Worker process for multiprocessing.
+    """
+
+    def __init__(self, operations, max_rowsize=16):
+        shared_memory = get_enable_shared_mem()
+        self.pipe = Pipe(shared_memory=shared_memory, max_rowsize=max_rowsize)
+        super().__init__(target=worker_target(operations), args=(self.pipe,), daemon=True)
+
+    def start(self):
+        super().start()
+        # close the child's end of the pipe
+        self.pipe.child_pipe.close()
+
+    def execute(self, idx, *args):
+        self.pipe.master_send(idx, args)
+        res = self.pipe.master_receive()
+        if isinstance(res, ExceptionHandler):
+            res.reraise()
+        return res
+
+    def close(self):
+        try:
+            if self.is_alive():
+                logger.info(f"Closing worker with PID: {self.pid}")
+                self.pipe.master_close()
+                super().terminate()
+                super().join()
+                super().close()
+        except ValueError:
+            # Process has been closed already
+            return
+        return
 
 
 class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
@@ -2835,203 +3021,21 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.operations = operations
         self.max_row_size = max_row_size
 
-        self.process_pool = None
+        self.workers = None
+        self.pids = None
         self.op_id = -1
 
-        self.arg_q_list = []
-        self.res_q_list = []
         self.queues_map = {}
         self.next_queue = 0
 
         self.eot = None
         self.watch_dog = None
-        self.workers = []
         self.ppid = os.getpid()
         self.hook = None
+        self.threads_to_workers = {}
 
-    def launch(self, op_id=-1):
-        self.op_id = op_id
-        logger.info("Launching new Python Multiprocessing pool for Op:" + str(self.op_id))
-        self.create_pool()
-
-    def create_pool(self):
-        """
-
-        Returns:
-
-        """
-        if get_enable_shared_mem():
-            self.create_shared_memory()
-
-        if self.process_pool is not None:
-            raise Exception("Pool was already created, close it first.")
-
-        # Let gc collect unrefrenced memory to avoid child processes in the pool to do it
-        gc.collect()
-        # Construct python multiprocessing pool.
-        # The _pyfunc_worker_init is used to pass lambda function to subprocesses.
-        self.process_pool = multiprocessing.Pool(processes=self.num_parallel_workers,
-                                                 initializer=_pyfunc_worker_init,
-                                                 initargs=(self.operations,
-                                                           self.arg_q_list, self.res_q_list))
-
-        self.gather_workers_info()
-
-        self.hook = _PythonMultiprocessing._ExceptHookHandler()
-
-        # The op (Map, Batch, etc) multiprocessing will launch a watch dog thread for monitoring sub processes
-        self._launch_watch_dog()
-
-        atexit.register(self.hook.mp_pool_exit_preprocess)
-        # If Python version greater than 3.8, we need to close ThreadPool in atexit for unclean pool teardown.
-        if sys.version_info >= (3, 8):
-            atexit.register(self.process_pool.close)
-
-    def terminate(self):
-        logger.info("Terminating Python Multiprocessing pool for Op:" + str(self.op_id))
-        self.close_pool()
-        self.abort_watchdog()
-        self.delete_shared_memory()
-        self.process_pool = None
-
-    def get_pids(self):
-        # obtain process IDs from multiprocessing.pool
-        return [w.pid for w in self.workers]
-
-    def add_new_workers(self, num_new_workers):
-        logger.info(
-            "Increasing num_parallel_workers of Python Multiprocessing pool for Op:" + str(self.op_id) +
-            ", old num_workers=" + str(self.num_parallel_workers) + " new num_workers" + str(self.num_parallel_workers +
-                                                                                             num_new_workers) + ".")
+    def __del__(self):
         self.terminate()
-        self.num_parallel_workers += num_new_workers
-        self.launch(self.op_id)
-
-    def remove_workers(self, num_removed_workers):
-        logger.info(
-            "Decreasing num_parallel_workers of Python Multiprocessing pool for Op:" + str(self.op_id) +
-            ", old num_workers=" + str(self.num_parallel_workers) + " new num_workers" + str(self.num_parallel_workers -
-                                                                                             num_removed_workers) + ".")
-        self.terminate()
-        self.num_parallel_workers -= num_removed_workers
-        self.launch(self.op_id)
-
-    def is_mp_enabled(self):
-        return self.process_pool is not None
-
-    def create_shared_memory(self):
-        """
-        Create shared memory queue across processes.
-        """
-        _check_shm_usage(self.num_parallel_workers, 1, self.max_row_size, 2)
-        self.arg_q_list = []
-        self.res_q_list = []
-        self.queues_map = {}
-        self.next_queue = 0
-        count = multiprocessing.Value('i', 0)
-
-        for _ in range(self.num_parallel_workers):
-            self.arg_q_list.append(_SharedQueue(1, count, max_rowsize=self.max_row_size))
-            self.res_q_list.append(_SharedQueue(1, count, max_rowsize=self.max_row_size))
-
-    def delete_shared_memory(self):
-        """
-        Call this method to delete any shared memory created for this pool.
-        """
-        if hasattr(self, 'arg_q_list') and self.arg_q_list is not None:
-            arg_q_list_len = len(self.arg_q_list)
-            for idx in range(arg_q_list_len):
-                del self.arg_q_list[arg_q_list_len - idx - 1]
-            del self.arg_q_list
-
-        if hasattr(self, 'res_q_list') and self.res_q_list is not None:
-            res_q_list_len = len(self.res_q_list)
-            for idx in range(res_q_list_len):
-                del self.res_q_list[res_q_list_len - idx - 1]
-            del self.res_q_list
-
-        #  recreate the lists for next pool creation
-        self.arg_q_list = []
-        self.res_q_list = []
-
-    def gather_workers_info(self):
-        """
-        Collect the PIDs of the children processes.
-        """
-        self.workers = [w for w in self.process_pool._pool]  # pylint: disable=W0212
-        pids = self.get_pids()
-        logger.info("Op: " + str(self.op_id) + " Python multiprocessing pool workers' PIDs: " + str(pids))
-
-    def execute(self, py_callable, idx, *args):
-        """
-        Execute
-        """
-        if self.is_running() and check_iterator_cleanup() is False:
-            result, qid, ret = self._send(py_callable, idx, *args)
-            if ret:
-                return result
-
-            # todo this check might be wrong
-            while check_iterator_cleanup() is False:
-                try:
-                    return self._receive(result, qid)
-                except multiprocessing.TimeoutError:
-                    continue
-                except KeyboardInterrupt:
-                    _set_iterator_cleanup()
-                    self.close_pool()
-                    raise Exception("Multiprocess Op worker receives KeyboardInterrupt.")
-            return (None,)
-        return None
-
-    def _send(self, py_callable, idx, *args):
-        """
-        The map/batch operator will use multiprocessing-pool apply_async interface to execute python function
-        in a sub process, apply_async will release GIL temporarily. For better performance, we use shared memory
-        feature and pass shared queue instead of multiprocess args.
-        """
-        ret = False
-        qid = None
-        if self.arg_q_list:
-            tid = threading.get_ident()
-            # Need to register each thread to use a different queue to send data to pool
-            if tid not in self.queues_map:
-                qid = self.next_queue
-                self.next_queue += 1
-                self.queues_map[tid] = qid
-            else:
-                qid = self.queues_map[tid]
-            self.arg_q_list[qid].put(args)
-
-            # This call will send the tensors along with Python callable index to the process pool.
-            # Block, yield GIL. Current thread will reacquire GIL once result is returned.
-            if self.is_running() and check_iterator_cleanup() is False:
-                result = self.process_pool.apply_async(_pyfunc_worker_exec, [idx, qid, []])
-            else:
-                ret = True
-                result = py_callable(*args)
-        else:
-            result = self.process_pool.apply_async(_pyfunc_worker_exec, [idx, -1, *args])
-        return result, qid, ret
-
-    def _receive(self, result, qid):
-        """
-        The map/batch operator will use multiprocessing-pool get interface to sync output data from a sub process,
-        get interface will reacquire GIL. For better performance, we use shared memory feature and get data from
-        shared queue directly.
-        """
-        if self.arg_q_list:
-            r = result.get(30)
-            if isinstance(r, ExceptionHandler):
-                r.reraise()
-            if r[0] != qid:
-                raise Exception("In PyCallable, got results from wrong thread")
-            r = self.res_q_list[qid].get()
-            return r
-        r = result.get(30)
-        if isinstance(r, ExceptionHandler):
-            r.reraise()
-        return r
 
     # This wait function is for cleaning zombie subprocesses
     @staticmethod
@@ -3051,29 +3055,19 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
     # Dataset need watch_dog thread to monitoring fork multi-processing,
     # and thread can't be a member function otherwise python won't collect and release resources.
     @staticmethod
-    def _watch_dog(eot, workers, pool=None):
+    def _watch_dog(eot, workers):
         """
         This thread is for monitoring subprocesses forked by GeneratorDataset/map/batch
         """
         if not isinstance(workers, list):
-            raise TypeError("[Internal Error] The 2nd parameter of watch dog thread should be list of process, " \
+            raise TypeError("[Internal Error] The 2nd parameter of watch dog thread should be list of process, "
                             "but got {}.".format(type(workers)))
-        if pool is not None and not isinstance(pool, multiprocessing.pool.Pool):
-            raise TypeError("[Internal Error] The 3rd parameter of watch dog thread should be multiprocessing.Pool, " \
-                            "but got {}".format(type(pool)))
+
         while not eot.is_set():
-            clear_subprocess_timeout = 0
             # Monitoring and count how many subprocesses already exit
             clear_subprocess_timeout = _PythonMultiprocessing._monitor_subprocess_exit(workers)
             # If find subprocess exit, we will wait for 30s and do some waitpid operations
             if clear_subprocess_timeout > 0:
-                if pool is not None:
-                    # Python multiprocessing.pool has a bug, if sub process of pool is killed, pool will launch
-                    # a new sub process, so we have to set worker_handler._state to TERMINATE to stop relaunching.
-                    if pool._state == RUN:  # pylint: disable=W0212
-                        pool._state = TERMINATE  # pylint: disable=W0212
-                        pool._worker_handler._state = TERMINATE  # pylint: disable=W0212
-                        pool._worker_handler.join()  # pylint: disable=W0212
                 start = time.time()
                 while time.time() - start < clear_subprocess_timeout:
                     # We need to distinguishing get_dataset_size or train finished normally and hang scenario.
@@ -3086,25 +3080,27 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
                     _PythonMultiprocessing.wait_pid()
                 # multiprocessing.queue may hang in .get() forever when put() process was killed.
                 # We have to exit main process otherwise main process will hang.
-                if pool is not None:
-                    _PythonMultiprocessing._terminate_process(pool._pool)  # pylint: disable=W0212
-                else:
-                    _PythonMultiprocessing._terminate_process(workers)
+                _PythonMultiprocessing._terminate_processes(workers)
                 logger.critical("The subprocess of dataset may exit unexpected or be killed, "
                                 "main process will exit. If this is not an artificial operation, you can use "
                                 "ds.config.set_enable_watchdog(False) to block this error.")
                 os.kill(os.getpid(), signal.SIGTERM)
 
     @staticmethod
-    # Terminate subprocess launched by multiprocessing.pool
-    def _terminate_process(workers):
-        for w in workers:
-            if w.exitcode is None:
-                w.terminate()
-        for w in workers:
-            if w._closed is False:  # pylint: disable=W0212
+    def _terminate_processes(processes):
+        """Terminate subprocesses"""
+
+        for p in processes:
+            try:
+                if p.exitcode is None:
+                    p.terminate()
+            except ValueError:
+                # process has been closed already
+                continue
+        for p in processes:
+            if p._closed is False:  # pylint: disable=W0212
                 # We don't use w.join because join can only used in main process or join will raise an error.
-                w._popen.wait()  # pylint: disable=W0212
+                p._popen.wait()  # pylint: disable=W0212
 
     # Monitor the exit number of subprocesses
     @staticmethod
@@ -3119,56 +3115,159 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
             int, the timeout(in seconds) when process exit.
         """
         for w in workers:
-            exit_code = w.exitcode
-            if exit_code is not None:
-                # For kill -9, we can exit quickly
-                if exit_code == -9:
-                    return 1
-                # For kill -15, we still exit after 30s
-                if exit_code == -15:
-                    return 30
+            try:
+                exit_code = w.exitcode
+                if exit_code is not None:
+                    # For kill -9, we can exit quickly
+                    if exit_code == -9:
+                        return 1
+                    # For kill -15, we still exit after 30s
+                    if exit_code == -15:
+                        return 30
+            except ValueError:
+                # process has been closed already
+                return 0
         return 0
 
-    # Monitor the exit status of main process
     @staticmethod
-    def process_still_alive(ppid):
+    def is_process_alive(pid):
         """
-        We always hit dead lock when we use psutil or w.exitcode to check whether a process is still alive. So we use
-        os.kill(ppid, 0) as the best solution when we want to check whether process is still alive.
+        Check if the process is alive or not.
+        Note:  We hit a deadlock when we use psutil or w.exitcode to check whether a process is alive.
+        Instead we use os.kill(ppid, 0).
+
+        Args:
+            pid: pid of the process to be checked
+
+        Returns:
+            True if the process is alive
         """
+
         try:
-            os.kill(ppid, 0)
+            os.kill(pid, 0)
         except OSError:
             return False
         return True
 
     # When main process exit, subprocesses will be terminate
     @staticmethod
-    def _clean_process(ppid, workers, pool=None):
+    def _clean_process(ppid, workers):
         """
-        This is the execute function of clean process, if we found main process is exit, we will clean subprocesses.
+            This is the execute function of clean process, if we found main process exited, we will clean subprocesses.
 
-        :param ppid: The process id of main process.
-        :param workers: The list of subprocesses.
-        :param pool: multiprocessing.Pool object, we can get list of subprocesses from _pool.
+        Args:
+            ppid: The process id of main process.
+            workers: The list of subprocesses.
+
         """
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-        while _PythonMultiprocessing.process_still_alive(ppid):
+        while _PythonMultiprocessing.is_process_alive(ppid):
             time.sleep(0.1)
-        if pool is not None:
-            # Python multiprocessing.pool has a bug, if sub process of pool is killed, pool will launch
-            # a new sub process, so we have to set worker_handler._state to TERMINATE to stop relaunching.
-            # But this pool is not the same object as it in main process, so we don't support kill main process then
-            # kill subprocess.
-            if pool._state == RUN:  # pylint: disable=W0212
-                pool._state = TERMINATE  # pylint: disable=W0212
-                pool._worker_handler._state = TERMINATE  # pylint: disable=W0212
-                pool._worker_handler.join()  # pylint: disable=W0212
-        if pool is not None:
-            _PythonMultiprocessing._terminate_process(pool._pool)  # pylint: disable=W0212
-        else:
-            _PythonMultiprocessing._terminate_process(workers)
+
+        _PythonMultiprocessing._terminate_processes(workers)
         os.kill(os.getpid(), signal.SIGTERM)
+
+    def launch(self, op_id=-1):
+        self.op_id = op_id
+        logger.info("Launching new Python Multiprocessing pool for Op:" + str(self.op_id))
+        self.create_pool()
+
+    def create_pool(self):
+        """
+
+        Returns:
+
+        """
+        if get_enable_shared_mem():
+            self.check_shared_memory()
+
+        if self.workers is not None:
+            raise Exception("Pool was already created, close it first.")
+
+        # Let gc collect unreferenced memory to avoid child processes in the pool to do it
+        gc.collect()
+
+        # Construct python worker processes
+        self.workers = []
+        for _ in range(self.num_parallel_workers):
+            worker = _MPWorker(self.operations, self.max_row_size)
+            worker.start()
+            self.workers.append(worker)
+
+        logger.info("Op: " + str(self.op_id) + " Python multiprocessing pool workers' PIDs: " + str(self.get_pids()))
+
+        self.hook = _PythonMultiprocessing._ExceptHookHandler()
+
+        # The op (Map, Batch, etc) multiprocessing will launch a watch dog thread for monitoring sub processes
+        self._launch_watch_dog()
+
+        atexit.register(self.terminate)
+
+    def terminate(self):
+        logger.info("Terminating Python Multiprocessing for Op:" + str(self.op_id))
+        self.close_all_workers()
+        self.abort_watchdog()
+
+    def get_pids(self):
+        """
+        Get list of worker's PIDs
+
+        Returns:
+            list of strings
+        """
+        if not self.is_mp_enabled:
+            return []
+        if not self.pids:
+            self.pids = []
+            if self.workers:
+                for w in self.workers:
+                    try:
+                        self.pids.append(w.pid)
+                    except ValueError:
+                        continue
+        return self.pids
+
+    def add_new_workers(self, num_new_workers):
+        logger.info(
+            "Increasing num_parallel_workers of Python Multiprocessing pool for Op:" + str(self.op_id) +
+            ", old num_workers=" + str(self.num_parallel_workers) + " new num_workers=" + str(
+                self.num_parallel_workers +
+                num_new_workers) + ".")
+        self.terminate()
+        self.num_parallel_workers += num_new_workers
+        self.launch(self.op_id)
+
+    def remove_workers(self, num_removed_workers):
+        logger.info(
+            "Decreasing num_parallel_workers of Python Multiprocessing pool for Op:" + str(self.op_id) +
+            ", old num_workers=" + str(self.num_parallel_workers) + " new num_workers=" + str(
+                self.num_parallel_workers -
+                num_removed_workers) + ".")
+        self.terminate()
+        self.num_parallel_workers -= num_removed_workers
+        self.launch(self.op_id)
+
+    def is_mp_enabled(self):
+        return self.workers is not None
+
+    def check_shared_memory(self):
+        """
+        Check if there is enough shared memory in the system.
+        """
+        _check_shm_usage(self.num_parallel_workers, 1, self.max_row_size, 2)
+
+    def execute(self, idx, *args):
+        """
+        Execute
+        """
+        t_id = threading.get_ident()
+        worker_id = self.threads_to_workers.setdefault(t_id, len(self.threads_to_workers))
+
+        # todo check_iterator_cleanup
+        if self.is_running() and check_iterator_cleanup() is False:
+            return self.workers[worker_id].execute(idx, *args)
+
+        return None
 
     def _launch_watch_dog(self):
         """
@@ -3178,16 +3277,15 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         """
         if platform.system().lower() != 'windows':
             self.cleaning_process = multiprocessing.Process(target=self._clean_process,
-                                                            args=(self.ppid, self.workers, self.process_pool))
-            self.cleaning_process.daemon = True
+                                                            args=(self.ppid, self.workers),
+                                                            daemon=True)
             self.cleaning_process.start()
 
             if get_enable_watchdog():
                 self.eot = threading.Event()
                 self.watch_dog = threading.Thread(target=self._watch_dog,
-                                                  args=(self.eot, self.workers + [self.cleaning_process],
-                                                        self.process_pool))
-                self.watch_dog.daemon = True
+                                                  args=(self.eot, self.workers + [self.cleaning_process]),
+                                                  daemon=True)
                 self.watch_dog.start()
 
     def _abort_watchdog(self):
@@ -3198,25 +3296,19 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         if hasattr(self, 'watch_dog') and self.watch_dog is not None and hasattr(self, 'eot') and self.eot is not None:
             self._abort_watchdog()
         if hasattr(self, 'cleaning_process') and self.cleaning_process is not None:
-            _PythonMultiprocessing._terminate_process([self.cleaning_process])
+            _PythonMultiprocessing._terminate_processes([self.cleaning_process])
 
     def is_running(self):
-        # note here: the RUN state of python3.7 and python3.8 is different:
-        # python3.7: RUN = 0
-        # python3.8: RUN = "RUN"
-        # so we use self.pool._state == RUN instead and we can't use _state == 0 any more.
-        if self.process_pool is not None and self.process_pool._state == RUN:  # pylint: disable=W0212
-            return True
+        if hasattr(self, 'workers') and self.workers is not None:
+            return all([w.is_alive() for w in self.workers])
         return False
 
-    def close_pool(self):
-        if hasattr(self, 'process_pool') and self.process_pool is not None:
-            self.process_pool.close()
-            self.process_pool.join()
-
-    def __del__(self):
-        # Cleanup when the iter had been deleted from ITERATORS_LIST
-        self.terminate()
+    def close_all_workers(self):
+        if hasattr(self, 'workers') and self.workers is not None:
+            for w in self.workers:
+                w.close()
+            self.workers = None
+            self.pids = None
 
 
 class MapDataset(UnionBaseDataset):
@@ -3319,6 +3411,11 @@ class MapDataset(UnionBaseDataset):
 
     def __deepcopy__(self, memodict):
         return self.__safe_deepcopy__(memodict, exclude=("operations", "callbacks", "__transfer_dataset__"))
+
+    def __del__(self):
+        if hasattr(self, "process_pool") and self.process_pool is not None:
+            self.process_pool.terminate()
+            del self.process_pool
 
     @staticmethod
     def __count_pyfuncs(operations):

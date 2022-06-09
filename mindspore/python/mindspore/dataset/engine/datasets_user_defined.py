@@ -330,7 +330,7 @@ class SamplerFn:
         if hasattr(self, 'eot') and self.eot is not None and not self.eot.is_set():
             self.eot.set()
         if hasattr(self, 'cleaning_process') and self.cleaning_process is not None:
-            _PythonMultiprocessing._terminate_process([self.cleaning_process])  # pylint: disable=W0212
+            _PythonMultiprocessing._terminate_processes([self.cleaning_process])  # pylint: disable=W0212
 
     @classmethod
     def _finalize_join(cls, twr, eot):
@@ -361,7 +361,7 @@ def _main_process_already_exit(eof, is_multiprocessing, idx_queue, result_queue,
     Judge whether main process already exit.
     """
     if eof.is_set() or (is_multiprocessing and platform.system().lower() != 'windows' and
-                        not _PythonMultiprocessing.process_still_alive(ppid)):
+                        not _PythonMultiprocessing.is_process_alive(ppid)):
         if is_multiprocessing:
             idx_queue.cancel_join_thread()
             result_queue.cancel_join_thread()

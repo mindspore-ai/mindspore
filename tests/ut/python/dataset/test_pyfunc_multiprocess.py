@@ -29,7 +29,7 @@ PYFUNCMAP_DATA_DIR = ["../data/dataset/testPyfuncMap/data.data"]
 PYFUNCMAP_SCHEMA_DIR = "../data/dataset/testPyfuncMap/schema.json"
 
 
-def skip_test_pyfunc_multiproc_shrmem():
+def test_pyfunc_multiproc_shrmem():
     """
     Feature: PyFunc in Map op
     Description: Test python_multiprocessing=True with shared memory enabled
@@ -52,7 +52,7 @@ def skip_test_pyfunc_multiproc_shrmem():
 
     data1 = ds.NumpySlicesDataset(np_data, shuffle=False)
 
-    data1 = data1.map(pyfunc, num_parallel_workers=8, python_multiprocessing=True, max_rowsize=1)
+    data1 = data1.map(pyfunc, num_parallel_workers=2, python_multiprocessing=True, max_rowsize=1)
 
     for i, data in enumerate(data1):
         np.testing.assert_equal(data[0].asnumpy(), np_data[i])
@@ -262,7 +262,7 @@ def test_pyfunc_multiproc_mainproc_exception():
 
 
 if __name__ == '__main__':
-    skip_test_pyfunc_multiproc_shrmem()
+    test_pyfunc_multiproc_shrmem()
     test_pyfunc_multiproc_noshrmem()
     test_pyfunc_multiproc_max_rowsize_small()
     test_pyfunc_multiproc_max_rowsize_large()
