@@ -49,6 +49,69 @@ int64_t Split::get_output_num() const {
   return GetValue<int64_t>(value_ptr);
 }
 
+namespace {
+abstract::TupleShapePtr SplitInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  (void)CheckAndConvertUtils::CheckInteger("input num", SizeToLong(input_args.size()), kEqual, 1L, prim_name);
+  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  auto input_shape = shape_ptr->shape();
+  auto input_min_shape = shape_ptr->min_shape();
+  auto input_max_shape = shape_ptr->max_shape();
+
+  auto input_rank = SizeToLong(input_shape.size());
+  auto output_num = GetValue<int64_t>(primitive->GetAttr(kOutputNum));
+  auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+  (void)CheckAndConvertUtils::CheckInteger("input_rank", input_rank, kGreaterEqual, 1, prim_name);
+
+  ShapeVector out_shape = input_shape;
+  ShapeVector out_min_shape = input_min_shape;
+  ShapeVector out_max_shape = input_max_shape;
+  if (!shape_ptr->IsDimUnknown()) {
+    (void)CheckAndConvertUtils::CheckInteger(kAxis, axis, kLessThan, input_rank, prim_name);
+    axis = axis < 0 ? axis + input_rank : axis;
+    int64_t split_axis_length = -1;
+    if (input_shape[axis] != -1) {
+      (void)CheckAndConvertUtils::CheckInteger("input x", input_shape[axis] % output_num, kEqual, 0L, prim_name);
+      split_axis_length = input_shape[axis] / output_num;
+    }
+    out_shape[axis] = split_axis_length;
+  }
+  std::vector<abstract::BaseShapePtr> shape_tuple;
+  for (int64_t i = 0; i < output_num; i++) {
+    abstract::ShapePtr output_shape = std::make_shared<abstract::Shape>(out_shape, out_min_shape, out_max_shape);
+    shape_tuple.push_back(output_shape);
+  }
+  return std::make_shared<abstract::TupleShape>(shape_tuple);
+}
+
+TuplePtr SplitInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto output_num = GetValue<int64_t>(prim->GetAttr(kOutputNum));
+  auto infer_type = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(infer_type);
+  const std::set<TypePtr> valid_types = {kInt8,   kInt16,  kInt32,  kInt64,   kUInt8,
+                                         kUInt16, kUInt32, kUInt64, kFloat16, kFloat32};
+  auto type = CheckAndConvertUtils::CheckTensorTypeValid("input_x", infer_type, valid_types, prim->name());
+  std::vector<TypePtr> type_tuple;
+  for (int64_t i = 0; i < output_num; i++) {
+    type_tuple.push_back(type);
+  }
+  return std::make_shared<Tuple>(type_tuple);
+}
+}  // namespace
+
+AbstractBasePtr SplitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                           const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto infertype = SplitInferType(primitive, input_args);
+  auto infershape = SplitInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infershape, infertype);
+}
+
 REGISTER_PRIMITIVE_C(kNameSplit, Split);
 }  // namespace ops
 }  // namespace mindspore

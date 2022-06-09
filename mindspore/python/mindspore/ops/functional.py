@@ -979,6 +979,7 @@ tensor_operator_registry.register('inplace_sub', P.InplaceSub)
 tensor_operator_registry.register('adaptive_avgpool2d', adaptive_avgpool2d)
 tensor_operator_registry.register('col2im', col2im)
 tensor_operator_registry.register('standard_laplace', P.StandardLaplace)
+tensor_operator_registry.register('split', P.Split)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)

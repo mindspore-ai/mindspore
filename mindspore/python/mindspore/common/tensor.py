@@ -4253,6 +4253,44 @@ class Tensor(Tensor_):
             validator.check_int(len(output_size), 2, Rel.EQ, "length of output_size", Tensor)
         return tensor_operator_registry.get("adaptive_avgpool2d")(self, output_size)
 
+    def split(self, axis=0, output_num=1):
+        """
+        Splits the input tensor into output_num of tensors along the given axis and output numbers.
+
+        The `input_x` tensor will be split into equally sized sub-tensors.
+        This requires that `input_x.shape(axis)` is divisible by `output_num`.
+
+        Args:
+            axis (int): Index of the split position. Default: 0.
+            output_num (int): The number of output tensors. Must be positive int. Default: 1.
+
+        Returns:
+            tuple[Tensor], the shape of each output tensor is the same, which is
+            :math:`(y_1, y_2, ..., y_S)`. And the data type is the same with `input_x`.
+
+        Raises:
+            TypeError: If `axis` or `output_num` is not an int.
+            ValueError: If `axis` is out of the range [-len(`input_x.shape`), len(`input_x.shape`)),
+                or if the `output_num` is less than or equal to 0.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]), mindspore.int32)
+            >>> print(x)
+            [[1 1 1 1]
+             [2 2 2 2]]
+            >>> output = x.split(1, 2)
+            >>> print(output)
+            (Tensor(shape=[2, 2], dtype=Int32, value=
+            [[1, 1],
+             [2, 2]]), Tensor(shape=[2, 2], dtype=Int32, value=
+            [[1, 1],
+             [2, 2]]))
+        """
+        return tensor_operator_registry.get('split')(axis, output_num)(self)
+
 
 class RowTensor(RowTensor_):
     """
