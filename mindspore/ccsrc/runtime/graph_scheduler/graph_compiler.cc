@@ -363,12 +363,20 @@ GraphCompilerInfo::~GraphCompilerInfo() {
 }
 
 namespace {
+bool IsNopNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  static mindspore::HashSet<std::string> nop_node_primitives = {
+    prim::kPrimReshape->name(), kExpandDimsOpName,  prim::kPrimSqueeze->name(),
+    prim::kPrimFlatten->name(), kFlattenGradOpName, prim::kPrimReformat->name()};
+  return nop_node_primitives.find(common::AnfAlgo::GetCNodeName(node)) != nop_node_primitives.end();
+}
 // Fetch the real input of the nop node recursively.
 AnfNodePtr FetchRealNodeByNopNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if (!common::AnfAlgo::IsNopNode(node)) {
+  if ((!node->isa<CNode>()) || (!IsNopNode(node))) {
     return node;
   }
+
   const auto &cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
@@ -437,7 +445,39 @@ bool HasMonadInput(const CNodePtr &cnode) {
   }
   return false;
 }
-}  // namespace
+
+// Collect all nopnodes which are input of kernel that not support multi-thread execute.
+std::set<CNodePtr> FetchNopNodeNotSupportEliminate(const KernelGraph *const graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  std::set<CNodePtr> invalid_nopnodes;
+
+  for (const auto &cnode : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    // If target is not cpu, the total cnode in graph can skip.
+    auto target = GetCNodeTarget(cnode);
+    if (target != kCPUDevice) {
+      break;
+    }
+
+    // kernel not support multi-thread execute will be inited in launch kernel, so its input cannot be eliminated.
+    if (kOpNotSupportMultiThreadExecList.find(common::AnfAlgo::GetCNodeName(cnode)) !=
+        kOpNotSupportMultiThreadExecList.end()) {
+      const auto &inputs = cnode->inputs();
+      for (const auto &input : inputs) {
+        MS_EXCEPTION_IF_NULL(input);
+        const auto &input_with_index = common::AnfAlgo::VisitKernelWithReturnType(input, 0);
+        if ((input_with_index.first != nullptr) && (input_with_index.first->isa<CNode>()) &&
+            IsNopNode(input_with_index.first)) {
+          // Collect all of the nopnode inputs.
+          invalid_nopnodes.emplace(input->cast<CNodePtr>());
+          MS_LOG(INFO) << "Add invalid nopnode:" << input->DebugString()
+                       << " for node not support mulit-thread execute list.";
+        }
+      }
+    }
+  }
+  return invalid_nopnodes;
+}
 
 void EliminateNopNode(KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -449,13 +489,15 @@ void EliminateNopNode(KernelGraph *graph) {
     return;
   }
 
+  // Invalid nopnode is those cannot be eliminated in some scene.
+  const auto &invalid_nopnodes = FetchNopNodeNotSupportEliminate(graph);
   const auto &graph_outputs = graph->graph_output_map();
   // Collect all the nopnodes that can be eliminated.
   for (const auto &cnode : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
     // Nopnode as graph output or has side effect cannot be eliminated.
-    if ((!common::AnfAlgo::IsNopNode(cnode)) || (graph_outputs.find({cnode, 0}) != graph_outputs.end()) ||
-        HasMonadInput(cnode)) {
+    if (!IsNopNode(cnode) || (graph_outputs.find({cnode, 0}) != graph_outputs.end()) || HasMonadInput(cnode) ||
+        (invalid_nopnodes.find(cnode) != invalid_nopnodes.end())) {
       new_execution_order.emplace_back(cnode);
       continue;
     }
@@ -469,6 +511,7 @@ void EliminateNopNode(KernelGraph *graph) {
   EliminateNodesFromGraph(graph->return_node().get(), nop_nodes, &checked_nodes);
   graph->set_execution_order(new_execution_order);
 }
+}  // namespace
 
 GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs,
                                     const DeviceContext *device_context, device::RunMode run_mode,
