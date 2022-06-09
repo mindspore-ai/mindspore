@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from io import BytesIO
 import numpy as np
 import pytest
 
@@ -98,11 +99,29 @@ class TrainOneStepCell(nn.Cell):
         return self.optimizer(grads)
 
 
+def encrypt_func(model_stream, key):
+    plain_data = BytesIO()
+    plain_data.write(model_stream)
+    return plain_data.getvalue()
+
+
+def decrypt_func(cipher_file, key):
+    with open(cipher_file, 'rb') as f:
+        plain_data = f.read()
+    f.close()
+    return plain_data
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_export_lenet_grad_mindir():
+    """
+    Feature: export LeNet to MindIR file
+    Description: Test export API to export network into MindIR
+    Expectation: export successfully
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     network = LeNet5()
     network.set_train()
@@ -119,6 +138,11 @@ def test_export_lenet_grad_mindir():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_load_mindir_and_run():
+    """
+    Feature: Load LeNet to MindIR
+    Description: Test load API to load network into MindIR
+    Expectation: load successfully
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     network = LeNet5()
     network.set_train()
@@ -132,6 +156,35 @@ def test_load_mindir_and_run():
     assert os.path.exists(mindir_name)
 
     graph = load(mindir_name)
+    loaded_net = nn.GraphCell(graph)
+    outputs_after_load = loaded_net(inputs0)
+    assert np.allclose(outputs0.asnumpy(), outputs_after_load.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_load_mindir_and_run_with_encryption():
+    """
+    Feature: Load encrypted LeNet to MindIR with decryption
+    Description: Test load API to load network with encryption into MindIR
+    Expectation: load successfully
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    network = LeNet5()
+    network.set_train()
+
+    inputs0 = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    outputs0 = network(inputs0)
+
+    inputs = Tensor(np.zeros([32, 1, 32, 32]).astype(np.float32))
+    export(network, inputs, file_name="test_lenet_load_enc", file_format='MINDIR',
+           enc_key=b'123456789', enc_mode=encrypt_func)
+    mindir_name = "test_lenet_load_enc.mindir"
+    assert os.path.exists(mindir_name)
+
+    graph = load(mindir_name, dec_key=b'123456789', dec_mode=decrypt_func)
     loaded_net = nn.GraphCell(graph)
     outputs_after_load = loaded_net(inputs0)
     assert np.allclose(outputs0.asnumpy(), outputs_after_load.asnumpy())

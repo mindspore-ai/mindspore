@@ -388,8 +388,8 @@ def load(file_name, **kwargs):
         kwargs (dict): Configuration options dictionary.
 
             - dec_key (bytes): Byte type key used for decryption. The valid length is 16, 24, or 32.
-            - dec_mode (str): Specifies the decryption mode, to take effect when dec_key is set.
-              Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
+            - dec_mode (Union[str, function]): Specifies the decryption mode, to take effect when dec_key is set.
+              Option: 'AES-GCM', 'AES-CBC' or customized decryption. Default: 'AES-GCM'.
     Returns:
         GraphCell, a compiled graph that can executed by `GraphCell`.
 
@@ -429,9 +429,15 @@ def load(file_name, **kwargs):
     if 'dec_key' in kwargs.keys():
         dec_key = Validator.check_isinstance('dec_key', kwargs.get('dec_key'), bytes)
         dec_mode = "AES-GCM"
+        dec_func = None
         if 'dec_mode' in kwargs.keys():
-            dec_mode = Validator.check_isinstance('dec_mode', kwargs.get('dec_mode'), str)
-        graph = load_mindir(file_name, dec_key=dec_key, key_len=len(dec_key), dec_mode=dec_mode)
+            if callable(kwargs.get('dec_mode')):
+                dec_mode = "Customized"
+                dec_func = kwargs.get('dec_mode')
+            else:
+                dec_mode = Validator.check_isinstance('dec_mode', kwargs.get('dec_mode'), str)
+        graph = load_mindir(file_name, dec_key=dec_key, key_len=len(dec_key), dec_mode=dec_mode,
+                            decrypt=dec_func)
     else:
         graph = load_mindir(file_name)
 
@@ -859,8 +865,9 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
             - std_dev (float): The variance of input data after preprocessing,
               used for quantizing the first layer of the network. Default: 127.5.
             - enc_key (byte): Byte type key used for encryption. The valid length is 16, 24, or 32.
-            - enc_mode (str): Specifies the encryption mode, to take effect when enc_key is set.
-              Option: 'AES-GCM' | 'AES-CBC'. Default: 'AES-GCM'.
+            - enc_mode (Union[str, function]): Specifies the encryption mode, to take effect when enc_key is set.
+              For 'AIR' and 'ONNX' models, only Customized encryption is supported. For 'MINDIR', all options are
+              supported. Option: 'AES-GCM', 'AES-CBC' or Customized encryption by user. Default: 'AES-GCM'.
 
     Examples:
         >>> import mindspore as ms
@@ -935,15 +942,16 @@ def _check_key_mode_type(file_format, **kwargs):
     enc_key = Validator.check_isinstance('enc_key', kwargs.get('enc_key'), bytes)
     enc_mode = kwargs.get('enc_mode')
 
-    if file_format in ('AIR', 'ONNX'):
-        if callable(enc_mode):
-            return enc_key, enc_mode
-        enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
-        raise RuntimeError(f"AIR/ONNX only support customized encryption, but got {enc_mode}.")
+    if callable(enc_mode):
+        return enc_key, enc_mode
 
     enc_mode = 'AES-GCM'
     if 'enc_mode' in kwargs.keys():
         enc_mode = Validator.check_isinstance('enc_mode', kwargs.get('enc_mode'), str)
+
+    if file_format in ('AIR', 'ONNX'):
+        raise RuntimeError(f"AIR/ONNX only support customized encryption, but got {enc_mode}.")
+
     if enc_mode in ('AES-CBC', 'AES-GCM'):
         return enc_key, enc_mode
     raise RuntimeError(f"MindIR only support AES-GCM/AES-CBC encryption, but got {enc_mode}")
@@ -1074,8 +1082,12 @@ def _spilt_save(net_dict, model, file_name, is_encrypt, **kwargs):
             write_data = raw_data + bytes(append_size)
             offset += (data_length + append_size)
             if is_encrypt():
-                write_data = _encrypt(write_data, len(write_data), kwargs.get('enc_key'),
-                                      len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
+                if callable(kwargs.get('enc_mode')):
+                    enc_func = kwargs.get('enc_mode')
+                    write_data = enc_func(write_data, kwargs.get('enc_key'))
+                else:
+                    write_data = _encrypt(write_data, len(write_data), kwargs.get('enc_key'),
+                                          len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
             f.write(write_data)
 
         graph_file_name = os.path.join(dirname, file_prefix + "_graph.mindir")
@@ -1147,8 +1159,12 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
         os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR)
         model_string = model.SerializeToString()
         if is_encrypt():
-            model_string = _encrypt(model_string, len(model_string), kwargs.get('enc_key'),
-                                    len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
+            if callable(kwargs.get('enc_mode')):
+                enc_func = kwargs.get('enc_mode')
+                model_string = enc_func(model_string, kwargs.get('enc_key'))
+            else:
+                model_string = _encrypt(model_string, len(model_string), kwargs.get('enc_key'),
+                                        len(kwargs.get('enc_key')), kwargs.get('enc_mode'))
         f.write(model_string)
         os.chmod(file_name, stat.S_IRUSR)
 

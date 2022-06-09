@@ -180,8 +180,8 @@ def test_export_lenet_with_dataset():
 
 def test_export_lenet_onnx_with_encryption():
     """
-    Feature: Export encrypted LeNet to MindIR
-    Description: Test export API to save network with encryption into MindIR
+    Feature: Export encrypted LeNet to ONNX
+    Description: Test export API to save network with encryption into ONNX
     Expectation: save successfully
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -193,5 +193,24 @@ def test_export_lenet_onnx_with_encryption():
     export(network, input_tensor, file_name=file_name, file_format='ONNX',
            enc_key=b'123456789', enc_mode=encrypt_func)
     verify_name = file_name + ".onnx"
+    assert os.path.exists(verify_name)
+    os.remove(verify_name)
+
+
+def test_export_lenet_mindir_with_encryption():
+    """
+    Feature: Export encrypted LeNet to MindIR
+    Description: Test export API to save network with encryption into MindIR
+    Expectation: save successfully
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    network = LeNet5()
+    network.set_train()
+    file_name = "lenet_preprocess"
+
+    input_tensor = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    export(network, input_tensor, file_name=file_name, file_format='MINDIR',
+           enc_key=b'123456789', enc_mode=encrypt_func)
+    verify_name = file_name + ".mindir"
     assert os.path.exists(verify_name)
     os.remove(verify_name)

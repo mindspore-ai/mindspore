@@ -183,7 +183,8 @@ void MemoryRecycle();
 void ExportGraph(const std::string &file_name, const std::string &model_type, const std::string &phase,
                  const py::object encrypt = py::none(), char *key = nullptr);
 
-FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode);
+FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode,
+                        const py::object decrypt = py::none());
 
 // init and exec dataset sub graph
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
