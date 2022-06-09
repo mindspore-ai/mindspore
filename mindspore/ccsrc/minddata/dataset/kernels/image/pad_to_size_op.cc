@@ -47,8 +47,8 @@ Status PadToSizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
       SizeToString(size_) + " and original size " + SizeToString(image_size) + ".");
   int32_t pad_top, pad_bottom, pad_left, pad_right;
   if (offset_.empty()) {
-    pad_top = static_cast<double>((size_[0] - image_size[0])) * HALF;
-    pad_left = static_cast<double>((size_[1] - image_size[1])) * HALF;
+    pad_top = static_cast<double>((size_[0] - image_size[0])) * kHalf;
+    pad_left = static_cast<double>((size_[1] - image_size[1])) * kHalf;
   } else if (offset_.size() == 1) {
     pad_top = offset_[0];
     pad_left = offset_[0];
@@ -63,18 +63,18 @@ Status PadToSizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
                                  "target size to pad, but got offset " +
                                    SizeToString(std::vector<int32_t>{pad_top, pad_left}) + " plus original size " +
                                    SizeToString(image_size) + " bigger than " + SizeToString(size_));
-  return Pad(input, output, pad_top, pad_bottom, pad_left, pad_right, boarder_type_, fill_value_[R_INDEX],
-             fill_value_[G_INDEX], fill_value_[B_INDEX]);
+  return Pad(input, output, pad_top, pad_bottom, pad_left, pad_right, boarder_type_, fill_value_[kRIndex],
+             fill_value_[kGIndex], fill_value_[kBIndex]);
 }
 
 Status PadToSizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
   TensorShape out({size_[0], size_[1]});
-  if (inputs[0].Rank() == MIN_IMAGE_RANK) {
+  if (inputs[0].Rank() == kMinImageRank) {
     outputs = {out};
-  } else if (inputs[0].Rank() == DEFAULT_IMAGE_RANK) {
-    outputs = {out.AppendDim(DEFAULT_IMAGE_CHANNELS)};
+  } else if (inputs[0].Rank() == kDefaultImageRank) {
+    outputs = {out.AppendDim(kDefaultImageChannel)};
   } else {
     RETURN_STATUS_UNEXPECTED("PadToSize: input tensor should be in shape of <H,W,C> or <H, W>, but got dimension: " +
                              std::to_string(inputs[0].Rank()));

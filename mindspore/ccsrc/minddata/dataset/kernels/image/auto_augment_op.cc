@@ -81,12 +81,12 @@ Transforms AutoAugmentOp::GetTransforms(AutoAugmentPolicy policy) {
 
 Status AutoAugmentOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  if (input->Rank() != DEFAULT_IMAGE_RANK) {
+  if (input->Rank() != kDefaultImageRank) {
     RETURN_STATUS_UNEXPECTED("AutoAugment: input tensor is not in shape of <H,W,C>, but got rank: " +
                              std::to_string(input->Rank()));
   }
   int num_channels = input->shape()[2];
-  if (num_channels != DEFAULT_IMAGE_CHANNELS) {
+  if (num_channels != kDefaultImageChannel) {
     RETURN_STATUS_UNEXPECTED("AutoAugment: channel of input image should be 3, but got: " +
                              std::to_string(num_channels));
   }

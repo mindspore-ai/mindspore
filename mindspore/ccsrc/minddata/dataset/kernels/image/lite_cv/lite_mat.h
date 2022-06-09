@@ -22,9 +22,8 @@
 
 namespace mindspore {
 namespace dataset {
-
-#define ALIGN 16
-#define MAX_DIMS 3
+constexpr int kAlign = 16;
+constexpr size_t kMaxDims = 3;
 
 template <typename T>
 struct Chn1 {
@@ -372,7 +371,7 @@ class LiteMat {
   size_t size_;
   LDataType data_type_;
   int *ref_count_;
-  size_t steps_[MAX_DIMS];
+  size_t steps_[kMaxDims];
   bool release_flag_;
 };
 

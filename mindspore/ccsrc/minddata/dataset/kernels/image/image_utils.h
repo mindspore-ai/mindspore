@@ -37,21 +37,21 @@
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
-#define CHANNEL_INDEX_HWC 2       // images are hwc, so index 2 represents number of channels
-#define CHANNEL_INDEX_CHW 0       // images are chw, so index 0 represents number of channels
-#define DEFAULT_IMAGE_CHANNELS 3  // images are 3 channels in general
-#define MIN_IMAGE_RANK 2          // images have at least 2 dimensions
-#define DEFAULT_IMAGE_RANK 3      // images are hwc channels in general
-#define MAX_BIT_VALUE 255         // max bit value after decode is 256
-#define MIN_IMAGE_CHANNELS 1      // image ops support minimum of 1 channel
-#define MAX_IMAGE_CHANNELS 4      // image ops support maximum of 4 channel
-#define HALF 0.5                  // to get the half of a value
-#define R_INDEX 0                 // index of red channel in RGB format
-#define G_INDEX 1                 // index of green channel in RGB format
-#define B_INDEX 2                 // index of blue channel in RGB format
-
 namespace mindspore {
 namespace dataset {
+constexpr dsize_t kChannelIndexHWC = 2;      // images are hwc, so index 2 represents number of channels
+constexpr dsize_t kChannelIndexCHW = 0;      // images are chw, so index 0 represents number of channels
+constexpr dsize_t kMinImageRank = 2;         // images have at least 2 dimensions
+constexpr dsize_t kDefaultImageRank = 3;     // images are hwc channels in general
+constexpr int32_t kMaxBitValue = 255;        // max bit value after decode is 256
+constexpr dsize_t kMinImageChannel = 1;      // image ops support minimum of 1 channel
+constexpr dsize_t kDefaultImageChannel = 3;  // images are 3 channels in general
+constexpr dsize_t kMaxImageChannel = 4;      // image ops support maximum of 4 channel
+constexpr float kHalf = 0.5;                 // to get the half of a value
+constexpr dsize_t kRIndex = 0;               // index of red channel in RGB format
+constexpr dsize_t kGIndex = 1;               // index of green channel in RGB format
+constexpr dsize_t kBIndex = 2;               // index of blue channel in RGB format
+
 void JpegErrorExitCustom(j_common_ptr cinfo);
 
 struct JpegErrorManagerCustom {
