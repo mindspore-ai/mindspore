@@ -509,7 +509,10 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
   for (auto actor : actors) {
-    (void)actor_manager->Spawn(actor);
+    // The sub actors in the fusion actor do not participate in message interaction.
+    if (actor->parent_fusion_actor_ == nullptr) {
+      (void)actor_manager->Spawn(actor);
+    }
   }
 
 #ifdef ENABLE_RPC_ACTOR

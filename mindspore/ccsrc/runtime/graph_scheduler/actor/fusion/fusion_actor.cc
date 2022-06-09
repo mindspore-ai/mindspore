@@ -18,33 +18,41 @@
 
 namespace mindspore {
 namespace runtime {
-void FusionActor::Run(OpContext<DeviceTensor> *const context) {
+void FusionActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(context);
-  // The real actor run op data.
-  const auto &data_iter = input_op_datas_.find(context->sequential_num_);
-  if (data_iter != input_op_datas_.end()) {
-    for (auto &input_data : data_iter->second) {
-      MS_EXCEPTION_IF_NULL(input_data);
-      if (IntToSize(input_data->index_) >= real_input_data_.size()) {
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is out of range.");
-      }
-      // Update the input data using the real input info.
-      auto &real_input_data = real_input_data_[input_data->index_];
-      MS_EXCEPTION_IF_NULL(real_input_data.first);
-      input_data->index_ = real_input_data.second;
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op data.";
 
-      real_input_data.first->RunOpData(input_data, context);
+  if (IntToSize(input_data->index_) >= real_input_data_.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The input index is out of range.");
+  }
+  // Update the input data using the real input info.
+  auto &real_input_data = real_input_data_[input_data->index_];
+  MS_EXCEPTION_IF_NULL(real_input_data.first);
+  input_data->index_ = real_input_data.second;
+
+  real_input_data.first->RunOpData(input_data, context);
+}
+
+void FusionActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(input_control);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op control.";
+
+  // Because the input controls of fusion actor are difficult to eliminate duplication, so only process the first input
+  // control when receive the same input controls.
+  if (recv_input_control_actors_.count(input_control->Name()) == 0) {
+    (void)recv_input_control_actors_.insert(input_control->Name());
+    for (auto &real_input_control_actor : real_input_controls_[input_control->Name()]) {
+      MS_EXCEPTION_IF_NULL(real_input_control_actor);
+      real_input_control_actor->RunOpControl(input_control, context);
     }
   }
 
-  // The real actor run op control.
-  auto from_aid = const_cast<AID *>(&GetAID());
-  for (auto &real_input_control : real_input_controls_) {
-    MS_EXCEPTION_IF_NULL(real_input_control);
-    real_input_control->RunOpControl(from_aid, context);
+  ++recv_input_controls_num_;
+  if (recv_input_controls_num_ == input_controls_num_) {
+    recv_input_controls_num_ = 0;
+    recv_input_control_actors_.clear();
   }
-
-  EraseInput(context);
 }
 }  // namespace runtime
 }  // namespace mindspore

@@ -110,7 +110,9 @@ void DumpBaseOutputInfo(const AbstractActor *actor, std::ofstream &ofs) {
 
 void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\t\tis_in_fusion_actor:" << actor->in_fusion_actor() << "\n ";
+  if (actor->parent_fusion_actor() != nullptr) {
+    ofs << "\t\tparent_fusion_actor:" << actor->parent_fusion_actor()->GetAID().Name() << "\n ";
+  }
   // Dump device context.
   if (actor->device_contexts().size() > 0) {
     ofs << "\t\tdevice_contexts:" << actor->device_contexts().size() << "\n ";
@@ -143,7 +145,7 @@ void DumpAbstractActor(const AbstractActor *actor, std::ofstream &ofs) {
   if (actor->dependent_actors().size() > 0) {
     ofs << "\t\tdependent_actors:" << actor->dependent_actors().size() << "\n ";
     for (auto &dependent_actor : actor->dependent_actors()) {
-      ofs << "\t\t\tdependent_actor_name:" << dependent_actor;
+      ofs << "\t\t\tdependent_actor_name:" << dependent_actor << "\n ";
     }
   }
 }
@@ -267,9 +269,10 @@ void DumpCopyActor(const CopyActor *actor, std::ofstream &ofs) {
 
 void DumpFusionActor(const FusionActor *actor, std::ofstream &ofs) {
   MS_EXCEPTION_IF_NULL(actor);
-  ofs << "\tactor_name:" << actor->GetAID().Name() << "\tsub actors num:" << actor->actors().size() << "\n";
-  for (auto &sub_actor : actor->actors()) {
-    ofs << "\t\tsub_actor_name:" << sub_actor.first << "\n";
+  ofs << "\tactor_name:" << actor->GetAID().Name() << "\n";
+  ofs << "\t\tsub actors:" << actor->sub_actors().size() << "\n";
+  for (auto &sub_actor : actor->sub_actors()) {
+    ofs << "\t\t\tsub_actor_name:" << sub_actor.first << "\n";
   }
 
   DumpAbstractActor(actor, ofs);
@@ -284,12 +287,17 @@ void DumpFusionActor(const FusionActor *actor, std::ofstream &ofs) {
   }
 
   if (actor->real_input_controls().size() > 0) {
-    ofs << "\t\treal_input_cpntrols:" << actor->real_input_controls().size() << "\n";
-    for (auto &real_input_control : actor->real_input_controls()) {
-      MS_EXCEPTION_IF_NULL(real_input_control);
-      ofs << "\t\t\treal_input_control_actor:" << real_input_control->GetAID().Name() << "\n";
+    ofs << "\t\treal_input_controls:" << actor->real_input_controls().size() << "\n";
+    for (auto &batch_real_input_control : actor->real_input_controls()) {
+      ofs << "\t\t\torigin_input_control_actor:" << batch_real_input_control.first << "\n";
+      for (auto &real_input_control : batch_real_input_control.second) {
+        MS_EXCEPTION_IF_NULL(real_input_control);
+        ofs << "\t\t\t\tto_real_control_actor:" << real_input_control->GetAID().Name() << "\n";
+      }
     }
   }
+
+  ofs << "\n";
 }
 
 void DumpFormalParameterDeviceTensor(const ControlActor *actor, std::ofstream &ofs) {
