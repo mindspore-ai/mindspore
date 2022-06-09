@@ -130,10 +130,10 @@ def check_normalize_py_param(mean, std):
 
 def check_fill_value(fill_value):
     if isinstance(fill_value, int):
-        check_uint8(fill_value)
+        check_uint8(fill_value, "fill_value")
     elif isinstance(fill_value, tuple) and len(fill_value) == 3:
-        for value in fill_value:
-            check_uint8(value)
+        for i, value in enumerate(fill_value):
+            check_uint8(value, "fill_value[{0}]".format(i))
     else:
         raise TypeError("fill_value should be a single integer or a 3-tuple.")
 

@@ -17,6 +17,7 @@ Testing PadToSize.
 """
 import cv2
 import numpy as np
+from PIL import Image
 import pytest
 
 import mindspore.dataset as ds
@@ -76,7 +77,7 @@ def test_pad_to_size_offset():
         assert data["image"].shape == (61, 57, 3)
 
 
-def test_pad_to_size_eager():
+def test_pad_to_size_eager(show=False):
     """
     Feature: PadToSize
     Description: Test eager mode
@@ -85,6 +86,12 @@ def test_pad_to_size_eager():
     img = cv2.imread("../data/dataset/apple.jpg")
     img = vision.PadToSize(size=(3500, 7000), offset=None, fill_value=255, padding_mode=Border.EDGE)(img)
     assert img.shape == (3500, 7000, 3)
+
+    img = Image.open("../data/dataset/apple.jpg").convert("RGB")
+    img = vision.PadToSize(size=(3500, 7000), fill_value=(0, 0, 255), padding_mode=Border.CONSTANT)(img)
+    assert img.shape == (3500, 7000, 3)
+    if show:
+        Image.fromarray(img).show()
 
 
 def test_pad_to_size_grayscale():
@@ -135,29 +142,40 @@ def test_pad_to_size_check():
     Expectation: Errors and logs are as expected
     """
 
-    def test_invalid_input(error, error_msg, size, offset=None, fill_value=0, padding_mode=Border.CONSTANT):
+    def test_invalid_input(error, error_msg, size=100, offset=None, fill_value=0, padding_mode=Border.CONSTANT,
+                           data=np.random.random((28, 28, 3))):
         with pytest.raises(error) as error_info:
-            _ = vision.PadToSize(size, offset, fill_value, padding_mode)(np.random.random((28, 28, 3)))
+            _ = vision.PadToSize(size, offset, fill_value, padding_mode)(data)
         assert error_msg in str(error_info.value)
 
-    test_invalid_input(TypeError, "is not of type", 3.5)
-    test_invalid_input(ValueError, "The size must be a sequence of length 2", ())
-    test_invalid_input(ValueError, "is not within the required interval", -100)
-    test_invalid_input(ValueError, "is not within the required interval", (0, 50))
+    # validate size
+    test_invalid_input(TypeError, "is not of type", size=3.5)
+    test_invalid_input(ValueError, "The size must be a sequence of length 2", size=())
+    test_invalid_input(ValueError, "is not within the required interval", size=-100)
+    test_invalid_input(ValueError, "is not within the required interval", size=(0, 50))
 
-    test_invalid_input(TypeError, "is not of type", 100, "5")
-    test_invalid_input(ValueError, "The offset must be empty or a sequence of length 2", 100, (5, 5, 5))
-    test_invalid_input(ValueError, "is not within the required interval", 100, (-1, 10))
+    # validate offset
+    test_invalid_input(TypeError, "is not of type", offset="5")
+    test_invalid_input(ValueError, "The offset must be empty or a sequence of length 2", offset=(5, 5, 5))
+    test_invalid_input(ValueError, "is not within the required interval", offset=(-1, 10))
 
-    test_invalid_input(TypeError, "fill_value should be a single integer or a 3-tuple", 100, 10, (0, 0))
-    test_invalid_input(ValueError, "is not within the required interval", 100, 10, -1)
+    # validate fill_value
+    test_invalid_input(TypeError, "fill_value should be a single integer or a 3-tuple", fill_value=(0, 0))
+    test_invalid_input(ValueError, "Input fill_value is not within the required interval", fill_value=-1)
+    test_invalid_input(TypeError, "Argument fill_value[0] with value 100.0 is not of type", fill_value=(100.0, 10, 1))
 
-    test_invalid_input(TypeError, "is not of type", 100, 10, 0, "CONSTANT")
+    # validate padding_mode
+    test_invalid_input(TypeError, "is not of type", padding_mode="CONSTANT")
 
-    test_invalid_input(RuntimeError, "the target size to pad should be no less than the original image size", (5, 5))
-    test_invalid_input(RuntimeError,
-                       "the sum of offset and original image size should be no more than the target size to pad",
+    # validate data
+    test_invalid_input(RuntimeError, "target size to pad should be no less than the original image size", size=(5, 5))
+    test_invalid_input(RuntimeError, "sum of offset and original image size should be no more than the target size",
                        (30, 30), (5, 5))
+    test_invalid_input(RuntimeError, "number of channels for input tensor can only be 1 or 3",
+                       data=np.random.random((28, 28, 4)))
+    test_invalid_input(RuntimeError, "input tensor is not in shape of <H,W> or <H,W,C>",
+                       data=np.random.random(28))
+    test_invalid_input(RuntimeError, "load image failed", data=np.random.random((28, 28, 3)).astype(np.str))
 
 
 if __name__ == "__main__":

@@ -222,7 +222,7 @@ def check_uint8(value, arg_name=""):
     :return: Exception: when the validation fails, nothing otherwise.
     """
     type_check(value, (int,), arg_name)
-    check_value(value, [UINT8_MIN, UINT8_MAX])
+    check_value(value, [UINT8_MIN, UINT8_MAX], arg_name)
 
 
 def check_uint32(value, arg_name=""):
@@ -234,7 +234,7 @@ def check_uint32(value, arg_name=""):
     :return: Exception: when the validation fails, nothing otherwise.
     """
     type_check(value, (int,), arg_name)
-    check_value(value, [UINT32_MIN, UINT32_MAX])
+    check_value(value, [UINT32_MIN, UINT32_MAX], arg_name)
 
 
 def check_pos_uint32(value, arg_name=""):
@@ -246,7 +246,7 @@ def check_pos_uint32(value, arg_name=""):
     :return: Exception: when the validation fails, nothing otherwise.
     """
     type_check(value, (int,), arg_name)
-    check_value(value, [POS_INT_MIN, UINT32_MAX])
+    check_value(value, [POS_INT_MIN, UINT32_MAX], arg_name)
 
 
 def check_pos_int32(value, arg_name=""):
@@ -270,7 +270,7 @@ def check_uint64(value, arg_name=""):
     :return: Exception: when the validation fails, nothing otherwise.
     """
     type_check(value, (int,), arg_name)
-    check_value(value, [UINT64_MIN, UINT64_MAX])
+    check_value(value, [UINT64_MIN, UINT64_MAX], arg_name)
 
 
 def check_pos_int64(value, arg_name=""):
@@ -282,7 +282,7 @@ def check_pos_int64(value, arg_name=""):
     :return: Exception: when the validation fails, nothing otherwise.
     """
     type_check(value, (int,), arg_name)
-    check_value(value, [POS_INT_MIN, INT64_MAX])
+    check_value(value, [POS_INT_MIN, INT64_MAX], arg_name)
 
 
 def check_non_negative_int32(value, arg_name=""):
