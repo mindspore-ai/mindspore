@@ -25,9 +25,9 @@
 extern "C" {
 #endif
 
-int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, const int *output_shape,
+int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, const int32_t *output_shape,
                     const TransposeParameter *transpose_param);
-void TransposeDimsInt8(const int8_t *in_data, int8_t *out_data, const int *output_shape,
+void TransposeDimsInt8(const int8_t *in_data, int8_t *out_data, const int32_t *output_shape,
                        const TransposeParameter *transpose_param, int task_id, int thread_num);
 #ifdef __cplusplus
 }

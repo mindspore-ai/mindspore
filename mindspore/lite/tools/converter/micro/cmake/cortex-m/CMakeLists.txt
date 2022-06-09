@@ -6,34 +6,7 @@ string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 set(MICRO_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
-
 include_directories(${NNACL_DIR}/..)
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes -fdata-sections -ffunction-sections")
-
-file(GLOB KERNEL_SRC
-        ${NNACL_DIR}/*.c
-        ${NNACL_DIR}/fp32/*.c
-        ${NNACL_DIR}/infer/*.c
-        ${NNACL_DIR}/base/*.c
-        ${NNACL_DIR}/fp32_grad/*.c
-        ${NNACL_DIR}/kernel/*.c
-        ${NNACL_DIR}/experimental/*.c
-        ${NNACL_DIR}/int8/*.c
-        ${NNACL_DIR}/fp32_sparse/*.c
-        ${NNACL_DIR}/infer/string/*.c
-        ${NNACL_DIR}/infer/control/*.c
-        )
-
-list(REMOVE_ITEM KERNEL_SRC ${NNACL_DIR}/infer/shape_fusion_infer.c)
-
-string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-
-add_library(nnacl_static STATIC ${KERNEL_SRC})
-set_target_properties(nnacl_static PROPERITES OUTPUT_NAME "nnacl")
-target_compile_options(nnacl_static PRIVATE -fPIC)
-
-target_link_options(nnacl_static PRIVATE -Wl,-z,relro,-z,now,-z,noexecstack)
 
 include(${TOP_DIR}/cmake/utils.cmake)
 include(${TOP_DIR}/cmake/external_libs/cmsis.cmake)

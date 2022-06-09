@@ -16,8 +16,8 @@
 #include "nnacl/int8/space_to_batch_int8.h"
 #include "nnacl/common_func.h"
 
-void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int *block_sizes, const int *in_shape,
-                            const int *out_shape) {
+void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int32_t *block_sizes, const int32_t *in_shape,
+                            const int32_t *out_shape) {
   int out_dim0 = out_shape[0];
   int out_dim1 = out_shape[1];
   int out_dim2 = out_shape[2];

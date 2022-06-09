@@ -51,10 +51,10 @@ typedef struct ConcatQuantArg {
 } ConcatQuantArg;
 
 typedef struct PreluQuantArg {
-  int *input_sizes_;
+  int32_t *input_sizes_;
   int output_size_;
-  int **input_shapes_;
-  int *output_shape_;
+  int32_t **input_shapes_;
+  int32_t *output_shape_;
   size_t input_num_;
   size_t output_dim_;
   float alpha_;
@@ -91,7 +91,7 @@ typedef struct GatherQuantArg {
 
 typedef struct DynamicGatherQuantArg {
   float *scale_in_;
-  int *zp_in_;
+  int32_t *zp_in_;
 } DynamicGatherQuantArg;
 
 typedef struct SoftmaxQuantArg {
@@ -164,8 +164,8 @@ typedef struct LeakyReluQuantArg {
   PreluQuantArg quant_arg;
   float slope_;
   int64_t axis_;
-  int *in_shape_;
-  int *out_shape_;
+  int32_t *in_shape_;
+  int32_t *out_shape_;
   int input_dim_;
   int element_num;
 } LeakyReluQuantArg;
@@ -196,21 +196,22 @@ typedef struct ResizeFloatScaleQuantArg {
 extern "C" {
 #endif
 
-void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift);
+void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int32_t *shift);
 
-void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier, int *right_shift);
+void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier, int32_t *right_shift);
 
-void QuantizeRoundParameterWithDoublePrecision(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
-                                               int *right_shift);
+void QuantizeRoundParameterWithDoublePrecision(double double_multiplier, int32_t *quantized_multiplier,
+                                               int32_t *left_shift, int32_t *right_shift);
 
-void QuantizeRoundParameterWithSinglePrecision(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
-                                               int *right_shift);
+void QuantizeRoundParameterWithSinglePrecision(double double_multiplier, int32_t *quantized_multiplier,
+                                               int32_t *left_shift, int32_t *right_shift);
 
 uint8_t QuantizeToUint8(float real_value, float scale, int32_t zp);
 
 int32_t QuantizeToInt8(float real_value, float scale, int32_t zp);
 
-void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int *mini, int *maxi);
+void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int32_t *mini,
+                                       int32_t *maxi);
 // quantize from float to int8
 void Quantize(const float *input_data, int length, float scale, int zero_point, int8_t *output_data);
 

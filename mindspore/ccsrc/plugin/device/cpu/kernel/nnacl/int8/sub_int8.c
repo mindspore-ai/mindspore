@@ -36,7 +36,7 @@ int16x4_t DoClacSumHalfWord(int32x4_t scaled_input0, int32x4_t scaled_input1, in
 }
 
 void SubInt8NEON(const int8_t *input0_data, const int8_t *input1_data, int8_t *output_data, int64_t real_dst_count,
-                 const SubQuantArg *para, int *index) {
+                 const SubQuantArg *para, int32_t *index) {
   int32x4_t left_shift_result0_vec = vdupq_n_s32(para->left_shift_result0_);
   int32x4_t left_shift_result1_vec = vdupq_n_s32(para->left_shift_result1_);
   int32x4_t input0_multiplier_vec = vdupq_n_s32(para->input0_multiplier_);

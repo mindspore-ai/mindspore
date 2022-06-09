@@ -19,14 +19,14 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int Int8DoSplit(const int8_t *in_data, int8_t **out_data, const int *input_shape, int offset, int num_unit,
+int Int8DoSplit(const int8_t *in_data, int8_t **out_data, const int32_t *input_shape, int offset, int num_unit,
                 const SplitParameter *param) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_ERR;
   }
   const int num_split = param->num_split_;
-  const int *split_sizes = param->split_sizes_;
-  const int *strides = param->strides_;
+  const int32_t *split_sizes = param->split_sizes_;
+  const int32_t *strides = param->strides_;
   const int split_dim = param->split_dim_;
   int in_stride = strides[split_dim];
 

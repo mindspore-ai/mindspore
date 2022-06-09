@@ -16,8 +16,8 @@
 #include "nnacl/int8/arg_min_max_int8.h"
 #include <float.h>
 
-void CalcParameter(const int *shape, int dims_number, int axis, int *pre_axis_count, int *axis_count,
-                   int *after_axis_count) {
+void CalcParameter(const int32_t *shape, int dims_number, int axis, int32_t *pre_axis_count, int32_t *axis_count,
+                   int32_t *after_axis_count) {
   *pre_axis_count = 1;
   for (int i = 0; i < axis; ++i) {
     *pre_axis_count = (*pre_axis_count) * shape[i];
@@ -82,7 +82,7 @@ void DoArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, con
   }
 }
 
-void Int8ArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+void Int8ArgMinMaxQuant(const int8_t *input, int8_t *output1, int8_t *output2, const int32_t *in_shape,
                         const ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   int pre_axis_count = 1;
   int axis_count = 1;
@@ -105,7 +105,7 @@ int8_t GetInt8Output(float real_out, float output_inverse_scale, int32_t output_
   return real_out * output_inverse_scale + output_zp;
 }
 
-void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output1, int8_t *output2, const int32_t *in_shape,
                        ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
@@ -131,7 +131,7 @@ void Int8ArgMinMaxDim0(const int8_t *input, int8_t *output1, int8_t *output2, co
   }
 }
 
-void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output1, int8_t *output2, const int32_t *in_shape,
                        ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
@@ -162,7 +162,7 @@ void Int8ArgMinMaxDim1(const int8_t *input, int8_t *output1, int8_t *output2, co
   }
 }
 
-void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output1, int8_t *output2, const int32_t *in_shape,
                        ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;
@@ -197,7 +197,7 @@ void Int8ArgMinMaxDim2(const int8_t *input, int8_t *output1, int8_t *output2, co
   }
 }
 
-void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output1, int8_t *output2, const int *in_shape,
+void Int8ArgMinMaxDim3(const int8_t *input, int8_t *output1, int8_t *output2, const int32_t *in_shape,
                        ArgMinMaxParameter *param, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg) {
   bool out_value = param->out_value_;
   const float output_inverse_scale = 1.f / out_quant_arg->scale_;

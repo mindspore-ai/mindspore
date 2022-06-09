@@ -126,9 +126,7 @@ COPY_TASK_IMPL(float16_t, int64_t)
 #endif
 
 #define GATHER_D_IMPL(type0, type1)                                                                                  \
-  int GatherD_Input_##type0##_Index_##type1(                                                                         \
-    type0 *output, const type0 *input, type1 *index, const size_t *input_shape, const size_t input_shape_size,       \
-    const size_t *output_shape, const size_t output_shape_size, const int dim) {                                     \
+  GATHER_D_IMPL_DECLARATION(type0, type1) {                                                                          \
     if (output == NULL || input == NULL || index == NULL || input_shape == NULL || output_shape == NULL) {           \
       return NNACL_NULL_PTR;                                                                                         \
     }                                                                                                                \

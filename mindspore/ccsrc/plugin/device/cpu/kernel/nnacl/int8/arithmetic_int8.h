@@ -23,8 +23,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void TileOneDimensionInt8(const int8_t *inData, int8_t *outData, int dim, size_t ndim, const int *inShape,
-                          const int *inStrides, const int *outStrides, const int *multiple);
+void TileOneDimensionInt8(const int8_t *inData, int8_t *outData, int dim, size_t ndim, const int32_t *inShape,
+                          const int32_t *inStrides, const int32_t *outStrides, const int32_t *multiple);
 void TileDimensionsInt8(const int8_t *data0, const int8_t *data1, int8_t *tile_data0, int8_t *tile_data1,
                         ArithmeticParameter *param);
 

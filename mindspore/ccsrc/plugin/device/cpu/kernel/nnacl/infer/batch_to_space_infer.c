@@ -52,7 +52,7 @@ int SetOutputShapeFromParam(const TensorC *const *inputs, TensorC **outputs, con
   if (mul_block_shape == 0) {
     return NNACL_ERR;
   }
-  int32_t output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE];
   size_t output_shape_size = input_shape_size;
   output_shape[kNHWC_N] = input_shape[kNHWC_N] / mul_block_shape;
   output_shape[kNHWC_H] = input_shape[kNHWC_H] * block_shape[0] - crops[0] - crops[1];
@@ -100,7 +100,7 @@ int SetOutputShapeFromInput(const TensorC *const *inputs, TensorC **outputs) {
   if (mul_block_shape_ == 0) {
     return NNACL_ERR;
   }
-  int32_t output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE];
   size_t output_shape_size = input_shape_size;
   output_shape[kNHWC_N] = input_shape[kNHWC_N] / mul_block_shape_;
   output_shape[kNHWC_H] = input_shape[kNHWC_H] * block_shape[0] - crops[0] - crops[1];
