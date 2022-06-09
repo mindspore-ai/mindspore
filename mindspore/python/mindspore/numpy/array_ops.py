@@ -1879,7 +1879,7 @@ def take(a, indices, axis=None, mode='clip'):
         [5 7]]
     """
     _check_input_tensor(a, indices)
-    return a.take(indices, axis=axis, mode=mode)
+    return a.take(indices, axis, mode)
 
 
 def repeat(a, repeats, axis=None):
