@@ -143,6 +143,7 @@ from .trans_data import _trans_data_tbe
 from .trans_data_ds import _trans_data_ds_tbe
 from .trans_data_rnn import _trans_data_rnn_tbe
 from .top_k import _top_k_tbe
+from .top_k_ds import _top_k_ds_tbe
 from .matmul import _matmul_tbe
 from .matmul_ds import _matmul_ds_tbe
 from .matmul_v2 import _matmul_v2_tbe

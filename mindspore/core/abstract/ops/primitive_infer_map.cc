@@ -74,6 +74,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kConv2DBackpropInput = prim::kPrimConv2DBackpropInput->name();
   static const auto &kCol2Im = prim::kPrimCol2Im->name();
   static const auto &kTile = prim::kPrimTile->name();
+  static const auto &kTopK = prim::kPrimTopK->name();
   static const auto &kNonDeterministicInts = prim::kPrimNonDeterministicInts->name();
   static const auto &kSliceGrad = prim::kPrimSliceGrad->name();
   static const auto &kReshape = prim::kPrimReshape->name();
@@ -115,6 +116,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kStridedSlice, ShapeSet{1, 2, 3}},
                                          {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
                                          {kTile, ShapeSet{1}},
+                                         {kTopK, ShapeSet{1}},
                                          {kReshape, ShapeSet{1}},
                                          {kScatterNd, ShapeSet{2}},
                                          {kSliceGrad, ShapeSet{2, 3}},
