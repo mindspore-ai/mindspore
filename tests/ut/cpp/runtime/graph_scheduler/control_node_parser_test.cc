@@ -207,7 +207,6 @@ TEST_F(ControlNodeParserTest, Parse) {
   std::vector<FuncGraphPtr> graphs{func_graph};
   FuncGraphManagerPtr manager = std::make_shared<FuncGraphManager>(graphs);
   manager->AddFuncGraph(func_graph);
-  ;
 
   auto parser = std::make_shared<ControlNodeParser>();
   DeviceContextKey device_context_key{"CPU", 0};
