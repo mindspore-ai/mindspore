@@ -17,6 +17,7 @@
 #include "tools/graph_kernel/runtime/akg_kernel.h"
 #include <dlfcn.h>
 #include <algorithm>
+#include <utility>
 #include <numeric>
 #include <functional>
 #include "src/tensor.h"
@@ -110,13 +111,28 @@ int AkgKernel::Prepare() {
     MS_LOG(ERROR) << "Undefined symbol [" << kernel_name_ << "] in [" << kAkgKernelSo << "]";
     return RET_ERROR;
   }
-  for (size_t i = 0; i < in_tensors_.size(); i++) {
-    auto &input = in_tensors_[i];
-    if (input->IsConst() && (reinterpret_cast<size_t>(input->data()) & 0xf) != 0) {
-      auto buffer = static_cast<float *>(input->data());
-      int data_num = input->ElementsNum();
-      std::vector<float> input_align(buffer, buffer + data_num);
-      const_inputs_.emplace(i, input_align);
+  const size_t kAddrAlign = 32;
+  const size_t kAddrAlignMask = 0x1f;
+  const_inputs_.reserve(in_tensors_.size());
+  for (auto &input : in_tensors_) {
+    // the data address should align in 32 bytes.
+    if (input->IsConst() && (reinterpret_cast<size_t>(input->data()) & kAddrAlignMask) != 0) {
+      auto buffer = static_cast<int8_t *>(input->data());
+      int tensor_size = input->Size();
+      if (tensor_size == 0) {
+        MS_LOG(ERROR) << "The tensor \'" << input->tensor_name() << "\' size is 0. kernel: " << kernel_name_;
+        return RET_ERROR;
+      }
+      std::vector<int8_t> input_align(tensor_size + kAddrAlign);
+      auto p = input_align.data();
+      while ((reinterpret_cast<size_t>(p) & kAddrAlignMask) != 0) {
+        p++;
+      }
+      (void)std::copy(buffer, buffer + tensor_size, p);
+      (void)const_inputs_.emplace_back(static_cast<void *>(p));
+      (void)const_data_align_cache_.emplace_back(std::move(input_align));
+    } else {
+      (void)const_inputs_.emplace_back(nullptr);
     }
   }
   return RET_OK;
@@ -130,12 +146,12 @@ int AkgKernel::Run() {
   nthread_ = op_parameter_->thread_num_;
   std::vector<void *> runtimeargs;
   runtimeargs.reserve(in_tensors_.size() + out_tensors_.size() + 1);
-  AkgCallBack akg_callback;
+  static AkgCallBack akg_callback;
   akg_callback.extend_data = static_cast<void *>(this);
   (void)runtimeargs.emplace_back(static_cast<void *>(&akg_callback));
   for (size_t i = 0; i < in_tensors_.size(); i++) {
-    if (const_inputs_.find(i) != const_inputs_.end()) {
-      (void)runtimeargs.emplace_back(reinterpret_cast<void *>(const_inputs_[i].data()));
+    if (const_inputs_[i] != nullptr) {
+      (void)runtimeargs.emplace_back(const_inputs_[i]);
     } else {
       (void)runtimeargs.emplace_back(in_tensors_[i]->data());
     }

@@ -26,6 +26,7 @@
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "utils/ms_context.h"
+#include "tools/graph_kernel/converter/substitute_conv2d.h"
 
 namespace mindspore::graphkernel {
 AnfNodePtr ParaToValueDeco::Run(const AnfNodePtr &node) {
@@ -37,6 +38,26 @@ AnfNodePtr ParaToValueDeco::Run(const AnfNodePtr &node) {
       ShapeVector out_list;
       std::transform(int_value, int_value + param_value->data_ptr()->size(), std::back_inserter(out_list), IntToLong);
       auto value = std::make_shared<ValueNode>(MakeValue(out_list));
+      cnode->set_input(idx + 1, value);
+    }
+  }
+  return decorated_->Run(cnode);
+}
+
+AnfNodePtr ParaToTensorDeco::Run(const AnfNodePtr &node) {
+  auto cnode = QuickCloneCNode(node);
+  for (const auto &idx : input_idx_) {
+    if (cnode->input(idx + 1)->isa<Parameter>()) {
+      auto default_param = cnode->input(idx + 1)->cast<ParameterPtr>()->default_param();
+      if (default_param == nullptr) {
+        continue;
+      }
+      auto param_value = default_param->cast<tensor::TensorPtr>();
+      if (param_value == nullptr) {
+        continue;
+      }
+      auto value = NewValueNode(param_value);
+      value->set_abstract(param_value->ToAbstract());
       cnode->set_input(idx + 1, value);
     }
   }
@@ -100,6 +121,7 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
     {prim::kPrimSqueeze->name(), {FixFormatDeco::Creator}},
     {prim::kPrimReshape->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
     {prim::kPrimTranspose->name(), {ParaToValueDeco::GetCreator({1}), InputToAttrDeco::GetCreator({1})}},
+    {prim::kPrimConv2DFusion->name(), {ParaToTensorDeco::GetCreator({1}), SubstituteConv2D::Creator}},
   };
   auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {

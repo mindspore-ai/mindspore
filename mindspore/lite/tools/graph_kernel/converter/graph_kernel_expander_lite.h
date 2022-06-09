@@ -40,6 +40,23 @@ class ParaToValueDeco : public ExpanderDecorator {
   HashSet<size_t> input_idx_;
 };
 
+class ParaToTensorDeco : public ExpanderDecorator {
+ public:
+  ParaToTensorDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
+      : ExpanderDecorator(decorated), input_idx_(input_idx) {}
+  ~ParaToTensorDeco() = default;
+
+  static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx) {
+    return [input_idx](const ExpanderPtr &decorated) {
+      return std::static_pointer_cast<Expander>(std::make_shared<ParaToTensorDeco>(decorated, input_idx));
+    };
+  }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
+
+ protected:
+  HashSet<size_t> input_idx_;
+};
+
 class FixFormatDeco : public ExpanderDecorator {
  public:
   explicit FixFormatDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
