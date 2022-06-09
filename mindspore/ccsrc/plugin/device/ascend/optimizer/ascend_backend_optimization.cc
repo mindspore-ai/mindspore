@@ -59,6 +59,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/refresh_parameter_format.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/transpose_transdata_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/deformable_offsets_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/deformable_offsets_grad_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/transdata_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/topk_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/conv2d_backprop_filter_mul_fission.h"
@@ -225,6 +226,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<DiagFission>());
   ir_fusion_pm->AddPass(std::make_shared<DiagPartFission>());
   ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MaxPool3DGradGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<AdaptiveMaxPool2DFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AvgPool3DFusion>());
@@ -422,6 +424,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<DiagFission>());
   ir_fusion_pm->AddPass(std::make_shared<DiagPartFission>());
   ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<DeformableOffsetsGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<ScaleGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<LambFission>());
