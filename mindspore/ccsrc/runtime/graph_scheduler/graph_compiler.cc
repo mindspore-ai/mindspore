@@ -519,10 +519,14 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
 
   session_->DumpGraphs({graph});
 
-  // Cache the backend graph output nodes to front nodes with output index.
-  auto backend_node = graph->output();
-  MS_EXCEPTION_IF_NULL(backend_node);
-  graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, outputs);
+  // The graph is not compiled yet in PyNative Mode.
+  // Need to cache output latter when the graph is compiled.
+  if (!run_in_pynative) {
+    // Cache the backend graph output nodes to front nodes with output index.
+    auto backend_node = graph->output();
+    MS_EXCEPTION_IF_NULL(backend_node);
+    graph->CacheGraphOutputToFrontNodeWithIndex({backend_node}, outputs);
+  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);

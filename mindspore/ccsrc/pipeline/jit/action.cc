@@ -955,16 +955,11 @@ void OriginSetRunMode(const ResourcePtr &resource) {
   }
 }
 
-void SetRunMode(const ResourcePtr &resource, bool pynative_switch_to_graph_mode) {
+void SetRunMode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) && common::GetEnv("DISABLE_ASCEND_MINDRT") != "1") {
-    // Run in GRAPH_MODE if the func_graph is ms_function or the func_graph contain multi-subgraph.
-    if (pynative_switch_to_graph_mode) {
-      context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
-      MS_LOG(INFO) << "PyNative graph Compile and Run in GRAPH_MODE";
-    }
     SetRunMode(resource->func_graph(), resource->GetResult(kBackend).cast<compile::BackendPtr>().get());
   } else {
     OriginSetRunMode(resource);
@@ -995,22 +990,14 @@ bool TaskEmitAction(const ResourcePtr &resource) {
     MS_LOG(WARNING) << "Multi device target is detected, CPU data is dumped in rank_0 directory";
   }
   DisableMindRT(resource);
-  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  auto is_parallel = (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
-  bool pynative_switch_to_graph_mode =
-    context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
-    (!func_graph->has_flag(kFlagIsPynativeBpropGraph) || func_graph->manager()->func_graphs().size() > 1) &&
-    !is_parallel;
-  SetRunMode(resource, pynative_switch_to_graph_mode);
+
+  SetRunMode(resource);
   auto bc_ptr = resource->GetResult(kBackend).cast<compile::BackendPtr>();
   MS_EXCEPTION_IF_NULL(bc_ptr);
   std::string backend = context_ptr->backend_policy();
   // The graph compiling of mindRT.
   if ((backend == kMsConvert) && context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     TaskEmitActionForMindRT(resource);
-    if (pynative_switch_to_graph_mode) {
-      context_ptr->set_param<int>(MS_CTX_EXECUTION_MODE, kPynativeMode);
-    }
     return true;
   }
 

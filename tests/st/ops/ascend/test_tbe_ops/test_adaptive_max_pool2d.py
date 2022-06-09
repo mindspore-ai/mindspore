@@ -44,13 +44,12 @@ def test_adaptive_max_pool2d():
     x = np.random.randn(32, 64, 128, 128).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     adaptive_max_pool2d = Net(64, True)
-    output1, argmax1 = adaptive_max_pool2d(Tensor(x))
+    output1, _ = adaptive_max_pool2d(Tensor(x))
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     adaptive_max_pool2d = Net(64, True)
-    output2, argmax2 = adaptive_max_pool2d(Tensor(x))
+    output2, _ = adaptive_max_pool2d(Tensor(x))
     assert (output1.asnumpy() == output2.asnumpy()).all()
-    assert (argmax1.asnumpy() == argmax2.asnumpy()).all()
 
 
 @pytest.mark.level0

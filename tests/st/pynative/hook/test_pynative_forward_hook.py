@@ -20,6 +20,7 @@ from mindspore import context
 from mindspore.ops import GradOperation
 from mindspore.common import ParameterTuple
 from mindspore.common.api import ms_function
+from mindspore import ops as P
 
 
 def forward_pre_hook_fn_bn(cell_id, inp):
@@ -49,7 +50,7 @@ def forward_pre_hook_fn_multi_add(cell_id, inp):
 
 
 def forward_hook_fn_conv(cell_id, inp, outp):
-    out = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")(outp)
+    out = P.Log()(outp)
     return out
 
 
@@ -101,6 +102,10 @@ class SingleNet(nn.Cell):
 class SingleNetInConstruct(nn.Cell):
     def __init__(self):
         super(SingleNetInConstruct, self).__init__()
+        self.handle1 = None
+        self.handle2 = None
+        self.handle3 = None
+        self.handle4 = None
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.relu = nn.ReLU()
 
@@ -262,13 +267,14 @@ class CompareMultiNet1(nn.Cell):
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.relu = nn.ReLU()
+        self.log = P.Log()
 
     def construct(self, x, y):
         x = self.mul(x + x, x * y)
-        x = self.conv(x)
+        x = self.log(x)
         x = self.bn(x)
-        x = self.relu(x)
-        x = self.mul(x, x)
+        y = self.relu(x)
+        x = self.mul(y, x)
         x = x + x
         return x
 
@@ -280,10 +286,11 @@ class CompareMultiNet2(nn.Cell):
         self.conv = nn.Conv2d(2, 2, kernel_size=2, stride=1, padding=0, weight_init="ones", pad_mode="valid")
         self.bn = nn.BatchNorm2d(2, momentum=0.99, eps=0.00001, gamma_init="ones")
         self.relu = nn.ReLU()
+        self.log = P.Log()
 
     def construct(self, x, y):
         x = self.mul(x, y)
-        x = self.conv(x)
+        x = self.log(x)
         x = self.bn(x)
         x = self.mul(x, x)
         return x
