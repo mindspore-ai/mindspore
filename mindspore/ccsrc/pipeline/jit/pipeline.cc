@@ -1423,6 +1423,12 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   MS_EXCEPTION_IF_NULL(backend);
   // The data set graph compiling and running of mindRT.
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+#ifdef WITH_BACKEND
+    if (ps::PSContext::instance()->is_worker() && ps::PSContext::instance()->cache_enable()) {
+      ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
+    }
+#endif
+
     const auto &mindrt_backend = std::dynamic_pointer_cast<compile::MindRTBackend>(backend);
     MS_EXCEPTION_IF_NULL(mindrt_backend);
     auto &actor_info = mindrt_backend->CompileGraphs(func_graph);

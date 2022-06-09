@@ -65,6 +65,26 @@ void PsEmbeddingCacheInserter::GetEmbeddingLookupNodes() {
   });
 }
 
+void PsEmbeddingCacheInserter::GetCacheEnableParameters() {
+  MS_EXCEPTION_IF_NULL(root_graph_);
+  const std::vector<AnfNodePtr> &parameters = root_graph_->parameters();
+  auto params_size = parameters.size();
+  for (size_t i = 0; i < params_size; ++i) {
+    MS_EXCEPTION_IF_NULL(parameters[i]);
+    if (!parameters[i]->isa<Parameter>()) {
+      MS_LOG(EXCEPTION) << "The node with name: " << parameters[i]->fullname_with_scope() << "is not a Parameter.";
+    }
+
+    ParameterPtr param = parameters[i]->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(param);
+    auto param_info = param->param_info();
+    if (param_info && param_info->key() != -1 && param_info->cache_enable()) {
+      keys_to_params_[param_info->key()] = param;
+      MS_LOG(INFO) << "Parameter[" << param->fullname_with_scope() << "], key[" << param_info->key() << "]";
+    }
+  }
+}
+
 void PsEmbeddingCacheInserter::SetNodeAttr(const CNodePtr &node, const std::string &node_role) const {
   MS_EXCEPTION_IF_NULL(node);
 
@@ -107,7 +127,7 @@ void PsEmbeddingCacheInserter::SetSendNodeAttr(const CNodePtr &send_node, int32_
     dst_ranks.push_back(i);
     dst_roles.push_back(dst_role);
     // Unique edge name: src role + src rank id -> dst role + dst rank id +embedding cache operation + parameter key.
-    inter_process_edges.push_back(distributed::kEnvRoleOfServer + std::to_string(rank_id_) + "->" + dst_role +
+    inter_process_edges.push_back(distributed::kEnvRoleOfPServer + std::to_string(rank_id_) + "->" + dst_role +
                                   std::to_string(i) + "_" + embedding_cache_op + "_" + distributed::kParameterKey +
                                   std::to_string(param_key));
   }
@@ -118,6 +138,7 @@ void PsEmbeddingCacheInserter::SetSendNodeAttr(const CNodePtr &send_node, int32_
   common::AnfAlgo::SetNodeAttr(kAttrSendDstNodeName, MakeValue(std::string(kEmbeddingLocalCacheNode)), send_node);
 
   common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeNames, MakeValue(inter_process_edges), send_node);
+  common::AnfAlgo::SetNodeAttr(kAttrIsMuxRpcKernel, MakeValue(true), send_node);
 }
 
 void PsEmbeddingCacheInserter::SetRecvNodeAttr(const CNodePtr &recv_node, const std::string &src_role) const {
@@ -139,7 +160,7 @@ void PsEmbeddingCacheInserter::SetRecvNodeAttr(const CNodePtr &recv_node, const 
         src_roles.push_back(src_role);
         // Unique edge name: src role + src rank id -> dst role + dst rank id + embedding cache operation + parameter
         // key.
-        inter_process_edges.push_back(src_role + std::to_string(i) + "->" + distributed::kEnvRoleOfServer +
+        inter_process_edges.push_back(src_role + std::to_string(i) + "->" + distributed::kEnvRoleOfPServer +
                                       std::to_string(rank_id_) + "_" + distributed::kEmbeddingCacheOps[k] + "_" +
                                       distributed::kParameterKey + std::to_string(param_key));
       }
@@ -150,7 +171,9 @@ void PsEmbeddingCacheInserter::SetRecvNodeAttr(const CNodePtr &recv_node, const 
   common::AnfAlgo::SetNodeAttr(kAttrRecvSrcRoles, MakeValue(src_roles), recv_node);
   common::AnfAlgo::SetNodeAttr(kAttrRecvSrcNodeName, MakeValue(std::string(kEmbeddingLocalCacheNode)), recv_node);
   common::AnfAlgo::SetNodeAttr(kAttrRecvDstNodeName, MakeValue(std::string(kEmbeddingRemoteCacheNode)), recv_node);
+
   common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeNames, MakeValue(inter_process_edges), recv_node);
+  common::AnfAlgo::SetNodeAttr(kAttrIsMuxRpcKernel, MakeValue(true), recv_node);
 }
 
 CNodePtr PsEmbeddingCacheInserter::CreateReturnNode(const FuncGraphPtr graph, const AnfNodePtr &output_node) const {
@@ -420,6 +443,9 @@ bool PsEmbeddingCacheInserter::ConstructEmbeddingCacheGraph() const {
 bool PsEmbeddingCacheInserter::Run() {
   // Get EmbeddingLookup nodes which are executed on server from origin function graph.
   GetEmbeddingLookupNodes();
+
+  // Get parameters enabled embedding cache of origin function graph.
+  GetCacheEnableParameters();
 
   // Construct the embedding cache graph of server.
   RETURN_IF_FALSE_WITH_LOG(ConstructEmbeddingCacheGraph(), "Construct embedding cache graph failed.");

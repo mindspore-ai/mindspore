@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace runtime {
+using distributed::cluster::ClusterContext;
 using mindspore::session::KernelGraph;
 
 // One and two dimensional shape placeholder.
@@ -58,7 +59,7 @@ bool InferOpShape(const CNodePtr &kernel) {
 
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  if (!kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+  if (kernel::KRET_OK != kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
     MS_LOG(ERROR) << "Kernel " << kernel->fullname_with_scope() << " resize failed.";
     return false;
   }
@@ -88,14 +89,17 @@ SendRecvPair CreateSenderReceiverPair(uint32_t worker_rank, uint32_t server_rank
                                       int32_t param_key) {
   // Create sender and receiver pair.
   ReceiverPtr receiver = std::make_shared<Receiver>();
-  SenderPtr sender = std::make_shared<Sender>(receiver);
+  MS_EXCEPTION_IF_NULL(receiver);
+  SenderPtr sender = std::make_shared<Sender>();
+  MS_EXCEPTION_IF_NULL(sender);
+  sender->set_receiver(receiver);
 
   // Set inter process edge
-  receiver->set_inter_process_edge_name(GenerateInterProcessEdge(distributed::kEnvRoleOfServer, server_rank,
+  receiver->set_inter_process_edge_name(GenerateInterProcessEdge(distributed::kEnvRoleOfPServer, server_rank,
                                                                  distributed::kEnvRoleOfWorker, worker_rank,
                                                                  cache_operation, param_key));
   sender->set_inter_process_edge_name(GenerateInterProcessEdge(distributed::kEnvRoleOfWorker, worker_rank,
-                                                               distributed::kEnvRoleOfServer, server_rank,
+                                                               distributed::kEnvRoleOfPServer, server_rank,
                                                                distributed::kLookupEmbeddingCache, param_key));
 
   // Set route table proxy.
@@ -172,9 +176,24 @@ void EmbeddingCachePrefetchActor::Initialize() {
     MS_LOG(EXCEPTION) << "Create stream failed.";
   }
 
+  // Get embedding cache table info.
+  hash_tables_ = embedding_cache_table_manager.hash_tables_;
+  local_host_cache_size_ = embedding_cache_table_manager.host_cache_size_;
+  vocab_size_ = embedding_cache_table_manager.vocab_size_;
+  embedding_device_cache_ = embedding_cache_table_manager.embedding_device_cache_;
+  MS_EXCEPTION_IF_NULL(embedding_device_cache_);
+  embedding_host_cache_ = embedding_cache_table_manager.embedding_host_cache_;
+  MS_EXCEPTION_IF_NULL(embedding_host_cache_);
+  local_embedding_slice_bounds_ = embedding_cache_table_manager.local_embedding_slice_bounds_;
+  local_device_cache_bounds_ = embedding_cache_table_manager.local_device_cache_bounds_;
+
+  // Get the id range of each server's embedding table slice.
+  GetRemoteEmbeddingSliceBound();
+
   BuildEmbeddingCacheLookupKernel();
   BuildEmbeddingCacheUpdateKernel();
 
+  // Build and link rpc operators.
   BuildRpcOperators();
   LinkRpcOperators();
 }
@@ -326,8 +345,40 @@ bool EmbeddingCachePrefetchActor::UpdateDeviceCache(void *indices, void *update_
   return true;
 }
 
+void EmbeddingCachePrefetchActor::IncreaseGraphStep(const std::string &channel_name) {
+  if (!running_) {
+    MS_LOG(EXCEPTION) << "PS embedding cache data processing thread isn't running.";
+  }
+  if (graph_step_ >= UINT64_MAX) {
+    MS_LOG(EXCEPTION) << "The graph step(" << graph_step_ << ") will exceed the maximum value of uint64_t.";
+  }
+  if (graph_step_ == 0) {
+    MS_LOG(INFO) << "Graph running waiting embedding table init begin:" << finish_init_parameters_on_remote_;
+    std::unique_lock<std::mutex> locker(data_mutex_);
+    data_parser_.wait(locker, [this] { return ((finish_init_parameters_on_remote_ == true) || (running_ == false)); });
+    if (!running_) {
+      MS_LOG(EXCEPTION) << "PS embedding cache data processing thread isn't running.";
+    }
+    MS_LOG(INFO) << "Graph running waiting embedding table init end.";
+  }
+  graph_step_++;
+  set_channel_name(channel_name);
+  if (!PsDataPrefetch::GetInstance().TryWakeChannel(channel_name)) {
+    MS_LOG(EXCEPTION) << "TryWakeChannel failed, channel name: " << channel_name;
+  }
+  data_parser_.notify_one();
+}
+
 void EmbeddingCachePrefetchActor::Run() {
-  // Note:Need to wait data channel ready.
+  running_ = true;
+
+  // Wait initialize parameters on remote.
+  // Prevents the subsequent prefetch cache from failing due to the long initialization time of the large parameter on
+  // the remote side.
+  WaitInitParametersOnRemote();
+
+  // Wait data channel ready.
+  WaitDataChannelInit();
 
   MS_LOG(INFO) << "Begin prefetching cache.";
   while (running_) {
@@ -728,7 +779,6 @@ bool EmbeddingCachePrefetchActor::PushCacheFromDeviceToLocalHost(const HashTable
   }
 
   MS_ERROR_IF_NULL(embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_device_cache_->cache_);
   MS_ERROR_IF_NULL(embedding_host_cache_);
 
   auto device_cache_device_to_host_index = embedding_device_cache_->device_to_host_index.get();
@@ -798,7 +848,6 @@ bool EmbeddingCachePrefetchActor::PullCacheFromLocalHostToDevice(const HashTable
   }
 
   MS_ERROR_IF_NULL(embedding_device_cache_);
-  MS_ERROR_IF_NULL(embedding_device_cache_->cache_);
   MS_ERROR_IF_NULL(embedding_host_cache_);
 
   auto host_cache_host_to_device_index = embedding_host_cache_->host_to_device_index.get();
@@ -1126,7 +1175,6 @@ bool EmbeddingCachePrefetchActor::SendToRemote(const std::string &cache_operatio
                                                size_t server_rank_id, size_t embedding_dim, const void *keys,
                                                size_t keys_len, const void *values, size_t values_len) {
   MS_ERROR_IF_NULL(keys);
-  MS_ERROR_IF_NULL(values);
   // Find sender corresponding to cache operation and parameter key.
   auto iter = rpc_operators_.find(cache_operation);
   if (iter == rpc_operators_.end()) {
@@ -1138,8 +1186,26 @@ bool EmbeddingCachePrefetchActor::SendToRemote(const std::string &cache_operatio
   MS_ERROR_IF_NULL(sender);
 
   int64_t ids_num = SizeToLong(keys_len / sizeof(int));
-  std::vector<ShapeVector> shapes = {{ids_num}, {ids_num, SizeToLong(embedding_dim)}, {1}};
-  std::vector<TypeId> data_types = {kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeInt64};
+  ShapeVector ids_shape = {ids_num};
+  ShapeVector values_shape;
+  float fake_value = 0.0;
+
+  if (values == nullptr && values_len == 0) {
+    values_shape = {1, 1};
+    values = &fake_value;
+    values_len = sizeof(fake_value);
+  } else {
+    MS_EXCEPTION_IF_ZERO("embedding_dim", embedding_dim);
+    int64_t embed_vec_num = SizeToLong(values_len / sizeof(float) / embedding_dim);
+    if (embed_vec_num != ids_num) {
+      MS_LOG(EXCEPTION) << "The embedding vector number[" << embed_vec_num << "] shouled be equal to ids number["
+                        << ids_num << "] which will be send to remote.";
+    }
+    values_shape = {embed_vec_num, SizeToLong(embedding_dim)};
+  }
+
+  std::vector<ShapeVector> shapes = {ids_shape, values_shape, {static_cast<int64_t>(1)}};
+  std::vector<TypeId> data_types = {kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeInt32};
 
   int32_t service_id = GetCacheOpsServiceId(cache_operation, param_key);
   AddressPtrList data_list = {std::make_shared<Address>(const_cast<void *>(keys), keys_len),
@@ -1218,6 +1284,39 @@ bool EmbeddingCachePrefetchActor::RetrieveEmbeddings(
     offset += embedding_dim;
   }
   return true;
+}
+
+std::string EmbeddingCachePrefetchActor::channel_name() {
+  std::lock_guard<std::mutex> locker(channel_mutex_);
+  return channel_name_;
+}
+
+void EmbeddingCachePrefetchActor::set_channel_name(const std::string channel_name) {
+  if (channel_name_ == channel_name) {
+    return;
+  }
+  std::lock_guard<std::mutex> locker(channel_mutex_);
+  channel_name_ = channel_name;
+}
+
+void EmbeddingCachePrefetchActor::WaitDataChannelInit() {
+  MS_LOG(INFO) << "Begin wait embedding cache data channel init.";
+  auto channel = channel_name();
+  if (channel.empty()) {
+    std::unique_lock<std::mutex> locker(data_mutex_);
+    data_parser_.wait(locker, [this] { return !channel_name_.empty() || running_ == false; });
+    if (!running_) {
+      return;
+    }
+  }
+  MS_LOG(INFO) << "End wait embedding cache data channel init.";
+}
+
+void EmbeddingCachePrefetchActor::WaitInitParametersOnRemote() {
+  std::unique_lock<std::mutex> locker(data_mutex_);
+  // Note: wait to finish embedding lookup from remote.
+  finish_init_parameters_on_remote_ = true;
+  data_parser_.notify_one();
 }
 
 void EmbeddingCachePrefetchActor::BuildRpcOperators() {

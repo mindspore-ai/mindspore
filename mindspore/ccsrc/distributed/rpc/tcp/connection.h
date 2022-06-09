@@ -204,6 +204,9 @@ struct Connection {
   // Parse message from socket recv buffer.
   bool ParseMessage();
 
+  // After ParseMessage, set from url and to url into recv message.
+  bool SetUrlForRecvMessage();
+
   // Make a http message based on given input message.
   std::string GenerateHttpMessage(MessageBase *msg);
 

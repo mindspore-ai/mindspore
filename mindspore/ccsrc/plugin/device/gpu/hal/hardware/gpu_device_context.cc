@@ -361,6 +361,61 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
     }
   }
 }
+
+// Check whether mutex exists for a stream.
+std::pair<bool, std::mutex *> CheckStreamMutexExist(
+  const void *stream, const mindspore::HashMap<const void *, std::shared_ptr<std::mutex>> &mtxs_for_streams,
+  std::shared_mutex *shd_mtx) {
+  MS_EXCEPTION_IF_NULL(stream);
+  MS_EXCEPTION_IF_NULL(shd_mtx);
+  std::shared_lock<std::shared_mutex> shd_lock(*shd_mtx);
+  auto iter = mtxs_for_streams.find(stream);
+  if (iter != mtxs_for_streams.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    return std::make_pair(true, iter->second.get());
+  }
+  return std::make_pair(false, nullptr);
+}
+
+// Create a mutex for stream.
+std::mutex *CreateStreamMutex(const void *stream, std::shared_mutex *shd_mtx,
+                              mindspore::HashMap<const void *, std::shared_ptr<std::mutex>> *mtxs_for_streams) {
+  MS_EXCEPTION_IF_NULL(stream);
+  MS_EXCEPTION_IF_NULL(shd_mtx);
+  MS_EXCEPTION_IF_NULL(mtxs_for_streams);
+
+  std::unique_lock<std::shared_mutex> unq_lock(*shd_mtx);
+  auto ret_pair = mtxs_for_streams->emplace(stream, std::make_shared<std::mutex>());
+
+  MS_EXCEPTION_IF_NULL(ret_pair.first->second);
+  return ret_pair.first->second.get();
+}
+
+// The launch kernel is thread-unsafe, and the behavior of delivering the kernel launch to the same stream requires
+// lock protection, need to create a separate lock for each stream.
+// for GPU, The cublas handle is not thread safety specifically, it is not recommended that multiple threads access the
+// same cublas handle at the same time, so need the launch mutex when multiple threads launch the cublas kernels.
+std::lock_guard<std::mutex> LockLaunchKernel(const void *stream) {
+  MS_EXCEPTION_IF_NULL(stream);
+  // Read-write lock for accessing mtxs_for_streams map.
+  // When the lock of each stream is created, mtxs_for_streams can be accessed concurrently to improve performance.
+  static std::shared_mutex shd_mtx;
+  static mindspore::HashMap<const void *, std::shared_ptr<std::mutex>> mtxs_for_streams;
+
+  std::mutex *stream_mtx;
+  // Check whether mutex exists for a stream.
+  std::pair<bool, std::mutex *> ret_pair = CheckStreamMutexExist(stream, mtxs_for_streams, &shd_mtx);
+  if (ret_pair.first) {
+    stream_mtx = ret_pair.second;
+  } else {
+    // Create a mutex for stream.
+    stream_mtx = CreateStreamMutex(stream, &shd_mtx, &mtxs_for_streams);
+  }
+
+  MS_EXCEPTION_IF_NULL(stream_mtx);
+  // Lock kernel launch for the stream.
+  return std::lock_guard<std::mutex>(*stream_mtx);
+}
 }  // namespace
 
 void GPUDeviceContext::OptimizeGraph(const FuncGraphPtr &graph) const {
@@ -462,20 +517,23 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   }
   bool ret = true;
 
+  auto stream = GetLaunchKernelStream(kernel);
+  MS_EXCEPTION_IF_NULL(stream);
+
 #ifndef ENABLE_SECURITY
   const auto &profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
 
   if (!profiler_inst->GetEnableFlag()) {
 #endif
-    std::lock_guard<std::mutex> locker(launch_mutex_);
+    auto lock = LockLaunchKernel(stream);
     MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
-    ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
+    ret = DoLaunchKernel(kernel, inputs, workspace, outputs, stream);
 #ifndef ENABLE_SECURITY
   } else {
-    std::lock_guard<std::mutex> locker(launch_mutex_);
+    auto lock = LockLaunchKernel(stream);
     MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
-    ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs);
+    ret = LaunchKernelWithProfiling(kernel, inputs, workspace, outputs, stream);
   }
 #endif
   if (!ret) {
@@ -496,8 +554,9 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
 #ifndef ENABLE_SECURITY
 bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) const {
+                                                 const std::vector<AddressPtr> &outputs, void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(stream);
 
   auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(kernel->func_graph());
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -512,7 +571,7 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   }
 
   profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), streams_.front());
-  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
+  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs, stream);
   profiler_inst->OpDataProducerEnd();
   profiler_inst->RecordFrameWorkInfo(kernel);
 
@@ -527,8 +586,16 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
 }
 #endif
 bool GPUDeviceContext::DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                      const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) const {
+                                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                                      void *stream) const {
+  MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(stream);
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  return kernel_mod->Launch(inputs, workspace, outputs, stream);
+}
+
+void *GPUDeviceContext::GetLaunchKernelStream(const CNodePtr &kernel) const {
   void *stream = nullptr;
   if (common::AnfAlgo::HasNodeAttr(kAttrStream, kernel)) {
     auto stream_id = common::AnfAlgo::GetNodeAttr<size_t>(kernel, kAttrStream);
@@ -542,9 +609,7 @@ bool GPUDeviceContext::DoLaunchKernel(const CNodePtr &kernel, const std::vector<
   }
 
   MS_EXCEPTION_IF_NULL(stream);
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->Launch(inputs, workspace, outputs, stream);
+  return stream;
 }
 
 bool GPUDeviceContext::SyncStream(size_t stream_id) const {

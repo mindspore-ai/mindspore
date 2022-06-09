@@ -19,6 +19,7 @@
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
+#include "ps/ps_context.h"
 
 namespace mindspore {
 namespace runtime {
@@ -390,6 +391,10 @@ std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &cnode, const Kern
     }
   }
   return ref_output_indexes;
+}
+
+bool is_embedding_cache_server() {
+  return ps::PSContext::instance()->cache_enable() && ps::PSContext::instance()->is_server();
 }
 }  // namespace runtime
 }  // namespace mindspore

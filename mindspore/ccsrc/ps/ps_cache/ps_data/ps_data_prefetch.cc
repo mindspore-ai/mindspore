@@ -22,6 +22,11 @@ namespace ps {
 const size_t kTimeoutLoopCount = 40;
 const int64_t kLongestTimeToWait = 30;
 
+PsDataPrefetch &PsDataPrefetch::GetInstance() {
+  static PsDataPrefetch instance;
+  return instance;
+}
+
 void PsDataPrefetch::CreateDataChannel(const std::string &channel_name, size_t step_num) {
   if (cache_enable_ == false) {
     return;
