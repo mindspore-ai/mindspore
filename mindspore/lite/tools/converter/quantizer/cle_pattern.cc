@@ -57,7 +57,7 @@ bool IsCommonConvNode(const BaseRef &n) {
     if (conv == nullptr) {
       return false;
     }
-    return conv->GetAttr(ops::kIsDepthWise) == nullptr || !GetValue<bool>(conv->GetAttr(ops::kIsDepthWise));
+    return conv->get_group() == 1;
   }
   return false;
 }
