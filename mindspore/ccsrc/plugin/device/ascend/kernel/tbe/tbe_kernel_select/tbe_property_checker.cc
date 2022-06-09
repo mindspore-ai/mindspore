@@ -102,7 +102,7 @@ static bool CheckStridedSlice(const CNodePtr &cnode) {
                         << input->ToString() << trace::DumpSourceLines(cnode);
     }
     const int base_number = 2;
-    if (shrink_axis_mask > std::pow<int, int>(base_number, input_dims - 1) && input_dims > 1) {
+    if (shrink_axis_mask >= std::pow<int, int>(base_number, input_dims) && input_dims > 1) {
       return false;
     }
   }
