@@ -17,21 +17,26 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LOG_SOFTMAX_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LOG_SOFTMAX_CPU_KERNEL_H_
 
+#include <map>
 #include <vector>
 #include <memory>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class LogSoftmaxCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class LogSoftmaxCpuKernelMod : public MKLCpuKernelMod {
  public:
   LogSoftmaxCpuKernelMod() = default;
   ~LogSoftmaxCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -39,6 +44,9 @@ class LogSoftmaxCpuKernelMod : public DeprecatedMKLCpuKernelMod {
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)};
     return support_list;
   }
+
+ private:
+  int axis_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
