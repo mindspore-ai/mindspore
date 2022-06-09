@@ -52,6 +52,7 @@ def test_net(data_type, index_type, error):
     Description:  test cases for SparseSegmentMean operator.
     Expectation: the result match expectation.
     """
+    np.random.seed(0)
     data_shape = (4, 5, 6)
     index_shape = (5,)
     x = np.random.random(size=data_shape).astype(data_type)
