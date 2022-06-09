@@ -102,6 +102,7 @@ from .select import _select_aicpu
 from .masked_select import _masked_select_aicpu
 from .masked_select_grad import _masked_select_grad_aicpu
 from .mirror_pad_grad import _mirror_pad_grad_aicpu
+from .mul import _mul_aicpu
 from .standard_normal import _standard_normal_aicpu
 from .gamma import _gamma_aicpu
 from .sub import _sub_aicpu
