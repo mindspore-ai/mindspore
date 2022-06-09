@@ -38,7 +38,7 @@ CUDA_LIB_EXPORT void KLDivLoss(const int &input_size, const ReductionMode &reduc
                                const T *input_y, T *loss, T *tmp_loss, cudaStream_t stream);
 template <typename T>
 CUDA_LIB_EXPORT void KLDivLossGrad(const int &input_size, const ReductionMode &reduction, const T *input_x,
-                                   const T *input_y, const T *dloss, T *dx, T *dy, cudaStream_t stream);
+                                   const T *input_y, const T *dloss, T *dx, cudaStream_t stream);
 template <typename T, typename S>
 CUDA_LIB_EXPORT void NLLLoss(const int n, const int c, const ReductionMode reduction, const T *input,
                              const int32_t *target, const S *weight, T *loss, S *total_weight, T *tmp_loss,

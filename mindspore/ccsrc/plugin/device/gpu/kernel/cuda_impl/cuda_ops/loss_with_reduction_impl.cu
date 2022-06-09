@@ -173,14 +173,13 @@ void KLDivLoss(const int &input_size, const ReductionMode &reduction, const T *i
 
 template <typename T>
 __global__ void KLDivLossGradKernel(const int input_size, const ReductionMode reduction, const T *input_x,
-                                    const T *input_y, const T *dloss, T *dx, T *dy) {
+                                    const T *input_y, const T *dloss, T *dx) {
   T epsilon = 1e-6;
   T one = static_cast<T>(1);
   if (reduction == ReductionMode::kNone) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
       T denominator = maxT(input_y[i], epsilon);
       dx[i] = -input_y[i] * dloss[i];
-      dy[i] = (logT(denominator) + one - input_x[i]) * dloss[i];
     }
   } else {
     T dloss1 = dloss[0];
@@ -190,16 +189,15 @@ __global__ void KLDivLossGradKernel(const int input_size, const ReductionMode re
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
       T denominator = maxT(input_y[i], epsilon);
       dx[i] = -input_y[i] * dloss1;
-      dy[i] = (logT(denominator) + one - input_x[i]) * dloss1;
     }
   }
 }
 
 template <typename T>
 void KLDivLossGrad(const int &input_size, const ReductionMode &reduction, const T *input_x, const T *input_y,
-                   const T *dloss, T *dx, T *dy, cudaStream_t stream) {
+                   const T *dloss, T *dx, cudaStream_t stream) {
   KLDivLossGradKernel<<<GET_BLOCKS(input_size), GET_THREADS, 0, stream>>>(input_size, reduction, input_x, input_y,
-                                                                          dloss, dx, dy);
+                                                                          dloss, dx);
 }
 
 template <typename T>
@@ -388,7 +386,7 @@ template CUDA_LIB_EXPORT void KLDivLoss<float>(const int &input_size, const Redu
 
 template CUDA_LIB_EXPORT void KLDivLossGrad<float>(const int &input_size, const ReductionMode &reduction,
                                                    const float *input_x, const float *input_y, const float *dloss,
-                                                   float *dx, float *dy, cudaStream_t stream);
+                                                   float *dx, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void KLDivLoss<double>(const int &input_size, const ReductionMode &reduction,
                                                 const double *input_x, const double *input_y, double *loss,
@@ -396,7 +394,7 @@ template CUDA_LIB_EXPORT void KLDivLoss<double>(const int &input_size, const Red
 
 template CUDA_LIB_EXPORT void KLDivLossGrad<double>(const int &input_size, const ReductionMode &reduction,
                                                     const double *input_x, const double *input_y, const double *dloss,
-                                                    double *dx, double *dy, cudaStream_t stream);
+                                                    double *dx, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void BinaryCrossEntropyLoss<float>(const int &input_size, const ReductionMode &reduction,
                                                             const float *input_x, const float *input_y,
@@ -434,7 +432,7 @@ template CUDA_LIB_EXPORT void KLDivLoss<half>(const int &input_size, const Reduc
 
 template CUDA_LIB_EXPORT void KLDivLossGrad<half>(const int &input_size, const ReductionMode &reduction,
                                                   const half *input_x, const half *input_y, const half *dloss, half *dx,
-                                                  half *dy, cudaStream_t stream);
+                                                  cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void BinaryCrossEntropyLoss<half>(const int &input_size, const ReductionMode &reduction,
                                                            const half *input_x, const half *input_y, const half *weight,

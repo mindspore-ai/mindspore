@@ -1204,8 +1204,8 @@ def get_bprop_kl_div_loss(self):
     grad = G.KLDivLossGrad(self.reduction)
 
     def bprop(x, y, out, dout):
-        dx, dy = grad(x, y, dout)
-        return dx, dy
+        dx = grad(dout, x, y)
+        return dx, zeros_like(y)
 
     return bprop
 
