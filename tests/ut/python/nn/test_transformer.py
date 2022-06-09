@@ -217,6 +217,24 @@ def test_multihead_attention_wrong_batch():
         _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
 
 
+def test_multihead_attention_fp32_dtype():
+    """
+    Feature: Test MultiHeadAttention with float32 as compute dtype
+    Description: Test using float32 as computation for linear layer.
+    Expectation: No exception
+    """
+    model = MultiHeadAttention(hidden_size=15,
+                               src_seq_length=20,
+                               tgt_seq_length=20,
+                               compute_dtype=dtype.float32,
+                               batch_size=2,
+                               num_heads=3)
+    from_tensor = Tensor(np.ones((2, 20, 15)), dtype.float32)
+    to_tensor = Tensor(np.ones((2, 20, 15)), dtype.float32)
+    attention_mask = Tensor(np.ones((2, 20, 20)), dtype.float32)
+    _cell_graph_executor.compile(model, from_tensor, to_tensor, to_tensor, attention_mask)
+
+
 def test_feedforward_layer():
     model = FeedForward(hidden_size=15,
                         ffn_hidden_size=30,
