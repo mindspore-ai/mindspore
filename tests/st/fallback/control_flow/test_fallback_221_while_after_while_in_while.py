@@ -13,50 +13,34 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
+import pytest
+import numpy as np
 from mindspore import Tensor, ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-def test_for_after_if_1():
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_while_after_while_in_while_numpy():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
-
     @ms_function
-    def func():
-        x = Tensor([0])
-        y = Tensor([0])
-        if x == y:
-            x = x + 3
-        for _ in range(3):
-            y = y + 1
-        return x + y
-
-    res = func()
-    assert res == 6
-
-
-def test_for_after_if_4():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func():
-        x = Tensor([1])
-        y = Tensor([2])
-        if max(x, y) == Tensor([2]):
-            x = x + min(x, y)
-
-        z = (Tensor(1), Tensor(2), Tensor(3))
-        for i in z:
-            x = x * i
-        return x
-
-    res = func()
-    assert res == 12
+    def control_flow_while_after_while_in_while():
+        x = Tensor([-1])
+        y = Tensor([-2])
+        while abs(x) <= abs(y):
+            z = np.array([3, 4, 5])
+            index = 0
+            z_sum = 0
+            while index < 3:
+                z_sum += z[index]
+                index += 1
+            x = x + Tensor(z_sum)
+        while y < x:
+            y += x
+        return x, y
+    res = control_flow_while_after_while_in_while()
+    assert res == (11, 20)

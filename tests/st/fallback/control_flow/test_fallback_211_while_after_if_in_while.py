@@ -53,31 +53,11 @@ def test_while_after_if_in_while_tensor():
     assert res == 33
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_while_after_if_in_while_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_while_after_if_in_while():
-        x = np.array([1])
-        y = np.array([10])
-        while Tensor(x) < Tensor(y):
-            z = Tensor([-2])
-            if Tensor(x) < z:
-                y = 0
-            else:
-                x = y + x
-        while Tensor(y[0]) < Tensor(x[0]):
-            y += x
-        return Tensor(y)
-    res = control_flow_while_after_if_in_while()
-    assert res == 21
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_while_after_if_in_while_numpy_2():
     """
     Feature: JIT Fallback
@@ -97,7 +77,7 @@ def test_while_after_if_in_while_numpy_2():
             else:
                 y = x + y
         while y[0] > x[0]:
-            y[0] -= x[0]
+            y -= x[0]
         return Tensor(x), Tensor(y)
     res_x, res_y = control_flow_while_after_if_in_while()
     assert res_x == 1

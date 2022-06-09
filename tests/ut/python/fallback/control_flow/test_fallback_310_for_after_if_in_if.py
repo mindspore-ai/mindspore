@@ -70,7 +70,6 @@ def test_for_after_if_in_if_tensor_2():
     assert res == 19
 
 
-@pytest.mark.skip(reason='Failed to find parent context.')
 def test_for_after_if_in_if_numpy():
     """
     Feature: JIT Fallback

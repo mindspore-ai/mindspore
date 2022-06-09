@@ -822,12 +822,6 @@ LocationPtr Parser::GetLocation(const py::object &node) const {
   return location;
 }
 
-void Parser::UpdateBlockPyParams(const FunctionBlockPtr &block, const FunctionBlockPtr &pre_block) {
-  block->UpdateGlobalPyParam(pre_block->global_py_params());
-  const auto &[keys, values] = pre_block->local_py_params();
-  block->UpdateLocalPyParam(keys, values);
-}
-
 void Parser::MakeConditionBlocks(const FunctionBlockPtr &pre_block, const FunctionBlockPtr &true_block,
                                  const FunctionBlockPtr &false_block) {
   MS_EXCEPTION_IF_NULL(true_block);
@@ -840,8 +834,8 @@ void Parser::MakeConditionBlocks(const FunctionBlockPtr &pre_block, const Functi
 
   static const auto use_fallback = (support_fallback() != "0");
   if (use_fallback) {
-    UpdateBlockPyParams(true_block, pre_block);
-    UpdateBlockPyParams(false_block, pre_block);
+    true_block->UpdateGlobalPyParam(pre_block->global_py_params());
+    false_block->UpdateGlobalPyParam(pre_block->global_py_params());
   }
 }
 
@@ -1772,7 +1766,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
                     << true_block->ToString() << ", true_end: " << true_end->ToString();
     }
     if (use_fallback) {
-      UpdateBlockPyParams(after_block, true_end);
+      after_block->UpdateGlobalPyParam(true_end->global_py_params());
     }
   }
 
@@ -1794,7 +1788,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
                     << false_block->ToString() << ", false_end: " << false_end->ToString();
     }
     if (use_fallback) {
-      UpdateBlockPyParams(after_block, false_end);
+      after_block->UpdateGlobalPyParam(false_end->global_py_params());
     }
   }
   auto switch_app = block->ConditionalJump(bool_node, true_block, false_block);
@@ -1862,9 +1856,9 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   static const auto use_fallback = (support_fallback() != "0");
   if (use_fallback) {
-    UpdateBlockPyParams(header_block, block);
-    UpdateBlockPyParams(body_block, block);
-    UpdateBlockPyParams(after_block, block);
+    header_block->UpdateGlobalPyParam(block->global_py_params());
+    body_block->UpdateGlobalPyParam(block->global_py_params());
+    after_block->UpdateGlobalPyParam(block->global_py_params());
   }
   AnfNodePtr condition_node = ParseExprNode(header_block, test_node);
   condition_node = header_block->ForceToWhileCond(condition_node);
@@ -1955,8 +1949,8 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   CNodePtr target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
   static const auto use_fallback = (support_fallback() != "0");
   if (use_fallback) {
-    UpdateBlockPyParams(header_block, block);
-    UpdateBlockPyParams(body_block, block);
+    header_block->UpdateGlobalPyParam(block->global_py_params());
+    body_block->UpdateGlobalPyParam(block->global_py_params());
   }
   WriteAssignVars(body_block, target_node, target_var);
 
@@ -1981,7 +1975,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   block->Jump(header_block, {NewValueNode(static_cast<int64_t>(0))});
   body_block->Mature();
   if (use_fallback) {
-    UpdateBlockPyParams(after_block, block);
+    after_block->UpdateGlobalPyParam(block->global_py_params());
   }
 
   header_block->ConditionalJump(cond_node, body_block, after_block);
@@ -1991,7 +1985,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body_block = ParseStatements(body_block, body_node);
   if (use_fallback) {
-    UpdateBlockPyParams(after_body_block, block);
+    after_body_block->UpdateGlobalPyParam(block->global_py_params());
   }
   if (after_body_block->func_graph()->get_return() == nullptr) {
     after_body_block->Jump(header_block, {loop_var_inc});
@@ -2044,8 +2038,8 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
 
   static const auto use_fallback = (support_fallback() != "0");
   if (use_fallback) {
-    UpdateBlockPyParams(header_block, block);
-    UpdateBlockPyParams(body_block, block);
+    header_block->UpdateGlobalPyParam(block->global_py_params());
+    body_block->UpdateGlobalPyParam(block->global_py_params());
   }
 
   // Get variable name of 'x' in statement 'for x in xs'
@@ -2073,7 +2067,7 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   block->Jump(header_block, {iter_node, NewValueNode(static_cast<int64_t>(0))});
   body_block->Mature();
   if (use_fallback) {
-    UpdateBlockPyParams(after_block, block);
+    after_block->UpdateGlobalPyParam(block->global_py_params());
   }
   header_block->ConditionalJump(cond_node, body_block, after_block);
 
@@ -2087,7 +2081,7 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   body_block->Jump(rolled_body_block, {});
   auto rolled_body_call = dyn_cast<CNode>(body_block->func_graph()->output());
   if (use_fallback) {
-    UpdateBlockPyParams(rolled_body_block, block);
+    rolled_body_block->UpdateGlobalPyParam(block->global_py_params());
   }
 
   // Parse loop body statements with loop context.
@@ -2095,7 +2089,7 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body_block = ParseStatements(rolled_body_block, body_node);
   if (use_fallback) {
-    UpdateBlockPyParams(after_body_block, block);
+    after_body_block->UpdateGlobalPyParam(block->global_py_params());
   }
   MS_LOG(DEBUG) << "Finish rolled block, after_body_block: " << after_body_block->ToString()
                 << ", rolled_body_block: " << rolled_body_block->ToString();

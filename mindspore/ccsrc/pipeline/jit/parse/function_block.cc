@@ -21,6 +21,8 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include <unordered_set>
+#include <queue>
 
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/parse/resolve.h"
@@ -125,6 +127,34 @@ AnfNodePtr FunctionBlock::ReadLocalVariable(const std::string &var_name) {
   return nullptr;
 }
 
+AnfNodePtr FunctionBlock::FindPredInterpretNode(const std::string &var_name) {
+  // Search the predecessors of the current block for the local parameter. If one of the local parameter of the
+  // predecessors is interpret node, the phi_param needs to set the interpret true.
+  std::unordered_set<FunctionBlock *> visited_block;
+  std::queue<FunctionBlock *> block_queue;
+  block_queue.push(this);
+  while (!block_queue.empty()) {
+    const auto &cur_block = block_queue.front();
+    block_queue.pop();
+    visited_block.insert(cur_block);
+    auto pred_node = cur_block->ReadLocalVariable(var_name);
+    if (pred_node != nullptr) {
+      bool interpret_without_internal =
+        IsPrimitiveCNode(pred_node, prim::kPrimPyInterpret) && !pred_node->interpret_internal_type();
+      if (pred_node->interpret() || interpret_without_internal) {
+        return pred_node;
+      }
+    } else {
+      for (const auto &cur_pred_block : cur_block->prev_blocks()) {
+        if (visited_block.count(cur_pred_block) == 0) {
+          block_queue.push(cur_pred_block);
+        }
+      }
+    }
+  }
+  return nullptr;
+}
+
 // Read variable from predecessors
 AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   MS_LOG(DEBUG) << "Read begin, var: " << var_name << ", block: " << ToString();
@@ -175,24 +205,14 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   ParameterPtr phi_param = std::make_shared<Parameter>(func_graph());
   MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " generate phi node "
                 << phi_param->ToString() << " for " << var_name;
+
   if (use_fallback) {
-    // Check the phi whether need interpret flag.
-    // If has Interpret node which name is var_name in prev_blocks_, means the phi need set interpret true.
-    for (auto &pred : prev_blocks_) {
-      MS_EXCEPTION_IF_NULL(pred);
-      auto iter = pred->local_py_params_values_.find(var_name);
-      if (iter != pred->local_py_params_values_.end()) {
-        auto pred_node = iter->second;
-        if (pred_node->interpret_special_type()) {
-          phi_param->set_interpret_special_type(true);
-        }
-        bool interpret_without_internal =
-          IsPrimitiveCNode(pred_node, prim::kPrimPyInterpret) && !pred_node->interpret_internal_type();
-        if (pred_node->interpret() || interpret_without_internal) {
-          phi_param->set_interpret(true);
-          break;
-        }
+    const auto &pred_node = FindPredInterpretNode(var_name);
+    if (pred_node != nullptr) {
+      if (pred_node->interpret_special_type()) {
+        phi_param->set_interpret_special_type(true);
       }
+      phi_param->set_interpret(true);
     }
   }
 

@@ -118,7 +118,11 @@ def test_while_after_for_in_if_3():
     assert (res.asnumpy() == [-3, -4]).all()
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_while_after_for_in_if_4():
     """
     Feature: JIT Fallback
