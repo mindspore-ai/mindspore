@@ -115,9 +115,45 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
     dataset_types, dataset_shapes = dataset_helper.types_shapes()
     (min_shapes, max_shapes) = (None, None) if not _has_dynamic_shape(dataset_shapes) \
         else dataset_helper.dynamic_min_max_shapes()
+    if network.get_inputs() and None not in network.get_inputs():
+        _check_inputs(network, dataset_shapes)
+        min_shapes, max_shapes = None, None
     network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types,
                                               queue_name, min_shapes, max_shapes)
     return network
+
+
+def _check_inputs(network, dataset_shapes):
+    """
+    Check if set inputs are correct.
+    """
+    network_shapes = network.get_inputs()
+    dataset_inputs_len = len(dataset_shapes)
+    network_inputs_len = len(network_shapes)
+    if network_inputs_len != dataset_inputs_len:
+        raise ValueError(
+            f"For 'set_inputs', the Length of Tensor must be {dataset_inputs_len}, but got {network_inputs_len}"
+        )
+    for tensor_index, ele_tensor in enumerate(dataset_shapes):
+        i_inputs = dataset_shapes[tensor_index]
+        set_inputs_shape = list(ele_tensor)
+        inputs_shape = list(i_inputs)
+        if len(inputs_shape) != len(set_inputs_shape):
+            raise ValueError(
+                f"For 'set_inputs', the Dimension of Tensor shape must be {len(inputs_shape)}, but got "
+                f"{len(set_inputs_shape)}"
+            )
+        if network_shapes[tensor_index] is None:
+            break
+        for index, ele_shape in enumerate(ele_tensor):
+            if network_shapes[tensor_index].shape[index] != -1:
+                if set_inputs_shape[index] != inputs_shape[index]:
+                    raise ValueError(
+                        f"For 'Length of Tensor shape', the value must be the same with that of inputs,but "
+                        f"got {ele_shape}"
+                    )
+            else:
+                dataset_shapes[tensor_index][index] = -1
 
 
 class _DatasetAux:

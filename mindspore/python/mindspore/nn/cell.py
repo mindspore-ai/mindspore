@@ -21,6 +21,7 @@ from collections import OrderedDict
 from types import FunctionType, MethodType
 import numpy
 
+import mindspore.dataset as ds
 from mindspore._checkparam import args_type_check
 from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
@@ -895,9 +896,12 @@ class Cell(Cell_):
             This is an experimental interface that is subject to change or deletion.
         """
         self._dynamic_shape_inputs = inputs
+        self._check_construct_args(*inputs)
         for ele in self._dynamic_shape_inputs:
             if isinstance(ele, (str, int, dict)):
                 raise TypeError(f"For element in 'set_inputs', the type must be Tensor, but got {type(ele)}.")
+        if self._dynamic_shape_inputs:
+            ds.config.set_dynamic_shape(True)
         if context._get_mode() == context.PYNATIVE_MODE:
             _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
 
@@ -2158,18 +2162,23 @@ class Cell(Cell_):
         for tensor_index in range(len_dynamic_shape_inputs):
             i_dynamic_shape_inputs = self._dynamic_shape_inputs[tensor_index]
             i_inputs = inputs[tensor_index]
+            if i_dynamic_shape_inputs is None:
+                break
             if i_dynamic_shape_inputs.dtype is not i_inputs.dtype:
                 raise TypeError(
                     f"For 'set_inputs', the DataType of Tensor must be {i_inputs.dtype}, but got "
                     f"{i_dynamic_shape_inputs.dtype}."
                 )
             set_inputs_shape = list(i_dynamic_shape_inputs.shape)
-            inputs_shape = list(i_inputs.shape)
-            if len(inputs_shape) != len(set_inputs_shape):
-                raise ValueError(
-                    f"For 'set_inputs' the Dimension of Tensor shape must be {len(inputs_shape)}, but got "
-                    f"{len(set_inputs_shape)}."
-                )
+            if i_inputs.shape == ():
+                inputs_shape = i_inputs
+            else:
+                inputs_shape = list(i_inputs.shape)
+                if len(inputs_shape) != len(set_inputs_shape):
+                    raise ValueError(
+                        f"For 'set_inputs' the Dimension of Tensor shape must be {len(inputs_shape)}, but got "
+                        f"{len(set_inputs_shape)}."
+                    )
             for shape_index in i_dynamic_shape_inputs.shape:
                 if shape_index != -1:
                     dynamic_index = i_dynamic_shape_inputs.shape.index(shape_index)
