@@ -3066,28 +3066,6 @@ class Tensor(Tensor_):
             j = tensor_operator_registry.get('select')(mask, mid, j)
         return j
 
-    def batch_to_space_nd(self, block_shape, crops):
-        """
-        Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
-
-        Refer to :func:`mindspore.ops.batch_to_space_nd` for more detail.
-
-        Supported Platforms:
-            ``Ascend`` ``CPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> from mindspore import Tensor
-            >>> block_shape = [2, 2]
-            >>> crops = [[0, 0], [0, 0]]
-            >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
-            >>> output = input_x.batch_to_space_nd(block_shape, crops)
-            >>> print(output)
-            [[[[1.  2.]
-               [3.  4.]]]]
-        """
-        return tensor_operator_registry.get('batch_to_space_nd')(block_shape, crops)(self)
-
     def one_hot(self, depth, on_value, off_value, axis=-1):
         r"""
         Computes a one-hot tensor.

@@ -306,15 +306,18 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.broadcast_to
     mindspore.ops.adaptive_max_pool2d
+    mindspore.ops.batch_to_space_nd
+    mindspore.ops.broadcast_to
     mindspore.ops.col2im
     mindspore.ops.diag
     mindspore.ops.expand_dims
+    mindspore.ops.flatten
     mindspore.ops.gather
     mindspore.ops.gather_d
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
+    mindspore.ops.gumbel_softmax
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
@@ -326,12 +329,10 @@ Array操作
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.reshape
-    mindspore.ops.flatten
     mindspore.ops.scatter_nd
     mindspore.ops.select
     mindspore.ops.shape
     mindspore.ops.size
-    mindspore.ops.gumbel_softmax
     mindspore.ops.space_to_batch_nd
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_min
