@@ -64,6 +64,7 @@ if(ENABLE_MINDDATA)
             ./pre_activate/*.cc
             ./pynative/*.cc
             ./session/*.cc
+            ./side_effect/*.cc
             ./transform/*.cc
             ./utils/*.cc
             ./vm/*.cc
