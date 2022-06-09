@@ -79,11 +79,13 @@ mindspore
 
     mindspore.Callback
     mindspore.CheckpointConfig
+    mindspore.EarlyStopping
     mindspore.History
     mindspore.LambdaCallback
     mindspore.LearningRateScheduler
     mindspore.LossMonitor
     mindspore.ModelCheckpoint
+    mindspore.ReduceLROnPlateau
     mindspore.RunContext
     mindspore.TimeMonitor
 

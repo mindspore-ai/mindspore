@@ -18,6 +18,7 @@ from functools import wraps
 
 import os
 import math
+import copy
 import numpy as np
 
 from mindspore import log as logger
@@ -25,7 +26,7 @@ from .serialization import save_checkpoint, load_checkpoint
 from .callback._checkpoint import ModelCheckpoint
 from .callback._checkpoint import _chg_ckpt_file_name_if_same_exist
 from ..common.tensor import Tensor
-from ..nn.metrics import get_metrics
+from ..nn.metrics import get_metrics, get_metric_fn
 from .._checkparam import check_input_data, check_output_data, Validator
 from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback, TimeMonitor
 from .callback import __all__ as internal_cb_names
@@ -683,8 +684,9 @@ class Model:
             need_exec_callback_epoch_end = not (self.enable_recovery and _get_recovery_context("need_reset"))
             if need_exec_callback_epoch_end:
                 list_callback.on_train_epoch_end(run_context)
-            if "metrics" in cb_params:
+            if "metrics" in cb_params or "eval_results" in cb_params:
                 cb_params.pop("metrics")
+                cb_params.pop("eval_results")
 
             should_stop = run_context.get_stop_requested()
             if should_stop:
@@ -880,8 +882,9 @@ class Model:
             self._flush_from_cache(cb_params)
 
             list_callback.on_train_epoch_end(run_context)
-            if "metrics" in cb_params:
+            if "metrics" in cb_params or "eval_results" in cb_params:
                 cb_params.pop("metrics")
+                cb_params.pop("eval_results")
             should_stop = run_context.get_stop_requested()
             if should_stop:
                 break
@@ -1114,8 +1117,8 @@ class Model:
         _device_number_check(self._parallel_mode, self._device_number)
 
         if not isinstance(valid_frequency, (int, list)):
-            raise ValueError(f"For 'Model.fit', the type of 'valid_frequency' must be a list or a integer, but got "
-                             f"type {type(valid_frequency)}.")
+            raise TypeError(f"For 'Model.fit', the type of 'valid_frequency' must be a list or a integer, but got "
+                            f"type {type(valid_frequency)}.")
 
         if valid_dataset and not self._metric_fns:
             raise ValueError("For 'Model.fit', if valid_dataset is not None, the model argument 'metrics' can not be"
@@ -1212,10 +1215,10 @@ class Model:
 
         with _CallbackManager(callbacks) as list_callback:
             if dataset_sink_mode:
-                return self._eval_dataset_sink_process(valid_dataset, list_callback, cb_params)
-            return self._eval_process(valid_dataset, list_callback, cb_params)
+                return self._eval_dataset_sink_process(valid_dataset, list_callback, cb_params, add_eval_loss=True)
+            return self._eval_process(valid_dataset, list_callback, cb_params, add_eval_loss=True)
 
-    def _eval_dataset_sink_process(self, valid_dataset, list_callback=None, cb_params=None):
+    def _eval_dataset_sink_process(self, valid_dataset, list_callback=None, cb_params=None, add_eval_loss=False):
         """
         Evaluation. The data would be passed to network through dataset channel.
 
@@ -1243,15 +1246,22 @@ class Model:
             cb_params.net_outputs = outputs
             list_callback.on_eval_step_end(run_context)
             self._update_metrics(outputs)
+            if add_eval_loss:
+                eval_loss_fn = get_metric_fn("loss")
+                eval_loss_fn.update(outputs[self._eval_indexes[0]])
 
         list_callback.on_eval_epoch_end(run_context)
         metrics = self._get_metrics()
         cb_params.metrics = metrics
+        if add_eval_loss:
+            eval_loss = eval_loss_fn.eval()
+            cb_params.eval_results = copy.deepcopy(metrics)
+            cb_params.eval_results.update({"eval_loss": eval_loss})
         list_callback.on_eval_end(run_context)
 
         return metrics
 
-    def _eval_process(self, valid_dataset, list_callback=None, cb_params=None):
+    def _eval_process(self, valid_dataset, list_callback=None, cb_params=None, add_eval_loss=False):
         """
         Evaluation. The data would be passed to network directly.
 
@@ -1278,11 +1288,18 @@ class Model:
             cb_params.net_outputs = outputs
             list_callback.on_eval_step_end(run_context)
             self._update_metrics(outputs)
+            if add_eval_loss:
+                eval_loss_fn = get_metric_fn("loss")
+                eval_loss_fn.update(outputs[self._eval_indexes[0]])
 
         list_callback.on_eval_epoch_end(run_context)
         valid_dataset.reset()
         metrics = self._get_metrics()
         cb_params.metrics = metrics
+        if add_eval_loss:
+            eval_loss = eval_loss_fn.eval()
+            cb_params.eval_results = copy.deepcopy(metrics)
+            cb_params.eval_results.update({"eval_loss": eval_loss})
         list_callback.on_eval_end(run_context)
         return metrics
 

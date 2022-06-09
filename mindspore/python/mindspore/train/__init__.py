@@ -26,7 +26,8 @@ from .serialization import save_checkpoint, load_checkpoint, load_param_into_net
     build_searched_strategy, merge_sliced_parameter, load_distributed_checkpoint, async_ckpt_thread_status,\
     restore_group_info_list
 from .callback import Callback, LossMonitor, TimeMonitor, ModelCheckpoint, SummaryCollector, CheckpointConfig, \
-    RunContext, LearningRateScheduler, SummaryLandscape, FederatedLearningManager, History, LambdaCallback
+    RunContext, LearningRateScheduler, SummaryLandscape, FederatedLearningManager, History, LambdaCallback, \
+    ReduceLROnPlateau, EarlyStopping
 from .summary import SummaryRecord
 from .train_thor import ConvertNetUtils, ConvertModelUtils
 
