@@ -36,7 +36,7 @@ bool HcomAllReduceKernel::Launch(const std::vector<AddressPtr> &inputs, const st
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllReduce(inputs[0]->addr, outputs[0]->addr, hccl_count_,
                                                                     hccl_data_type_list_[0], op_type_, stream_, group_);
   if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcclAllReduce faled, ret:" << hccl_result;
+    MS_LOG(ERROR) << "HcclAllReduce failed, ret:" << hccl_result;
     return false;
   }
   return true;

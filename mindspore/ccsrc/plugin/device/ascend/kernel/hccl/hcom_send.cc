@@ -35,7 +35,7 @@ bool HcomSendKernel::Launch(const std::vector<AddressPtr> &inputs, const std::ve
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclSend(inputs[0]->addr, hccl_count_, hccl_data_type_list_[0],
                                                                dest_rank_, stream_, group_);
   if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcomSend faled, ret:" << hccl_result;
+    MS_LOG(ERROR) << "HcomSend failed, ret:" << hccl_result;
     return false;
   }
   return true;

@@ -32,7 +32,7 @@ bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> &inputs, const
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclBroadcast(inputs[0]->addr, hccl_count_,
                                                                     hccl_data_type_list_[0], root_id_, stream_ptr);
   if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast fail, return: " << hccl_result;
+    MS_LOG(ERROR) << "HcomBroadcastOp : hcom_broadcast failed, return: " << hccl_result;
     return false;
   }
   return true;

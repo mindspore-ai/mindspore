@@ -105,6 +105,7 @@ void HcclAdapter::InitPlugin() {
   hccl_exec_finalize_ = DlsymFuncObj(HcomExecFinalize, plugin_handle_);
   hccl_exec_enqueue_op_ = DlsymFuncObj(HcomExecEnqueueOperation, plugin_handle_);
   hccl_exec_enqueue_all_to_all_v_ = DlsymFuncObj(HcomExecEnqueueAllToAllV, plugin_handle_);
+  launch_hccl_all_to_allv_ = DlsymFuncObj(HcclAlltoAllV, plugin_handle_);
 }
 
 void HcclAdapter::FinalizePlugin() {
@@ -131,6 +132,7 @@ void HcclAdapter::FinalizePlugin() {
   hccl_exec_finalize_ = nullptr;
   hccl_exec_enqueue_op_ = nullptr;
   hccl_exec_enqueue_all_to_all_v_ = nullptr;
+  launch_hccl_all_to_allv_ = nullptr;
   (void)dlclose(plugin_handle_);
   plugin_handle_ = nullptr;
 }
@@ -551,5 +553,15 @@ HcclResult HcclAdapter::HcclExecAllToAllv(const ::HcomAllToAllVParams &params, c
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(hccl_exec_enqueue_all_to_all_v_);
   return hccl_exec_enqueue_all_to_all_v_(params, callback);
+}
+
+HcclResult HcclAdapter::HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params,
+                                     HcclDataType dataType, aclrtStream stream, const std::string &group) const {
+  CheckExcutionMode();
+  CHECK_SYMBOL_NULL(launch_hccl_all_to_allv_);
+  auto hccl_comm = GetHcomm(group);
+  MS_EXCEPTION_IF_NULL(hccl_comm);
+  return launch_hccl_all_to_allv_(send_buf, params.sendcounts.data(), params.sdispls.data(), dataType, recv_buf,
+                                  params.recvcounts.data(), params.rdispls.data(), dataType, hccl_comm, stream);
 }
 }  // namespace mindspore::hccl

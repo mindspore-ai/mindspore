@@ -58,5 +58,9 @@ HcclResult HcclAdapter::HcclRecv(void *, uint64_t, HcclDataType, uint32_t, aclrt
 HcclResult HcclAdapter::HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const {
   return HCCL_SUCCESS;
 }
+HcclResult HcclAdapter::HcclAllToAll(void *, void *, hccl::HcclAllToAllVParams, HcclDataType, aclrtStream,
+                                     const std::string &) const {
+  return HCCL_SUCCESS;
+}
 }  // namespace hccl
 }  // namespace mindspore

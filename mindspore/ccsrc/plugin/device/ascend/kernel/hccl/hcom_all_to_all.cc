@@ -14,18 +14,41 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/kernel/hccl/hcom_all_to_all.h"
+#include <algorithm>
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
+#include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "include/common/utils/comm_manager.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::kernel {
 HcomAllToAllKernel::HcomAllToAllKernel() {}
 
 HcomAllToAllKernel::~HcomAllToAllKernel() {}
 
-bool HcomAllToAllKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &, void *) {
+bool HcomAllToAllKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  MS_LOG(DEBUG) << "HcclAllToAll launch";
+  if (inputs.empty() || outputs.empty() || hccl_data_type_list_.empty()) {
+    MS_LOG(ERROR) << "Invalid AllToAll input, output or data type size (" << inputs.size() << ", " << outputs.size()
+                  << ", " << hccl_data_type_list_.size() << ").";
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(inputs[0]);
+  MS_EXCEPTION_IF_NULL(outputs[0]);
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  if (stream_ == nullptr) {
+    stream_ = stream_ptr;
+  }
+
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllToAll(inputs[0]->addr, outputs[0]->addr, params_,
+                                                                   data_type_, stream_, group_);
+  if (hccl_result != HCCL_SUCCESS) {
+    MS_LOG(ERROR) << "HcclAllToAll failed, ret:" << hccl_result;
+    return false;
+  }
   return true;
 }
 
@@ -47,8 +70,26 @@ bool HcomAllToAllKernel::Init(const AnfNodePtr &anf_node) {
   } else {
     data_type_ = hccl_data_type_list_[0];
   }
-
-  mutable_workspace_size_list_ = {LongToSize(hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node, data_type_))};
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
+    mutable_workspace_size_list_ = {
+      LongToSize(hccl::HcclAdapter::GetInstance().CalcWorkspaceSize(anf_node, data_type_))};
+  }
+  uint32_t rank_size = 0;
+  if (!CommManager::GetInstance().GetRankSize(group_, &rank_size)) {
+    MS_LOG(EXCEPTION) << "Get hccl rank size for group " << group_ << " failed.";
+  }
+  hccl::AllToAllvCalcParam calc(cnode, rank_size);
+  calc.CalcOpParam();
+  std::transform(calc.GetSendCounts().begin(), calc.GetSendCounts().end(), std::back_inserter(params_.sendcounts),
+                 [](int64_t elem) { return static_cast<uint64_t>(elem); });
+  std::transform(calc.GetSendDispls().begin(), calc.GetSendDispls().end(), std::back_inserter(params_.sdispls),
+                 [](int64_t elem) { return static_cast<uint64_t>(elem); });
+  std::transform(calc.GetRecvCounts().begin(), calc.GetRecvCounts().end(), std::back_inserter(params_.recvcounts),
+                 [](int64_t elem) { return static_cast<uint64_t>(elem); });
+  std::transform(calc.GetRecvDispls().begin(), calc.GetRecvDispls().end(), std::back_inserter(params_.rdispls),
+                 [](int64_t elem) { return static_cast<uint64_t>(elem); });
   return true;
 }
 

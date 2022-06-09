@@ -27,6 +27,7 @@
 #include "utils/log_adapter.h"
 #include "mindspore/core/ops/core_ops.h"
 #include "include/transform/graph_ir/utils.h"
+#include "include/common/utils/comm_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
 
 namespace mindspore::hccl {
@@ -132,9 +133,8 @@ static void SetAllToAllvAttr(const CNodePtr &cnode, const ge::OpDescPtr &ge_op, 
     return;
   }
   uint32_t rank_size = 0;
-  ::HcclResult hccl_ret = hccl::HcclAdapter::GetInstance().HcclGetRankSize(group, &rank_size);
-  if (hccl_ret != ::HcclResult::HCCL_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Get hccl rank size for group " << group << " failed, ret = " << hccl_ret;
+  if (!CommManager::GetInstance().GetRankSize(group, &rank_size)) {
+    MS_LOG(EXCEPTION) << "Get hccl rank size for group " << group << " failed.";
   }
   mindspore::hccl::AllToAllvCalcParam calc(cnode, rank_size);
   calc.CalcOpParam();

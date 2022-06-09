@@ -30,7 +30,7 @@ using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiv
 
 namespace ge {
 class OpsKernelInfoStore;
-class OpsKernelBuilder;
+class OpsKernelvBuilder;
 }  // namespace ge
 
 namespace mindspore::hccl {
@@ -38,6 +38,13 @@ struct HcclTaskInfo {
   std::string private_def;
   int64_t workspace_size;
   int64_t stream_num;
+};
+
+struct HcclAllToAllVParams {
+  std::vector<uint64_t> sendcounts;
+  std::vector<uint64_t> sdispls;
+  std::vector<uint64_t> recvcounts;
+  std::vector<uint64_t> rdispls;
 };
 
 enum HcclMode { kGraph, kPynative, kKernelByKernel };
@@ -78,6 +85,8 @@ class HcclAdapter {
                       const std::string &group = "") const;
   HcclResult HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank, aclrtStream stream,
                       const std::string &group = "") const;
+  HcclResult HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params, HcclDataType dataType,
+                          aclrtStream stream, const std::string &group) const;
 
   // for enqueue op
   HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
@@ -129,6 +138,7 @@ class HcclAdapter {
   HcclRecvFunObj launch_hccl_recv_ = nullptr;
   HcclGetRankIdFunObj single_op_hccl_get_rank_id_ = nullptr;
   HcclGetRankSizeFunObj single_op_hccl_get_rank_size_ = nullptr;
+  HcclAlltoAllVFunObj launch_hccl_all_to_allv_ = nullptr;
 
   HcomCreateGroupFunObj hccl_create_group_ = nullptr;
   HcomDestroyGroupFunObj hccl_destroy_group_ = nullptr;

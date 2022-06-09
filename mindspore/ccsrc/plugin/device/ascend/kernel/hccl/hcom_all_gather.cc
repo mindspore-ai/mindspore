@@ -36,7 +36,7 @@ bool HcomAllGatherKernel::Launch(const std::vector<AddressPtr> &inputs, const st
   auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllGather(inputs[0]->addr, outputs[0]->addr, hccl_count_,
                                                                     hccl_data_type_list_[0], stream_, group_);
   if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcclAllGather faled, ret:" << hccl_result;
+    MS_LOG(ERROR) << "HcclAllGather failed, ret:" << hccl_result;
     return false;
   }
   return true;
