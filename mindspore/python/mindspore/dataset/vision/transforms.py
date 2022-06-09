@@ -1016,10 +1016,10 @@ class MixUp(PyTensorOperation):
 
     Examples:
         >>> # first decode the image
-        >>> image_folder_dataset = image_folder_dataset.map(operations=c_vision.Decode(),
+        >>> image_folder_dataset = image_folder_dataset.map(operations=vision.Decode(),
         ...                                                 input_columns="image")
         >>> # then ont hot decode the label
-        >>> image_folder_dataset = image_folder_dataset.map(operations=c_transforms.OneHot(10),
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms.OneHot(10),
         ...                                                 input_columns="label")
         >>> # batch the samples
         >>> batch_size = 4
