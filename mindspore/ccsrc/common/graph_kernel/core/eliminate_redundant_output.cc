@@ -209,7 +209,9 @@ bool EliminateRedundantOutput::Run(const FuncGraphPtr &func_graph) {
 }
 
 void EliminateHangingOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset) const {
-  if (offset == 0) return;
+  if (offset == 0) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(getitem);
   auto index = GetIndex(getitem);
   if (offset > index) {
@@ -240,7 +242,9 @@ AnfNodePtr EliminateHangingOutput::ReplaceMakeTuple(const AnfNodePtr &node, cons
       }
     }
   }
-  if (offset == 0) return nullptr;
+  if (offset == 0) {
+    return nullptr;
+  }
   if (new_maketuple_inputs.size() == 1) {
     MS_LOG(EXCEPTION) << "Input of MakeTuple could not be empty";
   }

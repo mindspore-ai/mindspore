@@ -32,7 +32,7 @@ class GraphKernelExpander : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  protected:
-  AnfNodePtr CreateExpandedNode(const CNodePtr &node, const std::string &name);
+  AnfNodePtr CreateExpandedNode(const CNodePtr &node, const std::string &name) const;
   virtual ExpanderPtr InitExpander(const AnfNodePtr &node) = 0;
   virtual std::vector<PrimitivePtr> InitOpList() = 0;
   bool DoExpand(const FuncGraphPtr &func_graph);

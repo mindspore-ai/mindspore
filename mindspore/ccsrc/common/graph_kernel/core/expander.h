@@ -68,6 +68,7 @@ class COMMON_EXPORT InputToAttrDeco : public ExpanderDecorator {
   InputToAttrDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
       : ExpanderDecorator(decorated), input_idx_(input_idx) {}
   ~InputToAttrDeco() = default;
+  AnfNodePtr Run(const AnfNodePtr &node) override;
 
   static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx) {
     return [input_idx](const ExpanderPtr &decorated) {
@@ -76,7 +77,6 @@ class COMMON_EXPORT InputToAttrDeco : public ExpanderDecorator {
   }
 
  protected:
-  AnfNodePtr Run(const AnfNodePtr &node) override;
   HashSet<size_t> input_idx_;
 };
 
