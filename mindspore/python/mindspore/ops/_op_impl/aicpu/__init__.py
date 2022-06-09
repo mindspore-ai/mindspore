@@ -263,3 +263,4 @@ from .unique_consecutive import _unique_consecutive_aicpu
 from .sparse_tensor_dense_mat_mul import _sparse_tensor_dense_mat_mul_aicpu
 from .sparse_matrix_nnz import _sparse_matrix_nnz_aicpu
 from .multinomial import _multinomial_aicpu
+from .pow import _pow_aicpu

@@ -146,6 +146,7 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
   void SquaredDifferenceComplex(const T *input1, const T *input2, T *out);
   void DivComplex(const T *input1, const T *input2, T *out);
   void XdivyComplex(const T *input1, const T *input2, T *out);
+  void PowComplex(const T *input1, const T *input2, T *out);
 
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                const std::vector<AddressPtr> &outputs) override {
@@ -198,7 +199,8 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
         {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDivComplex},
         {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul},
         {prim::kPrimDivNoNan->name(), &ArithmeticCpuTypeFunc<T>::DivNoNan},
-        {prim::kPrimAddV2->name(), &ArithmeticCpuTypeFunc<T>::AddV2}};
+        {prim::kPrimAddV2->name(), &ArithmeticCpuTypeFunc<T>::AddV2},
+        {prim::kPrimPow->name(), &ArithmeticCpuTypeFunc<T>::PowComplex}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Map2Str(arithmeticMathFuncMap)
@@ -646,6 +648,32 @@ void ArithmeticCpuTypeFunc<T>::Pow(const T *input1, const T *input2, T *out) {
 }
 
 template <typename T>
+void ArithmeticCpuTypeFunc<T>::PowComplex(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  if (output_size_ > kMaxPowSerialSize) {
+    auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
+      auto iter = base_iter;
+      iter.SetPos(start);
+      for (size_t i = start; i < end; i++) {
+        auto x = (input1[iter.GetInputPosA()]);
+        auto y = (input2[iter.GetInputPosB()]);
+        out[i] = static_cast<T>(std::pow(x, y));
+        iter.GenNextPos();
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  } else {
+    base_iter.SetPos(0);
+    for (size_t i = 0; i < output_size_; i++) {
+      auto sx = (input1[base_iter.GetInputPosA()]);
+      auto sy = (input2[base_iter.GetInputPosB()]);
+      out[i] = static_cast<T>(std::pow(sx, sy));
+      base_iter.GenNextPos();
+    }
+  }
+}
+
+template <typename T>
 void ArithmeticCpuTypeFunc<T>::SquaredDifference(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
@@ -835,7 +863,23 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
      SpecializeArithFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     SpecializeArithFunc<double>}}},
+     SpecializeArithFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeArithFunc<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     SpecializeArithFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeArithFunc<uint8_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     SpecializeArithFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     SpecializeArithFunc<complex128>}}},
   {kRealDiv,
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      SpecializeArithFunc<int32_t>},
