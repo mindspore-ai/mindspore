@@ -107,7 +107,7 @@ class AdjustGamma(TensorOperation, PyTensorOperation):
 
     @check_adjust_gamma
     def __init__(self, gamma, gain=1):
-        super(AdjustGamma, self).__init__()
+        super().__init__()
         self.gamma = gamma
         self.gain = gain
         self.random = False

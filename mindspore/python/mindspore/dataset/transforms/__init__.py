@@ -23,12 +23,6 @@ Common imported modules in corresponding API examples are as follows:
     import mindspore.dataset as ds
     import mindspore.dataset.transforms as transforms
 
-Alternative and equivalent imported transforms is as follows:
-
-.. code-block::
-
-    import mindspore.dataset.transforms.transforms as transforms
-
 Note: Legacy c_transforms and py_transforms are deprecated but can still be imported as follows:
 
 .. code-block::
