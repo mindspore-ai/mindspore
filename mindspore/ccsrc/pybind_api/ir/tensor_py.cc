@@ -169,6 +169,8 @@ class TensorDataNumpy : public TensorData {
 
   const void *const_data() const override { return buffer_.ptr; }
 
+  bool is_sub_data() const override { return false; }
+
   /// To string.
   std::string ToString(const TypeId, const ShapeVector &, bool use_comma) const override {
     if (use_comma) {

@@ -224,6 +224,20 @@ void UpdateGraphsRefNodeAddress(const std::vector<KernelGraphPtr> &graphs) {
     }
   }
 }
+
+bool IsNeedSync(const TensorPtr &tensor) {
+  if (RecoveryContext::GetInstance()->enable_recovery() &&
+      RecoveryContext::GetInstance()->need_sync_weight_to_device()) {
+    return true;
+  }
+
+  if (tensor == nullptr) {
+    return false;
+  }
+  // Sub data need sync each step
+  auto data_ptr = tensor->data_ptr();
+  return data_ptr != nullptr && data_ptr->is_sub_data();
+}
 }  // namespace
 void DataPrepareActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
@@ -309,6 +323,24 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
   }
 }
 
+void DataPrepareActor::SetInitTensorsIfNeeded(const std::vector<std::vector<TensorPtr>> &input_tensors) {
+  if (!init_tensors_.empty()) {
+    return;
+  }
+  bool need_save = std::any_of(input_tensors.begin(), input_tensors.end(), [](const std::vector<TensorPtr> &tensors) {
+    return std::any_of(tensors.begin(), tensors.end(), [](const TensorPtr &tensor) {
+      if (tensor == nullptr) {
+        return false;
+      }
+      auto data_ptr = tensor->data_ptr();
+      return data_ptr != nullptr && data_ptr->is_sub_data();
+    });
+  });
+  if (need_save) {
+    init_tensors_ = input_tensors;
+  }
+}
+
 void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                    OpContext<DeviceTensor> *const context, GraphExecutionStrategy real_strategy) {
   MS_EXCEPTION_IF_NULL(context);
@@ -316,7 +348,8 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
 
   real_strategy_ = real_strategy;
   // Convert actor running data from input tensors.
-  if (input_tensors.size() > 0) {
+  if (!input_tensors.empty()) {
+    SetInitTensorsIfNeeded(input_tensors);
     try {
       PrepareDataForDeviceTensorStore(input_tensors, context);
       if (strategy_ == GraphExecutionStrategy::kPipeline) {
@@ -728,7 +761,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   MS_EXCEPTION_IF_NULL(device_tensor);
   auto host_tensor_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
   // Use the device address of host tensor to set device tensor.
-  bool is_need_sync = false;
+  bool is_need_sync = IsNeedSync(tensor);
   if (host_tensor_address != device_tensor) {
     if (host_tensor_address == nullptr) {
       // The step mode can't reuse the device tensor, because other actors may use the device tensor in step mode.
@@ -780,11 +813,6 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   // so need update the device tensor store always.
   host_tensor_address->SetNodeIndex(backend_node, 0);
   DeviceTensorStore::GetInstance().Insert(front_node.get(), host_tensor_address);
-
-  if (RecoveryContext::GetInstance()->enable_recovery() &&
-      RecoveryContext::GetInstance()->need_sync_weight_to_device()) {
-    is_need_sync = true;
-  }
 
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
   MS_EXCEPTION_IF_NULL(host_tensor_address);
