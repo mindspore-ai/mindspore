@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Providing akg directory base path"""
-import importlib
+import importlib.util
 import os
 
 

@@ -340,11 +340,13 @@ def test_csr_ops():
     dense_tensor = Tensor([[1., 1, 1, 1], [1, 1, 1, 1]], dtype=mstype.float32)
     dense_vector = Tensor([[1.], [1], [1], [1]], dtype=mstype.float32)
     csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+    dense_matrix = Tensor([[1., 2.], [1, 2.], [1, 2.], [1., 2.]], dtype=mstype.float32)
 
     def test_ops_pynative_dense():
         dense1 = F.csr_reduce_sum(csr_tensor, 1)
         dense2 = F.csr_mv(csr_tensor, dense_vector)
-        return dense1, dense2
+        dense3 = csr_tensor.mm(dense_matrix)
+        return dense1, dense2, dense3
 
     def test_ops_pynative_sparse():
         sparse1 = csr_tensor * dense_tensor
@@ -359,10 +361,13 @@ def test_csr_ops():
     graph_res_dense = test_ops_graph_dense()
     expect1 = np.array([[2.], [1.]], dtype=np.float32)
     expect2 = np.array([[2.], [1.]], dtype=np.float32)
+    expect3 = np.array([[2., 4.], [1., 2.]], dtype=np.float32)
     assert np.allclose(pynative_res_dense[0].asnumpy(), expect1)
     assert np.allclose(pynative_res_dense[1].asnumpy(), expect2)
+    assert np.allclose(pynative_res_dense[2].asnumpy(), expect3)
     assert np.allclose(graph_res_dense[0].asnumpy(), expect1)
     assert np.allclose(graph_res_dense[1].asnumpy(), expect2)
+    assert np.allclose(graph_res_dense[2].asnumpy(), expect3)
 
     pynative_res_sparse = test_ops_pynative_sparse()
     graph_res_sparse = test_ops_graph_sparse()

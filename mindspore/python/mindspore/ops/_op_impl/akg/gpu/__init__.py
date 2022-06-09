@@ -19,6 +19,7 @@ from .csr_gather import _csr_gather_akg
 from .csr_div import _csr_div_akg
 from .csr_mul import _csr_mul_akg
 from .csr_mv import _csr_mv_akg
+from .csr_mm import _csr_mm_akg
 from .csr_reduce_sum import _csr_reduce_sum_akg
 from .equal import _equal_akg
 from .greater_equal import _greater_equal_akg

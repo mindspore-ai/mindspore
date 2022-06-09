@@ -60,6 +60,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(prim::kPrimUnsortedSegmentMax->name(), {2});
   Register(prim::kPrimCSRReduceSum->name(), {3, 4});
   Register(prim::kPrimCSRMV->name(), {3});
+  Register(prim::kPrimCSRMM->name(), {3});
   Register(prim::kPrimCSRMul->name(), {3});
   Register(prim::kPrimCSRDiv->name(), {3});
   Register(prim::kPrimCSRGather->name(), {3});

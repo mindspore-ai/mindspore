@@ -83,6 +83,19 @@ mindspore.CSRTensor
 
         Tensor。
 
+    .. py:method:: mm(dense_matrix)
+
+        返回CSRTensor右乘稠密矩阵的矩阵乘法运算结果。
+        形状为 `[M, N]` 的CSRTensor，需要适配形状为 `[N, K]` 的稠密矩阵，得到结果为 `[M, K]` 的稠密矩阵。
+
+        **参数：**
+
+        - **dense_matrix** (Tensor) - 形状为 `[N，K]` 的二维矩阵，其中N等于CSRTensor的列数。
+
+        **返回：**
+
+        Tensor。
+
     .. py:method:: ndim
         :property:
 

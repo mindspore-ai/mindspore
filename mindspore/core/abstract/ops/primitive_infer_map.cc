@@ -286,6 +286,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimCSRMul, R{InferImplCSRElementWise, nullptr, true}},
     {prim::kPrimCSRDiv, R{InferImplCSRElementWise, nullptr, true}},
     {prim::kPrimCSRMV, R{InferImplCSRMV, nullptr, true}},
+    {prim::kPrimCSRMM, R{InferImplCSRMM, nullptr, true}},
     {prim::kPrimCSRReduceSum, R{InferImplCSRReduceSum, nullptr, true}},
     {prim::kPrimCSRGather, R{InferImplCSRGather, nullptr, true}},
     {prim::kPrimCSR2COO, R{InferImplCSR2COO, nullptr, true}},

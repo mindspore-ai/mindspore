@@ -4834,6 +4834,35 @@ class CSRTensor(CSRTensor_):
         validator.check_value_type('dense_vector', dense_vector, (Tensor_,), 'CSRTensor.mv')
         return tensor_operator_registry.get("csr_mv")(self, dense_vector)
 
+    def mm(self, dense):
+        """
+        Sparse matrix-matrix multiplication.
+
+        Args:
+            dense_vector (Tensor): A dense Tensor, its shape[0] should be equal to csr_tensor.shape[1]
+
+        Returns:
+            Tensor.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor, CSRTensor
+            >>> from mindspore import dtype as mstype
+            >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+            >>> indices = Tensor([0, 1], dtype=mstype.int32)
+            >>> values = Tensor([2, 1], dtype=mstype.float32)
+            >>> dense_shape = (2, 4)
+            >>> csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+            >>> Tensor([[1., 2.], [1, 2.], [1, 2.], [1., 2.]], dtype=mstype.float32)
+            >>> print(csr_tensor.mm(dense))
+            [[2., 4.]
+            [1., 2.]]
+        """
+        validator.check_value_type('dense_matrix', dense, (Tensor_,), 'CSRTensor.mm')
+        return tensor_operator_registry.get("csr_mm")()(self.indptr, self.indices, self.values, self.shape, dense)
+
     def sum(self, axis):
         """
         Reduces a dimension of a CSRTensor by summing all elements in the dimension.

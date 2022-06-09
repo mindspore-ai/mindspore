@@ -1033,5 +1033,48 @@ AbstractBasePtr InferImplAdamApplyOneWithDecay(const AnalysisEnginePtr &, const 
   AbstractBasePtrList rets = {add1, add0, sub0};
   return std::make_shared<AbstractTuple>(rets);
 }
+AbstractBasePtr InferImplCSRMM(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a sparse tensor and a dense tensor.
+  constexpr auto kCSRMMInputsNum = 5;
+  constexpr auto kCSRMMShapeSize = 2;
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, kCSRMMInputsNum);
+  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+  auto shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 3);
+  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 4);
+  MS_EXCEPTION_IF_NULL(indptr);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(values);
+  MS_EXCEPTION_IF_NULL(shape);
+  MS_EXCEPTION_IF_NULL(dense);
+
+  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
+
+  ShapeVector sparse_shape = ConvertToShapeVector(shape);
+  auto dense_shape = dense->shape()->shape();
+  if (sparse_shape.size() != kCSRMMShapeSize || dense_shape.size() != kCSRMMShapeSize) {
+    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRMMShapeSize << "-D inputs! "
+                             << "But csr tensor has " << sparse_shape.size() << " dimensions, "
+                             << "and dense tensor has " << dense_shape.size() << " dimensions, ";
+  }
+  if (dense_shape[kIndexZero] != sparse_shape[kIndexOne]) {
+    MS_EXCEPTION(ValueError) << "The dense's shape[0] should be equal to csr tensor's shape[1]"
+                             << ", but dense's shape[0] is: " << dense_shape[kIndexZero]
+                             << "and csr tensor's shape[1] is" << sparse_shape[kIndexOne];
+  }
+
+  ShapeVector out_shape = {sparse_shape[kIndexZero], dense_shape[kIndexOne]};
+  auto ret = std::make_shared<AbstractTensor>(values->element()->BuildType(), out_shape);
+  // SetAttr
+  auto nnz_vec = indices->shape()->shape();
+  auto csr_avg_rows = nnz_vec[kIndexZero] / dense_shape[kIndexZero];
+  primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
+  primitive->set_attr(kIsCSR, MakeValue(true));
+  return ret;
+}
 }  // namespace abstract
 }  // namespace mindspore
