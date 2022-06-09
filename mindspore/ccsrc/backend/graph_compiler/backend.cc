@@ -441,7 +441,6 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
   SetDebuggerInit();
 #endif
   runtime::GraphScheduler::GetInstance().Initialize();
-  pynative_run_in_graph_ = device_context->GetDeviceType() != device::DeviceType::kAscend;
 }
 
 void MindRTBackend::ProcessNotSupportCnode(const FuncGraphPtr &func_graph,
@@ -914,49 +913,65 @@ void MindRTBackend::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *ou
   }
 }
 
-void MindRTBackend::RunGraphIntergated(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
-                                       const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
+void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
+                                     const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
   WaitTaskFinish();
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   auto graphs = graph_compiler_info.graphs_;
-  auto &op_executor = runtime::OpExecutor::GetInstance();
-  op_executor.Register([this]() { BatchBuildCallback(); });
-  for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
-    const auto &graph = graphs[graph_index];
-    MS_EXCEPTION_IF_NULL(graph);
-    // TODO(caifubi): Update parameter format for Ascend
-    if (!graph->has_flag(kFlagGraphCompiled)) {
+  if (graphs.size() > inputs.size()) {
+    MS_LOG(EXCEPTION) << "The actor_set " << actor_info << " graphs size " << graphs.size()
+                      << " should less than or equal to inputs size " << inputs.size();
+  }
+
+  auto actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
+  if (actor_set == nullptr) {
+    // Need to compile graph for the first step.
+    for (size_t i = 0; i < graphs.size(); ++i) {
+      const auto &graph = graphs[i];
+      MS_EXCEPTION_IF_NULL(graph);
+      graph->set_flag(kFlagPyNativeRunInGraph, true);
+      // Get real format from input tensor before compile graph
+      pynative::GraphAdapter::ReplaceBpropGraphParameter(graph, inputs[i]);
       graph_compiler_->CompileGraphImpl(graph, graph_compiler_info.device_contexts_.front());
       pynative::GraphAdapter::RemoveUnusedValueNodes(graph);
       graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, graph->front_outputs());
-      // Clear front outputs
+      // Clear front outputs after the outputs is cached.
       graph->set_front_outputs({});
-      // Transform graph to actor DAG, and schedule the actor DAG.
-      const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(graph_compiler_info);
-      runtime::GraphScheduler::GetInstance().Schedule(actor_set);
+    }
+
+    actor_set = runtime::GraphScheduler::GetInstance().Transform(graph_compiler_info);
+    MS_EXCEPTION_IF_NULL(actor_set);
+    // Multithreading can cause spikes in memory usage and performance fluctuations
+    actor_set->is_multi_thread_execution_ = false;
+    runtime::GraphScheduler::GetInstance().Schedule(actor_set);
+
+    for (auto &graph : graphs) {
       pynative::GraphAdapter::ClearForwardOutputValueNodeDeviceAddress(graph);
       pynative::GraphAdapter::GenerateRefCountForBpropValueNode(graph);
-      graph->set_flag(kFlagGraphCompiled, true);
     }
+  }
+
+  for (auto &graph : graphs) {
     pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graph);
   }
 
-  // Run actor DAG.
+  // Release GIL and run actor DAG.
   mindspore::ScopedLongRunning long_running;
-  const auto &actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
-  MS_EXCEPTION_IF_NULL(actor_set);
   runtime::GraphScheduler::GetInstance().Run(actor_set, graph_compiler_info.device_contexts_, inputs);
 
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);
 
   ConstructOutputs(actor_set, outputs, root_graph_);
-  // Clear bucket resources every step
-  for (auto &graph : graphs) {
-    if (graph->has_flag(kFlagIsPynativeBpropGraph)) {
-      graph_compiler_->AddGradAddrToBucket(graph->graph_id(), actor_set->output_actor_->outputs());
-      graph_compiler_->ClearAllBucket(graph->graph_id());
+
+  MS_EXCEPTION_IF_NULL(root_graph_);
+  if (root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
+    if (graph_compiler_info.device_contexts_.empty()) {
+      MS_LOG(EXCEPTION) << "RunGraph failed, actor_info " << actor_info << " has no device_context";
     }
+    MS_EXCEPTION_IF_NULL(graph_compiler_);
+    graph_compiler_->DoAllReduceOnGrads(actor_info, actor_set->output_actor_->outputs(),
+                                        graph_compiler_info.device_contexts_.front());
   }
 
   runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
@@ -1039,15 +1054,20 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
     // Python API will be called in cut_graph, so we cannot release gil here.
     RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
   } else {
-    // Release python gil.
-    mindspore::ScopedLongRunning long_running;
     bool is_dynamic_shape = std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
                                         [](const KernelGraphPtr &graph) { return graph->is_dynamic_shape(); });
-    // TODO(caifubi): PyNative dynamic shape not support run in graph now.
-    if (pynative_run_in_graph_ && !is_dynamic_shape && !root_graph_->has_flag(kFlagIsDynamicStructure)) {
-      RunGraphIntergated(actor_info, graph_compiler_info, input_tensors, outputs);
-    } else {
+
+    auto parallel_context = parallel::ParallelContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(parallel_context);
+    auto parallel_mode = parallel_context->parallel_mode();
+    bool is_parallel = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
+
+    // TODO(caifubi): Need to support condition: 1. Dynamic shape. 2. AutoParallel.
+    MS_EXCEPTION_IF_NULL(root_graph_);
+    if (root_graph_->has_flag(kFlagIsDynamicStructure) || is_dynamic_shape || is_parallel) {
       RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
+    } else {
+      RunGraphByActors(actor_info, graph_compiler_info, input_tensors, outputs);
     }
   }
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;

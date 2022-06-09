@@ -35,6 +35,47 @@ namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
+constexpr size_t kNchwDimNum = 4;
+constexpr size_t kDimC = 1;
+const std::set<std::string> formats_need_transdata = {kOpFormat_ND_RNN_BIAS, kOpFormat_FRACTAL_ZN_RNN,
+                                                      kOpFormat_C1HWNCoC0, kOpFormat_FRACTAL_ZN_LSTM};
+
+bool IsDepthwiseCase(const AnfNodePtr &node, size_t index, const std::string &format) {
+  if (format != kOpFormat_FRAC_Z) {
+    return false;
+  }
+  abstract::BaseShapePtr base_shape = common::AnfAlgo::GetOutputDetailShape(node, index);
+  MS_EXCEPTION_IF_NULL(base_shape);
+  if (base_shape->isa<abstract::Shape>()) {
+    auto shape_ptr = base_shape->cast<abstract::ShapePtr>();
+    MS_EXCEPTION_IF_NULL(shape_ptr);
+    auto shape_vec = shape_ptr->shape();
+    return shape_vec.size() == kNchwDimNum && shape_vec[kDimC] == 1;
+  }
+  return false;
+}
+
+// No need to insert TransData for PyNative Graph outputs except the format is in `formats_need_transdata`.
+std::vector<bool> GetNeedInsertTransdataFlags(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  std::vector<bool> need_insert_flag(output_num, true);
+  if (func_graph->has_flag(kFlagPyNativeRunInGraph)) {
+    auto real_outputs = common::AnfAlgo::GetAllOutput(func_graph->output());
+    auto find_output = std::find(real_outputs.begin(), real_outputs.end(), node);
+    // node is graph outputs.
+    if (find_output != real_outputs.end()) {
+      for (size_t i = 0; i < output_num; ++i) {
+        auto format = AnfAlgo::GetOutputFormat(node, i);
+        if (formats_need_transdata.find(format) == formats_need_transdata.end() && !IsDepthwiseCase(node, i, format)) {
+          need_insert_flag[i] = false;
+        }
+      }
+    }
+  }
+  return need_insert_flag;
+}
+
 bool NeedInsertTransData(const std::vector<size_t> &origin_shape, const std::string &format) {
   bool shape_check = origin_shape.size() > 1 || (origin_shape.size() == 1 && origin_shape[0] % kCubeSize != 0);
   return kCommonFormatSet.find(format) == kCommonFormatSet.end() && (shape_check || format == kOpFormat_ND_RNN_BIAS);
@@ -203,7 +244,11 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
   }
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  auto need_insert_flags = GetNeedInsertTransdataFlags(func_graph, node);
   size_t out_num = common::AnfAlgo::GetOutputTensorNum(node);
+  if (need_insert_flags.size() != out_num) {
+    MS_LOG(EXCEPTION) << "need_insert_flags size " << need_insert_flags.size() << " not equal to out_num " << out_num;
+  }
   for (size_t output_idx = 0; output_idx < out_num; ++output_idx) {
     std::string output_format = AnfAlgo::GetOutputFormat(node, output_idx);
     if (output_format == kOpFormat_NC1KHKWHWC0) {
@@ -212,7 +257,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
     }
     auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, output_idx);
     std::vector<size_t> origin_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
-    if (NeedInsertTransData(origin_shape, output_format)) {
+    if (NeedInsertTransData(origin_shape, output_format) && need_insert_flags[output_idx]) {
       auto trans_op = AddTransOpNodeToGraph(func_graph, tuple_getitem, kernel_select, 0, false);
       if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, output_idx)) {
         kernel_graph->ReplaceInternalOutput(node, trans_op, output_idx, 0);
@@ -473,6 +518,10 @@ AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodeP
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   // Single output
   if (outputs_num == 1 && (!common::AnfAlgo::IsTupleOutput(node))) {
+    auto need_insert_flags = GetNeedInsertTransdataFlags(func_graph, node);
+    if (!need_insert_flags.empty() && !need_insert_flags.front()) {
+      return node;
+    }
     auto new_node = InsertTransOpForSingleOutput(func_graph, node, kernel_select);
     if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, 0)) {
       kernel_graph->ReplaceInternalOutput(node, new_node);

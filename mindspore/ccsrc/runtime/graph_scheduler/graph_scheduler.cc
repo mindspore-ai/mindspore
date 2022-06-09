@@ -645,7 +645,7 @@ ActorSet *GraphScheduler::Fetch(const ActorInfo &actor_info) const {
   if (iter != actors_.end()) {
     return iter->second.get();
   } else {
-    MS_LOG(ERROR) << "Can't find the actors map of " << actor_info;
+    MS_LOG(DEBUG) << "Can't find the actors map of " << actor_info;
     return nullptr;
   }
 }

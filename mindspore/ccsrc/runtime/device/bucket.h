@@ -46,6 +46,7 @@ class Bucket {
   virtual ~Bucket() = default;
 
   uint32_t id() const { return id_; }
+  uint32_t bucket_size() const { return bucket_size_; }
   bool full() const { return full_; }
   void Launch();
   void Release();

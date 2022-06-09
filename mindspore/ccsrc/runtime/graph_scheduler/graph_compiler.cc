@@ -866,6 +866,12 @@ void GraphCompiler::RecoverGraphOutput(const AnfNodePtr &kernel, const VectorRef
   session_->HandleOpOutputs(kernel, op_outputs, ref_count, op_output_map, graph_output_info);
 }
 
+void GraphCompiler::DoAllReduceOnGrads(const std::string &actor_info, const std::vector<tensor::TensorPtr> &outputs,
+                                       device::DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->DoAllReduceOnGrads(actor_info, outputs, device_context);
+}
+
 void GraphCompiler::AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor) {
   MS_EXCEPTION_IF_NULL(session_);
   session_->AddGradAddrToBucket(graph_id, grad_tensor);
