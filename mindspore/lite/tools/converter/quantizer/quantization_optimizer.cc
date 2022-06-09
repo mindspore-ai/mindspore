@@ -203,8 +203,8 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<C
   }
   int status;
 
-  bool per_layer =
-    param->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL && !param->fullQuantParam.per_channel;
+  bool per_layer = param->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL &&
+                   !param->fullQuantParam.per_channel && param->fullQuantParam.target_device != DSP;
   if (per_layer) {
     CLEStrategy cle_strategy(old_graph);
     status = cle_strategy.Run();
