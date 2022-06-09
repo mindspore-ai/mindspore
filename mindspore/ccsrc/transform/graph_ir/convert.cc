@@ -2352,7 +2352,6 @@ void DfGraphConvertor::ConvertTile(const FuncGraphPtr anf_graph) {
 
 std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) {
   if (value == nullptr) {
-    MS_LOG(WARNING) << "Value ptr is nullptr.";
     return {};
   }
   std::vector<int64_t> cur_value = {};
