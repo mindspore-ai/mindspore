@@ -17,6 +17,7 @@
 #include "runtime/device/memory_scheduler.h"
 #include <algorithm>
 #include <queue>
+#include <set>
 #ifdef _MSC_VER
 #include <time.h>
 #else
@@ -43,6 +44,34 @@ double GetCurrentTime() {
 #endif
 }
 }  // namespace
+
+void *MemHandler::MallocHost(size_t mem_size) {
+  auto &mem_que = cached_host_mem_[mem_size];
+  if (!mem_que.empty()) {
+    auto ret = mem_que.front();
+    mem_que.pop();
+    return ret;
+  }
+  auto block = std::make_shared<std::vector<uint8_t>>();
+  try {
+    block->resize(mem_size, 0);
+    auto ptr = block->data();
+    host_mem_block_map_[ptr] = block;
+    return ptr;
+  } catch (const std::exception &e) {
+    MS_LOG(EXCEPTION) << "Malloc memory failed: size " << mem_size;
+  }
+}
+
+void MemHandler::FreeHost(void *ptr) {
+  MS_EXCEPTION_IF_NULL(ptr);
+  auto iter = host_mem_block_map_.find(ptr);
+  if (iter == host_mem_block_map_.end()) {
+    MS_LOG(ERROR) << "Free ptr not be created from manager!";
+  }
+  auto mem_size = iter->second->size();
+  cached_host_mem_[mem_size].emplace(iter->first);
+}
 
 void MemScheduler::Clear() {
   if (mem_handler_ == nullptr) {
@@ -72,6 +101,15 @@ void MemScheduler::ClearAllocatedMem() {
     }
   }
   swap_host_ptr_.clear();
+  continuous_mem_key_.clear();
+}
+
+void MemScheduler::AddContinuousMemInfo(bool is_input, size_t compute_index, size_t total_size,
+                                        const std::vector<size_t> &align_size_list,
+                                        const std::vector<const void *> &address_key_list) {
+  MS_EXCEPTION_IF_NULL(continuous_mem_info_helper_);
+  continuous_mem_info_helper_->AddContinuousMemInfo(is_input, compute_index, total_size, align_size_list,
+                                                    address_key_list);
 }
 
 void MemScheduler::Record(const void *key, const MemEventType &event_type, size_t mem_size) {
@@ -119,18 +157,51 @@ void *MemScheduler::GetOrMalloc(const void *key, size_t mem_size, MemPriority pr
   return nullptr;
 }
 
+void *MemScheduler::MallocContinuousMem(const std::shared_ptr<MemEvent> &event, void *stream) {
+  const auto &continuous_mem_info = continuous_mem_info_helper_->GetContinuousMemInfo(event->key);
+  void *device_ptr = nullptr;
+  if (cur_step_allocated_continuous_mem_.count(continuous_mem_info) == 0 &&
+      continuous_mem_info_helper_->NeedMallocContinuousMem(continuous_mem_info, current_step_)) {
+    if (mem_result_.find(event->key) != mem_result_.end()) {
+      MS_LOG(EXCEPTION) << "Device memory is allocated before first continuous memory alloc event, event key: "
+                        << event->key << ", continuous memory used index: " << continuous_mem_info->compute_index_;
+    }
+    const auto &device_ptr_list =
+      MallocContinuousMem(continuous_mem_info->total_size_, continuous_mem_info->align_size_list_, stream);
+    if (device_ptr_list.empty()) {
+      MS_LOG(WARNING) << "MallocContinuousMemFromMemPool failed, size: " << continuous_mem_info->total_size_;
+      return nullptr;
+    }
+    for (const auto &key_index : continuous_mem_info->key_index_map_) {
+      MS_EXCEPTION_IF_NULL(device_ptr_list[key_index.second]);
+      mem_result_[key_index.first] = device_ptr_list[key_index.second];
+      continuous_mem_key_.insert(key_index.first);
+    }
+    device_ptr = mem_result_[event->key];
+    MS_EXCEPTION_IF_NULL(device_ptr);
+    cur_step_allocated_continuous_mem_.insert(continuous_mem_info);
+  } else {
+    device_ptr = MallocDevice(event->mem_size, stream);
+  }
+  return device_ptr;
+}
+
 bool MemScheduler::PreComputeInit(const std::shared_ptr<MemEvent> &event, void *stream) {
+  const bool is_continuous_mem = continuous_mem_info_helper_->IsContinuousMem(event->key);
   const auto &iter = mem_result_.find(event->key);
   const bool new_malloc = iter == mem_result_.end();
   void *device_ptr = nullptr;
-  if (new_malloc) {
-    device_ptr = MallocDevice(event->mem_size, stream);
-    if (device_ptr == nullptr) {
-      return false;
-    }
-  } else {
+  if (!new_malloc) {
     device_ptr = iter->second;
+  } else if (is_continuous_mem) {
+    device_ptr = MallocContinuousMem(event, stream);
+  } else {
+    device_ptr = MallocDevice(event->mem_size, stream);
   }
+  if (device_ptr == nullptr) {
+    return false;
+  }
+
   if (new_malloc || high_priority_mem_need_init_.count(event->key) != 0) {
     MS_LOG(DEBUG) << "Init input data from host, key: " << event->key;
     auto host_ptr = init_host_ptr_[event->key];
@@ -142,29 +213,33 @@ bool MemScheduler::PreComputeInit(const std::shared_ptr<MemEvent> &event, void *
 }
 
 bool MemScheduler::PreComputeMalloc(const std::shared_ptr<MemEvent> &event, void *stream) {
-  const auto &iter = mem_result_.find(event->key);
-  const bool new_malloc = iter == mem_result_.end();
+  const bool is_continuous_mem = continuous_mem_info_helper_->IsContinuousMem(event->key);
   void *device_ptr = nullptr;
-  if (new_malloc) {
-    device_ptr = MallocDevice(event->mem_size, stream);
-    if (device_ptr == nullptr) {
-      return false;
-    }
+  const auto &iter = mem_result_.find(event->key);
+  if (iter != mem_result_.end()) {
+    return true;
+  } else if (is_continuous_mem) {
+    device_ptr = MallocContinuousMem(event, stream);
   } else {
-    device_ptr = iter->second;
+    device_ptr = MallocDevice(event->mem_size, stream);
+  }
+  if (device_ptr == nullptr) {
+    return false;
   }
   mem_result_[event->key] = device_ptr;
   return true;
 }
 
 bool MemScheduler::PreComputeSwapIn(const std::shared_ptr<MemEvent> &event, void *stream) {
+  if (!PreComputeMalloc(event, stream)) {
+    return false;
+  }
+  PreComputeMalloc(event, stream);
+  const auto device_ptr = mem_result_[event->key];
+  MS_EXCEPTION_IF_NULL(device_ptr);
   bool from_init = true;
   void *host_ptr = nullptr;
   GetHostPtr(event->key, &host_ptr, &from_init);
-  auto device_ptr = MallocDevice(event->mem_size, stream);
-  if (device_ptr == nullptr) {
-    return false;
-  }
   MS_EXCEPTION_IF_NULL(host_ptr);
   mem_handler_->SwapIn(host_ptr, device_ptr, event->mem_size, stream);
   mem_result_[event->key] = device_ptr;
@@ -196,7 +271,7 @@ bool MemScheduler::PreComputeGet(const std::shared_ptr<MemEvent> &event, void *s
   auto device_ptr = MallocDevice(mem_size, stream);
   mem_handler_->SwapIn(host_ptr, device_ptr, mem_size, stream);
   if (!from_init) {
-    (void)swap_host_ptr_.erase(host_ptr);
+    (void)swap_host_ptr_.erase(key);
     mem_handler_->FreeHost(host_ptr);
   }
   mem_result_[key] = device_ptr;
@@ -223,12 +298,14 @@ bool MemScheduler::PreCompute(void *stream) {
       ret = PreComputeGet(event, stream);
     }
     if (!ret) {
+      cur_step_allocated_continuous_mem_.clear();
       return false;
     }
   }
   if (record_compute_time_ && !updated_) {
     compute_start_time_ = GetCurrentTime();
   }
+  cur_step_allocated_continuous_mem_.clear();
   return true;
 }
 
@@ -253,12 +330,18 @@ bool MemScheduler::PostCompute(void *stream) {
       }
       mem_handler_->FreeDevice(ptr);
       (void)mem_result_.erase(event->key);
+      continuous_mem_key_.erase(event->key);
     } else if (event->type == kSwapOut) {
       auto device_ptr = mem_result_[event->key];
       if (device_ptr == nullptr) {
         return false;
       }
       SwapOutAndFreeDevice(event->key, device_ptr, event->mem_size, stream);
+    }
+  }
+  for (const auto &info : continuous_mem_info_helper_->GetIndexContinuousMemInfo(current_step_)) {
+    for (const auto &key_index : info->key_index_map_) {
+      continuous_mem_key_.erase(key_index.first);
     }
   }
   ++current_step_;
@@ -269,8 +352,9 @@ void MemScheduler::OptMemUsage(float mem_used_factor) {
   MS_EXCEPTION_IF_NULL(mem_handler_);
 
   if (strategy_ == nullptr) {
-    strategy_ = std::make_shared<MemOffloadStrategy>(mem_priority_, mem_events_, manual_offload_keys_,
-                                                     high_priority_updated_step_, total_step_);
+    strategy_ =
+      std::make_shared<MemOffloadStrategy>(mem_priority_, mem_events_, manual_offload_keys_,
+                                           high_priority_updated_step_, total_step_, continuous_mem_info_helper_);
     if (manual_offload_keys_.empty()) {
       compute_time_.resize(total_step_);
     } else {
@@ -352,25 +436,78 @@ void *MemScheduler::MallocDevice(size_t mem_size, void *stream) {
   if (device_ptr != nullptr || !optimized_) {
     return device_ptr;
   }
+  // Find memory block big enough in mem_result_, except continuous mem and memory blocks used in this step.
   auto iter = mem_result_.begin();
   using KeySizePair = std::pair<const void *, size_t>;
   auto less = [](const KeySizePair &a, const KeySizePair &b) -> bool { return a.second < b.second; };
   std::priority_queue<KeySizePair, std::vector<KeySizePair>, decltype(less)> mem_can_swap(less);
   while (iter != mem_result_.end()) {
     const auto key = iter->first;
-    if (no_reuse_key.count(key) != 0) {
+    if (no_reuse_key.count(key) != 0 || continuous_mem_key_.count(key) != 0) {
       ++iter;
       continue;
     }
     const auto device_mem_size = GetMemSize(key);
-    mem_can_swap.push({key, device_mem_size});
     if (device_mem_size >= mem_size) {
       SwapOutAndFreeDevice(key, iter->second, device_mem_size, stream);
       device_ptr = mem_handler_->MallocDevice(mem_size);
+      MS_EXCEPTION_IF_NULL(device_ptr);
       return device_ptr;
     }
+    mem_can_swap.push({key, device_mem_size});
     ++iter;
   }
+
+  // Try swap out memory block from big to small
+  while (!mem_can_swap.empty()) {
+    const auto &max_mem_in_device = mem_can_swap.top();
+    const auto key = max_mem_in_device.first;
+    const auto swap_mem_size = max_mem_in_device.second;
+    auto swap_device_ptr = mem_result_[key];
+    MS_EXCEPTION_IF_NULL(swap_device_ptr);
+    mem_can_swap.pop();
+    SwapOutAndFreeDevice(key, swap_device_ptr, swap_mem_size, stream);
+    device_ptr = mem_handler_->MallocDevice(mem_size);
+    if (device_ptr != nullptr) {
+      return device_ptr;
+    }
+  }
+
+  return nullptr;
+}
+
+std::vector<void *> MemScheduler::MallocContinuousMem(size_t total_size, const std::vector<size_t> &size_list,
+                                                      void *stream) {
+  const auto &no_reuse_key = step_keys_[current_step_];
+  auto device_ptr_list = mem_handler_->MallocContinuousMemFromMemPool(size_list);
+  if (!device_ptr_list.empty() || !optimized_) {
+    return device_ptr_list;
+  }
+  // Find memory block big enough in mem_result_, except continuous mem and memory blocks used in this step.
+  auto iter = mem_result_.begin();
+  using KeySizePair = std::pair<const void *, size_t>;
+  auto less = [](const KeySizePair &a, const KeySizePair &b) -> bool { return a.second < b.second; };
+  std::priority_queue<KeySizePair, std::vector<KeySizePair>, decltype(less)> mem_can_swap(less);
+  while (iter != mem_result_.end()) {
+    const auto key = iter->first;
+    if (no_reuse_key.count(key) != 0 || continuous_mem_key_.count(key) != 0) {
+      ++iter;
+      continue;
+    }
+    const auto device_mem_size = GetMemSize(key);
+    if (device_mem_size >= total_size) {
+      SwapOutAndFreeDevice(key, iter->second, device_mem_size, stream);
+      device_ptr_list = mem_handler_->MallocContinuousMemFromMemPool(size_list);
+      if (device_ptr_list.empty()) {
+        MS_LOG(EXCEPTION) << "device_ptr_list empty";
+      }
+      return device_ptr_list;
+    }
+    mem_can_swap.push({key, device_mem_size});
+    ++iter;
+  }
+
+  // Try swap out memory block from big to small
   while (!mem_can_swap.empty()) {
     const auto &max_mem_in_device = mem_can_swap.top();
     mem_can_swap.pop();
@@ -379,12 +516,13 @@ void *MemScheduler::MallocDevice(size_t mem_size, void *stream) {
     auto swap_device_ptr = mem_result_[key];
     MS_EXCEPTION_IF_NULL(swap_device_ptr);
     SwapOutAndFreeDevice(key, swap_device_ptr, swap_mem_size, stream);
-    device_ptr = mem_handler_->MallocDevice(mem_size);
-    if (device_ptr != nullptr) {
-      return device_ptr;
+    device_ptr_list = mem_handler_->MallocContinuousMemFromMemPool(size_list);
+    if (!device_ptr_list.empty()) {
+      return device_ptr_list;
     }
   }
-  return nullptr;
+
+  return device_ptr_list;
 }
 
 void MemScheduler::SwapOutAndFreeDevice(const void *key, void *device_ptr, size_t mem_size, void *stream) {

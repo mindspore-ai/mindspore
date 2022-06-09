@@ -23,7 +23,6 @@
 #include <queue>
 #include "common/mem_reuse/mem_reuse.h"
 #include "backend/common/somas/somas.h"
-#include "runtime/device/memory_scheduler.h"
 namespace mindspore {
 namespace device {
 enum MemType { kStaticMem, kDynamicMem, kSomasReuseDynamicMem };
@@ -32,7 +31,7 @@ constexpr uint64_t kMemAlignSize = 512;
 constexpr uint64_t kTwiceMemAlignSize = kMemAlignSize << 1;
 using SomasPtr = mindspore::somas::SomasPtr;
 
-class MemoryManager : public MemHandler {
+class MemoryManager {
  public:
   MemoryManager() = default;
   virtual ~MemoryManager() = default;
@@ -50,7 +49,6 @@ class MemoryManager : public MemHandler {
   virtual uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
     return MallocMem(type, size, address, kInvalidGraphId);
   }
-
   // param address is the address type of each device
   // param from_persistent_mem shows whether the tensor is a parameter in Pynative mode
   virtual bool MallocMemFromMemPool(const DeviceAddressPtr &address, size_t size);
@@ -65,45 +63,13 @@ class MemoryManager : public MemHandler {
   static size_t GetCommonAlignSize(size_t input_size);
   static size_t GetCommunicationAlignSize(size_t input_size);
 
-  // swap manager interface
-  void *MallocDevice(size_t mem_size) override { return MallocMemFromMemPool(mem_size, false); }
-  void FreeDevice(void *ptr) override {
-    MS_EXCEPTION_IF_NULL(ptr);
-    FreeMemFromMemPool(ptr);
-  }
-  void *MallocHost(size_t mem_size) override {
-    auto &mem_que = cached_host_mem_[mem_size];
-    if (!mem_que.empty()) {
-      auto ret = mem_que.front();
-      mem_que.pop();
-      return ret;
-    }
-    auto block = std::make_shared<std::vector<uint8_t>>();
-    try {
-      block->resize(mem_size, 0);
-      auto ptr = block->data();
-      host_mem_block_map_[ptr] = block;
-      return ptr;
-    } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << "Malloc memory failed: size " << mem_size;
-    }
-  }
-  void FreeHost(void *ptr) override {
-    MS_EXCEPTION_IF_NULL(ptr);
-    auto iter = host_mem_block_map_.find(ptr);
-    if (iter == host_mem_block_map_.end()) {
-      MS_LOG(ERROR) << "Free ptr not be created from manager!";
-    }
-    auto mem_size = iter->second->size();
-    cached_host_mem_[mem_size].emplace(iter->first);
-  }
-  void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override {
+  virtual void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
     MS_LOG(INFO) << "Call default swap in " << host_ptr << "," << device_ptr << "," << mem_size << "," << stream;
   }
-  void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override {
+  virtual void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
     MS_LOG(INFO) << "Call default swap out " << host_ptr << "," << device_ptr << "," << mem_size << "," << stream;
   }
-  size_t GetAvailableMemSize() override {
+  virtual size_t GetAvailableMemSize() {
     MS_LOG(ERROR) << "Return default 0 mem size!";
     return 0;
   }
@@ -115,8 +81,6 @@ class MemoryManager : public MemHandler {
   }
   virtual uint8_t *MallocDynamicMem(size_t size, bool communication_mem);
   SomasPtr somas_reuse_util_ptr_{nullptr};
-  std::map<size_t, std::queue<void *>> cached_host_mem_;
-  std::map<void *, std::shared_ptr<std::vector<uint8_t>>> host_mem_block_map_;
 };
 }  // namespace device
 }  // namespace mindspore
