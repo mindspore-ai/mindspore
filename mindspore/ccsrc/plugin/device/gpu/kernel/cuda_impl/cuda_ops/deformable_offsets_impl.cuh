@@ -23,11 +23,11 @@
 
 CUDA_LIB_EXPORT void GenPositionGrid(const uint kernel_h, const uint kernel_w, const uint stride_h, const uint stride_w,
                                      const uint dilations_h, const uint dilations_w, const uint pad_l, const uint pad_t,
-                                     const uint output_w, const uint num, uint *position_grid, const uint32_t device_id,
-                                     cudaStream_t cuda_stream);
+                                     const uint output_w, const uint num, int32_t *position_grid,
+                                     const uint32_t device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void DeformableOffsets(const T *input, const T *offsets, const uint *position_grid, uint n, uint c,
+CUDA_LIB_EXPORT void DeformableOffsets(const T *input, const T *offsets, const int32_t *position_grid, uint n, uint c,
                                        uint input_h, uint input_w, uint dfm_group, uint kernel_h, uint kernel_w,
                                        uint output_h, uint output_w, T *output, uint32_t device_id,
                                        cudaStream_t cuda_stream);
