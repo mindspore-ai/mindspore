@@ -27,6 +27,7 @@ from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim
 from ..operations.array_ops import Fills
 from ..operations.array_ops import ScatterNdMax
 from ..operations.array_ops import UniqueConsecutive
+from ..operations.array_ops import Col2Im
 
 
 @vmap_rules_getters.register("Cast")
@@ -947,3 +948,4 @@ def get_gather_vmap_rule(prim, axis_size):
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule =\
     vmap_rules_getters.register(UniqueConsecutive)(get_unsupported_dynamic_vmap_rule)
+get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(Col2Im)(get_unsupported_dynamic_vmap_rule)

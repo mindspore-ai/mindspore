@@ -1667,6 +1667,13 @@ def intopk(x1, x2, k):
     return F.intopk(x1, x2, k)
 
 
+def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
+    """
+    Combines an array of sliding local blocks into a large containing tensor.
+    """
+    return F.col2im(input_x, output_size, kernel_size, dilation, padding_value, stride)
+
+
 def narrow(x, axis, start, length):
     """
     Returns a narrowed tensor from input tensor.
