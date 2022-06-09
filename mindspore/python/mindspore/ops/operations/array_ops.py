@@ -6346,28 +6346,7 @@ class MaskedFill(Primitive):
     """
     Fills elements with value where mask is True.
 
-    The shapes of `input` and `mask` need to be the same or broadcast. If `value` is a Tensor of shape :math:`(*B)`,
-    then the first few shape of `input` and `mask` must be :math:`*B`, which means a batch dimension input.
-
-    Note:
-        In Ascend, batch dimension input is not supported. Specifically, `value` is required to be equal to be a
-        0-dimensional tensor or a float number.
-
-    Inputs:
-        - **input** (Tensor) - The source tensor whose data type is one of float16, float32, int8, int32.
-        - **mask** (Tensor[bool]) - The boolean mask.
-        - **value** (Union[float, Tensor]) – The value to fill in with, which dtype is the same as `input`.
-
-    Outputs:
-        Tensor, has the same type and shape as `input`.
-
-    Raises:
-        TypeError: If `input` or `mask` is not a tensor.
-        TypeError: If `value` is neither float number nor tensor.
-        TypeError: If dtype of `input` or `value` is not one of float16, float32, int8, int32.
-        TypeError: If dtype of `value` is different from that of `input`.
-        TypeError: If dtype of `mask` is not bool.
-        ValueError: If the shapes of `input` and `mask` could not be broadcast.
+    Refer to :func:`mindspore.ops.masked_fill` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

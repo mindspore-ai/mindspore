@@ -22,7 +22,6 @@ from mindspore import dtype as mstype
 from ..._checkparam import Validator as validator
 from ...ops import functional as F
 from ...ops import operations as P
-from ...ops import composite as C
 from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like, repeat_elements
 from ...ops.composite.base import _append, _insert
@@ -1653,15 +1652,11 @@ def expand_dims(x, axis):
 
 def masked_fill(x, mask, value):
     """
-    Fills elements of self tensor with value where mask is True.
-    The shape of mask must be equal to the shape of the underlying tensor.
+    Fills elements of Tensor with value where mask is True.
     """
     check_is_tensor(mask)
     check_type_name('mask', mask.dtype, [mstype.bool_], "Tensor")
-    mask_shape = infer_out_shape(x.shape, mask.shape)
-    mask = P.BroadcastTo(mask_shape)(mask)
-    check_value_type('value', value, [int, float], "Tensor")
-    return C.array_ops.masked_fill(x, mask, value)
+    return F.masked_fill(x, mask, value)
 
 
 def intopk(x1, x2, k):

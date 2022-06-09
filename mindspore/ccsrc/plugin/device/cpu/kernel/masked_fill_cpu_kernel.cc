@@ -56,9 +56,9 @@ int MaskedFillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
   need_broadcast_ = (input_shape_ == mask_shape_) ? false : true;
   size_t batch_size = value_shape.size();
-  if (input_shape.size() <= batch_size || mask_shape.size() <= batch_size) {
+  if (input_shape.size() < batch_size || mask_shape.size() < batch_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of input and mask should be greater than value's, but got input: "
+                      << "', the dimension of input and mask should not be less than value's, but got input: "
                       << input_shape.size() << ", mask: " << mask_shape.size() << ", value:" << value_shape.size();
   }
   for (size_t i = 0; i < batch_size; i++) {
