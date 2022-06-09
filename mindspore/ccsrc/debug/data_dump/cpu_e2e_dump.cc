@@ -103,7 +103,7 @@ void CPUE2eDump::DumpInputImpl(const CNodePtr &node, const std::string &dump_pat
     auto type = common::AnfAlgo::GetOutputInferDataType(input, index);
     std::string op_type = common::AnfAlgo::GetCNodeName(node);
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
-    uint64_t timestamp = GetTimeStamp();
+    uint64_t timestamp = Common::GetTimeStamp();
     const uint32_t kTaskId = 0;
     const uint32_t kStreamId = 0;
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(kTaskId) + '.' +
@@ -130,7 +130,7 @@ void CPUE2eDump::DumpOutputImpl(const CNodePtr &node, const std::string &dump_pa
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
     const uint32_t kTaskId = 0;
     const uint32_t kStreamId = 0;
-    uint64_t timestamp = GetTimeStamp();
+    uint64_t timestamp = Common::GetTimeStamp();
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(kTaskId) + '.' +
                             std::to_string(kStreamId) + '.' + std::to_string(timestamp) + ".output." +
                             std::to_string(j);
@@ -174,7 +174,7 @@ void CPUE2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t outp
   GetDumpIntShape(anf_node, output_index, NOT_NULL(&int_shapes));
   auto type = common::AnfAlgo::GetOutputInferDataType(anf_node, output_index);
 
-  uint64_t timestamp = GetTimeStamp();
+  uint64_t timestamp = Common::GetTimeStamp();
   const uint32_t kTaskId = 0;
   const uint32_t kStreamId = 0;
   std::string file_path = dump_path + "/Parameter." + dump_name + '.' + std::to_string(kTaskId) + '.' +

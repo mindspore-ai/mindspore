@@ -35,6 +35,10 @@ class COMMON_EXPORT Common {
  public:
   Common() = default;
   ~Common() = default;
+  static bool NeedMapping(const std::string &origin_name);
+  static std::string GetRandomStr();
+  static void MappingName(const std::string &input_path, std::optional<std::string> *prefix_path,
+                          std::optional<std::string> *origin_name, std::optional<std::string> *mapped_name);
   static std::optional<std::string> CreatePrefixPath(const std::string &input_path,
                                                      const bool support_relative_path = false);
   static std::optional<std::string> GetConfigFile(const std::string &env);
@@ -51,6 +55,9 @@ class COMMON_EXPORT Common {
   static bool GetDebugTerminate();
   static bool GetDebugExitSuccess();
   static void DebugTerminate(bool val, bool exit_success);
+
+  // Get time stamp since epoch in microseconds
+  static uint64_t GetTimeStamp();
 
  private:
   static bool IsEveryFilenameValid(const std::string &path, size_t length_limit, const std::string &error_message);

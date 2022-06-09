@@ -257,8 +257,39 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     MS_LOG(ERROR) << "Incorrect parameter.";
     return false;
   }
-
-  auto file_path = Common::CreatePrefixPath(filename + ".npy");
+  std::string npy_suffix = ".npy";
+  std::string origin_file_path = filename + npy_suffix;
+  std::optional<std::string> prefix_path;
+  std::optional<std::string> origin_name;
+  std::optional<std::string> mapped_name;
+  Common::MappingName(origin_file_path, &prefix_path, &origin_name, &mapped_name);
+  if (!prefix_path.has_value() || !origin_name.has_value() || !mapped_name.has_value()) {
+    MS_LOG(ERROR) << "Cannot get prefix_path or file_name from: " << origin_file_path;
+    return false;
+  }
+  std::string origin_name_str = origin_name.value();
+  std::string mapped_name_str = mapped_name.value();
+  bool need_map = origin_name_str != mapped_name_str;
+  if (need_map) {
+    auto mapping_file = Common::CreatePrefixPath(prefix_path.value() + "/mapping.csv");
+    if (!mapping_file.has_value()) {
+      MS_LOG(ERROR) << "CreatePrefixPath for mapping.csv failed.";
+      return false;
+    }
+    const std::string mapping_file_str = mapping_file.value();
+    // try to open file
+    ChangeFileMode(mapping_file_str, S_IWUSR);
+    std::ofstream fout(mapping_file_str, std::ofstream::app);
+    if (!fout.is_open()) {
+      MS_LOG(WARNING) << "Open file for mapping.csv failed.";
+      return false;
+    }
+    fout << mapped_name_str << "," << origin_name_str << "\n";
+    fout.close();
+    ChangeFileMode(mapping_file_str, S_IRUSR);
+    origin_file_path = prefix_path.value() + "/" + mapped_name_str;
+  }
+  auto file_path = Common::CreatePrefixPath(origin_file_path);
   if (!file_path.has_value()) {
     MS_LOG(ERROR) << "CreatePrefixPath failed.";
     return false;
