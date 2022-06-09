@@ -74,6 +74,30 @@ def test_tan_float64():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_tan_int32():
+    """
+    Feature: test_tan_int32
+    Description: Test the function of tan op.
+    Expectation: match to numpy benchmark.
+    """
+    tan(np.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tan_int64():
+    """
+    Feature: test_tan_int64
+    Description: Test the function of tan op.
+    Expectation: match to numpy benchmark.
+    """
+    tan(np.int64)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_tan_tensor_func_check():
     """
     Feature: test_tan_tensor_func_check.

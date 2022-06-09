@@ -174,6 +174,14 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::Una
        &UnaryOpGpuKernelMod::LaunchKernel<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<int>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+       &UnaryOpGpuKernelMod::LaunchKernel<int64_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<float>>},
+      {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+       &UnaryOpGpuKernelMod::LaunchKernel<utils::Complex<double>>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
     {kAsin,
@@ -321,16 +329,28 @@ std::vector<KernelAttr> UnaryOpGpuKernelMod::GetOpSupport() {
 template <typename T>
 bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &outputs) {
-  static const std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map = {
-    {kExp, Exponential<T>}, {kExpm1, Expm1<T>},   {kLog, Logarithm<T>}, {kLog1p, Log1p<T>},
-    {kErf, Erf<T>},         {kErfc, Erfc<T>},     {kNeg, Negative<T>},  {kReciprocal, Reciprocal<T>},
-    {kInv, Inv<T>},         {kInvert, Invert<T>}, {kSquare, Square<T>}, {kSqrt, Sqrt<T>},
-    {kRsqrt, Rsqrt<T>},     {kSin, Sin<T>},       {kCos, Cos<T>},       {kCosh, Cosh<T>},
-    {kAsin, Asin<T>},       {kACos, ACos<T>},     {kAtan, Atan<T>},     {kAsinh, Asinh<T>},
-    {kAcosh, Acosh<T>},     {kAbs, Abs<T>},       {kFloor, Floor<T>},   {kCeil, Ceil<T>},
-    {kRint, Rint<T>},       {kRound, Round<T>},   {kSign, Sign<T>},     {kAtanh, Atanh<T>},
-    {kTan, Tan<T>},
-  };
+  std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map;
+
+  const bool is_t_complex = (std::is_same_v<T, utils::Complex<float>>) || (std::is_same_v<T, utils::Complex<double>>);
+  if constexpr (is_t_complex) {
+    std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_complex = {
+      {kTan, Tan<T>},
+    };
+    copy(func_map_complex.begin(), func_map_complex.end(), inserter(func_map, func_map.begin()));
+  } else {
+    std::map<std::string, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map_normal = {
+      {kExp, Exponential<T>}, {kExpm1, Expm1<T>},   {kLog, Logarithm<T>}, {kLog1p, Log1p<T>},
+      {kErf, Erf<T>},         {kErfc, Erfc<T>},     {kNeg, Negative<T>},  {kReciprocal, Reciprocal<T>},
+      {kInv, Inv<T>},         {kInvert, Invert<T>}, {kSquare, Square<T>}, {kSqrt, Sqrt<T>},
+      {kRsqrt, Rsqrt<T>},     {kSin, Sin<T>},       {kCos, Cos<T>},       {kCosh, Cosh<T>},
+      {kAsin, Asin<T>},       {kACos, ACos<T>},     {kAtan, Atan<T>},     {kAsinh, Asinh<T>},
+      {kAcosh, Acosh<T>},     {kAbs, Abs<T>},       {kFloor, Floor<T>},   {kCeil, Ceil<T>},
+      {kRint, Rint<T>},       {kRound, Round<T>},   {kSign, Sign<T>},     {kAtanh, Atanh<T>},
+      {kTan, Tan<T>},
+    };
+    copy(func_map_normal.begin(), func_map_normal.end(), inserter(func_map, func_map.begin()));
+  }
+
   auto iter = func_map.find(kernel_name_);
   if (iter == func_map.end()) {
     MS_LOG(ERROR) << "For 'UnaryOp', only support these types: " << kernel::Map2Str(func_map) << " currently, but got "
