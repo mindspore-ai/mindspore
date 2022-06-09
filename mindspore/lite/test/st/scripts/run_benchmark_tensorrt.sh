@@ -169,9 +169,9 @@ function Run_TensorRT() {
             fi
 
             # different tensorrt run mode use different cuda command
-            echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --configFile='${config_file_path}' --cosineDistanceThreshold=${cosine_limit} --device=GPU' >> "${run_tensorrt_log_file}"
-            CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --configFile=${config_file_path} --cosineDistanceThreshold=${cosine_limit} --device=GPU >> ${run_tensorrt_log_file}
-            CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --configFile=${config_file_path} --cosineDistanceThreshold=${cosine_limit} --device=GPU >> ${run_tensorrt_log_file}
+            echo 'CUDA_VISIBLE_DEVICES='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --configFile='${config_file_path}' --cosineDistanceThreshold=${cosine_limit} --device=GPU' >> "${run_tensorrt_log_file}"
+            CUDA_VISIBLE_DEVICES=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --configFile=${config_file_path} --cosineDistanceThreshold=${cosine_limit} --device=GPU >> ${run_tensorrt_log_file}
+            CUDA_VISIBLE_DEVICES=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --configFile=${config_file_path} --cosineDistanceThreshold=${cosine_limit} --device=GPU >> ${run_tensorrt_log_file}
 
             if [ $? = 0 ]; then
                 run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
