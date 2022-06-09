@@ -614,7 +614,7 @@ def ger(x1, x2):
 
     Args:
         x1 (Tensor): input Tensor, with dtype of float16 or float32.
-        x2 (Tensor): input Tensor, with dtype of float16 or float32.
+        x2 (Tensor): input Tensor, with dtype of float16 or float32, must have the same dtype as `x1`.
 
     Returns:
         Tensor, output matrix with the same dtype as inputs. With `x1` shape :math:`(*B, m)` and
@@ -623,6 +623,7 @@ def ger(x1, x2):
     Raises:
         TypeError: If `x1` or `x2` is not a Tensor.
         TypeError: If the dtype of `x1` and `x2` is neither float16 nor float32.
+        TypeError: If the dtype of `x1` and `x2` are not the same.
         ValueError: If the batch dimension shapes :math:`(*B,)` of `x1` and `x2` are different.
 
     Supported Platforms:

@@ -106,7 +106,7 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
   } else if (keep_prop->isa<abstract::AbstractScalar>()) {
     if (keep_prop_value != nullptr) {
       if (!keep_prop_value->isa<FloatImm>()) {
-        MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the type of 'keep_prop' must be float. But got: "
+        MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the type of 'keep_prop' must be float, but got: "
                                 << keep_prop_value->ToString() << ".";
       }
       auto value = GetValue<float>(keep_prop_value);
@@ -116,7 +116,7 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
       }
     }
   } else {
-    MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the type of 'keep_prop' must be float or tensor. But got: "
+    MS_EXCEPTION(TypeError) << "For 'DropoutDoMask', the type of 'keep_prop' must be float or tensor, but got: "
                             << keep_prop_value->ToString() << ".";
   }
 

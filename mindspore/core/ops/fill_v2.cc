@@ -102,7 +102,7 @@ abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::ve
     if (shape_m > max_length) {
       MS_EXCEPTION(ValueError)
         << "For '" << primitive->name()
-        << "', the number of elements of output must be less than 'max_length'. But got number of elements: " << shape_m
+        << "', the number of elements of output must be less than 'max_length', but got number of elements: " << shape_m
         << ", 'max_length': " << max_length << ".";
     }
     return std::make_shared<abstract::Shape>(out_shape);
@@ -131,7 +131,7 @@ TypePtr FillV2InferType(const PrimitivePtr &primitive, const std::vector<Abstrac
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input1 datatype", input1_type, input1_valid_types, prim_name);
   } else {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name()
-                            << "', the dtype of input1 must be in [int32, int64]. But got: " << input1_type->ToString()
+                            << "', the dtype of input1 must be in [int32, int64], but got: " << input1_type->ToString()
                             << ".";
   }
   // Check the data type of the second input and infer the data type of the output from the second input
@@ -146,7 +146,7 @@ TypePtr FillV2InferType(const PrimitivePtr &primitive, const std::vector<Abstrac
     MS_EXCEPTION(TypeError)
       << "For '" << prim_name
       << "', the dtype of input2 must be in [bool, int8, int16, int32, int64, uint8, uint16, uint32, "
-         "uint64, float16, float32, float64]. But got: "
+         "uint64, float16, float32, float64], but got: "
       << input2_type->ToString() << ".";
   }
   auto input2_tensor_type = (input2_type->cast<TensorTypePtr>())->element();

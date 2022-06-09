@@ -13,7 +13,7 @@ mindspore.ops.ger
     **参数：**
 
     - **x1** (Tensor) - 输入Tensor，数据类型为float16或float32。
-    - **x2** (Tensor) - 输入Tensor，数据类型为float16或float32。
+    - **x2** (Tensor) - 输入Tensor，数据类型为float16或float32， 输入数据类型需和`x1`保持一致。
 
     **返回：**
 
@@ -23,4 +23,5 @@ mindspore.ops.ger
 
     - **TypeError** - `x1` 或 `x2` 不是Tensor。
     - **TypeError** - 输入的 `x1` 与 `x2` 数据类型不是float16或float32。
+    - **TypeError** - 输入的 `x1` 与 `x2` 数据类型不一致。
     - **ValueError** - `x1` 与 `x2` batch维 :math:`(*B)` 不相同。

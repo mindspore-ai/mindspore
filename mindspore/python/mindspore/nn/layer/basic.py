@@ -338,7 +338,7 @@ class Dense(Cell):
         if self.has_bias:
             if isinstance(bias_init, Tensor):
                 if bias_init.ndim != 1 or bias_init.shape[0] != out_channels:
-                    raise ValueError(f"For '{self.cls_name}', bias init shape error. The ndim of 'bias_init' should "
+                    raise ValueError(f"For '{self.cls_name}', bias init shape error. The ndim of 'bias_init' must "
                                      f"be equal to 1, and the first dim must be equal to 'out_channels'. But got "
                                      f"'bias_init': {bias_init}, 'out_channels': {out_channels}.")
             self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
