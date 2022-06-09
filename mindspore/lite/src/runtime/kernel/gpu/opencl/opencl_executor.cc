@@ -40,7 +40,7 @@ int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::ve
   }
   for (auto *kernel : kernels) {
     MS_ASSERT(kernel);
-    GPUCallBackParam callbackParam;
+    MSCallBackParam callbackParam;
     callbackParam.node_name = kernel->name();
     callbackParam.node_type = kernel->type_str();
     if ((before != nullptr) && !before(kernel->in_tensors(), kernel->out_tensors(), callbackParam)) {

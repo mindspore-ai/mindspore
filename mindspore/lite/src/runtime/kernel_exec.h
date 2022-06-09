@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,11 @@
 #include "include/api/delegate.h"
 #include "extendrt/mindir_loader/abstract_kernel.h"
 #include "include/lite_types.h"
+
+namespace mindspore::lite {
+using KernelCallBack = std::function<bool(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs,
+                                          const MSCallBackParam &opInfo)>;
+}
 
 using mindspore::infer::Abstractkernel;
 using mindspore::lite::KernelCallBack;

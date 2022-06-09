@@ -157,7 +157,11 @@ std::vector<char> Status::GetErrDescriptionChar() const {
   if (data_ == nullptr) {
     return std::vector<char>();
   }
-  return StringToChar(data_->err_description);
+  if (data_->err_description.empty()) {
+    return ToCString();
+  } else {
+    return StringToChar(data_->err_description);
+  }
 }
 
 std::vector<char> Status::CodeAsCString(enum StatusCode c) {
