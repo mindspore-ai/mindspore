@@ -67,7 +67,7 @@ class Serializer {
    */
   template <typename... PARAMETERS>
   void CodeFunction(const std::string &name, PARAMETERS... parameters) {
-    code << name << "(";
+    code << "    " << name << "(";
     GenCode(parameters...);
     code << ");\n";
   }
@@ -105,9 +105,9 @@ class Serializer {
   void CodeArray(const std::string &name, T *data, int length, bool is_const = true) {
     std::string type = GetVariableTypeName<T>();
     if (is_const) {
-      code << "const " << type << " " << name << "[" << length << "] = {";
+      code << "    const " << type << " " << name << "[" << length << "] = {";
     } else {
-      code << type << " " << name << "[" << length << "] = {";
+      code << "    " << type << " " << name << "[" << length << "] = {";
     }
     for (int i = 0; i < length - 1; ++i) {
       code << data[i] << ", ";
@@ -190,9 +190,9 @@ class Serializer {
   template <bool immutable = true, typename... PARAMETERS>
   void CodeBaseStruct(const std::string &type, const std::string &name, PARAMETERS... parameters) {
     if constexpr (immutable) {
-      code << "const " << type << " " << name << " = {";
+      code << "    const " << type << " " << name << " = {";
     } else {
-      code << type << " " << name << " = {";
+      code << "    " << type << " " << name << " = {";
     }
     GenCode(parameters...);
     code << "};\n";
@@ -254,7 +254,13 @@ class Serializer {
   void GenCode(int8_t t) { code << std::to_string(t); }
   void GenCode(uint8_t t) { code << std::to_string(t); }
   void GenCode(decltype(nullptr) t) { code << "NULL"; }
-  void GenCode(const char *t) { code << t; }
+  void GenCode(const char *t) {
+    if (t == nullptr || (t != nullptr && strlen(t) == 0)) {
+      code << "{0}";
+    } else {
+      code << t;
+    }
+  }
   void GenCode(TypeIdC t) { code << "(TypeIdC)" << t; }
 };
 }  // namespace mindspore::lite::micro
