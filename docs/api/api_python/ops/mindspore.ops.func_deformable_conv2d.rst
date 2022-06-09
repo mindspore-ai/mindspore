@@ -3,7 +3,7 @@ mindspore.ops.deformable_conv2d
 
 .. py:function:: mindspore.ops.deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1, deformable_groups=1, modulated=True)
 
-    给定4D的Tensor输入`x` ， `weight` 和 `offsets` ，计算一个2D的可变形卷积。可变形卷积运算可以表达如下：
+    给定4D的Tensor输入 `x` ， `weight` 和 `offsets` ，计算一个2D的可变形卷积。可变形卷积运算可以表达如下：
     可变形卷积v1：
     .. math::
         y(p)=\sum_{k=1}^{K}w_{k}\cdot x(p+p_{k}+\Delta{p_{k}})
