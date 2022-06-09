@@ -246,6 +246,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"repeat", std::string("repeat")},                                  // C.repeat_elements
        {"bernoulli", prim::kPrimBernoulli},                                // P.Bernoulli()
        {"cdist", std::string("cdist")},                                    // P.cdist
+       {"celu", std::string("celu")},                                      // P.celu
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
        {"one_hot", std::string("one_hot")},                                // P.OneHot
        {"intopk", std::string("intopk")},                                  // P.InTopK

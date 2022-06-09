@@ -255,6 +255,28 @@ mindspore.Tensor
         - **ValueError** - 如果当前Tensor的维度信息与输入参数 `input_y` 不相同。
         - **ValueError** - 如果当前Tensor或输入参数 `input_y` 不是2维或3维。
 
+    .. py:method:: celu(alpha=1.0)
+        
+        celu激活函数，按输入元素计算输出，公式定义如下：
+        
+        .. math::
+            \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
+            
+        **参数：**
+        
+        - **alpha** (float) - celu公式定义的阈值 :math:`\alpha` 。默认值：1.0。
+        
+        **返回：**
+        
+        Tensor，shape和数据类型与输入相同。
+        
+        **异常：**
+        
+        - **TypeError** - `alpha` 不是float。
+        - **ValueError** - `alpha` 的值为零。
+        - **TypeError** - `x` 不是tensor。
+        - **TypeError** - `x` 的dtype既不是float16也不是float32。
+
     .. py:method:: clip(xmin, xmax, dtype=None)
 
         裁剪Tensor中的值。

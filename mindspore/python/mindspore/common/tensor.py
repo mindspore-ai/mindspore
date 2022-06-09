@@ -3685,6 +3685,45 @@ class Tensor(Tensor_):
         s, _, _ = svd_op(full_matrices, compute_uv)(self)
         return s
 
+    def celu(self, alpha=1.0):
+        r"""
+        Computes celu (Continuously differentiable exponential linear units) of input tensors element-wise.
+
+        The formula is defined as follows:
+
+        .. math::
+            \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
+
+        It returns :math:`\max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))` element-wise.
+
+        The picture about celu looks like this `celu <https://arxiv.org/abs/1704.07483>`_.
+
+        Args:
+            alpha (float): The :math:`\alpha` value for the Celu formulation. Default: 1.0
+
+        Returns:
+            Tensor, has the same shape and data type as self.
+
+        Raises:
+            TypeError: If `alpha` is not a float.
+            ValueError: If `alpha` has the value of 0.
+            TypeError: If `x` is not a Tensor.
+            TypeError: If dtype of `x` is neither float16 nor float32.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
+            >>> print(x.celu())
+            [-0.86466473 -0.63212055  1.          2.        ]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('celu')(alpha)(self)
+
     def hardshrink(self, lambd=0.5):
         r"""
         Apply the Hard Shrink function for tensor. Calculates the output according to the input elements.

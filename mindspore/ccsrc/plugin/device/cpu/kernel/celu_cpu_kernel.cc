@@ -69,7 +69,9 @@ bool CeluCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   auto in_data = static_cast<float *>(inputs[0]->addr);
   auto out_data = static_cast<float *>(outputs[0]->addr);
 
-  auto task = [this, in_data, out_data](size_t start, size_t end) { Celu(in_data, (end - start), out_data, alpha_); };
+  auto task = [this, in_data, out_data](size_t start, size_t end) {
+    Celu(in_data + start, (end - start), out_data + start, alpha_);
+  };
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
 
   return true;

@@ -29,7 +29,7 @@ bool CeluGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
                             const std::vector<KernelTensorPtr> &outputs) {
   auto kernel_ptr = std::dynamic_pointer_cast<ops::CeLU>(base_operator);
   if (kernel_ptr == nullptr) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast Cdist ops failed!";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' cast celu ops failed!";
     return false;
   }
   kernel_name_ = kernel_ptr->name();

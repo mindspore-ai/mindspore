@@ -1490,6 +1490,13 @@ def repeat(x, repeats, axis=None):
     return P.Concat(axis)(repeated_subs)
 
 
+def celu(x, alpha=1.0):
+    r"""
+    Apply the Hard Shrink function for a tensor. Calculates the output according to the input elements.
+    """
+    return P.CeLU(alpha)(x)
+
+
 def hardshrink(x, lambd=0.5):
     r"""
     Apply the Hard Shrink function for a tensor. Calculates the output according to the input elements.

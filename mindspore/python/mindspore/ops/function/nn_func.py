@@ -113,6 +113,44 @@ fast_gelu_ = P.FastGeLU()
 softsign_ = P.Softsign()
 
 
+def celu(x, alpha=1.0):
+    r"""
+    Computes celu (Continuously differentiable exponential linear units) of input tensors element-wise.
+
+    .. math::
+
+        \text{CeLU}(x) = \max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))
+
+    It returns :math:`\max(0,x) + \min(0, \alpha * (\exp(x/\alpha) - 1))` element-wise.
+
+    The picture about celu looks like this `celu <https://arxiv.org/abs/1704.07483>`_.
+
+    Args:
+        x (Tensor): The input of celu with data type of float16 or float32.
+        alpha (float): The :math:`\alpha` value for the Celu formulation. Default: 1.0
+
+    Returns:
+        Tensor, has the same data type and shape as the input.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Raises:
+        TypeError: If `alpha` is not a float.
+        ValueError: If `alpha` has the value of 0.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Examples:
+        >>> x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]), mindspore.float32)
+        >>> output = ops.celu(x, alpha=1.0)
+        >>> print(output)
+        [-0.86466473 -0.63212055  1.          2.        ]
+    """
+    celu_op = P.CeLU(alpha)
+    return celu_op(x)
+
+
 def fast_gelu(x):
     r"""
     Fast Gaussian Error Linear Units activation function.
@@ -673,6 +711,7 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
 
 __all__ = [
     'adaptive_avgpool2d',
+    'celu',
     'deformable_conv2d',
     'fast_gelu',
     'hardshrink',
