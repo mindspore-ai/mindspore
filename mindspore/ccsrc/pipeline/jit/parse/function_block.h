@@ -203,7 +203,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   bool is_dead_block_{false};
 
   AnfNodePtr ReadLocalVariable(const std::string &var_name);
-  AnfNodePtr FindPredInterpretNode(const std::string &var_name);
+  std::pair<AnfNodePtr, bool> FindPredInterpretNode(const std::string &var_name);
 };
 }  // namespace parse
 }  // namespace mindspore

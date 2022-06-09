@@ -127,22 +127,24 @@ AnfNodePtr FunctionBlock::ReadLocalVariable(const std::string &var_name) {
   return nullptr;
 }
 
-AnfNodePtr FunctionBlock::FindPredInterpretNode(const std::string &var_name) {
+std::pair<AnfNodePtr, bool> FunctionBlock::FindPredInterpretNode(const std::string &var_name) {
   // Search the predecessors of the current block for the local parameter. If one of the local parameter of the
   // predecessors is interpret node, the phi_param needs to set the interpret true.
   std::unordered_set<FunctionBlock *> visited_block;
   std::queue<FunctionBlock *> block_queue;
   block_queue.push(this);
+  bool has_found = false;
   while (!block_queue.empty()) {
     const auto &cur_block = block_queue.front();
     block_queue.pop();
     visited_block.insert(cur_block);
     auto pred_node = cur_block->ReadLocalVariable(var_name);
     if (pred_node != nullptr) {
+      has_found = true;
       bool interpret_without_internal =
         IsPrimitiveCNode(pred_node, prim::kPrimPyInterpret) && !pred_node->interpret_internal_type();
       if (pred_node->interpret() || interpret_without_internal) {
-        return pred_node;
+        return std::make_pair(pred_node, has_found);
       }
     } else {
       for (const auto &cur_pred_block : cur_block->prev_blocks()) {
@@ -152,7 +154,7 @@ AnfNodePtr FunctionBlock::FindPredInterpretNode(const std::string &var_name) {
       }
     }
   }
-  return nullptr;
+  return std::make_pair(nullptr, has_found);
 }
 
 // Read variable from predecessors
@@ -207,12 +209,20 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
                 << phi_param->ToString() << " for " << var_name;
 
   if (use_fallback) {
-    const auto &pred_node = FindPredInterpretNode(var_name);
+    auto [pred_node, has_found] = FindPredInterpretNode(var_name);
     if (pred_node != nullptr) {
       if (pred_node->interpret_special_type()) {
         phi_param->set_interpret_special_type(true);
       }
       phi_param->set_interpret(true);
+    } else if (!has_found) {
+      // If the current node is created as a phi node at the first time.(the var_name has not be found in pre blocks)
+      // need resolve to determine whether it needs to be marked with interpret.
+      auto resolve_node = MakeResolveSymbol(var_name);
+      MS_EXCEPTION_IF_NULL(resolve_node);
+      phi_param->set_interpret(resolve_node->interpret());
+      phi_param->set_interpret_internal_type(resolve_node->interpret_internal_type());
+      phi_param->set_interpret_special_type(resolve_node->interpret_special_type());
     }
   }
 

@@ -20,7 +20,11 @@ from mindspore import Tensor, ms_function, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_while_after_while_in_while_numpy():
     """
     Feature: JIT Fallback
