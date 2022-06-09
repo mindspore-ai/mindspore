@@ -44,6 +44,7 @@ class ParallelInfo {
     dims_ = obj.dims_;
     fusion_info_ = obj.fusion_info_;
   }
+  ParallelInfo &operator=(const ParallelInfo &) = default;
   ~ParallelInfo() = default;
 
   size_t GetSize() const {
@@ -68,6 +69,7 @@ class ParallelConfig {
   ParallelConfig() = default;
   explicit ParallelConfig(size_t max_n) : max_num_for_fuse_(max_n) {}
   explicit ParallelConfig(const ParallelConfig &obj) { max_num_for_fuse_ = obj.max_num_for_fuse_; }
+  ParallelConfig &operator=(const ParallelConfig &) = default;
   ~ParallelConfig() = default;
   size_t max_num_for_fuse() const { return max_num_for_fuse_; }
 
@@ -94,7 +96,7 @@ class ParallelOpFusion : public opt::Pass {
   std::tuple<AnfNodePtrList, std::vector<int>> GetAvaliableNodesByOffset(int start, const std::vector<size_t> &offsets,
                                                                          const std::vector<bool> &used,
                                                                          const AnfNodePtrList &nodes,
-                                                                         const std::set<int> &excludes);
+                                                                         const std::set<int> &excludes) const;
 
   std::tuple<std::vector<bool>, std::vector<ParallelInfo>> DoSearchInSortedCandidates(
     size_t origin_size, const AnfNodePtrList &candidates, std::map<AnfNodePtr, int> *origin_indices,

@@ -15,7 +15,7 @@
  */
 #include "common/graph_kernel/model/op_node.h"
 
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 #include <set>
 #include <sstream>
@@ -81,12 +81,12 @@ NodeBase ExtractAbstract(const AbstractBasePtr &abs) {
 
 NodeBaseList PrimOp::InferShapeType(const NodePtrList &inputs, const DAttrs &attrs) {
   auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
-  auto iter = op_primc_fns.find(op_);
+  const auto iter = op_primc_fns.find(op_);
   if (iter == op_primc_fns.end()) {
     MS_LOG(EXCEPTION) << "The PrimitiveC of [" << op_ << "] is not defined.";
   }
   auto primc = iter->second();
-  primc->SetAttrs(attrs);
+  (void)primc->SetAttrs(attrs);
   AbstractBasePtrList inputs_abstract;
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_abstract),
                        [](const NodePtr &node) -> AbstractBasePtr {
@@ -156,7 +156,9 @@ std::string PrimOp::ToString() const {
     } else {
       oss << inputs_[i]->ToString();
     }
-    if (i != inputs_.size() - 1) oss << ", ";
+    if (i != inputs_.size() - 1) {
+      oss << ", ";
+    }
   }
   oss << ")";
   std::ostringstream attr_oss;
@@ -206,7 +208,9 @@ tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &o
 
 NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &, const std::string &op) {
   for (auto i : inputs) {
-    if (i->NodeType() != NType::Value) return nullptr;
+    if (i->NodeType() != NType::Value) {
+      return nullptr;
+    }
   }
   TypeId output_type = this->type;
   tensor::TensorPtr res = nullptr;
@@ -273,7 +277,8 @@ DShape ToNz(const DShape &default_shape) {
     return default_shape;
   }
   if (default_shape.size() > nz_size) {
-    (void)leading_shape.insert(leading_shape.end(), default_shape.begin(), default_shape.end() - SizeToLong(nz_size));
+    (void)leading_shape.insert(leading_shape.cend(), default_shape.cbegin(),
+                               default_shape.cend() - SizeToLong(nz_size));
   }
   if (default_shape.size() == 1 || (default_shape.size() >= nz_size && default_shape[len - nz_size] == 1)) {
     // (32) or (N, 1, 32) -> (N, 2, 1, 1, 16)
@@ -295,7 +300,7 @@ DShape ToNz(const DShape &default_shape) {
     }
     tail_shape = {default_shape[1] / align16, default_shape[0] / align16, align16, align16};
   }
-  (void)leading_shape.insert(leading_shape.end(), tail_shape.begin(), tail_shape.end());
+  (void)leading_shape.insert(leading_shape.cend(), tail_shape.cbegin(), tail_shape.cend());
   return leading_shape;
 }
 
@@ -315,7 +320,7 @@ DShape BroadcastShape(const NodePtrList &inputs, bool to_nz = false) {
   std::vector<std::vector<int64_t>> align_shapes;
   for (auto &s : shapes) {
     std::vector<int64_t> cur(max_dim - s.size(), 1);
-    (void)cur.insert(cur.end(), s.begin(), s.end());
+    (void)cur.insert(cur.cend(), s.cbegin(), s.cend());
     (void)align_shapes.emplace_back(cur);
   }
   std::vector<int64_t> output_shape(max_dim, 1);
@@ -386,16 +391,22 @@ std::vector<TypeId> ArgReduceOp::InferType(const NodePtrList &, const DAttrs &at
 
 DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
   // only support NCHW/NHWC now
-  if (inputs[0]->shape.size() != 4) return kOpFormat_DEFAULT;
+  if (inputs[0]->shape.size() != 4) {
+    return kOpFormat_DEFAULT;
+  }
   CHECK_ATTR(attrs, "perm");
   auto perm = GetListInt(attrs.find("perm")->second);
   const auto &ori_format = inputs[0]->format;
   if (ori_format == kOpFormat_DEFAULT || ori_format == kOpFormat_NCHW) {
     std::vector<int64_t> nchw2nhwc = {0, 2, 3, 1};
-    if (perm == nchw2nhwc) return kOpFormat_NHWC;
+    if (perm == nchw2nhwc) {
+      return kOpFormat_NHWC;
+    }
   } else if (ori_format == kOpFormat_NHWC) {
     std::vector<int64_t> nhwc2nchw = {0, 3, 1, 2};
-    if (perm == nhwc2nchw) return kOpFormat_NCHW;
+    if (perm == nhwc2nchw) {
+      return kOpFormat_NCHW;
+    }
   }
   return kOpFormat_DEFAULT;
 }
