@@ -160,7 +160,7 @@ if("${X86_64_SIMD}" STREQUAL "avx512")
                           ${NNACL_DIR}/fp32/matmul_avx512_fp32.c)
 
     set_source_files_properties(${MS_X86_AVX512_SRC} PROPERTIES LANGUAGE C
-        COMPILE_FLAGS "${CMAKE_C_FLAGS} -mavx512f")
+        COMPILE_FLAGS "${CMAKE_C_FLAGS} -mavx512f -fPIC")
 
 endif()
 

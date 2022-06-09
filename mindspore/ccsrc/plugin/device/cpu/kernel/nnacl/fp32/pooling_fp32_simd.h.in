@@ -32,7 +32,7 @@ static inline int AvgPoolingBatch@SIMD_INSTRUCTION@(int ci, const float *src_pla
   for (int block_max_size = channel - BLOCK_NUM + 1; ci < block_max_size; ci += BLOCK_NUM) {
     const float *src_c_ptr = src_plane_ptr + ci;
     float *dst_c_ptr = dst_plane_ptr + ci;
-    SIMD_F32 tmp_avg = SIMD_MOV_F32(0.0f);
+    SIMD_F32 tmp_avg = SIMD_SET0_F32;
     int real_count = 0;
     for (int h = real_win_h_start; h < real_win_h_end; h++) {
       for (int w = real_win_w_start; w < real_win_w_end; w++) {

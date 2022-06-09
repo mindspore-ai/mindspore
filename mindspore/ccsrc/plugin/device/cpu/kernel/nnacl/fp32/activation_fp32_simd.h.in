@@ -25,7 +25,7 @@ extern "C" {
 @SIMD_INSTRUCTION_BEGIN@
 
 static inline int Fp32Relu@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
-    SIMD_F32 zero = SIMD_MOV_F32(0.0f);
+    SIMD_F32 zero = SIMD_SET0_F32;
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
         SIMD_ST_F32(dst + index, SIMD_MAX_F32(SIMD_LD_F32(src + index), zero));
     }
@@ -41,7 +41,7 @@ static inline int Int32Relu@SIMD_INSTRUCTION@(int index, const int32_t *src, int
 }
 
 static inline int Fp32Relu6@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
-    SIMD_F32 zero = SIMD_MOV_F32(0.0f);
+    SIMD_F32 zero = SIMD_SET0_F32;
     SIMD_F32 six = SIMD_MOV_F32(6.0f);
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
         SIMD_ST_F32(dst + index, SIMD_CLAMP_F32(SIMD_LD_F32(src + index), zero, six));
@@ -53,7 +53,7 @@ static inline int LRelu@SIMD_INSTRUCTION@(int index, const float *src, int lengt
     SIMD_F32 alpha_data = SIMD_MOV_F32(alpha);
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
         SIMD_F32 src_tmp = SIMD_LD_F32(src + index);
-        SIMD_MASK mask = SIMD_CMPGT_F32(SIMD_MOV_F32(0.0f), src_tmp);
+        SIMD_MASK mask = SIMD_CMPGT_F32(SIMD_SET0_F32, src_tmp);
         SIMD_ST_F32(dst + index, SIMD_BLEND_F32(src_tmp, SIMD_MUL_F32(src_tmp, alpha_data), mask));
     }
     return index;
@@ -61,7 +61,7 @@ static inline int LRelu@SIMD_INSTRUCTION@(int index, const float *src, int lengt
 
 static inline int Sigmoid@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
-        SIMD_EXP_ST_F32(SIMD_SUB_F32(SIMD_MOV_F32(0.0f), (SIMD_LD_F32(src + index))), dst + index);
+        SIMD_EXP_ST_F32(SIMD_SUB_F32(SIMD_SET0_F32, (SIMD_LD_F32(src + index))), dst + index);
         SIMD_ST_F32(dst + index,
                     SIMD_DIV_F32(SIMD_MOV_F32(1.0f), SIMD_ADD_F32(SIMD_MOV_F32(1.0f), SIMD_LD_F32(dst + index))));
     }
@@ -142,7 +142,7 @@ static inline int Elu@SIMD_INSTRUCTION@(int index, const float *src, int length,
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
         SIMD_F32 src_tmp = SIMD_LD_F32(src + index);
         SIMD_F32 exp_tmp = SIMD_SUB_N_F32(SIMD_EXP_F32(src_tmp), 1.0f);
-        SIMD_MASK mask = SIMD_CMPLE_F32(src_tmp, SIMD_MOV_F32(0.0f));
+        SIMD_MASK mask = SIMD_CMPLE_F32(src_tmp, SIMD_SET0_F32);
         SIMD_ST_F32(dst + index, SIMD_BLEND_F32(src_tmp, SIMD_MUL_N_F32(exp_tmp, alpha), mask));
     }
     return index;
@@ -152,7 +152,7 @@ static inline int Celu@SIMD_INSTRUCTION@(int index, const float *src, int length
     for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
         SIMD_F32 src_tmp = SIMD_LD_F32(src + index);
         SIMD_F32 exp_tmp = SIMD_SUB_N_F32(SIMD_EXP_F32(SIMD_DIV_N_F32(src_tmp, alpha)), 1.0f);
-        SIMD_MASK mask = SIMD_CMPLE_F32(src_tmp, SIMD_MOV_F32(0.0f));
+        SIMD_MASK mask = SIMD_CMPLE_F32(src_tmp, SIMD_SET0_F32);
         SIMD_ST_F32(dst + index, SIMD_BLEND_F32(src_tmp, SIMD_MUL_N_F32(exp_tmp, alpha), mask));
     }
     return index;

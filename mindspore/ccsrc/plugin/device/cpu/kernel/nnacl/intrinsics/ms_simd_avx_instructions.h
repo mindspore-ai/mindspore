@@ -37,6 +37,7 @@
 #define MS_ADD256_EPI32 _mm256_add_epi32
 #define MS_MOV256_F32 _mm256_set1_ps
 #define MS_MOV256_EPI32 _mm256_set1_epi32
+#define MS_MOV256_VAL0_F32 _mm256_setzero_ps()
 #define MS_MLA256_F32(src1, src2, src3) _mm256_fmadd_ps(src2, src3, src1)
 #define MS_ST256_F32 _mm256_storeu_ps
 #define MS_ST256_EPI32(src1, src2) _mm256_storeu_si256((__m256i *)(src1), src2)

@@ -43,6 +43,7 @@
 #define MS_MOV128_F32 _mm_set1_ps
 #define MS_MOVQ_EPI32 _mm_set1_epi32
 #define MS_MOV128_EPI32 _mm_set1_epi32
+#define MS_MOV128_VAL0_F32 _mm_setzero_ps()
 #define MS_MLAQ_F32(src1, src2, src3) _mm_add_ps(src1, _mm_mul_ps(src2, src3))
 #define MS_STQ_F32 _mm_storeu_ps
 #define MS_ST128_F32 _mm_storeu_ps
