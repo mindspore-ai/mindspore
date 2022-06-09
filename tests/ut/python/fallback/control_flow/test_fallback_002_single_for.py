@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
+import pytest
 import numpy as np
 from mindspore import Tensor, ms_function, context
 
@@ -105,3 +106,21 @@ def test_single_for_builtin_function_list():
         return Tensor(x)
     res = control_flow_for()
     assert (res.asnumpy() == [8.8, 17.6]).all()
+
+
+def test_single_for_x_in_xs():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for():
+        x = np.array([1.1, 2.2])
+        y = np.array(0)
+        for i in x:
+            y += i
+        return Tensor(y)
+    with pytest.raises(TypeError) as err:
+        control_flow_for()
+    assert "Parsing syntax 'for x in xs', xs can not be interpret node " in str(err.value)
