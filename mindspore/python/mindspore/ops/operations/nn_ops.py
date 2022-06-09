@@ -7607,7 +7607,7 @@ class InTopK(PrimitiveWithInfer):
     r"""
     Determines whether the targets are in the top `k` predictions.
 
-    Refer to :func:`mindspore.ops.tanh` for more detail.
+    Refer to :func:`mindspore.ops.intopk` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
