@@ -29,6 +29,8 @@ class MIND_API ScatterUpdate : public BaseOperator {
   MIND_API_BASE_MEMBER(ScatterUpdate);
   /// \brief Constructor.
   ScatterUpdate() : BaseOperator(kNameScatterUpdate) { InitIOName({"input_x", "indices", "updates"}, {"output"}); }
+  /// \brief Init.
+  void Init() const {}
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -38,7 +38,7 @@ class TestScatterFuncNet(nn.Cell):
     def __init__(self, func, lock, inputx, indices, updates):
         super(TestScatterFuncNet, self).__init__()
 
-        self.scatter_func = func_map[func](use_locking=lock)
+        self.scatter_func = func_map.get(func)(use_locking=lock)
         self.inputx = Parameter(inputx, name="inputx")
         self.indices = Parameter(indices, name="indices")
         self.updates = Parameter(updates, name="updates")
@@ -63,7 +63,7 @@ def scatter_func_use_locking_false_net(func, inputx, indices, updates):
 class TestScatterFuncDynamicNet(nn.Cell):
     def __init__(self, func, inputx, indices, updates):
         super(TestScatterFuncDynamicNet, self).__init__()
-        self.scatter_func = func_map[func]()
+        self.scatter_func = func_map.get(func)()
         self.test_dynamic = inner.GpuConvertToDynamicShape()
         self.inputx = Parameter(inputx, name="inputx")
         self.indices = Parameter(indices, name="indices")
@@ -85,7 +85,7 @@ def scatter_func_d_net(func, inputx, indices, updates):
 class TestScatterFuncDynamicNet2(nn.Cell):
     def __init__(self, func, inputx):
         super(TestScatterFuncDynamicNet2, self).__init__()
-        self.scatter_func = func_map[func]()
+        self.scatter_func = func_map.get(func)()
         self.test_dynamic = inner.GpuConvertToDynamicShape()
         self.inputx = Parameter(inputx, name="inputx")
 
@@ -423,7 +423,12 @@ def test_scatter_func_input_less_than_1_float32():
     # update
     output = scatter_func_net("update", inputx, indices, updates)
     expected = np.array(
-        [[37.0, 38.0, 39.0], [34.0, 35.0, 66.0], [67.0, 68.0, 69.0],], dtype=np.float32,
+        [
+            [37.0, 38.0, 39.0],
+            [34.0, 35.0, 66.0],
+            [67.0, 68.0, 69.0],
+        ],
+        dtype=np.float32,
     )
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -950,19 +955,33 @@ def test_scatter_func_indices_vmap():
     ).astype(np.int32)), name="inputx")
     indices = Tensor(np.array([[[0, 1], [1, 1]], [[0, 1], [0, 1]], [[1, 1], [1, 0]]]).astype(np.int32))
     updates = Tensor(np.array([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]]]).astype(np.int32))
+    in_axes = (0, 0, None)
+    out_axes = 0
 
     # scatter_max
-    output = VmapNet(ScatterFuncVmapNet("max"), inputx, (0, 0, None), 0)(indices, updates)
+    output = VmapNet(ScatterFuncVmapNet("max"), inputx, in_axes, out_axes)(indices, updates)
     expected = np.array(
         [[[1, 1, 2], [4, 4, 5]], [[3, 3, 3], [4, 4, 5]], [[4, 4, 4], [3, 4, 5]]]
     ).astype(np.int32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
     # scatter_min
-    output = VmapNet(ScatterFuncVmapNet("min"), inputx, (0, 0, None), 0)(indices, updates)
+    output = VmapNet(ScatterFuncVmapNet("min"), inputx, in_axes, out_axes)(indices, updates)
     expected = np.array(
         [[[0, 1, 1], [2, 2, 2]], [[0, 1, 1], [2, 2, 2]], [[0, 1, 2], [1, 1, 1]]]
     ).astype(np.int32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # scatter_update
+    inputx = Parameter(Tensor(np.array(
+        [[[0, 1, 2], [3, 4, 5]], [[0, 1, 2], [3, 4, 5]], [[0, 1, 2], [3, 4, 5]]]
+    ).astype(np.float32)), name="inputx")
+    indices = Tensor(np.array([[0, 1], [1, 0], [0, 1]]).astype(np.int32))
+    updates = Tensor(np.array([[1, 1, 1], [2, 2, 2]]).astype(np.float32))
+    output = VmapNet(ScatterFuncVmapNet("update"), inputx, in_axes, out_axes)(indices, updates)
+    expected = np.array(
+        [[[1, 1, 1], [2, 2, 2]], [[2, 2, 2], [1, 1, 1]], [[1, 1, 1], [2, 2, 2]]]
+    ).astype(np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
@@ -978,13 +997,20 @@ def test_scatter_func_updates_vmap():
     inputx = Parameter(Tensor(np.array([[0.1, 1.0, 2.2], [3.0, 4.3, 5.5]]).astype(np.float32)), name="inputx")
     indices = Tensor(np.array([0, 1]).astype(np.int32))
     updates = Tensor(np.array([[1.0, 0.1], [1.2, 1.3]]).astype(np.float32))
+    in_axes = (0, None, 0)
+    out_axes = 0
 
     # scatter_max
-    output = VmapNet(ScatterFuncVmapNet("max"), inputx, (0, None, 0), 0)(indices, updates)
+    output = VmapNet(ScatterFuncVmapNet("max"), inputx, in_axes, out_axes)(indices, updates)
     expected = np.array([[1.0, 1.0, 2.2], [3.0, 4.3, 5.5]]).astype(np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
     # scatter_min
-    output = VmapNet(ScatterFuncVmapNet("min"), inputx, (0, None, 0), 0)(indices, updates)
+    output = VmapNet(ScatterFuncVmapNet("min"), inputx, in_axes, out_axes)(indices, updates)
     expected = np.array([[0.1, 0.1, 2.2], [1.2, 1.3, 5.5]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # scatter_update
+    output = VmapNet(ScatterFuncVmapNet("update"), inputx, in_axes, out_axes)(indices, updates)
+    expected = np.array([[1.0, 0.1, 2.2], [1.2, 1.3, 5.5]]).astype(np.float32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
