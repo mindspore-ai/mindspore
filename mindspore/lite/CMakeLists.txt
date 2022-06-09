@@ -64,7 +64,7 @@ option(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE "enable cloud and device fusion infe
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
 option(ENABLE_MODEL_OBF "if support model obfuscation" off)
-set(VERSION_STR "1.7.0" CACHE STRING "get from version")
+set(VERSION_STR "1.8.0" CACHE STRING "get from version")
 
 add_definitions(-DVERSION_STR=\"${VERSION_STR}\")
 
