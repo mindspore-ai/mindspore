@@ -15,7 +15,6 @@
  */
 
 #include "infer/custom_common.h"
-#include "include/errorcode.h"
 #include "include/registry/register_kernel_interface.h"
 
 namespace mindspore {

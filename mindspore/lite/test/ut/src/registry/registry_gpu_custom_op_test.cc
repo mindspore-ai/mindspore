@@ -31,16 +31,16 @@
 
 using mindspore::kernel::Kernel;
 using mindspore::kernel::KernelInterface;
-using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
-using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_AddFusion;
 #define UP_ROUND(x, y) (((x) + (y) - (1)) / (y) * (y))
 #define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
-#define C4NUM 4
 
 namespace mindspore {
 namespace {
+constexpr int kDimIndex2 = 2;
+constexpr int kDimIndex3 = 3;
+constexpr int kDimIndex4 = 4;
+constexpr size_t kDimSize2 = 2;
 constexpr auto kFloat32 = DataType::kNumberTypeFloat32;
 static const char *arithmetic_source =
   "\n"
@@ -70,18 +70,18 @@ void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
   }
   auto *N = dst;
   auto *H = dst + 1;
-  auto *W = dst + 2;
-  auto *C = dst + 3;
+  auto *W = dst + kDimIndex2;
+  auto *C = dst + kDimIndex3;
   if (src_num == 1) {  // 1 1 1 C
     *C = src[0];
-  } else if (src_num == 2) {  // N 1 1 C
+  } else if (src_num == kDimIndex2) {  // N 1 1 C
     *N = src[0];
     *C = src[1];
-  } else if (src_num == 3) {  // N 1 W C
+  } else if (src_num == kDimIndex3) {  // N 1 W C
     *N = src[0];
     *W = src[1];
     *C = src[2];
-  } else if (src_num == 4) {  // N H W C
+  } else if (src_num == kDimIndex4) {  // N H W C
     *N = src[0];
     *H = src[1];
     *W = src[2];
@@ -101,8 +101,7 @@ void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num, DstT default_va
   }
   Broadcast2GpuShape(dst, src, src_num);
 }
-#define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
-#define C4NUM 4
+
 struct GpuTensorInfo {
   GpuTensorInfo() = default;
   explicit GpuTensorInfo(const MSTensor *tensor, registry::opencl::OpenCLRuntimeWrapper *opencl_run) {
@@ -110,12 +109,12 @@ struct GpuTensorInfo {
       return;
     }
     auto shape_ori = tensor->Shape();
-    int64_t shape[4];
+    int64_t shape[kDimIndex4];
     Broadcast2GpuShape(shape, shape_ori.data(), shape_ori.size(), 1l);
     N = shape[0];
     H = shape[1];
-    W = shape[2];
-    C = shape[3];
+    W = shape[kDimIndex2];
+    C = shape[kDimIndex3];
     Slice = UP_DIV(C, C4NUM);
     if (tensor->DataType() == mindspore::DataType::kNumberTypeFloat16) {
       FLT_size = sizeof(cl_half);
@@ -159,12 +158,12 @@ class CustomAddKernel : public kernel::Kernel {
       : Kernel(inputs, outputs, primitive, ctx), fp16_enable_(fp16_enable) {}
   ~CustomAddKernel() override { FreeWeight(); }
 
-  int CheckInputsDataTypes() { return lite::RET_OK; }
+  int CheckInputsDataTypes() { return kSuccess; }
 
   // Prepare will be called during graph compilation
   int Prepare() override {
     auto ret = CheckSpecs();
-    if (ret != lite::RET_OK) {
+    if (ret != kSuccess) {
       std::cerr << "Prepare failed for check kernel specs!";
       return ret;
     }
@@ -173,7 +172,7 @@ class CustomAddKernel : public kernel::Kernel {
     std::string source = arithmetic_source;
     if (opencl_runtime_.LoadSource(program_name, source) != kSuccess) {
       std::cerr << "Load source failed.";
-      return lite::RET_ERROR;
+      return kLiteError;
     }
     std::vector<std::string> build_options_ext = {"-cl-mad-enable -cl-fast-relaxed-math -Werror"};
     if (fp16_enable_) {
@@ -184,7 +183,7 @@ class CustomAddKernel : public kernel::Kernel {
 
     if (opencl_runtime_.BuildKernel(&kernel_, program_name, kernel_name_, build_options_ext) != kSuccess) {
       std::cerr << "Build kernel failed.";
-      return lite::RET_ERROR;
+      return kLiteError;
     }
 
     auto out_shape = GpuTensorInfo(&outputs_[0], &opencl_runtime_);
@@ -204,19 +203,19 @@ class CustomAddKernel : public kernel::Kernel {
         if (allocator == nullptr) {
           std::cerr << "GetAllocator fail.";
           FreeWeight();
-          return lite::RET_ERROR;
+          return kLiteError;
         }
         auto weight_ptr = allocator->Malloc(in_shape.width, in_shape.height, dtype);
         if (weight_ptr == nullptr) {
           std::cerr << "Malloc fail.";
           FreeWeight();
-          return lite::RET_ERROR;
+          return kLiteError;
         }
         weight_ptrs_.push_back(weight_ptr);
         if (opencl_runtime_.WriteImage(weight_ptr, weight.data()) != kSuccess) {
           std::cerr << "WriteImage fail.";
           FreeWeight();
-          return lite::RET_ERROR;
+          return kLiteError;
         }
       } else {
         weight_ptrs_.push_back(nullptr);
@@ -228,17 +227,17 @@ class CustomAddKernel : public kernel::Kernel {
     if (opencl_runtime_.SetKernelArg(kernel_, arg_idx, output_shape) != kSuccess) {
       std::cerr << "Set kernel arg" << arg_idx << "failed.";
       FreeWeight();
-      return lite::RET_ERROR;
+      return kLiteError;
     }
 
     std::cout << kernel_name_ << " Prepare Done!" << std::endl;
-    return lite::RET_OK;
+    return kSuccess;
   }
 
   // Execute is called to compute.
   int Execute() override {
-    if (inputs_.size() != 2) {
-      return lite::RET_PARAM_INVALID;
+    if (inputs_.size() != kDimSize2) {
+      return kLiteParamInvalid;
     }
     PreProcess();
     std::cout << this->name() << " Running!" << std::endl;
@@ -247,41 +246,41 @@ class CustomAddKernel : public kernel::Kernel {
     int arg_idx = 0;
     if (opencl_runtime_.SetKernelArg(kernel_, arg_idx++, input_0_ptr) != kSuccess) {
       std::cerr << "Set kernel arg" << arg_idx - 1 << "failed.";
-      return lite::RET_ERROR;
+      return kLiteError;
     }
     if (opencl_runtime_.SetKernelArg(kernel_, arg_idx++, input_1_ptr) != kSuccess) {
       std::cerr << "Set kernel arg" << arg_idx - 1 << "failed.";
-      return lite::RET_ERROR;
+      return kLiteError;
     }
     if (opencl_runtime_.SetKernelArg(kernel_, arg_idx++, outputs_[0].MutableData()) != kSuccess) {
       std::cerr << "Set kernel arg" << arg_idx - 1 << "failed.";
-      return lite::RET_ERROR;
+      return kLiteError;
     }
     if (opencl_runtime_.RunKernel(kernel_, global_range_, local_range_, nullptr, &event_) != kSuccess) {
       std::cerr << "Run kernel failed.";
-      return lite::RET_ERROR;
+      return kLiteError;
     }
 
-    return lite::RET_OK;
+    return kSuccess;
   }
 
   int CheckSpecs() {
     for (auto &tensor : inputs_) {
       if (tensor.DataType() != DataType::kNumberTypeFloat32 && tensor.DataType() != DataType::kNumberTypeFloat16) {
         std::cerr << "ArithmeticOpenCLKernel only support fp32/fp16 input";
-        return lite::RET_ERROR;
+        return kLiteError;
       }
     }
     for (auto &tensor : outputs_) {
       if (tensor.DataType() != DataType::kNumberTypeFloat32 && tensor.DataType() != DataType::kNumberTypeFloat16) {
         std::cerr << "ArithmeticOpenCLKernel only support fp32/fp16 output";
-        return lite::RET_ERROR;
+        return kLiteError;
       }
     }
 
-    if (inputs_.size() != 2 || outputs_.size() != 1) {
+    if (inputs_.size() != kDimSize2 || outputs_.size() != 1) {
       std::cerr << "in size: " << inputs_.size() << ", out size: " << outputs_.size();
-      return lite::RET_ERROR;
+      return kLiteError;
     }
 
     for (int i = 0; i < inputs_.size(); ++i) {
@@ -289,34 +288,34 @@ class CustomAddKernel : public kernel::Kernel {
       if (!in_tensor.IsConst()) {
         if (fp16_enable_ && in_tensor.DataType() == mindspore::DataType::kNumberTypeFloat32) {
           std::cerr << "Inputs data type error, expectation kNumberTypeFloat16 but kNumberTypeFloat32.";
-          return lite::RET_ERROR;
+          return kLiteError;
         } else if (!fp16_enable_ && in_tensor.DataType() == mindspore::DataType::kNumberTypeFloat16) {
           std::cerr << "Inputs data type error, expectation kNumberTypeFloat32 but kNumberTypeFloat16.";
-          return lite::RET_ERROR;
+          return kLiteError;
         }
       }
     }
 
-    return lite::RET_OK;
+    return kSuccess;
   }
 
   // Resize is used to update some parameters if current node can change along with inputs.
   int ReSize() override {
-    if (CheckOutputs(outputs_) == lite::RET_OK) {
-      return lite::RET_OK;
+    if (CheckOutputs(outputs_) == kSuccess) {
+      return kSuccess;
     }
     auto status =
       registry::RegisterKernelInterface::GetKernelInterface("", primitive_)->Infer(&inputs_, &outputs_, primitive_);
     if (status != kSuccess) {
       std::cerr << "infer failed." << std::endl;
-      return lite::RET_ERROR;
+      return kLiteError;
     }
     auto ret = Prepare();
-    if (ret != lite::RET_OK) {
+    if (ret != kSuccess) {
       std::cerr << "ReSize failed for kernel prepare!";
       return ret;
     }
-    return lite::RET_OK;
+    return kSuccess;
   }
 
  private:
@@ -331,7 +330,7 @@ class CustomAddKernel : public kernel::Kernel {
   int PreProcess() {
     int ret;
     ret = ReSize();
-    if (ret != lite::RET_OK) {
+    if (ret != kSuccess) {
       return ret;
     }
     for (auto i = 0; i < outputs_.size(); ++i) {
@@ -340,36 +339,36 @@ class CustomAddKernel : public kernel::Kernel {
       auto allocator = output->allocator();
       if (allocator == nullptr) {
         std::cerr << "The output tensor of OpenCL kernel must have an allocator.";
-        return lite::RET_ERROR;
+        return kLiteError;
       }
       auto data_ptr = allocator->Malloc(img_info.width, img_info.height, output->DataType());
       if (data_ptr == nullptr) {
         std::cerr << "Malloc data failed";
-        return lite::RET_ERROR;
+        return kLiteError;
       }
       output->SetData(data_ptr);
     }
-    return lite::RET_OK;
+    return kSuccess;
   }
 
   int CheckOutputs(const std::vector<mindspore::MSTensor> &outputs) {
     for (auto &output : outputs) {
       auto output_shape = output.Shape();
       if (std::find(output_shape.begin(), output_shape.end(), -1) != output_shape.end()) {
-        return lite::RET_INFER_INVALID;
+        return kLiteInferInvalid;
       }
     }
-    return lite::RET_OK;
+    return kSuccess;
   }
 
   void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, const GpuTensorInfo &tensor,
                        mindspore::DataType data_type) {
-    auto src_fp16 = reinterpret_cast<float16_t *>(src);
-    auto src_fp32 = reinterpret_cast<float32_t *>(src);
-    auto src_int32 = reinterpret_cast<int32_t *>(src);
-    auto dst_fp16 = reinterpret_cast<float16_t *>(dst);
-    auto dst_fp32 = reinterpret_cast<float32_t *>(dst);
-    auto dst_int32 = reinterpret_cast<int32_t *>(dst);
+    auto src_fp16 = static_cast<float16_t *>(src);
+    auto src_fp32 = static_cast<float32_t *>(src);
+    auto src_int32 = static_cast<int32_t *>(src);
+    auto dst_fp16 = static_cast<float16_t *>(dst);
+    auto dst_fp32 = static_cast<float32_t *>(dst);
+    auto dst_int32 = static_cast<int32_t *>(dst);
     for (int n = 0, src_idx = 0; n < tensor.N; n++) {
       for (int h = 0; h < tensor.H; ++h) {
         for (int w = 0; w < tensor.W; ++w) {
@@ -389,9 +388,9 @@ class CustomAddKernel : public kernel::Kernel {
     // scalar
     if (tensor.ElementsNum == 1) {
       if (dst_is_fp16) {
-        dst_fp16[3] = dst_fp16[2] = dst_fp16[1] = dst_fp16[0];
+        dst_fp16[kDimIndex3] = dst_fp16[kDimIndex2] = dst_fp16[1] = dst_fp16[0];
       } else {
-        dst_fp32[3] = dst_fp32[2] = dst_fp32[1] = dst_fp32[0];
+        dst_fp32[kDimIndex3] = dst_fp32[kDimIndex2] = dst_fp32[1] = dst_fp32[0];
       }
     }
   }

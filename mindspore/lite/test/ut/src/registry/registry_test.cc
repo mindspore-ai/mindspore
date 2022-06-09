@@ -20,18 +20,13 @@
 #include "include/api/context.h"
 #include "include/api/model.h"
 #include "include/context.h"
-#include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/runtime/lite_session.h"
-#include "src/runtime/inner_allocator.h"
 #include "include/registry/register_kernel_interface.h"
 #include "include/registry/register_kernel.h"
 
 using mindspore::kernel::Kernel;
 using mindspore::kernel::KernelInterface;
-using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_OK;
-using mindspore::lite::RET_PARAM_INVALID;
 using mindspore::schema::PrimitiveType_AddFusion;
 
 namespace mindspore {
@@ -40,11 +35,11 @@ class TestCustomAdd : public Kernel {
   TestCustomAdd(const std::vector<mindspore::MSTensor> &inputs, const std::vector<mindspore::MSTensor> &outputs,
                 const schema::Primitive *primitive, const mindspore::Context *ctx)
       : Kernel(inputs, outputs, primitive, ctx) {}
-  int Prepare() override { return 0; }
+  int Prepare() override { return kSuccess; }
 
   int Execute() override;
 
-  int ReSize() override { return 0; }
+  int ReSize() override { return kSuccess; }
 
  private:
   int PreProcess() {
@@ -53,16 +48,16 @@ class TestCustomAdd : public Kernel {
       auto data = output.MutableData();
       if (data == nullptr) {
         MS_LOG(ERROR) << "Get data failed";
-        return RET_ERROR;
+        return kLiteError;
       }
     }
-    return RET_OK;
+    return kSuccess;
   }
 };
 
 int TestCustomAdd::Execute() {
   if (inputs_.size() != 2) {
-    return RET_PARAM_INVALID;
+    return kLiteParamInvalid;
   }
   PreProcess();
   auto *in0 = static_cast<const float *>(inputs_[0].Data().get());
@@ -72,7 +67,7 @@ int TestCustomAdd::Execute() {
   for (int i = 0; i < num; ++i) {
     out[i] = in0[i] + in1[i];
   }
-  return RET_OK;
+  return kSuccess;
 }
 
 class TestCustomAddInfer : public KernelInterface {
