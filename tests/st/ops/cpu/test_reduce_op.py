@@ -30,7 +30,7 @@ class NetReduce(nn.Cell):
         self.axis0 = 0
         self.axis1 = 1
         self.axis2 = -1
-        self.axis3 = (0, 1)
+        self.axis3 = (0, 1, -2)
         self.axis4 = (0, 1, 2)
         self.axis5 = (-1,)
         self.axis6 = ()
