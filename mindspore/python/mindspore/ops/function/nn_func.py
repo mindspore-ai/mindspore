@@ -277,10 +277,12 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
     Given 4D tensor inputs `x`, `weight` and `offsets`, compute a 2D deformable convolution. The deformable convolution
     operation can be expressed as follow:
     Deformable Convolution v1:
+
     .. math::
         y(p)=\sum_{k=1}^{K}w_{k}\cdot x(p+p_{k}+\Delta{p_{k}})
 
     Deformable Convolution v2:
+
     .. math::
         y(p)=\sum_{k=1}^{K}w_{k}\cdot x(p+p_{k}+\Delta{p_{k}})\cdot \Delta{m_{k}}
 
@@ -317,6 +319,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
     Returns:
         Tensor, A 4D Tensor of output feature map. With the same type as `x`. With the format "NCHW",
         the shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
+
         .. math::
             \begin{array}{ll} \\
                 H_{out} = \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (H_{f} - 1) \times

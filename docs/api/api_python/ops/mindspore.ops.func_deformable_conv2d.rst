@@ -3,12 +3,14 @@ mindspore.ops.deformable_conv2d
 
 .. py:function:: mindspore.ops.deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1, deformable_groups=1, modulated=True)
 
-    给定4D的Tensor输入`x` ， `weight` 和 `offsets` ，计算一个2D的可变形卷积。可变形卷积运算可以表达如下：
+    给定4D的Tensor输入 `x` ， `weight` 和 `offsets` ，计算一个2D的可变形卷积。可变形卷积运算可以表达如下：
     可变形卷积v1：
+
     .. math::
         y(p)=\sum_{k=1}^{K}w_{k}\cdot x(p+p_{k}+\Delta{p_{k}})
 
     可变形卷积v2：
+
     .. math::
         y(p)=\sum_{k=1}^{K}w_{k}\cdot x(p+p_{k}+\Delta{p_{k}})\cdot \Delta{m_{k}}
 
@@ -31,6 +33,7 @@ mindspore.ops.deformable_conv2d
     **返回：**
 
     Tensor，一个四维Tensor，表示输出特征图。数据类型与 `x` 相同，数据格式为"NCHW"，shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
+
     .. math::
         \begin{array}{ll} \\
             H_{out} = \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (H_{f} - 1) \times
