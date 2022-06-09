@@ -43,7 +43,7 @@ def test_renorm_op_float32(data_type=np.float32):
     Expectation: the result match with expect.
     """
     error = 1e-6
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     input_x = np.array([[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]],
                         [[9.0, 10.0, 11.0, 12.0], [13.0, 14.0, 15.0, 16.0]]]).astype(data_type)
     benchmark_output = np.array([[[0.27777779, 0.55555558, 0.83333337, 1.11111116],
@@ -54,7 +54,7 @@ def test_renorm_op_float32(data_type=np.float32):
     re_norm = ReNormNet()
     output = re_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     output = re_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
@@ -69,7 +69,7 @@ def test_renorm_op_float16(data_type=np.float16):
     Expectation: the result match with expect.
     """
     error = 1e-3
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     input_x = np.array([[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]],
                         [[9.0, 10.0, 11.0, 12.0], [13.0, 14.0, 15.0, 16.0]]]).astype(data_type)
     benchmark_output = np.array([[[0.27783203, 0.55566406, 0.83349609, 1.11132812],
@@ -80,7 +80,7 @@ def test_renorm_op_float16(data_type=np.float16):
     re_norm = ReNormNet()
     output = re_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     output = re_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
@@ -95,7 +95,7 @@ def test_renorm_op1_float32(data_type=np.float32):
     Expectation: the result match with expect.
     """
     error = 1e-6
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     input_x = np.array([[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]],
                         [[9.0, 10.0, 11.0, 12.0], [13.0, 14.0, 15.0, 16.0]]]).astype(data_type)
     benchmark_output = np.array([[[0.45834923, 0.91669846, 1.37504768, 1.83339691],
@@ -106,7 +106,7 @@ def test_renorm_op1_float32(data_type=np.float32):
     re_norm = ReNormNet(p=2, axis=1, maxnorm=10.0)
     output = re_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     output = re_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
@@ -121,7 +121,7 @@ def test_renorm_op2_float16(data_type=np.float16):
     Expectation: the result match with expect.
     """
     error = 1e-3
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     input_x = np.array([[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]],
                         [[9.0, 10.0, 11.0, 12.0], [13.0, 14.0, 15.0, 16.0]]]).astype(data_type)
     benchmark_output = np.array([[[0.60192931, 1.09108937, 1.49255586, 1.82574177],
@@ -132,7 +132,7 @@ def test_renorm_op2_float16(data_type=np.float16):
     re_norm = ReNormNet(p=2, axis=2, maxnorm=10.0)
     output = re_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
-    context.set_context(mode=context.PYNATIVE_MODE)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     output = re_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
@@ -227,7 +227,6 @@ def test_renorm_vmap_cpu():
     Expectation: the result match with expect.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    context.set_context(save_graphs=True, save_graphs_path="./rank0")
     vmap_case()
 
 
@@ -241,5 +240,25 @@ def test_renorm_vmap_cpu_nested():
     Expectation: the result match with expect.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    context.set_context(save_graphs=True, save_graphs_path="./rank0")
     vmap_nested_case()
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_renorm_op1_scala():
+    """
+    Feature: test Renorm using scala.
+    Description: inputs with batch.
+    Expectation: the result match with expect.
+    """
+    error = 1e-6
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_x = 12.0
+    re_norm = ReNormNet(p=2, axis=0, maxnorm=10.0)
+    benchmark_output = 10.0
+    output = re_norm(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    output = re_norm(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
