@@ -176,7 +176,7 @@ class WaitedDSCallback(Callback, DSCallback):
         ...         self.events.append(event)
         >>>
         >>> # custom callback class for data synchronization in network training
-        >>> class MyMSCallback(Callback):
+        >>> class MyMSCallback(ms.Callback):
         ...     def __init__(self, events):
         ...         self.events = events
         ...
