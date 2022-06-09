@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ void HcclTask::Distribute() {
   ge_task.privateDefLen = private_def_len;
   ge_task.opsKernelStorePtr = ops_kernel_store;
 
-  MS_LOG(INFO) << "Begin to call function LoadTask in hccl.";
+  MS_LOG(INFO) << "Begin to call function LoadTask in hccl. " << task_info_->op_name();
   auto result = ops_kernel_info_store->LoadTask(ge_task);
   // tagHcclResult::HCCL_SUCCESS is 0
   if (result != 0) {

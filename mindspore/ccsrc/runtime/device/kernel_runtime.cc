@@ -665,7 +665,7 @@ void KernelRuntime::GetDeviceAddress(const AnfNodePtr &item,
     auto tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
     (*device_address)->set_host_shape(trans::GetRuntimePaddingShape(item, index));
     MS_LOG(INFO) << "Assign Static Memory for Input node, size:" << tensor_size
-                 << " node:" << item->fullname_with_scope() << " index: " << index;
+                 << " node:" << item->fullname_with_scope() << " debug:" << item->DebugString() << " index: " << index;
     if (mem_manager_->MallocMem(kStaticMem, tensor_size, *device_address, graph_id) == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
     }

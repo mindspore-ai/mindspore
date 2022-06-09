@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ void RuntimeModel::InitEvent(uint32_t event_num) {
   MS_LOG(INFO) << "Event number: " << event_num;
   for (uint32_t i = 0; i < event_num; ++i) {
     rtEvent_t rt_event;
-    rtError_t rt_ret = rtEventCreate(&rt_event);
+    rtError_t rt_ret = rtEventCreateWithFlag(&rt_event, RT_EVENT_WITH_FLAG);
     if (rt_ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rt api rtEventCreate failed, ret: " << rt_ret;
     }

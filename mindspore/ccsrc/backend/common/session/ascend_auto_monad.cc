@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -984,6 +984,22 @@ class AscendAutoMonadConverter {
     AnfAlgo::KeepOrder(kg, pop, jump_node);
   }
 
+  void RemoveIdleParameter(const KernelGraphPtr &top_graph, const AnfNodePtr &parameter) {
+    MS_EXCEPTION_IF_NULL(top_graph);
+    auto erase_item_from_vec = [](std::vector<AnfNodePtr> vec, const AnfNodePtr &item) -> std::vector<AnfNodePtr> {
+      for (auto iter = vec.begin(); iter != vec.end();) {
+        if (*iter == item) {
+          iter = vec.erase(iter);
+        } else {
+          ++iter;
+        }
+      }
+      return vec;
+    };
+    top_graph->set_parameters(erase_item_from_vec(top_graph->parameters(), parameter));
+    top_graph->set_child_graph_result(erase_item_from_vec(top_graph->child_graph_result(), parameter));
+  }
+
   void HandleCallSite(CallSite *call_site) {
     // Update last_monad_.
     last_monad_ = call_site->last_monad;
@@ -1048,7 +1064,12 @@ class AscendAutoMonadConverter {
         // For multi-return call, assign result from temp parameter to
         // output parameter, this prevent result be overwritten by next call.
         auto tmp_param = context_.GetTempParameter(output->abstract());
-        output = AssignAll(output, tmp_param, false, false, true);
+        if (common::AnfAlgo::CheckPrimitiveType(output, prim::kPrimMakeTuple)) {
+          output = AssignAll(output, tmp_param, false, false, true);
+        } else {
+          RemoveIdleParameter(context_.TopGraph(), output);
+          output = TensorMove(tmp_param, false);
+        }
         monad_ = UpdateState(GetMonad(), output);
       }
       // Replace the the call/switch node with the output.
@@ -1247,6 +1268,16 @@ class AscendAutoMonadConverter {
       return last_monad_;
     }
     return GetMonad();
+  }
+
+  // Make a tensor move cnode.
+  CNodePtr TensorMove(const AnfNodePtr &source, bool link) {
+    auto monad = (link ? GetLinkMonad() : GetMonad());
+    auto tensor_move_prim = std::make_shared<Primitive>(prim::kPrimTensorMove->name());
+    auto tensor_move = NewValueNode(tensor_move_prim);
+    auto cnode = kernel_graph_->NewCNode(std::vector<AnfNodePtr>{tensor_move, source, monad});
+    cnode->set_abstract(source->abstract());
+    return cnode;
   }
 
   // Make a assign cnode.

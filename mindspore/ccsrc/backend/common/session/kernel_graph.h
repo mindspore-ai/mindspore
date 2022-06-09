@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -448,6 +448,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   AnfNodePtrList front_outputs() const { return front_outputs_; }
   void set_front_outputs(const AnfNodePtrList &outputs) { front_outputs_ = outputs; }
+  bool IsCommSubGraph(uint32_t id) const { return comm_sub_graph_ids_.find(id) != comm_sub_graph_ids_.end(); }
+  void RecordNewCommSubGraphId(uint32_t id) { comm_sub_graph_ids_.insert(id); }
 
  private:
   // remove value node form graph
@@ -578,6 +580,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
 
   // Indicate whether the kernel graph loop sink to the device executing.
   bool is_loop_count_sink_{false};
+  // save the communication sub-graph id for comm op reuse
+  std::set<uint32_t> comm_sub_graph_ids_{};
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

@@ -31,6 +31,9 @@
 #include "ir/tensor.h"
 #include "kernel/common_utils.h"
 #include "backend/common/optimizer/helper.h"
+#ifdef ENABLE_D
+#include "plugin/device/ascend/optimizer/ascend_comm_op_reuse.h"
+#endif
 #include "base/base_ref_utils.h"
 #include "include/common/debug/dump_proto.h"
 #ifdef ENABLE_DEBUGGER
@@ -683,6 +686,25 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Dump .pb graph before graph optimization.
   if (save_graphs) {
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
+  }
+#endif
+
+#ifdef ENABLE_D
+  // Add comm op reuse for Ascend backend
+  auto max_comm_op_reuse_num_env = common::GetEnv("MS_COMM_COMPILER_OPT");
+  if (device_context->GetDeviceType() == device::DeviceType::kAscend && !max_comm_op_reuse_num_env.empty()) {
+    const uint32_t max_comm_op_reuse_num = IntToUint(std::stoi(max_comm_op_reuse_num_env));
+    MS_LOG(INFO) << "MAX_COMM_OP_REUSE_NUM: " << max_comm_op_reuse_num;
+    opt::ascend::AscendCommOpReuse comm_io_reuse(
+      graph, [this]() { return this->session_->NewKernelGraph(); }, max_comm_op_reuse_num);
+    comm_io_reuse.Run();
+
+#ifdef ENABLE_DUMP_IR
+    if (save_graphs) {
+      std::string file_name = "hwopt_comm_reuse_after_graph_" + std::to_string(graph->graph_id()) + ".ir";
+      DumpIR(file_name, graph);
+    }
+#endif
   }
 #endif
 

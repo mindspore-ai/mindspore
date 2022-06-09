@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -534,7 +534,8 @@ void Somas::InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel) {
       prenode_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
     }
     if (common::AnfAlgo::CheckPrimitiveType(prenode_index.first, prim::kPrimMakeTuple)) {
-      MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i << " is MakeTuple";
+      MS_LOG(EXCEPTION) << "Input node [" << kernel->DebugString() << "]'s input " << i << " ["
+                        << input_node->DebugString() << "] is MakeTuple";
     }
     MS_EXCEPTION_IF_NULL(prenode_index.first);
     if (!AnfUtils::IsRealCNodeKernel(prenode_index.first)) {

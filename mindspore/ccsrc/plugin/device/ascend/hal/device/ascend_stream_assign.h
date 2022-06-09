@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ using CNodeKey = void *;
 using GroupGraphMap = std::map<std::string, std::map<uint32_t, std::vector<CNodePtr>>>;
 const uint32_t kInvalidStreamId = UINT32_MAX;
 const uint32_t kInvalidEventId = UINT32_MAX;
+const uint32_t kInvalidLabelId = UINT32_MAX;
 enum StreamActiveKind { kInvalid = 0, kHead, kMiddle, kTail };
 
 struct NodeExecInfo {
@@ -78,6 +79,8 @@ class AscendStreamAssign {
   void AssignStreamForNonTaskSink(const std::vector<CNodePtr> &kernels);
   const std::vector<std::vector<uint32_t>> &get_stream_group() const { return stream_groups_; }
   const std::map<CNodePtr, CNodePtr> &get_event_map() const { return event_map_; }
+  static uint32_t GetHcomTaskNum(const CNodePtr &cnode);
+  const uint32_t max_task_count() const { return max_task_count_; }
 
  private:
   AscendStreamAssign() = default;
@@ -86,7 +89,8 @@ class AscendStreamAssign {
   void AssignAllNodesStream(const NotNull<KernelGraphPtr> &graph_ptr);
   std::set<uint32_t> AssignNodeStreamInOrder(const std::vector<CNodePtr> node_list);
   void ClassifyNodeByKernel(const NotNull<KernelGraphPtr> &graph_ptr, std::vector<CNodePtr> *common_list,
-                            std::vector<CNodePtr> *hcom_list, std::vector<CNodePtr> *independent_list);
+                            std::vector<CNodePtr> *hcom_list, std::vector<CNodePtr> *independent_list,
+                            std::vector<CNodePtr> *comm_sub_graph_list);
   void ClassifyNodeByGroupAndGraph(const std::vector<CNodePtr> hcom_list, GroupGraphMap *group_graph_map);
   void ClassifyNodeByGraph(const std::vector<CNodePtr> indepent_list,
                            std::map<uint32_t, std::vector<CNodePtr>> *graph_node_map);
@@ -103,6 +107,7 @@ class AscendStreamAssign {
   void InsertStreamActiveForCommon(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertStreamActiveForIndependent(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertStreamActiveForParallel(const NotNull<KernelGraphPtr> &graph_ptr);
+  void InsertStreamActiveForCommSubGraph(const NotNull<KernelGraphPtr> &graph_ptr);
   void ActiveRootGraphHcom(const NotNull<KernelGraphPtr> &graph_ptr, const std::set<uint32_t> &hcom_streams);
   void ActiveRootGraphIndependent(const NotNull<KernelGraphPtr> &graph_ptr,
                                   const std::set<uint32_t> &independent_streams);
@@ -118,6 +123,7 @@ class AscendStreamAssign {
   void InsertEventHcomDependHcom(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventBetweenHcom(const NotNull<KernelGraphPtr> &graph_ptr,
                               const std::vector<std::pair<uint32_t, vector<size_t>>> &hcom_index);
+  void InsertEventForCallCommSubGraph(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventHcomDependHcomAtSameGroup(const NotNull<KernelGraphPtr> &graph_ptr,
                                             std::pair<std::string, std::map<uint32_t, std::set<uint32_t>>> group_item);
   std::vector<std::pair<uint32_t, vector<size_t>>> GetStreamIDHcomMap(std::vector<CNodePtr> cnode_ptr_list,
@@ -187,6 +193,7 @@ class AscendStreamAssign {
   std::set<uint32_t> common_stream_{};
   std::set<uint32_t> independent_stream_{};
   std::set<uint32_t> hcom_stream_{};
+  std::set<uint32_t> comm_sub_graph_stream_{};
 
   std::set<uint32_t> processed_streams_{};
   std::vector<uint32_t> need_first_active_streams_{};

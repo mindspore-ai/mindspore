@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "kernel/task_stream.h"
+#include "plugin/device/ascend/kernel/hccl/hccl_kernel.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_utils.h"
 #ifndef ENABLE_SECURITY
@@ -35,6 +36,18 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace tasksink {
+namespace {
+void GetSendReceiveStream(const std::vector<CNodePtr> &anf_node_list, std::set<uint32_t> *send_recv_stream_ids) {
+  for (const auto &node : anf_node_list) {
+    auto node_name = common::AnfAlgo::GetCNodeName(node);
+    if (node_name == kHcomSendOpName || node_name == kReceiveOpName) {
+      uint32_t stream_id = AnfAlgo::GetStreamId(node);
+      send_recv_stream_ids->insert(stream_id);
+    }
+  }
+}
+}  // namespace
+
 bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *task_info_list,
                              uint32_t graph_id) {
   MS_LOG(INFO) << "GenTasks start...";
@@ -249,12 +262,39 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   return true;
 }
 
+std::vector<CNodePtr> TaskGenerator::ReorderDistribute(const std::vector<CNodePtr> &anf_node_list) {
+  std::set<uint32_t> send_recv_stream_ids = {};
+  std::vector<CNodePtr> send_recv_nodes = {};
+  std::vector<CNodePtr> other_nodes = {};
+  GetSendReceiveStream(anf_node_list, &send_recv_stream_ids);
+  for (const auto &node : anf_node_list) {
+    uint32_t stream_id = AnfAlgo::GetStreamId(node);
+    if (send_recv_stream_ids.count(stream_id) == 0) {
+      other_nodes.emplace_back(node);
+    } else {
+      send_recv_nodes.emplace_back(node);
+    }
+  }
+  std::vector<CNodePtr> ret = {};
+  ret.insert(ret.end(), send_recv_nodes.begin(), send_recv_nodes.end());
+  ret.insert(ret.end(), other_nodes.begin(), other_nodes.end());
+  return ret;
+}
+
 bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
                                     std::vector<TaskInfoPtr> *task_info_list, uint32_t graph_id) {
   uint32_t current_op_index = 0;
   std::vector<CNodePtr> profiling_cnode_list;
   std::vector<std::string> kernel_name_list;
-  for (const auto &anf_node_ptr : anf_node_list) {
+  std::vector<CNodePtr> launch_node_list;
+  auto reorder_distribute = common::GetEnv("MS_COMM_COMPILER_OPT");
+  if (!reorder_distribute.empty()) {
+    MS_LOG(INFO) << "Enable Send/Receive distribute reorder.";
+    launch_node_list = ReorderDistribute(anf_node_list);
+  } else {
+    launch_node_list = anf_node_list;
+  }
+  for (const auto &anf_node_ptr : launch_node_list) {
     size_t old_size = task_info_list->size();
     uint32_t stream_id = AnfAlgo::GetStreamId(anf_node_ptr);
     MS_EXCEPTION_IF_NULL(anf_node_ptr);

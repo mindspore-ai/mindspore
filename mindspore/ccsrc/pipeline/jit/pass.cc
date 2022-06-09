@@ -45,6 +45,7 @@
 #include "frontend/optimizer/slice_activation_in_recompute.h"
 #include "frontend/optimizer/comm_op_attrs.h"
 #include "frontend/optimizer/environ_conversion.h"
+#include "frontend/optimizer/comm_op_reuse_tag.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/pynative/pynative_execute.h"
@@ -682,6 +683,12 @@ bool CommOpAddAttrs(const ResourcePtr &resource) {
   return true;
 }
 
+bool AddCommOpReusePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  opt::AddCommOpReuseTag(resource->func_graph());
+  return true;
+}
+
 bool AddCacheEmbeddingPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
 #ifdef WITH_BACKEND
@@ -904,6 +911,7 @@ std::vector<PassItem> kVmPasses = {
   {"environ_conv", EnvironConversionPass},
   {"slice_recompute_activation", SliceRecomputeActivationPass},
   {"comm_op_add_attrs", CommOpAddAttrs},
+  {"add_comm_op_reuse_tag", AddCommOpReusePass},
 };
 
 std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},

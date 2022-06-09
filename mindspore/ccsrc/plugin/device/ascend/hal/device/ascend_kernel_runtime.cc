@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1041,6 +1041,25 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
   try {
     ModelRunner::Instance().RunModel(graph.graph_id());
   } catch (const std::exception &) {
+    const auto &exec_order = graph.execution_order();
+    for (const auto &node : exec_order) {
+      if (!IsPrimitiveCNode(node, prim::kPrimLabelSwitch)) {
+        continue;
+      }
+
+      size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+      for (size_t i = 0; i < input_num; ++i) {
+        auto real_input_index = AnfAlgo::GetRealInputIndex(node, i);
+        auto device_address = AnfAlgo::GetPrevNodeOutputAddr(node, real_input_index);
+        MS_LOG(INFO) << "Input idx " << i << " size " << device_address->size_ << " addr " << device_address->ptr_;
+        int32_t value = 0;
+        auto ret =
+          rtMemcpy(&value, sizeof(int32_t), device_address->ptr_, device_address->size_, RT_MEMCPY_DEVICE_TO_HOST);
+        if (ret == RT_ERROR_NONE) {
+          MS_LOG(INFO) << "Value = " << value;
+        }
+      }
+    }
 #ifndef ENABLE_SECURITY
     DumpTaskExceptionInfo(graph);
 #endif
