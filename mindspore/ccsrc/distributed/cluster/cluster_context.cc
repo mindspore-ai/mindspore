@@ -197,6 +197,7 @@ bool ClusterContext::BuildCluster() {
     node_base_ = std::make_shared<topology::MetaServerNode>(node_id, node_role_, node_num);
   } else {
     node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id, node_role_);
+    node_base_->set_rank_id(node_->rank_id());
   }
   MS_EXCEPTION_IF_NULL(node_base_);
   RETURN_IF_FALSE_WITH_LOG(node_base_->Initialize(), "Failed to initialize the node.");

@@ -74,6 +74,9 @@ struct NodeInfo {
   // The role name of this cluster node.
   std::string role;
 
+  // The rank id of this cluster node(only for compute graph node).
+  uint32_t rank_id;
+
   // The timestamp of last heartbeat.
   // This timestamp is considered the health state of the node.
   time_t last_update;

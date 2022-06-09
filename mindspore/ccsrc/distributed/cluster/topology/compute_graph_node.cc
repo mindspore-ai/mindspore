@@ -102,6 +102,7 @@ bool ComputeGraphNode::Register() {
   RegistrationMessage reg_msg;
   reg_msg.set_node_id(node_id_);
   reg_msg.set_role(role_);
+  reg_msg.set_rank_id(rank_id_);
 
   // Set the local hostname.
   char host_name[MAX_HOSTNAME_LEN] = {0};
