@@ -16,9 +16,13 @@
 
 #include "plugin/device/gpu/kernel/arrays/matrix_band_part_gpu_kernel.h"
 #include <functional>
+#include "mindspore/core/ops/matrix_band_part.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kMaxDims = 8;
+constexpr size_t kXMinShapeSize = 2;
+
 bool MatrixBandPartGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
@@ -36,6 +40,44 @@ bool MatrixBandPartGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
+void MatrixBandPartGpuKernelMod::BroadcastShape(const std::vector<size_t> &x_shape,
+                                                const std::vector<size_t> &lower_shape,
+                                                const std::vector<size_t> &upper_shape,
+                                                const std::vector<size_t> &output_shape) {
+  broadcast_x_shape_.clear();
+  broadcast_lower_shape_.clear();
+  broadcast_upper_shape_.clear();
+  broadcast_output_shape_.clear();
+  broadcast_x_shape_.resize(kMaxDims, 1);
+  broadcast_lower_shape_.resize(kMaxDims, 1);
+  broadcast_upper_shape_.resize(kMaxDims, 1);
+  broadcast_output_shape_.resize(kMaxDims, 1);
+  auto expanded_lower_shape = ops::GetExpandedShape<size_t>(lower_shape);
+  auto expanded_upper_shape = ops::GetExpandedShape<size_t>(upper_shape);
+
+  for (size_t i = 0; i < output_shape.size(); i++) {
+    broadcast_output_shape_[i] = output_shape[i];
+  }
+
+  for (size_t i = 0; i < x_shape.size() - kXMinShapeSize; i++) {
+    broadcast_x_shape_[i] = x_shape[i];
+  }
+  broadcast_x_shape_[output_shape.size() - 2] = x_shape[x_shape.size() - 2];
+  broadcast_x_shape_[output_shape.size() - 1] = x_shape[x_shape.size() - 1];
+
+  for (size_t i = 0; i < expanded_lower_shape.size() - kXMinShapeSize; i++) {
+    broadcast_lower_shape_[i] = expanded_lower_shape[i];
+  }
+  broadcast_lower_shape_[output_shape.size() - 2] = expanded_lower_shape[expanded_lower_shape.size() - 2];
+  broadcast_lower_shape_[output_shape.size() - 1] = expanded_lower_shape[expanded_lower_shape.size() - 1];
+
+  for (size_t i = 0; i < expanded_upper_shape.size() - kXMinShapeSize; i++) {
+    broadcast_upper_shape_[i] = expanded_upper_shape[i];
+  }
+  broadcast_upper_shape_[output_shape.size() - 2] = expanded_upper_shape[expanded_upper_shape.size() - 2];
+  broadcast_upper_shape_[output_shape.size() - 1] = expanded_upper_shape[expanded_upper_shape.size() - 1];
+}
+
 int MatrixBandPartGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs,
                                        const std::map<uint32_t, tensor::TensorPtr> &) {
@@ -43,44 +85,58 @@ int MatrixBandPartGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     return ret;
   }
 
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  shapes_.clear();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(shapes_), LongToSize);
-  size_t input_element_num = std::accumulate(shapes_.begin(), shapes_.end(), 1, std::multiplies<size_t>());
+  auto x_shape_temp = inputs.at(kIndex0)->GetShapeVector();
+  auto lower_shape_temp = inputs.at(kIndex1)->GetShapeVector();
+  auto upper_shape_temp = inputs.at(kIndex2)->GetShapeVector();
+  auto output_shape_temp = outputs.at(kIndex0)->GetShapeVector();
+  std::vector<size_t> x_shape{};
+  std::vector<size_t> lower_shape{};
+  std::vector<size_t> upper_shape{};
+  std::vector<size_t> output_shape{};
+  (void)std::transform(x_shape_temp.begin(), x_shape_temp.end(), std::back_inserter(x_shape), LongToSize);
+  (void)std::transform(lower_shape_temp.begin(), lower_shape_temp.end(), std::back_inserter(lower_shape), LongToSize);
+  (void)std::transform(upper_shape_temp.begin(), upper_shape_temp.end(), std::back_inserter(upper_shape), LongToSize);
+  (void)std::transform(output_shape_temp.begin(), output_shape_temp.end(), std::back_inserter(output_shape),
+                       LongToSize);
+  size_t input_element_num = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
   if (is_null_input_) {
     return KRET_OK;
   }
 
-  dim_size_ = shapes_.size();
-  if (shapes_.size() < kDim2) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's input dims must be a matrix greater than or equal to 2D, "
-                  << "but got " << shapes_.size() << "D.";
+  dim_size_ = x_shape.size();
+  if (x_shape.size() < kDim2) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of input x must be greater than or equal to 2D, "
+                  << "but got " << x_shape.size() << "D.";
     return KRET_RESIZE_FAILED;
   }
-  m_ = shapes_[dim_size_ - kDim2];
-  n_ = shapes_[dim_size_ - kDim1];
+  m_ = x_shape[dim_size_ - kDim2];
+  n_ = x_shape[dim_size_ - kDim1];
   if (m_ == 0 || n_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the size of -2 axis or -1 axis can not be 0, "
                   << "but got m_=" << m_ << ", n_=" << n_;
     return KRET_RESIZE_FAILED;
   }
   output_outer_size_ = 1;
-  for (size_t i = 0; i < shapes_.size() - kDim2; i++) {
-    output_outer_size_ *= shapes_[i];
+  for (size_t i = 0; i < output_shape.size() - kXMinShapeSize; i++) {
+    output_outer_size_ *= output_shape[i];
   }
   output_element_num_ = output_outer_size_ * m_ * n_;
+
+  need_broadcast_ = lower_shape.size() > 0 || upper_shape.size() > 0;
+  if (need_broadcast_) {
+    if (output_shape.size() > kMaxDims) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of broadcast output cannot be greater than "
+                        << kMaxDims << ", but got the shape of broadcast output: " << output_shape;
+    }
+    BroadcastShape(x_shape, lower_shape, upper_shape, output_shape);
+  }
   return KRET_OK;
 }
 
 template <typename T, typename LU>
-bool MatrixBandPartGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_ptr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  // Both the lower and upper have done the type check in C++ primitive.
-  auto lower_ptr = reinterpret_cast<LU *>(inputs.at(kIndex1)->addr);
-  auto upper_ptr = reinterpret_cast<LU *>(inputs.at(kIndex2)->addr);
-  auto output_ptr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+bool MatrixBandPartGpuKernelMod::LaunchKernelNotBroadcast(const T *x_ptr, const LU *lower_ptr, const LU *upper_ptr,
+                                                          T *output_ptr) {
   LU lower = 0;
   LU upper = 0;
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&lower, lower_ptr, sizeof(LU), cudaMemcpyDeviceToHost,
@@ -96,7 +152,7 @@ bool MatrixBandPartGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   upper_ = (upper_ < 0 || upper_ > SizeToLong(n_)) ? SizeToLong(n_) : upper_;
   if (lower_ >= SizeToLong(m_) && upper_ >= SizeToLong(n_)) {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemcpyAsync(output_ptr, input_ptr, output_element_num_ * sizeof(T), cudaMemcpyDeviceToDevice,
+      cudaMemcpyAsync(output_ptr, x_ptr, output_element_num_ * sizeof(T), cudaMemcpyDeviceToDevice,
                       reinterpret_cast<cudaStream_t>(cuda_stream_)),
       "For 'MatrixBandPart', it's cudaMemcpyAsync failed.");
     return true;
@@ -106,9 +162,27 @@ bool MatrixBandPartGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
       cudaMemsetAsync(output_ptr, 0, output_element_num_ * sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_)),
       "For 'MatrixBandPart', it's cudaMemsetAsync failed.");
   }
-  MatrixBandPart(output_outer_size_, input_ptr, m_, n_, lower_, upper_, output_ptr, device_id_,
+  MatrixBandPart(output_outer_size_, x_ptr, m_, n_, lower_, upper_, output_ptr, device_id_,
                  reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
+}
+
+template <typename T, typename LU>
+bool MatrixBandPartGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<kernel::AddressPtr> &outputs) {
+  const auto x_ptr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
+  // Both the lower and upper have done the type check in C++ primitive.
+  const auto lower_ptr = reinterpret_cast<LU *>(inputs.at(kIndex1)->addr);
+  const auto upper_ptr = reinterpret_cast<LU *>(inputs.at(kIndex2)->addr);
+  auto output_ptr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  if (need_broadcast_) {
+    MatrixBandPartBroadcast(output_element_num_, broadcast_x_shape_, broadcast_lower_shape_, broadcast_upper_shape_,
+                            broadcast_output_shape_, x_ptr, m_, n_, lower_ptr, upper_ptr, output_ptr, device_id_,
+                            reinterpret_cast<cudaStream_t>(cuda_stream_));
+    return true;
+  } else {
+    return LaunchKernelNotBroadcast(x_ptr, lower_ptr, upper_ptr, output_ptr);
+  }
 }
 
 std::vector<std::pair<KernelAttr, MatrixBandPartGpuKernelMod::MatrixBandPartFunc>>

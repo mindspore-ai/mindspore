@@ -809,23 +809,7 @@ class Softsign(Cell):
     r"""
     Softsign activation function.
 
-    Applies the Softsign function element-wise.
-
-    Softsign is defined as:
-
-    .. math::
-        \text{SoftSign}(x) = \frac{x}{1 + |x|}
-
-    Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-
-    Outputs:
-        Tensor, with the same type and shape as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+    Refer to :func:`mindspore.ops.softsign` for more details.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

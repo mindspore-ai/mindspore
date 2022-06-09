@@ -52,21 +52,39 @@ abstract::ShapePtr MatrixBandPartInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  // Input 'lower' must be a tensor with a value or a scalar.
-  auto lower_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto lower_rank = SizeToLong(lower_shape.size());
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'lower'", lower_rank, kEqual, 0, prim_name);
 
-  // Input 'upper' must be a tensor with a value or a scalar.
-  auto upper_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  auto upper_rank = SizeToLong(upper_shape.size());
-  (void)CheckAndConvertUtils::CheckInteger("rank of 'upper'", upper_rank, kEqual, 0, prim_name);
+  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x_shape_ptr);
+  auto lower_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  MS_EXCEPTION_IF_NULL(lower_shape_ptr);
+  auto upper_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  MS_EXCEPTION_IF_NULL(upper_shape_ptr);
+  if (x_shape_ptr->IsDynamic() || lower_shape_ptr->IsDynamic() || upper_shape_ptr->IsDynamic()) {
+    return x_shape_ptr->cast<abstract::ShapePtr>();
+  }
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  const int64_t kXShapeSize = 2;
-  (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kGreaterEqual, kXShapeSize,
+  (void)CheckAndConvertUtils::CheckInteger("x shape size", SizeToLong(x_shape.size()), kGreaterEqual, kXMinShapeSize,
                                            prim_name);
-  return std::make_shared<abstract::Shape>(x_shape);
+  auto lower_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto upper_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+
+  auto broadcast_shape = x_shape;
+  if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
+    auto expanded_lower_shape = GetExpandedShape<int64_t>(lower_shape);
+    // Check whether broadcasting is possible
+    (void)CalBroadCastShape(x_shape, expanded_lower_shape, prim_name, "x", "lower");
+    // Get broadcast shape
+    broadcast_shape = CalBroadCastShape(broadcast_shape, expanded_lower_shape, prim_name);
+  }
+  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+    auto expanded_upper_shape = GetExpandedShape<int64_t>(upper_shape);
+    // Check whether broadcasting is possible
+    (void)CalBroadCastShape(x_shape, expanded_upper_shape, prim_name, "x", "upper");
+    // Get broadcast shape
+    broadcast_shape = CalBroadCastShape(broadcast_shape, expanded_upper_shape, prim_name);
+  }
+  return std::make_shared<abstract::Shape>(broadcast_shape);
 }
 }  // namespace
 

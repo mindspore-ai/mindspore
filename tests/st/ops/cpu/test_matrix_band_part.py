@@ -29,8 +29,10 @@ class MatrixBandPartDynamicShapeNet(nn.Cell):
 
     def construct(self, x, lower, upper):
         x_unique, _ = self.unique(x)
+        lower_unique, _ = self.unique(lower)
+        upper_unique, _ = self.unique(upper)
         x_unique = self.reshape(x_unique, (3, 3))
-        return F.matrix_band_part(x_unique, lower, upper)
+        return F.matrix_band_part(x_unique, lower_unique, upper_unique)
 
 
 @pytest.mark.level0
@@ -73,9 +75,9 @@ def test_matrix_band_part_vmap(mode):
     """
     context.set_context(mode=mode, device_target="CPU")
     x = Tensor(np.ones((2, 2, 3, 5)).astype(np.float32))
+    # Case 1
     lower = 1
     upper = 1
-    # Case 1
     output = F.vmap(F.matrix_band_part, (0, None, None), 0)(x, lower, upper)
     expect_output = np.array([[[[1., 1., 0., 0., 0.],
                                 [1., 1., 1., 0., 0.],
@@ -91,7 +93,9 @@ def test_matrix_band_part_vmap(mode):
                                 [0., 1., 1., 1., 0.]]]], dtype=np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
-    # # Case 2
+    # Case 2
+    lower = 1
+    upper = 1
     output = F.vmap(F.matrix_band_part, (-1, None, None), -1)(x, lower, upper)
     expect_output = np.array([[[[1., 1., 1., 1., 1.],
                                 [1., 1., 1., 1., 1.],
@@ -107,6 +111,127 @@ def test_matrix_band_part_vmap(mode):
                                 [1., 1., 1., 1., 1.]]]], dtype=np.float32)
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
+    # Case 3
+    lower = Tensor(np.array([[1], [0]]).astype(np.int64))
+    upper = 1
+    output = F.vmap(F.matrix_band_part, (0, 0, None), 0)(x, lower, upper)
+    expect_output = np.array([[[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]]],
+                              [[[1., 1., 0., 0., 0.],
+                                [0., 1., 1., 0., 0.],
+                                [0., 0., 1., 1., 0.]],
+                               [[1., 1., 0., 0., 0.],
+                                [0., 1., 1., 0., 0.],
+                                [0., 0., 1., 1., 0.]]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 4
+    lower = Tensor(np.array([1, 0]).astype(np.int64))
+    upper = 1
+    output = F.vmap(F.matrix_band_part, (0, 0, None), 0)(x, lower, upper)
+    expect_output = np.array([[[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]]],
+                              [[[1., 1., 0., 0., 0.],
+                                [0., 1., 1., 0., 0.],
+                                [0., 0., 1., 1., 0.]],
+                               [[1., 1., 0., 0., 0.],
+                                [0., 1., 1., 0., 0.],
+                                [0., 0., 1., 1., 0.]]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 5
+    lower = Tensor(np.array([[1, 0], [1, 0]]).astype(np.int64))
+    upper = 1
+    output = F.vmap(F.matrix_band_part, (0, 0, None), 0)(x, lower, upper)
+    expect_output = np.array([[[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 1., 0., 0., 0.],
+                                [0., 1., 1., 0., 0.],
+                                [0., 0., 1., 1., 0.]]],
+                              [[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 1., 0., 0., 0.],
+                                [0., 1., 1., 0., 0.],
+                                [0., 0., 1., 1., 0.]]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 6
+    lower = Tensor(np.array([[1, 0]]).astype(np.int64))
+    upper = 1
+    output = F.vmap(F.matrix_band_part, (0, 1, None), 0)(x, lower, upper)
+    expect_output = np.array([[[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]]],
+                              [[[1., 1., 0., 0., 0.],
+                                [0., 1., 1., 0., 0.],
+                                [0., 0., 1., 1., 0.]],
+                               [[1., 1., 0., 0., 0.],
+                                [0., 1., 1., 0., 0.],
+                                [0., 0., 1., 1., 0.]]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 7
+    lower = Tensor(np.array([[1, 0], [1, 0]]).astype(np.int32))
+    upper = Tensor(np.array([[1, 0], [1, 0]]).astype(np.int32))
+    output = F.vmap(F.matrix_band_part, (0, 0, 0), 0)(x, lower, upper)
+    expect_output = np.array([[[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 0., 0., 0., 0.],
+                                [0., 1., 0., 0., 0.],
+                                [0., 0., 1., 0., 0.]]],
+                              [[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 0., 0., 0., 0.],
+                                [0., 1., 0., 0., 0.],
+                                [0., 0., 1., 0., 0.]]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 8
+    lower = Tensor(np.array([[1, -1], [1, 0]]).astype(np.int64))
+    upper = Tensor(np.array([[1, 0], [1, -1]]).astype(np.int64))
+    output = F.vmap(F.matrix_band_part, (0, 0, 0), 0)(x, lower, upper)
+    expect_output = np.array([[[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 0., 0., 0., 0.],
+                                [1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.]]],
+                              [[[1., 1., 0., 0., 0.],
+                                [1., 1., 1., 0., 0.],
+                                [0., 1., 1., 1., 0.]],
+                               [[1., 1., 1., 1., 1.],
+                                [0., 1., 1., 1., 1.],
+                                [0., 0., 1., 1., 1.]]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
+    # Case 9
+    x = Tensor(np.ones((2, 3, 5)).astype(np.float32))
+    lower = Tensor(np.array([[1], [1]]).astype(np.int64))
+    upper = 1
+    output = F.vmap(F.matrix_band_part, (0, 0, None), 0)(x, lower, upper)
+    expect_output = np.array([[[1., 1., 0., 0., 0.],
+                               [1., 1., 1., 0., 0.],
+                               [0., 1., 1., 1., 0.]],
+                              [[1., 1., 0., 0., 0.],
+                               [1., 1., 1., 0., 0.],
+                               [0., 1., 1., 1., 0.]]], dtype=np.float32)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -120,7 +245,9 @@ def test_matrix_band_part_dynamic_shape(mode):
     """
     context.set_context(mode=mode, device_target="CPU")
     x = Tensor(np.array([8., -3., 2.1, 2.1, 10., 0., 0., 21., -3., 11., 4., -2., 10., 8.]).astype(np.float32))
-    output = MatrixBandPartDynamicShapeNet()(x, 1, 2)
+    lower = Tensor(np.array([1, 1, 1]).astype(np.int32))
+    upper = Tensor(np.array([2, 2, 2]).astype(np.int32))
+    output = MatrixBandPartDynamicShapeNet()(x, lower, upper)
     expect_output = np.array([[8., -3., 2.1],
                               [10., 0., 21.],
                               [0., 4., -2.]], dtype=np.float32)
