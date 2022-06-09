@@ -42,7 +42,7 @@ def serialize(dataset, json_filepath=""):
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
-        >>> one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
+        >>> one_hot_encode = transforms.OneHot(10)  # num_classes is input argument
         >>> dataset = dataset.map(operations=one_hot_encode, input_columns="label")
         >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
         >>> # serialize it to JSON file
@@ -70,7 +70,7 @@ def deserialize(input_dict=None, json_filepath=None):
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
-        >>> one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
+        >>> one_hot_encode = transforms.OneHot(10)  # num_classes is input argument
         >>> dataset = dataset.map(operations=one_hot_encode, input_columns="label")
         >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
         >>> # Case 1: to/from JSON file
@@ -109,7 +109,7 @@ def show(dataset, indentation=2):
 
     Examples:
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
-        >>> one_hot_encode = c_transforms.OneHot(10)
+        >>> one_hot_encode = transforms.OneHot(10)
         >>> dataset = dataset.map(operations=one_hot_encode, input_columns="label")
         >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
         >>> ds.show(dataset)

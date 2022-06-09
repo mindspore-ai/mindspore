@@ -35,7 +35,7 @@ class DSCallback:
 
     Examples:
         >>> from mindspore.dataset import DSCallback
-        >>> from mindspore.dataset.transforms import c_transforms
+        >>> from mindspore.dataset.transforms import transforms
         >>>
         >>> class PrintInfo(DSCallback):
         ...     def ds_epoch_end(self, ds_run_context):
@@ -43,7 +43,7 @@ class DSCallback:
         ...         print(ds_run_context.cur_step_num)
         >>>
         >>> dataset = ds.MnistDataset(mnist_dataset_dir, num_samples=100)
-        >>> op = c_transforms.OneHot(10)
+        >>> op = transforms.OneHot(10)
         >>> dataset = dataset.map(operations=op, callbacks=PrintInfo())
     """
 

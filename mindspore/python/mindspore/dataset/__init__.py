@@ -28,7 +28,8 @@ Common imported modules in corresponding API examples are as follows:
 .. code-block::
 
     import mindspore.dataset as ds
-    from mindspore.dataset.transforms import c_transforms
+    import mindspore.dataset.transforms as transforms
+    import mindspore.dataset.vision as vision
 
 
 Descriptions of common dataset terms are as follows:
