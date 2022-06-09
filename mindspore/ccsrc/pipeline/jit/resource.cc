@@ -247,6 +247,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"bernoulli", prim::kPrimBernoulli},                                // P.Bernoulli()
        {"cdist", std::string("cdist")},                                    // P.cdist
        {"hardshrink", std::string("hardshrink")},                          // P.hshrink
+       {"soft_shrink", std::string("soft_shrink")},                        // P.SoftShrink
        {"one_hot", std::string("one_hot")},                                // P.OneHot
        {"intopk", std::string("intopk")},                                  // P.InTopK
        {"gather_nd", std::string("gather_nd")},                            // P.GatherNd()

@@ -8677,7 +8677,7 @@ class SoftShrink(Primitive):
         ValueError: If lambd is less than 0.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mindspore.float16)

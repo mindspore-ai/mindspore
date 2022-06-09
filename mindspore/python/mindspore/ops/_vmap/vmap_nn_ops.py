@@ -191,6 +191,7 @@ def get_in_top_k_vmap_rule(prim, axis_size):
 
 @vmap_rules_getters.register(G.FastGeLUGrad)
 @vmap_rules_getters.register(G.HShrinkGrad)
+@vmap_rules_getters.register(G.SoftShrinkGrad)
 def get_fast_gelu_grad_vmap_rule(prim, axis_size):
     """VmapRule for common activation grad operation."""
     if isinstance(prim, str):
@@ -339,6 +340,7 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.Softplus)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Softsign)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.SoftShrink)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.HShrink)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.SoftShrink)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.GeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.FastGeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.HSwish)(get_unop_vmap_rule)

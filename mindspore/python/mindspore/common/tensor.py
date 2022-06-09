@@ -3724,6 +3724,22 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('hardshrink')(lambd)(self)
 
+    def soft_shrink(self, lambd=0.5):
+        """
+        Apply the soft shrink function for a tensor. Calculates the output according to the input elements.
+        Refer to :func:`mindspore.ops.SoftShrink` for more detail.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]).astype("float32")
+            >>> output = a.soft_shrink()
+            >>> print(output)
+            [[ 0.02979  0.287    0.676  ]
+             [ 0.2837   0.1216  -0.6543 ]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('soft_shrink')(lambd)(self)
+
     def unique_consecutive(self, return_idx=False, return_counts=False, axis=None):
         """
         Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.

@@ -1528,6 +1528,11 @@ def hardshrink(x, lambd=0.5):
     return P.HShrink(lambd)(x)
 
 
+def soft_shrink(x, lambd=0.5):
+    """Apply the soft shrink function for a tensor. Calculates the output according to the input elements."""
+    return F.SoftShrink(lambd)(x)
+
+
 def adaptive_avgpool2d(x, output_size):
     """
     2D adaptive average pooling for temporal data.
