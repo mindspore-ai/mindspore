@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::
       continue;
     }
     if (CheckConstantTensor(tensor)) {
-      if (config.target() != kARM32M) {
+      if (config.target() != kCortex_M) {
         hofs << "extern " << GetTensorDataType(tensor->data_type()) << name << "[];\n";
         cofs << GetTensorDataType(tensor->data_type()) << name << "[" << tensor->ElementsNum() << "];\n";
       } else {
@@ -105,7 +105,7 @@ void CodeInitWeightState(std::ofstream &ofs) {
 }
 
 void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
-  if (config.target() != kARM32M) {
+  if (config.target() != kCortex_M) {
     ofs << "static size_t PackWeightSize() {\n";
     ofs << "  size_t w_size = 0;\n";
     for (const auto &block : ctx->GetInitWeightSizeCode()) {

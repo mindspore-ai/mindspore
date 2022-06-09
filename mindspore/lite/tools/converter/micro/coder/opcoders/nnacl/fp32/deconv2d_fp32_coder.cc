@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ int DeConvolutionFP32Coder::InitRunBuf() {
   packed_output_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, pack_output_size_, kWorkspace));
   MS_CHECK_PTR(packed_output_);
 
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     tmp_buffer_size_ = matmul_param_.row_4_ * matmul_param_.col_8_ * sizeof(float);
   } else {
     tmp_buffer_size_ = matmul_param_.row_12_ * matmul_param_.col_8_ * sizeof(float);
@@ -40,7 +40,7 @@ int DeConvolutionFP32Coder::InitRunBuf() {
   tmp_buffer_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, tmp_buffer_size_, kWorkspace));
   MS_CHECK_PTR(tmp_buffer_);
 
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     pack_input_size_ = matmul_param_.row_4_ * matmul_param_.deep_ * sizeof(float);
   } else {
     pack_input_size_ = matmul_param_.row_12_ * matmul_param_.deep_ * sizeof(float);
@@ -138,7 +138,7 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
             "deconv_fp32.c",
             "minimal_filtering_generator.c",
           });
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     Collect(context, {}, {},
             {
               "MatmulFp32.S",
@@ -181,7 +181,7 @@ int DeConvolutionFP32Coder::DoCode(CoderContext *const context) {
     input_ptr_ = src_in_ptr_str + "+" + std::to_string(batch_index * input_plane_ * conv_param_->input_channel_);
     output_ptr_ = src_out_ptr_str + "+" + std::to_string(batch_index * output_plane_ * conv_param_->output_channel_);
 
-    if (target_ == kARM32A) {
+    if (target_ == kARM32) {
       code.CodeFunction("RowMajor2Col4Major", input_ptr_, packed_input_, matmul_param_.row_, matmul_param_.deep_);
     } else {
       code.CodeFunction("RowMajor2Col12Major", input_ptr_, packed_input_, matmul_param_.row_, matmul_param_.deep_);

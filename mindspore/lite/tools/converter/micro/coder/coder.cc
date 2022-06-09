@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ int Coder::MicroSourceCodeGeneration(const schema::MetaGraphT &graph, const std:
 
 int Coder::Init(const std::string code_mode, const std::string target, bool support_parallel, bool debug_mode) const {
   static const std::map<std::string, Target> kTargetMap = {
-    {"x86", kX86}, {"ARM32M", kARM32M}, {"ARM32A", kARM32A}, {"ARM64", kARM64}, {"All", kAllTargets}};
+    {"x86", kX86}, {"Cortex-M", kCortex_M}, {"ARM32", kARM32}, {"ARM64", kARM64}, {"All", kAllTargets}};
   static const std::map<std::string, CodeMode> kCodeModeMap = {{"Inference", Inference}, {"Train", Train}};
   Configurator *config = Configurator::GetInstance();
 
@@ -134,8 +134,8 @@ int Coder::Init(const std::string code_mode, const std::string target, bool supp
   MS_CHECK_TRUE_RET_BOOL(code_item != kCodeModeMap.end(), "unsupported code mode: " + code_mode);
   config->set_code_mode(code_item->second);
 
-  if (support_parallel && config->target() == kARM32M) {
-    MS_LOG(ERROR) << "arm32M cannot support parallel.";
+  if (support_parallel && config->target() == kCortex_M) {
+    MS_LOG(ERROR) << "Cortex-M cannot support parallel.";
     return RET_ERROR;
   }
   config->set_support_parallel(support_parallel);

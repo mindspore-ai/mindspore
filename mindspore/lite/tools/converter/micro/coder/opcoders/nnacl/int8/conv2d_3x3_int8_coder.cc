@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ int Conv2D3x3Int8Coder::DoCode(CoderContext *const context) {
               "conv3x3_run_int8_wrapper.c",
             });
   }
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     Collect(context, {}, {},
             {
               "IndirectGemmInt16to32_8x4.S",

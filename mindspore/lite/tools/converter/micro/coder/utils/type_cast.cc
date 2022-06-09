@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,10 +164,10 @@ std::string EnumNameTarget(Target target) {
   switch (target) {
     case kX86:
       return "kX86";
-    case kARM32M:
-      return "kARM32M";
-    case kARM32A:
-      return "kARM32A";
+    case kCortex_M:
+      return "kCortex_M";
+    case kARM32:
+      return "kARM32";
     case kARM64:
       return "kARM64";
     case kAllTargets:

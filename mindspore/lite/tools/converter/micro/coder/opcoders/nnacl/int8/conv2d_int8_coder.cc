@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ void Conv2DINT8Coder::CheckSupportOptimize() {
   matmul_func_ = "NULL";
 
   switch (target_) {
-    case kARM32A:
+    case kARM32:
       support_optimize_ = false;
       tile_num_ = kFour;
       matmul_func_ = "NULL";
@@ -116,7 +116,7 @@ int Conv2DINT8Coder::InitWeightBias(CoderContext *const context) {
 
   int up_round_oc;
   switch (target_) {
-    case kARM32A:
+    case kARM32:
       up_round_oc = UP_ROUND(output_channel, C2NUM);
       break;
     case kARM64:
@@ -196,7 +196,7 @@ int Conv2DINT8Coder::Resize() {
 }
 
 int Conv2DINT8Coder::DoCode(CoderContext *const context) {
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     Collect(context, {}, {},
             {
               "PreSum4x16Int8Peroc.S",
@@ -332,6 +332,6 @@ std::unique_ptr<OperatorCoder> CPUConv2DFusionINT8CoderCreator(const std::vector
 }
 
 REG_OPERATOR_CODER(kX86, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DFusionINT8CoderCreator)
-REG_OPERATOR_CODER(kARM32A, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DFusionINT8CoderCreator)
+REG_OPERATOR_CODER(kARM32, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DFusionINT8CoderCreator)
 REG_OPERATOR_CODER(kARM64, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DFusionINT8CoderCreator)
 }  // namespace mindspore::lite::micro::nnacl

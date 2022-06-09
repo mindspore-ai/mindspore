@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ int DTypeCastCoder::DoCode(CoderContext *const context) {
             "nnacl/fp32/cast.c",
             "nnacl/fp32/common_func.c",
           });
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     Collect(context, {}, {},
             {
               "nnacl/assembly/arm32/PostFuncBiasReluC8.S",

@@ -232,7 +232,7 @@ function Run_arm_codegen() {
     toolchain_name="aarch64-linux-android-clang"
     if [[ $7 == "arm32" ]]; then
       package_suffix="aarch32"
-      target="ARM32A"
+      target="ARM32"
       platform="ARM32"
       android_abi="armeabi-v7a"
       toolchain_name="clang"
@@ -429,7 +429,7 @@ models_codegen_parallel_config=${basepath}/../${config_folder}/models_codegen_pa
 micro_x86_config=${basepath}/../${config_folder}/micro/micro_x86.cfg
 micro_x86_parallel_config=${basepath}/../${config_folder}/micro/micro_x86_parallel.cfg
 micro_arm64_config=${basepath}/../${config_folder}/micro/micro_arm64.cfg
-micro_arm32A_config=${basepath}/../${config_folder}/micro/micro_arm32A.cfg
+micro_ARM32_config=${basepath}/../${config_folder}/micro/micro_arm32A.cfg
 micro_cortex_config=${basepath}/../${config_folder}/micro/micro_cortex_m.cfg
 
 # Set models and build path
@@ -491,7 +491,7 @@ fi
 if [[ $backend == "all" || $backend == "codegen" || $backend == "arm32_codegen" ]]; then
     # Run on arm32 codegen
     echo "start Run arm32 codegen ..."
-    Run_arm_codegen ${build_path_arm32} ${models_path} ${models_codegen_config} ${run_arm32_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm32" ${micro_arm32A_config}
+    Run_arm_codegen ${build_path_arm32} ${models_path} ${models_codegen_config} ${run_arm32_fp32_codegen_log_file} ${run_benchmark_result_file} ${device_id} "arm32" ${micro_ARM32_config}
     Run_arm32_codegen_status=$?
 #    Run_arm32_codegen_PID=$!
 #    sleep 1

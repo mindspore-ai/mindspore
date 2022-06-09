@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,5 +184,5 @@ std::unique_ptr<OperatorCoder> CmsisConv2DInt8OpCoderCreator(const std::vector<T
   return coder;
 }
 
-REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUOpCoderCreator<Conv2DInt8Coder>)
+REG_OPERATOR_CODER(kCortex_M, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUOpCoderCreator<Conv2DInt8Coder>)
 }  // namespace mindspore::lite::micro::cmsis

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   conv_param_->output_channel_ = out_channel;
   int kernel_plane = kernel_h * kernel_w;
   int oc_block = C8NUM;
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     oc_block = C4NUM;
   }
   int oc_block_num = UP_ROUND(out_channel, oc_block);
@@ -87,7 +87,7 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   w_buf_size += pack_weight_size_;
   init_code.CodeBufferOffsetExpression(packed_weight_, context->weight_name(), context->weight_offset_name(),
                                        context->weight_size_name(), pack_weight_size_);
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     init_code.CodeFunction("RowMajor2Col4Major", init_weight_str, packed_weight_, out_channel_size,
                            in_channel * kernel_plane);
   } else {
@@ -134,7 +134,7 @@ int ConvolutionFP32Coder::DoCode(CoderContext *const context) {
               "dequant_int8_to_fp32_wrapper.c",
             });
   }
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     Collect(context, {}, {},
             {
               "MatmulFp32.S",

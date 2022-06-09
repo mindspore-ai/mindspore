@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,7 +171,7 @@ int Generator::CodeStaticContent() {
   std::string context_source_txt = context_source;
   std::string tensor_header_txt = tensor_header;
   std::string tensor_source_txt = tensor_source;
-  if (config_->target() == kARM32M) {
+  if (config_->target() == kCortex_M) {
     bench_cmake_lists_txt = bench_cmake_lists_cortex;
     calib_header_txt = calib_header_cortex;
     calib_source_txt = calib_source_cortex;
@@ -200,7 +200,7 @@ int Generator::CodeStaticContent() {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.h", debug_utils_h));
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.c", debug_utils_c));
   }
-  if (config_->target() == kARM32M) {
+  if (config_->target() == kCortex_M) {
     const_blocks.emplace_back(std::make_pair(net_main_file_path_ + "data.h", data_h_cortex));
     const_blocks.emplace_back(
       std::make_pair(config_->code_path() + "/" + "cortex-m7.toolchain.cmake", cortex_m7_toolchain));
@@ -254,7 +254,7 @@ int Generator::CodeWeightFile() {
   cofs << "#include \"" << net_weight_hfile_ << "\"\n\n";
   cofs << "int  " << gThreadNum << " = 1; \n";
 
-  if (config_->target() != kARM32M) {
+  if (config_->target() != kCortex_M) {
     cofs << "unsigned char * " << ctx_->buffer_name() << " = 0; \n";
     cofs << "unsigned char * " << ctx_->weight_name() << " = 0; \n";
     std::string net_file = net_src_file_path_ + "net.bin";

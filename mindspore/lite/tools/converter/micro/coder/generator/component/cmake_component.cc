@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 namespace mindspore::lite::micro {
 void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator *config) {
   ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)\n";
-  if (config->target() == kARM32M) {
+  if (config->target() == kCortex_M) {
     ofs << "include_directories(${OP_HEADER_PATH}/CMSIS/NN/Include)\n"
         << "include_directories(${OP_HEADER_PATH}/CMSIS/DSP/Include)\n"
         << "include_directories(${OP_HEADER_PATH}/CMSIS/Core/Include)\n";
@@ -44,7 +44,7 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::unique_ptr<CoderContext>
   }
   ofs << ")\n";
   std::set<std::string> kernel_cmake_asm_set_files = ctx->asm_files();
-  if (!kernel_cmake_asm_set_files.empty() && (config->target() == kARM32A || config->target() == kARM64)) {
+  if (!kernel_cmake_asm_set_files.empty() && (config->target() == kARM32 || config->target() == kARM64)) {
     ofs << "set(ASSEMBLY_SRC\n";
     for (const std::string &asm_file : kernel_cmake_asm_set_files) {
       ofs << "    " << asm_file << ".o\n";
