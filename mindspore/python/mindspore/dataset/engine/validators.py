@@ -693,10 +693,6 @@ def check_caltech256_dataset(method):
         dataset_dir = param_dict.get('dataset_dir')
         check_dir(dataset_dir)
 
-        decrypt = param_dict.get('decrypt')
-        if decrypt is not None and not callable(decrypt):
-            raise TypeError("Argument decrypt is not a callable object, but got " + str(type(decrypt)))
-
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
         check_sampler_shuffle_shard_options(param_dict)
@@ -816,6 +812,10 @@ def check_celebadataset(method):
         dataset_dir = param_dict.get('dataset_dir')
 
         check_dir(dataset_dir)
+
+        decrypt = param_dict.get('decrypt')
+        if decrypt is not None and not callable(decrypt):
+            raise TypeError("Argument decrypt is not a callable object, but got " + str(type(decrypt)))
 
         validate_dataset_param_value(nreq_param_int, param_dict, int)
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
