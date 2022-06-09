@@ -13,7 +13,7 @@ mindspore.nn.SiLU
 
         \text{SiLU}(x) = x * \sigma(x),
 
-    其中 :math:`x_i` 是输入的元素, math:`\sigma(x)` 是Sigmoid函数。
+    其中 :math:`x_i` 是输入的元素， :math:`\sigma(x)` 是Sigmoid函数。
 
     .. math::
 
@@ -31,4 +31,4 @@ mindspore.nn.SiLU
 
     **异常：**
 
-    **TypeError** - `x` 的数据类型既不是float16也不是float32。
+    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
