@@ -107,5 +107,7 @@ std::vector<int64_t> Slice::get_size() const {
 }
 
 REGISTER_PRIMITIVE_C(kNameSlice, Slice);
+
+REGISTER_HOST_DEPENDS(kNameSlice, (std::set<int64_t>{1, 2}));
 }  // namespace ops
 }  // namespace mindspore
