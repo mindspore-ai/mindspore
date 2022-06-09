@@ -2754,3 +2754,106 @@ TEST_F(MindDataTestPipeline, TestMaskAlongAxisRank) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
+
+/// Feature: Resample
+/// Description: test Resample in pipeline mode
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestPipeline, TestResampleSincInterpolation) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResampleSincInterpolation.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("audio", mindspore::DataType::kNumberTypeFloat32, {3, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto resample_op = audio::Resample(48000, 16000);
+  ds = ds->Map({resample_op});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expected = {3, 67};
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["audio"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+  iter->Stop();
+}
+
+/// Feature: Resample
+/// Description: test Resample in pipeline mode
+/// Expectation: the data is processed successfully
+TEST_F(MindDataTestPipeline, TestResampleKaiserWindow) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResampleKaiserWindow.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("audio", mindspore::DataType::kNumberTypeFloat32, {10, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto resample_op = audio::Resample(3, 2, ResampleMethod::kKaiserWindow);
+  ds = ds->Map({resample_op});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expected = {10, 134};
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["audio"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+  iter->Stop();
+}
+
+/// Feature: Resample
+/// Description: test Resample with wrong input
+/// Expectation: the data is processed failed
+TEST_F(MindDataTestPipeline, TestResampleWithInvalidArg) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResampleInvalidArgs.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("audio", mindspore::DataType::kNumberTypeFloat32, {1, 200}));
+  std::shared_ptr<Dataset> ds_01 = RandomData(50, schema);
+  EXPECT_NE(ds_01, nullptr);
+
+  ds_01 = ds_01->SetNumWorkers(4);
+  EXPECT_NE(ds_01, nullptr);
+
+  auto resample_01 = audio::Resample(-2, 3, ResampleMethod::kKaiserWindow);
+
+  ds_01 = ds_01->Map({resample_01});
+  EXPECT_NE(ds_01, nullptr);
+
+  std::shared_ptr<Iterator> iter_01 = ds_01->CreateIterator();
+  // Expect failure, orig_freq can not be negative.
+  EXPECT_EQ(iter_01, nullptr);
+
+  std::shared_ptr<Dataset> ds_02 = RandomData(50, schema);
+  EXPECT_NE(ds_02, nullptr);
+
+  ds_02 = ds_02->SetNumWorkers(4);
+  EXPECT_NE(ds_02, nullptr);
+
+  auto resample_02 = audio::Resample(2, -3, ResampleMethod::kSincInterpolation);
+
+  ds_02 = ds_02->Map({resample_02});
+  EXPECT_NE(ds_02, nullptr);
+
+  std::shared_ptr<Iterator> iter_02 = ds_02->CreateIterator();
+  // Expect failure, new_freq can not be negative.
+  EXPECT_EQ(iter_02, nullptr);
+}

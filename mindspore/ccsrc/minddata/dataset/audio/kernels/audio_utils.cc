@@ -1987,5 +1987,181 @@ Status InverseMelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Ten
                                        tolerance_loss, tolerance_change, sgd_lr, sgd_momentum, norm, mel_type, rnd);
   }
 }
+
+template <typename T>
+Status GetSincResampleKernel(int32_t orig_freq, int32_t des_freq, ResampleMethod resample_method,
+                             int32_t lowpass_filter_width, float rolloff, float beta, DataType datatype,
+                             std::shared_ptr<Tensor> *kernel, int32_t *width) {
+  float base_freq = static_cast<float>(std::min(orig_freq, des_freq));
+  // Removing the highest frequencies to perform antialiasing filtering. This is needed in both upsampling and
+  // downsampling
+  base_freq *= rolloff;
+  // The key idea of the algorithm is that x(t) can be exactly reconstructed from x[i] (tensor) using the sinc
+  // interpolation formula:
+  //  x(t) = sum_i x[i] sinc(pi * orig_freq * (i / orig_freq - t))
+  // We can then sample the function x(t) with a different sample rate:
+  //  y[j] = sum_i x[i] sinc(pi * orig_freq * (i / orig_freq - j / des_freq))
+  *width = static_cast<int32_t>(ceil(static_cast<float>(lowpass_filter_width * orig_freq) / base_freq));
+  int32_t kernel_length = 2 * (*width) + orig_freq;
+  std::shared_ptr<Tensor> idx;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1, kernel_length}), datatype, &idx));
+  auto idx_it = idx->begin<T>();
+  for (int32_t i = -(*width); i < (*width + orig_freq); i++) {
+    *idx_it = static_cast<T>(i);
+    idx_it++;
+  }
+  std::vector<std::shared_ptr<Tensor>> kernels_vec;
+  std::shared_ptr<Tensor> filter;
+  RETURN_IF_NOT_OK(Tensor::CreateFromTensor(idx, &filter));
+  auto filter_begin = filter->begin<T>();
+  auto filter_end = filter->end<T>();
+  std::shared_ptr<Tensor> window;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(filter->shape(), filter->type(), &window));
+  auto window_it = window->begin<T>();
+  idx_it = idx->begin<T>();
+  // Compute the filter for resample, sinc interpolation
+  for (int32_t i = 0; i < des_freq; i++) {
+    while (filter_begin != filter_end) {
+      *filter_begin = (static_cast<T>(-i) / des_freq + *idx_it / orig_freq) * base_freq;
+      *filter_begin =
+        std::clamp(*filter_begin, static_cast<T>(-lowpass_filter_width), static_cast<T>(lowpass_filter_width));
+      // Build window
+      if (resample_method == ResampleMethod::kSincInterpolation) {
+        *window_it = *filter_begin * PI / lowpass_filter_width / 2.0;
+        *window_it = pow(cos(*window_it), 2);
+      } else {
+#ifdef __APPLE__
+        RETURN_STATUS_ERROR(StatusCode::kMDNotImplementedYet,
+                            "Resample: ResampleMethod of Kaiser Window is not supported on MacOS yet.");
+#else
+        *window_it =
+          static_cast<T>(std::cyl_bessel_i(3.0, beta * sqrt(1 - pow((*filter_begin / lowpass_filter_width), 2)))) /
+          (static_cast<T>(std::cyl_bessel_if(3.0, beta)));
+#endif
+      }
+      *filter_begin *= PI;
+      // sinc function
+      if (*filter_begin == 0) {
+        *filter_begin = 1.0;
+      } else {
+        *filter_begin = sin(*filter_begin) / *filter_begin;
+      }
+      *filter_begin *= (*window_it);
+      ++window_it;
+      ++filter_begin;
+      ++idx_it;
+    }
+    std::shared_ptr<Tensor> temp_filter;
+    RETURN_IF_NOT_OK(Tensor::CreateFromTensor(filter, &temp_filter));
+    kernels_vec.emplace_back(temp_filter);
+    window_it = window->begin<T>();
+    filter_begin = filter->begin<T>();
+    idx_it = idx->begin<T>();
+  }
+  T scale = static_cast<T>(base_freq) / orig_freq;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({des_freq, kernel_length}), datatype, kernel));
+  T temp;
+  for (int32_t i = 0; i < des_freq; i++) {
+    for (int32_t j = 0; j < kernel_length; j++) {
+      RETURN_IF_NOT_OK(kernels_vec.at(i)->GetItemAt<T>(&temp, {0, j}));
+      temp *= scale;
+      RETURN_IF_NOT_OK((*kernel)->SetItemAt<T>({i, j}, temp));
+    }
+  }
+  return Status::OK();
+}
+
+template <typename T>
+Status ResampleSingle(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                      const std::shared_ptr<Tensor> &kernel, int32_t orig_freq, int32_t target_length) {
+  int32_t pad_length = input->shape()[-1];
+  RETURN_IF_NOT_OK(input->Reshape(TensorShape({pad_length})));
+  int32_t kernel_x = kernel->shape()[0];
+  int32_t kernel_y = kernel->shape()[1];
+  std::shared_ptr<Tensor> multi_input;
+  int32_t resample_num = static_cast<int32_t>(ceil(static_cast<float>(target_length) / kernel_x));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({resample_num, kernel_y}), input->type(), &multi_input));
+  int x_dim = 0;
+  // Slice the waveform with stride orig_freq and length kernel_y
+  for (int i = 0; i + kernel_y < pad_length && x_dim < resample_num; i += orig_freq) {
+    std::vector<dsize_t> slice_idx(kernel_y);
+    std::iota(slice_idx.begin(), slice_idx.end(), i);
+    std::shared_ptr<Tensor> input_slice;
+    RETURN_IF_NOT_OK(input->Slice(&input_slice, std::vector<SliceOption>({SliceOption(slice_idx)})));
+    RETURN_IF_NOT_OK(multi_input->InsertTensor({x_dim}, input_slice));
+    ++x_dim;
+  }
+  auto multi_input_ptr = &*multi_input->begin<T>();
+  auto kernel_ptr = &*kernel->begin<T>();
+  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> multi_input_matrix(multi_input_ptr, kernel_y,
+                                                                                  resample_num);
+  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> kernel_matrix(kernel_ptr, kernel_y, kernel_x);
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mul_matrix =
+    (multi_input_matrix.transpose() * (kernel_matrix)).transpose();
+  std::vector<T> mul_mat(mul_matrix.data(), mul_matrix.data() + mul_matrix.size());
+  std::shared_ptr<Tensor> resampled;
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(mul_mat, &resampled));
+  std::vector<dsize_t> resampled_idx(target_length);
+  std::iota(resampled_idx.begin(), resampled_idx.end(), 0);
+  RETURN_IF_NOT_OK(resampled->Slice(output, std::vector<SliceOption>({SliceOption(resampled_idx)})));
+  return Status::OK();
+}
+
+template <typename T>
+Status Resample(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float orig_freq, float des_freq,
+                ResampleMethod resample_method, int32_t lowpass_filter_width, float rolloff, float beta) {
+  TensorShape input_shape = input->shape();
+  int32_t waveform_length = input_shape[-1];
+  int32_t num_waveform = input->Size() / waveform_length;
+  TensorShape to_shape = TensorShape({num_waveform, waveform_length});
+  RETURN_IF_NOT_OK(input->Reshape(to_shape));
+
+  int32_t gcd = std::gcd(static_cast<int32_t>(orig_freq), static_cast<int32_t>(des_freq));
+  CHECK_FAIL_RETURN_UNEXPECTED(gcd != 0, "Resample: gcd cannet be equal to 0.");
+  int32_t orig_freq_prime = static_cast<int32_t>(floor(orig_freq / gcd));
+  int32_t des_freq_prime = static_cast<int32_t>(floor(des_freq / gcd));
+  std::shared_ptr<Tensor> kernel;
+  int32_t width = 0;
+  RETURN_IF_NOT_OK(GetSincResampleKernel<T>(orig_freq_prime, des_freq_prime, resample_method, lowpass_filter_width,
+                                            rolloff, beta, input->type(), &kernel, &width));
+  // padding
+  int32_t pad_length = waveform_length + 2 * width + orig_freq_prime;
+  std::shared_ptr<Tensor> waveform_pad;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1, pad_length}), input->type(), &waveform_pad));
+  RETURN_IF_NOT_OK(Pad<T>(input, &waveform_pad, width, width + orig_freq_prime, BorderType::kConstant));
+
+  int32_t target_length =
+    static_cast<int32_t>(std::ceil(static_cast<double>(des_freq_prime * waveform_length) / orig_freq_prime));
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({num_waveform, target_length}), input->type(), output));
+  for (int32_t i = 0; i < num_waveform; i++) {
+    std::shared_ptr<Tensor> single_waveform;
+    RETURN_IF_NOT_OK(waveform_pad->Slice(
+      &single_waveform, std::vector<SliceOption>({SliceOption(std::vector<dsize_t>{i}), SliceOption(true)})));
+    std::shared_ptr<Tensor> resampled_single;
+    RETURN_IF_NOT_OK(ResampleSingle<T>(single_waveform, &resampled_single, kernel, orig_freq_prime, target_length));
+    RETURN_IF_NOT_OK((*output)->InsertTensor({i}, resampled_single));
+  }
+  std::vector<dsize_t> shape_vec = input_shape.AsVector();
+  shape_vec.at(shape_vec.size() - 1) = static_cast<dsize_t>(target_length);
+  TensorShape output_shape(shape_vec);
+  RETURN_IF_NOT_OK((*output)->Reshape(output_shape));
+  return Status::OK();
+}
+
+Status Resample(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float orig_freq, float des_freq,
+                ResampleMethod resample_method, int32_t lowpass_filter_width, float rolloff, float beta) {
+  RETURN_IF_NOT_OK(ValidateLowRank("Resample", input, kMinAudioDim, "<..., time>"));
+  RETURN_IF_NOT_OK(ValidateTensorNumeric("Resample", input));
+  if (input->type().value() == DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(
+      Resample<double>(input, output, orig_freq, des_freq, resample_method, lowpass_filter_width, rolloff, beta));
+  } else {
+    std::shared_ptr<Tensor> waveform;
+    RETURN_IF_NOT_OK(TypeCast(input, &waveform, DataType(DataType::DE_FLOAT32)));
+    RETURN_IF_NOT_OK(
+      Resample<float>(waveform, output, orig_freq, des_freq, resample_method, lowpass_filter_width, rolloff, beta));
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

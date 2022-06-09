@@ -24,7 +24,7 @@ from mindspore.dataset.core.validator_helpers import check_float32, check_float3
     check_int32_not_zero, check_list_same_size, check_non_negative_float32, check_non_negative_int32, \
     check_pos_float32, check_pos_int32, check_value, INT32_MAX, parse_user_args, type_check
 from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, MelType, Modulation, NormType, \
-    ScaleType, WindowType
+    ResampleMethod, ScaleType, WindowType
 
 
 def check_amplitude_to_db(method):
@@ -921,6 +921,31 @@ def check_phase_vocoder(method):
         type_check(rate, (int, float), "rate")
         check_pos_float32(rate, "rate")
         type_check(phase_advance, (np.ndarray,), "phase_advance")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_resample(method):
+    """Wrapper method to check the parameters of Resample."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [orig_freq, new_freq, resample_method, lowpass_filter_width, rolloff, _], _ = parse_user_args(
+            method, *args, **kwargs)
+
+        type_check(orig_freq, (float, int), "orig_freq")
+        check_pos_float32(orig_freq, "orig_freq")
+
+        type_check(new_freq, (float, int), "new_freq")
+        check_pos_float32(new_freq, "new_freq")
+
+        type_check(resample_method, (ResampleMethod,), "resample_method")
+
+        check_pos_int32(lowpass_filter_width, "lowpass_filter_width")
+
+        type_check(rolloff, (float,), "rolloff")
+        check_value(rolloff, [0, 1.0], "rolloff", True, False)
         return method(self, *args, **kwargs)
 
     return new_method

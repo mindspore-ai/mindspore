@@ -2025,6 +2025,20 @@ Status Vad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
   *output = res_tensor;
   return Status::OK();
 }
+
+/// \brief Resample a signal from one frequency to another. A resampling method can be given.
+/// \param[in] input Input tensor.
+/// \param[out] output Output tensor.
+/// \param[in] orig_freq The original frequency of the signal.
+/// \param[in] des_freq The desired frequency.
+/// \param[in] resample_method The resample method.
+/// \param[in] lowpass_filter_width Controls the sharpness of the filter, more means sharper but less efficient.
+/// \param[in] rolloff The roll-off frequency of the filter, as a fraction of the Nyquist. Lower values reduce
+///     anti-aliasing, but also reduce some of the highest frequencies.
+/// \param[in] beta The shape parameter used for kaiser window.
+/// \return Status return code.
+Status Resample(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float orig_freq, float des_freq,
+                ResampleMethod resample_method, int32_t lowpass_filter_width, float rolloff, float beta);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_AUDIO_KERNELS_AUDIO_UTILS_H_
