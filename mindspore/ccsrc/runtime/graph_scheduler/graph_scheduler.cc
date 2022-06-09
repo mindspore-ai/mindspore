@@ -73,6 +73,20 @@ namespace {
 constexpr char kNumaEnableEnv[] = "MS_ENABLE_NUMA";
 constexpr char kNumaEnableEnv2[] = "DATASET_ENABLE_NUMA";
 
+int64_t GetLoopCount(const GraphCompilerInfo &graph_compiler_info) {
+  const auto &graphs = graph_compiler_info.graphs_;
+  if (graphs.empty()) {
+    MS_LOG(EXCEPTION) << "No graphs found in GraphCompilerInfo";
+  }
+  MS_EXCEPTION_IF_NULL(graphs[0]);
+  auto loop_count = ConfigManager::GetInstance().iter_num();
+  if ((graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) ||
+      (graphs.size() == 1 && graphs[0]->is_loop_count_sink()) || graphs[0]->has_flag(kFlagPyNativeRunInGraph)) {
+    loop_count = 1;
+  }
+  return loop_count;
+}
+
 bool IsNeedInsertCopyActor(const DeviceContext *from_device_context, const DeviceContext *to_device_context) {
   MS_EXCEPTION_IF_NULL(from_device_context);
   MS_EXCEPTION_IF_NULL(to_device_context);
@@ -948,12 +962,7 @@ LoopCountActorPtr GraphScheduler::BuildLoopCountActor(const GraphCompilerInfo &g
     return nullptr;
   }
 
-  auto loop_count = ConfigManager::GetInstance().iter_num();
-  if ((graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) ||
-      (graph_compiler_info.graphs_.size() == 1 && graph_compiler_info.graphs_[0]->is_loop_count_sink())) {
-    loop_count = 1;
-  }
-
+  auto loop_count = GetLoopCount(graph_compiler_info);
   auto actor_name = graph_compiler_info.name_ + kLoopCountActorNameSuffix;
   auto loop_count_actor =
     std::make_shared<LoopCountActor>(actor_name, loop_count, memory_manager_aid_, debug_aid_, recorder_aid_,
@@ -971,12 +980,7 @@ OutputActorPtr GraphScheduler::BuildOutputActor(const GraphCompilerInfo &graph_c
     return nullptr;
   }
 
-  auto loop_count = ConfigManager::GetInstance().iter_num();
-  if ((graph_compiler_info.strategy_ == GraphExecutionStrategy::kStep) ||
-      (graph_compiler_info.graphs_.size() == 1 && graph_compiler_info.graphs_[0]->is_loop_count_sink())) {
-    loop_count = 1;
-  }
-
+  auto loop_count = GetLoopCount(graph_compiler_info);
   auto actor_name = graph_compiler_info.name_ + kOutputActorNameSuffix;
   auto output_actor = std::make_shared<OutputActor>(actor_name, loop_count, graph_compiler_info.outputs_num_);
   MS_LOG(INFO) << "Create output actor: " << actor_name;
