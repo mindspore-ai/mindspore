@@ -42,6 +42,7 @@
 #define MS_ADD512_EPI32 _mm512_add_epi32
 #define MS_MOV512_F32 _mm512_set1_ps
 #define MS_MOV512_EPI32 _mm512_set1_epi32
+#define MS_MOV512_VAL0_F32 _mm512_setzero_ps()
 #define MS_MLA512_F32(src1, src2, src3) _mm512_fmadd_ps(src2, src3, src1)
 #define MS_ST512_F32 _mm512_storeu_ps
 #define MS_ST512_EPI32(src1, src2) _mm512_storeu_si512((__m512i *)(src1), src2)
@@ -82,22 +83,9 @@
 #define MS_BLEND512_EPI32(src1, src2, mask) _mm512_mask_blend_epi32(mask, src1, src2)
 #define MS_CAST512_F32_S32(src) _mm512_castsi512_ps(src)
 #define MS_REDUCE_ADD512_F32(src) _mm512_reduce_add_ps(src)
-
-static inline float MS_GET_MAX512_F32(__m512 src) {
-  float result = MS_F32X16_GETI(src, 0);
-  for (int i = 1; i < 16; i++) {  // avx512 block num : 16
-    result = fmaxf(result, MS_F32X16_GETI(src, i));
-  }
-  return result;
-}
-
-static inline float MS_GET_SUM512_F32(__m512 src) {
-  float result = MS_F32X16_GETI(src, 0);
-  for (int i = 1; i < 16; i++) {  // avx512 block num : 16
-    result = result + MS_F32X16_GETI(src, i);
-  }
-  return result;
-}
+#define MS_GET_MAX512_F32(src) _mm512_reduce_max_ps(src)
+#define MS_GET_MIN512_F32(src) _mm512_reduce_min_ps(src)
+#define MS_GET_SUM512_F32(src) _mm512_reduce_add_ps(src)
 
 #define MS_DIV512_EPI32(src1, src2) \
   _mm512_cvttps_epi32(MS_DIV512_F32(_mm512_cvtepi32_ps(src1), _mm512_cvtepi32_ps(src2)))

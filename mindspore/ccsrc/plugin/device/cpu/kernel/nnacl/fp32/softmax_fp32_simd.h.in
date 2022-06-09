@@ -48,7 +48,7 @@ static inline int64_t SoftmaxNormCalcNorm@SIMD_INSTRUCTION@(int64_t index, const
 
 static inline int64_t SoftmaxLastAxisGetExpSum@SIMD_INSTRUCTION@(int64_t index, const float *src, float *dst,
   int cur_batch_offset, float max, float *exp_sum, int channel) {
-  SIMD_F32 sum_val = SIMD_MOV_F32(0.0f);
+  SIMD_F32 sum_val = SIMD_SET0_F32;
   for (int block_max_size = channel - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_F32 input = SIMD_LD_F32(src + cur_batch_offset + index);
     SIMD_F32 output = SIMD_SUB_F32(input, SIMD_MOV_F32(max));

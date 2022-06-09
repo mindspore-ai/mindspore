@@ -39,6 +39,7 @@
 #define MS_MOVQ_F32 vmovq_n_f32
 #define MS_MOV128_F32 vmovq_n_f32
 #define MS_MOVQ_EPI32 vmovq_n_s32
+#define MS_MOV128_VAL0_F32 vmovq_n_f32(0.0f)
 #define MS_MOV128_EPI32 vmovq_n_s32
 #define MS_SUBQ_F32 vsubq_f32
 #define MS_SUB128_F32 vsubq_f32
