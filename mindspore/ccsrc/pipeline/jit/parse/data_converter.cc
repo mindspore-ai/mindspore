@@ -697,6 +697,12 @@ py::object CallPythonScript(const py::object &script, const py::tuple &args_kwar
                              : python_adapter::CallPyModFn(mod, PYTHON_MOD_EVAL_PY_SCRIPT, script, args_kwargs);
 }
 
+// Get the ids of python script string.
+py::set GetPythonScriptIds(const py::object &script) {
+  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+  return python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_SCRIPT_IDS, script);
+}
+
 // Generate an appropriate name and set to graph debuginfo,
 // character <> can not used in the dot file, so change to another symbol.
 void MakeProperNameToFuncGraph(const FuncGraphPtr &func_graph, std::string name) {

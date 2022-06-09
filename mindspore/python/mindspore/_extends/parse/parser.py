@@ -19,6 +19,7 @@
 import os
 import sys
 import ast
+import re
 import hashlib
 import inspect
 import types
@@ -27,6 +28,7 @@ from textwrap import dedent
 import numpy
 
 import asttokens
+import astunparse
 
 from mindspore import Tensor
 from mindspore import log as logger
@@ -693,6 +695,15 @@ def eval_script(exp_str, params):
     if isinstance(obj, set):
         return tuple(obj)
     return obj
+
+
+def get_script_ids(script):
+    """Get the ids for the ast of script"""
+    ast_tokens = asttokens.ASTTokens(script, parse=True)
+    ast_tree = ast_tokens.tree
+    ast_str = astunparse.dump(ast_tree)
+    ids = re.findall(r"id='(.+?)'", ast_str)
+    return set(ids)
 
 
 class Parser:

@@ -21,7 +21,7 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      create_slice_obj, get_obj_id, get_module_namespace, get_obj_type, get_object_key,
                      get_ast_type, get_node_type, get_args, get_args_default_values, get_ast_namespace_symbol,
                      get_operation_symbol, get_operation_namespace_symbol, get_parse_method_of_class, get_scope_name,
-                     eval_script, expand_expr_statement, is_class_member, parse_cb, resolve_symbol,
+                     eval_script, get_script_ids, expand_expr_statement, is_class_member, parse_cb, resolve_symbol,
                      convert_to_ms_tensor, get_object_description, get_class_attr_namespace_symbol, get_ms_class_name,
                      is_class_type, check_obj_bool, is_cell_list, python_isinstance, ms_isinstance,
                      convert_cell_list_to_sequence, get_obj_from_sequence)
@@ -31,7 +31,7 @@ __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'ge
            'create_slice_obj', 'get_obj_id', 'get_module_namespace', 'get_obj_type', 'get_object_key',
            'get_ast_type', 'get_node_type', 'get_args', 'get_args_default_values', 'get_ast_namespace_symbol',
            'get_operation_symbol', 'get_operation_namespace_symbol', 'get_parse_method_of_class', 'get_scope_name',
-           'eval_script', 'expand_expr_statement', 'is_class_member', 'parse_cb', 'resolve_symbol',
+           'eval_script', 'get_script_ids', 'expand_expr_statement', 'is_class_member', 'parse_cb', 'resolve_symbol',
            'convert_to_ms_tensor', 'get_object_description', 'get_class_attr_namespace_symbol', 'get_ms_class_name',
            'is_class_type', 'check_obj_bool', 'is_cell_list', 'python_isinstance', 'ms_isinstance',
            'convert_cell_list_to_sequence', 'get_obj_from_sequence']

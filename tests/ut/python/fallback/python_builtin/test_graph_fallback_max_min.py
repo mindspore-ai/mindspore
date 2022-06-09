@@ -14,10 +14,12 @@
 # ============================================================================
 """ test graph fallback buildin python function max and min"""
 import operator
+import pytest
 import numpy as np
 from mindspore import ms_function, context, Tensor
 
 context.set_context(mode=context.GRAPH_MODE)
+
 
 def test_fallback_max_with_one_input_list():
     """
@@ -143,3 +145,18 @@ def test_fallback_min_with_two_inputs_list():
         return x
     out = foo()
     assert operator.eq(out, (1, 2, 3))
+
+
+def test_fallback_builtin_function_with_non_constance_inputs():
+    """
+    Feature: JIT Fallback
+    Description: Test builtin function in graph mode with non-constant inputs.
+    Expectation: Raise value error.
+    """
+    @ms_function
+    def foo(x, y):
+        return max(x, y)
+
+    with pytest.raises(ValueError) as ex:
+        foo(Tensor([1]), Tensor([1]))
+    assert "is not constant." in str(ex.value)
