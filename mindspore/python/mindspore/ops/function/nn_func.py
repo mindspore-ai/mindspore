@@ -111,6 +111,7 @@ def adaptive_avgpool2d(x, output_size):
 
 fast_gelu_ = P.FastGeLU()
 softsign_ = P.Softsign()
+hardswish_ = P.HSwish()
 
 
 def fast_gelu(x):
@@ -183,6 +184,42 @@ def hardshrink(x, lambd=0.5):
     """
     hshrink_op = P.HShrink(lambd)
     return hshrink_op(x)
+
+
+def hardswish(x):
+    r"""
+    Hard swish activation function.
+
+    Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
+
+    Hard swish is defined as:
+
+    .. math::
+
+        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
+
+    where :math:`x_i` is an element of the input Tensor.
+
+    Args:
+        x (Tensor): The input to compute the Hard Swish with data type of float16 or float32.
+
+    Returns:
+        Tensor, has the same data type and shape as the input.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> output = ops.hardswish(x)
+        >>> print(result)
+        [-0.3333  -0.3333  0  1.666  0.6665]
+    """
+    return hardswish_(x)
 
 
 def softsign(x):
@@ -701,6 +738,7 @@ __all__ = [
     'hardshrink',
     'soft_shrink',
     'intopk',
+    'hardswish',
     'softsign',
     'pdist',
     'cross_entropy',

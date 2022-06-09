@@ -208,6 +208,7 @@ from .nn_func import (
     hardshrink,
     soft_shrink,
     intopk,
+    hardswish,
     softsign,
     pdist,
     nll_loss,
