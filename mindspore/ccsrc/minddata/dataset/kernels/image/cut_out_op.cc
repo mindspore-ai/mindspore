@@ -44,7 +44,7 @@ Status CutOutOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   std::shared_ptr<CVTensor> inputCV = CVTensor::AsCVTensor(input);
   // cut out will clip the erasing area if the box is near the edge of the image and the boxes are black
   RETURN_IF_NOT_OK(
-    Erase(inputCV, output, box_height_, box_width_, num_patches_, false, random_color_, &rnd_, fill_colors_, is_hwc_));
+    CutOut(inputCV, output, box_height_, box_width_, num_patches_, false, random_color_, &rnd_, fill_colors_, is_hwc_));
   return Status::OK();
 }
 }  // namespace dataset

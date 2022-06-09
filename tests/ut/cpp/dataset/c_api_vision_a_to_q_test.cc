@@ -2194,3 +2194,75 @@ TEST_F(MindDataTestPipeline, TestSolarizeInvalidFillValue) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
+
+/// Feature: Erase op
+/// Description: Test Erase pipeline
+/// Expectation: Create an ImageFolder dataset then do erase on it with the policy
+TEST_F(MindDataTestPipeline, TestErase) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestErase.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> erase = std::make_shared<vision::Erase>(10, 10, 10, 10);
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({erase});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 1;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: Erase op
+/// Description: test Erase with invalid fill_value
+/// Expectation: pipeline iteration failed with wrong fill_value
+TEST_F(MindDataTestPipeline, TestEraseWideInvalidFillValue) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEraseWideInvalidFillValue.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto erase_wide_op = vision::Erase(10, 10, 10, 10, {20, 20});
+
+  ds = ds->Map({erase_wide_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}

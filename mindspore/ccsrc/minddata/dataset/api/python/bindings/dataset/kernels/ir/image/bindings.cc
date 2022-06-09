@@ -31,6 +31,7 @@
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
+#include "minddata/dataset/kernels/ir/vision/erase_ir.h"
 #include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
 #include "minddata/dataset/kernels/ir/vision/horizontal_flip_ir.h"
 #include "minddata/dataset/kernels/ir/vision/hwc_to_chw_ir.h"
@@ -204,6 +205,17 @@ PYBIND_REGISTER(EqualizeOperation, 1, ([](const py::module *m) {
                         THROW_IF_ERROR(equalize->ValidateParams());
                         return equalize;
                       }));
+                }));
+
+PYBIND_REGISTER(EraseOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::EraseOperation, TensorOperation, std::shared_ptr<vision::EraseOperation>>(
+                    *m, "EraseOperation")
+                    .def(py::init([](int32_t top, int32_t left, int32_t height, int32_t width,
+                                     const std::vector<uint8_t> &value, bool inplace) {
+                      auto erase = std::make_shared<vision::EraseOperation>(top, left, height, width, value, inplace);
+                      THROW_IF_ERROR(erase->ValidateParams());
+                      return erase;
+                    }));
                 }));
 
 PYBIND_REGISTER(

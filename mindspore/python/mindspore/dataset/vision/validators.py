@@ -235,6 +235,25 @@ def check_five_crop(method):
     return new_method
 
 
+def check_erase(method):
+    """Wrapper method to check the parameters of erase operation."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [top, left, height, width, value, inplace], _ = parse_user_args(
+            method, *args, **kwargs)
+        check_non_negative_int32(top, "top")
+        check_non_negative_int32(left, "left")
+        check_pos_int32(height, "height")
+        check_pos_int32(width, "width")
+        type_check(inplace, (bool,), "inplace")
+        check_fill_value(value)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_posterize(method):
     """A wrapper that wraps a parameter checker around the original function(posterize operation)."""
 

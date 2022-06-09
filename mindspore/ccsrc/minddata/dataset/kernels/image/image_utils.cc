@@ -1454,9 +1454,9 @@ uchar *GetPtr(const std::shared_ptr<Tensor> &tensor) {
   }
 }
 
-Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
-             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
-             std::vector<uint8_t> fill_colors, bool is_hwc) {
+Status CutOut(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
+              int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
+              std::vector<uint8_t> fill_colors, bool is_hwc) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     RETURN_IF_NOT_OK(ValidateCutOutImage(input_cv, is_hwc, box_height, box_width));
@@ -1523,6 +1523,52 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("CutOut: " + std::string(e.what()));
+  }
+
+  return Status::OK();
+}
+
+Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t top, int32_t left,
+             int32_t height, int32_t width, const std::vector<uint8_t> &value, bool inplace) {
+  try {
+    std::vector<dsize_t> size;
+    RETURN_IF_NOT_OK(ImageSize(input, &size));
+    int64_t image_h = size[kHeightIndex];
+    int64_t image_w = size[kWidthIndex];
+    if (height > image_h || width > image_w) {
+      RETURN_STATUS_UNEXPECTED(
+        "Erase: box size is too large for image erase, got box height: " + std::to_string(height) +
+        "box weight: " + std::to_string(width) + ", and image height: " + std::to_string(image_h) +
+        ", image width: " + std::to_string(image_w));
+    }
+
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    cv::Mat input_img = input_cv->mat();
+
+    int32_t h_start = top;
+    int32_t w_start = left;
+    h_start = (h_start < 0) ? 0 : h_start;
+    w_start = (w_start < 0) ? 0 : w_start;
+
+    int32_t max_width = (w_start + width > image_w) ? image_w : w_start + width;
+    int32_t max_height = (h_start + height > image_h) ? image_h : h_start + height;
+    int32_t true_width = max_width - w_start;
+    int32_t true_height = max_height - h_start;
+
+    uint8_t fill_r = value[kRIndex];
+    uint8_t fill_g = value[kGIndex];
+    uint8_t fill_b = value[kBIndex];
+
+    cv::Rect idx = cv::Rect(w_start, h_start, true_width, true_height);
+    cv::Scalar fill_color = cv::Scalar(fill_r, fill_g, fill_b);
+    input_img(idx).setTo(fill_color);
+
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_img, input_cv->Rank(), &output_cv));
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Erase: " + std::string(e.what()));
   }
 
   return Status::OK();
@@ -1608,9 +1654,9 @@ Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
         float r = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[0]);
         float g = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[1]);
         float b = static_cast<float>(input_img.at<cv::Vec3b>(row, col)[2]);
-        input_img.at<cv::Vec3b>(row, col)[0] = cv::saturate_cast<uchar>(r + pca_r);
-        input_img.at<cv::Vec3b>(row, col)[1] = cv::saturate_cast<uchar>(g + pca_g);
-        input_img.at<cv::Vec3b>(row, col)[2] = cv::saturate_cast<uchar>(b + pca_b);
+        input_img.at<cv::Vec3b>(row, col)[kRIndex] = cv::saturate_cast<uchar>(r + pca_r);
+        input_img.at<cv::Vec3b>(row, col)[kGIndex] = cv::saturate_cast<uchar>(g + pca_g);
+        input_img.at<cv::Vec3b>(row, col)[kBIndex] = cv::saturate_cast<uchar>(b + pca_b);
       }
     }
 

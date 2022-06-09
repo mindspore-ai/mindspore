@@ -2817,3 +2817,20 @@ TEST_F(MindDataTestExecute, TestResampleWithInvalidArg) {
   // Expect failure, new_freq can not be negative.
   EXPECT_FALSE(res_02.IsOk());
 }
+
+/// Feature: Execute Transform op
+/// Description: Test executing Decode then Erase op with eager mode
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestEraseEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestEraseEager.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto erase_op = vision::Erase(10, 10, 10, 10);
+
+  auto transform = Execute({decode, erase_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}

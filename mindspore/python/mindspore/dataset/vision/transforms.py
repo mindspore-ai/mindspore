@@ -64,14 +64,14 @@ from .py_transforms_util import is_pil
 from .utils import AutoAugmentPolicy, Border, ConvertMode, ImageBatchFormat, Inter, SliceMode, parse_padding
 from .validators import check_adjust_gamma, check_alpha, check_auto_augment, check_auto_contrast, \
     check_bounding_box_augment_cpp, check_center_crop, check_convert_color, check_crop, check_cut_mix_batch_c, \
-    check_cutout_new, check_decode, check_five_crop, check_gaussian_blur, check_hsv_to_rgb, check_linear_transform, \
-    check_mix_up, check_mix_up_batch_c, check_normalize, check_normalizepad, check_num_channels, check_pad, \
-    check_pad_to_size, check_positive_degrees, check_posterize, check_prob, check_random_adjust_sharpness, \
-    check_random_affine, check_random_auto_contrast, check_random_color_adjust, check_random_crop, \
-    check_random_erasing, check_random_perspective, check_random_resize_crop, check_random_rotation, \
-    check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize, \
-    check_resize_interpolation, check_rgb_to_hsv, check_rotate, check_slice_patches, check_solarize, check_ten_crop, \
-    check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
+    check_cutout_new, check_decode, check_erase, check_five_crop, check_gaussian_blur, check_hsv_to_rgb, \
+    check_linear_transform, check_mix_up, check_mix_up_batch_c, check_normalize, check_normalizepad, \
+    check_num_channels, check_pad, check_pad_to_size, check_positive_degrees, check_posterize, \
+    check_prob, check_random_adjust_sharpness, check_random_affine, check_random_auto_contrast, \
+    check_random_color_adjust, check_random_crop, check_random_erasing, check_random_perspective, \
+    check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, check_random_solarize, \
+    check_range, check_rescale, check_resize, check_resize_interpolation, check_rgb_to_hsv, check_rotate, \
+    check_slice_patches, check_solarize, check_ten_crop, check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
@@ -672,6 +672,55 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
         """
 
         return util.equalize(img)
+
+
+class Erase(ImageTensorOperation):
+    """
+    Erase the input image with given value.
+
+    Args:
+        top (int): Vertical ordinate of the upper left corner of erased region.
+        left (int): Horizontal ordinate of the upper left corner of erased region.
+        height (int): Height of erased region.
+        width (int): Width of erased region.
+        value (Union[int, Sequence[int]], optional): Pixel value used to pad the erased area.
+            If a single integer is provided, it will be used for all RGB channels.
+            If a sequence of length 3 is provided, it will be used for R, G, B channels respectively.
+            Default: 0.
+        inplace (bool, optional): Whether to apply erasing inplace. Default: False.
+
+    Raises:
+        TypeError: If `top` is not of type int.
+        TypeError: If `left` is not of type int.
+        TypeError: If `height` is not of type int.
+        TypeError: If `width` is not of type int.
+        TypeError: If `value` is not of type int or Sequence[int].
+        TypeError: If `inplace` is not of type bool.
+        RuntimeError: If given tensor shape is not <H, W, C>.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> transforms_list = [c_vision.Decode(), c_vision.Erase(10,10,10,10)]
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns=["image"])
+    """
+
+    @check_erase
+    def __init__(self, top, left, height, width, value=0, inplace=False):
+        super().__init__()
+        self.top = top
+        self.left = left
+        self.height = height
+        self.width = width
+        if isinstance(value, int):
+            value = tuple([value] * 3)
+        self.value = value
+        self.inplace = inplace
+
+    def parse(self):
+        return cde.EraseOperation(self.top, self.left, self.height, self.width, self.value, self.inplace)
 
 
 class FiveCrop(PyTensorOperation):
