@@ -187,9 +187,9 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
     if (is_bias_broadcast_) {
       float broad_cast_data = (reinterpret_cast<float *>(bias_tensor_->data()))[0];
       std::string bias_ptr_str = "((float *)(" + allocator_->GetRuntimeAddr(bias_ptr_) + "))";
-      init_code << "\tfor (int i = 0; i < " << max_bias_data << "; ++i) {\n";
-      init_code << "\t\t" << bias_ptr_str << "[i] = " << broad_cast_data << ";\n";
-      init_code << "\t}\n";
+      init_code << "\t    for (int i = 0; i < " << max_bias_data << "; ++i) {\n";
+      init_code << "\t\t    " << bias_ptr_str << "[i] = " << broad_cast_data << ";\n";
+      init_code << "   }\n";
     } else {
       std::string bias_tensor_str = allocator_->GetRuntimeAddr(bias_tensor_);
       init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_str, ori_bias_pack_ptr_size_);
@@ -246,25 +246,25 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   int current_rest_oc = params_->col_ - kDefaultTaskId * thread_stride_ * col_tile_;
   int cur_oc = MSMIN(current_stride_oc, current_rest_oc);
   if (cur_oc <= 0) return RET_OK;
-  code << "for (int i = 0; i < " << params_->batch << "; ++i) {\n";
+  code << "    for (int i = 0; i < " << params_->batch << "; ++i) {\n";
   if (vec_matmul_) {
-    code << "\t\tconst float *batch_a_ptr = " << a_pack_str << " + i * " << params_->deep_ << ";\n";
-    code << "\t\tconst float *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_ << ";\n";
-    code << "\t\tfloat *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
+    code << "      const float *batch_a_ptr = " << a_pack_str << " + i * " << params_->deep_ << ";\n";
+    code << "      const float *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_ << ";\n";
+    code << "      float *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
 
     code.CodeFunction("MatVecMulFp32", "batch_a_ptr", "batch_b_ptr", "batch_c_ptr", bias_ptr_, params_->act_type_,
                       params_->deep_, cur_oc);
   } else {
-    code << "\t\tconst float *batch_a_ptr = " << a_pack_str << " + i * " << params_->row_align_ * params_->deep_
+    code << "      const float *batch_a_ptr = " << a_pack_str << " + i * " << params_->row_align_ * params_->deep_
          << ";\n";
-    code << "\t\tconst float *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_align_
+    code << "      const float *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_align_
          << ";\n";
-    code << "\t\tfloat *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
+    code << "      float *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
 
     code.CodeFunction("MatMulOpt", "batch_a_ptr", "batch_b_ptr", "batch_c_ptr", bias_ptr_, params_->act_type_,
                       params_->deep_, params_->row_, cur_oc, params_->col_, "OutType_Nhwc");
   }
-  code << "\t\t}\n";
+  code << "    }\n";
   context->AppendInitWeightSizeCode(w_buf_size);
   context->AppendCode(code.str());
   context->AppendInitCode(init_code.str());
