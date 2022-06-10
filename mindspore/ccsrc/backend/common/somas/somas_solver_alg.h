@@ -118,6 +118,14 @@ class BlockTensor {
   bool Alone() const { return ((nullptr == m_start_tensor_->right_) && (nullptr == m_start_tensor_->left_)); }
 };
 
+struct AllocatedTensorInfo {
+  size_t index_;
+  size_t size_;
+  size_t offset_;
+  explicit AllocatedTensorInfo(const SomasSolverTensorDescPtr &tensor)
+      : index_(tensor->index_), size_(tensor->size_), offset_(tensor->offset_) {}
+};
+
 class FootPrint : public std::enable_shared_from_this<FootPrint> {
  public:
   uint32_t m_solId_;
@@ -135,16 +143,15 @@ class FootPrint : public std::enable_shared_from_this<FootPrint> {
   void setBranchingStrategy(uint32_t bs) { m_branching_strategy_ = bs; }
   void setCurrentSol(uint32_t solId) { m_solId_ = solId; }
   void setAlgorithm(uint32_t algorithm) { m_algorithm_ = algorithm; }
-  void addStart(BlockTensor *elemIndex) { m_starts_.push_back(elemIndex); }
   void addElem(BlockTensor *block, const size_t &offset);
+  void addTensorsInfo(BlockTensor *elemIndex);
   std::shared_ptr<FootPrint> &Next() { return m_foot_print_next_; }
   vector<BlockTensor *> &getStarts() { return m_starts_; }
   void Destroy();
   const size_t getOffset() const { return m_offset_; }
   void setOffset(const size_t &offset) { m_offset_ = offset; }
   bool findOffset(const std::vector<DynamicBitSet> *constraints, const BlockTensor &block, size_t *offset);
-  void Merge(vector<Interval> *l_interval, stack<Interval> *l_merged);
-  bool findFirst(stack<Interval> *merged, const BlockTensor &block, size_t *offset);
+  bool findFirst(vector<Interval> *interval_v, const BlockTensor &block, size_t *offset);
   size_t Result();
   void printStats();
 
@@ -152,6 +159,7 @@ class FootPrint : public std::enable_shared_from_this<FootPrint> {
   std::shared_ptr<FootPrint> m_foot_print_next_;
   size_t m_offset_;
   vector<BlockTensor *> m_starts_;
+  vector<AllocatedTensorInfo> m_tensors_info_;
   size_t m_alignment_;
   uint32_t m_branching_strategy_;
   uint32_t m_algorithm_;

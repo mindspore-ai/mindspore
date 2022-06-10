@@ -63,16 +63,23 @@ size_t FootPrint::Result() {
 
   return upperbound;
 }
-bool FootPrint::findFirst(stack<Interval> *merged, const BlockTensor &block, size_t *offset) {
-  MS_EXCEPTION_IF_NULL(merged);
-  MS_EXCEPTION_IF_NULL(offset);
-  bool bfound = false;
-  std::set<pair<size_t, size_t>, bool (*)(const pair<size_t, size_t> &a, const pair<size_t, size_t> &b)>
-    offsetcandidates(g_pBranching[m_branching_strategy_]);
-  size_t gap;
 
+bool FootPrint::findFirst(vector<Interval> *interval_v, const BlockTensor &block, size_t *offset) {
+  MS_EXCEPTION_IF_NULL(interval_v);
+  MS_EXCEPTION_IF_NULL(offset);
+  if (this->Next() == nullptr) {
+    *offset = this->getOffset();
+    return true;
+  }
+  sort((*interval_v).begin(), (*interval_v).end(),
+       [](Interval &i1, Interval &i2) { return (i1.lb() < i2.lb()) || (i1.lb() == i2.lb() && i1.ub() < i2.ub()); });
+
+  bool bfound = false;
+  auto fit_func = g_pBranching[m_branching_strategy_];
+  pair<size_t, size_t> fit_ret;
+
+  size_t gap;
   Interval a;
-  Interval it;
 
   size_t block_size;
   if (block.Alone()) {
@@ -81,53 +88,51 @@ bool FootPrint::findFirst(stack<Interval> *merged, const BlockTensor &block, siz
     block_size = block.m_start_tensor_->size_;  // consider only first tensor for contiguous block
   }
 
-  a.ub() = algorithm[m_algorithm_](this);
-  while (!(*merged).empty()) {
-    it = (*merged).top();
-    (*merged).pop();
-    a.lb() = it.ub();
-    if (a.contains(block_size) && a.lb() + block.m_size_ <= algorithm[m_algorithm_](this)) {
-      gap = a.ub() - a.lb() - block_size;
-      offsetcandidates.emplace(pair<size_t, size_t>(a.lb(), gap));
-    }
-    a.ub() = it.lb();
-  }
+  Interval top(m_offset_, m_offset_);
   a.lb() = m_offset_;
-  if (a.contains(block_size) && a.lb() + block.m_size_ <= algorithm[m_algorithm_](this)) {
-    gap = a.ub() - a.lb() - block_size;
-    offsetcandidates.emplace(pair<size_t, size_t>(a.lb(), gap));
+
+  for (auto &b : *interval_v) {
+    if (top.ub() < b.lb()) {
+      a.ub() = b.lb();
+      if (a.contains(block_size) && a.lb() + block.m_size_ <= algorithm[m_algorithm_](this)) {
+        gap = a.ub() - a.lb() - block_size;
+        auto fit_update = pair<size_t, size_t>(a.lb(), gap);
+        if (!bfound) {
+          bfound = true;
+          fit_ret = fit_update;
+        } else if (fit_func(fit_update, fit_ret)) {
+          fit_ret = fit_update;
+        }
+      }
+      top = b;
+    } else if (top.ub() < b.ub()) {
+      top.ub() = b.ub();
+    }
+    a.lb() = top.ub();
   }
 
-  if (offsetcandidates.size() > 0) {
-    *offset = (*offsetcandidates.begin()).first;
+  a.ub() = algorithm[m_algorithm_](this);
+  if (a.contains(block_size) && a.lb() + block.m_size_ <= algorithm[m_algorithm_](this)) {
+    gap = a.ub() - a.lb() - block_size;
+    auto fit_update = pair<size_t, size_t>(a.lb(), gap);
+    if (!bfound) {
+      bfound = true;
+      fit_ret = fit_update;
+    } else if (fit_func(fit_update, fit_ret)) {
+      fit_ret = fit_update;
+    }
+  }
+
+  if (bfound) {
+    *offset = fit_ret.first;
     m_foot_print_next_->m_offset_ = std::max(m_foot_print_next_->m_offset_, *offset + block.m_size_);
-    bfound = true;
   }
 
   return bfound;
 }
-void FootPrint::Merge(vector<Interval> *interval_v, stack<Interval> *s) {
-  MS_EXCEPTION_IF_NULL(s);
-  MS_EXCEPTION_IF_NULL(interval_v);
-  sort((*interval_v).begin(), (*interval_v).end(),
-       [](Interval &i1, Interval &i2) { return (i1.lb() < i2.lb()) || (i1.lb() == i2.lb() && i1.ub() < i2.ub()); });
-  (*s).push((*interval_v)[0]);
 
-  for (size_t i = 1; i < (*interval_v).size(); i++) {
-    Interval &top = (*s).top();
-    Interval &b = (*interval_v)[i];
-    if (top.ub() < b.lb())
-      (*s).push(b);
-
-    else if (top.ub() < b.ub())
-      top.ub() = b.ub();
-  }
-
-  return;
-}
 bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const BlockTensor &block, size_t *offset) {
   MS_EXCEPTION_IF_NULL(offset);
-  bool bretval = true;
   vector<Interval> l_interval;
 
   const size_t intervals_estimation = 1000;
@@ -138,54 +143,52 @@ bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const 
   // transform constrained tensors in non eligible intervals
   if (block.Alone()) {
     if (m_algorithm_ == static_cast<uint32_t>(kManyObjects) && m_starts_.size() > 0 && m_starts_[0]->Alone() &&
-        (*constraints)[block.m_start_tensor_->index_].IsBitTrue(m_starts_[0]->m_start_tensor_->index_) == false) {
+        !(*constraints)[block.m_start_tensor_->index_].IsBitTrue(m_starts_[0]->m_start_tensor_->index_)) {
       return false;
     }
-    for (size_t i = 0; i < m_starts_.size(); i++) {
-      auto allocated_tensor = m_starts_[i]->m_start_tensor_;
-      while (allocated_tensor != nullptr) {
-        if ((*constraints)[block.m_start_tensor_->index_].IsBitTrue(allocated_tensor->index_) == false) {
-          l_interval.emplace_back(Interval(allocated_tensor));
-        }
-        allocated_tensor = allocated_tensor->right_;
+
+    for (const auto &allocated_tensor_info : m_tensors_info_) {
+      if (!(*constraints)[block.m_start_tensor_->index_].IsBitTrue(allocated_tensor_info.index_)) {
+        l_interval.emplace_back(allocated_tensor_info.offset_,
+                                allocated_tensor_info.offset_ + allocated_tensor_info.size_);
       }
     }
   } else {
-    int64_t start_offset = static_cast<int64_t>(m_offset_);
-    for (size_t i = 0; i < m_starts_.size(); i++) {
-      auto allocated_tensor = m_starts_[i]->m_start_tensor_;
-      while (allocated_tensor != nullptr) {
-        int64_t allocated_offset = static_cast<int64_t>(allocated_tensor->offset_);
-        int64_t allocated_size = static_cast<int64_t>(allocated_tensor->size_);
-        int64_t accumulator = 0;
-        for (auto block_tensor = block.m_start_tensor_; block_tensor != nullptr; block_tensor = block_tensor->right_) {
-          if ((*constraints)[block_tensor->index_].IsBitTrue(allocated_tensor->index_) == false) {
-            int64_t start_first_contiguous = allocated_offset - accumulator - SizeToLong(block_tensor->size_);
-            int64_t end_first_contiguous = allocated_offset - accumulator + allocated_size;
-            if (start_first_contiguous > start_offset) {
-              l_interval.emplace_back(Interval(start_first_contiguous, end_first_contiguous));
-            } else {
-              if (end_first_contiguous > start_offset) {
-                l_interval.emplace_back(Interval(start_offset, end_first_contiguous));
-              }
+    auto start_offset = static_cast<int64_t>(m_offset_);
+    int64_t accumulator = 0;
+    for (auto block_tensor = block.m_start_tensor_; block_tensor != nullptr; block_tensor = block_tensor->right_) {
+      for (const auto &allocated_tensor_info : m_tensors_info_) {
+        auto allocated_offset = static_cast<int64_t>(allocated_tensor_info.offset_);
+        auto allocated_size = static_cast<int64_t>(allocated_tensor_info.size_);
+        if (!(*constraints)[block_tensor->index_].IsBitTrue(allocated_tensor_info.index_)) {
+          int64_t start_first_contiguous = allocated_offset - accumulator - SizeToLong(block_tensor->size_);
+          int64_t end_first_contiguous = allocated_offset - accumulator + allocated_size;
+          if (start_first_contiguous > start_offset) {
+            l_interval.emplace_back(start_first_contiguous, end_first_contiguous);
+          } else {
+            if (end_first_contiguous > start_offset) {
+              l_interval.emplace_back(start_offset, end_first_contiguous);
             }
           }
-          accumulator += SizeToLong(block_tensor->size_);
         }
-        allocated_tensor = allocated_tensor->right_;
       }
+      accumulator += SizeToLong(block_tensor->size_);
     }
   }
 
   // merge non-eligible intervals and find a slot to allocate the tensor block
-  if (!l_interval.empty()) {
-    stack<Interval> l_mergedIntervals;
-    Merge(&l_interval, &l_mergedIntervals);
-    bretval = findFirst(&l_mergedIntervals, block, offset);
-  }
-
-  return bretval;
+  return findFirst(&l_interval, block, offset);
 }
+
+void FootPrint::addTensorsInfo(BlockTensor *elemIndex) {
+  m_starts_.push_back(elemIndex);
+  auto allocated_tensor = elemIndex->m_start_tensor_;
+  while (allocated_tensor != nullptr) {
+    m_tensors_info_.emplace_back(allocated_tensor);
+    allocated_tensor = allocated_tensor->right_;
+  }
+}
+
 void FootPrint::addElem(BlockTensor *block, const size_t &offset) {
   if (m_foot_print_next_ == nullptr) {
     m_foot_print_next_ = std::make_shared<FootPrint>();
@@ -194,10 +197,10 @@ void FootPrint::addElem(BlockTensor *block, const size_t &offset) {
     m_foot_print_next_->setAlignment(m_alignment_);
     m_foot_print_next_->m_solId_ = m_solId_;
     m_starts_.clear();
+    m_tensors_info_.clear();
     MS_LOG(DEBUG) << "Creating footprint at offset: " << m_offset_;
   }
 
-  addStart(block);
   size_t offset1 = offset;
   SomasSolverTensorDescPtr tensor = block->m_start_tensor_;
   MS_LOG(DEBUG) << "Allocating block: " << tensor->index_ << " in offset: " << offset;
@@ -214,6 +217,7 @@ void FootPrint::addElem(BlockTensor *block, const size_t &offset) {
     MS_LOG(DEBUG) << tensor->index_ << " " << tensor->size_ << " " << tensor->offset_;
     tensor = tensor->right_;
   }
+  addTensorsInfo(block);
 }
 void FootPrint::printStats() {
   MS_LOG(DEBUG) << "Footprint blocks: " << m_starts_.size() << " \toffset: " << m_offset_;
