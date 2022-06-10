@@ -861,6 +861,14 @@ def matrix_band_part(x, lower, upper):
     return F.matrix_band_part(x, lower, upper)
 
 
+def pad(input_x, paddings):
+    r"""
+    Pads the input tensor according to the paddings.
+    Refer to :func:`mindspore.ops.pad` for more detail.
+    """
+    return F.pad(input_x, paddings)
+
+
 def padding(x, pad_dim_size=8):
     """
     Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.

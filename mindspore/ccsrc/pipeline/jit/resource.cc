@@ -229,6 +229,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"inv", std::string("inv")},                                        // inv()
        {"invert", std::string("invert")},                                  // invert()
        {"matrix_band_part", std::string("matrix_band_part")},              // matrix_band_part()
+       {"pad", std::string("pad")},                                        // P.Pad
        {"padding", std::string("padding")},                                // padding()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()
        {"take", std::string("take")},                                      // P.GatherNd()

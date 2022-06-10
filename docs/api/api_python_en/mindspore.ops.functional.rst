@@ -45,6 +45,7 @@ Neural Network
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_avgpool2d
+    mindspore.ops.pad
     mindspore.ops.pdist
     mindspore.ops.deformable_conv2d
 

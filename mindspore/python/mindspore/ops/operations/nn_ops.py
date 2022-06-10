@@ -4084,23 +4084,9 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
 class Pad(PrimitiveWithInfer):
     r"""
     Pads the input tensor according to the paddings.
-    For example,
-    to pad only the last dimension of the input tensor, then pad has the form (padding_left,padding_right);
-    to pad the last 2 dimensions of the input tensor, then use
-    ((padding_top, padding_bottom), (padding_left, padding_right));
-    to pad the last 3 dimensions, use
-    ((padding_front, padding_back), (padding_top, padding_bottom), (padding_left, padding_right)).
 
-    .. math::
-        \begin{aligned}
-            &\text{ input_x_shape} = (N_{1},N_{2},...,N_{n}) \\
-            &\begin{aligned}
-                \text{output_shape = }(&N_{1}+paddings[0,0]+paddings[0,1], \\
-                                 & N_{2}+paddings[1,0]+paddings[1,1], \\
-                                 &... , \\
-                                 & N_{n}+paddings[n-1,0]+paddings[n-1,1])
-            \end{aligned}
-        \end{aligned}
+    Refer to :func:`mindspore.ops.pad` for more detail. Use :func:`mindspore.ops.pad` instead if `paddings` has
+    negative values.
 
     Args:
         paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of

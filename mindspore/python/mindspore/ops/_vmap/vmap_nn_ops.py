@@ -239,6 +239,33 @@ def get_fast_gelu_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Pad)
+def get_pad_vmap_rule(prim, axis_size):
+    """VmapRule for `Pad`"""
+    paddings = prim.paddings
+
+    @constexpr
+    def _get_paddings(cur_paddings, x_dim):
+        """get paddings."""
+        new_paddings = list(cur_paddings)
+        new_paddings.insert(x_dim, (0, 0))
+        return tuple(new_paddings)
+
+    def vmap_rule(x_bdim):
+        x, x_dim = x_bdim
+        if x_dim is None:
+            # case1: batch not exists
+            out = prim(x)
+        else:
+            # case2: batch exists
+            new_paddings = _get_paddings(paddings, x_dim)
+            op = P.Pad(new_paddings)
+            out = op(x)
+        return (out, x_dim)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(NN.Pdist)
 def get_pdist_vmap_rule(prim, axis_size):
     """VmapRule for `Pdist`"""

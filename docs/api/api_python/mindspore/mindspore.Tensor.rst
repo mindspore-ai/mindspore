@@ -874,6 +874,28 @@ mindspore.Tensor
         - **ValueError** - 当前Tensor的shape不是大于或等于2维。
         - **ValueError** - 当前Tensor、 `lower` 和 `upper` 三者的shapes不能广播。
 
+    .. py:method:: pad(paddings)
+
+        根据参数 `paddings` 对当前Tensor进行填充。
+
+        更多参考详见 :func:`mindspore.ops.pad`。
+
+        **参数：**
+
+        - **paddings** (tuple) - 填充大小，其shape为(N, 2)，N是当前Tensor的维度，填充的元素为int类型。对于 `x` 的第 `D` 个维度，paddings[D, 0]表示当前Tensor的第 `D` 维度前面要扩展（如果该值大于0）或裁剪（如果该值小于0）的大小，paddings[D, 1]表示在当前Tensor的第 `D` 个维度后面要扩展（如果该值大于0）或裁剪（如果该值小于0）的大小。
+
+        **返回：**
+
+        填充后的Tensor。
+
+        **异常：**
+
+        - **TypeError** - `paddings` 不是tuple。
+        - **TypeError** - `input_x` 不是Tensor。
+        - **ValueError** - `paddings` 的shape不是 :math:`(N, 2)` 。
+        - **ValueError** - `paddings` 的大小不等于2 * len(当前Tensor)。
+        - **ValueError** - 计算出来的输出Tensor的shape里存在0或负数。
+
     .. py:method:: padding(pad_dim_size=8)
 
         通过填充0，将当前Tensor的最后一个维度从1扩展到pad_dim_size。

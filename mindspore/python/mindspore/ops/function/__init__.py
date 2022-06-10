@@ -212,6 +212,7 @@ from .nn_func import (
     hardswish,
     softsign,
     pdist,
+    pad,
     nll_loss,
     cross_entropy,
     grid_sample,
