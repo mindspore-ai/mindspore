@@ -203,7 +203,8 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
         {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub},
         {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::DivComplex},
         {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDivComplex},
-        {prim::kPrimXdivy->name(), &ArithmeticCpuTypeFunc<T>::XdivyComplex}};
+        {prim::kPrimXdivy->name(), &ArithmeticCpuTypeFunc<T>::XdivyComplex},
+        {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticMathFuncMap)
@@ -772,12 +773,30 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
      SpecializeArithFunc<int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeArithFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeArithFunc<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
      SpecializeArithFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeArithFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeArithFunc<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     SpecializeArithFunc<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     SpecializeArithFunc<int8_t>},
     {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
      SpecializeArithFunc<uint8_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     SpecializeArithFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     SpecializeArithFunc<complex128>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
      SpecializeArithFunc<bool>}}},
   {prim::kPrimDiv->name(),
