@@ -91,6 +91,9 @@ class KernelActor : public DebugAwareActor {
   void Run(OpContext<DeviceTensor> *const context) override;
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
+  // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
+  virtual void LaunchKernel(OpContext<DeviceTensor> *const context);
+
   // The info of kernel.
   CNodePtr kernel_;
   bool is_dynamic_shape_;

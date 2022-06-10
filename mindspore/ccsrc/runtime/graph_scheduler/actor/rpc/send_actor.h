@@ -46,8 +46,11 @@ class SendActor : public RpcActor {
   bool ConnectServer();
 
  protected:
-  // After rpc send kernel is launched, inter-process data should be sent.
-  void SendOutput(OpContext<DeviceTensor> *const context) override;
+  // Do real send operation in this method.
+  void LaunchKernel(OpContext<DeviceTensor> *const context) override;
+
+  // Erase inter-process inputs for this sequential number.
+  void EraseInput(const OpContext<DeviceTensor> *context) override;
 
   // Client only supports to send MessageBase, so build MessageBase with data and url.
   std::unique_ptr<MessageBase> BuildRpcMessage(const kernel::AddressPtrList &data_list, const std::string &server_url);

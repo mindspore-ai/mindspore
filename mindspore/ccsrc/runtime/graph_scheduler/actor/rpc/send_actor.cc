@@ -54,18 +54,11 @@ bool SendActor::ConnectServer() {
   return true;
 }
 
-void SendActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  MS_ERROR_IF_NULL_WO_RET_VAL(context);
-  MS_ERROR_IF_NULL_WO_RET_VAL(client_);
-  // Step 1: Send data and control outputs.
-  AbstractActor::SendOutput(context);
+void SendActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
+  MS_EXCEPTION_IF_NULL(context);
+  KernelActor::LaunchKernel(context);
 
-  // Step 2: Erase inter-process inputs for this sequential number.
-  if (input_op_inter_process_.count(context->sequential_num_) != 0) {
-    input_op_inter_process_.erase(context->sequential_num_);
-  }
-
-  // Step 3: Send input data(inter-process data is the input of the Send kernel) to peers.
+  // Send input data(inter-process data is the input of the Send kernel) to peers.
   if (launch_info_.inputs_.empty()) {
     MS_LOG(ERROR) << "Send kernel has no output tensor.";
     return;
@@ -77,6 +70,14 @@ void SendActor::SendOutput(OpContext<DeviceTensor> *const context) {
     MS_ERROR_IF_NULL_WO_RET_VAL(message);
     MS_LOG(INFO) << "Rpc actor send message for inter-process edge: " << peer.first;
     client_->SendAsync(std::move(message));
+  }
+}
+
+void SendActor::EraseInput(const OpContext<DeviceTensor> *context) {
+  MS_EXCEPTION_IF_NULL(context);
+  AbstractActor::EraseInput(context);
+  if (input_op_inter_process_.count(context->sequential_num_) != 0) {
+    input_op_inter_process_.erase(context->sequential_num_);
   }
 }
 
