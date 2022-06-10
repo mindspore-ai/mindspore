@@ -236,17 +236,18 @@ Serialization
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.save_checkpoint
-    mindspore.load_checkpoint
-    mindspore.load_param_into_net
+    mindspore.async_ckpt_thread_status
+    mindspore.build_searched_strategy
+    mindspore.convert_model
     mindspore.export
     mindspore.load
-    mindspore.parse_print
-    mindspore.build_searched_strategy
-    mindspore.merge_sliced_parameter
+    mindspore.load_checkpoint
     mindspore.load_distributed_checkpoint
-    mindspore.async_ckpt_thread_status
+    mindspore.load_param_into_net
+    mindspore.merge_sliced_parameter
+    mindspore.parse_print
     mindspore.restore_group_info_list
+    mindspore.save_checkpoint
 
 JIT
 ---
