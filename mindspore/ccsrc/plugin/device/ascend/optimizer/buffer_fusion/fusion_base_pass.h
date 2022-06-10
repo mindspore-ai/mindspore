@@ -53,6 +53,8 @@ struct BufferFusionInfo_t {
   std::vector<AnfNodePtr> anf_nodes;
   std::vector<AnfNodePtr> inputs_list;
   std::vector<AnfNodePtr> outputs_list;
+  // node_id of anf_node corresponding to each input
+  std::vector<size_t> nodes_id;
   kernel::KernelBuildInfoPtr kernel_build_info;
   bool all_inputs_to_first_node = true;
   bool all_outputs_from_last_node = true;
