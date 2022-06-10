@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "common/graph_kernel/split_model/area.h"
 #include <algorithm>
 #include <sstream>
-#include "abstract/utils.h"
-#include "common/graph_kernel/split_model/area.h"
 
 namespace mindspore::graphkernel::inner {
 namespace {
@@ -83,7 +82,7 @@ std::vector<AreaWithRelation> Area::users_with_relation() const {
 int64_t Area::compute_size() const {
   auto op = dom();
   MS_EXCEPTION_IF_NULL(op);
-  return abstract::ShapeSize(op->shape);
+  return op->tensor_size();
 }
 
 std::string Area::ToString() const {

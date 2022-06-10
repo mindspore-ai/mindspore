@@ -34,6 +34,8 @@ class GraphKernelOptimizer {
   GkPassManagerPtr PreProcess() const;
   // Cluster kernels
   GkPassManagerPtr Cluster() const;
+  // Optimize 1
+  GkPassManagerPtr HighLevelOpt1() const;
   // Split kernels
   GkPassManagerPtr Split() const;
   // Build akg kernel

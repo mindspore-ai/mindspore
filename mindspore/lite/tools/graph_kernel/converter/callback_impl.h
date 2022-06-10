@@ -19,10 +19,16 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include "utils/hash_map.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
+
+// TODO(dayschan): add this function to callback class.
+// Get default format for format flexible nodes.
+std::string GetDefaultFormat();
+
 class CallbackImpl : public Callback {
  public:
   ShapeVector GetInputInferShape(const AnfNodePtr &node, size_t i) override;
@@ -41,6 +47,10 @@ class CallbackImpl : public Callback {
   void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
   void SetEmptyKernelInfo(const AnfNodePtr &node) override;
   void ResetKernelInfo(const AnfNodePtr &node) override;
+
+ protected:
+  void SaveParameterFormat(const AnfNodePtr &node, const std::string &format);
+  mindspore::HashMap<AnfNodePtr, std::string> params_format_;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CALLBACK_IMPL_H_

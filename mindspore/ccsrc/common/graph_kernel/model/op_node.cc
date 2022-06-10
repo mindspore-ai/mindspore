@@ -347,8 +347,12 @@ std::vector<DShape> ElemwiseOp::InferShape(const NodePtrList &inputs, const DAtt
 }
 
 DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &) {
-  auto it = std::find_if(inputs.begin(), inputs.end(), [](const NodePtr &i) { return i->format != kOpFormat_DEFAULT; });
-  return it == inputs.end() ? kOpFormat_DEFAULT : (*it)->format;
+  auto it = std::find_if(inputs.begin(), inputs.end(),
+                         [](const NodePtr &i) { return i->format != kOpFormat_DEFAULT && i->tensor_size() > 1; });
+  if (it == inputs.end()) {
+    return inputs.empty() ? kOpFormat_DEFAULT : inputs[0]->format;
+  }
+  return (*it)->format;
 }
 
 std::vector<DShape> ArgReduceOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {

@@ -27,6 +27,7 @@
 #include "common/graph_kernel/core/eliminate_redundant_output.h"
 #include "common/graph_kernel/core/shape_ops_splitter.h"
 #include "common/graph_kernel/core/update_state_formatter.h"
+#include "common/graph_kernel/core/transform_op_optimizer.h"
 
 #include "tools/graph_kernel/converter/akg/kernel_builder.h"
 #include "tools/graph_kernel/converter/format_recognition.h"
@@ -39,8 +40,9 @@ using opt::GetitemTuple;
 using opt::GraphOptimizer;
 constexpr size_t kStagePreProcess = 0;
 constexpr size_t kStageCluster = 1;
-constexpr size_t kStageSplit = 2;
-constexpr size_t kStageBuildKernel = 3;
+constexpr size_t kStageHLO1 = 2;
+constexpr size_t kStageSplit = 3;
+constexpr size_t kStageBuildKernel = 4;
 
 GkPassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManagerLite>(kStagePreProcess, "preprocess");
@@ -60,6 +62,13 @@ GkPassManagerPtr GraphKernelOptimizer::Cluster() const {
 
   // Eliminate the outputs without external user
   pm->Add(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
+  return pm;
+}
+
+GkPassManagerPtr GraphKernelOptimizer::HighLevelOpt1() const {
+  auto pm = std::make_shared<GraphKernelPassManagerLite>(kStageHLO1, "highlevelopt1");
+  // Eliminate redundant transform ops
+  pm->Add(std::make_shared<TransformOpOptimizer>(), OptLevel_2);
   return pm;
 }
 
@@ -99,6 +108,7 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &func_graph) {
   std::vector<GkPassManagerPtr> pm_list;
   (void)pm_list.emplace_back(PreProcess());
   (void)pm_list.emplace_back(Cluster());
+  (void)pm_list.emplace_back(HighLevelOpt1());
   (void)pm_list.emplace_back(Split());
   (void)pm_list.emplace_back(BuildKernel());
 
