@@ -33,10 +33,12 @@ class InstanceNormGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
  public:
   InstanceNormGpuKernelMod() = default;
   ~InstanceNormGpuKernelMod() override {
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(y_desc_), "Destroy y desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(x_desc_),
+                                       "For 'InstanceNormGpuKernelMod', it destroy x desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(y_desc_),
+                                       "For 'InstanceNormGpuKernelMod', it destroy y desc failed");
     CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroyTensorDescriptor(scale_bias_mean_var_desc_),
-                                       "Destroy para desc failed");
+                                       "For 'InstanceNormGpuKernelMod', it destroy para desc failed");
   }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

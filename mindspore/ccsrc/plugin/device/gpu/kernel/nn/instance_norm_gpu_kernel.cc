@@ -31,10 +31,12 @@ bool InstanceNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   kernel_name_ = base_operator->name();
 
   handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&x_desc_), "Create x desc failed");
-  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&y_desc_), "Create y desc failed");
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&x_desc_),
+                                      "For 'InstanceNormGpuKernelMod', it create x desc failed");
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&y_desc_),
+                                      "For 'InstanceNormGpuKernelMod', it create y desc failed");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreateTensorDescriptor(&scale_bias_mean_var_desc_),
-                                      "Create para desc failed");
+                                      "For 'InstanceNormGpuKernelMod', it create para desc failed");
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::InstanceNorm>(base_operator);
   epsilon_ = kernel_ptr->get_epsilon();
@@ -72,24 +74,24 @@ int InstanceNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensor4dDescriptor(x_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch, channel, height, width),
-    "Set x desc failed");
+    "For 'InstanceNormGpuKernelMod', it set x desc failed");
 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensor4dDescriptor(y_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch, channel, height, width),
-    "Set y desc failed");
+    "For 'InstanceNormGpuKernelMod', it set y desc failed");
 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensor4dDescriptor(scale_bias_mean_var_desc_, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, channel, 1, 1),
-    "Set para desc failed");
+    "For 'InstanceNormGpuKernelMod', it set para desc failed");
 
   size_t para_size = 0;
 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnGetTensorSizeInBytes(scale_bias_mean_var_desc_, &para_size),
-                                      "Get para size failed");
+                                      "For 'InstanceNormGpuKernelMod', it get para size failed");
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnGetBatchNormalizationForwardTrainingExWorkspaceSize(handle_, mode_, bn_ops_, x_desc_, z_desc_, y_desc_,
                                                              scale_bias_mean_var_desc_, nullptr, &workspace_size_),
-    "cudnnGetBatchNormalizationForwardTrainingExWorkspaceSize failed");
+    "For 'InstanceNormGpuKernelMod', it launch cudnnGetBatchNormalizationForwardTrainingExWorkspaceSize failed");
 
   workspace_size_list_.clear();
   workspace_size_list_ = {
@@ -134,7 +136,7 @@ bool InstanceNormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
       handle_, mode_, bn_ops_, &alpha, &beta, x_desc_, x_addr, z_desc_, z, y_desc_, y_addr, scale_bias_mean_var_desc_,
       ws_gamma, ws_beta, exp_avg_factor_, ws_mean, ws_var, epsilon_, save_mean_addr, save_variance_addr, nullptr,
       workspace_addr, workspace_size_, reserve_addr, 0),
-    "Kernel launch failed");
+    "For 'InstanceNormGpuKernelMod', it launch cudnnBatchNormalizationForwardTrainingEx failed");
   return true;
 }
 
