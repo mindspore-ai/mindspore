@@ -206,6 +206,7 @@ from .math_func import (
 )
 from .nn_func import (
     adaptive_avgpool2d,
+    celu,
     deformable_conv2d,
     fast_gelu,
     hardshrink,

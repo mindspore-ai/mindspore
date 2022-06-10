@@ -147,11 +147,10 @@ int CdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
                   << in_shape1.size() << ", kernel_name_ " << kernel_name_;
     return KRET_RESIZE_FAILED;
   }
-  batch_ = 0;
+  batch_ = 1;
   for (size_t i = 0; i < in_shape_size - kCdistInputDimsMin; i++) {
-    batch_ += in_shape0[i];
+    batch_ *= in_shape0[i];
   }
-  batch_ = (batch_ <= 0) ? 1 : batch_;
 
   r0_ = in_shape0[in_shape_size - 2];
   m_ = in_shape0[in_shape_size - 1];

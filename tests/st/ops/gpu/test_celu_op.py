@@ -17,7 +17,9 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore import Tensor, context
-
+from mindspore.ops.functional import vmap
+from mindspore.ops import functional as F
+from mindspore.common.api import ms_function
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -53,3 +55,86 @@ def test_celu_op(data_type):
     output = celu(x)
     print(output)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize("data_type", [np.float32, np.float16])
+def test_celu_func(data_type):
+    """
+    Feature: Celu cpu kernel
+    Description: test the celu alpha = 1.0.
+    Expectation: match to np benchmark.
+    """
+    error = 1e-3
+    x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]).astype(data_type))
+    expect = np.array([-0.86468184, -0.6321212, 1., 2.]).astype(data_type)
+    context.set_context(mode=context.GRAPH_MODE)
+    output = F.celu(x, 1.0)
+    print(output)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    output = F.celu(x, 1.0)
+    print(output)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize("data_type", [np.float32, np.float16])
+def test_celu_tensor(data_type):
+    """
+    Feature: Celu gpu kernel
+    Description: test the celu alpha = 1.0.
+    Expectation: match to np benchmark.
+    """
+    error = 1e-3
+    x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]).astype(data_type))
+    expect = np.array([-0.86468184, -0.6321212, 1., 2.]).astype(data_type)
+    context.set_context(mode=context.GRAPH_MODE)
+    output = x.celu(1.0)
+    print(output)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    output = x.celu(1.0)
+    print(output)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_celu_vmap():
+    """
+    Feature: celu gpu kernel.
+    Description: test celu vmap feature.
+    Expectation: Success.
+    """
+    error = 1e-3
+    def cal_celu(x):
+        return P.CeLU(1.0)(x)
+
+    x = Tensor(np.array([[-2.0, -1.0, 1.0, 2.0], [-2.0, -1.0, 1.0, 2.0], [-2.0, -1.0, 1.0, 2.0],
+                         [-2.0, -1.0, 1.0, 2.0], [-2.0, -1.0, 1.0, 2.0], [-2.0, -1.0, 1.0, 2.0],
+                         [-2.0, -1.0, 1.0, 2.0], [-2.0, -1.0, 1.0, 2.0]]).astype(np.float32))
+    expect = np.array([[-0.86468184, -0.6321212, 1., 2.], [-0.86468184, -0.6321212, 1., 2.],
+                       [-0.86468184, -0.6321212, 1., 2.], [-0.86468184, -0.6321212, 1., 2.],
+                       [-0.86468184, -0.6321212, 1., 2.], [-0.86468184, -0.6321212, 1., 2.],
+                       [-0.86468184, -0.6321212, 1., 2.], [-0.86468184, -0.6321212, 1., 2.]]).astype(np.float32)
+
+    vmap_celu = vmap(cal_celu, in_axes=(0), out_axes=0)
+
+    output = vmap_celu(x)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
+
+    @ms_function
+    def manually_batched(xs):
+        output = []
+        for i in range(xs.shape[0]):
+            output.append(cal_celu(xs[i]))
+        return F.stack(output)
+
+    expect_m = manually_batched(x)
+    np.testing.assert_allclose(output.asnumpy(), expect_m.asnumpy(), rtol=error)

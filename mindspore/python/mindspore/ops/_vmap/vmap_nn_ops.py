@@ -435,6 +435,7 @@ def get_lrn_grad_vmap_rule(prim, axis_size):
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU6)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.CeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.SeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.HSigmoid)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Softplus)(get_unop_vmap_rule)
