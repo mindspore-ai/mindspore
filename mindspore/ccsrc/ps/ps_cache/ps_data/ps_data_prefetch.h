@@ -29,10 +29,7 @@ namespace mindspore {
 namespace ps {
 class EXPORT PsDataPrefetch {
  public:
-  EXPORT static PsDataPrefetch &GetInstance() {
-    static PsDataPrefetch instance;
-    return instance;
-  }
+  EXPORT static PsDataPrefetch &GetInstance();
 
   EXPORT bool cache_enable() const { return cache_enable_; }
   EXPORT void set_cache_enable(bool cache_enable) { cache_enable_ = cache_enable; }

@@ -30,19 +30,12 @@
 #include "distributed/rpc/tcp/tcp_client.h"
 #include "distributed/rpc/tcp/tcp_server.h"
 #include "utils/hash_map.h"
+#include "distributed/embedding_cache/embedding_cache_utils.h"
 
 // Note: After the code in ps/ps_cache are removed into runtime/addons/embedding_cache/,
 // the follow include file and using declaration of ps will be removed.
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-#include "ps/ps_cache/embedding_hash_map.h"
-#include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/ps_context.h"
-using mindspore::ps::EmbeddingDeviceCache;
-using mindspore::ps::EmbeddingHostCache;
-using mindspore::ps::HashTableInfo;
-using mindspore::ps::INVALID_INDEX_VALUE;
-using mindspore::ps::INVALID_STEP_VALUE;
-using mindspore::ps::PsCacheStatisticsInfo;
 using mindspore::ps::PSContext;
 using mindspore::ps::PsDataPrefetch;
 
@@ -59,8 +52,17 @@ using ReceiverPtr = std::shared_ptr<Receiver>;
 using SendRecvPair = std::pair<SenderPtr, ReceiverPtr>;
 using SendRecvPairList = std::vector<SendRecvPair>;
 
+using distributed::EmbeddingCacheStatisticsInfo;
+using distributed::EmbeddingDeviceCache;
+using distributed::EmbeddingHostCache;
+using distributed::HashTableInfo;
+using distributed::INVALID_INDEX_VALUE;
+using distributed::INVALID_STEP_VALUE;
+
 using distributed::cluster::ActorRouteTableProxy;
 using distributed::cluster::ActorRouteTableProxyPtr;
+using distributed::rpc::TCPClient;
+using distributed::rpc::TCPServer;
 
 // The EmbeddingCachePrefetchActor is used to cache large embedding table scenarios. The cache level is: Device
 // Cache->Local Host Cache->Remote Cache. This Actor is used to perform Local and Device Cache hit analysis and cache
@@ -81,6 +83,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // Perform local cache hit analysis, prefetch the feature vector corresponding to the next batch into the cache.
   void Run();
+
+  // Increase the global step of compute graph.
+  void IncreaseGraphStep(const std::string &channel_name);
 
   // Finalize embedding cache prefetch actor and push latest embedding from local cache to remote cache.
   void Finalize();
@@ -206,6 +211,19 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   bool UpdateDeviceCache(void *indices, void *update_value, size_t indices_num, size_t cache_size,
                          size_t embedding_size, void *embedding_cache);
 
+  // Get dataset channel name.
+  std::string channel_name();
+  // Set dataset channel name.
+  void set_channel_name(const std::string channel_name);
+
+  // Wait data channel ready.
+  void WaitDataChannelInit();
+
+  // Wait initialize parameters on remote.
+  // Prevents the subsequent prefetch cache from failing due to the long initialization time of the large parameter on
+  // the remote side.
+  void WaitInitParametersOnRemote();
+
   // Record sender and receiver pairs for different cache operation, server and parameter key.
   // key: cache operation(such as LookupEmbeddingCache and UpdateEmbeddingCache)
   // value: sender and receiver pairs for this kind of cache operation.
@@ -239,7 +257,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   std::shared_ptr<EmbeddingHostCache> embedding_host_cache_;
 
   // Statistics on the cache hit rate of the host and device and the information used to update cache.
-  PsCacheStatisticsInfo statistics_info_;
+  EmbeddingCacheStatisticsInfo statistics_info_;
 
   // Model parallelism is used between multiple workers, and local_embedding_slice_bounds_ records the feature range
   // corresponding to the embedding table slice of the process.
@@ -255,7 +273,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   std::vector<std::pair<size_t, size_t>> remote_embedding_slice_bounds_;
 
   // Total server number of cluster.
-  size_t server_num_;
+  size_t server_num_{0};
 
   // The flag which indicates whether this actor is running to prefetch cache.
   std::atomic_bool running_{false};
@@ -269,6 +287,11 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // Dataset channel name, used in dataset switching scenarios.
   std::string channel_name_;
+  // The mutex to access channel_name_.
+  std::mutex channel_mutex_;
+
+  // The flag indicates whether finish initializing parameters on remote..
+  std::atomic_bool finish_init_parameters_on_remote_{false};
 
   // Data parser condition variable for prefetching cache, used to start and synchronize intermediate state for cache
   // prefetching.
@@ -311,12 +334,15 @@ class RpcOperator {
 // Sender is used to send data to other process.
 class Sender : public RpcOperator {
  public:
-  explicit Sender(const ReceiverPtr &receiver) : server_url_(""), client_(nullptr), receiver_(receiver) {}
+  Sender() : server_url_(""), client_(nullptr) {}
   ~Sender();
 
   // Send buffer to peer.
   bool Send(const std::vector<ShapeVector> &shapes, const std::vector<TypeId> data_types,
             const AddressPtrList &data_list) const;
+
+  // Set the receiver paired with the sender to get the 'from url' from the receiver.
+  void set_receiver(const ReceiverPtr &receiver) { receiver_ = receiver; }
 
   // Lookup peer receiver's route and build network connection.
   bool ConnectServer();

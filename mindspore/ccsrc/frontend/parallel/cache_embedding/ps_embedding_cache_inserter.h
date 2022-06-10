@@ -21,7 +21,6 @@
 #include <map>
 #include <vector>
 
-#include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "distributed/constants.h"
 
@@ -104,7 +103,7 @@ class PsEmbeddingCacheInserter {
 
   // Record parameters enabled embedding cache of origin function graph.
   // Key: parameter key, Value: ParameterPtr
-  mindspore::HashMap<int32_t, ParameterPtr> keys_to_params_;
+  std::map<int32_t, ParameterPtr> keys_to_params_;
 
   // Record EmbeddingLookup nodes which are executed on server from origin function graph.
   // Key: shape of EmbeddingLookup node, Value: EmbeddingLookup AnfNodePtr.

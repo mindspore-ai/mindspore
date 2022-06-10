@@ -285,6 +285,9 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
 std::set<size_t> FetchModifiableRefInputIndex(const CNodePtr &node);
 // Fetch the output indexes which may be modified that exist in the ref node.
 std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &node, const KernelGraphPtr &graph);
+
+// Check whether this process is parameter server and enable embedding cache.
+bool is_embedding_cache_server();
 }  // namespace runtime
 }  // namespace mindspore
 

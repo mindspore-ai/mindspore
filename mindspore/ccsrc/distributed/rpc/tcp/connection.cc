@@ -513,11 +513,33 @@ bool Connection::ParseMessage() {
         total_recv_len -= recvLen;
         return false;
       }
+      if (!SetUrlForRecvMessage()) {
+        MS_LOG(ERROR) << "Set url info for recv message failed.";
+        return false;
+      }
       recv_state = State::kMsgHeader;
       break;
     default:
       return false;
   }
+  return true;
+}
+
+bool Connection::SetUrlForRecvMessage() {
+  auto recv_from_separator_pos = recv_from.find('@');
+  auto recv_to_separator_pos = recv_to.find('@');
+  if (recv_from_separator_pos == std::string::npos && recv_to_separator_pos == std::string::npos) {
+    MS_LOG(ERROR) << "Invalid message format, can not find separator '@'";
+    return false;
+  }
+
+  std::string from_name = recv_from.substr(0, recv_from_separator_pos);
+  std::string from_url = recv_from.substr(recv_from_separator_pos + 1);
+  std::string to_name = recv_to.substr(0, recv_to_separator_pos);
+  std::string to_url = recv_to.substr(recv_to_separator_pos + 1);
+  recv_message->from = AID(from_name, from_url);
+  recv_message->to = AID(to_name, to_url);
+
   return true;
 }
 

@@ -92,22 +92,23 @@ class GPUDeviceContext : public DeviceContext {
 #ifndef ENABLE_SECURITY
   // Launch a kernel and record the elapsed time end to end.
   bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                 const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs) const;
+                                 const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                                 void *stream) const;
 #endif
   // Launch a kernel by 'KernelMod' of the kernel.
   bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const;
+                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                      void *stream) const;
+
+  // Get the used to launch kernel, if there is a stream saved in attrs of kernel, use this stream, otherwise use
+  // default stream.
+  void *GetLaunchKernelStream(const CNodePtr &kernel) const;
 
   // Really create a cuda stream.
   bool CreateStream(void **stream) const override;
 
   // Really destroy a cuda stream.
   bool DestroyStream(void *stream) const override;
-
-  // The cublas handle is not thread safety specifically, it is not recommended that multiple threads access the same
-  // cublas handle at the same time, so need the launch mutex when multiple threads launch the cublas kernels.
-  mutable std::mutex launch_mutex_;
 
   std::shared_ptr<MemoryManager> mem_manager_;
   std::vector<void *> streams_;

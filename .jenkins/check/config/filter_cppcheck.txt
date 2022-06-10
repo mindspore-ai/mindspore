@@ -28,6 +28,7 @@
 "mindspore/mindspore/core/load_mindir/anf_model_parser.cc"                                            "stlIfStrFind"
 "mindspore/mindspore/ccsrc/frontend/optimizer/ad/kpynative.cc"                                        "containerOutOfBounds"
 "mindspore/mindspore/ccsrc/pipeline/jit/action.cc"                                                    "unreadVariable"
+"mindspore/mindspore/ccsrc/plugin/device/gpu/hal/hardware/gpu_device_context.c"                       "unreadVariable"
 
 # MindData
 "mindspore/mindspore/ccsrc/minddata/dataset/engine/dataset_iterator.cc"                               "useStlAlgorithm"
