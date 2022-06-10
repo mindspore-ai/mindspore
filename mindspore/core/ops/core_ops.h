@@ -108,6 +108,7 @@ constexpr auto kComplexAbs = "ComplexAbs";
 constexpr auto kGer = "Ger";
 constexpr auto kZeta = "Zeta";
 constexpr auto kBernoulli = "Bernoulli";
+constexpr auto kLinearSumAssignment = "LinearSumAssignment";
 
 // Math
 constexpr auto kCross = "Cross";
@@ -335,6 +336,7 @@ GVAR_DEF(PrimitivePtr, kPrimScalarLog, std::make_shared<Primitive>("scalar_log")
 GVAR_DEF(PrimitivePtr, kPrimScalarSin, std::make_shared<Primitive>("scalar_sin"));
 GVAR_DEF(PrimitivePtr, kPrimScalarCos, std::make_shared<Primitive>("scalar_cos"));
 GVAR_DEF(PrimitivePtr, kPrimScalarTan, std::make_shared<Primitive>("scalar_tan"));
+GVAR_DEF(PrimitivePtr, kPrimLinearSumAssignment, std::make_shared<Primitive>(kLinearSumAssignment));
 
 // Comparisons
 GVAR_DEF(PrimitivePtr, kPrimScalarEq, std::make_shared<Primitive>("scalar_eq"));

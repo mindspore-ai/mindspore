@@ -279,3 +279,4 @@ from .sparse_tensor_to_csr_sparse_matrix import _sparse_tensor_to_csr_sparse_mat
 from .csr_sparse_matrix_to_sparse_tensor import _csr_sparse_matrix_to_sparse_tensor_aicpu
 from .split import _split_aicpu
 from .sparse_apply_proximal_gradient_descent import _sparse_apply_proximal_gradient_descent_aicpu
+from .linear_sum_assignment import _linear_sum_assignment_aicpu

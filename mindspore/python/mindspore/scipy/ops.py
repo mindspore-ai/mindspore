@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Operators for scipy submodule"""
-from ..ops import PrimitiveWithInfer, prim_attr_register
+from ..ops import PrimitiveWithInfer, prim_attr_register, Primitive
 from .._checkparam import Validator as validator
 from ..common import dtype as mstype
 
@@ -256,6 +256,15 @@ class LU(PrimitiveWithInfer):
             'value': None
         }
         return output
+
+
+class LinearSumAssignment(Primitive):
+    """Solve the linear sum assignment problem."""
+    @prim_attr_register
+    def __init__(self):
+        super().__init__("LinearSumAssignment")
+        self.init_prim_io_names(inputs=['cost_matrix', 'dimension_limit', 'maximize'], outputs=['row_ind', 'col_ind'])
+        self.add_prim_attr("cust_aicpu", "mindspore_aicpu_kernels")
 
 
 # pylint: disable=C0413,W0611
