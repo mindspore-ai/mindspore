@@ -11,11 +11,11 @@ get_filename_component(PKG_PATH ${PKG_PATH} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BI
 set(HEADER_PATH ${PKG_PATH}/runtime)
 
 option(MICRO_BUILD_ARM64 "build android arm64" OFF)
-option(MICRO_BUILD_ARM32A "build android arm32" OFF)
+option(MICRO_BUILD_ARM32 "build android arm32" OFF)
 
 add_compile_definitions(NOT_USE_STL)
 
-if(MICRO_BUILD_ARM64 OR MICRO_BUILD_ARM32A)
+if(MICRO_BUILD_ARM64 OR MICRO_BUILD_ARM32)
   add_compile_definitions(ENABLE_NEON)
   add_compile_definitions(ENABLE_ARM)
 endif()
@@ -24,7 +24,7 @@ if(MICRO_BUILD_ARM64)
   add_compile_definitions(ENABLE_ARM64)
 endif()
 
-if(MICRO_BUILD_ARM32A)
+if(MICRO_BUILD_ARM32)
   add_compile_definitions(ENABLE_ARM32)
   add_definitions(-mfloat-abi=softfp -mfpu=neon)
 endif()

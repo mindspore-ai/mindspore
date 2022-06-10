@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ int LstmFP32Coder::InitParam() {
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
   weight_batch_ = lstm_param_->bidirectional_ ? kEight : kFour;
 
-  if (target_ == kARM32A || target_ == kARM32M) {
+  if (target_ == kARM32 || target_ == kCortex_M) {
     row_tile_ = C12NUM;
     col_tile_ = C4NUM;
   } else {
@@ -189,7 +189,7 @@ int LstmFP32Coder::DoCode(CoderContext *context) {
             "lstm_fp32.c",
             "mul_fp32.c",
           });
-  if (target_ == kARM32A || target_ == kARM64) {
+  if (target_ == kARM32 || target_ == kARM64) {
     Collect(context, {}, {},
             {
               "MatVecMulFp32.S",

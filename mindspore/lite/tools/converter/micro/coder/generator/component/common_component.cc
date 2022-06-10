@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ const char model_runtime_malloc_source[] = R"RAW(
 
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config) {
   ofs << model_runtime_init_source;
-  if (config.target() != kARM32M) {
+  if (config.target() != kCortex_M) {
     ofs << model_runtime_malloc_source;
   } else {
     ofs << "  micro_model->runtime_buffer = " << ctx->buffer_name() << ";\n";
@@ -109,7 +109,7 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
        "    return kMSStatusLiteNotSupport;\n"
        "  }\n";
   ofs << "  int ret = RET_OK;\n";
-  if (config->target() != kARM32M) {
+  if (config->target() != kCortex_M) {
     ofs << "  ret = Init((void*)model_data, data_size);\n";
   } else {
     ofs << "  ret = Init(NULL, 0);\n";
@@ -131,7 +131,7 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
 
 void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
   ofs << "void MSModelDestroy(MSModelHandle *model) {\n";
-  if (config->target() != kARM32M) {
+  if (config->target() != kCortex_M) {
     ofs << "  if (*model) {\n"
            "    MicroModel *micro_model = (MicroModel *)*model;\n"
            "    if (micro_model->runtime_buffer) {\n"
@@ -327,7 +327,7 @@ void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderCo
                                const Configurator &config) {
   ofs << "void "
       << "FreeResource() {\n";
-  if (config.target() != kARM32M) {
+  if (config.target() != kCortex_M) {
     ofs << "  " << ctx->buffer_name() << "= NULL;\n";
     std::vector<Tensor *> inputs = ctx->graph_inputs();
     size_t size = inputs.size();

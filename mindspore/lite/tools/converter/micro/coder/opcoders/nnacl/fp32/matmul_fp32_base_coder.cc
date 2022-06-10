@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ int MatMulFP32BaseCoder::InitBiasData() {
 
 void MatMulFP32BaseCoder::InitParameter() {
   row_tile_ = C12NUM;
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     col_tile_ = C4NUM;
   } else {
     col_tile_ = C8NUM;
@@ -140,7 +140,7 @@ int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
             "matmul_fp32.c",
             "matmul_fp32_wrapper.c",
           });
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     Collect(context, {}, {},
             {
               "MatmulFp32.S",

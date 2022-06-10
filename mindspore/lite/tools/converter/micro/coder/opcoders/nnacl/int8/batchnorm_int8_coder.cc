@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ int BatchNormInt8Coder::Prepare(CoderContext *const context) {
   }
   batchnorm_param_->op_parameter_.thread_num_ =
     MSMIN(batchnorm_param_->op_parameter_.thread_num_, batchnorm_param_->channel_);
-  if (target_ == kARM32M) {
+  if (target_ == kCortex_M) {
     batchnorm_param_->unit_ = batchnorm_param_->units_;
   } else {
     batchnorm_param_->unit_ = UP_DIV(batchnorm_param_->units_, kMaxThreadNumSupported);

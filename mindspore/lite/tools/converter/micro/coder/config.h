@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include <string>
 
 namespace mindspore::lite::micro {
-enum Target { kX86 = 0, kARM32M = 1, kARM32A = 2, kARM64 = 3, kAllTargets = 4, kTargetUnknown = 99 };
+enum Target { kX86 = 0, kCortex_M = 1, kARM32 = 2, kARM64 = 3, kAllTargets = 4, kTargetUnknown = 99 };
 enum CodeMode { Inference = 0, Train = 1, Code_Unknown = 99 };
 
 struct MicroParam {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ void MatMulBaseInt8Coder::InitParameter() {
   param_->a_const_ = (input_tensor_ != nullptr);
   param_->b_const_ = (filter_tensor_ != nullptr);
   row_tile_ = C4NUM;
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     col_tile_ = C2NUM;
   } else {
     col_tile_ = C4NUM;

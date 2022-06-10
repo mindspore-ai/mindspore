@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,7 +207,7 @@ int Conv2D1x1Int8Coder::InitWeightBias(CoderContext *const context) {
 int Conv2D1x1Int8Coder::InitFilterPeroc() {
   int32_t output_channel = filter_tensor_->Batch();
   int round_oc;
-  if (target_ == kARM32A) {
+  if (target_ == kARM32) {
     round_oc = UP_ROUND(output_channel, C2NUM);
   } else {
     round_oc = MSMAX(UP_ROUND(output_channel, C16NUM), UP_ROUND(output_channel, C4NUM));
