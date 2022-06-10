@@ -27,7 +27,7 @@ namespace mindspore {
 namespace kernel {
 bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::Gamma>(base_operator);
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomGamma>(base_operator);
   if (kernel_ptr == nullptr) {
     MS_LOG(EXCEPTION) << "cast RandomGamma ops failed!";
     return false;
@@ -79,117 +79,91 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
 #define UNIFORM(X)                                    \
   if (uniform_remaining == 0) {                       \
     uniform_remaining = Uniform::kResultElementCount; \
-    uniform_result = uniform(&gen);                   \
+    uniform_res = uniform(&gen);                      \
   }                                                   \
   uniform_remaining--;                                \
-  double X = uniform_result[uniform_remaining]
+  double X = uniform_res[uniform_remaining]
 
-  // Each attempt is 95+% successful, and requires 1-2 normal + 1 uniform
   static constexpr int kReservedSamplesPerOutput = 256;
 
   int64 num_alphas = std::accumulate(alpha_shape_.begin(), alpha_shape_.end(), 0);
 
   PhiloxRandom rng = generator_.ReserveRandomOutputs(num_samples * num_alphas, kReservedSamplesPerOutput);
 
-  // We partition work first across alphas then across samples-per-alpha to
-  // avoid a couple flops which can be done on a per-alpha basis.
   auto DoWork = [num_samples, num_alphas, &rng, samples_flat, alpha_flat](int64 start_output, int64 limit_output) {
     using Eigen::numext::exp;
     using Eigen::numext::log;
     using Eigen::numext::pow;
 
-    // Capturing "rng" by-value would only make a copy for the _shared_
-    // lambda.  Since we want to let each worker have its own copy, we pass
-    // "rng" by reference and explicitly do a copy assignment.
-
     Normal normal;
     Uniform uniform;
-    typename Normal::ResultType norm_result;
-    typename Uniform::ResultType uniform_result;
-    for (int64 output_idx = start_output; output_idx < limit_output;
-         /* output_idx incremented within inner loop below */) {
+    typename Normal::ResultType norm_res;
+    typename Uniform::ResultType uniform_res;
+
+    for (int64 output_idx = start_output; output_idx < limit_output;) {
       int64 alpha_idx = output_idx / num_samples;
-
-      // Instead of +alpha_idx for each sample, we offset the pointer once.
       T *const samples_alpha_offset = samples_flat + alpha_idx;
-
-      // Several calculations can be done on a per-alpha basis.
-      const double alpha = static_cast<double>(alpha_flat[alpha_idx]);
+      const double alpha_value = static_cast<double>(alpha_flat[alpha_idx]);
 
       //      DISABLE_FLOAT_EQUALITY_WARNING
-      if (alpha == static_cast<double>(1.0)) {
+      if (alpha_value == static_cast<double>(1.0)) {
         //        ENABLE_FLOAT_EQUALITY_WARNING
         // Sample from an exponential distribution.
         for (int64 sample_idx = output_idx % num_samples; sample_idx < num_samples && output_idx < limit_output;
              sample_idx++, output_idx++) {
-          // As we want data stable regardless of sharding
-          // (including eventually on GPU), we skip on a per-sample basis.
           PhiloxRandom gen = rng;
           gen.Skip(kReservedSamplesPerOutput * output_idx);
           int16 uniform_remaining = 0;
           UNIFORM(u);
           const double res = -log(1.0 - u);
           samples_alpha_offset[sample_idx * num_alphas] = static_cast<T>(res);
-        }       // for (sample_idx)
-      } else {  // if alpha != 1.0
+        }
+      } else {
         // Transformation-rejection from pairs of uniform and normal random
         // variables. http://dl.acm.org/citation.cfm?id=358414
-        //
-        // The algorithm has an acceptance rate of ~95% for small alpha (~1),
-        // and higher accept rates for higher alpha, so runtime is
-        // O(NumAlphas * NumSamples * k) with k ~ 1 / 0.95.
-        //
-        // For alpha<1, we add one to d=alpha-1/3, and multiply the final
-        // result by uniform()^(1/alpha)
-        const bool alpha_less_than_one = alpha < 1;
-        const double d = alpha + (alpha_less_than_one ? 2.0 / 3 : -1.0 / 3);
-        const double c = 1.0 / 3 / sqrt(d);
+        const bool alpha_less_than_one = alpha_value < 1;
+        const double su = alpha_value + (alpha_less_than_one ? 2.0 / 3 : -1.0 / 3);
+        const double cut = 1.0 / 3 / sqrt(su);
 
         // Compute the rest of the samples for the current alpha value.
         for (int64 sample_idx = output_idx % num_samples; sample_idx < num_samples && output_idx < limit_output;
              sample_idx++, output_idx++) {
-          // Since each sample may use a variable number of normal/uniform
-          // samples, and we want data stable regardless of sharding
-          // (including eventually on GPU), we skip on a per-sample basis.
           PhiloxRandom gen = rng;
           gen.Skip(kReservedSamplesPerOutput * output_idx);
           int16 norm_remaining = 0;
           int16 uniform_remaining = 0;
 
-          // Keep trying until we don't reject a sample. In practice, we will
-          // only reject ~5% at worst, for low alpha near 1.
           while (true) {
             if (norm_remaining == 0) {
               norm_remaining = Normal::kResultElementCount;
-              norm_result = normal(&gen);
+              norm_res = normal(&gen);
             }
             norm_remaining--;
-            const double x = norm_result[norm_remaining];
-            double v = 1 + c * x;
+            const double x = norm_res[norm_remaining];
+            double v = 1 + cut * x;
             if (v <= 0) {
               continue;
             }
             v = v * v * v;
             UNIFORM(u);
-            // The first option in the if is a "squeeze" short-circuit to
-            // dodge the two logs. Magic constant sourced from the paper
-            // linked above. Upward of .91 of the area covered by the log
-            // inequality is covered by the squeeze as well (larger coverage
-            // for smaller values of alpha).
-            if ((u < 1 - 0.0331 * (x * x) * (x * x)) || (log(u) < 0.5 * x * x + d * (1 - v + log(v)))) {
-              double res = d * v;
+
+            double u_max = 1 - 0.0331 * (x * x) * (x * x);
+            double u_lmax = 0.5 * x * x + su * (1 - v + log(v));
+
+            if ((u < u_max) || (log(u) < u_lmax)) {
+              double res = su * v;
               if (alpha_less_than_one) {
                 UNIFORM(b);
-                res *= pow(b, 1 / alpha);
+                res *= pow(b, 1 / alpha_value);
               }
               samples_alpha_offset[sample_idx * num_alphas] = static_cast<T>(res);
               break;
             }
-          }  // while: true
-        }    // for: sample_idx
-      }      // if (alpha == 1.0)
-    }        // for: output_idx
-  };         // DoWork
+          }
+        }
+      }
+    }
+  };
 #undef UNIFORM
   ParallelLaunchAutoSearch(DoWork, num_alphas * num_samples, this, &parallel_search_info_);
 }
@@ -209,39 +183,16 @@ bool GammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
 }
 
 std::vector<KernelAttr> GammaCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list = {KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt32)
-                                            .AddInputAttr(kNumberTypeFloat16)
-                                            .AddInputAttr(kNumberTypeFloat16)
-                                            .AddOutputAttr(kNumberTypeFloat16),
-                                          KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt32)
-                                            .AddInputAttr(kNumberTypeFloat32)
-                                            .AddInputAttr(kNumberTypeFloat32)
-                                            .AddOutputAttr(kNumberTypeFloat32),
-                                          KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt32)
-                                            .AddInputAttr(kNumberTypeFloat64)
-                                            .AddInputAttr(kNumberTypeFloat64)
-                                            .AddOutputAttr(kNumberTypeFloat64),
-                                          KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeFloat16)
-                                            .AddInputAttr(kNumberTypeFloat16)
-                                            .AddOutputAttr(kNumberTypeFloat16),
-                                          KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeFloat32)
-                                            .AddInputAttr(kNumberTypeFloat32)
-                                            .AddOutputAttr(kNumberTypeFloat32),
-                                          KernelAttr()
-                                            .AddInputAttr(kNumberTypeInt64)
-                                            .AddInputAttr(kNumberTypeFloat64)
-                                            .AddInputAttr(kNumberTypeFloat64)
-                                            .AddOutputAttr(kNumberTypeFloat64)};
+  std::vector<KernelAttr> support_list = {
+    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)};
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Gamma, GammaCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RandomGamma, GammaCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

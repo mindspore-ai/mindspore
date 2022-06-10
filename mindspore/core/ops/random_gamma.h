@@ -27,13 +27,13 @@ namespace mindspore {
 namespace ops {
 constexpr auto kRandomGamma = "RandomGamma";
 /// \brief Generates random numbers according to the Gamma random number distribution.
-/// Refer to Python API @ref mindspore.ops.Gamma for more details.
-class MIND_API Gamma : public BaseOperator {
+/// Refer to Python API @ref mindspore.ops.RandomGamma for more details.
+class MIND_API RandomGamma : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(Gamma);
+  MIND_API_BASE_MEMBER(RandomGamma);
   /// \brief Constructor.
-  Gamma() : BaseOperator(kRandomGamma) { InitIOName({"shape", "alpha", "beta"}, {"output"}); }
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Gamma for the inputs.
+  RandomGamma() : BaseOperator(kRandomGamma) { InitIOName({"shape", "alpha"}, {"output"}); }
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.RandomGamma for the inputs.
   void Init(const int64_t seed = 0, const int64_t seed2 = 0);
 
   /// \brief Set seed. Defaults to 0.
@@ -53,7 +53,7 @@ class MIND_API Gamma : public BaseOperator {
 
 abstract::AbstractBasePtr GammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<abstract::AbstractBasePtr> &input_args);
-using PrimGammaPtr = std::shared_ptr<Gamma>;
+using PrimGammaPtr = std::shared_ptr<RandomGamma>;
 }  // namespace ops
 }  // namespace mindspore
 
