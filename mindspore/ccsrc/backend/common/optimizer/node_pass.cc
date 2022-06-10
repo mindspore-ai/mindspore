@@ -52,6 +52,14 @@ void AddOutputAndCallerToMap(const CNodePtr &cnode, mindspore::HashMap<AnfNodePt
   }
 }
 
+void SkipSameOp(const AnfNodePtr &old_node, const AnfNodePtr &new_node, mindspore::HashSet<AnfNodePtr> *seen_node) {
+  MS_EXCEPTION_IF_NULL(seen_node);
+  if (old_node->isa<CNode>() && new_node->isa<CNode>() &&
+      (common::AnfAlgo::GetCNodeName(old_node) == common::AnfAlgo::GetCNodeName(new_node))) {
+    seen_node->insert(new_node);
+  }
+}
+
 bool NodePass::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();
@@ -79,6 +87,7 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
       if (find_iter != subgraph_out_caller_map.end()) {
         find_iter->second->set_abstract(new_node->abstract());
       }
+      SkipSameOp(node, new_node, &seen_node);
       (void)manager->Replace(node, new_node);
       // if replaced node is end_goto, refresh relative params in kernel graph
       auto kernel_graph = fg->cast<std::shared_ptr<session::KernelGraph>>();
