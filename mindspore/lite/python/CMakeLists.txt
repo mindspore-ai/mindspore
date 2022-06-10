@@ -25,7 +25,7 @@ if(Python3_FOUND)
 
     target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--whole-archive mindspore-lite_static -Wl,--no-whole-archive)
     if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_RUNTIME_GLOG)
-      target_link_libraries(_c_lite_wrapper PRIVATE mindspore::glog)
+      target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--no-as-needed mindspore::glog)
     endif()
     if(MSLITE_ENABLE_CONVERTER)
       target_link_libraries(_c_lite_wrapper PRIVATE
