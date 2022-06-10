@@ -159,7 +159,7 @@ Status VirtualDatasetInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status VirtualDatasetInfo::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> VirtualDatasetInfo::GenerateOpStrategies(int64_t stage_id) {
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   StrategyPtr sp;
   Strategys strategy;
@@ -183,18 +183,8 @@ Status VirtualDatasetInfo::GenerateStrategies(int64_t stage_id) {
     }
   }
   sp = std::make_shared<Strategy>(stage_id, strategy);
-  if (SetCostUnderStrategy(sp) == SUCCESS) {
-    MS_LOG(INFO) << name_ << ": Successfully dataset strategy.";
-    PrintStrategy(sp);
-  } else {
-    MS_LOG(ERROR) << name_ << ": Generating dataset strategy failed.";
-    return FAILED;
-  }
-  return SUCCESS;
-}
-
-std::vector<StrategyPtr> VirtualDatasetInfo::GenerateOpStrategies(int64_t) {
   std::vector<StrategyPtr> sp_vector;
+  sp_vector.push_back(sp);
   return sp_vector;
 }
 

@@ -51,7 +51,7 @@ Status VirtualOutputInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status VirtualOutputInfo::GenerateStrategies(int64_t stage_id) {
+std::vector<StrategyPtr> VirtualOutputInfo::GenerateOpStrategies(int64_t stage_id) {
   StrategyPtr sp;
   Strategys strategy;
   bool full_batch = ParallelContext::GetInstance()->full_batch();
@@ -63,8 +63,7 @@ Status VirtualOutputInfo::GenerateStrategies(int64_t stage_id) {
   }
 
   if (total_dev_num == 0) {
-    MS_LOG(ERROR) << name_ << ": The total devices num is 0";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": The total devices num is 0";
   }
 
   for (auto &shape : inputs_shape_) {
@@ -80,14 +79,9 @@ Status VirtualOutputInfo::GenerateStrategies(int64_t stage_id) {
     strategy.push_back(temp);
   }
   sp = std::make_shared<Strategy>(stage_id, strategy);
-  if (SetCostUnderStrategy(sp) == SUCCESS) {
-    MS_LOG(INFO) << name_ << ": Successfully dataset strategy.";
-    PrintStrategy(sp);
-  } else {
-    MS_LOG(ERROR) << name_ << ": Generating dataset strategy failed.";
-    return FAILED;
-  }
-  return SUCCESS;
+  std::vector<StrategyPtr> sp_vector;
+  sp_vector.push_back(sp);
+  return sp_vector;
 }
 }  // namespace parallel
 }  // namespace mindspore

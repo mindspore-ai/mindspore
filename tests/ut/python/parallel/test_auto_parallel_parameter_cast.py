@@ -39,6 +39,11 @@ class NetWithLoss(nn.Cell):
 
 
 def test_common_parameter():
+    """
+    Features: test auto parallel
+    Description: search strategies for cast parameter
+    Expectation: Generated strategies matching expectations
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -72,7 +77,9 @@ def test_common_parameter():
     _cell_graph_executor.compile(net, x, y, phase='train')
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
-        if re.search('MatMul-op', k) is not None:
+        if re.search('MatMul-op0', k) is not None:
+            assert v == [[4, 1], [1, 2]]
+        elif re.search('MatMul-op', k) is not None:
             assert v == [[8, 1], [1, 1]]
         elif re.search('Cast-op', k) is not None:
             assert v == [[1, 1]]

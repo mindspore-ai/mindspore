@@ -58,6 +58,11 @@ def compile_net(net, x, y, b, phase):
 
 
 def test_auto_parallel_arithmetic():
+    """
+    Features: test auto parallel
+    Description: search strategies
+    Expectation: Generated strategies matching expectations
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -89,6 +94,11 @@ def test_auto_parallel_arithmetic():
 
 
 def test_auto_parallel_arithmetic_broadcast_both():
+    """
+    Features: test auto parallel
+    Description: search strategies for broadcast
+    Expectation: Generated strategies matching expectations
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -113,12 +123,17 @@ def test_auto_parallel_arithmetic_broadcast_both():
     strategies = _cell_graph_executor._get_shard_strategy(net)
     for (k, v) in strategies.items():
         if re.search('FloorDiv-op', k) is not None:
-            assert v == [[8, 1], [1, 1]]
+            assert v == [[1, 1], [1, 1]]
         elif re.search('MatMul-op', k) is not None:
-            assert v == [[8, 1], [1, 1]]
+            assert v == [[1, 1], [1, 1]]
 
 
 def test_auto_parallel_arithmetic_broadcast_right():
+    """
+    Features: test auto parallel
+    Description: search strategies for right broadcast
+    Expectation: Generated strategies matching expectations
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -150,6 +165,11 @@ def test_auto_parallel_arithmetic_broadcast_right():
 
 
 def test_auto_parallel_arithmetic_broadcast_left():
+    """
+    Features: test auto parallel
+    Description: search strategies for left broadcast
+    Expectation: Generated strategies matching expectations
+    """
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()

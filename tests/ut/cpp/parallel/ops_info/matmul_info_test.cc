@@ -93,6 +93,9 @@ void TestMatmulInfo::SetUp() {
   matmul4 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_4);
 }
 
+/// Feature: test matmul info
+/// Description: infer dev matrix
+/// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape1) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -104,6 +107,9 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape1) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
+/// Feature: test matmul info
+/// Description: infer dev matrix
+/// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape2) {
   Strategys inputs = {{2, 4, 8, 8}, {2, 4, 8, 2}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -115,7 +121,9 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape2) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-// matmul2
+/// Feature: test matmul info
+/// Description: infer dev matrix
+/// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape3) {
   Strategys inputs = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -127,7 +135,9 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape3) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-// matmul2
+/// Feature: test matmul info
+/// Description: infer dev matrix
+/// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape4) {
   Strategys inputs = {{2, 4, 8, 8}, {2, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -139,7 +149,9 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape4) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-// matmul3
+/// Feature: test matmul info
+/// Description: infer dev matrix
+/// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape5) {
   Strategys inputs = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -151,7 +163,9 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape5) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-// matmul3
+/// Feature: test matmul info
+/// Description: infer dev matrix
+/// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape6) {
   Strategys inputs = {{8, 8}, {2, 4, 2, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -163,6 +177,9 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape6) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
+/// Feature: test matmul info
+/// Description: infer tensor map
+/// Expectation: the tensor map is right
 TEST_F(TestMatmulInfo, InferTensorMap1) {
   Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
@@ -188,7 +205,9 @@ TEST_F(TestMatmulInfo, InferTensorMap1) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
-// matmul2
+/// Feature: test matmul info
+/// Description: infer tensor map
+/// Expectation: the tensor map is right
 TEST_F(TestMatmulInfo, InferTensorMap2) {
   Strategys str = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
@@ -214,7 +233,9 @@ TEST_F(TestMatmulInfo, InferTensorMap2) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
-// matmul3
+/// Feature: test matmul info
+/// Description: infer tensor map
+/// Expectation: the tensor map is right
 TEST_F(TestMatmulInfo, InferTensorMap3) {
   Strategys str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
@@ -240,6 +261,9 @@ TEST_F(TestMatmulInfo, InferTensorMap3) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
+/// Feature: test matmul info
+/// Description: infer slice shape
+/// Expectation: the slice shape is right
 TEST_F(TestMatmulInfo, InferSliceShape1) {
   Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
@@ -265,7 +289,9 @@ TEST_F(TestMatmulInfo, InferSliceShape1) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-// matmul2
+/// Feature: test matmul info
+/// Description: infer slice shape
+/// Expectation: the slice shape is right
 TEST_F(TestMatmulInfo, InferSliceShape2) {
   Strategys str = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
@@ -291,7 +317,9 @@ TEST_F(TestMatmulInfo, InferSliceShape2) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-// matmul3
+/// Feature: test matmul info
+/// Description: infer slice shape
+/// Expectation: the slice shape is right
 TEST_F(TestMatmulInfo, InferSliceShape3) {
   Strategys str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
@@ -317,7 +345,9 @@ TEST_F(TestMatmulInfo, InferSliceShape3) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-// matmul3
+/// Feature: test matmul info
+/// Description: get tensor layout
+/// Expectation: the tensor layout is right
 TEST_F(TestMatmulInfo, GetTensorLayout3) {
   Strategys str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
@@ -343,6 +373,9 @@ TEST_F(TestMatmulInfo, GetTensorLayout3) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
+/// Feature: test matmul info
+/// Description: infer forward op
+/// Expectation: the forward op is right
 TEST_F(TestMatmulInfo, GetForwardOp1) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -369,6 +402,9 @@ TEST_F(TestMatmulInfo, GetForwardOp1) {
   ASSERT_EQ(arg1_value_is_string, true);
 }
 
+/// Feature: test matmul info
+/// Description: infer forward op
+/// Expectation: the forward op is right
 TEST_F(TestMatmulInfo, GetForwardOp2) {
   Strategys inputs = {{2, 4, 8, 1}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -379,6 +415,9 @@ TEST_F(TestMatmulInfo, GetForwardOp2) {
   ASSERT_EQ(forward_op.size(), 0);
 }
 
+/// Feature: test matmul info
+/// Description: infer virtual_div op
+/// Expectation: the virtual_div op is right
 TEST_F(TestMatmulInfo, GetVirtualDivOp1) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -398,6 +437,9 @@ TEST_F(TestMatmulInfo, GetVirtualDivOp1) {
   ASSERT_EQ(divisor, 16);
 }
 
+/// Feature: test matmul info
+/// Description: infer mirror op
+/// Expectation: the mirror op is right
 TEST_F(TestMatmulInfo, GetMirrorOPs1) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -417,7 +459,9 @@ TEST_F(TestMatmulInfo, GetMirrorOPs1) {
   ASSERT_EQ(arg0_name, "group");
 }
 
-// matmul2
+/// Feature: test matmul info
+/// Description: infer mirror op
+/// Expectation: the mirror op is right
 TEST_F(TestMatmulInfo, GetMirrorOPs2) {
   Strategys inputs = {{2, 4, 1, 16}, {8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -437,7 +481,9 @@ TEST_F(TestMatmulInfo, GetMirrorOPs2) {
   ASSERT_EQ(arg0_name, "group");
 }
 
-// matmul3
+/// Feature: test matmul info
+/// Description: infer mirror op
+/// Expectation: the mirror op is right
 TEST_F(TestMatmulInfo, GetMirrorOPs3) {
   Strategys inputs = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -456,6 +502,9 @@ TEST_F(TestMatmulInfo, GetMirrorOPs3) {
   ASSERT_EQ(arg0_name, "group");
 }
 
+/// Feature: test matmul info
+/// Description: infer mirror op
+/// Expectation: the mirror op is right
 TEST_F(TestMatmulInfo, GetMirrorOPs4) {
   Strategys inputs = {{2, 4, 1, 16}, {2, 4, 16, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -466,6 +515,9 @@ TEST_F(TestMatmulInfo, GetMirrorOPs4) {
   ASSERT_EQ(mirror_ops.size(), 2);
 }
 
+/// Feature: test matmul info
+/// Description: init twice
+/// Expectation: the mirror op is right
 TEST_F(TestMatmulInfo, InitTwice) {
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -487,6 +539,9 @@ TEST_F(TestMatmulInfo, InitTwice) {
   ASSERT_EQ(arg0_name, "group");
 }
 
+/// Feature: test matmul info
+/// Description: check strategy, the strategy is invalid
+/// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy1) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
   Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
@@ -496,6 +551,9 @@ TEST_F(TestMatmulInfo, CheckStrategy1) {
   ASSERT_EQ(ret, FAILED);
 }
 
+/// Feature: test matmul info
+/// Description: check strategy, the strategy is invalid
+/// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy2) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
   Strategys inputs = {{2, 4, 8, 16}, {4, 16, 1}};
@@ -505,6 +563,9 @@ TEST_F(TestMatmulInfo, CheckStrategy2) {
   ASSERT_EQ(ret, FAILED);
 }
 
+/// Feature: test matmul info
+/// Description: check strategy, the strategy is invalid
+/// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy3) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
   Strategys inputs = {{2, 4, 8, 16}, {2, 4, 8, 1}};
@@ -514,6 +575,9 @@ TEST_F(TestMatmulInfo, CheckStrategy3) {
   ASSERT_EQ(ret, FAILED);
 }
 
+/// Feature: test matmul info
+/// Description: check strategy, the strategy is invalid
+/// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy4) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
   Strategys inputs = {{2, 4, 8, 16}, {2, 3, 16, 1}};
@@ -523,6 +587,9 @@ TEST_F(TestMatmulInfo, CheckStrategy4) {
   ASSERT_EQ(ret, FAILED);
 }
 
+/// Feature: test matmul info
+/// Description: check strategy, the strategy is invalid
+/// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy5) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
   Strategys inputs = {{0, 4, 8, 16}, {2, 4, 16, 1}};
@@ -532,6 +599,9 @@ TEST_F(TestMatmulInfo, CheckStrategy5) {
   ASSERT_EQ(ret, FAILED);
 }
 
+/// Feature: test matmul info
+/// Description: check strategy, the strategy is invalid
+/// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy6) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
   Strategys inputs = {{-1, 4, 8, 16}, {2, 4, 16, 1}};
@@ -541,6 +611,9 @@ TEST_F(TestMatmulInfo, CheckStrategy6) {
   ASSERT_EQ(ret, FAILED);
 }
 
+/// Feature: test matmul info
+/// Description: check strategy, the strategy is invalid
+/// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy7) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
   Strategys inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
@@ -550,6 +623,9 @@ TEST_F(TestMatmulInfo, CheckStrategy7) {
   ASSERT_EQ(ret, FAILED);
 }
 
+/// Feature: test matmul info
+/// Description: init, invalid strategy
+/// Expectation: return FAILED
 TEST_F(TestMatmulInfo, InitFailed) {
   // matmul4 attr is wrong
   Strategys inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
@@ -559,6 +635,9 @@ TEST_F(TestMatmulInfo, InitFailed) {
   ASSERT_EQ(ret, FAILED);
 }
 
+/// Feature: test matmul info
+/// Description: generate strategy
+/// Expectation: the computation cost is right
 TEST_F(TestMatmulInfo, test_GenerateStrategies1) {
   // the parameter '0' indicates that the stageId = 0, there are 1024 devices in the stage 0
   ASSERT_EQ(matmul1->GenerateStrategies(0), Status::SUCCESS);
@@ -570,36 +649,6 @@ TEST_F(TestMatmulInfo, test_GenerateStrategies1) {
     std::vector<TensorInfo> inputs_info = matmul1->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = matmul1->outputs_tensor_info();
     ASSERT_DOUBLE_EQ(matmul1->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
-                     cost.computation_cost_);
-    break;
-  }
-}
-
-TEST_F(TestMatmulInfo, test_GenerateStrategies2) {
-  // the parameter '0' indicates that the stageId = 0, there are 1024 devices in the stage 0
-  ASSERT_EQ(matmul3->GenerateStrategies(0), Status::SUCCESS);
-  std::vector<std::shared_ptr<StrategyWithCost>> sc = matmul3->GetStrategyCost();
-  for (const auto& swc : sc) {
-    StrategyPtr sp = swc->strategy_ptr;
-    Cost cost = *(swc->cost_list[0]);
-    matmul3->InitForCostModel(sp, nullptr);
-
-    std::vector<TensorInfo> inputs_info = matmul3->inputs_tensor_info();
-    std::vector<TensorInfo> outputs_info = matmul3->outputs_tensor_info();
-    std::vector<TensorInfo> replica_inputs_info;
-    replica_inputs_info.push_back(inputs_info[0]);
-
-    // transpose the tensor B
-    TensorInfo input1_info = inputs_info[1];
-    Shape input1_shape = input1_info.shape();
-    Shape input1_slice_shape = input1_info.slice_shape();
-    TensorLayout tly;
-    matmul3->SwapLastTwoElements(&input1_shape);
-    matmul3->SwapLastTwoElements(&input1_slice_shape);
-    TensorInfo replica_input1_info(tly, input1_shape, input1_slice_shape);
-    replica_inputs_info.push_back(replica_input1_info);
-
-    ASSERT_DOUBLE_EQ(matmul3->operator_cost()->GetComputationCost(replica_inputs_info, outputs_info, sp->GetInputStage()),
                      cost.computation_cost_);
     break;
   }

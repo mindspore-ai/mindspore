@@ -420,15 +420,9 @@ void ReshapeInfo::SetCostForReshape(const mindspore::parallel::StrategyPtr &stra
   strategy_cost_.emplace_back(swc);
 }
 
-Status ReshapeInfo::GenerateStrategies(int64_t stage_id) {
-  if (GetAttrs() != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": GetAttrs failed.";
-    return FAILED;
-  }
-  if ((inputs_shape_.size() != 1) || (outputs_shape_.size() != 1)) {
-    MS_LOG(ERROR) << name_ << ": Inputs shape size or outputs shape size is wrong, " << inputs_shape_.size() << ", "
-                  << outputs_shape_.size();
-    return FAILED;
+std::vector<StrategyPtr> ReshapeInfo::GenerateOpStrategies(int64_t stage_id) {
+  if (inputs_shape_.empty()) {
+    MS_LOG(EXCEPTION) << name_ << ": Inputs shape size or is empty";
   }
   Shape input0_split;
   (void)input0_split.insert(input0_split.end(), inputs_shape_[0].size(), 1);
@@ -436,15 +430,10 @@ Status ReshapeInfo::GenerateStrategies(int64_t stage_id) {
   // strategy used only in the input node is parameter,
   // in other case, use the input node's output_layout as input_layout.
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": GenerateStrategiesForIndependentInputs failed.";
-    return FAILED;
+    MS_LOG(EXCEPTION) << name_ << ": GenerateStrategiesForIndependentInputs failed.";
   }
-  return SUCCESS;
-}
 
-std::vector<StrategyPtr> ReshapeInfo::GenerateOpStrategies(int64_t) {
-  std::vector<StrategyPtr> sp_vector;
-  return sp_vector;
+  return sp_vector_;
 }
 
 Status ReshapeInfo::GenerateStrategyCosts(const std::vector<std::shared_ptr<StrategyWithCost>> &pre_stra_costs,
