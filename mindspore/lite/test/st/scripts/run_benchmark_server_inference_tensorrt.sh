@@ -95,8 +95,8 @@ function Run_TensorRT() {
             if [[ ${mode} == "fp16" ]]; then
                 enableFp16="true"
             fi
-            echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --enableParallelPredict=true --device=GPU'
-            CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --enableParallelPredict=true --device=GPU
+            echo 'CUDA_VISIBLE_DEVICES='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --enableParallelPredict=true --device=GPU'
+            CUDA_VISIBLE_DEVICES=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --enableParallelPredict=true --device=GPU
 
             if [ $? = 0 ]; then
                 run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
