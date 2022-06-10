@@ -156,7 +156,7 @@ def test_op4(dtype):
     assert np.allclose(out.asnumpy(), np.array(expect, dtype=dtype))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
