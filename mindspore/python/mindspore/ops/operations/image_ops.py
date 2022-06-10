@@ -502,7 +502,7 @@ class NonMaxSuppressionWithOverlaps(Primitive):
         ValueError: If the shape of `scores` is not equal to the shape of the dim0 or dim1 of `overlaps`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU
 
     Examples:
         >>> overlaps = Tensor(np.array([[0.6964692, 0.28613934, 0.22685145, 0.5513148],
@@ -523,6 +523,8 @@ class NonMaxSuppressionWithOverlaps(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize NonMaxSuppressionWithOverlaps"""
+        self.init_prim_io_names(inputs=['overlaps', 'scores', 'max_output_size',
+                                        'overlap_threshold', 'score_threshold'], outputs=['selected_indices'])
 
 
 class HSVToRGB(Primitive):
