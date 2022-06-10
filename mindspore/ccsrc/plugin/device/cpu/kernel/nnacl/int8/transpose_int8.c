@@ -15,8 +15,8 @@
  */
 
 #include "nnacl/int8/transpose_int8.h"
-void TransposeDim2Int8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void TransposeDim2Int8(const int8_t *in_data, int8_t *out_data, const int32_t *strides, const int32_t *out_strides,
+                       const int32_t *perm, const int32_t *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int output0 = output_shape[0];
@@ -31,8 +31,8 @@ void TransposeDim2Int8(const int8_t *in_data, int8_t *out_data, const int *strid
   return;
 }
 
-void TransposeDim3Int8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void TransposeDim3Int8(const int8_t *in_data, int8_t *out_data, const int32_t *strides, const int32_t *out_strides,
+                       const int32_t *perm, const int32_t *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -54,8 +54,8 @@ void TransposeDim3Int8(const int8_t *in_data, int8_t *out_data, const int *strid
   }
 }
 
-void TransposeDim4Int8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void TransposeDim4Int8(const int8_t *in_data, int8_t *out_data, const int32_t *strides, const int32_t *out_strides,
+                       const int32_t *perm, const int32_t *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -86,8 +86,8 @@ void TransposeDim4Int8(const int8_t *in_data, int8_t *out_data, const int *strid
   }
 }
 
-void TransposeDim5Int8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void TransposeDim5Int8(const int8_t *in_data, int8_t *out_data, const int32_t *strides, const int32_t *out_strides,
+                       const int32_t *perm, const int32_t *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -125,8 +125,8 @@ void TransposeDim5Int8(const int8_t *in_data, int8_t *out_data, const int *strid
   }
 }
 
-void TransposeDim6Int8(const int8_t *in_data, int8_t *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape) {
+void TransposeDim6Int8(const int8_t *in_data, int8_t *out_data, const int32_t *strides, const int32_t *out_strides,
+                       const int32_t *perm, const int32_t *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -172,16 +172,16 @@ void TransposeDim6Int8(const int8_t *in_data, int8_t *out_data, const int *strid
   }
 }
 
-int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, const int *output_shape,
+int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, const int32_t *output_shape,
                     const TransposeParameter *transpose_param) {
   NNACL_CHECK_NULL_RETURN_ERR(in_data);
   NNACL_CHECK_NULL_RETURN_ERR(out_data);
   NNACL_CHECK_NULL_RETURN_ERR(output_shape);
   NNACL_CHECK_NULL_RETURN_ERR(transpose_param);
 
-  const int *perm = transpose_param->perm_;
-  const int *strides = transpose_param->strides_;
-  const int *out_strides = transpose_param->out_strides_;
+  const int32_t *perm = transpose_param->perm_;
+  const int32_t *strides = transpose_param->strides_;
+  const int32_t *out_strides = transpose_param->out_strides_;
   const int num_axes = transpose_param->num_axes_;
 
   // check if transpose is needed
@@ -221,16 +221,16 @@ int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, const int *output_s
   return NNACL_OK;
 }
 
-void TransposeDimsInt8(const int8_t *in_data, int8_t *out_data, const int *output_shape,
+void TransposeDimsInt8(const int8_t *in_data, int8_t *out_data, const int32_t *output_shape,
                        const TransposeParameter *transpose_param, int task_id, int thread_num) {
   NNACL_CHECK_NULL_RETURN_VOID(in_data);
   NNACL_CHECK_NULL_RETURN_VOID(out_data);
   NNACL_CHECK_NULL_RETURN_VOID(output_shape);
   NNACL_CHECK_NULL_RETURN_VOID(transpose_param);
   NNACL_CHECK_ZERO_RETURN(thread_num);
-  const int *perm = transpose_param->perm_;
-  const int *strides = transpose_param->strides_;
-  const int *out_strides = transpose_param->out_strides_;
+  const int32_t *perm = transpose_param->perm_;
+  const int32_t *strides = transpose_param->strides_;
+  const int32_t *out_strides = transpose_param->out_strides_;
   int num_axes = transpose_param->num_axes_;
   size_t data_size = (size_t)((*out_strides) * output_shape[0]);
   size_t offset_size = UP_DIV(data_size, thread_num);

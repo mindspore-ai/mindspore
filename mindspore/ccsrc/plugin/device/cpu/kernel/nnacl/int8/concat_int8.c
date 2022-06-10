@@ -25,7 +25,7 @@ void Int8Concat(int8_t **inputs, int8_t *output, const ConcatParameter *para, in
   int input_num = para->input_num_;
   int64_t count_unit_ = para->count_unit_;
   int64_t after_axis_size = para->after_axis_size;
-  const int *output_shape = para->output_shapes_;
+  const int32_t *output_shape = para->output_shapes_;
   int out_copy_size = output_shape[axis] * after_axis_size;
   QuantArg *input_quant = para->quant_arg_.in_args_;
   int output_zp = para->quant_arg_.out_args_.zp_;
@@ -37,7 +37,7 @@ void Int8Concat(int8_t **inputs, int8_t *output, const ConcatParameter *para, in
 
   for (int k = start; k < end; k++) {
     for (int i = 0; i < input_num; i++) {
-      const int *input_shape = para->input_shapes_[i];
+      const int32_t *input_shape = para->input_shapes_[i];
       int64_t in_copy_size = input_shape[axis] * after_axis_size;
       const int8_t *input_ptr = inputs[i] + k * in_copy_size;
       if (input_quant[i].scale_ == output_scale && input_quant[i].zp_ == output_zp) {

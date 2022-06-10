@@ -26,7 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int *exp_data, int *sum_data,
+int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int32_t *exp_data, int32_t *sum_data,
                 const SoftmaxQuantArg *quant_param, const SoftmaxParameter *parameter);
 #ifdef __cplusplus
 }

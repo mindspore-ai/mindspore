@@ -23,8 +23,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DynamicGather(const int8_t *input, int outer_size, int inner_size, int limit, const int *indices,
-                   int indices_element_size, float *output, const float *scale_in, const int *zp_in);
+void DynamicGather(const int8_t *input, int outer_size, int inner_size, int limit, const int32_t *indices,
+                   int indices_element_size, float *output, const float *scale_in, const int32_t *zp_in);
 void DynamicGatherArm64(const int8_t *src, float *output, int count_16, int zp, float scale);
 #ifdef __cplusplus
 }

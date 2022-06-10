@@ -20,7 +20,7 @@
 #include "nnacl/errorcode.h"
 
 int GatherInt8Int32Index(const int8_t *in_data, int8_t *out_data, int outer_size, int inner_size, int limit,
-                         const int *indices, int indices_element_size, GatherQuantArg para) {
+                         const int32_t *indices, int indices_element_size, GatherQuantArg para) {
   double alpha = para.alpha_;
   int z1 = para.zp_in_;
   int z2 = para.zp_out_;

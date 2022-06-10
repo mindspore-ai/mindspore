@@ -52,7 +52,7 @@ int TransOut2InputDimIndexInt8(int out_dim_index, int left_pad, int in_dim, int 
   return MSMAX(index_sum - out_dim_index, 0);
 }
 
-int GetInputFlattenIndexInt8(int out_flatten_index, const int *input_shape, const PadParameter *pad_param) {
+int GetInputFlattenIndexInt8(int out_flatten_index, const int32_t *input_shape, const PadParameter *pad_param) {
   int in_flatten_index = 0;
   int i;
   for (i = 0; i < COMM_SHAPE_SIZE; ++i) {
@@ -66,8 +66,8 @@ int GetInputFlattenIndexInt8(int out_flatten_index, const int *input_shape, cons
   return in_flatten_index;
 }
 
-void MirrorPadInt8(const int8_t *input_data, int8_t *output_data, const int *input_shape, const PadParameter *pad_param,
-                   int begin, int end) {
+void MirrorPadInt8(const int8_t *input_data, int8_t *output_data, const int32_t *input_shape,
+                   const PadParameter *pad_param, int begin, int end) {
   int i = 0;
   for (i = begin; i < end; ++i) {
     output_data[i] = input_data[GetInputFlattenIndexInt8(i, input_shape, pad_param)];

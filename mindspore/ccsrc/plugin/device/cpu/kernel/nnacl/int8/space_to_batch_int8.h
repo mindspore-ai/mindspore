@@ -22,8 +22,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int *block_sizes, const int *in_shape,
-                            const int *out_shape);
+void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int32_t *block_sizes, const int32_t *in_shape,
+                            const int32_t *out_shape);
 void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, SpaceToBatchParameter *param, int32_t zp);
 #ifdef __cplusplus
 }

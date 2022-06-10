@@ -20,8 +20,8 @@
 #endif
 #include "nnacl/errorcode.h"
 
-void TileOneDimensionInt8(const int8_t *inData, int8_t *outData, int dim, size_t ndim, const int *inShape,
-                          const int *inStrides, const int *outStrides, const int *multiple) {
+void TileOneDimensionInt8(const int8_t *inData, int8_t *outData, int dim, size_t ndim, const int32_t *inShape,
+                          const int32_t *inStrides, const int32_t *outStrides, const int32_t *multiple) {
   int srcDimSize = inShape[dim];
   if (dim == ndim - 1) {
     for (int i = 0; i < multiple[dim]; i++) {

@@ -84,9 +84,9 @@ void ConvDwInt8(int8_t *output_data, int32_t *row_buffer, const int8_t *input_da
   int end_h = MSMIN(start_h + step_h, conv_param->output_h_);
 
   bool filter_per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
-  int *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
-  int *left_shift = conv_param->conv_quant_arg_.left_shift_;
-  int *right_shift = conv_param->conv_quant_arg_.right_shift_;
+  int32_t *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
+  int32_t *left_shift = conv_param->conv_quant_arg_.left_shift_;
+  int32_t *right_shift = conv_param->conv_quant_arg_.right_shift_;
 
   int intput_zp = conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
   int output_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
@@ -240,9 +240,9 @@ void ConvDw3x3Int8Row(int8_t *output, int8_t *buffer, const int8_t *input, const
                       const ConvParameter *conv_param, int start_w, int end_w, int block_output_h, int block_output_w,
                       int block_input_h, int block_input_w) {
   bool filter_per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
-  int *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
-  int *left_shift = conv_param->conv_quant_arg_.left_shift_;
-  int *right_shift = conv_param->conv_quant_arg_.right_shift_;
+  int32_t *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
+  int32_t *left_shift = conv_param->conv_quant_arg_.left_shift_;
+  int32_t *right_shift = conv_param->conv_quant_arg_.right_shift_;
   int in_zp = conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
   int out_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
   int acc_min = conv_param->conv_quant_arg_.out_act_min_[0];
@@ -331,7 +331,7 @@ void ConvDw3x3Int8(int8_t *output_data, int8_t *buffer, const int8_t *input_data
 #ifndef ENABLE_ARM32
 void ConvDw3x3Int8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
                               int width, int in_kh_step, int in_kw_step, int channel, int8_t in_zp, int32_t out_zp,
-                              const int *out_multiplier, const int *left_shift, const int *right_shift,
+                              const int32_t *out_multiplier, const int32_t *left_shift, const int32_t *right_shift,
                               const int32_t acc_min, const int32_t acc_max, bool per_channel) {
   for (int c = 0; c < channel; c += 8) {
     int tmp_buffer[8];
@@ -386,24 +386,24 @@ void ConvDw3x3Int8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *wei
 
 #ifndef ENABLE_ARM64
 void ConvDw3x3Int8Corner(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int in_kh_step,
-                         int in_kw_step, int channel, int8_t in_zp, int32_t out_zp, const int *out_multiplier,
-                         const int *left_shift, const int *right_shift, int32_t acc_min, int32_t acc_max,
+                         int in_kw_step, int channel, int8_t in_zp, int32_t out_zp, const int32_t *out_multiplier,
+                         const int32_t *left_shift, const int32_t *right_shift, int32_t acc_min, int32_t acc_max,
                          bool per_channel) {
   ConvDw3x3Int8BorderPixel(dst, src, weight, bias, 2, 2, in_kh_step, in_kw_step, channel, in_zp, out_zp, out_multiplier,
                            left_shift, right_shift, acc_min, acc_max, per_channel);
 }
 
 void ConvDw3x3Int8Vertical(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int in_kh_step,
-                           int in_kw_step, int channel, int8_t in_zp, int32_t out_zp, const int *out_multiplier,
-                           const int *left_shift, const int *right_shift, int32_t acc_min, int32_t acc_max,
+                           int in_kw_step, int channel, int8_t in_zp, int32_t out_zp, const int32_t *out_multiplier,
+                           const int32_t *left_shift, const int32_t *right_shift, int32_t acc_min, int32_t acc_max,
                            bool per_channel) {
   ConvDw3x3Int8BorderPixel(dst, src, weight, bias, 2, 3, in_kh_step, in_kw_step, channel, in_zp, out_zp, out_multiplier,
                            left_shift, right_shift, acc_min, acc_max, per_channel);
 }
 
 void ConvDw3x3Int8Horizontal(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int in_kh_step,
-                             int in_kw_step, int channel, int8_t in_zp, int32_t out_zp, const int *out_multiplier,
-                             const int *left_shift, const int *right_shift, int32_t acc_min, int32_t acc_max,
+                             int in_kw_step, int channel, int8_t in_zp, int32_t out_zp, const int32_t *out_multiplier,
+                             const int32_t *left_shift, const int32_t *right_shift, int32_t acc_min, int32_t acc_max,
                              bool per_channel) {
   ConvDw3x3Int8BorderPixel(dst, src, weight, bias, 3, 2, in_kh_step, in_kw_step, channel, in_zp, out_zp, out_multiplier,
                            left_shift, right_shift, acc_min, acc_max, per_channel);
@@ -413,9 +413,9 @@ void ConvDw3x3Int8Horizontal(int8_t *dst, const int8_t *src, const int16_t *weig
 void ConvDw3x3Int8Pad(int8_t *output_data, const int8_t *input_data, const int16_t *weight_data,
                       const int32_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
   bool filter_per_channel = conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;
-  int *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
-  int *left_shift = conv_param->conv_quant_arg_.left_shift_;
-  int *right_shift = conv_param->conv_quant_arg_.right_shift_;
+  int32_t *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_;
+  int32_t *left_shift = conv_param->conv_quant_arg_.left_shift_;
+  int32_t *right_shift = conv_param->conv_quant_arg_.right_shift_;
   int in_zp = conv_param->conv_quant_arg_.input_quant_args_[0].zp_;
   int out_zp = conv_param->conv_quant_arg_.output_quant_args_[0].zp_;
   int acc_min = conv_param->conv_quant_arg_.out_act_min_[0];
@@ -499,8 +499,8 @@ void ConvDw3x3Int8Pad(int8_t *output_data, const int8_t *input_data, const int16
 /*conv depthwise sliding window perchannel int8 begin*/
 void ConvDwInt8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
                            int width, int in_kh_step, int in_kw_step, int kernel_w, const int8_t *input_zp,
-                           const int32_t *out_zp, const int *out_multiplier, const int *left_shift,
-                           const int *right_shift, const int32_t *acc_min, const int32_t *acc_max) {
+                           const int32_t *out_zp, const int32_t *out_multiplier, const int32_t *left_shift,
+                           const int32_t *right_shift, const int32_t *acc_min, const int32_t *acc_max) {
   int tmp_buffer[C8NUM];
   for (int i = 0; i < C8NUM; i++) {
     tmp_buffer[i] = 0;
@@ -535,8 +535,9 @@ void ConvDwInt8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *weight
 
 void ConvDwInt8Border(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int top, int bottom,
                       int left, int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
-                      const int8_t *in_zp, const int32_t *out_zp, const int *out_multiplier, const int *left_shift,
-                      const int *right_shift, const int32_t *acc_min, const int32_t *acc_max) {
+                      const int8_t *in_zp, const int32_t *out_zp, const int32_t *out_multiplier,
+                      const int32_t *left_shift, const int32_t *right_shift, const int32_t *acc_min,
+                      const int32_t *acc_max) {
   int8_t *dst_h = dst + top * sliding->out_h_step_;
   for (int oh = top; oh < bottom; oh++) {
     int ih = oh * conv_param->stride_h_ - conv_param->pad_u_;
@@ -630,11 +631,11 @@ void ConvDwInt8SW(int8_t *output_data, const int8_t *input_data, const int16_t *
       const int16_t *weight = weight_data + oc * sliding->kernel_step_;
       const int32_t *bias = bias_data + oc * C8NUM;
 
-      int *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_ + oc * C8NUM;
-      int *left_shift = conv_param->conv_quant_arg_.left_shift_ + oc * C8NUM;
-      int *right_shift = conv_param->conv_quant_arg_.right_shift_ + oc * C8NUM;
-      int *acc_min = conv_param->conv_quant_arg_.out_act_min_ + oc * C8NUM;
-      int *acc_max = conv_param->conv_quant_arg_.out_act_max_ + oc * C8NUM;
+      int32_t *out_multiplier = conv_param->conv_quant_arg_.quant_multiplier_ + oc * C8NUM;
+      int32_t *left_shift = conv_param->conv_quant_arg_.left_shift_ + oc * C8NUM;
+      int32_t *right_shift = conv_param->conv_quant_arg_.right_shift_ + oc * C8NUM;
+      int32_t *acc_min = conv_param->conv_quant_arg_.out_act_min_ + oc * C8NUM;
+      int32_t *acc_max = conv_param->conv_quant_arg_.out_act_max_ + oc * C8NUM;
       const int8_t *in_zp = input_zp + oc * C8NUM;
       const int32_t *out_zp = output_zp + oc * C8NUM;
 

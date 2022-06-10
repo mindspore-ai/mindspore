@@ -18,8 +18,8 @@
 #include "nnacl/int8/fixed_point.h"
 
 void DynamicMatmul4x4x16AIWI(const int8_t *a, const int8_t *b, float *out, size_t deep4, float *multi_scales,
-                             float *bias, size_t row, size_t col, size_t stride, const int *a_sums, const int *b_sums,
-                             int64_t a_zp, int64_t b_zp_sum) {
+                             float *bias, size_t row, size_t col, size_t stride, const int32_t *a_sums,
+                             const int32_t *b_sums, int64_t a_zp, int64_t b_zp_sum) {
   /* *
    * row4x4-major * row4x16-major => (int8)row-major
    * support activation per-layer symmetric && weight per-layer/per-channel symmetric
@@ -321,7 +321,7 @@ void PackInput2Col4x4(const int8_t *src_input, int8_t *packed_input, int row, in
   }
 }
 
-void CalcWeightSums(const int8_t *weight, int row, int col, int *dst, DataOrder order) {
+void CalcWeightSums(const int8_t *weight, int row, int col, int32_t *dst, DataOrder order) {
   if (order == RowMajor) {
     for (int c = 0; c < col; ++c) {
       int sum = 0;
@@ -342,7 +342,7 @@ void CalcWeightSums(const int8_t *weight, int row, int col, int *dst, DataOrder 
   return;
 }
 
-void CalcPartWeightSums(const int8_t *weight, int row, int stride, int cur_col, int *dst, DataOrder order) {
+void CalcPartWeightSums(const int8_t *weight, int row, int stride, int cur_col, int32_t *dst, DataOrder order) {
   if (order == RowMajor) {
     for (int c = 0; c < cur_col; ++c) {
       int sum = 0;

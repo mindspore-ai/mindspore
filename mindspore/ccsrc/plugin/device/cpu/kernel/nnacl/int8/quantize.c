@@ -26,7 +26,7 @@ const double dNormalizer = 0x1p54;
 const int dNormalizerBias = 54;
 const int iMantissaBits = 31;
 
-void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier, int *right_shift) {
+void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier, int32_t *right_shift) {
   if (quantized_multiplier == NULL || right_shift == NULL) {
     return;
   }
@@ -35,8 +35,8 @@ void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantiz
   *right_shift = -shift;
 }
 
-void QuantizeRoundParameterWithDoublePrecision(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
-                                               int *right_shift) {
+void QuantizeRoundParameterWithDoublePrecision(double double_multiplier, int32_t *quantized_multiplier,
+                                               int32_t *left_shift, int32_t *right_shift) {
   int shift = 0;
   QuantizeMultiplierSmallerThanOne(double_multiplier, quantized_multiplier, &shift);
   shift = -shift;
@@ -49,8 +49,8 @@ void QuantizeRoundParameterWithDoublePrecision(double double_multiplier, int32_t
   }
 }
 
-void QuantizeRoundParameterWithSinglePrecision(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
-                                               int *right_shift) {
+void QuantizeRoundParameterWithSinglePrecision(double double_multiplier, int32_t *quantized_multiplier,
+                                               int32_t *left_shift, int32_t *right_shift) {
   int shift = 0;
   const uint32_t scale_bits = (uint32_t)(double_multiplier);
   /* multiplier is in[0x40000000, 0x7FFFFF80] range */
@@ -74,7 +74,8 @@ uint8_t QuantizeToUint8(float real_value, float scale, int32_t zp) { return roun
 
 int32_t QuantizeToInt8(float real_value, float scale, int32_t zp) { return round(real_value / scale + zp); }
 
-void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int *mini, int *maxi) {
+void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int32_t *mini,
+                                       int32_t *maxi) {
   int32_t min = INT8_MIN;
   int32_t max = INT8_MAX;
   int32_t quantized_zero = QuantizeToInt8(0, scale, zp);
@@ -108,7 +109,7 @@ void Dequantize(const int8_t *input_data, int length, float scale, int zero_poin
   }
 }
 
-void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int *shift) {
+void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier, int32_t *shift) {
   if (quantized_multiplier == NULL || shift == NULL) {
     return;
   }

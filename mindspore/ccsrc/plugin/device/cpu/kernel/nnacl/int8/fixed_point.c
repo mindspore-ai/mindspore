@@ -166,7 +166,7 @@ int32_t reciprocal_on_interval_between_0_1(int32_t a) {
   return Rescale(x, 2 - 1, 0);
 }
 
-int32_t ComputerReciprocal(int32_t x, uint32_t x_digits, int *recip_shift) {
+int32_t ComputerReciprocal(int32_t x, uint32_t x_digits, int32_t *recip_shift) {
   uint32_t leading_zreos_plus_one = CountLeadingZeroBits((uint32_t)x);
   *recip_shift = x_digits - leading_zreos_plus_one;
   const int32_t shifted_minus_one = (int32_t)(((uint32_t)x << leading_zreos_plus_one) - ((uint32_t)(1) << 31));
@@ -190,7 +190,7 @@ int exp_on_interval_values(int a) {
 }
 
 void exp_barrel_shifter(int exponent, int muliplier, int integer_bits, int fractional_bits, int remainder,
-                        int *result) {
+                        int32_t *result) {
   if (integer_bits > exponent) {
     int total_shift = integer_bits > exponent ? fractional_bits + exponent : 0;
     *result = BitsSelect(MaskIfNonZero(BitAnd(remainder, (1 << (uint32_t)total_shift))),

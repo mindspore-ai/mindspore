@@ -235,8 +235,8 @@ void RowMajor2Row16x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, 
   return;
 }
 
-void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
-                     const int *input_sum, const int *bias) {
+void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int32_t *dst, int row_4, int col_4, int deep_16,
+                     const int32_t *input_sum, const int32_t *bias) {
   /*  row4x16-major * row16x4-major => row4x4-major  */
   for (int r = 0; r < row_4; r++) {
     for (int c = 0; c < col_4; c++) {
@@ -799,8 +799,8 @@ void CalcInputSums(const int8_t *input, int row, int col, int weight_zp, int32_t
 }
 
 // dst: bias + depth*input_zp*weight_zp - input_zp*weight_col_sums
-void CalcWeightBiasSums(const int8_t *weight, int row, int col, int input_zp, const int *weight_zp_ptr, const int *bias,
-                        int32_t *dst, DataOrder order, bool filter_per_channel) {
+void CalcWeightBiasSums(const int8_t *weight, int row, int col, int input_zp, const int32_t *weight_zp_ptr,
+                        const int32_t *bias, int32_t *dst, DataOrder order, bool filter_per_channel) {
   for (int c = 0; c < col; ++c) {
     int sum = 0;
     for (int r = 0; r < row; ++r) {
@@ -819,7 +819,7 @@ void CalcWeightBiasSums(const int8_t *weight, int row, int col, int input_zp, co
 }
 
 void CalcPartWeightBiasSums(const int8_t *weight, int row, int stride, int cur_col, int input_zp,
-                            const int *weight_zp_ptr, const int *bias, int *dst, DataOrder order,
+                            const int32_t *weight_zp_ptr, const int32_t *bias, int32_t *dst, DataOrder order,
                             bool filter_per_channel) {
   for (int c = 0; c < cur_col; ++c) {
     int sum = 0;

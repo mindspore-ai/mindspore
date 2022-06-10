@@ -156,8 +156,8 @@ int ResizeBilinearWithFloatScaleInt8(const int8_t *input_ptr, int8_t *output_ptr
   return NNACL_OK;
 }
 
-int ResizeNearestNeighborInt8Simple(const int8_t *input_data, int8_t *output_data, const int *input_shape,
-                                    const int *output_shape, const bool align_corners, int tid, int thread_num) {
+int ResizeNearestNeighborInt8Simple(const int8_t *input_data, int8_t *output_data, const int32_t *input_shape,
+                                    const int32_t *output_shape, const bool align_corners, int tid, int thread_num) {
   int batch, y, x, c;
   c = output_shape[3];
   int in_h, in_w, new_height, new_width;
@@ -195,8 +195,8 @@ void ComputeNearestNeighborInt(const int32_t pos, const int in_size, const int32
   *nearest = *nearest < in_size ? *nearest : in_size - 1;
 }
 
-int ResizeNearestNeighborInt8(const int8_t *input_data, int8_t *output_data, const int *input_shape,
-                              const int *output_shape, const bool align_corners, const QuantMulArg *multiplier,
+int ResizeNearestNeighborInt8(const int8_t *input_data, int8_t *output_data, const int32_t *input_shape,
+                              const int32_t *output_shape, const bool align_corners, const QuantMulArg *multiplier,
                               const QuantArg *quant_in, const QuantArg *quant_out, int tid, int thread_num) {
   const int base_offset = 20;
   int32_t batch, y, x, c;

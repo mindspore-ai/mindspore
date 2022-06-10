@@ -369,8 +369,9 @@ else()
     install(FILES ${TOP_DIR}/mindspore/lite/build/.commit_id DESTINATION ${RUNTIME_PKG_NAME}
             COMPONENT ${RUNTIME_COMPONENT_NAME})
 endif()
-install(DIRECTORY ${flatbuffers_INC}/ DESTINATION ${RUNTIME_INC_DIR}/third_party COMPONENT ${RUNTIME_COMPONENT_NAME})
-
+if(NOT PLATFORM_MCU)
+    install(DIRECTORY ${flatbuffers_INC}/ DESTINATION ${RUNTIME_INC_DIR}/third_party COMPONENT ${RUNTIME_COMPONENT_NAME})
+endif()
 if(PLATFORM_ARM64)
     if(SUPPORT_NPU)
         install(FILES ${DDK_LIB_PATH}/libhiai.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
@@ -797,6 +798,11 @@ elseif(WIN32)
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${LIB_LIST} DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
+elseif(PLATFORM_MCU)
+    __install_micro_wrapper()
+    __install_micro_codegen()
+    install(DIRECTORY ${TOP_DIR}/include/c_api/ DESTINATION ${RUNTIME_INC_DIR}/c_api
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
 else()
     install(FILES ${TOP_DIR}/mindspore/lite/include/kernel_interface.h DESTINATION ${RUNTIME_INC_DIR}
             COMPONENT ${RUNTIME_COMPONENT_NAME})

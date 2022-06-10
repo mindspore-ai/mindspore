@@ -80,7 +80,7 @@ int SpaceSetOutputShapeFromInput(const TensorC *const *inputs, size_t inputs_siz
     padding_right = padding[3];
     block_w = block_shape[1];
   }
-  int32_t output_shape[MAX_SHAPE_SIZE];
+  int output_shape[MAX_SHAPE_SIZE];
   size_t output_shape_size = input->shape_size_;
   if (input->shape_[kNHWC_N] == 0 || block_shape[0] * block_w > INT_MAX / input->shape_[kNHWC_N]) {
     return NNACL_ERR;

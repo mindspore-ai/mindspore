@@ -94,7 +94,7 @@ void DoSlice(const void *input, void *output, const SliceParameter *param, int t
   }
 }
 
-static bool WhetherCopyByAxis(const int begin[], const int end[], const int shape[], int dim) {
+static bool WhetherCopyByAxis(const int32_t *begin, const int32_t *end, const int32_t *shape, int dim) {
   for (int i = dim + 1; i < DIMENSION_8D; ++i) {
     if (begin[i] != 0 || end[i] != shape[i]) return false;
   }

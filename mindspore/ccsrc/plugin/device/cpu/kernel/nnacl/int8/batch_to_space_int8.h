@@ -21,10 +21,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void BatchToSpaceNoCropForNHWCInt8(const int8_t *input, int8_t *output, const int *in_shape, int out_n,
-                                   const int *block, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg);
-void BatchToSpaceForNHWCInt8(const int8_t *input, int8_t *output, const int *in_shape, int out_n, const int *block,
-                             const int *crops, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg);
+void BatchToSpaceNoCropForNHWCInt8(const int8_t *input, int8_t *output, const int32_t *in_shape, int out_n,
+                                   const int32_t *block, const QuantArg *in_quant_arg, const QuantArg *out_quant_arg);
+void BatchToSpaceForNHWCInt8(const int8_t *input, int8_t *output, const int32_t *in_shape, int out_n,
+                             const int32_t *block, const int32_t *crops, const QuantArg *in_quant_arg,
+                             const QuantArg *out_quant_arg);
 #ifdef __cplusplus
 }
 #endif

@@ -34,11 +34,11 @@ int ResizeBilinearWithFloatScaleInt8(const int8_t *input_ptr, int8_t *output_ptr
                                      int out_h, int out_w, int channel, int index, int count,
                                      ResizeFloatScaleQuantArg quant_arg);
 
-int ResizeNearestNeighborInt8Simple(const int8_t *input_data, int8_t *output_data, const int *input_shape,
-                                    const int *output_shape, const bool align_corners, int tid, int thread_num);
+int ResizeNearestNeighborInt8Simple(const int8_t *input_data, int8_t *output_data, const int32_t *input_shape,
+                                    const int32_t *output_shape, const bool align_corners, int tid, int thread_num);
 
-int ResizeNearestNeighborInt8(const int8_t *input_data, int8_t *output_data, const int *input_shape,
-                              const int *output_shape, const bool align_corners, const QuantMulArg *multiplier,
+int ResizeNearestNeighborInt8(const int8_t *input_data, int8_t *output_data, const int32_t *input_shape,
+                              const int32_t *output_shape, const bool align_corners, const QuantMulArg *multiplier,
                               const QuantArg *quant_in, const QuantArg *quant_out, int tid, int thread_num);
 
 void ComputeNearestNeighborInt(const int32_t pos, const int in_size, const int32_t new_size, const bool align_corners,

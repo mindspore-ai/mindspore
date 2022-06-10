@@ -19,8 +19,8 @@
 
 #include "nnacl/op_base.h"
 
-typedef void (*MATMUL_OPT_R4_FUNC)(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
-                                   const int *input_sum, const int *bias);
+typedef void (*MATMUL_OPT_R4_FUNC)(const int8_t *a, const int8_t *b, int32_t *dst, int row_4, int col_4, int deep_16,
+                                   const int32_t *input_sum, const int32_t *bias);
 
 typedef void (*MATMUL_OPT_R_FUNC)(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
                                   size_t stride, const int32_t *input_sum, const int32_t *bias,
@@ -31,7 +31,7 @@ typedef void (*MATMUL_OPT_DP_FUNC)(const int8_t *a, const int8_t *b, int8_t *dst
                                    size_t stride, const int32_t *input_sum, const int32_t *bias,
                                    const int32_t *left_shift, const int32_t *right_shift, const int32_t *multiplier,
                                    int32_t output_zp, int32_t mini, int32_t maxi, size_t per_channel,
-                                   const int *filter_zp);
+                                   const int32_t *filter_zp);
 
 typedef enum OutType { OutType_C8 = 0, OutType_Nhwc = 1, OutType_TileC8 = 2, OutType_NC4HW4 = 3 } OutType;
 

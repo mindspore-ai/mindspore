@@ -17,8 +17,8 @@
 #include "nnacl/int8/dynamic_gather_int8.h"
 #include "nnacl/op_base.h"
 
-void DynamicGather(const int8_t *input, int outer_size, int inner_size, int limit, const int *indices,
-                   int indices_element_size, float *output, const float *scale_in, const int *zp_in) {
+void DynamicGather(const int8_t *input, int outer_size, int inner_size, int limit, const int32_t *indices,
+                   int indices_element_size, float *output, const float *scale_in, const int32_t *zp_in) {
   for (int m = 0; m < outer_size; ++m) {
     const int8_t *int8_in_m = input + inner_size * m * limit;
     float *int8_out_m = output + inner_size * m * indices_element_size;
