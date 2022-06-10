@@ -279,6 +279,8 @@ class KernelAttr {
   const OutputInputRefMap &GetOutInRefMap() const { return out_in_ref_map_; }
   const bool &GetAllOutInRef() const { return all_out_in_ref_; }
 
+  void SetInputAttr(const size_t index, const TypeId &ms_type, const std::string &format);
+  void SetOutputAttr(const size_t index, const TypeId &ms_type, const std::string &format);
   void SetInputAttrList(const std::vector<DataType> &addr_list);
 
  private:

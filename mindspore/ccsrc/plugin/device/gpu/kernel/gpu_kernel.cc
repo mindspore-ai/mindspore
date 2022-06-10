@@ -114,7 +114,6 @@ bool NativeGpuKernelMod::CheckSupport(const std::string &kernel_name, const Kern
 
 NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(const std::string &kernel_name,
                                                                                const KernelAttr &kernel_attr_to_check) {
-  KernelAttr reduce_kernel_attr;
   std::vector<ReduceDetail> input_reduce_index;
   std::vector<ReduceDetail> output_reduce_index;
   std::vector<KernelAttr> kernel_attr_list = this->GetOpSupport();
@@ -126,26 +125,41 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
     auto attr_size = cur_kernel_attr.GetInputSize();
     MS_EXCEPTION_IF_ZERO("kernel attr input size", attr_size);
     for (size_t iidx = 0; iidx < kernel_attr_to_check.GetInputSize(); iidx++) {
-      auto [type_id, format] = kernel_attr_to_check.GetInputAttr(iidx);
+      auto cur_input_attr = kernel_attr_to_check.GetInputAttr(iidx);
+      const auto &type_id = cur_input_attr.first;
       if (type_id == from_precision && cur_kernel_attr.GetInputAttr(iidx % attr_size).first == to_precision) {
         (void)input_reduce_index.emplace_back(iidx, from_precision, to_precision);
-        type_id = to_precision;
         MS_LOG(WARNING) << "Kernel [" << kernel_name << "] does not support int64, cast input " << iidx << " to int32.";
-        reduce_kernel_attr.AddInputAttr(type_id, format);
       }
     }
     for (size_t oidx = 0; oidx < kernel_attr_to_check.GetOutputSize(); oidx++) {
-      auto [type_id, format] = kernel_attr_to_check.GetOutputAttr(oidx);
+      auto cur_output_attr = kernel_attr_to_check.GetOutputAttr(oidx);
+      const auto &type_id = cur_output_attr.first;
       if (type_id == from_precision && cur_kernel_attr.GetOutputAttr(oidx % attr_size).first == to_precision) {
         (void)output_reduce_index.emplace_back(oidx, from_precision, to_precision);
-        type_id = to_precision;
         MS_LOG(WARNING) << "Kernel [" << kernel_name << "] does not support int64, cast output " << oidx
                         << " to int32.";
-        reduce_kernel_attr.AddOutputAttr(type_id, format);
       }
     }
   }
 
+  if (input_reduce_index.empty() && output_reduce_index.empty()) {
+    return std::make_tuple(false, input_reduce_index, output_reduce_index);
+  }
+
+  auto reduce_kernel_attr = kernel_attr_to_check;
+  for (const auto &reduce_item : input_reduce_index) {
+    auto reduce_idx = std::get<0>(reduce_item);
+    auto cur_attr = reduce_kernel_attr.GetInputAttr(reduce_idx);
+    reduce_kernel_attr.SetInputAttr(reduce_idx, std::get<2>(reduce_item), cur_attr.second);
+  }
+  for (const auto &reduce_item : output_reduce_index) {
+    auto reduce_idx = std::get<0>(reduce_item);
+    auto cur_attr = reduce_kernel_attr.GetOutputAttr(reduce_idx);
+    reduce_kernel_attr.SetOutputAttr(reduce_idx, std::get<2>(reduce_item), cur_attr.second);
+  }
+
+  MS_LOG(WARNING) << "Kernel [" << kernel_name << "] reduce precision attr: " << reduce_kernel_attr;
   return std::make_tuple(CheckSupport(kernel_name, reduce_kernel_attr), input_reduce_index, output_reduce_index);
 }
 
