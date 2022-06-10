@@ -25,6 +25,43 @@ from mindspore.ops.functional import vmap
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
+class ConcatConstFold(nn.Cell):
+    def __init__(self):
+        super(ConcatConstFold, self).__init__()
+        self.cat = P.Concat(axis=0)
+        self.mul = P.Mul()
+        self.input_x1 = Tensor(np.array([[0, 1, 2, 1], [1, 1, 3, 5]]).astype(np.float32))
+        self.input_x2 = Tensor(np.array([[4, 6, 2, 2], [0, 6, 2, 6]]).astype(np.float32))
+
+    def construct(self, input_y):
+        x = self.cat((self.input_x1, self.input_x2))
+        x = self.mul(x, input_y)
+        x = 2*x
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_constant_folding_float32():
+    """
+    Feature: concat testcase about constant fold
+    Description: all inputs of concat is constant.
+    Expectation: success
+    """
+    mul_x1 = Tensor(np.array([[0, 0, 1, 1],
+                              [1, 2, 3, 1],
+                              [2, 4, 5, 5],
+                              [3, 6, 7, 6]]).astype(np.float32))
+    cat0 = ConcatConstFold()
+    output = cat0(mul_x1)
+    expect = np.array([[0, 0, 4, 2],
+                       [2, 4, 18, 10],
+                       [16, 48, 20, 20],
+                       [0, 72, 28, 72]]).astype(np.float32)
+    assert (output.asnumpy() == expect).all()
+
+
 class ConcatV10(nn.Cell):
     def __init__(self, nptype):
         super(ConcatV10, self).__init__()

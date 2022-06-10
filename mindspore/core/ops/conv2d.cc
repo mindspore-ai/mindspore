@@ -247,8 +247,8 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   int64_t pad_mode;
   CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr("pad_mode"), &pad_mode);
   if (!CheckConv2dShape(prim_name, input_args, x_shape, w_shape, padding, pad_mode, w_axis, h_axis)) {
-    MS_LOG(EXCEPTION) << "For 'Conv2d', input shape's h and w after padding must be greater than or equal to "
-                         "kernel_size's h and w respectively.";
+    MS_EXCEPTION(ValueError) << "For 'Conv2d', input shape's h and w after padding must be greater than or equal to "
+                                "kernel_size's h and w respectively.";
   }
 
   std::vector<int64_t> output_hw;
