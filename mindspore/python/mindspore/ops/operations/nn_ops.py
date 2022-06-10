@@ -8129,7 +8129,8 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         valid_dtypes = [mstype.float16, mstype.float32]
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
         validator.check("filter's batch", w['shape'][0], "dout's channel", doutput['shape'][1], Rel.EQ, self.name)
-        validator.check("filter's channel", w['shape'][1], "input_size's channel", x_size_v[1], Rel.EQ, self.name)
+        validator.check("filter's channel * group", w['shape'][1] * self.group, \
+                        "input_size's channel", x_size_v[1], Rel.EQ, self.name)
         validator.check("input_size's batch", x_size_v[0], "dout's batch", doutput['shape'][0], Rel.EQ, self.name)
 
         # infer shape

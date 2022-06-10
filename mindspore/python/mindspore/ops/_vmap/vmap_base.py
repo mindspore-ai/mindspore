@@ -330,3 +330,9 @@ def get_unary_grad_vmap_rule(prim, axis_size):
         return (out, out_dim)
 
     return vmap_rule
+
+
+@constexpr
+def _update_prim_attr(prim, attr_name, attr_value):
+    """Set new value for attribute of the primitive."""
+    prim.add_prim_attr(attr_name, attr_value)
