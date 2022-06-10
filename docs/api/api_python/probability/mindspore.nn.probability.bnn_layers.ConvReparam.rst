@@ -34,8 +34,8 @@ mindspore.nn.probability.bnn_layers.ConvReparam
     
     **输入：**
 
-    - **input** (Tensor) - 输入 Tensor 的 shape 为 :math:`(N, C_{in}`。
+    - **input** (Tensor) - 输入 Tensor 的 shape 为 :math:`(N, C_{in})`。
 
     **输出：**
 
-    - **output** (Tensor) - 输出张量的形状是 :math:`(N, C_{out}, H_{out}, W_{out})`。
+    Tensor，输出张量的形状是 :math:`(N, C_{out}, H_{out}, W_{out})`。

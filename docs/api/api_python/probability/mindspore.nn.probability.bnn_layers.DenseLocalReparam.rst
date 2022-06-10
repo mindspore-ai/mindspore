@@ -31,4 +31,4 @@ mindspore.nn.probability.bnn_layers.DenseLocalReparam
 
     **输出：**
 
-    - **output** (Tensor) - `output` 的 shape 是 :math:`(N, out\_channels)`。
+    Tensor，`output` 的 shape 是 :math:`(N, out\_channels)`。
