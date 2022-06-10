@@ -119,8 +119,8 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     if (shape_value->isa<tensor::Tensor>()) {
       auto mask_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);
       std::vector<ValuePtr> value_elements;
-      std::transform(mask_shape.begin(), mask_shape.end(), std::back_inserter(value_elements),
-                     [](int64_t elem) { return MakeValue(elem); });
+      (void)std::transform(mask_shape.begin(), mask_shape.end(), std::back_inserter(value_elements),
+                           [](int64_t elem) { return MakeValue(elem); });
       out_shape = CalDynamicOutputShape(primitive, value_elements);
       return std::make_shared<abstract::Shape>(out_shape);
     }

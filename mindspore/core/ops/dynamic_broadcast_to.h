@@ -31,7 +31,7 @@ class MIND_API DynamicBroadcastTo : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DynamicBroadcastTo);
   DynamicBroadcastTo() : BaseOperator(kNameDynamicBroadcastTo) { InitIOName({"x", "shape"}, {"y"}); }
-  void Init() {}
+  void Init() const {}
 };
 
 abstract::AbstractBasePtr DynamicBroadcastToInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
