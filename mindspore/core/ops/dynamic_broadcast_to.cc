@@ -39,7 +39,8 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input_y = input_args[1];
   MS_EXCEPTION_IF_NULL(input_y);
@@ -102,7 +103,7 @@ TypePtr DynamicBroadcastToInferType(const PrimitivePtr &prim, const std::vector<
   }
   auto x_dtype = input_args[0]->BuildType()->cast<TensorTypePtr>();
   std::set<TypePtr> template_types = {kTensorType};
-  CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim->name());
+  (void)CheckAndConvertUtils::CheckSubClass("x_dtype", x_dtype, template_types, prim->name());
   return x_dtype->element();
 }
 }  // namespace
