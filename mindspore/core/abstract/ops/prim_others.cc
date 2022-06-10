@@ -569,6 +569,7 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
 AbstractBasePtr InferImplCSRGather(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
   // Inputs: the indptr and indices of a sparse csr tensor, a dense tensor, and the shape of the sparse tensor.
+  constexpr size_t csr_row_num = 2;
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, kSizeFour);
   auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexZero);
@@ -592,6 +593,11 @@ AbstractBasePtr InferImplCSRGather(const AnalysisEnginePtr &, const PrimitivePtr
 
   MS_EXCEPTION_IF_NULL(indices->shape());
   ShapeVector out_shape = indices->shape()->shape();
+  MS_EXCEPTION_IF_NULL(dense->shape());
+  ShapeVector dense_shape = dense->shape()->shape();
+  for (size_t i = csr_row_num; i < dense_shape.size(); ++i) {
+    out_shape.push_back(dense_shape[i]);
+  }
   MS_EXCEPTION_IF_NULL(dense->element());
   auto ret = std::make_shared<AbstractTensor>(dense->element()->BuildType(), out_shape);
   return ret;

@@ -107,6 +107,11 @@ class GraphKernelFlags {
   unsigned int fusion_ops_level{OpLevel_0};
 
   /**
+   * Enable recompute fusion for CSR operations.
+   */
+  bool enable_csr_fusion{false};
+
+  /**
    * Optimization level, value from 0 to 3.
    * 0: Disable GraphKernel
    * 1: Enable GraphKernel with basic features only.

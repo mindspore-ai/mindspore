@@ -69,17 +69,21 @@ class AutoRecompute {
   AutoRecompute() = default;
   ~AutoRecompute() = default;
 
-  std::vector<Candidate> Run(const FuncGraphPtr &func_graph);
+  virtual std::vector<Candidate> Run(const FuncGraphPtr &func_graph);
 
- private:
+ protected:
   using NodeRecomputeCandidates =
     OrderedMap<AnfNodePtr, OrderedMap<AnfNodePtr, std::pair<EdgeLifeTimeType, AnfNodePtrList>>>;
+  virtual NodeRecomputeCandidates FindNodeRecomputeCandidates(const AnfNodePtr &node,
+                                                              const OutPosLinkList &target_graphs,
+                                                              const FuncGraphManagerPtr &mng);
+  void FindCandidates(const FuncGraphPtr &func_graph);
+  std::vector<Candidate> candidates_;
+
+ private:
   OutPosLinkList JudegeTargetAndCaptureSource(const AnfNodePtr &node, const FuncGraphManagerPtr &mng);
   AnfNodePtrList Filter(const AnfNodePtr &source_node, const AnfNodePtr &end_node, int edge_pos,
                         const FuncGraphManagerPtr &mng);
-  NodeRecomputeCandidates FindNodeRecomputeCandidates(const AnfNodePtr &node, const OutPosLinkList &target_graphs,
-                                                      const FuncGraphManagerPtr &mng);
-  void FindCandidates(const FuncGraphPtr &func_graph);
   int GetSourceLinkOutPos(const AnfNodePtr &target, int pos);
   std::tuple<OrderedSet<AnfNodePtr>, OutPosLinkMap, MemorySize> GetValidUsers(const AnfNodePtr &node,
                                                                               const FuncGraphManagerPtr &mng);
@@ -87,13 +91,24 @@ class AutoRecompute {
   bool IsThresholdDefaultValue() const;
 
   std::map<AnfNodePtr, MemorySize> topo_indice_;
-  std::vector<Candidate> candidates_;
   MemorySize lifetime_threshold_{0};
   MemorySize local_peak_threshold_{0};
 
   void RecomputeLinkEdgeLog(const AnfNodePtr &node, const OrderedSet<AnfNodePtr> &direct_users,
                             const OutPosLinkList &target_link_infos) const;
   void RecomputeCandidatesLog(const std::vector<Candidate> &candidates) const;
+};
+
+class CSRRecompute : public AutoRecompute {
+ public:
+  std::vector<Candidate> Run(const FuncGraphPtr &func_graph) override;
+
+ protected:
+  NodeRecomputeCandidates FindNodeRecomputeCandidates(const AnfNodePtr &node, const OutPosLinkList &target_graphs,
+                                                      const FuncGraphManagerPtr &mng) override;
+
+ private:
+  bool CheckPrimitiveInput(AnfNodePtr base, PrimitivePtr prim_type);
 };
 
 class GraphKernelRecompute : public opt::Pass {
@@ -103,6 +118,7 @@ class GraphKernelRecompute : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
+  bool DoRun(const FuncGraphPtr &func_graph, bool use_csr = false);
   void Process(const Candidate &candidate);
   std::pair<FuncGraphPtr, AnfNodePtrList> CloneGraph(const CNodePtr &source_graph,
                                                      const AnfNodePtrList &recompute_edges);

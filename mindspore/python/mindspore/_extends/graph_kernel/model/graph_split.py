@@ -1016,7 +1016,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             return fused, True
 
         def _gather_output(dom, reduce_fusion=False):
-            gather_prims = ("Gather", "GatherNd")
+            gather_prims = ("Gather", "GatherNd", "CSRGather")
             if not dom.dom_op().prim in gather_prims:
                 return []
 
@@ -1049,14 +1049,22 @@ class GraphSplitGpu(GraphSplitByPattern):
                 visited = []
                 op_queue = [start_op]
 
+                def _remove_preceding_ones(shape):
+                    i = 0
+                    while shape[i] == 1 and i < len(shape):
+                        i += 1
+                    return shape[i:]
+
                 def _early_stop(cur_op):
                     if cur_op in end_ops:
                         # If reduce the gather axis, stop early for not fusion.
                         if cur_op.prim == "ReduceSum" and _reduce_exclude(cur_op, gather_axis):
                             return True
                     else:
+                        shape1 = _remove_preceding_ones(consisten_shape)
+                        shape2 = _remove_preceding_ones(cur_op.output.shape)
                         if (cur_op.prim in start_prims and cur_op != start_op) or \
-                                consisten_shape != cur_op.output.shape:
+                                shape1 != shape2:
                             return True
                     return False
 
@@ -1108,7 +1116,10 @@ class GraphSplitGpu(GraphSplitByPattern):
                         return False
                 return True
 
-            appected_areas = {"ReduceSum"} if reduce_fusion else {"TensorScatterAdd", "UnsortedSegmentSum"}
+            if reduce_fusion:
+                appected_areas = {"ReduceSum", "CSRReduceSum"}
+            else:
+                appected_areas = {"TensorScatterAdd", "UnsortedSegmentSum"}
 
             for a, _ in dom.out_relations.items():
                 if _shape_consistent(gather_prims, appected_areas, dom, a) and dom.check_acyclic(a):
@@ -1206,12 +1217,30 @@ class GraphSplitGpu(GraphSplitByPattern):
             return a.ops[0].prim == dom.ops[0].prim and dom.ops[0].output.shape == a.ops[0].output.shape and \
                 dom.ops[0].inputs[0].shape == a.ops[0].inputs[0].shape
 
+        def _link_csr(dom):
+            def _same_input(op1, op2):
+                return bool(set(op1.inputs.copy()) & set(op2.inputs.copy()))
+            fuse_arg = {"CSRReduceSum": slice(1, 3), "CSRGather": slice(2, 3)}
+            arg_idx = fuse_arg.get(dom.dom_op().prim, -1)
+            if arg_idx == -1:
+                return []
+            fuse_tensor = dom.dom_op().inputs[arg_idx]
+            for a, _ in dom.in_relations.items():
+                if (a.dom_op().prim == "CSRGather" and a.dom_op().prim == dom.dom_op().prim and
+                        _same_input(dom.dom_op(), a.dom_op())):
+                    return [a], True
+                if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
+                        any([op.output in fuse_tensor for op in a.ops]):
+                    return [a], True
+            return []
+
         def _fuse_loop():
             self.fuse(CommonPattern.reshape)
             self.fuse(CommonPattern.assign)
             self.fuse(CommonPattern.elemwise_depth)
             self.fuse(CommonPattern.elemwise_width)
             self.fuse(_broadcast_tot)
+            self.fuse(_link_csr)
             self.fuse(CommonPattern.broadcast_depth)
             self.fuse(CommonPattern.broadcast_width)
             self.fuse(_reduce_depth)

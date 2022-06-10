@@ -95,7 +95,7 @@ class ParallelCostModel {
  public:
   ParallelCostModel() {}
   ~ParallelCostModel() {}
-  int GetNodeCalAmount(const AnfNodePtr &node) const;
+  int64_t GetNodeCalAmount(const AnfNodePtr &node) const;
   std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> CalFuseInfo(const AnfNodePtrList &nodes) const;
 
  private:

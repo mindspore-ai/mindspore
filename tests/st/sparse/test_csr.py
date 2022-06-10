@@ -311,7 +311,7 @@ def test_batch_csr_ops():
     assert np.allclose(graph_res_elemwise[0].values.asnumpy(), expect3)
     assert np.allclose(graph_res_elemwise[1].values.asnumpy(), expect4)
 
-    expect5 = np.array([1., 1.], dtype=np.float32)
+    expect5 = np.array([[1, 1, 1], [2, 2, 2]], dtype=np.float32)
     res_gather = test_ops_pynative_gather()
     test_ops_graph_gather = ms_function(test_ops_pynative_gather)
     graph_res_gather = test_ops_graph_gather()
