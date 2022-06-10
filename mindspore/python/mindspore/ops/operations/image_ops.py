@@ -469,6 +469,9 @@ class ResizeLinear1D(Primitive):
     r"""
     Using the linear interpolate method resize the input tensor 'x'.
 
+    Note:
+        This is an experimental feature and is subjected to change.
+
     Args:
         coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
             in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.

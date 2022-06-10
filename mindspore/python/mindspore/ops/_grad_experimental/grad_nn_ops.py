@@ -39,6 +39,7 @@ from ..operations.nn_ops import MaxPoolV1
 from ..operations._grad_ops import MaxPoolGradV1
 from ..operations.nn_ops import ReLUV3
 from ..operations._grad_ops import ReluGrad
+from ..operations.image_ops import ResizeLinear1D
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -245,5 +246,17 @@ def get_bprop_grid_sampler_2d(self):
     def bprop(input_x, grid, out, dout):
         dx, dgrid = grad(dout, input_x, grid)
         return dx, dgrid
+
+    return bprop
+
+
+@bprop_getters.register(ResizeLinear1D)
+def get_bprop_resize_bilinear(self):
+    """Grad definition for `ResizeLinear1D` operation."""
+    resize_grad = G.ResizeLinear1DGrad(self.coordinate_transformation_mode)
+
+    def bprop(input_x, size, out, dout):
+        dx = resize_grad(dout, input_x)
+        return (dx, zeros_like(size))
 
     return bprop
