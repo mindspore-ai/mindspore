@@ -19,7 +19,7 @@ mindspore.nn.probability.infer.SVI
 
         numpy.dtype，训练后的损失。
 
-    .. py:method:: run(train_dataset, epochs =10)
+    .. py:method:: run(train_dataset, epochs=10)
      
         通过训练概率网络来优化参数，并返回训练好的网络。
     

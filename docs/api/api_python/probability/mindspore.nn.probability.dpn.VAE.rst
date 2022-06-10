@@ -1,7 +1,7 @@
 mindspore.nn.probability.dpn.VAE
 ================================
 
-.. py:class:: mindspore.nn.probability.dpn.VAE
+.. py:class:: mindspore.nn.probability.dpn.VAE(encoder, decoder, hidden_size, latent_size)
 
     变分自动编码器 (VAE)。
     VAE 定义了一个生成模型，Z从先验中采样，然后由解码器用于重建X。有关更多详细信息，请参阅 `自动编码变分贝叶斯 <https://arxiv.org/abs/1312.6114>`_。
@@ -36,7 +36,7 @@ mindspore.nn.probability.dpn.VAE
 
         Tensor，生成的样本。
 
-    .. py:method:: reconstruct_sample(×)
+    .. py:method:: reconstruct_sample(x)
 
         从原始数据重建样本。
 
