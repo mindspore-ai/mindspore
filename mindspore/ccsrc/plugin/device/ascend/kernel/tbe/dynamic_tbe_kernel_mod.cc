@@ -193,8 +193,8 @@ bool DynamicTbeKernelMod::CopyTilingToDevice(void *stream_ptr) {
   }
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
-  auto ret = aclrtMemcpyAsync(tiling_data_ptr_, op_para_size, tiling_data_.c_str(), tiling_data_.size(),
-                              ACL_MEMCPY_HOST_TO_DEVICE, stream_ptr);
+  auto ret = rtMemcpyAsync(tiling_data_ptr_, op_para_size, tiling_data_.c_str(), tiling_data_.size(),
+                           RT_MEMCPY_HOST_TO_DEVICE_EX, stream_ptr);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Tiling aclrtMemcpyAsync failed, ret:" << ret;
   }

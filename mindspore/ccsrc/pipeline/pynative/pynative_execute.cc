@@ -3174,7 +3174,7 @@ TopCellInfoPtr GradExecutor::GetTopCellWithDynamicShape(const py::object &cell, 
   }
   const auto &cell_self_id = GetId(cell);
   auto it = std::find_if(top_cell_list_.begin(), top_cell_list_.end(), [&cell_self_id](const TopCellInfoPtr &elem) {
-    return elem->cell_self_info()->cell_self_id == cell_self_id;
+    return elem->cell_self_info() != nullptr && elem->cell_self_info()->cell_self_id == cell_self_id;
   });
   if (it != top_cell_list_.end()) {
     const auto &elem = *it;

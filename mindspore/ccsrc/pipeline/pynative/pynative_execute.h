@@ -187,7 +187,7 @@ class TopCellInfo {
   std::string all_op_info_;
   std::string grad_operation_;
   abstract::AbstractBasePtr last_output_abs_;
-  CellSelfInfoPtr cell_self_info_;
+  CellSelfInfoPtr cell_self_info_{nullptr};
   OrderedMap<FuncGraphPtr, GraphInfoPtr> graph_info_map_;
   mindspore::HashSet<std::string> sub_cell_list_;
   // Record `register hook` or `remove hook` function has been called by sub cell
