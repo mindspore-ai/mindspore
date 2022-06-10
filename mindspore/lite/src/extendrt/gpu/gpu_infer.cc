@@ -24,11 +24,8 @@
 #include "backend/common/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
-
 namespace mindspore {
-API_FACTORY_REG(GraphCell::GraphImpl, GPUInferSession);
-
-GPUInferSession::GPUInferSession()
+GPUInferExecutor::GPUInferExecutor()
     : session_impl_(nullptr),
       graph_id_(0),
       device_id_(0),
@@ -40,7 +37,7 @@ GPUInferSession::GPUInferSession()
       load_flag_(false),
       set_device_id_flag_(false) {}
 
-Status GPUInferSession::InitEnv() {
+Status GPUInferExecutor::InitEnv() {
   if (init_flag_) {
     MS_LOG(WARNING) << "Initialized again, return success.";
     return kSuccess;
@@ -85,7 +82,7 @@ Status GPUInferSession::InitEnv() {
   return kSuccess;
 }
 
-Status GPUInferSession::FinalizeEnv() {
+Status GPUInferExecutor::FinalizeEnv() {
   if (!init_flag_) {
     MS_LOG(WARNING) << "Never initialize before, return success";
     return kSuccess;
@@ -100,7 +97,7 @@ Status GPUInferSession::FinalizeEnv() {
   return kSuccess;
 }
 
-Status GPUInferSession::Load(uint32_t device_id) {
+Status GPUInferExecutor::Load(uint32_t device_id) {
   // check graph type
   if (graph_->ModelType() != ModelType::kMindIR) {
     MS_LOG(ERROR) << "Unsupported model type " << graph_->ModelType();
@@ -139,29 +136,7 @@ Status GPUInferSession::Load(uint32_t device_id) {
   return kSuccess;
 }
 
-Status GPUInferSession::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr) {
-  MS_ASSERT(session_impl_ != nullptr);
-  try {
-    graph_id_ = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
-    return kSuccess;
-  } catch (std::exception &e) {
-    MS_LOG(ERROR) << "CompileGraph failed: " << e.what();
-    return kMCFailed;
-  }
-}
-
-std::vector<tensor::TensorPtr> GPUInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inputs) {
-  try {
-    VectorRef outputs;
-    session_impl_->RunGraph(graph_id_, inputs, &outputs);
-    return TransformVectorRefToMultiTensor(outputs);
-  } catch (std::exception &e) {
-    MS_LOG(ERROR) << "RunGraph failed: " << e.what();
-    return std::vector<tensor::TensorPtr>();
-  }
-}
-
-Status GPUInferSession::ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply) {
+Status GPUInferExecutor::ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply) {
   MS_EXCEPTION_IF_NULL(reply);
 
   vector<tensor::TensorPtr> inputs;
@@ -192,7 +167,7 @@ Status GPUInferSession::ExecuteModel(const std::vector<MSTensor> &request, std::
   return kSuccess;
 }
 
-Status GPUInferSession::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+Status GPUInferExecutor::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   if (!load_flag_) {
     Status ret = Load(device_id_);
@@ -239,7 +214,7 @@ Status GPUInferSession::Run(const std::vector<MSTensor> &inputs, std::vector<MST
   return kSuccess;
 }
 
-std::vector<MSTensor> GPUInferSession::GetInputs() {
+std::vector<MSTensor> GPUInferExecutor::GetInputs() {
   if (!load_flag_) {
     Status ret = Load(device_id_);
     if (ret != kSuccess) {
@@ -263,7 +238,7 @@ std::vector<MSTensor> GPUInferSession::GetInputs() {
   return result;
 }
 
-std::vector<MSTensor> GPUInferSession::GetOutputs() {
+std::vector<MSTensor> GPUInferExecutor::GetOutputs() {
   if (!load_flag_) {
     Status ret = Load(device_id_);
     if (ret != kSuccess) {
@@ -290,5 +265,5 @@ std::vector<MSTensor> GPUInferSession::GetOutputs() {
   return result;
 }
 
-bool GPUInferSession::CheckDeviceSupport(mindspore::DeviceType device_type) { return device_type == kGPU; }
+bool GPUInferExecutor::CheckDeviceSupport(mindspore::DeviceType device_type) { return device_type == kGPU; }
 }  // namespace mindspore

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_ASCEND_ASCEND_GRAPH_IMPL_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_ASCEND_ASCEND_GRAPH_IMPL_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_ASCEND_INFER_EXECUTOR_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_ASCEND_INFER_EXECUTOR_H_
 #include <functional>
 #include <map>
 #include <string>
@@ -23,21 +23,18 @@
 #include <utility>
 #include "include/api/status.h"
 #include "include/api/graph.h"
-#include "extendrt/cxx_api/graph/graph_impl.h"
-#include "backend/common/session/session_basic.h"
-#include "ir/anf.h"
-#include "extendrt/cxx_api/model/model_impl.h"
+#include "extendrt/graph_executor.h"
 #include "runtime/context.h"
 
 namespace mindspore {
-class AscendInferSession : public InferSession {
+class AscendInferExecutor : public GraphExecutor {
  public:
-  AscendInferSession();
-  ~AscendInferSession() override;
+  AscendInferExecutor();
+  ~AscendInferExecutor() override;
 
-  Status CompileGraph(FuncGraphPtr graph) override;
-  Status RunGraph() override;
-  Status Resize(const std::vector<Tensor::TensorPtr> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
+  Status Execute(const ExecutePlan &plan, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
+
+ protected:
   bool CheckDeviceSupport(mindspore::DeviceType device_type) override;
   Status Load(uint32_t device_id);
   Status InitEnv();
