@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +126,9 @@ void AccuracyComparison(const std::vector<std::vector<double>> &expect, LiteMat 
   }
 }
 
+/// Feature: InitFromPixel
+/// Description: Test InitFromPixel with LPixelType::RGB
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testRGB) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -141,6 +144,9 @@ TEST_F(MindDataImageProcess, testRGB) {
   cv::Mat dst_image(lite_mat_rgb.height_, lite_mat_rgb.width_, CV_8UC3, lite_mat_rgb.data_ptr_);
 }
 
+/// Feature: LiteMat
+/// Description: Test load data to lite_mat_rgb by memory pointer
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testLoadByMemPtr) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -188,6 +194,9 @@ TEST_F(MindDataImageProcess, testLoadByMemPtr) {
   free(p_rgb_pad);
 }
 
+/// Feature: Image Process
+/// Description: Test processing an image to image with 3 channels
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, test3C) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -209,6 +218,9 @@ TEST_F(MindDataImageProcess, test3C) {
   CompareMat(cv_image, lite_norm_mat_cut);
 }
 
+/// Feature: ResizeCubic
+/// Description: Test ResizeCubic with 3 channels image
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testCubic3C) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -250,6 +262,9 @@ bool ReadYUV(const char *filename, int w, int h, uint8_t **data) {
   return true;
 }
 
+/// Feature: InitFromPixel
+/// Description: Test InitFromPixel with LPixelType::RGBA2GRAY
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestRGBA2GRAY) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -296,6 +311,9 @@ TEST_F(MindDataImageProcess, TestNormalize) {
   }
 }
 
+/// Feature: InitFromPixel
+/// Description: Test InitFromPixel with LPixelType::NV212BGR
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testNV21ToBGR) {
   //  ffmpeg -i ./data/dataset/apple.jpg  -s 1024*800 -pix_fmt nv21 ./data/dataset/yuv/test_nv21.yuv
   const char *filename = "data/dataset/yuv/test_nv21.yuv";
@@ -318,6 +336,9 @@ TEST_F(MindDataImageProcess, testNV21ToBGR) {
   free(yuv_data);
 }
 
+/// Feature: InitFromPixel
+/// Description: Test InitFromPixel with LPixelType::NV122BGR
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testNV12ToBGR) {
   //  ffmpeg -i ./data/dataset/apple.jpg  -s 1024*800 -pix_fmt nv12 ./data/dataset/yuv/test_nv12.yuv
   const char *filename = "data/dataset/yuv/test_nv12.yuv";
@@ -339,6 +360,9 @@ TEST_F(MindDataImageProcess, testNV12ToBGR) {
   free(yuv_data);
 }
 
+/// Feature: ExtractChannel
+/// Description: Test ExtractChannel basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testExtractChannel) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -365,6 +389,9 @@ TEST_F(MindDataImageProcess, testExtractChannel) {
   // cv::imwrite("./test_lite_r.jpg", dst_imageR);
 }
 
+/// Feature: Split
+/// Description: Test Split basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testSplit) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -387,6 +414,9 @@ TEST_F(MindDataImageProcess, testSplit) {
   cv::Mat dst_imageR(lite_r.height_, lite_r.width_, CV_8UC1, lite_r.data_ptr_);
 }
 
+/// Feature: Merge
+/// Description: Test Merge basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testMerge) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -463,6 +493,9 @@ cv::Mat cv1CImageProcess(cv::Mat &image) {
   return imgR2;
 }
 
+/// Feature: ImageProcess
+/// Description: Test image processing on to 1 channel image
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, test1C) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -482,6 +515,9 @@ TEST_F(MindDataImageProcess, test1C) {
   CompareMat(cv_image, lite_norm_mat_cut);
 }
 
+/// Feature: Pad
+/// Description: Test Pad with PaddBorderType::PADD_BORDER_CONSTANT basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestPadd) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -512,6 +548,9 @@ TEST_F(MindDataImageProcess, TestPadd) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: Pad
+/// Description: Test Pad with PaddBorderType::PADD_BORDER_CONSTANT with left=right=top=bottom=0
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestPadZero) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -542,6 +581,9 @@ TEST_F(MindDataImageProcess, TestPadZero) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: Pad
+/// Description: Test Pad with PaddBorderType::PADD_BORDER_REPLICATE
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestPadReplicate) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -573,6 +615,9 @@ TEST_F(MindDataImageProcess, TestPadReplicate) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: Pad
+/// Description: Test Pad with PaddBorderType::PADD_BORDER_REFLECT_101
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestPadReflect101) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -604,6 +649,9 @@ TEST_F(MindDataImageProcess, TestPadReflect101) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: GetDefaultBoxes
+/// Description: Test GetDefaultBoxes basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestGetDefaultBoxes) {
   std::string benchmark = "data/dataset/testLite/default_boxes.bin";
   BoxesConfig config;
@@ -637,6 +685,9 @@ TEST_F(MindDataImageProcess, TestGetDefaultBoxes) {
   EXPECT_LT(distance, 1e-5);
 }
 
+/// Feature: ApplyNms
+/// Description: Test ApplyNms basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestApplyNms) {
   std::vector<std::vector<float>> all_boxes = {{1, 1, 2, 2}, {3, 3, 4, 4}, {5, 5, 6, 6}, {5, 5, 6, 6}};
   std::vector<float> all_scores = {0.6, 0.5, 0.4, 0.9};
@@ -646,6 +697,9 @@ TEST_F(MindDataImageProcess, TestApplyNms) {
   ASSERT_TRUE(keep[2] == 1);
 }
 
+/// Feature: Affine
+/// Description: Test Affine with invalid inputs
+/// Expectation: Throw correct error and message
 TEST_F(MindDataImageProcess, TestAffineInput) {
   LiteMat src(3, 3);
   LiteMat dst;
@@ -655,6 +709,9 @@ TEST_F(MindDataImageProcess, TestAffineInput) {
   EXPECT_FALSE(Affine(src, dst, M, {0, 0}, UINT8_C1(0)));
 }
 
+/// Feature: Affine
+/// Description: Test Affine basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestAffine) {
   // The input matrix
   // 0 0 1 0 0
@@ -718,6 +775,9 @@ TEST_F(MindDataImageProcess, TestAffine) {
   }
 }
 
+/// Feature: Subtract
+/// Description: Test Subtract on dataset with LDataType::UINT8
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestSubtractUint8) {
   const size_t cols = 4;
   // Test uint8
@@ -737,6 +797,9 @@ TEST_F(MindDataImageProcess, TestSubtractUint8) {
   }
 }
 
+/// Feature: Subtract
+/// Description: Test Subtract on dataset with LDataType::INT8
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestSubtractInt8) {
   const size_t cols = 4;
   // Test int8
@@ -755,6 +818,9 @@ TEST_F(MindDataImageProcess, TestSubtractInt8) {
   }
 }
 
+/// Feature: Subtract
+/// Description: Test Subtract on dataset with LDataType::UINT16
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestSubtractUInt16) {
   const size_t cols = 4;
   // Test uint16
@@ -774,6 +840,9 @@ TEST_F(MindDataImageProcess, TestSubtractUInt16) {
   }
 }
 
+/// Feature: Subtract
+/// Description: Test Subtract on dataset with LDataType::INT16
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestSubtractInt16) {
   const size_t cols = 4;
   // Test int16
@@ -793,6 +862,9 @@ TEST_F(MindDataImageProcess, TestSubtractInt16) {
   }
 }
 
+/// Feature: Subtract
+/// Description: Test Subtract on dataset with LDataType::UINT32
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestSubtractUInt32) {
   const size_t cols = 4;
   // Test uint16
@@ -812,6 +884,9 @@ TEST_F(MindDataImageProcess, TestSubtractUInt32) {
   }
 }
 
+/// Feature: Subtract
+/// Description: Test Subtract on dataset with LDataType::INT32
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestSubtractInt32) {
   const size_t cols = 4;
   // Test int32
@@ -831,6 +906,9 @@ TEST_F(MindDataImageProcess, TestSubtractInt32) {
   }
 }
 
+/// Feature: Subtract
+/// Description: Test Subtract on dataset with LDataType::FLOAT32
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestSubtractFloat) {
   const size_t cols = 4;
   // Test float
@@ -850,6 +928,9 @@ TEST_F(MindDataImageProcess, TestSubtractFloat) {
   }
 }
 
+/// Feature: Divide
+/// Description: Test Divide on dataset with LDataType::UINT8
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestDivideUint8) {
   const size_t cols = 4;
   // Test uint8
@@ -869,6 +950,9 @@ TEST_F(MindDataImageProcess, TestDivideUint8) {
   }
 }
 
+/// Feature: Divide
+/// Description: Test Divide on dataset with LDataType::INT8
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestDivideInt8) {
   const size_t cols = 4;
   // Test int8
@@ -887,6 +971,9 @@ TEST_F(MindDataImageProcess, TestDivideInt8) {
   }
 }
 
+/// Feature: Divide
+/// Description: Test Divide on dataset with LDataType::UINT16
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestDivideUInt16) {
   const size_t cols = 4;
   // Test uint16
@@ -906,6 +993,9 @@ TEST_F(MindDataImageProcess, TestDivideUInt16) {
   }
 }
 
+/// Feature: Divide
+/// Description: Test Divide on dataset with LDataType::INT16
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestDivideInt16) {
   const size_t cols = 4;
   // Test int16
@@ -925,6 +1015,9 @@ TEST_F(MindDataImageProcess, TestDivideInt16) {
   }
 }
 
+/// Feature: Divide
+/// Description: Test Divide on dataset with LDataType::UINT32
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestDivideUInt32) {
   const size_t cols = 4;
   // Test uint16
@@ -944,6 +1037,9 @@ TEST_F(MindDataImageProcess, TestDivideUInt32) {
   }
 }
 
+/// Feature: Divide
+/// Description: Test Divide on dataset with LDataType::INT32
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestDivideInt32) {
   const size_t cols = 4;
   // Test int32
@@ -963,6 +1059,9 @@ TEST_F(MindDataImageProcess, TestDivideInt32) {
   }
 }
 
+/// Feature: Divide
+/// Description: Test Divide on dataset with LDataType::FLOAT32
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestDivideFloat) {
   const size_t cols = 4;
   // Test float
@@ -982,6 +1081,9 @@ TEST_F(MindDataImageProcess, TestDivideFloat) {
   }
 }
 
+/// Feature: Multiply
+/// Description: Test Multiply on dataset with LDataType::UINT8
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestMultiplyUint8) {
   const size_t cols = 4;
   // Test uint8
@@ -1001,6 +1103,9 @@ TEST_F(MindDataImageProcess, TestMultiplyUint8) {
   }
 }
 
+/// Feature: Multiply
+/// Description: Test Multiply on dataset with LDataType::UINT16
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestMultiplyUInt16) {
   const size_t cols = 4;
   // Test int16
@@ -1020,6 +1125,9 @@ TEST_F(MindDataImageProcess, TestMultiplyUInt16) {
   }
 }
 
+/// Feature: Multiply
+/// Description: Test Multiply on dataset with LDataType::FLOAT32
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestMultiplyFloat) {
   const size_t cols = 4;
   // Test float
@@ -1039,6 +1147,9 @@ TEST_F(MindDataImageProcess, TestMultiplyFloat) {
   }
 }
 
+/// Feature: ExtractChannel
+/// Description: Test ExtractChannel with invalid LiteMat
+/// Expectation: Throw correct error and message
 TEST_F(MindDataImageProcess, TestExtractChannel) {
   LiteMat lite_single;
   LiteMat lite_mat = LiteMat(1, 4, 3, LDataType::UINT16);
@@ -1046,6 +1157,10 @@ TEST_F(MindDataImageProcess, TestExtractChannel) {
   EXPECT_FALSE(ExtractChannel(lite_mat, lite_single, 0));
   EXPECT_TRUE(lite_single.IsEmpty());
 }
+
+/// Feature: GetROI
+/// Description: Test GetROI using image with 3 channels
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testROI3C) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1076,6 +1191,9 @@ TEST_F(MindDataImageProcess, testROI3C) {
   cv::imwrite("./lite_roi.jpg", dst_imageR);
 }
 
+/// Feature: GetROI
+/// Description: Test GetROI using image with 3 channels with invalid inputs
+/// Expectation: Throw correct error and message
 TEST_F(MindDataImageProcess, testROI3CFalse) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1094,6 +1212,9 @@ TEST_F(MindDataImageProcess, testROI3CFalse) {
   EXPECT_FALSE(ret);
 }
 
+/// Feature: GetROI
+/// Description: Test GetROI using gray image
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testROI1C) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1129,7 +1250,9 @@ TEST_F(MindDataImageProcess, testROI1C) {
   cv::imwrite("./lite_roi.jpg", dst_imageR);
 }
 
-// warp
+/// Feature: WarpAffine
+/// Description: Test WarpAffine on BGR image
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testWarpAffineBGR) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1169,6 +1292,9 @@ TEST_F(MindDataImageProcess, testWarpAffineBGR) {
   cv::imwrite("./warpAffine_lite_bgr.png", dst_imageR);
 }
 
+/// Feature: WarpAffine
+/// Description: Test WarpAffine on BGR image with scale
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testWarpAffineBGRScale) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1208,6 +1334,9 @@ TEST_F(MindDataImageProcess, testWarpAffineBGRScale) {
   cv::imwrite("./warpAffine_lite_bgr_scale.png", dst_imageR);
 }
 
+/// Feature: WarpAffine
+/// Description: Test WarpAffine on BGR image with resize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testWarpAffineBGRResize) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1247,6 +1376,9 @@ TEST_F(MindDataImageProcess, testWarpAffineBGRResize) {
   cv::imwrite("./warpAffine_lite_bgr_resize.png", dst_imageR);
 }
 
+/// Feature: WarpAffine
+/// Description: Test WarpAffine on gray image
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testWarpAffineGray) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1291,6 +1423,9 @@ TEST_F(MindDataImageProcess, testWarpAffineGray) {
   cv::imwrite("./warpAffine_lite_gray.png", dst_imageR);
 }
 
+/// Feature: WarpPerspective
+/// Description: Test WarpPerspective on BGR image with resize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testWarpPerspectiveBGRResize) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1338,6 +1473,9 @@ TEST_F(MindDataImageProcess, testWarpPerspectiveBGRResize) {
   cv::imwrite("./warpPerspective_lite_bgr.png", dst_imageR);
 }
 
+/// Feature: WarpPerspective
+/// Description: Test WarpPerspective on gray image with resize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testWarpPerspectiveGrayResize) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1390,6 +1528,9 @@ TEST_F(MindDataImageProcess, testWarpPerspectiveGrayResize) {
   cv::imwrite("./warpPerspective_lite_gray.png", dst_imageR);
 }
 
+/// Feature: GetRotationMatrix2D
+/// Description: Test GetRotationMatrix2D basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testGetRotationMatrix2D) {
   std::vector<std::vector<double>> expect_matrix = {{0.250000, 0.433013, -0.116025}, {-0.433013, 0.250000, 1.933013}};
 
@@ -1403,6 +1544,9 @@ TEST_F(MindDataImageProcess, testGetRotationMatrix2D) {
   AccuracyComparison(expect_matrix, M);
 }
 
+/// Feature: GetPerspectiveTransform
+/// Description: Test GetPerspectiveTransform basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testGetPerspectiveTransform) {
   std::vector<std::vector<double>> expect_matrix = {
     {1.272113, 3.665216, -788.484287}, {-0.394146, 3.228247, -134.009780}, {-0.001460, 0.006414, 1}};
@@ -1417,6 +1561,9 @@ TEST_F(MindDataImageProcess, testGetPerspectiveTransform) {
   AccuracyComparison(expect_matrix, M);
 }
 
+/// Feature: GetPerspectiveTransform
+/// Description: Test GetPerspectiveTransform with invalid src and dst pairs
+/// Expectation: Throw correct error and message
 TEST_F(MindDataImageProcess, testGetPerspectiveTransformFail) {
   std::vector<Point> src = {Point(165, 270), Point(835, 270), Point(360, 125), Point(615, 125)};
   std::vector<Point> dst = {Point(100, 100), Point(500, 30)};
@@ -1433,6 +1580,9 @@ TEST_F(MindDataImageProcess, testGetPerspectiveTransformFail) {
   EXPECT_FALSE(ret1);
 }
 
+/// Feature: GetAffineTransform
+/// Description: Test GetAffineTransform basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testGetAffineTransform) {
   std::vector<std::vector<double>> expect_matrix = {{0.400000, 0.066667, 16.666667}, {0.000000, 0.333333, 23.333333}};
 
@@ -1446,6 +1596,9 @@ TEST_F(MindDataImageProcess, testGetAffineTransform) {
   AccuracyComparison(expect_matrix, M);
 }
 
+/// Feature: GetAffineTransform
+/// Description: Test GetAffineTransform with invalid src and dst pairs
+/// Expectation: Throw correct error and message
 TEST_F(MindDataImageProcess, testGetAffineTransformFail) {
   std::vector<Point> src = {Point(50, 50), Point(200, 50)};
   std::vector<Point> dst = {Point(40, 40), Point(100, 40), Point(50, 90)};
@@ -1462,6 +1615,9 @@ TEST_F(MindDataImageProcess, testGetAffineTransformFail) {
   EXPECT_FALSE(ret1);
 }
 
+/// Feature: Conv2D
+/// Description: Test Conv2D on LDataType::UINT8
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestConv2D8U) {
   LiteMat lite_mat_src;
   lite_mat_src.Init(3, 3, 1, LDataType::UINT8);
@@ -1490,6 +1646,9 @@ TEST_F(MindDataImageProcess, TestConv2D8U) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: Conv2D
+/// Description: Test Conv2D on LDataType::FLOAT32
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestConv2D32F) {
   LiteMat lite_mat_src;
   lite_mat_src.Init(2, 2, 1, LDataType::FLOAT32);
@@ -1518,6 +1677,9 @@ TEST_F(MindDataImageProcess, TestConv2D32F) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: GaussianBlur
+/// Description: Test GaussianBlur with Size(3, 5)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestGaussianBlurSize35) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1546,6 +1708,9 @@ TEST_F(MindDataImageProcess, TestGaussianBlurSize35) {
   EXPECT_LE(distance, 1.0f);
 }
 
+/// Feature: GaussianBlur
+/// Description: Test GaussianBlur with Size(1, 3)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestGaussianBlurSize13) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1574,6 +1739,9 @@ TEST_F(MindDataImageProcess, TestGaussianBlurSize13) {
   EXPECT_LE(distance, 1.0f);
 }
 
+/// Feature: GaussianBlur
+/// Description: Test GaussianBlur with invalid parameters
+/// Expectation: Throw correct error and message
 TEST_F(MindDataImageProcess, TestGaussianBlurInvalidParams) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1604,6 +1772,9 @@ TEST_F(MindDataImageProcess, TestGaussianBlurInvalidParams) {
   ASSERT_TRUE(ret == false);
 }
 
+/// Feature: Canny
+/// Description: Test Canny with aperture_size=3
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestCannySize3) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1633,6 +1804,9 @@ TEST_F(MindDataImageProcess, TestCannySize3) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: Canny
+/// Description: Test Canny with aperture_size=5
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestCannySize5) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1662,6 +1836,9 @@ TEST_F(MindDataImageProcess, TestCannySize5) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: Canny
+/// Description: Test Canny with aperture_size=7
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestCannySize7) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1691,6 +1868,9 @@ TEST_F(MindDataImageProcess, TestCannySize7) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: Canny
+/// Description: Test Canny with L2Gradient
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestCannyL2) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1721,6 +1901,9 @@ TEST_F(MindDataImageProcess, TestCannyL2) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: Canny
+/// Description: Test Canny with invalid parameters
+/// Expectation: Throw correct error and message
 TEST_F(MindDataImageProcess, TestCannyInvalidParams) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1761,6 +1944,9 @@ TEST_F(MindDataImageProcess, TestCannyInvalidParams) {
   ASSERT_TRUE(ret == false);
 }
 
+/// Feature: Sobel
+/// Description: Test Sobel with one of dx or dy = 0 with default ksize, scale, and delta
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestSobel) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1807,6 +1993,9 @@ TEST_F(MindDataImageProcess, TestSobel) {
   EXPECT_EQ(distance_y, 0.0f);
 }
 
+/// Feature: Sobel
+/// Description: Test Sobel with dx and dy > 0 with ksize=5
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, TestSobelFlag) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1843,6 +2032,9 @@ TEST_F(MindDataImageProcess, TestSobelFlag) {
   EXPECT_EQ(distance_x, 0.0f);
 }
 
+/// Feature: ConvertRgbToBgr
+/// Description: Test ConvertRgbToBgr basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testConvertRgbToBgr) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1861,6 +2053,9 @@ TEST_F(MindDataImageProcess, testConvertRgbToBgr) {
   CompareMat(image, lite_mat_bgr);
 }
 
+/// Feature: ConvertRgbToBgr
+/// Description: Test ConvertRgbToBgr with invalid inputs
+/// Expectation: Throw correct error and message
 TEST_F(MindDataImageProcess, testConvertRgbToBgrFail) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1882,6 +2077,9 @@ TEST_F(MindDataImageProcess, testConvertRgbToBgrFail) {
   ASSERT_TRUE(ret1 == false);
 }
 
+/// Feature: ConvertRgbToGray
+/// Description: Test ConvertRgbToGray basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testConvertRgbToGray) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1904,6 +2102,9 @@ TEST_F(MindDataImageProcess, testConvertRgbToGray) {
   CompareMat(rgb_mat, lite_mat_gray);
 }
 
+/// Feature: ConvertRgbToGray
+/// Description: Test ConvertRgbToGray with invalid inputs
+/// Expectation: Throw correct error and message
 TEST_F(MindDataImageProcess, testConvertRgbToGrayFail) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1937,6 +2138,9 @@ TEST_F(MindDataImageProcess, testConvertRgbToGrayFail) {
   ASSERT_TRUE(ret2 == false);
 }
 
+/// Feature: ResizePreserveARWithFiller
+/// Description: Test ResizePreserveARWithFiller basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataImageProcess, testResizePreserveARWithFillerv) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1954,6 +2158,9 @@ TEST_F(MindDataImageProcess, testResizePreserveARWithFillerv) {
   cv::imwrite("./mindspore_image.jpg", dst_image);
 }
 
+/// Feature: ResizePreserveARWithFiller
+/// Description: Test ResizePreserveARWithFiller with invalid inputs
+/// Expectation: Throw correct error and message
 TEST_F(MindDataImageProcess, testResizePreserveARWithFillervFail) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -2002,7 +2209,7 @@ TEST_F(MindDataImageProcess, testResizePreserveARWithFillervFail) {
 
 /// Feature: Test HWCTOCHW Operation successfully.
 /// Description: The input is a three-dimensional int array.
-/// Expectation: success and The final result should be consistent with expect_value_arr.
+/// Expectation: Success and The final result should be consistent with expect_value_arr.
 TEST_F(MindDataImageProcess, TestHWCTOCHW) {
   std::vector<int32_t> a = {1, 2, 3, 4, 5, 6};
   LiteMat src(1, 2, 3, a.data(), LDataType(LDataType::INT32));
@@ -2020,7 +2227,7 @@ TEST_F(MindDataImageProcess, TestHWCTOCHW) {
 
 /// Feature: Test HWCTOCHW Operation successfully.
 /// Description: The input is a three channel picture.
-/// Expectation: success and The final result should be consistent with expect_value.
+/// Expectation: Success and The final result should be consistent with expect_value.
 TEST_F(MindDataImageProcess, TestHWCTOCHWImage) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);

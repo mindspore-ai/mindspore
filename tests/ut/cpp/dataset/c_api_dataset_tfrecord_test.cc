@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetBasic.";
 
@@ -84,6 +87,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic) {
   iter->Stop();
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasicGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetBasicGetters.";
 
@@ -116,6 +122,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasicGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset with ShuffleMode::kFalse
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetShuffle.";
   // This case is to verify if the list of datafiles are sorted in lexicographical order.
@@ -176,6 +185,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset with ShuffleMode::kGlobal
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetShuffle2.";
   // This case is to verify the content of the data is indeed shuffled.
@@ -224,6 +236,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle2) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset with schema using file path
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetSchemaPath) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetSchemaPath.";
 
@@ -266,6 +281,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetSchemaPath) {
   iter->Stop();
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset with schema using SchemaObj
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetSchemaObj) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetSchemaObj.";
 
@@ -327,6 +345,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetSchemaObj) {
   iter->Stop();
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset without schema (nullptr)
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetNoSchema) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetNoSchema.";
 
@@ -367,6 +388,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetNoSchema) {
   iter->Stop();
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset with column names as input
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetColName) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetColName.";
 
@@ -401,6 +425,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetColName) {
   iter->Stop();
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset with num_shards and shard_id
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetShard) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetShard.";
 
@@ -446,6 +473,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShard) {
   iter2->Stop();
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset with invalid inputs
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetExeception.";
 
@@ -481,6 +511,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception) {
   EXPECT_EQ(ds8->CreateIterator(), nullptr);
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset with column name that does not exist in the dataset
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetExeception2.";
   // This case expected to fail because the input column name does not exist.
@@ -498,6 +531,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset with invalid schema used
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestIncorrectTFSchemaObject) {
   std::string path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -512,6 +548,9 @@ TEST_F(MindDataTestPipeline, TestIncorrectTFSchemaObject) {
   EXPECT_ERROR(itr->GetNextRow(&mp));
 }
 
+/// Feature: TFRecordDataset
+/// Description: Test TFRecordDataset with invalid TFRecord file
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestIncorrectTFrecordFile) {
   std::string path = datasets_root_path_ + "/test_tf_file_3_images2/datasetSchema.json";
   std::shared_ptr<Dataset> ds = TFRecord({path});
@@ -523,7 +562,7 @@ TEST_F(MindDataTestPipeline, TestIncorrectTFrecordFile) {
 
 // Feature: Test TFRecord with a schema file
 // Description: Create TFRecord with datasetSchema1Row.json
-// Expectation: There should  be 1 row in the dataset
+// Expectation: There should be 1 row in the dataset
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic1Row) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetBasic.";
 
@@ -556,7 +595,7 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic1Row) {
 
 // Feature: Test TFRecord with a schema file
 // Description: Create TFRecord with datasetSchema7Rows.json
-// Expectation: There should  be 7 rows in the dataset
+// Expectation: There should be 7 rows in the dataset
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic7Row) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetBasic.";
 

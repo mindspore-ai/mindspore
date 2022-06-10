@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: SBUDataset.
-/// Description: test basic usage of SBUDataset.
-/// Expectation: get correct number of data.
+/// Feature: SBUDataset
+/// Description: Test basic usage of SBUDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSBUDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUDataset.";
 
@@ -63,9 +63,9 @@ TEST_F(MindDataTestPipeline, TestSBUDataset) {
   iter->Stop();
 }
 
-/// Feature: SBUDatasetWithPipeline.
-/// Description: test usage of SBUDataset with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: SBUDataset
+/// Description: Test SBUDataset with pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSBUDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUDatasetWithPipeline.";
 
@@ -121,9 +121,9 @@ TEST_F(MindDataTestPipeline, TestSBUDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: SBUIteratorOneColumn.
-/// Description: test iterator of SBUDataset with only the "image" column.
-/// Expectation: get correct data.
+/// Feature: SBUDataset
+/// Description: Test iterator of SBUDataset with only the image column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSBUIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUIteratorOneColumn.";
   // Create a SBU Dataset
@@ -161,9 +161,9 @@ TEST_F(MindDataTestPipeline, TestSBUIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: SBUIteratorWrongColumn.
-/// Description: test iterator of SBUtDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: SBUDataset
+/// Description: Test iterator of SBUDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSBUIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUIteratorWrongColumn.";
   // Create a SBU Dataset
@@ -177,9 +177,9 @@ TEST_F(MindDataTestPipeline, TestSBUIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: SBUDatasetSize.
-/// Description: test usage of get the size of SBUDataset.
-/// Expectation: get correct number of data.
+/// Feature: SBUDataset
+/// Description: Test SBUDataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestGetSBUDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetSBUDatasetSize.";
 
@@ -191,9 +191,9 @@ TEST_F(MindDataTestPipeline, TestGetSBUDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 5);
 }
 
-/// Feature: SBUDatasetGetters.
-/// Description: test usage of getters SBUDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: SBUDataset
+/// Description: Test SBUDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSBUDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUDatasetGetters.";
 
@@ -228,9 +228,9 @@ TEST_F(MindDataTestPipeline, TestSBUDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 5);
 }
 
-/// Feature: SBUDataFail.
-/// Description: test failure of SBUDataset.
-/// Expectation: get none piece of data.
+/// Feature: SBUDataset
+/// Description: Test SBUDataset with invalid folder path input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSBUDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUDatasetFail.";
 
@@ -244,9 +244,9 @@ TEST_F(MindDataTestPipeline, TestSBUDatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: SBUDataWithNullSamplerFail.
-/// Description: test failure of SBUDataset with null sampler.
-/// Expectation: get none piece of data.
+/// Feature: SBUDataset
+/// Description: Test SBUDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSBUDatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSBUDatasetWithNullSamplerFail.";
 

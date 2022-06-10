@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,9 @@ class MindDataTestExecute : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: Execute Transform op
+/// Description: Test executing AllpassBiquad op in eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestAllpassBiquadWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAllpassBiquadWithEager.";
   // Original waveform
@@ -59,6 +62,9 @@ TEST_F(MindDataTestExecute, TestAllpassBiquadWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing AllpassBiquad op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestAllpassBiquadWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAllpassBiquadWithWrongArg.";
   std::vector<double> labels = {
@@ -78,6 +84,9 @@ TEST_F(MindDataTestExecute, TestAllpassBiquadWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing AdjustGamma op in eager mode with dataset with 3 channels
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestAdjustGammaEager3Channel) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustGammaEager3Channel.";
   // Read images
@@ -92,6 +101,9 @@ TEST_F(MindDataTestExecute, TestAdjustGammaEager3Channel) {
   EXPECT_EQ(rc, Status::OK());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing AdjustGamma op in eager mode with dataset transformed to 1 channel only
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestAdjustGammaEager1Channel) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustGammaEager1Channel.";
   auto m1 = ReadFileToTensor("data/dataset/apple.jpg");
@@ -105,6 +117,9 @@ TEST_F(MindDataTestExecute, TestAdjustGammaEager1Channel) {
   EXPECT_EQ(rc, Status::OK());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing AmplitudeToDB with basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestAmplitudeToDB) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDB.";
   // Original waveform
@@ -125,6 +140,9 @@ TEST_F(MindDataTestExecute, TestAmplitudeToDB) {
   EXPECT_TRUE(status.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing AmplitudeToDB with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDBWrongArgs.";
   // Original waveform
@@ -145,6 +163,9 @@ TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongArgs) {
   EXPECT_FALSE(status.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing AmplitudeToDB with no arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongInput) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAmplitudeToDBWrongInput.";
   // Original waveform
@@ -164,6 +185,9 @@ TEST_F(MindDataTestExecute, TestAmplitudeToDBWrongInput) {
   EXPECT_FALSE(status.IsOk());
 }
 
+/// Feature: Execute composed transform ops
+/// Description: Test executing composed multiple transform ops
+/// Expectation: Output is equal to the expected output and status is okay
 TEST_F(MindDataTestExecute, TestComposeTransforms) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestComposeTransforms.";
 
@@ -172,7 +196,7 @@ TEST_F(MindDataTestExecute, TestComposeTransforms) {
 
   // Transform params
   std::shared_ptr<TensorTransform> decode = std::make_shared<vision::Decode>();
-  std::shared_ptr<TensorTransform> center_crop(new vision::CenterCrop({30}));
+  auto center_crop = std::make_shared<vision::CenterCrop>(std::vector<int32_t>{30});
   std::shared_ptr<TensorTransform> rescale = std::make_shared<vision::Rescale>(1. / 3, 0.5);
 
   auto transform = Execute({decode, center_crop, rescale});
@@ -183,9 +207,9 @@ TEST_F(MindDataTestExecute, TestComposeTransforms) {
   EXPECT_EQ(30, image.Shape()[1]);
 }
 
-/// Feature: ComputeDeltas
-/// Description: test basic function of ComputeDeltas
-/// Expectation: get correct number of data
+/// Feature: ComputeDeltas op
+/// Description: Test basic function of ComputeDeltas op
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestExecute, TestComputeDeltas) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestComputeDeltas.";
   std::shared_ptr<Tensor> input_tensor_;
@@ -209,9 +233,9 @@ TEST_F(MindDataTestExecute, TestComputeDeltas) {
   EXPECT_TRUE(status.IsOk());
 }
 
-/// Feature: ComputeDeltas
-/// Description: test wrong input args of ComputeDeltas
-/// Expectation: get nullptr of iterator
+/// Feature: ComputeDeltas op
+/// Description: Test wrong input args of ComputeDeltas op
+/// Expectation: Get nullptr of iterator
 TEST_F(MindDataTestExecute, TestComputeDeltasWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestComputeDeltasWrongArgs.";
   std::shared_ptr<Tensor> input_tensor_;
@@ -234,6 +258,9 @@ TEST_F(MindDataTestExecute, TestComputeDeltasWrongArgs) {
   EXPECT_FALSE(status.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Crop op after Decode op
+/// Expectation: Output is equal to the expected output and status is okay
 TEST_F(MindDataTestExecute, TestCrop) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestCrop.";
 
@@ -252,7 +279,7 @@ TEST_F(MindDataTestExecute, TestCrop) {
   EXPECT_EQ(image.Shape()[1], 15);
 }
 
-/// Feature: FilterWikipediaXMLEager
+/// Feature: FilterWikipediaXMLEager op
 /// Description: Test FilterWikipediaXML's Eager mode
 /// Expectation: Run successfully
 TEST_F(MindDataTestExecute, TestFilterWikipediaXMLEager) {
@@ -270,6 +297,9 @@ TEST_F(MindDataTestExecute, TestFilterWikipediaXMLEager) {
   ASSERT_TRUE(s.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing FrequencyMasking op basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestFrequencyMasking) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestFrequencyMasking.";
   std::shared_ptr<Tensor> input_tensor_;
@@ -283,9 +313,9 @@ TEST_F(MindDataTestExecute, TestFrequencyMasking) {
   EXPECT_TRUE(status.IsOk());
 }
 
-/// Feature: RandomLighting
-/// Description: test RandomLighting Op when alpha=0.1
-/// Expectation: the data is processed successfully
+/// Feature: RandomLighting op
+/// Description: Test RandomLighting Op when alpha=0.1
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestRandomLighting) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomLighting.";
   // Read images
@@ -300,6 +330,9 @@ TEST_F(MindDataTestExecute, TestRandomLighting) {
   EXPECT_EQ(rc, Status::OK());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing TimeMasking op basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestTimeMasking) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTimeMasking.";
   std::shared_ptr<Tensor> input_tensor_;
@@ -313,6 +346,9 @@ TEST_F(MindDataTestExecute, TestTimeMasking) {
   EXPECT_TRUE(status.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing TimeStretch op basic usage in eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestTimeStretchEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTimeStretchEager.";
   std::shared_ptr<Tensor> input_tensor_;
@@ -338,6 +374,9 @@ TEST_F(MindDataTestExecute, TestTimeStretchEager) {
   EXPECT_TRUE(status.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing TimeStretch op with invalid parameters
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestTimeStretchParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestTimeStretch-TestTimeStretchParamCheck.";
   // Create an input
@@ -361,6 +400,10 @@ TEST_F(MindDataTestExecute, TestTimeStretchParamCheck) {
   EXPECT_FALSE(status.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test Execute with transform op input using API constructors with
+///     std::shared_ptr<TensorTransform pointers, instantiated via mix of make_shared and new
+/// Expectation: Output is equal to the expected output and status is okay
 TEST_F(MindDataTestExecute, TestTransformInput1) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformInput1.";
   // Test Execute with transform op input using API constructors, with std::shared_ptr<TensorTransform pointers,
@@ -371,9 +414,10 @@ TEST_F(MindDataTestExecute, TestTransformInput1) {
 
   // Define transform operations
   std::shared_ptr<TensorTransform> decode = std::make_shared<vision::Decode>();
-  std::shared_ptr<TensorTransform> resize(new vision::Resize({224, 224}));
-  std::shared_ptr<TensorTransform> normalize(
-    new vision::Normalize({0.485 * 255, 0.456 * 255, 0.406 * 255}, {0.229 * 255, 0.224 * 255, 0.225 * 255}));
+  auto resize = std::make_shared<vision::Resize>(std::vector<int32_t>{224, 224});
+  auto normalize = std::make_shared<vision::Normalize>(
+    std::vector<float>{0.485 * 255, 0.456 * 255, 0.406 * 255}, 
+    std::vector<float>{0.229 * 255, 0.224 * 255, 0.225 * 255});
   std::shared_ptr<TensorTransform> hwc2chw = std::make_shared<vision::HWC2CHW>();
 
   mindspore::dataset::Execute Transform({decode, resize, normalize, hwc2chw});
@@ -389,6 +433,10 @@ TEST_F(MindDataTestExecute, TestTransformInput1) {
   ASSERT_EQ(image.Shape()[2], 224);
 }
 
+/// Feature: Execute Transform op
+/// Description: Test Execute with transform op input using API constructors with
+///     std::shared_ptr<TensorTransform pointers, instantiated via new
+/// Expectation: Output is equal to the expected output and status is okay
 TEST_F(MindDataTestExecute, TestTransformInput2) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformInput2.";
   // Test Execute with transform op input using API constructors, with std::shared_ptr<TensorTransform pointers,
@@ -402,11 +450,12 @@ TEST_F(MindDataTestExecute, TestTransformInput2) {
   auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define transform operations
-  std::shared_ptr<TensorTransform> decode(new vision::Decode());
-  std::shared_ptr<TensorTransform> resize(new vision::Resize({224, 224}));
-  std::shared_ptr<TensorTransform> normalize(
-    new vision::Normalize({0.485 * 255, 0.456 * 255, 0.406 * 255}, {0.229 * 255, 0.224 * 255, 0.225 * 255}));
-  std::shared_ptr<TensorTransform> hwc2chw(new vision::HWC2CHW());
+  auto decode = std::make_shared<vision::Decode>();
+  auto resize = std::make_shared<vision::Resize>(std::vector<int32_t>{224, 224});
+  auto normalize = std::make_shared<vision::Normalize>(
+    std::vector<float>{0.485 * 255, 0.456 * 255, 0.406 * 255}, 
+    std::vector<float>{0.229 * 255, 0.224 * 255, 0.225 * 255});
+  auto hwc2chw = std::make_shared<vision::HWC2CHW>();
 
   mindspore::dataset::Execute Transform({decode, resize, normalize, hwc2chw});
 
@@ -421,6 +470,9 @@ TEST_F(MindDataTestExecute, TestTransformInput2) {
   ASSERT_EQ(image.Shape()[2], 224);
 }
 
+/// Feature: Execute Transform op
+/// Description: Test Execute with transform op input using API constructors with auto pointers
+/// Expectation: Output is equal to the expected output and status is okay
 TEST_F(MindDataTestExecute, TestTransformInput3) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformInput3.";
   // Test Execute with transform op input using API constructors, with auto pointers
@@ -451,6 +503,10 @@ TEST_F(MindDataTestExecute, TestTransformInput3) {
   ASSERT_EQ(image.Shape()[2], 3);
 }
 
+/// Feature: Execute Transform op
+/// Description: Test Execute with transform op input using API constructors with auto pointers
+///     then apply 2 transformations sequentially, including single non-vector transform op input
+/// Expectation: Output is equal to the expected output and status is okay
 TEST_F(MindDataTestExecute, TestTransformInputSequential) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformInputSequential.";
   // Test Execute with transform op input using API constructors, with auto pointers;
@@ -462,10 +518,11 @@ TEST_F(MindDataTestExecute, TestTransformInputSequential) {
   auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define transform#1 operations
-  std::shared_ptr<TensorTransform> decode(new vision::Decode());
-  std::shared_ptr<TensorTransform> resize(new vision::Resize({224, 224}));
-  std::shared_ptr<TensorTransform> normalize(
-    new vision::Normalize({0.485 * 255, 0.456 * 255, 0.406 * 255}, {0.229 * 255, 0.224 * 255, 0.225 * 255}));
+  auto decode = std::make_shared<vision::Decode>();
+  auto resize = std::make_shared<vision::Resize>(std::vector<int32_t>{224, 224});
+  auto normalize = std::make_shared<vision::Normalize>(
+    std::vector<float>{0.485 * 255, 0.456 * 255, 0.406 * 255}, 
+    std::vector<float>{0.229 * 255, 0.224 * 255, 0.225 * 255});
 
   std::vector<std::shared_ptr<TensorTransform>> op_list = {decode, resize, normalize};
   mindspore::dataset::Execute Transform(op_list);
@@ -474,7 +531,7 @@ TEST_F(MindDataTestExecute, TestTransformInputSequential) {
   Status rc = Transform(image, &image);
 
   // Define transform#2 operations
-  std::shared_ptr<TensorTransform> hwc2chw(new vision::HWC2CHW());
+  auto hwc2chw = std::make_shared<vision::HWC2CHW>();
   mindspore::dataset::Execute Transform2(hwc2chw);
 
   // Apply transform#2 on image
@@ -488,6 +545,10 @@ TEST_F(MindDataTestExecute, TestTransformInputSequential) {
   ASSERT_EQ(image.Shape()[2], 224);
 }
 
+/// Feature: Execute Transform op
+/// Description: Test Execute with Decode, Resize, and CenterCrop transform ops input using API constructors,
+///     with shared pointers
+/// Expectation: Output is equal to the expected output and status is okay
 TEST_F(MindDataTestExecute, TestTransformDecodeResizeCenterCrop1) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformDecodeResizeCenterCrop1.";
   // Test Execute with Decode, Resize and CenterCrop transform ops input using API constructors, with shared pointers
@@ -500,10 +561,10 @@ TEST_F(MindDataTestExecute, TestTransformDecodeResizeCenterCrop1) {
   // Define transform operations
   std::vector<int32_t> resize_paras = {256, 256};
   std::vector<int32_t> crop_paras = {224, 224};
-  std::shared_ptr<TensorTransform> decode(new vision::Decode());
-  std::shared_ptr<TensorTransform> resize(new vision::Resize(resize_paras));
-  std::shared_ptr<TensorTransform> centercrop(new vision::CenterCrop(crop_paras));
-  std::shared_ptr<TensorTransform> hwc2chw(new vision::HWC2CHW());
+  auto decode = std::make_shared<vision::Decode>();
+  auto resize = std::make_shared<vision::Resize>(resize_paras);
+  auto centercrop = std::make_shared<vision::CenterCrop>(crop_paras);
+  auto hwc2chw = std::make_shared<vision::HWC2CHW>();
 
   std::vector<std::shared_ptr<TensorTransform>> op_list = {decode, resize, centercrop, hwc2chw};
   mindspore::dataset::Execute Transform(op_list, MapTargetDevice::kCpu);
@@ -519,6 +580,9 @@ TEST_F(MindDataTestExecute, TestTransformDecodeResizeCenterCrop1) {
   ASSERT_EQ(image.Shape()[2], 224);
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing UniformAugment op basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestUniformAugment) {
   // Read images
   auto image = ReadFileToTensor("data/dataset/apple.jpg");
@@ -526,21 +590,25 @@ TEST_F(MindDataTestExecute, TestUniformAugment) {
 
   // Transform params
   std::shared_ptr<TensorTransform> decode = std::make_shared<vision::Decode>();
-  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({16, 16}));
+  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{16, 16});
   std::shared_ptr<TensorTransform> vertical = std::make_shared<vision::RandomVerticalFlip>();
   std::shared_ptr<TensorTransform> horizontal = std::make_shared<vision::RandomHorizontalFlip>();
 
-  std::shared_ptr<TensorTransform> uniform_op(new vision::UniformAugment({resize_op, vertical, horizontal}, 3));
+  auto uniform_op = std::make_shared<vision::UniformAugment>(
+    std::vector<std::shared_ptr<TensorTransform>>{resize_op, vertical, horizontal}, 3);
 
   auto transform1 = Execute({decode});
   Status rc = transform1(image, &image);
   ASSERT_TRUE(rc.IsOk());
 
-  auto transform2 = Execute({uniform_op});
+  auto transform2 = Execute(std::vector<std::shared_ptr<TensorTransform>>{uniform_op});
   rc = transform2({image}, &image2);
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing BasicTokenizer op basic usage
+/// Expectation: Status is okay and output is equal to the expected output
 TEST_F(MindDataTestExecute, TestBasicTokenizer) {
   std::shared_ptr<Tensor> de_tensor;
   Tensor::CreateScalar<std::string>("Welcome to China.", &de_tensor);
@@ -558,6 +626,9 @@ TEST_F(MindDataTestExecute, TestBasicTokenizer) {
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Decode op then Rotate op
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestRotate) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRotate.";
 
@@ -574,6 +645,9 @@ TEST_F(MindDataTestExecute, TestRotate) {
   EXPECT_EQ(rc, Status::OK());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Decode op then ResizeWithBBox op
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestResizeWithBBox) {
   auto image = ReadFileToTensor("data/dataset/apple.jpg");
   std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
@@ -589,6 +663,9 @@ TEST_F(MindDataTestExecute, TestResizeWithBBox) {
   EXPECT_FALSE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing BandBiquad op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestBandBiquadWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandBiquadWithEager.";
   // Original waveform
@@ -608,6 +685,9 @@ TEST_F(MindDataTestExecute, TestBandBiquadWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing BandBiquad op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestBandBiquadWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandBiquadWithWrongArg.";
   std::vector<double> labels = {
@@ -627,6 +707,9 @@ TEST_F(MindDataTestExecute, TestBandBiquadWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing BandpassBiquad op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestBandpassBiquadWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandpassBiquadWithEager.";
   // Original waveform
@@ -646,6 +729,9 @@ TEST_F(MindDataTestExecute, TestBandpassBiquadWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing BandpassBiquad op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestBandpassBiquadWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandpassBiquadWithWrongArg.";
   std::vector<double> labels = {
@@ -665,6 +751,9 @@ TEST_F(MindDataTestExecute, TestBandpassBiquadWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing BandrejectBiquad op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestBandrejectBiquadWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandrejectBiquadWithEager.";
   // Original waveform
@@ -684,6 +773,9 @@ TEST_F(MindDataTestExecute, TestBandrejectBiquadWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing BandrejectBiquad op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestBandrejectBiquadWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestBandrejectBiquadWithWrongArg.";
   std::vector<double> labels = {
@@ -703,6 +795,9 @@ TEST_F(MindDataTestExecute, TestBandrejectBiquadWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Angle op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestAngleEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAngleEager.";
   std::vector<double> origin = {1.143, 1.3123, 2.632, 2.554, -1.213, 1.3, 0.456, 3.563};
@@ -718,9 +813,9 @@ TEST_F(MindDataTestExecute, TestAngleEager) {
   ASSERT_TRUE(s.IsOk());
 }
 
-/// Feature: MelScale
-/// Description: test basic usage of MelScale
-/// Expectation: the data is processed successfully
+/// Feature: MelScale op
+/// Description: Test basic usage of MelScale op
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestMelScale) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestMelScale.";
   // Original waveform
@@ -741,6 +836,9 @@ TEST_F(MindDataTestExecute, TestMelScale) {
   EXPECT_TRUE(status.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Decode op then RGB2BGR op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestRGB2BGREager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRGB2BGREager.";
 
@@ -757,6 +855,9 @@ TEST_F(MindDataTestExecute, TestRGB2BGREager) {
   EXPECT_EQ(rc, Status::OK());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing EqualizerBiquad op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestEqualizerBiquadEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestEqualizerBiquadEager.";
   int sample_rate = 44100;
@@ -769,12 +870,15 @@ TEST_F(MindDataTestExecute, TestEqualizerBiquadEager) {
                                      0.7598, 0.5394, 0.2842, 0.5634, 0.6363, 0.2226, 0.2288};
   Tensor::CreateFromVector(test_vector, TensorShape({5, 3}), &test);
   auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
-  std::shared_ptr<TensorTransform> equalizer_biquad(new audio::EqualizerBiquad({sample_rate, center_freq, gain, Q}));
-  auto transform = Execute({equalizer_biquad});
+  auto equalizer_biquad = std::make_shared<audio::EqualizerBiquad>(sample_rate, center_freq, gain, Q);
+  auto transform = Execute(std::vector<std::shared_ptr<TensorTransform>>{equalizer_biquad});
   Status rc = transform({input}, &output);
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing EqualizerBiquad op with invalid Q parameter
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestEqualizerBiquadParamCheckQ) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestEqualizerBiquadParamCheckQ.";
   std::vector<mindspore::MSTensor> output;
@@ -790,6 +894,9 @@ TEST_F(MindDataTestExecute, TestEqualizerBiquadParamCheckQ) {
   ASSERT_FALSE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing EqualizerBiquad op with invalid sample_rate
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestEqualizerBiquadParamCheckSampleRate) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestEqualizerBiquadParamCheckSampleRate.";
   std::vector<mindspore::MSTensor> output;
@@ -805,6 +912,9 @@ TEST_F(MindDataTestExecute, TestEqualizerBiquadParamCheckSampleRate) {
   ASSERT_FALSE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing LowpassBiquad op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestLowpassBiquadEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestLowpassBiquadEager.";
   int sample_rate = 44100;
@@ -816,12 +926,15 @@ TEST_F(MindDataTestExecute, TestLowpassBiquadEager) {
                                      11.3, 37.4, 67.1, 33.8, 73.4, 53.3, 93.7, 31.1};
   Tensor::CreateFromVector(test_vector, TensorShape({4, 4}), &test);
   auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
-  std::shared_ptr<TensorTransform> lowpass_biquad(new audio::LowpassBiquad({sample_rate, cutoff_freq, Q}));
-  auto transform = Execute({lowpass_biquad});
+  auto lowpass_biquad = std::make_shared<audio::LowpassBiquad>(sample_rate, cutoff_freq, Q);
+  auto transform = Execute(std::vector<std::shared_ptr<TensorTransform>>{lowpass_biquad});
   Status rc = transform({input}, &output);
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing LowpassBiquad op with invalid Q
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestLowpassBiuqadParamCheckQ) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestLowpassBiuqadParamCheckQ.";
 
@@ -838,6 +951,9 @@ TEST_F(MindDataTestExecute, TestLowpassBiuqadParamCheckQ) {
   ASSERT_FALSE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing LowpassBiquad with invalid sample_rate
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestLowpassBiuqadParamCheckSampleRate) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestLowpassBiuqadParamCheckSampleRate.";
 
@@ -853,6 +969,9 @@ TEST_F(MindDataTestExecute, TestLowpassBiuqadParamCheckSampleRate) {
   ASSERT_FALSE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing ComplexNorm op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestComplexNormEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestComplexNormEager.";
   // testing
@@ -868,6 +987,9 @@ TEST_F(MindDataTestExecute, TestComplexNormEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Contrast op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestContrastWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestContrastWithEager.";
   // Original waveform
@@ -882,6 +1004,9 @@ TEST_F(MindDataTestExecute, TestContrastWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Contrast op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestContrastWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestContrastWithWrongArg.";
   std::vector<double> labels = {-1.007, -5.06, 7.934, 6.683, 1.312, 1.84, 2.246, 2.597};
@@ -896,6 +1021,9 @@ TEST_F(MindDataTestExecute, TestContrastWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing DeemphBiquad op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestDeemphBiquadWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestDeemphBiquadWithEager";
   // Original waveform
@@ -915,6 +1043,9 @@ TEST_F(MindDataTestExecute, TestDeemphBiquadWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing DeemphBiquad op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestDeemphBiquadWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestDeemphBiquadWithWrongArg.";
   std::vector<double> labels = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
@@ -929,9 +1060,9 @@ TEST_F(MindDataTestExecute, TestDeemphBiquadWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
-// Feature: Gain
-// Description: test Gain in eager mode
-// Expectation: the data is processed successfully
+// Feature: Gain op
+// Description: Test Gain op in eager mode
+// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestGainWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestGainWithEager.";
   // Original waveform
@@ -951,6 +1082,9 @@ TEST_F(MindDataTestExecute, TestGainWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing HighpassBiquad op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestHighpassBiquadEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestHighpassBiquadEager.";
   int sample_rate = 44100;
@@ -962,12 +1096,15 @@ TEST_F(MindDataTestExecute, TestHighpassBiquadEager) {
                                      0.7598, 0.5394, 0.2842, 0.5634, 0.6363, 0.2226, 0.2288};
   Tensor::CreateFromVector(test_vector, TensorShape({5, 3}), &test);
   auto input = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
-  std::shared_ptr<TensorTransform> highpass_biquad(new audio::HighpassBiquad({sample_rate, cutoff_freq, Q}));
-  auto transform = Execute({highpass_biquad});
+  auto highpass_biquad = std::make_shared<audio::HighpassBiquad>(sample_rate, cutoff_freq, Q);
+  auto transform = Execute(std::vector<std::shared_ptr<TensorTransform>>{highpass_biquad});
   Status rc = transform({input}, &output);
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing HighpassBiquad with invalid Q
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestHighpassBiquadParamCheckQ) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestHighpassBiquadParamCheckQ.";
   std::vector<mindspore::MSTensor> output;
@@ -984,6 +1121,9 @@ TEST_F(MindDataTestExecute, TestHighpassBiquadParamCheckQ) {
   ASSERT_FALSE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing HighpassBiquad op with invalid sample_rate
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestHighpassBiquadParamCheckSampleRate) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestHighpassBiquadParamCheckSampleRate.";
   std::vector<mindspore::MSTensor> output;
@@ -998,9 +1138,9 @@ TEST_F(MindDataTestExecute, TestHighpassBiquadParamCheckSampleRate) {
   ASSERT_FALSE(rc.IsOk());
 }
 
-// Feature: InverseMelScale
-// Description: test InverseMelScale in eager mode
-// Expectation: the data is processed successfully
+// Feature: InverseMelScale op
+// Description: Test InverseMelScale op in eager mode
+// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestInverseMelScale) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestInverseMelScale.";
   // Original waveform
@@ -1021,6 +1161,9 @@ TEST_F(MindDataTestExecute, TestInverseMelScale) {
   EXPECT_TRUE(status.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing MuLawDecoding op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestMuLawDecodingEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestMuLawDecodingEager.";
   // testing
@@ -1036,9 +1179,9 @@ TEST_F(MindDataTestExecute, TestMuLawDecodingEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
-/// Feature: MuLawEncoding
-/// Description: test MuLawEncoding in eager mode
-/// Expectation: the data is processed successfully
+/// Feature: MuLawEncoding op
+/// Description: Test MuLawEncoding op in eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestMuLawEncodingEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestMuLawEncodingEager.";
   // testing
@@ -1054,9 +1197,9 @@ TEST_F(MindDataTestExecute, TestMuLawEncodingEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
-/// Feature: Overdrive
-/// Description: test basic usage of Overdrive
-/// Expectation: get correct number of data
+/// Feature: Overdrive op
+/// Description: Test basic usage of Overdrive op
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestExecute, TestOverdriveBasicWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestOverdriveBasicWithEager.";
   // Original waveform
@@ -1075,9 +1218,9 @@ TEST_F(MindDataTestExecute, TestOverdriveBasicWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
-/// Feature: MaskAlongAxisIID
-/// Description: test MaskAlongAxisIID
-/// Expectation: the returned result is as expected
+/// Feature: MaskAlongAxisIID op
+/// Description: Test MaskAlongAxisIID op
+/// Expectation: The returned result is as expected
 TEST_F(MindDataTestExecute, TestMaskAlongAxisIID) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestMaskAlongAxisIID.";
   // testing
@@ -1092,9 +1235,9 @@ TEST_F(MindDataTestExecute, TestMaskAlongAxisIID) {
   EXPECT_TRUE(status.IsOk());
 }
 
-/// Feature: Overdrive
-/// Description: test invalid parameter of Overdrive
-/// Expectation: throw exception correctly
+/// Feature: Overdrive op
+/// Description: Test invalid parameter of Overdrive op
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestExecute, TestOverdriveWrongArgWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestOverdriveWrongArgWithEager";
   std::vector<double> labels = {0.271, 1.634, 9.246,  0.108, 1.138, 1.156, 3.394,
@@ -1118,6 +1261,9 @@ TEST_F(MindDataTestExecute, TestOverdriveWrongArgWithEager) {
   EXPECT_FALSE(s02.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing RiaaBiquad op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestRiaaBiquadWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRiaaBiquadWithEager.";
   // Original waveform
@@ -1137,6 +1283,9 @@ TEST_F(MindDataTestExecute, TestRiaaBiquadWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing RiaaBiquad op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestRiaaBiquadWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRiaaBiquadWithWrongArg.";
   std::vector<float> labels = {3.156, 5.690, 1.362, 1.093, 5.782, 6.381, 5.982, 3.098, 1.222, 6.027,
@@ -1152,6 +1301,9 @@ TEST_F(MindDataTestExecute, TestRiaaBiquadWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing TrebleBiquad op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestTrebleBiquadWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTrebleBiquadWithEager.";
   // Original waveform
@@ -1166,6 +1318,9 @@ TEST_F(MindDataTestExecute, TestTrebleBiquadWithEager) {
   EXPECT_OK(Transform01(input_01, &input_01));
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing TrebleBiquad op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestTrebleBiquadWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTrebleBiquadWithWrongArg.";
   std::vector<double> labels = {
@@ -1191,6 +1346,9 @@ TEST_F(MindDataTestExecute, TestTrebleBiquadWithWrongArg) {
   EXPECT_ERROR(Transform02(input02, &input02));
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing LFilter op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestLFilterWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestLFilterWithEager.";
   // Original waveform
@@ -1212,6 +1370,9 @@ TEST_F(MindDataTestExecute, TestLFilterWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing LFilter op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestLFilterWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestLFilterWithWrongArg.";
   std::vector<double> labels = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
@@ -1229,9 +1390,9 @@ TEST_F(MindDataTestExecute, TestLFilterWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
-/// Feature: Phaser
-/// Description: test basic usage of Phaser
-/// Expectation: get correct number of data
+/// Feature: Phaser op
+/// Description: Test basic usage of Phaser op
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestExecute, TestPhaserBasicWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestPhaserBasicWithEager.";
   // Original waveform
@@ -1250,9 +1411,9 @@ TEST_F(MindDataTestExecute, TestPhaserBasicWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
-/// Feature: Phaser
-/// Description: test invalid parameter of Phaser
-/// Expectation: throw exception correctly
+/// Feature: Phaser op
+/// Description: Test invalid parameter of Phaser op
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestExecute, TestPhaserInputArgWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestPhaserInputArgWithEager";
   std::vector<double> labels = {0.271, 1.634, 9.246,  0.108, 1.138, 1.156, 3.394,
@@ -1297,6 +1458,9 @@ TEST_F(MindDataTestExecute, TestPhaserInputArgWithEager) {
   EXPECT_FALSE(s05.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing DCShift op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestDCShiftEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestDCShiftEager.";
 
@@ -1311,6 +1475,9 @@ TEST_F(MindDataTestExecute, TestDCShiftEager) {
   ASSERT_TRUE(s.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Biquad op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestBiquadWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestBiquadWithEager.";
   // Original waveform
@@ -1326,6 +1493,9 @@ TEST_F(MindDataTestExecute, TestBiquadWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Biquad op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestBiquadWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestBiquadWithWrongArg.";
   std::vector<double> labels = {
@@ -1345,6 +1515,9 @@ TEST_F(MindDataTestExecute, TestBiquadWithWrongArg) {
   EXPECT_FALSE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Fade op with various FadeShape
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestFade) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestFade.";
   std::vector<float> waveform = {
@@ -1382,6 +1555,9 @@ TEST_F(MindDataTestExecute, TestFade) {
   EXPECT_TRUE(s05.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Fade op with default arguments
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestFadeDefaultArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestFadeDefaultArg.";
   std::vector<double> waveform = {
@@ -1409,6 +1585,9 @@ TEST_F(MindDataTestExecute, TestFadeDefaultArg) {
   EXPECT_TRUE(s03.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Fade op with invalid arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestFadeWithInvalidArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestFadeWithInvalidArg.";
   std::vector<float> waveform = {
@@ -1441,9 +1620,9 @@ TEST_F(MindDataTestExecute, TestFadeWithInvalidArg) {
   EXPECT_FALSE(s04.IsOk());
 }
 
-/// Feature: Fade
-/// Description: test Fade with bool type
-/// Expectation: success.
+/// Feature: Fade op
+/// Description: Test Fade op with bool type
+/// Expectation: The dataset is processed successfully
 TEST_F(MindDataTestExecute, TestFadeWithBool) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestFadeWithBool.";
   std::vector<bool> waveform = {1, 0, 1, 1, 1, 1, 1, 1};
@@ -1456,9 +1635,9 @@ TEST_F(MindDataTestExecute, TestFadeWithBool) {
   EXPECT_TRUE(s01.IsOk());
 }
 
-/// Feature: GriffinLim
-/// Description: test basic usage of GriffinLim
-/// Expectation: success
+/// Feature: GriffinLim op
+/// Description: Test basic usage of GriffinLim op
+/// Expectation: The dataset is processed successfully
 TEST_F(MindDataTestExecute, TestGriffinLimDefaultValue) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestGriffinLimDefaultValue.";
   // Random waveform
@@ -1478,9 +1657,9 @@ TEST_F(MindDataTestExecute, TestGriffinLimDefaultValue) {
   EXPECT_TRUE(status.IsOk());
 }
 
-/// Feature: Vad
-/// Description: test basic usage of Vad
-/// Expectation: success
+/// Feature: Vad op
+/// Description: Test basic usage of Vad op
+/// Expectation: The dataset is processed successfully
 TEST_F(MindDataTestExecute, TestVadDefaultValue) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestVadDefaultValue.";
   // Random waveform
@@ -1500,6 +1679,9 @@ TEST_F(MindDataTestExecute, TestVadDefaultValue) {
   EXPECT_TRUE(status.IsOk());
 }
 
+/// Feature: Execute Vol op
+/// Description: Test executing Vol op with default values
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestVolDefalutValue) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestVolDefalutValue.";
   std::shared_ptr<Tensor> input_tensor_;
@@ -1513,6 +1695,9 @@ TEST_F(MindDataTestExecute, TestVolDefalutValue) {
   EXPECT_TRUE(status.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Vol op with GainType::kPower
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestVolGainTypePower) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestVolGainTypePower.";
   std::shared_ptr<Tensor> input_tensor_;
@@ -1526,6 +1711,9 @@ TEST_F(MindDataTestExecute, TestVolGainTypePower) {
   EXPECT_TRUE(status.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Magphase op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestMagphaseEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestMagphaseEager.";
   float power = 1.0;
@@ -1534,12 +1722,15 @@ TEST_F(MindDataTestExecute, TestMagphaseEager) {
   std::vector<float> test_vector = {3, 4, -3, 4, 3, -4, -3, -4, 5, 12, -5, 12, 5, -12, -5, -12};
   Tensor::CreateFromVector(test_vector, TensorShape({2, 4, 2}), &test);
   auto input_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(test));
-  std::shared_ptr<TensorTransform> magphase(new audio::Magphase({power}));
-  auto transform = Execute({magphase});
+  auto magphase = std::make_shared<audio::Magphase>(power);
+  auto transform = Execute(std::vector<std::shared_ptr<TensorTransform>>{magphase});
   Status rc = transform({input_tensor}, &output_tensor);
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Decode then RandomInvert op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestRandomInvertEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomInvertEager.";
   // Read images
@@ -1554,6 +1745,9 @@ TEST_F(MindDataTestExecute, TestRandomInvertEager) {
   EXPECT_EQ(rc, Status::OK());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Decode then RandomAutoContrast op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestRandomAutoContrastEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomAutoContrastEager.";
   // Read images
@@ -1568,6 +1762,9 @@ TEST_F(MindDataTestExecute, TestRandomAutoContrastEager) {
   EXPECT_EQ(rc, Status::OK());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Decode then RandomEqualize op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestRandomEqualizeEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomEqualizeEager.";
   // Read images
@@ -1582,6 +1779,9 @@ TEST_F(MindDataTestExecute, TestRandomEqualizeEager) {
   EXPECT_EQ(rc, Status::OK());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Decode then RandomAdjustSharpness op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestRandomAdjustSharpnessEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomAdjustSharpnessEager.";
   // Read images
@@ -1596,6 +1796,9 @@ TEST_F(MindDataTestExecute, TestRandomAdjustSharpnessEager) {
   EXPECT_EQ(rc, Status::OK());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing DetectPitchFrequency op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestDetectPitchFrequencyWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestDetectPitchFrequencyWithEager.";
   // Original waveform
@@ -1616,6 +1819,9 @@ TEST_F(MindDataTestExecute, TestDetectPitchFrequencyWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing DetectPitchFrequency with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestDetectPitchFrequencyWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestDetectPitchFrequencyWithWrongArg.";
   std::vector<float> labels = {
@@ -1661,9 +1867,9 @@ TEST_F(MindDataTestExecute, TestDetectPitchFrequencyWithWrongArg) {
   EXPECT_FALSE(s05.IsOk());
 }
 
-/// Feature: Dither
-/// Description: test Dither in eager mode
-/// Expectation: the data is processed successfully
+/// Feature: Dither op
+/// Description: Test Dither op in eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestDitherWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestDitherWithEager.";
   // Original waveform
@@ -1683,6 +1889,9 @@ TEST_F(MindDataTestExecute, TestDitherWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Flanger op with eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestFlangerWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestFlangerWithEager.";
   // Original waveform
@@ -1702,6 +1911,9 @@ TEST_F(MindDataTestExecute, TestFlangerWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: Execute Transform op
+/// Description: Test executing Flanger op with wrong arguments
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestExecute, TestFlangerWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestFlangerWithWrongArg.";
   std::vector<double> labels = {1.143, 1.3123, 2.632, 2.554, 1.213, 1.3, 0.456, 3.563};
@@ -1717,8 +1929,8 @@ TEST_F(MindDataTestExecute, TestFlangerWithWrongArg) {
 }
 
 /// Feature: Vectors
-/// Description: test basic usage of Vectors and the ToVectors with default parameter
-/// Expectation: get correct MSTensor
+/// Description: Test basic usage of Vectors and the ToVectors with default parameter
+/// Expectation: Get correct MSTensor
 TEST_F(MindDataTestExecute, TestVectorsParam) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestVectorsParam.";
   std::shared_ptr<Tensor> de_tensor;
@@ -1763,9 +1975,9 @@ TEST_F(MindDataTestExecute, TestVectorsParam) {
   EXPECT_TRUE(status03.IsOk());
 }
 
-/// Feature: ToVectors
-/// Description: test basic usage of ToVectors and the Vectors with default parameter
-/// Expectation: get correct MSTensor
+/// Feature: ToVectors op
+/// Description: Test basic usage of ToVectors op and the Vectors with default parameter
+/// Expectation: Get correct MSTensor
 TEST_F(MindDataTestExecute, TestToVectorsParam) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsParam.";
   std::shared_ptr<Tensor> de_tensor01;
@@ -1823,9 +2035,9 @@ TEST_F(MindDataTestExecute, TestToVectorsParam) {
   EXPECT_TRUE(status04.IsOk());
 }
 
-/// Feature: ToVectors
-/// Description: test invalid parameter of ToVectors
-/// Expectation: throw exception correctly
+/// Feature: ToVectors op
+/// Description: Test invalid parameter of ToVectors op
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParam) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsWithInvalidParam.";
   std::shared_ptr<Tensor> de_tensor;
@@ -1851,8 +2063,8 @@ TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParam) {
 }
 
 /// Feature: FastText
-/// Description: test basic usage of FastText and the ToVectors with default parameter
-/// Expectation: get correct MSTensor
+/// Description: Test basic usage of FastText and the ToVectors with default parameter
+/// Expectation: Get correct MSTensor
 TEST_F(MindDataTestExecute, TestFastTextParam) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestFastTextParam.";
   std::shared_ptr<Tensor> de_tensor;
@@ -1897,9 +2109,9 @@ TEST_F(MindDataTestExecute, TestFastTextParam) {
   EXPECT_TRUE(status03.IsOk());
 }
 
-/// Feature: ToVectors
-/// Description: test basic usage of ToVectors and the FastText with default parameter
-/// Expectation: get correct MSTensor
+/// Feature: ToVectors op
+/// Description: Test basic usage of ToVectors op and the FastText with default parameter
+/// Expectation: Get correct MSTensor
 TEST_F(MindDataTestExecute, TestToVectorsParamForFastText) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsParamForFastText.";
   std::shared_ptr<Tensor> de_tensor01;
@@ -1957,9 +2169,9 @@ TEST_F(MindDataTestExecute, TestToVectorsParamForFastText) {
   EXPECT_TRUE(status04.IsOk());
 }
 
-/// Feature: ToVectors
-/// Description: test invalid parameter of ToVectors for FastText
-/// Expectation: throw exception correctly
+/// Feature: ToVectors op
+/// Description: Test invalid parameter of ToVectors op for FastText
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForFastText) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsWithInvalidParamForFastText.";
   std::shared_ptr<Tensor> de_tensor;
@@ -1985,8 +2197,8 @@ TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForFastText) {
 }
 
 /// Feature: GloVe
-/// Description: test basic usage of GloVe and the ToVectors with default parameter
-/// Expectation: get correct MSTensor
+/// Description: Test basic usage of GloVe and the ToVectors with default parameter
+/// Expectation: Get correct MSTensor
 TEST_F(MindDataTestExecute, TestGloVeParam) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestGloVeParam.";
   std::shared_ptr<Tensor> de_tensor;
@@ -2031,9 +2243,9 @@ TEST_F(MindDataTestExecute, TestGloVeParam) {
   EXPECT_TRUE(status03.IsOk());
 }
 
-/// Feature: ToVectors
-/// Description: test basic usage of ToVectors and the GloVe with default parameter
-/// Expectation: get correct MSTensor
+/// Feature: ToVectors op
+/// Description: Test basic usage of ToVectors op and the GloVe with default parameter
+/// Expectation: Get correct MSTensor
 TEST_F(MindDataTestExecute, TestToVectorsParamForGloVe) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsParamForGloVe.";
   std::shared_ptr<Tensor> de_tensor01;
@@ -2091,9 +2303,9 @@ TEST_F(MindDataTestExecute, TestToVectorsParamForGloVe) {
   EXPECT_TRUE(status04.IsOk());
 }
 
-/// Feature: ToVectors
-/// Description: test invalid parameter of ToVectors for GloVe
-/// Expectation: throw exception correctly
+/// Feature: ToVectors op
+/// Description: Test invalid parameter of ToVectors for GloVe
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForGloVe) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsWithInvalidParamForGloVe.";
   std::shared_ptr<Tensor> de_tensor;
@@ -2119,8 +2331,8 @@ TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForGloVe) {
 }
 
 /// Feature: CharNGram
-/// Description: test basic usage of CharNGram and the ToVectors with default parameter
-/// Expectation: get correct MSTensor
+/// Description: Test basic usage of CharNGram and the ToVectors with default parameter
+/// Expectation: Get correct MSTensor
 TEST_F(MindDataTestExecute, TestCharNGramParam) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestCharNGramParam.";
   std::shared_ptr<Tensor> de_tensor;
@@ -2169,8 +2381,8 @@ TEST_F(MindDataTestExecute, TestCharNGramParam) {
 }
 
 /// Feature: CharNGram
-/// Description: test basic usage of ToVectors and the CharNGram with default parameter
-/// Expectation: get correct MSTensor
+/// Description: Test basic usage of ToVectors and the CharNGram with default parameter
+/// Expectation: Get correct MSTensor
 TEST_F(MindDataTestExecute, TestToVectorsParamForCharNGram) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsParamForCharNGram.";
   std::shared_ptr<Tensor> de_tensor01;
@@ -2228,8 +2440,8 @@ TEST_F(MindDataTestExecute, TestToVectorsParamForCharNGram) {
 }
 
 /// Feature: CharNGram
-/// Description: test invalid parameter of ToVectors
-/// Expectation: throw exception correctly
+/// Description: Test invalid parameter of ToVectors op
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForCharNGram) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestToVectorsWithInvalidParamForCharNGram.";
   std::shared_ptr<Tensor> de_tensor;
@@ -2254,9 +2466,9 @@ TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForCharNGram) {
   EXPECT_FALSE(status02.IsOk());
 }
 
-// Feature: DBToAmplitude
-// Description: test DBToAmplitude in eager mode
-// Expectation: the data is processed successfully
+// Feature: DBToAmplitude op
+// Description: Test DBToAmplitude op in eager mode
+// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestDBToAmplitudeWithEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestDBToAmplitudeWithEager.";
   // Original waveform
@@ -2276,9 +2488,9 @@ TEST_F(MindDataTestExecute, TestDBToAmplitudeWithEager) {
   EXPECT_TRUE(s01.IsOk());
 }
 
-/// Feature: PhaseVocoder
-/// Description: test PhaseVocoder in eager mode
-/// Expectation: the data is processed successfully
+/// Feature: PhaseVocoder op
+/// Description: Test PhaseVocoder op in eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestPhaseVocoderEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestPhaseVocoderEager.";
   // testing
@@ -2302,9 +2514,9 @@ TEST_F(MindDataTestExecute, TestPhaseVocoderEager) {
   EXPECT_TRUE(status.IsOk());
 }
 
-/// Feature: SlidingWindowCmn
-/// Description: test basic function of SlidingWindowCmn
-/// Expectation: get correct number of data
+/// Feature: SlidingWindowCmn op
+/// Description: Test basic function of SlidingWindowCmn op
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestExecute, TestSlidingWindowCmn) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestSlidingWindowCmn.";
 
@@ -2332,9 +2544,9 @@ TEST_F(MindDataTestExecute, TestSlidingWindowCmn) {
   EXPECT_TRUE(status.IsOk());
 }
 
-/// Feature: SlidingWindowCmn
-/// Description: test wrong input args of SlidingWindowCmn
-/// Expectation: get nullptr of iterator
+/// Feature: SlidingWindowCmn op
+/// Description: Test wrong input args of SlidingWindowCmn op
+/// Expectation: Get nullptr of iterator
 TEST_F(MindDataTestExecute, TestSlidingWindowCmnWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestSlidingWindowCmnWrongArgs.";
 
@@ -2364,9 +2576,9 @@ TEST_F(MindDataTestExecute, TestSlidingWindowCmnWrongArgs) {
   EXPECT_FALSE(status_2.IsOk());
 }
 
-/// Feature: AutoAugment
-/// Description: test AutoAugment eager
-/// Expectation: load one image data and process auto augmentation with given policy on it.
+/// Feature: AutoAugment op
+/// Description: Test AutoAugment op eager
+/// Expectation: Load one image data and process auto augmentation with given policy on it
 TEST_F(MindDataTestExecute, TestAutoAugmentEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestAutoAugmentEager.";
   // Read images
@@ -2381,9 +2593,9 @@ TEST_F(MindDataTestExecute, TestAutoAugmentEager) {
   EXPECT_EQ(rc, Status::OK());
 }
 
-/// Feature: Spectrogram.
-/// Description: test Spectrogram in eager mode.
-/// Expectation: the data is processed successfully.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op in eager mode.
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestSpectrogramEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-SpectrogramEager.";
   std::shared_ptr<Tensor> test_input_tensor;
@@ -2397,9 +2609,9 @@ TEST_F(MindDataTestExecute, TestSpectrogramEager) {
   ASSERT_TRUE(rc.IsOk());
 }
 
-/// Feature: SpectralCentroid.
-/// Description: test SpectralCentroid in eager mode.
-/// Expectation: the data is processed successfully.
+/// Feature: SpectralCentroid op
+/// Description: Test SpectralCentroid op in eager mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestExecute, TestSpectralCentroidEager) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-SpectralCentroidEager.";
   std::shared_ptr<Tensor> test_input_tensor;
@@ -2413,9 +2625,9 @@ TEST_F(MindDataTestExecute, TestSpectralCentroidEager) {
   ASSERT_TRUE(rc.IsOk());
 }
 
-/// Feature: SpectralCentroid.
-/// Description: test wrong input args of SpectralCentroid in eager mode.
-/// Expectation: Expectation: throw exception correctly
+/// Feature: SpectralCentroid op
+/// Description: Test wrong input args of SpectralCentroid in eager mode
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestExecute, TestSpectralCentroidWithWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestSpectralCentroidWithWrongArg.";
   std::shared_ptr<Tensor> test_input_tensor;
@@ -2432,7 +2644,7 @@ TEST_F(MindDataTestExecute, TestSpectralCentroidWithWrongArg) {
 }
 
 /// Feature: Execute Construct Demo1
-/// Description: demonstrate how to construct a Execute
+/// Description: Demonstrate how to construct a Execute
 /// Expectation: Construct Execute object and run
 TEST_F(MindDataTestExecute, TestConstructorDemo1) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestConstructorDemo1.";
@@ -2453,7 +2665,7 @@ TEST_F(MindDataTestExecute, TestConstructorDemo1) {
 }
 
 /// Feature: Execute Construct Demo2
-/// Description: demonstrate how to construct a Execute
+/// Description: Demonstrate how to construct a Execute
 /// Expectation: Construct Execute object and run
 TEST_F(MindDataTestExecute, TestConstructorDemo2) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestConstructorDemo2.";
@@ -2479,7 +2691,7 @@ TEST_F(MindDataTestExecute, TestConstructorDemo2) {
 }
 
 /// Feature: Execute Construct Demo3
-/// Description: demonstrate how to construct a Execute
+/// Description: Demonstrate how to construct a Execute
 /// Expectation: Construct Execute object and run
 TEST_F(MindDataTestExecute, TestConstructorDemo3) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestConstructorDemo3.";
@@ -2489,8 +2701,8 @@ TEST_F(MindDataTestExecute, TestConstructorDemo3) {
   std::vector<mindspore::MSTensor> aug_images;
 
   // Pass smart pointers of Transformation object
-  std::shared_ptr<TensorTransform> decode(new vision::Decode());
-  std::shared_ptr<TensorTransform> resize(new vision::Resize({66, 77}));
+  auto decode = std::make_shared<vision::Decode>();
+  auto resize = std::make_shared<vision::Resize>(std::vector<int32_t>{66, 77});
   std::vector<std::shared_ptr<TensorTransform>> ops = {decode, resize};
 
   auto transform = Execute(ops);
@@ -2502,7 +2714,7 @@ TEST_F(MindDataTestExecute, TestConstructorDemo3) {
 }
 
 /// Feature: Execute Construct Demo4
-/// Description: demonstrate how to construct a Execute
+/// Description: Demonstrate how to construct a Execute
 /// Expectation: Construct Execute object and run
 TEST_F(MindDataTestExecute, TestConstructorDemo4) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestConstructorDemo4.";
@@ -2527,9 +2739,9 @@ TEST_F(MindDataTestExecute, TestConstructorDemo4) {
   delete resize;
 }
 
-/// Feature: MaskAlongAxis
-/// Description: test MaskAlongAxis
-/// Expectation: the returned result is as expected
+/// Feature: MaskAlongAxis op
+/// Description: Test MaskAlongAxis op
+/// Expectation: The returned result is as expected
 TEST_F(MindDataTestExecute, TestMaskAlongAxis) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestMaskAlongAxis.";
   std::shared_ptr<Tensor> input;

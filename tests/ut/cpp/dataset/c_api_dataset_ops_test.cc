@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,6 +153,9 @@ MSTensorVec BucketBatchTestFunction(MSTensorVec input) {
   return RowToVec(output);
 }
 
+/// Feature: Batch and Repeat ops
+/// Description: Test Batch and Repeat ops on MnistDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestBatchAndRepeat) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBatchAndRepeat.";
 
@@ -194,6 +197,9 @@ TEST_F(MindDataTestPipeline, TestBatchAndRepeat) {
   iter->Stop();
 }
 
+/// Feature: BucketBatchByLength op
+/// Description: Test BucketBatchByLength op with default values
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess1) {
   // Calling with default values
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthSuccess1.";
@@ -230,6 +236,9 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess1) {
   iter->Stop();
 }
 
+/// Feature: BucketBatchByLength op
+/// Description: Test BucketBatchByLength op with non-default values
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess2) {
   // Calling with non-default values
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthSuccess2.";
@@ -267,6 +276,9 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess2) {
   iter->Stop();
 }
 
+/// Feature: BucketBatchByLength op
+/// Description: Test BucketBatchByLength op with empty bucket_boundaries
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail1) {
   // Empty bucket_boundaries
   // Calling with function pointer
@@ -287,6 +299,9 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BucketBatchByLength op
+/// Description: Test BucketBatchByLength op with empty bucket_batch_sizes
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail2) {
   // Empty bucket_batch_sizes
   // Calling with function pointer
@@ -307,6 +322,9 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BucketBatchByLength op
+/// Description: Test BucketBatchByLength op with negative boundaries
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail3) {
   // Negative boundaries
   // Calling with function pointer
@@ -327,6 +345,9 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BucketBatchByLength op
+/// Description: Test BucketBatchByLength op with boundaries not strictly increasing
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail4) {
   // Boundaries not strictly increasing
   // Calling with function pointer
@@ -347,6 +368,9 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BucketBatchByLength op
+/// Description: Test BucketBatchByLength op with incorrect size of bucket_batch_size
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail5) {
   // Incorrect size of bucket_batch_size
   // Calling with function pointer
@@ -367,6 +391,9 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail5) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BucketBatchByLength op
+/// Description: Test BucketBatchByLength op with negative bucket_batch_size
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail6) {
   // Negative bucket_batch_size
   // Calling with function pointer
@@ -386,6 +413,9 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail6) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BucketBatchByLength op
+/// Description: Test with element_length_function not specified and column_names has more than 1 element
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail7) {
   // This should fail because element_length_function is not specified and column_names has more than 1 element.
   // Calling with function pointer
@@ -406,6 +436,9 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail7) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Concat op
+/// Description: Test Concat op where the input column names of concatenated datasets are not the same
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestConcatFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatFail1.";
   // This case is expected to fail because the input column names of concatenated datasets are not the same
@@ -438,6 +471,9 @@ TEST_F(MindDataTestPipeline, TestConcatFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Concat op
+/// Description: Test Concat op where the input dataset is empty
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestConcatFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatFail2.";
   // This case is expected to fail because the input dataset is empty.
@@ -458,6 +494,9 @@ TEST_F(MindDataTestPipeline, TestConcatFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Concat op
+/// Description: Test Concat op where the input dataset is nullptr
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestConcatFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatFail3.";
   // This case is expected to fail because the input dataset is nullptr.
@@ -478,6 +517,9 @@ TEST_F(MindDataTestPipeline, TestConcatFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Concat op
+/// Description: Test Concat op where the input dataset is nullptr
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestConcatFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatFail4.";
   // This case is expected to fail because the input dataset is nullptr.
@@ -498,6 +540,9 @@ TEST_F(MindDataTestPipeline, TestConcatFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Concat op
+/// Description: Test Concat op where the dataset concat itself which causes ProjectNode with two parent nodes
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestConcatFail5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatFail5.";
   // This case is expected to fail because the dataset concat itself which causes ProjectNode has two parent nodes
@@ -527,6 +572,9 @@ TEST_F(MindDataTestPipeline, TestConcatFail5) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Concat op
+/// Description: Test Concat op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConcatSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatSuccess.";
 
@@ -578,6 +626,9 @@ TEST_F(MindDataTestPipeline, TestConcatSuccess) {
   iter->Stop();
 }
 
+/// Feature: Concat op
+/// Description: Test Concat op followed by GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConcatGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatGetDatasetSize.";
 
@@ -606,6 +657,9 @@ TEST_F(MindDataTestPipeline, TestConcatGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 19);
 }
 
+/// Feature: Concat op
+/// Description: Test Concat op using "+" operator to concat two datasets
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConcatSuccess2) {
   // Test "+" operator to concat two datasets
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatSuccess2.";
@@ -658,6 +712,9 @@ TEST_F(MindDataTestPipeline, TestConcatSuccess2) {
   iter->Stop();
 }
 
+/// Feature: Filter op
+/// Description: Test Filter op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFilterSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterSuccess1.";
   // Test basic filter api with specific predicate to judge if label is equal to 3
@@ -672,7 +729,7 @@ TEST_F(MindDataTestPipeline, TestFilterSuccess1) {
   std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>(true);
   EXPECT_NE(decode_op, nullptr);
 
-  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({64, 64}));
+  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{64, 64});
   EXPECT_NE(resize_op, nullptr);
 
   // Create a Map operation on ds
@@ -715,6 +772,9 @@ TEST_F(MindDataTestPipeline, TestFilterSuccess1) {
   iter->Stop();
 }
 
+/// Feature: Filter op
+/// Description: Test Filter op without input_columns
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFilterSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterSuccess2.";
   // Test filter api without input_columns
@@ -762,6 +822,9 @@ TEST_F(MindDataTestPipeline, TestFilterSuccess2) {
   iter->Stop();
 }
 
+/// Feature: Filter op
+/// Description: Test Filter op with nullptr predicate
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFilterFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterFail1.";
   // Test filter api with nullptr predicate
@@ -784,6 +847,9 @@ TEST_F(MindDataTestPipeline, TestFilterFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Filter op
+/// Description: Test Filter op with wrong input_columns
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFilterFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterFail2.";
   // Test filter api with wrong input_columns
@@ -820,6 +886,9 @@ TEST_F(MindDataTestPipeline, TestFilterFail2) {
   iter->Stop();
 }
 
+/// Feature: Filter op
+/// Description: Test Filter op with empty string as column name
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFilterFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterFail3.";
   // Test filter api with empty input_columns
@@ -840,6 +909,10 @@ TEST_F(MindDataTestPipeline, TestFilterFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Test ImageFolder with Batch and Repeat operations
+/// Description: Perform Repeat and Batch ops based on repeat_count, batch_size, num_samples, and replacement,
+///     iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 void ImageFolderBatchAndRepeat(int32_t repeat_count, int32_t batch_size, int64_t num_samples, 
                                bool replacement, std::string datasets_root_path) {
   // Create an ImageFolder Dataset
@@ -891,11 +964,9 @@ void ImageFolderBatchAndRepeat(int32_t repeat_count, int32_t batch_size, int64_t
   iter->Stop();
 }
 
-// Feature: Test ImageFolder with Batch and Repeat operations
-// Description: Perform Repeat and Batch ops with varying parameters, 
-// iterate through dataset and count rows
-// Expectation: Number of rows should be equal to the size of the dataset/num_samples 
-// times the repeat_count divided by the batch_size
+/// Feature: Test ImageFolder with Batch and Repeat operations
+/// Description: Perform Repeat and Batch ops with varying parameters, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestImageFolderBatchAndRepeat) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderBatchAndRepeat.";
   ImageFolderBatchAndRepeat(2, 2, 10, false, datasets_root_path_);
@@ -903,6 +974,9 @@ TEST_F(MindDataTestPipeline, TestImageFolderBatchAndRepeat) {
   ImageFolderBatchAndRepeat(3, 2, 12, true, datasets_root_path_);
 }
 
+/// Feature: Test ImageFolder with Batch and Repeat operations
+/// Description: Test ImageFolder with Repeat and Batch operations, followed by GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPipelineGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPipelineGetDatasetSize.";
 
@@ -924,6 +998,9 @@ TEST_F(MindDataTestPipeline, TestPipelineGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
+/// Feature: GetDatasetSize
+/// Description: Test distributed ImageFolder where num_per_shard is more than num_samples, followed by GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDistributedGetDatasetSize1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedGetDatasetSize1.";
   // Test get dataset size in distributed scenario when num_per_shard is more than num_samples
@@ -955,6 +1032,9 @@ TEST_F(MindDataTestPipeline, TestDistributedGetDatasetSize1) {
   EXPECT_EQ(i, 10);
 }
 
+/// Feature: GetDatasetSize
+/// Description: Test distributed ImageFolder where num_per_shard is less than num_samples, followed by GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDistributedGetDatasetSize2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedGetDatasetSize2.";
   // Test get dataset size in distributed scenario when num_per_shard is less than num_samples
@@ -986,6 +1066,9 @@ TEST_F(MindDataTestPipeline, TestDistributedGetDatasetSize2) {
   EXPECT_EQ(i, 11);
 }
 
+/// Feature: Project and Map ops
+/// Description: Test Project op after a Map op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestProjectMap) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProjectMap.";
 
@@ -1040,6 +1123,9 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
   iter->Stop();
 }
 
+/// Feature: Project op
+/// Description: Test Project op with duplicate column name
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestProjectDuplicateColumnFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProjectDuplicateColumnFail.";
 
@@ -1069,6 +1155,9 @@ TEST_F(MindDataTestPipeline, TestProjectDuplicateColumnFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Map op
+/// Description: Test Map op with duplicate column name
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMapDuplicateColumnFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMapDuplicateColumnFail.";
 
@@ -1109,6 +1198,9 @@ TEST_F(MindDataTestPipeline, TestMapDuplicateColumnFail) {
   EXPECT_EQ(iter3, nullptr);
 }
 
+/// Feature: Map op
+/// Description: Test Map op with nullptr as the operation
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMapNullOperation) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMapNullOperation.";
 
@@ -1128,6 +1220,9 @@ TEST_F(MindDataTestPipeline, TestMapNullOperation) {
   EXPECT_EQ(iter1, nullptr);
 }
 
+/// Feature: Project and Map ops
+/// Description: Test auto injection of Project op after Map op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline.TestProjectMapAutoInjection";
 
@@ -1142,7 +1237,7 @@ TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
+  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{30, 30});
   EXPECT_NE(resize_op, nullptr);
 
   // Create a Map operation on ds
@@ -1179,6 +1274,9 @@ TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
   iter->Stop();
 }
 
+/// Feature: Rename op
+/// Description: Test Rename op where input and output in Rename are not the same size
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRenameFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRenameFail1.";
   // We expect this test to fail because input and output in Rename are not the same size
@@ -1203,6 +1301,9 @@ TEST_F(MindDataTestPipeline, TestRenameFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Rename op
+/// Description: Test Rename op where input or output column name is empty
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRenameFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRenameFail2.";
   // We expect this test to fail because input or output column name is empty
@@ -1222,6 +1323,9 @@ TEST_F(MindDataTestPipeline, TestRenameFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Rename op
+/// Description: Test Rename op with duplicate column name
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRenameFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRenameFail3.";
   // We expect this test to fail because duplicate column name
@@ -1250,6 +1354,9 @@ TEST_F(MindDataTestPipeline, TestRenameFail3) {
   EXPECT_EQ(iter2, nullptr);
 }
 
+/// Feature: Rename op
+/// Description: Test Rename op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRenameSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRenameSuccess.";
 
@@ -1300,6 +1407,9 @@ TEST_F(MindDataTestPipeline, TestRenameSuccess) {
   iter->Stop();
 }
 
+/// Feature: Repeat op
+/// Description: Test Repeat op with default inputs (repeat count is -1)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRepeatDefault) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRepeatDefault.";
 
@@ -1343,6 +1453,9 @@ TEST_F(MindDataTestPipeline, TestRepeatDefault) {
   iter->Stop();
 }
 
+/// Feature: Repeat op
+/// Description: Test Repeat op with repeat count to be 1
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRepeatOne) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRepeatOne.";
 
@@ -1382,6 +1495,9 @@ TEST_F(MindDataTestPipeline, TestRepeatOne) {
   iter->Stop();
 }
 
+/// Feature: Repeat op
+/// Description: Test Repeat op with invalid repeat_num=0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRepeatFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRepeatFail1.";
 
@@ -1401,6 +1517,9 @@ TEST_F(MindDataTestPipeline, TestRepeatFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Repeat op
+/// Description: Test Repeat op with invalid repeat_num=-2
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRepeatFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRepeatFail2.";
   // This case is expected to fail because the repeat count is invalid (<-1 && !=0).
@@ -1421,6 +1540,9 @@ TEST_F(MindDataTestPipeline, TestRepeatFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Shuffle op
+/// Description: Test Shuffle op on ImageFolderDataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestShuffleDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestShuffleDataset.";
 
@@ -1467,7 +1589,9 @@ TEST_F(MindDataTestPipeline, TestShuffleDataset) {
   iter->Stop();
 }
 
-
+/// Feature: Test shuffle operation on TFRecord dataset
+/// Description: Iterate through dataset with a shuffle size of shuffle_size and count the number of rows
+/// Expectation: There should be 10 rows in the dataset
 void TestShuffleTFRecord(int32_t shuffle_size, std::string dataset_root_path) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestShuffleTFRecord.";
 
@@ -1501,9 +1625,9 @@ void TestShuffleTFRecord(int32_t shuffle_size, std::string dataset_root_path) {
   iter->Stop();
 }
 
-// Feature: Test shuffle operation on TFRecord dataset
-// Description: Iterate through dataset with a shuffle size of 4 and 100 and count the number of rows
-// Expectation: There should be 10 rows in the dataset
+/// Feature: Test shuffle operation on TFRecord dataset
+/// Description: Iterate through dataset with a shuffle size of 4 and 100 and count the number of rows
+/// Expectation: There should be 10 rows in the dataset
 TEST_F(MindDataTestPipeline, TestShuffleTFRecord) {
  TestShuffleTFRecord(4, datasets_root_path_);
  TestShuffleTFRecord(100, datasets_root_path_);
@@ -1547,6 +1671,9 @@ TEST_F(MindDataTestPipeline, TestSkipDataset) {
   iter->Stop();
 }
 
+/// Feature: Skip, Take, Repeat ops
+/// Description: Test Skip, Project, Take, then Repeat op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSkipTakeRepeat) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSkipTakeRepeat.";
 
@@ -1592,6 +1719,9 @@ TEST_F(MindDataTestPipeline, TestSkipTakeRepeat) {
   iter->Stop();
 }
 
+/// Feature: Skip op
+/// Description: Test Skip op followed by GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSkipGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSkipGetDatasetSize.";
 
@@ -1608,6 +1738,9 @@ TEST_F(MindDataTestPipeline, TestSkipGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 7);
 }
 
+/// Feature: Skip op
+/// Description: Test Skip op with invalid count input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSkipDatasetError1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSkipDatasetError1.";
 
@@ -1627,6 +1760,9 @@ TEST_F(MindDataTestPipeline, TestSkipDatasetError1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Take op
+/// Description: Test Take op with default count=-1
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTakeDatasetDefault) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTakeDatasetDefault.";
 
@@ -1664,6 +1800,9 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetDefault) {
   iter->Stop();
 }
 
+/// Feature: Take op
+/// Description: Test Take op followed by GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTakeGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTakeGetDatasetSize.";
 
@@ -1679,6 +1818,9 @@ TEST_F(MindDataTestPipeline, TestTakeGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 2);
 }
 
+/// Feature: Take op
+/// Description: Test Take op with invalid count input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTakeDatasetError1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTakeDatasetError1.";
 
@@ -1708,6 +1850,9 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetError1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Take op
+/// Description: Test Take op with valid count input
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTakeDatasetNormal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTakeDatasetNormal.";
 
@@ -1745,6 +1890,9 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetNormal) {
   iter->Stop();
 }
 
+/// Feature: Tensor and Map ops
+/// Description: Test Tensor and Map ops
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTensorOpsAndMap) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTensorOpsAndMap.";
 
@@ -1759,10 +1907,10 @@ TEST_F(MindDataTestPipeline, TestTensorOpsAndMap) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
+  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{30, 30});
   EXPECT_NE(resize_op, nullptr);
 
-  std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
+  auto center_crop_op = std::make_shared<vision::CenterCrop>(std::vector<int32_t>{16, 16});
   EXPECT_NE(center_crop_op, nullptr);
 
   // Create a Map operation on ds
@@ -1797,6 +1945,9 @@ TEST_F(MindDataTestPipeline, TestTensorOpsAndMap) {
   iter->Stop();
 }
 
+/// Feature: Zip op
+/// Description: Test Zip op with datasets that have image and label columns (same column names)
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestZipFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipFail.";
   // We expect this test to fail because we are the both datasets we are zipping have "image" and "label" columns
@@ -1826,6 +1977,9 @@ TEST_F(MindDataTestPipeline, TestZipFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Zip op
+/// Description: Test Zip op with empty input dataset
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestZipFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipFail2.";
   // This case is expected to fail because the input dataset is empty.
@@ -1846,6 +2000,9 @@ TEST_F(MindDataTestPipeline, TestZipFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Zip op
+/// Description: Test Zip op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestZipSuccess) {
   // Testing the member zip() function
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipSuccess.";
@@ -1916,6 +2073,9 @@ TEST_F(MindDataTestPipeline, TestZipSuccess) {
   iter->Stop();
 }
 
+/// Feature: Zip op
+/// Description: Test Zip op followed by GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestZipGetDatasetSize) {
   // Testing the member zip() function
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipGetDatasetSize.";
@@ -1954,6 +2114,9 @@ TEST_F(MindDataTestPipeline, TestZipGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 2);
 }
 
+/// Feature: Zip op
+/// Description: Test Zip op using static zip() function
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestZipSuccess2) {
   // Testing the static zip() function
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestZipSuccess2.";
@@ -2008,6 +2171,9 @@ TEST_F(MindDataTestPipeline, TestZipSuccess2) {
   iter->Stop();
 }
 
+/// Feature: SetNumWorkers op
+/// Description: Test SetNumWorkers with various inputs
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestNumWorkersValidate) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNumWorkersValidate.";
 
@@ -2035,7 +2201,7 @@ TEST_F(MindDataTestPipeline, TestNumWorkersValidate) {
   }
 }
 
-// Feature: Test Conact operation on TFRecord dataset
+// Feature: Test Concat operation on TFRecord dataset
 // Description: Perform Concat on two identical datasets, iterate through the product and count rows
 // Expectation: There should be 2 rows in the concatenated dataset (2 times original size)
 TEST_F(MindDataTestPipeline, TestConcatTFRecord) {
@@ -2233,8 +2399,8 @@ TEST_F(MindDataTestPipeline, TestTFRecordRename) {
 }
 
 // Feature: Test TFRecord with Zip and Repeat operation
-// Description: Create two datasets and apply Zip operation on them. 
-// Apply Repeat operation on resulting dataset and count rows
+// Description: Create two datasets and apply Zip operation on them.
+//     Apply Repeat operation on resulting dataset and count rows
 // Expectation: There should be 9 rows in the dataset
 TEST_F(MindDataTestPipeline, TestTFRecordZip) {
   // Testing the member zip() function
@@ -2386,6 +2552,9 @@ TEST_F(MindDataTestPipeline, TestBatch) {
   iter->Stop();
 }
 
+/// Feature: Test Repeat and Batch on TFRecord
+/// Description: Apply repeat then batch with drop=drop, count rows in the dataset
+/// Expectation: The number of rows should equal the expected_rows
 void TestRepeatBatch(bool drop, uint64_t expected_rows, std::string datasets_root_path) {
   // Create a TFRecord Dataset
   std::string file_path = datasets_root_path + "/testBatchDataset/test.data";
@@ -2423,15 +2592,18 @@ void TestRepeatBatch(bool drop, uint64_t expected_rows, std::string datasets_roo
   iter->Stop();
 }
 
-// Feature: Test Repeat and Batch on TFRecord
-// Description: Apply repeat then batch with drop on and off, count rows in the dataset
-// Expectation: The number of rows should equal the expected number of rows
+/// Feature: Test Repeat and Batch on TFRecord
+/// Description: Apply repeat then batch with drop on and off, count rows in the dataset
+/// Expectation: The number of rows should equal the expected number of rows
 TEST_F(MindDataTestPipeline, TestRepeatBatchDrop) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRepeatBatchDrop.";
   TestRepeatBatch(true, 3, datasets_root_path_);
   TestRepeatBatch(false, 4, datasets_root_path_);
 }
 
+/// Feature: Test Batch and Repeat on TFRecord
+/// Description: Apply batch then repeat with drop=drop, count rows in the dataset
+/// Expectation: The number of rows should equal the expected_rows
 void TestBatchRepeat(bool drop, uint64_t expected_rows, std::string datasets_root_path) {
   // Create a TFRecord Dataset
   std::string file_path = datasets_root_path + "/testBatchDataset/test.data";
@@ -2469,9 +2641,9 @@ void TestBatchRepeat(bool drop, uint64_t expected_rows, std::string datasets_roo
   iter->Stop();
 }
 
-// Feature: Test Batch and Repeat on TFRecord
-// Description: Apply batch then repeat with drop on and off, count rows in the dataset
-// Expectation: The number of rows should equal the expected number of rows
+/// Feature: Test Batch and Repeat on TFRecord
+/// Description: Apply batch then repeat with drop on and off, count rows in the dataset
+/// Expectation: The number of rows should equal the expected number of rows
 TEST_F(MindDataTestPipeline, TestBatchDropRepeat) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBatchDropRepeat.";
   TestBatchRepeat(true, 2, datasets_root_path_);

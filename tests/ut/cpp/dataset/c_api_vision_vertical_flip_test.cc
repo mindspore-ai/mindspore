@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ class MindDataTestVerticalFlip : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: VerticalFlip op
+/// Description: Test VerticalFlip op in pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestVerticalFlip, TestVerticalFlipPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestVerticalFlip-TestVerticalFlipPipeline.";
 
@@ -34,7 +37,7 @@ TEST_F(MindDataTestVerticalFlip, TestVerticalFlipPipeline) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> vertical_flip(new vision::VerticalFlip());
+  auto vertical_flip = std::make_shared<vision::VerticalFlip>();
 
   // Create a Map operation on ds
   ds = ds->Map({vertical_flip});
@@ -68,6 +71,9 @@ TEST_F(MindDataTestVerticalFlip, TestVerticalFlipPipeline) {
   iter->Stop();
 }
 
+/// Feature: VerticalFlip op
+/// Description: Test VerticalFlip op in eager mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestVerticalFlip, TestVerticalFlipEager) {
   MS_LOG(INFO) << "Doing MindDataTestVerticalFlip-TestVerticalFlipEager.";
 

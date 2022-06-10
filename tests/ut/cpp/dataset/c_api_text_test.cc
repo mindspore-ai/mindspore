@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: BasicTokenizer op
+/// Description: Test BasicTokenizer op on TextFileDataset with default inputs
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBasicTokenizerSuccess1.";
   // Test BasicTokenizer with default parameters
@@ -103,6 +106,9 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess1) {
   iter->Stop();
 }
 
+/// Feature: BasicTokenizer op
+/// Description: Test BasicTokenizer op on TextFileDataset with lower_case=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBasicTokenizerSuccess2.";
   // Test BasicTokenizer with lower_case true
@@ -153,6 +159,9 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess2) {
   iter->Stop();
 }
 
+/// Feature: BasicTokenizer op
+/// Description: Test BasicTokenizer op on TextFileDataset with with_offsets=true and lower_case=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBasicTokenizerSuccess3.";
   // Test BasicTokenizer with with_offsets true and lower_case true
@@ -231,6 +240,9 @@ std::vector<std::string> list = {
   "😀",  "😃",  "😄",     "😁",     "+",     "/",     "-",       "=",         "12",        "28",   "40",    "16",
   " ",  "I",  "[CLS]", "[SEP]", "[UNK]", "[PAD]", "[MASK]",  "[unused1]", "[unused10]"};
 
+/// Feature: BertTokenizer op
+/// Description: Test BertTokenizer op on TextFileDataset with default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess1.";
   // Test BertTokenizer with default parameters
@@ -290,6 +302,9 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess1) {
   iter->Stop();
 }
 
+/// Feature: BertTokenizer op
+/// Description: Test BertTokenizer op on TextFileDataset with lower_case=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess2.";
   // Test BertTokenizer with lower_case true
@@ -351,6 +366,9 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess2) {
   iter->Stop();
 }
 
+/// Feature: BertTokenizer op
+/// Description: Test BertTokenizer op on TextFileDataset with NormalizeForm::kNfc
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess3.";
   // Test BertTokenizer with normalization_form NFKC
@@ -413,6 +431,9 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess3) {
   iter->Stop();
 }
 
+/// Feature: BertTokenizer op
+/// Description: Test BertTokenizer op on TextFileDataset with keep_whitespace=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess4.";
   // Test BertTokenizer with keep_whitespace true
@@ -473,6 +494,9 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess4) {
   iter->Stop();
 }
 
+/// Feature: BertTokenizer op
+/// Description: Test BertTokenizer op on TextFileDataset with empty unknown_token and keep_whitespace=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess5.";
   // Test BertTokenizer with unknown_token empty and keep_whitespace true
@@ -533,6 +557,9 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess5) {
   iter->Stop();
 }
 
+/// Feature: BertTokenizer op
+/// Description: Test BertTokenizer op with preserve_unused_token=false, empty unknown_token, and keep_whitespace=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess6) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess6.";
   // Test BertTokenizer with preserve_unused_token false, unknown_token empty and keep_whitespace true
@@ -593,6 +620,9 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess6) {
   iter->Stop();
 }
 
+/// Feature: BertTokenizer op
+/// Description: Test BertTokenizer op with with_offsets=true and lower_case=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess7) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess7.";
   // Test BertTokenizer with with_offsets true and lower_case true
@@ -674,6 +704,9 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess7) {
   iter->Stop();
 }
 
+/// Feature: BertTokenizer op
+/// Description: Test BertTokenizer op with nullptr vocab
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBertTokenizerFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerFail1.";
   // Test BertTokenizer with nullptr vocab
@@ -696,6 +729,9 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BertTokenizer op
+/// Description: Test BertTokenizer op with negative max_bytes_per_token
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBertTokenizerFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerFail2.";
   // Test BertTokenizer with negative max_bytes_per_token
@@ -723,6 +759,9 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: CaseFold op
+/// Description: Test CaseFold op on TextFileDataset with default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCaseFoldSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaseFoldSuccess.";
 
@@ -768,9 +807,9 @@ TEST_F(MindDataTestPipeline, TestCaseFoldSuccess) {
   iter->Stop();
 }
 
-/// Feature: FilterWikipediaXML
-/// Description: test FilterWikipediaXML in pipeline mode
-/// Expectation: the data is processed successfully
+/// Feature: FilterWikipediaXML op
+/// Description: Test FilterWikipediaXML op in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestFilterWikipediaXMLSuccess) {
   // Testing the parameter of FilterWikipediaXML interface .
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterWikipediaXMLSuccess.";
@@ -817,6 +856,9 @@ TEST_F(MindDataTestPipeline, TestFilterWikipediaXMLSuccess) {
   iter->Stop();
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test JiebaTokenizer op when the mode is JiebaMode::kMp and with_offsets=false
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess) {
   // Testing the parameter of JiebaTokenizer interface when the mode is JiebaMode::kMp and the with_offsets is false.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerSuccess.";
@@ -866,6 +908,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess) {
   iter->Stop();
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test JiebaTokenizer op when the mode is JiebaMode::kHmm and with_offsets=false
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess1) {
   // Testing the parameter of JiebaTokenizer interface when the mode is JiebaMode::kHmm and the with_offsets is false.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerSuccess1.";
@@ -915,6 +960,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess1) {
   iter->Stop();
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test JiebaTokenizer op when the mode is JiebaMode::kMp and with_offsets=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess2) {
   // Testing the parameter of JiebaTokenizer interface when the mode is JiebaMode::kMp and the with_offsets is true.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerSuccess2.";
@@ -985,6 +1033,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess2) {
   iter->Stop();
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test JiebaTokenizer op with empty hmm_path
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail1) {
   // Testing the incorrect parameter of JiebaTokenizer interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerFail1.";
@@ -1010,6 +1061,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test JiebaTokenizer op with empty mp_path
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail2) {
   // Testing the incorrect parameter of JiebaTokenizer interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerFail2.";
@@ -1035,6 +1089,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test JiebaTokenizer op with invalid hmm_path
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail3) {
   // Testing the incorrect parameter of JiebaTokenizer interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerFail3.";
@@ -1061,6 +1118,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test JiebaTokenizer op with invalid mp_path
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail4) {
   // Testing the incorrect parameter of JiebaTokenizer interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerFail4.";
@@ -1087,6 +1147,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test AddWord of JiebaTokenizer when the freq is not provided (default 0)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord) {
   // Testing the parameter AddWord of JiebaTokenizer when the freq is not provided (default 0).
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddWord.";
@@ -1139,6 +1202,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord) {
   iter->Stop();
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test AddWord of JiebaTokenizer when the freq is set explicitly to 0
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord1) {
   // Testing the parameter AddWord of JiebaTokenizer when the freq is set explicitly to 0.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddWord1.";
@@ -1191,6 +1257,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord1) {
   iter->Stop();
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test AddWord of JiebaTokenizer when the freq is set to 10
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord2) {
   // Testing the parameter AddWord of JiebaTokenizer when the freq is 10.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddWord2.";
@@ -1243,6 +1312,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord2) {
   iter->Stop();
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test AddWord of JiebaTokenizer when the freq is 20000 which affects the result of segmentation
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord3) {
   // Testing the parameter AddWord of JiebaTokenizer when the freq is 20000 which affects the result of segmentation.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddWord3.";
@@ -1295,6 +1367,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord3) {
   iter->Stop();
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test AddWord of JiebaTokenizer with invalid parameters
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWordFail) {
   // Testing the incorrect parameter of AddWord in JiebaTokenizer.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddWordFail.";
@@ -1318,6 +1393,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWordFail) {
   EXPECT_NE(jieba_tokenizer1->AddWord("我们", -1), Status::OK());
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test AddDict of JiebaTokenizer when the input is a vector of word-freq pair
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddDict) {
   // Testing AddDict of JiebaTokenizer when the input is a vector of word-freq pair.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddDict.";
@@ -1371,6 +1449,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddDict) {
   iter->Stop();
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test AddDict of JiebaTokenizer when the input is a path to dict
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddDictFromFile) {
   // Testing AddDict of JiebaTokenizer when the input is a path to dict.
   // Test error scenario for AddDict: invalid path
@@ -1427,6 +1508,9 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddDictFromFile) {
   iter->Stop();
 }
 
+/// Feature: SlidingWindow op
+/// Description: Test SlidingWindow when the axis is 0
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess) {
   // Testing the parameter of SlidingWindow interface when the axis is 0.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowSuccess.";
@@ -1481,6 +1565,9 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess) {
   iter->Stop();
 }
 
+/// Feature: SlidingWindow op
+/// Description: Test SlidingWindow when the axis is -1
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess1) {
   // Testing the parameter of SlidingWindow interface when the axis is -1.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowSuccess1.";
@@ -1534,6 +1621,9 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess1) {
   iter->Stop();
 }
 
+/// Feature: SlidingWindow op
+/// Description: Test SlidingWindow when the width=0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSlidingWindowFail1) {
   // Testing the incorrect parameter of SlidingWindow interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowFail1.";
@@ -1558,6 +1648,9 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: SlidingWindow op
+/// Description: Test SlidingWindow when the width=-2
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSlidingWindowFail2) {
   // Testing the incorrect parameter of SlidingWindow interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowFail2.";
@@ -1582,6 +1675,9 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: ToNumber op
+/// Description: Test ToNumber with integer numbers
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestToNumberSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberSuccess1.";
   // Test ToNumber with integer numbers
@@ -1633,6 +1729,9 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess1) {
   iter->Stop();
 }
 
+/// Feature: ToNumber op
+/// Description: Test ToNumber with float numbers
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestToNumberSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberSuccess2.";
   // Test ToNumber with float numbers
@@ -1689,6 +1788,9 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess2) {
   iter->Stop();
 }
 
+/// Feature: ToNumber op
+/// Description: Test ToNumber with overflow integer numbers
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestToNumberFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail1.";
   // Test ToNumber with overflow integer numbers
@@ -1739,6 +1841,9 @@ TEST_F(MindDataTestPipeline, TestToNumberFail1) {
   iter->Stop();
 }
 
+/// Feature: ToNumber op
+/// Description: Test ToNumber with overflow float numbers
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestToNumberFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail2.";
   // Test ToNumber with overflow float numbers
@@ -1790,6 +1895,9 @@ TEST_F(MindDataTestPipeline, TestToNumberFail2) {
   iter->Stop();
 }
 
+/// Feature: ToNumber op
+/// Description: Test ToNumber with non numerical input
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestToNumberFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail3.";
   // Test ToNumber with non numerical input
@@ -1836,6 +1944,9 @@ TEST_F(MindDataTestPipeline, TestToNumberFail3) {
   iter->Stop();
 }
 
+/// Feature: ToNumber op
+/// Description: Test ToNumber with non numerical data type (kObjectTypeString)
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestToNumberFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail4.";
   // Test ToNumber with non numerical data type
@@ -1859,6 +1970,9 @@ TEST_F(MindDataTestPipeline, TestToNumberFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: ToNumber op
+/// Description: Test ToNumber with non numerical data type (kObjectTypeBool)
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestToNumberFail5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail5.";
   // Test ToNumber with non numerical data type
@@ -1882,6 +1996,9 @@ TEST_F(MindDataTestPipeline, TestToNumberFail5) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TruncateSequencePair op
+/// Description: Test TruncateSequencePair basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTruncateSequencePairSuccess1.";
   // Testing basic TruncateSequencePair
@@ -1957,6 +2074,9 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess1) {
   EXPECT_EQ(status_set_worker, true);
 }
 
+/// Feature: TruncateSequencePair op
+/// Description: Test TruncateSequencePair with odd max_length
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTruncateSequencePairSuccess2.";
   // Testing basic TruncateSequencePair with odd max_length
@@ -2035,6 +2155,9 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess2) {
   EXPECT_EQ(status_set_worker, true);
 }
 
+/// Feature: TruncateSequencePair op
+/// Description: Test TruncateSequencePair with negative max_length
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTruncateSequencePairFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTruncateSequencePairFail.";
   // Testing TruncateSequencePair with negative max_length
@@ -2059,6 +2182,9 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Ngram op
+/// Description: Test parameters for Ngram interface
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestNgramSuccess) {
   // Testing the parameter of Ngram interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramSuccess.";
@@ -2072,7 +2198,8 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess) {
   std::shared_ptr<TensorTransform> white_tokenizer = std::make_shared<text::WhitespaceTokenizer>();
   EXPECT_NE(white_tokenizer, nullptr);
   // Create sliding_window operation on ds
-  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({2}, {"_", 1}, {"_", 1}, " "));
+  auto ngram_op = std::make_shared<text::Ngram>(
+    std::vector<int>{2}, std::pair<std::string, int32_t>{"_", 1}, std::pair<std::string, int32_t>{"_", 1}, " ");
   EXPECT_NE(ngram_op, nullptr);
 
   // Create Map operation on ds
@@ -2113,6 +2240,9 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess) {
   iter->Stop();
 }
 
+/// Feature: Ngram op
+/// Description: Test Ngram basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestNgramSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramSuccess1.";
 
@@ -2125,7 +2255,8 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess1) {
   std::shared_ptr<TensorTransform> white_tokenizer = std::make_shared<text::WhitespaceTokenizer>();
   EXPECT_NE(white_tokenizer, nullptr);
   // Create sliding_window operation on ds
-  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({2, 3}, {"&", 2}, {"&", 2}, "-"));
+  auto ngram_op = std::make_shared<text::Ngram>(
+    std::vector<int32_t>{2, 3}, std::pair<std::string, int32_t>{"&", 2}, std::pair<std::string, int32_t>{"&", 2}, "-");
   EXPECT_NE(ngram_op, nullptr);
 
   // Create Map operation on ds
@@ -2170,6 +2301,9 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess1) {
   iter->Stop();
 }
 
+/// Feature: Ngram op
+/// Description: Test Ngram where the vector of ngram is empty
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestNgramFail1) {
   // Testing the incorrect parameter of Ngram interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail1.";
@@ -2181,7 +2315,7 @@ TEST_F(MindDataTestPipeline, TestNgramFail1) {
 
   // Create sliding_window operation on ds
   // Testing the vector of ngram is empty
-  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({}));
+  auto ngram_op = std::make_shared<text::Ngram>(std::vector<int32_t>{});
   EXPECT_NE(ngram_op, nullptr);
 
   // Create a Map operation on ds
@@ -2193,6 +2327,9 @@ TEST_F(MindDataTestPipeline, TestNgramFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Ngram op
+/// Description: Test Ngram where value of ngram vector is equal to 0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestNgramFail2) {
   // Testing the incorrect parameter of Ngram interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail2.";
@@ -2204,7 +2341,7 @@ TEST_F(MindDataTestPipeline, TestNgramFail2) {
 
   // Create sliding_window operation on ds
   // Testing the value of ngrams vector less than and equal to 0
-  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({0}));
+  auto ngram_op = std::make_shared<text::Ngram>(std::vector<int32_t>{0});
   EXPECT_NE(ngram_op, nullptr);
 
   // Create a Map operation on ds
@@ -2216,6 +2353,9 @@ TEST_F(MindDataTestPipeline, TestNgramFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Ngram op
+/// Description: Test Ngram where value of ngram vector is less than 0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestNgramFail3) {
   // Testing the incorrect parameter of Ngram interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail3.";
@@ -2227,7 +2367,7 @@ TEST_F(MindDataTestPipeline, TestNgramFail3) {
 
   // Create sliding_window operation on ds
   // Testing the value of ngrams vector less than and equal to 0
-  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({-2}));
+  auto ngram_op = std::make_shared<text::Ngram>(std::vector<int32_t>{-2});
   EXPECT_NE(ngram_op, nullptr);
 
   // Create a Map operation on ds
@@ -2239,6 +2379,9 @@ TEST_F(MindDataTestPipeline, TestNgramFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Ngram op
+/// Description: Test Ngram where second parameter pad_width in left_pad vector is less than 0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestNgramFail4) {
   // Testing the incorrect parameter of Ngram interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail4.";
@@ -2250,7 +2393,7 @@ TEST_F(MindDataTestPipeline, TestNgramFail4) {
 
   // Create sliding_window operation on ds
   // Testing the second parameter pad_width in left_pad vector less than 0
-  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({2}, {"", -1}));
+  auto ngram_op = std::make_shared<text::Ngram>(std::vector<int32_t>{2}, std::pair<std::string, int32_t>{"", -1});
   EXPECT_NE(ngram_op, nullptr);
 
   // Create a Map operation on ds
@@ -2262,6 +2405,9 @@ TEST_F(MindDataTestPipeline, TestNgramFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Ngram op
+/// Description: Test Ngram where second parameter pad_width in right_pad vector is less than 0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestNgramFail5) {
   // Testing the incorrect parameter of Ngram interface.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail5.";
@@ -2273,7 +2419,8 @@ TEST_F(MindDataTestPipeline, TestNgramFail5) {
 
   // Create sliding_window operation on ds
   // Testing the second parameter pad_width in right_pad vector less than 0
-  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({2}, {"", 1}, {"", -1}));
+  auto ngram_op = std::make_shared<text::Ngram>(
+    std::vector<int32_t>{2}, std::pair<std::string, int32_t>{"", 1}, std::pair<std::string, int32_t>{"", -1});
   EXPECT_NE(ngram_op, nullptr);
 
   // Create a Map operation on ds
@@ -2285,6 +2432,9 @@ TEST_F(MindDataTestPipeline, TestNgramFail5) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: NormalizeUTF8 op
+/// Description: Test NormalizeUTF8 when the normalize_form is NormalizeForm::kNfkc
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success) {
   // Testing the parameter of NormalizeUTF8 interface when the normalize_form is NormalizeForm::kNfkc.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizeUTF8Success.";
@@ -2331,6 +2481,9 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success) {
   iter->Stop();
 }
 
+/// Feature: NormalizeUTF8 op
+/// Description: Test NormalizeUTF8 when the normalize_form is NormalizeForm::kNfc
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success1) {
   // Testing the parameter of NormalizeUTF8 interface when the normalize_form is NormalizeForm::kNfc.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizeUTF8Success1.";
@@ -2377,6 +2530,9 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success1) {
   iter->Stop();
 }
 
+/// Feature: NormalizeUTF8 op
+/// Description: Test NormalizeUTF8 when the normalize_form is NormalizeForm::kNfd
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success2) {
   // Testing the parameter of NormalizeUTF8 interface when the normalize_form is NormalizeForm::kNfd.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizeUTF8Success2.";
@@ -2423,6 +2579,9 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success2) {
   iter->Stop();
 }
 
+/// Feature: NormalizeUTF8 op
+/// Description: Test NormalizeUTF8 when the normalize_form is NormalizeForm::kNfkd
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success3) {
   // Testing the parameter of NormalizeUTF8 interface when the normalize_form is NormalizeForm::kNfkd.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizeUTF8Success3.";
@@ -2469,6 +2628,9 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success3) {
   iter->Stop();
 }
 
+/// Feature: RegexReplace op
+/// Description: Test RegexReplace when the replace_all=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess) {
   // Testing the parameter of RegexReplace interface when the replace_all is true.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRegexReplaceSuccess.";
@@ -2516,6 +2678,9 @@ TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess) {
   iter->Stop();
 }
 
+/// Feature: RegexReplace op
+/// Description: Test RegexReplace when the replace_all=false
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess1) {
   // Testing the parameter of RegexReplace interface when the replace_all is false.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRegexReplaceSuccess1.";
@@ -2563,6 +2728,9 @@ TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess1) {
   iter->Stop();
 }
 
+/// Feature: RegexTokenizer op
+/// Description: Test RegexTokenizer when with_offsets=false
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess) {
   // Testing the parameter of RegexTokenizer interface when the with_offsets is false.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRegexTokenizerSuccess.";
@@ -2619,6 +2787,9 @@ TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess) {
   iter->Stop();
 }
 
+/// Feature: RegexTokenizer op
+/// Description: Test RegexTokenizer when with_offsets=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess1) {
   // Testing the parameter of RegexTokenizer interface when the with_offsets is true.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRegexTokenizerSuccess1.";
@@ -2695,6 +2866,9 @@ TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess1) {
   iter->Stop();
 }
 
+/// Feature: UnicodeCharTokenizer op
+/// Description: Test UnicodeCharTokenizer when with_offsets is default
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess) {
   // Testing the parameter of UnicodeCharTokenizer interface when the with_offsets is default.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUnicodeCharTokenizerSuccess.";
@@ -2748,6 +2922,9 @@ TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess) {
   iter->Stop();
 }
 
+/// Feature: UnicodeCharTokenizer op
+/// Description: Test UnicodeCharTokenizer when with_offsets=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess1) {
   // Testing the parameter of UnicodeCharTokenizer interface when the with_offsets is true.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUnicodeCharTokenizerSuccess1.";
@@ -2833,6 +3010,9 @@ std::vector<std::string> vocab_english = {"book", "cholera", "era", "favor", "##
 
 std::vector<std::string> vocab_chinese = {"我", "最", "喜", "欢", "的", "书", "是", "霍", "乱", "时", "期", "爱", "情"};
 
+/// Feature: WordpieceTokenizer op
+/// Description: Test WordpieceTokenizer with default parameters on English vocab
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess1.";
   // Test WordpieceTokenizer with default parameters on English vocab
@@ -2889,6 +3069,9 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess1) {
   iter->Stop();
 }
 
+/// Feature: WordpieceTokenizer op
+/// Description: Test WordpieceTokenizer with empty unknown_token
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess2.";
   // Test WordpieceTokenizer with empty unknown_token
@@ -2946,6 +3129,9 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess2) {
   iter->Stop();
 }
 
+/// Feature: WordpieceTokenizer op
+/// Description: Test WordpieceTokenizer with non-default max_bytes_per_token
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess3.";
   // Test WordpieceTokenizer with non-default max_bytes_per_token
@@ -3003,6 +3189,9 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess3) {
   iter->Stop();
 }
 
+/// Feature: WordpieceTokenizer op
+/// Description: Test WordpieceTokenizer with default parameters on Chinese vocab
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess4.";
   // Test WordpieceTokenizer with default parameters on Chinese vocab
@@ -3064,6 +3253,9 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess4) {
   iter->Stop();
 }
 
+/// Feature: WordpieceTokenizer op
+/// Description: Test WordpieceTokenizer with with_offsets=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess5.";
   // Test WordpieceTokenizer with with_offsets true
@@ -3137,6 +3329,9 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess5) {
   iter->Stop();
 }
 
+/// Feature: WordpieceTokenizer op
+/// Description: Test WordpieceTokenizer with max_bytes_per_token=0
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess6) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerSuccess6.";
   // Test WordpieceTokenizer with max_bytes_per_token equals to 0
@@ -3194,6 +3389,9 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerSuccess6) {
   iter->Stop();
 }
 
+/// Feature: WordpieceTokenizer op
+/// Description: Test WordpieceTokenizer with nullptr vocab
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestWordpieceTokenizerFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerFail1.";
   // Test WordpieceTokenizer with nullptr vocab
@@ -3216,6 +3414,9 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: WordpieceTokenizer op
+/// Description: Test WordpieceTokenizer with negative max_bytes_per_token
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestWordpieceTokenizerFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWordpieceTokenizerFail2.";
   // Test WordpieceTokenizer with negative max_bytes_per_token
@@ -3243,6 +3444,9 @@ TEST_F(MindDataTestPipeline, TestWordpieceTokenizerFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: UnicodeScriptTokenizer op
+/// Description: Test UnicodeScriptTokenizer when with_offsets and keep_whitespace is default
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess) {
   // Testing the parameter of UnicodeScriptTokenizer interface when the with_offsets and the keep_whitespace is default.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUnicodeScriptTokenizerSuccess.";
@@ -3293,6 +3497,9 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess) {
   iter->Stop();
 }
 
+/// Feature: UnicodeScriptTokenizer op
+/// Description: Test UnicodeScriptTokenizer when with_offsets=false and keep_whitespace=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess1) {
   // Testing the parameter of UnicodeScriptTokenizer interface when the keep_whitespace is true and the with_offsets is
   // false.
@@ -3344,6 +3551,9 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess1) {
   iter->Stop();
 }
 
+/// Feature: UnicodeScriptTokenizer op
+/// Description: Test UnicodeScriptTokenizer when with_offsets=true and keep_whitespace=false
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess2) {
   // Testing the parameter of UnicodeScriptTokenizer interface when the keep_whitespace is false and the with_offsets is
   // true.
@@ -3414,6 +3624,9 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess2) {
   iter->Stop();
 }
 
+/// Feature: UnicodeScriptTokenizer op
+/// Description: Test UnicodeScriptTokenizer when with_offsets=true and keep_whitespace=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess3) {
   // Testing the parameter of UnicodeScriptTokenizer interface when the keep_whitespace is true and the with_offsets is
   // true.
@@ -3483,6 +3696,9 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess3) {
   iter->Stop();
 }
 
+/// Feature: WhitespaceTokenizer op
+/// Description: Test WhitespaceTokenizer when with_offsets is default
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess) {
   // Testing the parameter of WhitespaceTokenizer interface when the with_offsets is default.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWhitespaceTokenizerSuccess.";
@@ -3533,6 +3749,9 @@ TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess) {
   iter->Stop();
 }
 
+/// Feature: WhitespaceTokenizer op
+/// Description: Test WhitespaceTokenizer when with_offsets=true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess1) {
   // Testing the parameter of WhitespaceTokenizer interface when the with_offsets is true.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWhitespaceTokenizerSuccess1.";
@@ -3602,8 +3821,8 @@ TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess1) {
 }
 
 /// Feature: Vectors
-/// Description: test with default parameter in function BuildFromFile and function Lookup
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Description: Test with default parameter in function BuildFromFile and function Lookup
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestVectorsDefaultParam) {
   // Test with default parameter.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsDefaultParam.";
@@ -3663,8 +3882,8 @@ TEST_F(MindDataTestPipeline, TestVectorsDefaultParam) {
 }
 
 /// Feature: Vectors
-/// Description: test with all parameters which include `path` and `max_vector` in function BuildFromFile
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Description: Test with all parameters which include `path` and `max_vector` in function BuildFromFile
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestVectorsAllBuildfromfileParams) {
   // Test with two parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsAllBuildfromfileParams.";
@@ -3724,8 +3943,8 @@ TEST_F(MindDataTestPipeline, TestVectorsAllBuildfromfileParams) {
 }
 
 /// Feature: Vectors
-/// Description: test with all parameters in function BuildFromFile and `unknown_init` in function Lookup
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Description: Test with all parameters in function BuildFromFile and `unknown_init` in function Lookup
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestVectorsUnknownInit) {
   // Test with two parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsUnknownInit.";
@@ -3786,9 +4005,9 @@ TEST_F(MindDataTestPipeline, TestVectorsUnknownInit) {
 }
 
 /// Feature: Vectors
-/// Description: test with all parameters which include `path` and `max_vectors` in function BuildFromFile and `token`,
+/// Description: Test with all parameters which include `path` and `max_vectors` in function BuildFromFile and `token`,
 ///     `unknown_init` and `lower_case_backup` in function Lookup. But some tokens have some big letters
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestVectorsAllParams) {
   // Test with all parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsAllParams.";
@@ -3848,8 +4067,8 @@ TEST_F(MindDataTestPipeline, TestVectorsAllParams) {
 }
 
 /// Feature: Vectors
-/// Description: test with pre-vectors set that have the different dimension
-/// Expectation: throw correct error and message
+/// Description: Test with pre-vectors set that have the different dimension
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestVectorsDifferentDimension) {
   // Tokens don't have the same number of vectors.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsDifferentDimension.";
@@ -3866,8 +4085,8 @@ TEST_F(MindDataTestPipeline, TestVectorsDifferentDimension) {
 }
 
 /// Feature: Vectors
-/// Description: test with pre-vectors set that has the head-info
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Description: Test with pre-vectors set that has the head-info
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestVectorsWithHeadInfo) {
   // Test with words that has head info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsWithHeadInfo.";
@@ -3927,8 +4146,8 @@ TEST_F(MindDataTestPipeline, TestVectorsWithHeadInfo) {
 }
 
 /// Feature: Vectors
-/// Description: test with the parameter max_vectors that is <= 0
-/// Expectation: throw correct error and message
+/// Description: Test with the parameter max_vectors that is <= 0
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestVectorsMaxVectorsLessThanZero) {
   // Test with max_vectors <= 0.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsMaxVectorsLessThanZero.";
@@ -3945,8 +4164,8 @@ TEST_F(MindDataTestPipeline, TestVectorsMaxVectorsLessThanZero) {
 }
 
 /// Feature: Vectors
-/// Description: test with the pre-vectors file that is empty
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors file that is empty
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestVectorsWithEmptyFile) {
   // Read empty file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsWithEmptyFile.";
@@ -3963,8 +4182,8 @@ TEST_F(MindDataTestPipeline, TestVectorsWithEmptyFile) {
 }
 
 /// Feature: Vectors
-/// Description: test with the pre-vectors file that is not exist
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors file that is not exist
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestVectorsWithNotExistFile) {
   // Test with not exist file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsWithNotExistFile.";
@@ -3981,8 +4200,8 @@ TEST_F(MindDataTestPipeline, TestVectorsWithNotExistFile) {
 }
 
 /// Feature: Vectors
-/// Description: test with the pre-vectors set that has a situation that info-head is not the first line in the set
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors set that has a situation that info-head is not the first line in the set
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestVectorsWithWrongInfoFile) {
   // Wrong info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVectorsWithWrongInfoFile.";
@@ -3999,8 +4218,8 @@ TEST_F(MindDataTestPipeline, TestVectorsWithWrongInfoFile) {
 }
 
 /// Feature: FastText
-/// Description: test with default parameter in function BuildFromFile and function Lookup
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Description: Test with default parameter in function BuildFromFile and function Lookup
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestFastTextDefaultParam) {
   // Test with default parameter.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextDefaultParam.";
@@ -4060,8 +4279,8 @@ TEST_F(MindDataTestPipeline, TestFastTextDefaultParam) {
 }
 
 /// Feature: FastText
-/// Description: test with all parameters which include `path` and `max_vector` in function BuildFromFile
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Description: Test with all parameters which include `path` and `max_vector` in function BuildFromFile
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestFastTextAllBuildfromfileParams) {
   // Test with two parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextAllBuildfromfileParams.";
@@ -4121,8 +4340,8 @@ TEST_F(MindDataTestPipeline, TestFastTextAllBuildfromfileParams) {
 }
 
 /// Feature: FastText
-/// Description: test with all parameters in function BuildFromFile and `unknown_init` in function Lookup
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Description: Test with all parameters in function BuildFromFile and `unknown_init` in function Lookup
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestFastTextUnknownInit) {
   // Test with two parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextUnknownInit.";
@@ -4183,9 +4402,9 @@ TEST_F(MindDataTestPipeline, TestFastTextUnknownInit) {
 }
 
 /// Feature: FastText
-/// Description: test with all parameters which include `path` and `max_vectors` in function BuildFromFile and `token`,
+/// Description: Test with all parameters which include `path` and `max_vectors` in function BuildFromFile and `token`,
 ///     `unknown_init` and `lower_case_backup` in function Lookup. But some tokens have some big letters
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestFastTextAllParams) {
   // Test with all parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextAllParams.";
@@ -4245,8 +4464,8 @@ TEST_F(MindDataTestPipeline, TestFastTextAllParams) {
 }
 
 /// Feature: FastText
-/// Description: test with pre-vectors set that have the different dimension
-/// Expectation: throw correct error and message
+/// Description: Test with pre-vectors set that have the different dimension
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextDifferentDimension) {
   // Tokens don't have the same number of vectors.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextDifferentDimension.";
@@ -4263,8 +4482,8 @@ TEST_F(MindDataTestPipeline, TestFastTextDifferentDimension) {
 }
 
 /// Feature: FastText
-/// Description: test with the parameter max_vectors that is <= 0
-/// Expectation: throw correct error and message
+/// Description: Test with the parameter max_vectors that is <= 0
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextMaxVectorsLessThanZero) {
   // Test with max_vectors <= 0.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextMaxVectorsLessThanZero.";
@@ -4281,8 +4500,8 @@ TEST_F(MindDataTestPipeline, TestFastTextMaxVectorsLessThanZero) {
 }
 
 /// Feature: FastText
-/// Description: test with the pre-vectors file that is empty
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors file that is empty
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextWithEmptyFile) {
   // Read empty file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithEmptyFile.";
@@ -4299,8 +4518,8 @@ TEST_F(MindDataTestPipeline, TestFastTextWithEmptyFile) {
 }
 
 /// Feature: FastText
-/// Description: test with the pre-vectors file that is not exist
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors file that is not exist
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextWithNotExistFile) {
   // Test with not exist file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithNotExistFile.";
@@ -4317,8 +4536,8 @@ TEST_F(MindDataTestPipeline, TestFastTextWithNotExistFile) {
 }
 
 /// Feature: FastText
-/// Description: test with the pre-vectors set that has a situation that info-head is not the first line in the set
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors set that has a situation that info-head is not the first line in the set
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextWithWrongInfoFile) {
   // Wrong info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithWrongInfoFile.";
@@ -4335,8 +4554,8 @@ TEST_F(MindDataTestPipeline, TestFastTextWithWrongInfoFile) {
 }
 
 /// Feature: FastText
-/// Description: test with the pre-vectors set that has a wrong suffix
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors set that has a wrong suffix
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestFastTextWithWrongSuffix) {
   // Wrong info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFastTextWithWrongSuffix.";
@@ -4353,8 +4572,8 @@ TEST_F(MindDataTestPipeline, TestFastTextWithWrongSuffix) {
 }
 
 /// Feature: GloVe
-/// Description: test with default parameter in function BuildFromFile and function Lookup
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Description: Test with default parameter in function BuildFromFile and function Lookup
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestGloVeDefaultParam) {
   // Test with default parameter.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeDefaultParam.";
@@ -4414,8 +4633,8 @@ TEST_F(MindDataTestPipeline, TestGloVeDefaultParam) {
 }
 
 /// Feature: GloVe
-/// Description: test with all parameters which include `path` and `max_vector` in function BuildFromFile
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Description: Test with all parameters which include `path` and `max_vector` in function BuildFromFile
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestGloVeAllBuildfromfileParams) {
   // Test with two parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeAllBuildfromfileParams.";
@@ -4475,8 +4694,8 @@ TEST_F(MindDataTestPipeline, TestGloVeAllBuildfromfileParams) {
 }
 
 /// Feature: GloVe
-/// Description: test with all parameters in function BuildFromFile and `unknown_init` in function Lookup
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Description: Test with all parameters in function BuildFromFile and `unknown_init` in function Lookup
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestGloVeUnknownInit) {
   // Test with two parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeUnknownInit.";
@@ -4537,9 +4756,9 @@ TEST_F(MindDataTestPipeline, TestGloVeUnknownInit) {
 }
 
 /// Feature: GloVe
-/// Description: test with all parameters which include `path` and `max_vectors` in function BuildFromFile and `token`,
+/// Description: Test with all parameters which include `path` and `max_vectors` in function BuildFromFile and `token`,
 ///     `unknown_init` and `lower_case_backup` in function Lookup. But some tokens have some big letters
-/// Expectation: return correct MSTensor which is equal to the expected
+/// Expectation: Return correct MSTensor which is equal to the expected
 TEST_F(MindDataTestPipeline, TestGloVeAllParams) {
   // Test with all parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeAllParams.";
@@ -4599,8 +4818,8 @@ TEST_F(MindDataTestPipeline, TestGloVeAllParams) {
 }
 
 /// Feature: GloVe
-/// Description: test with pre-vectors set that have the different dimension
-/// Expectation: throw correct error and message
+/// Description: Test with pre-vectors set that have the different dimension
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeDifferentDimension) {
   // Tokens don't have the same number of glove.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeDifferentDimension.";
@@ -4617,8 +4836,8 @@ TEST_F(MindDataTestPipeline, TestGloVeDifferentDimension) {
 }
 
 /// Feature: GloVe
-/// Description: test with the parameter max_vectors that is <= 0
-/// Expectation: throw correct error and message
+/// Description: Test with the parameter max_vectors that is <= 0
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeMaxVectorsLessThanZero) {
   // Test with max_vectors <= 0.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeMaxVectorsLessThanZero.";
@@ -4635,8 +4854,8 @@ TEST_F(MindDataTestPipeline, TestGloVeMaxVectorsLessThanZero) {
 }
 
 /// Feature: GloVe
-/// Description: test with the pre-vectors file that is empty
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors file that is empty
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeWithEmptyFile) {
   // Read empty file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeWithEmptyFile.";
@@ -4653,8 +4872,8 @@ TEST_F(MindDataTestPipeline, TestGloVeWithEmptyFile) {
 }
 
 /// Feature: GloVe
-/// Description: test with the pre-vectors file that is not exist
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors file that is not exist
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeWithNotExistFile) {
   // Test with not exist file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeWithNotExistFile.";
@@ -4671,8 +4890,8 @@ TEST_F(MindDataTestPipeline, TestGloVeWithNotExistFile) {
 }
 
 /// Feature: GloVe
-/// Description: test with the pre-vectors set that has a situation that info-head is not the first line in the set
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors set that has a situation that info-head is not the first line in the set
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeWithWrongInfoFile) {
   // Wrong info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeWithWrongInfoFile.";
@@ -4689,8 +4908,8 @@ TEST_F(MindDataTestPipeline, TestGloVeWithWrongInfoFile) {
 }
 
 /// Feature: GloVe
-/// Description: test with the pre-vectors set that has a wrong format
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors set that has a wrong format
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestGloVeWithWrongFormat) {
   // Wrong info.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGloVeWithWrongFormat.";
@@ -4707,8 +4926,8 @@ TEST_F(MindDataTestPipeline, TestGloVeWithWrongFormat) {
 }
 
 /// Feature: CharNGram
-/// Description: test with default parameter in function BuildFromFile and function Lookup
-/// Expectation: return correct MSTensor which is equal to the excepted
+/// Description: Test with default parameter in function BuildFromFile and function Lookup
+/// Expectation: Return correct MSTensor which is equal to the excepted
 TEST_F(MindDataTestPipeline, TestCharNGramDefaultParam) {
   // Test with default parameter.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramDefaultParam.";
@@ -4768,8 +4987,8 @@ TEST_F(MindDataTestPipeline, TestCharNGramDefaultParam) {
 }
 
 /// Feature: CharNGram.
-/// Description: test with all parameters which include `path` and `max_vector` in function BuildFromFile
-/// Expectation: return correct MSTensor which is equal to the excepted
+/// Description: Test with all parameters which include `path` and `max_vector` in function BuildFromFile
+/// Expectation: Return correct MSTensor which is equal to the excepted
 TEST_F(MindDataTestPipeline, TestCharNGramAllBuildfromfileParams) {
   // Test with two parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramAllBuildfromfileParams.";
@@ -4830,8 +5049,8 @@ TEST_F(MindDataTestPipeline, TestCharNGramAllBuildfromfileParams) {
 }
 
 /// Feature: CharNGram
-/// Description: test with all parameters in function BuildFromFile and `unknown_init` in function Lookup
-/// Expectation: return correct MSTensor which is equal to the excepted
+/// Description: Test with all parameters in function BuildFromFile and `unknown_init` in function Lookup
+/// Expectation: Return correct MSTensor which is equal to the excepted
 TEST_F(MindDataTestPipeline, TestCharNGramUnknownInit) {
   // Test with two parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramUnknownInit.";
@@ -4893,9 +5112,9 @@ TEST_F(MindDataTestPipeline, TestCharNGramUnknownInit) {
 }
 
 /// Feature: CharNGram
-/// Description: test with all parameters which include `path` and `max_vectors` in function BuildFromFile and `token`,
+/// Description: Test with all parameters which include `path` and `max_vectors` in function BuildFromFile and `token`,
 ///     `unknown_init` and `lower_case_backup` in function Lookup. But some tokens have some big letters
-/// Expectation: return correct MSTensor which is equal to the excepted
+/// Expectation: Return correct MSTensor which is equal to the excepted
 TEST_F(MindDataTestPipeline, TestCharNGramAllParams) {
   // Test with all parameters.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramAllParams.";
@@ -4956,8 +5175,8 @@ TEST_F(MindDataTestPipeline, TestCharNGramAllParams) {
 }
 
 /// Feature: CharNGram
-/// Description: test with pre-vectors set that have the different dimension
-/// Expectation: throw correct error and message
+/// Description: Test with pre-vectors set that have the different dimension
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestCharNGramDifferentDimension) {
   // Tokens don't have the same number of vectors.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramDifferentDimension.";
@@ -4974,8 +5193,8 @@ TEST_F(MindDataTestPipeline, TestCharNGramDifferentDimension) {
 }
 
 /// Feature: CharNGram
-/// Description: test with the parameter max_vectors that is <= 0
-/// Expectation: throw correct error and message
+/// Description: Test with the parameter max_vectors that is <= 0
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestCharNGramMaxVectorsLessThanZero) {
   // Test with max_vectors <= 0.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramMaxVectorsLessThanZero.";
@@ -4992,8 +5211,8 @@ TEST_F(MindDataTestPipeline, TestCharNGramMaxVectorsLessThanZero) {
 }
 
 /// Feature: CharNGram
-/// Description: test with the pre-vectors file that is empty
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors file that is empty
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestCharNGramWithEmptyFile) {
   // Read empty file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramWithEmptyFile.";
@@ -5010,8 +5229,8 @@ TEST_F(MindDataTestPipeline, TestCharNGramWithEmptyFile) {
 }
 
 /// Feature: CharNGram
-/// Description: test with the pre-vectors file that is not exist
-/// Expectation: throw correct error and message
+/// Description: Test with the pre-vectors file that is not exist
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestCharNGramsWithNotExistFile) {
   // Test with not exist file.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCharNGramsWithNotExistFile.";

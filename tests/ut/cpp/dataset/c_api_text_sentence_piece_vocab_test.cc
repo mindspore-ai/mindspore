@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: SentencePieceVocab
+/// Description: Test SentencePieceVocab with SentencePieceTokenizer op from vocab object
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceVocabSuccess1 plus sentencepiece tokenizer.";
 
@@ -93,6 +96,9 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess1) {
   iter->Stop();
 }
 
+/// Feature: SentencePieceVocab
+/// Description: Test SentencePieceVocab with SentencePieceTokenizer op from local vocab model
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceVocabSuccess2 plus sentencepiece tokenizer.";
 
@@ -156,6 +162,9 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess2) {
   iter->Stop();
 }
 
+/// Feature: SentencePieceVocab
+/// Description: Test SentencePieceVocab with incorrect parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSentencePieceVocabFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceVocabFail1 with incorrect parameter.";
 
@@ -185,6 +194,9 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabFail) {
   EXPECT_EQ(vocab4, nullptr);
 }
 
+/// Feature: SentencePieceTokenizer op
+/// Description: Test SentencePieceTokenizer op with local vocab model equal to empty string
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceTokenizerFail with incorrect parameter.";
 
@@ -209,6 +221,9 @@ TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: SentencePieceTokenizer op
+/// Description: Test SentencePieceTokenizer op with incorrect local vocab model
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceTokenizerFail2 with incorrect parameter.";
 
@@ -233,6 +248,9 @@ TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: SentencePieceTokenizer op
+/// Description: Test SentencePieceTokenizer op with nullptr as vocab model
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceTokenizerFail3 with incorrect parameter.";
 
@@ -257,6 +275,9 @@ TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: SentencePieceTokenizer op
+/// Description: Test SentencePieceTokenizer op with invalid SentencePieceVocab object
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceTokenizerFail with invalid SentencePieceVocab object.";
 

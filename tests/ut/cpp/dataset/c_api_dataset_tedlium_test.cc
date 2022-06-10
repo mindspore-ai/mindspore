@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: TedliumDataset.
-/// Description: read some samples from all files according to different versions.
+/// Description: Read some samples from all files according to different versions.
 /// Expectation: 4 * 2 samples.
 TEST_F(MindDataTestPipeline, TestTedliumDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDataset.";
@@ -93,7 +93,7 @@ TEST_F(MindDataTestPipeline, TestTedliumDataset) {
 }
 
 /// Feature: TedliumDataset.
-/// Description: read some samples with pipeline from all files according to different versions.
+/// Description: Read some samples with pipeline from all files according to different versions.
 /// Expectation: 8 * 2 samples.
 TEST_F(MindDataTestPipeline, TestTedliumDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDatasetWithPipeline.";
@@ -193,9 +193,9 @@ TEST_F(MindDataTestPipeline, TestTedliumDatasetWithPipeline) {
   iter3->Stop();
 }
 
-/// Feature: TestTedliumDatasetIteratorOneColumn.
-/// Description: test iterator of Tedlium dataset with only the "waveform" column.
-/// Expectation: get correct data.
+/// Feature: TedliumDataset.
+/// Description: Test iterator of Tedlium dataset with only the "waveform" column.
+/// Expectation: Get correct data.
 TEST_F(MindDataTestPipeline, TestTedliumDatasetIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDatasetIteratorOneColumn.";
   // Create a Tedlium Dataset.
@@ -233,9 +233,9 @@ TEST_F(MindDataTestPipeline, TestTedliumDatasetIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: TestTedliumDatasetIteratorWrongColumn.
-/// Description: test iterator of TedliumDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: TedliumDataset.
+/// Description: Test iterator of TedliumDataset with wrong column.
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr.
 TEST_F(MindDataTestPipeline, TestTedliumDatasetIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDatasetIteratorWrongColumn.";
   // Create a Tedlium Dataset.
@@ -251,7 +251,7 @@ TEST_F(MindDataTestPipeline, TestTedliumDatasetIteratorWrongColumn) {
 }
 
 /// Feature: TedliumDataset.
-/// Description: read number of all samples from all files according to different versions.
+/// Description: Read number of all samples from all files according to different versions.
 /// Expectation: TEDLIUM_release12 : 1 + 2 + 3
 ///              TEDLIUM_release3 : 3 + 4
 TEST_F(MindDataTestPipeline, TestTedliumGetDatasetSize) {
@@ -270,8 +270,8 @@ TEST_F(MindDataTestPipeline, TestTedliumGetDatasetSize) {
 }
 
 /// Feature: TedliumDataset.
-/// Description: Includes tests for shape, type, size.
-/// Expectation: correct shape, type, size.
+/// Description: Test TedliumDataset Getters method.
+/// Expectation: Correct shape, type, size.
 TEST_F(MindDataTestPipeline, TestTedliumGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumGetters.";
 
@@ -320,8 +320,8 @@ TEST_F(MindDataTestPipeline, TestTedliumGetters) {
 }
 
 /// Feature: TedliumDataset.
-/// Description: test with invalid release.
-/// Expectation: unable to read in data.
+/// Description: Test with invalid release.
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr.
 TEST_F(MindDataTestPipeline, TestTedliumDatasetWithInvalidReleaseFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDatasetWithInvalidReleaseFail.";
 
@@ -346,8 +346,8 @@ TEST_F(MindDataTestPipeline, TestTedliumDatasetWithInvalidReleaseFail) {
 }
 
 /// Feature: TedliumDataset.
-/// Description: test with invalid path.
-/// Expectation: unable to read in data.
+/// Description: Test with invalid path.
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr.
 TEST_F(MindDataTestPipeline, TestTedliumDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDatasetFail.";
 
@@ -371,8 +371,8 @@ TEST_F(MindDataTestPipeline, TestTedliumDatasetFail) {
 }
 
 /// Feature: TedliumDataset.
-/// Description: test with invalid usage.
-/// Expectation: unable to read in data.
+/// Description: Test with invalid usage.
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr.
 TEST_F(MindDataTestPipeline, TestTedliumDatasetWithInvalidUsageFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDatasetWithInvalidUsageFail.";
 
@@ -397,8 +397,8 @@ TEST_F(MindDataTestPipeline, TestTedliumDatasetWithInvalidUsageFail) {
 }
 
 /// Feature: TedliumDataset.
-/// Description: test with invalid extensions.
-/// Expectation: unable to read in data.
+/// Description: Test with invalid extensions.
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr.
 TEST_F(MindDataTestPipeline, TestTedliumDatasetWithInvalidExtensionsFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDatasetWithInvalidExtensionsFail.";
 
@@ -423,8 +423,8 @@ TEST_F(MindDataTestPipeline, TestTedliumDatasetWithInvalidExtensionsFail) {
 }
 
 /// Feature: TedliumDataset.
-/// Description: test with null sampler.
-/// Expectation: unable to read in data.
+/// Description: Test with null sampler.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestTedliumDatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTedliumDatasetWithNullSamplerFail.";
 

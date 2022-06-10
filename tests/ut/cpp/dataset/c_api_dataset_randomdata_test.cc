@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset basic usage with default schema
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasic1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic1.";
 
@@ -69,6 +72,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic1) {
   iter->Stop();
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset with pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasicWithPipeline.";
 
@@ -127,6 +133,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasicWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetGetters.";
 
@@ -180,6 +189,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic2) {
   iter->Stop();
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset basic usage with SCHEMA_FILE as an input to Schema
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasic3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic3.";
 
@@ -263,6 +275,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic3) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset basic usage using SCHEMA_FILE path as an input
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasic4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic4.";
 
@@ -345,6 +360,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic4) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset basic usage with input columns
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasic5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic5.";
 
@@ -407,6 +425,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic5) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset basic usage with null schema and input columns
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasic6) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic6.";
 
@@ -441,6 +462,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic6) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset basic usage with empty string schema and input columns
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasic7) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic7.";
 
@@ -477,7 +501,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic7) {
 
 // Feature: Test Repeat and Shuffle on RandomData
 // Description: Apply operations, iterate through dataset and count rows
-// Expectation: There should  be 30 rows in the dataset
+// Expectation: There should be 30 rows in the dataset
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasic8) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic8.";
 
@@ -522,6 +546,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic8) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset with UInt8 numbers for given shape
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestRandomDatasetUInt8) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetUInt8.";
 
@@ -560,6 +587,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetUInt8) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset with float numbers for given shape
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestRandomDatasetFloat) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetFloat.";
 
@@ -598,6 +628,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetFloat) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset with duplicate column names
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomDatasetDuplicateColumnName) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetDuplicateColumnName.";
 
@@ -610,6 +643,9 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetDuplicateColumnName) {
   EXPECT_EQ(ds->CreateIterator(), nullptr);
 }
 
+/// Feature: RandomDataDataset
+/// Description: Test RandomDataDataset with num_workers greater than num_rows
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetFail.";
   // this will fail because num_workers is greater than num_rows

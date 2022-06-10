@@ -25,8 +25,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: LibriTTSDataset
-/// Description: test LibriTTS
-/// Expectation: get correct LibriTTS dataset
+/// Description: Test LibriTTSDataset basic usage
+/// Expectation: Get correct LibriTTS dataset
 TEST_F(MindDataTestPipeline, TestLibriTTSBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLibriTTSBasic.";
 
@@ -60,8 +60,8 @@ TEST_F(MindDataTestPipeline, TestLibriTTSBasic) {
 }
 
 /// Feature: LibriTTSDataset
-/// Description: test LibriTTS with Pipeline
-/// Expectation: get correct LibriTTS dataset
+/// Description: Test LibriTTSDataset with pipeline mode
+/// Expectation: Get correct LibriTTS dataset
 TEST_F(MindDataTestPipeline, TestLibriTTSBasicWithPipeline) {
   MS_LOG(INFO) << "Doing DataSetOpBatchTest-TestLibriTTSBasicWithPipeline.";
 
@@ -141,8 +141,8 @@ TEST_F(MindDataTestPipeline, TestLibriTTSBasicWithPipeline) {
 }
 
 /// Feature: LibriTTSDataset
-/// Description: test LibriTTS with invalid directory
-/// Expectation: get correct LibriTTS dataset
+/// Description: Test LibriTTSDataset with invalid directory
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestLibriTTSError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLibriTTSError.";
 
@@ -166,8 +166,8 @@ TEST_F(MindDataTestPipeline, TestLibriTTSError) {
 }
 
 /// Feature: LibriTTSDataset
-/// Description: test LibriTTS with Getters
-/// Expectation: dataset is null
+/// Description: Test LibriTTSDataset with Getters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLibriTTSGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLibriTTSGetters.";
 
@@ -189,8 +189,8 @@ TEST_F(MindDataTestPipeline, TestLibriTTSGetters) {
 }
 
 /// Feature: LibriTTSDataset
-/// Description: test LibriTTS dataset with invalid type
-/// Expectation: dataset is null
+/// Description: Test LibriTTSDataset with invalid usage
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestLibriTTSWithInvalidUsageError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLibriTTSWithInvalidUsageError.";
 
@@ -214,8 +214,8 @@ TEST_F(MindDataTestPipeline, TestLibriTTSWithInvalidUsageError) {
 }
 
 /// Feature: LibriTTSDataset
-/// Description: test LibriTTS dataset with null sampler
-/// Expectation: dataset is null
+/// Description: Test LibriTTSDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestLibriTTSWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLibriTTSWithNullSamplerError.";
 
@@ -231,8 +231,8 @@ TEST_F(MindDataTestPipeline, TestLibriTTSWithNullSamplerError) {
 }
 
 /// Feature: LibriTTSDataset
-/// Description: test LibriTTS with sequential sampler
-/// Expectation: get correct LibriTTS dataset
+/// Description: Test LibriTTSDataset with SequentialSampler
+/// Expectation: Get correct LibriTTS dataset
 TEST_F(MindDataTestPipeline, TestLibriTTSSequentialSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLibriTTSSequentialSamplers.";
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: Test WikiText Dataset.
-/// Description: read WikiText data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetBasic.";
   // Test WikiText Dataset with single text file and many default inputs
@@ -84,9 +84,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetBasic) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: read WikiText data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetBasicWithPipeline.";
   // Test WikiText Dataset with single text file and many default inputs
@@ -146,9 +146,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetBasicWithPipeline) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: WikiTextIteratorOneColumn.
-/// Description: test iterator of WikiTextDataset with only the "text" column.
-/// Expectation: get correct data.
+/// Feature: WikiTextDataset
+/// Description: Test iterator of WikiTextDataset with only the "text" column
+/// Expectation: Get correct data
 TEST_F(MindDataTestPipeline, TestWikiTextIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextIteratorOneColumn.";
   // Test WikiText Dataset with single text file and many default inputs
@@ -196,9 +196,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: WikiTextIteratorWrongColumn.
-/// Description: test iterator of WikiTextDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: WikiTextDataset
+/// Description: Test iterator of WikiTextDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestWikiTextIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextIteratorWrongColumn.";
   // Test WikiText Dataset with single text file and many default inputs
@@ -220,9 +220,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: read WikiText data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestWikiTextGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextGetters.";
   // Test WikiText Dataset with single text file and many default inputs
@@ -258,9 +258,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextGetters) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with invalid samplers=-1
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetFail1.";
 
@@ -276,9 +276,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with empty dataset_files input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetFail2.";
 
@@ -294,9 +294,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with non-existent dataset_files input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetFail3.";
 
@@ -312,9 +312,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with empty string dataset_files input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetFail4.";
 
@@ -330,9 +330,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with invalid num_shards=0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetFail5.";
 
@@ -348,9 +348,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail5) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with invalid shard_id=-1
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail6) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetFail6.";
 
@@ -366,9 +366,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail6) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with invalid shard_id=2 and num_shards=2 combination
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail7) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetFail7.";
 
@@ -384,9 +384,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetFail7) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Test WikiTextDataset with Shuffle mode False.
-/// Expectation: Exception thrown to be caught.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with ShuffleMode::kFalse
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetShuffleFalse) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetShuffleFalse.";
 
@@ -451,9 +451,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetShuffleFalse) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Test WikiTextDataset with Shuffle mode Files.
-/// Expectation: the data is processed successfully.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with ShuffleMode::kFiles
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetShuffleFilesA.";
 
@@ -518,9 +518,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetShuffleFilesA) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Test WikiTextDataset with Shuffle mode Infile.
-/// Expectation: the data is processed successfully.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with ShuffleMode::kInfile
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetShuffleFilesB.";
 
@@ -585,9 +585,9 @@ TEST_F(MindDataTestPipeline, TestWikiTextDatasetShuffleFilesB) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test WikiText Dataset.
-/// Description: Test WikiTextDataset with Shuffle mode Global.
-/// Expectation: the data is processed successfully.
+/// Feature: WikiTextDataset
+/// Description: Test WikiTextDataset with ShuffleMode::kGlobal
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestWikiTextDatasetShuffleGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWikiTextDatasetShuffleGlobal.";
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: Save
+/// Description: Test Save on function with loading Cifar10Dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSaveCifar10AndLoad(single mindrecord file).";
 
@@ -117,6 +120,9 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
   EXPECT_EQ(remove(temp_file_db.c_str()), 0);
 }
 
+/// Feature: Save
+/// Description: Test Save on Cifar10Datasetwith invalid inputs
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSaveFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSaveFail with incorrect param.";
 

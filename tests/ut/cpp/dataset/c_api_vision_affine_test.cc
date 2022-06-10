@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ TEST_F(MindDataTestPipeline, TestAffineAPI) {
 
   // Create auto contrast object with default values
 
-  std::shared_ptr<TensorTransform> crop(new vision::RandomCrop({256, 256}));
-  std::shared_ptr<TensorTransform> affine(
-    new vision::Affine(0.0, {0.0, 0.0}, 0.0, {0.0, 0.0}, InterpolationMode::kLinear));
+  auto crop = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{256, 256});
+  auto affine = std::make_shared<vision::Affine>(
+    0.0, std::vector<float>{0.0, 0.0}, 0.0, std::vector<float>{0.0, 0.0}, InterpolationMode::kLinear);
 
   // Create a Map operation on ds
   ds = ds->Map({crop, affine});
@@ -82,9 +82,9 @@ TEST_F(MindDataTestPipeline, TestAffineAPIFail) {
 
   // Create auto contrast object with default values
 
-  std::shared_ptr<TensorTransform> crop(new vision::RandomCrop({256, 256}));
-  std::shared_ptr<TensorTransform> affine(
-    new vision::Affine(0.0, {2.0, -1.0}, 0.0, {0.0, 0.0}, InterpolationMode::kLinear));
+  auto crop = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{256, 256});
+  auto affine = std::make_shared<vision::Affine>(
+    0.0, std::vector<float>{2.0, -1.0}, 0.0, std::vector<float>{0.0, 0.0}, InterpolationMode::kLinear);
 
   // Create a Map operation on ds
   ds = ds->Map({crop, affine});

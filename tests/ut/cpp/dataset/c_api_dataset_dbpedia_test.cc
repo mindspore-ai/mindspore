@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: DBpedia.
-/// Description: read test data.
-/// Expectation: the data is processed successfully.
+/// Feature: DBpediaDataset
+/// Description: Test DBpediaDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetBasic.";
 
@@ -70,9 +70,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetBasic) {
   iter->Stop();
 }
 
-/// Feature: DBpedia.
-/// Description: read train data and test data.
-/// Expectation: the data is processed successfully.
+/// Feature: DBpediaDataset
+/// Description: Test DBpediaDataset with all as usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetUsageAll) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetUsageAll.";
 
@@ -119,9 +119,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetUsageAll) {
   iter->Stop();
 }
 
-/// Feature: TestDBpediaDatasetIteratorOneColumn.
-/// Description: test iterator of DBpediaDataset with only the "class" column.
-/// Expectation: get correct data.
+/// Feature: DBpediaDataset
+/// Description: Test iterator of DBpediaDataset with only the class column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetIteratorOneColumn.";
   // Create a DBpedia Dataset
@@ -162,9 +162,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: DBpediaDatasetIteratorWrongColumn.
-/// Description: test iterator of DBpediaDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: DBpediaDataset
+/// Description: Test iterator of DBpediaDataset with wrong column
+/// Expectation: Get none piece of data
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetIteratorWrongColumn.";
   // Create a DBpedia Dataset
@@ -179,9 +179,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: DBpedia.
-/// Description: includes tests for shape, type, size.
-/// Expectation: the data is processed successfully.
+/// Feature: DBpediaDataset
+/// Description: Test DBpediaDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetGetters.";
 
@@ -206,9 +206,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
-/// Feature: DBpedia.
-/// Description: read 2 samples from train file.
-/// Expectation: the data is processed successfully.
+/// Feature: DBpediaDataset
+/// Description: Test DBpediaDataset with num_samples
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetNumSamples.";
 
@@ -253,9 +253,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetNumSamples) {
   iter->Stop();
 }
 
-/// Feature: DBpedia.
-/// Description: test in a distributed state.
-/// Expectation: the data is processed successfully.
+/// Feature: DBpediaDataset
+/// Description: Test distributed DBpediaDataset (with num_shards and shard_id)
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetDistribution.";
 
@@ -300,9 +300,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetDistribution) {
   iter->Stop();
 }
 
-/// Feature: DBpedia.
-/// Description: test with invalid input.
-/// Expectation: throw error messages when certain errors occur.
+/// Feature: DBpediaDataset
+/// Description: Test DBpediaDataset with invalid inputs
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetFail.";
   // Create a DBpedia Dataset
@@ -351,9 +351,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetFail) {
   EXPECT_EQ(iter4, nullptr);
 }
 
-/// Feature: DBpedia.
-/// Description: read data with pipeline from test file.
-/// Expectation: the data is processed successfully.
+/// Feature: DBpediaDataset
+/// Description: Test DBpediaDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetWithPipeline.";
 
@@ -409,9 +409,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: DBpedia.
-/// Description: test with shuffle files.
-/// Expectation: the data is processed successfully.
+/// Feature: DBpediaDataset
+/// Description: Test DBpediaDataset with ShuffleMode::kFiles
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetShuffleFilesA.";
 
@@ -470,9 +470,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetShuffleFilesA) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: DBpedia.
-/// Description: test with shuffle in file.
-/// Expectation: the data is processed successfully.
+/// Feature: DBpediaDataset
+/// Description: Test DBpediaDataset with ShuffleMode::kInfile
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetShuffleFilesB.";
 
@@ -528,9 +528,9 @@ TEST_F(MindDataTestPipeline, TestDBpediaDatasetShuffleFilesB) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: DBpedia.
-/// Description: test with global shuffle.
-/// Expectation: the data is processed successfully.
+/// Feature: DBpediaDataset
+/// Description: Test DBpediaDataset with ShuffleMode::kGlobal
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBpediaDatasetShuffleGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBpediaDatasetShuffleFilesGlobal.";
 

@@ -26,8 +26,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: GTZANDataset
-/// Description: test GTZAN
-/// Expectation: get correct GTZAN dataset
+/// Description: Test GTZAN
+/// Expectation: Get correct GTZAN dataset
 TEST_F(MindDataTestPipeline, TestGTZANBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGTZANBasic.";
 
@@ -78,8 +78,8 @@ TEST_F(MindDataTestPipeline, TestGTZANBasic) {
 }
 
 /// Feature: GTZANDataset
-/// Description: test GTZAN with Pipeline
-/// Expectation: get correct GTZAN dataset
+/// Description: Test GTZAN with Pipeline
+/// Expectation: Get correct GTZAN dataset
 TEST_F(MindDataTestPipeline, TestGTZANBasicWithPipeline) {
   MS_LOG(INFO) << "Doing DataSetOpBatchTest-TestGTZANBasicWithPipeline.";
 
@@ -136,8 +136,8 @@ TEST_F(MindDataTestPipeline, TestGTZANBasicWithPipeline) {
 }
 
 /// Feature: GTZANDataset
-/// Description: test GTZAN with invalid directory
-/// Expectation: get correct GTZAN dataset
+/// Description: Test GTZAN with invalid directory
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestGTZANError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGTZANError.";
 
@@ -161,8 +161,8 @@ TEST_F(MindDataTestPipeline, TestGTZANError) {
 }
 
 /// Feature: GTZANDataset
-/// Description: test GTZAN with Getters
-/// Expectation: dataset is null
+/// Description: Test GTZAN with Getters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestGTZANGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGTZANGetters.";
 
@@ -188,8 +188,8 @@ TEST_F(MindDataTestPipeline, TestGTZANGetters) {
 }
 
 /// Feature: GTZANDataset
-/// Description: test GTZAN dataset with invalid usage
-/// Expectation: dataset is null
+/// Description: Test GTZAN dataset with invalid usage
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestGTZANWithInvalidUsageError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGTZANWithInvalidUsageError.";
 
@@ -212,8 +212,8 @@ TEST_F(MindDataTestPipeline, TestGTZANWithInvalidUsageError) {
 }
 
 /// Feature: GTZANDataset
-/// Description: test GTZAN dataset with null sampler
-/// Expectation: dataset is null
+/// Description: Test GTZAN dataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestGTZANWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGTZANWithNullSamplerError.";
 
@@ -229,8 +229,8 @@ TEST_F(MindDataTestPipeline, TestGTZANWithNullSamplerError) {
 }
 
 /// Feature: GTZANDataset
-/// Description: test GTZAN with sequential sampler
-/// Expectation: get correct GTZAN dataset
+/// Description: Test GTZAN with sequential sampler
+/// Expectation: Get correct GTZAN dataset
 TEST_F(MindDataTestPipeline, TestGTZANNumSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGTZANWithSequentialSampler.";
 

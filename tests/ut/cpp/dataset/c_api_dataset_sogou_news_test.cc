@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ protected:
 };
 
 /// Feature: Test SogouNews Dataset.
-/// Description: read SogouNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Description: Read SogouNewsDataset data and get data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSogouNewsDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSogouNewsDatasetBasic.";
 
@@ -78,8 +78,8 @@ TEST_F(MindDataTestPipeline, TestSogouNewsDatasetBasic) {
 }
 
 /// Feature: Test SogouNews Dataset(usage=all).
-/// Description: read train data and test data.
-/// Expectation: the data is processed successfully.
+/// Description: Read train data and test data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSogouNewsDatasetUsageAll) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSogouNewsDatasetUsageAll.";
 
@@ -141,8 +141,8 @@ TEST_F(MindDataTestPipeline, TestSogouNewsDatasetUsageAll) {
 }
 
 /// Feature: Test Getters.
-/// Description: includes tests for shape, type, size.
-/// Expectation: the data is processed successfully.
+/// Description: Includes tests for shape, type, size.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSogouNewsGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSogouNewsGetters.";
 
@@ -156,8 +156,8 @@ TEST_F(MindDataTestPipeline, TestSogouNewsGetters) {
 }
 
 /// Feature: Test SogouNews Dataset(num_samples = 3).
-/// Description: test whether the interface meets expectations when NumSamples is equal to 3.
-/// Expectation: the data is processed successfully.
+/// Description: Test whether the interface meets expectations when NumSamples is equal to 3.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSogouNewsNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSogouNewsNumSamples.";
 
@@ -209,8 +209,8 @@ TEST_F(MindDataTestPipeline, TestSogouNewsNumSamples) {
 }
 
 /// Feature: Test SogouNewsDataset in distribution.
-/// Description: test interface in a distributed state.
-/// Expectation: the data is processed successfully.
+/// Description: Test interface in a distributed state.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSogouNewsDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSogouNewsDatasetDistribution.";
 
@@ -262,8 +262,8 @@ TEST_F(MindDataTestPipeline, TestSogouNewsDatasetDistribution) {
 }
 
 /// Feature: Error Test.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestSogouNewsDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSogouNewsDatasetFail.";
 
@@ -313,8 +313,8 @@ TEST_F(MindDataTestPipeline, TestSogouNewsDatasetFail) {
 }
 
 /// Feature: Test SogouNews Dataset(ShuffleMode=kFiles).
-/// Description: test SogouNews Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test SogouNews Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSogouNewsDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSogouNewsDatasetShuffleFilesA.";
 
@@ -386,8 +386,8 @@ TEST_F(MindDataTestPipeline, TestSogouNewsDatasetShuffleFilesA) {
 }
 
 /// Feature: Test SogouNews Dataset(ShuffleMode=kInfile).
-/// Description: test SogouNews Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test SogouNews Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSogouNewsDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSogouNewsDatasetShuffleFilesB.";
 
@@ -459,8 +459,8 @@ TEST_F(MindDataTestPipeline, TestSogouNewsDatasetShuffleFilesB) {
 }
 
 /// Feature: Test SogouNews Dataset(ShuffleMode=kGlobal).
-/// Description: test SogouNews Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test SogouNews Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSogouNewsDatasetShuffleFilesGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSogouNewsDatasetShuffleFilesGlobal.";
 

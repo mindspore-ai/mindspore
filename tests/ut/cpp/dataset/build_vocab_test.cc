@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ class MindDataTestVocab : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: Vocab
+/// Description: Test building Vocab using BuildFromUnorderedMap
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestVocab, TestVocabFromUnorderedMap) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromUnorderedMap.";
   // Build a map
@@ -52,6 +55,9 @@ TEST_F(MindDataTestVocab, TestVocabFromUnorderedMap) {
   }
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab from empty map
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestVocab, TestVocabFromEmptyMap) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromEmptyMap.";
   // Build vocab from empty map
@@ -70,6 +76,9 @@ TEST_F(MindDataTestVocab, TestVocabFromEmptyMap) {
   }
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab with negative index of word
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestVocab, TestVocabFromMapFail) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromMapFail.";
   // Build a map
@@ -83,6 +92,9 @@ TEST_F(MindDataTestVocab, TestVocabFromMapFail) {
   EXPECT_NE(s, Status::OK());
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab from vector of words where special tokens are prepended to vocab
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestVocab, TestVocabFromVectorPrependSpTokens) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromVectorPrependSpTokens.";
   // Build vocab from a vector of words, special tokens are prepended to vocab
@@ -101,6 +113,9 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorPrependSpTokens) {
   }
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab from vector of words where special tokens are appended to vocab
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestVocab, TestVocabFromVectorAppendSpTokens) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromVectorAppendSpTokens.";
   // Build vocab from a vector of words, special tokens are appended to vocab
@@ -118,6 +133,9 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorAppendSpTokens) {
   }
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab from vector of words with no special tokens
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestVocab, TestVocabFromVectorWithNoSpTokens) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromVectorWithNoSpTokens.";
   // Build vocab from a vector of words with no special tokens
@@ -136,6 +154,9 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorWithNoSpTokens) {
   }
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab from empty vector
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestVocab, TestVocabFromEmptyVector) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromEmptyVector.";
   // Build vocab from empty vector
@@ -154,6 +175,9 @@ TEST_F(MindDataTestVocab, TestVocabFromEmptyVector) {
   }
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab with duplicate words
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestVocab, TestVocabFromVectorFail1) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromVectorFail1.";
   // Build vocab from a vector of words
@@ -166,6 +190,9 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorFail1) {
   EXPECT_NE(s, Status::OK());
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab with duplicate special token
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestVocab, TestVocabFromVectorFail2) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromVectorFail2.";
   // Build vocab from a vector
@@ -178,6 +205,9 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorFail2) {
   EXPECT_NE(s, Status::OK());
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab with special tokens that already exist in word_list
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestVocab, TestVocabFromVectorFail3) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromVectorFail3.";
   // Build vocab from a vector
@@ -190,6 +220,9 @@ TEST_F(MindDataTestVocab, TestVocabFromVectorFail3) {
   EXPECT_NE(s, Status::OK());
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab from local file
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestVocab, TestVocabFromFile) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromFile.";
   // Build vocab from local file
@@ -207,6 +240,9 @@ TEST_F(MindDataTestVocab, TestVocabFromFile) {
   }
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab from local file which does not exist
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestVocab, TestVocabFromFileFail1) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromFileFail1.";
   // Build vocab from local file which is not exist
@@ -216,6 +252,9 @@ TEST_F(MindDataTestVocab, TestVocabFromFileFail1) {
   EXPECT_NE(s, Status::OK());
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab from local file with invalid vocab_size
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestVocab, TestVocabFromFileFail2) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromFileFail2.";
   // Build vocab from local file
@@ -227,6 +266,9 @@ TEST_F(MindDataTestVocab, TestVocabFromFileFail2) {
   EXPECT_NE(s, Status::OK());
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab from local file with duplicate special token
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestVocab, TestVocabFromFileFail3) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromFileFail3.";
   // Build vocab from local file
@@ -238,6 +280,9 @@ TEST_F(MindDataTestVocab, TestVocabFromFileFail3) {
   EXPECT_NE(s, Status::OK());
 }
 
+/// Feature: Vocab
+/// Description: Test building Vocab from local file with special tokens and word_list that contain duplicate word
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestVocab, TestVocabFromFileFail4) {
   MS_LOG(INFO) << "Doing MindDataTestVocab-TestVocabFromFileFail4.";
   // Build vocab from local file

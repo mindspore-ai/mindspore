@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 protected:
 };
 
-/// Feature: LFWDataset.
-/// Description: test LFWDataset.
-/// Expectation: get correct lfw dataset.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestLFWDataset) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFWDataset.";
 
@@ -63,9 +63,9 @@ TEST_F(MindDataTestPipeline, TestLFWDataset) {
  iter->Stop();
 }
 
-/// Feature: LFWPeopleDatasetGetters.
-/// Description: test usage of getters LFWPeopleDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset Getters method using people dataset and RandomSampler
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLFWPeopleDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFWPeopleDatasetGetters.";
 
@@ -91,9 +91,9 @@ TEST_F(MindDataTestPipeline, TestLFWPeopleDatasetGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
-/// Feature: LFWPairsDatasetGetters.
-/// Description: test usage of getters LFWPairsDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset Getters method using pairs dataset and RandomSampler
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLFWPairsDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFWPairsDatasetGetters.";
 
@@ -120,9 +120,9 @@ TEST_F(MindDataTestPipeline, TestLFWPairsDatasetGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
-/// Feature: LFWDataset.
-/// Description: test LFWDatasetWithPipeline.
-/// Expectation: get correct lfw dataset.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset with pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestLFWDatasetWithPipeline) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFWDatasetWithPipeline.";
 
@@ -180,9 +180,9 @@ TEST_F(MindDataTestPipeline, TestLFWDatasetWithPipeline) {
  iter->Stop();
 }
 
-/// Feature: LFWDataset.
-/// Description: test LFWGetDatasetSize.
-/// Expectation: get correct lfw dataset.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLFWGetDatasetSize) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetLFWDatasetSize.";
 
@@ -194,9 +194,9 @@ TEST_F(MindDataTestPipeline, TestLFWGetDatasetSize) {
  EXPECT_EQ(ds->GetDatasetSize(), 4);
 }
 
-/// Feature: LFWDataset.
-/// Description: test LFWDatasetPeopleGetters.
-/// Expectation: get correct lfw dataset.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset Getters method with people dataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLFWDatasetPeopleGetters) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFWPeopleDatasetGetters.";
 
@@ -230,9 +230,9 @@ TEST_F(MindDataTestPipeline, TestLFWDatasetPeopleGetters) {
  EXPECT_EQ(ds->GetDatasetSize(), 3);
 }
 
-/// Feature: LFWDataset.
-/// Description: test LFWDatasetPairsGetters.
-/// Expectation: get correct lfw dataset.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset Getters method with pairs dataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLFWDatasetPairsGetters) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFWDatasetPairsGetters.";
 
@@ -267,9 +267,9 @@ TEST_F(MindDataTestPipeline, TestLFWDatasetPairsGetters) {
  EXPECT_EQ(ds->GetDatasetSize(), 4);
 }
 
-/// Feature: LFWDataset.
-/// Description: test LFWDatasetUsage.
-/// Expectation: get correct lfw dataset.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset with all usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestLFWDatasetUsage) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFWDatasetUsage.";
 
@@ -308,9 +308,9 @@ TEST_F(MindDataTestPipeline, TestLFWDatasetUsage) {
  iter->Stop();
 }
 
-/// Feature: LFWDataset.
-/// Description: test LFWDatasetTImageSet.
-/// Expectation: get correct lfw dataset.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset with deepfunneled as image_set
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestLFWDatasetImagSet) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFWDatasetImageSet.";
 
@@ -350,9 +350,9 @@ TEST_F(MindDataTestPipeline, TestLFWDatasetImagSet) {
 }
 
 
-/// Feature: LFWDataset.
-/// Description: test LFWDataset with null file dir.
-/// Expectation: throw exception correctly.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset with invalid folder path (empty string)
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestLFWDatasetWithNullFileDirFail) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFWDatasetFail.";
 
@@ -367,9 +367,9 @@ TEST_F(MindDataTestPipeline, TestLFWDatasetWithNullFileDirFail) {
  EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: LFWDataset.
-/// Description: test LFWDataset with null sampler.
-/// Expectation: throw exception correctly.
+/// Feature: LFWDataset
+/// Description: Test LFWDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestLFWDatasetWithNullSamplerFail) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLFWDatasetWithNullSamplerFail.";
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,14 @@ class MindDataTestAutoContrastOp : public UT::CVOP::CVOpCommon {
   MindDataTestAutoContrastOp() : CVOpCommon() {}
 };
 
+/// Feature: AutoContrast op
+/// Description: Test AutoContrast op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestAutoContrastOp, TestOp1) {
   MS_LOG(INFO) << "Doing testAutoContrastOp.";
 
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<AutoContrastOp> op(new AutoContrastOp(1.0, {0, 255}));
+  auto op = std::make_unique<AutoContrastOp>(1.0, std::vector<uint32_t>{0, 255});
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

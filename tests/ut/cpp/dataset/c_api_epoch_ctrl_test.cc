@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ class MindDataTestEpochCtrl : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: Epoch Control
+/// Description: Test auto inject epoch (num_epochs > 1)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestEpochCtrl, TestAutoInjectEpoch) {
   MS_LOG(INFO) << "Doing MindDataTestEpochCtrl-TestAutoInjectEpoch.";
 
@@ -72,6 +75,9 @@ TEST_F(MindDataTestEpochCtrl, TestAutoInjectEpoch) {
   iter->Stop();
 }
 
+/// Feature: Epoch Control
+/// Description: Test epoch basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestEpochCtrl, TestEpoch) {
   MS_LOG(INFO) << "Doing MindDataTestEpochCtrl-TestEpoch.";
 
@@ -119,6 +125,9 @@ TEST_F(MindDataTestEpochCtrl, TestEpoch) {
   iter->Stop();
 }
 
+/// Feature: Epoch Control
+/// Description: Test epoch after Repeat op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestEpochCtrl, TestRepeatEpoch) {
   MS_LOG(INFO) << "Doing MindDataTestEpochCtrl-TestRepeatEpoch.";
 
@@ -168,6 +177,9 @@ TEST_F(MindDataTestEpochCtrl, TestRepeatEpoch) {
   iter->Stop();
 }
 
+/// Feature: Epoch Control
+/// Description: Test epoch after 2 Repeat ops
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestEpochCtrl, TestRepeatRepeatEpoch) {
   MS_LOG(INFO) << "Doing MindDataTestEpochCtrl-TestRepeatRepeatEpoch.";
 

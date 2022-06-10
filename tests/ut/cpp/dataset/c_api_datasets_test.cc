@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 
 // Tests for datasets (in alphabetical order)
 
+/// Feature: CelebADataset
+/// Description: Test CelebADataset with all usage and SequentialSampler
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCelebADataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebADataset.";
 
@@ -75,6 +78,9 @@ TEST_F(MindDataTestPipeline, TestCelebADataset) {
   iter->Stop();
 }
 
+/// Feature: CelebADataset
+/// Description: Test CelebADataset with default inputs
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCelebADefault) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebADefault.";
 
@@ -177,6 +183,9 @@ TEST_F(MindDataTestPipeline, TestCelebASubsetRandomSampler) {
   iter->Stop();
 }
 
+/// Feature: GetRepeatCount
+/// Description: Test GetRepeatCount on ImageFolderDataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestGetRepeatCount) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetRepeatCount.";
 
@@ -193,6 +202,9 @@ TEST_F(MindDataTestPipeline, TestGetRepeatCount) {
   EXPECT_EQ(ds->GetRepeatCount(), 3);
 }
 
+/// Feature: GetBatchSize
+/// Description: Test GetBatchSize on ImageFolderDataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestGetBatchSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetRepeatCount.";
 
@@ -219,6 +231,9 @@ TEST_F(MindDataTestPipeline, TestCelebAGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 1);
 }
 
+/// Feature: CelebADataset
+/// Description: Test CelebADataset with invalid dataset path and invalid dataset type
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCelebAError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebAError.";
 
@@ -245,6 +260,9 @@ TEST_F(MindDataTestPipeline, TestCelebAError) {
   EXPECT_EQ(iter2, nullptr);
 }
 
+/// Feature: CelebADataset
+/// Description: Test CelebADataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCelebADatasetWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCelebADataset.";
 
@@ -259,6 +277,9 @@ TEST_F(MindDataTestPipeline, TestCelebADatasetWithNullSamplerError) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: ImageFolderDataset
+/// Description: Test ImageFolderDataset with wrong dataset directory
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestImageFolderWithWrongDatasetDirFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderWithWrongDatasetDirFail.";
 
@@ -272,6 +293,9 @@ TEST_F(MindDataTestPipeline, TestImageFolderWithWrongDatasetDirFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: ImageFolderDataset
+/// Description: Test ImageFolderDataset with wrong extension
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongExtensionFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFailWithWrongExtensionFail.";
 
@@ -295,6 +319,9 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongExtensionFail) {
   iter->Stop();
 }
 
+/// Feature: ImageFolderDataset
+/// Description: Test ImageFolderDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestImageFolderGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderGetDatasetSize.";
 
@@ -310,6 +337,9 @@ TEST_F(MindDataTestPipeline, TestImageFolderGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 44);
 }
 
+/// Feature: ImageFolderDataset
+/// Description: Test ImageFolderDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestImageFolderFailWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFailWithNullSamplerFail.";
 
@@ -324,6 +354,9 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithNullSamplerFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: ImageFolderDataset
+/// Description: Test ImageFolderDataset with wrong sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderFailWithWrongSamplerFail.";
 
@@ -338,6 +371,9 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongSamplerFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: MnistDataset
+/// Description: Test MnistDataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestMnistGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistGetDatasetSize.";
 
@@ -348,6 +384,9 @@ TEST_F(MindDataTestPipeline, TestMnistGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 20);
 }
 
+/// Feature: MnistDataset
+/// Description: Test MnistDataset with wrong dataset directory
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMnistFailWithWrongDatasetDirFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithWrongDatasetDirFail.";
 
@@ -361,6 +400,9 @@ TEST_F(MindDataTestPipeline, TestMnistFailWithWrongDatasetDirFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: MnistDataset
+/// Description: Test MnistDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMnistFailWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithNullSamplerFail.";
 
@@ -375,6 +417,9 @@ TEST_F(MindDataTestPipeline, TestMnistFailWithNullSamplerFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: ImageFolderDataset
+/// Description: Test ImageFolderDataset with class_index
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestImageFolderClassIndexDatasetSize) {
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   std::map<std::string, int32_t> class_index;
@@ -384,6 +429,9 @@ TEST_F(MindDataTestPipeline, TestImageFolderClassIndexDatasetSize) {
   EXPECT_EQ(ds->GetNumClasses(), 2);
 }
 
+/// Feature: ImageFolderDataset
+/// Description: Test ImageFolderDataset with wrong class in class_index
+/// Expectation: GetNumClasses should return -1
 TEST_F(MindDataTestPipeline, TestImageFolderClassIndexDatasetSizeFail) {
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   std::map<std::string, int32_t> class_index;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: LSUNDataset.
-/// Description: test LSUNDataset.
-/// Expectation: get correct lsun dataset.
+/// Feature: LSUNDataset
+/// Description: Test LSUNDataset with train dataset
+/// Expectation: Get correct LSUNDataset
 TEST_F(MindDataTestPipeline, TestLSUNTrainDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLSUNTrainDataset.";
 
@@ -63,9 +63,9 @@ TEST_F(MindDataTestPipeline, TestLSUNTrainDataset) {
   iter->Stop();
 }
 
-/// Feature: LSUNDataset.
-/// Description: test LSUNDataset.
-/// Expectation: get correct lsun dataset.
+/// Feature: LSUNDataset
+/// Description: Test LSUNDataset with valid dataset
+/// Expectation: Get correct LSUNDataset
 TEST_F(MindDataTestPipeline, TestLSUNValidDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLSUNValidDataset.";
 
@@ -100,9 +100,9 @@ TEST_F(MindDataTestPipeline, TestLSUNValidDataset) {
   iter->Stop();
 }
 
-/// Feature: LSUNDataset.
-/// Description: test LSUNDataset.
-/// Expectation: get correct lsun dataset.
+/// Feature: LSUNDataset
+/// Description: Test LSUNDataset with test dataset
+/// Expectation: Get correct LSUNDataset
 TEST_F(MindDataTestPipeline, TestLSUNTestDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLSUNTestDataset.";
 
@@ -137,9 +137,9 @@ TEST_F(MindDataTestPipeline, TestLSUNTestDataset) {
   iter->Stop();
 }
 
-/// Feature: LSUNDataset.
-/// Description: test LSUNDataset.
-/// Expectation: get correct lsun dataset.
+/// Feature: LSUNDataset
+/// Description: Test LSUNDataset with all dataset
+/// Expectation: Get correct LSUNDataset
 TEST_F(MindDataTestPipeline, TestLSUNAllDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLSUNAllDataset.";
 
@@ -174,9 +174,9 @@ TEST_F(MindDataTestPipeline, TestLSUNAllDataset) {
   iter->Stop();
 }
 
-/// Feature: LSUNDataset.
-/// Description: test LSUNDataset.
-/// Expectation: get correct lsun dataset.
+/// Feature: LSUNDataset
+/// Description: Test LSUNDataset with classes
+/// Expectation: Get correct LSUNDataset
 TEST_F(MindDataTestPipeline, TestLSUNClassesDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLSUNClassesDataset.";
 
@@ -212,9 +212,9 @@ TEST_F(MindDataTestPipeline, TestLSUNClassesDataset) {
   iter->Stop();
 }
 
-/// Feature: LSUNDataset.
-/// Description: test LSUNDataset.
-/// Expectation: get correct lsun dataset.
+/// Feature: LSUNDataset
+/// Description: Test LSUNDataset in pipeline mode
+/// Expectation: Get correct LSUNDataset
 TEST_F(MindDataTestPipeline, TestLSUNDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLSUNDatasetWithPipeline.";
 
@@ -272,9 +272,9 @@ TEST_F(MindDataTestPipeline, TestLSUNDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: LSUNDataset.
-/// Description: test LSUNDataset.
-/// Expectation: get correct lsun dataset.
+/// Feature: LSUNDataset
+/// Description: Test LSUNDataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLSUNGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLSUNGetDatasetSize.";
 
@@ -287,8 +287,8 @@ TEST_F(MindDataTestPipeline, TestLSUNGetDatasetSize) {
 }
 
 /// Feature: LSUNDataset.
-/// Description: test LSUNDataset.
-/// Expectation: get correct lsun dataset.
+/// Description: Test LSUNDataset.
+/// Expectation: Get correct lsun dataset.
 TEST_F(MindDataTestPipeline, TestLSUNClassesGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetLSUNClassesDatasetSize.";
 
@@ -300,9 +300,9 @@ TEST_F(MindDataTestPipeline, TestLSUNClassesGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 2);
 }
 
-/// Feature: LSUNDataset.
-/// Description: test LSUNDataset.
-/// Expectation: get correct lsun dataset.
+/// Feature: LSUNDataset
+/// Description: Test LSUNDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLSUNDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLSUNDatasetGetters.";
 
@@ -332,9 +332,9 @@ TEST_F(MindDataTestPipeline, TestLSUNDatasetGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
-/// Feature: LSUNDataset.
-/// Description: test LSUNDataset with wrong folder path.
-/// Expectation: throw exception correctly.
+/// Feature: LSUNDataset
+/// Description: Test LSUNDataset with wrong folder path
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestPipeline, TestLSUNDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLSUNDatasetFail.";
 
@@ -348,9 +348,9 @@ TEST_F(MindDataTestPipeline, TestLSUNDatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: LSUNDataset.
-/// Description: test LSUNDataset with null sampler.
-/// Expectation: throw exception correctly.
+/// Feature: LSUNDataset
+/// Description: Test LSUNDataset with null sampler
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestPipeline, TestLSUNDatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLSUNDatasetWithNullSamplerFail.";
 

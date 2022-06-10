@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 protected:
 };
 
-/// Feature: Test AGNewsDataset Dataset.
-/// Description: read AGNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: AGNewsDataset
+/// Description: Basic test for AGNewsDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestAGNewsDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetBasic.";
 
@@ -74,9 +74,9 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetBasic) {
   iter->Stop();
 }
 
-/// Feature: Test AGNewsDataset Dataset.
-/// Description: read AGNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: AGNewsDataset
+/// Description: Test AGNewsDataset in pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestAGNewsGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsGetters.";
 
@@ -100,9 +100,9 @@ TEST_F(MindDataTestPipeline, TestAGNewsGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
-/// Feature: Test AGNewsDataset Dataset.
-/// Description: read AGNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: AGNewsDataset
+/// Description: Test AGNewsDataset with invalid inputs
+/// Expectation: Correct error and message are thrown
 TEST_F(MindDataTestPipeline, TestAGNewsDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetFail.";
 
@@ -148,9 +148,9 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetFail) {
   EXPECT_EQ(iter4, nullptr);
 }
 
-/// Feature: Test AGNewsDataset Dataset.
-/// Description: read AGNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: AGNewsDataset
+/// Description: Test AGNewsDataset with valid num_samples
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestAGNewsDatasetNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetNumSamples.";
 
@@ -197,9 +197,9 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetNumSamples) {
   iter->Stop();
 }
 
-/// Feature: Test AGNewsDataset Dataset.
-/// Description: read AGNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: AGNewsDataset
+/// Description: Test distributed AGNewsDataset (with num_shards and shard_id)
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestAGNewsDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetDistribution.";
 
@@ -246,9 +246,9 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetDistribution) {
   iter->Stop();
 }
 
-/// Feature: Test AGNewsDataset Dataset.
-/// Description: read AGNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: AGNewsDataset
+/// Description: Test AGNewsDataset with all as usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestAGNewsDatasetMultiFiles) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetMultiFiles.";
 
@@ -304,9 +304,9 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetMultiFiles) {
   iter->Stop();
 }
 
-/// Feature: Test AGNewsDataset Dataset.
-/// Description: read AGNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: AGNewsDataset
+/// Description: Test AGNewsDataset header
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestAGNewsDatasetHeader) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetHeader.";
 
@@ -353,9 +353,9 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetHeader) {
   iter->Stop();
 }
 
-/// Feature: Test AGNewsDataset Dataset.
-/// Description: read AGNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: AGNewsDataset
+/// Description: Test AGNewsDataset using ShuffleMode::kFiles
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestAGNewsDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetShuffleFilesA.";
 
@@ -422,9 +422,9 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetShuffleFilesA) {
       original_num_parallel_workers);
 }
 
-/// Feature: Test AGNewsDataset Dataset.
-/// Description: read AGNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: AGNewsDataset
+/// Description: Test AGNewsDataset using ShuffleMode::kInfile
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestAGNewsDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetShuffleFilesB.";
   // Set configuration.
@@ -496,9 +496,9 @@ TEST_F(MindDataTestPipeline, TestAGNewsDatasetShuffleFilesB) {
       original_num_parallel_workers);
 }
 
-/// Feature: Test AGNewsDataset Dataset.
-/// Description: read AGNewsDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: AGNewsDataset
+/// Description: Test AGNewsDataset using ShuffleMode::kGlobal
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestAGNewsDatasetShuffleGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAGNewsDatasetShuffleGlobal.";
   // Test AGNews Dataset with GLOBLE shuffle.

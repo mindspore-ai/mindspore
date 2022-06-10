@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: PullBasedIterator
+/// Description: Test PullBasedIterator after Batch op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPullBasedBatch) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumBasic.";
 
@@ -49,6 +52,9 @@ TEST_F(MindDataTestPipeline, TestPullBasedBatch) {
   EXPECT_EQ(row[0].Shape(), result);
 }
 
+/// Feature: PullBasedIterator
+/// Description: Test PullBasedIterator after Project op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPullBasedProject) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumBasic.";
 

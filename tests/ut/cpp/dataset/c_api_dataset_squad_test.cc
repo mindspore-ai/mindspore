@@ -27,8 +27,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: SQuADDataset.
-/// Description: test SQuADDataset basic.
-/// Expectation: the data is processed successfully.
+/// Description: Test SQuADDataset basic.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSQuADDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSQuADDatasetBasic.";
 
@@ -62,8 +62,8 @@ TEST_F(MindDataTestPipeline, TestSQuADDatasetBasic) {
 }
 
 /// Feature: SQuADDataset.
-/// Description: test SQuADDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Description: Test SQuADDataset in pipeline mode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSQuADDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSQuADDatasetBasicWithPipeline.";
 
@@ -119,8 +119,8 @@ TEST_F(MindDataTestPipeline, TestSQuADDatasetBasicWithPipeline) {
 }
 
 /// Feature: SQuADDataset.
-/// Description: test the getter functions of SQuADDataset.
-/// Expectation: the data is processed successfully.
+/// Description: Test the getter functions of SQuADDataset.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSQuADGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSQuADGetters.";
 
@@ -136,8 +136,8 @@ TEST_F(MindDataTestPipeline, TestSQuADGetters) {
 }
 
 /// Feature: SQuADDataset.
-/// Description: test SQuAD1.1 for train, dev and all.
-/// Expectation: the data is processed successfully.
+/// Description: Test SQuAD1.1 for train, dev and all.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSQuADDatasetVersion1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSQuADDatasetVersion1.";
 
@@ -243,8 +243,8 @@ TEST_F(MindDataTestPipeline, TestSQuADDatasetVersion1) {
 }
 
 /// Feature: SQuADDataset.
-/// Description: test SQuAD2.0 for train, dev and all.
-/// Expectation: the data is processed successfully.
+/// Description: Test SQuAD2.0 for train, dev and all.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSQuADDatasetVersion2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSQuADDatasetVersion2.";
 
@@ -349,8 +349,8 @@ TEST_F(MindDataTestPipeline, TestSQuADDatasetVersion2) {
 }
 
 /// Feature: SQuADDataset.
-/// Description: test the distribution of SQuADDataset.
-/// Expectation: the data is processed successfully.
+/// Description: Test the distribution of SQuADDataset.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSQuADDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSQuADDatasetDistribution.";
 
@@ -385,8 +385,8 @@ TEST_F(MindDataTestPipeline, TestSQuADDatasetDistribution) {
 }
 
 /// Feature: SQuADDataset.
-/// Description: test some failed cases of SQuADDataset.
-/// Expectation: throw correct error and message.
+/// Description: Test some failed cases of SQuADDataset.
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr.
 TEST_F(MindDataTestPipeline, TestSQuADDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSQuADDatasetFail.";
   // Create a SQuAD Dataset
@@ -438,8 +438,8 @@ TEST_F(MindDataTestPipeline, TestSQuADDatasetFail) {
 }
 
 /// Feature: SQuADDataset.
-/// Description: test the Shuffle of SQuADDataset.
-/// Expectation: the data is processed successfully.
+/// Description: Test the Shuffle of SQuADDataset.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSQuADDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSQuADDatasetShuffleFilesA.";
   // Test SQuAD Dataset with files shuffle, num_parallel_workers=1.
@@ -504,8 +504,8 @@ TEST_F(MindDataTestPipeline, TestSQuADDatasetShuffleFilesA) {
 }
 
 /// Feature: SQuADDataset.
-/// Description: test the Shuffle of SQuADDataset.
-/// Expectation: the data is processed successfully.
+/// Description: Test the Shuffle of SQuADDataset.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSQuADDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSQuADDatasetShuffleFilesB.";
   // Test SQuAD Dataset with files shuffle, num_parallel_workers=1.
@@ -570,8 +570,8 @@ TEST_F(MindDataTestPipeline, TestSQuADDatasetShuffleFilesB) {
 }
 
 /// Feature: SQuADDataset.
-/// Description: test the global Shuffle of SQuADDataset.
-/// Expectation: the data is processed successfully.
+/// Description: Test the global Shuffle of SQuADDataset.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSQuADDatasetShuffleGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSQuADDatasetShuffleGlobal.";
   // Test SQuAD Dataset with GLOBLE shuffle

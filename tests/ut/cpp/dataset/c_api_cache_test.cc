@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ class MindDataTestCacheOp : public UT::DatasetOpTesting {
   void SetUp() override { DatasetOpTesting::SetUp(); }
 };
 
+/// Feature: Cache
+/// Description: Test Cache with null sampler on ImageFolderDataset
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiSamplerNull) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -47,6 +50,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiSamplerNull) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Cache
+/// Description: Test Cache with Decode op on ImageFolderDataset
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiNestedCache) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -75,6 +81,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiNestedCache) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on ImageFolderDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheImageFolderCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -116,6 +125,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheImageFolderCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on CocoDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCocoCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -159,6 +171,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCocoCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on MnistDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheMnistCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -200,6 +215,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheMnistCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on CelebADataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCelebaCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -242,6 +260,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCelebaCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on ManifestDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheManifestCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -283,6 +304,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheManifestCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on Cifar10Dataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCifar10CApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -324,6 +348,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCifar10CApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on Cifar100Dataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCifar100CApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -365,6 +392,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCifar100CApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on VOCDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheVocCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -407,6 +437,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheVocCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on AlbumDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheAlbumCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -449,6 +482,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheAlbumCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache on MindRecordDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheMindRecordCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -488,6 +524,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheMindRecordCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on RandomDataDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -530,6 +569,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on TFRecordDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi1) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -573,6 +615,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi1) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on TFRecordDataset with sharding config, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi2) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -624,6 +669,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi2) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on TFRecordDataset with num_samples, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi3) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -671,6 +719,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi3) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on TextFileDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTextfileCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -714,6 +765,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTextfileCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on CSVDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCsvCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -758,6 +812,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCsvCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache and Repeat on CLUEDataset, iterate through dataset and count rows
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheClueCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -803,6 +860,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheClueCApi) {
   iter->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache share by having two datasets where both pipeline is ImageFolderDataset with RandomSampler
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare1) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -855,6 +915,10 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare1) {
   iter2->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache share by having two datasets where first pipeline is ImageFolder with RandomSampler
+///     and second pipeline is ImageFolder with SequentialSampler
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare2) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -908,6 +972,11 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare2) {
   iter2->Stop();
 }
 
+/// Feature: Cache
+/// Description: Test Cache share by having two datasets where first pipeline is ImageFolder with decode flag set
+///     to be true and second pipeline is ImageFolder with decode flag set to be false
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline,
+///     returns nullptr for second pipeline
 TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShareFailure1) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -947,7 +1016,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShareFailure1) {
 
 // Feature: Test RandomData with Cache and Repeat
 // Description: Iterate through dataset and count rows
-// Expectation: There should  be 200 rows in the dataset
+// Expectation: There should be 200 rows in the dataset
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi1) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
@@ -992,7 +1061,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi1) {
 
 // Feature: Test RandomData with Cache and Repeat
 // Description: Set mem_sz such that spill occurs, iterate through dataset and count rows
-// Expectation: There should  be 40 rows in the dataset
+// Expectation: There should be 40 rows in the dataset
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataSpillCApi) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);

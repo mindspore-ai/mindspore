@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: ManifestBasic.
-/// Description: test basic usage of ManifestDataset.
-/// Expectation: get correct number of data.
+/// Feature: ManifestDataset
+/// Description: Test basic usage of ManifestDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestManifestBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestBasic.";
 
@@ -57,9 +57,9 @@ TEST_F(MindDataTestPipeline, TestManifestBasic) {
   iter->Stop();
 }
 
-/// Feature: ManifestBasicWithPipeline.
-/// Description: test usage of ManifestDataset with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: ManifestDataset
+/// Description: Test ManifestDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestManifestBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestBasicWithPipeline.";
 
@@ -112,9 +112,9 @@ TEST_F(MindDataTestPipeline, TestManifestBasicWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: ManifestIteratorOneColumn.
-/// Description: test iterator of ManifestDataset with only the "image" column.
-/// Expectation: get correct data.
+/// Feature: ManifestDataset
+/// Description: Test iterator of ManifestDataset with only the image column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestManifestIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestIteratorOneColumn.";
   std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
@@ -152,9 +152,9 @@ TEST_F(MindDataTestPipeline, TestManifestIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: ManifestIteratorWrongColumn.
-/// Description: test iterator of ManifestDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: ManifestDataset
+/// Description: Test iterator of ManifestDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestManifestIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestIteratorWrongColumn.";
   std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
@@ -168,9 +168,9 @@ TEST_F(MindDataTestPipeline, TestManifestIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: ManifestGetters.
-/// Description: test usage of getters ManifestDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: ManifestDataset
+/// Description: Test ManifestDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestManifestGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestGetters.";
 
@@ -207,9 +207,9 @@ TEST_F(MindDataTestPipeline, TestManifestGetters) {
   EXPECT_EQ(class_index2[2].second[0], 2);
 }
 
-/// Feature: ManifestDecode.
-/// Description: test usage of ManifestDecode.
-/// Expectation: get correct number of data.
+/// Feature: ManifestDataset
+/// Description: Test ManifestDataset with Decode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestManifestDecode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestDecode.";
 
@@ -244,9 +244,9 @@ TEST_F(MindDataTestPipeline, TestManifestDecode) {
   iter->Stop();
 }
 
-/// Feature: ManifestEval.
-/// Description: test usage of ManifestEval.
-/// Expectation: get correct number of data.
+/// Feature: ManifestDataset
+/// Description: Test ManifestDataset with eval usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestManifestEval) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestEval.";
 
@@ -278,9 +278,9 @@ TEST_F(MindDataTestPipeline, TestManifestEval) {
   iter->Stop();
 }
 
-/// Feature: ManifestClassIndex.
-/// Description: test usage of ManifestClassIndex.
-/// Expectation: get correct number of data.
+/// Feature: ManifestDataset
+/// Description: Test ManifestDataset with class index
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestClassIndex.";
 
@@ -335,9 +335,9 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   iter->Stop();
 }
 
-/// Feature: ManifestNumSamplers.
-/// Description: test usage of ManifestDataset with num sampler.
-/// Expectation: get correct piece of data.
+/// Feature: ManifestDataset
+/// Description: Test ManifestDataset with num sampler
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestManifestNumSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestNumSamplers.";
 
@@ -369,9 +369,9 @@ TEST_F(MindDataTestPipeline, TestManifestNumSamplers) {
   iter->Stop();
 }
 
-/// Feature: ManifestError.
-/// Description: test failure of Manifest Dataset.
-/// Expectation: get none piece of data.
+/// Feature: ManifestDataset
+/// Description: Test ManifestDataset with invalid inputs
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestManifestError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestError.";
 
@@ -404,9 +404,9 @@ TEST_F(MindDataTestPipeline, TestManifestError) {
   EXPECT_EQ(iter2, nullptr);
 }
 
-/// Feature: ManifestWithNullSamplerError.
-/// Description: test failure of ManifestDataset with null sampler.
-/// Expectation: get none piece of data.
+/// Feature: ManifestDataset
+/// Description: Test ManifestDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestManifestWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestWithNullSamplerError.";
   std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
@@ -420,9 +420,9 @@ TEST_F(MindDataTestPipeline, TestManifestWithNullSamplerError) {
   EXPECT_EQ(iter, nullptr);
 }
 
-// Feature: Test SubsetRandomSampler with Manifest
-// Description: Use SubsetRandomSampler with 1 index given, iterate through dataset and count rows
-// Expectation: There should  be 1 row in the dataset
+/// Feature: ManifestDataset
+/// Description: Test with SubsetRandomSampler with 1 index given, iterate through dataset and count rows
+/// Expectation: There should be 1 row in the dataset
 TEST_F(MindDataTestPipeline, TestManifestSubsetRandomSampler) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestSubsetRandomSampler.";
 

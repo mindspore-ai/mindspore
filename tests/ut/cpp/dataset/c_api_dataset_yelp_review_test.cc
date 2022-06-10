@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 protected:
 };
 
-/// Feature: Test YelpReviewPolarity Dataset.
-/// Description: read YelpReviewPolarityDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset basic usage with polarity dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestYelpReviewPolarityDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewPolarityDatasetBasic.";
 
@@ -71,9 +71,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewPolarityDatasetBasic) {
   iter->Stop();
 }
 
-/// Feature: Test YelpReviewFull Dataset.
-/// Description: read YelpReviewFullDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset basic usage with full dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestYelpReviewFullDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewFullDatasetBasic.";
 
@@ -119,9 +119,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewFullDatasetBasic) {
   iter->Stop();
 }
 
-/// Feature: YelpReviewDatasetWithPipeline.
-/// Description: test usage of YelpReviewDataset with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset with pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestYelpReviewDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewDatasetWithPipeline.";
 
@@ -177,9 +177,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: TestYelpReviewDatasetIteratorOneColumn.
-/// Description: test iterator of YelpReviewDataset with only the "text" column.
-/// Expectation: get correct data.
+/// Feature: YelpReviewDataset
+/// Description: Test iterator of YelpReviewDataset with only the text column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestYelpReviewDatasetIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewIteratorOneColumn.";
   // Create a YelpReview dataset
@@ -217,9 +217,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewDatasetIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: TestYelpReviewDatasetIteratorWrongColumn.
-/// Description: test iterator of YelpReviewDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: YelpReviewDataset
+/// Description: Test iterator of YelpReviewDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestYelpReviewDatasetIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewDatasetIteratorWrongColumn.";
   // Create a YelpReview dataset
@@ -233,9 +233,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewDatasetIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test YelpReviewPolarity Dataset(usage=all).
-/// Description: read train data and test data.
-/// Expectation: the data is processed successfully.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset with all usage and polarity dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestYelpReviewDatasetUsageAll) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewDatasetUsageAll.";
 
@@ -284,9 +284,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewDatasetUsageAll) {
   iter->Stop();
 }
 
-/// Feature: Test Getters.
-/// Description: includes tests for shape, type, size.
-/// Expectation: the data is processed successfully.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestYelpReviewDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewDatasetGetters.";
 
@@ -309,9 +309,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewDatasetGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
-/// Feature: Test YelpReview Dataset(num_samples = 2).
-/// Description: test whether the interface meets expectations when NumSamples is equal to 2.
-/// Expectation: the data is processed successfully.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset with num_samples=2
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestYelpReviewDatasetNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewDatasetNumSamples.";
 
@@ -357,9 +357,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewDatasetNumSamples) {
   iter->Stop();
 }
 
-/// Feature: Test YelpReviewDataset in distribution.
-/// Description: test interface in a distributed state.
-/// Expectation: the data is processed successfully.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset in distributed state (with num_shards and shard_id)
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestYelpReviewDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewDatasetDistribution.";
 
@@ -406,9 +406,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewDatasetDistribution) {
   iter->Stop();
 }
 
-/// Feature: Error Test.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset with invalid inputs
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestYelpReviewDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewDatasetFail.";
 
@@ -455,9 +455,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewDatasetFail) {
   EXPECT_EQ(iter4, nullptr);
 }
 
-/// Feature: Test YelpReview Dataset.
-/// Description: test YelpReview Dataset interface in pipeline.
-/// Expectation: the data is processed successfully.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset basic usage with polarity dataset with pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestYelpReviewDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYelpReviewDatasetBasicWithPipeline.";
 
@@ -513,9 +513,9 @@ TEST_F(MindDataTestPipeline, TestYelpReviewDatasetBasicWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: Test YelpReview Dataset(ShuffleMode=kFiles).
-/// Description: test YelpReview Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset with ShuffleMode::kFiles
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TesYelpReviewDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TesYelpReviewDatasetShuffleFilesA.";
 
@@ -574,9 +574,9 @@ TEST_F(MindDataTestPipeline, TesYelpReviewDatasetShuffleFilesA) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test YelpReview Dataset(ShuffleMode=kInfile).
-/// Description: test YelpReview Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset with ShuffleMode::kInfile
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TesYelpReviewDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TesYelpReviewDatasetShuffleFilesB.";
 
@@ -636,9 +636,9 @@ TEST_F(MindDataTestPipeline, TesYelpReviewDatasetShuffleFilesB) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test YelpReview Dataset(ShuffleMode=kGlobal).
-/// Description: test YelpReview Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Feature: YelpReviewDataset
+/// Description: Test YelpReviewDataset with ShuffleMode::kGlobal
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TesYelpReviewDatasetShuffleFilesGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TesYelpReviewDatasetShuffleFilesGlobal.";
 

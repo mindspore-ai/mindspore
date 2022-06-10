@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetBasic.";
   // Test TextFile Dataset with single text file and many default inputs
@@ -84,6 +87,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetBasic) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset basic usage with pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetBasicWithPipeline.";
   // Test TextFile Dataset with single text file and many default inputs
@@ -148,6 +154,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetBasicWithPipeline) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTextFileGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileGetters.";
   // Test TextFile Dataset with single text file and many default inputs
@@ -180,6 +189,9 @@ TEST_F(MindDataTestPipeline, TestTextFileGetters) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with invalid samplers=-1
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTextFileDatasetFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail1.";
 
@@ -195,6 +207,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with empty dataset_files input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTextFileDatasetFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail2.";
 
@@ -209,6 +224,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with non-existent dataset_files input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTextFileDatasetFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail3.";
 
@@ -224,6 +242,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with empty string dataset_files input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTextFileDatasetFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail4.";
 
@@ -238,6 +259,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with invalid num_shards=0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTextFileDatasetFail5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail5.";
 
@@ -253,6 +277,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetFail5) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with invalid shard_id=-1
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTextFileDatasetFail6) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail6.";
 
@@ -268,6 +295,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetFail6) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with invalid shard_id=2 and num_shards=2 combination
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTextFileDatasetFail7) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetFail7.";
 
@@ -283,7 +313,7 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetFail7) {
   EXPECT_EQ(iter, nullptr);
 }
 
-// Feature: Test Textfile dataset
+// Feature: TextFileDataset
 // Description: Create TextFile dataset with a file that does not exist and check the size of the dataset
 // Expectation: The dataset should have size 0
 TEST_F(MindDataTestPipeline, TestTextFileFileNotExist) {
@@ -298,6 +328,9 @@ TEST_F(MindDataTestPipeline, TestTextFileFileNotExist) {
   EXPECT_EQ(ds->GetDatasetSize(), 0);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test with ShuffleMode::kFalse with two text files, 1.txt then 2.txt, in lexicographical order
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1A) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFalse1A.";
   // Test TextFile Dataset with two text files and no shuffle, num_parallel_workers=1
@@ -359,6 +392,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1A) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test with ShuffleMode::kFalse with two text files, 2.txt then 1.txt, in non-lexicographical order
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1B) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFalse1B.";
   // Test TextFile Dataset with two text files and no shuffle, num_parallel_workers=1
@@ -420,6 +456,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1B) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with ShuffleMode::kFalse with shard coverage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse4Shard) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFalse4Shard.";
   // Test TextFile Dataset with two text files and no shuffle, num_parallel_workers=4, shard coverage
@@ -480,6 +519,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse4Shard) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test with ShuffleMode::kFiles with two text files, 1.txt then 2.txt, in lexicographical order
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1A) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFiles1A.";
   // Test TextFile Dataset with files shuffle, num_parallel_workers=1
@@ -543,6 +585,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1A) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test with ShuffleMode::kFiles with two text files, 2.txt then 1.txt, in non-lexicographical order
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1B) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFiles1B.";
   // Test TextFile Dataset with files shuffle, num_parallel_workers=1
@@ -606,6 +651,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1B) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with ShuffleMode::kFiles with num_parallel_workers=4
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleFiles4.";
   // Test TextFile Dataset with files shuffle, num_parallel_workers=4
@@ -668,6 +716,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles4) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with ShuffleMode::kGlobal with 1 text file
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal1A) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleGlobal1A.";
   // Test TextFile Dataset with 1 text file, global shuffle, num_parallel_workers=1
@@ -726,6 +777,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal1A) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with ShuffleMode::kGlobal with 2 text files
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal1B) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleGlobal1B.";
   // Test TextFile Dataset with 2 text files, global shuffle, num_parallel_workers=1
@@ -787,6 +841,9 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal1B) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: TextFileDataset
+/// Description: Test TextFileDataset with ShuffleMode::kGlobal with num_parallel_workers=4
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetShuffleGlobal4.";
   // Test TextFile Dataset with 2 text files, global shuffle, num_parallel_workers=4

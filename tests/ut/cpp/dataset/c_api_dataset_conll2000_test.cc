@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 protected:
 };
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetBasic.";
   // Test CoNLL2000 Dataset with single text file and many default inputs.
@@ -84,9 +84,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetBasic) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetBasicWithPipeline.";
   // Test CoNLL2000 Dataset with single text file and many default inputs.
@@ -151,9 +151,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetBasicWithPipeline) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCoNLL2000Getters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000Getters.";
   // Test CoNLL2000 Dataset with single text file and many default inputs.
@@ -186,9 +186,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000Getters) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with invalid samplers
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetFail1.";
 
@@ -204,9 +204,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with empty dataset_files
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetFail2.";
 
@@ -221,9 +221,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with non-existent dataset_files
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetFail3.";
 
@@ -239,9 +239,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with empty string as an input to dataset_files
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetFail4.";
 
@@ -257,9 +257,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with invalid num_shards value
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetFail5.";
 
@@ -275,9 +275,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail5) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with invalid shard_id value
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail6) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetFail6.";
 
@@ -293,9 +293,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail6) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with invalid shard_id and num_shards values
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail7) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetFail7.";
 
@@ -311,9 +311,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetFail7) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with no shuffle
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetShuffleFalse) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetShuffleFalse.";
   // Test CoNLL2000 Dataset with two text files and no shuffle, num_parallel_workers=4.
@@ -375,9 +375,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetShuffleFalse) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with ShuffleMode::kFalse
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetShuffleFilesA.";
   // Test CoNLL2000 Dataset with files shuffle, num_parallel_workers=4.
@@ -439,9 +439,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetShuffleFilesA) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with ShuffleMode::kFalse
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetShuffleFilesB.";
   // Test CoNLL2000 Dataset with files shuffle, num_parallel_workers=4.
@@ -503,9 +503,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetShuffleFilesB) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with ShuffleMode::kFalse and with one text file only
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetShuffleGlobal1A) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetShuffleGlobalA.";
   // Test CoNLL2000 Dataset with 1 text file, global shuffle, num_parallel_workers=4.
@@ -563,9 +563,9 @@ TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetShuffleGlobal1A) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: CoNLL2000ChunkingDataset.
-/// Description: test CoNLL2000ChunkingDataset in pipeline mode.
-/// Expectation: the data is processed successfully.
+/// Feature: CoNLL2000Dataset
+/// Description: Test CoNLL2000Dataset with ShuffleMode::kFalse with 2 text files
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCoNLL2000DatasetShuffleGlobalB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCoNLL2000DatasetShuffleGlobalB.";
   // Test CoNLL200 Dataset with 2 text files, global shuffle, num_parallel_workers=4.

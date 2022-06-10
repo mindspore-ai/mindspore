@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,6 +138,9 @@ class MindDataTestCallback : public UT::DatasetOpTesting {
     GlobalInit();
   }
 
+  /// Feature: Callback
+  /// Description: Test basic callbacks with mappable dataset (RandomDataset)
+  /// Expectation: Number and order of callbacks generated are correct
   void TestBasicCallback(std::shared_ptr<ExecutionTree> tree, std::shared_ptr<DatasetOp> callback_node,
                          int32_t step_size) {
     // config callback
@@ -213,7 +216,7 @@ class MindDataTestCallback : public UT::DatasetOpTesting {
 
 /// Feature: Callback
 /// Description: Test callbacks with mappable dataset (RandomDataset)
-/// Expectation: number and order of callbacks generated are correct
+/// Expectation: Number and order of callbacks generated are correct
 TEST_F(MindDataTestCallback, TestBasicCallback) {
   MS_LOG(INFO) << "Doing: MindDataTestCallback-TestBasicCallback";
   // Test Mapop
@@ -230,6 +233,9 @@ TEST_F(MindDataTestCallback, TestBasicCallback) {
   TestBasicCallback(tree, nodes[2], 64);
 }
 
+/// Feature: Callback
+/// Description: Test callbacks with multiple epochs
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
   MS_LOG(INFO) << "Doing: MindDataTestCallback-TestMultiEpochCallback";
   // config callback
@@ -300,6 +306,9 @@ TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
   EXPECT_EQ(tst_cb->all_step_nums(len), all_steps);
 }
 
+/// Feature: Callback
+/// Description: Test selected callbacks and turning off the epochs
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCallback, TestSelectedCallback) {
   MS_LOG(INFO) << "Doing: MindDataTestCallback-TestSelectedCallback";
   // config callback
@@ -343,6 +352,9 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   EXPECT_EQ(tst_cb->all_step_nums(len), all_steps);
 }
 
+/// Feature: Callback
+/// Description: Test Cpp API callbacks and disabling IR optimization pass and use tree_adapter to set num_epochs=1
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCallback, TestCAPICallback) {
   MS_LOG(INFO) << "Doing: MindDataTestCallback-TestCAPICallback";
   // config callback

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: QMnistTrainDataset.
-/// Description: test basic usage of QMnistTrainDataset.
-/// Expectation: get correct number of data.
+/// Description: Test basic usage of QMnistTrainDataset.
+/// Expectation: Get correct number of data.
 TEST_F(MindDataTestPipeline, TestQMnistTrainDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistTrainDataset.";
 
@@ -62,9 +62,9 @@ TEST_F(MindDataTestPipeline, TestQMnistTrainDataset) {
   iter->Stop();
 }
 
-/// Feature: QMnistTestDataset.
-/// Description: test basic usage of QMnistTestDataset.
-/// Expectation: get correct number of data.
+/// Feature: QMnistTestDataset
+/// Description: Test basic usage of QMnistDataset with test dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestQMnistTestDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistTestDataset.";
 
@@ -99,9 +99,9 @@ TEST_F(MindDataTestPipeline, TestQMnistTestDataset) {
   iter->Stop();
 }
 
-/// Feature: QMnistNistDataset.
-/// Description: test basic usage of QMnistNistDataset.
-/// Expectation: get correct number of data.
+/// Feature: QMnistTestDataset
+/// Description: Test basic usage of QMnistDataset with nist dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestQMnistNistDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistNistDataset.";
 
@@ -136,9 +136,9 @@ TEST_F(MindDataTestPipeline, TestQMnistNistDataset) {
   iter->Stop();
 }
 
-/// Feature: QMnistAllDataset.
-/// Description: test basic usage of QMnistAllDataset.
-/// Expectation: get correct number of data.
+/// Feature: QMnistTestDataset
+/// Description: Test basic usage of QMnistDataset with all dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestQMnistAllDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistAllDataset.";
 
@@ -173,9 +173,9 @@ TEST_F(MindDataTestPipeline, TestQMnistAllDataset) {
   iter->Stop();
 }
 
-/// Feature: QMnistCompatDataset.
-/// Description: test basic usage of QMnistCompatDataset.
-/// Expectation: get correct number of data.
+/// Feature: QMnistTestDataset
+/// Description: Test basic usage of QMnistDataset with all and compat dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestQMnistCompatDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistCompatDataset.";
 
@@ -212,9 +212,9 @@ TEST_F(MindDataTestPipeline, TestQMnistCompatDataset) {
   iter->Stop();
 }
 
-/// Feature: QMnistTrainDatasetWithPipeline.
-/// Description: test usage of QMnistTrainDataset with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: QMnistTestDataset
+/// Description: Test usage of QMnistDataset with pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestQMnistDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistTrainDatasetWithPipeline.";
 
@@ -270,9 +270,9 @@ TEST_F(MindDataTestPipeline, TestQMnistDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: QMnistIteratorOneColumn.
-/// Description: test iterator of QMnistDataset with only the "image" column.
-/// Expectation: get correct data.
+/// Feature: QMnistTestDataset
+/// Description: Test iterator of QMnistDataset with only the image column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestQMnistIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistIteratorOneColumn.";
   // Create a QMnist Dataset
@@ -312,9 +312,9 @@ TEST_F(MindDataTestPipeline, TestQMnistIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: QMnistIteratorWrongColumn.
-/// Description: test iterator of QMnistDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: QMnistTestDataset
+/// Description: Test iterator of QMnistDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestQMnistIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistIteratorWrongColumn.";
   // Create a QMnist Dataset
@@ -328,9 +328,9 @@ TEST_F(MindDataTestPipeline, TestQMnistIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: GetQMnistDatasetSize.
-/// Description: test usage of get the size of QMnistDataset.
-/// Expectation: get correct number of data.
+/// Feature: QMnistTestDataset
+/// Description: Test QMnistDataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestGetQMnistDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetQMnistTrainDatasetSize.";
 
@@ -342,9 +342,9 @@ TEST_F(MindDataTestPipeline, TestGetQMnistDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
-/// Feature: QMnistDatasetGetters.
-/// Description: test usage of getters QMnistTrainDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: QMnistTestDataset
+/// Description: Test QMnistDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestQMnistDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistTrainDatasetGetters.";
 
@@ -383,9 +383,9 @@ TEST_F(MindDataTestPipeline, TestQMnistDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
-/// Feature: QMnistDataFail.
-/// Description: test failure of QMnistDataset.
-/// Expectation: get none piece of data.
+/// Feature: QMnistTestDataset
+/// Description: Test QMnistDataset with invalid folder path input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestQMnistDataFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistDataFail.";
 
@@ -399,9 +399,9 @@ TEST_F(MindDataTestPipeline, TestQMnistDataFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: QMnistDataWithInvalidUsageFail.
-/// Description: test failure of QMnistDataset with invalid usage.
-/// Expectation: get none piece of data.
+/// Feature: QMnistTestDataset
+/// Description: Test QMnistDataset with invalid usage
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestQMnistDataWithInvalidUsageFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistDataWithInvalidUsageFail.";
 
@@ -416,9 +416,9 @@ TEST_F(MindDataTestPipeline, TestQMnistDataWithInvalidUsageFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: QMnistDataWithNullSamplerFail.
-/// Description: test failure of QMnistDataset with null sampler.
-/// Expectation: get none piece of data.
+/// Feature: QMnistTestDataset
+/// Description: Test QMnistDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestQMnistDataWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestQMnistDataWithNullSamplerFail.";
 

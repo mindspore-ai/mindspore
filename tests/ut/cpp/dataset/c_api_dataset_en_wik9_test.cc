@@ -26,8 +26,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: EnWik9Dataset
-/// Description: test EnWik9Dataset in pipeline mode
-/// Expectation: the number of samples is proper
+/// Description: Test EnWik9Dataset basic usage
+/// Expectation: The number of samples is proper
 TEST_F(MindDataTestPipeline, TestEnWik9DatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEnWik9DatasetBasic.";
   // Test EnWik9 Dataset with single text file and many default inputs.
@@ -88,8 +88,8 @@ TEST_F(MindDataTestPipeline, TestEnWik9DatasetBasic) {
 }
 
 /// Feature: EnWik9Dataset
-/// Description: test EnWik9Dataset in pipeline mode
-/// Expectation: the number of samples is proper
+/// Description: Test EnWik9Dataset basic usage with repeat op
+/// Expectation: The number of samples is proper
 TEST_F(MindDataTestPipeline, TestEnWik9DatasetBasicAndRepeat) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEnWik9DatasetBasicAndRepeat.";
   // Test EnWik9 Dataset with single enwik9 file and many default inputs.
@@ -155,8 +155,8 @@ TEST_F(MindDataTestPipeline, TestEnWik9DatasetBasicAndRepeat) {
 }
 
 /// Feature: EnWik9Dataset
-/// Description: test EnWik9Dataset in pipeline mode
-/// Expectation: the number of samples is proper
+/// Description: Test EnWik9Dataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestEnWik9Getters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEnWik9Getters.";
   // Test EnWik9 Dataset with single text file and many default inputs.
@@ -191,8 +191,8 @@ TEST_F(MindDataTestPipeline, TestEnWik9Getters) {
 }
 
 /// Feature: EnWik9Dataset
-/// Description: test EnWik9Dataset in pipeline mode
-/// Expectation: the argument named dataset_file is incorrect
+/// Description: Test EnWik9Dataset with non-existent dataset_files
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestEnWik9DatasetFailNoExistentPath) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEnWik9DatasetFailNoExistentPath.";
 
@@ -209,8 +209,8 @@ TEST_F(MindDataTestPipeline, TestEnWik9DatasetFailNoExistentPath) {
 }
 
 /// Feature: EnWik9Dataset
-/// Description: test EnWik9Dataset in pipeline mode
-/// Expectation: the data of samples is proper
+/// Description: Test EnWik9Dataset with ShuffleMode::kFalse
+/// Expectation: The data of samples is proper
 TEST_F(MindDataTestPipeline, TestEnWik9DatasetShuffleFalse1A) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEnWik9DatasetShuffleFalse1A.";
   // Test EnWik9 Dataset with two enwik9 files and no shuffle, num_parallel_workers=1.
@@ -282,8 +282,8 @@ TEST_F(MindDataTestPipeline, TestEnWik9DatasetShuffleFalse1A) {
 }
 
 /// Feature: EnWik9Dataset
-/// Description: test EnWik9Dataset in pipeline mode
-/// Expectation: the data of samples is proper
+/// Description: Test EnWik9Dataset with ShuffleMode::kFalse and with num_shards and shard_id
+/// Expectation: The data of samples is proper
 TEST_F(MindDataTestPipeline, TestEnWik9DatasetShuffleFalse4Shard) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEnWik9DatasetShuffleFalse4Shard.";
   // Test EnWik9 Dataset with one enwik9 files and no shuffle, num_parallel_workers=4, shard coverage.
@@ -354,8 +354,8 @@ TEST_F(MindDataTestPipeline, TestEnWik9DatasetShuffleFalse4Shard) {
 }
 
 /// Feature: EnWik9Dataset
-/// Description: test EnWik9Dataset in pipeline mode
-/// Expectation: the data of samples is proper
+/// Description: Test EnWik9Dataset with ShuffleMode::kGlobal
+/// Expectation: The data of samples is proper
 TEST_F(MindDataTestPipeline, TestEnWik9DatasetShuffleGlobal1A) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEnWik9DatasetShuffleGlobal1A.";
   // Test EnWik9 Dataset with one enwik9 file, global shuffle, num_parallel_workers=1.

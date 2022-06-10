@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: PhotoTourTrainDataset.
-/// Description: test basic usage of PhotoTourTrainDataset.
-/// Expectation: get correct number of data.
+/// Feature: PhotoTourDataset
+/// Description: Test basic usage of PhotoTourDataset with train dataset
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestPhotoTourTrainDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourTrainDataset.";
 
@@ -61,9 +61,9 @@ TEST_F(MindDataTestPipeline, TestPhotoTourTrainDataset) {
   iter->Stop();
 }
 
-/// Feature: PhotoTourTestDataset.
-/// Description: test basic usage of PhotoTourTestDataset.
-/// Expectation: get correct number of data.
+/// Feature: PhotoTourDataset
+/// Description: Test basic usage of PhotoTourDataset with test dataset
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestPhotoTourTestDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourTestDataset.";
 
@@ -99,9 +99,9 @@ TEST_F(MindDataTestPipeline, TestPhotoTourTestDataset) {
   iter->Stop();
 }
 
-/// Feature: PhotoTourTrainDatasetWithPipeline.
-/// Description: test usage of PhotoTourTrainDataset with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: PhotoTourDataset
+/// Description: Test usage of PhotoTourDataset in pipeline mode with train dataset
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestPhotoTourTrainDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourTrainDatasetWithPipeline.";
 
@@ -156,9 +156,9 @@ TEST_F(MindDataTestPipeline, TestPhotoTourTrainDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: PhotoTourIteratorOneColumn.
-/// Description: test iterator of PhotoTourDataset with only the "image" column.
-/// Expectation: get correct data.
+/// Feature: PhotoTourDataset
+/// Description: Test iterator of PhotoTourDataset with only the image column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestPhotoTourIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourIteratorOneColumn.";
   // Create a PhotoTour Dataset
@@ -198,9 +198,9 @@ TEST_F(MindDataTestPipeline, TestPhotoTourIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: PhotoTourIteratorWrongColumn.
-/// Description: test iterator of PhotoTourDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: PhotoTourDataset
+/// Description: Test iterator of PhotoTourDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPhotoTourIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourIteratorWrongColumn.";
   // Create a PhotoTour Dataset
@@ -214,9 +214,9 @@ TEST_F(MindDataTestPipeline, TestPhotoTourIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: PhotoTourTrainDatasetSize.
-/// Description: test usage of get the size of PhotoTourTrainDataset.
-/// Expectation: get correct number of data.
+/// Feature: PhotoTourDataset
+/// Description: Test PhotoTourDataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestGetPhotoTourTrainDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetPhotoTourTrainDatasetSize.";
 
@@ -228,9 +228,9 @@ TEST_F(MindDataTestPipeline, TestGetPhotoTourTrainDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 100);
 }
 
-/// Feature: PhotoTourTrainDatasetGetters.
-/// Description: test usage of getters PhotoTourTrainDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: PhotoTourDataset
+/// Description: Test PhotoTourDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPhotoTourTrainDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourTrainDatasetGetters.";
 
@@ -267,9 +267,9 @@ TEST_F(MindDataTestPipeline, TestPhotoTourTrainDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 100);
 }
 
-/// Feature: PhotoTourDatasetFail.
-/// Description: test failure of PhotoTourDataset.
-/// Expectation: get none piece of data.
+/// Feature: PhotoTourDataset
+/// Description: Test PhotoTourDataset with invalid folder path input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPhotoTourDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourDatasetFail.";
 
@@ -283,9 +283,9 @@ TEST_F(MindDataTestPipeline, TestPhotoTourDatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: PhotoTourDatasetWithInvalidUsageFail.
-/// Description: test failure of PhotoTourDataset with invalid usage.
-/// Expectation: get none piece of data.
+/// Feature: PhotoTourDataset
+/// Description: Test PhotoTourDataset with invalid usage
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPhotoTourDatasetWithInvalidUsageFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourDatasetWithInvalidUsageFail.";
 
@@ -300,9 +300,9 @@ TEST_F(MindDataTestPipeline, TestPhotoTourDatasetWithInvalidUsageFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: PhotoTourDatasetWithNullSamplerFail.
-/// Description: test failure of PhotoTourDataset with null sampler.
-/// Expectation: get none piece of data.
+/// Feature: PhotoTourDataset
+/// Description: Test PhotoTourDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPhotoTourDatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhotoTourDatasetWithNullSamplerFail.";
 

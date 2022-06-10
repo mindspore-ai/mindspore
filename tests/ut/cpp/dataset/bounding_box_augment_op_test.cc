@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ class MindDataTestBoundingBoxAugmentOp : public UT::CVOP::BBOXOP::BBoxOpCommon {
   MindDataTestBoundingBoxAugmentOp() : UT::CVOP::BBOXOP::BBoxOpCommon() {}
 };
 
+/// Feature: BoundingBoxAugment op
+/// Description: Test BoundingBoxAugment op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestBoundingBoxAugmentOp, TestOp) {
   MS_LOG(INFO) << "Doing testBoundingBoxAugment.";
   TensorTable results;
