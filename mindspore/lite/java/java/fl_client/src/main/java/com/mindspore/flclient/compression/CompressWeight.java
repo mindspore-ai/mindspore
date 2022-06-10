@@ -25,14 +25,14 @@ import java.util.List;
  */
 public class CompressWeight {
     private String weightFullname;
-    private List<Byte> compressData;
+    private byte[] compressData;
     private float minValue;
     private float maxValue;
 
     public CompressWeight() {
     }
 
-    public CompressWeight(String weightFullname, List<Byte> compressData, float minValue, float maxValue) {
+    public CompressWeight(String weightFullname, byte[] compressData, float minValue, float maxValue) {
         this.weightFullname = weightFullname;
         this.compressData = compressData;
         this.minValue = minValue;
@@ -47,11 +47,11 @@ public class CompressWeight {
         this.weightFullname = weightFullname;
     }
 
-    public List<Byte> getCompressData() {
+    public byte[] getCompressData() {
         return compressData;
     }
 
-    public void setCompressData(List<Byte> compressData) {
+    public void setCompressData(byte[] compressData) {
         this.compressData = compressData;
     }
 

@@ -20,7 +20,9 @@ import com.mindspore.Graph;
 import com.mindspore.config.MSContext;
 import com.mindspore.config.ModelType;
 import com.mindspore.config.TrainCfg;
+import com.mindspore.flclient.FLParameter;
 import com.mindspore.flclient.LocalFLParameter;
+import com.mindspore.flclient.ServerMod;
 import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.MSTensor;
 import com.mindspore.Model;
@@ -46,6 +48,13 @@ public abstract class Client {
     public Model model;
 
     /**
+     * Mindspore model proxy of train/infer
+     */
+    private ModelProxy trainModelProxy = null;
+    private ModelProxy inferModelProxy = null;
+    private ModelProxy curProxy = null;
+
+    /**
      * dataset map.
      */
     public Map<RunType, DataSet> dataSets = new HashMap<>();
@@ -53,6 +62,11 @@ public abstract class Client {
     private final List<ByteBuffer> inputsBuffer = new ArrayList<>();
 
     private float uploadLoss = 0.0f;
+
+    /**
+     * feature map before train
+     */
+    private Map<String, float[]> preFeatures = null;
     /**
      * Get callback.
      *
@@ -86,64 +100,44 @@ public abstract class Client {
      */
     public abstract List<Object> getInferResult(List<Callback> inferCallback);
 
-    /**
-     * Init lite session and inputs buffer.
-     *
-     * @param modelPath model file path.
-     * @param inputShapes input shape of model.
-     * @return execute status.
-     */
-    public Status initSessionAndInputs(String modelPath, int[][] inputShapes) {
-        if (modelPath == null) {
-            logger.severe("session init failed");
-            return Status.FAILED;
+    public Status initModel(FLParameter flParameter) {
+        String trainModelPath = flParameter.getTrainModelPath();
+        String inferModelPath = flParameter.getInferModelPath();
+        int[][] inputShapes = flParameter.getInputShape();
+
+        Status initRet = Status.FAILED;
+        if (trainModelPath != null && !trainModelPath.isEmpty()) {
+            trainModelProxy = new ModelProxy();
+            initRet = trainModelProxy.initModel(trainModelPath, inputShapes);
         }
 
-        MSContext msContext = getMsContext();
-        if (msContext == null) {
-            return Status.FAILED;
+        if (inferModelPath == null || inferModelPath.isEmpty()) {
+            return initRet;
         }
 
-        boolean initModelRet = inputShapes == null ?
-                initTrainModel(modelPath, msContext) : initInferModel(modelPath, msContext);
-        if (!initModelRet) {
-            free();
-            return Status.FAILED;
-        }
-        inputsBuffer.clear();
-        if (inputShapes == null) {
-            List<MSTensor> inputs = model.getInputs();
-            for (MSTensor input : inputs) {
-                ByteBuffer inputBuffer = ByteBuffer.allocateDirect((int) input.size());
-                inputBuffer.order(ByteOrder.nativeOrder());
-                inputsBuffer.add(inputBuffer);
-                input.free();
-            }
+        // if infer/train modelpath is same, using the sameproxy to same memory
+        if (inferModelPath.equals(trainModelPath)) {
+            inferModelProxy = trainModelProxy;
         } else {
-            List<MSTensor> inputs = model.getInputs();
-            boolean isSuccess = model.resize(inputs, inputShapes);
-            inputs.forEach(MSTensor::free);
-            if (!isSuccess) {
-                logger.severe("session resize failed");
-                return Status.FAILED;
-            }
-            for (int[] shapes : inputShapes) {
-                int size = IntStream.of(shapes).reduce((a, b) -> a * b).getAsInt() * Integer.BYTES;
-                ByteBuffer inputBuffer = ByteBuffer.allocateDirect(size);
-                inputBuffer.order(ByteOrder.nativeOrder());
-                inputsBuffer.add(inputBuffer);
-            }
+            inferModelProxy = new ModelProxy();
+            initRet = inferModelProxy.initModel(inferModelPath, inputShapes);
         }
-        return Status.SUCCESS;
+        return initRet;
     }
 
-    private void fillModelInput(DataSet dataSet, int batchIdx) {
-        dataSet.fillInputBuffer(inputsBuffer, batchIdx);
-        List<MSTensor> inputs = model.getInputs();
-        for (int i = 0; i < inputs.size(); i++) {
-            inputs.get(i).setData(inputsBuffer.get(i));
-            inputs.get(i).free();
+    public boolean EnableTrain(boolean enableFlg) {
+        if (enableFlg == true && trainModelProxy != null) {
+            curProxy = trainModelProxy;
+            model = trainModelProxy.getModel();
+            return true;
         }
+        if (enableFlg == false && inferModelProxy != null) {
+            curProxy = inferModelProxy;
+            model = inferModelProxy.getModel();
+            return true;
+        }
+        logger.severe("Can't get Model proxy for " + (enableFlg ? "train" : "infer"));
+        return false;
     }
 
     /**
@@ -157,7 +151,8 @@ public abstract class Client {
             logger.severe("epochs cannot smaller than 0");
             return Status.INVALID;
         }
-        model.setTrainMode(true);
+        // Backup the prev Features for encrypt/compress
+        preFeatures = curProxy.getFeatureMap();
         DataSet trainDataSet = dataSets.getOrDefault(RunType.TRAINMODE, null);
         if (trainDataSet == null) {
             logger.severe("not find train dataset");
@@ -165,7 +160,8 @@ public abstract class Client {
         }
         trainDataSet.padding();
         List<Callback> trainCallbacks = initCallbacks(RunType.TRAINMODE, trainDataSet);
-        Status status = runModel(epochs, trainCallbacks, trainDataSet);
+        model.setTrainMode(true);
+        Status status = curProxy.runModel(epochs, trainCallbacks, trainDataSet);
         if (status != Status.SUCCESS) {
             logger.severe("train loop failed");
             return status;
@@ -183,7 +179,7 @@ public abstract class Client {
         DataSet evalDataSet = dataSets.getOrDefault(RunType.EVALMODE, null);
         evalDataSet.padding();
         List<Callback> evalCallbacks = initCallbacks(RunType.EVALMODE, evalDataSet);
-        Status status = runModel(1, evalCallbacks, evalDataSet);
+        Status status = curProxy.runModel(1, evalCallbacks, evalDataSet);
         if (status != Status.SUCCESS) {
             logger.severe("train loop failed");
             return Float.NaN;
@@ -201,7 +197,7 @@ public abstract class Client {
         DataSet inferDataSet = dataSets.getOrDefault(RunType.INFERMODE, null);
         inferDataSet.padding();
         List<Callback> inferCallbacks = initCallbacks(RunType.INFERMODE, inferDataSet);
-        Status status = runModel(1, inferCallbacks, inferDataSet);
+        Status status = curProxy.runModel(1, inferCallbacks, inferDataSet);
         if (status != Status.SUCCESS) {
             logger.severe("train loop failed");
             return null;
@@ -209,207 +205,110 @@ public abstract class Client {
         return getInferResult(inferCallbacks);
     }
 
-    private Status runModel(int epochs, List<Callback> callbacks, DataSet dataSet) {
-        LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
-        long startTime = System.currentTimeMillis();
-        for (int i = 0; i < epochs; i++) {
-            for (int j = 0; j < dataSet.batchNum; j++) {
-                if (localFLParameter.isStopJobFlag()) {
-                    logger.info("the stopJObFlag is set to true, the job will be stop");
-                    return Status.FAILED;
-                }
-                fillModelInput(dataSet, j);
-                boolean isSuccess = model.runStep();
-                if (!isSuccess) {
-                    logger.severe("run graph failed");
-                    return Status.FAILED;
-                }
-                for (Callback callBack : callbacks) {
-                    callBack.stepEnd();
-                }
-            }
-            for (Callback callBack : callbacks) {
-                callBack.epochEnd();
-                if (callBack instanceof LossCallback && i == epochs - 1) {
-                    LossCallback lossCallback = (LossCallback)callBack;
-                    setUploadLoss(lossCallback.getUploadLoss());
-                }
-            }
-        }
-        long endTime = System.currentTimeMillis();
-        logger.info("total run time:" + (endTime - startTime) + "ms");
-        return Status.SUCCESS;
-    }
-
     /**
      * Save model.
-     *
-     * @param modelPath model file path.
-     * @return save status.
+     * @param flParameter
+     * @param localFLParameter
+     * @return save result
      */
-    public Status saveModel(String modelPath) {
-        if (modelPath == null) {
-            logger.severe("model path cannot be empty");
-            return Status.NULLPTR;
+    public Status saveModel(FLParameter flParameter, LocalFLParameter localFLParameter) {
+        String trainModelPath = flParameter.getTrainModelPath();
+        String inferModelPath = flParameter.getInferModelPath();
+        boolean exportRet = true;
+        if (trainModelPath == null || trainModelPath.isEmpty() ||
+                trainModelProxy == null || trainModelProxy.getModel() == null) {
+            logger.info("No train model provided, no need save train model");
+        } else {
+            Model trainModel = trainModelProxy.getModel();
+            exportRet = trainModel.export(trainModelPath, 0, false, null);
         }
-        boolean isSuccess = model.export(modelPath, 0, false, null);
-        if (!isSuccess) {
-            logger.severe("save model failed");
+
+        if (!exportRet) {
+            logger.severe("Save train model to file failed.");
+            return Status.FAILED;
+        }
+
+        if (!localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
+            return Status.SUCCESS;
+        }
+
+        if (inferModelPath == null || inferModelPath.isEmpty() ||
+                inferModelProxy == null || inferModelProxy.getModel() == null) {
+            logger.info("No infer model provided, no need save infer model");
+        } else {
+            Model inferModel = inferModelProxy.getModel();
+            exportRet = inferModel.export(inferModelPath, 0, false, null);
+        }
+        if (!exportRet) {
+            logger.severe("Save infer model to file failed.");
             return Status.FAILED;
         }
         return Status.SUCCESS;
     }
 
-    /**
-     * init train model.
-     *
-     * @return init status.
-     */
-    private boolean initTrainModel(String modelPath, MSContext msContext) {
-        TrainCfg trainCfg = new TrainCfg();
-        if(!trainCfg.init()){
-            logger.severe("Call trainCfg.init failed ...");
-            msContext.free();
-            trainCfg.free();
-            return false;
-        }
-        Graph graph = new Graph();
-        if(!graph.load(modelPath)){
-            logger.severe("Call graph.load failed, modelPath: " + modelPath);
-            graph.free();
-            trainCfg.free();
-            msContext.free();
-            return false;
-        }
-        model = new Model();
-        if (!model.build(graph, msContext, trainCfg)) {
-            // The Jni implement will change msContext & graph to shared_ptr, no need free here
-            logger.severe("Call model.build failed ... ");
-            graph.free();
-            return false;
-        }
-        graph.free();
-        return true;
-    }
-
 
     /**
-     * init infer model.
-     *
-     * @return init status.
-     */
-    private boolean initInferModel(String modelPath, MSContext msContext) {
-        model = new Model();
-        if (!model.build(modelPath, ModelType.MT_MINDIR, msContext)) {
-            // The Jni implement will change msContext & graph to shared_ptr, no need free here
-            logger.severe("Call model.build failed ... ");
-            return false;
-        }
-        return true;
-    }
-
-    private MSContext getMsContext() {
-        int deviceType = LocalFLParameter.getInstance().getDeviceType();
-        int threadNum = LocalFLParameter.getInstance().getThreadNum();
-        int cpuBindMode = LocalFLParameter.getInstance().getCpuBindMode();
-        boolean enableFp16 = LocalFLParameter.getInstance().isEnableFp16();
-        MSContext msContext = new MSContext();
-        // use default param init context
-        if(!msContext.init(threadNum, cpuBindMode)){
-            logger.severe("Call msContext.init failed, threadNum " + threadNum + ", cpuBindMode " + cpuBindMode);
-            msContext.free();
-            return null;
-        }
-
-        if (!msContext.addDeviceInfo(deviceType, enableFp16, 0)) {
-            logger.severe("Call msContext.addDeviceInfo failed, deviceType " + deviceType + ", enableFp16 " + enableFp16);
-            msContext.free();
-            return null;
-        }
-        return msContext;
-    }
-
-    /**
-     * Get model feature maps with float value.
+     * calculate Weight normal for dp.
      *
      * @return model weights.
      */
-    public Map<String, float[]> getFeatureMap() {
-        List<MSTensor> tensors = model.getFeatureMaps();
-        Map<String, float[]> features = new HashMap<>(tensors.size());
-        for (MSTensor mstensor : tensors) {
-            if (mstensor == null) {
-                logger.severe("tensors cannot be null");
-                return new HashMap<>();
-            }
-            features.put(mstensor.tensorName(), mstensor.getFloatData());
-            mstensor.free();
+    public float getDpWeightNorm(ArrayList<String> featureList) {
+        if (preFeatures == null) {
+            throw new RuntimeException("Must call getDpWeightNorm after train.");
         }
-        return features;
+        float updateL2Norm = 0f;
+        for (String key : featureList) {
+            float[] preData = preFeatures.get(key);
+            float[] curData = trainModelProxy.getFeature(key);
+            if (preData == null || curData == null) {
+                throw new RuntimeException("Get feature value failed, feature name:" + key);
+            }
+
+            if (preData.length != curData.length) {
+                throw new RuntimeException("Length of " + key + " is changed after update, origin len:" +
+                        preData.length + " cur len:" + curData.length);
+            }
+            for (int j = 0; j < preData.length; j++) {
+                float updateData = preData[j] - curData[j];
+                updateL2Norm += updateData * updateData;
+            }
+        }
+        updateL2Norm = (float) Math.sqrt(updateL2Norm);
+        return updateL2Norm;
     }
 
     /**
-     * update model feature maps.
+     * Get model feature with name.
      *
-     * @param modelName model file name.
-     * @param featureMaps new weights.
+     * @return model weight.
+     */
+    public float[] getFeature(String weightName) {
+        return curProxy.getFeature(weightName);
+    }
+
+    /**
+     * Get model feature with name.
+     *
+     * @return model weight.
+     */
+    public float[] getPreFeature(String weightName) {
+        return preFeatures.get(weightName);
+    }
+
+    /**
+     * update model feature
+     *
+     * @param newFeature new weights.
      * @return update status.
      */
-    public Status updateFeatures(String modelName, List<FeatureMap> featureMaps) {
-        if (model == null || featureMaps == null || modelName == null || modelName.isEmpty()) {
-            logger.severe("trainSession,featureMaps modelName cannot be null");
-            return Status.NULLPTR;
+    public Status updateFeature(FeatureMap newFeature, boolean trainFlg) {
+        if(trainFlg && trainModelProxy != null){
+           return trainModelProxy.updateFeature(newFeature);
         }
-
-        class TensorInfo {
-            TensorInfo(int dataType, int[] dataShape) {
-                this.dataType = dataType;
-                this.dataShape = dataShape;
-            }
-
-            public int dataType;
-            public int[] dataShape;
+        if(!trainFlg && inferModelProxy != null){
+            return inferModelProxy.updateFeature(newFeature);
         }
-        List<MSTensor> modelFeatures = model.getFeatureMaps();
-        HashMap<String, TensorInfo> modelFeatureMaps = new HashMap<>();
-        for (MSTensor item : modelFeatures) {
-            modelFeatureMaps.put(item.tensorName(), new TensorInfo(item.getDataType(), item.getShape()));
-            item.free();
-        }
-
-        List<MSTensor> tensors = new ArrayList<>(featureMaps.size());
-        for (FeatureMap newFeature : featureMaps) {
-            if (newFeature == null) {
-                logger.severe("newFeature cannot be null");
-                return Status.NULLPTR;
-            }
-
-            if (newFeature.weightFullname().isEmpty() || !modelFeatureMaps.containsKey(newFeature.weightFullname())) {
-                logger.severe("Can't get feature for name:" + newFeature.weightFullname());
-                return Status.NULLPTR;
-            }
-            TensorInfo origin = modelFeatureMaps.get(newFeature.weightFullname());
-            ByteBuffer by = newFeature.dataAsByteBuffer();
-            ByteBuffer newData = ByteBuffer.allocateDirect(by.remaining());
-            newData.order(ByteOrder.nativeOrder());
-            newData.put(by);
-            MSTensor tensor = MSTensor.createTensor(newFeature.weightFullname(),
-                    origin.dataType, origin.dataShape, newData);
-            tensors.add(tensor);
-        }
-        boolean isSuccess = model.updateFeatureMaps(tensors);
-        for (MSTensor tensor : tensors) {
-            if (tensor == null) {
-                logger.severe("tensor cannot be null");
-                return Status.NULLPTR;
-            }
-            tensor.free();
-        }
-
-        if (isSuccess) {
-            model.export(modelName, 0, false, null);
-            return Status.SUCCESS;
-        }
+        logger.severe("Can't get ModelProxy for " + (trainFlg?"trainModel":"inferModel"));
         return Status.FAILED;
     }
 
@@ -417,10 +316,17 @@ public abstract class Client {
      * Free client.
      */
     public void free() {
-        if (model != null) {
-            model.free();
-            model = null;
+        if (trainModelProxy != null) {
+            trainModelProxy.free();
         }
+
+        if (inferModelProxy != null && inferModelProxy != trainModelProxy) {
+            inferModelProxy.free();
+        }
+        trainModelProxy = null;
+        inferModelProxy = null;
+        curProxy = null;
+        model = null;
     }
 
     /**
@@ -449,10 +355,10 @@ public abstract class Client {
     }
 
     public float getUploadLoss() {
-        return uploadLoss;
+        return curProxy.getUploadLoss();
     }
 
     public void setUploadLoss(float uploadLoss) {
-        this.uploadLoss = uploadLoss;
+        curProxy.setUploadLoss(uploadLoss);
     }
 }

@@ -41,22 +41,7 @@ import static mindspore.schema.CompressType.QUANT;
 public class DecodeExecutor {
     private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(DecodeExecutor.class.toString());
 
-    private static volatile DecodeExecutor compressExecutor;
-
-    private DecodeExecutor() {}
-
-    public static DecodeExecutor getInstance() {
-        if (compressExecutor == null) {
-            synchronized (DecodeExecutor.class) {
-                if (compressExecutor == null) {
-                    compressExecutor = new DecodeExecutor();
-                }
-            }
-        }
-        return compressExecutor;
-    }
-
-    public List<FeatureMap> deCompressWeight(byte compressType, List<CompressFeatureMap> compressFeatureMapList) {
+    static public List<FeatureMap> deCompressWeight(byte compressType, List<CompressFeatureMap> compressFeatureMapList) {
         if (!CompressMode.COMPRESS_TYPE_MAP.containsKey(compressType)) {
             return new ArrayList<>();
         }
@@ -68,7 +53,7 @@ public class DecodeExecutor {
         return new ArrayList<>();
     }
 
-    private List<FeatureMap> deCompressQuantMinMax(List<CompressFeatureMap> compressFeatureMapList, int num_bits) {
+    static private List<FeatureMap> deCompressQuantMinMax(List<CompressFeatureMap> compressFeatureMapList, int num_bits) {
         float temp1 = (float) (Math.pow(2, num_bits) - 1);
         float temp2 = (float) Math.pow(2, num_bits - 1);
 
@@ -112,5 +97,38 @@ public class DecodeExecutor {
             featureMaps.add(featureMap);
         }
         return featureMaps;
+    }
+
+    static public FeatureMap quantDeCompress(CompressFeatureMap compressFeature) {
+        int num_bits = CompressMode.COMPRESS_TYPE_MAP.get(QUANT);
+        float temp1 = (float) (Math.pow(2, num_bits) - 1);
+        float temp2 = (float) Math.pow(2, num_bits - 1);
+
+        String weightName = compressFeature.weightFullname();
+        int compressDataLength = compressFeature.compressDataLength();
+        List<Byte> compressWeightList = new ArrayList<>();
+        for (int j = 0; j < compressDataLength; j++) {
+            compressWeightList.add(compressFeature.compressData(j));
+        }
+        float minVal = compressFeature.minVal();
+        float maxVal = compressFeature.maxVal();
+        float scale_value = (float) ((maxVal - minVal) / temp1 + 1e-10);
+        float[] params = new float[compressWeightList.size()];
+        for (int j = 0; j < params.length; j++) {
+            float val = (compressWeightList.get(j).intValue() + temp2) * scale_value + minVal;
+            params[j] = val;
+        }
+        FlatBufferBuilder builder = new FlatBufferBuilder(0);
+        int weightFullnameOffset = builder.createString(weightName);
+        int dataOffset = FeatureMap.createDataVector(builder, params);
+        FeatureMap.startFeatureMap(builder);
+        FeatureMap.addWeightFullname(builder, weightFullnameOffset);
+        FeatureMap.addData(builder, dataOffset);
+
+        int orc = FeatureMap.endFeatureMap(builder);
+        builder.finish(orc);
+        ByteBuffer buf = builder.dataBuffer();
+        FeatureMap featureMap = FeatureMap.getRootAsFeatureMap(buf);
+        return featureMap;
     }
 }

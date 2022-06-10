@@ -232,14 +232,6 @@ public class LocalFLParameter {
         this.lr = lr;
     }
 
-    public Map<String, float[]> getOldFeatureMap() {
-        return oldFeatureMap;
-    }
-
-    public void setOldFeatureMap(Map<String, float[]> oldFeatureMap) {
-        this.oldFeatureMap = oldFeatureMap;
-    }
-
     public byte getUploadCompressType() {
         return uploadCompressType;
     }

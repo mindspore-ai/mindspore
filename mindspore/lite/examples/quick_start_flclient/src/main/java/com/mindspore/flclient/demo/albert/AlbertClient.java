@@ -24,7 +24,6 @@ import com.mindspore.flclient.model.ClientManager;
 import com.mindspore.flclient.model.DataSet;
 import com.mindspore.flclient.model.LossCallback;
 import com.mindspore.flclient.model.RunType;
-import com.mindspore.lite.config.MSConfig;
 
 import java.util.ArrayList;
 import java.util.HashMap;

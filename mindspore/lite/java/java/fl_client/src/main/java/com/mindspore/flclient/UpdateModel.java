@@ -19,10 +19,7 @@ package com.mindspore.flclient;
 import com.google.flatbuffers.FlatBufferBuilder;
 
 import com.mindspore.flclient.common.FLLoggerGenerater;
-import com.mindspore.flclient.model.Client;
-import com.mindspore.flclient.model.ClientManager;
-import com.mindspore.flclient.model.CommonUtils;
-import com.mindspore.flclient.model.Status;
+import com.mindspore.flclient.model.*;
 import com.mindspore.MSTensor;
 import com.mindspore.flclient.compression.EncodeExecutor;
 import com.mindspore.flclient.compression.CompressWeight;
@@ -32,6 +29,8 @@ import mindspore.schema.CompressFeatureMap;
 import mindspore.schema.RequestUpdateModel;
 import mindspore.schema.ResponseCode;
 import mindspore.schema.ResponseUpdateModel;
+
+import static com.mindspore.flclient.EncryptLevel.SIGNDS;
 import static mindspore.schema.CompressType.NO_COMPRESS;
 
 import java.util.ArrayList;
@@ -144,26 +143,6 @@ public class UpdateModel {
         }
     }
 
-    private Map<String, float[]> getFeatureMap() {
-        Client client = ClientManager.getClient(flParameter.getFlName());
-        status = Common.initSession(flParameter.getTrainModelPath());
-        if (status == FLClientStatus.FAILED) {
-            retCode = ResponseCode.RequestError;
-            throw new IllegalArgumentException();
-        }
-        Map<String, float[]> trainedMap = client.getFeatureMap();
-        LOGGER.info("[updateModel] ===========free session=============");
-        Common.freeSession();
-        if (trainedMap.isEmpty()) {
-            LOGGER.severe("[updateModel] the return trainedMap is empty in <CommonUtils" +
-                    ".convertTensorToFeatures>");
-            retCode = ResponseCode.RequestError;
-            status = FLClientStatus.FAILED;
-            throw new IllegalArgumentException();
-        }
-        return trainedMap;
-    }
-
     class RequestUpdateModelBuilder {
         private RequestUpdateModel requestUM;
         private FlatBufferBuilder builder;
@@ -250,134 +229,253 @@ public class UpdateModel {
             return this;
         }
 
-        private RequestUpdateModelBuilder featuresMap(SecureProtocol secureProtocol, int trainDataSize) {
-            ArrayList<String> updateFeatureName = secureProtocol.getUpdateFeatureName();
-            Map<String, float[]> trainedMap = new HashMap<String, float[]>();
-            trainedMap = getFeatureMap();
-            Map<String, List<Float>> featureMaps = new HashMap<>();
-            long startTime;
-            long endTime;
+        abstract class EncrypterBase {
+            protected Client client;
+            protected SecureProtocol secureProtocol;
+            protected ArrayList<String> featureNames;
+            protected int trainDataSize;
+            protected int curIter = 0;
+
+            public EncrypterBase(Client client, SecureProtocol secureProtocol, int trainDataSize) {
+                this.client = client;
+                this.secureProtocol = secureProtocol;
+                this.trainDataSize = trainDataSize;
+                this.featureNames = secureProtocol.getUpdateFeatureName();
+            }
+
+            abstract boolean init();
+
+            boolean isEnd() {
+                return curIter >= featureNames.size();
+            }
+
+            public String getNextFeature() {
+                String weightName = featureNames.get(curIter);
+                curIter++;
+                return weightName;
+            }
+
+            abstract public float[] geEncryptWeight(String weightName);
+        }
+
+        class NoEncrypter extends EncrypterBase {
+            public NoEncrypter(Client client, SecureProtocol secureProtocol, int trainDataSize) {
+                super(client, secureProtocol, trainDataSize);
+            }
+
+            public boolean init() {
+                return true;
+            }
+
+            public float[] geEncryptWeight(String weightName) {
+                float[] weight = client.getFeature(weightName);
+                // here reuse weight to avoid android Background concurrent copying GC freed xxx,  AllocSpace objects xx
+                for (int i = 0; i < weight.length; i++) {
+                    weight[i] = weight[i] * (float) trainDataSize;
+                }
+                return weight;
+            }
+        }
+
+        class PwEncrypter extends EncrypterBase {
+            private int maskedLen;
+
+            public PwEncrypter(Client client, SecureProtocol secureProtocol, int trainDataSize) {
+                super(client, secureProtocol, trainDataSize);
+                this.maskedLen = 0;
+            }
+
+            public boolean init() {
+                return true;
+            }
+
+            public float[] geEncryptWeight(String weightName) {
+                float[] weight = client.getFeature(weightName);
+                float[] encryptWeight = secureProtocol.pwMaskWeight(trainDataSize, weight, maskedLen);
+                maskedLen += maskedLen;
+                return encryptWeight;
+            }
+        }
+
+        class DpEncrypter extends EncrypterBase {
+            private double clipFactor;
+            private double gaussianSigma;
+
+            public DpEncrypter(Client client, SecureProtocol secureProtocol, int trainDataSize) {
+                super(client, secureProtocol, trainDataSize);
+            }
+
+            public boolean init() {
+                gaussianSigma = secureProtocol.calculateSigma();
+                double dpNormClip = secureProtocol.getDpNormClip();
+                // calculate l2-norm of all layers' update array
+                double updateL2Norm = 0d;
+                for (int i = 0; i < featureNames.size(); i++) {
+                    String key = featureNames.get(i);
+                    float[] data = client.getFeature(key);
+                    float[] dataBeforeTrain = client.getPreFeature(key);
+                    if (data == null || dataBeforeTrain == null || data.length != dataBeforeTrain.length) {
+                        throw new RuntimeException("data of feature size is not same, feature name:" + key);
+                    }
+                    for (int j = 0; j < data.length; j++) {
+                        float updateData = data[j] - dataBeforeTrain[j];
+                        updateL2Norm += updateData * updateData;
+                    }
+                }
+                updateL2Norm = Math.sqrt(updateL2Norm);
+                if (updateL2Norm == 0) {
+                    LOGGER.severe("[Encrypt] updateL2Norm is 0, please check");
+                    return false;
+                }
+                clipFactor = Math.min(1.0, dpNormClip / updateL2Norm);
+                return true;
+            }
+
+            public float[] geEncryptWeight(String weightName) {
+                // clip and add noise
+                float[] weight = client.getFeature(weightName);
+                float[] weightBeforeTrain = client.getPreFeature(weightName);
+                if (weight == null || weightBeforeTrain == null || weight.length != weightBeforeTrain.length) {
+                    throw new RuntimeException("data of feature size is not same, feature name:" + weightName);
+                }
+                // prepare gaussian noise
+                // here reuse weight to avoid android Background concurrent copying GC freed xxx,  AllocSpace objects xx
+                SecureRandom secureRandom = Common.getSecureRandom();
+                for (int j = 0; j < weight.length; j++) {
+                    float rawData = weight[j];
+                    float rawDataBeforeTrain = weightBeforeTrain[j];
+                    float updateData = rawData - rawDataBeforeTrain;
+                    // clip
+                    updateData *= clipFactor;
+                    // add noise
+                    double gaussianNoise = secureRandom.nextGaussian() * gaussianSigma;
+                    updateData += gaussianNoise;
+                    weight[j] = rawDataBeforeTrain + updateData;
+                    weight[j] = weight[j] * trainDataSize;
+                }
+                return weight;
+            }
+        }
+
+
+        private EncrypterBase getEncrypter(Client client, SecureProtocol secureProtocol, int trainDataSize) {
             switch (encryptLevel) {
                 case PW_ENCRYPT:
-                    featureMaps = secureProtocol.pwMaskModel(builder, trainDataSize, trainedMap);
-                    if (featureMaps == null || featureMaps.size() == 0) {
-                        LOGGER.severe("[Encrypt] the return featureMaps from <secureProtocol.pwMaskModel> is " +
-                                "null, please check");
-                        throw new IllegalArgumentException();
-                    }
-                    LOGGER.info("[Encrypt] pairwise mask model ok!");
-                    break;
+                    return new PwEncrypter(client, secureProtocol, trainDataSize);
                 case DP_ENCRYPT:
-                    startTime = System.currentTimeMillis();
-                    featureMaps = secureProtocol.dpMaskModel(builder, trainDataSize, trainedMap);
-                    if (featureMaps == null || featureMaps.size() == 0) {
-                        LOGGER.severe("[Encrypt] the return featureMaps from <secureProtocol.dpMaskModel> is " +
-                                "null, please check");
-                        retCode = ResponseCode.RequestError;
-                        status = FLClientStatus.FAILED;
-                        throw new IllegalArgumentException();
-                    }
-                    LOGGER.info("[Encrypt] DP mask model ok!");
-                    endTime = System.currentTimeMillis();
-                    LOGGER.info("dp time is " + (endTime - startTime) + "ms");
-                    break;
-                case SIGNDS:
-                    startTime = System.currentTimeMillis();
-                    // signds alg return indexArray, and package indexArray into flatbuffer.
-                    SecureRandom secureRandom = Common.getSecureRandom();
-                    boolean signBool = secureRandom.nextBoolean();
-                    this.sign = signBool ? 1 : -1;
-                    int[] indexArray = secureProtocol.signDSModel(trainedMap, signBool);
-                    if (indexArray == null || indexArray.length == 0) {
-                        LOGGER.severe("[Encrypt] the return fmOffsetsSignDS from <secureProtocol.signDSModel> is " +
-                                "null, please check");
-                        retCode = ResponseCode.RequestError;
-                        status = FLClientStatus.FAILED;
-                        throw new IllegalArgumentException();
-                    }
-                    this.indexArrayOffset = RequestUpdateModel.createIndexArrayVector(builder, indexArray);
-
-                    // only package featureName into flatbuffer.
-                    int compFeatureSize = updateFeatureName.size();
-                    int[] fmOffsetsSignds = new int[compFeatureSize];
-                    for (int i = 0; i < compFeatureSize; i++) {
-                        String key = updateFeatureName.get(i);
-                        float[] data = new float[0];
-                        int featureName = builder.createString(key);
-                        int weight = FeatureMap.createDataVector(builder, data);
-                        int featureMap = FeatureMap.createFeatureMap(builder, featureName, weight);
-                        fmOffsetsSignds[i] = featureMap;
-                    }
-                    this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsSignds);
-                    LOGGER.info("[Encrypt] SignDS mask model ok!");
-                    endTime = System.currentTimeMillis();
-                    LOGGER.info("signds time is " + (endTime - startTime) + "ms");
-                    return this;
+                    return new DpEncrypter(client, secureProtocol, trainDataSize);
                 case NOT_ENCRYPT:
                 default:
-                    startTime = System.currentTimeMillis();
-                    for (String name : updateFeatureName) {
-                        float[] data = trainedMap.get(name);
-                        List<Float> featureMap = new ArrayList<>();
-                        for (float datum : data) {
-                            featureMap.add(datum * (float) trainDataSize);
-                        }
-                        featureMaps.put(name, featureMap);
-                    }
-                    endTime = System.currentTimeMillis();
-                    LOGGER.info("not encrypt time is " + (endTime - startTime) + "ms");
-                    break;
+                    return new NoEncrypter(client, secureProtocol, trainDataSize);
             }
-            byte uploadCompressType = localFLParameter.getUploadCompressType();
-            if (uploadCompressType != NO_COMPRESS) {
-                startTime = System.currentTimeMillis();
-                this.compFmOffset = buildCompFmOffset(featureMaps, trainDataSize);
-                this.uploadCompressType = localFLParameter.getUploadCompressType();
-                this.uploadSparseRate = localFLParameter.getUploadSparseRatio();
-                this.nameVecOffset = buildNameVecOffset(updateFeatureName);
-                endTime = System.currentTimeMillis();
-                LOGGER.info("compression time is " + (endTime - startTime) + "ms");
+        }
+
+        private RequestUpdateModelBuilder featuresMap(SecureProtocol secureProtocol, int trainDataSize) {
+            ArrayList<String> updateFeatureName = secureProtocol.getUpdateFeatureName();
+
+            if(encryptLevel == SIGNDS){
+                return signDSEncrypt(secureProtocol, updateFeatureName);
+            }
+
+            Client client = ClientManager.getClient(flParameter.getFlName());
+            EncrypterBase encrypterBase = getEncrypter(client, secureProtocol, trainDataSize);
+            encrypterBase.init();
+            this.uploadCompressType = localFLParameter.getUploadCompressType();
+            if(uploadCompressType == NO_COMPRESS){
+                long startTime = System.currentTimeMillis();
+                int index = 0;
+                int[] fmOffsets = new int[updateFeatureName.size()];
+                while (!encrypterBase.isEnd()) {
+                    String featureName = encrypterBase.getNextFeature();
+                    float[] encryptWeight = encrypterBase.geEncryptWeight(featureName);
+                    LOGGER.fine("[updateModel build featuresMap] feature name: " + featureName + " feature " +
+                            "size: " + encryptWeight.length);
+                    int featureNameOffset = builder.createString(featureName);
+                    int weightOffset = FeatureMap.createDataVector(builder, encryptWeight);
+                    int featureMapOffset = FeatureMap.createFeatureMap(builder, featureNameOffset, weightOffset);
+                    fmOffsets[index] = featureMapOffset;
+                    index += 1;
+                }
+                this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsets);
+                long endTime = System.currentTimeMillis();
+                LOGGER.info("No compression and encrypt type is:" +
+                        encryptLevel + " cost " + (endTime - startTime) + "ms");
                 return this;
             }
-            this.fmOffset = buildFmOffset(featureMaps, updateFeatureName);
+
+            long startTime = System.currentTimeMillis();
+            int totalMaskLen = 0;
+            for (String featureName : updateFeatureName) {
+                totalMaskLen += client.getPreFeature(featureName).length;
+            }
+            boolean[] maskArray = EncodeExecutor.getInstance().constructMaskArray(totalMaskLen);
+            int maskedLen = 0;
+            int index = 0;
+            int[] compFmOffsets = new int[updateFeatureName.size()];
+            while (!encrypterBase.isEnd()) {
+                String featureName = encrypterBase.getNextFeature();
+                float[] encryptWeight = encrypterBase.geEncryptWeight(featureName);
+                float[] preWeight = client.getPreFeature(featureName);
+                CompressWeight compressWeight = EncodeExecutor.enDiffSparseQuantData(featureName,
+                        encryptWeight, preWeight, 8, trainDataSize, maskArray, maskedLen);
+                byte[] data = compressWeight.getCompressData();
+                float minVal = compressWeight.getMinValue();
+                float maxVal = compressWeight.getMaxValue();
+                LOGGER.fine("[updateModel build compressWeight] origin size: "
+                        + preWeight.length + ", after compress size: " + data.length);
+                int featureNameOffset = builder.createString(featureName);
+                int weightOffset = CompressFeatureMap.createCompressDataVector(builder, data);
+                int featureOffset = CompressFeatureMap.createCompressFeatureMap(builder, featureNameOffset,
+                        weightOffset, minVal, maxVal);
+                LOGGER.fine("[updateModel Compression] " + featureName +
+                        "min_val: " + minVal + ", max_val: " + maxVal);
+                compFmOffsets[index] = featureOffset;
+                index += 1;
+                maskedLen += preWeight.length;
+            }
+            this.compFmOffset = RequestUpdateModel.createCompressFeatureMapVector(builder, compFmOffsets);
+            this.uploadSparseRate = localFLParameter.getUploadSparseRatio();
+            this.nameVecOffset = buildNameVecOffset(updateFeatureName);
+            long endTime = System.currentTimeMillis();
+            LOGGER.info("compression time is " + (endTime - startTime) + "ms, encrypt is " + encryptLevel);
             return this;
         }
 
-        private int buildCompFmOffset(Map<String, List<Float>> featureMaps, int trainDataSize) {
-            List<CompressWeight> compressWeights = EncodeExecutor.getInstance().encode(featureMaps, trainDataSize);
-            if (compressWeights == null || compressWeights.size() == 0) {
-                LOGGER.severe("[Compression] the return compressWeights from <encodeExecutor.encode> is " +
+        private RequestUpdateModelBuilder signDSEncrypt(SecureProtocol secureProtocol, ArrayList<String> updateFeatureName) {
+            long endTime;
+            long startTime;
+            startTime = System.currentTimeMillis();
+            Client client = ClientManager.getClient(flParameter.getFlName());
+            // signds alg return indexArray, and package indexArray into flatbuffer.
+            SecureRandom secureRandom = Common.getSecureRandom();
+            boolean signBool = secureRandom.nextBoolean();
+            this.sign = signBool ? 1 : -1;
+            int[] indexArray = secureProtocol.signDSModel(client, signBool);
+            if (indexArray == null || indexArray.length == 0) {
+                LOGGER.severe("[Encrypt] the return fmOffsetsSignDS from <secureProtocol.signDSModel> is " +
                         "null, please check");
                 retCode = ResponseCode.RequestError;
                 status = FLClientStatus.FAILED;
                 throw new IllegalArgumentException();
             }
-            int compFeatureSize = compressWeights.size();
-            int[] compFmOffsets = new int[compFeatureSize];
-            int index = 0;
-            for (CompressWeight compressWeight : compressWeights) {
-                String weightFullname = compressWeight.getWeightFullname();
-                List<Byte> compressData = compressWeight.getCompressData();
-                float minVal = compressWeight.getMinValue();
-                float maxVal = compressWeight.getMaxValue();
-                byte[] data = new byte[compressData.size()];
-                LOGGER.info("[updateModel build compressWeight] feature name: "
-                        + weightFullname + ", feature size: " + data.length);
-                for (int j = 0; j < data.length; j++) {
-                    data[j] = compressData.get(j);
-                }
-                int featureName = builder.createString(weightFullname);
-                int weight = CompressFeatureMap.createCompressDataVector(builder, data);
-                int featureMap = CompressFeatureMap.createCompressFeatureMap(builder, featureName, weight,
-                        minVal, maxVal);
-                LOGGER.info("[Compression]" +
-                        " featureName: " + weightFullname +
-                        ", min_val: " + minVal +
-                        ", max_val: " + maxVal);
-                compFmOffsets[index] = featureMap;
-                index += 1;
+            this.indexArrayOffset = RequestUpdateModel.createIndexArrayVector(builder, indexArray);
+
+            // only package featureName into flatbuffer.
+            int compFeatureSize = updateFeatureName.size();
+            int[] fmOffsetsSignds = new int[compFeatureSize];
+            for (int i = 0; i < compFeatureSize; i++) {
+                String key = updateFeatureName.get(i);
+                float[] data = new float[0];
+                int featureName = builder.createString(key);
+                int weight = FeatureMap.createDataVector(builder, data);
+                int featureMap = FeatureMap.createFeatureMap(builder, featureName, weight);
+                fmOffsetsSignds[i] = featureMap;
             }
-            return RequestUpdateModel.createCompressFeatureMapVector(builder, compFmOffsets);
+            this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsSignds);
+            LOGGER.info("[Encrypt] SignDS mask model ok!");
+            endTime = System.currentTimeMillis();
+            LOGGER.info("signds time is " + (endTime - startTime) + "ms");
+            return this;
         }
 
         private int buildNameVecOffset(ArrayList<String> updateFeatureName) {
@@ -385,30 +483,9 @@ public class UpdateModel {
             int[] nameVecOffsets = new int[featureSize];
             for (int i = 0; i < featureSize; i++) {
                 String key = updateFeatureName.get(i);
-                int featureName = builder.createString(key);
-                nameVecOffsets[i] = featureName;
+                nameVecOffsets[i] = builder.createString(key);
             }
             return RequestUpdateModel.createNameVecVector(builder, nameVecOffsets);
-        }
-
-        private int buildFmOffset(Map<String, List<Float>> featureMaps, ArrayList<String> updateFeatureName) {
-            int featureSize = updateFeatureName.size();
-            int[] fmOffsets = new int[featureSize];
-            for (int i = 0; i < featureSize; i++) {
-                String key = updateFeatureName.get(i);
-                List<Float> featureMap = featureMaps.get(key);
-                float[] data = new float[featureMap.size()];
-                LOGGER.fine("[updateModel build featuresMap] feature name: " + key + " feature " +
-                        "size: " + data.length);
-                for (int j = 0; j < data.length; j++) {
-                    data[j] = featureMap.get(j);
-                }
-                int featureName = builder.createString(key);
-                int weight = FeatureMap.createDataVector(builder, data);
-                int featureMapOff = FeatureMap.createFeatureMap(builder, featureName, weight);
-                fmOffsets[i] = featureMapOff;
-            }
-            return RequestUpdateModel.createFeatureMapVector(builder, fmOffsets);
         }
 
         /**

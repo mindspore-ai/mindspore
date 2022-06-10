@@ -31,6 +31,8 @@ class FLMockServer {
     private final Dispatcher dispatcher = new Dispatcher() {
         @Override
         public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+            // Pop req from the request queue, avoid memory leak.
+            server.takeRequest();
             if (httpRes == null) {
                 LOGGER.severe("httpRes size is:" + Integer.toString(httpRes.size()) + " httpResCnt is:" + Integer.toString(httpResCnt));
                 return new MockResponse().setResponseCode(404);
