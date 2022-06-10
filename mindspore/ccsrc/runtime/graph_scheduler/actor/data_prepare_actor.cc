@@ -26,6 +26,9 @@
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
 #include "distributed/recovery/recovery_context.h"
+#ifdef WITH_BACKEND
+#include "runtime/graph_scheduler/embedding_cache_scheduler.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
@@ -344,8 +347,10 @@ void DataPrepareActor::SetInitTensorsIfNeeded(const std::vector<std::vector<Tens
 void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                    OpContext<DeviceTensor> *const context, GraphExecutionStrategy real_strategy) {
   MS_EXCEPTION_IF_NULL(context);
-  MS_LOG(DEBUG) << "Data prepare actor(" << GetAID().Name() << ") prepares data.";
+  // Preprocess before prepare data for data prepare actor.
+  PreprocessBeforePrepareData();
 
+  MS_LOG(DEBUG) << "Data prepare actor(" << GetAID().Name() << ") prepares data.";
   real_strategy_ = real_strategy;
   // Convert actor running data from input tensors.
   if (!input_tensors.empty()) {
@@ -929,6 +934,15 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
     // directly set to the input control node, which may be a passthrough node. The device 'ptr_' is re-malloced and
     // device to device copy by input tensor address in data source process.
   }
+}
+
+void DataPrepareActor::PreprocessBeforePrepareData() const {
+  // Embedding Cache mode needs to record the number of global steps executed by the compute graph.
+  // The first step compute graph needs to wait for the Embedding cache prefetch cache to warm up to prevent the
+  // GetNext operator from timing out in the compute graph.
+#ifdef WITH_BACKEND
+  EmbeddingCacheScheduler::GetInstance().IncreaseGraphStep(GetAID());
+#endif
 }
 }  // namespace runtime
 }  // namespace mindspore

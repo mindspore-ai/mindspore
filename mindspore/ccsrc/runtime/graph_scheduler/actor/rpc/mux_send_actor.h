@@ -35,11 +35,14 @@ class MuxSendActor : public SendActor {
   explicit MuxSendActor(const std::string &name, const CNodePtr &kernel, const DeviceContext *device_context,
                         const AID &memory_manager_aid, const AID *debug_aid, const AID *recorder_aid,
                         GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
-                        const std::set<size_t> &modifiable_ref_output_indexes, const MuxRecvActorPtr &mux_recv_actor)
+                        const std::set<size_t> &modifiable_ref_output_indexes)
       : SendActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
-                  modifiable_ref_input_indexes, modifiable_ref_output_indexes),
-        mux_recv_actor_(mux_recv_actor) {}
+                  modifiable_ref_input_indexes, modifiable_ref_output_indexes) {}
   ~MuxSendActor() override = default;
+
+ public:
+  // Set the MuxRecvActor paired with the MuxSendActor to get the 'from url' from the MuxRecvActor.
+  void set_mux_recv_actor(const MuxRecvActorPtr &mux_recv_actor) { mux_recv_actor_ = mux_recv_actor; }
 
  private:
   // After rpc send kernel is launched, inter-process data should be sent and can be sent to different Recv Actor each
@@ -48,7 +51,7 @@ class MuxSendActor : public SendActor {
   // When serving as a service, the MuxSendActor and MuxRecvActor of the server are used in pairs, and the MuxSendActor
   // needs to obtain the information(ip and port) of peer that initiates this service from the corresponding
   // MuxRecvActor to response request.
-  void SendOutput(OpContext<DeviceTensor> *const context) override;
+  bool LaunchKernel() override;
 
   // MuxSendActor and MuxRecvActor of the server are used in pairs, and the MuxSendActor
   // needs to obtain the information(ip and port) of peer from the corresponding MuxRecvActor.

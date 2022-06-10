@@ -71,6 +71,29 @@ class RpcActorOpContextSetter {
   RpcActorSetPtr rpc_actors_;
   OpContext<DeviceTensor> *op_context_;
 };
+
+// This class is used to refresh the state of the rpc actor. For example, the mux recv actor receives requests for
+// the service process. Currently, the requests are processed serially. After each request (that is, the execution of an
+// actor dag) ends, the state of the Recv actor needs to be refreshed. Make it in the ready state to continue with the
+// next request.
+class RpcActorStatusUpdater {
+ public:
+  static RpcActorStatusUpdater &GetInstance();
+
+  // Set rpc actors which need to be update status.
+  void set_rpc_actors(const RpcActorSetPtr &rpc_actors);
+
+  // Update rpc actors' status.
+  void UpdateRpcActorStatus() const;
+
+ private:
+  RpcActorStatusUpdater() = default;
+  ~RpcActorStatusUpdater() = default;
+  DISABLE_COPY_AND_ASSIGN(RpcActorStatusUpdater);
+
+  // Record rpc actors which need to update status.
+  RpcActorSetPtr rpc_actors_;
+};
 }  // namespace runtime
 }  // namespace mindspore
 

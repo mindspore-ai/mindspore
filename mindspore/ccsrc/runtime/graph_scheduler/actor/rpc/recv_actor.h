@@ -37,9 +37,9 @@ class RecvActor : public RpcActor {
       : RpcActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
                  modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kRecvActor),
         server_(nullptr),
+        is_context_valid_(false),
         ip_(""),
-        port_(0),
-        is_context_valid_(false) {}
+        port_(0) {}
   ~RecvActor() override;
 
   // Besides set the op context, this method also notify the message handler to 'RunOpInterProcessData'.
@@ -74,7 +74,15 @@ class RecvActor : public RpcActor {
   // Set the message handler of the server.
   virtual void SetMessageHandler();
 
+  // Parse finalize command message from received message.
+  virtual void ParseFinalizeReqData(size_t data_len, const MessageBase *const msg, bool *need_finalize) {}
+
   std::unique_ptr<TCPServer> server_;
+
+  // The variables used to ensure thread-safe of op context visited by recv actor.
+  bool is_context_valid_;
+  std::mutex context_mtx_;
+  std::condition_variable context_cv_;
 
  private:
   // Create abstract and add to the abstract list.
@@ -84,11 +92,13 @@ class RecvActor : public RpcActor {
   // Parse the protobuf message from the given buffer. The format is as below.
   // |--------22 bytes------|---4 bytes--|PB data size bytes| data size bytes |
   // |RPC_DYNAMIC_SHAPE_DATA|PB data size|      PB data     | real data       |
-  void ParseDynamicShapeData(const std::string &dynamic_shape_data, AbstractBasePtrList *args_spec_list, size_t count);
+  // Return dynamic shape data length.
+  size_t ParseDynamicShapeData(const std::string &dynamic_shape_data, AbstractBasePtrList *args_spec_list,
+                               size_t count);
 
   // After Recv actor receives data from a remote peer, the data could be with dynamic shape so we need to preprocess
   // it, e.g., infer shape for RpcRecv kernel and call Resize().
-  void PreprocessRemoteInput(MessageBase *const msg);
+  void PreprocessRemoteInput(MessageBase *const msg, bool *need_finalize);
 
   // The message callback of the tcp server.
   MessageBase *HandleMessage(MessageBase *const msg);
@@ -96,11 +106,6 @@ class RecvActor : public RpcActor {
   // The network address of this recv actor. It's generated automatically by rpc module.
   std::string ip_;
   uint32_t port_;
-
-  // The variables used to ensure thread-safe of op context visited by recv actor.
-  bool is_context_valid_;
-  std::mutex context_mtx_;
-  std::condition_variable context_cv_;
 };
 
 using RecvActorPtr = std::shared_ptr<RecvActor>;

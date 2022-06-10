@@ -15,16 +15,33 @@
  */
 
 #include "runtime/graph_scheduler/actor/rpc/mux_recv_actor.h"
+#include "distributed/constants.h"
 
 namespace mindspore {
 namespace runtime {
+using distributed::kFinalizeMuxRecvActor;
+
 void MuxRecvActor::SetMessageHandler() {
   MS_EXCEPTION_IF_NULL(server_);
   server_->SetMessageHandler(std::bind(&MuxRecvActor::HandleMessage, this, std::placeholders::_1));
 }
 
 MessageBase *MuxRecvActor::HandleMessage(MessageBase *const msg) {
-  if (msg == nullptr) {
+  // Block the message handler if the context is invalid.
+  std::unique_lock<std::mutex> lock(context_mtx_);
+  context_cv_.wait(lock, [this] { return is_context_valid_; });
+  lock.unlock();
+
+  if (finalized_) {
+    return distributed::rpc::NULL_MSG;
+  }
+
+  // The mux recv actor receives requests for the service process. Currently, the requests are processed serially.
+  std::unique_lock<std::mutex> is_ready_lock(is_ready_mtx_);
+  is_ready_cv_.wait(is_ready_lock, [this] { return is_ready_.load(); });
+  is_ready_ = false;
+
+  if (msg == nullptr || op_context_ == nullptr) {
     return distributed::rpc::NULL_MSG;
   }
 
@@ -33,6 +50,48 @@ MessageBase *MuxRecvActor::HandleMessage(MessageBase *const msg) {
 
   ActorDispatcher::Send(GetAID(), &MuxRecvActor::RunOpInterProcessData, msg, op_context_);
   return distributed::rpc::NULL_MSG;
+}
+
+void MuxRecvActor::ParseFinalizeReqData(size_t data_len, const MessageBase *const msg, bool *need_finalize) {
+  MS_EXCEPTION_IF_NULL(msg);
+  MS_EXCEPTION_IF_NULL(need_finalize);
+  const std::string &msg_body = msg->body;
+  size_t msg_len = msg_body.length();
+  if (data_len == msg_len) {
+    return;
+  }
+
+  size_t remainder_len = msg_len - data_len;
+  size_t finalize_header_size = strlen(kFinalizeMuxRecvActor);
+  if (remainder_len <= finalize_header_size) {
+    MS_LOG(EXCEPTION) << "Not found msg header[" << kFinalizeMuxRecvActor << "] in received message";
+  }
+
+  if (remainder_len - finalize_header_size != 1) {
+    MS_LOG(EXCEPTION) << "Invalid finalize request message";
+  }
+
+  const void *need_finalize_actor_data = msg_body.c_str() + data_len + finalize_header_size;
+  *need_finalize = *(reinterpret_cast<const bool *>(need_finalize_actor_data));
+  if (*need_finalize) {
+    // Finalize loop of runtime.
+    SET_OPCONTEXT_SUCCESS_RET((*op_context_));
+  }
+}
+
+void MuxRecvActor::UpdateStatus() {
+  std::unique_lock<std::mutex> is_ready_lock(is_ready_mtx_);
+  is_ready_ = true;
+  is_ready_cv_.notify_one();
+}
+
+void MuxRecvActor::Finalize() {
+  std::unique_lock<std::mutex> lock(context_mtx_);
+  finalized_ = true;
+
+  op_context_ = nullptr;
+  context_cv_.notify_all();
+  is_ready_cv_.notify_all();
 }
 }  // namespace runtime
 }  // namespace mindspore
