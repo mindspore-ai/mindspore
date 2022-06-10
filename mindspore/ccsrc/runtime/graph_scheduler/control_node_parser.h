@@ -121,6 +121,8 @@ KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index);
 // Check if the partial node is valid.
 // Invalid partial nodes are those partial cnodes whose funcgraph is deadnode.
 bool IsInvalidPartial(const AnfNodePtr &node);
+// Check whether the switch node abstract is functional.
+bool IsPartialInput(const AnfNodePtr &node);
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
  public:
