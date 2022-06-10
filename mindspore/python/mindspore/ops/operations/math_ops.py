@@ -5971,3 +5971,55 @@ class Renorm(Primitive):
         validator.check_value_type("maxnorm", maxnorm, [float], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         self.add_prim_attr("p", float(p))
+
+
+class Cholesky(Primitive):
+    """
+    Computes the Cholesky decomposition of a symmetric positive-definite matrix `A`
+    or for batches of symmetric positive-definite matrices.
+
+    If `upper` is `True`, the returned matrix `U` is upper-triangular, and the decomposition has the form:
+
+    .. math::
+        A = U^TU
+
+    If `upper` is `False`, the returned matrix `L` is lower-triangular, and the decomposition has the form:
+
+    .. math::
+        A = LL^T
+
+    Args:
+        upper (bool): Flag that indicates whether to return a upper or lower triangular matrix.
+            Default: False.
+
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(*, N, N)`, where :math:`*` is zero or more batch dimensions
+          consisting of symmetric positive-definite matrices, with float32 or float64 data type.
+
+    Outputs:
+        Tensor, has the same shape and data type as `input_x`.
+
+    Raises:
+        TypeError: If `upper` is not a bool.
+        TypeError: If dtype of `input_x` is not one of: float64, float32.
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If `input_x` is not batch square.
+        ValueError: If `input_x` is not symmetric positive definite.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1.0, 1.0], [1.0, 2.0]]), mindspore.float32)
+        >>> cholesky = ops.Cholesky(upper=False)
+        >>> output = cholesky(input_x)
+        >>> print(output)
+        [[1. 0.]
+         [1. 1.]]
+    """
+
+    @prim_attr_register
+    def __init__(self, upper=False):
+        """Initialize Cholesky"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
+        validator.check_value_type('upper', upper, [bool], self.name)

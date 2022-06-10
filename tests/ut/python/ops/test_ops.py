@@ -35,6 +35,7 @@ from mindspore.ops.operations.math_ops import BesselJ0, BesselJ1, BesselK0, Bess
                                               BesselK1e, Bucketize
 from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import Trace
+from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.array_ops import CheckNumerics
@@ -1581,6 +1582,10 @@ test_case_math_ops = [
         'block': P.CholeskyInverse(upper=False),
         'desc_inputs': [Tensor(np.array([[2.0, 0.0, 0.0], [4.0, 1.0, 0.0], [-8.0, 1.0, 2.0]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[2.0, 0.0, 0.0], [4.0, 1.0, 0.0], [-8.0, 1.0, 2.0]]).astype(np.float32))]}),
+    ('Cholesky', {
+        'block': Cholesky(),
+        'desc_inputs': [Tensor(np.array([[1, 1], [1, 2]]).astype(np.float32))],
+        'skip': ['backward']}),
     ('DenseToCSRSparseMatrix', {
         'block': DenseToCSRSparseMatrix(),
         'desc_inputs': [Tensor(np.array([[1, 0], [0, 1]]).astype(np.float32)),
