@@ -5323,7 +5323,7 @@ class Conj(Primitive):
         self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 
-class Real(PrimitiveWithInfer):
+class Real(Primitive):
     """
     Returns a Tensor that is the real part of the input.
     If input is real, it is returned unchanged.
@@ -5338,7 +5338,7 @@ class Real(PrimitiveWithInfer):
        TypeError: If the input is not a Tensor.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
@@ -5367,27 +5367,27 @@ class Complex(Primitive):
 
     Raises:
        TypeError: If the dtype of input is not one of: float32, float64.
-                  If the dtypes of two inputs are not same.
+       TypeError: If the dtypes of two inputs are not same.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
-        >>> real = Tensor(np.asarray(1, mindspore.complex64)
-        >>> imag = Tensor(np.asarray(2, mindspore.complex64)
+        >>> real = Tensor(np.array([1]), mindspore.float32)
+        >>> imag = Tensor(np.array([2]), mindspore.float32)
         >>> complex = ops.Complex()
         >>> output = complex(real, imag)
         >>> print(output)
-        (1 + 2j)
+        [1.+2.j]
     """
 
     @prim_attr_register
     def __init__(self):
         """Initialize Complex"""
-        self.init_prim_io_names(inputs=['input_real', 'input_imag'], outputs=['output'])
+        self.init_prim_io_names(inputs=['real', 'imag'], outputs=['output'])
 
 
-class Imag(PrimitiveWithInfer):
+class Imag(Primitive):
     """
     Returns a new tensor containing imaginary value of the input.
     If input is real, it is returned zeros.
@@ -5402,7 +5402,7 @@ class Imag(PrimitiveWithInfer):
        TypeError: If the input is not a Tensor.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
@@ -5415,6 +5415,39 @@ class Imag(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize Imag"""
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])
+
+
+class Angle(Primitive):
+    """
+    Returns the element-wise argument of a complex tensor.
+    The elements in input are considered to be complex numbers of the form a+bj, where a is the real part and b
+    is the imaginary part. The argument returned by this function is of the form atan2(b,a).
+
+    Inputs:
+        - **input** (Tensor) - The input tensor. types: complex64, complex128.
+
+    Outputs:
+        Tensor, has the float32 or float64 type and the same shape as input.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If the dtype of input is not one of: complex64, complex128.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input = Tensor([-1.5 + 7.8j, 3 + 5.75j], mindspore.complex64)
+        >>> angle = ops.Angle()
+        >>> output = angle(input)
+        >>> print(output)
+        [1.7607845 1.0899091]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Angle"""
         self.init_prim_io_names(inputs=['input'], outputs=['output'])
 
 

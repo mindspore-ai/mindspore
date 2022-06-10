@@ -23,6 +23,7 @@ from ...nn.layer import math
 from .. import functional as F
 from .. import operations as P
 from ..operations.math_ops import Trace, Bernoulli, Renorm
+from ..operations.math_ops import Real, Imag, Complex, Angle
 from ..functional import broadcast_gradient_args
 from .._grad.grad_base import bprop_getters
 from .._grad.grad_math_ops import binop_grad_common
@@ -378,6 +379,69 @@ def get_bprop_cholesky_inverse(self):
         else:
             dx = neg(matmul(common_term, input_x))
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Real)
+def get_bprop_real(self):
+    """Grad definition for `Real` operation."""
+    complex_grad = Complex()
+
+    def bprop(input_1, out, dout):
+        zero = zeros_like(dout)
+        dx = dout
+        res = complex_grad(dx, zero)
+        return (res,)
+
+    return bprop
+
+
+@bprop_getters.register(Imag)
+def get_bprop_imag(self):
+    """Grad definition for `Real` operation."""
+    complex_grad = Complex()
+
+    def bprop(input_1, out, dout):
+        zero = zeros_like(dout)
+        dx = dout
+        res = complex_grad(zero, dx)
+        return (res,)
+
+    return bprop
+
+
+@bprop_getters.register(Complex)
+def get_bprop_complex(self):
+    """Grad definition for `Real` operation."""
+    real_grad = Real()
+    imag_grad = Imag()
+
+    def bprop(real, imag, out, dout):
+        dx = real_grad(dout)
+        dy = imag_grad(dout)
+        return (dx, dy,)
+
+    return bprop
+
+
+@bprop_getters.register(Angle)
+def get_bprop_angle(self):
+    """Grad definition for `Angle` operation."""
+    real_op = Real()
+    imag_op = Imag()
+    reciprocal_op = P.Reciprocal()
+    complex_op = Complex()
+    neg_op = P.Neg()
+
+    def bprop(x, out, dout):
+        re = real_op(x)
+        im = imag_op(x)
+        re = complex_op(im, re)
+        z = reciprocal_op(re)
+        zero = zeros_like(dout)
+        complex_dout = complex_op(dout, zero)
+        return (neg_op(complex_dout * z),)
 
     return bprop
 
