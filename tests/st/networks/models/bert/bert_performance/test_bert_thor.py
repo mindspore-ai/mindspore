@@ -33,9 +33,11 @@ from mindspore.train.model import Model
 from mindspore.train.train_thor import ConvertModelUtils
 import mindspore.dataset.transforms as C
 
-from tests.models.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepCell
-from tests.models.official.nlp.bert.src.utils import get_bert_thor_lr, get_bert_thor_damping
-from tests.models.official.nlp.bert.src.bert_model import BertConfig
+from tests.st.networks.models.bert.bert_performance.src.bert_for_pre_training import BertNetworkWithLoss, \
+    BertTrainOneStepCell
+
+from tests.st.networks.models.bert.bert_performance.src.utils import get_bert_thor_lr, get_bert_thor_damping
+from tests.st.networks.models.bert.bert_performance.src.bert_model import BertConfig
 
 MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_table_8p.json"
 DATASET_PATH = "/home/workspace/mindspore_dataset/bert/thor/en-wiki-512_test_first1wan"
@@ -188,7 +190,7 @@ def train_process_bert_thor(q, device_id, epoch_size, device_num):
     q.put({'loss': loss_list, 'cost': per_step_mseconds})
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
