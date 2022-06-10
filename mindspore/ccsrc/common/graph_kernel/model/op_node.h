@@ -48,7 +48,7 @@ class PrimOp : public Node {
   ~PrimOp() = default;
 
   NodeBaseList Infer(const NodePtrList &inputs, const DAttrs &attrs);
-  virtual NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs, const std::string &op);
+  virtual NodePtr InferValue(const NodePtrList &inputs, const DAttrs &, const std::string &op);
 
   std::string ToString() const override;
   NType NodeType() override { return NType::Primitive; }
@@ -99,7 +99,7 @@ class ElemwiseOp : public PrimOp {
 
  protected:
   std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
-  DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override;
+  DFormat InferFormat(const NodePtrList &inputs, const DAttrs &) override;
 };
 
 class BroadcastOp : public PrimOp {
@@ -228,7 +228,7 @@ class ComplexOp : public ElemwiseOp {
   ~ComplexOp() = default;
 
  protected:
-  void Check(const NodePtrList &inputs, const DAttrs &attrs) override;
+  void Check(const NodePtrList &inputs, const DAttrs &) override;
   std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &) override { return {inputs[0]->shape}; }
   std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeComplex64}; }
 };
@@ -239,7 +239,7 @@ class StandardNormalOp : public OpaqueOp {
   ~StandardNormalOp() = default;
 
  protected:
-  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &attrs) override;
   std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeFloat32}; }
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; }
 };

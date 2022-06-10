@@ -210,7 +210,7 @@ void ProcessLocalStructure(OrderedMap<AnfNodePtr, NodeRelation> *node_rels, std:
   std::vector<std::pair<AnfNodePtr, AnfNodePtr>> latter_delete;
 
   for (const auto &ninode : no_input_nodes) {
-    AnfNodePtrList cnexts((*node_rels)[ninode].nexts.begin(), (*node_rels)[ninode].nexts.end());
+    AnfNodePtrList cnexts((*node_rels)[ninode].nexts.cbegin(), (*node_rels)[ninode].nexts.cend());
     for (const auto &n : cnexts) {
       AnfNodePtr serial_tail = ninode;
       AnfNodePtr cur_node = n;
@@ -499,7 +499,7 @@ std::vector<std::vector<AnfNodePtrList>> ParallelOpFusion::SearchParallelGroups(
 
 std::tuple<AnfNodePtrList, std::vector<int>> ParallelOpFusion::GetAvaliableNodesByOffset(
   int start, const std::vector<size_t> &offsets, const std::vector<bool> &used, const AnfNodePtrList &nodes,
-  const std::set<int> &excludes) {
+  const std::set<int> &excludes) const {
   // Get unused nodes by offset index, the result will contain the node with start index.
   int node_limit = static_cast<int>(nodes.size());
   if (start >= node_limit) {
@@ -765,7 +765,7 @@ bool ParallelOpFusion::CreateParallelOpSubGraphs(const std::vector<ParallelInfo>
 std::set<AnfNodePtr> CollectCapturedNodes(const std::vector<ParallelInfo> &infos) {
   std::set<AnfNodePtr> captured;
   (void)std::for_each(infos.cbegin(), infos.cend(), [&captured](const ParallelInfo &info) {
-    captured.insert(info.nodes().begin(), info.nodes().end());
+    captured.insert(info.nodes().cbegin(), info.nodes().cend());
   });
   return captured;
 }
@@ -787,7 +787,8 @@ std::vector<std::vector<AnfNodePtrList>> GetParallelGroupsByBfs(const OrderedMap
   while (!node_que.empty()) {
     std::vector<AnfNodePtrList> group;
     int node_size = SizeToInt(node_que.size());
-    while (node_size--) {
+    while (node_size != 0) {
+      node_size--;
       auto node = node_que.front();
       node_que.pop();
       if (exclude.count(node) == 0 && Parallelizable(node)) {
@@ -840,7 +841,7 @@ bool ParallelOpFusion::Run(const FuncGraphPtr &graph) {
     auto groups_bfs = GetParallelGroupsByBfs(node_rels, exclued_nodes);
     auto bfs_parallel_infos = SearchFusableParallelCNodes(groups_bfs);
 
-    (void)parallel_infos.insert(parallel_infos.end(), bfs_parallel_infos.begin(), bfs_parallel_infos.end());
+    (void)parallel_infos.insert(parallel_infos.cend(), bfs_parallel_infos.cbegin(), bfs_parallel_infos.cend());
   }
 
   // Create core-fuse subgraph and change origin graph.

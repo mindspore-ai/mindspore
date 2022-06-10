@@ -113,14 +113,18 @@ std::string CutStr(const string &s, size_t start_pos = 0, size_t len = std::stri
     MS_LOG(EXCEPTION) << "Start index " << start_pos << " is out of range [0, " << s.length() << ") in string: " << s;
   }
   for (size_t i = 0; i < len; i++) {
-    if (start_pos + i >= s.length()) break;
+    if (start_pos + i >= s.length()) {
+      break;
+    }
     new_str += s[start_pos + i];
   }
   return new_str;
 }
 
 bool StartWith(const std::string &s, const std::string &prefix) {
-  if (s.length() < prefix.length()) return false;
+  if (s.length() < prefix.length()) {
+    return false;
+  }
   return s.find(prefix) == 0;
 }
 
@@ -213,7 +217,9 @@ bool CheckCurNode(const inner::NodePtr &tmp_node, const std::string &tmp_pattern
           auto pattern_value_str =
             std::static_pointer_cast<inner::ConstTensorNode>((*const_to_ref)[tmp_pattern_op])->ToString();
           double pattern_value = std::stod(CleanStr(pattern_value_str));
-          if (pattern_value != node_value) return false;
+          if (pattern_value != node_value) {
+            return false;
+          }
         } else {
           (*const_to_ref)[tmp_pattern_op] = tmp_node;
         }
@@ -325,7 +331,9 @@ inner::NodePtr PatternTree::AlterGraph(const std::shared_ptr<ParaMap> &para_to_r
   inner::GraphBuilder gb("");
   mindspore::HashMap<PatternNodePtr, inner::NodePtr> pattern_to_ref;
   for (auto &n : (*res)) {
-    if (PatternNodeType(n->op()) != inner::NType::Primitive) continue;
+    if (PatternNodeType(n->op()) != inner::NType::Primitive) {
+      continue;
+    }
     inner::NodePtrList inputs;
     for (auto &i : n->inputs()) {
       if (PatternNodeType(i->op()) == inner::NType::Primitive) {
@@ -540,9 +548,13 @@ mindspore::HashMap<std::string, std::vector<PatternTreePtr>> GetExpressions() {
   mindspore::HashSet<std::string> disable_ids{flags.disable_simplify_exprs.begin(), flags.disable_simplify_exprs.end()};
   for (auto &e : expressions) {
     if (!enable_ids.empty()) {
-      if (enable_ids.count(std::to_string(e.id)) == 0) continue;
+      if (enable_ids.count(std::to_string(e.id)) == 0) {
+        continue;
+      }
     } else {
-      if (disable_ids.count(std::to_string(e.id)) > 0) continue;
+      if (disable_ids.count(std::to_string(e.id)) > 0) {
+        continue;
+      }
     }
     PatternTreePtr pt = e.func(e.math_expr);
     expression_map[pt->GetRootOp()].push_back(pt);
@@ -650,10 +662,14 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
         find_pattern = DoArithmeticTrans(lg) || find_pattern;
         change_anf_graph = change_anf_graph || find_pattern;
       }
-      if (!change_anf_graph) continue;
+      if (!change_anf_graph) {
+        continue;
+      }
       ReorganizeEmptyGraph(lg);
       auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(lg, Callback::Instance());
-      if (new_funcgraph == nullptr) continue;
+      if (new_funcgraph == nullptr) {
+        continue;
+      }
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
