@@ -304,6 +304,7 @@ Array操作
 
     mindspore.ops.broadcast_to
     mindspore.ops.adaptive_max_pool2d
+    mindspore.ops.col2im
     mindspore.ops.diag
     mindspore.ops.expand_dims
     mindspore.ops.gather

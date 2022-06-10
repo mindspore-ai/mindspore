@@ -22,6 +22,7 @@ from mindspore.ops.primitive import constexpr
 from ..operations.array_ops import UniqueConsecutive
 from ..operations.array_ops import NonZero, MatrixDiagV3
 from ..operations.array_ops import Fills
+from ..operations.array_ops import Col2Im
 from ..operations.array_ops import ScatterNdMax
 from ..operations.array_ops import ScatterNdMul
 from ..operations.nn_ops import AdaptiveMaxPool2D
@@ -2920,6 +2921,51 @@ def diag(input_x):
     return diag_(input_x)
 
 
+def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
+    """
+    Combines an array of sliding local blocks into a large containing tensor.
+
+    Args:
+        input_x (Tensor): 4D tensor with data type float16 or float.
+        output_size (Tensor): 1D tensor with 2 elements of data type int.
+        kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+            for height and width. If type is int, it means that height equal with width. Must be specified.
+        dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
+        padding_value (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 1.
+        stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
+            for height and width. If type is int, it means that height equal with width. Default: 0.
+
+    Returns:
+        A 4D Tensor, with same type as 'input_x'.
+
+    Raises:
+        TypeError: If :attr:`kernel_size`, `dilation`, `padding_value`, `stride` data type is not in
+            Union[int, tuple[int], list[int]].
+        ValueError: If :attr:`kernel_size`, `dilation`, `padding_value`, `stride` value is not
+            greater than zero or elements number more than 2.
+        ValueError: If :attr:`padding_value` value is less than zero or elements number more than 2.
+        ValueError: If input_x.shape[2] != kernel_size[0] * kernel_size[1].
+        ValueError: If input_x.shape[3] does not match the calculated number of sliding blocks.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
+        >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
+        >>> output = ops.col2im(x, output_size, [2, 2], [2, 2], [2, 2], [2, 2])
+        >>> print(output.shape)
+        (16, 16, 8, 8)
+    """
+    c2i = Col2Im(kernel_size, dilation, padding_value, stride)
+    return c2i(input_x, output_size)
+
+
 __all__ = [
     'unique',
     'unique_consecutive',
@@ -2982,5 +3028,6 @@ __all__ = [
     'adaptive_max_pool2d',
     'meshgrid',
     'broadcast_to',
+    'col2im'
 ]
 __all__.sort()

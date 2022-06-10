@@ -1652,6 +1652,46 @@ class Tensor(Tensor_):
         perm = validator.check_transpose_axis(axes, self.ndim)
         return tensor_operator_registry.get('transpose')()(self, perm)
 
+    def col2im(self, output_size, kernel_size, dilation, padding_value, stride):
+        """
+        Combines an array of sliding local blocks into a large containing tensor.
+
+        Args:
+            output_size (Tensor): 1D tensor with 2 elements of data type int.
+            kernel_size (Union[int, tuple[int], list[int]]): The size of the kernel, should be two int
+                for height and width. If type is int, it means that height equal with width. Must be specified.
+            dilation (Union[int, tuple[int], list[int]]): The size of the dilation, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: 1.
+            padding_value (Union[int, tuple[int], list[int]]): The size of the padding, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: 1.
+            stride (Union[int, tuple[int], list[int]]): The size of the stride, should be two int
+                for height and width. If type is int, it means that height equal with width. Default: 0.
+
+        Returns:
+            A 4D Tensor, with same type as input 'x'.
+
+        Raises:
+            TypeError: If :attr:`kernel_size`, `dilation`, `padding_value`, `stride` data type is not in
+                Union[int, tuple[int], list[int]].
+            ValueError: If :attr:`kernel_size`, `dilation`, `stride` value is less than zero or elements
+                number more than 2.
+            ValueError: If :attr:`padding_value` value is not greater than zero or elements number more than 2.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
+            >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
+            >>> y = x.col2im(output_size, kernel_size=[2, 2], dilation=[2, 2], padding_value=[2, 2], stride=[2, 2])
+            >>> print(y.shape)
+            (16, 16, 8, 8)
+        """
+        self._init_check()
+        return tensor_operator_registry.get('col2im')(self, output_size, kernel_size, dilation, padding_value, stride)
+
+
+
     def reshape(self, *shape):
         """
         Give a new shape to a tensor without changing its data.

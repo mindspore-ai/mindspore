@@ -530,9 +530,13 @@ class Col2Im(Primitive):
         ValueError: If x.shape[3] does not match the calculated number of sliding blocks.
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore.ops.operations.array_ops import Col2Im
         >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
         >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
-        >>> col2im = P.Col2Im(kernel_size=[2, 2], dilation=[2, 2], padding=[2, 2], stride=[2, 2])
+        >>> col2im = Col2Im(kernel_size=[2, 2], dilation=[2, 2], padding=[2, 2], stride=[2, 2])
         >>> y = col2im(x, output_size)
         >>> print(y.shape)
         (16, 16, 8, 8)
