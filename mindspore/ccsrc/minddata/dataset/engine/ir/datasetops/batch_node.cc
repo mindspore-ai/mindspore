@@ -86,8 +86,8 @@ Status BatchNode::ValidateParams() {
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  if (batch_map_func_ && in_col_names_.empty()) {
-    std::string err_msg = "Batch: 'in_col_names' cannot be empty when per_batch_map is used.";
+  if (!in_col_names_.empty() && !batch_map_func_) {
+    std::string err_msg = "Batch: per_batch_map needs to be specified when input_columns is set.";
     LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 #endif

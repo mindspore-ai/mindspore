@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
+
 import mindspore.dataset as ds
 from mindspore import log as logger
 from util import save_and_check_dict
@@ -531,8 +533,7 @@ def test_batch_exception_14():
     try:
         _ = data1.batch(batch_size=batch_size, input_columns=input_columns)
     except ValueError as e:
-        assert "per_batch_map and input_columns need to be passed in together." in str(
-            e)
+        assert "input_columns can be specified only when per_batch_map is set." in str(e)
 
 
 def test_batch_exception_15():
@@ -551,6 +552,64 @@ def test_batch_exception_15():
     except ValueError as e:
         err_msg = str(e)
     assert "batch_size is not within the required interval of [1, 2147483647]" in err_msg
+
+
+def test_no_input_columns_01():
+    """
+    Feature: Batch op
+    Description: Test with per_batch_map has value but input_columns has no value
+    Expectation: Output is equal to the expected output
+    """
+    def gen_2_cols(num):
+        for i in range(1, 1 + num):
+            yield (np.array([i]), np.array([i ** 2]))
+
+    def swap_col(col1, col2, batch_info):
+        return ([np.copy(a) for a in col2], [np.copy(b) for b in col1])
+
+    def batch_map_config(num, s, f, col_order=None):
+        try:
+            dst = ds.GeneratorDataset((lambda: gen_2_cols(num)), ["col1", "col2"])
+            dst = dst.batch(batch_size=s, per_batch_map=f, column_order=col_order)
+            res = []
+            for row in dst.create_dict_iterator(num_epochs=1, output_numpy=True):
+                res.append(row)
+            return res
+        except (ValueError, RuntimeError, TypeError) as e:
+            return str(e)
+
+    res = batch_map_config(3, 3, swap_col)[0]
+    assert np.array_equal(res["col1"], [[1], [4], [9]]) and np.array_equal(res["col2"], [[1], [2], [3]])
+
+
+def test_no_input_columns_02():
+    """
+    Feature: Batch op
+    Description: Test per_batch_map has value but input_columns has no value and given output_columns parameter
+    Expectation: Output is equal to the expected output
+    """
+    def gen_2_cols(num):
+        for i in range(1, 1 + num):
+            yield (np.array([i]), np.array([i ** 2]))
+
+    def split_col(col1, col2, batch_info):
+        return (col1, [np.copy(arr) for arr in col2], [np.copy(-arr) for arr in col2])
+
+    def batch_map_config(num, s, f, out_nms, col_order=None):
+        try:
+            dst = ds.GeneratorDataset((lambda: gen_2_cols(num)), ["col1", "col2"])
+            dst = dst.batch(batch_size=s, per_batch_map=f, output_columns=out_nms, column_order=col_order)
+            res = []
+            for row in dst.create_dict_iterator(num_epochs=1, output_numpy=True):
+                res.append(row)
+            return res
+        except (ValueError, RuntimeError, TypeError) as e:
+            return str(e)
+
+    # split 2 col into 3 cols
+    res = batch_map_config(3, 3, split_col, ["col1", "col_x2", "col_y2"])[0]
+    assert np.array_equal(res["col1"], [[1], [2], [3]])
+    assert np.array_equal(res["col_x2"], [[1], [4], [9]]) and np.array_equal(res["col_y2"], [[-1], [-4], [-9]])
 
 
 if __name__ == '__main__':
@@ -581,4 +640,6 @@ if __name__ == '__main__':
     test_batch_exception_13()
     test_batch_exception_14()
     test_batch_exception_15()
+    test_no_input_columns_01()
+    test_no_input_columns_02()
     logger.info('\n')

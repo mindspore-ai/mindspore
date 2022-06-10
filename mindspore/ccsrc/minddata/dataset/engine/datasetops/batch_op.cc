@@ -249,7 +249,7 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
 Status BatchOp::MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row) {
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
 #ifdef ENABLE_PYTHON
-  if (!in_col_names_.empty()) {
+  if (batch_map_func_) {
     RETURN_IF_NOT_OK(MapColumns(&table_pair));
   }  // pass it through pyfun
 #endif
@@ -512,6 +512,27 @@ Status BatchOp::ComputeColMap() {
                                "ds1 = ds.ImageFolderDataset().batch().");
   CHECK_FAIL_RETURN_UNEXPECTED(!(child_[0]->column_name_id_map().empty()),
                                "Invalid data, the column of the previous operator of the batch cannot be empty.");
+
+// when per_batch_map is set and input_columns is not specified: enter the if branch of ENABLE_PYTHON
+// when per_batch_map is set and input_columns is specified: will not enter the if branch of ENABLE_PYTHON
+// and in_col_names_.empty()
+// when per_batch_map is not set and input_columns is not specified: enter the if branch of in_col_names_.empty()
+// when per_batch_map is not set and input_columns is specified: ERROR
+#ifdef ENABLE_PYTHON
+  // when per_batch_map is set and input_columns is not specified, input_columns will be automatically speculated
+  if (batch_map_func_ && in_col_names_.empty()) {
+    auto column_name = child_[0]->column_name_id_map();
+    std::vector<std::pair<std::string, int32_t>> tmp;
+    std::copy(column_name.begin(), column_name.end(), std::back_inserter(tmp));
+    std::sort(tmp.begin(), tmp.end(),
+              [=](const std::pair<std::string, int32_t> &a, const std::pair<std::string, int32_t> &b) {
+                return a.second < b.second;
+              });
+    for (auto &it : tmp) {
+      in_col_names_.emplace_back(it.first);
+    }
+  }
+#endif
 
   if (in_col_names_.empty()) {  // if per_batch_map is not set, do not need to deal with out_col_names
     column_name_id_map_ = child_[0]->column_name_id_map();

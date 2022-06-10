@@ -1258,9 +1258,9 @@ def check_batch(method):
             for k, v in param_dict.get('pad_info').items():
                 check_pad_info(k, v)
 
-        if (per_batch_map is None) != (input_columns is None):
-            # These two parameters appear together.
-            raise ValueError("per_batch_map and input_columns need to be passed in together.")
+        if (input_columns is not None) and (per_batch_map is None):
+            # input_columns must be None when per_batch_map is not set
+            raise ValueError("input_columns can be specified only when per_batch_map is set.")
 
         if input_columns is not None:
             check_columns(input_columns, "input_columns")
