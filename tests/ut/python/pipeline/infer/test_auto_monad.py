@@ -377,7 +377,6 @@ def test_return_const_value_with_side_effect_op():
     Description: Test side effect with returned const value.
     Expectation: Throw exception.
     """
-
     class Demo(nn.Cell):
         def construct(self, x):
             print('print here...')
@@ -387,5 +386,7 @@ def test_return_const_value_with_side_effect_op():
 
     x = [[1, 2, 3, 4], [5, 6, 7, 8]]
     net = Demo()
-    output = net(x)
-    assert output == (5, 9, 7, 8)
+    with pytest.raises(RuntimeError) as info:
+        output = net(x)
+        print(output)
+    assert "Side Effect Invalid" in str(info.value)
