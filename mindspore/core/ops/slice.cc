@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,72 +28,117 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 3, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto input_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
+std::vector<std::vector<int64_t>> InferImplSliceFuncCalInputValue(const PrimitivePtr &primitive,
+                                                                  const std::vector<AbstractBasePtr> &input_args) {
+  std::vector<int64_t> tmp_input;
   std::vector<std::vector<int64_t>> input_values;
-  // get begin and size value
-  for (size_t i = 1; i <= 2; ++i) {
-    std::vector<int64_t> tmp_input;
+  for (size_t i = 1; i <= kInputIndex2; ++i) {
     auto input_value = input_args[i]->BuildValue();
     MS_EXCEPTION_IF_NULL(input_value);
     if (input_value->isa<tensor::Tensor>()) {
-      tmp_input = CheckAndConvertUtils::CheckTensorIntValue("slice args value", input_value, prim_name);
+      tmp_input = CheckAndConvertUtils::CheckTensorIntValue("slice args value", input_value, primitive->name());
+    } else if (input_value->isa<ValueTuple>()) {
+      tmp_input = CheckAndConvertUtils::CheckTupleInt("slice args value", input_value, primitive->name());
+    } else if (input_value->isa<ValueList>()) {
+      tmp_input = CheckAndConvertUtils::CheckListInt("slice args value", input_value, primitive->name());
     } else {
-      tmp_input = CheckAndConvertUtils::CheckTupleInt("slice args value", input_value, prim_name);
+      MS_EXCEPTION(TypeError) << "For Slice, the begin and size must be Tuple or List.";
     }
-    (void)input_values.emplace_back(tmp_input);
+    input_values.emplace_back(tmp_input);
   }
-
-  auto begin_v = input_values[0];
-  auto size_v = input_values[1];
-  auto rank = input_shape.size();
-  if (begin_v.size() != rank || size_v.size() != rank) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', the shape of 'input', 'begin' and 'size' must be equal, but got 'input' shape: " << rank
-                      << ", 'begin' shape: " << begin_v.size() << ", 'size' shape: " << size_v.size() << ".";
-  }
-
-  for (size_t i = 0; i < size_v.size(); ++i) {
-    if (size_v[i] == -1) {
-      size_v[i] = input_shape[i] - begin_v[i];
-    }
-  }
-  if (max_shape.empty() && min_shape.empty()) {
-    return std::make_shared<abstract::Shape>(size_v);
-  }
-  return std::make_shared<abstract::Shape>(size_v, min_shape, max_shape);
+  return input_values;
 }
 
-TypePtr SliceInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("slice_prim_infer", input_args.size(), kEqual, 3, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
+abstract::ShapePtr SliceInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  auto input_x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto input_size_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape());
+  auto input_x_shape = input_x_shape_map[kShape];
+  auto input_x_shape_min = input_x_shape_map[kMinShape];
+  auto input_x_shape_max = input_x_shape_map[kMaxShape];
+  auto input_begin_value_ptr = input_args[kInputIndex1]->BuildValue();
+  auto input_size_value_ptr = input_args[kInputIndex2]->BuildValue();
+  auto input_size_shape = input_size_shape_map[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("rank of input_x", SizeToLong(input_x_shape.size()), kGreaterThan, 0,
+                                           prim_name);
+  ShapeVector out_shape = {};
+  ShapeVector out_shape_min;
+  ShapeVector out_shape_max;
+  if (input_x_shape[0] == 0) {
+    MS_EXCEPTION(ValueError) << "For Slice, the input_x must hava value.";
   }
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto x_type_map = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(x_type_map);
-  auto x_dtype = x_type_map->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(x_dtype);
-  std::set<TypePtr> template_types = {kTensorType};
-  return CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", x_dtype, template_types, prim_name);
+  if (!input_x_shape_max.empty()) {
+    out_shape_min = input_x_shape_min;
+    out_shape_max = input_x_shape_max;
+  } else {
+    out_shape_min = input_x_shape;
+    out_shape_max = input_x_shape;
+  }
+  if (input_begin_value_ptr->isa<AnyValue>() || input_size_value_ptr->isa<AnyValue>()) {
+    if (input_size_value_ptr->isa<AnyValue>()) {
+      if (input_size_shape[0] < 0) {
+        MS_EXCEPTION(ValueError) << "For Slice, the size shape haven't support dynamic yet.";
+      }
+      for (size_t i = 0; i < LongToSize(input_size_shape[0]); i++) {
+        out_shape.push_back(-1);
+      }
+    } else {
+      for (size_t i = 0; i < input_size_shape.size(); i++) {
+        out_shape.push_back(-1);
+      }
+    }
+    return std::make_shared<abstract::Shape>(out_shape, out_shape_min, out_shape_max);
+  }
+  auto input_values = InferImplSliceFuncCalInputValue(primitive, input_args);
+  auto input_begin_value = input_values[0];
+  auto input_size_value = input_values[1];
+  auto rank = input_x_shape.size();
+  if (input_begin_value.size() != rank || input_size_value.size() != rank) {
+    MS_EXCEPTION(ValueError) << "For Slice, the shape of input|begin|size must be equal.";
+  }
+  (void)CheckAndConvertUtils::CheckPositiveVector("input_begin", input_begin_value, prim_name);
+  bool is_dynamic = false;
+  for (size_t i = 0; i < rank; ++i) {
+    if (input_x_shape[i] < 0) {
+      is_dynamic = true;
+      continue;
+    }
+    if (input_begin_value[i] + input_size_value[i] > input_x_shape[i]) {
+      MS_EXCEPTION(ValueError) << "For Slice, the sum of begin_shape[" << i << "] and size_shape[" << i
+                               << "] must be no greater than input_x_shape[" << i << "].";
+    }
+    if (input_size_value[i] == -1) {
+      input_size_value[i] = input_x_shape[i] - input_begin_value[i];
+    }
+    out_shape_min[i] = input_size_value[i];
+    out_shape_max[i] = input_size_value[i];
+  }
+  if (!is_dynamic) {
+    return std::make_shared<abstract::Shape>(input_size_value);
+  } else {
+    return std::make_shared<abstract::Shape>(input_size_value, out_shape_min, out_shape_max);
+  }
+}
+
+TypePtr SliceInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  return CheckAndConvertUtils::CheckSubClass("input_x", input_args[0]->BuildType(), {kTensorType}, primitive->name());
 }
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Slice, BaseOperator);
 AbstractBasePtr SliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(SliceInferShape(primitive, input_args), SliceInferType(primitive, input_args));
+  MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputIndex3, prim_name);
+  auto type = SliceInferType(primitive, input_args);
+  auto shape = SliceInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
 }
 
 std::vector<int64_t> Slice::get_begin() const {
@@ -106,8 +151,7 @@ std::vector<int64_t> Slice::get_size() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_C(kNameSlice, Slice);
-
 REGISTER_HOST_DEPENDS(kNameSlice, (std::set<int64_t>{1, 2}));
+REGISTER_PRIMITIVE_EVAL_IMPL(Slice, prim::kPrimSlice, SliceInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

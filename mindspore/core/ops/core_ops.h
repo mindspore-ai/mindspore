@@ -164,6 +164,7 @@ constexpr auto kMeshgrid = "Meshgrid";
 constexpr auto kScatterNdMax = "ScatterNdMax";
 constexpr auto kScatterNdMin = "ScatterNdMin";
 constexpr auto kCSRSparseMatrixToSparseTensor = "CSRSparseMatrixToSparseTensor";
+constexpr auto kSlice = "Slice";
 
 // NN
 constexpr auto kFractionalMaxPool3DWithFixedKsize = "FractionalMaxPool3DWithFixedKsize";
@@ -361,7 +362,7 @@ GVAR_DEF(PrimitivePtr, kPrimComputeAccidentalHits, std::make_shared<Primitive>("
 GVAR_DEF(PrimitivePtr, kPrimCacheSwapTable, std::make_shared<Primitive>("CacheSwapTable"));
 GVAR_DEF(PrimitivePtr, kPrimDynamicAssign, std::make_shared<Primitive>("DynamicAssign"));
 GVAR_DEF(PrimitivePtr, kPrimPadAndShift, std::make_shared<Primitive>("PadAndShift"));
-GVAR_DEF(PrimitivePtr, kPrimSlice, std::make_shared<Primitive>("Slice"));
+GVAR_DEF(PrimitivePtr, kPrimSlice, std::make_shared<Primitive>(kSlice));
 GVAR_DEF(PrimitivePtr, kPrimSliceGrad, std::make_shared<Primitive>("SliceGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSliceFusion, std::make_shared<Primitive>("SliceFusion"));
 GVAR_DEF(PrimitivePtr, kPrimTile, std::make_shared<Primitive>(kTile));
