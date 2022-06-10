@@ -77,7 +77,16 @@ bool HShrinkGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   auto *dx = reinterpret_cast<float *>(outputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(dx, false);
 
-  auto task = [dy, x, dx, this](size_t start, size_t end) { HShrinkGrad(dy, x, (end - start), dx, this->lambd_); };
+  auto task = [dy, x, dx, this](size_t start, size_t end) {
+    auto dy_tmp = dy + start;
+    auto x_tmp = x + start;
+    auto dx_tmp = dx + start;
+
+    auto ret = HShrinkGrad(dy_tmp, x_tmp, (end - start), dx_tmp, this->lambd_);
+    if (ret != static_cast<int>(NNACL_OK)) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', call NNACL HShrinkGrad function failed. Error code: " << ret;
+    }
+  };
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
   return true;
 }

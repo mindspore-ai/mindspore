@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <vector>
 #include <string>
+#include "mindspore/core/utils/ms_context.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/maxpool_with_argmax_impl.cuh"
@@ -69,7 +70,7 @@ class MaxPoolWithArgmaxFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     S *index_addr = GetDeviceAddress<S>(outputs, 1);
     CalMaxPoolWithArgmax(input_addr, n_, c_, input_height_, input_width_, window_height_, window_width_, stride_height_,
                          stride_width_, pad_top_, pad_left_, output_height_, output_width_, output_addr, index_addr,
-                         reinterpret_cast<cudaStream_t>(stream_ptr));
+                         device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -134,6 +135,7 @@ class MaxPoolWithArgmaxFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       SetPad();
     }
     InitSizeLists();
+    device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     return true;
   }
 
