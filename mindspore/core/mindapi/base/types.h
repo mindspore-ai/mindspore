@@ -81,6 +81,7 @@ enum ReduceMode : int64_t {
   Reduce_Sum_Square = 5,
   Reduce_ASum = 6,
   Reduce_All = 7,
+  Reduce_L2 = 8
 };
 
 enum EltwiseMode : int64_t {
