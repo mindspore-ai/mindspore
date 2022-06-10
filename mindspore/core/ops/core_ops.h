@@ -806,6 +806,7 @@ GVAR_DEF(PrimitivePtr, kPrimNeg, std::make_shared<Primitive>(kNeg));
 GVAR_DEF(PrimitivePtr, kPrimLcm, std::make_shared<Primitive>("Lcm"));
 GVAR_DEF(PrimitivePtr, kPrimSin, std::make_shared<Primitive>("Sin"));
 GVAR_DEF(PrimitivePtr, kPrimCos, std::make_shared<Primitive>(kCos));
+GVAR_DEF(PrimitivePtr, kPrimGcd, std::make_shared<Primitive>("Gcd"));
 GVAR_DEF(PrimitivePtr, kPrimSub, std::make_shared<Primitive>(kSub));
 GVAR_DEF(PrimitivePtr, kPrimMul, std::make_shared<Primitive>(kMul));
 GVAR_DEF(PrimitivePtr, kPrimMulNoNan, std::make_shared<Primitive>(kMulNoNan));
