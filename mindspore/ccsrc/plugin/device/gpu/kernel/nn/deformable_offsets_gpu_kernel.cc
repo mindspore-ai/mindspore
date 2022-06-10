@@ -136,7 +136,7 @@ int DeformableOffsetsGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   output_h_ = y_shape[h_axis_];
   output_w_ = y_shape[w_axis_];
   position_grid_num_ = output_w_ * output_h_;
-  auto position_grid_size = position_grid_num_ * 2 * sizeof(uint);
+  auto position_grid_size = position_grid_num_ * 2 * sizeof(int32_t);
   workspace_size_list_.emplace_back(position_grid_size);
   return KRET_OK;
 }
@@ -145,7 +145,7 @@ template <class T>
 bool DeformableOffsetsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                  const std::vector<AddressPtr> &workspace,
                                                  const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  unsigned int *position_addr = GetDeviceAddress<unsigned int>(workspace, 0);
+  int32_t *position_addr = GetDeviceAddress<int32_t>(workspace, 0);
   const size_t num = output_h_ * output_w_;
   GenPositionGrid(kernel_size_[kKernelSizeHIndex], kernel_size_[kKernelSizeWIndex], strides_[h_axis_],
                   strides_[w_axis_], dilations_[h_axis_], dilations_[w_axis_], pads_[kLeftPadIndex],

@@ -68,7 +68,7 @@ __device__ T DefromableBilinear(const T *input, const uint width, const uint hei
 __global__ void GenPositionGridKernel(const uint kernel_h, const uint kernel_w, const uint stride_h,
                                       const uint stride_w, const uint dilations_h, const uint dilations_w,
                                       const uint pad_l, const uint pad_t, const uint output_w, const uint num,
-                                      uint *position_grid) {
+                                      int32_t *position_grid) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num; i += blockDim.x * gridDim.x) {
     uint y = i / output_w;
     uint x = i % output_w;
@@ -83,7 +83,7 @@ __global__ void GenPositionGridKernel(const uint kernel_h, const uint kernel_w, 
 }
 
 template <class T>
-__global__ void DeformableOffsetsKernel(const T *input, const T *offsets, const uint *position_grid, const uint c,
+__global__ void DeformableOffsetsKernel(const T *input, const T *offsets, const int32_t *position_grid, const uint c,
                                         const uint output_n_dim, const uint output_c_dim, const uint output_w,
                                         const uint c_size_per_dfm_group, const uint offset_n_dim,
                                         const uint offset_mask_dim, const uint offset_group_dim,
@@ -95,8 +95,8 @@ __global__ void DeformableOffsetsKernel(const T *input, const T *offsets, const 
     // Get original input position
     const uint hw_idx = i % output_c_dim;
     const uint position_grid_idx = hw_idx * 2;
-    const uint input_x = position_grid[position_grid_idx];
-    const uint input_y = position_grid[position_grid_idx + 1];
+    const int input_x = position_grid[position_grid_idx];
+    const int input_y = position_grid[position_grid_idx + 1];
     // Get offsets
     const uint n_index = i / output_n_dim;
     const uint c_index = i / output_c_dim % c;
@@ -125,7 +125,7 @@ __global__ void DeformableOffsetsKernel(const T *input, const T *offsets, const 
 }
 
 template <class T>
-void DeformableOffsets(const T *input, const T *offsets, const uint *position_grid, uint n, uint c, uint input_h,
+void DeformableOffsets(const T *input, const T *offsets, const int32_t *position_grid, uint n, uint c, uint input_h,
                        uint input_w, uint dfm_group, uint kernel_h, uint kernel_w, uint output_h, uint output_w,
                        T *output, uint32_t device_id, cudaStream_t cuda_stream) {
   const uint pixel_w = output_w / kernel_w;
@@ -147,23 +147,22 @@ void DeformableOffsets(const T *input, const T *offsets, const uint *position_gr
     input_w, kernel_h, kernel_w, num, output);
 }
 
-
 void GenPositionGrid(const uint kernel_h, const uint kernel_w, const uint stride_h, const uint stride_w,
                      const uint dilations_h, const uint dilations_w, const uint pad_l, const uint pad_t,
-                     const uint output_w, const uint num, uint *position_grid, const uint32_t device_id,
+                     const uint output_w, const uint num, int32_t *position_grid, const uint32_t device_id,
                      cudaStream_t cuda_stream) {
   GenPositionGridKernel<<<CUDA_BLOCKS(device_id, num), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     kernel_h, kernel_w, stride_h, stride_w, dilations_h, dilations_w, pad_l, pad_t, output_w, num, position_grid);
 }
 
 template CUDA_LIB_EXPORT void DeformableOffsets<float>(const float *input, const float *offsets,
-                                                       const uint *position_grid, uint n, uint c, uint input_h,
+                                                       const int32_t *position_grid, uint n, uint c, uint input_h,
                                                        uint input_w, uint dfm_group, uint kernel_h, uint kernel_w,
                                                        uint output_h, uint output_w, float *output,
                                                        uint32_t device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void DeformableOffsets<half>(const half *input, const half *offsets,
-                                                      const uint *position_grid, uint n, uint c, uint input_h,
+                                                      const int32_t *position_grid, uint n, uint c, uint input_h,
                                                       uint input_w, uint dfm_group, uint kernel_h, uint kernel_w,
                                                       uint output_h, uint output_w, half *output,
                                                       uint32_t device_id, cudaStream_t cuda_stream);
