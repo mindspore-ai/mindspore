@@ -292,7 +292,7 @@ BASEPATH=$(cd "$(dirname $0)"; pwd)
 mkdir -p build
 
 VERSION_STR=1.8.0
-MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-cortex-m7"
+MINDSPORE_FILE_NAME="mindspore-lite-${VERSION_STR}-none-cortex-m7"
 MINDSPORE_FILE="${MINDSPORE_FILE_NAME}.tar.gz"
 MINDSPORE_LITE_DOWNLOAD_URL=\
 "https://ms-release.obs.cn-north-4.myhuaweicloud.com/${VERSION_STR}/MindSpore/lite/release/cortex-m/${MINDSPORE_FILE}"
