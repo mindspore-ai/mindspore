@@ -20,6 +20,44 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
+std::pair<bool, int64_t> GetDimValue(const ValuePtr &dim_value_ptr) {
+  MS_EXCEPTION_IF_NULL(dim_value_ptr);
+  int64_t dim_v = 0;
+  bool value_type_error = false;
+  if (dim_value_ptr->isa<tensor::Tensor>()) {
+    auto dim_tensor = dim_value_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(dim_tensor);
+    size_t data_size = dim_tensor->DataSize();
+    MS_EXCEPTION_IF_CHECK_FAIL(data_size == 1, "dim value is not equal to one!");
+    auto dim_type_id = dim_tensor->data_type();
+    if (dim_type_id == kNumberTypeInt32) {
+      auto dim_data32 = reinterpret_cast<int *>(dim_tensor->data_c());
+      MS_EXCEPTION_IF_NULL(dim_data32);
+      dim_v = static_cast<int64_t>(*dim_data32);
+    } else if (dim_type_id == kNumberTypeInt64) {
+      auto dim_data64 = reinterpret_cast<int64_t *>(dim_tensor->data_c());
+      MS_EXCEPTION_IF_NULL(dim_data64);
+      dim_v = static_cast<int64_t>(*dim_data64);
+    } else {
+      value_type_error = true;
+    }
+  } else {
+    if (dim_value_ptr->isa<Int32Imm>() || dim_value_ptr->isa<Int64Imm>()) {
+      dim_v = GetValue<int64_t>(dim_value_ptr);
+    } else {
+      value_type_error = true;
+    }
+  }
+
+  if (value_type_error) {
+    MS_LOG(ERROR) << "For GatherD, 'dim' must be one of these types: [int32/int64].";
+    return {false, dim_v};
+  }
+  return {true, dim_v};
+}
+}  // namespace
+
 std::vector<std::pair<KernelAttr, GatherFwdGpuKernelMod::GatherFwdFunc>> GatherFwdGpuKernelMod::func_list_ = {
   // For static shape case:
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
@@ -332,7 +370,12 @@ int GatherFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     if (dim_attr == nullptr) {
       return KRET_RESIZE_FAILED;
     }
-    dim_value = GetValue<int64_t>(dim_attr);
+
+    auto value_res = GetDimValue(dim_attr);
+    if (!value_res.first) {
+      return KRET_RESIZE_FAILED;
+    }
+    dim_value = value_res.second;
   } else {
     GetDynamicAttrIntValue(inputs, 1, inputsOnHost, kernel_name_, &dim_value);
   }

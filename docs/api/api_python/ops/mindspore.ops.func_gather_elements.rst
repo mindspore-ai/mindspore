@@ -1,0 +1,7 @@
+mindspore.ops.gather_elements
+=============================
+
+.. py:function:: mindspore.ops.gather_elements(x, dim, index)
+
+    获取指定轴的元素。
+    有关更多详细信息，请参阅: py:function:: `mindspore.ops.gather_d`。

@@ -1960,6 +1960,30 @@ def gather_d(x, dim, index):
     return gather_d_(x, dim, index)
 
 
+def gather_elements(x, dim, index):
+    """
+    Gathers values along an axis specified by dim.
+
+    Refer to :func:`mindspore.ops.gather_d` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
+        >>> index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
+        >>> dim = 1
+        >>> output = mindspore.ops.gather_elements(x, dim, index)
+        >>> print(output)
+        [[1 1]
+         [4 3]]
+    """
+    return gather_d_(x, dim, index)
+
+
 def gather_nd(input_x, indices):
     r"""
     Gathers slices from a tensor by indices.
@@ -3012,6 +3036,7 @@ __all__ = [
     'tensor_scatter_min',
     'gather',
     'gather_d',
+    'gather_elements',
     'gather_nd',
     'one_hot',
     'masked_fill',

@@ -19,9 +19,11 @@ import mindspore
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
+import mindspore.ops as ops
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.functional import vmap
+import mindspore.numpy as ms_np
 
 
 context.set_context(device_target="Ascend")
@@ -35,6 +37,15 @@ class Net(nn.Cell):
 
     def construct(self, x, index):
         return self.op(x, self.dim, index)
+
+
+class TensorNet(nn.Cell):
+    def __init__(self, dim=0):
+        super(TensorNet, self).__init__()
+        self.dim = dim
+
+    def construct(self, x, index):
+        return x.gather_elements(self.dim, index)
 
 
 class NetGrad(nn.Cell):
@@ -105,6 +116,64 @@ def test_gatherd_dynamic(ms_type):
     out = net(x, index)
 
     assert np.array_equal(out.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_functional():
+    """
+    Feature: test GatherD function interface.
+    Description: input x and index is static shape.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
+    index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
+    dim = 1
+    output = ops.gather_elements(x, dim, index)
+    expect = np.array([[1, 1], [4, 3]])
+    assert np.array_equal(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_tensor():
+    """
+    Feature: test GatherD tensor interface in pynative case.
+    Description: input x and index is static shape.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    x = ms_np.array([[1, 2], [3, 4]])
+    dim = 1
+    index = ms_np.array([[0, 0], [1, 0]])
+    output = x.gather_elements(dim, index)
+    expect = np.array([[1, 1], [4, 3]])
+    assert np.array_equal(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_graph_tensor():
+    """
+    Feature: test GatherD tensor interface in graph case.
+    Description: input x and index is static shape.
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    x = ms_np.array([[1, 2], [3, 4]])
+    index = ms_np.array([[0, 0], [1, 0]])
+    dim = 1
+    net = Net(dim)
+    output = net(x, index)
+    expect = np.array([[1, 1], [4, 3]])
+    assert np.array_equal(output.asnumpy(), expect)
 
 
 @pytest.mark.level0
