@@ -182,9 +182,13 @@ std::vector<std::string> SogouNewsNode::WalkAllFiles(const std::string &usage, c
     sogou_news_files_list.push_back(temp_path.ToString());
   } else {
     Path temp_path = dir / train_prefix;
-    sogou_news_files_list.push_back(temp_path.ToString());
+    if (temp_path.Exists()) {
+      sogou_news_files_list.push_back(temp_path.ToString());
+    }
     Path temp_path1 = dir / test_prefix;
-    sogou_news_files_list.push_back(temp_path1.ToString());
+    if (temp_path1.Exists()) {
+      sogou_news_files_list.push_back(temp_path1.ToString());
+    }
   }
   return sogou_news_files_list;
 }
