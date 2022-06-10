@@ -684,11 +684,11 @@ class AdaptiveMaxPool2d(Cell):
         Shape of the output is `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape`.
 
     Raises:
-        ValueError: If `output_size` is not int or tuole.
-        ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
+        TypeError: If `output_size` is not int or tuple.
         TypeError: If `input_x` is not a tensor.
         TypeError: If `return_indices` is not a bool.
         TypeError: If dtype of `input_x` is not float16, float32 or float64.
+        ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
         ValueError: If the dimension of `input_x` is not NCHW or CHW.
 
     Supported Platforms:
