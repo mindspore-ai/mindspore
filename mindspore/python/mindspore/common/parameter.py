@@ -40,6 +40,9 @@ __all__ = ['Parameter', 'ParameterTuple']
 PARAMETER_NAME_DEFAULT = "Parameter"
 PARAMETER_NAME_PREFIX_MAX_LEN = 1024
 
+# Global variable for parameter unique key.
+_GLOBAL_PARAMETER_KEY = -1
+
 
 def _is_in_parallel_mode():
     """Get parallel mode."""
@@ -65,6 +68,19 @@ def init_to_value(init):
     if isinstance(init, numbers.Number):
         return float(init)
     raise ValueError("The argument 'init' should be number or string, but got {}.".format(type(init)))
+
+
+def _get_unique_parameter_key():
+    """
+    Get parameter unique key.
+    Used to identify the same Parameter for Worker and Server in the embedding cache scenario.
+
+    Returns:
+        Integer. The unique parameter key.
+    """
+    global _GLOBAL_PARAMETER_KEY
+    _GLOBAL_PARAMETER_KEY += 1
+    return _GLOBAL_PARAMETER_KEY
 
 
 class Parameter(Tensor_):
@@ -180,7 +196,6 @@ class Parameter(Tensor_):
     def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True):
         self.param_info = ParamInfo()
         self.init_in_server = False
-        self.cache_enable = False
         self.name = name
         self.requires_grad = requires_grad
         self.layerwise_parallel = layerwise_parallel
@@ -430,6 +445,8 @@ class Parameter(Tensor_):
         x.is_param_ps = self.is_param_ps
         x.init_in_server = self.init_in_server
         x.cache_enable = self.cache_enable
+        if x.cache_enable:
+            x.key = _get_unique_parameter_key()
         x.requires_aggr = self.requires_aggr
         if self.cache_shape:
             x.cache_shape = self.cache_shape
@@ -492,6 +509,19 @@ class Parameter(Tensor_):
         if not isinstance(value, (tuple, list)):
             raise TypeError("The argument `cache_shape` must be tuple or list type.")
         self.param_info.cache_shape = value
+
+    @property
+    def key(self):
+        """Return the parameter unique key."""
+        return self.param_info.key
+
+    @key.setter
+    def key(self, value=-1):
+        """Set the parameter unique key."""
+        if not isinstance(value, int):
+            raise TypeError("The argument `key` must be int type.")
+        self.param_info.key = value
+
 
     @property
     def requires_grad(self):
@@ -737,7 +767,7 @@ class ParameterTuple(tuple):
                 continue
 
             if _is_role_worker():
-                _clone_hash_table(x.name, x1.name)
+                _clone_hash_table(x.name, x.key, x1.name, x1.key)
                 _insert_accumu_init_info(x1.name, init_to_value(init))
         return ParameterTuple(new)
 

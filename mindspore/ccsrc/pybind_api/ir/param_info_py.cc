@@ -26,6 +26,7 @@ REGISTER_PYBIND_DEFINE(
       .def(py::init())
       .def("clone", &ParamInfo::Clone)
       .def_property("name", &ParamInfo::name, &ParamInfo::set_name)
+      .def_property("key", &ParamInfo::key, &ParamInfo::set_key)
       .def_property("requires_grad", &ParamInfo::requires_grad, &ParamInfo::set_requires_grad)
       .def_property("init_in_server", &ParamInfo::init_in_server, &ParamInfo::set_init_in_server)
       .def_property("layerwise_parallel", &ParamInfo::layerwise_parallel, &ParamInfo::set_layerwise_parallel)

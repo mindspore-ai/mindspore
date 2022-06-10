@@ -19,11 +19,13 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.parameter import _get_unique_parameter_key
 from mindspore.common.initializer import initializer
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_parallel_mode, _get_full_batch
-from mindspore.parallel._ps_context import _is_role_worker, _get_ps_context
+from mindspore.parallel._ps_context import _get_ps_context, _enable_distributed_mindrt
+from mindspore.parallel._ps_context import _is_role_worker, _is_role_pserver
 from mindspore.parallel._ps_context import _insert_hash_table_size, _set_cache_enable, _set_rank_id
 from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
@@ -240,6 +242,7 @@ class EmbeddingLookup(Cell):
         else:
             self.gatherv2 = P.Gather()
         self.embeddinglookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
+        self.is_ps_server = _is_role_pserver() and _enable_distributed_mindrt()
         enable_ps = _get_ps_context("enable_ps")
         if enable_ps:
             self._process_vocab_cache(slice_mode)
@@ -256,7 +259,7 @@ class EmbeddingLookup(Cell):
         if is_auto_parallel:
             self.unique = P.Unique().shard(((1,),))
         if self.cache_enable and enable_ps:
-            self._set_voacb_cache_enable_for_ps(vocab_cache_size, embedding_size, vocab_size)
+            self._set_voacb_cache_enable_for_ps(vocab_cache_size, embedding_size, vocab_size, param_init)
             if is_auto_parallel:
                 self.unique.add_prim_attr('cache_enable', True)
         indices_shape_size = 2
@@ -339,15 +342,23 @@ class EmbeddingLookup(Cell):
             if _is_role_worker():
                 self.vocab_size = self.vocab_cache_size
 
-    def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size):
+    def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size, param_init):
         """PS embeddingLookup cache enable set."""
-        self.embedding_table.cache_enable = True
-        self.embedding_table.is_param_ps = True
         _set_cache_enable(True)
         if self.sparse:
             self.forward_unique = True
+        param_key = _get_unique_parameter_key()
         if _is_role_worker():
-            _insert_hash_table_size(self.embedding_table.name, vocab_cache_size, embedding_size, vocab_size)
+            self.embedding_table.is_param_ps = True
+            self.embedding_table.cache_enable = True
+            self.embedding_table.key = param_key
+            _insert_hash_table_size(self.embedding_table.name, vocab_cache_size, embedding_size, vocab_size, param_key)
+
+        if  _enable_distributed_mindrt():
+            self.rank_id = get_rank()
+            if self.is_ps_server:
+                self._slice_pserver_embeddings(param_init)
+                self._set_cache_enable_and_key_for_pserver(param_key)
 
     def _slice_pserver_embeddings(self, param_init):
         '''
@@ -386,7 +397,7 @@ class EmbeddingLookup(Cell):
             # Add EmbeddingLookup ops on different servers.
             embedding_lookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
             embedding_lookup.add_prim_attr('rank_id', i)
-            embedding_lookup.add_prim_attr('ms_role', 'MS_SERVER')
+            embedding_lookup.add_prim_attr('ms_role', 'MS_PSERVER')
             self.embedding_lookup_list.append(embedding_lookup)
 
         self.embedding_table_param_tuple = ParameterTuple(self.embedding_table_list)
@@ -406,9 +417,28 @@ class EmbeddingLookup(Cell):
         final_result = self.reduce_lookup_result(result_from_servers)
         return final_result
 
+    def _set_cache_enable_and_key_for_pserver(self, param_key):
+        '''
+        Set cache enable and parameter key for embedding table on parameter servers.
+        '''
+        # Parameter The Embedding Table on the Server side will be divided according to the number of servers.
+        # The divided Embedding Table will be used instead of the complete Embedding Table.
+        self.embedding_table = self.embedding_table_list[self.rank_id]
+        self.embedding_table.cache_enable = True
+        self.embedding_table.key = param_key
+
+    def _pserver_embedding_lookup(self, indices):
+        '''
+        Construct backbone for EmbeddingLookup operators on servers for embedding cache lookup.
+        '''
+        return self.embedding_lookup_list[self.rank_id](self.embedding_table, indices,
+                                                        self.embedding_offset[self.rank_id])
+
     def construct(self, indices):
         if self.target == "CPU":
             out = self.embeddinglookup(self.embedding_table, indices, 0)
+        elif self.is_ps_server:
+            out = self._pserver_embedding_lookup(indices)
         else:
             if self.forward_unique:
                 shp = self.shape(indices) + (self.embedding_size,)

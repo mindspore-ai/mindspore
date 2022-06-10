@@ -23,6 +23,7 @@
 #include "distributed/cluster/cluster_context.h"
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "distributed/embedding_cache/embedding_cache_utils.h"
 #else
 #include "distributed/cluster/dummy_cluster_context.h"
 #endif
@@ -159,8 +160,12 @@ void PSContext::SetPSRankId(uint32_t rank_id) { rank_id_ = rank_id; }
 uint32_t PSContext::ps_rank_id() const { return rank_id_; }
 
 void PSContext::InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size, size_t embedding_size,
-                                    size_t vocab_size) const {
+                                    size_t vocab_size, int32_t param_key) const {
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  if (enable_distributed_mindrt()) {
+    embedding_cache_table_manager.InsertHashTableSize(param_name, cache_vocab_size, embedding_size, vocab_size,
+                                                      param_key);
+  }
   ps_cache_instance.InsertHashTableSize(param_name, cache_vocab_size, embedding_size, vocab_size);
 #endif
 }
@@ -168,6 +173,10 @@ void PSContext::InsertHashTableSize(const std::string &param_name, size_t cache_
 void PSContext::ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name,
                                       size_t cache_vocab_size, size_t embedding_size) const {
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  if (enable_distributed_mindrt()) {
+    embedding_cache_table_manager.ReInsertHashTableSize(new_param_name, cur_param_name, cache_vocab_size,
+                                                        embedding_size);
+  }
   ps_cache_instance.ReInsertHashTableSize(new_param_name, cur_param_name, cache_vocab_size, embedding_size);
 #endif
 }
@@ -184,8 +193,12 @@ void PSContext::InsertAccumuInitInfo(const std::string &param_name, float init_v
 #endif
 }
 
-void PSContext::CloneHashTable(const std::string &dest_param_name, const std::string &src_param_name) const {
+void PSContext::CloneHashTable(const std::string &dest_param_name, int32_t dest_param_key,
+                               const std::string &src_param_name, int32_t src_param_key) const {
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  if (enable_distributed_mindrt()) {
+    embedding_cache_table_manager.CloneHashTable(dest_param_name, dest_param_key, src_param_name, src_param_key);
+  }
   ps_cache_instance.CloneHashTable(dest_param_name, src_param_name);
 #endif
 }
