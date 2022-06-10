@@ -30,12 +30,12 @@ constexpr size_t kBesselK0OutputsNum = 1;
 constexpr size_t kBesselK0eInputsNum = 1;
 constexpr size_t kBesselK0eOutputsNum = 1;
 
-const double A[] = {1.37446543561352307156E-16, 4.25981614279661018399E-14, 1.03496952576338420167E-11,
-                    1.90451637722020886025E-9,  2.53479107902614945675E-7,  2.28621210311945178607E-5,
-                    1.26461541144692592338E-3,  3.59799365153615016266E-2,  3.44289899924628486886E-1,
-                    -5.35327393233902768720E-1};
+const double K0A[] = {1.37446543561352307156E-16, 4.25981614279661018399E-14, 1.03496952576338420167E-11,
+                      1.90451637722020886025E-9,  2.53479107902614945675E-7,  2.28621210311945178607E-5,
+                      1.26461541144692592338E-3,  3.59799365153615016266E-2,  3.44289899924628486886E-1,
+                      -5.35327393233902768720E-1};
 
-const double B[] = {
+const double K0B[] = {
   5.30043377268626276149E-18, -1.64758043015242134646E-17, 5.21039150503902756861E-17, -1.67823109680541210385E-16,
   5.51205597852431940784E-16, -1.84859337734377901440E-15, 6.34007647740507060557E-15, -2.22751332699166985548E-14,
   8.03289077536357521100E-14, -2.98009692317273043925E-13, 1.14034058820847496303E-12, -4.51459788337394416547E-12,
@@ -45,11 +45,11 @@ const double B[] = {
   2.44030308206595545468E0};
 
 const double ZERO = 0.0;
-const double C1 = 8.0;
-const double C2 = 2.0;
-const double C3 = 5.0;
-const int DEG1 = 10;
-const int DEG2 = 25;
+const double C8_0 = 8.0;
+const double C2_0 = 2.0;
+const double C0_5 = 0.5;
+const int DEG10 = 10;
+const int DEG25 = 25;
 }  // namespace
 
 double BesselK0CpuKernelMod::k0(double x) {
@@ -61,13 +61,13 @@ double BesselK0CpuKernelMod::k0(double x) {
     return NAN;
   }
 
-  if (x <= C2) {
-    y = x * x - C2;
-    y = BesselI0CpuKernelMod::chbevl(y, A, DEG1) - log(C3 * x) * BesselI0CpuKernelMod::bessel_i0_func(x);
+  if (x <= C2_0) {
+    y = x * x - C2_0;
+    y = BesselI0eCpuKernelMod::chbevl(y, K0A, DEG10) - log(C0_5 * x) * BesselI0CpuKernelMod::bessel_i0_func(x);
     return (y);
   }
-  z = C1 / x - C2;
-  y = exp(-x) * BesselI0CpuKernelMod::chbevl(z, B, DEG2) / sqrt(x);
+  z = C8_0 / x - C2_0;
+  y = exp(-x) * BesselI0eCpuKernelMod::chbevl(z, K0B, DEG25) / sqrt(x);
   return y;
 }
 
@@ -159,13 +159,13 @@ double BesselK0eCpuKernelMod::k0e(double x) {
     return NAN;
   }
 
-  if (x <= C2) {
-    y = x * x - C2;
-    y = BesselI0CpuKernelMod::chbevl(y, A, DEG1) - log(C3 * x) * BesselI0CpuKernelMod::bessel_i0_func(x);
+  if (x <= C2_0) {
+    y = x * x - C2_0;
+    y = BesselI0eCpuKernelMod::chbevl(y, K0A, DEG10) - log(C0_5 * x) * BesselI0CpuKernelMod::bessel_i0_func(x);
     return (y * exp(x));
   }
 
-  y = BesselI0CpuKernelMod::chbevl(C1 / x - C2, B, DEG2) / sqrt(x);
+  y = BesselI0eCpuKernelMod::chbevl(C8_0 / x - C2_0, K0B, DEG25) / sqrt(x);
   return y;
 }
 

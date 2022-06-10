@@ -39,7 +39,6 @@ class BesselI0CpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
-  static double chbevl(double x, const double array[], int n);
   static double bessel_i0_func(double x);
   template <typename T>
   static void BesselI0Func(const T *input, T *output, size_t start, size_t end);
@@ -75,6 +74,7 @@ class BesselI0eCpuKernelMod : public NativeCpuKernelMod {
     return kernel_func_(this, inputs, outputs);
   }
   static double bessel_i0e_func(double x);
+  static double chbevl(double x, const double array[], int n);
   template <typename T>
   static void BesselI0eFunc(const T *input, T *output, size_t start, size_t end);
 
