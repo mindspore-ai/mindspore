@@ -1832,6 +1832,21 @@ def tensor_scatter_min(x, indices, updates):
     return F.tensor_scatter_min(x, indices, updates)
 
 
+def unsorted_segment_min(x, segment_ids, num_segments):
+    """Apply the unsorted segment min function for a tensor. Calculates the output according to the input elements."""
+    return F.unsorted_segment_min(x, segment_ids, num_segments)
+
+
+def unsorted_segment_max(x, segment_ids, num_segments):
+    """Apply the unsorted segment max function for a tensor. Calculates the output according to the input elements."""
+    return F.unsorted_segment_max(x, segment_ids, num_segments)
+
+
+def unsorted_segment_prod(x, segment_ids, num_segments):
+    """Apply the unsorted segment prod function for a tensor. Calculates the output according to the input elements."""
+    return F.unsorted_segment_prod(x, segment_ids, num_segments)
+
+
 def nonzero(x):
     """
     Return a tensor of the positions of all non-zero values.

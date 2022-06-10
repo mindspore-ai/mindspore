@@ -236,6 +236,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"scatter_min", std::string("tensor_scatter_min")},                 // P.TensorScatterMin()
        {"scatter_div", std::string("tensor_scatter_div")},                 // P.TensorScatterDiv()
        {"norm", std::string("norm")},                                      // norm()
+       {"unsorted_segment_min", std::string("unsorted_segment_min")},      // P.UnsortedSegmentMin()
+       {"unsorted_segment_max", std::string("unsorted_segment_max")},      // P.UnsortedSegmentMax()
+       {"unsorted_segment_prod", std::string("unsorted_segment_prod")},    // P.UnsortedSegmentProd()
        {"renorm", std::string("renorm")},                                  // renorm()
        {"trace", std::string("trace")},                                    // P.Eye()
        {"var", std::string("var")},                                        // P.ReduceSum

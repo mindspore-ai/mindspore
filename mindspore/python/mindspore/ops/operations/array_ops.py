@@ -2557,7 +2557,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
         ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
@@ -2581,7 +2581,11 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
         valid_type = [mstype.float16, mstype.float32, mstype.int32]
         validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
         validator.check_tensor_dtype_valid("segment_ids", segment_ids['dtype'], [mstype.int32], self.name)
-        validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
+
+        # support vmap : segment_ids_shape support batch rank
+        if not hasattr(self, 'batch_rank'):
+            validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
+
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
         if -1 not in x_shape and -1 not in segment_ids_shape:
@@ -2626,7 +2630,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: Only have two num_segments, where is 0 and 1, and segment_ids=[0, 1, 1]
@@ -2711,7 +2715,11 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
         validator.check_tensors_dtypes_same_and_valid({"segment_ids": segment_ids['dtype']},
                                                       [mstype.int32, mstype.int64], self.name)
-        validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
+
+        # support vmap : segment_ids_shape support batch rank
+        if not hasattr(self, 'batch_rank'):
+            validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
+
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
         if -1 not in x_shape and -1 not in segment_ids_shape:
@@ -2747,7 +2755,7 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
         ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
@@ -2774,7 +2782,11 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
         valid_type = [mstype.float16, mstype.float32, mstype.int32]
         validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
         validator.check_tensor_dtype_valid("segment_ids", segment_ids['dtype'], [mstype.int32], self.name)
-        validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
+
+        # support vmap : segment_ids_shape support batch rank
+        if not hasattr(self, 'batch_rank'):
+            validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
+
         validator.check(f'first shape of input_x', x_shape[0],
                         'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
         num_segments_v = num_segments['value']

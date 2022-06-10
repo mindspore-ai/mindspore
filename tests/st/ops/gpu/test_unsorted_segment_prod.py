@@ -22,6 +22,8 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+import mindspore.ops as ops
 
 
 def init_result(func, shape, dtype):
@@ -296,3 +298,75 @@ def test_dyn_b(func, data_type, index_type):
     output = net(input_x, segment_ids)
     expected = unsorted_segment_arith_expected('prod', input_x, segment_ids, num_segments)
     assert (output.asnumpy() == expected).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor_check():
+    """
+    Feature: test_tensor_check.
+    Description: test cases for tensor func
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    x = Tensor(np.random.randint(0, 100, size=[4]), mstype.float32)
+    segment_ids = Tensor(np.random.randint(0, 5, size=[4]), mstype.int32)
+    num_segments = 5
+
+    output_ms = x.unsorted_segment_prod(segment_ids, num_segments)
+    expected = unsorted_segment_arith_expected('prod', x, segment_ids, num_segments)
+    np.testing.assert_allclose(output_ms.asnumpy(), expected, rtol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_functional_check():
+    """
+    Feature: test_functional_check.
+    Description: test cases for functional func.
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x = Tensor(np.random.randint(0, 100, size=[4]), mstype.float32)
+    segment_ids = Tensor(np.random.randint(0, 5, size=[4]), mstype.int32)
+    num_segments = 5
+
+    output_ms = F.unsorted_segment_prod(x, segment_ids, num_segments)
+    expected = unsorted_segment_arith_expected('prod', x, segment_ids, num_segments)
+    np.testing.assert_allclose(output_ms.asnumpy(), expected, rtol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_vmap():
+    """
+    Feature: test_vmap.
+    Description: in_axes : None, 0, None
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    x = Tensor(np.random.rand(4, 5).astype(np.float32))
+    segment_ids = Tensor(np.random.randint(0, 5, size=[2, 3, 4]), mstype.int32)
+    num_segments = 5
+    in_axes = (None, 0, None)
+    out_axes = 0
+
+    def prod_vmap_graph(x, segment_ids, num_segments):
+        return P.UnsortedSegmentProd()(x, segment_ids, num_segments)
+    vmap_graph = prod_vmap_graph
+    vmap_round_net = ops.vmap(ops.vmap(vmap_graph, in_axes, out_axes), in_axes, out_axes)
+    output = vmap_round_net(x, segment_ids, num_segments)
+
+    expected = []
+    for i in range(0, 2):
+        for j in range(0, 3):
+            ids_s = segment_ids[i, j]
+            out_s = unsorted_segment_arith_expected('prod', x, ids_s, num_segments)
+            expected.append(out_s)
+
+    output_shape = (2, 3, 5, 5)
+    expected = np.array(expected).reshape(output_shape)
+    np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-3)

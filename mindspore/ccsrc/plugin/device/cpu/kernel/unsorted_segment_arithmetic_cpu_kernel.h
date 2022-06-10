@@ -62,6 +62,11 @@ class UnsortedSegmentArithmeticCpuKernelMod : public NativeCpuKernelMod,
   size_t comp_size_ = 1;
   size_t loop_size_ = 1;
   size_t out_size_ = 1;
+  int64_t batch_rank_ = 0;
+  int64_t batch_size_ = 1;
+  int64_t in_stride_ = 1;
+  int64_t ids_stride_ = 1;
+  int64_t out_stride_ = 1;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -29,7 +29,8 @@
 
 namespace mindspore {
 namespace kernel {
-class UnsortedSegmentProdGpuKernelMod : public NativeGpuKernelMod {
+class UnsortedSegmentProdGpuKernelMod : public NativeGpuKernelMod,
+                                        public MatchKernelHelper<UnsortedSegmentProdGpuKernelMod> {
  public:
   UnsortedSegmentProdGpuKernelMod() {}
   ~UnsortedSegmentProdGpuKernelMod() {}
@@ -43,19 +44,19 @@ class UnsortedSegmentProdGpuKernelMod : public NativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
+    stream_ptr_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+ private:
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using UnsortedSegmentProdFunc =
-    std::function<bool(UnsortedSegmentProdGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
-  UnsortedSegmentProdFunc kernel_func_;
-  static std::vector<std::pair<KernelAttr, UnsortedSegmentProdFunc>> func_list_;
+                    const std::vector<AddressPtr> &outputs);
 
  private:
   void ResetResource();
@@ -68,6 +69,12 @@ class UnsortedSegmentProdGpuKernelMod : public NativeGpuKernelMod {
   size_t output_dim1_ = 1;
   size_t data_unit_size_ = 0; /* size of T */
   size_t ids_unit_size_ = 0;  /* size of S */
+  int64_t batch_rank_ = 0;
+  int64_t batch_size_ = 1;
+  int64_t in_stride_ = 1;
+  int64_t ids_stride_ = 1;
+  int64_t out_stride_ = 1;
+  void *stream_ptr_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
