@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/pynative_shard/pynative_shard.h"
-
 #include <algorithm>
 #include <string>
 #include <vector>
 #include <set>
 #include <memory>
+
+#include "frontend/parallel/pynative_shard/pynative_shard.h"
+#include "frontend/parallel/graph_util/graph_info.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
-#include "frontend/parallel/step_parallel_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/comm_manager.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
@@ -177,9 +178,12 @@ static Shapes GenerateDefaultStrategyForParam(const CNodePtr &cnode, const std::
         continue;
       }
     }
-    auto iter = std::find(parameters.begin(), parameters.end(), current_input);
-    if (iter != parameters.end()) {
-      elements.push_back(input_strategy[LongToSize(iter - parameters.begin())]);
+    if (IsPrimitiveCNode(current_input, prim::kPrimTupleGetItem)) {
+      auto tuple_getitem_cnode = current_input->cast<CNodePtr>();
+      auto tuple_index = tuple_getitem_cnode->input(2);
+      auto value_node = tuple_index->cast<ValueNodePtr>();
+      auto index = GetValue<int64_t>(value_node->value());
+      elements.push_back(input_strategy[index]);
     } else {
       auto shape = current_input->Shape()->cast<abstract::ShapePtr>();
       auto dimension = shape->shape().size();
@@ -235,8 +239,14 @@ static void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_
     }
     AnfNodeIndexSet param_sub_set = manager->node_users()[parameter];
     for (auto &param_pair : param_sub_set) {
-      CNodePtr param_cnode = param_pair.first->cast<CNodePtr>();
-      (void)concerned_nodes.insert(param_cnode);
+      auto tuple_getitem_nodes = manager->node_users()[param_pair.first];
+      for (auto &tuple_getitem_node : tuple_getitem_nodes) {
+        auto nodes = manager->node_users()[tuple_getitem_node.first];
+        for (auto &node : nodes) {
+          CNodePtr param_cnode = node.first->cast<CNodePtr>();
+          concerned_nodes.insert(param_cnode);
+        }
+      }
     }
   }
   for (auto &cnode : concerned_nodes) {
@@ -253,9 +263,8 @@ static void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_
   }
 }
 
-static void SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
+static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                                 const int64_t &device_num) {
-  root->set_flag("training", true);
   for (auto &node : all_nodes) {
     if (IsPrimitiveCNode(node, prim::kPrimShard)) {
       root->set_flag(kPynativeShard, true);
@@ -266,24 +275,29 @@ static void SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
       ScopeGuard scope_guard(vnode->scope());
       auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
       MS_EXCEPTION_IF_NULL(func_graph);
+      if (HasNestedMetaFg(func_graph)) {
+        return false;
+      }
       SetInputLayout(func_graph, in_strategy, device_num);
       SetOutputLayout(func_graph, out_strategy, device_num);
+      return true;
     }
   }
+  return false;
 }
 
-bool PynativeShard(const pipeline::ResourcePtr &res) {
-  MS_LOG(INFO) << "Entering pynative shard";
-  MS_EXCEPTION_IF_NULL(res);
+bool PynativeShard(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
+  bool change = false;
+  MS_EXCEPTION_IF_NULL(root);
   auto parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   if (parallel_mode != kSemiAutoParallel && parallel_mode != kAutoParallel) {
     MS_LOG(INFO) << "Only auto_parallel and semi_auto_parallel support pynative shard";
-    return true;
+    return change;
   }
 
   auto execution_mode = MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE);
   if (execution_mode != kPynativeMode) {
-    return true;
+    return change;
   }
 
   if (!ParallelContext::GetInstance()->device_num_is_set()) {
@@ -294,14 +308,13 @@ bool PynativeShard(const pipeline::ResourcePtr &res) {
     MS_LOG(EXCEPTION) << "parallel init failed.";
   }
 
-  auto root = res->func_graph();
   AnfNodePtr ret = root->get_return();
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   auto device_num_shard = parallel::ParallelContext::GetInstance()->device_num();
-  SetStrategyForShard(root, all_nodes, device_num_shard);
+  change = SetStrategyForShard(root, all_nodes, device_num_shard);
   MS_LOG(INFO) << "Leaving pynative shard";
-  return true;
+  return change;
 }
 }  // namespace parallel
 }  // namespace mindspore

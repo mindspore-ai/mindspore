@@ -196,6 +196,21 @@ bool IsParallelCareNode(const CNodePtr &cnode) {
   return cnode->in_forward_flag();
 }
 
+bool HasNestedMetaFg(const FuncGraphPtr &func_graph) {
+  if (!IsPynativeParallel()) {
+    return false;
+  }
+  AnfNodePtr ret = func_graph->get_return();
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
+  for (auto &node : all_nodes) {
+    if (IsPrimitiveCNode(node, prim::kPrimJ) || IsPrimitiveCNode(node, prim::kPrimVmap) ||
+        IsPrimitiveCNode(node, prim::kPrimTaylor)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Shapes GetValueListShape(const AnfNodePtr &node) {
   Shapes shapes;
   std::vector<ValuePtr> inputs_seq;

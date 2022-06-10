@@ -401,12 +401,12 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"parameter_eliminate", opt::OptPassConfig(opt::irpass::ParameterEliminator())},
                          {"a_2", a_2},
                          {"accelerated_algorithm", accelerated_algorithm},
+                         {"pynative_shard", opt::OptPassConfig(parallel::PynativeShard)},
                          {"auto_parallel", opt::OptPassConfig(parallel::StepAutoParallel)},
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},
-                         {"shard", opt::OptPassConfig(opt::irpass::ExpandShardPrim())},
                          {"meta_fg_expand", opt::OptPassConfig(opt::irpass::ExpandMetaFg())},
                          {"after_resolve", after_resolve_pass},
                          {"a_after_grad", a_after_grad},
@@ -782,8 +782,6 @@ bool CconvPass(const ResourcePtr &resource) {
 }
 
 bool PipelineSplitPass(const ResourcePtr &resource) { return PipelineSplit(resource); }
-
-bool PynativeShardPass(const ResourcePtr &resource) { return parallel::PynativeShard(resource); }
 
 bool GeSpecializedPass(const ResourcePtr &resource) {
   // valid null ptr

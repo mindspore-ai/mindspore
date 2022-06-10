@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace parallel {
-bool PynativeShard(const pipeline::ResourcePtr &res);
+bool PynativeShard(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &);
 }  // namespace parallel
 }  // namespace mindspore
 

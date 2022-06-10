@@ -86,7 +86,8 @@ class SpecialOpEliminater : public OptimizerCaller {
 class VirtualDatasetEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsPrimitiveCNode(node, prim::kPrimVirtualDataset) || node->func_graph() == nullptr) {
+    if (!IsPrimitiveCNode(node, prim::kPrimVirtualDataset) || node->func_graph() == nullptr ||
+        parallel::HasNestedMetaFg(node->func_graph())) {
       return nullptr;
     }
 
@@ -107,6 +108,10 @@ class VirtualDatasetEliminater : public AnfVisitor {
 class VirtualOutputEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!IsPrimitiveCNode(node, prim::kPrimVirtualOutput) || node->func_graph() == nullptr ||
+        parallel::HasNestedMetaFg(node->func_graph())) {
+      return nullptr;
+    }
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr) {
       return nullptr;

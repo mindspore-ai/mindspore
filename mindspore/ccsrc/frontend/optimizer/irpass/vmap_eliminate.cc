@@ -20,6 +20,7 @@
 #include <vector>
 #include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/operator/composite/vmap.h"
 
@@ -529,6 +530,11 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimi
         vmap_fn_node = NewValueNode(vmap_fg_copy);
       } else {
         vmap_fn_node = NewValueNode(vmap_fg);
+      }
+
+      if (parallel::IsPynativeParallel()) {
+        auto func_graph = GetValueNode<FuncGraphPtr>(vmap_fn_node);
+        func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, false);
       }
 
       // get axis size, simultaneous correction the negative in_axes.

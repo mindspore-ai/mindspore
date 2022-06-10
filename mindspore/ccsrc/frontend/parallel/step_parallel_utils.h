@@ -82,6 +82,7 @@ void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const st
 void SetCastForParamNotRecompute(const std::vector<AnfNodePtr> &all_nodes);
 bool IsPynativeParallel();
 bool IsAutoParallelCareGraph(const FuncGraphPtr &func_graph);
+bool HasNestedMetaFg(const FuncGraphPtr &func_graph);
 }  // namespace parallel
 }  // namespace mindspore
 
