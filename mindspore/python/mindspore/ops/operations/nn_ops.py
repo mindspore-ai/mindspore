@@ -1056,28 +1056,6 @@ class InstanceNorm(PrimitiveWithInfer):
         self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self._update_parameter = True
 
-    def infer_shape(self, input_x, gamma, beta, mean, variance):
-        input_shape_norm = input_x
-        validator.check_equal_int(len(gamma), 1, "gamma rank", self.name)
-        validator.check("gamma shape", gamma, "beta shape", beta, Rel.EQ, self.name)
-        validator.check("gamma shape[0]", gamma[0], "input channel", input_shape_norm[1], Rel.EQ, self.name)
-        validator.check_equal_int(len(mean), 1, "mean rank", self.name)
-
-        validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
-        validator.check("mean shape", mean, "gamma shape", gamma, Rel.EQ, self.name)
-        save_mean_shape = gamma
-        save_mean_shape[0] = save_mean_shape[0] * input_shape_norm[0]
-        return input_x, save_mean_shape, save_mean_shape
-
-    def infer_dtype(self, input_x, gamma, beta, mean, variance):
-        validator.check_tensor_dtype_valid("input_x", input_x, [mstype.float16, mstype.float32], self.name)
-        args = {"gamma": gamma, "beta": beta}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float32], self.name)
-        args_moving = {"mean": mean, "variance": variance}
-        valid_dtypes = [mstype.tensor_type(mstype.float32)]
-        validator.check_types_same_and_valid(args_moving, valid_dtypes, self.name)
-        return input_x, gamma, gamma
-
 
 class BNTrainingReduce(Primitive):
     """
