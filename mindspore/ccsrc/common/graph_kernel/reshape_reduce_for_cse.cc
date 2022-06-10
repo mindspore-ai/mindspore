@@ -65,6 +65,22 @@ void InsertReshape(const FuncGraphPtr &graph, const AnfNodePtr &node, const Type
   (void)manager->Replace(node, reshape);
 }
 
+void InsertReshapeForMultiOutputs(const FuncGraphPtr &graph, const AnfNodePtr &node,
+                                  const std::vector<std::vector<size_t>> &origin_output_shapes,
+                                  const std::vector<std::vector<size_t>> &target_output_shapes,
+                                  const std::vector<TypeId> &target_output_types, const AnfNodePtr &target) {
+  auto used_node_list = opt::GetRealNodeUsedList(graph, node);
+  MS_EXCEPTION_IF_NULL(used_node_list);
+  for (auto &output_info : (*used_node_list)) {
+    auto used_node = output_info.first;
+    if (IsPrimitiveCNode(used_node, prim::kPrimTupleGetItem)) {
+      size_t index = ProcessTupleGetItem(used_node, target_output_types, target_output_shapes);
+      InsertReshape(graph, used_node, target_output_types[index], origin_output_shapes[index],
+                    AnfAlgo::GetAllOutputDeviceTypes(target)[index]);
+    }
+  }
+}
+
 bool IsSameAxis(const ValuePtr &main, const ValuePtr &other) {
   if (main == nullptr || other == nullptr) {
     return false;
@@ -83,7 +99,9 @@ AnfNodePtr CanCSE(const FuncGraphPtr &graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(primitive);
   if (auto at = primitive->GetAttr(kAttrKeepDims); at != nullptr) {
     bool keep_dims = GetValue<bool>(at);
-    if (keep_dims) return nullptr;
+    if (keep_dims) {
+      return nullptr;
+    }
     auto axis = primitive->GetAttr(kAttrAxis);
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode);
     auto input = cnode->input(1);
@@ -153,16 +171,8 @@ bool ReshapeReduceForCSE::Run(const FuncGraphPtr &graph) {
           InsertReshape(graph, node, target_output_types[0], origin_output_shapes[0],
                         AnfAlgo::GetAllOutputDeviceTypes(target)[0]);
         } else {
-          auto used_node_list = opt::GetRealNodeUsedList(graph, node);
-          MS_EXCEPTION_IF_NULL(used_node_list);
-          for (auto &output_info : (*used_node_list)) {
-            auto used_node = output_info.first;
-            if (IsPrimitiveCNode(used_node, prim::kPrimTupleGetItem)) {
-              size_t index = ProcessTupleGetItem(used_node, target_output_types, target_output_shapes);
-              InsertReshape(graph, used_node, target_output_types[index], origin_output_shapes[index],
-                            AnfAlgo::GetAllOutputDeviceTypes(target)[index]);
-            }
-          }
+          InsertReshapeForMultiOutputs(graph, node, origin_output_shapes, target_output_shapes, target_output_types,
+                                       target);
         }
         changed = true;
       }

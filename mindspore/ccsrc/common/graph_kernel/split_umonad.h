@@ -26,7 +26,7 @@ class SplitAssign : public opt::PatternProcessPass {
   explicit SplitAssign(bool multigraph = true) : PatternProcessPass("split_assign", multigraph) {}
   ~SplitAssign() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 
 class OpUMonadExpanderDeco : public ExpanderDecorator {

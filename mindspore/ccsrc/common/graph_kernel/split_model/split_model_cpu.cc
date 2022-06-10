@@ -39,7 +39,9 @@ class FuseReshape : public FusePattern {
         KeepMinimumArea(inp, FuseDirection::FORWARD);
       }
     }
-    if (min_area_ == nullptr) return false;
+    if (min_area_ == nullptr) {
+      return false;
+    }
     (void)fused_areas_.emplace_back(min_area_);
     return true;
   }

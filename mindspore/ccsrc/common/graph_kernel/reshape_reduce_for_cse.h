@@ -17,7 +17,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_RESHAPE_REDUCE_FOR_CSE_H_
 
 #include <memory>
-#include <vector>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
 

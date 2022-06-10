@@ -28,7 +28,7 @@ ReachTable::ReachTable(size_t size) : size_(size), reach_(size, std::vector<bool
 void ReachTable::Link(size_t from, size_t to) {
   // if there's an edge <from, to>, the `from` can reach to `to`'s succeeding areas.
   // so we connect `from` to all succeeding areas of `to`.
-  for (size_t suc : alive_) {
+  for (const size_t suc : alive_) {
     if (Reachable(to, suc)) {
       reach_[from][suc] = true;
     }
@@ -38,9 +38,9 @@ void ReachTable::Link(size_t from, size_t to) {
 void ReachTable::FuseArea(size_t target, size_t other) {
   // if `suc` is the succeeding nodes of other_node,
   // link the target_node's previous nodes to `suc`.
-  for (size_t suc : alive_) {
+  for (const size_t suc : alive_) {
     if (Reachable(other, suc) && !Reachable(target, suc)) {
-      for (size_t pre : alive_) {
+      for (const size_t pre : alive_) {
         if (Reachable(pre, target)) {
           reach_[pre][suc] = true;
         }
@@ -49,9 +49,9 @@ void ReachTable::FuseArea(size_t target, size_t other) {
   }
   // if `pre` is the previous nodes of other_node,
   // link `pre` to target_node's succeeding nodes.
-  for (size_t pre : alive_) {
+  for (const size_t pre : alive_) {
     if (Reachable(pre, other) && !Reachable(pre, target)) {
-      for (size_t suc : alive_) {
+      for (const size_t suc : alive_) {
         if (Reachable(target, suc)) {
           reach_[pre][suc] = true;
         }
@@ -90,7 +90,7 @@ AreaPtr SplitModel::NewArea(const PrimOpPtr &op, bool is_output) {
   return new_area;
 }
 
-void SplitModel::AlignShape(const LiteGraphPtr &litegraph) {
+void SplitModel::AlignShape(const LiteGraphPtr &litegraph) const {
   for (auto &inp : litegraph->inputs()) {
     if (inp->shape.empty()) {
       inp->shape.push_back(1LL);
@@ -115,7 +115,7 @@ void SplitModel::AlignShape(const LiteGraphPtr &litegraph) {
     }
     if (cur_shape_size > op->shape.size()) {
       auto num = cur_shape_size - op->shape.size();
-      (void)op->shape.insert(op->shape.begin(), num, 1LL);
+      (void)op->shape.insert(op->shape.cbegin(), num, 1LL);
     }
   }
 }
@@ -148,7 +148,7 @@ void SplitModel::AddPattern(const std::shared_ptr<FusePattern> &pn, bool enable)
   patterns_.back().first->SetCircleChecker(reach_table_);
 }
 
-void SplitModel::LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas, size_t max_size) {
+void SplitModel::LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas, size_t max_size) const {
   auto dom_size = dom->size();
   for (auto a = areas->begin(); a != areas->end(); ++a) {
     dom_size += (*a)->size();
@@ -163,11 +163,13 @@ void SplitModel::LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas, 
     cur_size += a->size();
     return cur_size > max_size;
   });
-  (void)areas->erase(iter, areas->end());
+  (void)areas->erase(iter, areas->cend());
 }
 
 void SplitModel::FuseAreas(const AreaPtr &dom, const std::vector<AreaPtr> &areas, FuseDirection direction) {
-  if (areas.empty()) return;
+  if (areas.empty()) {
+    return;
+  }
   auto target = dom;
   for (auto a : areas) {
     if (direction == FuseDirection::BACKWARD) {
@@ -212,7 +214,9 @@ bool SplitModel::RunOnePattern(const FusePatternPtr &pattern) {
 void SplitModel::RunFusePatterns() {
   // process one pattern for all areas before process next pattern.
   for (auto &[pattern, enable] : patterns_) {
-    if (!enable) continue;
+    if (!enable) {
+      continue;
+    }
     MS_LOG(DEBUG) << "Run pattern " << pattern->name();
     (void)RunOnePattern(pattern);
   }

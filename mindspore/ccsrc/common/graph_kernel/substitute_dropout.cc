@@ -32,7 +32,7 @@
 
 namespace mindspore {
 namespace prim {
-inline const PrimitivePtr kPrimGkDropout = std::make_shared<Primitive>("GkDropout");
+GVAR_DEF(PrimitivePtr, kPrimGkDropout, std::make_shared<Primitive>("GkDropout"));
 }  // namespace prim
 namespace graphkernel {
 using opt::CheckCNodeInputSize;

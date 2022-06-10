@@ -50,9 +50,13 @@ bool SaveOutputShape::Run(const FuncGraphPtr &func_graph) {
 }
 
 void RewriteOutputShape::Process(const AnfNodePtr &node, size_t index, const AbstractBasePtr &abstract) {
-  if (!node->isa<CNode>()) return;
+  if (!node->isa<CNode>()) {
+    return;
+  }
   // the previous nodes should not be MakeTuple again.
-  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) return;
+  if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    return;
+  }
 
   if (node->abstract()->isa<abstract::AbstractTuple>()) {
     auto node_abstracts = node->abstract()->cast<abstract::AbstractTuplePtr>()->elements();
@@ -67,10 +71,14 @@ void RewriteOutputShape::Process(const AnfNodePtr &node, size_t index, const Abs
   }
 
   // do not process from real kernel
-  if (AnfUtils::IsRealKernel(node)) return;
+  if (AnfUtils::IsRealKernel(node)) {
+    return;
+  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->size() <= 1) return;
+  if (cnode->size() <= 1) {
+    return;
+  }
   if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem)) {
     auto idx = GetValue<int64_t>(GetValueNode(cnode->input(kInputNodeOutputIndexInTupleGetItem)));
     Process(cnode->input(kRealInputNodeIndexInTupleGetItem), LongToSize(idx), abstract);
