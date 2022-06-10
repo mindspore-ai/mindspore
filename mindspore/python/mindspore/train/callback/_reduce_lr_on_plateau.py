@@ -73,6 +73,11 @@ class ReduceLROnPlateau(Callback):
             lr has been reduced. Default: 0.
         min_lr (float): lower bound on the learning rate. Default: 0.
 
+    Raises:
+        ValueError: `mode` not in 'auto', 'min' or 'max'.
+        ValueError: The monitor value is not a scalar.
+        ValueError: The learning rate is not a Parameter.
+
     Examples:
         >>> import numpy as np
         >>> import mindspore.dataset as ds
@@ -183,9 +188,10 @@ class ReduceLROnPlateau(Callback):
             cb_params (dict): A dictionary stores context information of the model. For more details,
                     please refer to :class:`mindspore.RunContext`.
         """
-        monitor_value = None
+        monitor_candidates = {}
         if self.monitor == "loss":
             loss = cb_params.get("net_outputs")
+            monitor_value = loss
             if isinstance(loss, (tuple, list)):
                 if isinstance(loss[0], Tensor) and isinstance(loss[0].asnumpy(), np.ndarray):
                     monitor_value = loss[0]
@@ -195,13 +201,14 @@ class ReduceLROnPlateau(Callback):
                 logger.warning("Invalid %s.", self.monitor)
                 monitor_value = loss
         else:
-            monitor_candidates = cb_params.get("eval_results")
-            if monitor_candidates:
-                monitor_value = monitor_candidates.get(self.monitor)
-                if not monitor_value:
-                    logger.warning('Learning rate reduction is conditioned on %s '
-                                   'which is not available. Available choices are: %s',
-                                   self.monitor, ["loss"] + list(monitor_candidates.keys()))
+            monitor_candidates = cb_params.get("eval_results", {})
+            monitor_value = monitor_candidates.get(self.monitor)
+
+        if not monitor_value:
+            support_keys = set(["loss"] + list(monitor_candidates.keys()))
+            logger.warning('Learning rate reduction is conditioned on %s, '
+                           'which is not available. Available choices are: %s',
+                           self.monitor, support_keys)
         return np.array(monitor_value) if monitor_value else None
 
 
