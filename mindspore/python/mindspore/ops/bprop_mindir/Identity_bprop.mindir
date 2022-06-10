@@ -1,9 +1,9 @@
 
-0.1.1	MindSpore*1.8.0:ü
+0.1.1	MindSpore*1.9.0:ü
 m
 bprop.3:doutbprop.3:[CNode]4:1bprop.3:[CNode]4:1"REF::S-Prim-MakeTuple:2:Default/S-Prim-MakeTuple-op2bprop.3*
 	bprop.3:x*
 bprop.3:out*
 bprop.3:dout2
-bprop.3:[CNode]4:1:@be2452f9b8134bd7781e5e22020d19b2d36a287f74516a0778f7310f36e43b8bPb&
+bprop.3:[CNode]4:1:@abb533f39a011ae73d109e945feea7d72d7b1f540d8413d31d05b9f3b49d0463Pb&
 S-Prim-MakeTuple:2S-Prim-MakeTupleh

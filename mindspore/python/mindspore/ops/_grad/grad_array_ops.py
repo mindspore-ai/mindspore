@@ -1099,18 +1099,33 @@ def get_bprop_unsorted_segment_prod(self):
     unsorted_segment_prod = P.UnsortedSegmentProd()
 
     def bprop(x, segment_ids, num_segments, out, dout):
-        is_zero = equal(x, 0)
+        if x.dtype == mstype.complex64 or x.dtype == mstype.complex128:
+            is_zero = equal(x, F.scalar_to_tensor(0).astype(x.dtype))
+        else:
+            is_zero = equal(cast(x, mstype.float32), F.scalar_to_tensor(0).astype(np.float32))
         num_zero = unsorted_segment_sum(cast(is_zero, mstype.int32), segment_ids, num_segments)
         grad = select(greater(num_zero, 1), zeros_like(dout), dout)
-        non_zero_data = select(is_zero, ones_like(x), x)
+        if x.dtype == mstype.complex64 or x.dtype == mstype.complex128:
+            non_zero_data = select(is_zero, ones_like(x), x)
+        else:
+            temp_var = ones_like(cast(x, mstype.float32))
+            non_zero_data = select(is_zero, cast(temp_var, x.dtype), x)
         non_zero_prod = unsorted_segment_prod(non_zero_data, segment_ids, num_segments)
         zero_clipped_indices = maximum(segment_ids, zeros_like(segment_ids))
         gathered_prod = gather(out, zero_clipped_indices, 0)
         gathered_non_zero_prod = gather(non_zero_prod, zero_clipped_indices, 0)
-        prod_divided_by_x = gathered_prod / x
-        partial_derivative = select(is_zero, gathered_non_zero_prod, prod_divided_by_x)
+        if x.dtype == mstype.uint32 or x.dtype == mstype.uint64:
+            prod_divided_by_x = cast(gathered_prod, mstype.float32) / cast(x, mstype.float32)
+        else:
+            prod_divided_by_x = gathered_prod / x
+        partial_derivative = select(is_zero, gathered_non_zero_prod,
+                                    cast(prod_divided_by_x, gathered_non_zero_prod.dtype))
         gathered_grad, _, _ = _gather_drop_negatives(grad, segment_ids, zero_clipped_indices, None)
-        dx = gathered_grad * partial_derivative
+        if x.dtype == mstype.uint32 or x.dtype == mstype.uint64:
+            temp_dx = cast(gathered_grad, mstype.float32) * cast(partial_derivative, mstype.float32)
+            dx = cast(temp_dx, x.dtype)
+        else:
+            dx = gathered_grad * partial_derivative
         return dx, zeros_like(segment_ids), zeros_like(num_segments)
 
     return bprop

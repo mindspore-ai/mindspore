@@ -42,7 +42,9 @@ std::map<string, std::vector<std::pair<string, size_t>>> AicpuOpAttrToInputMap =
   {prim::kPrimScatterNd->name(), {{"shape", 2}}},
   {prim::kPrimReduceProd->name(), {{"axis", 1}}},
   {prim::kPrimReverseV2->name(), {{"axis", 1}}},
-  {prim::kPrimBroadcastTo->name(), {{"shape", 1}}}};
+  {prim::kPrimBroadcastTo->name(), {{"shape", 1}}},
+  {prim::kPrimUnsortedSegmentProd->name(), {{"num_segments", 2}}},
+  {prim::kPrimUnsortedSegmentSum->name(), {{"num_segments", 2}}}};
 
 bool GetAicpuOpAttrToInputInfo(const CNodePtr &kernel_node, std::vector<std::pair<string, size_t>> *info) {
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
