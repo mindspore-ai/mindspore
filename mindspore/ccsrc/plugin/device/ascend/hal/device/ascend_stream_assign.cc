@@ -257,7 +257,7 @@ void GenKernelIoExecInfoMap(const NotNull<KernelGraphPtr> &kernel_graph,
     MS_EXCEPTION_IF_NULL(process_kernel);
     auto process_iter = kernel_io_exec_info_map->find(process_kernel);
     if (process_iter == kernel_io_exec_info_map->end()) {
-      MS_LOG(ERROR) << "Can't get kernel io execution info for  " << process_kernel->fullname_with_scope();
+      MS_LOG(INFO) << "Can't get kernel io execution info for  " << process_kernel->fullname_with_scope();
       continue;
     }
     auto process_io_exec_info = process_iter->second;
@@ -271,8 +271,8 @@ void GenKernelIoExecInfoMap(const NotNull<KernelGraphPtr> &kernel_graph,
         auto input_kernel = input_node->cast<CNodePtr>();
         auto iter = kernel_io_exec_info_map->find(input_kernel);
         if (iter == kernel_io_exec_info_map->end()) {
-          MS_LOG(ERROR) << "Can't get kernel io execution info for " << process_kernel->fullname_with_scope()
-                        << "'s input node " << input_kernel->fullname_with_scope();
+          MS_LOG(INFO) << "Can't get kernel io execution info for " << process_kernel->fullname_with_scope()
+                       << "'s input node " << input_kernel->fullname_with_scope();
           continue;
         }
         auto input_io_exec_info = iter->second;
@@ -407,7 +407,7 @@ void AscendStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &k
     MS_LOG(DEBUG) << "Start GenEvents For ParallelOp " << process_kernel->fullname_with_scope();
     auto process_iter = kernel_io_exec_info_map.find(process_kernel);
     if (process_iter == kernel_io_exec_info_map.end()) {
-      MS_LOG(ERROR) << "Can't get node io execution info for  " << process_kernel->fullname_with_scope();
+      MS_LOG(INFO) << "Can't get node io execution info for  " << process_kernel->fullname_with_scope();
       continue;
     }
     auto process_io_exec_info = process_iter->second;
