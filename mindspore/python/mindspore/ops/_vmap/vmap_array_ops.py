@@ -326,6 +326,7 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ScatterNdMin)
 @vmap_rules_getters.register(P.ScatterNdMax)
 @vmap_rules_getters.register(P.ScatterNdDiv)
+@vmap_rules_getters.register(P.ScatterNdUpdate)
 @vmap_rules_getters.register(P.ScatterUpdate)
 def get_scatter_op_vmap_rule(prim, axis_size):
     """
@@ -344,6 +345,7 @@ def get_scatter_op_vmap_rule(prim, axis_size):
         "ScatterNdMin": P.ScatterNdMin,
         "ScatterNdMax": P.ScatterNdMax,
         "ScatterNdDiv": P.ScatterNdDiv,
+        "ScatterNdUpdate": P.ScatterNdUpdate,
         "ScatterUpdate": P.ScatterNdUpdate
     }
     sactter_func_list = ["ScatterAdd", "ScatterMin", "ScatterMax", "ScatterDiv", "ScatterUpdate"]
