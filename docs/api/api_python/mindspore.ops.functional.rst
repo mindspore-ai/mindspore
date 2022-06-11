@@ -222,6 +222,7 @@ Reduction算子
     mindspore.ops.ge
     mindspore.ops.gt
     mindspore.ops.intopk
+    mindspore.ops.isclose
     mindspore.ops.isfinite
     mindspore.ops.isnan
     mindspore.ops.le

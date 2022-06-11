@@ -2471,7 +2471,46 @@ def isnan(x):
 
 def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
     """
-    Returns a boolean tensor where two tensors are element-wise equal within a tolerance.
+    Returns a new Tensor with boolean elements representing if each element of `x1`
+    is “close” to the corresponding element of `x2`. Closeness is defined as:
+
+    .. math::
+
+            ∣x1−x2∣  ≤  atol + rtol × ∣x2∣
+
+    Note:
+        On Ascend, input arrays containing inf or NaN are not supported. Therefore, when the input is NaN or inf,
+        the result is uncertain. And `equal_nan` must be True on Ascend.
+
+    Args:
+        x1 (Tensor): First Tensor to compare, with data type belongs to float32, float16, int32.
+        x2 (Tensor): Second Tensor to compare, with data type belongs to float32, float16, int32.
+        rtol (float, optional): Relative tolerance. Default: 1e-05.
+        atol (float, optional): Absolute tolerance. Default: 1e-08.
+        equal_nan (bool, optional): If True, then two NaNs will be considered equal. Default: False.
+
+    Returns:
+        A bool Tensor, with the shape as broadcasted result of the input `x1` and `x2`.
+
+    Raises:
+        TypeError: If either of `x1` and `x2` is not Tensor.
+        TypeError: If either of `x1` and `x2` is not float16, float32 or int32.
+        TypeError: If either of `atol` and `rtol` is not float.
+        TypeError: If `equal_nan` is not bool.
+        TypeError: If the dtype of `x1` is not same as the `x2`.
+        ValueError: If `x1` and `x2` can not be broadcast.
+        ValueError: If either of `atol` and `rtol` is less than zero.
+        ValueError: If `equal_nan` is False on Ascend platform.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
+        >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
+        >>> output = ops.isclose(input, other)
+        >>> print(output)
+            [true false false false true]
     """
     return P.IsClose(rtol=rtol, atol=atol, equal_nan=equal_nan)(x1, x2)
 

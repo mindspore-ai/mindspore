@@ -719,6 +719,35 @@ mindspore.Tensor
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - 该Tensor的数据类型非float16或float32。
 
+    .. py:method:: isclose(x2, rtol=1e-05, atol=1e-08, equal_nan=False)
+
+        返回一个布尔型Tensor，表示当前Tensor与 `x2` 的对应元素是否在给定容忍度内相等。
+
+        .. note::
+            目前，Ascend后端不支持包含 inf 或 NaN 的输入数组。因此，当输入包含NaN或inf时，结果是不确定的。在Ascend后端上， `equal_nan` 必须为真。
+
+        **参数：**
+
+        - **x2** (Tensor) - 对比的第二个输入，支持的类型有float32，float16，int32。
+        - **rtol** (Tensor) - 相对容忍度。默认值：1e-05。
+        - **atol** (Tensor) - 绝对容忍度。默认值：1e-08。
+        - **equal_nan** (bool, optional) - IsNan的输入，任意维度的Tensor。
+
+        **返回：**
+
+        Tensor，shape与广播后的shape相同，数据类型是布尔型。
+
+        **异常：**
+
+        - **TypeError** - 如果当前Tensor和 `x2` 中的任何一个不是Tensor。
+        - **TypeError** - 如果当前Tensor和 `x2` 的数据类型不是float16、float32或int32之一。
+        - **TypeError** - 如果 `atol` 和 `rtol` 中的任何一个不是float。
+        - **TypeError** - 如果  `equal_nan`  不是bool。
+        - **TypeError** - 如果当前Tensor和 `x2` 的数据类型不同。
+        - **ValueError** - 如果当前Tensor和 `x2` 无法广播。
+        - **ValueError** - 如果 `atol` 和 `rtol` 中的任何一个小于零。
+        - **ValueError** - 如果Ascend平台上的  `equal_nan`  为False。
+
     .. py:method:: item(index=None)
 
         获取Tensor中指定索引的元素。
