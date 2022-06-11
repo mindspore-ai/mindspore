@@ -6124,6 +6124,52 @@ class Cholesky(Primitive):
         validator.check_value_type('upper', upper, [bool], self.name)
 
 
+class STFT(Primitive):
+    """
+    STFTs can be used as a way of quantifying the change of a nonstationary signal’s
+    frequency and phase content over time.
+
+    Args:
+        n_fft (int): The size of Fourier transform.
+        hop_length (int): The distance between neighboring sliding window
+            frames.
+        win_length (int): the size of window frame and STFT filter.
+        normalized (bool): controls whether to return the normalized STFT results
+        onesided (bool): controls whether to return half of results to
+            avoid redundancy for real inputs.
+        return_complex (bool, optional): whether to return a complex tensor, or
+            a real tensor with an extra last dimension for the real and
+            imaginary components.
+
+    input:
+        - **x** (Tensor) - Time sequence of stft, must be either a 1-D time tensor or a 2-D tensor.
+          n_fft (int): The size of Fourier transform.
+        - **window** (Tensor) - the optional window function.
+
+
+    output:
+        - **y** (Tensor) - A tensor containing the STFT result with shape described above.
+
+    Examples:
+        >>> x = Tensor(np.random.rand(2,7192), mindspore.float32)
+        >>> window =  Tensor(np.random.rand(64), mindspore.float32)
+        >>> stft = ops.STFT(64, 16, 64, False, True, True)
+        >>> output = stft(x, window)
+        >>> print(output.shape)
+        (2, 33, 446)
+    """
+    @prim_attr_register
+    def __init__(self, n_fft, hop_length, win_length, normalized, onesided, return_complex):
+        """Initialize STFT."""
+        self.init_prim_io_names(inputs=['x', 'window'], outputs=['y'])
+        validator.check_value_type('n_fft', n_fft, [int], self.name)
+        validator.check_value_type('hop_length', hop_length, [int], self.name)
+        validator.check_value_type('win_length', win_length, [int], self.name)
+        validator.check_value_type('normalized', normalized, [bool], self.name)
+        validator.check_value_type('onesided', onesided, [bool], self.name)
+        validator.check_value_type('return_complex', return_complex, [bool], self.name)
+
+
 class CholeskySolve(Primitive):
     """
     Given its Cholesky factor `u`, solves a linear system of equations with a positive definite matrix.

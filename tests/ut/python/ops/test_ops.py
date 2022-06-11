@@ -39,6 +39,7 @@ from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
+from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import FillDiagonal
 from mindspore.ops.operations.array_ops import Tril
@@ -2127,6 +2128,11 @@ test_case_math_ops = [
         'block': Trace(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]).astype(np.float32))],
         'desc_bprop': [Tensor([15.0], dtype=mstype.float32)]}),
+    ('STFT', {
+        'block': STFT(n_fft=64, hop_length=16, win_length=64, normalized=False, onesided=True, return_complex=False),
+        'desc_inputs': [Tensor(np.random.rand(2, 7192), mstype.float32),
+                        Tensor(np.ones((64,)), mstype.float32)],
+        'skip': ['backward']}),
 ]
 
 test_case_nn_ops = [
