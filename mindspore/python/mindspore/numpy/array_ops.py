@@ -1387,7 +1387,7 @@ def split(x, indices_or_sections, axis=0):
         axis (int): The axis along which to split. Default: 0.
 
     Returns:
-        A list of sub-tensors.
+        A tuple of sub-tensors.
 
     Raises:
         TypeError: If argument `indices_or_sections` is not integer,

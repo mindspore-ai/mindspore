@@ -21,6 +21,106 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
                       KernelAttr()
+                        .AddInputAttr(kNumberTypeBool)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeBool),
+                      DenseToCSRSparseMatrixKernelMod, bool, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt8)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt8),
+                      DenseToCSRSparseMatrixKernelMod, int8_t, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt16)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt16),
+                      DenseToCSRSparseMatrixKernelMod, int16_t, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      DenseToCSRSparseMatrixKernelMod, int, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt64),
+                      DenseToCSRSparseMatrixKernelMod, int64_t, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt8)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeUInt8),
+                      DenseToCSRSparseMatrixKernelMod, uint8_t, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt16)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeUInt16),
+                      DenseToCSRSparseMatrixKernelMod, uint16_t, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeUInt32),
+                      DenseToCSRSparseMatrixKernelMod, uint, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeUInt64),
+                      DenseToCSRSparseMatrixKernelMod, uint64_t, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      DenseToCSRSparseMatrixKernelMod, half, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32)
@@ -39,5 +139,25 @@ MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
                         .AddOutputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat64),
                       DenseToCSRSparseMatrixKernelMod, double, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeComplex64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeComplex64),
+                      DenseToCSRSparseMatrixKernelMod, cuComplex, int)
+MS_REG_GPU_KERNEL_TWO(DenseToCSRSparseMatrix,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeComplex128)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeComplex128),
+                      DenseToCSRSparseMatrixKernelMod, cuDoubleComplex, int)
 }  // namespace kernel
 }  // namespace mindspore

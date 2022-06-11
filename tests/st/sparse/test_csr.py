@@ -773,3 +773,28 @@ def test_bprop2():
     compare_res(test_csr_to_abs(indptr, indices, values, dense_shape), values_absgrad)
     compare_res(test_csr_to_coo(indptr, indices, values, dense_shape), values_on)
     compare_res(test_csr_to_dense(indptr, indices, values, dense_shape), values_on)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dense_to_csr():
+    """
+    Feature: Test dense tensor to csr methods.
+    Description: Test tensor.to_csr().
+    Expectation: Success.
+    """
+    dense_tensor = Tensor([[0, 1, 2, 0], [0, 0, 0, 0], [1, 0, 0, 0]], dtype=mstype.float32)
+    def test_to_csr(dense_tensor):
+        return dense_tensor.to_csr()
+
+    csr_tensor = test_to_csr(dense_tensor)
+    csr_tensor_graph = ms_function(test_to_csr)(dense_tensor)
+    expect = CSRTensor(Tensor([0, 2, 2, 3], dtype=mstype.int32),
+                       Tensor([1, 2, 0], dtype=mstype.int32),
+                       Tensor([1, 2, 1], dtype=mstype.float32),
+                       (3, 4))
+    assert isinstance(csr_tensor, CSRTensor)
+    assert isinstance(csr_tensor_graph, CSRTensor)
+    compare_csr(csr_tensor, expect)
+    compare_csr(csr_tensor_graph, expect)
