@@ -20,22 +20,36 @@
 #include <map>
 #include <set>
 #include <memory>
+#include <queue>
 #include <utility>
 #include "runtime/device/memory_offload_strategy.h"
+#include "runtime/device/memory_manager.h"
 
 namespace mindspore {
 namespace device {
 class MemHandler {
  public:
-  MemHandler() = default;
-  virtual ~MemHandler() = default;
-  virtual size_t GetAvailableMemSize() = 0;
-  virtual void *MallocDevice(size_t mem_size) = 0;
-  virtual void FreeDevice(void *ptr) = 0;
-  virtual void *MallocHost(size_t mem_size) = 0;
-  virtual void FreeHost(void *ptr) = 0;
-  virtual void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) = 0;
-  virtual void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) = 0;
+  explicit MemHandler(std::shared_ptr<MemoryManager> memory_manager) : memory_manager_(memory_manager) {}
+  ~MemHandler() = default;
+  size_t GetAvailableMemSize() { return memory_manager_->GetAvailableMemSize(); }
+  void *MallocDevice(size_t mem_size) { return memory_manager_->MallocMemFromMemPool(mem_size, false); }
+  void FreeDevice(void *ptr) { memory_manager_->FreeMemFromMemPool(ptr); }
+  void *MallocHost(size_t mem_size);
+  void FreeHost(void *ptr);
+  void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
+    memory_manager_->SwapIn(host_ptr, device_ptr, mem_size, stream);
+  }
+  void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
+    memory_manager_->SwapOut(device_ptr, host_ptr, mem_size, stream);
+  }
+  std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) {
+    return memory_manager_->MallocContinuousMemFromMemPool(size_list);
+  }
+
+ private:
+  std::shared_ptr<MemoryManager> memory_manager_;
+  std::map<size_t, std::queue<void *>> cached_host_mem_;
+  std::map<void *, std::shared_ptr<std::vector<uint8_t>>> host_mem_block_map_;
 };
 
 class MemScheduler {
@@ -88,6 +102,10 @@ class MemScheduler {
 
   void ClearMemNeedInit() { high_priority_mem_need_init_.clear(); }
 
+  void AddContinuousMemInfo(bool is_input, size_t compute_index, size_t total_size,
+                            const std::vector<size_t> &align_size_list,
+                            const std::vector<const void *> &address_key_list);
+
  private:
   void Record(const void *key, const MemEventType &event_type, size_t mem_size = 0);
 
@@ -98,6 +116,8 @@ class MemScheduler {
   void AdjustFirstEventIndex();
 
   void *MallocDevice(size_t mem_size, void *stream);
+
+  std::vector<void *> MallocContinuousMem(size_t total_size, const std::vector<size_t> &size_list, void *stream);
 
   void SwapOutAndFreeDevice(const void *key, void *device_ptr, size_t mem_size, void *stream);
 
@@ -115,8 +135,10 @@ class MemScheduler {
 
   bool PreComputeGet(const std::shared_ptr<MemEvent> &event, void *stream);
 
+  void *MallocContinuousMem(const std::shared_ptr<MemEvent> &event, void *stream);
+
   std::map<const void *, MemPriority> mem_priority_;
-  std::map<const void *, std::vector<std::shared_ptr<MemEvent>>> mem_events_;
+  std::map<const void *, MemEventPtrList> mem_events_;
   std::set<const void *> manual_offload_keys_;
   std::vector<std::set<const void *>> step_keys_;
   std::map<const void *, void *> mem_result_;
@@ -134,6 +156,9 @@ class MemScheduler {
   bool updated_{false};
   std::shared_ptr<MemHandler> mem_handler_{nullptr};
   std::shared_ptr<MemOffloadStrategy> strategy_{nullptr};
+  std::shared_ptr<ContinuousMemInfoHelper> continuous_mem_info_helper_{std::make_shared<ContinuousMemInfoHelper>()};
+  std::set<std::shared_ptr<ContinuousMemInfo>> cur_step_allocated_continuous_mem_;
+  std::set<const void *> continuous_mem_key_;
 };
 
 class MemSchedulerManager {

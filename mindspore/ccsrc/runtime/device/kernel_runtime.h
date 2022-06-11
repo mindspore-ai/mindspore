@@ -178,7 +178,7 @@ class KernelRuntime {
   void SyncNodeOutputTensor(const std::shared_ptr<MemScheduler> &mem_scheduler, const KernelWithIndex &output,
                             const session::KernelGraph &graph);
 
-  void AssignCommunicationMem(const session::KernelGraph &graph);
+  void AddCommunicationMemInfo(const session::KernelGraph &graph);
   bool LaunchKernelMod(const session::KernelGraph &graph, bool mock = false);
   void LaunchKernelEvent(const std::map<AnfNodePtr, std::vector<std::function<void()>>> &run_events,
                          const AnfNodePtr &node) const;
@@ -204,6 +204,10 @@ class KernelRuntime {
   void GetCommunicationOutputInfo(const AnfNodePtr &node, size_t *total_size, DeviceAddressPtrList *address_list,
                                   std::vector<size_t> *align_size_list) const;
   DeviceAddressPtr CreateDeviceAddressForStringValue(const ValuePtr &value, bool use_mem_pool, uint32_t graph_id);
+  bool MemSchedulerPreCompute(const AnfNodePtr &kernel, const std::shared_ptr<MemScheduler> &mem_scheduler,
+                              void *stream, bool mock, KernelLaunchInfo *kernel_launch_info);
+  bool MemSchedulerPostCompute(const session::KernelGraph &graph, const AnfNodePtr &kernel,
+                               const std::shared_ptr<MemScheduler> &mem_scheduler, void *stream, bool mock);
 
  protected:
   uint32_t device_id_{0};

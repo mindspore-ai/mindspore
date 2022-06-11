@@ -48,11 +48,6 @@ uint64_t AscendMemoryManager::GetMsMaxMemSize() { return AscendMemAdapter::GetIn
 
 uint64_t AscendMemoryManager::GetMsUsedHbmSize() { return AscendMemAdapter::GetInstance().GetMsUsedHbmSize(); }
 
-void *AscendMemoryManager::MallocDevice(size_t size) {
-  auto align_size = GetCommonAlignSize(size);
-  return AscendMemoryPool::GetInstance().AllocTensorMem(align_size);
-}
-
 void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem) {
   auto align_size = GetCommonAlignSize(size);
   const auto device_addr = AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem);
