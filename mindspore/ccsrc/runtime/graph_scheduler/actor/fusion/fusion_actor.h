@@ -41,21 +41,13 @@ class FusionActor : public AbstractActor {
   // The actor run when receive the input control.
   void RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) override;
 
-  const mindspore::HashMap<std::string, AbstractActorPtr> &sub_actors() const { return sub_actors_; }
   const std::vector<std::pair<AbstractActor *, size_t>> &real_input_data() const { return real_input_data_; }
   const mindspore::HashMap<std::string, std::vector<AbstractActor *>> &real_input_controls() const {
     return real_input_controls_;
   }
 
- protected:
-  mindspore::HashMap<std::string, AbstractActorPtr> FetchSubActors() const override { return sub_actors_; }
-
  private:
   friend class SchedulerHelper;
-
-  // These actors are not spawned in the ActorMgr, so they do not participate in message interaction, but only internal
-  // processing.
-  mindspore::HashMap<std::string, AbstractActorPtr> sub_actors_;
 
   // std::pair<actor, input_index> used to find the mapping between fusion actor inputs and real actors inputs.
   std::vector<std::pair<AbstractActor *, size_t>> real_input_data_;

@@ -347,9 +347,10 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
 }
 
 void DataPrepareActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
-  ActorDispatcher::Send(*debug_aid_, &DebugActor::DebugOnStepBegin, graph_compiler_info_->graphs_,
-                        graph_compiler_info_->origin_parameters_order_, graph_compiler_info_->device_contexts_, context,
-                        &GetAID());
+  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugOnStepBegin, graph_compiler_info_->graphs_,
+                            graph_compiler_info_->origin_parameters_order_, graph_compiler_info_->device_contexts_,
+                            context, &GetAID());
+  OnDebugFinish(context);
 }
 
 void DataPrepareActor::OnDebugFinish(OpContext<DeviceTensor> *const context) {
@@ -367,6 +368,7 @@ void DataPrepareActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
     ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
                               &continuous_memory_alloc_list_list_, &size_list_list_, &total_size_list_,
                               &continuous_memory_device_contexts_, context, GetAID());
+    OnMemoryAllocFinish(context);
   } else {
     ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateContinuousMemory,
                           &continuous_memory_alloc_list_list_, &size_list_list_, &total_size_list_,

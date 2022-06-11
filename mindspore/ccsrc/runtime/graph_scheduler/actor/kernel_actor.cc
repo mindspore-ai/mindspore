@@ -197,6 +197,7 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
     if (ActorDispatcher::get_is_memory_allocation_sync()) {
       ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
                                 device_contexts_[0], context, GetAID());
+      OnMemoryAllocFinish(context);
     } else {
       ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
                             device_contexts_[0], context, GetAID());
@@ -242,8 +243,9 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
 
 void KernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
-  ActorDispatcher::Send(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context,
-                        &GetAID());
+  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::Debug, kernel_, &launch_info_, device_contexts_[0], context,
+                            &GetAID());
+  OnDebugFinish(context);
 }
 
 void KernelActor::OnDebugFinish(OpContext<DeviceTensor> *context) {

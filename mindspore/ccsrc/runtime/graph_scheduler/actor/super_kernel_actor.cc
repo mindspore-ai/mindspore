@@ -113,7 +113,8 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
 
 void SuperKernelActor::SendDebugReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
-  ActorDispatcher::Send(*debug_aid_, &DebugActor::DebugForGraph, graph_, device_contexts_[0], context, &GetAID());
+  ActorDispatcher::SendSync(*debug_aid_, &DebugActor::DebugForGraph, graph_, device_contexts_[0], context, &GetAID());
+  OnDebugFinish(context);
 }
 
 bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {

@@ -90,6 +90,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
     return batch_output_data_arrows_;
   }
   AbstractActor *parent_fusion_actor() const { return parent_fusion_actor_; }
+  const mindspore::HashMap<std::string, std::shared_ptr<AbstractActor>> &sub_actors() const { return sub_actors_; }
   const std::unordered_set<std::string> &dependent_actors() const { return dependent_actors_; }
 
  protected:
@@ -117,7 +118,6 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // Fetch the sub actor in the fusion actor by the name.
   AbstractActor *FetchSubActorInFusionActor(const std::string &sub_actor_name);
-  virtual mindspore::HashMap<std::string, std::shared_ptr<AbstractActor>> FetchSubActors() const { return {}; }
 
   KernelTransformType type_;
 
@@ -166,6 +166,10 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // Indicates whether the actor is in fusion actor.
   AbstractActor *parent_fusion_actor_;
+
+  // The sub actors in the fusion actor are not spawned in the ActorMgr, so they do not participate in message
+  // interaction, but only internal processing.
+  mindspore::HashMap<std::string, std::shared_ptr<AbstractActor>> sub_actors_;
 
   // All actors that the actor depends on for execution, the dependent actors are expanded by the input data and input
   // controls. For example, ActorA->ActorB->ActorC, the expanded dependent actors of ActorC are ActorA and ActorB.

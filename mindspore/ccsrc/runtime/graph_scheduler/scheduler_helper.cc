@@ -425,7 +425,7 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
       // 'ActorA->ActorB' to 'ActorA->FusionActor'.
       auto from_actor = FetchActor(input_data_arrow_aid.first.Name());
       MS_EXCEPTION_IF_NULL(from_actor);
-      auto &old_to_actor_name = input_data_arrow->to_op_id_.Name();
+      auto old_to_actor_name = input_data_arrow->to_op_id_.Name();
       // Record the input index of real actor and fusion actor.
       (void)fusion_actor->real_input_data_.emplace_back(std::make_pair(actor.get(), input_data_arrow->to_input_index_));
       from_actor->data_arrow_to_fusion_actor_indexs_[input_data_arrow] = fusion_actor->input_data_arrow_aids_.size();
