@@ -26,7 +26,6 @@ from ..operations import _inner_ops as inner
 from ..operations import _rl_inner_ops as rl_ops
 from ... import context
 from .._utils.utils import range_op, get_1d_shape
-from ..operations.nn_ops import DeformableOffsets
 
 
 @bprop_getters.register(P.BiasAdd)
@@ -1281,7 +1280,7 @@ def get_bprop_basic_lstm_cell(self):
     return bprop
 
 
-@bprop_getters.register(DeformableOffsets)
+@bprop_getters.register(nps.DeformableOffsets)
 def get_bprop_deformable_offsets(self):
     """Grad definition for `DeformableOffsets` operation."""
     grad = G.DeformableOffsetsGrad(self.strides, self.pads, self.ksize, self.dilations, self.data_format,

@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 deformable_offsets_grad_op_info = TBERegOp("DeformableOffsetsGrad") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("deformable_offsets.so") \
+    .binfile_name("deformable_offsets_grad.so") \
     .compute_cost(10) \
-    .kernel_name("deformable_offsets") \
+    .kernel_name("deformable_offsets_grad") \
     .partial_flag(True) \
     .need_check_supported(True) \
     .attr("strides", "required", "listInt", "all") \

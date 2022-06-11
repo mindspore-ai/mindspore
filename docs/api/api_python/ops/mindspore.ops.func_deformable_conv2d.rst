@@ -52,4 +52,7 @@ mindspore.ops.deformable_conv2d
 
     .. note::
         - 这是一个实验性质的接口，将来有可能被修改或删除。
-        - 在Ascend平台上，只支持同时满足 :math:`C_{in}` 能被8整除， `deformable_groups` 为1且 `offsets` 的数据是浮点数类型（即需要包含小数部分）的场景。例如， `x` 的shape为 :math:`(N, 2, H_{in}, W_{in})` 、 `deformable_groups` 为2、使用"numpy.ones()"函数去赋值 `offsets` 等场景均不支持。
+        - 在Ascend平台上，目前需满足如下条件：
+        	- :math:`C_{in}` 能被8整除。
+        	- `deformable_groups` 为1且 `offsets` 的数据是浮点数类型（即需要包含小数部分）。
+        	- `kernel_size` 需大于1。

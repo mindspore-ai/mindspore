@@ -380,10 +380,12 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
 
     .. note::
         - This is an experimental interface that is subject to change or deletion.
-        - For Ascend platform, only supports cases when :math:`C_{in}` can be divisible by 8, `deformable_groups` is 1
-          and `offsets` value is float which needs to contain a decimal part. For example, these scenarios where the
-          shape of `x` is :math:`(N, 2, H_{in}, W_{in})`, `deformable_groups` is 2 or `offsets` is assigned with
-          "numpy.ones()" function are not supported.
+        - For Ascend platform, the following cases are not supported:
+            - :math:`C_{in}` cannot be divisible by 8, e.g. `x` is :math:`(N, 2, H_{in}, W_{in})`
+            - `deformable_groups` is 1, e.g. `deformable_groups` is 2
+            - `offsets` value is float which does not contain a decimal part, e.g. `offsets` is assigned with
+            "numpy.ones()"
+            - `kernel_size` is less than 2, e.g. `kernel_size` is (1, 1)
 
     Examples:
         >>> x = Tensor(np.ones((4, 3, 10, 10)), mstype.float32)
