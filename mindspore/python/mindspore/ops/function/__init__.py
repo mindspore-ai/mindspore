@@ -232,7 +232,8 @@ from .math_func import (
     reduce_prod,
     sparse_segment_mean,
     log2,
-    xlogy
+    xlogy,
+    log10
 )
 from .nn_func import (
     adaptive_avg_pool2d,

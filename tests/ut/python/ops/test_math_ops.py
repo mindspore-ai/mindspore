@@ -520,6 +520,16 @@ class Log2Net(nn.Cell):
     def construct(self, x):
         return self.log2(x)
 
+
+class Log10Net(nn.Cell):
+    def __init__(self):
+        super(Log10Net, self).__init__()
+        self.log10 = ops.log10
+
+    def construct(self, x):
+        return self.log10(x)
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -641,6 +651,10 @@ test_case_math_ops = [
         'block': Log2Net(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
         'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))]}),
+    ('Log10', {
+        'block': Log10Net(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))]}),
 ]
 
 test_case_lists = [test_case_math_ops]
@@ -753,6 +767,14 @@ raise_set = [
     ('Log2_Error_1', {
         'block': (Log2Net(), {'exception;': TypeError}),
         'desc_inputs': [[1]],
+        'skip': ['backward']}),
+    ('Log10_Error_1', {
+        'block': (Log10Net(), {'exception': TypeError}),
+        'desc_inputs': [[1]],
+        'skip': ['backward']}),
+    ('Log10_Error_2', {
+        'block': (Log10Net(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.array([[1, 2, 4]], np.int32))],
         'skip': ['backward']}),
 ]
 
