@@ -145,6 +145,10 @@ int ConcatBaseCPUKernel::InitDynamicStatus() {
       outer_size *= shape[j];
     }
     auto inner_size = data_size_;
+    if (out_tensors_.front()->data_type() == kNumberTypeBool) {
+      inner_size = sizeof(bool);
+    }
+
     MS_CHECK_TRUE_MSG(inner_size > 0, RET_ERROR, "data-type is invalid.");
     for (int j = concat_param_->axis_; j < static_cast<int>(shape.size()); ++j) {
       inner_size *= shape[j];
@@ -234,4 +238,5 @@ int ConcatBaseCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Concat, LiteKernelCreator<ConcatBaseCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Concat, LiteKernelCreator<ConcatBaseCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Concat, LiteKernelCreator<ConcatBaseCPUKernel>)
 }  // namespace mindspore::kernel
