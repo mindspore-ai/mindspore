@@ -46,18 +46,18 @@ std::string Common::GetRandomStr() {
   return random_name;
 }
 
-void Common::MappingName(const std::string &input_path, std::optional<std::string> *prefix_path,
+bool Common::MappingName(const std::string &input_path, std::optional<std::string> *prefix_path,
                          std::optional<std::string> *origin_name, std::optional<std::string> *mapped_name) {
   FileUtils::SplitDirAndFileName(input_path, prefix_path, origin_name);
   if (!prefix_path->has_value() || !origin_name->has_value()) {
     MS_LOG(ERROR) << "Cannot get prefix_path or file_name from: " << input_path;
-    return;
+    return false;
   }
   auto origin_name_str = origin_name->value();
   if (!NeedMapping(origin_name_str)) {
     MS_EXCEPTION_IF_NULL(mapped_name);
     *mapped_name = origin_name_str;
-    return;
+    return false;
   }
   MS_LOG(INFO) << "The file name: " << input_path << " is too long, change it to a random string.";
   // name, max_loop is used to avoid the foreverloop.
@@ -71,11 +71,11 @@ void Common::MappingName(const std::string &input_path, std::optional<std::strin
     if (FileExists(file_path)) {
       continue;
     }
-    return;
+    return true;
   }
   MS_LOG(WARNING) << "Random strings are repeated, which may lead to coverring the old data! File path is: "
                   << file_path;
-  return;
+  return true;
 }
 
 std::optional<std::string> Common::CreatePrefixPath(const std::string &input_path, const bool support_relative_path) {
