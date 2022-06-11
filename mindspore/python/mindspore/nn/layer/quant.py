@@ -1042,7 +1042,7 @@ class Conv2dBnFoldQuant(Cell):
         self.assignadd = P.AssignAdd()
 
     @classmethod
-    def from_float(cls, convbn: Conv2dBnAct, quant_config: QuantConfig):
+    def from_float(cls, convbn: Conv2dBnAct, quant_config: QuantConfig, extra_args: dict):
         """
         A class method to create `Conv2dBnFoldQuantOneConv` from a `Conv2dBnAct`
 
@@ -1055,6 +1055,7 @@ class Conv2dBnFoldQuant(Cell):
             >>> # when apply QAT on `conv_bn_op`, QAT need to create a quant Conv2dBnAct whose weight is fake-quanted
             >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
             >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
+            >>> extra_args = {"freeze_bn": 100000}
             >>> conv_bn_quant = nn.Conv2dBnFoldQuant.from_float(conv_bn_op, quant_config)
         """
 
@@ -1079,6 +1080,7 @@ class Conv2dBnFoldQuant(Cell):
             kwargs['gamma_init'] = convbn.batchnorm.gamma_init
             kwargs['mean_init'] = convbn.batchnorm.moving_mean_init
             kwargs['var_init'] = convbn.batchnorm.moving_var_init
+        kwargs = {**kwargs, **extra_args}
         return cls(**kwargs)
 
     def extend_repr(self):
