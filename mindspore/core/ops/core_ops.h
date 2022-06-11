@@ -656,6 +656,9 @@ GVAR_DEF(PrimitivePtr, kPrimConv2DBackpropInput, std::make_shared<Primitive>("Co
 GVAR_DEF(PrimitivePtr, kPrimConv2DBackpropFilter, std::make_shared<Primitive>("Conv2DBackpropFilter"));
 GVAR_DEF(PrimitivePtr, kPrimConv3DBackpropInput, std::make_shared<Primitive>("Conv3DBackpropInput"));
 GVAR_DEF(PrimitivePtr, kPrimConv3DBackpropFilter, std::make_shared<Primitive>("Conv3DBackpropFilter"));
+GVAR_DEF(PrimitivePtr, kPrimDilation2D, std::make_shared<Primitive>("Dilation2D"));
+GVAR_DEF(PrimitivePtr, kPrimDilation2DBackpropInput, std::make_shared<Primitive>("Dilation2DBackpropInput"));
+GVAR_DEF(PrimitivePtr, kPrimDilation2DBackpropFilter, std::make_shared<Primitive>("Dilation2DBackpropFilter"));
 GVAR_DEF(PrimitivePtr, kPrimDeformableOffsetsGrad, std::make_shared<Primitive>("DeformableOffsetsGrad"));
 GVAR_DEF(PrimitivePtr, kPrimCustomNormalize, std::make_shared<Primitive>("CustomNormalize"));
 GVAR_DEF(PrimitivePtr, kPrimDepthwiseConv2dNative, std::make_shared<Primitive>("DepthwiseConv2dNative"));

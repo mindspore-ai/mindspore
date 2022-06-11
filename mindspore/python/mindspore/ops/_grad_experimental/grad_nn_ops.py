@@ -26,6 +26,7 @@ from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations.nn_ops import MaxUnpool2D
 from ..operations.nn_ops import MaxUnpool3D
+from ..operations.nn_ops import Dilation2D
 from ..operations.nn_ops import FractionalMaxPool
 from ..operations._grad_ops import FractionalMaxPoolGrad
 from ..operations.nn_ops import FractionalMaxPool3DWithFixedKsize
@@ -104,6 +105,23 @@ def get_bprop_multilabel_margin_loss(self):
     def bprop(x, target, out, dout):
         dx = input_grad(dout[0], x, target, out[1])
         return dx, zeros_like(target)
+
+    return bprop
+
+
+@bprop_getters.register(Dilation2D)
+def get_bprop_dilation2d(self):
+    """Grad definition for `Dilation2D` operation"""
+
+    input_grad = G.Dilation2DBackpropInput(stride=self.stride, dilation=self.dilation,
+                                           pad_mode=self.pad_mode, data_format=self.data_format)
+    filter_grad = G.Dilation2DBackpropFilter(stride=self.stride, dilation=self.dilation,
+                                             pad_mode=self.pad_mode, data_format=self.data_format)
+
+    def bprop(x, _filter, out, dout):
+        dx = input_grad(x, _filter, dout)
+        dfilter = filter_grad(x, _filter, dout)
+        return dx, dfilter
 
     return bprop
 
