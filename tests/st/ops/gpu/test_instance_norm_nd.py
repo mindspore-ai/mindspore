@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,96 +13,159 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
 import pytest
-import mindspore
-import mindspore.context as context
-from mindspore import Tensor, Parameter, nn
+import numpy as np
+from mindspore import Tensor, nn, context, Parameter, ms_function
+from mindspore.ops.composite import GradOperation
+from mindspore.ops import functional as F
 from mindspore.ops.operations.nn_ops import InstanceNorm
+from mindspore.common.initializer import initializer
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
-class InstanceNormNet(nn.Cell):
-    def __init__(self, channel, epsilon=1e-5):
-        super(InstanceNormNet, self).__init__()
-        self.instance_norm = InstanceNorm(epsilon=epsilon)
-        self.gamma = Parameter(Tensor(np.ones([channel]), mindspore.float32), name="gamma")
-        self.beta = Parameter(Tensor(np.zeros([channel]), mindspore.float32), name="beta")
-        self.mean = Parameter(Tensor(np.zeros([channel]), mindspore.float32), name="mean")
-        self.variance = Parameter(Tensor(np.ones([channel]), mindspore.float32), name="variance")
+class InstanceNormNd(nn.Cell):
+    def __init__(self, num_features, eps=1e-5, momentum=0.1, affine=True, gamma_init='ones', beta_init='zeros'):
+        super(InstanceNormNd, self).__init__()
+        self.moving_mean = Parameter(initializer('zeros', num_features), name="mean", requires_grad=False)
+        self.moving_variance = Parameter(initializer('ones', num_features), name="variance", requires_grad=False)
+        self.gamma = Parameter(initializer(gamma_init, num_features), name="gamma", requires_grad=affine)
+        self.beta = Parameter(initializer(beta_init, num_features), name="beta", requires_grad=affine)
+        self.instance_bn = InstanceNorm(epsilon=eps, momentum=momentum)
 
-    def construct(self, input_x):
-        out = self.instance_norm(input_x, self.gamma, self.beta, self.mean, self.variance)
-        return out[0]
+    def construct(self, x):
+        return self.instance_bn(x, self.gamma, self.beta, self.moving_mean, self.moving_variance)[0]
 
 
-def instance_norm_np(x, eps=1e-5):
-    shape = x.shape
-    b = shape[0]
-    c = shape[1]
-    x = x.reshape((b, c, -1))
-    mu = np.expand_dims(np.mean(x, axis=-1), axis=-1)
-    std = np.expand_dims(np.std(x, axis=-1), axis=-1)
-    result = (x - mu) / (std + eps)
-    return result.reshape(shape)
+class Grad(nn.Cell):
+    def __init__(self, network):
+        super(Grad, self).__init__()
+        self.grad = GradOperation(get_all=True, sens_param=True)
+        self.network = network
+
+    @ms_function
+    def construct(self, input_x, grad):
+        return self.grad(self.network)(input_x, grad)
+
+
+class Expected1d(nn.Cell):
+    def __init__(self, n, gamma_init=0.5, beta_init=0.5):
+        super(Expected1d, self).__init__()
+        self.ops = nn.BatchNorm2d(n, use_batch_statistics=True, gamma_init=gamma_init, beta_init=beta_init)
+
+    def construct(self, x):
+        shape = F.shape(x)
+        return F.reshape(self.ops(F.reshape(x, (1, -1, 1, shape[2]))), shape)
+
+
+class Expected2d(nn.Cell):
+    def __init__(self, n, gamma_init=0.5, beta_init=0.5):
+        super(Expected2d, self).__init__()
+        self.ops = nn.BatchNorm2d(n, use_batch_statistics=True, gamma_init=gamma_init, beta_init=beta_init)
+
+    def construct(self, x):
+        shape = F.shape(x)
+        return F.reshape(self.ops(F.reshape(x, (1, -1, shape[2], shape[3]))), shape)
+
+
+class Expected3d(nn.Cell):
+    def __init__(self, n, gamma_init=0.5, beta_init=0.5):
+        super(Expected3d, self).__init__()
+        self.ops = nn.BatchNorm3d(n, use_batch_statistics=True, gamma_init=gamma_init, beta_init=beta_init)
+
+    def construct(self, x):
+        shape = F.shape(x)
+        return F.reshape(self.ops(F.reshape(x, (1, -1, shape[2], shape[3], shape[4]))), shape)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("shape", [(8, 4, 5)])
-@pytest.mark.parametrize("data_type, err", [(np.float16, 1e-3), (np.float32, 1e-4)])
-def test_instancenorm_1d(shape, data_type, err):
+@pytest.mark.parametrize("data_type", [np.float16, np.float32])
+def test_instancenorm_1d(shape, data_type):
     """
     Feature: InstanceNorm 1D operator.
     Description: Compatible with instance_norm_np.
     Expectation: The result matches numpy implementation.
     """
     np.random.seed(0)
-    input_x_np = np.random.randn(np.prod(shape)).reshape(shape).astype(data_type)
-    input_x = Tensor(input_x_np)
-    net = InstanceNormNet(shape[1])
-    output = net(input_x)
-    expected = instance_norm_np(input_x_np)
-    assert np.allclose(output.asnumpy(), expected, atol=err, rtol=err)
+
+    x_np = Tensor(np.random.randn(*shape).astype(data_type))
+    grad = Tensor(np.random.randn(*shape).astype(data_type))
+
+    instance_op = InstanceNormNd(shape[1], gamma_init=0.5, beta_init=0.5)
+    expected_net = Expected1d(shape[0] * shape[1], gamma_init=0.5, beta_init=0.5)
+
+    result = instance_op(Tensor(x_np))
+    expected = expected_net(Tensor(x_np))
+    assert np.allclose(result.asnumpy(), expected.asnumpy())
+
+    instance_backward_net = Grad(instance_op)
+    expected_backward_net = Grad(expected_net)
+
+    result = instance_backward_net(Tensor(x_np), Tensor(grad))
+    expected = expected_backward_net(Tensor(x_np), Tensor(grad))
+    assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("shape", [(8, 4, 3, 4)])
-@pytest.mark.parametrize("data_type, err", [(np.float16, 1e-3), (np.float32, 1e-4)])
-def test_instancenorm_2d(shape, data_type, err):
+@pytest.mark.parametrize("data_type", [np.float16, np.float32])
+def test_instancenorm_2d(shape, data_type):
     """
     Feature: InstanceNorm 2D operator.
     Description: Compatible with instance_norm_np.
     Expectation: The result matches numpy implementation.
     """
     np.random.seed(0)
-    input_x_np = np.random.randn(np.prod(shape)).reshape(shape).astype(data_type)
-    input_x = Tensor(input_x_np)
-    net = InstanceNormNet(shape[1])
-    output = net(input_x)
-    expected = instance_norm_np(input_x_np)
-    assert np.allclose(output.asnumpy(), expected, atol=err, rtol=err)
+
+    x_np = Tensor(np.random.randn(*shape).astype(data_type))
+    grad = Tensor(np.random.randn(*shape).astype(data_type))
+
+    instance_op = InstanceNormNd(shape[1], gamma_init=0.5, beta_init=0.5)
+    expected_net = Expected2d(shape[0] * shape[1], gamma_init=0.5, beta_init=0.5)
+
+    result = instance_op(Tensor(x_np))
+    expected = expected_net(Tensor(x_np))
+    assert np.allclose(result.asnumpy(), expected.asnumpy())
+
+    instance_backward_net = Grad(instance_op)
+    expected_backward_net = Grad(expected_net)
+
+    result = instance_backward_net(Tensor(x_np), Tensor(grad))
+    expected = expected_backward_net(Tensor(x_np), Tensor(grad))
+    assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("shape", [(8, 4, 3, 4, 7)])
-@pytest.mark.parametrize("data_type, err", [(np.float16, 1e-3), (np.float32, 1e-4)])
-def test_instancenorm_3d(shape, data_type, err):
+@pytest.mark.parametrize("data_type", [np.float16, np.float32])
+def test_instancenorm_3d(shape, data_type):
     """
     Feature: InstanceNorm 3D operator.
     Description: Compatible with instance_norm_np.
     Expectation: The result matches numpy implementation.
     """
     np.random.seed(0)
-    input_x_np = np.random.randn(np.prod(shape)).reshape(shape).astype(data_type)
-    input_x = Tensor(input_x_np)
-    net = InstanceNormNet(shape[1])
-    output = net(input_x)
-    expected = instance_norm_np(input_x_np)
-    assert np.allclose(output.asnumpy(), expected, atol=err, rtol=err)
+
+    x_np = Tensor(np.random.randn(*shape).astype(data_type))
+    grad = Tensor(np.random.randn(*shape).astype(data_type))
+
+    instance_op = InstanceNormNd(shape[1], gamma_init=0.5, beta_init=0.5)
+    expected_net = Expected3d(shape[0] * shape[1], gamma_init=0.5, beta_init=0.5)
+
+    result = instance_op(Tensor(x_np))
+    expected = expected_net(Tensor(x_np))
+    assert np.allclose(result.asnumpy(), expected.asnumpy())
+
+    instance_backward_net = Grad(instance_op)
+    expected_backward_net = Grad(expected_net)
+
+    result = instance_backward_net(Tensor(x_np), Tensor(grad))
+    expected = expected_backward_net(Tensor(x_np), Tensor(grad))
+    assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
