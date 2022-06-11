@@ -18,7 +18,7 @@ from typing import Optional, Union, Tuple, Any
 import os
 import sys
 import ast
-import importlib
+import tempfile
 import astunparse
 
 from mindspore.nn import Cell
@@ -1200,12 +1200,19 @@ class SymbolTree(Observer, Observable):
         Returns:
             A class handle.
         """
-        self.save_network_to_file()
-        tmp_module_path, tmp_module_file = os.path.split(self._saved_file_name)
+        source = self.get_code()
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.py')
+        tmp_file.write(source.encode('utf8'))
+        tmp_file.flush()
+        tmp_file_name = tmp_file.name
+        if len(self._tmp_files) >= self._tmp_file_limits:
+            raise RuntimeError(f"Too many tmp file generated, it may caused by calling get_network method too much "
+                               f"times. Only support open {self._tmp_file_limits} tmp file at most now!")
+        self._tmp_files.append(tmp_file)
+        tmp_module_path, tmp_module_file = os.path.split(tmp_file_name)
         tmp_module_name = tmp_module_file[:-3]
         sys.path.append(tmp_module_path)
-        tmp_module = importlib.import_module(tmp_module_name)
-        importlib.reload(tmp_module)
+        tmp_module = __import__(tmp_module_name)
         network_cls = getattr(tmp_module, self._opt_cls_name)
         if network_cls is None:
             raise RuntimeError("Can not find network class:", self._opt_cls_name)
