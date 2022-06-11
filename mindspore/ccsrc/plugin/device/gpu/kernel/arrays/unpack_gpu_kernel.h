@@ -103,6 +103,17 @@ class UnpackFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void InitSizeLists() override {}
 
  private:
+  void ResetResource() noexcept override {
+    axis_ = 0;
+    is_null_input_ = false;
+    output_num_ = 0;
+    input_size_ = 1;
+    dims_after_axis_ = 1;
+    outputs_host_ = nullptr;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
   void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
