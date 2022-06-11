@@ -49,6 +49,8 @@ from .hamming_window import _hamming_window_aicpu
 from .gather_nd import _gather_nd_aicpu
 from .scatter_nd import _scatter_nd_aicpu
 from .scatter_nd_update import _scatter_nd_update_aicpu
+from .scale_and_translate import _scale_and_translate_aicpu
+from .scale_and_translate_grad import _scale_and_translate_grad_aicpu
 from .scatter import _scatter_aicpu
 from .scatter_add_with_axis import _scatter_add_with_axis_aicpu
 from .exp import _exp_aicpu

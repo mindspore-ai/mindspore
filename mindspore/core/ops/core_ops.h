@@ -49,6 +49,8 @@ constexpr auto kResizeBilinearV2 = "ResizeBilinearV2";
 constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kCropAndResize = "CropAndResize";
 constexpr auto kCropAndResizeGradImage = "CropAndResizeGradImage";
+constexpr auto kScaleAndTranslate = "ScaleAndTranslate";
+constexpr auto kScaleAndTranslateGrad = "ScaleAndTranslateGrad";
 
 // String
 constexpr auto kStringEq = "string_eq";
@@ -1198,6 +1200,9 @@ GVAR_DEF(PrimitivePtr, kPrimAdjustHue, std::make_shared<Primitive>(kAdjustHue));
 GVAR_DEF(PrimitivePtr, kPrimAdjustContrastv2, std::make_shared<Primitive>(kAdjustContrastv2));
 GVAR_DEF(PrimitivePtr, kPrimAdjustSaturation, std::make_shared<Primitive>(kAdjustSaturation));
 GVAR_DEF(PrimitivePtr, kPrimCompareAndBitpack, std::make_shared<Primitive>(kCompareAndBitpack));
+GVAR_DEF(PrimitivePtr, kPrimScaleAndTranslate, std::make_shared<Primitive>("ScaleAndTranslate"));
+GVAR_DEF(PrimitivePtr, kPrimScaleAndTranslateGrad, std::make_shared<Primitive>("ScaleAndTranslateGrad"));
+
 // Statements
 GVAR_DEF(PrimitivePtr, kPrimReturn, std::make_shared<Primitive>(kReturn));
 GVAR_DEF(PrimitivePtr, kPrimUnroll, std::make_shared<Primitive>("Unroll"));

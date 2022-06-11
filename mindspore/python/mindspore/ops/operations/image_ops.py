@@ -979,3 +979,72 @@ class CropAndResizeGradImage(Primitive):
         else:
             validator.check_type_name("T", T, valid_values, self.name)
         self.add_prim_attr("max_Byte", int(2e9))  # Maximum bytes of image gradient
+
+
+class ScaleAndTranslate(Primitive):
+    """
+    Scale And Translate the input image tensor.
+
+    Note:
+        Input images must be a 4-D tensor.
+        Input size, scale and translation must be a 1-D tensor with two elements.
+
+    Args:
+        kernel_type (str): An optional string. Deciding which image filtering algorithm to choose. Default: "lanczos3".
+        antialias (bool): An optional bool. Deciding whether to use the antialias. Default: True.
+
+    Inputs:
+        - **images** (Tensor) - A 4-D tensor of shape (batch, image_height, image_width, channel).
+        - **size** (Tensor) - The size of the output image after scale and translate operations. A 1-D tensor with two
+          positive elements whose dtype is int32 and shape must be (2,).
+        - **scale** (Tensor) - Indicates the zoom factor. A 1-D tensor with two positive elements whose dtype is float32
+          and shape must be (2,).
+        - **translation** (Tensor) - Translate the pixel value. A 1-D tensor with two elements whose dtype is
+          float32 and shape must be (2,).
+
+    Outputs:
+        A 4-D tensor with type: float32 and shape: [batch, size[0], size[1], channel].
+
+    Raises:
+        TypeError: If `kernel_type` is not str.
+        TypeError: If `antialias` is not bool.
+        TypeError: If `images` is not tensor with valid dtype.
+        TypeError: If `size` is not a tensor of int32.
+        TypeError: If `scale` is not a tensor of float32.
+        TypeError: If `translation` is not a tensor of float32.
+        ValueError: If `kernel_type` is not in ["lanczos1", "lanczos3", "lanczos5", "gaussian", "box", "triangle",
+                    "keyscubic", "mitchellcubic"].
+        ValueError: If the rank of `images` is not 4.
+        ValueError: If  the shape of `size` is not (2,).
+        ValueError: If  the shape of `scale` is not (2,).
+        ValueError: If the shape of `translation`  is not (2,).
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> op = P.ScaleAndTranslate()
+        >>> image = Tensor(np.array([[[[9.0], [5.0], [2.0], [1.0]],
+        ...                           [[6.0], [1.0], [9.0], [7.0]]]]), mindspore.float32)
+        >>> size = Tensor(np.array([2, 4]).astype(np.int32))
+        >>> scale = Tensor(np.array([3, 4]).astype(np.float32))
+        >>> translation = Tensor(np.array([0.4, 0.5]).astype(np.float32))
+        >>> output = op(image, size, scale, translation)
+        >>> print(output)
+        [[[[10.359701]
+           [10.081222]
+           [ 9.824163]
+           [ 9.439745]]
+          [[ 9.972004]
+           [ 9.657038]
+           [ 9.304725]
+           [ 8.781468]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, kernel_type="lanczos3", antialias=True):
+        """Initialize ScaleAndTranslate"""
+        validator.check_value_type("kernel_type", kernel_type, [str], self.name)
+        validator.check_string(kernel_type, ["lanczos1", "lanczos3", "lanczos5", "gaussian", "box", "triangle",
+                                             "keyscubic", "mitchellcubic"], "kernel_type", self.name)
+        validator.check_value_type("antialias", antialias, [bool], self.name)

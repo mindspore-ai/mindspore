@@ -71,6 +71,7 @@ from mindspore.ops.operations.random_ops import TruncatedNormal
 from mindspore.ops.operations.random_ops import ParameterizedTruncatedNormal
 from mindspore.ops.operations.image_ops import NonMaxSuppressionWithOverlaps
 from mindspore.ops.operations.image_ops import ResizeArea
+from mindspore.ops.operations.image_ops import ScaleAndTranslate
 from mindspore.ops.operations.other_ops import SampleDistortedBoundingBoxV2
 from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.array_ops import ResizeNearestNeighborV2
@@ -3961,6 +3962,12 @@ test_case_image_ops = [
                         Tensor(np.array([2, 2]).astype(np.int32)),
                         Tensor(np.array([[0, 0]]).astype(np.float32))],
         'skip': ['backward']}),
+    ('ScaleAndTranslate', {
+        'block': ScaleAndTranslate(kernel_type="lanczos3", antialias=True),
+        'desc_inputs': [Tensor(np.random.rand(2, 2, 2, 4), mstype.float32),
+                        Tensor([3, 4], mstype.int32), Tensor([5, 6], mstype.float32),
+                        Tensor([0.1, 0.8], mstype.float32)],
+        'desc_bprop': [Tensor(np.random.rand(2, 2, 2, 4), mstype.float32)]}),
 ]
 
 test_case_other_ops = [
