@@ -37,7 +37,12 @@ class Net(nn.Cell):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_binary_cross_entropy_loss():
+def test_kl_div_loss():
+    """
+    Feature: Test KLDivLoss.
+    Description: Test KLDivLoss op with float inputs.
+    Expectation: The result match to expect.
+    """
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
     target = np.random.rand(20).astype(np.float32)
@@ -64,7 +69,12 @@ class Grad(nn.Cell):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_binary_cross_entropy_loss_grad():
+def test_kl_div_loss_grad():
+    """
+    Feature: Test KLDivLossGrad.
+    Description: Test KLDivLossGrad op with float inputs.
+    Expectation: The result match to expect.
+    """
     np.random.seed(42)
     prediction = np.random.rand(20).astype(np.float32)
     target = np.random.rand(20).astype(np.float32)
@@ -77,10 +87,4 @@ def test_binary_cross_entropy_loss_grad():
                   -0.06111591, -0.8490888, -0.57735133, -0.7452407, -0.02695603, -0.01914206,
                   -0.03094601, -0.14319494]
 
-    dx2_expect = [0.0163771, -0.950962, -0.03309895, -0.5481312, 0.01523498, 0.39894313,
-                  -0.20858267, -0.27628726, -0.06815486, -0.5134226, 0.46645382, -1.3477919,
-                  -2.409831, 0.65787154, 0.4682768, 0.55671424, -0.04362264, -0.36274382,
-                  0.00852979, -0.03639247]
-
     assert np.allclose(dx[0].asnumpy(), dx1_expect)
-    assert np.allclose(dx[1].asnumpy(), dx2_expect)
