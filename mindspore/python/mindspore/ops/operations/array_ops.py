@@ -3092,7 +3092,7 @@ class Unstack(Primitive):
     This is the opposite of pack.
 
     Args:
-        axis (int): Dimension along which to pack. Default: 0.
+        axis (int): Dimension along which to unpack. Default: 0.
                     Negative values wrap around. The range is [-R, R).
 
     Inputs:
