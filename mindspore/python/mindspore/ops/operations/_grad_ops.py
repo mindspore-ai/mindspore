@@ -151,21 +151,21 @@ class BiasAddGrad(Primitive):
         self.add_prim_attr('data_format', self.format)
 
 
-class KLDivLossGrad(PrimitiveWithInfer):
+class KLDivLossGrad(Primitive):
     """Computes gradients for `KLDivLoss` operation."""
 
     @prim_attr_register
     def __init__(self, reduction='mean'):
-        self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
-
-    def infer_shape(self, doutput_shape, x_shape, y_shape):
-        validator.check('x_shape', x_shape, 'y_shape', y_shape, Rel.EQ, self.name)
-        return x_shape
-
-    def infer_dtype(self, doutput_type, x_type, y_type):
-        args = {'x_type': x_type, 'y_type': y_type, 'doutput_type': doutput_type}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
-        return x_type
+        device_target = context.get_context("device_target")
+        if device_target == "CPU":
+            support_mode = ['none', 'mean', 'batchmean', 'sum']
+        elif device_target == "GPU":
+            support_mode = ['none', 'mean', 'sum']
+        elif device_target == "Ascend":
+            raise ValueError(f"'{self.name}' does not support Ascend platform currently.")
+        else:
+            raise ValueError(f"'{self.name}' unknown device target: '{device_target}'")
+        self.reduction = validator.check_string(reduction, support_mode, 'reduction', self.name)
 
 
 class BinaryCrossEntropyGrad(PrimitiveWithInfer):
