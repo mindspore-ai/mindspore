@@ -68,7 +68,7 @@ class DataPrepareActor : public DebugAwareActor {
  protected:
   void Init() override;
   void Run(OpContext<DeviceTensor> *const context) override {
-    PrepareData({}, context, GraphExecutionStrategy::kPipeline);
+    PrepareData(init_tensors_, context, GraphExecutionStrategy::kPipeline);
   }
 
  private:
@@ -113,6 +113,8 @@ class DataPrepareActor : public DebugAwareActor {
                                      const device::DeviceAddressPtr &host_tensor_address,
                                      const DeviceContext *device_context, OpContext<DeviceTensor> *context) const;
 
+  void SetInitTensorsIfNeeded(const std::vector<std::vector<TensorPtr>> &input_tensors);
+
   const GraphCompilerInfo *graph_compiler_info_;
   GraphExecutionStrategy strategy_;
   GraphExecutionStrategy real_strategy_;
@@ -128,6 +130,7 @@ class DataPrepareActor : public DebugAwareActor {
   std::vector<std::vector<size_t>> size_list_list_;
   std::vector<size_t> total_size_list_;
   std::vector<const DeviceContext *> continuous_memory_device_contexts_;
+  std::vector<std::vector<TensorPtr>> init_tensors_;
 };  // namespace runtime
 
 using DataPrepareActorPtr = std::shared_ptr<DataPrepareActor>;

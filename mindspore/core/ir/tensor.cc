@@ -410,6 +410,8 @@ class TensorDataImpl : public TensorData {
 
   ssize_t ndim() const override { return static_cast<ssize_t>(ndim_); }
 
+  bool is_sub_data() const override { return false; }
+
   void *data() override {
     if (data_ == nullptr) {
       if (data_size_ > INT32_MAX) {
@@ -467,6 +469,8 @@ class TensorSubData : public TensorData {
   ssize_t nbytes() const override { return size() * itemsize(); }
 
   ssize_t ndim() const override { return static_cast<ssize_t>(ndim_); }
+
+  bool is_sub_data() const override { return true; }
 
   void *data() override {
     // Set data initialized if data() is called.

@@ -85,6 +85,11 @@ class MS_CORE_API TensorData {
   /// \return Const data pointer.
   virtual const void *const_data() const = 0;
 
+  /// \brief Get whether this tensor data is sub data.
+  ///
+  /// \return Whether this tensor data is sub data.
+  virtual bool is_sub_data() const = 0;
+
   /// \brief Whether the data are equal.
   ///
   /// \param[in] other Another TensorData.
