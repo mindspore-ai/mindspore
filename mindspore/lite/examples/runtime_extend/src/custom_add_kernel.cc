@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 #include "src/custom_common.h"
-#include "include/errorcode.h"
 #include "include/registry/register_kernel_interface.h"
 #include "include/registry/register_kernel.h"
 
@@ -36,12 +35,12 @@ class CustomAddKernel : public Kernel {
   ~CustomAddKernel() = default;
 
   // Prepare will be called during graph compilation
-  int Prepare() override { return lite::RET_OK; }
+  int Prepare() override { return kSuccess; }
 
   // Execute is called to compute.
   int Execute() override {
     if (inputs_.size() != 2) {
-      return lite::RET_PARAM_INVALID;
+      return kLiteParamInvalid;
     }
     PreProcess();
     ParseAttrData();
@@ -52,11 +51,11 @@ class CustomAddKernel : public Kernel {
     for (int i = 0; i < num; ++i) {
       out[i] = in0[i] + in1[i];
     }
-    return lite::RET_OK;
+    return kSuccess;
   }
 
   // Resize is used to update some parameters if current node can change along with inputs.
-  int ReSize() override { return lite::RET_OK; }
+  int ReSize() override { return kSuccess; }
 
  private:
   // if output shape exists value -1, need to be inferred before applying memory for output tensor.
@@ -66,10 +65,10 @@ class CustomAddKernel : public Kernel {
                       ->Infer(&inputs_, &outputs_, primitive_);
       if (status != kSuccess) {
         std::cerr << "infer failed." << std::endl;
-        return lite::RET_ERROR;
+        return kLiteError;
       }
       auto ret = ReSize();
-      if (ret != lite::RET_OK) {
+      if (ret != kSuccess) {
         std::cerr << "resize failed." << std::endl;
         return ret;
       }
@@ -79,10 +78,10 @@ class CustomAddKernel : public Kernel {
       auto data = output.MutableData();
       if (data == nullptr) {
         std::cerr << "Get data failed" << std::endl;
-        return lite::RET_ERROR;
+        return kLiteError;
       }
     }
-    return lite::RET_OK;
+    return kSuccess;
   }
 
   // fetch attributes if user need.
