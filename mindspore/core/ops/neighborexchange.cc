@@ -96,7 +96,7 @@ void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<Abst
   MS_EXCEPTION_IF_NULL(recv_type_attr);
   if (!recv_type_attr->isa<Type>()) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name << "', attr '" << kNeighborExchangeRecvType
-                            << "' must be a mindspore data type. But got: " << recv_type_attr << ".";
+                            << "' must be a mindspore data type, but got: " << recv_type_attr << ".";
   }
   // check group
   auto group_attr = primitive->GetAttr(kGroup);

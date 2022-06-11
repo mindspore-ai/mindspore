@@ -31,7 +31,7 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name()
-                            << "', input must be a tensor. But got: " << input_args[0]->BuildShape()->ToString() << ".";
+                            << "', input must be a tensor, but got: " << input_args[0]->BuildShape()->ToString() << ".";
   }
   MS_EXCEPTION_IF_NULL(primitive);
   const uint32_t kInpuDims = 1;
@@ -55,7 +55,7 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
   auto shape_v = shape_ptr->shape();
   if (shape_v.size() != kInpuDims) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', input tensor must be a 1-D tensor. But got shape size: " << shape_v.size() << ".";
+                             << "', input tensor must be a 1-D tensor, but got shape size: " << shape_v.size() << ".";
   }
   if (shape_v[0] < kInpuSizes) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input tensor must have a least 2 elements, but got "
@@ -72,7 +72,7 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
           shape_m *= input_shape_ptr[i];
         } else {
           MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                                   << "', each dimension of input must be greater than 0. But got input_shape[" << i
+                                   << "', each dimension of input must be greater than 0, but got input_shape[" << i
                                    << "]: " << input_shape_ptr[i] << ".";
         }
       }
@@ -84,7 +84,7 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
           shape_m *= input_shape_ptr[i];
         } else {
           MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                                   << "', each dimension of input must be greater than 0. But got input_shape[" << i
+                                   << "', each dimension of input must be greater than 0, but got input_shape[" << i
                                    << "]: " << input_shape_ptr[i] << ".";
         }
       }
