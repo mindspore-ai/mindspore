@@ -33,6 +33,7 @@ from ..operations.array_ops import (
 from ..operations.nn_ops import AdaptiveMaxPool2D
 from ..operations.array_ops import TensorScatterElements
 from ...common import Tensor
+from .._primitive_cache import _get_cache_prim
 
 eye_ = P.Eye()
 fill_ = P.Fill()
@@ -208,7 +209,7 @@ def padding(x, pad_dim_size=8):
         [[ 8.  0.  0.  0.]
          [10.  0.  0.  0.]]
     """
-    padding_ = P.array_ops.Padding(pad_dim_size)
+    padding_ = _get_cache_prim(P.array_ops.Padding)(pad_dim_size)
     return padding_(x)
 
 
@@ -257,7 +258,8 @@ def one_hot(indices, depth, on_value, off_value, axis=-1):
          [0. 1. 0.]
          [0. 0. 1.]]
     """
-    return P.OneHot(axis)(indices, depth, on_value, off_value)
+    onehot = _get_cache_prim(P.OneHot)(axis)
+    return onehot(indices, depth, on_value, off_value)
 
 
 def fill(type, shape, value):
@@ -552,8 +554,8 @@ def unique(x):
         [0 1 2 1]
     """
 
-    unique_op = P.Unique()
-    reshape_op = P.Reshape()
+    unique_op = _get_cache_prim(P.Unique)()
+    reshape_op = _get_cache_prim(P.Reshape)()
 
     shape_x = x.shape
     length_x = get_x_shape(shape_x)
@@ -650,7 +652,7 @@ def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
         >>> print(counts)
         [2 2 1 2 1]
     """
-    unique_consecutive_op = UniqueConsecutive(return_idx, return_counts, axis)
+    unique_consecutive_op = _get_cache_prim(UniqueConsecutive)(return_idx, return_counts, axis)
     output, idx, counts = unique_consecutive_op(x)
     if return_idx and return_counts:
         return output, idx, counts
@@ -1082,7 +1084,8 @@ def concat(input_x, axis=0):
         [[0. 1. 0. 1.]
          [2. 1. 2. 1.]]
     """
-    return P.Concat(axis)(input_x)
+    _concat = _get_cache_prim(P.Concat)(axis)
+    return _concat(input_x)
 
 
 def expand_dims(input_x, axis):
@@ -1345,9 +1348,7 @@ def scatter_nd(indices, updates, shape):
     Scatters a tensor into a new tensor depending on the specified indices.
 
     Creates an empty tensor with the given `shape`, and set values by scattering the update tensor
-    depending on indices.
-
-    The empty tensor has rank :math:`P` and `indices` has rank :math:`Q` where :math:`Q \ge 2`.
+    depending on indices. The empty tensor has rank :math:`P` and `indices` has rank :math:`Q` where :math:`Q \ge 2`.
 
     `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where :math:`N \le P`.
 
@@ -1491,7 +1492,7 @@ def scatter_update(input_x, indices, updates):
         [[2. 1.2  1.]
          [3. 1.2  1.]]
     """
-    scatter_update_inner = P.ScatterUpdate()
+    scatter_update_inner = _get_cache_prim(P.ScatterUpdate)()
     return scatter_update_inner(input_x, indices, updates)
 
 
@@ -1567,7 +1568,7 @@ def scatter_nd_add(input_x, indices, updates, use_locking=False):
           [0 0 0 0]
           [0 0 0 0]]]
     """
-    scatter_nd_add_inner = P.ScatterNdAdd(use_locking)
+    scatter_nd_add_inner = _get_cache_prim(P.ScatterNdAdd)(use_locking)
     return scatter_nd_add_inner(input_x, indices, updates)
 
 
@@ -1643,7 +1644,7 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
           [ 0  0  0  0]
           [ 0  0  0  0]]]
     """
-    scatter_nd_sub_inner = P.ScatterNdSub(use_locking)
+    scatter_nd_sub_inner = _get_cache_prim(P.ScatterNdSub)(use_locking)
     return scatter_nd_sub_inner(input_x, indices, updates)
 
 
@@ -1715,7 +1716,7 @@ def scatter_nd_mul(input_x, indices, updates, use_locking=False):
           [1 1 1 1]
           [1 1 1 1]]]
     """
-    scatter_nd_mul_inner = ScatterNdMul(use_locking)
+    scatter_nd_mul_inner = _get_cache_prim(ScatterNdMul)(use_locking)
     return scatter_nd_mul_inner(input_x, indices, updates)
 
 
@@ -1793,7 +1794,7 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
           [1.         1.         1.         1.        ]
           [1.         1.         1.         1.        ]]]
     """
-    scatter_nd_div_inner = P.ScatterNdDiv(use_locking)
+    scatter_nd_div_inner = _get_cache_prim(P.ScatterNdDiv)(use_locking)
     return scatter_nd_div_inner(input_x, indices, updates)
 
 
@@ -1864,7 +1865,7 @@ def scatter_nd_max(input_x, indices, updates, use_locking=False):
           [1 1 1 1]
           [1 1 1 1]]]
     """
-    scatter_nd_max_inner = ScatterNdMax(use_locking)
+    scatter_nd_max_inner = _get_cache_prim(ScatterNdMax)(use_locking)
     return scatter_nd_max_inner(input_x, indices, updates)
 
 
@@ -1941,7 +1942,7 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
           [10 10 10 10]
           [10 10 10 10]]]
     """
-    scatter_nd_min_inner = P.ScatterNdMin(use_locking)
+    scatter_nd_min_inner = _get_cache_prim(P.ScatterNdMin)(use_locking)
     return scatter_nd_min_inner(input_x, indices, updates)
 
 
@@ -2405,7 +2406,8 @@ def space_to_batch_nd(input_x, block_size, paddings):
          [[[3.]]]
          [[[4.]]]]
     """
-    return P.SpaceToBatchND(block_size, paddings)(input_x)
+    _space_to_batch_nd = _get_cache_prim(P.SpaceToBatchND)(block_size, paddings)
+    return _space_to_batch_nd(input_x)
 
 
 def batch_to_space_nd(input_x, block_shape, crops):
@@ -2463,7 +2465,8 @@ def batch_to_space_nd(input_x, block_shape, crops):
         [[[[1.  2.]
            [3.  4.]]]]
     """
-    return P.BatchToSpaceND(block_shape, crops)(input_x)
+    _batch_to_space_nd = _get_cache_prim(P.BatchToSpaceND)(block_shape, crops)
+    return _batch_to_space_nd(input_x)
 
 
 def nonzero(x):
@@ -2583,7 +2586,7 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
         num_cols = cast_(num_cols, mstype.int32)
     if isinstance(padding_value, (float, int)) and not isinstance(padding_value, bool):
         padding_value = cast_(padding_value, x.dtype)
-    matrix_diag_v3 = MatrixDiagV3(align)
+    matrix_diag_v3 = _get_cache_prim(MatrixDiagV3)(align)
     return matrix_diag_v3(x, k, num_rows, num_cols, padding_value)
 
 
@@ -2643,7 +2646,7 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
         >>> print(output.shape)
         (3, 3)
     """
-    matrix_diag_part_v3 = MatrixDiagPartV3(align)
+    matrix_diag_part_v3 = _get_cache_prim(MatrixDiagPartV3)(align)
     return matrix_diag_part_v3(x, k, padding_value)
 
 
@@ -2724,7 +2727,7 @@ def meshgrid(inputs, indexing='xy'):
            [8, 9, 0, 1, 2],
            [8, 9, 0, 1, 2]]]))
     """
-    meshgrid_op = P.Meshgrid(indexing)
+    meshgrid_op = _get_cache_prim(P.Meshgrid)(indexing)
     return meshgrid_op(inputs)
 
 
@@ -2772,7 +2775,8 @@ def broadcast_to(x, shape):
         [[1. 1.]
          [2. 2.]]
     """
-    return P.BroadcastTo(shape)(x)
+    _broadcast_to = _get_cache_prim(P.BroadcastTo)(shape)
+    return _broadcast_to(x)
 
 
 def unsorted_segment_min(x, segment_ids, num_segments):
@@ -2993,7 +2997,8 @@ def adaptive_max_pool2d(input_x, output_size, return_indices=False):
          [[8. 9.]]
          [[8. 9.]]]
     """
-    return AdaptiveMaxPool2D(output_size, return_indices)(input_x)
+    _adaptive_max_pool2d = _get_cache_prim(AdaptiveMaxPool2D)(output_size, return_indices)
+    return _adaptive_max_pool2d(input_x)
 
 
 def index_fill(x, dim, index, value):
@@ -3373,7 +3378,7 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
         >>> print(output.shape)
         (16, 16, 8, 8)
     """
-    c2i = Col2Im(kernel_size, dilation, padding_value, stride)
+    c2i = _get_cache_prim(Col2Im)(kernel_size, dilation, padding_value, stride)
     return c2i(input_x, output_size)
 
 
@@ -3426,7 +3431,7 @@ def split(input_x, axis=0, output_num=1):
         [[1],
          [2]]))
     """
-    split_ = P.Split(axis, output_num)
+    split_ = _get_cache_prim(P.Split)(axis, output_num)
     return split_(input_x)
 
 

@@ -18,6 +18,7 @@
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN
 from ...common.tensor import Tensor
+from .._primitive_cache import _get_cache_prim
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -111,7 +112,7 @@ def adaptive_avg_pool2d(input_x, output_size):
          [[4.5 5.5]]
          [[4.5 5.5]]]
     """
-    adaptive_avgpool2d_ = P.AdaptiveAvgPool2D(output_size)
+    adaptive_avgpool2d_ = _get_cache_prim(P.AdaptiveAvgPool2D)(output_size)
     return adaptive_avgpool2d_(input_x)
 
 
@@ -180,7 +181,8 @@ def avg_pool2d(x, kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW'
           [[26.5  27.5  28.5]
            [30.5  31.5  32.5]]]]
     """
-    return P.AvgPool(kernel_size, strides, pad_mode, data_format)(x)
+    _avg_pool = _get_cache_prim(P.AvgPool)(kernel_size, strides, pad_mode, data_format)
+    return _avg_pool(x)
 
 
 def celu(x, alpha=1.0):
@@ -217,7 +219,7 @@ def celu(x, alpha=1.0):
         >>> print(output)
         [-0.86466473 -0.63212055  1.          2.        ]
     """
-    celu_op = P.CeLU(alpha)
+    celu_op = _get_cache_prim(P.CeLU)(alpha)
     return celu_op(x)
 
 
@@ -381,7 +383,7 @@ def hardshrink(x, lambd=0.5):
         [[ 0.      1.      2.    ]
         [ 0.      0.     -2.1233]]
     """
-    hshrink_op = P.HShrink(lambd)
+    hshrink_op = _get_cache_prim(P.HShrink)(lambd)
     return hshrink_op(x)
 
 
@@ -489,7 +491,7 @@ def soft_shrink(x, lambd=0.5):
         [[ 0.02979  0.287    0.676  ]
          [ 0.2837   0.1216  -0.6543 ]]
     """
-    soft_shrink_op = P.SoftShrink(lambd)
+    soft_shrink_op = _get_cache_prim(P.SoftShrink)(lambd)
     return soft_shrink_op(x)
 
 
@@ -579,15 +581,16 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         >>> print(output.shape)
         (4, 5, 8, 8)
     """
-    deformable_offsets = NN.DeformableOffsets(strides, padding, kernel_size, dilations, "NCHW", deformable_groups,
-                                              modulated)
+    deformable_offsets = _get_cache_prim(NN.DeformableOffsets)(strides, padding, kernel_size, dilations, "NCHW",
+                                                               deformable_groups,
+                                                               modulated)
     fm_offset = deformable_offsets(x, offsets)
 
     weight_shape = weight.shape
     out_channel = weight_shape[0]
     strides_conv = (kernel_size[0], kernel_size[1])
-    conv = P.Conv2D(out_channel, kernel_size, 1, "valid", 0, strides_conv, 1, groups)
-    bias_add = P.BiasAdd()
+    conv = _get_cache_prim(P.Conv2D)(out_channel, kernel_size, 1, "valid", 0, strides_conv, 1, groups)
+    bias_add = _get_cache_prim(P.BiasAdd)()
 
     output = conv(fm_offset, weight)
     if bias is not None:
@@ -630,7 +633,7 @@ def pdist(x, p=2.0):
         >>> print(y)
         [1.4142135 2.828427 1.4142135]
     """
-    pdist_ = NN.Pdist(p=p)
+    pdist_ = _get_cache_prim(NN.Pdist)(p=p)
     return pdist_(x)
 
 
@@ -719,10 +722,12 @@ def pad(input_x, paddings):
             pad_all_non_positive = False
         non_negative_padding.append((max(0, pd[0]), max(0, pd[1])))
     if pad_all_non_negative:
-        return P.Pad(paddings)(input_x)
+        _pad = _get_cache_prim(P.Pad)(paddings)
+        return _pad(input_x)
     if pad_all_non_positive:
         return slice_(input_x, slice_begin, slice_size)
-    out = P.Pad(tuple(non_negative_padding))(input_x)
+    _pad = _get_cache_prim(P.Pad)(tuple(non_negative_padding))
+    out = _pad(input_x)
     return slice_(out, slice_begin, slice_size)
 
 
@@ -813,19 +818,23 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
     class_dim = 0 if inputs.ndim == 1 else 1
     if inputs.size == target.size:
         return _cross_entropy(inputs, target, class_dim, weight, reduction, label_smoothing)
-    return nll_loss(P.LogSoftmax(class_dim)(inputs), target, weight, ignore_index, reduction, label_smoothing)
+    _log_softmax = _get_cache_prim(P.LogSoftmax)(class_dim)
+    return nll_loss(_log_softmax(inputs), target, weight, ignore_index, reduction, label_smoothing)
 
 
 def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', label_smoothing=0.0):
     """cross entropy inner function"""
+    _log_softmax = _get_cache_prim(P.LogSoftmax)(target_dim)
+    _ones_like = _get_cache_prim(P.OnesLike)()
+
     class_dim = 0 if inputs.ndim == 1 else 1
     n_classes = inputs.shape[class_dim]
-    inputs = P.LogSoftmax(target_dim)(inputs)
+    inputs = _log_softmax(inputs)
     if label_smoothing > 0.0:
         target = target * (1 - label_smoothing) + label_smoothing / n_classes
 
     if weight is None:
-        weight = P.OnesLike()(inputs)
+        weight = _ones_like(inputs)
 
     if reduction == 'mean':
         return -(inputs * target * weight).sum() / (inputs.size / n_classes)
@@ -909,17 +918,23 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
 
 def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, reduction='none', label_smoothing=0.0):
     """nll loss inner function"""
+    _neg = _get_cache_prim(P.Neg)()
+    _gather_d = _get_cache_prim(P.GatherD)()
+    _gather = _get_cache_prim(P.Gather)()
+    _ones_like = _get_cache_prim(P.OnesLike)()
+    _equal = _get_cache_prim(P.Equal)()
+
     if target.ndim == inputs.ndim - 1:
         target = target.expand_dims(target_dim)
-    loss = P.Neg()(P.GatherD()(inputs, target_dim, target))
-    smooth_loss = P.Neg()(inputs.sum(axis=target_dim, keepdims=True))
+    loss = _neg(_gather_d(inputs, target_dim, target))
+    smooth_loss = _neg(inputs.sum(axis=target_dim, keepdims=True))
     if weight is not None:
-        loss_weights = P.Gather()(weight, target, 0)
+        loss_weights = _gather(weight, target, 0)
         loss = loss * loss_weights
     else:
-        loss_weights = P.OnesLike()(loss)
+        loss_weights = _ones_like(loss)
     if ignore_index is not None:
-        non_pad_mask = P.Equal()(target, ignore_index)
+        non_pad_mask = _equal(target, ignore_index)
         loss = loss.masked_fill(non_pad_mask, 0.)
         loss_weights = loss_weights.masked_fill(non_pad_mask, 0.)
         smooth_loss = smooth_loss.masked_fill(non_pad_mask, 0.)
@@ -971,7 +986,8 @@ def intopk(x1, x2, k):
         >>> print(output)
         [ True  False]
     """
-    return P.InTopK(k)(x1, x2)
+    _in_topk = _get_cache_prim(P.InTopK)(k)
+    return _in_topk(x1, x2)
 
 
 def log_softmax(logits, axis=-1):
@@ -1009,7 +1025,8 @@ def log_softmax(logits, axis=-1):
         >>> print(output)
         [-4.4519143 -3.4519143 -2.4519143 -1.4519144 -0.4519144]
     """
-    return P.LogSoftmax(axis)(logits)
+    _log_softmax = _get_cache_prim(P.LogSoftmax)(axis)
+    return _log_softmax(logits)
 
 
 def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
@@ -1132,8 +1149,10 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
            [14.8      ]]]]
     """
     if input_x.ndim == 4:
-        return NN.GridSampler2D(interpolation_mode, padding_mode, align_corners)(input_x, grid)
-    return NN.GridSampler3D(interpolation_mode, padding_mode, align_corners)(input_x, grid)
+        _grid_sampler_2d = _get_cache_prim(NN.GridSampler2D)(interpolation_mode, padding_mode, align_corners)
+        return _grid_sampler_2d(input_x, grid)
+    _grid_sampler_3d = _get_cache_prim(NN.GridSampler3D)(interpolation_mode, padding_mode, align_corners)
+    return _grid_sampler_3d(input_x, grid)
 
 
 __all__ = [

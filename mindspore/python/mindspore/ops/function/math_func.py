@@ -47,6 +47,7 @@ from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ..._c_expression import Tensor as Tensor_
 from ..._checkparam import Validator as validator
+from .._primitive_cache import _get_cache_prim
 
 
 @constexpr
@@ -320,7 +321,8 @@ def argmin(x, axis=-1):
         >>> print(index)
         2
     """
-    return P.Argmin(axis)(x)
+    _argmin = _get_cache_prim(P.Argmin)(axis)
+    return _argmin(x)
 
 
 neg_tensor = P.Neg()
@@ -853,7 +855,7 @@ def inplace_update(x, v, indices):
          [1.  1.5]
          [5.  6. ]]
     """
-    inplace_update_inner = P.InplaceUpdate(indices)
+    inplace_update_inner = _get_cache_prim(P.InplaceUpdate)(indices)
     return inplace_update_inner(x, v)
 
 
@@ -893,7 +895,7 @@ def inplace_add(x, v, indices):
          [4.  5.5]
          [5.  6. ]]
     """
-    inplace_add_inner = P.InplaceAdd(indices)
+    inplace_add_inner = _get_cache_prim(P.InplaceAdd)(indices)
     return inplace_add_inner(x, v)
 
 
@@ -933,7 +935,7 @@ def inplace_sub(x, v, indices):
          [2.  2.5]
          [5.  6. ]]
     """
-    inplace_sub_inner = P.InplaceSub(indices)
+    inplace_sub_inner = _get_cache_prim(P.InplaceSub)(indices)
     return inplace_sub_inner(x, v)
 
 
@@ -2060,7 +2062,7 @@ def matrix_solve(matrix, rhs, adjoint=False):
         [[0.14285707]
          [1.5714287 ]]
     """
-    matrix_solve_ = MatrixSolve(adjoint=adjoint)
+    matrix_solve_ = _get_cache_prim(MatrixSolve)(adjoint=adjoint)
     return matrix_solve_(matrix, rhs)
 
 
@@ -2186,8 +2188,8 @@ def ldexp(x, other):
         [ 2.  4.  8. 16.]
     """
 
-    pow_ops = P.Pow()
-    mul_ops = P.Mul()
+    pow_ops = _get_cache_prim(P.Pow)()
+    mul_ops = _get_cache_prim(P.Mul)()
 
     out = mul_ops(x, pow_ops(2.0, other))
     return out
@@ -2585,7 +2587,8 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
         >>> print(output)
             [true false false false true]
     """
-    return P.IsClose(rtol=rtol, atol=atol, equal_nan=equal_nan)(x1, x2)
+    is_close = _get_cache_prim(P.IsClose)(rtol=rtol, atol=atol, equal_nan=equal_nan)
+    return is_close(x1, x2)
 
 
 def isreal(x):
@@ -2619,12 +2622,12 @@ def isreal(x):
         raise TypeError("the input x must be Tensor!")
 
     # Note: Integral and Floating tensor values are always real
-    ones_op = P.Ones()
+    ones_op = _get_cache_prim(P.Ones)()
     real_dtype = mstype.int_type + mstype.uint_type + mstype.float_type + (mstype.bool_,)
     if x.dtype in real_dtype:
         return ones_op(x.shape, mstype.bool_)
 
-    imag_op = P.Imag()
+    imag_op = _get_cache_prim(P.Imag)()
     return imag_op(x) == 0
 
 
@@ -2820,8 +2823,8 @@ def logaddexp(x1, x2):
         [2.312 2.693 3.312]
     """
 
-    log_op = P.Log()
-    exp_op = P.Exp()
+    log_op = _get_cache_prim(P.Log)()
+    exp_op = _get_cache_prim(P.Exp)()
 
     y = log_op(exp_op(x1) + exp_op(x2))
     return y
@@ -2858,9 +2861,9 @@ def logaddexp2(x1, x2):
         [3. 4.32 8.02]
     """
 
-    log_op = P.Log()
-    pow_op = P.Pow()
-    add_op = P.Add()
+    log_op = _get_cache_prim(P.Log)()
+    pow_op = _get_cache_prim(P.Pow)()
+    add_op = _get_cache_prim(P.Add)()
 
     if not isinstance(x1, (Tensor, Tensor_)):
         raise TypeError("The input x1 must be Tensor.")
@@ -2920,7 +2923,7 @@ def outer(x1, x2):
     if len(x2.shape) != 1:
         raise ValueError("the input x2 must be a 1-D vector!")
     x1 = x1.reshape(-1, 1)
-    mul_ops = P.Mul()
+    mul_ops = _get_cache_prim(P.Mul)()
     y = mul_ops(x1, x2)
     return y
 
@@ -2954,8 +2957,8 @@ def mv(mat, vec):
         [11. 13. 7.]
     """
 
-    matmul_op = P.MatMul()
-    reshape_op = P.Reshape()
+    matmul_op = _get_cache_prim(P.MatMul)()
+    reshape_op = _get_cache_prim(P.Reshape)()
 
     if not isinstance(mat, (Tensor, Tensor_)):
         raise TypeError("The input mat must be Tensor.")
@@ -3004,7 +3007,7 @@ def lcm(x1, x2):
         [14 24 36]
     """
 
-    lcm_ = Lcm()
+    lcm_ = _get_cache_prim(Lcm)()
     return lcm_(x1, x2)
 
 
@@ -3043,7 +3046,7 @@ def cdist(x, y, p=2.0):
         [[[2.8284273 2.8284273]
           [1.4142137 1.4142137]]]
     """
-    cdist_ = P.Cdist(p)
+    cdist_ = _get_cache_prim(P.Cdist)(p)
     return cdist_(x, y)
 
 
@@ -3076,7 +3079,7 @@ def gcd(x1, x2):
         [7 2 3]
     """
 
-    gcd_ = Gcd()
+    gcd_ = _get_cache_prim(Gcd)()
     return gcd_(x1, x2)
 
 
@@ -3166,7 +3169,7 @@ def bernoulli(x, p=0.5, seed=-1):
         >>> print(output)
         [0 1 1]
     """
-    bernoulli_ = Bernoulli(seed)
+    bernoulli_ = _get_cache_prim(Bernoulli)(seed)
     return bernoulli_(x, p)
 
 
@@ -3312,7 +3315,7 @@ def deg2rad(x):
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError("The input x must be tensor")
-    dtype_op = P.DType()
+    dtype_op = _get_cache_prim(P.DType)()
     x_dtype = dtype_op(x)
     _check_input_dtype("x", x_dtype, [mstype.float16, mstype.float32, mstype.float64], "")
     if x_dtype == mstype.float16:
@@ -3353,7 +3356,7 @@ def rad2deg(x):
     """
     if not isinstance(x, (Tensor, Tensor_)):
         raise TypeError("The input x must be tensor")
-    dtype_op = P.DType()
+    dtype_op = _get_cache_prim(P.DType)()
     x_dtype = dtype_op(x)
     _check_input_dtype("x", x_dtype, [mstype.float16, mstype.float32, mstype.float64], "")
     if x_dtype == mstype.float16:
@@ -3425,12 +3428,13 @@ def cummin(x, axis):
         >>> print(output[1])
         [0 1 1 1 4 4]
     """
-    cummin_op = Cummin(axis=0)
+    cummin_op = _get_cache_prim(Cummin)(axis=0)
     if axis == 0:
         out1, out2 = cummin_op(x)
     else:
-        transpose = P.Transpose()
-        x_shape = P.Shape()(x)
+        transpose = _get_cache_prim(P.Transpose)()
+        _shape_op = _get_cache_prim(P.Shape)()
+        x_shape = _shape_op(x)
         prem = _create_cummin_perm(axis, x_shape)
         x = transpose(x, prem)
         out1, out2 = cummin_op(x)
@@ -3445,7 +3449,8 @@ def cummax(x, axis):
     is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
     each maximum value.
     """
-    return ops.Cummax(axis=axis)(x)
+    _cummax = _get_cache_prim(ops.Cummax)(axis=axis)
+    return _cummax(x)
 
 
 def sparse_segment_mean(x, indices, segment_ids):
@@ -3492,11 +3497,14 @@ def logsumexp(x, axis, keep_dims=False):
         >>> print(output.shape)
         (3, 1, 5, 6)
     """
+    _exp = _get_cache_prim(P.Exp)()
+    _reduce_sum = _get_cache_prim(P.ReduceSum)(keep_dims)
+    _log = _get_cache_prim(P.Log)()
 
     x_max = x.max()
-    x_exp = P.Exp()(x - x_max)
-    x_sumexp = P.ReduceSum(keep_dims)(x_exp, axis)
-    x_logsumexp = P.Log()(x_sumexp)
+    x_exp = _exp(x - x_max)
+    x_sumexp = _reduce_sum(x_exp, axis)
+    x_logsumexp = _log(x_sumexp)
     return x_logsumexp + x_max
 
 
@@ -3800,7 +3808,7 @@ def norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
         >>> print(output)
         [ 9.165152 10.954452]
     """
-    lp_norm_inner = P.LpNorm(axis, p, keep_dims, epsilon)
+    lp_norm_inner = _get_cache_prim(P.LpNorm)(axis, p, keep_dims, epsilon)
     return lp_norm_inner(input_x)
 
 
@@ -3837,7 +3845,7 @@ def renorm(input_x, p, dim, maxnorm):
         [1.6666666 1.6666666 1.6666666 1.6666666]
         [1.6666667 1.6666667 1.6666667 1.6666667]]
     """
-    renorm_ = Renorm(p, dim, maxnorm)
+    renorm_ = _get_cache_prim(Renorm)(p, dim, maxnorm)
     return renorm_(input_x)
 
 
@@ -3885,7 +3893,7 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     """
     if not isinstance(logits, (Tensor, Tensor_)):
         raise TypeError("The input logits must be tensor")
-    dtype_op = P.DType()
+    dtype_op = _get_cache_prim(P.DType)()
     logits_dtype = dtype_op(logits)
     _check_input_dtype("logits", logits_dtype, [mstype.float16, mstype.float32], "gumbel_softmax")
     _check_attr_dtype("tau", tau, [float], "gumbel_softmax")
@@ -3893,12 +3901,12 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     _check_attr_dtype("dim", dim, [int], "gumbel_softmax")
     _check_positive_float(tau, "tau", "gumbel_softmax")
 
-    shape_op = P.Shape()
-    cast_op = P.Cast()
-    log_op = P.Log()
-    const_op = P.ScalarToArray()
-    softmax_op = P.Softmax(dim)
-    onehot_op = P.OneHot(dim)
+    shape_op = _get_cache_prim(P.Shape)()
+    cast_op = _get_cache_prim(P.Cast)()
+    log_op = _get_cache_prim(P.Log)()
+    const_op = _get_cache_prim(P.ScalarToArray)()
+    softmax_op = _get_cache_prim(P.Softmax)(dim)
+    onehot_op = _get_cache_prim(P.OneHot)(dim)
 
     sample_shape = shape_op(logits)
     uniform = C.uniform(sample_shape, const_op(0.0), const_op(1.0))
@@ -3986,8 +3994,8 @@ def _check_need_broadcast(shape1, shape2):
 
 def _expand(x, ndim):
     """Expand x to ndim from axis, which can be 0 or -1."""
-    rank_op = P.Rank()
-    expand_dims_op = P.ExpandDims()
+    rank_op = _get_cache_prim(P.Rank)()
+    expand_dims_op = _get_cache_prim(P.ExpandDims)()
     while rank_op(x) < ndim:
         x = expand_dims_op(x, 0)
     return x
@@ -3995,7 +4003,7 @@ def _expand(x, ndim):
 
 def _broadcast_to(x, shape_cur, shape_to, ndim_to):
     """Broadcasts x from shape_cur to shape_to."""
-    tile_op = P.Tile()
+    tile_op = _get_cache_prim(P.Tile)()
     size = _tile_size(shape_cur, shape_to, ndim_to)
     return tile_op(x, size)
 
@@ -4055,10 +4063,10 @@ def matmul(x1, x2):
         >>> print(output.shape)
         (1,)
     """
-    dtype_op = P.DType()
-    rank_op = P.Rank()
-    shape_op = P.Shape()
-    reshape_op = P.Reshape()
+    dtype_op = _get_cache_prim(P.DType)()
+    rank_op = _get_cache_prim(P.Rank)()
+    shape_op = _get_cache_prim(P.Shape)()
+    reshape_op = _get_cache_prim(P.Reshape)()
 
     dtype1 = dtype_op(x1)
     dtype2 = dtype_op(x2)
@@ -4074,12 +4082,15 @@ def matmul(x1, x2):
     shape_out = shape_backbone + _infer_shape_rem(shape1_orig, shape2_orig,
                                                   ndim1_orig, ndim2_orig, transpose_b)
 
+    _matmul = _get_cache_prim(P.MatMul)(False, transpose_b)
+    _batch_matmul = _get_cache_prim(P.BatchMatMul)(False, transpose_b)
+
     x1 = _expand(x1, 2)
     x2 = _expand(x2, 2)
     if rank_op(x2) == 2:
         if rank_op(x1) > 2:
             x1 = reshape_op(x1, (-1, shape1_orig[-1]))
-        res = P.MatMul(False, transpose_b)(x1, x2)
+        res = _matmul(x1, x2)
     else:
         # broadcasts x1.shape[:-2] with x2.shape[:-2]
         ndim_aligned = _max(ndim1_orig, ndim2_orig)
@@ -4088,7 +4099,7 @@ def matmul(x1, x2):
         shape1_aligned, shape2_aligned = shape_op(x1), shape_op(x2)
         x1 = _broadcast_to(x1, shape1_aligned[:-2], shape_backbone, ndim_aligned)
         x2 = _broadcast_to(x2, shape2_aligned[:-2], shape_backbone, ndim_aligned)
-        res = P.BatchMatMul(False, transpose_b)(x1, x2)
+        res = _batch_matmul(x1, x2)
 
     return reshape_op(res, shape_out)
 
@@ -4131,8 +4142,8 @@ def baddbmm(x, batch1, batch2, beta=1, alpha=1):
           [5. 5. 5.]
           [5. 5. 5.]]]
     """
-    dtypeop = P.DType()
-    bmmop = P.BatchMatMul(False, False)
+    dtypeop = _get_cache_prim(P.DType)()
+    bmmop = _get_cache_prim(P.BatchMatMul)(False, False)
     if not (isinstance(x, Tensor) and isinstance(batch1, Tensor) and isinstance(batch2, Tensor)):
         raise TypeError("For Baddbmm, inputs must be all tensors.")
     if len(batch1.shape) != 3 or len(batch2.shape) != 3:
@@ -4190,7 +4201,7 @@ def log2(x):
         [1. 2. 3.]
     """
 
-    dtype_op = P.DType()
+    dtype_op = _get_cache_prim(P.DType)()
 
     x_dtype = dtype_op(x)
     denominator = log_(_make_tensor(2, x_dtype))

@@ -5,9 +5,7 @@ mindspore.ops.scatter_nd
 
     根据指定的索引将更新值散布到新Tensor上。
 
-    使用给定的 `shape` 创建一个空Tensor，并将 `updates` 的值通过索引来设置空Tensor的值。
-
-    空Tensor的秩为 :math:`P` ，而 `indices` 的秩为 :math:`Q` ， 且 :math:`Q \ge 2` 。
+    使用给定的 `shape` 创建一个空Tensor，并将 `updates` 的值通过索引来设置空Tensor的值。空Tensor的秩为 :math:`P` ，而 `indices` 的秩为 :math:`Q` ， 且 :math:`Q \ge 2` 。
 
     `indices` 的shape为 :math:`(i_0, i_1, ..., i_{Q-2}, N)` ， :math:`N \le P` 。
 

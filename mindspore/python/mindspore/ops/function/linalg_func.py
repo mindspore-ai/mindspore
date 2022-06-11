@@ -16,6 +16,7 @@
 """Operators for linalg function."""
 
 from ..operations import linalg_ops
+from .._primitive_cache import _get_cache_prim
 
 
 def svd(a, full_matrices=False, compute_uv=True):
@@ -67,15 +68,13 @@ def svd(a, full_matrices=False, compute_uv=True):
         [[-0.6386359 0.7695091]
         [-0.7695091 -0.6386359]]
     """
-    svd_ = linalg_ops.Svd(full_matrices=full_matrices, compute_uv=compute_uv)
+    svd_ = _get_cache_prim(linalg_ops.Svd)(full_matrices=full_matrices, compute_uv=compute_uv)
 
     if compute_uv:
         return svd_(a)
 
     s, _, _ = svd_(a)
     return s
-
-
 
 
 __all__ = ['svd']
