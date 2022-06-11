@@ -21,9 +21,7 @@
 #include "extendrt/acl/acl_utils.h"
 
 namespace mindspore {
-API_FACTORY_REG(GraphCell::GraphImpl, AclInferSession);
-
-AclInferSession::AclInferSession()
+AclInferExecutor::AclInferExecutor()
     : init_flag_(false),
       load_flag_(false),
       device_type_("AscendCL"),
@@ -31,17 +29,17 @@ AclInferSession::AclInferSession()
       context_(nullptr),
       acl_env_(nullptr) {}
 
-AclInferSession::~AclInferSession() {
+AclInferExecutor::~AclInferExecutor() {
   try {
     (void)FinalizeEnv();
   } catch (const std::exception &e) {
-    MS_LOG(ERROR) << "AclInferSession destructor run failed, error message : " << e.what();
+    MS_LOG(ERROR) << "AclInferExecutor destructor run failed, error message : " << e.what();
   } catch (...) {
-    MS_LOG(ERROR) << "AclInferSession destructor run failed, unknown error occurred.";
+    MS_LOG(ERROR) << "AclInferExecutor destructor run failed, unknown error occurred.";
   }
 }
 
-Status AclInferSession::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+Status AclInferExecutor::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   Status ret = Load(IntToUint(device_id_));
   if (ret != kSuccess) {
@@ -52,7 +50,7 @@ Status AclInferSession::Run(const std::vector<MSTensor> &inputs, std::vector<MST
   return model_process_.PredictFromHost(inputs, outputs);
 }
 
-std::vector<MSTensor> AclInferSession::GetInputs() {
+std::vector<MSTensor> AclInferExecutor::GetInputs() {
   Status ret = Load(IntToUint(device_id_));
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
@@ -62,7 +60,7 @@ std::vector<MSTensor> AclInferSession::GetInputs() {
   return model_process_.GetInputs();
 }
 
-std::vector<MSTensor> AclInferSession::GetOutputs() {
+std::vector<MSTensor> AclInferExecutor::GetOutputs() {
   Status ret = Load(IntToUint(device_id_));
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
@@ -72,7 +70,7 @@ std::vector<MSTensor> AclInferSession::GetOutputs() {
   return model_process_.GetOutputs();
 }
 
-Status AclInferSession::LoadAclModel(const Buffer om_data) {
+Status AclInferExecutor::LoadAclModel(const Buffer om_data) {
   MS_LOG(INFO) << "Start load acl model.";
   // acl load model
   uint32_t acl_model_id;
@@ -95,7 +93,7 @@ Status AclInferSession::LoadAclModel(const Buffer om_data) {
   return kSuccess;
 }
 
-Status AclInferSession::InitEnv() {
+Status AclInferExecutor::InitEnv() {
   if (init_flag_) {
     return kSuccess;
   }
@@ -134,7 +132,7 @@ Status AclInferSession::InitEnv() {
   return kSuccess;
 }
 
-Status AclInferSession::FinalizeEnv() {
+Status AclInferExecutor::FinalizeEnv() {
   if (!init_flag_) {
     return kSuccess;
   }
@@ -170,7 +168,7 @@ Status AclInferSession::FinalizeEnv() {
   return kSuccess;
 }
 
-Status AclInferSession::Build() {
+Status AclInferExecutor::Build() {
   MS_LOG(INFO) << "Start build model.";
   MS_EXCEPTION_IF_NULL(graph_);
 
@@ -245,7 +243,7 @@ Status AclInferSession::Build() {
   return kSuccess;
 }
 
-Status AclInferSession::Load(uint32_t device_id) {
+Status AclInferExecutor::Load(uint32_t device_id) {
   // check graph type
   if (graph_->ModelType() != ModelType::kOM) {
     Status ret = ConvertToOM();
@@ -286,7 +284,7 @@ Status AclInferSession::Load(uint32_t device_id) {
   return kSuccess;
 }
 
-Status AclInferSession::ConvertToOM() {
+Status AclInferExecutor::ConvertToOM() {
   MS_LOG(INFO) << "Start convert to om model.";
   if (graph_ == nullptr) {
     MS_LOG(ERROR) << "Invalid graph_ is null.";
@@ -315,7 +313,7 @@ Status AclInferSession::ConvertToOM() {
   return kMCFailed;
 }
 
-bool AclInferSession::CheckDeviceSupport(mindspore::DeviceType device_type) {
+bool AclInferExecutor::CheckDeviceSupport(mindspore::DeviceType device_type) {
   // for Ascend, only support kAscend and kAscend310
   if (device_type != kAscend && device_type != kAscend310) {
     return false;

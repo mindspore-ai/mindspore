@@ -25,23 +25,22 @@
 #include "extendrt/acl/model_process.h"
 #include "extendrt/acl/acl_env_guard.h"
 #include "extendrt/cxx_api/graph/graph_impl.h"
-#include "extendrt/infer_session.h"
+#include "extendrt/graph_executor.h"
 
 namespace mindspore {
-class AclInferSession : public InferSession {
+class AclInferExecutor : public GraphExecutor {
  public:
-  AclInferSession();
-  ~AclInferSession() override;
+  AclInferExecutor();
+  ~AclInferExecutor() override;
 
-  Status CompileGraph(FuncGraphPtr graph) override;
-  Status RunGraph() override;
-  Status Resize(const std::vector<Tensor::TensorPtr> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
+  Status Execute(const ExecutePlan &plan, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
+
+ protected:
   bool CheckDeviceSupport(mindspore::DeviceType device_type) override;
   Status Load(uint32_t device_id);
   Status InitEnv();
   Status FinalizeEnv();
   Status CheckModelInputs(const std::vector<tensor::TensorPtr> &inputs) const;
-  Status LoadAclModel(const Buffer om_data);
 
   bool init_flag_;
   bool load_flag_;

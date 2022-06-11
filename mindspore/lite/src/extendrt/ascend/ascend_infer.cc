@@ -27,11 +27,8 @@
 #include "runtime/dev.h"
 #include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "include/common/utils/python_adapter.h"
-
 namespace mindspore {
 namespace {
-API_FACTORY_REG(GraphCell::GraphImpl, AscendInferSession);
-
 constexpr auto kHcclEnable = "MS_ENABLE_HCCL";
 constexpr auto kHcclGroupFile = "PARA_GROUP_FILE";
 
@@ -72,7 +69,7 @@ bool CreateGroupsByCkptFile(const std::string &file) {
   return true;
 }
 }  // namespace
-AscendInferSession::AscendInferSession()
+AscendInferExecutor::AscendInferExecutor()
     : session_impl_(nullptr),
       graph_id_(0),
       device_type_("Ascend"),
@@ -84,9 +81,9 @@ AscendInferSession::AscendInferSession()
       output_names_(),
       load_flag_(false) {}
 
-AscendInferSession::~AscendInferSession() {}
+AscendInferExecutor::~AscendInferExecutor() {}
 
-Status AscendInferSession::InitEnv() {
+Status AscendInferExecutor::InitEnv() {
   MS_LOG(INFO) << "Start to init env.";
   env_guard_ = MsEnvGuard::GetEnv(device_id_);
   if (env_guard_ == nullptr) {
@@ -106,7 +103,7 @@ Status AscendInferSession::InitEnv() {
   return kSuccess;
 }
 
-Status AscendInferSession::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr) {
+Status AscendInferExecutor::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr) {
   MS_ASSERT(session_impl_ != nullptr);
   try {
     graph_id_ = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
@@ -117,7 +114,7 @@ Status AscendInferSession::CompileGraph(const std::shared_ptr<FuncGraph> &funcGr
   }
 }
 
-std::vector<tensor::TensorPtr> AscendInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inputs) {
+std::vector<tensor::TensorPtr> AscendInferExecutor::RunGraph(const std::vector<tensor::TensorPtr> &inputs) {
   try {
     VectorRef outputs;
     session_impl_->RunGraph(graph_id_, inputs, &outputs);
@@ -128,7 +125,7 @@ std::vector<tensor::TensorPtr> AscendInferSession::RunGraph(const std::vector<te
   }
 }
 
-Status AscendInferSession::CheckModelInputs(const std::vector<tensor::TensorPtr> &inputs) const {
+Status AscendInferExecutor::CheckModelInputs(const std::vector<tensor::TensorPtr> &inputs) const {
   MS_ASSERT(session_impl_ != nullptr);
   std::string error_msg;
   if (!session_impl_->CheckModelInputs(graph_id_, inputs, &error_msg)) {
@@ -137,7 +134,7 @@ Status AscendInferSession::CheckModelInputs(const std::vector<tensor::TensorPtr>
   return kSuccess;
 }
 
-Status AscendInferSession::ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply) {
+Status AscendInferExecutor::ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply) {
   MS_EXCEPTION_IF_NULL(reply);
   if (context_ == nullptr) {
     MS_LOG(ERROR) << "rtCtx is nullptr";
@@ -177,7 +174,7 @@ Status AscendInferSession::ExecuteModel(const std::vector<MSTensor> &request, st
   return kSuccess;
 }
 
-std::vector<MSTensor> AscendInferSession::GetInputs() {
+std::vector<MSTensor> AscendInferExecutor::GetInputs() {
   if (!load_flag_) {
     Status ret = Load(device_id_);
     if (ret != kSuccess) {
@@ -201,7 +198,7 @@ std::vector<MSTensor> AscendInferSession::GetInputs() {
   return result;
 }
 
-std::vector<MSTensor> AscendInferSession::GetOutputs() {
+std::vector<MSTensor> AscendInferExecutor::GetOutputs() {
   if (!load_flag_) {
     Status ret = Load(device_id_);
     if (ret != kSuccess) {
@@ -225,7 +222,7 @@ std::vector<MSTensor> AscendInferSession::GetOutputs() {
   return result;
 }
 
-Status AscendInferSession::Load(uint32_t device_id) {
+Status AscendInferExecutor::Load(uint32_t device_id) {
   // check graph type
   if (graph_->ModelType() != ModelType::kMindIR) {
     MS_LOG(ERROR) << "Unsupported model type " << graph_->ModelType();
@@ -283,7 +280,7 @@ Status AscendInferSession::Load(uint32_t device_id) {
   return kSuccess;
 }
 
-Status AscendInferSession::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
+Status AscendInferExecutor::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   if (!load_flag_) {
     Status ret = Load(device_id_);
@@ -321,7 +318,7 @@ Status AscendInferSession::Run(const std::vector<MSTensor> &inputs, std::vector<
   return kSuccess;
 }
 
-AscendInferSession::MsEnvGuard::MsEnvGuard(uint32_t device_id) {
+AscendInferExecutor::MsEnvGuard::MsEnvGuard(uint32_t device_id) {
   MS_LOG(INFO) << "Start to init device " << device_id;
   device_id_ = device_id;
   RegAllOp();
@@ -367,7 +364,7 @@ AscendInferSession::MsEnvGuard::MsEnvGuard(uint32_t device_id) {
   errno_ = kSuccess;
 }
 
-AscendInferSession::MsEnvGuard::~MsEnvGuard() {
+AscendInferExecutor::MsEnvGuard::~MsEnvGuard() {
   MS_LOG(INFO) << "Start finalize device " << device_id_;
   session::ExecutorManager::Instance().Clear();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
@@ -395,7 +392,7 @@ AscendInferSession::MsEnvGuard::~MsEnvGuard() {
   MS_LOG(INFO) << "End finalize device " << device_id_;
 }
 
-std::shared_ptr<AscendInferSession::MsEnvGuard> AscendInferSession::MsEnvGuard::GetEnv(uint32_t device_id) {
+std::shared_ptr<AscendInferExecutor::MsEnvGuard> AscendInferExecutor::MsEnvGuard::GetEnv(uint32_t device_id) {
   std::shared_ptr<MsEnvGuard> acl_env;
   std::lock_guard<std::mutex> lock(global_ms_env_mutex_);
   auto iter = global_ms_env_.find(device_id);
@@ -419,7 +416,7 @@ std::shared_ptr<AscendInferSession::MsEnvGuard> AscendInferSession::MsEnvGuard::
   return acl_env;
 }
 
-bool AscendInferSession::CheckDeviceSupport(mindspore::DeviceType device_type) {
+bool AscendInferExecutor::CheckDeviceSupport(mindspore::DeviceType device_type) {
   // for Ascend, only support kAscend and kAscend910
   if (device_type != kAscend && device_type != kAscend910) {
     return false;
@@ -427,8 +424,8 @@ bool AscendInferSession::CheckDeviceSupport(mindspore::DeviceType device_type) {
   return IsAscend910Soc();
 }
 
-std::map<uint32_t, std::weak_ptr<AscendInferSession::MsEnvGuard>> AscendInferSession::MsEnvGuard::global_ms_env_;
-std::mutex AscendInferSession::MsEnvGuard::global_ms_env_mutex_;
+std::map<uint32_t, std::weak_ptr<AscendInferExecutor::MsEnvGuard>> AscendInferExecutor::MsEnvGuard::global_ms_env_;
+std::mutex AscendInferExecutor::MsEnvGuard::global_ms_env_mutex_;
 
 PythonEnvGuard::PythonEnvGuard() {
   origin_init_status_ = PythonIsInited();

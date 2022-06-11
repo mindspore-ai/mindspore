@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_GPU_GPU_GRAPH_IMPL_H_
-#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_GPU_GPU_GRAPH_IMPL_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_GPU_INFER_EXECUTOR_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_GPU_INFER_EXECUTOR_H_
 #include <string>
 #include <vector>
 #include <utility>
 #include <memory>
 #include "include/api/status.h"
 #include "include/api/graph.h"
-#include "extendrt/cxx_api/graph/graph_impl.h"
-#include "backend/common/session/session_basic.h"
 #include "ir/anf.h"
-#include "extendrt/cxx_api/model/model_impl.h"
-
+#include "extendrt/graph_executor.h"
 namespace mindspore {
-class GPUInferSession : public InferSession {
+class GPUInferExecutor : public GraphExecutor {
  public:
   GPUInferSession();
   ~GPUInferSession() override = default;
-  Status CompileGraph(FuncGraphPtr graph) override;
-  Status RunGraph() override;
-  Status Resize(const std::vector<Tensor::TensorPtr> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
+  Status Execute(const ExecutePlan &plan, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
+
+ protected:
   bool CheckDeviceSupport(mindspore::DeviceType device_type) override;
   Status Load(uint32_t device_id);
   Status InitEnv();
@@ -59,4 +56,4 @@ class GPUInferSession : public InferSession {
   uint32_t workspace_size_;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_GRAPH_GPU_GPU_GRAPH_IMPL_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_GPU_INFER_EXECUTOR_H_
