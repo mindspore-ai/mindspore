@@ -34,6 +34,7 @@
 #include "utils/trace_base.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 
@@ -298,6 +299,10 @@ std::string DebuggerProtoExporter::GetOpNodeInputId(const FuncGraphPtr &, const 
       MS_LOG(EXCEPTION) << "Can not find node '" << node->ToString() << "' in apply_map";
     }
     return std::to_string(iter->second);
+  }
+
+  if (AnfUtils::IsCustomActorNode(node)) {
+    return AnfUtils::GetCustomActorName(node);
   }
 
   if (node->isa<Parameter>()) {

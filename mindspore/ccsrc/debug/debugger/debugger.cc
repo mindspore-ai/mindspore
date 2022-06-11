@@ -1347,6 +1347,10 @@ void Debugger::SendWatchpoints(const std::list<WatchpointHit> &points) {
 }
 
 bool Debugger::DumpTensorToFile(const std::string &filepath, const std::string &tensor_name, size_t slot) const {
+  if (debug_services_ == nullptr) {
+    MS_LOG(INFO) << "The debug_services_ is nullptr.";
+    return false;
+  }
   return debug_services_.get()->DumpTensorToFile(filepath, tensor_name, slot);
 }
 
@@ -1760,7 +1764,7 @@ void Debugger::ClearCurrentData() {
     if (debug_services_) {
       debug_services_->EmptyCurrentTensor();
     } else {
-      MS_LOG(ERROR) << "debug_services_ is nullptr";
+      MS_LOG(WARNING) << "debug_services_ is nullptr";
     }
   }
 }
