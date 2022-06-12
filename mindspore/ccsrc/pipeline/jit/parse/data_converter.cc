@@ -581,7 +581,7 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
     func_graph = value->cast<FuncGraphPtr>();
     if (!func_graph->dropped()) {
       bool has_forbid_reuse_attr = py::hasattr(obj, PYTHON_FUNCTION_FORBID_REUSE);
-      if (forbid_reuse || has_forbid_reuse_attr || pipeline::GetJitLevel() == "o0") {
+      if (forbid_reuse || has_forbid_reuse_attr || pipeline::GetJitLevel() == "O0") {
         return BasicClone(func_graph);
       }
       return func_graph;

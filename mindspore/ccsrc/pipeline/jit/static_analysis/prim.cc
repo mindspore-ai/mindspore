@@ -1325,7 +1325,7 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   if (new_node == nullptr) {
     MS_LOG(EXCEPTION) << "Resolve node failed";
   }
-  if (pipeline::GetJitLevel() == "o0" && IsValueNode<FuncGraph>(new_node)) {
+  if (pipeline::GetJitLevel() == "O0" && IsValueNode<FuncGraph>(new_node)) {
     UpdateDebugInfo(GetValueNode<FuncGraphPtr>(new_node), out_node->scope(), out_node->debug_info());
   }
 
@@ -1394,7 +1394,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
     // composite registered in standard_method_map go to this branch
     converted_value = prim::GetPythonOps(require.cast<std::string>());
     MS_EXCEPTION_IF_NULL(converted_value);
-    if (pipeline::GetJitLevel() == "o0" && converted_value->isa<FuncGraph>()) {
+    if (pipeline::GetJitLevel() == "O0" && converted_value->isa<FuncGraph>()) {
       UpdateDebugInfo(converted_value->cast<FuncGraphPtr>(), out_conf->node()->scope(), out_conf->node()->debug_info());
     }
     if (!converted_value->isa<Primitive>()) {
