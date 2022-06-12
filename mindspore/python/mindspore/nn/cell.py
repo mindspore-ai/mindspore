@@ -115,6 +115,7 @@ class Cell(Cell_):
         self._id = 1
         self.exist_names = set("")
         self.exist_objs = set()
+        self.jit_config_dict = dict()
         init_pipeline()
 
         # call gc to release GE session resources used by non-used cell objects
@@ -905,7 +906,6 @@ class Cell(Cell_):
         if context._get_mode() == context.PYNATIVE_MODE:
             _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
 
-
     def get_inputs(self):
         """
         Returns the dynamic_inputs of a cell object in one network.
@@ -926,7 +926,8 @@ class Cell(Cell_):
             inputs (tuple): Inputs of the Cell object.
         """
         if self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None:
-            _cell_graph_executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
+            _cell_graph_executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode,
+                                         jit_config_dict=self.jit_config_dict)
         else:
             self._check_compile_dynamic_shape(*inputs)
             if self.saved_dynamic_shape:
@@ -936,7 +937,8 @@ class Cell(Cell_):
 
             self.saved_dynamic_shape = self._dynamic_shape_inputs
             _cell_graph_executor.compile(self, *self._dynamic_shape_inputs, phase=self.phase,
-                                         auto_parallel_mode=self._auto_parallel_mode)
+                                         auto_parallel_mode=self._auto_parallel_mode,
+                                         jit_config_dict=self.jit_config_dict)
             logger.debug("Compiled Graph with dynamic shape")
 
     def compile_and_run(self, *inputs):
@@ -1634,7 +1636,14 @@ class Cell(Cell_):
         self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
 
-    def flatten_weights(self):
+    def set_jit_config(self, jit_config):
+        """Set jit config for cell."""
+        if self.jit_config_dict:
+            logger.warning("For Cell, jit config can only be set once, ignore this setting.")
+        else:
+            self.jit_config_dict = jit_config.jit_config_dict
+
+    def flatten_weights(self, fusion_size=0):
         """
         Reset data for weight parameters so that they are using contiguous memory chunks grouped by data type.
         """
@@ -2243,6 +2252,32 @@ class GraphCell(Cell):
         self.phase = "graph_load_from_mindir"
         self._add_attr("graph_load_from_mindir", self.graph)
         return self.compile_and_run(*inputs)
+
+
+class JitConfig:
+    """
+    Jit config for compile.
+
+    Note:
+        This is an experimental function that is subject to change or deletion.
+
+    jit_level (str): Option for argument `level` for Optimization of lift graph.
+        Supports ["O0", "O1", "O2"]. Default: "O1".
+        - "O0": Basic optimization.
+        - "O1": Manual optimization.
+        - "O2": Manual optimization and graph computation fusion.
+    task_sink (bool): Determines whether to pass the data through dataset channel. Default: True.
+    """
+    def __init__(self, jit_level="O1", task_sink=True, **kwargs):
+        if jit_level not in ["O0", "O1", "O2"]:
+            raise ValueError("For 'jit_level' must be one of ['O0', 'O1', 'O2'].")
+        if not isinstance(task_sink, bool):
+            raise TypeError("For 'task_sink' must be bool.")
+        self.jit_config_dict = dict()
+        self.jit_config_dict["jit_level"] = jit_level
+        self.jit_config_dict["task_sink"] = str(int(task_sink))
+        for key, value in kwargs.items():
+            self.jit_config_dict[key] = value
 
 
 def _check_param_list_tuple(value):

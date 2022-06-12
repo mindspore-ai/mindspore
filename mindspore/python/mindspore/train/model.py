@@ -44,7 +44,7 @@ from ..parallel._cost_model_context import _set_multi_subgraphs
 from ..parallel._recovery_context import _set_recovery_context, _get_recovery_context
 from .dataset_helper import DatasetHelper, connect_network_with_dataset
 from . import amp
-from ..common.api import _pynative_executor, _cell_graph_executor
+from ..common.api import _pynative_executor
 from ..dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 
 def _transfer_tensor_to_tuple(inputs):
@@ -1193,7 +1193,7 @@ class Model:
                     valid_frequency=valid_frequency,
                     valid_dataset_sink_mode=valid_dataset_sink_mode)
 
-    def build(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, jit_config=None):
+    def build(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1):
         """
         Build computational graphs and data graphs with the sink mode.
 
@@ -1212,15 +1212,6 @@ class Model:
                                      will be built, and `metrics` in `Model` can not be None. Default: None.
             sink_size (int): Control the amount of data in each sink. Default: -1.
             epoch (int): Control the training epochs. Default: 1.
-            jit_config (Union[str, str]): Control the jit config.
-                                          By default, if set to None, the graph will compile as the default behavior.
-                                          You can customize the compile config with a dictionary.
-                                          For example, you can set {'jit_level': 'o0'} to control the jit level.
-                                          The data that supports control is shown below. Default: None.
-
-                                          - jit_level (string): Control the graph compile optimize level.
-                                            Optional: o0/o1. Default: o1. If set to o0, the graph compiling will pass
-                                            the combine like graph phase.
 
         Examples:
             >>> import mindspore as ms
@@ -1238,8 +1229,6 @@ class Model:
             >>> model.build(dataset, epoch=2)
             >>> model.train(2, dataset)
         """
-        if jit_config is not None:
-            _cell_graph_executor.set_jit_config(jit_config)
         self._init(train_dataset, valid_dataset, sink_size, epoch)
 
     def _eval_in_fit(self, valid_dataset, callbacks=None, dataset_sink_mode=True, cb_params=None):

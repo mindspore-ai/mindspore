@@ -36,7 +36,7 @@ TEST_F(TestGraphExecutor, test_jit_config_with_jit_level_equal_o0) {
   pipeline::GraphExecutorPy::GetInstance()->SetJitConfig(obj);
 
   auto jit_level = pipeline::GetJitLevel();
-  ASSERT_TRUE(jit_level == "o0");
+  ASSERT_TRUE(jit_level == "O0");
 
   auto actions = GePipeline();
   bool ret = false;
@@ -56,7 +56,7 @@ TEST_F(TestGraphExecutor, test_jit_config_with_jit_level_equal_o1) {
   pipeline::GraphExecutorPy::GetInstance()->SetJitConfig(obj);
 
   auto jit_level = pipeline::GetJitLevel();
-  ASSERT_TRUE(jit_level == "o1");
+  ASSERT_TRUE(jit_level == "O1");
 
   auto actions = GePipeline();
   bool ret = false;
