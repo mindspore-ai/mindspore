@@ -491,6 +491,17 @@ class Rad2degNet(nn.Cell):
         return self.rad2deg(x)
 
 
+class BaddbmmNet(nn.Cell):
+    def __init__(self, beta=1, alpha=1):
+        super(BaddbmmNet, self).__init__()
+        self.beta = beta
+        self.alpha = alpha
+        self.baddbmm = ops.baddbmm
+
+    def construct(self, x, batch1, batch2):
+        return self.baddbmm(x, batch1, batch2, self.beta, self.alpha)
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -601,6 +612,13 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[3.142, -3.142], [6.283, -6.283], [1.570, -1.570]], np.float32))],
         'desc_bprop': [Tensor(np.array([[3.142, -3.142], [6.283, -6.283], [1.570, -1.570]], np.float32))],
     }),
+    ('Baddbmm', {
+        'block': BaddbmmNet(),
+        'desc_inputs': [Tensor(np.ones([1, 3, 3]).astype(np.float32)),
+                        Tensor(np.ones([1, 3, 4]).astype(np.float32)),
+                        Tensor(np.ones([1, 4, 3]).astype(np.float32))],
+        'skip': ['backward']
+    }),
 ]
 
 test_case_lists = [test_case_math_ops]
@@ -696,6 +714,12 @@ raise_set = [
     ('Rad2deg_2_Error', {
         'block': (lambda x: Rad2degNet(), {'exception': TypeError}),
         'desc_inputs': [Tensor(np.array([[3, -3], [6, -6], [1, -1]], np.int32))]}),
+    ('Baddbmm_Error', {
+        'block': (BaddbmmNet(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.ones([1, 3, 3]).astype(np.float32)),
+                        Tensor(np.ones([1, 3, 4]).astype(np.float32)),
+                        [1, 2]],
+        'skip': ['backward']}),
 ]
 
 
