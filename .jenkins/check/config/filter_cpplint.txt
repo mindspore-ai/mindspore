@@ -16,6 +16,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/"                                        "readability/casting"
 "mindspore/mindspore/ccsrc/plugin/device/gpu/hal/device/gpu_kernel_runtime.cc"                     "build/include_what_you_use"
 "mindspore/mindspore/ccsrc/utils/convert_utils_py.cc"                                              "whitespace/indent"
+"mindspore/mindspore/core/utils/log_adapter.cc"                                                    "runtime/references"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

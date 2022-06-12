@@ -34,6 +34,7 @@
 // namespace to support utils module definition
 namespace mindspore {
 constexpr int kNameMaxLength = 18;
+constexpr size_t kStep = 2;
 #if defined(__ANDROID__) || defined(ANDROID)
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 #endif
@@ -179,6 +180,137 @@ void LogWriter::set_trace_provider(const TraceProvider &trace_provider) {
 
 LogWriter::TraceProvider LogWriter::trace_provider() { return trace_provider_; }
 
+static inline std::string GetEnv(const std::string &envvar) {
+  const char *value = std::getenv(envvar.c_str());
+
+  if (value == nullptr) {
+    return std::string();
+  }
+
+  return std::string(value);
+}
+
+// When GLOG_logtostderr is set to 0, logs are output to a file, then will print duplicate message
+// in exception log and stack. Otherwise when GLOG_logtostderr is set to 1, logs are output to the screen,
+// then will only print message in exception stack.
+void LogWriter::RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const {
+  if (GetEnv("GLOG_logtostderr") == "0") {
+    std::string str = msg.str();
+    auto replace = [&](const std::string &orgStr, const std::string &newStr) {
+      std::string::size_type pos;
+      while ((pos = str.find(orgStr)) != std::string::npos) {
+        str.replace(pos, orgStr.length(), newStr);
+      }
+      return str;
+    };
+    // remove label "#dmsg#" and "#umsg#"
+    str = replace("#dmsg#", "");
+    str = replace("#umsg#", "");
+    std::ostringstream replaced_msg;
+    replaced_msg << str;
+    OutputLog(replaced_msg);
+  }
+}
+
+// Function to split string based on character delimiter
+void SplitString(const std::string &message, const std::string &delimiter, std::vector<std::string> *output) {
+  size_t pos1, pos2;
+  pos1 = 0;
+  pos2 = message.find(delimiter);
+  MS_EXCEPTION_IF_NULL(output);
+
+  while (pos2 != std::string::npos) {
+    (void)output->emplace_back(message.substr(pos1, pos2 - pos1));
+    pos1 = pos2 + delimiter.size();
+    pos2 = message.find(delimiter, pos1);
+  }
+
+  if (pos1 != message.length()) {
+    (void)output->emplace_back(message.substr(pos1));
+  }
+}
+
+// Parse exception message format like: Error Description#dmsg#Developer Message Title#dmsg#Developer Message Content
+// #umsg#User Message Title#umsg#User Message Content
+void ParseExceptionMessage(const std::string &message, std::ostringstream &oss, std::vector<std::string> *dmsg,
+                           std::vector<std::string> *umsg) {
+  std::vector<std::string> vec;
+  SplitString(message, "#dmsg#", &vec);  // first:split message by label #dmsg#
+
+  if (!vec.empty() && (vec[0].find("#umsg#") == std::string::npos)) {
+    oss << vec[0];
+  }
+
+  MS_EXCEPTION_IF_NULL(dmsg);
+  MS_EXCEPTION_IF_NULL(umsg);
+
+  for (size_t i = 0; i < vec.size(); i++) {
+    if (vec[i].find("#umsg#") != std::string::npos) {
+      std::vector<std::string> temp;
+      SplitString(vec[i], "#umsg#", &temp);  // second:split message by label #umsg#
+      if (!temp.empty()) {
+        if (i == 0) {
+          oss << temp[0];
+        } else {
+          (void)dmsg->emplace_back(temp[0]);
+        }
+        (void)umsg->insert(umsg->end(), temp.begin() + 1, temp.end());
+      }
+    } else {
+      if (i != 0) {
+        (void)dmsg->emplace_back(vec[i]);
+      }
+    }
+  }
+}
+
+void PrintMessage(std::ostringstream &oss, const std::string &title, const std::string &content) {
+  const std::string &message = oss.str();
+  size_t length = message.length();
+  if ((length != 0) && (message[length - 1] != '\n')) {
+    oss << "\n";
+  }
+
+  oss << "\n----------------------------------------------------\n"
+      << title << "\n----------------------------------------------------\n"
+      << content;
+}
+
+void DisplayDevExceptionMessage(std::ostringstream &oss, const std::vector<std::string> &dmsg,
+                                const LocationInfo &location) {
+  bool display = true;
+  if (GetEnv("MS_EXCEPTION_DISPLAY_LEVEL") == "1") {
+    display = false;
+  }
+
+  if (display) {
+    const std::string CPP_CALL_STACK_TITLE = "- C++ Call Stack: (For framework developers)";
+    std::ostringstream cpp_call_stack_content;
+    cpp_call_stack_content << location.file_ << ":" << location.line_ << " " << location.func_ << "\n";
+    PrintMessage(oss, CPP_CALL_STACK_TITLE, cpp_call_stack_content.str());
+
+    size_t size = dmsg.size();
+    if ((size != 0) && (size % kStep == 0)) {
+      for (size_t i = 0; i < size; i += kStep) {
+        std::ostringstream dmsg_title;
+        dmsg_title << "- " << dmsg[i] << " (For framework developers)";
+        PrintMessage(oss, dmsg_title.str(), dmsg[i + 1]);
+      }
+    }
+  }
+}
+
+void DisplayUserExceptionMessage(std::ostringstream &oss, const std::vector<std::string> &umsg) {
+  size_t size = umsg.size();
+  if ((size != 0) && (size % kStep == 0)) {
+    for (size_t i = 0; i < size; i += kStep) {
+      std::ostringstream umsg_title;
+      umsg_title << "- " << umsg[i];
+      PrintMessage(oss, umsg_title.str(), umsg[i + 1]);
+    }
+  }
+}
+
 void LogWriter::OutputLog(const std::ostringstream &msg) const {
 #ifdef USE_GLOG
 #define google mindspore_private
@@ -219,20 +351,25 @@ void LogWriter::operator^(const LogStream &stream) const {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();
   std::ostringstream oss;
-  oss << location_.file_ << ":" << location_.line_ << " " << location_.func_ << "] ";
-  oss << msg.str();
+  std::vector<std::string> dmsg;
+  std::vector<std::string> umsg;
+
+  ParseExceptionMessage(msg.str(), oss, &dmsg, &umsg);
+  DisplayUserExceptionMessage(oss, umsg);
 
   thread_local bool running = false;
   if (!running) {
     running = true;
     if (this_thread_max_log_level >= EXCEPTION) {
-      OutputLog(msg);
+      RemoveLabelBeforeOutputLog(msg);
     }
     if (trace_provider_ != nullptr) {
-      trace_provider_(oss);
+      trace_provider_(oss, true);
     }
     running = false;
   }
+
+  DisplayDevExceptionMessage(oss, dmsg, location_);
 
   if (exception_handler_ != nullptr) {
     exception_handler_(exception_type_, oss.str());
@@ -240,16 +377,6 @@ void LogWriter::operator^(const LogStream &stream) const {
   throw std::runtime_error(oss.str());
 }
 #endif
-
-static inline std::string GetEnv(const std::string &envvar) {
-  const char *value = std::getenv(envvar.c_str());
-
-  if (value == nullptr) {
-    return std::string();
-  }
-
-  return std::string(value);
-}
 
 enum class LogConfigToken : size_t {
   INVALID,      // indicate invalid token

@@ -475,7 +475,22 @@ void ClearTraceStack() {
   cnode_debug_stack.clear();
 }
 
-void GetTraceStackInfo(std::ostringstream &oss) {
+void PrintMessage(std::ostringstream &oss, const std::string &content, bool add_title) {
+  if (add_title) {
+    const std::string &message = oss.str();
+    size_t length = message.length();
+    if ((length != 0) && (message[length - 1] != '\n')) {
+      oss << "\n";
+    }
+
+    oss << "\n----------------------------------------------------\n"
+        << "- The Traceback of Net Construct Code:"
+        << "\n----------------------------------------------------";
+  }
+  oss << content;
+}
+
+void GetTraceStackInfo(std::ostringstream &oss, bool add_title) {
   TraceGraphEval();
   std::ostringstream trace_info;
   GetEvalStackInfo(trace_info);
@@ -484,11 +499,13 @@ void GetTraceStackInfo(std::ostringstream &oss) {
     if (debug_info != nullptr && TraceManager::record_debug_info_flag() == true) {
       auto debug_str = trace::GetDebugInfo(debug_info);
       if (!debug_str.empty()) {
-        oss << "\n\n# " << debug_str;
+        std::ostringstream content;
+        content << "\n\n# " << debug_str;
+        PrintMessage(oss, content.str(), add_title);
       }
     }
   } else {
-    oss << trace_info.str();
+    PrintMessage(oss, trace_info.str(), add_title);
   }
 }
 
