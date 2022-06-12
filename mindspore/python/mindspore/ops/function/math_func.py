@@ -74,6 +74,7 @@ tensor_mul = P.Mul()
 tensor_div = P.RealDiv()
 tensor_floordiv = P.FloorDiv()
 floordiv = tensor_floordiv
+tensor_xdivy = P.Xdivy()
 tensor_pow = P.Pow()
 pows = tensor_pow
 tensor_mod = P.FloorMod()
@@ -3892,6 +3893,48 @@ def log2(x):
     return output
 
 
+def xdivy(x, y):
+    """
+    Divides the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
+
+    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar could only be a constant.
+
+    Inputs:
+        - **x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
+          or a tensor whose data type is float16, float32, float64, complex64, complex128 or bool.
+        - **y** (Union[Tensor, Number, bool]) - The second input is a number,
+          or a bool when the first input is a tensor, or a tensor whose data type is float16,
+          float32, float64, complex64, complex128 or bool.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+        TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64, complex64, complex128, bool].
+        ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
+        RuntimeError: If the data type of `x`, `y` conversion of Parameter is given
+                      but data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([2, 4, -1]), mindspore.float32)
+        >>> y = Tensor(np.array([2, 2, 2]), mindspore.float32)
+        >>> output = ops.xdivy(x, y)
+        >>> print(output)
+        [ 1.   2.  -0.5]
+    """
+    return tensor_xdivy(x, y)
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -3924,6 +3967,8 @@ __all__ = [
     'tensor_floordiv',
     'floor_div',
     'floordiv',
+    'tensor_xdivy',
+    'xdivy',
     'tensor_pow',
     'pow',
     'pows',

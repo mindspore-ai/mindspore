@@ -2032,6 +2032,13 @@ def float_bool(x):
     return x != 0.0
 
 
+def xdivy(x, y):
+    r"""
+    Divides the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
+    """
+    return F.tensor_xdivy(x, y)
+
+
 def int_bool(x):
     """Implementation of `int_bool`."""
     return x != 0
