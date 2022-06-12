@@ -112,14 +112,6 @@ void TcpClient::Init() {
     MS_EXCEPTION_IF_NULL(event_base_);
   }
 
-  sockaddr_in sin{};
-  if (memset_s(&sin, sizeof(sin), 0, sizeof(sin)) != EOK) {
-    MS_LOG(EXCEPTION) << "Initialize sockaddr_in failed!";
-  }
-  sin.sin_family = AF_INET;
-  sin.sin_addr.s_addr = inet_addr(server_address_.c_str());
-  sin.sin_port = htons(server_port_);
-
   if (!PSContext::instance()->enable_ssl()) {
     MS_LOG(INFO) << "SSL is disable.";
     buffer_event_ = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
@@ -137,9 +129,19 @@ void TcpClient::Init() {
     MS_LOG(EXCEPTION) << "Buffer event enable read and write failed!";
   }
 
-  int result_code = bufferevent_socket_connect(buffer_event_, reinterpret_cast<struct sockaddr *>(&sin), sizeof(sin));
-  if (result_code < 0) {
-    MS_LOG(WARNING) << "Connect server ip:" << server_address_ << " and port: " << server_port_ << " is failed!";
+  if (server_port_ > 0) {
+    sockaddr_in sin{};
+    if (memset_s(&sin, sizeof(sin), 0, sizeof(sin)) != EOK) {
+      MS_LOG(EXCEPTION) << "Initialize sockaddr_in failed!";
+    }
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = inet_addr(server_address_.c_str());
+    sin.sin_port = htons(server_port_);
+
+    int result_code = bufferevent_socket_connect(buffer_event_, reinterpret_cast<struct sockaddr *>(&sin), sizeof(sin));
+    if (result_code < 0) {
+      MS_LOG(WARNING) << "Connect server ip:" << server_address_ << " and port: " << server_port_ << " is failed!";
+    }
   }
 }
 
