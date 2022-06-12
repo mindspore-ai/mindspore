@@ -942,6 +942,7 @@ class Unique(TensorOperation):
     Perform the unique operation on the input tensor, only support transform one column each time.
 
     Return 3 tensor: unique output tensor, index tensor, count tensor.
+
     - Output tensor contains all the unique elements of the input tensor
       in the same order that they occur in the input tensor.
     - Index tensor that contains the index of each element of the input tensor in the unique output tensor.
