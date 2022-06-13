@@ -174,3 +174,22 @@ def test_tensor_interface_graph():
     y = x.adaptive_max_pool2d((3, 5))
     expect_shape = (1, 32, 3, 5)
     assert y.asnumpy().shape == expect_shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_shape():
+    """
+    Feature: test adaptivemaxpool2d op.
+    Description: test the ops in dynamic shape.
+    Expectation: expect correct shape result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = Netnn()
+    x_dyn = Tensor(shape=[1, 32, 9, None], dtype=mindspore.float32)
+    net.set_inputs(x_dyn)
+    x = np.random.randn(1, 32, 9, 9)
+    output = net(Tensor(x, mindspore.float32))
+    expect_shape = (1, 32, 3, 5)
+    assert output.asnumpy().shape == expect_shape

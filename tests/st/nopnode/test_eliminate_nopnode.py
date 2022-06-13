@@ -98,3 +98,38 @@ def test_nopnode_dynamic_shape():
     z = Tensor(np.ones([6, 1]), mindspore.float32)
     out = net(x, y, z)
     assert out.shape == (3, 2)
+
+
+class AscendNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.reshape = ops.Reshape()
+
+    def construct(self, x, y, z):
+        a = self.reshape(x, (3, 2))
+        while z < 3:
+            z = z + 1
+            b = self.reshape(y, (3, 2))
+            a = a + b
+        return a
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ascend_nopnode_eliminate():
+    """
+    Feature: eliminate nopnode.
+    Description: dynamic shape scene.
+    Expectation: No exception.
+    """
+    x = Tensor(np.ones([6, 1]), mindspore.float32)
+    y = Tensor(np.ones([6, 1]), mindspore.float32)
+    z = Tensor([0], mindspore.float32)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    net = AscendNet()
+    output = net(x, y, z)
+    expect = np.array([[4., 4.], [4., 4.], [4., 4.]], dtype=np.float32)
+    assert output.shape == (3, 2)
+    assert np.allclose(output.asnumpy(), expect)
