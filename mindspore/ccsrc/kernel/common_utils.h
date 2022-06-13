@@ -179,6 +179,22 @@ struct CachedInterpolation {
   float lerp;
 };
 
+struct AlignCornersFunc {
+  float operator()(const float &new_x, const int &old_length, const int &new_length) const {
+    return new_length != 1 ? new_x * (old_length - 1) / (new_length - 1) : 0;
+  }
+};
+struct AsymmetricFunc {
+  float operator()(const float &new_x, const int &old_length, const int &new_length) const {
+    return new_length != 0 ? new_x * old_length / new_length : 0;
+  }
+};
+struct HalfPixelFunc {
+  float operator()(const float &new_x, const int &old_length, const int &new_length) const {
+    return new_length != 0 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0;
+  }
+};
+
 void ComputeInterpolationWeights(const size_t out_size, const size_t in_size, const float scale,
                                  CachedInterpolation *interpolation);
 

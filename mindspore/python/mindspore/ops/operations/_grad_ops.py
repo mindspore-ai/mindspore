@@ -1840,6 +1840,29 @@ class ResizeNearestNeighborGrad(Primitive):
         self.init_prim_io_names(inputs=['grads', 'size'], outputs=['y'])
 
 
+class ResizeLinear1DGrad(Primitive):
+    """
+    Compute gradient of `ResizeLinear1D` operator.
+
+    Note:
+        This is an experimental feature and is subjected to change.
+
+    Args:
+        coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
+            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
+    """
+
+    @prim_attr_register
+    def __init__(self, coordinate_transformation_mode="align_corners"):
+        """Initialize ResizeLinear1DGrad"""
+        self.init_prim_io_names(
+            inputs=['grads', 'input_x'], outputs=['y'])
+        validator.check_value_type(
+            "coordinate_transformation_mode", coordinate_transformation_mode, [str], self.name)
+        validator.check_string(coordinate_transformation_mode, ["align_corners", "half_pixel", "asymmetric"],
+                               "coordinate_transformation_mode", self.name)
+
+
 class ROIAlignGrad(PrimitiveWithInfer):
     """
     ROIAlignGrad operator.

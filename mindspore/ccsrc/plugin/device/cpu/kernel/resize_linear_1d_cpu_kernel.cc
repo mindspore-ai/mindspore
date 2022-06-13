@@ -17,28 +17,12 @@
 #include "plugin/device/cpu/kernel/resize_linear_1d_cpu_kernel.h"
 #include <algorithm>
 #include <functional>
+#include <unordered_map>
 #include "mindspore/core/ops/resize_linear_1d.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
 #include "kernel/common_utils.h"
 
-namespace {
-struct AlignCornersFunc {
-  float operator()(const float &new_x, const int &old_length, const int &new_length) const {
-    return new_length != 1 ? new_x * (old_length - 1) / (new_length - 1) : 0;
-  }
-};
-struct AsymmetricFunc {
-  float operator()(const float &new_x, const int &old_length, const int &new_length) const {
-    return new_length != 0 ? new_x * old_length / new_length : 0;
-  }
-};
-struct HalfPixelFunc {
-  float operator()(const float &new_x, const int &old_length, const int &new_length) const {
-    return new_length != 0 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0;
-  }
-};
-}  // namespace
 namespace mindspore::kernel {
 constexpr auto kResizeLinear1D = "ResizeLinear1D";
 constexpr const size_t kResizeLinear1DInputsNum = 2;
@@ -131,19 +115,9 @@ const std::vector<std::pair<KernelAttr, ResizeLinear1DCpuKernelMod::KernelRunFun
 
 ResizeLinear1DCpuKernelMod::CoordinateTransformationFunc ResizeLinear1DCpuKernelMod::ChooseCoordinateTransformationFunc(
   CoordinateTransformationMode coordinate_transformation_mode) {
-  switch (coordinate_transformation_mode) {
-    case ALIGN_CORNERS: {
-      return AlignCornersFunc();
-    };
-    case HALF_PIXEL: {
-      return HalfPixelFunc();
-    };
-    case ASYMMETRIC: {
-      return AsymmetricFunc();
-    }
-    default:
-      return AlignCornersFunc();
-  }
+  const std::unordered_map<CoordinateTransformationMode, CoordinateTransformationFunc> coordinate_map{
+    {ALIGN_CORNERS, AlignCornersFunc()}, {HALF_PIXEL, HalfPixelFunc()}, {ASYMMETRIC, AsymmetricFunc()}};
+  return coordinate_map.at(coordinate_transformation_mode);
 }
 
 bool ResizeLinear1DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,

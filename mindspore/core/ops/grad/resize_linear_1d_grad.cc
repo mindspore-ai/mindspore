@@ -1,0 +1,90 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <string>
+#include <algorithm>
+#include <memory>
+#include <set>
+#include <vector>
+#include "ops/op_utils.h"
+#include "ops/grad/resize_linear_1d_grad.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
+
+namespace mindspore {
+namespace ops {
+namespace {
+abstract::ShapePtr ResizeLinear1DGradInferShape(const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  auto grad_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
+  MS_EXCEPTION_IF_NULL(grad_shape_ptr);
+  auto grad_shape = grad_shape_ptr->shape();
+  auto input_x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
+  MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
+  auto input_x_shape = input_x_shape_ptr->shape();
+  std::vector<int64_t> ret_shape;
+  ret_shape.push_back(grad_shape[kInputIndex0]);
+  ret_shape.push_back(grad_shape[kInputIndex1]);
+  ret_shape.push_back(input_x_shape[kInputIndex2]);
+  if (grad_shape_ptr->IsDynamic()) {
+    auto grad_min_shape = grad_shape_ptr->min_shape();
+    std::vector<int64_t> ret_min_shape;
+    ret_min_shape.push_back(grad_min_shape[kInputIndex0]);
+    ret_min_shape.push_back(grad_min_shape[kInputIndex1]);
+    ret_min_shape.push_back(input_x_shape[kInputIndex2]);
+    auto grad_max_shape = grad_shape_ptr->max_shape();
+    std::vector<int64_t> ret_max_shape;
+    ret_max_shape.push_back(grad_max_shape[kInputIndex0]);
+    ret_max_shape.push_back(grad_max_shape[kInputIndex1]);
+    ret_max_shape.push_back(input_x_shape[kInputIndex2]);
+    return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
+  }
+  return std::make_shared<abstract::Shape>(ret_shape);
+}
+
+TypePtr ResizeLinear1DGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  return input_args[1]->BuildType();
+}
+}  // namespace
+
+void ResizeLinear1DGrad::set_coordinate_transformation_mode(const std::string coordinate_transformation_mode) {
+  (void)this->AddAttr("coordinate_transformation_mode", api::MakeValue(coordinate_transformation_mode));
+}
+std::string ResizeLinear1DGrad::get_coordinate_transformation_mode() const {
+  auto value_ptr = GetAttr("coordinate_transformation_mode");
+  return GetValue<std::string>(value_ptr);
+}
+
+void ResizeLinear1DGrad::Init(const std::string coordinate_transformation_mode) {
+  this->set_coordinate_transformation_mode(coordinate_transformation_mode);
+}
+
+MIND_API_OPERATOR_IMPL(ResizeLinear1DGrad, BaseOperator);
+AbstractBasePtr ResizeLinear1DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInteger("infer", SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args)),
+                                           kEqual, input_num, prim_name);
+  return abstract::MakeAbstract(ResizeLinear1DGradInferShape(primitive, input_args),
+                                ResizeLinear1DGradInferType(primitive, input_args));
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(ResizeLinear1DGrad, prim::kPrimResizeLinear1DGrad, ResizeLinear1DGradInfer, nullptr, true);
+}  // namespace ops
+}  // namespace mindspore

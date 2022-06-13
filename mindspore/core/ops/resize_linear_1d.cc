@@ -65,10 +65,12 @@ abstract::ShapePtr ResizeLinear1DInferShape(const PrimitivePtr &primitive,
   auto shape0_v = shape0_ptr->shape();
   auto shape1_v = shape1_ptr->shape();
   if (shape0_v.size() < kInputShape0Dim) {
-    MS_EXCEPTION(ValueError) << "The rank of images tensor must be greater than 3. But got " << shape0_v.size();
+    MS_EXCEPTION(ValueError) << "For 'ResizeLinear1D', the rank of images tensor must be greater than 3. But got "
+                             << shape0_v.size();
   }
   if (shape1_v.size() != kInputShape1Dim) {
-    MS_EXCEPTION(ValueError) << "The size tensor must be a 1-D tensor. But got " << shape1_v.size() << "-D";
+    MS_EXCEPTION(ValueError) << "For 'ResizeLinear1D', the size tensor must be a 1-D tensor. But got "
+                             << shape1_v.size() << "-D";
   }
   if (size_arg->isa<abstract::AbstractTensor>() && size_arg->BuildValue()->isa<tensor::Tensor>()) {
     auto size_shape_ptr = reinterpret_cast<int64_t *>(size_shape_tensor->data_c());
