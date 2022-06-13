@@ -237,8 +237,8 @@ class SummaryLandscape:
         """Get the model params."""
         parameters = []
         for epoch in epochs:
-            file_path = self._model_params_file_map[str(epoch)]
-            parameters.append(load_checkpoint(file_path).values())
+            file_path = self._model_params_file_map.get(str(epoch))
+            parameters.append(list(load_checkpoint(file_path).values()))
         return parameters
 
     def _create_epoch_group(self, intervals):
@@ -312,8 +312,7 @@ class SummaryLandscape:
                     data[key] = value
 
             if "intervals" in collect_landscape.keys():
-                intervals = collect_landscape.get("intervals")
-                self._create_epoch_group(intervals)
+                self._create_epoch_group(collect_landscape.get("intervals"))
                 data["epoch_group"] = self._epoch_group
             with open(json_path, 'w') as file:
                 json.dump(data, file)
@@ -328,36 +327,32 @@ class SummaryLandscape:
     def _list_landscapes(self, callback_fn, device_ids=None):
         """Create landscape with single device and list all landscape."""
 
-        json_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
-        if not os.path.exists(json_path):
+        if not os.path.exists(os.path.join(self._ckpt_dir, 'train_metadata.json')):
             raise FileNotFoundError(f'For "{self.__class__.__name__}", train_metadata.json file does not exist '
                                     f'under the path, please use summary_collector to collect information to '
                                     f'create the json file')
-        with open(json_path, 'r') as file:
+        with open(os.path.join(self._ckpt_dir, 'train_metadata.json'), 'r') as file:
             data = json.load(file)
         self._check_json_file_data(data)
 
         self._epoch_group = data['epoch_group']
         self._model_params_file_map = data['model_params_file_map']
-        create_landscape = data['create_landscape']
-        landscape_size = data['landscape_size']
-        kwargs = dict(proz=0.2, landscape_size=landscape_size, device_ids=device_ids, callback_fn=callback_fn)
+        kwargs = dict(proz=0.2, landscape_size=data['landscape_size'], device_ids=device_ids, callback_fn=callback_fn)
 
-        count = len(device_ids)
         start = time.time()
-        with ProcessPoolExecutor(max_workers=count) as executor:
-            if count > 1:
+        with ProcessPoolExecutor(max_workers=len(device_ids)) as executor:
+            if len(device_ids) > 1:
                 futures = []
                 for device_id in device_ids:
                     future = executor.submit(self._set_context, device_id)
                     futures.append(future)
                 wait(futures, return_when=ALL_COMPLETED)
 
-            kwargs['executor'] = executor if count > 1 else None
+            kwargs['executor'] = executor if len(device_ids) > 1 else None
 
-            if create_landscape['train']:
+            if data['create_landscape']['train']:
                 for i, epochs in enumerate(self._epoch_group.values()):
-                    self._log_message(create_landscape, index=i, interval=epochs)
+                    self._log_message(data['create_landscape'], index=i, interval=epochs)
                     kwargs['epochs'] = epochs
                     mid_time = time.time()
                     landscape_data = self._create_landscape_by_pca(**kwargs)
@@ -365,21 +360,19 @@ class SummaryLandscape:
                     landscape_data.unit = data['unit']
                     landscape_data.step_per_epoch = data['step_per_epoch']
                     landscape_data.num_samples = data['num_samples']
-                    landscape_msg = landscape_data.transform_to_loss_landscape_msg(landscape_data)
-                    yield [epochs[0], epochs[-1]], landscape_msg
+                    yield [epochs[0], epochs[-1]], landscape_data.transform_to_loss_landscape_msg(landscape_data)
 
-            if create_landscape['result']:
+            if data['create_landscape']['result']:
                 final_epochs = [list(self._epoch_group.values())[-1][-1]]
-                self._log_message(create_landscape, final_epochs=final_epochs)
+                self._log_message(data['create_landscape'], final_epochs=final_epochs)
                 kwargs['epochs'] = final_epochs
-                mid_time_2 = time.time()
+                mid_time = time.time()
                 landscape_data = self._create_landscape_by_random(**kwargs)
-                logger.info("Create landscape end, use time: %s s." % (round(time.time() - mid_time_2, 6)))
+                logger.info("Create landscape end, use time: %s s." % (round(time.time() - mid_time, 6)))
                 landscape_data.unit = data['unit']
                 landscape_data.step_per_epoch = data['step_per_epoch']
                 landscape_data.num_samples = data['num_samples']
-                landscape_msg = landscape_data.transform_to_loss_landscape_msg(landscape_data)
-                yield final_epochs, landscape_msg
+                yield final_epochs, landscape_data.transform_to_loss_landscape_msg(landscape_data)
         logger.info("Total use time: %s s." % (round(time.time() - start, 6)))
 
     def _log_message(self, create_landscape, index=None, interval=None, final_epochs=None):
@@ -414,7 +407,7 @@ class SummaryLandscape:
             parlis = []
             for param in parameters:
                 if ("weight" in param.name or "bias" in param.name) and ("moment" not in param.name):
-                    data = param.data.asnumpy().copy()
+                    data = param.data.asnumpy()
                     parlis = np.concatenate((parlis, data), axis=None)
                 else:
                     continue
@@ -442,26 +435,23 @@ class SummaryLandscape:
         # Flat to a single vector and calc alpha, beta
         v_param = self._flat_ndarray(v_ndarray_filtered)
         w_param = self._flat_ndarray(w_ndarray_filtered)
-        final_params_numpy = [param.data.asnumpy().copy() for param in final_params]
-        final_params_filtered_numpy = [param.data.asnumpy().copy() for param in final_params_filtered]
+        final_params_numpy = [param.data.asnumpy() for param in final_params]
+        final_params_filtered_numpy = [param.data.asnumpy() for param in final_params_filtered]
         coefs = self._calc_coefs(multi_parameters, final_params_filtered_numpy, v_param, w_param)
 
         # generate coordinates of loss landscape
         coefs_x = coefs[:, 0][np.newaxis]
         coefs_y = coefs[:, 1][np.newaxis]
 
-        boundaries_x = max(coefs_x[0]) - min(coefs_x[0])
-        boundaries_y = max(coefs_y[0]) - min(coefs_y[0])
-
-        x_axis = np.linspace(min(coefs_x[0]) - proz * boundaries_x, max(coefs_x[0]) +
-                             proz * boundaries_x, landscape_size)
-        y_axis = np.linspace(min(coefs_y[0]) - proz * boundaries_y, max(coefs_y[0]) +
-                             proz * boundaries_y, landscape_size)
+        x_axis = np.linspace(min(coefs_x[0]) - proz * (max(coefs_x[0]) - min(coefs_x[0])),
+                             max(coefs_x[0]) + proz * (max(coefs_x[0]) - min(coefs_x[0])), landscape_size)
+        y_axis = np.linspace(min(coefs_y[0]) - proz * (max(coefs_y[0]) - min(coefs_y[0])),
+                             max(coefs_y[0]) + proz * (max(coefs_y[0]) - min(coefs_y[0])), landscape_size)
         x_points, y_points = np.meshgrid(x_axis, y_axis)
 
         test_final_params = dict()
         for param in final_params:
-            test_final_params[param.name] = param.data.asnumpy().copy()
+            test_final_params[param.name] = param.data.asnumpy()
 
         if executor is not None:
             coefs_parts, y_points_parts = [], []
@@ -548,7 +538,7 @@ class SummaryLandscape:
         """Create landscape by Random."""
         multi_parameters = self._get_model_params(epochs)
         final_params = list(multi_parameters[-1])
-        final_params_numpy = [param.data.asnumpy().copy() for param in final_params]
+        final_params_numpy = [param.data.asnumpy() for param in final_params]
         total_params = sum(np.size(p) for p in final_params_numpy)
         v_rand = np.random.normal(size=total_params)
         w_rand = np.random.normal(size=total_params)
@@ -564,7 +554,7 @@ class SummaryLandscape:
         x_points, y_points = np.meshgrid(x_axis, y_axis)
         test_final_params = dict()
         for param in final_params:
-            test_final_params[param.name] = param.data.asnumpy().copy()
+            test_final_params[param.name] = param.data.asnumpy()
         if executor is not None:
             logger.info("Use multi process, device_id: %s." % (device_ids))
             y_points_parts = []
@@ -614,7 +604,7 @@ class SummaryLandscape:
         ndarray = list()
         index = 0
         for param in parameters:
-            data = param.data.asnumpy().copy()
+            data = param.data.asnumpy()
             if ("weight" not in param.name and "bias" not in param.name) or ("moment" in param.name):
                 ndarray.append(np.array(data, dtype=np.float32))
                 continue
@@ -645,7 +635,7 @@ class SummaryLandscape:
         for i, param in enumerate(parameters):
             # Here as MindSpore ckpt has hyperparameters, we should skip them to make sure
             # PCA calculation is correct.
-            data = param.data.asnumpy().copy()
+            data = param.data.asnumpy()
             if ("weight" in param.name or "bias" in param.name) and ("moment" not in param.name):
                 factor_v = np.linalg.norm(data) / np.linalg.norm(get_v[i])
                 factor_w = np.linalg.norm(data) / np.linalg.norm(get_w[i])
@@ -681,7 +671,7 @@ class SummaryLandscape:
                 # we should skip them to make sure PCA calculation is correct
                 if ('weight' not in param.name and 'bias' not in param.name) or ('moment' in param.name):
                     continue
-                testi.append(param.data.asnumpy().copy())
+                testi.append(param.data.asnumpy())
 
             st_vec = self._flat_ndarray(testi)
             b_vec = st_vec - pas
@@ -902,6 +892,61 @@ class _PCA:
         self._iterated_power = "auto"
         self._n_oversamples = 10
 
+    @staticmethod
+    def _safe_dot(a, b):
+        """Dot product that handle the matrix case correctly."""
+        if a.ndim > 2 or b.ndim > 2:
+            if sparse.issparse(b):
+                # Sparse is always 2 dimensional. Implies a is above 3 dimensional.
+                # [n, ..., o, p] @ [l, m] -> [n, ..., o, m]
+                a_2d = a.reshape(-1, a.shape[-1])
+                ret = a_2d @ b
+                ret = ret.reshape(*a.shape[:-1], b.shape[1])
+            elif sparse.issparse(a):
+                # Sparse is always 2 dimensional. Implies b is above 3 dimensional.
+                # [l, m] @ [n, ..., o, p, q] -> [l, n, ..., o, q]
+                b_ = np.rollaxis(b, -2)
+                b_2d = b_.reshape((b.shape[-2], -1))
+                ret = a @ b_2d
+                ret = ret.reshape(a.shape[0], *b_.shape[1:])
+            else:
+                ret = np.dot(a, b)
+
+        else:
+            ret = a @ b
+
+        return ret
+
+    @staticmethod
+    def _svd_turn(u, v, u_decision=True):
+        """Confirm correction to ensure deterministic output from SVD."""
+        if u_decision:
+            # rows of v, columns of u
+            max_cols = np.argmax(np.abs(u), axis=0)
+            signs = np.sign(u[max_cols, list(range(u.shape[1]))])
+            v *= signs[:, np.newaxis]
+            u *= signs
+        else:
+            # rows of u, columns of v
+            max_rows = np.argmax(np.abs(v), axis=1)
+            signs = np.sign(v[list(range(v.shape[0])), max_rows])
+            v *= signs[:, np.newaxis]
+            u *= signs
+        return u, v
+
+    @staticmethod
+    def _check_random_status(seed):
+        """Transform seed into a np.random.RandomState instance."""
+        if isinstance(seed, np.random.RandomState):
+            return seed
+        if seed is None or seed is np.random:
+            return np.random.RandomState()
+        if isinstance(seed, numbers.Integral):
+            return np.random.RandomState(seed)
+        raise ValueError(
+            "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+        )
+
     def compute(self, x):
         """Main method for computing principal components."""
         n_components = self._n_comps
@@ -948,8 +993,7 @@ class _PCA:
         n_samples, n_features = m.shape
         # Adjust 7 or 4 was found a good compromise for randomized SVD.
         n_iter = 7 if n_components < 0.1 * min(m.shape) else 4
-        transpose = n_samples < n_features
-        if transpose:
+        if n_samples < n_features:
             m = m.T
 
         q = self._random_range_finder(m, size=n_random, n_iter=n_iter, random_state=random_state)
@@ -994,55 +1038,3 @@ class _PCA:
         # The orthogonal basis is extracted by the linear projection of Q, and the range of a is sampled.
         q, _ = linalg.qr(self._safe_dot(a, q), mode="economic")
         return q
-
-    def _safe_dot(self, a, b):
-        """Dot product that handle the matrix case correctly."""
-        if a.ndim > 2 or b.ndim > 2:
-            if sparse.issparse(b):
-                # Sparse is always 2 dimensional. Implies a is above 3 dimensional.
-                # [n, ..., o, p] @ [l, m] -> [n, ..., o, m]
-                a_2d = a.reshape(-1, a.shape[-1])
-                ret = a_2d @ b
-                ret = ret.reshape(*a.shape[:-1], b.shape[1])
-            elif sparse.issparse(a):
-                # Sparse is always 2 dimensional. Implies b is above 3 dimensional.
-                # [l, m] @ [n, ..., o, p, q] -> [l, n, ..., o, q]
-                b_ = np.rollaxis(b, -2)
-                b_2d = b_.reshape((b.shape[-2], -1))
-                ret = a @ b_2d
-                ret = ret.reshape(a.shape[0], *b_.shape[1:])
-            else:
-                ret = np.dot(a, b)
-
-        else:
-            ret = a @ b
-
-        return ret
-
-    def _svd_turn(self, u, v, u_decision=True):
-        """Confirm correction to ensure deterministic output from SVD."""
-        if u_decision:
-            # rows of v, columns of u
-            max_cols = np.argmax(np.abs(u), axis=0)
-            signs = np.sign(u[max_cols, range(u.shape[1])])
-            v *= signs[:, np.newaxis]
-            u *= signs
-        else:
-            # rows of u, columns of v
-            max_rows = np.argmax(np.abs(v), axis=1)
-            signs = np.sign(v[range(v.shape[0]), max_rows])
-            v *= signs[:, np.newaxis]
-            u *= signs
-        return u, v
-
-    def _check_random_status(self, seed):
-        """Transform seed into a np.random.RandomState instance."""
-        if isinstance(seed, np.random.RandomState):
-            return seed
-        if seed is None or seed is np.random:
-            return np.random.RandomState()
-        if isinstance(seed, numbers.Integral):
-            return np.random.RandomState(seed)
-        raise ValueError(
-            "%r cannot be used to seed a numpy.random.RandomState instance" % seed
-        )
