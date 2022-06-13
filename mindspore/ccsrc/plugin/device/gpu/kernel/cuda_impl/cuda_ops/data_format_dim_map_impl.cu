@@ -20,8 +20,7 @@
 template <typename T>
 __global__ void DataFormatDimMapKernel(size_t size, T *input_addr, T *output_addr, int32_t *dim_map) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    assert(input_addr[pos] >= -4 && input_addr[pos] <= 3);
-    output_addr[pos] = dim_map[input_addr[pos] + 4];
+    output_addr[pos] = dim_map[(input_addr[pos] % 4 + 4) % 4];
   }
 }
 

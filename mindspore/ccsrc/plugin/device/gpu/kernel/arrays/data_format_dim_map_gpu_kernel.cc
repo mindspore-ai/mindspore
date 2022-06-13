@@ -27,9 +27,9 @@ constexpr const size_t kDataFormatDimMapOutputsNum = 1;
 constexpr const size_t kDimMapNum = 8;
 constexpr const int32_t kLowerThre = -4;
 constexpr const int32_t kUpperThre = 3;
-const std::vector<int32_t> kDimMapSameFormat = {0, 1, 2, 3, 0, 1, 2, 3};
-const std::vector<int32_t> kDimMapNHWC2NCHW = {0, 2, 3, 1, 0, 2, 3, 1};
-const std::vector<int32_t> kDimMapNCHW2NHWC = {0, 3, 1, 2, 0, 3, 1, 2};
+const std::vector<int32_t> kDimMapSameFormat = {0, 1, 2, 3};
+const std::vector<int32_t> kDimMapNHWC2NCHW = {0, 3, 1, 2};
+const std::vector<int32_t> kDimMapNCHW2NHWC = {0, 2, 3, 1};
 
 template <typename T>
 bool DataFormatDimMapGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
@@ -112,6 +112,12 @@ int DataFormatDimMapGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                       outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
   auto in_shape_size = input_shape_.size();
+  if (in_shape_size > max_dims_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of output should be less than or equal to 7, but got " << in_shape_size
+                      << ".";
+    return KRET_RESIZE_FAILED;
+  }
   auto output_shape_size = output_shape_.size();
   if (in_shape_size != output_shape_size) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input shape size should be the same as output shape size, but got"

@@ -997,6 +997,26 @@ def get_gather_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.DataFormatDimMap)
+def get_pdist_vmap_rule(prim, axis_size):
+    """VmapRule for `DataFormatDimMap`"""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+        prim.add_prim_attr('src_format', 'NHWC')
+        prim.add_prim_attr('dst_format', 'NCHW')
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        out = prim(x)
+        return out, 0
+
+    return vmap_rule
+
+
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = \
     vmap_rules_getters.register(UniqueConsecutive)(get_unsupported_dynamic_vmap_rule)

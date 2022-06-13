@@ -89,8 +89,8 @@ def test_ger_vmap(dtype):
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
-    def fast_gelu_func(x1, x2):
-        """fast_gelu_func"""
+    def ger_func(x1, x2):
+        """ger_func"""
         return P.Ger()(x1, x2)
 
     @ms_function
@@ -98,7 +98,7 @@ def test_ger_vmap(dtype):
         """manually_batched"""
         output = []
         for i in range(x1s.shape[0]):
-            output.append(fast_gelu_func(x1s[i], x2s[i]))
+            output.append(ger_func(x1s[i], x2s[i]))
         return F.stack(output)
 
     x1shape = (100, 3)
@@ -112,7 +112,7 @@ def test_ger_vmap(dtype):
     x2 = F.sub(x2, 0)
 
     start_time = time.perf_counter()
-    output_vmap = vmap(fast_gelu_func, in_axes=(0, 0))(x1, x2)
+    output_vmap = vmap(ger_func, in_axes=(0, 0))(x1, x2)
     vmap_time = time.perf_counter() - start_time
 
     start_time_manually = time.perf_counter()
@@ -136,8 +136,8 @@ def test_ger_vmap_two(dtype):
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
-    def fast_gelu_func_two(x1, x2):
-        """fast_gelu_func"""
+    def ger_func_two(x1, x2):
+        """ger_func_two"""
         return P.Ger()(x1, x2)
 
     @ms_function
@@ -145,7 +145,7 @@ def test_ger_vmap_two(dtype):
         """manually_batched_two"""
         output = []
         for i in range(x1s.shape[0]):
-            output.append(fast_gelu_func_two(x1s[i], x2s[:, i]))
+            output.append(ger_func_two(x1s[i], x2s[:, i]))
         return F.stack(output)
 
     x1shape_2 = (100, 3)
@@ -159,7 +159,7 @@ def test_ger_vmap_two(dtype):
     x2_2 = F.sub(x2_2, 0)
 
     start_time_2 = time.perf_counter()
-    output_vmap_2 = vmap(fast_gelu_func_two, in_axes=(0, 1))(x1_2, x2_2)
+    output_vmap_2 = vmap(ger_func_two, in_axes=(0, 1))(x1_2, x2_2)
     vmap_time_2 = time.perf_counter() - start_time_2
 
     start_time_manually_2 = time.perf_counter()

@@ -26,12 +26,10 @@ constexpr auto kDataFormatDimMap = "DataFormatDimMap";
 constexpr const size_t kDataFormatDimMapInputsNum = 1;
 constexpr const size_t kDataFormatDimMapOutputsNum = 1;
 constexpr const int32_t kInvalidOutput = -1;
-const std::unordered_map<int32_t, int32_t> kDimMapSameFormat = {{-4, 0}, {-3, 1}, {-2, 2}, {-1, 3},
-                                                                {0, 0},  {1, 1},  {2, 2},  {3, 3}};
-const std::unordered_map<int32_t, int32_t> kDimMapNHWC2NCHW = {{-4, 0}, {-3, 2}, {-2, 3}, {-1, 1},
-                                                               {0, 0},  {1, 2},  {2, 3},  {3, 1}};
-const std::unordered_map<int32_t, int32_t> kDimMapNCHW2NHWC = {{-4, 0}, {-3, 3}, {-2, 1}, {-1, 2},
-                                                               {0, 0},  {1, 3},  {2, 1},  {3, 2}};
+constexpr const int32_t kNumberFour = 4;
+const std::vector<int32_t> kDimMapSameFormat = {0, 1, 2, 3};
+const std::vector<int32_t> kDimMapNHWC2NCHW = {0, 3, 1, 2};
+const std::vector<int32_t> kDimMapNCHW2NHWC = {0, 2, 3, 1};
 
 template <typename T>
 bool DataFormatDimMapCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
@@ -47,22 +45,10 @@ bool DataFormatDimMapCpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
   const size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
   auto task = [this, &input, &output](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      const auto res_pair = this->dim_map_.find(input[i]);
-      if (this->dim_map_.find(input[i]) == this->dim_map_.end()) {
-        this->invalid_value_ = static_cast<int32_t>(input[i]);
-        this->value_valid_ = false;
-        output[i] = static_cast<T>(kInvalidOutput);
-      } else {
-        output[i] = res_pair->second;
-      }
+      output[i] = this->dim_map_[(input[i] % kNumberFour + kNumberFour) % kNumberFour];
     }
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
-
-  if (value_valid_ == false) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input must be in [-4, 4) but got one input " << invalid_value_;
-    return false;
-  }
   return true;
 }
 
@@ -122,6 +108,12 @@ int DataFormatDimMapCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();
   std::vector<int64_t> output_shape = outputs[0]->GetShapeVector();
   auto in_shape_size = input_shape.size();
+  if (in_shape_size > max_dims_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of output should be less than or equal to 7, but got " << in_shape_size
+                      << ".";
+    return KRET_RESIZE_FAILED;
+  }
   auto output_shape_size = output_shape.size();
   if (in_shape_size != output_shape_size) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input shape size should be the same as output shape size, but got"
