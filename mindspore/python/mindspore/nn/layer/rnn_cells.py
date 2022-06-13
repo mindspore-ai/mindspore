@@ -252,6 +252,11 @@ class LSTMCell(RNNCellBase):
     `Long Short-Term Memory Recurrent Neural Network Architectures for Large Scale Acoustic Modeling
     <https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/43905.pdf>`_.
 
+    The encapsulated LSTMCell can be simplified to the following formula:
+
+    .. math::
+        h^{'},c^{'} = LSTMCell(x, (h_0, c_0))
+
     Args:
         input_size (int): Number of features of input.
         hidden_size (int):  Number of features of hidden layer.

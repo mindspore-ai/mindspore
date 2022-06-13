@@ -30,8 +30,8 @@ mindspore.nn.BCEWithLogitsLoss
 
     **输入：**
 
-    - **logits** (Tensor) - 输入预测值，任意维度的Tensor。数据类型必须为float16或float32。
-    - **labels** (Tensor) - 输入目标值，任意维度的Tensor，其shape和数据类型与 `logits` 相同。
+    - **logits** (Tensor) - 输入预测值Tensor，shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。数据类型必须为float16或float32。
+    - **labels** (Tensor) - 输入目标值Tensor，shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。与 `logits` 的shape和数据类型相同。
 
     **输出：**
 

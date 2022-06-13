@@ -12,8 +12,8 @@ mindspore.nn.RMSELoss
 
     **输入：**
 
-    - **logits** (Tensor) - 输入的预测值，任意维度的Tensor。
-    - **labels** (Tensor) - 输入的目标值，任意维度的Tensor。一般与 `logits` 的shape相同。如果 `logits` 和 `labels` 的shape不同，需支持广播。
+    - **logits** (Tensor) - 输入的预测值Tensor, shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。
+    - **labels** (Tensor) - 输入的目标值Tensor，shape :math:`(N,*)` 。一般与 `logits` 的shape相同。如果 `logits` 和 `labels` 的shape不同，需支持广播。
 
     **输出：**
 

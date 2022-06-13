@@ -5,6 +5,8 @@ mindspore.nn.L1Regularizer
 
     对权重计算L1正则化。
 
+    L1正则化可导致稀疏权重。
+
     .. math::
         \text{loss}=\lambda * \text{reduce_sum}(\text{abs}(\omega))
 

@@ -31,7 +31,7 @@ mindspore.nn.LossBase
 
         **参数：**
 
-        - **x** (Tensor) - 输入数据，任意维度的Tensor。
+        - **x** (Tensor) - shape为 :math:`(N,*)` 的输入Tensor，其中 :math:`*` 表示任意数量的附加维度。
         - **weights** (Union[float, Tensor]) - 可选值，要么rank为0，要么rank与输入相同，并且必须可广播到输入（即，所有维度必须为 `1` ，或与相应输入的维度相同）。默认值: 1.0。
 
         **返回：**
