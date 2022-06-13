@@ -197,9 +197,9 @@ def test_tensor_scatter_arithmetic_tensor_op(func, data_type, index_type):
     expected = tensor_scatter_np(func, input_x, indices, updates)
 
     if func == 'add':
-        output = input_x.tensor_scatter_add(indices, updates)
+        output = input_x.scatter_add(indices, updates)
     elif func == 'sub':
-        output = input_x.tensor_scatter_sub(indices, updates)
+        output = input_x.scatter_sub(indices, updates)
 
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
 

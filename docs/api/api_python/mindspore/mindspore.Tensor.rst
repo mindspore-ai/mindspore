@@ -1475,7 +1475,7 @@ mindspore.Tensor
 
         Tensor。
 
-    .. py:method:: tensor_scatter_add(indices, updates)
+    .. py:method:: scatter_add(indices, updates)
 
         根据指定的更新值和输入索引，通过相加运算更新本Tensor的值。当同一索引有不同值时，更新的结果将是所有值的总和。
 
@@ -1496,7 +1496,7 @@ mindspore.Tensor
         - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
         - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
 
-    .. py:method:: tensor_scatter_div(indices, updates)
+    .. py:method:: scatter_div(indices, updates)
 
         根据指定的索引, 通过除法进行计算, 将输出赋值到输出Tensor中。
 
@@ -1518,7 +1518,7 @@ mindspore.Tensor
         - **TypeError** - `indices` 的数据类型不是int32，也不是int64。
         - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
 
-    .. py:method:: tensor_scatter_min(indices, updates)
+    .. py:method:: scatter_min(indices, updates)
 
         根据指定的更新值和输入索引，通过最小值运算，将结果赋值到输出Tensor中。
 
@@ -1541,7 +1541,7 @@ mindspore.Tensor
         - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
         - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
 
-    .. py:method:: tensor_scatter_mul(indices, updates)
+    .. py:method:: scatter_mul(indices, updates)
 
         根据指定的索引， 通过乘法进行计算， 将输出赋值到输出Tensor中。
 
@@ -1562,7 +1562,7 @@ mindspore.Tensor
         - **TypeError** - `indices` 的数据类型不是int32，也不是int64。
         - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
 
-    .. py:method:: tensor_scatter_sub(indices, updates)
+    .. py:method:: scatter_sub(indices, updates)
 
         根据指定的更新值和输入索引，通过减法进行运算，将结果赋值到输出Tensor中。当同一索引有不同值时，更新的结果将是所有值的总和。此操作几乎等同于使用 :class:`mindspore.ops.ScatterNdSub` ，只是更新后的结果是通过算子output返回，而不是直接原地更新input。
 

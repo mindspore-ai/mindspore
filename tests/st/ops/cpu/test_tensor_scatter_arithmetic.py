@@ -266,7 +266,7 @@ def test_tensor_scatter_arithmetic_tensor_func_check(func, data_type, index_type
     expected = tensor_scatter_np(func, input_x, indices, updates)
 
     if func == 'div':
-        output = input_x.tensor_scatter_div(indices, updates)
+        output = input_x.scatter_div(indices, updates)
 
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
 
