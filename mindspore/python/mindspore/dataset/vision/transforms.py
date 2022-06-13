@@ -856,7 +856,7 @@ class HsvToRgb(PyTensorOperation):
         return util.hsv_to_rgbs(hsv_imgs, self.is_hwc)
 
 
-class HWC2CHW(TensorOperation, PyTensorOperation):
+class HWC2CHW(TensorOperation):
     """
     Transpose the input image from shape (H, W, C) to shape (C, H, W). The input image should be 3 channels image.
 
@@ -877,22 +877,11 @@ class HWC2CHW(TensorOperation, PyTensorOperation):
 
     def __init__(self):
         super().__init__()
+        self.implementation = Implementation.C
         self.random = False
 
     def parse(self):
         return cde.HwcToChwOperation()
-
-    def execute_py(self, img):
-        """
-        Execute method.
-
-        Args:
-            img (numpy.ndarray): numpy.ndarray of shape (H, W, C) to be transposed.
-
-        Returns:
-            numpy.ndarray, transposed numpy.ndarray of shape (C, H, W).
-        """
-        return util.hwc_to_chw(img)
 
 
 class Invert(TensorOperation, PyTensorOperation):
@@ -3391,7 +3380,7 @@ class ToPIL(PyTensorOperation):
         return util.to_pil(img)
 
 
-class ToTensor(TensorOperation, PyTensorOperation):
+class ToTensor(TensorOperation):
     """
     Convert the input PIL Image or numpy.ndarray to numpy.ndarray of the desired dtype, rescale the pixel value
     range from [0, 255] to [0.0, 1.0] and change the shape from (H, W, C) to (C, H, W).
