@@ -5,7 +5,7 @@ if(ENABLE_CPU)
     if(WIN32 OR APPLE)
         list(REMOVE_ITEM HARDWARE_CPU_SRC_LIST "ms_collective_comm_lib.cc" "allreduce_impl.cc"
           "ms_collective_ops_impl.cc")
-        list(REMOVE_ITEM HARDWARE_CPU_SRC_LIST "ms_collective_topo.cc")
+        list(REMOVE_ITEM HARDWARE_CPU_SRC_LIST "ms_collective_topo.cc" "ms_collective_node.cc")
     endif()
     if(ENABLE_MPI)
         set(MPI_COLLECTIVE_SRCS "mpi_collective_comm_lib.cc"
