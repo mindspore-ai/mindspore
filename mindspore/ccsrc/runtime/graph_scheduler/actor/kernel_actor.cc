@@ -194,7 +194,7 @@ void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContex
 void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
   running_dependent_msg_num_ = 1;
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
-    if (ActorDispatcher::get_is_memory_allocation_sync()) {
+    if (ActorDispatcher::is_memory_allocation_sync()) {
       ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::AllocateMemory, &memory_alloc_list_,
                                 device_contexts_[0], context, GetAID());
       OnMemoryAllocFinish(context);
@@ -210,8 +210,13 @@ void KernelActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context) {
 void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   if (strategy_ == GraphExecutionStrategy::kPipeline) {
-    ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_, device_contexts_[0],
-                          context, GetAID());
+    if (ActorDispatcher::is_memory_free_sync()) {
+      ActorDispatcher::SendSync(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_,
+                                device_contexts_[0], context, GetAID());
+    } else {
+      ActorDispatcher::Send(memory_manager_aid_, &MemoryManagerActor::FreeMemory, &memory_free_list_,
+                            device_contexts_[0], context, GetAID());
+    }
   } else {
     FreeMemory(memory_free_list_, device_contexts_[0]);
   }

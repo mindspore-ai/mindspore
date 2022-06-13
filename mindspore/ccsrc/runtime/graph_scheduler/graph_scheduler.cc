@@ -568,7 +568,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   if (actor_set->is_multi_thread_execution_) {
     thread_pool->SetSpinCountMaxValue();
   }
-  ActorDispatcher::is_multi_thread_execution(actor_set->is_multi_thread_execution_);
+  ActorDispatcher::set_is_multi_thread_execution(actor_set->is_multi_thread_execution_);
   double start_time = GetTime();
   ActorDispatcher::Send(actor_set->data_prepare_actor_->GetAID(), &DataPrepareActor::PrepareData, input_tensors,
                         &op_context, GraphExecutionStrategy::kPipeline);
