@@ -22,9 +22,6 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
 
 class MindDataTestRgbaToBgrOp : public UT::CVOP::CVOpCommon {
  protected:

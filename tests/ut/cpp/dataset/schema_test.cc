@@ -26,9 +26,6 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
 
 class MindDataTestSchema : public UT::DatasetOpTesting {
  protected:

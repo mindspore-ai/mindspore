@@ -16,10 +16,6 @@
 
 #include "minddata/mindrecord/include/shard_sample.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
-
 namespace mindspore {
 namespace mindrecord {
 ShardSample::ShardSample(int64_t n)

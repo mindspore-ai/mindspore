@@ -27,10 +27,6 @@
 #include "minddata/mindrecord/include/shard_error.h"
 #include "minddata/mindrecord/include/shard_page.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
-
 namespace mindspore {
 namespace mindrecord {
 std::atomic<bool> thread_status(false);

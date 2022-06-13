@@ -33,8 +33,6 @@
 #include "minddata/dataset/kernels/ir/vision/random_resized_crop_ir.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::MsLogLevel::INFO;
 
 class MindDataTestOptimizationPass : public UT::DatasetOpTesting {};
 

@@ -29,8 +29,6 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::MsLogLevel::INFO;
 
 namespace mindspore {
 namespace dataset {

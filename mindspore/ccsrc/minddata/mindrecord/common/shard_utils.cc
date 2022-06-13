@@ -19,11 +19,6 @@
 #include "utils/ms_utils.h"
 #include "./securec.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::DEBUG;
-using mindspore::MsLogLevel::ERROR;
-
 namespace mindspore {
 namespace mindrecord {
 // split a string using a character

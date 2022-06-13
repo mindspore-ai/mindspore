@@ -21,9 +21,6 @@
 #include "minddata/dataset/util/queue.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
 
 class MindDataTestIntrpService : public UT::Common {
  public:

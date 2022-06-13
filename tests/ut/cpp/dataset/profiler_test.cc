@@ -20,8 +20,6 @@
 #include "minddata/dataset/include/dataset/datasets.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::MsLogLevel::INFO;
 
 namespace mindspore {
 namespace dataset {

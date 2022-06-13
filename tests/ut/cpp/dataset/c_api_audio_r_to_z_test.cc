@@ -20,9 +20,6 @@
 #include "minddata/dataset/include/dataset/audio.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

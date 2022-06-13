@@ -18,12 +18,6 @@
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::DEBUG;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::MsLogLevel::INFO;
-
 namespace mindspore {
 namespace mindrecord {
 ShardIndexGenerator::ShardIndexGenerator(const std::string &file_path, bool append)

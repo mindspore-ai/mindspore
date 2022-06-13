@@ -31,9 +31,6 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 
 class MindDataTestMindRecordOp : public UT::DatasetOpTesting {};
 

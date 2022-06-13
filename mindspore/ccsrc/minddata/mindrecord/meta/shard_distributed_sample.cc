@@ -16,10 +16,6 @@
 
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
-
 namespace mindspore {
 namespace mindrecord {
 ShardDistributedSample::ShardDistributedSample(int num_shards, int shard_id, int64_t no_of_padded_samples, bool shuffle,

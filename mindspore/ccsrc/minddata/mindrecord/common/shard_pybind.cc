@@ -31,10 +31,6 @@
 
 namespace py = pybind11;
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
-
 namespace mindspore {
 namespace mindrecord {
 #define THROW_IF_ERROR(s)                                      \

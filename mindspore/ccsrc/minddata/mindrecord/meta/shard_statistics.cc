@@ -17,10 +17,6 @@
 #include "minddata/mindrecord/include/shard_statistics.h"
 #include "pybind11/pybind11.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
-
 namespace mindspore {
 namespace mindrecord {
 std::shared_ptr<Statistics> Statistics::Build(std::string desc, const json &statistics) {

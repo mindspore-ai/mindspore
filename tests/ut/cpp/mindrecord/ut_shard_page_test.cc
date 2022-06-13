@@ -30,10 +30,6 @@ using std::pair;
 using std::string;
 using std::vector;
 
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
-
 namespace mindspore {
 namespace mindrecord {
 class TestShardPage : public UT::Common {

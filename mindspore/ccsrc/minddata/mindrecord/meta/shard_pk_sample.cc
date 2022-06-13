@@ -16,10 +16,6 @@
 
 #include "minddata/mindrecord/include/shard_pk_sample.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
-
 namespace mindspore {
 namespace mindrecord {
 ShardPkSample::ShardPkSample(const std::string &category_field, int64_t num_elements, int64_t num_samples)

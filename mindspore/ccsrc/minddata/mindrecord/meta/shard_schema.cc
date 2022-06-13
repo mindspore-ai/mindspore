@@ -17,10 +17,6 @@
 #include "minddata/mindrecord/include/shard_schema.h"
 #include "utils/ms_utils.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
-
 namespace mindspore {
 namespace mindrecord {
 std::shared_ptr<Schema> Schema::Build(std::string desc, const json &schema) {

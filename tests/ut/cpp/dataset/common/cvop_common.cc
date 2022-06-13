@@ -28,9 +28,6 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 using UT::CVOP::CVOpCommon;
 
 CVOpCommon::CVOpCommon() {}

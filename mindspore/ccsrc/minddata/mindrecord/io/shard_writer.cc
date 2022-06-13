@@ -20,12 +20,6 @@
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "./securec.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::DEBUG;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::MsLogLevel::INFO;
-
 namespace mindspore {
 namespace mindrecord {
 ShardWriter::ShardWriter()

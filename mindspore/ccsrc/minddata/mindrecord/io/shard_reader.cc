@@ -23,12 +23,6 @@
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
 #include "utils/ms_utils.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::DEBUG;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::MsLogLevel::INFO;
-
 namespace mindspore {
 namespace mindrecord {
 template <class Type>
