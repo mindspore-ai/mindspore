@@ -20,6 +20,7 @@
 #include "utils/check_convert_utils.h"
 #include "ops/cummin.h"
 #include "mindapi/src/helper.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -51,7 +52,16 @@ TuplePtr CumminInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
+void Cummin::Init(const int64_t &axis) { this->set_axis(axis); }
+
+void Cummin::set_axis(const int64_t &axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+int64_t Cummin::get_axis() const {
+  auto value_ptr = GetAttr(kAxis);
+  return GetValue<int64_t>(value_ptr);
+}
 MIND_API_OPERATOR_IMPL(Cummin, BaseOperator);
+
 AbstractBasePtr CumminInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();

@@ -15,7 +15,6 @@
  */
 
 #include "ops/cummax.h"
-#include <map>
 #include <string>
 #include <set>
 #include "ops/op_utils.h"
@@ -52,6 +51,17 @@ TuplePtr CummaxInferType(const PrimitivePtr &primitive, const std::vector<Abstra
   auto indices_type = kInt64;
   return std::make_shared<Tuple>(std::vector<TypePtr>{y_type, indices_type});
 }
+}  // namespace
+
+void Cummax::Init(const int64_t &axis) { this->set_axis(axis); }
+
+void Cummax::set_axis(const int64_t &axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+int64_t Cummax::get_axis() const {
+  auto value_ptr = GetAttr(kAxis);
+  return GetValue<int64_t>(value_ptr);
+}
+MIND_API_OPERATOR_IMPL(Cummax, BaseOperator);
 
 AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
@@ -64,8 +74,5 @@ AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const Primitive
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(Cummax, prim::kPrimCummax, CummaxInfer, nullptr, true);
-}  // namespace
-
-MIND_API_OPERATOR_IMPL(Cummax, BaseOperator);
 }  // namespace ops
 }  // namespace mindspore

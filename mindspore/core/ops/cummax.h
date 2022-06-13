@@ -29,6 +29,12 @@ class MIND_API Cummax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Cummax);
   Cummax() : BaseOperator(kNameCummax) { InitIOName({"x"}, {"y", "indices"}); }
+
+  void Init(const int64_t &axis);
+
+  void set_axis(const int64_t &axis);
+
+  int64_t get_axis() const;
 };
 abstract::AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<abstract::AbstractBasePtr> &input_args);
