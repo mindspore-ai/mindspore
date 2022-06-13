@@ -30,6 +30,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ReduceFusion;
 using mindspore::schema::ReduceMode;
 using mindspore::schema::ReduceMode_ReduceASum;
+using mindspore::schema::ReduceMode_ReduceL2;
 using mindspore::schema::ReduceMode_ReduceMax;
 using mindspore::schema::ReduceMode_ReduceMean;
 using mindspore::schema::ReduceMode_ReduceMin;
@@ -55,7 +56,7 @@ void ReduceFp16CPUKernel::InitialKernelList() {
     {ReduceMode_ReduceSum, ReduceSumFp16},   {ReduceMode_ReduceMean, ReduceMeanFp16},
     {ReduceMode_ReduceMax, ReduceMaxFp16},   {ReduceMode_ReduceMin, ReduceMinFp16},
     {ReduceMode_ReduceProd, ReduceProdFp16}, {ReduceMode_ReduceSumSquare, ReduceSumFp16},
-    {ReduceMode_ReduceASum, ReduceSumFp16}};
+    {ReduceMode_ReduceASum, ReduceSumFp16},  {ReduceMode_ReduceL2, ReduceL2NormFp16}};
   auto iter = func_list.find(static_cast<schema::ReduceMode>(mode_));
   if (iter != func_list.end()) {
     fp16_reducer_ = iter->second;
