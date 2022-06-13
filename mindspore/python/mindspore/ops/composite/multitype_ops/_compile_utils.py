@@ -153,8 +153,8 @@ def tensor_item(data, *args):
     args_types = hyper_map(F.typeof, args)
     if not args or const_utils.judge_index_type(args_types[0], mstype.type_none):
         if data.shape == (1,):
-            return data
-        const_utils.raise_value_error("Can only convert an array of size 1 to a Python scalar")
+            return data[0]
+        const_utils.raise_value_error("Can only convert an array of size 1 to a Tensor scalar")
 
     if not const_utils.judge_indexes_types(args_types, mstype.int64):
         const_utils.raise_type_error("The index object cannot be interpreted as an integer")
