@@ -218,6 +218,8 @@ PassManagerPtr GraphKernelOptimizer::Combine() const {
 PassManagerPtr GraphKernelOptimizer::Build() const {
   auto pm = std::make_shared<GraphKernelPassManager>(6, "build");
   pm->Add(std::make_shared<ExtendOutputForUpdateState>(), OptLevel_1);
+  // Reduce fake output memory.
+  pm->Add(std::make_shared<ReduceFakeOutMem>(), OptLevel_1);
   // Compile graph kernel nodes, and inline nodes if compile failed.
   pm->Add(std::make_shared<GraphKernelBuild>(), OptLevel_1);
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
@@ -233,9 +235,6 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() const {
   // Recover the original output info
   pm->Add(std::make_shared<GetitemTuple>(), OptLevel_1);
   pm->Add(std::make_shared<RewriteOutputShape>(), OptLevel_1);
-
-  // Reduce fake output memory.
-  pm->Add(std::make_shared<ReduceFakeOutMem>(), OptLevel_1);
 
   // Add the new tensors to the kernel_graph
   pm->Add(std::make_shared<BindValueToGraph>(), OptLevel_1);
