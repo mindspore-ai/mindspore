@@ -17,13 +17,14 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSHRINK_GRAD_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_HSHRINK_GRAD_CPU_KERNEL_H_
 
+#include <map>
 #include <vector>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-class HShrinkGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<HShrinkGradCpuKernelMod> {
+class HShrinkGradCpuKernelMod : public NativeCpuKernelMod {
  public:
   HShrinkGradCpuKernelMod() = default;
   ~HShrinkGradCpuKernelMod() override = default;
@@ -31,22 +32,21 @@ class HShrinkGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHel
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, workspace, outputs);
-  }
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override;
 
  protected:
-  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs);
-
-  float lambd_{0.f};
+  size_t input_elements_ = 0;
+  size_t unit_size_ = 0;
+  float lambd_ = 0.5;
 };
 }  // namespace kernel
 }  // namespace mindspore

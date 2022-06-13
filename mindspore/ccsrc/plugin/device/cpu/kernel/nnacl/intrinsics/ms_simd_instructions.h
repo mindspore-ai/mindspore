@@ -42,6 +42,7 @@
 
 #define MS_SIMD_INSTRUCTION_F32(instruction) MS_SIMD_INSTRUCTION(instruction, _F32)
 #define MS_SIMD_INSTRUCTION_EPI32(instruction) MS_SIMD_INSTRUCTION(instruction, _EPI32)
+#define MS_SIMD_INSTRUCTION_MASK(instruction) MS_SIMD_INSTRUCTION(instruction, _MASK)
 
 // define (float/int) data
 #define SIMD_F32 MS_SIMD_INSTRUCTION_F32(MS_FLOAT)
@@ -166,9 +167,13 @@
 #define SIMD_EXP_ST_F32 MS_SIMD_INSTRUCTION(simd_exp, )
 #define SIMD_EXP_F32 MS_SIMD_INSTRUCTION(simd_exp, _f32)
 
+// cmp (float/int) op
 #define SIMD_CMPLE_F32 MS_SIMD_INSTRUCTION_F32(MS_CMPLE)
 #define SIMD_CMPGT_F32 MS_SIMD_INSTRUCTION_F32(MS_CMPGT)
 #define SIMD_BLEND_F32 MS_SIMD_INSTRUCTION_F32(MS_BLEND)
+
+// logical op
+#define SIMD_AND_MASK MS_SIMD_INSTRUCTION_MASK(MS_AND)
 
 // int32/float mutual conversion
 #define SIMD_EPI32_TO_F32 MS_SIMD_INSTRUCTION(MS, _INT32_TO_FLOAT32)
