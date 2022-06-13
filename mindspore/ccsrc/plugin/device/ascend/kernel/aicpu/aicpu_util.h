@@ -85,6 +85,7 @@ constexpr auto kPriorityReplayBufferCreate = "PriorityReplayBufferCreate";
 constexpr auto kPriorityReplayBufferPush = "PriorityReplayBufferPush";
 constexpr auto kPriorityReplayBufferSample = "PriorityReplayBufferSample";
 constexpr auto kPriorityReplayBufferUpdate = "PriorityReplayBufferUpdate";
+constexpr auto kPriorityReplayBufferDestroy = "PriorityReplayBufferDestroy";
 constexpr auto kReLUV3 = "ReLUV3";
 constexpr auto kNonZero = "NonZero";
 constexpr auto kMaxPoolV1 = "MaxPoolV1";
@@ -103,7 +104,8 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
                                               kPriorityReplayBufferCreate,
                                               kPriorityReplayBufferPush,
                                               kPriorityReplayBufferSample,
-                                              kPriorityReplayBufferUpdate};
+                                              kPriorityReplayBufferUpdate,
+                                              kPriorityReplayBufferDestroy};
 const std::set<std::string> kDynamicInputOps{
   kPrint,           kPack,           kMeshgrid,      kStackInitOpName,          kStackDestroyOpName,
   kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample};

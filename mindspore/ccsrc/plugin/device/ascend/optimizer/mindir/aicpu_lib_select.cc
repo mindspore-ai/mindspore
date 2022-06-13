@@ -30,8 +30,9 @@ const AnfNodePtr AICpuLibSelectPass::Process(const FuncGraphPtr &graph, const An
   MS_EXCEPTION_IF_NULL(equiv);
 
   static const std::set<std::string> kAICpuOpNames = {
-    kEnvironCreateOpName,        kEnvironSetOpName,         kEnvironGetOpName,           kEnvironDestroyAllOpName,
-    kPriorityReplayBufferCreate, kPriorityReplayBufferPush, kPriorityReplayBufferSample, kPriorityReplayBufferUpdate};
+    kEnvironCreateOpName,        kEnvironSetOpName,           kEnvironGetOpName,
+    kEnvironDestroyAllOpName,    kPriorityReplayBufferCreate, kPriorityReplayBufferPush,
+    kPriorityReplayBufferSample, kPriorityReplayBufferUpdate, kPriorityReplayBufferDestroy};
   static const std::string kEnvOpSoNames = "mindspore_aicpu_kernels";
 
   if (!node->isa<CNode>()) {
