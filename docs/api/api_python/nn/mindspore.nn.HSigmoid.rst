@@ -22,4 +22,4 @@ mindspore.nn.HSigmoid
 
     **异常：**
 
-    **TypeError** - `input_x` 不是tensor。
+    - **TypeError** - `input_x` 不是tensor。

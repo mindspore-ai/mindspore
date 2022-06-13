@@ -19,7 +19,7 @@ mindspore.nn.LogSoftmax
 
     **参数：**
 
-    **axis** (int) - Log Softmax运算的axis，-1表示最后一个维度。默认值：-1。
+    - **axis** (int) - Log Softmax运算的axis，-1表示最后一个维度。默认值：-1。
 
     **输入：**
 
