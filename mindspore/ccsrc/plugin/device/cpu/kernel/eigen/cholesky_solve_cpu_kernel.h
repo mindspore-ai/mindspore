@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_SOLVE_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_SOLVE_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_SOLVE_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_SOLVE_CPU_KERNEL_H_
+
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <vector>
-#include <utility>
+
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -30,36 +35,20 @@ class CholeskySolveCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, workspace, outputs);
-  }
+              const std::vector<AddressPtr> &outputs) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void InitLeftMatrixInfo(const std::vector<size_t> &shape, const bool is_rank_equal, size_t *row, size_t *col);
-  void InitRightMatrixInfo(const std::vector<size_t> &shape, size_t *row, size_t *col);
-
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
-  using CholeskySolveFunc =
-    std::function<bool(CholeskySolveCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, CholeskySolveFunc>> func_list_;
-  CholeskySolveFunc kernel_func_;
-
-  size_t outer_batch_{1};
-  size_t input_a_row_{1};
-  size_t input_a_col_{1};
-  size_t input_b_row_{1};
-  size_t input_b_col_{1};
-  size_t output_row_{1};
-  size_t output_col_{1};
-  TypeId dtype_{kNumberTypeFloat32};
-  bool lower_{false};
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool upper{false};
+  size_t batch_size{1};
+  size_t dim{1};
+  size_t rhs_dim{1};
+  TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_CPU_SOLVE_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_CHOLESKY_SOLVE_CPU_KERNEL_H_

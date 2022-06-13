@@ -37,6 +37,7 @@ from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
+from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.array_ops import CheckNumerics
@@ -1605,6 +1606,11 @@ test_case_math_ops = [
         'block': Cholesky(),
         'desc_inputs': [Tensor(np.array([[1, 1], [1, 2]]).astype(np.float32))],
         'skip': ['backward']}),
+    ('CholeskySolve', {
+        'block': CholeskySolve(upper=False),
+        'desc_inputs': [Tensor(np.array([[1.0, 0.0], [0.0, 1.0]]).astype(np.float32)),
+                        Tensor(np.array([[5.0, 2.0], [3.0, 5.0]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[3.0, 5.0], [5.0, 7.0]]).astype(np.float32))]}),
     ('DenseToCSRSparseMatrix', {
         'block': DenseToCSRSparseMatrix(),
         'desc_inputs': [Tensor(np.array([[1, 0], [0, 1]]).astype(np.float32)),
