@@ -40,6 +40,7 @@
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
+#include "frontend/parallel/pynative_shard/pynative_shard.h"
 #include "frontend/optimizer/recompute.h"
 #include "frontend/optimizer/slice_activation_in_recompute.h"
 #include "frontend/optimizer/comm_op_attrs.h"
@@ -747,6 +748,8 @@ bool CconvPass(const ResourcePtr &resource) {
 }
 
 bool PipelineSplitPass(const ResourcePtr &resource) { return PipelineSplit(resource); }
+
+bool PynativeShardPass(const ResourcePtr &resource) { return parallel::PynativeShard(resource); }
 
 bool GeSpecializedPass(const ResourcePtr &resource) {
   // valid null ptr
