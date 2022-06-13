@@ -126,6 +126,12 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
     auto &node_info = type_id_to_node_info[type_id];
     auto concat_node = NewConcatNode(func_graph, node_info, type_id);
     MS_EXCEPTION_IF_NULL(concat_node);
+
+    size_t input_num = node_info.first.size() - 1;
+    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(0), concat_node);
+    common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue<int64_t>(input_num), concat_node);
+    std::vector<int64_t> dyn_input_size{UlongToLong(input_num)};
+    common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat_node);
     concat_node->set_scope(cnode->scope());
 
     (void)concat_nodes.emplace_back(concat_node);

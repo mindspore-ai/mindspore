@@ -238,6 +238,20 @@ bool IsNeedSync(const TensorPtr &tensor) {
   auto data_ptr = tensor->data_ptr();
   return data_ptr != nullptr && data_ptr->is_sub_data();
 }
+
+void SyncTensorTrunk(const std::vector<std::vector<TensorPtr>> &input_tensors) {
+  for (auto &tensors : input_tensors) {
+    for (auto &tensor : tensors) {
+      if (tensor == nullptr) {
+        continue;
+      }
+      auto data_ptr = tensor->data_ptr();
+      if (data_ptr != nullptr && data_ptr->has_sub_data()) {
+        tensor->data_sync();
+      }
+    }
+  }
+}
 }  // namespace
 void DataPrepareActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
@@ -349,6 +363,7 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
   real_strategy_ = real_strategy;
   // Convert actor running data from input tensors.
   if (!input_tensors.empty()) {
+    SyncTensorTrunk(input_tensors);
     SetInitTensorsIfNeeded(input_tensors);
     try {
       PrepareDataForDeviceTensorStore(input_tensors, context);
