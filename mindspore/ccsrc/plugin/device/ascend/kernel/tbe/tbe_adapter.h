@@ -55,6 +55,8 @@ const std::map<std::string, std::string> opTypeAdapter = {{"ReLUV2", "ReluV2"},
                                                           {"ParallelResizeBilinear", "SyncResizeBilinearV2"},
                                                           {"ParallelResizeBilinearGrad", "SyncResizeBilinearV2Grad"},
                                                           {"Split", "SplitD"},
+                                                          {"HSwish", "HardSwish"},
+                                                          {"HSwishGrad", "HardSwishGrad"},
                                                           {"CeLU", "CeluV2"},
                                                           {"ArgminV2", "ArgMin"},
                                                           {"IndexAdd", "InplaceIndexAdd"}};

@@ -59,6 +59,8 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"DynamicResizeNearestNeighbor", "ResizeNearestNeighborV2"},
     {"ParallelResizeBilinear", "SyncResizeBilinearV2"},
     {"ParallelResizeBilinearGrad", "SyncResizeBilinearV2Grad"},
+    {"HSwish", "HardSwish"},
+    {"HSwishGrad", "HardSwishGrad"},
     {"CeLU", "CeluV2"},
     {"TransposeNOD", "Transpose"},
     {"IndexAdd", "InplaceIndexAdd"},

@@ -199,6 +199,8 @@ constexpr auto kGridSampler3DGrad = "GridSampler3DGrad";
 constexpr auto kAdaptiveMaxPool2D = "AdaptiveMaxPool2D";
 constexpr auto kUpsampleTrilinear3D = "UpsampleTrilinear3D";
 constexpr auto kUpsampleNearest3D = "UpsampleNearest3D";
+constexpr auto kHSwish = "HSwish";
+constexpr auto kHSwishGrad = "HSwishGrad";
 
 // CSRTensor
 constexpr auto kMakeCSRTensor = "MakeCSRTensor";
@@ -654,6 +656,8 @@ GVAR_DEF(PrimitivePtr, kPrimSoftShrink, std::make_shared<Primitive>("SoftShrink"
 GVAR_DEF(PrimitivePtr, kPrimSoftShrinkGrad, std::make_shared<Primitive>("SoftShrinkGrad"));
 GVAR_DEF(PrimitivePtr, kPrimHShrink, std::make_shared<Primitive>("HShrink"));
 GVAR_DEF(PrimitivePtr, kPrimHShrinkGrad, std::make_shared<Primitive>("HShrinkGrad"));
+GVAR_DEF(PrimitivePtr, kPrimHSwish, std::make_shared<Primitive>(kHSwish));
+GVAR_DEF(PrimitivePtr, kPrimHSwishGrad, std::make_shared<Primitive>(kHSwishGrad));
 GVAR_DEF(PrimitivePtr, kPrimHSVToRGB, std::make_shared<Primitive>("HSVToRGB"));
 GVAR_DEF(PrimitivePtr, kPrimDeformableOffsets, std::make_shared<Primitive>("DeformableOffsets"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAdagradDA, std::make_shared<Primitive>("ApplyAdagradDA"));
