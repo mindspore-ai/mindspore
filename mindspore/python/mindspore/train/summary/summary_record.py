@@ -144,7 +144,7 @@ class SummaryRecord:
         ...
         ...     # use in try .. finally .. to ensure closing
         ...     try:
-        ...         summary_record = SummaryRecord(log_dir="./summary_dir")
+        ...         summary_record = ms.SummaryRecord(log_dir="./summary_dir")
         ...     finally:
         ...         summary_record.close()
     """
