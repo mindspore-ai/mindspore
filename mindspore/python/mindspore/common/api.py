@@ -510,13 +510,15 @@ def ms_function(fn=None, input_signature=None, hash_args=None):
             hash_obj = _get_ms_function_hash(hash_args)
         else:
             hash_obj = int(time.time() * 1e9)
+        _pynative_parallel_func_name = "after_shard"
 
         @wraps(func)
         def staging_specialize(*args):
             process_obj = None
             if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
-            if is_pynative_parallel():
+            # only the function or cell instance wrapped by shard will fall into this branch
+            if is_pynative_parallel() and func.__name__ == _pynative_parallel_func_name:
                 process_obj = args[0]
                 args = args[1:]
             out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj)(*args)
