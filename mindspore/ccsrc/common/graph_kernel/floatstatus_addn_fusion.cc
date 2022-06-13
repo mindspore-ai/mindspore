@@ -50,7 +50,7 @@ InplaceAssignerInfo SubGraphSignleOutput(const AnfNodePtr &anf_node) {
   InplaceAssignerInfo new_op_info;
   auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(anf_node);
   auto output = sub_graph->output();
-  if (IsPrimitiveCNode(output, kPrimElemAny)) {
+  if (IsPrimitiveCNode(output, prim::kPrimElemAny)) {
     new_op_info.op_node = output->cast<CNodePtr>();
   }
   return new_op_info;
@@ -128,7 +128,7 @@ bool FloatStatusAddNFusion::Run(const FuncGraphPtr &func_graph) {
     MS_EXCEPTION_IF_NULL(cnode);
     bool pattern_match =
       std::all_of(cnode->inputs().begin() + 1, cnode->inputs().end(),
-                  [](const AnfNodePtr &anf_node) { return IsPrimitiveCNode(anf_node, kPrimFloatStatus); });
+                  [](const AnfNodePtr &anf_node) { return IsPrimitiveCNode(anf_node, prim::kPrimFloatStatus); });
     if (!pattern_match) continue;
     ProcessFloatStatusAddN(func_graph, cnode, mng);
     changed = true;

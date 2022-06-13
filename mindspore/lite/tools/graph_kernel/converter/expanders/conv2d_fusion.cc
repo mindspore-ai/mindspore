@@ -22,28 +22,12 @@
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
-int64_t CalInnerAxisLen(const int64_t channel_outer, const int64_t channel_inner) {
-  if (channel_inner != -1) {
-    return channel_inner;
-  }
-  int64_t simd_size = 8;
-  auto channel = channel_outer;
-  auto inner_len = 1;
-  for (auto inner = simd_size; inner > 0; inner--) {
-    if (channel % inner == 0) {
-      inner_len = inner;
-      break;
-    }
-  }
-
-  return inner_len;
-}
-
 class Conv2DFusion : public OpDesc {
  public:
   Conv2DFusion() {
-    std::initializer_list<std::string> attrs{"kernel_size", "out_channel", "stride",  "dilation",
-                                             "in_channel",  "pad_list",    "pad_mode"};
+    std::initializer_list<std::string> attrs{"kernel_size", "out_channel", "stride",    "dilation",
+                                             "in_channel",  "pad_list",    "pad_mode",  "weight_coo",
+                                             "weight_coi",  "weight_cio",  "weight_cii"};
     (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
   ~Conv2DFusion() = default;
@@ -54,37 +38,20 @@ class Conv2DFusion : public OpDesc {
     const auto &weight = inputs[1];
     auto data_shape = data->shape;
     auto data_format = data->format;
-    auto weight_shape = weight->shape;
 
     // pad_top, pad_bottom, pad_left, pad_right
     std::vector<int64_t> pads = GetValue<std::vector<int64_t>>(attrs_["pad_list"]);
     auto n = data_shape[0];
     auto h = data_shape[1];
     auto w = data_shape[2];
-    auto c_in = data_shape[3];
-    auto c_out = weight_shape[0];
-    auto k_h = weight_shape[1];
-    auto k_w = weight_shape[2];
+    auto c_i_i = GetValue<int64_t>(attrs_["weight_cii"]);
+    auto c_i_o = GetValue<int64_t>(attrs_["weight_cio"]);
+    auto c_o_i = GetValue<int64_t>(attrs_["weight_coi"]);
 
-    auto c_i_i = CalInnerAxisLen(c_in, -1);
-    if (c_i_i == 0) {
-      MS_LOG(EXCEPTION) << "Calculation of Conv2DFusion is wrong, please check.";
-    }
-    auto c_i_o = c_in / c_i_i;
     ShapeVector data_rs_shape{n, h, w, c_i_o, c_i_i};
     std::string conv_format = "NCHW" + std::to_string(c_i_i) + "c";
     auto data_tp = gb.Emit("LayoutTransform", {data},
                            {{"src_format", MakeValue(data_format)}, {"dst_format", MakeValue(conv_format)}});
-
-    auto c_o_i = CalInnerAxisLen(c_out, -1);
-    if (c_o_i == 0) {
-      MS_LOG(EXCEPTION) << "Calculation of Conv2DFusion is wrong, please check.";
-    }
-    auto c_o_o = c_out / c_o_i;
-    ShapeVector weight_rs_shape{c_o_o, c_o_i, k_h, k_w, c_i_o, c_i_i};
-    auto weight_rs = gb.Reshape(weight, weight_rs_shape);
-    ShapeVector weight_perm{0, 4, 2, 3, 5, 1};
-    auto weight_tp = gb.Transpose(weight_rs, weight_perm);
 
     // PAD: NCHWc->NCHWc
     auto pad_n = pads[0];
@@ -111,7 +78,7 @@ class Conv2DFusion : public OpDesc {
     updated_attrs["data_format"] = MakeValue(kOpFormat_NC1HWC0);
     std::string conv_out_format = "NCHW" + std::to_string(c_o_i) + "c";
     updated_attrs["conv_out_format"] = MakeValue(conv_out_format);
-    auto result_nchwc = gb.Emit("Conv2D", {data_pad, weight_tp}, updated_attrs);
+    auto result_nchwc = gb.Emit("Conv2D", {data_pad, weight}, updated_attrs);
 
     inner::NodePtr result_nchwc_act;
     if (attrs_.find("activation_type") != attrs_.end()) {

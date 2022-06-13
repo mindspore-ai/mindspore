@@ -27,14 +27,16 @@
 #include "common/graph_kernel/model/lite_graph.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 
+namespace mindspore::prim {
+GVAR_DEF(PrimitivePtr, kPrimFloatStatus, std::make_shared<Primitive>("FloatStatus"));
+GVAR_DEF(PrimitivePtr, kPrimElemAny, std::make_shared<Primitive>("ElemAny"));
+GVAR_DEF(PrimitivePtr, kPrimLayoutTransform, std::make_shared<Primitive>("LayoutTransform"));
+}  // namespace mindspore::prim
+
 namespace mindspore::graphkernel {
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
 constexpr auto kAllTarget = "ALL";
 constexpr auto kOutputsFormat = "outputs_format";
-
-GVAR_DEF(PrimitivePtr, kPrimFloatStatus, std::make_shared<Primitive>("FloatStatus"));
-GVAR_DEF(PrimitivePtr, kPrimElemAny, std::make_shared<Primitive>("ElemAny"));
-GVAR_DEF(PrimitivePtr, kPrimLayoutTransform, std::make_shared<Primitive>("LayoutTransform"));
 
 using OpWithLevel = std::tuple<std::string, unsigned int, PrimitivePtr>;
 
