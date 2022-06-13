@@ -346,19 +346,14 @@ void MemOffloadStrategy::GenComputeMemEvents() {
 
     const auto &last_event = mem_events[mem_events.size() - 1];
     size_t pre_index = is_high_priority ? last_event->index : first_event->index;
-    const auto &swap_out_event_index = GetSwapOutEventIndex(item.first, mem_events);
     for (size_t i = kFirstGetMemEventIndex; i < mem_events.size(); ++i) {
       auto &event = mem_events[i];
       MS_EXCEPTION_IF_NULL(event);
       if (need_swap_ && swap_events_.find(event) != swap_events_.end()) {
-        MemEventType event_type = kSwapOut;
-        if (is_high_priority && swap_out_event_index.count(i) == 0) {
-          event_type = kFree;
-        }
-        auto free_or_swap_out_event = std::make_shared<MemEvent>(event_type, pre_index);
-        free_or_swap_out_event->key = item.first;
-        free_or_swap_out_event->mem_size = first_event->mem_size;
-        (void)post_compute_events_[pre_index].emplace_back(free_or_swap_out_event);
+        auto swap_out_event = std::make_shared<MemEvent>(kSwapOut, pre_index);
+        swap_out_event->key = item.first;
+        swap_out_event->mem_size = first_event->mem_size;
+        (void)post_compute_events_[pre_index].emplace_back(swap_out_event);
         // avoid swap-in-event follow init-event
         if (i != kFirstGetMemEventIndex || first_event->type != kInit) {
           auto swap_in_event = std::make_shared<MemEvent>(kSwapIn, event->index);
@@ -385,40 +380,6 @@ void MemOffloadStrategy::GenFreeEvent(const std::shared_ptr<MemEvent> &last_even
   if (last_event->index < post_compute_events_.size()) {
     (void)post_compute_events_[last_event->index].emplace_back(free_event);
   }
-}
-
-std::set<size_t> MemOffloadStrategy::GetSwapOutEventIndex(const void *key,
-                                                          const std::vector<std::shared_ptr<MemEvent>> &mem_events) {
-  const auto &update_step_iter = high_priority_updated_step_.find(key);
-  if (update_step_iter == high_priority_updated_step_.end() || update_step_iter->second.empty()) {
-    return std::set<size_t>();
-  }
-  const auto &update_steps = update_step_iter->second;
-  size_t update_steps_index = 0;
-  std::set<size_t> swap_out_event_index;
-  size_t min_swap_index_before_update = SIZE_MAX;
-  size_t max_swap_out_step = 0;
-  for (size_t i = 0; i < mem_events.size(); ++i) {
-    const auto &mem_event = mem_events[i];
-    if (swap_events_.count(mem_event) == 0) {
-      continue;
-    }
-    if (mem_event->index <= update_steps[update_steps_index]) {
-      if (i <= min_swap_index_before_update) {
-        min_swap_index_before_update = i;
-      }
-    } else {
-      (void)swap_out_event_index.insert(i);
-      max_swap_out_step = mem_event->index;
-      while (update_steps_index < update_steps.size() && update_steps[update_steps_index] < mem_event->index) {
-        ++update_steps_index;
-      }
-    }
-  }
-  if (max_swap_out_step <= update_steps[update_steps.size() - 1]) {
-    (void)swap_out_event_index.insert(min_swap_index_before_update);
-  }
-  return swap_out_event_index;
 }
 
 std::shared_ptr<ContinuousMemInfo> ContinuousMemInfoHelper::GetContinuousMemInfo(const void *address_key) {
