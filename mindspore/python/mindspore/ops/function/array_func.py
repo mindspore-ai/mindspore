@@ -2873,14 +2873,7 @@ def masked_select(x, mask):
 def masked_fill(input_x, mask, value):
     """
     Fills elements of Tensor with value where mask is True.
-
-    The shapes of `input_x` and `mask` need to be the same or broadcastable. If `value` is a Tensor of shape
-    :math:`(*B)`, then the `input_x` shape should be :math:`(*B, *N)`, `mask` shape should be :math:`(*B, *M)`,
-    where `*N` and `*M` should be the same or broadcastable.
-
-    Note:
-        In Ascend, batch dimension input is not supported. Specifically, `value` is required to be equal to be a
-        0-dimensional Tensor or a float number.
+    The shapes of `input_x` and `mask` need to be the same or broadcastable.
 
     Args:
         input_x (Tensor): The source Tensor whose data type is one of float16, float32, int8, int32.

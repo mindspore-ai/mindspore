@@ -52,7 +52,7 @@ class MaskedFillGpuKernelMod : public NativeGpuKernelMod {
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs);
   void ResetResource() noexcept;
-  void BroadcastShape(const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  bool BroadcastShape(const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
                       const std::vector<size_t> &output_shape);
   using MaskedFillFunc =
     std::function<bool(MaskedFillGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
@@ -64,6 +64,7 @@ class MaskedFillGpuKernelMod : public NativeGpuKernelMod {
   bool is_null_input_;
   size_t output_num_;
   size_t inner_size_;
+  int64_t batch_rank_;
   std::vector<size_t> lhs_shape_;
   std::vector<size_t> rhs_shape_;
   std::vector<size_t> output_shape_;

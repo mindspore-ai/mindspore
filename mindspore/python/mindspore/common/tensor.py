@@ -2599,13 +2599,8 @@ class Tensor(Tensor_):
 
     def masked_fill(self, mask, value):
         """
-        Fills elements of self tensor with value where mask is True. If `value` is a Tensor of shape :math:`(*B)`,
-        then self tensor shape should be :math:`(*B, *N)`, `mask` shape should be :math:`(*B, *M)`, where `*N` and
-        `*M` should be the same or broadcastable.
-
-        Note:
-            In Ascend, batch dimension input is not supported. Specifically, `value` is required to be equal to be a
-            0-dimensional Tensor or a float number.
+        Fills elements of self tensor with value where mask is True.
+        The shapes of self tensor and `mask` need to be the same or broadcastable.
 
         Args:
             mask (Tensor[bool]): The boolean mask.
