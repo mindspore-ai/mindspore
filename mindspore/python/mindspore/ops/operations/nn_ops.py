@@ -816,7 +816,7 @@ class Elu(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
 
 
-class HSwish(PrimitiveWithInfer):
+class HSwish(Primitive):
     r"""
     Hard swish activation function.
 
@@ -837,13 +837,6 @@ class HSwish(PrimitiveWithInfer):
     def __init__(self):
         """Initialize HSwish."""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, xshape):
-        return xshape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, (mstype.float16, mstype.float32), self.name)
-        return x_dtype
 
 
 class Sigmoid(Primitive):

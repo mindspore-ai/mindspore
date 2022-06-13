@@ -1957,8 +1957,12 @@ class _ActivationGrad(PrimitiveWithInfer):
         return x_dtype
 
 
-class HSwishGrad(_ActivationGrad):
+class HSwishGrad(Primitive):
     """Gets the gradient of HSwish operation."""
+    @prim_attr_register
+    def __init__(self):
+        """Initialize HSwishGrad"""
+        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
 
 
 class HSigmoidGrad(_ActivationGrad):
