@@ -31,8 +31,8 @@ int64_t CheckAttrInt64Positive(const std::string &op, const ValuePtr &attr, cons
   MS_EXCEPTION_IF_NULL(attr);
   int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
   if (attr_val <= 0) {
-    MS_LOG(EXCEPTION) << "For '" << op << "', the '" << attr_name << "' should be greater than 0, but got: " << attr_val
-                      << ".";
+    MS_EXCEPTION(ValueError) << "For '" << op << "', the '" << attr_name
+                             << "' should be greater than 0, but got: " << attr_val << ".";
   }
   return attr_val;
 }
@@ -42,16 +42,24 @@ std::vector<int64_t> CheckAttrTuple(const PrimitivePtr &prim, const std::string 
   MS_EXCEPTION_IF_NULL(attr);
   std::vector<int64_t> result;
   if (!attr->isa<ValueTuple>()) {
-    MS_LOG(EXCEPTION) << "For '" << prim->name() << "', the '" << attr_name
-                      << "' should be a tuple[int64], but got: " << attr->ToString();
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the '" << attr_name
+                             << "' should be a tuple[int64], but got: " << attr->ToString() << ".";
   }
   std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
   if (attr_vec.size() != num_element) {
-    MS_LOG(EXCEPTION) << "For '" << prim->name() << "', the '" << attr_name << "' should be a tuple[int64] with size "
-                      << num_element << ", but its size is " << attr_vec.size();
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the '" << attr_name
+                             << "' should be a tuple[int64] with size " << num_element << ", but its size is "
+                             << attr_vec.size() << ".";
   }
   (void)std::transform(attr_vec.begin(), attr_vec.end(), std::back_inserter(result),
-                       [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
+                       [&prim, &attr_name](const ValuePtr &e) -> int64_t {
+                         auto value = GetValue<int64_t>(e);
+                         if (value < 0) {
+                           MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the element of '" << attr_name
+                                                    << "' should not be negative number, but got " << value << ".";
+                         }
+                         return value;
+                       });
   return result;
 }
 
@@ -59,9 +67,10 @@ std::vector<int64_t> CheckAttrTupleAndNCDimensions(const PrimitivePtr &primitive
                                                    size_t num, int n_axis, int c_axis) {
   std::vector<int64_t> tuple = CheckAttrTuple(primitive, attr_name, num);
   if (tuple[n_axis] != 1 || tuple[c_axis] != 1) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', the values of 'strides' according to N and C dimensions must be set to 1, but got N: "
-                      << tuple[n_axis] << ", C: " << tuple[c_axis];
+    MS_EXCEPTION(ValueError)
+      << "For '" << primitive->name()
+      << "', the values of 'strides' according to N and C dimensions must be set to 1, but got N: " << tuple[n_axis]
+      << ", C: " << tuple[c_axis] << ".";
   }
   return tuple;
 }
@@ -99,12 +108,13 @@ void DeformableOffsetsPadFunction(std::vector<int64_t> *output_hw, const std::ve
 void CheckOutputHeightAndWight(const std::string &prim_name, const std::vector<int64_t> &output_hw,
                                const std::vector<int64_t> &offset_shape) {
   if (output_hw[kIndex0] != offset_shape[kIndex2] || output_hw[kIndex1] != offset_shape[kIndex3]) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << ", the H and W dims of offsets input should be equal to the computed H and W dims of the "
-                         "output of deformable_conv2d. But got H and W dims of offsets input: ("
-                      << offset_shape[kIndex2] << ", " << offset_shape[kIndex3]
-                      << "), computed H and W dims of the output of deformable_conv2d: (" << output_hw[kIndex0] << ", "
-                      << output_hw[kIndex1] << ").";
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << ", the H and W dims of offsets input should be equal to the computed H and W dims of the "
+         "output of deformable_conv2d. But got H and W dims of offsets input: ("
+      << offset_shape[kIndex2] << ", " << offset_shape[kIndex3]
+      << "), computed H and W dims of the output of deformable_conv2d: (" << output_hw[kIndex0] << ", "
+      << output_hw[kIndex1] << ").";
   }
 }
 
@@ -149,9 +159,10 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
 
   int64_t deformable_groups = CheckAttrInt64Positive(prim_name, primitive->GetAttr(kAttrDfmGroup), kAttrDfmGroup);
   if (x_shape[c_axis] != abstract::Shape::SHP_ANY && x_shape[c_axis] % deformable_groups != 0) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', 'C_in' of input 'x' shape must be divisible by 'deformable_groups'"
-                      << ", but got 'C_in' of input 'x' shape: " << x_shape[c_axis]
-                      << ", and 'deformable_groups': " << deformable_groups;
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', 'C_in' of input 'x' shape must be divisible by 'deformable_groups'"
+                             << ", but got 'C_in' of input 'x' shape: " << x_shape[c_axis]
+                             << ", and 'deformable_groups': " << deformable_groups << ".";
   }
 
   constexpr int64_t offsets_channel_factor = 3;
@@ -159,15 +170,15 @@ abstract::ShapePtr DeformableOffsetsInferShape(const PrimitivePtr &primitive,
   std::vector<int64_t> kernel_size = CheckAttrTuple(primitive, kAttrKsize, kernel_size_num);
   if (offsets_shape[c_axis] != abstract::Shape::SHP_ANY &&
       offsets_shape[c_axis] != deformable_groups * offsets_channel_factor * kernel_size[0] * kernel_size[1]) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', 'C_in' of input 'offsets' shape must be equal to "
-                      << offsets_channel_factor << " * kernel_height * kernel_width * deformable_groups"
-                      << ", but got 'C_in' of input 'offsets' shape: " << offsets_shape[c_axis]
-                      << ", kernel_height: " << kernel_size[0] << ", kernel_width: " << kernel_size[1]
-                      << ", deformable_groups: " << deformable_groups;
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'C_in' of input 'offsets' shape must be equal to "
+                             << offsets_channel_factor << " * kernel_height * kernel_width * deformable_groups"
+                             << ", but got 'C_in' of input 'offsets' shape: " << offsets_shape[c_axis]
+                             << ", kernel_height: " << kernel_size[0] << ", kernel_width: " << kernel_size[1]
+                             << ", deformable_groups: " << deformable_groups << ".";
   }
 
   if (!GetValue<bool>(primitive->GetAttr(kAttrModulated))) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', the value of 'modulated' only support to be set to True.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the value of 'modulated' only support to be set to True.";
   }
 
   constexpr size_t pads_num = 4;

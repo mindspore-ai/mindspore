@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.ops as ops
 import mindspore.common.dtype as mstype
+from mindspore.ops import functional as F
 
 context.set_context(device_target='CPU')
 
@@ -327,3 +328,33 @@ def test_with_dilations():
 
                         [[161832.]]]]).astype(np.float32)
     assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap():
+    """"
+    Feature: deformable_conv2d function.
+    Description: Test case with vmap.
+    Expectation: The results are as expected.
+    """
+    kh, kw = 3, 3
+
+    def cal_deformable_conv2d(x, weight, offsets):
+        return ops.deformable_conv2d(x, weight, offsets, (kh, kw), (1, 1, 1, 1), (0, 0, 0, 0))
+
+    x = Tensor(np.arange(2 * 2 * 3 * 5 * 5).reshape(2, 2, 3, 5, 5), mstype.float32)
+    weight = Tensor(np.arange(5 * 3 * kh * kw).reshape(5, 3, kh, kw), mstype.float32)
+    offsets = Tensor(np.ones((2, 2, 3 * kh * kw, 3, 3)), mstype.float32)
+    vmap_deformable_conv2d = F.vmap(cal_deformable_conv2d, in_axes=(0, None, 0), out_axes=0)
+    out1 = vmap_deformable_conv2d(x, weight, offsets)
+
+    def manually_batched(x, weight, offsets):
+        output = []
+        for i in range(x.shape[0]):
+            output.append(cal_deformable_conv2d(x[i], weight, offsets[i]))
+        return F.stack(output)
+
+    out2 = manually_batched(x, weight, offsets)
+    assert np.allclose(out1.asnumpy(), out2.asnumpy())
