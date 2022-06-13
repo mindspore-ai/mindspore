@@ -33,6 +33,12 @@ PrimitiveCPtr OnnxTopkParser::Parse(const onnx::GraphProto &onnx_graph, const on
       auto k_value = MakeValue(static_cast<int32_t>(onnx_node_attr.i()));
       MS_CHECK_TRUE_MSG(k_value != nullptr, nullptr, "CreateValueNode failed");
       prim_c->AddAttr("k", k_value);
+    } else if (attribute_name == "axis") {
+      prim->set_axis(static_cast<int64_t>(onnx_node_attr.i()));
+    } else if (attribute_name == "largest") {
+      prim->set_largest(static_cast<int64_t>(onnx_node_attr.i()));
+    } else if (attribute_name == "sorted") {
+      prim->set_sorted(static_cast<int64_t>(onnx_node_attr.i()));
     }
   }
 

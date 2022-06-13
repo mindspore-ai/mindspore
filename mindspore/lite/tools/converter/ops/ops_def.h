@@ -43,6 +43,7 @@ ADD_CONVERTER_ONLY_OP(TensorArrayV3);
 ADD_CONVERTER_ONLY_OP(TensorArrayWriteV3);
 ADD_CONVERTER_ONLY_OP(Constant);
 ADD_CONVERTER_ONLY_OP(Merge);
+ADD_CONVERTER_ONLY_OP(Einsum);
 }  // namespace lite
 }  // namespace mindspore
 
