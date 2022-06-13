@@ -20,56 +20,99 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "mindspore/core/ops/argmax_with_value.h"
+#include "mindspore/core/ops/argmin_with_value.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/general_reduction_impl.cuh"
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputNum = 1;
+constexpr size_t kOutputNum = 2;
+
 template <typename T, typename S>
-class ArgMaxAndMinWithValueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
  public:
   ArgMaxAndMinWithValueGpuKernelMod() { ResetResource(); }
   ~ArgMaxAndMinWithValueGpuKernelMod() override = default;
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
+    if (!InitSize(base_operator, inputs, outputs)) {
+      return KRET_RESIZE_FAILED;
+    }
+    return KRET_OK;
+  }
+
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+      KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16)};
+    return support_list;
+  }
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
+    MS_EXCEPTION_IF_NULL(stream_ptr);
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 1);
     S *index = GetDeviceAddress<S>(outputs, 0);
-    CalGeneralReduction(small_, input, bound_, outerSize_, innerSize_, index, output,
+    CalGeneralReduction(small_, input, bound_, outer_size_, inner_size_, index, output,
                         reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override {
-    std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-    small_ = (kernel_name == "ArgMinWithValue") ? true : false;
-    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
-    if (AnfAlgo::IsShapesDynamic({shape_signed, output_shape_signed})) {
-      return true;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override {
+    MS_EXCEPTION_IF_NULL(base_operator);
+    kernel_name_ = base_operator->name();
+    if (kernel_name_ != "ArgMaxWithValue" && kernel_name_ != "ArgMinWithValue") {
+      MS_EXCEPTION(ArgumentError) << "The kernel must be either ArgMaxWithValue or ArgMinWithValue.";
     }
 
-    auto shape = Convert2SizeTClipNeg(shape_signed);
-    auto output_shape = Convert2SizeTClipNeg(output_shape_signed);
-    is_null_input_ =
-      CHECK_SHAPE_NULL(shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
+    // Check inputs and outputs size.
+    if (inputs.size() != kInputNum) {
+      MS_EXCEPTION(ArgumentError)
+        << "For kernel mod[ArgMaxAndMinWithValueGpuKernelMod], the size of input should be 1, but got "
+        << inputs.size();
     }
+    if (outputs.size() != kOutputNum) {
+      MS_EXCEPTION(ArgumentError)
+        << "For kernel mod[ArgMaxAndMinWithValueGpuKernelMod], the size of output should be 2, but got "
+        << outputs.size();
+    }
+
+    if (kernel_name_ == "ArgMinWithValue") {
+      auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMinWithValue>(base_operator);
+      MS_EXCEPTION_IF_NULL(kernel_ptr);
+      axis_ = kernel_ptr->axis();
+    } else {
+      auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMaxWithValue>(base_operator);
+      MS_EXCEPTION_IF_NULL(kernel_ptr);
+      axis_ = kernel_ptr->axis();
+    }
+    small_ = (kernel_name_ == "ArgMinWithValue") ? true : false;
+    return InitSize(base_operator, inputs, outputs);
+  }
+
+  bool InitSize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) {
+    MS_EXCEPTION_IF_NULL(inputs[0]);
+    auto shape = Convert2SizeTClipNeg(inputs[0]->GetShapeVector());
+    MS_EXCEPTION_IF_NULL(outputs[0]);
+    auto output_shape = Convert2SizeTClipNeg(outputs[0]->GetShapeVector());
     int64_t dims = SizeToLong(shape.size());
-    int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
-    if (axis < -dims || axis >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' must be in the range [-" << dims << "," << dims
-                        << "), but got " << axis;
+    if (axis_ < -dims || axis_ >= dims) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << ","
+                               << dims << "), but got " << axis_;
     }
-    if (axis < 0) {
-      axis += dims;
+    if (axis_ < 0) {
+      axis_ += dims;
     }
     input_size_ = sizeof(T);
     for (auto x : shape) {
@@ -79,50 +122,50 @@ class ArgMaxAndMinWithValueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     for (auto x : output_shape) {
       output_size_ *= x;
     }
-    bound_ = static_cast<S>(shape[axis]);
-    if (shape[axis] != static_cast<size_t>(bound_)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of shape[axis] must be "
-                        << static_cast<size_t>(bound_) << ", but got " << shape[axis];
+    bound_ = static_cast<S>(shape[axis_]);
+    if (static_cast<S>(shape[axis_]) != bound_) {
+      MS_EXCEPTION(ArgumentError) << "For '" << kernel_name_ << "', the value of shape[axis] must be "
+                                  << static_cast<size_t>(bound_) << ", but got " << shape[axis_];
     }
-    outerSize_ = 1;
-    for (int64_t i = axis - 1; i >= 0; i--) {
-      outerSize_ *= shape[i];
+    outer_size_ = 1;
+    for (int64_t i = axis_ - 1; i >= 0; i--) {
+      outer_size_ *= shape[i];
     }
-    innerSize_ = 1;
-    for (int64_t i = axis + 1; i < dims; i++) {
-      innerSize_ *= shape[i];
+    inner_size_ = 1;
+    for (int64_t i = axis_ + 1; i < dims; i++) {
+      inner_size_ *= shape[i];
     }
-    InitSizeLists();
+
+    input_size_list_.clear();
+    output_size_list_.clear();
+    input_size_list_.push_back(input_size_);
+    output_size_list_.push_back(output_size_);
+    output_size_list_.push_back(output_size_ / sizeof(S) * sizeof(T));
     return true;
   }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
+    kernel_name_ = "";
+    axis_ = 0;
     input_size_ = 0;
     output_size_ = 0;
     bound_ = 0;
-    outerSize_ = 0;
-    innerSize_ = 0;
-    is_null_input_ = false;
+    outer_size_ = 0;
+    inner_size_ = 0;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
 
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
-    output_size_list_.push_back(output_size_ / sizeof(S) * sizeof(T));
-  }
-
  private:
+  std::string kernel_name_;
   bool small_ = false;
+  int64_t axis_;
   size_t input_size_;
   size_t output_size_;
   S bound_;
-  size_t outerSize_;
-  size_t innerSize_;
-  bool is_null_input_;
+  size_t outer_size_;
+  size_t inner_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore

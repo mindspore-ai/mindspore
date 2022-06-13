@@ -16,10 +16,12 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 class NetArgminWithValue(nn.Cell):
@@ -101,6 +103,15 @@ def argminwithvalue_3d(data_type, shape_x):
     assert (output[1].asnumpy() == expect2).all()
 
 
+def argminwithvalue_tensor(context_mode, np_type):
+    context.set_context(mode=context_mode, device_target="GPU")
+    x = Tensor(np.array([[1., 20., 5.],
+                         [67., 8., 9.],
+                         [130., 24., 15.],
+                         [0.3, -0.4, -15.]]).astype(np_type))
+    return x.arg_min_with_value(axis=-1)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -144,3 +155,77 @@ def test_argminwithvalue_3d_big_float32():
     argminwithvalue_3d(np.float32, shape_x)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     argminwithvalue_3d(np.float32, shape_x)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_argminwithvalue_functional():
+    """
+    Feature: support min op functional.
+    Description: test the op using functional.
+    Expectation: expect correct result.
+    """
+    context.set_context(device_target="GPU")
+    x = Tensor(np.array([[1., 20., 5.],
+                         [67., 8., 9.],
+                         [130., 24., 15.],
+                         [0.3, -0.4, -15.]]).astype(np.float32))
+    expect_index = np.array([3, 3, 3]).astype(np.int32)
+    expect_output = np.array([0.3, -0.4, -15.]).astype(np.float32)
+    index, output = F.min(x, axis=0)
+
+    assert (index.asnumpy() == expect_index).all()
+    assert (output.asnumpy() == expect_output).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_argminwithvalue_tensor():
+    """
+    Feature: support tensor's arg_min_with_value op.
+    Description: test the op using tensor.
+    Expectation: expect correct result.
+    """
+    expect_index = np.array([0, 1, 2, 2]).astype(np.int32)
+    expect_output = np.array([1., 8., 15., -15.]).astype(np.float32)
+
+    index, output = argminwithvalue_tensor(context.GRAPH_MODE, np.float32)
+    assert (index.asnumpy() == expect_index).all()
+    assert (output.asnumpy() == expect_output).all()
+
+    index, output = argminwithvalue_tensor(context.PYNATIVE_MODE, np.float32)
+    assert (index.asnumpy() == expect_index).all()
+    assert (output.asnumpy() == expect_output).all()
+
+    expect_output_int16 = np.array([1., 8., 15., -15.]).astype(np.int16)
+    index, output = argminwithvalue_tensor(context.GRAPH_MODE, np.int16)
+    assert (index.asnumpy() == expect_index).all()
+    assert (output.asnumpy() == expect_output_int16).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_argminwithvalue_dynamic_shape():
+    """
+    Feature: support arg_min_with_value op with dynamic shape.
+    Description: test the op with dynamic shape
+    Expectation: expect correct result.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x = Tensor(np.array([[1., 20., 5.],
+                         [67., 8., 9.],
+                         [130., 24., 15.],
+                         [0.3, -0.4, -15.]]).astype(np.float32))
+    expect_index = np.array([0, 1, 2, 2]).astype(np.int32)
+    expect_output = np.array([1., 8., 15., -15.]).astype(np.float32)
+
+    argmin_net = NetArgminWithValue()
+    input_dynamic = Tensor(shape=[4, None], dtype=mindspore.float32)
+    argmin_net.set_inputs(input_dynamic)
+    output = argmin_net(x)
+
+    assert (output[1][0].asnumpy() == expect_index).all()
+    assert (output[1][1].asnumpy() == expect_output).all()

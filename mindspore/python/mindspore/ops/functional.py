@@ -926,5 +926,6 @@ tensor_operator_registry.register('bernoulli', bernoulli)
 tensor_operator_registry.register('norm', norm)
 tensor_operator_registry.register('adaptive_max_pool2d', AdaptiveMaxPool2D)
 tensor_operator_registry.register('unsorted_segment_sum', P.UnsortedSegmentSum)
+tensor_operator_registry.register('arg_min_with_value', min)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')

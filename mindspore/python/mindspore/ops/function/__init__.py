@@ -89,6 +89,7 @@ from .array_func import (
     col2im,
     split,
     max,
+    min,
 )
 from .parameter_func import (
     assign,

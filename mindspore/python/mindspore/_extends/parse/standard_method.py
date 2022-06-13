@@ -562,6 +562,13 @@ def argmax(x, axis=None):
     return P.Argmax(axis)(x)
 
 
+def arg_min_with_value(input_x, axis=0, keep_dims=False):
+    """
+    Returns the minimum value with corresponding index.
+    """
+    return F.arg_min_with_value(input_x, axis, keep_dims)
+
+
 def argmin(x, axis=None):
     """
     Returns the indices of the minimum values along an axis.

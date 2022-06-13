@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/argmax_with_value.h"
+#include "ops/argmin_with_value.h"
 #include <set>
 #include <string>
 
@@ -25,31 +25,35 @@
 
 namespace mindspore {
 namespace ops {
-int64_t ArgMaxWithValue::axis() const {
+int64_t ArgMinWithValue::axis() const {
   auto value_ptr = GetAttr("axis");
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<int64_t>(value_ptr);
 }
 
-bool ArgMaxWithValue::keep_dims() const {
+bool ArgMinWithValue::keep_dims() const {
   auto value_ptr = GetAttr("keep_dims");
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
 
 namespace {
-abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
+abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto x_shape_ptr = input_args[0]->BuildShape();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr);
   auto x_shape = x_shape_map[kShape];
-  auto axis = GetValue<int64_t>(primitive->GetAttr("axis"));
-  auto keep_dims = GetValue<bool>(primitive->GetAttr("keep_dims"));
-  auto x_rank = static_cast<int64_t>(x_shape.size());
+  auto axis_value = primitive->GetAttr("axis");
+  MS_EXCEPTION_IF_NULL(axis_value);
+  auto axis = GetValue<int64_t>(axis_value);
+  auto keep_dims_value = primitive->GetAttr("keep_dims");
+  MS_EXCEPTION_IF_NULL(keep_dims_value);
+  auto keep_dims = GetValue<bool>(keep_dims_value);
+  auto x_rank = SizeToLong(x_shape.size());
   if (x_rank == 0) {
     if (axis != -1 && axis != 0) {
-      MS_EXCEPTION(ValueError) << "For ArgMaxWithValue with 0d input tensor, axis must be one of 0 or -1, but got"
+      MS_EXCEPTION(ValueError) << "For ArgMinWithValue with 0d input tensor, axis must be one of 0 or -1, but got"
                                << axis << ".";
     }
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape_ptr, x_shape_ptr});
@@ -58,7 +62,7 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
     axis += x_rank;
   }
   if (axis < 0 || axis >= x_rank) {
-    MS_EXCEPTION(ValueError) << "For ArgMaxWithValue, axis must be in range [-x_rank, x_rank), but got" << axis << ".";
+    MS_EXCEPTION(ValueError) << "For ArgMinWithValue, axis must be in range [-x_rank, x_rank), but got" << axis << ".";
   }
   (void)primitive->AddAttr("dimension", MakeValue(axis));
   // Calculate all the shapes.
@@ -72,30 +76,31 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
   };
   ShapeVector output_shape;
   cal_shape(output_shape, x_shape);
-
   auto index_and_value_shape = std::make_shared<abstract::Shape>(output_shape);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{index_and_value_shape, index_and_value_shape});
 }
 
-TuplePtr ArgMaxWithValueInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+TuplePtr ArgMinWithValueInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  const std::set<TypePtr> valid_types = {kInt16, kInt32, kUInt16, kUInt32, kFloat16, kFloat32, kFloat64};
   TypePtr input_x_type = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_x_type, valid_types, prim->name());
   auto index_type = std::make_shared<TensorType>(kInt32);
   return std::make_shared<Tuple>(std::vector<TypePtr>{index_type, input_x_type});
 }
 }  // namespace
-AbstractBasePtr ArgMaxWithValueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+
+AbstractBasePtr ArgMinWithValueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto shapes = ArgMaxWithValueInferShape(primitive, input_args);
-  auto types = ArgMaxWithValueInferType(primitive, input_args);
+  auto shapes = ArgMinWithValueInferShape(primitive, input_args);
+  auto types = ArgMinWithValueInferType(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);
 }
-MIND_API_OPERATOR_IMPL(ArgMaxWithValue, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(ArgMaxWithValue, prim::kPrimArgMaxWithValue, ArgMaxWithValueInfer, nullptr, true);
+
+MIND_API_OPERATOR_IMPL(ArgMinWithValue, BaseOperator);
+REGISTER_PRIMITIVE_EVAL_IMPL(ArgMinWithValue, prim::kPrimArgMinWithValue, ArgMinWithValueInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
