@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/pack_weight_manager.h"
+#include <vector>
 #include "src/common/graph_util.h"
 namespace mindspore::lite {
 namespace {
@@ -78,7 +79,7 @@ char *PackWeightManager::GetNumaModelBuf(const char *model_buf, int numa_id) {
   return nullptr;
 }
 
-STATUS PackWeightManager::StoreOriginTensorData(Model *model) {
+STATUS PackWeightManager::StoreOriginTensorData(Model *model, std::vector<Tensor *> *all_tensors) {
 #ifdef SHARING_MODEL_WEIGHT
   MS_CHECK_TRUE_MSG(model != nullptr, RET_ERROR, "model is nullptr in pack weight manager.");
   if (pack_weight_ == nullptr) {
@@ -96,7 +97,14 @@ STATUS PackWeightManager::StoreOriginTensorData(Model *model) {
           src_tensor->length() == 0) {
         continue;
       }
-      auto status = pack_weight_->StoreOriginTensorData(lite_model->buf, src_tensor->data());
+      if (all_tensors->at(tensor_index)->own_data()) {
+        auto status = pack_weight_->ReplaceOriginTensorData(lite_model->buf, all_tensors, tensor_index);
+        if (status != RET_OK) {
+          MS_LOG(DEBUG) << "ReplaceOriginTensorData failed.";
+          return RET_ERROR;
+        }
+      }
+      auto status = pack_weight_->StoreOriginTensorData(lite_model->buf, all_tensors->at(tensor_index)->data());
       if (status != RET_OK) {
         MS_LOG(DEBUG) << "data not packed.";
         return RET_ERROR;

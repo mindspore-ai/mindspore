@@ -58,12 +58,12 @@ Status PredictTaskQueue::InitTaskQueue(size_t num, size_t max_queue_size) {
 }
 
 void PredictTaskQueue::WaitUntilPredictActive(PredictTask *task, int node_id) {
-  waite_worker_num_.at(node_id) += 1;
   std::unique_lock<std::mutex> result_lock(task->task_done_mutex);
   while (!task->ready) {
     task->task_done_condition.wait(result_lock);
   }
   task->ready = false;
+  waite_worker_num_.at(node_id) += 1;
   return;
 }
 

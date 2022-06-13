@@ -528,7 +528,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-  ret = lite::PackWeightManager::GetInstance()->StoreOriginTensorData(model);
+  ret = lite::PackWeightManager::GetInstance()->StoreOriginTensorData(model, &tensors_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StoreOriginTensorData failed.";
     return RET_ERROR;

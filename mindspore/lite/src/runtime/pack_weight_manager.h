@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_MANAGER_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_MANAGER_H_
 #include <memory>
+#include <vector>
 #include "include/model.h"
 #include "include/errorcode.h"
 #include "src/tensor.h"
@@ -31,7 +32,7 @@ class PackWeightManager {
   STATUS InitPackWeight(const char *model_buf, size_t model_size, int numa_id = -1);
   STATUS InitPackWeightByBuf(const char *model_buf, size_t model_size);
   char *GetNumaModelBuf(const char *model_buf, int numa_id);
-  STATUS StoreOriginTensorData(Model *model);
+  STATUS StoreOriginTensorData(Model *model, std::vector<Tensor *> *all_tensors);
   void *GetPackData(const void *tensor_data, const size_t size, bool *is_packed);
   void Free(void *tensor_data);
   bool IsCopyTensor(int op_type);

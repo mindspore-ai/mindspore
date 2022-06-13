@@ -48,11 +48,16 @@ STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_si
       return RET_ERROR;
     }
     memcpy(new_model_buf, model_buf, model_size);
-    numa_model_buf_[model_buf] = {numa_id};
+    if (numa_model_buf_.find(model_buf) == numa_model_buf_.end()) {
+      numa_model_buf_[model_buf] = {numa_id};
+      model_buf_map_[model_buf] = {new_model_buf};
+    } else {
+      numa_model_buf_[model_buf].push_back(numa_id);
+      model_buf_map_[model_buf].push_back(new_model_buf);
+    }
     buf_model_weight_[new_model_buf] = model_const_weight;
     buf_model_weight_[new_model_buf]->allocator = allocator;
     model_const_weight->numa_id = numa_id;
-    model_buf_map_.insert(std::make_pair(model_buf, new_model_buf));
   } else {
     buf_model_weight_[model_buf] = model_const_weight;
     buf_model_weight_[model_buf]->allocator = allocator;
@@ -67,7 +72,9 @@ char *PackWeight::GetNumaModelBuf(const char *model_buf, int numa_id) {
     MS_LOG(ERROR) << "can not find numa id in saved model buf.";
     return nullptr;
   }
-  return model_buf_map_[model_buf];
+  auto numa_id_list = numa_model_buf_[model_buf];
+  auto it = find(numa_id_list.begin(), numa_id_list.end(), numa_id) - numa_id_list.begin();
+  return model_buf_map_[model_buf][it];
 }
 
 STATUS PackWeight::StoreOriginTensorData(const char *model_buf, const void *origin_tensor_data) {
@@ -83,6 +90,32 @@ STATUS PackWeight::StoreOriginTensorData(const char *model_buf, const void *orig
     return RET_OK;
   }
   packed_pair.insert(std::make_pair(origin_tensor_data, nullptr));
+  return RET_OK;
+}
+
+STATUS PackWeight::ReplaceOriginTensorData(const char *model_buf, std::vector<Tensor *> *tensors, int tensor_index) {
+  std::lock_guard<std::mutex> lock(mtx_weight_);
+  if (buf_model_weight_.find(model_buf) == buf_model_weight_.end()) {
+    MS_LOG(ERROR) << "can not find model buf in store origin Tensor";
+    return RET_ERROR;
+  }
+  auto &tensor = tensors->at(tensor_index);
+  auto &model_weight = buf_model_weight_[model_buf];
+  if (model_weight->tensors_data.find(tensor_index) == model_weight->tensors_data.end()) {
+    auto allocator = model_weight->allocator;
+    void *new_data = allocator->Malloc(tensor->Size());
+    memcpy(new_data, tensor->data(), tensor->Size());
+    MS_CHECK_TRUE_MSG(tensor->own_data(), RET_ERROR, "tensor data is not own data.");
+    tensor->FreeData();
+    tensor->set_data(new_data);
+    tensor->set_own_data(false);
+    model_weight->tensors_data.insert(std::make_pair(tensor_index, new_data));
+  } else {
+    auto new_data = model_weight->tensors_data[tensor_index];
+    tensor->FreeData();
+    tensor->set_data(new_data);
+    tensor->set_own_data(false);
+  }
   return RET_OK;
 }
 
@@ -126,10 +159,25 @@ void PackWeight::FreePackedWeight(ModelConstWeight *weight) {
   weight->origin_and_packed_pair.clear();
 }
 
+void PackWeight::FreeTensorData(ModelConstWeight *weight) {
+  MS_CHECK_TRUE_RET_VOID(weight != nullptr);
+  for (auto &tensor_data : weight->tensors_data) {
+    auto &data = tensor_data.second;
+    auto allocator = weight->allocator;
+    MS_CHECK_TRUE_RET_VOID(allocator != nullptr);
+    if (data != nullptr) {
+      allocator->Free(data);
+      data = nullptr;
+    }
+  }
+  weight->tensors_data.clear();
+}
+
 PackWeight::~PackWeight() {
   std::lock_guard<std::mutex> lock(mtx_weight_);
   for (auto &item : buf_model_weight_) {
     FreePackedWeight(item.second);
+    FreeTensorData(item.second);
   }
   // free model buf
   if (copy_buf_) {
