@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_BUILD_H_
 #include <string>
 #include "kernel/akg/akg_kernel_build.h"
+#include "kernel/akg/akg_kernel_build_manager.h"
 #include "base/base.h"
 
 namespace mindspore {
@@ -32,6 +33,7 @@ class AkgCpuKernelBuilder : public AkgKernelBuilder {
                        const AnfNodePtr &anf_node) override;
   void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
 };
+REG_AKG_KERNEL_BUILDER(kCPUDevice, AkgCpuKernelBuilder);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_CPU_AKG_CPU_KERNEL_BUILD_H_

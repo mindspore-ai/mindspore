@@ -85,7 +85,7 @@
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "include/common/utils/utils.h"
 #include "abstract/utils.h"
-#if ENABLE_CPU && ENABLE_GPU
+#ifdef WITH_BACKEND
 #include "ps/util.h"
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -358,7 +358,7 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
     auto input_node = input_nodes[i];
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
-#if ENABLE_CPU && ENABLE_GPU
+#ifdef WITH_BACKEND
       const std::string &param_name = input_node->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {
         continue;
@@ -438,7 +438,7 @@ GraphId GPUSession::CompileGraphImpl(const KernelGraphPtr &graph) {
   GraphKernelOptimize(graph);
   // Start gpu kernel runtime
   StartKernelRT();
-#if ENABLE_CPU && ENABLE_GPU
+#ifdef WITH_BACKEND
   InitPsWorker(graph);
 #endif
   // Assign CUDA streams
@@ -518,7 +518,7 @@ void GPUSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_grap
   E2eDump::UpdateIterOldRTDump(kernel_graph.get());
 #endif
 
-#if ENABLE_CPU && ENABLE_GPU
+#ifdef WITH_BACKEND
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);
 #endif
@@ -555,7 +555,7 @@ void GPUSession::ExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_graph) 
   int kernel_num = kernel_graph->execution_order().size();
   int64_t loopsize = (kernel_num > 1) ? ConfigManager::GetInstance().gpu_loopsink_size() : 1;
   for (int64_t i = 0; i < loopsize; i++) {
-#if ENABLE_CPU && ENABLE_GPU
+#ifdef WITH_BACKEND
     std::string channel_name;
     if (ps::PsDataPrefetch::GetInstance().cache_enable() && IsGetNextGraph(kernel_graph, &channel_name)) {
       ps::ps_cache_instance.IncreaseGraphStep(channel_name);
@@ -605,7 +605,7 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
         // But one time memory application scenarios need to be skipped, because the memory is not allocated next step:
         // 1. Non cnode 2. Communication kernel.
         bool ps_mode = false;
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
         ps_mode = ps::PSContext::instance()->is_ps_mode();
 #endif
         if (node->isa<CNode>() && !common::AnfAlgo::IsCommunicationOp(node) && !ps_mode) {

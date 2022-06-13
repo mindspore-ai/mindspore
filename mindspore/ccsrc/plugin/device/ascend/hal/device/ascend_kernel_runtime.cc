@@ -245,12 +245,15 @@ bool AscendKernelRuntime::NeedDestroyHccl() {
 #ifndef ENABLE_SECURITY
 void AsyncDataDumpUninit() {
   if (DumpJsonParser::GetInstance().async_dump_enabled()) {
-#if ENABLE_D
-    // When it is A+M dump mode, wait until file save is finished.
-    if (DumpJsonParser::GetInstance().FileFormatIsNpy()) {
-      Debugger::GetInstance()->WaitForWriteFileFinished();
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_type = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    if (device_type == kAscendDevice) {
+      // When it is A+M dump mode, wait until file save is finished.
+      if (DumpJsonParser::GetInstance().FileFormatIsNpy()) {
+        Debugger::GetInstance()->WaitForWriteFileFinished();
+      }
     }
-#endif
     if (AdxDataDumpServerUnInit() != 0) {
       MS_LOG(ERROR) << "Adx data dump server uninit failed";
     }

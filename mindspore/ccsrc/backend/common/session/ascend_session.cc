@@ -69,7 +69,7 @@
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "debug/rdr/graph_recorder.h"
 #endif
-#if ENABLE_CPU && ENABLE_D
+#ifdef WITH_BACKEND
 #include "ps/util.h"
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -247,7 +247,7 @@ bool TensorNeedSync(const std::shared_ptr<KernelGraph> &kernel_graph, const AnfN
       }
       MS_EXCEPTION_IF_NULL(memcpy_nums);
       (*memcpy_nums)++;
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
       const std::string &param_name = parameter->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {
         return false;
@@ -346,7 +346,7 @@ void AscendSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_gra
     }
     if (AnfAlgo::OutputAddrExist(input_node, 0) &&
         TensorNeedSync(kernel_graph, input_node, tensor, &device_memcpy_nums)) {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
       const std::string &param_name = input_node->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {
         continue;
@@ -459,7 +459,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 
   // adjust kernel
   AdjustKernel(root_graph);
-#if ENABLE_CPU && ENABLE_D
+#ifdef WITH_BACKEND
   InitPsWorker(root_graph);
 #endif
   // assign stream
@@ -538,7 +538,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   single_graph->UpdateExecuteKernelStreamLabel();
   // adjust execution order because  merge child graph and other special operations
   AdjustKernel(graph);
-#if ENABLE_CPU && ENABLE_D
+#ifdef WITH_BACKEND
   InitPsWorker(graph);
 #endif
   // Assign streams for control sink and hccl and so on
@@ -616,7 +616,7 @@ void AscendSession::PreExecuteGraph(const std::shared_ptr<KernelGraph> &kernel_g
     debugger_->PreExecute(kernel_graph);
   }
 #endif
-#if ENABLE_CPU && ENABLE_D
+#ifdef WITH_BACKEND
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);
   std::string channel_name;
@@ -1000,17 +1000,19 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
 }
 
 #ifndef ENABLE_SECURITY
-void DumpInit(uint32_t device_id) {
+void DumpInit(const std::string &device_type, uint32_t device_id) {
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
   json_parser.CopyDumpJsonToDir(device_id);
   json_parser.CopyHcclJsonToDir(device_id);
   json_parser.CopyMSCfgJsonToDir(device_id);
   if (json_parser.async_dump_enabled()) {
-#ifdef ENABLE_D
-    // register callback to adx
-    if (json_parser.FileFormatIsNpy()) {
-      AdxRegDumpProcessCallBack(DumpDataCallBack);
+#if !(defined(ENABLE_TEST) || defined(ENABLE_TESTCASES))
+    if (device_type == kAscendDevice) {
+      // register callback to adx
+      if (json_parser.FileFormatIsNpy()) {
+        AdxRegDumpProcessCallBack(DumpDataCallBack);
+      }
     }
 #endif
     if (AdxDataDumpServerInit() != 0) {
@@ -1035,7 +1037,8 @@ void AscendSession::InitRuntimeResource() {
     rank_id_ = GetRankId();
   }
 #ifndef ENABLE_SECURITY
-  DumpInit(rank_id_);
+  auto device_type = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  DumpInit(device_type, rank_id_);
 #endif
   MS_LOG(INFO) << "Status record: end init runtime resource.";
 }

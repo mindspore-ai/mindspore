@@ -22,9 +22,6 @@
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/scoped_long_running.h"
 #include "pybind_api/ir/tensor_py.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
-#include "ps/ps_cache/ps_cache_manager.h"
-#endif
 
 using mindspore::tensor::TensorPy;
 namespace mindspore {

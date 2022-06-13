@@ -38,7 +38,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "include/common/debug/env_config_parser.h"
 #include "plugin/device/ascend/hal/device/ascend_device_address.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 #include "kernel/common_utils.h"
@@ -600,7 +600,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
     }
     add_need_alloc_nodes(input_node);
   }
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
   bool ps_cache_check = false;
 #endif
   std::map<AnfNodePtr, AnfNodePtr> shadow_backend_node_map;
@@ -616,7 +616,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
         continue;
       }
       DeviceAddressPtr device_address = GetInternalDeviceAddress(graph, item);
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#ifdef WITH_BACKEND
       const std::string &param_name = item->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {
         MS_LOG(INFO) << "Parameter(" << param_name << ")"
@@ -1833,7 +1833,7 @@ void KernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id) {
   MS_LOG(INFO) << "Clear graph:" << graph_id << " runtime resource";
 }
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
 namespace {
 // Finalize ps cache module before throw an exception.
 void FinalizePsCache(const std::string &exception) {

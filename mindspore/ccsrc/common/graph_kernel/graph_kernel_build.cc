@@ -26,12 +26,7 @@
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
-#if ENABLE_D
-#include "plugin/device/ascend/kernel/akg/akg_ascend_kernel_build.h"
-#elif ENABLE_GPU
-#include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_build.h"
-#endif
-#include "plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.h"
+#include "kernel/akg/akg_kernel_build_manager.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -151,21 +146,13 @@ void GraphKernelBuild::Init() {
   }
 
   // Init AkgKernelBuilder.
-#if ENABLE_D
-  if (Callback::Instance()->GetTargetFromContext() == kCPUDevice) {
-    kernel_builder_ = std::make_shared<kernel::AkgCpuKernelBuilder>();
+  if (Callback::Instance()->GetTargetFromContext() == kGPUDevice) {
+    kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kGPUDevice);
+  } else if (Callback::Instance()->GetTargetFromContext() == kAscendDevice) {
+    kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kAscendDevice);
   } else {
-    kernel_builder_ = std::make_shared<kernel::AkgAscendKernelBuilder>();
+    kernel_builder_ = kernel::AkgKernelBuildManager::Instance().GetAkgKernelBuilder(kCPUDevice);
   }
-#elif ENABLE_GPU
-  if (Callback::Instance()->GetTargetFromContext() == kCPUDevice) {
-    kernel_builder_ = std::make_shared<kernel::AkgCpuKernelBuilder>();
-  } else {
-    kernel_builder_ = std::make_shared<kernel::AkgGpuKernelBuilder>();
-  }
-#elif ENABLE_CPU
-  kernel_builder_ = std::make_shared<kernel::AkgCpuKernelBuilder>();
-#endif
 }
 
 bool GraphKernelBuild::Process(const FuncGraphPtr &func_graph, int iter) {

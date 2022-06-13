@@ -1767,7 +1767,6 @@ bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
   return false;
 }
 
-#ifdef ENABLE_D
 /*
  * Feature group: Dump.
  * Target device group: Ascend.
@@ -1805,6 +1804,5 @@ void Debugger::WaitForWriteFileFinished() {
     recheck_cnt++;
   }
 }
-#endif
 
 }  // namespace mindspore
