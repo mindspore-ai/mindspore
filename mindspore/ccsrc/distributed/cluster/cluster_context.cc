@@ -20,6 +20,7 @@
 #include <memory>
 #include "distributed/cluster/cluster_context.h"
 #include "distributed/cluster/topology/common.h"
+#include "distributed/recovery/recovery_context.h"
 #include "distributed/cluster/topology/compute_graph_node.h"
 #include "distributed/cluster/topology/meta_server_node.h"
 #include "distributed/collective/collective_manager.h"
@@ -34,11 +35,9 @@ namespace cluster {
 ClusterContext::ClusterContext()
     : inited_(false),
       finalized_(true),
-      cluster_ready_(false),
       node_num_each_role_({}),
       scheduler_host_(kLocalHost),
       scheduler_port_(kDefaultSchedPort),
-      node_(nullptr),
       node_role_(""),
       cluster_config_(nullptr) {}
 
@@ -51,7 +50,6 @@ ClusterContext::~ClusterContext() {
     }
   }
   finalized_ = true;
-  node_ = nullptr;
 }
 
 std::shared_ptr<ClusterContext> ClusterContext::instance() {
@@ -74,11 +72,6 @@ bool ClusterContext::Initialize() {
 
   // Step 2: Build network for this cluster. Every process will block in this method until networking is done.
   if (!BuildCluster()) {
-    MS_EXCEPTION_IF_NULL(node_);
-    if (!node_->Stop()) {
-      MS_LOG(ERROR) << "Failed to stop node after the failure of BuildCluster";
-      return false;
-    }
     MS_LOG(ERROR) << "Building networking for " << node_role_ << " failed.";
     return false;
   }
@@ -100,15 +93,6 @@ bool ClusterContext::Finalize(uint32_t timeout) {
   if (finalized_) {
     return true;
   }
-  // In some cases, one node calls the Finish function while other nodes don't. So timeout is acceptable.
-  if (!node_->Finish(timeout)) {
-    MS_LOG(WARNING) << "Finishing node " << node_role_ << " timeout.";
-  }
-  if (!node_->Stop()) {
-    MS_LOG(ERROR) << "Failed to stop node " << node_role_;
-    return false;
-  }
-
   MS_EXCEPTION_IF_NULL(node_base_);
   size_t interval = 5;
   while (!node_base_->Finalize()) {
@@ -121,7 +105,7 @@ bool ClusterContext::Finalize(uint32_t timeout) {
 
 bool ClusterContext::IsScheduler() { return node_role_ == kEnvRoleOfScheduler; }
 
-const std::shared_ptr<ps::core::Node> &ClusterContext::node() const { return node_; }
+const std::shared_ptr<topology::NodeBase> &ClusterContext::node() const { return node_base_; }
 
 const std::shared_ptr<topology::NodeBase> &ClusterContext::node_base() const { return node_base_; }
 
@@ -166,26 +150,6 @@ void ClusterContext::InitClusterConfig() {
 }
 
 bool ClusterContext::BuildCluster() {
-  // Create node according to different role.
-  if (node_role_ == kEnvRoleOfWorker) {
-    node_ = std::make_shared<ps::core::PSWorkerNode>();
-  } else if (node_role_ == kEnvRoleOfServer || node_role_ == kEnvRoleOfPServer) {
-    node_ = std::make_shared<ps::core::PSServerNode>();
-  } else if (node_role_ == kEnvRoleOfScheduler) {
-    ps::PSContext::instance()->set_scheduler_manage_port(0);
-    node_ = std::make_shared<ps::core::PSSchedulerNode>();
-  } else {
-    MS_LOG(EXCEPTION) << "The role " << node_role_ << " is invalid.";
-    return false;
-  }
-  MS_EXCEPTION_IF_NULL(node_);
-
-  RegisterEventCallback();
-  if (!node_->Start()) {
-    MS_LOG(ERROR) << "Building network failed.";
-    return false;
-  }
-
   // Get node_id from environment configuration or uuid generator.
   std::string node_id = common::GetEnv(kNodeId);
   if (node_id.length() == 0) {
@@ -197,7 +161,6 @@ bool ClusterContext::BuildCluster() {
     node_base_ = std::make_shared<topology::MetaServerNode>(node_id, node_role_, node_num);
   } else {
     node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id, node_role_);
-    node_base_->set_rank_id(node_->rank_id());
   }
   MS_EXCEPTION_IF_NULL(node_base_);
   RETURN_IF_FALSE_WITH_LOG(node_base_->Initialize(), "Failed to initialize the node.");
@@ -259,68 +222,6 @@ void ClusterContext::InitSchedulerPort() {
   if (scheduler_port_ > kMaxPort) {
     MS_LOG(EXCEPTION) << "The port: " << scheduler_port_ << " is invalid.";
   }
-}
-
-void ClusterContext::RegisterEventCallback() {
-  auto abstract_node = std::dynamic_pointer_cast<ps::core::AbstractNode>(node_);
-  if (abstract_node != nullptr) {
-    abstract_node->RegisterEventCallback(ps::core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
-      std::unique_lock<std::mutex> lock(finish_mutex_);
-      MS_LOG(ERROR) << "Event SCHEDULER_TIMEOUT is captured.";
-      try {
-        MS_LOG(INFO) << "Start finalize cluster...";
-        if (!Finalize()) {
-          MS_LOG(EXCEPTION) << "Failed to finalize cluster.";
-        }
-        MS_LOG(INFO) << "Successfully finalize cluster.";
-
-        MS_LOG(INFO) << "Start finalize collective communication...";
-        if (!collective::CollectiveManager::instance()->Finalize()) {
-          MS_LOG(EXCEPTION) << "Failed to finalize collective communication.";
-        }
-        MS_LOG(INFO) << "Successfully finalize collective communication.";
-
-        MS_LOG(EXCEPTION)
-          << "Event SCHEDULER_TIMEOUT is captured. This is because scheduler node is finalized or crashed.";
-      } catch (std::exception &) {
-        MsException::Instance().SetException();
-      }
-    });
-
-    abstract_node->RegisterEventCallback(ps::core::ClusterEvent::NODE_TIMEOUT, [this]() {
-      std::unique_lock<std::mutex> lock(finish_mutex_);
-      MS_LOG(ERROR) << "Event NODE_TIMEOUT is captured.";
-      try {
-        MS_LOG(INFO) << "Start finalize cluster...";
-        if (!Finalize()) {
-          MS_LOG(EXCEPTION) << "Failed to finalize cluster.";
-        }
-        MS_LOG(INFO) << "Successfully finalize cluster.";
-
-        MS_LOG(INFO) << "Start finalize collective communication...";
-        if (!collective::CollectiveManager::instance()->Finalize()) {
-          MS_LOG(EXCEPTION) << "Failed to finalize collective communication.";
-        }
-        MS_LOG(INFO) << "Successfully finalize collective communication.";
-
-        MS_LOG(EXCEPTION) << "Event NODE_TIMEOUT is captured. This is because some nodes are finalized or crashed.";
-      } catch (std::exception &) {
-        MsException::Instance().SetException();
-      }
-    });
-
-    abstract_node->RegisterEventCallback(ps::core::ClusterEvent::ON_SEND_META_DATA,
-                                         [this]() { cluster_ready_ = true; });
-  }
-}
-
-void ClusterContext::WaitForClusterReady() {
-  while (!cluster_ready_) {
-    const int kWaitDuration = 200;
-    std::this_thread::sleep_for(std::chrono::milliseconds(kWaitDuration));
-  }
-
-  cluster_ready_ = false;
 }
 }  // namespace cluster
 }  // namespace distributed

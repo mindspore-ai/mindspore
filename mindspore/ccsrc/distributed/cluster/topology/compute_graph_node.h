@@ -34,7 +34,7 @@ class ComputeGraphNode : public NodeBase {
  public:
   ComputeGraphNode(const std::string &node_id, const std::string &role)
       : NodeBase(node_id, role), authenticated_(false), enable_hb_(false) {}
-  ~ComputeGraphNode() override = default;
+  ~ComputeGraphNode() override;
 
   bool Initialize() override;
   bool Initialized() override;

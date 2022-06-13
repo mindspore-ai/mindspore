@@ -21,9 +21,19 @@
 namespace mindspore {
 namespace distributed {
 namespace cluster {
+static const size_t kInterval = 3;
 bool ActorRouteTableProxy::RegisterRoute(const std::string &actor_id, const topology::ActorAddress &actor_addr) {
   MS_EXCEPTION_IF_NULL(cgn_);
-  cgn_->PutMetadata(actor_id, actor_addr.SerializeAsString(), false);
+
+  bool success = false;
+  while (!success) {
+    success = cgn_->PutMetadata(actor_id, actor_addr.SerializeAsString(), false);
+    if (!success) {
+      MS_LOG(WARNING) << "Retry to register the address for actor: " << actor_id;
+      sleep(kInterval);
+    }
+  }
+  MS_LOG(INFO) << "The address of actor " << actor_id << " has been registered successfully.";
   return true;
 }
 
@@ -47,7 +57,7 @@ topology::ActorAddress ActorRouteTableProxy::LookupRoute(const std::string &acto
     // An actor route could not be registered yet because another process could be launched slow.
     // If the response actor id is empty, this means the adderess is not registered yet.
     if (lookup_route_rsp_msg.actor_id().empty()) {
-      MS_LOG(DEBUG) << "Actor route for actor " << actor_id << " is not registered yet, please try later.";
+      MS_LOG(WARNING) << "Retry to get the address of actor " << actor_id;
     }
   } while (!lookup_success && CURRENT_TIMESTAMP_MILLI <= timeout_ts);
 

@@ -18,7 +18,9 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_ALLREDUCE_IMPL_H_
 
 #include <string>
+#include <memory>
 #include "distributed/cluster/cluster_context.h"
+#include "plugin/device/cpu/hal/hardware/ms_collective_node.h"
 
 namespace mindspore {
 namespace device {
@@ -27,21 +29,21 @@ class AllReduceLauncher {
  public:
   AllReduceLauncher(const AllReduceLauncher &) = delete;
   AllReduceLauncher &operator=(const AllReduceLauncher &) = delete;
+  AllReduceLauncher() = default;
   ~AllReduceLauncher() = default;
 
-  static AllReduceLauncher &GetInstance() {
-    static AllReduceLauncher instance;
-    return instance;
-  }
+  bool Initialize();
+  bool Finalize();
+
   bool Execute(const void *input_data, void *const output_data, size_t data_size) const;
+
+  std::shared_ptr<ps::core::CollectiveNode> collective_node();
 
  private:
   size_t rank_id_{0};
   size_t rank_size_{0};
   std::string node_role_{distributed::kEnvRoleOfWorker};
-  ps::core::AbstractNodePtr abs_node_{nullptr};
-
-  AllReduceLauncher();
+  std::shared_ptr<ps::core::CollectiveNode> abs_node_{nullptr};
 
   bool RingAllReduce(const void *input_data, void *const output_data, size_t data_size) const;
   bool ReduceBroadcastAllReduce(const void *input_data, void *const output_data, size_t data_size) const;

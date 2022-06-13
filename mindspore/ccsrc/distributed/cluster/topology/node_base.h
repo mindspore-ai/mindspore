@@ -30,7 +30,7 @@ namespace topology {
 class NodeBase {
  public:
   explicit NodeBase(const std::string &node_id, const std::string &role)
-      : node_id_(node_id), rank_id_(-1), role_(role) {}
+      : node_id_(node_id), rank_id_(-1), role_(role), finalized_(false) {}
   virtual ~NodeBase() = default;
 
   // Prepare the resources hold in this node.
@@ -62,6 +62,9 @@ class NodeBase {
 
   // The role name of this node specified by the environment variable.
   std::string role_;
+
+  // Indicates whether the finalize method of this node has been called.
+  bool finalized_;
 };
 }  // namespace topology
 }  // namespace cluster

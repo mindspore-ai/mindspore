@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "distributed/cluster/topology/node_base.h"
 #include "distributed/cluster/cluster_context.h"
 
 namespace mindspore {
@@ -21,11 +22,9 @@ namespace cluster {
 ClusterContext::ClusterContext()
     : inited_(false),
       finalized_(true),
-      cluster_ready_(false),
       node_num_each_role_({}),
       scheduler_host_(kLocalHost),
       scheduler_port_(kDefaultSchedPort),
-      node_(nullptr),
       node_role_(""),
       cluster_config_(nullptr) {}
 
@@ -38,11 +37,10 @@ ClusterContext::~ClusterContext() {
     }
   }
   finalized_ = true;
-  node_ = nullptr;
 }
 bool ClusterContext::Initialize() { return true; }
 bool ClusterContext::Finalize(uint32_t timeout) { return true; }
-const std::shared_ptr<ps::core::Node> &ClusterContext::node() const { return node_; }
+const std::shared_ptr<topology::NodeBase> &ClusterContext::node() const { return node_base_; }
 }  // namespace cluster
 }  // namespace distributed
 }  // namespace mindspore

@@ -26,6 +26,10 @@
 #include "utils/file_utils.h"
 #include "distributed/constants.h"
 #include "distributed/cluster/topology/common.h"
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+#include "distributed/cluster/cluster_context.h"
+#include "distributed/cluster/topology/compute_graph_node.h"
+#endif
 #include "runtime/hardware/device_context_manager.h"
 #include "utils/convert_utils_base.h"
 #include "utils/ms_context.h"
@@ -39,6 +43,9 @@ constexpr char kJsonSuffix[] = ".json";
 constexpr char kConfigJson[] = "/config.json";
 
 const uint32_t kSendBufferLen = 2;
+
+constexpr char kCkptEpochInfoPrefix[] = "ckpt_epoch_rank_";
+constexpr char kCkptStepInfoPrefix[] = "ckpt_step_rank_";
 
 namespace {
 std::pair<int, int> ParseCkptEpochStep(const std::string &checkpoint) {
@@ -143,17 +150,55 @@ void RecoveryContext::ObtainGlobalLatestCkptInfo() {
 
   const uint32_t kRecvBufferLen = kSendBufferLen * global_rank_size_;
 
-  int send_buffer[kSendBufferLen] = {latest_ckpt_epoch_, latest_ckpt_step_};
   int recv_buffer[kRecvBufferLen];
   (void)std::fill_n(recv_buffer, kRecvBufferLen, 0);
-  recv_buffer[kSendBufferLen * global_rank_id_] = latest_ckpt_epoch_;
-  recv_buffer[kSendBufferLen * global_rank_id_ + 1] = latest_ckpt_step_;
 
-  const std::string &host_global_group_name = host_comm_lib_instance->global_group_name();
-  if (!host_comm_lib_instance->AllGather(send_buffer, recv_buffer, kSendBufferLen, TypeId::kNumberTypeInt,
-                                         host_global_group_name)) {
-    MS_LOG(EXCEPTION) << "AllGather latest ckpt step failed";
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  // Synchronize the checkpoint information between all the other nodes to ensure the accuracy of training.
+  auto node = cluster::ClusterContext::instance()->node();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(node);
+  MS_EXCEPTION_IF_NULL(cgn);
+
+  auto ckpt_epoch_key = kCkptEpochInfoPrefix + std::to_string(cgn->rank_id());
+  auto ckpt_step_key = kCkptStepInfoPrefix + std::to_string(cgn->rank_id());
+
+  const size_t interval = 3;
+  bool success = false;
+  while (!success) {
+    success = (cgn->PutMetadata(ckpt_epoch_key, std::to_string(latest_ckpt_epoch_)) &&
+               cgn->PutMetadata(ckpt_step_key, std::to_string(latest_ckpt_step_)));
+    if (success) {
+      break;
+    } else {
+      MS_LOG(WARNING) << "Retry to register the checkpoint information to the meta server.";
+      sleep(interval);
+    }
   }
+  MS_LOG(INFO) << "The checkpoint information for rank " << cgn->rank_id()
+               << " has been reported. (epoch: " << latest_ckpt_epoch_ << ", step: " << latest_ckpt_step_ << ")";
+  for (uint32_t i = 0; i < global_rank_size_; ++i) {
+    success = false;
+    auto epoch_key = kCkptEpochInfoPrefix + std::to_string(i);
+    auto step_key = kCkptStepInfoPrefix + std::to_string(i);
+
+    while (!success) {
+      auto ckpt_epoch = cgn->GetMetadata(epoch_key);
+      auto ckpt_step = cgn->GetMetadata(step_key);
+      if (ckpt_epoch.length() == 0 || ckpt_step.length() == 0) {
+        sleep(interval);
+        continue;
+      } else {
+        recv_buffer[kSendBufferLen * i] = std::stoi(ckpt_epoch);
+        recv_buffer[kSendBufferLen * i + 1] = std::stoi(ckpt_step);
+        success = true;
+        MS_LOG(INFO) << "The latest checkpoint for rank " << i << "is that epoch: " << ckpt_epoch
+                     << ", step: " << ckpt_step;
+      }
+    }
+  }
+  MS_LOG(INFO) << "The checkpoint information of all the ranks have been synchronized.";
+#endif
 
   // 3. Check whether save checkpoint successfully on every workers.
   uint32_t save_ckpt_success_num = 0;

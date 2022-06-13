@@ -27,18 +27,34 @@ namespace {
 constexpr size_t kWaitTimeout = 30;
 }  // namespace
 
-AllReduceLauncher::AllReduceLauncher() {
-  abs_node_ =
-    std::dynamic_pointer_cast<ps::core::AbstractNode>(distributed::cluster::ClusterContext::instance()->node());
-  if (abs_node_ == nullptr) {
-    MS_LOG(EXCEPTION) << "The abstract node is nullptr when init AllReduceLauncher.";
+bool AllReduceLauncher::Initialize() {
+  auto node_base = distributed::cluster::ClusterContext::instance()->node_base();
+  rank_id_ = node_base->rank_id();
+
+  auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(node_base);
+  abs_node_ = std::make_shared<ps::core::CollectiveNode>(cgn);
+  if (!abs_node_->Start()) {
+    MS_LOG(ERROR) << "Failed to start the cpu collective node.";
+    return false;
   }
-  rank_id_ = abs_node_->rank_id();
 
   const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
   MS_EXCEPTION_IF_NULL(cluster_ctx);
   node_role_ = cluster_ctx->node_role();
   rank_size_ = IntToSize(cluster_ctx->node_num(cluster_ctx->node_role()));
+  return true;
+}
+
+bool AllReduceLauncher::Finalize() {
+  MS_EXCEPTION_IF_NULL(abs_node_);
+  if (!abs_node_->Finish()) {
+    MS_LOG(WARNING) << "Failed to finish the cpu collective node.";
+  }
+  if (!abs_node_->Stop()) {
+    MS_LOG(ERROR) << "Failed to stop the cpu collective node.";
+    return false;
+  }
+  return true;
 }
 
 bool AllReduceLauncher::Execute(const void *input_data, void *const output_data, size_t data_size) const {
@@ -106,7 +122,8 @@ bool AllReduceLauncher::RingAllReduce(const void *input_data, void *const output
     std::shared_ptr<std::vector<unsigned char>> rec_ptr = nullptr;
     auto rec_req_id = abs_node_->CollectiveReceiveAsync(ps::core::NodeRole::WORKER, rec_from_rank, &rec_ptr);
     if (!abs_node_->CollectiveWait(rec_req_id, kWaitTimeout)) {
-      MS_LOG(ERROR) << "Ring ReduceScatter wait receiving" << rec_req_id << " failed.";
+      MS_LOG(ERROR) << "Ring ReduceScatter wait receiving [" << rec_req_id.first << "," << rec_req_id.second
+                    << "] failed.";
       return false;
     }
     // Step 3: Reduce the data, so we can overlap the time cost of send.
@@ -154,6 +171,8 @@ bool AllReduceLauncher::RingAllReduce(const void *input_data, void *const output
   MS_LOG(DEBUG) << "End Ring AllGather.";
   return true;
 }
+
+std::shared_ptr<ps::core::CollectiveNode> AllReduceLauncher::collective_node() { return abs_node_; }
 
 bool AllReduceLauncher::ReduceBroadcastAllReduce(const void *input_data, void *const output_data,
                                                  size_t data_size) const {
