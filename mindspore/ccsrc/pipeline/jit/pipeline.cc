@@ -1570,10 +1570,20 @@ void ExportGraph(const std::string &file_name, const std::string &model_type, co
 #endif
 }
 
-FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len,
-                        const std::string &dec_mode) {
-  MindIRLoader mindir_loader(false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode, false);
-  auto func_graph = mindir_loader.LoadMindIR(file_name);
+FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode,
+                        const py::object decrypt) {
+  FuncGraphPtr func_graph;
+  if (dec_mode == "Customized") {
+    py::bytes key_bytes(dec_key);
+    py::bytes model_stream = decrypt(file_name, key_bytes);
+    std::string model_string(model_stream);
+
+    MindIRLoader mindir_loader;
+    func_graph = mindir_loader.LoadMindIR(model_string.c_str(), model_string.size());
+  } else {
+    MindIRLoader mindir_loader(false, reinterpret_cast<unsigned char *>(dec_key), key_len, dec_mode, false);
+    func_graph = mindir_loader.LoadMindIR(file_name);
+  }
 #ifdef ENABLE_DUMP_IR
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

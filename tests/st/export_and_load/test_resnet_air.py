@@ -13,6 +13,7 @@
 # limitations under the License.
 """Test network export."""
 import os
+from io import BytesIO
 import numpy as np
 import pytest
 
