@@ -135,4 +135,24 @@ TEST_F(TestAnf, test_FlatParameterFinder) {
   assert(flat_param6 == nullptr);
   assert(offset6 == 0);
 }
+
+/// Feature: Flatten tensor
+/// Description: Test is_sub_data() & has_sub_data() api
+/// Expectation: API works as expected.
+TEST_F(TestAnf, test_TensorWithSubData) {
+  auto t1 = std::make_shared<Tensor>(0.1f);
+  auto t2 = std::make_shared<Tensor>(0.2f);
+  auto t3 = std::make_shared<Tensor>(0.3f);
+  auto t4 = std::make_shared<Tensor>(0.4f);
+  assert(!t1->data().is_sub_data());
+  assert(!t1->data().has_sub_data());
+  auto flat_tensors = Tensor::FlattenTensors(TensorPtrList{t1, t2, t3});
+  assert(flat_tensors.size() == 1);
+  assert(!flat_tensors[0]->data().is_sub_data());
+  assert(flat_tensors[0]->data().has_sub_data());
+  assert(t1->data().is_sub_data());
+  assert(!t1->data().has_sub_data());
+  assert(t2->data().is_sub_data());
+  assert(!t2->data().has_sub_data());
+}
 }  // namespace mindspore
