@@ -41,10 +41,10 @@ abstract::ShapePtr SqrtGradInferShape(const PrimitivePtr &primitive, const std::
 
 TypePtr SqrtGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("dout", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("y", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("dy", input_args[kInputIndex1]->BuildType());
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kComplex128, kComplex64};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim_name);
   return input_args[kInputIndex0]->BuildType();
 }

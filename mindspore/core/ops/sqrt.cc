@@ -106,7 +106,7 @@ ValuePtr SqrtInferValue(const PrimitivePtr &prim, const std::vector<AbstractBase
   }
   iter->second(x_datac, result_datac, data_size);
   return result_tensor;
-}  // namespace
+}
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Sqrt, BaseOperator);
@@ -115,8 +115,9 @@ AbstractBasePtr SqrtInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-
-  return abstract::MakeAbstract(SqrtInferShape(primitive, input_args), SqrtInferType(primitive, input_args));
+  auto types = SqrtInferType(primitive, input_args);
+  auto shapes = SqrtInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shapes, types);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Sqrt, prim::kPrimSqrt, SqrtInfer, SqrtInferValue, true);
 }  // namespace ops

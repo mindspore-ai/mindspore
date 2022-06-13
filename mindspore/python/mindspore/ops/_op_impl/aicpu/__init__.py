@@ -47,6 +47,8 @@ from .edit_distance import _edit_distance_aicpu
 from .unique_with_pad import _unique_with_pad_aicpu
 from .bartlett_window import _bartlett_window_aicpu
 from .add_n import _add_n_aicpu
+from .sqrt import _sqrt_aicpu
+from .sqrt_grad import _sqrt_grad_aicpu
 from .sub_and_filter import _sub_and_filter_aicpu
 from .pad_and_shift import _pad_and_shift_aicpu
 from .data_format_vec_permute import _data_format_vec_permute_aicpu
