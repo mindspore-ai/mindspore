@@ -141,16 +141,7 @@ class Flatten(Primitive):
     r"""
     Flattens a tensor without changing its batch size on the 0-th axis.
 
-    Inputs:
-        - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)` to be flattened, where :math:`N` is batch size.
-
-    Outputs:
-        Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
-        the product of the remaining dimension.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        ValueError: If length of shape of `input_x` is less than 1.
+    Refer to :func:`mindspore.ops.flatten` for more details.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
