@@ -4142,21 +4142,7 @@ class Tensor(Tensor_):
         r"""
         Determines whether the targets are in the top `k` predictions.
 
-        Args:
-            x (Tensor): A 1D Tensor defines the labels of a batch of samples with int32 data type. The size of `x`
-                must be equal to the first dimension of self tensor. The values of `x` can not be negative and
-                must be equal to or less than index of the second dimension of self tensor.
-            k (int): Specifies the number of top elements to be used for computing precision along the last dimension.
-
-        Returns:
-            Tensor has 1 dimension of type bool and the same shape with `x`. For labeling sample `i` in `x`,
-            if the label in the first `k` predictions for sample `i` is in self tensor, then the value is True,
-            otherwise False.
-
-        Raises:
-            TypeError: If `k` is not an int.
-            TypeError: If `x` is not a Tensor.
-            TypeError: If dtype of self tensor is neither float16 nor float32.
+        Refer to :func:`mindspore.ops.intopk` for more detail.
 
         Args:
             x (Tensor): A 1D Tensor defines the labels of a batch of samples with int32 data type. The size of `x`
@@ -4188,7 +4174,6 @@ class Tensor(Tensor_):
         if not isinstance(x, Tensor):
             raise TypeError("For 'Tensor.intopk', the type of the argument 'x' must be Tensor, but "
                             "got {}.".format(type(x)))
-        validator.check_type_name('x', x.dtype, [mstype.float16, mstype.float32], "Tensor")
         validator.check_value_type("k", k, [int], "Tensor")
         return tensor_operator_registry.get('intopk')(self, x, k)
 
