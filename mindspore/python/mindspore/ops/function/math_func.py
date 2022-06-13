@@ -3278,9 +3278,6 @@ def renorm(input_x, p, dim, maxnorm):
     `maxnorm`. Otherwise the sub-tensor needs to be modified to the original value of the corresponding position
     divided by the p-norm of the substensor and then multiplied by `maxnorm`.
 
-    Note:
-        The input must be a tensor.
-
     Args:
         input_x: A Tensor, types: float32 or float16.
         p (float): P-norm.
