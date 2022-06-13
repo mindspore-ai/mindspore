@@ -467,11 +467,62 @@ void FullQuantQuantizer::InitDSPConfig() {
   activation_symmetric_ = false;
   weight_channel_symmetric_ = true;
   weight_layer_symmetric_ = false;
-  // support all layers
-  support_int8_ops_ = {};
+  // support 52 operators
+  support_int8_ops_ = {prim::kPrimAbs,
+                       prim::kPrimActivation,
+                       prim::kPrimAddFusion,
+                       prim::kPrimArgMaxFusion,
+                       prim::kPrimAvgPoolFusion,
+                       prim::kPrimBatchNorm,
+                       prim::kPrimBatchToSpace,
+                       prim::kPrimBatchToSpaceND,
+                       prim::kPrimCeil,
+                       prim::kPrimConcat,
+                       prim::kPrimConv2DFusion,
+                       prim::kPrimConv2dTransposeFusion,
+                       prim::kPrimDepthToSpace,
+                       prim::kPrimDivFusion,
+                       prim::kPrimExpFusion,
+                       prim::kPrimFloor,
+                       prim::kPrimFullConnection,
+                       prim::kPrimGather,
+                       prim::kPrimInstanceNorm,
+                       prim::kPrimLeakyRelu,
+                       prim::kPrimMatMulFusion,
+                       prim::kPrimMaximum,
+                       prim::kPrimMaxPoolFusion,
+                       prim::kPrimMinimum,
+                       prim::kPrimMulFusion,
+                       prim::kPrimNeg,
+                       prim::kPrimPadFusion,
+                       prim::kPrimPReLUFusion,
+                       prim::kPrimReduceFusion,
+                       prim::kPrimReduceMax,
+                       prim::kPrimReduceMean,
+                       prim::kPrimReduceMin,
+                       prim::kPrimReduceSum,
+                       prim::kPrimReduceMax,
+                       prim::kPrimReshape,
+                       prim::kPrimResize,
+                       prim::kPrimResizeBilinear,
+                       prim::kPrimResizeNearestNeighbor,
+                       prim::kPrimRound,
+                       prim::kPrimScaleFusion,
+                       prim::kPrimSoftmax,
+                       prim::kPrimSpaceToBatch,
+                       prim::kPrimSpaceToBatchND,
+                       prim::kPrimSpaceToDepth,
+                       prim::kPrimSplit,
+                       prim::kPrimSqrt,
+                       prim::kPrimSqueeze,
+                       prim::kPrimStridedSlice,
+                       prim::kPrimStack,
+                       prim::kPrimSubFusion,
+                       prim::kPrimTileFusion,
+                       prim::kPrimTranspose};
   skip_check_dtype_ops_ = {prim::kPrimTupleGetItem, prim::kPrimShape};
   per_channel_ops_ = {prim::kPrimConv2DFusion, prim::kPrimConv2dTransposeFusion};
-  support_activation_ = {};
+  support_activation_ = {RELU, RELU6, SIGMOID, TANH};
 }
 
 void FullQuantQuantizer::InitQMinMax() {
