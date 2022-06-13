@@ -21,6 +21,7 @@
 #include "nnacl/pooling_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
+int NNaclFp32Serializer::count = 0;
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter) {
   CodeBaseStruct("PoolingParameter", name,
                  // Primitive parameter
@@ -165,5 +166,29 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const TransFuncStr
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const GroupNormParameter &gn_param) {
   CodeBaseStruct("GroupNormParameter", name, gn_param.op_parameter_, gn_param.epsilon_, gn_param.num_groups_,
                  gn_param.channel_, gn_param.unit_, gn_param.batch_, gn_param.affine_);
+}
+
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const OpParameter &op_param) {
+  CodeBaseStruct<false>("OpParameter", name, op_param.name_, op_param.type_, op_param.thread_num_, op_param.quant_type_,
+                        op_param.is_train_session_, op_param.is_zero_shape_);
+}
+
+void NNaclFp32Serializer::CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor) {
+  std::vector<std::string> tensor_names;
+  int size = tensor.size();
+  for (int i = 0; i < size; ++i) {
+    std::string tensor_name = "tensor" + std::to_string(count++);
+    CodeBaseStruct<false>("TensorC", name, tensor_name, tensorC[i].is_ready_, tensorC[i].data_type_, tensorC[i].format_,
+                          tensor[i], tensorC[i].shape_size_, ToString(tensorC[i].shape_));
+    tensor_names.emplace_back(tensor_name);
+  }
+  code << "    TensorC"
+       << " " << name << "[" << std::to_string(size) << "]"
+       << " = {";
+  for (int i = 0; i < size - 1; ++i) {
+    code << tensor_names[i] << ", ";
+  }
+  code << tensor_names[size - 1];
+  code << "};\n";
 }
 }  // namespace mindspore::lite::micro::nnacl

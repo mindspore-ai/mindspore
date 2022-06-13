@@ -94,6 +94,23 @@ class Serializer {
   }
 
   /*
+   * Code function call to generated code with return variable
+   * First parameter is the function name, the rest are the parameters of the function
+   * example:
+   *    CodeFunctionWithCheck("int op", "function", "foo", "bar", "foobar", 42);
+   * the code above would produce:
+   * """
+   * int op = function("foo", "bar", "foobar", 42)
+   * """
+   */
+  template <typename... PARAMETERS>
+  void CodeFunctionWithRet(const std::string &ret, const std::string &func_name, PARAMETERS... parameters) {
+    code << "    " << ret << " = " << func_name << "(";
+    GenCode(parameters...);
+    code << ");\n";
+  }
+
+  /*
    * helper function for coding
    * example:
    *    int bar[] = {1 ,3, 2};

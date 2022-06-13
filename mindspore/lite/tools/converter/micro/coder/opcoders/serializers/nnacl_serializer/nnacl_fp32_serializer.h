@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_SERIALIZER_NNACL_FP32_SERIALIZER_H_
 #include <string>
 #include <sstream>
+#include <vector>
 #include "coder/opcoders/serializers/serializer.h"
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
@@ -35,6 +36,7 @@
 #include "wrapper/fp32/dequant_int8_to_fp32_wrapper.h"
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
+#include "nnacl/tensor_c.h"
 #include "wrapper/fp32/arithmetic_fp32_wrapper.h"
 #include "wrapper/base/affine_wrapper.h"
 #include "wrapper/fp32/conv_winograd_fp32_wrapper.h"
@@ -63,6 +65,11 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const SpliceWrapperParam &splice_param);
   void CodeStruct(const std::string &name, const TransFuncStr trans_func_str);
   void CodeStruct(const std::string &name, const GroupNormParameter &gn_param);
+  void CodeStruct(const std::string &name, const OpParameter &op_param);
+  void CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor);
+
+ private:
+  static int count;
 };
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_FP32_ERIALIZER_H_
