@@ -129,6 +129,8 @@ struct ParallelSearchInfo {
   float best_block_size{0.f};
   size_t best_pow{0};
   size_t search_count{0};
+  bool kernel_thread_num_set{false};
+  size_t max_pow{6};
 };
 
 class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
