@@ -24,7 +24,7 @@ CUDA_LIB_EXPORT void SoftShrink(const size_t &size, const T *input, const float 
                                 const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void SoftShrinkGrad(const size_t &size, const T *input, const float lambd, T *output,
-                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void SoftShrinkGrad(const size_t &size, const T *dy_addr, const T *x_addr, const float lambd,
+                                    T *dx_addr, const uint32_t &device_id, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_HSHRINK_IMPL_CUH_

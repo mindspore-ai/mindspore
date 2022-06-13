@@ -21,15 +21,16 @@
 namespace mindspore {
 namespace kernel {
 #define SOFT_SHRINK_GRAD_GPU_REGISTER(DT, T) \
-  KernelAttr().AddInputAttr(DT).AddOutputAttr(DT), &SoftShrinkGradGpuKernelMod::LaunchKernel<T>
+  KernelAttr().AddInputAttr(DT).AddInputAttr(DT).AddOutputAttr(DT), &SoftShrinkGradGpuKernelMod::LaunchKernel<T>
 
 template <typename T>
 bool SoftShrinkGradGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &,
                                               const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
-  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
-  SoftShrinkGrad(size_, input_addr, lambd_, output_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+  T *dy_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  T *x_addr = GetDeviceAddress<T>(inputs, kIndex1);
+  T *dx_addr = GetDeviceAddress<T>(outputs, kIndex0);
+  SoftShrinkGrad(size_, dy_addr, x_addr, lambd_, dx_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
 }
 
