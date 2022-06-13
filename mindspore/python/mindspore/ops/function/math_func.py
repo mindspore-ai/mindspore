@@ -25,8 +25,21 @@ from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore._checkparam import check_is_number
-from ..operations.math_ops import (Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
-                                   BesselK1e, Renorm, Lcm, Gcd)
+from ..operations.math_ops import (
+    Bernoulli,
+    BesselJ0,
+    BesselJ1,
+    BesselK0,
+    BesselK0e,
+    BesselY0,
+    BesselY1,
+    BesselK1,
+    BesselK1e,
+    MatrixSolve,
+    Renorm,
+    Lcm,
+    Gcd,
+)
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ..._c_expression import Tensor as Tensor_
@@ -1991,6 +2004,14 @@ def log_matrix_determinant(x):
     return log_matrix_determinant_(x)
 
 
+def matrix_solve(matrix, rhs, adjoint=False):
+    r"""
+    Solves systems of linear equations.
+    """
+    matrix_solve_ = MatrixSolve(adjoint=adjoint)
+    return matrix_solve_(matrix, rhs)
+
+
 def truncate_div(x, y):
     """
     Divides the first input tensor by the second input tensor element-wise for integer types, negative numbers will
@@ -3251,6 +3272,7 @@ def rad2deg(x):
         out = x * 180.0 / math.pi
     return out
 
+
 #####################################
 # Reduction Operation Functions.
 #####################################
@@ -3750,6 +3772,7 @@ __all__ = [
     'log_matrix_determinant',
     'matrix_determinant',
     'linspace',
+    'matrix_solve',
     'same_type_shape',
     'maximum',
     'minimum',

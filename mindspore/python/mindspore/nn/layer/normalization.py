@@ -35,7 +35,7 @@ from mindspore.parallel._utils import _is_in_auto_parallel_mode
 from ..cell import Cell
 
 __all__ = ['BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LayerNorm', 'GroupNorm',
-           'GlobalBatchNorm', 'SyncBatchNorm', 'InstanceNorm2d']
+           'GlobalBatchNorm', 'SyncBatchNorm', 'InstanceNorm1d', 'InstanceNorm2d', 'InstanceNorm3d']
 
 SYNC_BN_GROUP_NAME = ""
 
@@ -271,6 +271,19 @@ def _shape_check_bn(in_shape, in_dims, prim_name=None):
         raise ValueError(f"{msg_prefix} in_shape must have 5 dims, but got {len(in_shape)}.")
     if in_dims == 'both' and dim != 2 and dim != 4:
         raise ValueError(f"{msg_prefix} in_shape must have 2 dims or 4 dims, but got {len(in_shape)}.")
+
+
+@constexpr
+def _shape_check_in(in_shape, in_dims, prim_name=None):
+    """check input dims of batch norm."""
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    dim = len(in_shape)
+    if in_dims == '1d' and dim != 3:
+        raise ValueError(f"{msg_prefix} in_shape must have 3 dims, but got {len(in_shape)}.")
+    if in_dims == '2d' and dim != 4:
+        raise ValueError(f"{msg_prefix} in_shape must have 4 dims, but got {len(in_shape)}.")
+    if in_dims == '3d' and dim != 5:
+        raise ValueError(f"{msg_prefix} in_shape must have 5 dims, but got {len(in_shape)}.")
 
 
 @constexpr
@@ -854,7 +867,92 @@ class LayerNorm(Cell):
             self.normalized_shape, self.begin_norm_axis, self.begin_params_axis, self.gamma, self.beta)
 
 
-class InstanceNorm2d(Cell):
+class _InstanceNorm(Cell):
+    """Instance Normalization base class."""
+
+    @cell_attr_register
+    def __init__(self,
+                 num_features,
+                 eps=1e-5,
+                 momentum=0.1,
+                 affine=True,
+                 gamma_init='ones',
+                 beta_init='zeros',
+                 input_dims='2d'):
+        """Initialize InstanceNorm2d."""
+        super(_InstanceNorm, self).__init__()
+        validator.check_value_type('num_features', num_features, [int], self.cls_name)
+        validator.check_value_type('eps', eps, [float], self.cls_name)
+        validator.check_value_type('momentum', momentum, [float], self.cls_name)
+        validator.check_value_type('affine', affine, [bool], self.cls_name)
+        args_input = {"gamma_init": gamma_init, "beta_init": beta_init}
+        self.check_types_valid(args_input, 'InstanceNorm2d')
+        if num_features < 1:
+            raise ValueError(f"For '{self.cls_name}', the 'num_features' must be at least 1, but got {num_features}.")
+
+        if momentum < 0 or momentum > 1:
+            raise ValueError(f"For '{self.cls_name}', the 'momentum' must be a number in range [0, 1], "
+                             f"but got {momentum}.")
+        self.num_features = num_features
+        self.eps = eps
+        self.input_dims = input_dims
+        self.moving_mean = Parameter(initializer('zeros', num_features), name="mean", requires_grad=False)
+        self.moving_variance = Parameter(initializer('ones', num_features), name="variance", requires_grad=False)
+        self.gamma = Parameter(initializer(
+            gamma_init, num_features), name="gamma", requires_grad=affine)
+        self.beta = Parameter(initializer(
+            beta_init, num_features), name="beta", requires_grad=affine)
+
+        self.shape = P.Shape()
+        self.momentum = momentum
+        self.instance_bn = P.InstanceNorm(epsilon=self.eps, momentum=self.momentum)
+
+    def construct(self, x):
+        _shape_check_in(self.shape(x), self.input_dims, self.cls_name)
+        return self.instance_bn(x,
+                                self.gamma,
+                                self.beta,
+                                self.moving_mean,
+                                self.moving_variance)[0]
+
+    def extend_repr(self):
+        return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
+            self.num_features, self.eps, self.momentum, self.gamma, self.beta, self.moving_mean, self.moving_variance)
+
+    def check_types_valid(self, args_dict, name):
+        for key, _ in args_dict.items():
+            val = args_dict[key]
+            if not isinstance(val, (Tensor, numbers.Number, str, Initializer)):
+                raise TypeError(f"For '{self.cls_name}', the type of '{key}' must be in "
+                                f"[Tensor, numbers.Number, str, Initializer], but got type {type(val).__name__}.")
+            if isinstance(val, Tensor) and val.dtype != mstype.float32:
+                raise TypeError(f"For '{self.cls_name}', the type of '{key}' must be float32, "
+                                f"but got {val.dtype}.")
+
+
+class InstanceNorm1d(_InstanceNorm):
+    r"""
+    Instance Normalization layer over a 3D input.
+    """
+
+    def __init__(self,
+                 num_features,
+                 eps=1e-5,
+                 momentum=0.1,
+                 affine=True,
+                 gamma_init='ones',
+                 beta_init='zeros'):
+        """Initialize InstanceNorm2d."""
+        super(InstanceNorm1d, self).__init__(num_features,
+                                             eps,
+                                             momentum,
+                                             affine,
+                                             gamma_init,
+                                             beta_init,
+                                             input_dims='1d')
+
+
+class InstanceNorm2d(_InstanceNorm):
     r"""
     Instance Normalization layer over a 4D input.
 
@@ -924,7 +1022,6 @@ class InstanceNorm2d(Cell):
         (2, 3, 2, 2)
     """
 
-    @cell_attr_register
     def __init__(self,
                  num_features,
                  eps=1e-5,
@@ -933,57 +1030,35 @@ class InstanceNorm2d(Cell):
                  gamma_init='ones',
                  beta_init='zeros'):
         """Initialize InstanceNorm2d."""
-        super(InstanceNorm2d, self).__init__()
-        validator.check_value_type('num_features', num_features, [int], self.cls_name)
-        validator.check_value_type('eps', eps, [float], self.cls_name)
-        validator.check_value_type('momentum', momentum, [float], self.cls_name)
-        validator.check_value_type('affine', affine, [bool], self.cls_name)
-        args_input = {"gamma_init": gamma_init, "beta_init": beta_init}
-        self.check_types_valid(args_input, 'InstanceNorm2d')
-        if num_features < 1:
-            raise ValueError(f"For '{self.cls_name}', the 'num_features' must be at least 1, but got {num_features}.")
+        super(InstanceNorm2d, self).__init__(num_features,
+                                             eps,
+                                             momentum,
+                                             affine,
+                                             gamma_init,
+                                             beta_init,
+                                             input_dims='2d')
 
-        if momentum < 0 or momentum > 1:
-            raise ValueError(f"For '{self.cls_name}', the 'momentum' must be a number in range [0, 1], "
-                             f"but got {momentum}.")
-        self.num_features = num_features
-        self.eps = eps
-        self.input_dims = '2d'
-        self.moving_mean = Parameter(initializer('zeros', num_features), name="mean", requires_grad=False)
-        self.moving_variance = Parameter(initializer('ones', num_features), name="variance", requires_grad=False)
-        self.gamma = Parameter(initializer(
-            gamma_init, num_features), name="gamma", requires_grad=affine)
-        self.beta = Parameter(initializer(
-            beta_init, num_features), name="beta", requires_grad=affine)
 
-        self.shape = P.Shape()
-        self.momentum = momentum
-        self.instance_bn = P.InstanceNorm(epsilon=self.eps, momentum=self.momentum)
+class InstanceNorm3d(_InstanceNorm):
+    r"""
+    Instance Normalization layer over a 5D input.
+    """
 
-    def _check_data_dim(self, x):
-        raise NotImplementedError
-
-    def construct(self, x):
-        _shape_check_bn(self.shape(x), self.input_dims, self.cls_name)
-        return self.instance_bn(x,
-                                self.gamma,
-                                self.beta,
-                                self.moving_mean,
-                                self.moving_variance)[0]
-
-    def extend_repr(self):
-        return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
-            self.num_features, self.eps, self.momentum, self.gamma, self.beta, self.moving_mean, self.moving_variance)
-
-    def check_types_valid(self, args_dict, name):
-        for key, _ in args_dict.items():
-            val = args_dict[key]
-            if not isinstance(val, (Tensor, numbers.Number, str, Initializer)):
-                raise TypeError(f"For '{self.cls_name}', the type of '{key}' must be in "
-                                f"[Tensor, numbers.Number, str, Initializer], but got type {type(val).__name__}.")
-            if isinstance(val, Tensor) and val.dtype != mstype.float32:
-                raise TypeError(f"For '{self.cls_name}', the type of '{key}' must be float32, "
-                                f"but got {val.dtype}.")
+    def __init__(self,
+                 num_features,
+                 eps=1e-5,
+                 momentum=0.1,
+                 affine=True,
+                 gamma_init='ones',
+                 beta_init='zeros'):
+        """Initialize InstanceNorm2d."""
+        super(InstanceNorm3d, self).__init__(num_features,
+                                             eps,
+                                             momentum,
+                                             affine,
+                                             gamma_init,
+                                             beta_init,
+                                             input_dims='3d')
 
 
 class GroupNorm(Cell):

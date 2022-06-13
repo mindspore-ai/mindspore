@@ -18,7 +18,7 @@ import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.context as context
-from mindspore.common.tensor import Tensor
+from mindspore import Tensor, ops
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
@@ -49,8 +49,7 @@ def test_lin_space(start_np, stop_np, num_np):
     start = Tensor(start_np, dtype=mstype.float32)
     stop = Tensor(stop_np, dtype=mstype.float32)
     num = num_np
-    ls_op = P.LinSpace()
-    result_ms = ls_op(start, stop, num).asnumpy()
+    result_ms = ops.linspace(start, stop, num).asnumpy()
     result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
     assert np.allclose(result_ms, result_np)
 

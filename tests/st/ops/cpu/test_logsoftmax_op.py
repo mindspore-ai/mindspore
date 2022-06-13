@@ -17,9 +17,7 @@ import numpy as np
 import scipy.special
 import pytest
 
-import mindspore.context as context
-import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops, nn, context
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
@@ -27,7 +25,7 @@ from mindspore.ops import operations as P
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('axis', [-1, 2, 0])
+@pytest.mark.parametrize('axis', [-1, 0, 2])
 @pytest.mark.parametrize('dtype, error', [(np.float32, 1.0e-5), (np.float16, 1.0e-3)])
 def test_logsoftmax(axis, dtype, error):
     """
@@ -40,17 +38,17 @@ def test_logsoftmax(axis, dtype, error):
     expect = scipy.special.log_softmax(x, axis).astype(dtype)
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
-    output = P.LogSoftmax(axis)(Tensor(x))
+    output = ops.log_softmax(Tensor(x), axis)
     assert np.allclose(output.asnumpy(), expect, atol=error, rtol=error)
 
 
 class LogSoftmax(nn.Cell):
     def __init__(self, axis=-1):
         super(LogSoftmax, self).__init__()
-        self.logsoftmax = P.LogSoftmax(axis)
+        self.log_softmax = P.LogSoftmax(axis)
 
     def construct(self, x):
-        return self.logsoftmax(x)
+        return self.log_softmax(x)
 
 
 class Grad(nn.Cell):
