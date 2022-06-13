@@ -64,6 +64,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
     {"IndexAdd", "InplaceIndexAdd"},
     {"KLDivLoss", "KLDiv"},
     {"Unstack", "Unpack"},
+    {"ArgminV2", "ArgMin"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {

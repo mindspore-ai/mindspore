@@ -2015,7 +2015,7 @@ class Argmin(PrimitiveWithInfer):
         TypeError: If `output_type` is neither int32 nor int64.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
@@ -2038,7 +2038,6 @@ class Argmin(PrimitiveWithInfer):
         if axis is None:
             axis = 0
         x_rank = len(x_shape)
-        validator.check_int_range(axis, -x_rank, x_rank, Rel.INC_LEFT, "axis", self.name)
         axis = axis + x_rank if axis < 0 else axis
         ouput_shape = [x_shape[i] for i in range(x_rank) if i != axis]
         return ouput_shape
@@ -2046,6 +2045,64 @@ class Argmin(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
         return mstype.tensor_type(self.output_type)
+
+
+class ArgminV2(Primitive):
+    """
+    Returns the indices of the minimum value of a tensor across the axis.
+
+    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor is
+    :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+
+    Note:
+        This operator only supports dynamic shape. As for static shape, please use operator `Argmin` instead.
+
+    Inputs:
+        - **x** (Tensor) - Input tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **axis** (int) - Axis where the Argmin operator applies to. Default: -1.
+
+    Outputs:
+        Tensor, indices of the min value of input tensor across the axis.
+
+    Raises:
+        TypeError: If `axis` is not an int.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> class ArgMinV2DynatimicShape(nn.Cell):
+        ...     def __init__(self, gather_axis=1, argmin_axis=1):
+        ...         super(ArgMinV2DynatimicShape, self).__init__()
+        ...         self.unique = P.Unique()
+        ...         self.gather = P.Gather()
+        ...         self.argmin = ArgminV2()
+        ...         self.gather_axis = gather_axis
+        ...         self.argmin_axis = argmin_axis
+        ...     def construct(self, x, indices):
+        ...         unique_index, _ = self.unique(indices)
+        ...         y = self.gather(x, unique_index, self.gather_axis)
+        ...         z = self.argmin(y, self.argmin_axis)
+        ...         return z
+        >>>
+        >>> x = Tensor(np.array([[4, 8, 1, 6], [4, 3, 6, 2], [4, 4, 1, 1]]).astype(np.float32))
+        >>> index = Tensor([1, 2], dtype=mindspore.int32)
+        >>> net = ArgMinV2DynatimicShape()
+        >>> res = net(x, index)
+        >>> print(res)
+        [1 0 1]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ArgminV2"""
+        self.init_prim_io_names(inputs=['x', 'axis'], outputs=['y'])
+
+    def __call__(self, x, axis=-1):
+        args = [x, axis]
+        output = _run_op(self, self.name, args)
+        return output
 
 
 class ArgMaxWithValue(PrimitiveWithInfer):
