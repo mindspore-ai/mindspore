@@ -14,7 +14,7 @@ mindspore.nn.GraphCell
 
     **异常：**
 
-    - **TypeError** – 如果图不是FuncGraph类型。
-    - **TypeError** – 如果 `params_init` 不是字典。
-    - **TypeError** – 如果 `params_init` 的key不是字符串。
-    - **TypeError** – 如果 `params_init` 的value既不是 Tensor也不是Parameter。
+    - **TypeError** - 如果图不是FuncGraph类型。
+    - **TypeError** - 如果 `params_init` 不是字典。
+    - **TypeError** - 如果 `params_init` 的key不是字符串。
+    - **TypeError** - 如果 `params_init` 的value既不是 Tensor也不是Parameter。

@@ -14,8 +14,8 @@ mindspore.nn.WithLossCell
 
     **输入：**
 
-    - **data** （Tensor） - shape为 :math:`(N, \ldots)` 的Tensor。
-    - **label** （Tensor） - shape为 :math:`(N, \ldots)` 的Tensor。
+    - **data** (Tensor) - shape为 :math:`(N, \ldots)` 的Tensor。
+    - **label** (Tensor) - shape为 :math:`(N, \ldots)` 的Tensor。
 
     **输出：**
 

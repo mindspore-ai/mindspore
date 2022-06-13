@@ -16,7 +16,7 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
     **输入：**
 
-    **(*inputs)** (Tuple(Tensor))- shape为 :math:`(N, \ldots)` 的Tensor组成的元组。
+    - **(*inputs)** (Tuple(Tensor)) - shape为 :math:`(N, \ldots)` 的Tensor组成的元组。
 
     **输出：**
 
