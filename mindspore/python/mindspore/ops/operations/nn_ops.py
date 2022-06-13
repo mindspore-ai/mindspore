@@ -256,6 +256,9 @@ class AdaptiveMaxPool2D(Primitive):
         Output(i,j) &= {\max Input[h_{start}:h_{end}, w_{start}:w_{end}]}
         \end{align}
 
+    Note:
+        In Ascend, the second output `argmax` is invalid, please ignore it.
+
     Args:
         output_size (Union[int, tuple]): The target output size is H x W.
             ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
@@ -280,9 +283,10 @@ class AdaptiveMaxPool2D(Primitive):
         TypeError: If dtype of `input_x` is not float16, float32 or float64.
         ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
         ValueError: If the dimension of `input_x` is not NCHW or CHW.
+        ValueError: If `output_size` is less than -1.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: output_size=(None, 2)
@@ -331,6 +335,8 @@ class AdaptiveMaxPool2D(Primitive):
         self.output_size = (output_size, output_size) if isinstance(self.output_size, int) else output_size
         self.output_size = (-1 if self.output_size[0] is None else self.output_size[0],
                             -1 if self.output_size[1] is None else self.output_size[1])
+        for size in self.output_size:
+            validator.check_number("output_size", size, -1, Rel.GE, None)
         self.add_prim_attr('output_size', self.output_size)
         self.add_prim_attr('return_indices', return_indices)
 

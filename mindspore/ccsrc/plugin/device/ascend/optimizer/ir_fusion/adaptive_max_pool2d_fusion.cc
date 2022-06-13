@@ -17,11 +17,13 @@
 #include <memory>
 #include <vector>
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
+#include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
 constexpr int64_t kMaxPaddingSize = 10;
+constexpr int64_t kAdaptiveMaxpool2DOutputNumber = 1;
 
 std::vector<int64_t> ComputeKernelAttr(int64_t input_size, int64_t output_size) {
   int64_t padding_size = 0;
@@ -115,11 +117,24 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
 
   int64_t height = SizeToLong(input_shape.at(kDim2));
   int64_t width = SizeToLong(input_shape.at(kDim3));
-  if (output_size[kDim0] <= 0 || output_size[kDim1] <= 0) {
+  int64_t output_h = (output_size[kDim0] == -1) ? height : output_size[kDim0];
+  int64_t output_w = (output_size[kDim1] == -1) ? width : output_size[kDim1];
+  if (output_h <= 0 || output_w <= 0) {
     MS_LOG(EXCEPTION) << "AdaptiveMaxPool2D's output_size value is invalid.";
   }
-  auto height_attr = ComputeKernelAttr(height, output_size[kDim0]);
-  auto width_attr = ComputeKernelAttr(width, output_size[kDim1]);
+  if (height % output_h != 0 || width % output_w != 0) {
+    auto types = {common::AnfAlgo::GetOutputInferDataType(adaptive_max_pool2d, 0), kNumberTypeInt64};
+    auto shapes = {common::AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0),
+                   common::AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0)};
+    common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, adaptive_max_pool2d.get());
+    std::vector<int64_t> new_output_size{output_h, output_w};
+    common::AnfAlgo::SetNodeAttr(kAttrOutputSize, MakeValue(new_output_size), adaptive_max_pool2d);
+    std::vector<AnfNodePtr> multi_outputs;
+    CreateMultipleOutputsOfAnfNode(func_graph, adaptive_max_pool2d, kAdaptiveMaxpool2DOutputNumber, &multi_outputs);
+    return multi_outputs[kIndex0];
+  }
+  auto height_attr = ComputeKernelAttr(height, output_h);
+  auto width_attr = ComputeKernelAttr(width, output_w);
   if (height_attr[kIndex0] == -1 || width_attr[kIndex0] == -1) {
     MS_LOG(EXCEPTION) << "Current AdaptiveMaxPool2D not support this scene! node:" << node->DebugString();
   }
@@ -128,8 +143,10 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
   (void)pooling_inputs.insert(pooling_inputs.end(), adaptive_max_pool2d->inputs().begin() + 1,
                               adaptive_max_pool2d->inputs().end());
   auto pooling = NewCNode(pooling_inputs, kernel_graph);
+  auto types = {common::AnfAlgo::GetOutputInferDataType(adaptive_max_pool2d, 0)};
+  auto shapes = {common::AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0)};
+  common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, pooling.get());
   pooling->set_scope(adaptive_max_pool2d->scope());
-  pooling->set_abstract(adaptive_max_pool2d->abstract());
   SetNodeAttr(pooling, height_attr, width_attr);
   return pooling;
 }
