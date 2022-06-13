@@ -323,7 +323,7 @@ class Mutator {
   }
 
   void RemoveTransOp() {
-    for (auto &node : trans_ops_) {
+    for (const auto &node : trans_ops_) {
       (void)visited_.erase(node);
       node->ReplaceWith(node->input(0));
       // clear inputs, so that the node will not be the basenode again.
@@ -333,11 +333,11 @@ class Mutator {
   }
 
   void GenFormatGraph() {
-    for (auto &node : visited_) {
+    for (const auto &node : visited_) {
       if (node->NodeType() == NType::Parameter) {
         continue;
       }
-      bool is_flexible = (flexible_ops_.find(node) != flexible_ops_.end());
+      bool is_flexible = (flexible_ops_.find(node) != flexible_ops_.cend());
       size_t cur_id = 0;
       if (is_flexible) {
         cur_id = GetId({node, kOutputIndex});
@@ -451,10 +451,10 @@ bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const std::str
   return true;
 }
 
-bool TransformOpOptimizer::Run(const FuncGraphPtr &kernel_graph) {
-  auto mng = kernel_graph->manager();
+bool TransformOpOptimizer::Run(const FuncGraphPtr &func_graph) {
+  auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
-  auto todos = TopoSort(kernel_graph->get_return());
+  auto todos = TopoSort(func_graph->get_return());
   bool changed = false;
   for (auto node : todos) {
     if (!AnfUtils::IsGraphKernel(node)) {
@@ -471,7 +471,7 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &kernel_graph) {
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());
-      auto new_node = CreateNewFuseCNode(kernel_graph, new_funcgraph, inputs);
+      auto new_node = CreateNewFuseCNode(func_graph, new_funcgraph, inputs);
       (void)mng->Replace(node, new_node);
       mng->AddFuncGraph(new_funcgraph);
     }

@@ -124,11 +124,12 @@ class AkgKernelJsonGenerator {
                    nlohmann::json *attr_json, const ValuePtr &attr_value);
   bool CreateAttrDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *attrs_json);
   void GenStitchJson(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map,
-                     nlohmann::json *kernel_json);
+                     nlohmann::json *kernel_json) const;
   void GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size,
                  std::vector<size_t> *output_size) const;
   bool GenSingleJsons(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);
-  void UpdateTensorName(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);
+  void UpdateTensorName(const std::vector<AnfNodePtr> &anf_nodes,
+                        std::map<AnfNodePtr, nlohmann::json> *node_json_map) const;
   nlohmann::json CreateInputsJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
                                   const std::map<AnfNodePtr, nlohmann::json> &node_json_map);
   nlohmann::json CreateOutputsJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
@@ -145,7 +146,7 @@ class AkgKernelJsonGenerator {
   void CollectParallelDimInfo(const AnfNodePtr &anf_node);
   void GenParallelJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
                        const std::vector<AnfNodePtr> &output_list,
-                       const std::map<AnfNodePtr, nlohmann::json> &node_json_map, nlohmann::json *kernel_json);
+                       const std::map<AnfNodePtr, nlohmann::json> &node_json_map, nlohmann::json *kernel_json) const;
   bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *node_json) const;
   size_t GetTensorSize(const nlohmann::json &node_json) const;
   std::string GetProcessorByTarget() const;

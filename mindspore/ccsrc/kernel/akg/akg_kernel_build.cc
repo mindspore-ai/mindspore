@@ -16,8 +16,6 @@
 #include "kernel/akg/akg_kernel_build.h"
 
 #include <sys/shm.h>
-#include <stdio.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -231,7 +229,7 @@ int32_t AkgKernelPool::Release() const {
     }
 
     // Detach shared memory
-    ret = shmdt(reinterpret_cast<void *>(kernel_lists_[0]));
+    ret = shmdt(static_cast<void *>(kernel_lists_[0]));
     if (ret < 0) {
       MS_LOG(ERROR) << "Shared_mem detach failed, error msg:" << GetErrorInfo();
       return -1;
@@ -456,7 +454,7 @@ bool AkgKernelBuilder::HandleRepeatNodes() {
 }
 
 std::vector<std::string> AkgKernelBuilder::GetKernelJsonsByHashId(const std::vector<JsonNodePair> &build_args,
-                                                                  const std::set<size_t> fetched_ids) {
+                                                                  const std::set<size_t> &fetched_ids) {
   std::vector<std::string> jsons;
   for (const auto &[json_generator, anf_node] : build_args) {
     MS_EXCEPTION_IF_NULL(anf_node);
@@ -601,7 +599,9 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
   for (const auto &anf_node : anf_nodes) {
     MS_EXCEPTION_IF_NULL(anf_node);
     // Node already has kernel mod, no need to process it.
-    if (AnfAlgo::GetKernelMod(anf_node) != nullptr) continue;
+    if (AnfAlgo::GetKernelMod(anf_node) != nullptr) {
+      continue;
+    }
     graphkernel::DumpOption option;
     option.get_compute_capability = true;
     AkgKernelJsonGenerator akg_kernel_json_generator(option);

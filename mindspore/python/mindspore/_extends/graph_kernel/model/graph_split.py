@@ -837,9 +837,7 @@ class GraphSplitByPattern:
             for op in borders:
                 if prods[op]:
                     prod_ops, inputs = prods[op]
-                    in_size = sum([t.get_size() for t in inputs])
-                    out_size = op.output.get_size()
-                    if in_size <= out_size:
+                    if sum([t.get_size() for t in inputs]) <= op.output.get_size():
                         pred = self.area_map.get(inputs[0].op) if inputs and inputs[0].op else None
                         result.append([pred, prod_ops[::-1]])
             return result

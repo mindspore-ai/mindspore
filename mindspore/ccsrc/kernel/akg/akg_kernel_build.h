@@ -52,7 +52,7 @@ class AkgKernelBuilder {
  private:
   std::vector<JsonNodePair> GetNotCachedKernels(const std::vector<JsonNodePair> &build_args);
   std::vector<std::string> GetKernelJsonsByHashId(const std::vector<JsonNodePair> &build_args,
-                                                  std::set<size_t> fetched_ids);
+                                                  const std::set<size_t> &fetched_ids);
   bool InsertToCache(const std::vector<JsonNodePair> &build_args);
   bool HandleRepeatNodes();
   bool AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args);
@@ -129,12 +129,12 @@ class AkgKernelPool {
   std::string GetCurrentPath() const;
 
   inline void InitKernelLists(void *addr) {
-    kernel_lists_[kToDoIdx_] = reinterpret_cast<size_t *>(addr);
+    kernel_lists_[kToDoIdx_] = static_cast<size_t *>(addr);
     kernel_lists_[kDoingIdx_] = kernel_lists_[kToDoIdx_] + kMaxKernelNum_ + 1;
     kernel_lists_[kDoneIdx_] = kernel_lists_[kDoingIdx_] + kMaxKernelNum_ + 1;
   }
 
-  int32_t AddKernels(const std::vector<JsonNodePair> &kernel_jsons);
+  int32_t AddKernels(const std::vector<JsonNodePair> &build_args);
   int32_t Wait() const;
 
   int32_t shm_id_{-1};

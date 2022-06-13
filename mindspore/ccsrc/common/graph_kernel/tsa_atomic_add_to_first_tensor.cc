@@ -56,7 +56,7 @@ class TsaChecker : public AtomicAddChecker {
 
 std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::FindTsaFirstRealInputInGraph(const KernelGraphPtr &,
                                                                                       const CNodePtr &tsa_node,
-                                                                                      const AnfNodePtr &node) {
+                                                                                      const AnfNodePtr &node) const {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(cnode);
@@ -148,7 +148,7 @@ std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::GetOrCreateNewTsaFirstN
 
 void TsaAtomicAddToFirstTensor::ChangeKernelBuildInfo(
   const AnfNodePtr &composite_node,
-  const std::vector<std::tuple<InplaceAssignerInfo, AnfNodePtr, size_t>> &outer_infos) {
+  const std::vector<std::tuple<InplaceAssignerInfo, AnfNodePtr, size_t>> &outer_infos) const {
   // Change kernel build info with modify input
   auto kernel_info = static_cast<device::KernelInfo *>(composite_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);

@@ -143,7 +143,9 @@ class CNodeDecoder {
       std::string name = input_desc[kJsonKeyTensorName];
       if (input_desc.find(kJsonKeyValue) != input_desc.end()) {
         auto value = DecodeValueNode(input_desc, func_graph);
-        if (value == nullptr) return false;
+        if (value == nullptr) {
+          return false;
+        }
         inputs.push_back(value);
       } else if (nodes_map_.count(name) == 0) {
         MS_LOG(ERROR) << "Input: " << name << " of: " << op_name_ << " not found.";
@@ -261,10 +263,12 @@ class CNodeDecoder {
     return nullptr;
   }
 
-  ValueNodePtr DecodeValueNode(const nlohmann::json &value_json, const FuncGraphPtr &func_graph) {
+  ValueNodePtr DecodeValueNode(const nlohmann::json &value_json, const FuncGraphPtr &func_graph) const {
     MS_LOG(DEBUG) << "start decode value node, " << value_json;
     auto tensor = DecodeScalar(value_json);
-    if (tensor == nullptr) return nullptr;
+    if (tensor == nullptr) {
+      return nullptr;
+    }
     auto value_node = std::make_shared<ValueNode>(tensor);
     value_node->set_abstract(tensor->ToAbstract());
     // create kernel_info fo new value node.
@@ -374,7 +378,9 @@ FuncGraphPtr AkgKernelJsonDecoder::DecodeFusedNodes(const nlohmann::json &kernel
   }
   for (const auto &op_desc : op_node_descs) {
     auto op_node = DecodeCNode(op_desc, graph, kernel_json[kJsonKeyProcess]);
-    if (op_node == nullptr) return nullptr;
+    if (op_node == nullptr) {
+      return nullptr;
+    }
   }
   MS_LOG(DEBUG) << "Decode cnodes successfully.";
 
@@ -386,7 +392,9 @@ FuncGraphPtr AkgKernelJsonDecoder::DecodeFusedNodes(const nlohmann::json &kernel
     return nullptr;
   }
   auto output = DecodeOutput(output_descs, graph);
-  if (output == nullptr) return nullptr;
+  if (output == nullptr) {
+    return nullptr;
+  }
   MS_LOG(DEBUG) << "Decode json successfully, json: " << kernel_json;
   return graph;
 }

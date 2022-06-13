@@ -19,8 +19,6 @@
 
 #include <memory>
 #include <tuple>
-#include <utility>
-#include <vector>
 #include "backend/common/optimizer/optimizer.h"
 #include "common/graph_kernel/add_atomic_clean.h"
 #include "backend/common/session/kernel_graph.h"
