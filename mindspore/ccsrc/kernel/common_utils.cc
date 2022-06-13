@@ -1357,6 +1357,10 @@ bool IsBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs)
 
 bool AlignedBroadCastShape(size_t align_rank, std::vector<size_t> *broadcast, std::vector<size_t> *lhs,
                            std::vector<size_t> *rhs) {
+  if (broadcast == nullptr || lhs == nullptr || rhs == nullptr) {
+    MS_LOG(ERROR) << "input is nullptr.";
+    return false;
+  }
   size_t broadcast_rank = broadcast->size();
   size_t l_rank = lhs->size();
   size_t r_rank = rhs->size();

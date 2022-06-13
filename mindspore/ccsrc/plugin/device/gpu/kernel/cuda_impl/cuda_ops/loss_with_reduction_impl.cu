@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,6 @@ template <typename T>
 __global__ void KLDivLossGradKernel(const int input_size, const ReductionMode reduction, const T *input_x,
                                     const T *input_y, const T *dloss, T *dx) {
   T epsilon = 1e-6;
-  T one = static_cast<T>(1);
   if (reduction == ReductionMode::kNone) {
     for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
       T denominator = maxT(input_y[i], epsilon);
