@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: LJSpeechDataset
-/// Description: basic test of LJSpeechDataset
-/// Expectation: the data is processed successfully
+/// Description: Basic test of LJSpeechDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestLJSpeechDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLJSpeechDataset.";
   std::string folder_path = datasets_root_path_ + "/testLJSpeechData/";
@@ -64,8 +64,8 @@ TEST_F(MindDataTestPipeline, TestLJSpeechDataset) {
 }
 
 /// Feature: LJSpeechDataset
-/// Description: test LJSpeechDataset in pipeline mode
-/// Expectation: the data is processed successfully
+/// Description: Test LJSpeechDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestLJSpeechDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLJSpeechDatasetWithPipeline.";
 
@@ -123,9 +123,9 @@ TEST_F(MindDataTestPipeline, TestLJSpeechDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: TestLJSpeechDatasetIteratorOneColumn.
-/// Description: test iterator of LJSpeechDataset with only the "waveform" column.
-/// Expectation: get correct data.
+/// Feature: LJSpeechDataset
+/// Description: Test iterator of LJSpeechDataset with only the waveform column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestLJSpeechDatasetIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLJSpeechDatasetIteratorOneColumn.";
   // Create a  LJSpeech dataset
@@ -163,9 +163,9 @@ TEST_F(MindDataTestPipeline, TestLJSpeechDatasetIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: TestLJSpeechDatasetIteratorWrongColumn.
-/// Description: test iterator of LJSpeechDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: LJSpeechDataset
+/// Description: Test iterator of LJSpeechDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestLJSpeechDatasetIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLJSpeechDatasetIteratorWrongColumn.";
   // Create a LJSpeech Dataset
@@ -180,8 +180,8 @@ TEST_F(MindDataTestPipeline, TestLJSpeechDatasetIteratorWrongColumn) {
 }
 
 /// Feature: LJSpeechDataset
-/// Description: test getting size of LJSpeechDataset
-/// Expectation: the size is correct
+/// Description: Test getting size of LJSpeechDataset
+/// Expectation: The size is correct
 TEST_F(MindDataTestPipeline, TestLJSpeechGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLJSpeechGetDatasetSize.";
 
@@ -194,8 +194,8 @@ TEST_F(MindDataTestPipeline, TestLJSpeechGetDatasetSize) {
 }
 
 /// Feature: LJSpeechDataset
-/// Description: test LJSpeechDataset with mix getter
-/// Expectation: the data is processed successfully
+/// Description: Test LJSpeechDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLJSpeechGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLJSpeechMixGetter.";
 
@@ -228,8 +228,8 @@ TEST_F(MindDataTestPipeline, TestLJSpeechGetters) {
 }
 
 /// Feature: LJSpeechDataset
-/// Description: test LJSpeechDataset with the fail of reading dataset
-/// Expectation: throw correct error and message
+/// Description: Test LJSpeechDataset with the fail of reading dataset
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestLJSpeechDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLJSpeechDatasetFail.";
 
@@ -244,8 +244,8 @@ TEST_F(MindDataTestPipeline, TestLJSpeechDatasetFail) {
 }
 
 /// Feature: LJSpeechDataset
-/// Description: test LJSpeechDataset with the null sampler
-/// Expectation: throw correct error and message
+/// Description: Test LJSpeechDataset with the null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestLJSpeechDatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLJSpeechDatasetWithNullSamplerFail.";
 

@@ -25,8 +25,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: Test Multi30k Dataset(English).
-/// Description: read Multi30kDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Description: Read Multi30kDataset data and get data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestMulti30kSuccessEn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kSuccessEn.";
   // Test Multi30k English files with default parameters
@@ -134,8 +134,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kSuccessEn) {
 }
 
 /// Feature: Test Multi30k Dataset(Germany).
-/// Description: read Multi30kDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Description: Read Multi30kDataset data and get data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestMulti30kSuccessDe) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kSuccessDe.";
   // Test Multi30k Germany files with default parameters
@@ -243,8 +243,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kSuccessDe) {
 }
 
 /// Feature: Test Multi30k Dataset(Germany).
-/// Description: read Multi30kDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Description: Read Multi30kDataset data and get data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetBasicWithPipeline.";
 
@@ -301,8 +301,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetBasicWithPipeline) {
 }
 
 /// Feature: Test Getters.
-/// Description: includes tests for shape, type, size.
-/// Expectation: the data is processed successfully.
+/// Description: Includes tests for shape, type, size.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestMulti30kGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kGetters.";
 
@@ -317,8 +317,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kGetters) {
 }
 
 /// Feature: Test Multi30kDataset in distribution.
-/// Description: test interface in a distributed state.
-/// Expectation: the data is processed successfully.
+/// Description: Test interface in a distributed state.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetDistribution.";
 
@@ -354,8 +354,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetDistribution) {
 }
 
 /// Feature: Error Test.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidFilePath) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetFailInvalidFilePath.";
 
@@ -368,8 +368,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidFilePath) {
 }
 
 /// Feature: Error Test.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidUsage) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetFailInvaildUsage.";
 
@@ -382,8 +382,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidUsage) {
 }
 
 /// Feature: Error Test.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidLanguagePair) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetFailLanguagePair.";
 
@@ -400,8 +400,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidLanguagePair) {
 }
 
 /// Feature: Error Test.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetFailInvalidNumSamples.";
 
@@ -419,8 +419,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidNumSamples) {
 }
 
 /// Feature: Error Test.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidShards) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetFailInvalidShards.";
 
@@ -438,8 +438,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidShards) {
 }
 
 /// Feature: Error Test.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidShardID) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetFailInvalidShardID.";
 
@@ -457,8 +457,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetFailInvalidShardID) {
 }
 
 /// Feature: Error Test.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetLanguagePair) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetLanguagePair.";
 
@@ -497,8 +497,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetLanguagePair) {
 }
 
 /// Feature: Test Multi30k Dataset(shufflemode=kFalse).
-/// Description: test Multi30k Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test Multi30k Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetShuffleFilesFalse) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetShuffleFilesFalse.";
 
@@ -554,8 +554,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetShuffleFilesFalse) {
 }
 
 /// Feature: Test Multi30k Dataset(shufflemode=kFiles).
-/// Description: test Multi30k Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test Multi30k Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetShuffleFilesFiles) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetShuffleFilesFiles.";
 
@@ -611,8 +611,8 @@ TEST_F(MindDataTestPipeline, TestMulti30kDatasetShuffleFilesFiles) {
 }
 
 /// Feature: Test Multi30k Dataset(shufflemode=kGlobal).
-/// Description: test Multi30k Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test Multi30k Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestMulti30kDatasetShuffleFilesGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMulti30kDatasetShuffleFilesGlobal.";
 

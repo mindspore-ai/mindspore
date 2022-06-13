@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: SemeionDataset.
-/// Description: read some samples from all files.
-/// Expectation: 10 samples.
+/// Feature: SemeionDataset
+/// Description: Test SemeionDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSemeionDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSemeionDataset.";
 
@@ -62,9 +62,9 @@ TEST_F(MindDataTestPipeline, TestSemeionDataset) {
   iter->Stop();
 }
 
-/// Feature: SemeionDataset.
-/// Description: read some samples with pipeline from all files.
-/// Expectation: 10 samples.
+/// Feature: SemeionDataset
+/// Description: Test SemeionDataset with pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSemeionDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSemeionDatasetWithPipeline.";
 
@@ -119,9 +119,9 @@ TEST_F(MindDataTestPipeline, TestSemeionDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: SemeionIteratorOneColumn.
-/// Description: test iterator of SemeionDataset with only the "image" column.
-/// Expectation: get correct data.
+/// Feature: SemeionDataset
+/// Description: Test iterator of SemeionDataset with only the image column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSemeionIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSemeionIteratorOneColumn.";
   // Create a Semeion Dataset.
@@ -161,9 +161,9 @@ TEST_F(MindDataTestPipeline, TestSemeionIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: SemeionIteratorWrongColumn.
-/// Description: test iterator of SemeionDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: SemeionDataset
+/// Description: Test iterator of SemeionDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSemeionIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSemeionIteratorWrongColumn.";
   // Create a Semeion Dataset.
@@ -177,9 +177,9 @@ TEST_F(MindDataTestPipeline, TestSemeionIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: SemeionDataset.
-/// Description: read number of all samples from all files according to different versions.
-/// Expectation: 10.
+/// Feature: SemeionDataset
+/// Description: Read number of all samples from all files according to different versions
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSemeionGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSemeionGetDatasetSize.";
 
@@ -191,9 +191,9 @@ TEST_F(MindDataTestPipeline, TestSemeionGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
-/// Feature: Data Property Testing.
-/// Description: Includes tests for shape, type, size.
-/// Expectation: correct shape, type, size.
+/// Feature: SemeionDataset
+/// Description: Test SemeionDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSemeionGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSemeionGetters.";
 
@@ -232,9 +232,9 @@ TEST_F(MindDataTestPipeline, TestSemeionGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
-/// Feature: SemeionDataset.
-/// Description: test with invalid path.
-/// Expectation: unable to read in data.
+/// Feature: SemeionDataset
+/// Description: Test SemeionDataset with invalid folder path
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSemeionDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSemeionDatasetFail.";
 
@@ -250,9 +250,9 @@ TEST_F(MindDataTestPipeline, TestSemeionDatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: SemeionDataset.
-/// Description: test with null sampler.
-/// Expectation: unable to read in data.
+/// Feature: SemeionDataset
+/// Description: Test SemeionDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSemeionDatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSemeionDatasetWithNullSamplerFail.";
 

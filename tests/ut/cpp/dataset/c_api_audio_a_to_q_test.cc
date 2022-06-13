@@ -31,6 +31,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: AmplitudeToDB op
+/// Description: Test AmplitudeToDB op pipelined
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestAmplitudeToDBPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmplitudeToDBPipeline.";
   // Original waveform
@@ -69,6 +72,9 @@ TEST_F(MindDataTestPipeline, TestAmplitudeToDBPipeline) {
   iter->Stop();
 }
 
+/// Feature: AmplitudeToDB op
+/// Description: Test AmplitudeToDB op with wrong arguments
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestAmplitudeToDBWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmplitudeToDBWrongArgs.";
   // Original waveform
@@ -90,6 +96,9 @@ TEST_F(MindDataTestPipeline, TestAmplitudeToDBWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BandBiquad op
+/// Description: Test BandBiquad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBandBiquadBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandBiquadBasic.";
   // Original waveform
@@ -129,6 +138,9 @@ TEST_F(MindDataTestPipeline, TestBandBiquadBasic) {
   iter->Stop();
 }
 
+/// Feature: BandBiquad op
+/// Description: Test BandBiquad op with invalid Q_ and sample_rate
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBandBiquadParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -158,6 +170,9 @@ TEST_F(MindDataTestPipeline, TestBandBiquadParamCheck) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: AllpassBiquad op
+/// Description: Test AllpassBiquad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestAllpassBiquadBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAllpassBiquadBasic.";
   // Original waveform
@@ -197,6 +212,9 @@ TEST_F(MindDataTestPipeline, TestAllpassBiquadBasic) {
   iter->Stop();
 }
 
+/// Feature: AllpassBiquad op
+/// Description: Test AllpassBiquad op with invalid Q_ and sample_rate
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestAllpassBiquadParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAllpassBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -226,6 +244,9 @@ TEST_F(MindDataTestPipeline, TestAllpassBiquadParamCheck) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: BandpassBiquad op
+/// Description: Test BandpassBiquad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBandpassBiquadBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandpassBiquadBasic.";
   // Original waveform
@@ -265,6 +286,9 @@ TEST_F(MindDataTestPipeline, TestBandpassBiquadBasic) {
   iter->Stop();
 }
 
+/// Feature: BandpassBiquad op
+/// Description: Test BandpassBiquad op with invalid Q_ and sample_rate
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBandpassBiquadParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandpassBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -294,6 +318,9 @@ TEST_F(MindDataTestPipeline, TestBandpassBiquadParamCheck) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: BandrejectBiquad op
+/// Description: Test BandrejectBiquad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBandrejectBiquadBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandrejectBiquadBasic.";
   // Original waveform
@@ -333,6 +360,9 @@ TEST_F(MindDataTestPipeline, TestBandrejectBiquadBasic) {
   iter->Stop();
 }
 
+/// Feature: BandrejectBiquad op
+/// Description: Test BandrejectBiquad op with invalid Q_ and sample_rate
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBandrejectBiquadParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBandrejectBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -362,6 +392,9 @@ TEST_F(MindDataTestPipeline, TestBandrejectBiquadParamCheck) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: BassBiquad op
+/// Description: Test BassBiquad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBassBiquadBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBassBiquadBasic.";
   // Original waveform
@@ -401,6 +434,9 @@ TEST_F(MindDataTestPipeline, TestBassBiquadBasic) {
   iter->Stop();
 }
 
+/// Feature: BassBiquad op
+/// Description: Test BassBiquad op with invalid Q_ and sample_rate
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBassBiquadParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBassBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -430,6 +466,9 @@ TEST_F(MindDataTestPipeline, TestBassBiquadParamCheck) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: Angle op
+/// Description: Test Angle op with pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestAnglePipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipeline.";
 
@@ -468,6 +507,9 @@ TEST_F(MindDataTestPipeline, TestAnglePipeline) {
   iter->Stop();
 }
 
+/// Feature: Angle op
+/// Description: Test Angle op with pipeline mode with invalid input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestAnglePipelineError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAnglePipelineError.";
 
@@ -489,6 +531,9 @@ TEST_F(MindDataTestPipeline, TestAnglePipelineError) {
   EXPECT_ERROR(iter->GetNextRow(&row));
 }
 
+/// Feature: EqualizerBiquad op
+/// Description: Test EqualizerBiquad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestEqualizerBiquadSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEqualizerBiquadSuccess.";
 
@@ -499,7 +544,7 @@ TEST_F(MindDataTestPipeline, TestEqualizerBiquadSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create a filter object
-  std::shared_ptr<TensorTransform> equalizer_biquad(new audio::EqualizerBiquad(44100, 3.5, 5.5, 0.707));
+  auto equalizer_biquad = std::make_shared<audio::EqualizerBiquad>(44100, 3.5, 5.5, 0.707);
   auto ds1 = ds->Map({equalizer_biquad}, {"col1"}, {"audio"});
   EXPECT_NE(ds1, nullptr);
   std::shared_ptr<Iterator> iter = ds1->CreateIterator();
@@ -515,6 +560,9 @@ TEST_F(MindDataTestPipeline, TestEqualizerBiquadSuccess) {
   iter->Stop();
 }
 
+/// Feature: EqualizerBiquad op
+/// Description: Test EqualizerBiquad op with invalid sample_rate and Q_
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestEqualizerBiquadWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestEqualizerBiquadWrongArgs.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -544,6 +592,9 @@ TEST_F(MindDataTestPipeline, TestEqualizerBiquadWrongArgs) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: LowpassBiquad op
+/// Description: Test LowpassBiquad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLowpassBiquadSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLowpassBiquadSuccess.";
 
@@ -554,7 +605,7 @@ TEST_F(MindDataTestPipeline, TestLowpassBiquadSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create a filter object
-  std::shared_ptr<TensorTransform> lowpass_biquad(new audio::LowpassBiquad(44100, 3000.5, 0.707));
+  auto lowpass_biquad = std::make_shared<audio::LowpassBiquad>(44100, 3000.5, 0.707);
   auto ds1 = ds->Map({lowpass_biquad}, {"col1"}, {"audio"});
   EXPECT_NE(ds1, nullptr);
   std::shared_ptr<Iterator> iter = ds1->CreateIterator();
@@ -570,6 +621,9 @@ TEST_F(MindDataTestPipeline, TestLowpassBiquadSuccess) {
   iter->Stop();
 }
 
+/// Feature: LowpassBiquad op
+/// Description: Test LowpassBiquad op with invalid sample_rate and Q_
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestLowpassBiquadWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLowpassBiquadWrongArgs.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -599,6 +653,9 @@ TEST_F(MindDataTestPipeline, TestLowpassBiquadWrongArgs) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: FrequencyMasking op
+/// Description: Test FrequencyMaking op with pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFrequencyMaskingPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFrequencyMaskingPipeline.";
   // Original waveform
@@ -637,6 +694,9 @@ TEST_F(MindDataTestPipeline, TestFrequencyMaskingPipeline) {
   iter->Stop();
 }
 
+/// Feature: FrequencyMasking op
+/// Description: Test FrequencyMaking op with invalid arguments
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFrequencyMaskingWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFrequencyMaskingWrongArgs.";
   // Original waveform
@@ -659,6 +719,9 @@ TEST_F(MindDataTestPipeline, TestFrequencyMaskingWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: ComplexNorm op
+/// Description: Test ComplexNorm op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestComplexNormBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComplexNormBasic.";
 
@@ -698,6 +761,9 @@ TEST_F(MindDataTestPipeline, TestComplexNormBasic) {
   iter->Stop();
 }
 
+/// Feature: ComplexNorm op
+/// Description: Test ComplexNorm op with wrong arguments
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestComplexNormWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComplexNormWrongArgs.";
 
@@ -717,6 +783,9 @@ TEST_F(MindDataTestPipeline, TestComplexNormWrongArgs) {
   EXPECT_EQ(iter1, nullptr);
 }
 
+/// Feature: Contrast op
+/// Description: Test Contrast op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestContrastBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestContrastBasic.";
   // Original waveform
@@ -755,6 +824,9 @@ TEST_F(MindDataTestPipeline, TestContrastBasic) {
   iter->Stop();
 }
 
+/// Feature: Contrast op
+/// Description: Test Contrast op with invalid enhancement_amount
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestContrastParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestContrastParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -783,6 +855,9 @@ TEST_F(MindDataTestPipeline, TestContrastParamCheck) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: DeemphBiquad op
+/// Description: Test DeemphBiquad op basic usage in pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDeemphBiquadPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDeemphBiquadPipeline.";
   // Original waveform
@@ -822,6 +897,9 @@ TEST_F(MindDataTestPipeline, TestDeemphBiquadPipeline) {
   iter->Stop();
 }
 
+/// Feature: DeemphBiquad op
+/// Description: Test DeemphBiquad op with invalid sample_rate and Q_
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestDeemphBiquadWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDeemphBiquadWrongArgs.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -841,9 +919,9 @@ TEST_F(MindDataTestPipeline, TestDeemphBiquadWrongArgs) {
   EXPECT_EQ(iter01, nullptr);
 }
 
-/// Feature: Dither
-/// Description: test basic usage of Dither in pipeline mode
-/// Expectation: the data is processed successfully
+/// Feature: Dither op
+/// Description: Test basic usage of Dither op in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDitherBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDitherBasic.";
   // Original waveform
@@ -881,6 +959,9 @@ TEST_F(MindDataTestPipeline, TestDitherBasic) {
   iter->Stop();
 }
 
+/// Feature: HighpassBiquad op
+/// Description: Test HighpassBiquad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestHighpassBiquadSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestHighpassBiquadSuccess.";
 
@@ -891,7 +972,7 @@ TEST_F(MindDataTestPipeline, TestHighpassBiquadSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create a filter object
-  std::shared_ptr<TensorTransform> highpass_biquad(new audio::HighpassBiquad(44100, 3000.5, 0.707));
+  auto highpass_biquad = make_shared<audio::HighpassBiquad>(44100, 3000.5, 0.707);
   auto ds1 = ds->Map({highpass_biquad}, {"col1"}, {"audio"});
   EXPECT_NE(ds1, nullptr);
   std::shared_ptr<Iterator> iter = ds1->CreateIterator();
@@ -907,6 +988,9 @@ TEST_F(MindDataTestPipeline, TestHighpassBiquadSuccess) {
   iter->Stop();
 }
 
+/// Feature: HighpassBiquad op
+/// Description: Test HighpassBiquad op with invalid sample_rate and Q_
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestHighpassBiquadWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestHighpassBiquadWrongArgs.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -936,9 +1020,9 @@ TEST_F(MindDataTestPipeline, TestHighpassBiquadWrongArgs) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-/// Feature: InverseMelScale
-/// Description: test basic usage of InverseMelScale
-/// Expectation: get correct number of data
+/// Feature: InverseMelScale op
+/// Description: Test basic usage of InverseMelScale op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestInverseMelScalePipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestInverseMelScalePipeline.";
   // Original waveform
@@ -1040,9 +1124,9 @@ TEST_F(MindDataTestPipeline, TestInverseMelScalePipeline) {
   iter->Stop();
 }
 
-/// Feature: InverseMelScale
-/// Description: test WrongArg of InverseMelScale
-/// Expectation: return error
+/// Feature: InverseMelScale op
+/// Description: Test wrong arguments for InverseMelScale op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestInverseMelScaleWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestInverseMelScaleWrongArgs.";
   // MelScale: f_max must be greater than f_min.
@@ -1094,9 +1178,9 @@ TEST_F(MindDataTestPipeline, TestInverseMelScaleWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: MelscaleFbanks.
-/// Description: Test normal operation.
-/// Expectation: As expected.
+/// Feature: MelscaleFbanks op
+/// Description: Test normal operation
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestMelscaleFbanksNormal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-MelscaleFbanksNormal.";
   mindspore::MSTensor output;
@@ -1106,6 +1190,9 @@ TEST_F(MindDataTestPipeline, TestMelscaleFbanksNormal) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+/// Feature: MuLawDecoding op
+/// Description: Test MuLawDecoding op basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMuLawDecodingBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMuLawDecodingBasic.";
 
@@ -1145,6 +1232,9 @@ TEST_F(MindDataTestPipeline, TestMuLawDecodingBasic) {
   iter->Stop();
 }
 
+/// Feature: MuLawDecoding op
+/// Description: Test MuLawDecoding op with invalid quantization_channels
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMuLawDecodingWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMuLawDecodingWrongArgs.";
 
@@ -1172,9 +1262,9 @@ TEST_F(MindDataTestPipeline, TestMuLawDecodingWrongArgs) {
   EXPECT_EQ(iter1, nullptr);
 }
 
-/// Feature: MuLawEncoding
-/// Description: test MuLawEncoding in pipeline mode
-/// Expectation: the data is processed successfully
+/// Feature: MuLawEncoding op
+/// Description: Test MuLawEncoding op in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMuLawEncodingBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMuLawEncodingBasic.";
 
@@ -1214,9 +1304,9 @@ TEST_F(MindDataTestPipeline, TestMuLawEncodingBasic) {
   iter->Stop();
 }
 
-/// Feature: MuLawEncoding
-/// Description: test invalid parameter of MuLawEncoding
-/// Expectation: throw exception correctly
+/// Feature: MuLawEncoding op
+/// Description: Test invalid parameter of MuLawEncoding op
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestPipeline, TestMuLawEncodingWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMuLawEncodingWrongArgs.";
 
@@ -1244,9 +1334,9 @@ TEST_F(MindDataTestPipeline, TestMuLawEncodingWrongArgs) {
   EXPECT_EQ(iter1, nullptr);
 }
 
-/// Feature: Overdrive
-/// Description: test basic usage of Overdrive
-/// Expectation: get correct number of data
+/// Feature: Overdrive op
+/// Description: Test basic usage of Overdrive op
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestOverdriveBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOverdriveBasic.";
   // Original waveform
@@ -1285,9 +1375,9 @@ TEST_F(MindDataTestPipeline, TestOverdriveBasic) {
   iter->Stop();
 }
 
-/// Feature: Overdrive
-/// Description: test invalid parameter of Overdrive
-/// Expectation: throw exception correctly
+/// Feature: Overdrive op
+/// Description: Test invalid parameter of Overdrive op
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestPipeline, TestOverdriveWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOverdriveWrongArg.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1315,9 +1405,9 @@ TEST_F(MindDataTestPipeline, TestOverdriveWrongArg) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-/// Feature: Phaser
-/// Description: test basic usage of Phaser
-/// Expectation: get correct number of data
+/// Feature: Phaser op
+/// Description: Test basic usage of Phaser op
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestPhaserBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhaserBasic";
   // Original waveform
@@ -1356,9 +1446,9 @@ TEST_F(MindDataTestPipeline, TestPhaserBasic) {
   iter->Stop();
 }
 
-/// Feature: Phaser
-/// Description: test invalid parameter of Phaser
-/// Expectation: throw exception correctly
+/// Feature: Phaser op
+/// Description: Test invalid parameter of Phaser op
+/// Expectation: Throw exception correctly
 TEST_F(MindDataTestPipeline, TestPhaserWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhaserWrongArg.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1453,6 +1543,9 @@ TEST_F(MindDataTestPipeline, TestPhaserWrongArg) {
   EXPECT_EQ(iter10, nullptr);
 }
 
+/// Feature: LFilter op
+/// Description: Test LFilter op with pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestLfilterPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLfilterPipeline.";
   // Original waveform
@@ -1494,6 +1587,9 @@ TEST_F(MindDataTestPipeline, TestLfilterPipeline) {
   iter->Stop();
 }
 
+/// Feature: LFilter op
+/// Description: Test LFilter op with invalid sample_rate
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestLfilterWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestLfilterWrongArgs.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1515,6 +1611,9 @@ TEST_F(MindDataTestPipeline, TestLfilterWrongArgs) {
   EXPECT_EQ(iter01, nullptr);
 }
 
+/// Feature: DCShift op
+/// Description: Test DCShift op with pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDCShiftPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDCShiftPipeline.";
 
@@ -1550,6 +1649,9 @@ TEST_F(MindDataTestPipeline, TestDCShiftPipeline) {
   iter->Stop();
 }
 
+/// Feature: DCShift op
+/// Description: Test DCShift op with pipeline mode with invalid input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestDCShiftPipelineError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDCShiftPipelineError.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1566,6 +1668,9 @@ TEST_F(MindDataTestPipeline, TestDCShiftPipelineError) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Biquad op
+/// Description: Test Biquad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBiquadBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBiquadBasic.";
   // Original waveform
@@ -1605,6 +1710,9 @@ TEST_F(MindDataTestPipeline, TestBiquadBasic) {
   iter->Stop();
 }
 
+/// Feature: Biquad op
+/// Description: Test Biquad op with invalid a0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBiquadParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBiquadParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1624,6 +1732,9 @@ TEST_F(MindDataTestPipeline, TestBiquadParamCheck) {
   EXPECT_EQ(iter01, nullptr);
 }
 
+/// Feature: Fade op
+/// Description: Test Fade op with pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFadeWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithPipeline.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1661,6 +1772,9 @@ TEST_F(MindDataTestPipeline, TestFadeWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: Fade op
+/// Description: Test Fade op with FadeShape::kLinear
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFadeWithLinear) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithLinear.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1698,6 +1812,9 @@ TEST_F(MindDataTestPipeline, TestFadeWithLinear) {
   iter->Stop();
 }
 
+/// Feature: Fade op
+/// Description: Test Fade op with FadeShape::kLogarithmic
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFadeWithLogarithmic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithLogarithmic.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1735,6 +1852,9 @@ TEST_F(MindDataTestPipeline, TestFadeWithLogarithmic) {
   iter->Stop();
 }
 
+/// Feature: Fade op
+/// Description: Test Fade op with FadeShape::kQuarterSine
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFadeWithQuarterSine) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithQuarterSine.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1772,6 +1892,9 @@ TEST_F(MindDataTestPipeline, TestFadeWithQuarterSine) {
   iter->Stop();
 }
 
+/// Feature: Fade op
+/// Description: Test Fade op with FadeShape::kHalfSine
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFadeWithHalfSine) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithHalfSine.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1809,6 +1932,9 @@ TEST_F(MindDataTestPipeline, TestFadeWithHalfSine) {
   iter->Stop();
 }
 
+/// Feature: Fade op
+/// Description: Test Fade op with invalid arguments
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFadeWithInvalidArg) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFadeWithInvalidArg.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1842,6 +1968,9 @@ TEST_F(MindDataTestPipeline, TestFadeWithInvalidArg) {
   EXPECT_EQ(iter_02, nullptr);
 }
 
+/// Feature: Magphase op
+/// Description: Test Magphase op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestMagphase) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMagphase.";
 
@@ -1850,7 +1979,7 @@ TEST_F(MindDataTestPipeline, TestMagphase) {
   ASSERT_OK(schema->add_column("col1", mindspore::DataType::kNumberTypeFloat32, {1, 2}));
   std::shared_ptr<Dataset> ds = RandomData(8, schema);
   EXPECT_NE(ds, nullptr);
-  std::shared_ptr<TensorTransform> magphase(new audio::Magphase(power));
+  auto magphase = std::make_shared<audio::Magphase>(power);
   auto ds1 = ds->Map({magphase}, {"col1"}, {"mag", "phase"});
   EXPECT_NE(ds1, nullptr);
   std::shared_ptr<Iterator> iter = ds1->CreateIterator();
@@ -1866,11 +1995,14 @@ TEST_F(MindDataTestPipeline, TestMagphase) {
   iter->Stop();
 }
 
+/// Feature: Magphase op
+/// Description: Test Magphase op with invalid power
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMagphaseWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMagphaseWrongArgs.";
 
   float power_wrong = -1.0;
-  std::shared_ptr<TensorTransform> magphase(new audio::Magphase(power_wrong));
+  auto magphase = std::make_shared<audio::Magphase>(power_wrong);
   std::unordered_map<std::string, mindspore::MSTensor> row;
 
   // Magphase: power must be greater than or equal to 0.
@@ -1884,6 +2016,9 @@ TEST_F(MindDataTestPipeline, TestMagphaseWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: DetectPitchFrequency op
+/// Description: Test DetectPitchFrequency op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDetectPitchFrequencyBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDetectPitchFrequencyBasic.";
   // Original waveform
@@ -1922,6 +2057,9 @@ TEST_F(MindDataTestPipeline, TestDetectPitchFrequencyBasic) {
   iter->Stop();
 }
 
+/// Feature: DetectPitchFrequency op
+/// Description: Test DetectPitchFrequency op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestDetectPitchFrequencyParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDetectPitchFrequencyParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1981,6 +2119,9 @@ TEST_F(MindDataTestPipeline, TestDetectPitchFrequencyParamCheck) {
   EXPECT_EQ(iter05, nullptr);
 }
 
+/// Feature: Flanger op
+/// Description: Test Flanger op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFlangerBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlangerBasic.";
   // Original waveform
@@ -2018,6 +2159,9 @@ TEST_F(MindDataTestPipeline, TestFlangerBasic) {
   iter->Stop();
 }
 
+/// Feature: Flanger op
+/// Description: Test Flanger op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFlangerParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFlangerParamCheck.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -2090,9 +2234,9 @@ TEST_F(MindDataTestPipeline, TestFlangerParamCheck) {
   EXPECT_EQ(iterPhase, nullptr);
 }
 
-/// Feature: CreateDct
-/// Description: test CreateDct in eager mode
-/// Expectation: the returned result is as expected
+/// Feature: CreateDct op
+/// Description: Test CreateDct op in eager mode with NormMode::kNone
+/// Expectation: The returned result is as expected
 TEST_F(MindDataTestPipeline, TestCreateDctNone) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCreateDctNone.";
   mindspore::MSTensor output;
@@ -2100,9 +2244,9 @@ TEST_F(MindDataTestPipeline, TestCreateDctNone) {
   EXPECT_TRUE(s01.IsOk());
 }
 
-/// Feature: CreateDct
-/// Description: test CreateDct in eager mode
-/// Expectation: the returned result is as expected
+/// Feature: CreateDct op
+/// Description: Test CreateDct op in eager mode with NormMode::kOrtho
+/// Expectation: The returned result is as expected
 TEST_F(MindDataTestPipeline, TestCreateDctOrtho) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCreateDctOrtho.";
   mindspore::MSTensor output;
@@ -2110,9 +2254,9 @@ TEST_F(MindDataTestPipeline, TestCreateDctOrtho) {
   EXPECT_TRUE(s02.IsOk());
 }
 
-/// Feature: CreateDct
-/// Description: test WrongArg of CreateDct
-/// Expectation: return error
+/// Feature: CreateDct op
+/// Description: Test wrong arguments for CreateDct op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCreateDctWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCreateDctWrongArg.";
   mindspore::MSTensor output;
@@ -2126,9 +2270,9 @@ TEST_F(MindDataTestPipeline, TestCreateDctWrongArg) {
   EXPECT_FALSE(s04.IsOk());
 }
 
-/// Feature: DBToAmplitude
-/// Description: test DBToAmplitude in pipeline mode
-/// Expectation: the data is processed successfully
+/// Feature: DBToAmplitude op
+/// Description: Test DBToAmplitude op in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDBToAmplitudePipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDBToAmplitudePipeline.";
   // Original waveform
@@ -2167,9 +2311,9 @@ TEST_F(MindDataTestPipeline, TestDBToAmplitudePipeline) {
   iter->Stop();
 }
 
-/// Feature: ComputeDeltas
-/// Description: test basic function of ComputeDeltas
-/// Expectation: get correct number of data
+/// Feature: ComputeDeltas op
+/// Description: Test basic function of ComputeDeltas op
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestComputeDeltas) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComputeDeltas.";
   // Original waveform
@@ -2208,9 +2352,9 @@ TEST_F(MindDataTestPipeline, TestComputeDeltas) {
   iter->Stop();
 }
 
-/// Feature: ComputeDeltas
-/// Description: test wrong input args of ComputeDeltas
-/// Expectation: get nullptr of iterator
+/// Feature: ComputeDeltas op
+/// Description: Test wrong input args of ComputeDeltas op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestComputeDeltasWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComputeDeltasWrongArgs.";
   // Original waveform
@@ -2230,9 +2374,9 @@ TEST_F(MindDataTestPipeline, TestComputeDeltasWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Gain
-/// Description: test Gain in pipeline mode
-/// Expectation: the data is processed successfully
+/// Feature: Gain op
+/// Description: Test Gain op in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestGainPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGainPipeline.";
   // Original waveform
@@ -2272,9 +2416,9 @@ TEST_F(MindDataTestPipeline, TestGainPipeline) {
   iter->Stop();
 }
 
-/// Feature: MelScale
-/// Description: test basic usage of MelScale
-/// Expectation: get correct number of data
+/// Feature: MelScale op
+/// Description: Test basic usage of MelScale op
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestMelScalePipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMelScalePipeline.";
   // Original waveform
@@ -2354,9 +2498,9 @@ TEST_F(MindDataTestPipeline, TestMelScalePipeline) {
   iter->Stop();
 }
 
-/// Feature: MelScale
-/// Description: test WrongArg of MelScale
-/// Expectation: return error
+/// Feature: MelScale op
+/// Description: Test wrong arguments for MelScale op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMelScaleWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMelScaleWrongArgs.";
 
@@ -2388,9 +2532,9 @@ TEST_F(MindDataTestPipeline, TestMelScaleWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: PhaseVocoder
-/// Description: test PhaseVocoder in pipeline mode
-/// Expectation: the data is processed successfully
+/// Feature: PhaseVocoder op
+/// Description: Test PhaseVocoder op in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestPhaseVocoderPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhaseVocoderPipeline.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -2445,9 +2589,9 @@ TEST_F(MindDataTestPipeline, TestPhaseVocoderPipeline) {
   iter->Stop();
 }
 
-/// Feature: PhaseVocoder
-/// Description: test PhaseVocoder with wrong input
-/// Expectation: Throw exception as expected.
+/// Feature: PhaseVocoder op
+/// Description: Test PhaseVocoder op with wrong input
+/// Expectation: Throw exception as expected
 TEST_F(MindDataTestPipeline, TestPhaseVocoderWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPhaseVocoderWrongArgs.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -2484,9 +2628,9 @@ TEST_F(MindDataTestPipeline, TestPhaseVocoderWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: MaskAlongAxisIID
-/// Description: test MaskAlongAxisIID pipeline
-/// Expectation: the returned result is as expected
+/// Feature: MaskAlongAxisIID op
+/// Description: Test MaskAlongAxisIID op pipeline
+/// Expectation: The returned result is as expected
 TEST_F(MindDataTestPipeline, TestMaskAlongAxisIIDPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskAlongAxisIIDPipeline.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -2530,9 +2674,9 @@ TEST_F(MindDataTestPipeline, TestMaskAlongAxisIIDPipeline) {
   iter->Stop();
 }
 
-/// Feature: MaskAlongAxisIID
-/// Description: test MaskAlongAxisIID wrong args
-/// Expectation: the returned result is as expected
+/// Feature: MaskAlongAxisIID op
+/// Description: Test MaskAlongAxisIID op with invalid mask_param
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMaskAlongAxisIIDInvalidMaskParam) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskAlongAxisIIDInvalidMaskParam.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -2559,9 +2703,9 @@ TEST_F(MindDataTestPipeline, TestMaskAlongAxisIIDInvalidMaskParam) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: MaskAlongAxisIID
-/// Description: test MaskAlongAxisIID wrong axis
-/// Expectation: the returned result is as expected
+/// Feature: MaskAlongAxisIID op
+/// Description: Test MaskAlongAxisIID op with wrong axis
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMaskAlongAxisIIDInvaildAxis) {
   MS_LOG(INFO) << "MindDataTestPipeline-TestMaskAlongAxisIIDInvaildAxis.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -2588,9 +2732,9 @@ TEST_F(MindDataTestPipeline, TestMaskAlongAxisIIDInvaildAxis) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: MaskAlongAxis
-/// Description: test MaskAlongAxis Pipeline
-/// Expectation: the returned result is as expected
+/// Feature: MaskAlongAxis op
+/// Description: Test MaskAlongAxis op in pipeline mode
+/// Expectation: The returned result is as expected
 TEST_F(MindDataTestPipeline, TestMaskAlongAxisPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskAlongAxisPipeline.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -2635,9 +2779,9 @@ TEST_F(MindDataTestPipeline, TestMaskAlongAxisPipeline) {
   iter->Stop();
 }
 
-/// Feature: MaskAlongAxis
-/// Description: test MaskAlongAxis wrong args
-/// Expectation: the returned result is as expected
+/// Feature: MaskAlongAxis op
+/// Description: Test MaskAlongAxis op with invalid mask_param
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMaskAlongAxisWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskAlongAxisWrongArgs.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -2665,9 +2809,9 @@ TEST_F(MindDataTestPipeline, TestMaskAlongAxisWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: MaskAlongAxis
-/// Description: test MaskAlongAxis wrong mask_width
-/// Expectation: the returned result is as expected
+/// Feature: MaskAlongAxis op
+/// Description: Test MaskAlongAxis op with wrong mask_width
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMaskAlongAxisNegativeMaskWidth) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskAlongAxisNegativeMaskWidth.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -2695,9 +2839,9 @@ TEST_F(MindDataTestPipeline, TestMaskAlongAxisNegativeMaskWidth) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: MaskAlongAxis
-/// Description: test MaskAlongAxis wrong axis
-/// Expectation: the returned result is as expected
+/// Feature: MaskAlongAxis op
+/// Description: Test MaskAlongAxis op with wrong axis
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMaskAlongAxisInvaildAxis) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskAlongAxisInvaildAxis.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -2725,9 +2869,9 @@ TEST_F(MindDataTestPipeline, TestMaskAlongAxisInvaildAxis) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: MaskAlongAxis
-/// Description: test MaskAlongAxis wrong axis rank
-/// Expectation: the returned result is as expected
+/// Feature: MaskAlongAxis op
+/// Description: Test MaskAlongAxis op with wrong axis rank
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMaskAlongAxisRank) {
   MS_LOG(INFO) << "Doing TestMaskAlongAxis-TestMaskAlongAxisRank.";
   std::shared_ptr<SchemaObj> schema = Schema();

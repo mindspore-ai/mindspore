@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: FashionMnistTestDataset.
-/// Description: test basic usage of FashionMnistTestDataset.
-/// Expectation: get correct data.
+/// Feature: FashionMnistDataset
+/// Description: Test basic usage of FashionMnistDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestFashionMnistTestDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFashionMnistTestDataset.";
 
@@ -63,9 +63,9 @@ TEST_F(MindDataTestPipeline, TestFashionMnistTestDataset) {
   iter->Stop();
 }
 
-/// Feature: FashionMnistTestDatasetWithPipeline.
-/// Description: test FashionMnistTestDataset with pipeline.
-/// Expectation: get correct data.
+/// Feature: FashionMnistDataset
+/// Description: Test FashionMnistDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestFashionMnistTestDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFashionMnistTestDatasetWithPipeline.";
 
@@ -122,9 +122,9 @@ TEST_F(MindDataTestPipeline, TestFashionMnistTestDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: FashionMnistIteratorOneColumn.
-/// Description: test iterator of FashionMnistDataset with only the "image" column.
-/// Expectation: get correct data.
+/// Feature: FashionMnistDataset
+/// Description: Test iterator of FashionMnistDataset with only the image column.
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestFashionMnistIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFashionMnistIteratorOneColumn.";
   // Create a FashionMnist Dataset
@@ -164,9 +164,9 @@ TEST_F(MindDataTestPipeline, TestFashionMnistIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: FashionMnistTestDatasetSize.
-/// Description: test usage of get the size of FashionMnistTestDataset.
-/// Expectation: get correct data.
+/// Feature: FashionMnistDataset
+/// Description: Test FashionMnistDataset GetDatasetSize
+/// Expectation: Correct size of dataset
 TEST_F(MindDataTestPipeline, TestGetFashionMnistTestDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetFashionMnistTestDatasetSize.";
 
@@ -179,9 +179,9 @@ TEST_F(MindDataTestPipeline, TestGetFashionMnistTestDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 10000);
 }
 
-/// Feature: FashionMnistTestDatasetGetters.
-/// Description: test DatasetGetters of FashionMnistTestDataset.
-/// Expectation: get correct the value.
+/// Feature: FashionMnistDataset
+/// Description: Test FashionMnistDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFashionMnistTestDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFashionMnistTestDatasetGetters.";
 
@@ -220,9 +220,9 @@ TEST_F(MindDataTestPipeline, TestFashionMnistTestDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 10000);
 }
 
-/// Feature: FashionMnistIteratorWrongColumn.
-/// Description: test iterator of FashionMnistDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: FashionMnistDataset
+/// Description: Test iterator of FashionMnistDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFashionMnistIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFashionMnistIteratorOneColumn.";
   // Create a FashionMnist Dataset
@@ -236,9 +236,9 @@ TEST_F(MindDataTestPipeline, TestFashionMnistIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: FashionMnistDatasetFail.
-/// Description: test failure of FashionMnistDataset.
-/// Expectation: get none piece of data.
+/// Feature: FashionMnistDataset
+/// Description: Test FashionMnistDataset with empty string as the folder path
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFashionMnistDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFashionMnistDatasetFail.";
 
@@ -252,9 +252,9 @@ TEST_F(MindDataTestPipeline, TestFashionMnistDatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: FashionMnistDatasetWithInvalidUsageFail.
-/// Description: test FashionMnistDataset with invalid usage.
-/// Expectation: get none piece of data.
+/// Feature: FashionMnistDataset
+/// Description: Test FashionMnistDataset with invalid usage
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFashionMnistDatasetWithInvalidUsageFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFashionMnistDatasetWithInvalidUsageFail.";
 
@@ -269,9 +269,9 @@ TEST_F(MindDataTestPipeline, TestFashionMnistDatasetWithInvalidUsageFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: FashionMnistDatasetWithNullSamplerFail.
-/// Description: test FashionMnistDataset with null sampler.
-/// Expectation: get none piece of data.
+/// Feature: FashionMnistDataset
+/// Description: Test FashionMnistDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFashionMnistDatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFashionMnistUDatasetWithNullSamplerFail.";
 

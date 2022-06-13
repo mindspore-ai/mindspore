@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: Sampler
+/// Description: Test ImageFolderDataset with various samplers
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestImageFolderWithSamplers) {
   std::shared_ptr<Sampler> sampl = std::make_shared<DistributedSampler>(2, 1);
   EXPECT_NE(sampl, nullptr);
@@ -125,6 +128,9 @@ TEST_F(MindDataTestPipeline, TestWeightedRandomSamplerImageFolder) {
   iter->Stop();
 }
 
+/// Feature: Sampler
+/// Description: Test ImageFolderDataset with no sampler provided (defaults to RandomSampler)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestNoSamplerSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNoSamplerSuccess1.";
   // Test building a dataset with no sampler provided (defaults to random sampler
@@ -151,6 +157,9 @@ TEST_F(MindDataTestPipeline, TestNoSamplerSuccess1) {
   iter->Stop();
 }
 
+/// Feature: Sampler
+/// Description: Test basic setting of DistributedSampler through shared pointer
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerSuccess1.";
   // Test basic setting of distributed_sampler
@@ -181,6 +190,9 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess1) {
   iter->Stop();
 }
 
+/// Feature: Sampler
+/// Description: Test basic setting of DistributedSampler through new definition
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerSuccess2.";
   // Test basic setting of distributed_sampler
@@ -215,6 +227,9 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess2) {
   delete sampler;
 }
 
+/// Feature: Sampler
+/// Description: Test basic setting of DistributedSampler through object definition
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerSuccess3.";
   // Test basic setting of distributed_sampler
@@ -244,6 +259,9 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess3) {
   iter->Stop();
 }
 
+/// Feature: Sampler
+/// Description: Test pointer of DistributedSampler
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerSuccess4.";
   // Test pointer of distributed_sampler
@@ -339,6 +357,9 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess6) {
   iter->Stop();
 }
 
+/// Feature: Sampler
+/// Description: Test DistributedSampler with num_shards < offset through shared pointer
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestDistributedSamplerFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerFail1.";
   // Test basic setting of distributed_sampler
@@ -358,6 +379,9 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Sampler
+/// Description: Test DistributedSampler with num_shards < offset through new definition
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestDistributedSamplerFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerFail2.";
   // Test basic setting of distributed_sampler
@@ -381,6 +405,9 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerFail2) {
   delete sampler;
 }
 
+/// Feature: Sampler
+/// Description: Test DistributedSampler with num_shards < offset through object definition
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestDistributedSamplerFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerFail3.";
   // Test basic setting of distributed_sampler
@@ -399,6 +426,9 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Sampler
+/// Description: Test DistributedSampler with SequentialSampler as child sampler
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSamplerAddChild) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSamplerAddChild.";
 
@@ -593,6 +623,9 @@ TEST_F(MindDataTestPipeline, TestSamplerAddChild5) {
   iter->Stop();
 }
 
+/// Feature: Sampler
+/// Description: Test basic setting of SubsetSampler with default num_samples
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSubsetSamplerSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSubsetSamplerSuccess1.";
   // Test basic setting of subset_sampler with default num_samples
@@ -624,6 +657,9 @@ TEST_F(MindDataTestPipeline, TestSubsetSamplerSuccess1) {
   iter->Stop();
 }
 
+/// Feature: Sampler
+/// Description: Test SubsetSampler with num_samples provided
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSubsetSamplerSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSubsetSamplerSuccess2.";
   // Test subset_sampler with num_samples
@@ -655,6 +691,9 @@ TEST_F(MindDataTestPipeline, TestSubsetSamplerSuccess2) {
   iter->Stop();
 }
 
+/// Feature: Sampler
+/// Description: Test SubsetSampler with num_samples larger than the indices size
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSubsetSamplerSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSubsetSamplerSuccess3.";
   // Test subset_sampler with num_samples larger than the indices size.
@@ -686,6 +725,9 @@ TEST_F(MindDataTestPipeline, TestSubsetSamplerSuccess3) {
   iter->Stop();
 }
 
+/// Feature: Sampler
+/// Description: Test SubsetSampler with index out of bounds
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSubsetSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSubsetSamplerFail.";
   // Test subset_sampler with index out of bounds.

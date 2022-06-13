@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: Test YesNo dataset.
-/// Description: read data from a single file.
-/// Expectation: the data is processed successfully.
+/// Feature: YesNoDataset
+/// Description: Test YesNoDataset using a single file
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestYesNoDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYesNoDataset.";
   // Create a YesNoDataset
@@ -62,9 +62,9 @@ TEST_F(MindDataTestPipeline, TestYesNoDataset) {
   iter->Stop();
 }
 
-/// Feature: Test YesNo dataset.
-/// Description: test YesNo dataset with pipeline.
-/// Expectation: the data is processed successfully.
+/// Feature: YesNoDataset
+/// Description: Test YesNoDataset with pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, YesNoDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-YesNoDatasetWithPipeline.";
 
@@ -116,9 +116,9 @@ TEST_F(MindDataTestPipeline, YesNoDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: TestYesNoDatasetIteratorOneColumn.
-/// Description: test iterator of  YesNo dataset with only the "waveform" column.
-/// Expectation: get correct data.
+/// Feature: YesNoDataset
+/// Description: Test iterator of YesNoDataset with only the waveform column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestYesNoDatasetIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYesNoDatasetIteratorOneColumn.";
   // Create a YesNo dataset
@@ -158,9 +158,9 @@ TEST_F(MindDataTestPipeline, TestYesNoDatasetIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: TestYesNoGetDatasetIteratorWrongColumn.
-/// Description: test iterator of YesNoGetDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: YesNoDataset
+/// Description: Test iterator of YesNoDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestYesNoGetDatasetIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYesNoGetDatasetIteratorWrongColumn.";
   // Create a YesNo dataset
@@ -174,9 +174,9 @@ TEST_F(MindDataTestPipeline, TestYesNoGetDatasetIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test YesNo dataset.
-/// Description: get the size of YesNo dataset.
-/// Expectation: the data is processed successfully.
+/// Feature: YesNoDataset
+/// Description: Test YesNoDataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestYesNoGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYesNoGetDatasetSize.";
 
@@ -188,9 +188,9 @@ TEST_F(MindDataTestPipeline, TestYesNoGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 3);
 }
 
-/// Feature: Test YesNo dataset.
-/// Description: getter functions.
-/// Expectation: the data is processed successfully.
+/// Feature: YesNoDataset
+/// Description: Test YesNoDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestYesNoGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYesNoMixGetter.";
   // Create a YesNo Dataset
@@ -221,7 +221,7 @@ TEST_F(MindDataTestPipeline, TestYesNoGetters) {
 
 /// Feature: Test YesNo dataset.
 /// Description: DatasetFail tests.
-/// Expectation: throw error messages when certain errors occur.
+/// Expectation: Throw error messages when certain errors occur.
 TEST_F(MindDataTestPipeline, TestYesNoDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYesNoDatasetFail.";
 
@@ -235,9 +235,9 @@ TEST_F(MindDataTestPipeline, TestYesNoDatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test YesNo dataset.
-/// Description: NullSamplerFail tests.
-/// Expectation: Throw error messages when certain errors occur.
+/// Feature: YesNoDataset
+/// Description: Test YesNoDataset using null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestYesNoDatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYesNo10DatasetWithNullSamplerFail.";
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestSlicePatches : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: SlicePatches op
+/// Description: Test SlicePatches op with invalid inputs (num_height and num_width)
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestSlicePatches, TestSlicePacthesParamCheck) {
   MS_LOG(INFO) << "Doing TestSlicePatchesParamCheck with invalid parameters.";
   // Create an ImageFolder Dataset
@@ -35,7 +38,7 @@ TEST_F(MindDataTestSlicePatches, TestSlicePacthesParamCheck) {
 
   // Case 1: num_height is not positive
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> slice_patches_1(new vision::SlicePatches(-1));
+  auto slice_patches_1 = std::make_shared<vision::SlicePatches>(-1);
   auto ds1 = ds->Map({slice_patches_1});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -45,7 +48,7 @@ TEST_F(MindDataTestSlicePatches, TestSlicePacthesParamCheck) {
 
   // Case 2: num_width is not positive
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> slice_patches_2(new vision::SlicePatches(1, 0));
+  auto slice_patches_2 = std::make_shared<vision::SlicePatches>(1, 0);
   auto ds2 = ds->Map({slice_patches_2});
   EXPECT_NE(ds2, nullptr);
   // Create an iterator over the result of the above dataset
@@ -54,7 +57,9 @@ TEST_F(MindDataTestSlicePatches, TestSlicePacthesParamCheck) {
   EXPECT_EQ(iter2, nullptr);
 }
 
-
+/// Feature: SlicePatches op
+/// Description: Test SlicePatches op in pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSlicePatches, TestSlicePatchesPipeline) {
   MS_LOG(INFO) << "Doing TestGaussianBlurPipeline.";
 
@@ -64,7 +69,7 @@ TEST_F(MindDataTestSlicePatches, TestSlicePatchesPipeline) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> slice_patches(new vision::SlicePatches(2, 2));
+  auto slice_patches = std::make_shared<vision::SlicePatches>(2, 2);
 
   // Create a Map operation on ds
   ds = ds->Map({slice_patches}, {"image"}, {"img0", "img1", "img2", "img3"}, {"img0", "img1", "img2", "img3"});
@@ -97,6 +102,9 @@ TEST_F(MindDataTestSlicePatches, TestSlicePatchesPipeline) {
   iter->Stop();
 }
 
+/// Feature: SlicePatches op
+/// Description: Test SlicePatches op in eager mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSlicePatches, TestSlicePatchesEager) {
   MS_LOG(INFO) << "Doing TestGaussianBlurEager.";
 

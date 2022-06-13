@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with string file pattern
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMindDataSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess1 with string file pattern.";
 
@@ -59,6 +62,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess1) {
   iter->Stop();
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestMindDataGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataGetters with string file pattern.";
 
@@ -75,6 +81,9 @@ TEST_F(MindDataTestPipeline, TestMindDataGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with a vector of single MindRecord file
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMindDataSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess2 with a vector of single mindrecord file.";
 
@@ -109,6 +118,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess2) {
   iter->Stop();
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with a vector of multiple MindRecord files
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMindDataSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess3 with a vector of multiple mindrecord files.";
 
@@ -145,6 +157,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess3) {
   iter->Stop();
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with specified column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMindDataSuccess4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess4 with specified column.";
 
@@ -180,6 +195,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess4) {
   iter->Stop();
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with specified sampler
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMindDataSuccess5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess5 with specified sampler.";
 
@@ -220,6 +238,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess5) {
   iter->Stop();
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with num_samples out of range
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMindDataSuccess6) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess6 with num_samples out of range.";
 
@@ -279,6 +300,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess6) {
   }
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with padded sample with skip op
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMindDataSuccess7) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess7 with padded sample.";
 
@@ -331,6 +355,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess7) {
   iter->Stop();
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with padded sample with skip op and repeat op
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess8 with padded sample.";
 
@@ -402,6 +429,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
   iter->Stop();
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with padded sample with repeat op, project op, and concat op
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestMindDataSuccess9) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess9 with padded sample.";
 
@@ -475,6 +505,9 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess9) {
   iter->Stop();
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with incorrect file path
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMindDataFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataFail1 with incorrect file path.";
 
@@ -511,6 +544,9 @@ TEST_F(MindDataTestPipeline, TestMindDataFail1) {
   EXPECT_EQ(iter3, nullptr);
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with incorrect column name
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMindDataFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataFail2 with incorrect column name.";
 
@@ -547,6 +583,9 @@ TEST_F(MindDataTestPipeline, TestMindDataFail2) {
   EXPECT_EQ(iter3, nullptr);
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with unsupported sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMindDataFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataFail3 with unsupported sampler.";
 
@@ -571,6 +610,9 @@ TEST_F(MindDataTestPipeline, TestMindDataFail3) {
   EXPECT_EQ(iter2, nullptr);
 }
 
+/// Feature: MindDataDataset
+/// Description: Test MindDataDataset with invalid num_padded and padded_sample set of inputs
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMindDataFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindData with padded sample.";
 

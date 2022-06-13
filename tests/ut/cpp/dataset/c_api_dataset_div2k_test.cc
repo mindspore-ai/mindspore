@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: DIV2KDataset.
-/// Description: test basic usage of DIV2KDataset.
-/// Expectation: get correct number of data.
+/// Feature: DIV2KDataset
+/// Description: Test basic usage of DIV2KDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDIV2KBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KBasic.";
 
@@ -63,9 +63,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KBasic) {
   iter->Stop();
 }
 
-/// Feature: DIV2KDatasetWithPipeline.
-/// Description: test usage of DIV2KDataset with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: DIV2KDataset
+/// Description: Test usage of DIV2KDataset with pipeline
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDIV2KBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KBasicWithPipeline.";
 
@@ -124,9 +124,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KBasicWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: DIV2KIteratorOneColumn.
-/// Description: test iterator of DIV2KDataset with only the "hr_image" column.
-/// Expectation: get correct data.
+/// Feature: DIV2KDataset
+/// Description: Test iterator of DIV2KDataset with only the hr_image column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDIV2KIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KIteratorOneColumn.";
   // Create a DIV2K Dataset
@@ -167,9 +167,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: DIV2KIteratorWrongColumn.
-/// Description: test iterator of DIV2KDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: DIV2KDataset
+/// Description: Test iterator of DIV2KDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestDIV2KIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KIteratorWrongColumn.";
   // Create a DIV2K Dataset
@@ -186,9 +186,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: DIV2KDatasetGetters.
-/// Description: test usage of getters DIV2KDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: DIV2KDataset
+/// Description: Test usage of DIV2KDataset Getters method
+/// Expectation: Get correct number of data and correct tensor shape
 TEST_F(MindDataTestPipeline, TestDIV2KGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KGetters.";
 
@@ -213,9 +213,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KGetters) {
   EXPECT_EQ(ds2->GetColumnNames(), column_names);
 }
 
-/// Feature: DIV2KDecode.
-/// Description: test usage of DIV2KDecode.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: DIV2KDataset
+/// Description: Test usage of DIV2KDataset with Decode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDIV2KDecode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KDecode.";
 
@@ -257,9 +257,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KDecode) {
   iter->Stop();
 }
 
-/// Feature: DIV2KNumSampler.
-/// Description: test usage of DIV2KDataset with num sampler.
-/// Expectation: get correct piece of data.
+/// Feature: DIV2KDataset
+/// Description: Test usage of DIV2KDataset with num sampler
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestDIV2KNumSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KNumSamplers.";
 
@@ -300,9 +300,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KNumSamplers) {
   iter->Stop();
 }
 
-/// Feature: DIV2KError.
-/// Description: test failure of DIV2K Dataset.
-/// Expectation: get none piece of data.
+/// Feature: DIV2KDataset
+/// Description: Test DIV2KDataset with non-existing dataset directory and other invalid inputs
+/// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestDIV2KError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KError.";
 
@@ -366,9 +366,9 @@ TEST_F(MindDataTestPipeline, TestDIV2KError) {
   EXPECT_EQ(iter5, nullptr);
 }
 
-/// Feature: DIV2KWithNullSamplerError.
-/// Description: test failure of DIV2K Dataset.
-/// Expectation: get none piece of data.
+/// Feature: DIV2KDataset
+/// Description: Test DIV2KDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestDIV2KWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDIV2KWithNullSamplerError.";
 

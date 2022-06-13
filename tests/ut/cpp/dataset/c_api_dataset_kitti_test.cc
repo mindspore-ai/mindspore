@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 protected:
 };
 
-/// Feature: KITTIDatasetPipeline.
-/// Description: test Pipeline of KITTI.
-/// Expectation: get correct data.
+/// Feature: KITTIDataset
+/// Description: Test KITTIDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestKITTIPipeline) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKITTIPipeline.";
 
@@ -71,9 +71,9 @@ TEST_F(MindDataTestPipeline, TestKITTIPipeline) {
  iter->Stop();
 }
 
-/// Feature: KITTITrainDatasetGetters.
-/// Description: test usage of getters KITTITrainDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: KITTIDataset
+/// Description: Test KITTIDataset Getters method
+/// Expectation: Get correct number of data and correct tensor shape
 TEST_F(MindDataTestPipeline, TestKITTITrainDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKITTITrainDatasetGetters.";
 
@@ -112,9 +112,9 @@ TEST_F(MindDataTestPipeline, TestKITTITrainDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 2);
 }
 
-/// Feature: KITTIUsageTrainDecodeFalse.
-/// Description: test get train dataset of KITTI and test decode.
-/// Expectation: getters of KITTI get the correct value.
+/// Feature: KITTIDataset
+/// Description: Test KITTIDataset with train dataset and test decode
+/// Expectation: Getters get the correct value
 TEST_F(MindDataTestPipeline, TestKITTIUsageTrainDecodeFalse) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKITTIGettersTrainDecodeFalse.";
 
@@ -132,9 +132,9 @@ TEST_F(MindDataTestPipeline, TestKITTIUsageTrainDecodeFalse) {
  EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
-/// Feature: TestKITTIUsageTestDecodeTrue.
-/// Description: test get test dataset of KITTI and test the decode.
-/// Expectation: getters of KITTI get the correct value.
+/// Feature: KITTIDataset
+/// Description: Test KITTIDataset with test dataset and test decode
+/// Expectation: Getters of KITTI get the correct value
 TEST_F(MindDataTestPipeline, TestKITTIUsageTestDecodeTrue) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKITTIGettersTestDecodeTrue.";
 
@@ -151,9 +151,9 @@ TEST_F(MindDataTestPipeline, TestKITTIUsageTestDecodeTrue) {
  EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
-/// Feature: KITTIPipelineRandomSampler.
-/// Description: test RandomSampler of KITTI.
-/// Expectation: getters of KITTI get the correct value.
+/// Feature: KITTIDataset
+/// Description: Test KITTIDataset with RandomSampler
+/// Expectation: Getters of KITTI get the correct value
 TEST_F(MindDataTestPipeline, TestKITTIPipelineRandomSampler) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKITTIPipelineRandomSampler.";
 
@@ -170,9 +170,9 @@ TEST_F(MindDataTestPipeline, TestKITTIPipelineRandomSampler) {
  EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
-/// Feature: KITTIPipelineDistributedSampler.
-/// Description: test DistributedSampler of KITTI.
-/// Expectation: getters of KITTI get the correct value.
+/// Feature: KITTIDataset
+/// Description: Test KITTIDataset with DistributedSampler
+/// Expectation: Getters of KITTI get the correct value
 TEST_F(MindDataTestPipeline, TestKITTIPipelineDistributedSampler) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKITTIPipelineDistributedSampler.";
 
@@ -200,9 +200,9 @@ TEST_F(MindDataTestPipeline, TestKITTIPipelineDistributedSampler) {
  iter->Stop();
 }
 
-/// Feature: KITTIDatasetWithNullSampler.
-/// Description: test null sampler of KITTI.
-/// Expectation: throw exception correctly.
+/// Feature: KITTIDataset
+/// Description: Test KITTIDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestKITTIWithNullSamplerError) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKITTIWithNullSamplerError.";
  // Create a KITTI Dataset.
@@ -216,9 +216,9 @@ TEST_F(MindDataTestPipeline, TestKITTIWithNullSamplerError) {
  EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: KITTIDatasetWithNullPath.
-/// Description: test null path of KITTI.
-/// Expectation: throw exception correctly.
+/// Feature: KITTIDataset
+/// Description: Test KITTIDataset with empty string path
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestKITTIWithNullPath) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKITTIWithNullPath.";
  // Create a KITTI Dataset.
@@ -232,9 +232,9 @@ TEST_F(MindDataTestPipeline, TestKITTIWithNullPath) {
  EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: KITTIDatasetWithWrongUsage.
-/// Description: test wrong usage of KITTI.
-/// Expectation: throw exception correctly.
+/// Feature: KITTIDataset
+/// Description: Test KITTIDataset with wrong usage
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestKITTIWithWrongUsage) {
  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestKITTIWithWrongUsage.";
  // Create a KITTI Dataset.

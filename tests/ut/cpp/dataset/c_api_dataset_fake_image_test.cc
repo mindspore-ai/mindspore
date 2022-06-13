@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: FakeImageDataset
-/// Description: test FakeImage 
-/// Expectation: get correct FakeImage dataset
+/// Description: Test FakeImageDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestFakeImageDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDataset.";
 
@@ -62,9 +62,9 @@ TEST_F(MindDataTestPipeline, TestFakeImageDataset) {
   iter->Stop();
 }
 
-/// Feature: FakeImageDatasetWithPipeline
-/// Description: test FakeImage in pipeline mode
-/// Expectation: get correct FakeImage dataset
+/// Feature: FakeImageDataset
+/// Description: Test FakeImageDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetWithPipeline.";
 
@@ -118,9 +118,10 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithPipeline) {
   // Manually terminate the pipeline
   iter->Stop();
 }
-/// Feature: FakeImageIteratorOneColumn.
-/// Description: test iterator of FakeImageDataset with only the "image" column.
-/// Expectation: get correct data.
+
+/// Feature: FakeImageDataset
+/// Description: Test iterator of FakeImageDataset with only the image column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestFakeImageIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageIteratorOneColumn.";
   // Create a FakeImage Dataset
@@ -159,9 +160,9 @@ TEST_F(MindDataTestPipeline, TestFakeImageIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: FakeImageIteratorWrongColumn.
-/// Description: test iterator of FakeImageDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: FakeImageDataset
+/// Description: Test iterator of FakeImageDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFakeImageIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageIteratorWrongColumn.";
   // Create a FakeImage Dataset
@@ -174,9 +175,9 @@ TEST_F(MindDataTestPipeline, TestFakeImageIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: GetFakeImageDatasetSize
-/// Description: test GetDataSize of FakeImage 
-/// Expectation: get the correct size of FakeImage
+/// Feature: FakeImageDataset
+/// Description: Test FakeImageDataset GetDatasetSize
+/// Expectation: Get the correct size of the dataset
 TEST_F(MindDataTestPipeline, TestGetFakeImageDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetFakeImageDatasetSize.";
 
@@ -187,9 +188,9 @@ TEST_F(MindDataTestPipeline, TestGetFakeImageDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 50);
 }
 
-/// Feature: FakeImageDatasetGetters
-/// Description: test DatasetGetters of FakeImage 
-/// Expectation: getters of FakeImage get the correct value
+/// Feature: FakeImageDataset
+/// Description: Test FakeImageDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetGetters.";
 
@@ -227,9 +228,9 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 50);
 }
 
-/// Feature: FakeImageDatasetWithInvalidNumImages
-/// Description: test invalid num_images of FakeImage 
-/// Expectation: throw exception correctly
+/// Feature: FakeImageDataset
+/// Description: Test FakeImageDataset with invalid num_image
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidNumImages) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetWithInvalidNumImages.";
 
@@ -243,9 +244,9 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidNumImages) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: FakeImageDatasetWithInvalidImageSize
-/// Description: test invalid image_size of FakeImage 
-/// Expectation: throw exception correctly
+/// Feature: FakeImageDataset
+/// Description: Test FakeImageDataset with invalid image_size
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidImageSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetWithInvalidImageSize.";
 
@@ -259,9 +260,9 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidImageSize) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: FakeImageDatasetWithInvalidNumClasses
-/// Description: test invalid num_classes of FakeImage 
-/// Expectation: throw exception correctly
+/// Feature: FakeImageDataset
+/// Description: Test FakeImageDataset with invalid num_class
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidNumClasses) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetWithInvalidNumClasses.";
 
@@ -275,9 +276,9 @@ TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithInvalidNumClasses) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: FakeImageDatasetWithNullSampler
-/// Description: test FakeImage dataset with null sampler
-/// Expectation: dataset is null
+/// Feature: FakeImageDataset
+/// Description: Test FakeImageDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFakeImageDatasetWithNullSampler) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFakeImageDatasetWithNullSampler.";
 

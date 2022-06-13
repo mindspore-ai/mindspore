@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 // Tests for vision UniformAugment
 // Tests for vision C++ API UniformAugment TensorTransform Operations
 
+/// Feature: UniformAugment op
+/// Description: Test UniformAugment op with shared pointer
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestUniformAugWithOps1Shr) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugWithOps1Shr.";
 
@@ -42,10 +45,11 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps1Shr) {
 
   // Create objects for the tensor ops
   // Use shared pointers
-  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
-  std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
-  std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
-  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment({random_crop_op, center_crop_op}, 2));
+  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{30, 30});
+  auto random_crop_op = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{28, 28});
+  auto center_crop_op = std::make_shared<vision::CenterCrop>(std::vector<int32_t>{16, 16});
+  auto uniform_aug_op = std::make_shared<vision::UniformAugment>(
+    std::vector<std::shared_ptr<TensorTransform>>{random_crop_op, center_crop_op}, 2);
 
   // Create a Map operation on ds
   ds = ds->Map({resize_op, uniform_aug_op});
@@ -74,6 +78,9 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps1Shr) {
   iter->Stop();
 }
 
+/// Feature: UniformAugment op
+/// Description: Test UniformAugment op with auto assignment
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestUniformAugWithOps2Auto) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugWithOps2Auto.";
 
@@ -128,6 +135,9 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps2Auto) {
   delete uniform_aug_op;
 }
 
+/// Feature: UniformAugment op
+/// Description: Test UniformAugment op with object definition
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestUniformAugWithOps3Obj) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugWithOps3Obj.";
 
@@ -175,6 +185,9 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps3Obj) {
   iter->Stop();
 }
 
+/// Feature: UniformAugment op
+/// Description: Test UniformAugment op with invalid num_ops=0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestUniformAugmentFail1num_ops) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail1num_ops with invalid num_ops parameter.";
 
@@ -184,11 +197,12 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail1num_ops) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
-  std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
+  auto random_crop_op = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{28, 28});
+  auto center_crop_op = std::make_shared<vision::CenterCrop>(std::vector<int32_t>{16, 16});
 
   // UniformAug: num_ops must be greater than 0
-  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment({random_crop_op, center_crop_op}, 0));
+  auto uniform_aug_op = std::make_shared<vision::UniformAugment>(
+    std::vector<std::shared_ptr<TensorTransform>>{random_crop_op, center_crop_op}, 0);
 
   // Create a Map operation on ds
   ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -200,6 +214,9 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail1num_ops) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: UniformAugment op
+/// Description: Test UniformAugment op with invalid num_ops > transform size
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestUniformAugmentFail2num_ops) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail2num_ops with invalid num_ops parameter.";
 
@@ -209,11 +226,12 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail2num_ops) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
-  std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
+  auto random_crop_op = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{28, 28});
+  auto center_crop_op = std::make_shared<vision::CenterCrop>(std::vector<int32_t>{16, 16});
 
   // UniformAug: num_ops is greater than transforms size
-  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment({random_crop_op, center_crop_op}, 3));
+  auto uniform_aug_op = std::make_shared<vision::UniformAugment>(
+    std::vector<std::shared_ptr<TensorTransform>>{random_crop_op, center_crop_op}, 3);
 
   // Create a Map operation on ds
   ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -225,6 +243,9 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail2num_ops) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: UniformAugment op
+/// Description: Test UniformAugment op with invalid transform op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestUniformAugmentFail3transforms) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail3transforms with invalid transform.";
 
@@ -235,10 +256,11 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail3transforms) {
 
   // Create objects for the tensor ops
   // RandomRotation has invalid input, negative size
-  std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({-28}));
+  auto random_crop_op = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{-28});
 
   // Create UniformAug op with invalid transform op
-  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment({random_crop_op}, 1));
+  auto uniform_aug_op = std::make_shared<vision::UniformAugment>(
+    std::vector<std::shared_ptr<TensorTransform>>{random_crop_op}, 1);
 
   // Create a Map operation on ds
   ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -250,6 +272,9 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail3transforms) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: UniformAugment op
+/// Description: Test UniformAugment op with null transform op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestUniformAugmentFail4transforms) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail4transforms with invalid transform.";
 
@@ -259,10 +284,11 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail4transforms) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28}));
+  auto random_crop_op = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{28});
 
   // Create UniformAug op with invalid transform op, nullptr
-  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment({random_crop_op, nullptr}, 2));
+  auto uniform_aug_op = std::make_shared<vision::UniformAugment>(
+    std::vector<std::shared_ptr<TensorTransform>>{random_crop_op, nullptr}, 2);
 
   // Create a Map operation on ds
   ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -274,6 +300,9 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail4transforms) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: UniformAugment op
+/// Description: Test UniformAugment op with invalid transform op empty list
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestUniformAugmentFail5transforms) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail5transforms with invalid transform.";
 
@@ -284,7 +313,7 @@ TEST_F(MindDataTestPipeline, TestUniformAugmentFail5transforms) {
 
   // Create UniformAug op with invalid transform op empty list
   std::vector<std::shared_ptr<TensorTransform>> list = {};
-  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment(list, 1));
+  auto uniform_aug_op = std::make_shared<vision::UniformAugment>(list, 1);
 
   // Create a Map operation on ds
   ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});

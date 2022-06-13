@@ -26,8 +26,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: CMUArcticDataset
-/// Description: test CMUArctic 
-/// Expectation: get correct CMUArctic dataset
+/// Description: Test CMUArcticDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCMUArcticBasic) {
   MS_LOG(INFO) << "Doing CMUArcticDataTestPipeline-TestCMUArcticBasic.";
 
@@ -82,8 +82,8 @@ TEST_F(MindDataTestPipeline, TestCMUArcticBasic) {
 }
 
 /// Feature: CMUArcticDataset
-/// Description: test CMUArctic with Pipeline 
-/// Expectation: get correct CMUArctic dataset
+/// Description: Test CMUArcticDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCMUArcticBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCMUArcticBasicWithPipeline.";
 
@@ -138,8 +138,8 @@ TEST_F(MindDataTestPipeline, TestCMUArcticBasicWithPipeline) {
 }
 
 /// Feature: CMUArcticDataset
-/// Description: test CMUArctic with invalid directory 
-/// Expectation: get correct CMUArctic dataset
+/// Description: Test CMUArcticDataset with non-existing dataset directory
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCMUArcticError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCMUArcticError.";
 
@@ -163,8 +163,8 @@ TEST_F(MindDataTestPipeline, TestCMUArcticError) {
 }
 
 /// Feature: CMUArcticDataset
-/// Description: test CMUArctic with Getters 
-/// Expectation: dataset is null
+/// Description: Test CMUArcticDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCMUArcticGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCMUArcticGetters.";
 
@@ -185,8 +185,8 @@ TEST_F(MindDataTestPipeline, TestCMUArcticGetters) {
 }
 
 /// Feature: CMUArcticDataset
-/// Description: test CMUArctic dataset with invalid name
-/// Expectation: dataset is null
+/// Description: Test CMUArcticDataset with invalid name
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCMUArcticWithInvalidNameError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCMUArcticWithInvalidNameError.";
 
@@ -210,8 +210,8 @@ TEST_F(MindDataTestPipeline, TestCMUArcticWithInvalidNameError) {
 }
 
 /// Feature: CMUArcticDataset
-/// Description: test CMUArctic dataset with null sampler
-/// Expectation: dataset is null
+/// Description: Test CMUArcticDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCMUArcticWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCMUArcticWithNullSamplerError.";
 
@@ -227,8 +227,8 @@ TEST_F(MindDataTestPipeline, TestCMUArcticWithNullSamplerError) {
 }
 
 /// Feature: CMUArcticDataset
-/// Description: test CMUArctic with sequential sampler
-/// Expectation: get correct CMUArctic dataset
+/// Description: Test CMUArcticDataset with SequentialSampler
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCMUArcticNumSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCMUArcticWithSequentialSampler.";
 

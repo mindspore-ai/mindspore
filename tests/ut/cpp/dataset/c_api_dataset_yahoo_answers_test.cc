@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: YahooAnswersDataset.
-/// Description: read test data.
-/// Expectation: the data is processed successfully.
+/// Description: Read test data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYahooAnswersDatasetBasic.";
 
@@ -70,8 +70,8 @@ TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetBasic) {
 }
 
 /// Feature: YahooAnswersDataset.
-/// Description: read train data and test data.
-/// Expectation: the data is processed successfully.
+/// Description: Read train data and test data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetUsageAll) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYahooAnswersDatasetUsageAll.";
 
@@ -119,8 +119,8 @@ TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetUsageAll) {
 }
 
 /// Feature: YahooAnswersDataset.
-/// Description: includes tests for shape, type, size.
-/// Expectation: the data is processed successfully.
+/// Description: Includes tests for shape, type, size.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYahooAnswersDatasetGetters.";
 
@@ -148,8 +148,8 @@ TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetGetters) {
 }
 
 /// Feature: YahooAnswersDataset.
-/// Description: read 2 samples from train file.
-/// Expectation: the data is processed successfully.
+/// Description: Read 2 samples from train file.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYahooAnswersDatasetNumSamples.";
 
@@ -195,8 +195,8 @@ TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetNumSamples) {
 }
 
 /// Feature: YahooAnswersDataset.
-/// Description: test in a distributed state.
-/// Expectation: the data is processed successfully.
+/// Description: Test in a distributed state.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYahooAnswersDatasetDistribution.";
 
@@ -242,8 +242,8 @@ TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetDistribution) {
 }
 
 /// Feature: YahooAnswersDataset.
-/// Description: test with invalid input.
-/// Expectation: throw error messages when certain errors occur.
+/// Description: Test with invalid input.
+/// Expectation: Throw error messages when certain errors occur.
 TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYahooAnswersDatasetFail.";
   // Create a YahooAnswers Dataset.
@@ -293,8 +293,8 @@ TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetFail) {
 }
 
 /// Feature: YahooAnswersDataset.
-/// Description: read data with pipeline from test file.
-/// Expectation: the data is processed successfully.
+/// Description: Read data with pipeline from test file.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYahooAnswersDatasetWithPipeline.";
 
@@ -351,8 +351,8 @@ TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetWithPipeline) {
 }
 
 /// Feature: YahooAnswersDataset.
-/// Description: test with shuffle files.
-/// Expectation: the data is processed successfully.
+/// Description: Test with shuffle files.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYahooAnswersDatasetShuffleFilesA.";
 
@@ -412,8 +412,8 @@ TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetShuffleFilesA) {
 }
 
 /// Feature: YahooAnswersDataset.
-/// Description: test with shuffle in file.
-/// Expectation: the data is processed successfully.
+/// Description: Test with shuffle in file.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYahooAnswersDatasetShuffleFilesB.";
 
@@ -469,8 +469,8 @@ TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetShuffleFilesB) {
 }
 
 /// Feature: YahooAnswersDataset.
-/// Description: test with global shuffle.
-/// Expectation: the data is processed successfully.
+/// Description: Test with global shuffle.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestYahooAnswersDatasetShuffleGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestYahooAnswersDatasetShuffleFilesGlobal.";
 

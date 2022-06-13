@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: VOCDataset
+/// Description: Test VOCDataset with class_index
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestVOCClassIndex) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCClassIndex.";
 
@@ -75,6 +78,9 @@ TEST_F(MindDataTestPipeline, TestVOCClassIndex) {
   iter->Stop();
 }
 
+/// Feature: VOCDataset
+/// Description: Test VOCDataset GetClassIndexing
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestVOCGetClassIndex) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCGetClassIndex.";
   // Create a VOC Dataset
@@ -97,6 +103,9 @@ TEST_F(MindDataTestPipeline, TestVOCGetClassIndex) {
   EXPECT_EQ(class_index1[2].second[0], 9);
 }
 
+/// Feature: VOCDataset
+/// Description: Test VOCDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestVOCGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCGetters.";
 
@@ -118,6 +127,9 @@ TEST_F(MindDataTestPipeline, TestVOCGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
+/// Feature: VOCDataset
+/// Description: Test VOCDataset Detection task
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestVOCDetection) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCDetection.";
 
@@ -166,8 +178,8 @@ TEST_F(MindDataTestPipeline, TestVOCDetection) {
   iter->Stop();
 }
 
-// Feature: Test VOC dataset with detection task
-// Description: Create VOC dataset with task="Detection" and count rows
+// Feature: VOCDataset
+// Description: Create VOCDataset with task="Detection" and count rows
 // Expectation: There should be 9 rows
 TEST_F(MindDataTestPipeline, TestVOCDetection1) {
   std::string dataset_path;
@@ -192,6 +204,9 @@ TEST_F(MindDataTestPipeline, TestVOCDetection1) {
   iter->Stop();
 }
 
+/// Feature: VOCDataset
+/// Description: Test VOCDataset with invalid task or invalid mode
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestVOCInvalidTaskOrModeError1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCInvalidTaskOrModeError1.";
 
@@ -214,6 +229,9 @@ TEST_F(MindDataTestPipeline, TestVOCInvalidTaskOrModeError1) {
   EXPECT_EQ(iter2, nullptr);
 }
 
+/// Feature: VOCDataset
+/// Description: Test VOCDataset Segmentation task
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestVOCSegmentation) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCSegmentation.";
 
@@ -261,8 +279,8 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentation) {
   iter->Stop();
 }
 
-// Feature: Test VOC dataset with Segmentation task
-// Description: Create VOC dataset with take="Segmentation" and count rows
+// Feature: VOCDataset
+// Description: Create VOCDataset with take="Segmentation" and count rows
 // Expectation: There should be 10 rows
 TEST_F(MindDataTestPipeline, TestVOCSegmentation1) {
   std::string dataset_path;
@@ -287,6 +305,9 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentation1) {
   iter->Stop();
 }
 
+/// Feature: VOCDataset
+/// Description: Test VOCDataset Segmentation task with invalid sampler input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestVOCSegmentationError2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCSegmentationError2.";
 
@@ -303,6 +324,9 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentationError2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: VOCDataset
+/// Description: Test VOCDataset Segmentation task with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestVOCWithNullSamplerError3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCWithNullSamplerError3.";
 

@@ -69,72 +69,88 @@ class MindDataTestIRVision : public UT::DatasetOpTesting {
   MindDataTestIRVision() = default;
 };
 
+/// Feature: AutoContrast op
+/// Description: Test AutoContrast op with invalid cutoff
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestIRVision, TestAutoContrastFail1) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestAutoContrastFail1.";
 
   // Testing invalid cutoff < 0
-  std::shared_ptr<TensorOperation> auto_contrast1(new vision::AutoContrastOperation(-1.0, {}));
+  auto auto_contrast1 = std::make_shared<vision::AutoContrastOperation>(-1.0, std::vector<uint32_t>{});
   Status rc1 = auto_contrast1->ValidateParams();
   EXPECT_ERROR(rc1);
 
   // Testing invalid cutoff > 100
-  std::shared_ptr<TensorOperation> auto_contrast2(new vision::AutoContrastOperation(110.0, {10, 20}));
+  auto auto_contrast2 = std::make_shared<vision::AutoContrastOperation>(110.0, std::vector<uint32_t>{10, 20});
   Status rc2 = auto_contrast2->ValidateParams();
   EXPECT_ERROR(rc2);
 }
 
+/// Feature: CenterCrop op
+/// Description: Test CenterCrop op with invalid parameters
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestIRVision, TestCenterCropFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestCenterCrop with invalid parameters.";
 
   Status rc;
 
   // center crop height value negative
-  std::shared_ptr<TensorOperation> center_crop1(new vision::CenterCropOperation({-32, 32}));
+  auto center_crop1 = std::make_shared<vision::CenterCropOperation>(std::vector<int32_t>{-32, 32});
   rc = center_crop1->ValidateParams();
   EXPECT_ERROR(rc);
 
   // center crop width value negative
-  std::shared_ptr<TensorOperation> center_crop2(new vision::CenterCropOperation({32, -32}));
+  auto center_crop2 = std::make_shared<vision::CenterCropOperation>(std::vector<int32_t>{32, -32});
   rc = center_crop2->ValidateParams();
   EXPECT_ERROR(rc);
 
   // 0 value would result in nullptr
-  std::shared_ptr<TensorOperation> center_crop3(new vision::CenterCropOperation({0, 32}));
+  auto center_crop3 = std::make_shared<vision::CenterCropOperation>(std::vector<int32_t>{0, 32});
   rc = center_crop3->ValidateParams();
   EXPECT_ERROR(rc);
 
   // center crop with 3 values
-  std::shared_ptr<TensorOperation> center_crop4(new vision::CenterCropOperation({10, 20, 30}));
+  auto center_crop4 = std::make_shared<vision::CenterCropOperation>(std::vector<int32_t>{10, 20, 30});
   rc = center_crop4->ValidateParams();
   EXPECT_ERROR(rc);
 }
 
+/// Feature: Crop op
+/// Description: Test Crop op with invalid parameters
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestIRVision, TestCropFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestCrop with invalid parameters.";
 
   Status rc;
 
   // wrong width
-  std::shared_ptr<TensorOperation> crop1(new vision::CropOperation({0, 0}, {32, -32}));
+  auto crop1 = std::make_shared<vision::CropOperation>(
+    std::vector<int32_t>{0, 0}, std::vector<int32_t>{32, -32});
   rc = crop1->ValidateParams();
   EXPECT_ERROR(rc);
 
   // wrong height
-  std::shared_ptr<TensorOperation> crop2(new vision::CropOperation({0, 0}, {-32, -32}));
+  auto crop2 = std::make_shared<vision::CropOperation>(
+    std::vector<int32_t>{0, 0}, std::vector<int32_t>{-32, -32});
   rc = crop2->ValidateParams();
   EXPECT_ERROR(rc);
 
   // zero height
-  std::shared_ptr<TensorOperation> crop3(new vision::CropOperation({0, 0}, {0, 32}));
+  auto crop3 = std::make_shared<vision::CropOperation>(
+    std::vector<int32_t>{0, 0}, std::vector<int32_t>{0, 32});
   rc = crop3->ValidateParams();
   EXPECT_ERROR(rc);
 
   // negative coordinates
-  std::shared_ptr<TensorOperation> crop4(new vision::CropOperation({-1, 0}, {32, 32}));
+  auto crop4 = std::make_shared<vision::CropOperation>(
+    std::vector<int32_t>{-1, 0}, std::vector<int32_t>{32, 32});
   rc = crop4->ValidateParams();
   EXPECT_ERROR(rc);
 }
 
+/// Feature: CutOut op
+/// Description: Test CutOut op with invalid parameters (negative length and number of patches)
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestIRVision, TestCutOutFail1) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestCutOutFail1 with invalid parameters.";
 
@@ -152,6 +168,9 @@ TEST_F(MindDataTestIRVision, TestCutOutFail1) {
   EXPECT_ERROR(rc);
 }
 
+/// Feature: CutOut op
+/// Description: Test CutOut op with invalid parameters (zero length and number of patches)
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestIRVision, TestCutOutFail2) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestCutOutFail2 with invalid params, boundary cases.";
 
@@ -170,8 +189,8 @@ TEST_F(MindDataTestIRVision, TestCutOutFail2) {
 }
 
 /// Feature: Normalize op
-/// Description: test invalid input parameters at IR level
-/// Expectation: throw correct error and message
+/// Description: Test invalid input parameters at IR level
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestIRVision, TestNormalizeFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestNormalizeFail with invalid parameters.";
 
@@ -223,8 +242,8 @@ TEST_F(MindDataTestIRVision, TestNormalizeFail) {
 }
 
 /// Feature: NormalizePad op
-/// Description: test invalid input parameters at IR level
-/// Expectation: throw correct error and message
+/// Description: Test invalid input parameters at IR level
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestIRVision, TestNormalizePadFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestNormalizePadFail with invalid parameters.";
 
@@ -265,72 +284,87 @@ TEST_F(MindDataTestIRVision, TestNormalizePadFail) {
   EXPECT_ERROR(rc);
 }
 
+/// Feature: Rescale op
+/// Description: Test Rescale op with negative rescale parameter
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestIRVision, TestRescaleFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRescaleFail with invalid params.";
 
   Status rc;
 
   // incorrect negative rescale parameter
-  std::shared_ptr<TensorOperation> rescale(new vision::RescaleOperation(-1.0, 0.0));
+  auto rescale = std::make_shared<vision::RescaleOperation>(-1.0, 0.0);
   rc = rescale->ValidateParams();
   EXPECT_ERROR(rc);
 }
 
+/// Feature: Resize op
+/// Description: Test Resize op with invalid resize values
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestIRVision, TestResizeFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestResize with invalid parameters.";
 
   Status rc;
 
   // negative resize value
-  std::shared_ptr<TensorOperation> resize_op1(new vision::ResizeOperation({30, -30}, InterpolationMode::kLinear));
+  auto resize_op1 = std::make_shared<vision::ResizeOperation>(
+    std::vector<int32_t>{30, -30}, InterpolationMode::kLinear);
   rc = resize_op1->ValidateParams();
   EXPECT_ERROR(rc);
 
   // zero resize value
-  std::shared_ptr<TensorOperation> resize_op2(new vision::ResizeOperation({0, 30}, InterpolationMode::kLinear));
+  auto resize_op2 = std::make_shared<vision::ResizeOperation>(
+    std::vector<int32_t>{0, 30}, InterpolationMode::kLinear);
   rc = resize_op2->ValidateParams();
   EXPECT_ERROR(rc);
 
   // resize with 3 values
-  std::shared_ptr<TensorOperation> resize_op3(new vision::ResizeOperation({30, 20, 10}, InterpolationMode::kLinear));
+  auto resize_op3 = std::make_shared<vision::ResizeOperation>(
+    std::vector<int32_t>{30, 20, 10}, InterpolationMode::kLinear);
   rc = resize_op3->ValidateParams();
   EXPECT_ERROR(rc);
 }
 
+/// Feature: ResizeWithBBox op
+/// Description: Test ResizeWithBBox op with invalid resize values
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestIRVision, TestResizeWithBBoxFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestResizeWithBBoxFail with invalid parameters.";
 
   Status rc;
 
   // Testing negative resize value
-  std::shared_ptr<TensorOperation> resize_with_bbox_op(
-    new vision::ResizeWithBBoxOperation({10, -10}, InterpolationMode::kLinear));
+  auto resize_with_bbox_op = std::make_shared<vision::ResizeWithBBoxOperation>(
+    std::vector<int32_t>{10, -10}, InterpolationMode::kLinear);
   EXPECT_NE(resize_with_bbox_op, nullptr);
   rc = resize_with_bbox_op->ValidateParams();
   EXPECT_ERROR(rc);
 
   // Testing negative resize value
-  std::shared_ptr<TensorOperation> resize_with_bbox_op1(
-    new vision::ResizeWithBBoxOperation({-10}, InterpolationMode::kLinear));
+  auto resize_with_bbox_op1 = std::make_shared<vision::ResizeWithBBoxOperation>(
+    std::vector<int32_t>{-10}, InterpolationMode::kLinear);
   EXPECT_NE(resize_with_bbox_op1, nullptr);
   rc = resize_with_bbox_op1->ValidateParams();
   EXPECT_ERROR(rc);
 
   // Testing zero resize value
-  std::shared_ptr<TensorOperation> resize_with_bbox_op2(
-    new vision::ResizeWithBBoxOperation({0, 10}, InterpolationMode::kLinear));
+  auto resize_with_bbox_op2 = std::make_shared<vision::ResizeWithBBoxOperation>(
+    std::vector<int32_t>{0, 10}, InterpolationMode::kLinear);
   EXPECT_NE(resize_with_bbox_op2, nullptr);
   rc = resize_with_bbox_op2->ValidateParams();
   EXPECT_ERROR(rc);
 
   // Testing resize with 3 values
-  std::shared_ptr<TensorOperation> resize_with_bbox_op3(
-    new vision::ResizeWithBBoxOperation({10, 10, 10}, InterpolationMode::kLinear));
+  auto resize_with_bbox_op3 = std::make_shared<vision::ResizeWithBBoxOperation>(
+    std::vector<int32_t>{10, 10, 10}, InterpolationMode::kLinear);
   EXPECT_NE(resize_with_bbox_op3, nullptr);
   rc = resize_with_bbox_op3->ValidateParams();
   EXPECT_ERROR(rc);
 }
 
+/// Feature: Vision operation name
+/// Description: Create a vision tensor operation and check the name
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestIRVision, TestVisionOperationName) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestVisionOperationName.";
 

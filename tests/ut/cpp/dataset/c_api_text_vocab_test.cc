@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
   } while (false)
 
 /// Feature: C++ text.Vocab class.
-/// Description: test TokensToIds() IdsToTokens() methods of text::Vocab.
-/// Expectation: success.
+/// Description: Test TokensToIds() IdsToTokens() methods of text::Vocab.
+/// Expectation: Success.
 TEST_F(MindDataTestPipeline, TestVocabLookupAndReverseLookup) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupAndReverseLookup.";
   // Create a vocab from vector
@@ -80,6 +80,9 @@ TEST_F(MindDataTestPipeline, TestVocabLookupAndReverseLookup) {
   EXPECT_EQ(multi_words, expected_multi_words);
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test Lookup op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOp.";
 
@@ -134,6 +137,9 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   iter->Stop();
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test Lookup op using an empty string as the unknown_token
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOpEmptyString.";
 
@@ -188,6 +194,9 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
   iter->Stop();
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test Lookup op with mindspore::DataType::kNumberTypeBool
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestVocabLookupBool) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupBool.";
   // Invoke Lookup with Bool data_type
@@ -237,6 +246,9 @@ TEST_F(MindDataTestPipeline, TestVocabLookupBool) {
   iter->Stop();
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test Lookup op with an unknown token that is not a word of vocab
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestVocabLookupOpFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOpFail1.";
   // Create a TextFile Dataset
@@ -264,6 +276,9 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test Lookup op with null vocab
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestVocabLookupOpFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOpFail2.";
   // Create a TextFile Dataset
@@ -288,6 +303,9 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test Lookup op with mindspore::DataType::kObjectTypeString
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestVocabLookupOpFail3DataType) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOpFail3DataType.";
   // Create a TextFile Dataset
@@ -315,6 +333,9 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail3DataType) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test BuildVocab using a dataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDataset.";
 
@@ -372,6 +393,9 @@ TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
   iter->Stop();
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test BuildVocab with default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDatasetDefault.";
 
@@ -436,6 +460,9 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
   iter->Stop();
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test BuildVocab where top_k is negative
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDatasetFail1.";
 
@@ -451,6 +478,9 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail1) {
   EXPECT_EQ(vocab, nullptr);
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test BuildVocab where frequency_range [a, b] is a > b
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDatasetFail2.";
 
@@ -466,6 +496,9 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail2) {
   EXPECT_EQ(vocab, nullptr);
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test BuildVocab where column name does not exist in dataset
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDatasetFail3.";
 
@@ -480,6 +513,9 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail3) {
   EXPECT_EQ(vocab, nullptr);
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test BuildVocab where special tokens are already in the dataset
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDatasetFail4.";
 
@@ -495,6 +531,9 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetFail4) {
   EXPECT_EQ(vocab, nullptr);
 }
 
+/// Feature: C++ text.Vocab class
+/// Description: Test BuildVocab from dataset and Lookup op with mindspore::DataType::kNumberTypeInt64
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabFromDatasetInt64.";
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 
 // Tests for data transforms ops (in alphabetical order)
 
+/// Feature: Compose op
+/// Description: Test Compose op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestComposeSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeSuccess.";
 
@@ -39,8 +42,8 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> decode_op(new vision::Decode());
-  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({777, 777}));
+  auto decode_op = std::make_shared<vision::Decode>();
+  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{777, 777});
   transforms::Compose compose({decode_op, resize_op});
 
   // Create a Map operation on ds
@@ -74,6 +77,9 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
   iter->Stop();
 }
 
+/// Feature: Compose op
+/// Description: Test Compose op with invalid transform op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestComposeFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail1 with invalid transform.";
 
@@ -97,6 +103,9 @@ TEST_F(MindDataTestPipeline, TestComposeFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Compose op
+/// Description: Test Compose op with null transform op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestComposeFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail2 with invalid transform.";
 
@@ -107,7 +116,8 @@ TEST_F(MindDataTestPipeline, TestComposeFail2) {
 
   // Compose: transform ops must not be null
   std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
-  std::shared_ptr<TensorTransform> compose(new transforms::Compose({decode_op, nullptr}));
+  auto compose = std::make_shared<transforms::Compose>(
+    std::vector<std::shared_ptr<TensorTransform>>{decode_op, nullptr});
 
   // Create a Map operation on ds
   ds = ds->Map({compose}, {"image"});
@@ -118,6 +128,9 @@ TEST_F(MindDataTestPipeline, TestComposeFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Compose op
+/// Description: Test Compose op with empty transform list
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestComposeFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail3 with invalid transform.";
 
@@ -139,6 +152,9 @@ TEST_F(MindDataTestPipeline, TestComposeFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Concatenate op
+/// Description: Test basic Concatenate op with prepend and append
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConcatenateSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatenateSuccess1.";
   // Test basic concatenate with prepend and append
@@ -204,6 +220,9 @@ TEST_F(MindDataTestPipeline, TestConcatenateSuccess1) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Concatenate op
+/// Description: Test Concatenate op with no input
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConcatenateSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatenateSuccess2.";
   // Test concatenate with no input
@@ -256,6 +275,9 @@ TEST_F(MindDataTestPipeline, TestConcatenateSuccess2) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Concatenate op
+/// Description: Test Concatenate op with strings
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConcatenateSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatenateSuccess3.";
   // Test concatenate of string
@@ -327,6 +349,9 @@ TEST_F(MindDataTestPipeline, TestConcatenateSuccess3) {
   // GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Concatenate op
+/// Description: Test Concatenate op with negative axis
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConcatenateSuccess4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatenateSuccess4.";
   // Test concatenate with negative axis
@@ -392,6 +417,9 @@ TEST_F(MindDataTestPipeline, TestConcatenateSuccess4) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Concatenate op
+/// Description: Test Concatenate op with type mismatch
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestConcatenateFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatenateFail1.";
   // Test concatenate with type mismatch
@@ -441,6 +469,9 @@ TEST_F(MindDataTestPipeline, TestConcatenateFail1) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Concatenate op
+/// Description: Test Concatenate op with incorrect dimension
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestConcatenateFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatenateFail2.";
   // Test concatenate with incorrect dimension
@@ -489,6 +520,9 @@ TEST_F(MindDataTestPipeline, TestConcatenateFail2) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Concatenate op
+/// Description: Test Concatenate op with wrong axis
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestConcatenateFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatenateFail3.";
   // Test concatenate with wrong axis
@@ -531,6 +565,9 @@ TEST_F(MindDataTestPipeline, TestConcatenateFail3) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Duplicate op
+/// Description: Test Duplicate op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDuplicateSuccess.";
 
@@ -571,6 +608,9 @@ TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
   iter->Stop();
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op basic usage on RandomDataset with Int32 numbers for given shape
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFillSuccessInt) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessInt.";
 
@@ -626,6 +666,9 @@ TEST_F(MindDataTestPipeline, TestFillSuccessInt) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op basic usage on RandomDataset with bool values for given shape
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFillSuccessBool) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessBool.";
 
@@ -680,6 +723,10 @@ TEST_F(MindDataTestPipeline, TestFillSuccessBool) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op using negative numbers on RandomDataset with UInt8 numbers for given shape,
+///     so there will be down typecasting
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessDownTypecast.";
 
@@ -735,6 +782,10 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op using 0 on RandomDataset with UInt8 numbers for given shape,
+///     so there will be down typecasting to 0
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecastZero) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessDownTypecastZero.";
 
@@ -789,6 +840,10 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecastZero) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op using negative numbers on RandomDataset with UInt16 numbers for given shape,
+///     so there will be down typecasting
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast16) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessDownTypecast16.";
 
@@ -845,6 +900,10 @@ TEST_F(MindDataTestPipeline, TestFillSuccessDownTypecast16) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op using 0 on RandomDataset with Float numbers for given shape,
+///     so there will be up typecasting to 0 scalar value
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFillSuccessUpTypecast) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessUpTypecast.";
 
@@ -899,6 +958,9 @@ TEST_F(MindDataTestPipeline, TestFillSuccessUpTypecast) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op on TextFileDataset which contains strings
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestFillSuccessString) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillSuccessString.";
 
@@ -958,6 +1020,9 @@ TEST_F(MindDataTestPipeline, TestFillSuccessString) {
   iter->Stop();
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op with wrongful vector shape instead of scalar
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestFillFailFillValueNotScalar) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFillFailFillValueNotScalar.";
   // Test BasicTokenizer with lower_case true
@@ -997,6 +1062,9 @@ TEST_F(MindDataTestPipeline, TestFillFailFillValueNotScalar) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Mask op
+/// Description: Test Mask op on RandomDataset with Int16 data type with int
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestMaskSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskSuccess1.";
   // Test Mask random int dataset with int
@@ -1051,6 +1119,9 @@ TEST_F(MindDataTestPipeline, TestMaskSuccess1) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Mask op
+/// Description: Test Mask op on RandomDataset with Float16 data type with float
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestMaskSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskSuccess2.";
   // Test Mask random float dataset with float
@@ -1147,6 +1218,9 @@ TEST_F(MindDataTestPipeline, TestMaskSuccess2) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Mask op
+/// Description: Test Mask op on TextFileDataset with strings
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestMaskSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskSuccess3.";
   // Test Mask random text dataset with string
@@ -1209,6 +1283,9 @@ TEST_F(MindDataTestPipeline, TestMaskSuccess3) {
   iter->Stop();
 }
 
+/// Feature: Mask op
+/// Description: Test Mask op with nun-numeric datatype as output result
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMaskFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskFail1.";
   // Test Mask with nun-numeric datatype as output result.
@@ -1242,6 +1319,9 @@ TEST_F(MindDataTestPipeline, TestMaskFail1) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Mask op
+/// Description: Test Mask op with mismatched datatype
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestMaskFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMaskFail2.";
   // Test Mask with mismatched datatype.
@@ -1280,6 +1360,9 @@ TEST_F(MindDataTestPipeline, TestMaskFail2) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: OneHot op
+/// Description: Test OneHot op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotSuccess1.";
   // Testing CutMixBatch on a batch of CHW images
@@ -1345,6 +1428,9 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
   iter->Stop();
 }
 
+/// Feature: OneHot op
+/// Description: Test OneHot op followed by MixUpBatch op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotSuccess2.";
   // Create a Cifar10 Dataset
@@ -1393,6 +1479,9 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
   iter->Stop();
 }
 
+/// Feature: OneHot op
+/// Description: Test OneHot op with invalid num_class=0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestOneHotFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotFail1 with invalid params.";
 
@@ -1413,6 +1502,9 @@ TEST_F(MindDataTestPipeline, TestOneHotFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: OneHot op
+/// Description: Test OneHot op with invalid num_class < 0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestOneHotFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotFail2 with invalid params.";
 
@@ -1433,6 +1525,9 @@ TEST_F(MindDataTestPipeline, TestOneHotFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: PadEnd op
+/// Description: Test PadEnd op basic usage with int as pad_value
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPadEndSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadEndSuccess1.";
   // Test PadEnd basic with int as pad_value
@@ -1487,6 +1582,9 @@ TEST_F(MindDataTestPipeline, TestPadEndSuccess1) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: PadEnd op
+/// Description: Test PadEnd op with pad_shape equals to the current shape, nothing padded
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPadEndSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadEndSuccess2.";
   // Test PadEnd with pad_shape equals to current shape, nothing padded
@@ -1541,6 +1639,9 @@ TEST_F(MindDataTestPipeline, TestPadEndSuccess2) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: PadEnd op
+/// Description: Test PadEnd op without pad_value (using default pad_value)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPadEndSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadEndSuccess3.";
   // Test PadEnd without pad_value (using default pad_value)
@@ -1590,6 +1691,9 @@ TEST_F(MindDataTestPipeline, TestPadEndSuccess3) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: PadEnd op
+/// Description: Test PadEnd op with pad_shape less than current shape, will truncate the values
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPadEndSuccess4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadEndSuccess4.";
   // Test PadEnd with pad_shape less than current shape, will truncate the values
@@ -1644,6 +1748,9 @@ TEST_F(MindDataTestPipeline, TestPadEndSuccess4) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: PadEnd op
+/// Description: Test PadEnd op with string as pad_value
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPadEndSuccess5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadEndSuccess5.";
   // Test PadEnd with string as pad_value
@@ -1704,6 +1811,9 @@ TEST_F(MindDataTestPipeline, TestPadEndSuccess5) {
   iter->Stop();
 }
 
+/// Feature: PadEnd op
+/// Description: Test PadEnd op with type mismatch, source and pad_value are not of the same type
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestPipeline, TestPadEndFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadEndFail.";
   // Test PadEnd with type mismatch, source and pad_value are not of the same type.
@@ -1743,6 +1853,9 @@ TEST_F(MindDataTestPipeline, TestPadEndFail) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: RandomApply op
+/// Description: Test RandomApply op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplySuccess.";
 
@@ -1784,6 +1897,9 @@ TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
   iter->Stop();
 }
 
+/// Feature: RandomApply op
+/// Description: Test RandomApply op with invalid transform op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomApplyFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplyFail1 with invalid transform.";
 
@@ -1807,6 +1923,9 @@ TEST_F(MindDataTestPipeline, TestRandomApplyFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: RandomApply op
+/// Description: Test RandomApply op with null transform op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomApplyFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplyFail2 with invalid transform.";
 
@@ -1817,7 +1936,8 @@ TEST_F(MindDataTestPipeline, TestRandomApplyFail2) {
 
   // RandomApply: transform ops must not be null
   std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
-  std::shared_ptr<TensorTransform> random_apply(new transforms::RandomApply({decode_op, nullptr}));
+  auto random_apply = std::make_shared<transforms::RandomApply>(
+    std::vector<std::shared_ptr<TensorTransform>>{decode_op, nullptr});
 
   // Create a Map operation on ds
   ds = ds->Map({random_apply}, {"image"});
@@ -1828,6 +1948,9 @@ TEST_F(MindDataTestPipeline, TestRandomApplyFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: RandomApply op
+/// Description: Test RandomApply op probability out of range
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomApplyFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplyFail3 with invalid transform.";
 
@@ -1849,6 +1972,9 @@ TEST_F(MindDataTestPipeline, TestRandomApplyFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: RandomApply op
+/// Description: Test RandomApply op with empty transform list
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomApplyFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplyFail4 with invalid transform.";
 
@@ -1870,6 +1996,9 @@ TEST_F(MindDataTestPipeline, TestRandomApplyFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: RandomChoice op
+/// Description: Test RandomChoice op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomChoiceSuccess.";
 
@@ -1879,8 +2008,8 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> resize_op1(new vision::Resize({777, 777}));
-  std::shared_ptr<TensorTransform> resize_op2(new vision::Resize({888, 888}));
+  auto resize_op1 = std::make_shared<vision::Resize>(std::vector<int32_t>{777, 777});
+  auto resize_op2 = std::make_shared<vision::Resize>(std::vector<int32_t>{888, 888});
   auto random_choice = transforms::RandomChoice({resize_op1, resize_op2});
 
   // Create a Map operation on ds
@@ -1912,6 +2041,9 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
   iter->Stop();
 }
 
+/// Feature: RandomChoice op
+/// Description: Test RandomChoice op with invalid transform op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomChoiceFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomChoiceFail1 with invalid transform.";
 
@@ -1936,6 +2068,9 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: RandomChoice op
+/// Description: Test RandomChoice op with null transform op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomChoiceFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomChoiceFail2 with invalid transform.";
 
@@ -1946,7 +2081,8 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail2) {
 
   // RandomChoice: transform ops must not be null
   std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
-  std::shared_ptr<TensorTransform> random_choice(new transforms::RandomApply({decode_op, nullptr}));
+  auto random_choice = std::make_shared<transforms::RandomApply>(
+    std::vector<std::shared_ptr<TensorTransform>>{decode_op, nullptr});
 
   // Create a Map operation on ds
   ds = ds->Map({random_choice}, {"image"});
@@ -1957,6 +2093,9 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: RandomChoice op
+/// Description: Test RandomChoice op with empty transform list
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomChoiceFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomChoiceFail3 with invalid transform.";
 
@@ -1978,6 +2117,9 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Slice op
+/// Description: Test Slice op with user defined slice object
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSliceSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSliceSuccess1.";
   // Test Slice int with user defined slice object.
@@ -2042,6 +2184,9 @@ TEST_F(MindDataTestPipeline, TestSliceSuccess1) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Slice op
+/// Description: Test Slice op on int dataset with bool true (slice all)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSliceSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSliceSuccess2.";
   // Test Slice int with bool true (slice all).
@@ -2107,6 +2252,9 @@ TEST_F(MindDataTestPipeline, TestSliceSuccess2) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Slice op
+/// Description: Test Slice op on int dataset with list of indices including negative
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSliceSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSliceSuccess3.";
   // Test Slice int with list of indices including negative.
@@ -2172,6 +2320,9 @@ TEST_F(MindDataTestPipeline, TestSliceSuccess3) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Slice op
+/// Description: Test Slice op on string dataset with list of indices
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSliceSuccess4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSliceSuccess4.";
   // Test Slice string with list of indices.
@@ -2230,6 +2381,9 @@ TEST_F(MindDataTestPipeline, TestSliceSuccess4) {
   iter->Stop();
 }
 
+/// Feature: Slice op
+/// Description: Test Slice op on int dataset on multi-dimension
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSliceSuccess5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSliceSuccess5.";
   // Test Slice int on multi-dimension.
@@ -2290,6 +2444,9 @@ TEST_F(MindDataTestPipeline, TestSliceSuccess5) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Slice op
+/// Description: Test Slice op with index out of bounds
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSliceFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSliceFail.";
   // Test Slice with index out of bounds.
@@ -2326,6 +2483,9 @@ TEST_F(MindDataTestPipeline, TestSliceFail1) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: Slice op
+/// Description: Test Slice op with false as input for SliceOption only (no other index nor slice list provided)
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSliceFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSliceFail2.";
   // Test Slice with false as input SliceOption only (no other index nor slice list provided)
@@ -2373,6 +2533,9 @@ TEST_F(MindDataTestPipeline, TestSliceFail2) {
   GlobalContext::config_manager()->set_seed(curr_seed);
 }
 
+/// Feature: TypeCast op
+/// Description: Test TypeCast op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTypeCastSuccess.";
 
@@ -2423,6 +2586,9 @@ TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
   iter2->Stop();
 }
 
+/// Feature: TypeCast op
+/// Description: Test TypeCast op with incorrect data type
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTypeCastFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTypeCastFail with invalid param.";
 

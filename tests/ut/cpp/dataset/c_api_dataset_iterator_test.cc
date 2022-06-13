@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: Iterator
+/// Description: Test iterator with an empty column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIteratorEmptyColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorEmptyColumn.";
   // Create a Cifar10 Dataset
@@ -59,6 +62,9 @@ TEST_F(MindDataTestPipeline, TestIteratorEmptyColumn) {
   iter->Stop();
 }
 
+/// Feature: Iterator
+/// Description: Test iterator with one column (image column)
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorOneColumn.";
   // Create a Mnist Dataset
@@ -98,6 +104,9 @@ TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
   iter->Stop();
 }
 
+/// Feature: Iterator
+/// Description: Test iterator by reordering image and label column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorReOrder.";
   // Create a Cifar10 Dataset
@@ -137,6 +146,9 @@ TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
   iter->Stop();
 }
 
+/// Feature: Iterator
+/// Description: Test iterator with 2 columns (image and bbox)
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorTwoColumns.";
   // Create a VOC Dataset
@@ -180,6 +192,9 @@ TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
   iter->Stop();
 }
 
+/// Feature: Iterator
+/// Description: Test iterator with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorOneColumn.";
   // Create a Mnist Dataset
@@ -193,6 +208,9 @@ TEST_F(MindDataTestPipeline, TestIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Iterator
+/// Description: Test iterator with num_epochs
+/// Expectation: The data is processed successfully and throw correct error when getting a row beyond limit
 TEST_F(MindDataTestPipeline, TestIteratorNumEpoch) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorNumEpoch.";
 
@@ -225,6 +243,9 @@ TEST_F(MindDataTestPipeline, TestIteratorNumEpoch) {
   iter->Stop();
 }
 
+/// Feature: Iterator
+/// Description: Test iterator with incorrect num_epochs value
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestIteratorNumEpochFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorNumEpochFail.";
 

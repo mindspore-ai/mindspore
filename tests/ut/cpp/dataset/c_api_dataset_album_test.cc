@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: AlbumDataset.
-/// Description: test basic usage of AlbumDataset.
-/// Expectation: get correct number of data.
+/// Description: Test basic usage of AlbumDataset.
+/// Expectation: Get correct number of data.
 TEST_F(MindDataTestPipeline, TestAlbumBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumBasic.";
 
@@ -159,8 +159,8 @@ TEST_F(MindDataTestPipeline, TestAlbumWithFullSchema) {
 }
 
 /// Feature: AlbumDatasetWithPipeline.
-/// Description: test usage of AlbumDataset with pipeline.
-/// Expectation: get correct number of data.
+/// Description: Test usage of AlbumDataset with pipeline.
+/// Expectation: Get correct number of data.
 TEST_F(MindDataTestPipeline, TestAlbumBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumBasicWithPipeline.";
 
@@ -217,8 +217,8 @@ TEST_F(MindDataTestPipeline, TestAlbumBasicWithPipeline) {
 }
 
 /// Feature: AlbumIteratorOneColumn.
-/// Description: test iterator of AlbumDataset with only the "image" column.
-/// Expectation: get correct data.
+/// Description: Test iterator of AlbumDataset with only the "image" column.
+/// Expectation: Get correct data.
 TEST_F(MindDataTestPipeline, TestAlbumIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumIteratorOneColumn.";
   // Create a Album Dataset
@@ -259,8 +259,8 @@ TEST_F(MindDataTestPipeline, TestAlbumIteratorOneColumn) {
 }
 
 /// Feature: AlbumIteratorWrongColumn.
-/// Description: test iterator of AlbumDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Description: Test iterator of AlbumDataset with wrong column.
+/// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestAlbumIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumIteratorWrongColumn.";
   // Create a Album Dataset
@@ -277,8 +277,8 @@ TEST_F(MindDataTestPipeline, TestAlbumIteratorWrongColumn) {
 }
 
 /// Feature: AlbumDatasetGetters.
-/// Description: test usage of getters AlbumDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Description: Test usage of getters AlbumDataset.
+/// Expectation: Get correct number of data and correct tensor shape.
 TEST_F(MindDataTestPipeline, TestAlbumGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumGetters.";
 
@@ -308,8 +308,8 @@ TEST_F(MindDataTestPipeline, TestAlbumGetters) {
 }
 
 /// Feature: AlbumDecode.
-/// Description: test usage of AlbumDecode.
-/// Expectation: get correct number of data.
+/// Description: Test usage of AlbumDecode.
+/// Expectation: Get correct number of data.
 TEST_F(MindDataTestPipeline, TestAlbumDecode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumDecode.";
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
@@ -346,8 +346,8 @@ TEST_F(MindDataTestPipeline, TestAlbumDecode) {
 }
 
 /// Feature: AlbumNumSampler.
-/// Description: test usage of AlbumDataset with num sampler.
-/// Expectation: get correct piece of data.
+/// Description: Test usage of AlbumDataset with num sampler.
+/// Expectation: Get correct piece of data.
 TEST_F(MindDataTestPipeline, TestAlbumNumSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumNumSamplers.";
 
@@ -382,8 +382,8 @@ TEST_F(MindDataTestPipeline, TestAlbumNumSamplers) {
 }
 
 /// Feature: AlbumError.
-/// Description: test failure of Album Dataset.
-/// Expectation: get none piece of data.
+/// Description: Test failure of Album Dataset.
+/// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestAlbumError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumError.";
   std::string folder_path = datasets_root_path_ + "/testAlbum/ima";
@@ -400,8 +400,8 @@ TEST_F(MindDataTestPipeline, TestAlbumError) {
 }
 
 /// Feature: AlbumWithNullSamplerError.
-/// Description: test failure of Album Dataset.
-/// Expectation: get none piece of data.
+/// Description: Test failure of Album Dataset.
+/// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestAlbumWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumWithNullSamplerError.";
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
@@ -418,8 +418,8 @@ TEST_F(MindDataTestPipeline, TestAlbumWithNullSamplerError) {
 }
 
 /// Feature: AlbumDuplicateColumnNameError.
-/// Description: test failure of Album Dataset.
-/// Expectation: get none piece of data.
+/// Description: Test failure of Album Dataset.
+/// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestAlbumDuplicateColumnNameError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumDuplicateColumnNameError.";
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";

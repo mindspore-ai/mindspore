@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: CityscapesDataset
+/// Description: Basic test of CityscapesDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCityscapesBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCityscapesBasic.";
 
@@ -62,6 +65,9 @@ TEST_F(MindDataTestPipeline, TestCityscapesBasic) {
   iter->Stop();
 }
 
+/// Feature: CityscapesDataset
+/// Description: Test CityscapesDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCityscapesBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCityscapesBasicWithPipeline.";
 
@@ -119,6 +125,9 @@ TEST_F(MindDataTestPipeline, TestCityscapesBasicWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: CityscapesDataset
+/// Description: Test CityscapesDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCityscapesGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCityscapesGetters.";
 
@@ -144,6 +153,9 @@ TEST_F(MindDataTestPipeline, TestCityscapesGetters) {
   EXPECT_EQ(ds2->GetBatchSize(), 1);
 }
 
+/// Feature: CityscapesDataset
+/// Description: Test CityscapesDataset in where the dataset comes from .json file
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCityscapesTaskJson) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCityscapesTaskJson.";
 
@@ -191,6 +203,9 @@ TEST_F(MindDataTestPipeline, TestCityscapesTaskJson) {
   iter->Stop();
 }
 
+/// Feature: CityscapesDataset
+/// Description: Test CityscapesDataset with Decode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCityscapesDecode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCityscapesDecode.";
 
@@ -231,6 +246,9 @@ TEST_F(MindDataTestPipeline, TestCityscapesDecode) {
   iter->Stop();
 }
 
+/// Feature: CityscapesDataset
+/// Description: Test CityscapesDataset using sampler
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCityscapesNumSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCityscapesNumSamplers.";
 
@@ -270,6 +288,9 @@ TEST_F(MindDataTestPipeline, TestCityscapesNumSamplers) {
   iter->Stop();
 }
 
+/// Feature: CityscapesDataset
+/// Description: Test CityscapesDataset with invalid inputs
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCityscapesError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCityscapesError.";
 
@@ -315,6 +336,9 @@ TEST_F(MindDataTestPipeline, TestCityscapesError) {
   EXPECT_EQ(iter3, nullptr);
 }
 
+/// Feature: CityscapesDataset
+/// Description: Test CityscapesDataset using nullptr for sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCityscapesWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCityscapesWithNullSamplerError.";
 

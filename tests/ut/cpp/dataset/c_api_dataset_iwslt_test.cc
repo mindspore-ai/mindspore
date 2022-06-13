@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: read IWSLT2016Dataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Description: Read IWSLT2016Dataset data and get data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetBasic.";
 
@@ -71,8 +71,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetBasic) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: read IWSLT2016Dataset data and get data (usage=valid).
-/// Expectation: the data is processed successfully.
+/// Description: Read IWSLT2016Dataset data and get data (usage=valid).
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetUsageValidBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetUsageValidBasic.";
 
@@ -117,8 +117,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetUsageValidBasic) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: read IWSLT2016Dataset data and get data (usage=test).
-/// Expectation: the data is processed successfully.
+/// Description: Read IWSLT2016Dataset data and get data (usage=test).
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetUsageTestBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetUsageTestBasic.";
 
@@ -163,8 +163,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetUsageTestBasic) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: read IWSLT2016Dataset data and get data (usage=all).
-/// Expectation: the data is processed successfully.
+/// Description: Read IWSLT2016Dataset data and get data (usage=all).
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetUsageAllBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetUsageAllBasic.";
 
@@ -215,8 +215,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetUsageAllBasic) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: includes tests for shape, type, size.
-/// Expectation: the data is processed successfully.
+/// Description: Includes tests for shape, type, size.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetGetters.";
 
@@ -240,8 +240,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetGetters) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: test whether the interface meets expectations when NumSamples is equal to 2.
-/// Expectation: the data is processed successfully.
+/// Description: Test whether the interface meets expectations when NumSamples is equal to 2.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetNumSamples.";
 
@@ -287,8 +287,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetNumSamples) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: test interface in a distributed state.
-/// Expectation: the data is processed successfully.
+/// Description: Test interface in a distributed state.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetDistribution.";
 
@@ -335,8 +335,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetDistribution) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetFail.";
 
@@ -422,8 +422,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetFail) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: test IWSLT2016 Dataset interface in pipeline.
-/// Expectation: the data is processed successfully.
+/// Description: Test IWSLT2016 Dataset interface in pipeline.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetBasicWithPipeline.";
 
@@ -482,8 +482,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetBasicWithPipeline) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: test IWSLT2016 Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test IWSLT2016 Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetShuffleFilesA.";
 
@@ -544,8 +544,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetShuffleFilesA) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: test IWSLT2016 Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test IWSLT2016 Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2016DatasetShuffleFilesB.";
 
@@ -607,8 +607,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2016DatasetShuffleFilesB) {
 }
 
 /// Feature: Test IWSLT2016 Dataset.
-/// Description: test IWSLT2016 Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test IWSLT2016 Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TesIWSLT2016DatasetShuffleFilesGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TesIWSLT2016DatasetShuffleFilesGlobal.";
 
@@ -670,8 +670,8 @@ TEST_F(MindDataTestPipeline, TesIWSLT2016DatasetShuffleFilesGlobal) {
 }
 
 /// Feature: Test IWSLT2017 Dataset.
-/// Description: read IWSLT2017Dataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Description: Read IWSLT2017Dataset data and get data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2017DatasetBasic.";
 
@@ -715,8 +715,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetBasic) {
 }
 
 /// Feature: Test IWSLT2017 Dataset.
-/// Description: read IWSLT2017Dataset data and get data (usage=valid).
-/// Expectation: the data is processed successfully.
+/// Description: Read IWSLT2017Dataset data and get data (usage=valid).
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetUsageValidBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2017DatasetUsageValidBasic.";
 
@@ -761,8 +761,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetUsageValidBasic) {
 }
 
 /// Feature: Test IWSLT2017 Dataset.
-/// Description: read IWSLT2017Dataset data and get data (usage=test).
-/// Expectation: the data is processed successfully.
+/// Description: Read IWSLT2017Dataset data and get data (usage=test).
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetUsageTestBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2017DatasetUsageTestBasic.";
 
@@ -807,8 +807,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetUsageTestBasic) {
 }
 
 /// Feature: Test IWSLT2017 Dataset.
-/// Description: read IWSLT2017Dataset data and get data (usage=all).
-/// Expectation: the data is processed successfully.
+/// Description: Read IWSLT2017Dataset data and get data (usage=all).
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetUsageAllBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2017DatasetUsageAllBasic.";
 
@@ -857,8 +857,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetUsageAllBasic) {
 }
 
 /// Feature: Test IWSLT2017 Dataset.
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2017DatasetFail.";
 
@@ -927,8 +927,8 @@ TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetFail) {
 }
 
 /// Feature: Test IWSLT2017 Dataset.
-/// Description: test IWSLT2017 Dataset interface in pipeline.
-/// Expectation: the data is processed successfully.
+/// Description: Test IWSLT2017 Dataset interface in pipeline.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestIWSLT2017DatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIWSLT2017DatasetBasicWithPipeline.";
 

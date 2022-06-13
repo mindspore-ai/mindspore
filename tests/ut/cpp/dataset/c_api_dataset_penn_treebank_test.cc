@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: read PennTreebank data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetBasic.";
   // Test PennTreebank Dataset with single text file and many default inputs
@@ -84,9 +84,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetBasic) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: read PennTreebank data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetBasicWithPipeline.";
   // Test PennTreebank Dataset with single text file and many default inputs
@@ -151,9 +151,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetBasicWithPipeline) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: TestPennTreebankDatasetIteratorOneColumn.
-/// Description: test iterator of PennTreebankDataset with only the "text" column.
-/// Expectation: get correct data.
+/// Feature: PennTreebankDataset
+/// Description: Test iterator of PennTreebankDataset with only text column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetIteratorOneColumn.";
   // Create a  PennTreebank dataset
@@ -197,9 +197,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: TestPennTreebankDatasetIteratorWrongColumn.
-/// Description: test iterator of PennTreebankDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: PennTreebankDataset
+/// Description: Test iterator of PennTreebankDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetIteratorWrongColumn.";
   // Create a  PennTreebank dataset
@@ -220,9 +220,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: read PennTreebank data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPennTreebankGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankGetters.";
   // Test PennTreebank Dataset with single text file and many default inputs
@@ -258,9 +258,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankGetters) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with invalid samplers
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetFail1.";
 
@@ -276,9 +276,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with empty dataset_files input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetFail2.";
 
@@ -294,9 +294,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with non-existent dataset_files input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetFail3.";
 
@@ -312,9 +312,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with empty string dataset_files input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetFail4.";
 
@@ -330,9 +330,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with invalid num_shards=0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail5) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetFail5.";
 
@@ -348,9 +348,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail5) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with invalid shard_id=-1
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail6) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetFail6.";
 
@@ -366,9 +366,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail6) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with invalid shard_id=2 and num_shards=2 combination
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail7) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetFail7.";
 
@@ -384,9 +384,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetFail7) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: Testing abnormal inputs.
-/// Expectation: Exception thrown to be caught.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with ShuffleMode::kFalse
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetShuffleFalse) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetShuffleFalse.";
 
@@ -451,9 +451,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetShuffleFalse) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: read PennTreebank data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with ShuffleMode::kFiles
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetShuffleFilesA.";
 
@@ -518,9 +518,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetShuffleFilesA) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: read PennTreebank data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with ShuffleMode::kInfile
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetShuffleFilesB.";
 
@@ -585,9 +585,9 @@ TEST_F(MindDataTestPipeline, TestPennTreebankDatasetShuffleFilesB) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
-/// Feature: Test PennTreebank Dataset.
-/// Description: read PennTreebank data and get data.
-/// Expectation: the data is processed successfully.
+/// Feature: PennTreebankDataset
+/// Description: Test PennTreebankDataset with ShuffleMode::kGlobal
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestPennTreebankDatasetShuffleGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPennTreebankDatasetShuffleGlobal.";
 

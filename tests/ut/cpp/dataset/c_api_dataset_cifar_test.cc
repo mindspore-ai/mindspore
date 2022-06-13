@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: Cifar10Dataset
+/// Description: Basic test of Cifar10Dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10Dataset.";
 
@@ -60,6 +63,9 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
   iter->Stop();
 }
 
+/// Feature: Cifar10Dataset
+/// Description: Test Cifar10Dataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCifar10DatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetWithPipeline.";
 
@@ -115,6 +121,9 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: Cifar10Dataset
+/// Description: Test Cifar10Dataset GetDatasetSize
+/// Expectation: The size is correct
 TEST_F(MindDataTestPipeline, TestCifar10GetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10GetDatasetSize.";
 
@@ -126,6 +135,9 @@ TEST_F(MindDataTestPipeline, TestCifar10GetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 10000);
 }
 
+/// Feature: Cifar10Dataset
+/// Description: Test Cifar10Dataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCifar10Getters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10MixGetter.";
 
@@ -164,6 +176,9 @@ TEST_F(MindDataTestPipeline, TestCifar10Getters) {
   EXPECT_EQ(ds->GetDatasetSize(), 10000);
 }
 
+/// Feature: Cifar100Dataset
+/// Description: Basic test of Cifar100Dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100Dataset.";
 
@@ -199,6 +214,9 @@ TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
   iter->Stop();
 }
 
+/// Feature: Cifar100Dataset
+/// Description: Test Cifar100Dataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCifar100Getters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100Getters.";
 
@@ -227,6 +245,9 @@ TEST_F(MindDataTestPipeline, TestCifar100Getters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
+/// Feature: Cifar100Dataset
+/// Description: Test Cifar100Dataset with invalid input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCifar100DatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetFail.";
 
@@ -240,6 +261,9 @@ TEST_F(MindDataTestPipeline, TestCifar100DatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Cifar10Dataset
+/// Description: Test Cifar10Dataset with invalid input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCifar10DatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetFail.";
 
@@ -253,6 +277,9 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Cifar10Dataset
+/// Description: Test Cifar10Dataset with invalid usage arg
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCifar10DatasetWithInvalidUsageFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetWithNullSamplerFail.";
 
@@ -267,6 +294,9 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetWithInvalidUsageFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Cifar10Dataset
+/// Description: Test Cifar10Dataset with invalid sampler (using nullptr)
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCifar10DatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetWithNullSamplerFail.";
 
@@ -281,6 +311,9 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetWithNullSamplerFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Cifar100Dataset
+/// Description: Test Cifar100Dataset with invalid sampler (using nullptr)
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCifar100DatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetWithNullSamplerFail.";
 
@@ -295,6 +328,9 @@ TEST_F(MindDataTestPipeline, TestCifar100DatasetWithNullSamplerFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Cifar100Dataset
+/// Description: Test Cifar100Dataset with invalid sampler (sampler that is not constructed properly)
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCifar100DatasetWithWrongSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetWithWrongSamplerFail.";
 

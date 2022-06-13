@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: Places365TrainStandardDataset.
-/// Description: test basic usage of Places365TrainStandardDataset.
-/// Expectation: get correct number of data.
+/// Feature: Places365Dataset
+/// Description: Test basic usage of Places365Dataset with train-standard dataset
+/// Expectation: The dataset is processed successfully
 TEST_F(MindDataTestPipeline, TestPlaces365TrainStandardDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPlaces365TrainStandardDataset.";
 
@@ -64,9 +64,9 @@ TEST_F(MindDataTestPipeline, TestPlaces365TrainStandardDataset) {
   iter->Stop();
 }
 
-/// Feature: Places365TrainChallengeDataset.
-/// Description: test basic usage of Places365TrainChallengeDataset.
-/// Expectation: get correct number of data.
+/// Feature: Places365Dataset
+/// Description: Test basic usage of Places365Dataset with train-challenge dataset
+/// Expectation: The dataset is processed successfully
 TEST_F(MindDataTestPipeline, TestPlaces365TrainChallengeDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPlaces365TrainChallengeDataset.";
 
@@ -102,9 +102,9 @@ TEST_F(MindDataTestPipeline, TestPlaces365TrainChallengeDataset) {
   iter->Stop();
 }
 
-/// Feature: Places365ValDataset.
-/// Description: test basic usage of Places365ValDataset.
-/// Expectation: get correct number of data.
+/// Feature: Places365Dataset
+/// Description: Test basic usage of Places365Dataset with val dataset
+/// Expectation: The dataset is processed successfully
 TEST_F(MindDataTestPipeline, TestPlaces365ValDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPlaces365ValDataset.";
 
@@ -139,9 +139,9 @@ TEST_F(MindDataTestPipeline, TestPlaces365ValDataset) {
   iter->Stop();
 }
 
-/// Feature: Places365TrainDatasetWithPipeline.
-/// Description: test usage of Places365TrainDataset pith pipeline.
-/// Expectation: get correct number of data.
+/// Feature: Places365Dataset
+/// Description: Test usage of Places365Dataset with pipeline mode with train-standard dataset
+/// Expectation: The dataset is processed successfully
 TEST_F(MindDataTestPipeline, TestPlaces365TrainDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPlaces365TrainDatasetWithPipeline.";
 
@@ -199,9 +199,9 @@ TEST_F(MindDataTestPipeline, TestPlaces365TrainDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: Places365IteratorOneColumn.
-/// Description: test iterator of Places365Dataset with only the "image" column.
-/// Expectation: get correct data.
+/// Feature: Places365Dataset
+/// Description: Test iterator of Places365Dataset with only the image column
+/// Expectation: The dataset is processed successfully
 TEST_F(MindDataTestPipeline, TestPlaces365IteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPlaces365IteratorOneColumn.";
   // Create a Places365 Dataset
@@ -242,9 +242,9 @@ TEST_F(MindDataTestPipeline, TestPlaces365IteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: Places365IteratorWrongColumn.
-/// Description: test iterator of Places365Dataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: Places365Dataset
+/// Description: Test iterator of Places365Dataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPlaces365IteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPlaces365IteratorWrongColumn.";
   // Create a Places365 Dataset
@@ -259,9 +259,9 @@ TEST_F(MindDataTestPipeline, TestPlaces365IteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Places365TrainDatasetSize.
-/// Description: test usage of get the size of Places365TrainDataset.
-/// Expectation: get correct number of data.
+/// Feature: Places365Dataset
+/// Description: Test usage of GetDatasetSize of Places365TrainDataset
+/// Expectation: Get the correct size
 TEST_F(MindDataTestPipeline, TestGetPlaces365TrainDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetPlaces365TrainDatasetSize.";
 
@@ -273,9 +273,9 @@ TEST_F(MindDataTestPipeline, TestGetPlaces365TrainDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 4);
 }
 
-/// Feature: Places365TrainDatasetGetters.
-/// Description: test usage of getters Places365TrainDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: Places365Dataset
+/// Description: Test Places365Dataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPlaces365TrainDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPlaces365TrainDatasetGetters.";
 
@@ -314,9 +314,9 @@ TEST_F(MindDataTestPipeline, TestPlaces365TrainDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 4);
 }
 
-/// Feature: Places365DatasetFail.
-/// Description: test failure of Places365Dataset.
-/// Expectation: get none piece of data.
+/// Feature: Places365Dataset
+/// Description: Test Places365Dataset with invalid folder path input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPlaces365DatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPlaces365DatasetFail.";
 
@@ -330,9 +330,9 @@ TEST_F(MindDataTestPipeline, TestPlaces365DatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Places365DatasetWithInvalidUsageFail.
-/// Description: test failure of Places365Dataset with invalid usage.
-/// Expectation: get none piece of data.
+/// Feature: Places365Dataset
+/// Description: Test Places365Dataset with invalid usage
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPlaces365DatasetWithInvalidUsageFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPlaces365DatasetWithInvalidUsageFail.";
 
@@ -347,9 +347,9 @@ TEST_F(MindDataTestPipeline, TestPlaces365DatasetWithInvalidUsageFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Places365DatasetWithNullSamplerFail.
-/// Description: test failure of Places365Dataset with null sampler.
-/// Expectation: get none piece of data.
+/// Feature: Places365Dataset
+/// Description: Test Places365Dataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestPlaces365DatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPlaces365DatasetWithNullSamplerFail.";
 

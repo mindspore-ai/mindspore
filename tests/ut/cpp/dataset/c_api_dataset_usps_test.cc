@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: USPSTrainDataset.
-/// Description: test basic usage of USPSTrainDataset.
-/// Expectation: get correct number of data.
+/// Feature: USPSDataset
+/// Description: Test basic usage of USPSDataset with train dataset
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestUSPSTrainDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSTrainDataset.";
 
@@ -62,9 +62,9 @@ TEST_F(MindDataTestPipeline, TestUSPSTrainDataset) {
   iter->Stop();
 }
 
-/// Feature: USPSTestDataset.
-/// Description: test basic usage of USPSTestDataset.
-/// Expectation: get correct number of data.
+/// Feature: USPSDataset
+/// Description: Test basic usage of USPSDataset with test dataset
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestUSPSTestDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSTestDataset.";
 
@@ -99,9 +99,9 @@ TEST_F(MindDataTestPipeline, TestUSPSTestDataset) {
   iter->Stop();
 }
 
-/// Feature: USPSAllDataset.
-/// Description: test basic usage of USPSAllDataset.
-/// Expectation: get correct number of data.
+/// Feature: USPSDataset
+/// Description: Test basic usage of USPSDataset with all dataset
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestUSPSAllDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSAllDataset.";
 
@@ -136,9 +136,9 @@ TEST_F(MindDataTestPipeline, TestUSPSAllDataset) {
   iter->Stop();
 }
 
-/// Feature: USPSDatasetWithPipeline.
-/// Description: test usage of USPSDataset with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: USPSDataset
+/// Description: Test usage of USPSDataset with pipeline mode
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestUSPSDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSTrainDatasetWithPipeline.";
 
@@ -194,9 +194,9 @@ TEST_F(MindDataTestPipeline, TestUSPSDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: USPSIteratorOneColumn.
-/// Description: test iterator of USPSDataset with only the "image" column.
-/// Expectation: get correct data.
+/// Feature: USPSDataset
+/// Description: Test iterator of USPSDataset with only the "image" column
+/// Expectation: Get correct data
 TEST_F(MindDataTestPipeline, TestUSPSIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSIteratorOneColumn.";
   // Create a USPS Dataset
@@ -236,9 +236,9 @@ TEST_F(MindDataTestPipeline, TestUSPSIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: USPSIteratorWrongColumn.
-/// Description: test iterator of USPSDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: USPSDataset
+/// Description: Test iterator of USPSDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestUSPSIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSIteratorWrongColumn.";
   // Create a USPS Dataset
@@ -252,9 +252,9 @@ TEST_F(MindDataTestPipeline, TestUSPSIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: GetUSPSDatasetSize.
-/// Description: test usage of get the size of USPSDataset.
-/// Expectation: get correct number of data.
+/// Feature: USPSDataset
+/// Description: Test GetDatasetSize of USPSDataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestGetUSPSDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetUSPSTrainDatasetSize.";
 
@@ -266,9 +266,9 @@ TEST_F(MindDataTestPipeline, TestGetUSPSDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 3);
 }
 
-/// Feature: USPSDatasetGetters.
-/// Description: test usage of getters USPSDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: USPSDataset
+/// Description: Test usage of getters USPSDataset
+/// Expectation: Get correct number of data and correct tensor shape
 TEST_F(MindDataTestPipeline, TestUSPSDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSTrainDatasetGetters.";
 
@@ -303,9 +303,9 @@ TEST_F(MindDataTestPipeline, TestUSPSDatasetGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 3);
 }
 
-/// Feature: USPSDataFail.
-/// Description: test failure of USPSDataset.
-/// Expectation: get none piece of data.
+/// Feature: USPSDataset
+/// Description: Test failure of USPSDataset with empty string as folder path
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestUSPSDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSDatasetFail.";
 
@@ -319,9 +319,9 @@ TEST_F(MindDataTestPipeline, TestUSPSDatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: USPSDatasetWithInvalidUsageFail.
-/// Description: test failure of USPSDataset with invalid usage.
-/// Expectation: get none piece of data.
+/// Feature: USPSDataset
+/// Description: Test failure of USPSDataset with invalid usage
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestUSPSDatasetWithInvalidUsageFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUSPSDatasetWithInvalidUsageFail.";
 

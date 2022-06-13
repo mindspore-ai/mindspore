@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,9 @@ std::vector<double> GenerateMatrix(const std::shared_ptr<Tensor> &input, float_t
   return matrix;
 }
 
+/// Feature: Affine op
+/// Description: Test Affine op using lite_mat_rgb
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestAffineOp, TestAffineLite) {
   MS_LOG(INFO) << "Doing MindDataTestAffine-TestAffineLite.";
 
@@ -80,7 +83,7 @@ TEST_F(MindDataTestAffineOp, TestAffineLite) {
   std::vector<float> shear = {0.0, 0.0};
 
   // Create affine object with default values
-  std::shared_ptr<AffineOp> op(new AffineOp(degree, translation, scale, shear, InterpolationMode::kLinear));
+  auto op = std::make_shared<AffineOp>(degree, translation, scale, shear, InterpolationMode::kLinear);
   // output tensor
   std::shared_ptr<Tensor> output_tensor;
 

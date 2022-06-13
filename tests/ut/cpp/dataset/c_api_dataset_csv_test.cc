@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: CSVDataset
+/// Description: Test CSVDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCSVDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetBasic.";
 
@@ -72,6 +75,9 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetBasic) {
   iter->Stop();
 }
 
+/// Feature: CSVDataset
+/// Description: Test CSVDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCSVGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVGetters.";
 
@@ -85,6 +91,9 @@ TEST_F(MindDataTestPipeline, TestCSVGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
+/// Feature: CSVDataset
+/// Description: Test CSVDataset with multiple files
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCSVDatasetMultiFiles) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetMultiFiles.";
 
@@ -142,6 +151,9 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetMultiFiles) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: CSVDataset
+/// Description: Test CSVDataset with num_samples
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCSVDatasetNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetNumSamples.";
 
@@ -184,6 +196,9 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetNumSamples) {
   iter->Stop();
 }
 
+/// Feature: CSVDataset
+/// Description: Test distributed CSVDataset (with shard_id and num_shards)
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCSVDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetDistribution.";
 
@@ -226,6 +241,9 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetDistribution) {
   iter->Stop();
 }
 
+/// Feature: CSVDataset
+/// Description: Test CSVDataset where each column has different data type
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCSVDatasetType) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetType.";
 
@@ -297,6 +315,9 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetType) {
   iter->Stop();
 }
 
+/// Feature: CSVDataset
+/// Description: Test CSVDataset on header file
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCSVDatasetHeader) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetHeader.";
 
@@ -341,6 +362,9 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetHeader) {
   iter->Stop();
 }
 
+/// Feature: CSVDataset
+/// Description: Test CSVDataset with invalid inputs
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCSVDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetFail.";
   // Create a CSV Dataset
@@ -397,6 +421,9 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetFail) {
   EXPECT_EQ(iter5, nullptr);
 }
 
+/// Feature: CSVDataset
+/// Description: Test with ShuffleMode::kFiles with 2 CSV files, 1.csv and append.csv in lexicographical order
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetShuffleFilesA.";
 
@@ -454,6 +481,9 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesA) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: CSVDataset
+/// Description: Test with ShuffleMode::kFiles with 2 CSV files, append.csv and 1.csv in lexicographical order
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetShuffleFilesB.";
 
@@ -512,6 +542,9 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleFilesB) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: CSVDataset
+/// Description: Test CSVDataset with ShuffleMode::kGlobal
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetShuffleGlobal.";
   // Test CSV Dataset with GLOBLE shuffle
@@ -567,6 +600,9 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetShuffleGlobal) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: CSVDataset
+/// Description: Test CSVDataset with duplicate column name
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCSVDatasetDuplicateColumnNameFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVDatasetDuplicateColumnNameFail.";
 

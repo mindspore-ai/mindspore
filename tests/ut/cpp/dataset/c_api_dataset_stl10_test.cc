@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: STL10TrainDataset.
-/// Description: test basic usage of STL10TrainDataset.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test basic usage of STL10Dataset with train dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSTL10TrainDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10TrainDataset.";
 
@@ -63,9 +63,9 @@ TEST_F(MindDataTestPipeline, TestSTL10TrainDataset) {
   iter->Stop();
 }
 
-/// Feature: STL10TestDataset.
-/// Description: test basic usage of STL10TestDataset.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test basic usage of STL10Dataset with test dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSTL10TestDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10TestDataset.";
 
@@ -100,9 +100,9 @@ TEST_F(MindDataTestPipeline, TestSTL10TestDataset) {
   iter->Stop();
 }
 
-/// Feature: STL10UnlabeledDataset.
-/// Description: test basic usage of STL10UnlabeledDataset.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test basic usage of STL10Dataset with unlabeled dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSTL10UnlabeledDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10UnlabeledDataset.";
 
@@ -137,9 +137,9 @@ TEST_F(MindDataTestPipeline, TestSTL10UnlabeledDataset) {
   iter->Stop();
 }
 
-/// Feature: STL10TrainUnlabeledDataset.
-/// Description: test basic usage of STL10TrainUnlabeledDataset.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test basic usage of STL10Dataset with train+unlabeled dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSTL10TrainUnlabeledDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10TrainUnlabeledDataset.";
 
@@ -174,9 +174,9 @@ TEST_F(MindDataTestPipeline, TestSTL10TrainUnlabeledDataset) {
   iter->Stop();
 }
 
-/// Feature: STL10AllDataset.
-/// Description: test basic usage of STL10AllDataset.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test basic usage of STL10Dataset with all dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSTL10AllDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10AllDataset.";
 
@@ -211,9 +211,9 @@ TEST_F(MindDataTestPipeline, TestSTL10AllDataset) {
   iter->Stop();
 }
 
-/// Feature: STL10TrainDatasetWithPipeline.
-/// Description: test usage of STL10TrainDataset with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test usage of STL10Dataset with pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSTL10TrainDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10TrainDatasetWithPipeline.";
 
@@ -269,9 +269,9 @@ TEST_F(MindDataTestPipeline, TestSTL10TrainDatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: TestSTL10DatasetIteratorOneColumn.
-/// Description: test iterator of STL10Dataset with only the "image" column.
-/// Expectation: get correct data.
+/// Feature: STL10Dataset
+/// Description: Test iterator of STL10Dataset with only the image column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestSTL10DatasetIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10DatasetIteratorOneColumn.";
   // Create a STL10 Dataset
@@ -311,9 +311,9 @@ TEST_F(MindDataTestPipeline, TestSTL10DatasetIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: TestSTL10DatasetIteratorWrongColumn.
-/// Description: test iterator of STL10Dataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: STL10Dataset
+/// Description: Test iterator of STL10Dataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSTL10DatasetIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10DatasetIteratorWrongColumn.";
   // Create a STL10 Dataset
@@ -327,9 +327,9 @@ TEST_F(MindDataTestPipeline, TestSTL10DatasetIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: STL10GetTrainDatasetSize.
-/// Description: test usage of STL10GetTrainDatasetSize with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test usage of STL10Dataset with train dataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSTL10GetTrainDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10GetTrainDatasetSize.";
 
@@ -341,9 +341,9 @@ TEST_F(MindDataTestPipeline, TestSTL10GetTrainDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 1);
 }
 
-/// Feature: STL10GetTestDatasetSize.
-/// Description: test usage of STL10GetTestDatasetSize with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test STL10Dataset with test dataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSTL10GetTestDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10GetTestDatasetSize.";
 
@@ -355,9 +355,9 @@ TEST_F(MindDataTestPipeline, TestSTL10GetTestDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 1);
 }
 
-/// Feature: STL10GetUnlabeledDatasetSize.
-/// Description: test usage of STL10GetUnlabeledDatasetSize with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test STL10Dataset with unlabeled dataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSTL10GetUnlabeledDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10GetUnlabeledDatasetSize.";
 
@@ -369,9 +369,9 @@ TEST_F(MindDataTestPipeline, TestSTL10GetUnlabeledDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 1);
 }
 
-/// Feature: STL10GetTrainUnlabeledDatasetSize.
-/// Description: test usage of STL10GetTrainUnlabeledDatasetSize with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test STL10Dataset with train+unlabeled dataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSTL10GetTrainUnlabeledDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10GetTrainUnlabeledDatasetSize.";
 
@@ -383,9 +383,9 @@ TEST_F(MindDataTestPipeline, TestSTL10GetTrainUnlabeledDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 2);
 }
 
-/// Feature: STL10GetAllDatasetSize.
-/// Description: test usage of STL10GetAllDatasetSize with pipeline.
-/// Expectation: get correct number of data.
+/// Feature: STL10Dataset
+/// Description: Test STL10Dataset with all dataset GetDatasetSize
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSTL10GetAllDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10GetAllDatasetSize.";
 
@@ -397,9 +397,9 @@ TEST_F(MindDataTestPipeline, TestSTL10GetAllDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 3);
 }
 
-/// Feature: STL10TrainDatasetGetters.
-/// Description: test usage of getters STL10TrainDataset.
-/// Expectation: get correct number of data and correct tensor shape.
+/// Feature: STL10Dataset
+/// Description: Test STL10Dataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSTL10TrainGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSTL10TrainGetter.";
 
@@ -438,9 +438,9 @@ TEST_F(MindDataTestPipeline, TestSTL10TrainGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 1);
 }
 
-/// Feature: STL10DatasetFail.
-/// Description: test failure of STL10Dataset.
-/// Expectation: get none piece of data.
+/// Feature: STL10Dataset
+/// Description: Test STL10Dataset with invalid folder path input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, testSTL10DataFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-testSTL10DataFail.";
 
@@ -454,9 +454,9 @@ TEST_F(MindDataTestPipeline, testSTL10DataFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: STL10DatasetWithInvalidUsageFail.
-/// Description: test failure of STL10Dataset with invalid usage.
-/// Expectation: get none piece of data.
+/// Feature: STL10Dataset
+/// Description: Test STL10Dataset with invalid usage
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, testSTL10DataWithInvalidUsageFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-testSTL10DataWithNullSamplerFail.";
 
@@ -471,9 +471,9 @@ TEST_F(MindDataTestPipeline, testSTL10DataWithInvalidUsageFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: STL10DatasetWithNullSamplerFail.
-/// Description: test failure of STL10Dataset with null sampler.
-/// Expectation: get none piece of data.
+/// Feature: STL10Dataset
+/// Description: Test STL10Dataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, testSTL10DataWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-testSTL10DataWithNullSamplerFail.";
 

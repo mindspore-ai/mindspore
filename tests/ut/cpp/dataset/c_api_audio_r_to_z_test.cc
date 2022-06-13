@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: RiaaBiquad op
+/// Description: Test RiaaBiquad op basic usage with sample rate 44100
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate44100) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRiaaBiquadBasicSampleRate44100.";
   // Original waveform
@@ -67,6 +70,9 @@ TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate44100) {
   iter->Stop();
 }
 
+/// Feature: RiaaBiquad op
+/// Description: Test RiaaBiquad op basic usage with sample rate 48000
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate48000) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRiaaBiquadBasicSampleRate48000.";
   // Original waveform
@@ -106,6 +112,9 @@ TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate48000) {
   iter->Stop();
 }
 
+/// Feature: RiaaBiquad op
+/// Description: Test RiaaBiquad op basic usage with sample rate 88200
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate88200) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRiaaBiquadBasicSampleRate88200.";
   // Original waveform
@@ -145,6 +154,9 @@ TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate88200) {
   iter->Stop();
 }
 
+/// Feature: RiaaBiquad op
+/// Description: Test RiaaBiquad op basic usage with sample rate 96000
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate96000) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRiaaBiquadBasicSampleRate96000.";
   // Original waveform
@@ -184,6 +196,9 @@ TEST_F(MindDataTestPipeline, TestRiaaBiquadBasicSampleRate96000) {
   iter->Stop();
 }
 
+/// Feature: RiaaBiquad op
+/// Description: Test RiaaBiquad op basic usage with invalid sample_rate=0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRiaaBiquadWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRiaaBiquadWrongArg.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -203,9 +218,9 @@ TEST_F(MindDataTestPipeline, TestRiaaBiquadWrongArg) {
   EXPECT_EQ(iter01, nullptr);
 }
 
-/// Feature: SlidingWindowCmn
-/// Description: test basic function of SlidingWindowCmn
-/// Expectation: get correct number of data
+/// Feature: SlidingWindowCmn op
+/// Description: Test basic function of SlidingWindowCmn op
+/// Expectation: Get correct number of data
 TEST_F(MindDataTestPipeline, TestSlidingWindowCmn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowCmn.";
 
@@ -229,9 +244,9 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowCmn) {
   iter->Stop();
 }
 
-/// Feature: SlidingWindowCmn
-/// Description: test wrong input args of SlidingWindowCmn
-/// Expectation: get nullptr of iterator
+/// Feature: SlidingWindowCmn op
+/// Description: Test wrong input args of SlidingWindowCmn op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSlidingWindowCmnWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowCmnWrongArgs.";
 
@@ -255,9 +270,9 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowCmnWrongArgs) {
   EXPECT_EQ(iter_2, nullptr);
 }
 
-/// Feature: SpectralCentroid.
-/// Description: test pipeline.
-/// Expectation: success.
+/// Feature: SpectralCentroid op
+/// Description: Test SpectralCentroid op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectralCentroidBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectralCentroidBasic.";
 
@@ -286,9 +301,9 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidBasic) {
   iter->Stop();
 }
 
-/// Feature: SpectralCentroid.
-/// Description: test pipeline.
-/// Expectation: success.
+/// Feature: SpectralCentroid op
+/// Description: Test SpectralCentroid op with default inputs
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectralCentroidDefault) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectralCentroidDefault.";
 
@@ -317,9 +332,9 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidDefault) {
   iter->Stop();
 }
 
-/// Feature: SpectralCentroid.
-/// Description: test some invalid parameters.
-/// Expectation: success.
+/// Feature: SpectralCentroid op
+/// Description: Test SpectralCentroid op with invalid arguments
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSpectralCentroidWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectralCentroidWrongArgs.";
 
@@ -380,9 +395,9 @@ TEST_F(MindDataTestPipeline, TestSpectralCentroidWrongArgs) {
   EXPECT_EQ(iter05, nullptr);
 }
 
-/// Feature: Spectrogram.
-/// Description: test pipeline.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with default inputs
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramDefault) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramDefault.";
 
@@ -412,9 +427,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramDefault) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test parameter: onesided.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with onesided parameter to be false
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramOnesidedFalse) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramOnesidedFalse.";
 
@@ -444,9 +459,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramOnesidedFalse) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test parameter: center.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with center parameter to be false
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramCenterFalse) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramCenterFalse.";
 
@@ -476,9 +491,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramCenterFalse) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test parameter: normaliezd.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with normalized parameter to be true
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramNormalizedTrue) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramNormalizedTrue.";
 
@@ -508,9 +523,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramNormalizedTrue) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test parameter: window.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with WindowType::kHamming
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramWindowHamming) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramWindowHamming.";
 
@@ -540,9 +555,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWindowHamming) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test parameter: pad_mode.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with BorderType::kEdge
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramPadmodeEdge) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramPadmodeEdge.";
 
@@ -572,9 +587,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramPadmodeEdge) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test parameter: power.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with power parameter to be 0
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramPower0) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramPower0.";
 
@@ -604,9 +619,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramPower0) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test parameter: n_fft.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with n_fft parameter to be 50
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramNfft50) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramNfft600.";
 
@@ -636,9 +651,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramNfft50) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test parameter: pad.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with pad parameter to be 10
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramPad10) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramPad50.";
 
@@ -668,9 +683,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramPad10) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test parameter: win_length.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with win_length parameter to be 30
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramWinlength30) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramWinlength300.";
 
@@ -700,9 +715,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWinlength30) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test parameters.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with hop_length parameter to be 30
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestSpectrogramHoplength30) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramHoplength300.";
 
@@ -732,9 +747,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramHoplength30) {
   iter->Stop();
 }
 
-/// Feature: Spectrogram.
-/// Description: test some invalid parameters.
-/// Expectation: success.
+/// Feature: Spectrogram op
+/// Description: Test Spectrogram op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSpectrogramWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpectrogramWrongArgs.";
 
@@ -811,6 +826,9 @@ TEST_F(MindDataTestPipeline, TestSpectrogramWrongArgs) {
   EXPECT_EQ(iter06, nullptr);
 }
 
+/// Feature: TimeMasking op
+/// Description: Test TimeMasking op with pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTimeMaskingPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeMaskingPipeline.";
   // Original waveform
@@ -850,6 +868,9 @@ TEST_F(MindDataTestPipeline, TestTimeMaskingPipeline) {
   iter->Stop();
 }
 
+/// Feature: TimeMasking op
+/// Description: Test TimeMasking op with wrong arguments
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTimeMaskingWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeMaskingWrongArgs.";
   // Original waveform
@@ -871,6 +892,9 @@ TEST_F(MindDataTestPipeline, TestTimeMaskingWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TimeStretch op
+/// Description: Test TimeStretch op with pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTimeStretchPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeStretchPipeline.";
   // op param
@@ -913,6 +937,9 @@ TEST_F(MindDataTestPipeline, TestTimeStretchPipeline) {
   iter->Stop();
 }
 
+/// Feature: TimeStretch op
+/// Description: Test TimeStretch op with pipeline mode with wrong arguments
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTimeStretchPipelineWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTimeStretchPipelineWrongArgs.";
   // op param
@@ -939,6 +966,9 @@ TEST_F(MindDataTestPipeline, TestTimeStretchPipelineWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: TrebleBiquad op
+/// Description: Test TrebleBiquad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestTrebleBiquadBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTrebleBiquadBasic.";
   // Original waveform
@@ -978,6 +1008,9 @@ TEST_F(MindDataTestPipeline, TestTrebleBiquadBasic) {
   iter->Stop();
 }
 
+/// Feature: TrebleBiquad op
+/// Description: Test TrebleBiquad op with invalid sample_rate and Q_
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestTrebleBiquadWrongArg) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTrebleBiquadWrongArg.";
   std::shared_ptr<SchemaObj> schema = Schema();
@@ -1007,9 +1040,9 @@ TEST_F(MindDataTestPipeline, TestTrebleBiquadWrongArg) {
   EXPECT_EQ(iter02, nullptr);
 }
 
-/// Feature: GriffinLim.
-/// Description: test pipeline.
-/// Expectation: success.
+/// Feature: GriffinLim op
+/// Description: Test GriffinLim op with pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestGriffinLimPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGriffinLimPipeline.";
   // Original waveform
@@ -1067,9 +1100,9 @@ TEST_F(MindDataTestPipeline, TestGriffinLimPipeline) {
   iter->Stop();
 }
 
-/// Feature: GriffinLim.
-/// Description: test some invalid parameters.
-/// Expectation: success.
+/// Feature: GriffinLim op
+/// Description: Test GriffinLim op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestGriffinLimWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGriffinLimWrongArgs.";
   // Original waveform
@@ -1144,9 +1177,9 @@ TEST_F(MindDataTestPipeline, TestGriffinLimWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Vad.
-/// Description: test pipeline.
-/// Expectation: success.
+/// Feature: Vad op
+/// Description: Test Vad op with pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestVadPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVadPipeline.";
   // Original waveform
@@ -1204,9 +1237,9 @@ TEST_F(MindDataTestPipeline, TestVadPipeline) {
   iter->Stop();
 }
 
-/// Feature: Vad.
-/// Description: test some invalid parameters.
-/// Expectation: success.
+/// Feature: Vad op
+/// Description: Test Vad op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestVadWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVadWrongArgs.";
   // Original waveform
@@ -1347,6 +1380,9 @@ TEST_F(MindDataTestPipeline, TestVadWrongArgs) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: Vol op
+/// Description: Test Vol op with pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestVolPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVolPipeline.";
   // Original waveform
@@ -1385,6 +1421,9 @@ TEST_F(MindDataTestPipeline, TestVolPipeline) {
   iter->Stop();
 }
 
+/// Feature: Vol op
+/// Description: Test Vol op with wrong arguments
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestVolWrongArgs) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVolWrongArgs.";
   // Original waveform

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ class MindDataTestGaussianBlur : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: GaussianBlur op
+/// Description: Test GaussianBlur op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestGaussianBlur, TestGaussianBlurParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestGaussianBlur-TestGaussianBlurParamCheck with invalid parameters.";
   // Create an ImageFolder Dataset
@@ -34,7 +37,7 @@ TEST_F(MindDataTestGaussianBlur, TestGaussianBlurParamCheck) {
 
   // Case 1: Kernel size is not positive
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> gaussian_blur1(new vision::GaussianBlur({-1}));
+  auto gaussian_blur1 = std::make_shared<vision::GaussianBlur>(std::vector<int32_t>{-1});
   auto ds1 = ds->Map({gaussian_blur1});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -44,7 +47,7 @@ TEST_F(MindDataTestGaussianBlur, TestGaussianBlurParamCheck) {
 
   // Case 2: Kernel size is not odd
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> gaussian_blur2(new vision::GaussianBlur({2, 2}, {3, 3}));
+  auto gaussian_blur2 = std::make_shared<vision::GaussianBlur>(std::vector<int32_t>{2, 2}, std::vector<float>{3, 3});
   auto ds2 = ds->Map({gaussian_blur2});
   EXPECT_NE(ds2, nullptr);
   // Create an iterator over the result of the above dataset
@@ -54,7 +57,7 @@ TEST_F(MindDataTestGaussianBlur, TestGaussianBlurParamCheck) {
 
   // Case 3: Sigma is not positive
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> gaussian_blur3(new vision::GaussianBlur({3}, {-3}));
+  auto gaussian_blur3 = std::make_shared<vision::GaussianBlur>(std::vector<int32_t>{3}, std::vector<float>{-3});
   auto ds3 = ds->Map({gaussian_blur3});
   EXPECT_NE(ds3, nullptr);
   // Create an iterator over the result of the above dataset
@@ -63,6 +66,9 @@ TEST_F(MindDataTestGaussianBlur, TestGaussianBlurParamCheck) {
   EXPECT_EQ(iter3, nullptr);
 }
 
+/// Feature: GaussianBlur op
+/// Description: Test GaussianBlur op in pipeline mode
+/// Expectation: Runs successfully
 TEST_F(MindDataTestGaussianBlur, TestGaussianBlurPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestGaussianBlur-TestGaussianBlurPipeline.";
 
@@ -72,7 +78,7 @@ TEST_F(MindDataTestGaussianBlur, TestGaussianBlurPipeline) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> gaussian_blur(new vision::GaussianBlur({3, 3}, {5, 5}));
+  auto gaussian_blur = std::make_shared<vision::GaussianBlur>(std::vector<int32_t>{3, 3}, std::vector<float>{5, 5});
 
   // Create a Map operation on ds
   ds = ds->Map({gaussian_blur});
@@ -106,6 +112,9 @@ TEST_F(MindDataTestGaussianBlur, TestGaussianBlurPipeline) {
   iter->Stop();
 }
 
+/// Feature: GaussianBlur op
+/// Description: Test GaussianBlur op in eager mode
+/// Expectation: Runs successfully
 TEST_F(MindDataTestGaussianBlur, TestGaussianBlurEager) {
   MS_LOG(INFO) << "Doing MindDataTestGaussianBlur-TestGaussianBlurEager.";
 

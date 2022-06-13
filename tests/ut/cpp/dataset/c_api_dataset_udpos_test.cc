@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: Test UDPOS Dataset.
-/// Description: read data from a single file.
-/// Expectation: three data in one file.
+/// Description: Read data from a single file.
+/// Expectation: Three data in one file.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetBasic.";
   // Test UDPOS Dataset with single UDPOS file and many default inputs.
@@ -84,8 +84,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetBasic) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: repeat read data.
-/// Expectation: five times the read-in data.
+/// Description: Repeat read data.
+/// Expectation: Five times the read-in data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetBasicWithPipeline.";
   // Test UDPOS Dataset with single UDPOS file and many default inputs.
@@ -152,7 +152,7 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetBasicWithPipeline) {
 
 /// Feature: Test UDPOS Dataset.
 /// Description: Includes tests for shape, type, size.
-/// Expectation: correct shape, type, size.
+/// Expectation: Correct shape, type, size.
 TEST_F(MindDataTestPipeline, TestUDPOSGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSGetters.";
   // Test UDPOS Dataset with single UDPOS file and many default inputs.
@@ -195,8 +195,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSGetters) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: test with samplers=-1.
-/// Expectation: unable to read in data.
+/// Description: Test with samplers=-1.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidSamplers) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetInvalidSamplers.";
 
@@ -213,8 +213,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidSamplers) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: test with wrongful empty dataset_files.
-/// Expectation: unable to read in data.
+/// Description: Test with wrongful empty dataset_files.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidFilePath) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetInvalidFilePath.";
 
@@ -230,8 +230,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidFilePath) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: test with non-existent dataset_files.
-/// Expectation: unable to read in data.
+/// Description: Test with non-existent dataset_files.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidFileName) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetInvalidFileName.";
 
@@ -248,8 +248,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidFileName) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: test with empty string dataset_files.
-/// Expectation: unable to read in data.
+/// Description: Test with empty string dataset_files.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetEmptyFilePath) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetEmptyFilePath.";
 
@@ -265,8 +265,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetEmptyFilePath) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: test with invalid num_shards=0 value.
-/// Expectation: unable to read in data.
+/// Description: Test with invalid num_shards=0 value.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidNumShards) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetInvalidNumShards.";
 
@@ -283,8 +283,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidNumShards) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: test with invalid shard_id=-1 value.
-/// Expectation: unable to read in data.
+/// Description: Test with invalid shard_id=-1 value.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidShardId) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetInvalidShardId.";
 
@@ -301,8 +301,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidShardId) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: test with invalid shard_id=2 and num_shards=2 combination.
-/// Expectation: unable to read in data.
+/// Description: Test with invalid shard_id=2 and num_shards=2 combination.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidIdAndShards) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetInvalidIdAndShards.";
 
@@ -319,8 +319,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetInvalidIdAndShards) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: read all data with no shuffle, num_parallel_workers=1.
-/// Expectation: return correct data.
+/// Description: Read all data with no shuffle, num_parallel_workers=1.
+/// Expectation: Return correct data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetShuffleFalse) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetShuffleFalse.";
   // Test UDPOS Dataset with three UDPOS files and no shuffle, num_parallel_workers=1.
@@ -384,8 +384,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetShuffleFalse) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: read all data with files shuffle, num_parallel_workers=1.
-/// Expectation: return correct data.
+/// Description: Read all data with files shuffle, num_parallel_workers=1.
+/// Expectation: Return correct data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetShuffleFilesA.";
   // Test TUDPOS Dataset with files shuffle, num_parallel_workers=1.
@@ -449,8 +449,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetShuffleFilesA) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: read all data with no shuffle, num_parallel_workers=4, shard coverage.
-/// Expectation: return correct data.
+/// Description: Read all data with no shuffle, num_parallel_workers=4, shard coverage.
+/// Expectation: Return correct data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetShuffleFilesB.";
   // Test UDPOS Dataset with files shuffle, num_parallel_workers=1.
@@ -514,8 +514,8 @@ TEST_F(MindDataTestPipeline, TestUDPOSDatasetShuffleFilesB) {
 }
 
 /// Feature: Test UDPOS Dataset.
-/// Description: read all data with global shuffle, num_parallel_workers=1.
-/// Expectation: return correct data.
+/// Description: Read all data with global shuffle, num_parallel_workers=1.
+/// Expectation: Return correct data.
 TEST_F(MindDataTestPipeline, TestUDPOSDatasetShuffleGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUDPOSDatasetShuffleGlobal.";
   // Test UDPOS Dataset with one UDPOS file, global shuffle, num_parallel_workers=1.

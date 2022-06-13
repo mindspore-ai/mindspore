@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: Test IMDB Dataset.
-/// Description: read IMDB data and get all data.
-/// Expectation: the data is processed successfully.
+/// Feature: IMDBDataset
+/// Description: Test IMBDDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIMDBBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBBasic.";
 
@@ -64,9 +64,9 @@ TEST_F(MindDataTestPipeline, TestIMDBBasic) {
   iter->Stop();
 }
 
-/// Feature: Test IMDB Dataset.
-/// Description: read IMDB data and get train data.
-/// Expectation: the data is processed successfully.
+/// Feature: IMDBDataset
+/// Description: Test IMBDDataset with train dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIMDBTrain) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBTrain.";
 
@@ -101,9 +101,9 @@ TEST_F(MindDataTestPipeline, TestIMDBTrain) {
   iter->Stop();
 }
 
-/// Feature: Test IMDB Dataset.
-/// Description: read IMDB data and get test data.
-/// Expectation: the data is processed successfully.
+/// Feature: IMDBDataset
+/// Description: Test IMBDDataset with test dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIMDBTest) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBTest.";
 
@@ -138,9 +138,9 @@ TEST_F(MindDataTestPipeline, TestIMDBTest) {
   iter->Stop();
 }
 
-/// Feature: Test IMDB Dataset.
-/// Description: read IMDB data and test pipeline.
-/// Expectation: the data is processed successfully.
+/// Feature: IMDBDataset
+/// Description: Test IMBDDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIMDBBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBBasicWithPipeline.";
 
@@ -189,9 +189,9 @@ TEST_F(MindDataTestPipeline, TestIMDBBasicWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: IMDBIteratorOneColumn.
-/// Description: test iterator of IMDBDataset with only the "text" column.
-/// Expectation: get correct data.
+/// Feature: IMDBDataset
+/// Description: Test iterator of IMDBDataset with only the text column.
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIMDBIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBIteratorOneColumn.";
   std::string dataset_path = datasets_root_path_ + "/testIMDBDataset";
@@ -231,9 +231,9 @@ TEST_F(MindDataTestPipeline, TestIMDBIteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: IMDBIteratorWrongColumn.
-/// Description: test iterator of IMDBDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: IMDBDataset
+/// Description: Test iterator of IMDBDataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestIMDBIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBIteratorWrongColumn.";
   std::string dataset_path = datasets_root_path_ + "/testIMDBDataset";
@@ -249,9 +249,9 @@ TEST_F(MindDataTestPipeline, TestIMDBIteratorWrongColumn) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: Test IMDB Dataset.
-/// Description: read IMDB data with GetDatasetSize, GetColumnNames, GetBatchSize.
-/// Expectation: the data is processed successfully.
+/// Feature: IMDBDataset
+/// Description: Test IMDBDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestIMDBGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBGetters.";
 
@@ -272,9 +272,9 @@ TEST_F(MindDataTestPipeline, TestIMDBGetters) {
   EXPECT_EQ(ds1->GetBatchSize(), 1);
 }
 
-/// Feature: Test IMDB Dataset.
-/// Description: read IMDB data with errors.
-/// Expectation: the data is processed successfully.
+/// Feature: IMDBDataset
+/// Description: Test IMDBDataset with invalid inputs
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestIMDBError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBError.";
 
@@ -300,9 +300,9 @@ TEST_F(MindDataTestPipeline, TestIMDBError) {
   EXPECT_EQ(iter1, nullptr);
 }
 
-/// Feature: Test IMDB Dataset.
-/// Description: read IMDB data with Null SamplerError.
-/// Expectation: the data is processed successfully.
+/// Feature: IMDBDataset
+/// Description: Test IMDBDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestIMDBWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIMDBWithNullSamplerError.";
 

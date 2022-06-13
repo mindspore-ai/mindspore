@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset using AFQMC task
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetAFQMC.";
 
@@ -118,6 +121,9 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
   iter->Stop();
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetBasic.";
 
@@ -153,6 +159,9 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetBasic) {
   iter->Stop();
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetBasicWithPipeline.";
 
@@ -209,6 +218,9 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetBasicWithPipeline) {
   iter->Stop();
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCLUEGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEGetters.";
 
@@ -224,6 +236,9 @@ TEST_F(MindDataTestPipeline, TestCLUEGetters) {
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset using CMNLI task
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetCMNLI) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetCMNLI.";
 
@@ -267,6 +282,9 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCMNLI) {
   iter->Stop();
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset using CSL task
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetCSL) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetCSL.";
 
@@ -310,6 +328,9 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCSL) {
   iter->Stop();
 }
 
+/// Feature: CLUEDataset
+/// Description: Test distributed CLUEDataset (using num_shards and shard_id)
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetDistribution.";
 
@@ -345,6 +366,9 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetDistribution) {
   iter->Stop();
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset using invalid inputs
+/// Expectation: Correct error and messagre are thrown
 TEST_F(MindDataTestPipeline, TestCLUEDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetFail.";
   // Create a CLUE Dataset
@@ -410,6 +434,9 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetFail) {
   EXPECT_EQ(iter7, nullptr);
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset using IFLYTEK task
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetIFLYTEK) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetIFLYTEK.";
 
@@ -453,6 +480,10 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetIFLYTEK) {
   iter->Stop();
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset using ShuffleMode:kFiles
+///     with two text files, dev.json and train.json, in lexicographical order
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetShuffleFilesA.";
   // Test CLUE Dataset with files shuffle, num_parallel_workers=1
@@ -520,6 +551,10 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesA) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset using ShuffleMode::kFiles with two text files,
+///     train.json and dev.json, in non-lexicographical order
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetShuffleFilesB.";
   // Test CLUE Dataset with files shuffle, num_parallel_workers=1
@@ -586,6 +621,9 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesB) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset using ShuffleMode::kGlobal
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetShuffleGlobal.";
   // Test CLUE Dataset with GLOBLE shuffle
@@ -641,6 +679,9 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleGlobal) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset using TNEWS task
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetTNEWS) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetTNEWS.";
 
@@ -684,6 +725,9 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetTNEWS) {
   iter->Stop();
 }
 
+/// Feature: CLUEDataset
+/// Description: Test CLUEDataset using WSC task
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCLUEDatasetWSC) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetWSC.";
 

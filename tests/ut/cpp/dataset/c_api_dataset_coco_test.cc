@@ -26,8 +26,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: CocoDataset
-/// Description: default test of CocoDataset
-/// Expectation: the data is processed successfully
+/// Description: Default test of CocoDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoDefault) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDefault.";
   // Create a Coco Dataset.
@@ -65,8 +65,8 @@ TEST_F(MindDataTestPipeline, TestCocoDefault) {
 }
 
 /// Feature: CocoDataset
-/// Description: default pipeline test of CocoDataset
-/// Expectation: the data is processed successfully
+/// Description: Default pipeline test of CocoDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDefaultWithPipeline.";
   // Create two Coco Dataset.
@@ -125,8 +125,8 @@ TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
 }
 
 /// Feature: CocoDataset
-/// Description: test getters of CocoDataset
-/// Expectation: the data is processed successfully
+/// Description: Test getters of CocoDataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCocoGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoGetters.";
   // Create a Coco Dataset.
@@ -142,8 +142,8 @@ TEST_F(MindDataTestPipeline, TestCocoGetters) {
 }
 
 /// Feature: CocoDataset
-/// Description: test detection task of CocoDataset
-/// Expectation: the data is processed successfully
+/// Description: Test detection task of CocoDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoDetection) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDetection.";
   // Create a Coco Dataset.
@@ -205,8 +205,8 @@ TEST_F(MindDataTestPipeline, TestCocoDetection) {
 }
 
 /// Feature: CocoDataset
-/// Description: test fail of CocoDataset
-/// Expectation: throw correct error and message
+/// Description: Test fail of CocoDataset
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCocoFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoFail.";
   // Create a Coco Dataset.
@@ -238,8 +238,8 @@ TEST_F(MindDataTestPipeline, TestCocoFail) {
 }
 
 /// Feature: CocoDataset
-/// Description: test keypoint task of CocoDataset
-/// Expectation: the data is processed successfully
+/// Description: Test keypoint task of CocoDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoKeypoint.";
   // Create a Coco Dataset.
@@ -303,8 +303,8 @@ TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
 }
 
 /// Feature: CocoDataset
-/// Description: test panoptic task of CocoDataset
-/// Expectation: the data is processed successfully
+/// Description: Test panoptic task of CocoDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoPanoptic.";
   // Create a Coco Dataset.
@@ -379,8 +379,8 @@ TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
 }
 
 /// Feature: CocoDataset
-/// Description: test get class index of panoptic task
-/// Expectation: the data is processed successfully
+/// Description: Test get class index of panoptic task
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoPanopticGetClassIndex) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoPanopticGetClassIndex.";
   // Create a Coco Dataset.
@@ -405,8 +405,8 @@ TEST_F(MindDataTestPipeline, TestCocoPanopticGetClassIndex) {
 }
 
 /// Feature: CocoDataset
-/// Description: test stuff task of CocoDataset
-/// Expectation: the data is processed successfully
+/// Description: Test stuff task of CocoDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoStuff) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoStuff.";
   // Create a Coco Dataset.
@@ -464,8 +464,8 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
 }
 
 /// Feature: CocoDataset
-/// Description: test captioning task of CocoDataset
-/// Expectation: the data is processed successfully
+/// Description: Test captioning task of CocoDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCocoCaptioning) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoCaptioning.";
   // Create a Coco Dataset.
@@ -514,8 +514,8 @@ TEST_F(MindDataTestPipeline, TestCocoCaptioning) {
 }
 
 /// Feature: CocoDataset
-/// Description: test CocoDataset with the null sampler
-/// Expectation: throw correct error and message
+/// Description: Test CocoDataset with the null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCocoWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoWithNullSamplerFail.";
   // Create a Coco Dataset.

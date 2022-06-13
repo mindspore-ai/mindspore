@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 
 // Tests for vision C++ API A to Q TensorTransform Operations (in alphabetical order)
 
+/// Feature: AdjustGamma op
+/// Description: Test AdjustGamma op on 3 channels dataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestAdjustGamma3Channel) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustGamma3Channel.";
   std::string MindDataPath = "data/dataset";
@@ -65,6 +68,9 @@ TEST_F(MindDataTestPipeline, TestAdjustGamma3Channel) {
   iter2->Stop();
 }
 
+/// Feature: AdjustGamma op
+/// Description: Test AdjustGamma op on 3 channels dataset transformed to 1 channel dataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestAdjustGamma1Channel) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustGamma1Channel.";
   std::string MindDataPath = "data/dataset";
@@ -103,6 +109,9 @@ TEST_F(MindDataTestPipeline, TestAdjustGamma1Channel) {
   iter2->Stop();
 }
 
+/// Feature: AdjustGamma op
+/// Description: Test AdjustGamma op with negative gamma
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestAdjustGammaParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustGammaParamCheck.";
   std::string MindDataPath = "data/dataset";
@@ -112,7 +121,7 @@ TEST_F(MindDataTestPipeline, TestAdjustGammaParamCheck) {
 
   // Case 1: Negative gamma
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> adjust_gamma(new vision::AdjustGamma(-1, 1.0));
+  auto adjust_gamma = std::make_shared<vision::AdjustGamma>(-1, 1.0);
   auto ds1 = ds->Map({adjust_gamma});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -121,6 +130,9 @@ TEST_F(MindDataTestPipeline, TestAdjustGammaParamCheck) {
   EXPECT_EQ(iter1, nullptr);
 }
 
+/// Feature: AutoContrast op
+/// Description: Test AutoContrast op with default values
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestAutoContrastSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoContrastSuccess1.";
 
@@ -135,7 +147,7 @@ TEST_F(MindDataTestPipeline, TestAutoContrastSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create auto contrast object with default values
-  std::shared_ptr<TensorTransform> auto_contrast(new vision::AutoContrast());
+  auto auto_contrast = std::make_shared<vision::AutoContrast>();
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
@@ -170,6 +182,9 @@ TEST_F(MindDataTestPipeline, TestAutoContrastSuccess1) {
   iter->Stop();
 }
 
+/// Feature: AutoContrast op
+/// Description: Test AutoContrast op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestAutoContrastSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoContrastSuccess2.";
 
@@ -184,7 +199,7 @@ TEST_F(MindDataTestPipeline, TestAutoContrastSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create auto contrast object
-  std::shared_ptr<TensorTransform> auto_contrast(new vision::AutoContrast(10, {10, 20}));
+  auto auto_contrast = std::make_shared<vision::AutoContrast>(10, std::vector<uint32_t>{10, 20});
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
@@ -219,6 +234,9 @@ TEST_F(MindDataTestPipeline, TestAutoContrastSuccess2) {
   iter->Stop();
 }
 
+/// Feature: CenterCrop op
+/// Description: Test CenterCrop op with single integer input
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCenterCrop) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCenterCrop with single integer input.";
 
@@ -233,7 +251,7 @@ TEST_F(MindDataTestPipeline, TestCenterCrop) {
   EXPECT_NE(ds, nullptr);
 
   // Create centre crop object with square crop
-  std::shared_ptr<TensorTransform> centre_out1(new vision::CenterCrop({30}));
+  auto centre_out1 = std::make_shared<vision::CenterCrop>(std::vector<int32_t>{30});
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
@@ -268,6 +286,9 @@ TEST_F(MindDataTestPipeline, TestCenterCrop) {
   iter->Stop();
 }
 
+/// Feature: CenterCrop op
+/// Description: Test CenterCrop op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCropSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCropSuccess.";
 
@@ -279,7 +300,7 @@ TEST_F(MindDataTestPipeline, TestCropSuccess) {
   // Create a crop object
   int height = 20;
   int width = 25;
-  std::shared_ptr<TensorTransform> crop(new vision::Crop({0, 0}, {height, width}));
+  auto crop = std::make_shared<vision::Crop>(std::vector<int32_t>{0, 0}, std::vector<int32_t>{height, width});
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
@@ -315,6 +336,9 @@ TEST_F(MindDataTestPipeline, TestCropSuccess) {
   iter->Stop();
 }
 
+/// Feature: CenterCrop op
+/// Description: Test CenterCrop op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCropParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCropParamCheck with invalid parameters.";
 
@@ -325,7 +349,7 @@ TEST_F(MindDataTestPipeline, TestCropParamCheck) {
 
   // Case 1: Value of coordinates is negative
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> crop1(new vision::Crop({-1, -1}, {20}));
+  auto crop1 = std::make_shared<vision::Crop>(std::vector<int32_t>{-1, -1}, std::vector<int32_t>{20});
   auto ds1 = ds->Map({crop1});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -335,7 +359,7 @@ TEST_F(MindDataTestPipeline, TestCropParamCheck) {
 
   // Case 2: Size of coordinates is not 2
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> crop2(new vision::Crop({5}, {10}));
+  auto crop2 = std::make_shared<vision::Crop>(std::vector<int32_t>{5}, std::vector<int32_t>{10});
   auto ds2 = ds->Map({crop2});
   EXPECT_NE(ds2, nullptr);
   // Create an iterator over the result of the above dataset
@@ -345,7 +369,7 @@ TEST_F(MindDataTestPipeline, TestCropParamCheck) {
 
   // Case 3: Value of size is negative
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> crop3(new vision::Crop({0, 0}, {-10, -5}));
+  auto crop3 = std::make_shared<vision::Crop>(std::vector<int32_t>{0, 0}, std::vector<int32_t>{-10, -5});
   auto ds3 = ds->Map({crop3});
   EXPECT_NE(ds3, nullptr);
   // Create an iterator over the result of the above dataset
@@ -355,7 +379,7 @@ TEST_F(MindDataTestPipeline, TestCropParamCheck) {
 
   // Case 4: Size is neither a single number nor a vector of size 2
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> crop4(new vision::Crop({0, 0}, {10, 10, 10}));
+  auto crop4 = std::make_shared<vision::Crop>(std::vector<int32_t>{0, 0}, std::vector<int32_t>{10, 10, 10});
   auto ds4 = ds->Map({crop4});
   EXPECT_NE(ds4, nullptr);
   // Create an iterator over the result of the above dataset
@@ -364,6 +388,9 @@ TEST_F(MindDataTestPipeline, TestCropParamCheck) {
   EXPECT_EQ(iter4, nullptr);
 }
 
+/// Feature: CutMixBatch op
+/// Description: Test CutMixBatch op on a batch of CHW images
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCutMixBatchSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchSuccess1.";
   // Testing CutMixBatch on a batch of CHW images
@@ -433,6 +460,9 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchSuccess1) {
   iter->Stop();
 }
 
+/// Feature: CutMixBatch op
+/// Description: Test CutMixBatch op on a batch of HWC images with default values of alpha and prob
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCutMixBatchSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchSuccess2.";
   // Calling CutMixBatch on a batch of HWC images with default values of alpha and prob
@@ -495,6 +525,9 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchSuccess2) {
   iter->Stop();
 }
 
+/// Feature: CutMixBatch op
+/// Description: Test CutMixBatch op with invalid negative alpha parameter
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCutMixBatchFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchFail1 with invalid negative alpha parameter.";
 
@@ -530,6 +563,9 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: CutMixBatch op
+/// Description: Test CutMixBatch op with invalid negative prob parameter
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCutMixBatchFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchFail2 with invalid negative prob parameter.";
 
@@ -565,6 +601,9 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: CutMixBatch op
+/// Description: Test CutMixBatch op with invalid zero alpha parameter
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCutMixBatchFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchFail3 with invalid zero alpha parameter.";
 
@@ -600,6 +639,9 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: CutMixBatch op
+/// Description: Test CutMixBatch op with invalid prob parameter that is greater than 1
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCutMixBatchFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchFail4 with invalid greater than 1 prob parameter.";
 
@@ -634,6 +676,9 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: CutOut op
+/// Description: Test CutOut op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCutOut) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOut.";
 
@@ -684,6 +729,9 @@ TEST_F(MindDataTestPipeline, TestCutOut) {
   iter->Stop();
 }
 
+/// Feature: Decode op
+/// Description: Test Decode op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestDecode) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDecode.";
 
@@ -732,6 +780,9 @@ TEST_F(MindDataTestPipeline, TestDecode) {
   iter->Stop();
 }
 
+/// Feature: HWC2CHW op
+/// Description: Test HWC2CHW basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestHwcToChw) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestHwcToChw.";
 
@@ -784,6 +835,9 @@ TEST_F(MindDataTestPipeline, TestHwcToChw) {
   iter->Stop();
 }
 
+/// Feature: Invert op
+/// Description: Test Invert op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestInvert) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestInvert.";
 
@@ -822,6 +876,9 @@ TEST_F(MindDataTestPipeline, TestInvert) {
   iter->Stop();
 }
 
+/// Feature: MixUpBatch op
+/// Description: Test MixUpBatch op with negative alpha parameter
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMixUpBatchFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMixUpBatchFail1 with negative alpha parameter.";
 
@@ -856,6 +913,9 @@ TEST_F(MindDataTestPipeline, TestMixUpBatchFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: MixUpBatch op
+/// Description: Test MixUpBatch op with zero alpha parameter
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestMixUpBatchFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMixUpBatchFail2 with zero alpha parameter.";
 
@@ -890,6 +950,9 @@ TEST_F(MindDataTestPipeline, TestMixUpBatchFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: MixUpBatch op
+/// Description: Test MixUpBatch op with explicit valid alpha parameter
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMixUpBatchSuccess1 with explicit alpha parameter.";
 
@@ -941,6 +1004,9 @@ TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess1) {
   iter->Stop();
 }
 
+/// Feature: MixUpBatch op
+/// Description: Test MixUpBatch op with default alpha parameter
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMixUpBatchSuccess1 with default alpha parameter.";
 
@@ -992,6 +1058,9 @@ TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess2) {
   iter->Stop();
 }
 
+/// Feature: Normalize op
+/// Description: Test Normalize op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestNormalize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalize.";
 
@@ -1006,7 +1075,8 @@ TEST_F(MindDataTestPipeline, TestNormalize) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> normalize(new vision::Normalize({121.0, 115.0, 0.0}, {70.0, 68.0, 71.0}));
+  auto normalize = std::make_shared<vision::Normalize>(
+    std::vector<float>{121.0, 115.0, 0.0}, std::vector<float>{70.0, 68.0, 71.0});
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
@@ -1041,6 +1111,9 @@ TEST_F(MindDataTestPipeline, TestNormalize) {
   iter->Stop();
 }
 
+/// Feature: NormalizePad op
+/// Description: Test NormalizePad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestNormalizePad) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePad.";
 
@@ -1055,8 +1128,8 @@ TEST_F(MindDataTestPipeline, TestNormalizePad) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> normalizepad(
-    new vision::NormalizePad({121.0, 115.0, 100.0}, {70.0, 68.0, 71.0}, "float32"));
+  auto normalizepad = std::make_shared<vision::NormalizePad>(
+    std::vector<float>{121.0, 115.0, 100.0}, std::vector<float>{70.0, 68.0, 71.0}, "float32");
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
@@ -1088,6 +1161,9 @@ TEST_F(MindDataTestPipeline, TestNormalizePad) {
   iter->Stop();
 }
 
+/// Feature: Pad op
+/// Description: Test Pad op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestPad) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPad.";
 
@@ -1102,9 +1178,12 @@ TEST_F(MindDataTestPipeline, TestPad) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> pad_op1(new vision::Pad({1, 2, 3, 4}, {0}, BorderType::kSymmetric));
-  std::shared_ptr<TensorTransform> pad_op2(new vision::Pad({1}, {1, 1, 1}, BorderType::kEdge));
-  std::shared_ptr<TensorTransform> pad_op3(new vision::Pad({1, 4}));
+  auto pad_op1 = std::make_shared<vision::Pad>(
+    std::vector<int32_t>{1, 2, 3, 4}, std::vector<uint8_t>{0}, BorderType::kSymmetric);
+  auto pad_op2 = std::make_shared<vision::Pad>(
+    std::vector<int32_t>{1}, std::vector<uint8_t>{1, 1, 1}, BorderType::kEdge);
+  auto pad_op3 = std::make_shared<vision::Pad>(
+    std::vector<int32_t>{1, 4});
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
@@ -1139,6 +1218,9 @@ TEST_F(MindDataTestPipeline, TestPad) {
   iter->Stop();
 }
 
+/// Feature: ConvertColor op
+/// Description: Test ConvertColor op with ConvertMode::COLOR_RGB2GRAY
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConvertColorSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorSuccess1.";
   // Create an ImageFolder Dataset
@@ -1146,8 +1228,8 @@ TEST_F(MindDataTestPipeline, TestConvertColorSuccess1) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
   EXPECT_NE(ds, nullptr);
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({500, 1000}));
-  std::shared_ptr<TensorTransform> convert(new mindspore::dataset::vision::ConvertColor(ConvertMode::COLOR_RGB2GRAY));
+  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{500, 1000});
+  auto convert = std::make_shared<mindspore::dataset::vision::ConvertColor>(ConvertMode::COLOR_RGB2GRAY);
 
   ds = ds->Map({resize_op, convert});
   EXPECT_NE(ds, nullptr);
@@ -1176,6 +1258,9 @@ TEST_F(MindDataTestPipeline, TestConvertColorSuccess1) {
   iter->Stop();
 }
 
+/// Feature: ConvertColor op
+/// Description: Test ConvertColor op with ConvertMode::COLOR_RGB2BGR
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConvertColorSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorSuccess2.";
   // Create an ImageFolder Dataset
@@ -1183,8 +1268,8 @@ TEST_F(MindDataTestPipeline, TestConvertColorSuccess2) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
   EXPECT_NE(ds, nullptr);
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({500, 1000}));
-  std::shared_ptr<TensorTransform> convert(new mindspore::dataset::vision::ConvertColor(ConvertMode::COLOR_RGB2BGR));
+  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{500, 1000});
+  auto convert = std::make_shared<mindspore::dataset::vision::ConvertColor>(ConvertMode::COLOR_RGB2BGR);
 
   ds = ds->Map({resize_op, convert});
   EXPECT_NE(ds, nullptr);
@@ -1213,6 +1298,9 @@ TEST_F(MindDataTestPipeline, TestConvertColorSuccess2) {
   iter->Stop();
 }
 
+/// Feature: ConvertColor op
+/// Description: Test ConvertColor op with ConvertMode::COLOR_RGB2RGBA
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConvertColorSuccess3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorSuccess3.";
   // Create an ImageFolder Dataset
@@ -1220,8 +1308,8 @@ TEST_F(MindDataTestPipeline, TestConvertColorSuccess3) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
   EXPECT_NE(ds, nullptr);
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({500, 1000}));
-  std::shared_ptr<TensorTransform> convert(new mindspore::dataset::vision::ConvertColor(ConvertMode::COLOR_RGB2RGBA));
+  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{500, 1000});
+  auto convert = std::make_shared<mindspore::dataset::vision::ConvertColor>(ConvertMode::COLOR_RGB2RGBA);
 
   ds = ds->Map({resize_op, convert});
   EXPECT_NE(ds, nullptr);
@@ -1250,6 +1338,9 @@ TEST_F(MindDataTestPipeline, TestConvertColorSuccess3) {
   iter->Stop();
 }
 
+/// Feature: ConvertColor op
+/// Description: Test ConvertColor op with invalid ConvertMode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestConvertColorFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorFail.";
   // Create an ImageFolder Dataset
@@ -1260,8 +1351,8 @@ TEST_F(MindDataTestPipeline, TestConvertColorFail) {
   ConvertMode error_convert_mode = static_cast<ConvertMode>(50);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({500, 1000}));
-  std::shared_ptr<TensorTransform> convert(new mindspore::dataset::vision::ConvertColor(error_convert_mode));
+  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{500, 1000});
+  auto convert = std::make_shared<mindspore::dataset::vision::ConvertColor>(error_convert_mode);
 
   ds = ds->Map({resize_op, convert});
   EXPECT_NE(ds, nullptr);
@@ -1272,9 +1363,9 @@ TEST_F(MindDataTestPipeline, TestConvertColorFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: AutoAugment
-/// Description: test AutoAugment pipeline
-/// Expectation: create an ImageFolder dataset then do auto augmentation on it with the policy
+/// Feature: AutoAugment op
+/// Description: Test AutoAugment op pipeline
+/// Expectation: Create an ImageFolder dataset then do auto augmentation on it with the policy
 TEST_F(MindDataTestPipeline, TestAutoAugment) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoAugment.";
 
@@ -1305,9 +1396,9 @@ TEST_F(MindDataTestPipeline, TestAutoAugment) {
   iter->Stop();
 }
 
-/// Feature: AutoAugment
-/// Description: test AutoAugment with invalid fill_value
-/// Expectation: pipeline iteration failed with wrong argument fill_value
+/// Feature: AutoAugment op
+/// Description: Test AutoAugment op with invalid fill_value
+/// Expectation: Pipeline iteration failed with wrong argument fill_value
 TEST_F(MindDataTestPipeline, TestAutoAugmentInvalidFillValue) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoAugmentInvalidFillValue.";
 
@@ -1327,8 +1418,8 @@ TEST_F(MindDataTestPipeline, TestAutoAugmentInvalidFillValue) {
 }
 
 /// Feature: GetImageNumChannels
-/// Description: test GetImageNumChannels with pipeline mode
-/// Expectation: the returned result is as expected
+/// Description: Test GetImageNumChannels with pipeline mode
+/// Expectation: The returned result is as expected
 TEST_F(MindDataTestPipeline, TestGetImageNumChannelsPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetImageNumChannelsPipeline.";
 
@@ -1344,8 +1435,8 @@ TEST_F(MindDataTestPipeline, TestGetImageNumChannelsPipeline) {
 }
 
 /// Feature: GetImageNumChannels
-/// Description: test GetImageNumChannels with invalid input
-/// Expectation: the returned result is as expected
+/// Description: Test GetImageNumChannels with invalid input
+/// Expectation: The returned result is as expected
 TEST_F(MindDataTestPipeline, TestGetImageNumChannelsInValidInput) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetImageNumChannelsInValidInput.";
 
@@ -1358,8 +1449,8 @@ TEST_F(MindDataTestPipeline, TestGetImageNumChannelsInValidInput) {
 }
 
 /// Feature: GetImageSize
-/// Description: test GetImageSize with pipeline mode
-/// Expectation: the returned result is as expected
+/// Description: Test GetImageSize with pipeline mode
+/// Expectation: The returned result is as expected
 TEST_F(MindDataTestPipeline, TestGetImageSizePipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetImageSizePipeline.";
 
@@ -1374,8 +1465,8 @@ TEST_F(MindDataTestPipeline, TestGetImageSizePipeline) {
 }
 
 /// Feature: GetImageSize
-/// Description: test GetImageSize with invalid input
-/// Expectation: the returned result is as expected
+/// Description: Test GetImageSize with invalid input
+/// Expectation: The returned result is as expected
 TEST_F(MindDataTestPipeline, TestGetImageSizeInValidInput) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetImageSizeInValidInput.";
 
@@ -1386,9 +1477,9 @@ TEST_F(MindDataTestPipeline, TestGetImageSizeInValidInput) {
   ASSERT_FALSE(ImageSize(input_tensor, &size));
 }
 
-/// Feature: PadToSize
-/// Description: test default usage
-/// Expectation: samples processed successfully
+/// Feature: PadToSize op
+/// Description: Test default usage
+/// Expectation: Samples processed successfully
 TEST_F(MindDataTestPipeline, TestPadToSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadToSize.";
 
@@ -1426,9 +1517,9 @@ TEST_F(MindDataTestPipeline, TestPadToSize) {
   iter->Stop();
 }
 
-/// Feature: PadToSize
-/// Description: test parameter check
-/// Expectation: error logs are as expected
+/// Feature: PadToSize op
+/// Description: Test parameter check
+/// Expectation: Error logs are as expected
 TEST_F(MindDataTestPipeline, TestPadToSizeInvalid) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadToSizeInvalid.";
 

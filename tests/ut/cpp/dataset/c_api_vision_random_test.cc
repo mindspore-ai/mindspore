@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 
 // Tests for vision C++ API Random* TensorTransform Operations (in alphabetical order)
 
+/// Feature: RandomAffine op
+/// Description: Test RandomAffine op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomAffineFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomAffineFail with invalid parameters.";
   // Create an ImageFolder Dataset
@@ -37,7 +40,7 @@ TEST_F(MindDataTestPipeline, TestRandomAffineFail) {
 
   // Case 1: Empty input for translate
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> affine1(new vision::RandomAffine({0.0, 0.0}, {}));
+  auto affine1 = std::make_shared<vision::RandomAffine>(std::vector<float_t>{0.0, 0.0},  std::vector<float_t>{});
   auto ds1 = ds->Map({affine1});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -47,7 +50,8 @@ TEST_F(MindDataTestPipeline, TestRandomAffineFail) {
 
   // Case 2: Invalid number of values for translate
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> affine2(new vision::RandomAffine({0.0, 0.0}, {1, 1, 1, 1, 1}));
+  auto affine2 = std::make_shared<vision::RandomAffine>(
+    std::vector<float_t>{0.0, 0.0}, std::vector<float_t>{1, 1, 1, 1, 1});
   auto ds2 = ds->Map({affine2});
   EXPECT_NE(ds2, nullptr);
   // Create an iterator over the result of the above dataset
@@ -57,7 +61,9 @@ TEST_F(MindDataTestPipeline, TestRandomAffineFail) {
 
   // Case 3: Invalid number of values for shear
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> affine3(new vision::RandomAffine({30.0, 30.0}, {0.0, 0.0}, {2.0, 2.0}, {10.0}));
+  auto affine3 = std::make_shared<vision::RandomAffine>(
+    std::vector<float_t>{30.0, 30.0}, std::vector<float_t>{0.0, 0.0}, std::vector<float_t>{2.0, 2.0}, 
+    std::vector<float_t>{10.0});
   auto ds3 = ds->Map({affine3});
   EXPECT_NE(ds3, nullptr);
   // Create an iterator over the result of the above dataset
@@ -66,6 +72,9 @@ TEST_F(MindDataTestPipeline, TestRandomAffineFail) {
   EXPECT_EQ(iter3, nullptr);
 }
 
+/// Feature: RandomAffine op
+/// Description: Test RandomAffine op with non-default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomAffineSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomAffineSuccess1 with non-default parameters.";
 
@@ -80,8 +89,9 @@ TEST_F(MindDataTestPipeline, TestRandomAffineSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> affine(
-    new vision::RandomAffine({30.0, 30.0}, {-1.0, 1.0, -1.0, 1.0}, {2.0, 2.0}, {10.0, 10.0, 20.0, 20.0}));
+  auto affine = std::make_shared<vision::RandomAffine>(
+    std::vector<float>{30.0, 30.0}, std::vector<float>{-1.0, 1.0, -1.0, 1.0}, std::vector<float>{2.0, 2.0}, 
+    std::vector<float>{10.0, 10.0, 20.0, 20.0});
 
   // Create a Map operation on ds
   ds = ds->Map({affine});
@@ -115,6 +125,9 @@ TEST_F(MindDataTestPipeline, TestRandomAffineSuccess1) {
   iter->Stop();
 }
 
+/// Feature: RandomAffine op
+/// Description: Test RandomAffine op with default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomAffineSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomAffineSuccess2 with default parameters.";
 
@@ -129,7 +142,7 @@ TEST_F(MindDataTestPipeline, TestRandomAffineSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> affine(new vision::RandomAffine({0.0, 0.0}));
+  auto affine = std::make_shared<vision::RandomAffine>(std::vector<float_t>{0.0, 0.0});
 
   // Create a Map operation on ds
   ds = ds->Map({affine});
@@ -163,6 +176,9 @@ TEST_F(MindDataTestPipeline, TestRandomAffineSuccess2) {
   iter->Stop();
 }
 
+/// Feature: RandomColor op
+/// Description: Test RandomColor op with non-default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomColor) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomColor with non-default parameters.";
 
@@ -215,6 +231,9 @@ TEST_F(MindDataTestPipeline, TestRandomColor) {
   iter->Stop();
 }
 
+/// Feature: RandomColorAdjust op
+/// Description: Test RandomColorAdjust op with non-default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomColorAdjust.";
 
@@ -230,21 +249,25 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
 
   // Create objects for the tensor ops
   // Use single value for vectors
-  std::shared_ptr<TensorTransform> random_color_adjust1(new vision::RandomColorAdjust({1.0}, {0.0}, {0.5}, {0.5}));
+  auto random_color_adjust1 = std::make_shared<vision::RandomColorAdjust>(
+    std::vector<float>{1.0}, std::vector<float>{0.0}, std::vector<float>{0.5}, std::vector<float>{0.5});
 
   // Use same 2 values for vectors
-  std::shared_ptr<TensorTransform> random_color_adjust2(
-    new vision::RandomColorAdjust({1.0, 1.0}, {0.0, 0.0}, {0.5, 0.5}, {0.5, 0.5}));
+  auto random_color_adjust2 = std::make_shared<vision::RandomColorAdjust>(
+    std::vector<float>{1.0, 1.0}, std::vector<float>{0.0, 0.0}, 
+    std::vector<float>{0.5, 0.5}, std::vector<float>{0.5, 0.5});
 
   // Use different 2 value for vectors
-  std::shared_ptr<TensorTransform> random_color_adjust3(
-    new vision::RandomColorAdjust({0.5, 1.0}, {0.0, 0.5}, {0.25, 0.5}, {0.25, 0.5}));
+  auto random_color_adjust3 = std::make_shared<vision::RandomColorAdjust>(
+    std::vector<float>{0.5, 1.0}, std::vector<float>{0.0, 0.5}, 
+    std::vector<float>{0.25, 0.5}, std::vector<float>{0.25, 0.5});
 
   // Use default input values
-  std::shared_ptr<TensorTransform> random_color_adjust4(new vision::RandomColorAdjust());
+  auto random_color_adjust4 = std::make_shared<vision::RandomColorAdjust>();
 
   // Use subset of explicitly set parameters
-  std::shared_ptr<TensorTransform> random_color_adjust5(new vision::RandomColorAdjust({0.0, 0.5}, {0.25}));
+  auto random_color_adjust5 = std::make_shared<vision::RandomColorAdjust>(
+    std::vector<float>{0.0, 0.5}, std::vector<float>{0.25});
 
   // Create a Map operation on ds
   ds = ds->Map(
@@ -279,6 +302,9 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
   iter->Stop();
 }
 
+/// Feature: RandomCrop op
+/// Description: Test RandomCrop op with various size of size vector, padding vector, and fill_value vector
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropSuccess.";
   // Create an VOC Dataset
@@ -289,25 +315,30 @@ TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
 
   // Create objects for the tensor ops
   // Testing size of size vector is 1
-  std::shared_ptr<TensorTransform> random_crop(new vision::RandomCrop({20}));
+  auto random_crop = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{20});
 
   // Testing size of size vector is 2
-  std::shared_ptr<TensorTransform> random_crop1(new vision::RandomCrop({20, 20}));
+  auto random_crop1 = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{20, 20});
 
   // Testing size of paddiing vector is 1
-  std::shared_ptr<TensorTransform> random_crop2(new vision::RandomCrop({20, 20}, {10}));
+  auto random_crop2 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{20, 20}, std::vector<int32_t>{10});
 
   // Testing size of paddiing vector is 2
-  std::shared_ptr<TensorTransform> random_crop3(new vision::RandomCrop({20, 20}, {10, 20}));
+  auto random_crop3 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{20, 20}, std::vector<int32_t>{10, 20});
 
   // Testing size of paddiing vector is 2
-  std::shared_ptr<TensorTransform> random_crop4(new vision::RandomCrop({20, 20}, {10, 10, 10, 10}));
+  auto random_crop4 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{20, 20}, std::vector<int32_t>{10, 10, 10, 10});
 
   // Testing size of fill_value vector is 1
-  std::shared_ptr<TensorTransform> random_crop5(new vision::RandomCrop({20, 20}, {10, 10, 10, 10}, false, {5}));
+  auto random_crop5 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{20, 20}, std::vector<int32_t>{10, 10, 10, 10}, false, std::vector<uint8_t>{5});
 
   // Testing size of fill_value vector is 3
-  std::shared_ptr<TensorTransform> random_crop6(new vision::RandomCrop({20, 20}, {10, 10, 10, 10}, false, {4, 4, 4}));
+  auto random_crop6 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{20, 20}, std::vector<int32_t>{10, 10, 10, 10}, false, std::vector<uint8_t>{4, 4, 4});
 
   // Create a Map operation on ds
   ds = ds->Map({random_crop, random_crop1, random_crop2, random_crop3, random_crop4, random_crop5, random_crop6},
@@ -336,6 +367,9 @@ TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
   iter->Stop();
 }
 
+/// Feature: RandomCrop op
+/// Description: Test RandomCrop op with multiple fields
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomCropWithMultiField) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropWithMultiField.";
   // Create an VOC Dataset
@@ -346,7 +380,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithMultiField) {
 
   // Create objects for the tensor ops
   transforms::Duplicate duplicate = transforms::Duplicate();
-  std::shared_ptr<TensorTransform> random_crop(new mindspore::dataset::vision::RandomCrop({500, 500}));
+  auto random_crop = std::make_shared<mindspore::dataset::vision::RandomCrop>(std::vector<int32_t>{500, 500});
 
   // Create a Map operation on ds
   ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});
@@ -379,6 +413,9 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithMultiField) {
   iter->Stop();
 }
 
+/// Feature: RandomCrop op
+/// Description: Test RandomCrop op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomCropFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropFail with invalid parameters.";
   // Create an VOC Dataset
@@ -389,7 +426,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
   // Case 1: Testing the size parameter is negative.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop1(new vision::RandomCrop({-28, 28}));
+  auto random_crop1 = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{-28, 28});
   auto ds1 = ds->Map({random_crop1});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -399,7 +436,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
   // Case 2: Testing the size parameter is None.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop2(new vision::RandomCrop({}));
+  auto random_crop2 = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{});
   auto ds2 = ds->Map({random_crop2});
   EXPECT_NE(ds2, nullptr);
   // Create an iterator over the result of the above dataset
@@ -409,7 +446,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
   // Case 3: Testing the size of size vector is 3.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop3(new vision::RandomCrop({28, 28, 28}));
+  auto random_crop3 = std::make_shared<vision::RandomCrop>(std::vector<int32_t>{28, 28, 28});
   auto ds3 = ds->Map({random_crop3});
   EXPECT_NE(ds3, nullptr);
   // Create an iterator over the result of the above dataset
@@ -419,7 +456,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
   // Case 4: Testing the padding parameter is negative.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop4(new vision::RandomCrop({28, 28}, {-5}));
+  auto random_crop4 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{28, 28}, std::vector<int32_t>{-5});
   auto ds4 = ds->Map({random_crop4});
   EXPECT_NE(ds4, nullptr);
   // Create an iterator over the result of the above dataset
@@ -429,7 +467,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
   // Case 5: Testing the size of padding vector is empty.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop5(new vision::RandomCrop({28, 28}, {}));
+  auto random_crop5 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{28, 28}, std::vector<int32_t>{});
   auto ds5 = ds->Map({random_crop5});
   EXPECT_NE(ds5, nullptr);
   // Create an iterator over the result of the above dataset
@@ -439,7 +478,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
   // Case 6: Testing the size of padding vector is 3.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop6(new vision::RandomCrop({28, 28}, {5, 5, 5}));
+  auto random_crop6 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{28, 28}, std::vector<int32_t>{5, 5, 5});
   auto ds6 = ds->Map({random_crop6});
   EXPECT_NE(ds6, nullptr);
   // Create an iterator over the result of the above dataset
@@ -449,7 +489,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
   // Case 7: Testing the size of padding vector is 5.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop7(new vision::RandomCrop({28, 28}, {5, 5, 5, 5, 5}));
+  auto random_crop7 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{28, 28}, std::vector<int32_t>{5, 5, 5, 5, 5});
   auto ds7 = ds->Map({random_crop7});
   EXPECT_NE(ds7, nullptr);
   // Create an iterator over the result of the above dataset
@@ -459,7 +500,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
   // Case 8: Testing the size of fill_value vector is empty.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop8(new vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {}));
+  auto random_crop8 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{28, 28}, std::vector<int32_t>{0, 0, 0, 0}, false, std::vector<uint8_t>{});
   auto ds8 = ds->Map({random_crop8});
   EXPECT_NE(ds8, nullptr);
   // Create an iterator over the result of the above dataset
@@ -469,7 +511,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
   // Case 9: Testing the size of fill_value vector is 2.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop9(new vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {0, 0}));
+  auto random_crop9 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{28, 28}, std::vector<int32_t>{0, 0, 0, 0}, false, std::vector<uint8_t>{0, 0});
   auto ds9 = ds->Map({random_crop9});
   EXPECT_NE(ds9, nullptr);
   // Create an iterator over the result of the above dataset
@@ -479,7 +522,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
 
   // Case 10: Testing the size of fill_value vector is 4.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop10(new vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {0, 0, 0, 0}));
+  auto random_crop10 = std::make_shared<vision::RandomCrop>(
+    std::vector<int32_t>{28, 28}, std::vector<int32_t>{0, 0, 0, 0}, false, std::vector<uint8_t>{0, 0, 0, 0});
   auto ds10 = ds->Map({random_crop10});
   EXPECT_NE(ds10, nullptr);
   // Create an iterator over the result of the above dataset
@@ -488,6 +532,9 @@ TEST_F(MindDataTestPipeline, TestRandomCropFail) {
   EXPECT_EQ(iter10, nullptr);
 }
 
+/// Feature: RandomCropWithBBox op
+/// Description: Test RandomCropWithBBox op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropWithBboxSuccess.";
   // Create an VOC Dataset
@@ -497,7 +544,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop(new mindspore::dataset::vision::RandomCropWithBBox({128, 128}));
+  auto random_crop = std::make_shared<mindspore::dataset::vision::RandomCropWithBBox>(
+    std::vector<int32_t>{128, 128});
 
   // Create a Map operation on ds
   ds = ds->Map({random_crop}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -527,6 +575,9 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
   iter->Stop();
 }
 
+/// Feature: RandomCropWithBBox op
+/// Description: Test RandomCropWithBBox op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropWithBboxFail with invalid parameters.";
   // Create an VOC Dataset
@@ -537,7 +588,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
 
   // Case 1: The size parameter is negative.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop1(new vision::RandomCropWithBBox({-10}));
+  auto random_crop1 = std::make_shared<vision::RandomCropWithBBox>(std::vector<int32_t>{-10});
   auto ds1 = ds->Map({random_crop1});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -547,7 +598,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
 
   // Case 2: The parameter in the padding vector is negative.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop2(new vision::RandomCropWithBBox({10, 10}, {-2, 2, 2, 2}));
+  auto random_crop2 = std::make_shared<vision::RandomCropWithBBox>(
+    std::vector<int32_t>{10, 10}, std::vector<int32_t>{-2, 2, 2, 2});
   auto ds2 = ds->Map({random_crop2});
   EXPECT_NE(ds2, nullptr);
   // Create an iterator over the result of the above dataset
@@ -557,7 +609,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
 
   // Case 3: The size container is empty.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop3(new vision::RandomCropWithBBox({}));
+  auto random_crop3 = std::make_shared<vision::RandomCropWithBBox>(std::vector<int32_t>{});
   auto ds3 = ds->Map({random_crop3});
   EXPECT_NE(ds3, nullptr);
   // Create an iterator over the result of the above dataset
@@ -567,7 +619,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
 
   // Case 4: The size of the size container is too large.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop4(new vision::RandomCropWithBBox({10, 10, 10}));
+  auto random_crop4 = std::make_shared<vision::RandomCropWithBBox>(std::vector<int32_t>{10, 10, 10});
   auto ds4 = ds->Map({random_crop4});
   EXPECT_NE(ds4, nullptr);
   // Create an iterator over the result of the above dataset
@@ -577,7 +629,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
 
   // Case 5: The padding container is empty.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop5(new vision::RandomCropWithBBox({10, 10}, {}));
+  auto random_crop5 = std::make_shared<vision::RandomCropWithBBox>(
+    std::vector<int32_t>{10, 10}, std::vector<int32_t>{});
   auto ds5 = ds->Map({random_crop5});
   EXPECT_NE(ds5, nullptr);
   // Create an iterator over the result of the above dataset
@@ -587,7 +640,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
 
   // Case 6: The size of the padding container is too large.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop6(new vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5, 5}));
+  auto random_crop6 = std::make_shared<vision::RandomCropWithBBox>(
+    std::vector<int32_t>{10, 10}, std::vector<int32_t>{5, 5, 5, 5, 5});
   auto ds6 = ds->Map({random_crop6});
   EXPECT_NE(ds6, nullptr);
   // Create an iterator over the result of the above dataset
@@ -597,7 +651,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
 
   // Case 7: The fill_value container is empty.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop7(new vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5}, false, {}));
+  auto random_crop7 = std::make_shared<vision::RandomCropWithBBox>(
+    std::vector<int32_t>{10, 10}, std::vector<int32_t>{5, 5, 5, 5}, false, std::vector<uint8_t>{});
   auto ds7 = ds->Map({random_crop7});
   EXPECT_NE(ds7, nullptr);
   // Create an iterator over the result of the above dataset
@@ -607,8 +662,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
 
   // Case 8: The size of the fill_value container is too large.
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop8(
-    new vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5}, false, {3, 3, 3, 3}));
+  auto random_crop8 = std::make_shared<vision::RandomCropWithBBox>(
+    std::vector<int32_t>{10, 10}, std::vector<int32_t>{5, 5, 5, 5}, false, std::vector<uint8_t>{3, 3, 3, 3});
   auto ds8 = ds->Map({random_crop8});
   EXPECT_NE(ds8, nullptr);
   // Create an iterator over the result of the above dataset
@@ -617,6 +672,9 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
   EXPECT_EQ(iter8, nullptr);
 }
 
+/// Feature: RandomHorizontalFlipWithBBox op
+/// Description: Test RandomHorizontalFlipWithBBox op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomHorizontalFlipWithBBoxSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalFlipWithBBoxSuccess.";
   // Create an VOC Dataset
@@ -655,6 +713,9 @@ TEST_F(MindDataTestPipeline, TestRandomHorizontalFlipWithBBoxSuccess) {
   iter->Stop();
 }
 
+/// Feature: RandomHorizontalFlip and RandomVerticalFlip ops
+/// Description: Test RandomVerticalFlip op then RandomHorizontalFlip op on ImageFolderDataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlip) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalAndVerticalFlip for horizontal and vertical flips.";
 
@@ -704,6 +765,9 @@ TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlip) {
   iter->Stop();
 }
 
+/// Feature: RandomResize op
+/// Description: Test RandomResize with single integer input with multiple fields
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomResizeWithMultiField) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeWithMultiField with single integer input.";
 
@@ -714,7 +778,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithMultiField) {
 
   // Create objects for the tensor ops
   transforms::Duplicate duplicate = transforms::Duplicate();
-  std::shared_ptr<TensorTransform> random_resize(new vision::RandomResize({100}));
+  auto random_resize = std::make_shared<vision::RandomResize>(std::vector<int32_t>{100});
 
   // Create a Map operation on ds
   ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});
@@ -748,6 +812,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithMultiField) {
   iter->Stop();
 }
 
+/// Feature: RandomPosterize op
+/// Description: Test RandomPosterize op with non-default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomPosterizeSuccess1 with non-default parameters.";
 
@@ -762,7 +829,7 @@ TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> posterize(new vision::RandomPosterize({1, 4}));
+  auto posterize = std::make_shared<vision::RandomPosterize>(std::vector<uint8_t>{1, 4});
 
   // Create a Map operation on ds
   ds = ds->Map({posterize});
@@ -796,6 +863,9 @@ TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess1) {
   iter->Stop();
 }
 
+/// Feature: RandomPosterize op
+/// Description: Test RandomPosterize op with default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomPosterizeSuccess2 with default parameters.";
 
@@ -810,7 +880,7 @@ TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> posterize(new vision::RandomPosterize());
+  auto posterize = std::make_shared<vision::RandomPosterize>();
 
   // Create a Map operation on ds
   ds = ds->Map({posterize});
@@ -844,6 +914,9 @@ TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess2) {
   iter->Stop();
 }
 
+/// Feature: RandomResize op
+/// Description: Test RandomResize op with single integer input
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomResizeSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeSuccess1 with single integer input.";
 
@@ -853,7 +926,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizeSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resize(new vision::RandomResize({66}));
+  auto random_resize = std::make_shared<vision::RandomResize>(std::vector<int32_t>{66});
 
   // Create a Map operation on ds
   ds = ds->Map({random_resize}, {"image"});
@@ -883,6 +956,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizeSuccess1) {
   iter->Stop();
 }
 
+/// Feature: RandomResize op
+/// Description: Test RandomResize op with (height, width) input
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomResizeSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeSuccess2 with (height, width) input.";
 
@@ -897,7 +973,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizeSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resize(new vision::RandomResize({66, 77}));
+  auto random_resize = std::make_shared<vision::RandomResize>(std::vector<int32_t>{66, 77});
 
   // Create a Map operation on ds
   ds = ds->Map({random_resize}, {"image"});
@@ -927,6 +1003,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizeSuccess2) {
   iter->Stop();
 }
 
+/// Feature: RandomResizeWithBBox op
+/// Description: Test RandomResizeWithBBox op with single integer input
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeWithBBoxSuccess1 with single integer input.";
   // setting seed here to prevent random core dump
@@ -940,7 +1019,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resize(new vision::RandomResizeWithBBox({88}));
+  auto random_resize = std::make_shared<vision::RandomResizeWithBBox>(std::vector<int32_t>{88});
 
   // Create a Map operation on ds
   ds = ds->Map({random_resize}, {"image", "bbox"});
@@ -971,6 +1050,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess1) {
   config::set_seed(current_seed);
 }
 
+/// Feature: RandomResizeWithBBox op
+/// Description: Test RandomResizeWithBBox op with (height, width) input
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeWithBBoxSuccess2 with (height, width) input.";
   uint32_t current_seed = config::get_seed();
@@ -987,7 +1069,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resize(new vision::RandomResizeWithBBox({88, 99}));
+  auto random_resize = std::make_shared<vision::RandomResizeWithBBox>(std::vector<int32_t>{88, 99});
 
   // Create a Map operation on ds
   ds = ds->Map({random_resize}, {"image", "bbox"});
@@ -1018,6 +1100,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess2) {
   config::set_seed(current_seed);
 }
 
+/// Feature: RandomResizedCrop op
+/// Description: Test RandomResizedCrop op with default values
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropSuccess1.";
   // Testing RandomResizedCrop with default values
@@ -1027,7 +1112,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5}));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCrop>(std::vector<int32_t>{5});
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop}, {"image"});
@@ -1057,6 +1142,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
   iter->Stop();
 }
 
+/// Feature: RandomResizedCrop op
+/// Description: Test RandomResizedCrop op with non-default values
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropSuccess2.";
   // Testing RandomResizedCrop with non-default values
@@ -1066,8 +1154,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop(
-    {5, 10}, {0.25, 0.75}, {0.5, 1.25}, mindspore::dataset::InterpolationMode::kArea, 20));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCrop>(
+    std::vector<int32_t>{5, 10}, std::vector<float>{0.25, 0.75}, std::vector<float>{0.5, 1.25}, 
+    mindspore::dataset::InterpolationMode::kArea, 20);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop}, {"image"});
@@ -1097,6 +1186,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess2) {
   iter->Stop();
 }
 
+/// Feature: RandomResizedCrop op
+/// Description: Test RandomResizedCrop op with negative size
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with negative size.";
   // This should fail because size has negative value
@@ -1106,7 +1198,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5, -10}));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCrop>(std::vector<int32_t>{5, -10});
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop});
@@ -1117,6 +1209,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: RandomResizedCrop op
+/// Description: Test RandomResizedCrop op with invalid scale input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with invalid scale input.";
   // This should fail because scale isn't in {min, max} format
@@ -1126,7 +1221,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5, 10}, {4, 3}));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCrop>(
+    std::vector<int32_t>{5, 10}, std::vector<float>{4, 3});
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop});
@@ -1137,6 +1233,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: RandomResizedCrop op
+/// Description: Test RandomResizedCrop op with invalid ratio input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with invalid ratio input.";
   // This should fail because ratio isn't in {min, max} format
@@ -1146,7 +1245,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail3) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5, 10}, {4, 5}, {7, 6}));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCrop>(
+    std::vector<int32_t>{5, 10}, std::vector<float>{4, 5}, std::vector<float>{7, 6});
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop});
@@ -1157,6 +1257,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: RandomResizedCrop op
+/// Description: Test RandomResizedCrop op with invalid scale size
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with invalid scale size.";
   // This should fail because scale has a size of more than 2
@@ -1166,7 +1269,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail4) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5, 10, 20}, {4, 5}, {7, 6}));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCrop>(
+    std::vector<int32_t>{5, 10, 20}, std::vector<float>{4, 5}, std::vector<float>{7, 6});
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop});
@@ -1177,6 +1281,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: RandomResizedCropWithBBox op
+/// Description: Test RandomResizedCropWithBBox op with default values
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxSuccess1.";
   // Testing RandomResizedCropWithBBox with default values
@@ -1189,7 +1296,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox({5}));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCropWithBBox>(std::vector<int32_t>{5});
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop}, {"image", "bbox"});
@@ -1220,6 +1327,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
   iter->Stop();
 }
 
+/// Feature: RandomResizedCropWithBBox op
+/// Description: Test RandomResizedCropWithBBox op with non-default values
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxSuccess2.";
   // Testing RandomResizedCropWithBBox with non-default values
@@ -1232,8 +1342,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox(
-    {5, 10}, {0.25, 0.75}, {0.5, 1.25}, mindspore::dataset::InterpolationMode::kArea, 20));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCropWithBBox>(
+    std::vector<int32_t>{5, 10}, std::vector<float>{0.25, 0.75}, std::vector<float>{0.5, 1.25}, 
+    mindspore::dataset::InterpolationMode::kArea, 20);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop}, {"image", "bbox"});
@@ -1264,6 +1375,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
   iter->Stop();
 }
 
+/// Feature: RandomResizedCropWithBBox op
+/// Description: Test RandomResizedCropWithBBox op with negative size value
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxFail1 with negative size value.";
   // This should fail because size has negative value
@@ -1273,7 +1387,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox({5, -10}));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCropWithBBox>(std::vector<int32_t>{5, -10});
   auto ds1 = ds->Map({random_resized_crop});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1282,6 +1396,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail1) {
   EXPECT_EQ(iter1, nullptr);
 }
 
+/// Feature: RandomResizedCropWithBBox op
+/// Description: Test RandomResizedCropWithBBox op with invalid scale input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxFail2 with invalid scale input.";
   // This should fail because scale isn't in {min, max} format
@@ -1291,7 +1408,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox({5, 10}, {4, 3}));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCropWithBBox>(
+    std::vector<int32_t>{5, 10}, std::vector<float>{4, 3});
   auto ds1 = ds->Map({random_resized_crop});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1300,6 +1418,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail2) {
   EXPECT_EQ(iter1, nullptr);
 }
 
+/// Feature: RandomResizedCropWithBBox op
+/// Description: Test RandomResizedCropWithBBox op with invalid ratio input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxFail3 with invalid ratio input.";
   // This should fail because ratio isn't in {min, max} format
@@ -1309,7 +1430,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail3) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox({5, 10}, {4, 5}, {7, 6}));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCropWithBBox>(
+    std::vector<int32_t>{5, 10}, std::vector<float>{4, 5}, std::vector<float>{7, 6});
   auto ds1 = ds->Map({random_resized_crop});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1318,6 +1440,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail3) {
   EXPECT_EQ(iter1, nullptr);
 }
 
+/// Feature: RandomResizedCropWithBBox op
+/// Description: Test RandomResizedCropWithBBox op with invalid scale size
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxFail4 with invalid scale size.";
   // This should fail because scale has a size of more than 2
@@ -1327,8 +1452,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail4) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(
-    new vision::RandomResizedCropWithBBox({5, 10, 20}, {4, 5}, {7, 6}));
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCropWithBBox>(
+    std::vector<int32_t>{5, 10, 20}, std::vector<float>{4, 5}, std::vector<float>{7, 6});
   auto ds1 = ds->Map({random_resized_crop});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1337,6 +1462,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail4) {
   EXPECT_EQ(iter1, nullptr);
 }
 
+/// Feature: RandomRotation op
+/// Description: Test RandomRotation op with various size of degree and size of fill_value inputs
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomRotation) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomRotation.";
 
@@ -1352,15 +1480,17 @@ TEST_F(MindDataTestPipeline, TestRandomRotation) {
 
   // Create objects for the tensor ops
   // Testing the size of degrees is 1
-  std::shared_ptr<TensorTransform> random_rotation_op(new vision::RandomRotation({180}));
+  auto random_rotation_op = std::make_shared<vision::RandomRotation>(std::vector<float>{180});
   // Testing the size of degrees is 2
-  std::shared_ptr<TensorTransform> random_rotation_op1(new vision::RandomRotation({-180, 180}));
+  auto random_rotation_op1 = std::make_shared<vision::RandomRotation>(std::vector<float>{-180, 180});
   // Testing the size of fill_value is 1
-  std::shared_ptr<TensorTransform> random_rotation_op2(
-    new vision::RandomRotation({180}, InterpolationMode::kNearestNeighbour, false, {-1, -1}, {2}));
+  auto random_rotation_op2 = std::make_shared<vision::RandomRotation>(
+    std::vector<float>{180}, InterpolationMode::kNearestNeighbour, false, std::vector<float>{-1, -1}, 
+    std::vector<uint8_t>{2});
   // Testing the size of fill_value is 3
-  std::shared_ptr<TensorTransform> random_rotation_op3(
-    new vision::RandomRotation({180}, InterpolationMode::kNearestNeighbour, false, {-1, -1}, {2, 2, 2}));
+  auto random_rotation_op3 = std::make_shared<vision::RandomRotation>(
+    std::vector<float>{180}, InterpolationMode::kNearestNeighbour, false, std::vector<float>{-1, -1}, 
+    std::vector<uint8_t>{2, 2, 2});
 
   // Create a Map operation on ds
   ds = ds->Map({random_rotation_op, random_rotation_op1, random_rotation_op2, random_rotation_op3});
@@ -1394,6 +1524,9 @@ TEST_F(MindDataTestPipeline, TestRandomRotation) {
   iter->Stop();
 }
 
+/// Feature: RandomRotation op
+/// Description: Test RandomRotation op with invalid parameters
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomRotationFail with invalid parameters.";
   // Create an ImageFolder Dataset
@@ -1403,7 +1536,7 @@ TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
 
   // Case 1: Testing the size of degrees vector is 0
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_rotation_op1(new vision::RandomRotation({}));
+  auto random_rotation_op1 = std::make_shared<vision::RandomRotation>(std::vector<float>{});
   auto ds1 = ds->Map({random_rotation_op1});
   EXPECT_NE(ds1, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1413,7 +1546,7 @@ TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
 
   // Case 2: Testing the size of degrees vector is 3
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_rotation_op2(new vision::RandomRotation({-50.0, 50.0, 100.0}));
+  auto random_rotation_op2 = std::make_shared<vision::RandomRotation>(std::vector<float>{-50.0, 50.0, 100.0});
   auto ds2 = ds->Map({random_rotation_op2});
   EXPECT_NE(ds2, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1423,7 +1556,7 @@ TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
 
   // Case 3: Test the case where the first column value of degrees is greater than the second column value
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_rotation_op3(new vision::RandomRotation({50.0, -50.0}));
+  auto random_rotation_op3 = std::make_shared<vision::RandomRotation>(std::vector<float>{50.0, -50.0});
   auto ds3 = ds->Map({random_rotation_op3});
   EXPECT_NE(ds3, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1433,8 +1566,9 @@ TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
 
   // Case 4: Testing the size of center vector is 1
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_rotation_op4(
-    new vision::RandomRotation({-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0}));
+  auto random_rotation_op4 = std::make_shared<vision::RandomRotation>(
+    std::vector<float>{-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, 
+    std::vector<float>{-1.0});
   auto ds4 = ds->Map({random_rotation_op4});
   EXPECT_NE(ds4, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1444,8 +1578,9 @@ TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
 
   // Case 5: Testing the size of center vector is 3
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_rotation_op5(new vision::RandomRotation(
-    {-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0, -1.0}));
+  auto random_rotation_op5 = std::make_shared<vision::RandomRotation>(
+    std::vector<float>{-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, 
+    std::vector<float>{-1.0, -1.0, -1.0});
   auto ds5 = ds->Map({random_rotation_op5});
   EXPECT_NE(ds5, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1455,8 +1590,9 @@ TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
 
   // Case 6: Testing the size of fill_value vector is 2
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_rotation_op6(new vision::RandomRotation(
-    {-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0}, {2, 2}));
+  auto random_rotation_op6 = std::make_shared<vision::RandomRotation>(
+    std::vector<float>{-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, 
+    std::vector<float>{-1.0, -1.0}, std::vector<uint8_t>{2, 2});
   auto ds6 = ds->Map({random_rotation_op6});
   EXPECT_NE(ds6, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1466,8 +1602,9 @@ TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
 
   // Case 7: Testing the size of fill_value vector is 4
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_rotation_op7(new vision::RandomRotation(
-    {-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0}, {2, 2, 2, 2}));
+  auto random_rotation_op7 = std::make_shared<vision::RandomRotation>(
+    std::vector<float>{-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, 
+    std::vector<float>{-1.0, -1.0}, std::vector<uint8_t>{2, 2, 2, 2});
   auto ds7 = ds->Map({random_rotation_op7});
   EXPECT_NE(ds7, nullptr);
   // Create an iterator over the result of the above dataset
@@ -1476,6 +1613,9 @@ TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
   EXPECT_EQ(iter7, nullptr);
 }
 
+/// Feature: RandomSharpness op
+/// Description: Test RandomSharpness op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomSharpness) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomSharpness.";
 
@@ -1491,10 +1631,10 @@ TEST_F(MindDataTestPipeline, TestRandomSharpness) {
 
   // Create objects for the tensor ops
   // Valid case: Input start degree and end degree
-  std::shared_ptr<TensorTransform> random_sharpness_op_1(new vision::RandomSharpness({0.4, 2.3}));
+  auto random_sharpness_op_1 = std::make_shared<vision::RandomSharpness>(std::vector<float>{0.4, 2.3});
 
   // Valid case: Use default input values
-  std::shared_ptr<TensorTransform> random_sharpness_op_2(new vision::RandomSharpness());
+  auto random_sharpness_op_2 = std::make_shared<vision::RandomSharpness>();
 
   // Create a Map operation on ds
   ds = ds->Map({random_sharpness_op_1, random_sharpness_op_2});
@@ -1528,6 +1668,9 @@ TEST_F(MindDataTestPipeline, TestRandomSharpness) {
   iter->Stop();
 }
 
+/// Feature: RandomSolarize op
+/// Description: Test RandomSolarize op with non-default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomSolarizeSucess1.";
 
@@ -1568,6 +1711,9 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess1) {
   iter->Stop();
 }
 
+/// Feature: RandomSolarize op
+/// Description: Test RandomSolarize op with default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomSolarizeSuccess2 with default parameters.";
 
@@ -1606,6 +1752,9 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess2) {
   iter->Stop();
 }
 
+/// Feature: RandomVerticalFlipWithBBox op
+/// Description: Test RandomVerticalFlipWithBBox op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomVerticalFlipWithBBoxSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomVerticalFlipWithBBoxSuccess.";
   // Create an VOC Dataset
@@ -1643,6 +1792,9 @@ TEST_F(MindDataTestPipeline, TestRandomVerticalFlipWithBBoxSuccess) {
   iter->Stop();
 }
 
+/// Feature: RandomHorizontalFlip and RandomVerticalFlip ops
+/// Description: Test RandomVerticalFlip op and RandomHorizontalFlip op with multiple fields
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlipWithMultiField) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalAndVerticalFlipWithMultiField for horizontal and "
                   "vertical flips.";
@@ -1689,6 +1841,9 @@ TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlipWithMultiField) 
   iter->Stop();
 }
 
+/// Feature: RandomCropDecodeResize op
+/// Description: Test RandomCropDecodeResize op with multiple fields
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomCropDecodeResizeWithMultiField) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropDecodeResizeWithMultiField.";
 
@@ -1699,7 +1854,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropDecodeResizeWithMultiField) {
 
   // Create objects for the tensor ops
   transforms::Duplicate duplicate = transforms::Duplicate();
-  std::shared_ptr<TensorTransform> random_crop_decode_resize(new vision::RandomCropDecodeResize({500, 500}));
+  auto random_crop_decode_resize = std::make_shared<vision::RandomCropDecodeResize>(std::vector<int32_t>{500, 500});
 
   // Create a Map operation on ds
    ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});
@@ -1734,6 +1889,9 @@ TEST_F(MindDataTestPipeline, TestRandomCropDecodeResizeWithMultiField) {
   iter->Stop();
 }
 
+/// Feature: RandomCropResize op
+/// Description: Test RandomCropResize op with multiple fields
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomCropResizeWithMultiField) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropResizeWithMultiField.";
 
@@ -1744,7 +1902,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropResizeWithMultiField) {
 
   // Create objects for the tensor ops
   transforms::Duplicate duplicate = transforms::Duplicate();
-  std::shared_ptr<TensorTransform> random_crop_decode_resize(new vision::RandomResizedCrop({500, 500}));
+  auto random_crop_decode_resize = std::make_shared<vision::RandomResizedCrop>(std::vector<int32_t>{500, 500});
 
   // Create a Map operation on ds
   ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});

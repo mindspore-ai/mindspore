@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,10 @@ class MindDataTestTaskManager : public UT::Common {
   void SetUp() { Services::CreateInstance(); }
 };
 
+/// Feature: GetTaskErrorIfAny in TaskGroup
+/// Description: Test the error is passed back to the master thread if vg_rc is OK
+///     If vg_rc is kOutOfMemory, the group error is already passed back
+/// Expectation: No hangs or failures
 TEST_F(MindDataTestTaskManager, Test1) {
   // Clear the rc of the master thread if any
   (void)TaskManager::GetMasterThreadRc();
@@ -50,13 +54,14 @@ TEST_F(MindDataTestTaskManager, Test1) {
   }
 }
 
+/// Feature: Wait in CondVar
+/// Description: This testcase will spawn about 100 threads and block on a conditional variable.
+///     The master thread will try to interrupt them almost at the same time. This can
+///     cause a racing condition that some threads may miss the interrupt and blocked.
+///     The new logic of Task::Join() will do a time-out join and wake up all those threads that miss the interrupt
+///     Clear the rc of the master thread if any
+/// Expectation: No hangs or failures
 TEST_F(MindDataTestTaskManager, Test2) {
-  // This testcase will spawn about 100 threads and block on a conditional variable.
-  // The master thread will try to interrupt them almost at the same time. This can
-  // cause a racing condition that some threads may miss the interrupt and blocked.
-  // The new logic of Task::Join() will do a time-out join and wake up all those
-  // threads that miss the interrupt.
-  // Clear the rc of the master thread if any
   (void)TaskManager::GetMasterThreadRc();
   TaskGroup vg;
   CondVar cv;
@@ -84,9 +89,9 @@ TEST_F(MindDataTestTaskManager, Test2) {
   ASSERT_TRUE(vg.join_all(Task::WaitFlag::kNonBlocking).IsOk());
 }
 
-/// Feature: WaitFor in CondVar.
-/// Description: test WaitFor function
-/// Expectation: no hangs or failures
+/// Feature: WaitFor in CondVar
+/// Description: Test WaitFor function
+/// Expectation: No hangs or failures
 TEST_F(MindDataTestTaskManager, Test3) {
   (void)TaskManager::GetMasterThreadRc();
   TaskGroup vg;

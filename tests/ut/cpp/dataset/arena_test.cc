@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,9 @@ class MindDataTestArena : public UT::Common {
     MindDataTestArena() {}
 };
 
-
+/// Feature: Arena
+/// Description: Test Arena basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestArena, Test1) {
   std::shared_ptr<Arena> mp;
   Status rc = Arena::CreateArena(&mp);
@@ -48,6 +50,9 @@ TEST_F(MindDataTestArena, Test1) {
   MS_LOG(DEBUG) << *mp;
 }
 
+/// Feature: Arena
+/// Description: Test copy and move
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestArena, Test2) {
   std::shared_ptr<Arena> arena;
   Status rc = Arena::CreateArena(&arena);

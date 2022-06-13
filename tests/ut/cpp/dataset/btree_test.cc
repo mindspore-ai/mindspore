@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,9 @@ class MindDataTestBPlusTree : public UT::Common {
   MindDataTestBPlusTree() = default;
 };
 
-// Test serial insert.
+/// Feature: Btree
+/// Description: Test Btree serial insert
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestBPlusTree, Test1) {
   Allocator<std::string> alloc(std::make_shared<SystemPool>());
   BPlusTree<uint64_t, std::string, Allocator<std::string>, std::less<>, mytraits> btree(alloc);
@@ -105,7 +107,9 @@ TEST_F(MindDataTestBPlusTree, Test1) {
   }
 }
 
-// Test concurrent insert.
+/// Feature: Btree
+/// Description: Test Btree concurrent insert
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestBPlusTree, Test2) {
   Allocator<std::string> alloc(std::make_shared<SystemPool>());
   BPlusTree<uint64_t, std::string, Allocator<std::string>, std::less<>, mytraits> btree(alloc);
@@ -179,6 +183,9 @@ TEST_F(MindDataTestBPlusTree, Test2) {
   }
 }
 
+/// Feature: AutoIndexObj
+/// Description: Test AutoIndexObj basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestBPlusTree, Test3) {
   Allocator<std::string> alloc(std::make_shared<SystemPool>());
   AutoIndexObj<std::string, Allocator<std::string>> ai(alloc);
@@ -200,6 +207,9 @@ TEST_F(MindDataTestBPlusTree, Test3) {
   }
 }
 
+/// Feature: AutoIndexObj
+/// Description: Test AutoIndexObj iterator function
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestBPlusTree, Test4) {
   Allocator<int64_t> alloc(std::make_shared<SystemPool>());
   AutoIndexObj<int64_t, Allocator<int64_t>> ai(alloc);
@@ -227,6 +237,9 @@ TEST_F(MindDataTestBPlusTree, Test4) {
   }
 }
 
+/// Feature: Btree
+/// Description: Test Btree with no locking
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestBPlusTree, TestPerfNoLocking) {
   AutoIndexObj<int64_t> btree;
   // No locking test

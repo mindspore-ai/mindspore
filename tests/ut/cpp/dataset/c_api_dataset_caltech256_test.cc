@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: Caltech256Dataset
-/// Description: basic test of Caltech256Dataset
-/// Expectation: the data is processed successfully
+/// Description: Basic test of Caltech256Dataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCaltech256Dataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256Dataset.";
 
@@ -63,8 +63,8 @@ TEST_F(MindDataTestPipeline, TestCaltech256Dataset) {
 }
 
 /// Feature: Caltech256Dataset
-/// Description: test Caltech256Dataset in pipeline mode
-/// Expectation: the data is processed successfully
+/// Description: Test Caltech256Dataset in pipeline mode
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCaltech256DatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256DatasetWithPipeline.";
 
@@ -120,9 +120,9 @@ TEST_F(MindDataTestPipeline, TestCaltech256DatasetWithPipeline) {
   iter->Stop();
 }
 
-/// Feature: Caltech256IteratorOneColumn.
-/// Description: test iterator of Caltech256Dataset with only the "image" column.
-/// Expectation: get correct data.
+/// Feature: Caltech256Dataset
+/// Description: Test iterator of Caltech256Dataset with only the image column
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCaltech256IteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256IteratorOneColumn.";
   // Create a Caltech256 Dataset.
@@ -162,9 +162,9 @@ TEST_F(MindDataTestPipeline, TestCaltech256IteratorOneColumn) {
   iter->Stop();
 }
 
-/// Feature: Caltech256IteratorWrongColumn.
-/// Description: test iterator of Caltech256Dataset with wrong column.
-/// Expectation: get none piece of data.
+/// Feature: Caltech256Dataset
+/// Description: Test iterator of Caltech256Dataset with wrong column
+/// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCaltech256IteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256IteratorWrongColumn.";
   // Create a Caltech256 Dataset.
@@ -179,8 +179,8 @@ TEST_F(MindDataTestPipeline, TestCaltech256IteratorWrongColumn) {
 }
 
 /// Feature: Caltech256Dataset
-/// Description: test getting size of Caltech256Dataset
-/// Expectation: the size is correct
+/// Description: Test getting size of Caltech256Dataset
+/// Expectation: The size is correct
 TEST_F(MindDataTestPipeline, TestCaltech256GetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256GetDatasetSize.";
 
@@ -193,8 +193,8 @@ TEST_F(MindDataTestPipeline, TestCaltech256GetDatasetSize) {
 }
 
 /// Feature: Caltech256Dataset
-/// Description: test Caltech256Dataset with mix getter
-/// Expectation: the data is processed successfully
+/// Description: Test Caltech256Dataset Getters method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestCaltech256Getters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256MixGetter.";
 
@@ -232,8 +232,8 @@ TEST_F(MindDataTestPipeline, TestCaltech256Getters) {
 }
 
 /// Feature: Caltech256Dataset
-/// Description: test Caltech256Dataset with the fail of reading dataset
-/// Expectation: throw correct error and message
+/// Description: Test Caltech256Dataset with the fail of reading dataset
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCaltech256DatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256DatasetFail.";
 
@@ -248,8 +248,8 @@ TEST_F(MindDataTestPipeline, TestCaltech256DatasetFail) {
 }
 
 /// Feature: Caltech256Dataset
-/// Description: test Caltech256Dataset with the null sampler
-/// Expectation: throw correct error and message
+/// Description: Test Caltech256Dataset with the null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestCaltech256DatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaltech256DatasetWithNullSamplerFail.";
 

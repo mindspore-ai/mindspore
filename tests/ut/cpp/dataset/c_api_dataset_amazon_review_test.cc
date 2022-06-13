@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ protected:
 };
 
 /// Feature: AmazonReview
-/// Description: read AmazonReviewPolarityDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Description: Read AmazonReviewPolarityDataset data and get data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestAmazonReviewPolarityDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewPolarityDatasetBasic.";
 
@@ -74,8 +74,8 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewPolarityDatasetBasic) {
 }
 
 /// Feature: AmazonReview
-/// Description: read AmazonReviewFullDataset data and get data.
-/// Expectation: the data is processed successfully.
+/// Description: Read AmazonReviewFullDataset data and get data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestAmazonReviewFullDatasetBasic) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewFullDatasetBasic.";
 
@@ -124,8 +124,8 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewFullDatasetBasic) {
 }
 
 /// Feature: AmazonReview(usage=all).
-/// Description: read train data and test data.
-/// Expectation: the data is processed successfully.
+/// Description: Read train data and test data.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetUsageAll) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetUsageAll.";
 
@@ -176,8 +176,8 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetUsageAll) {
 }
 
 /// Feature: AmazonReview
-/// Description: test Getter methods
-/// Expectation: the data is processed successfully.
+/// Description: Test Getter methods
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestAmazonReviewGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewGetters.";
 
@@ -191,8 +191,8 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewGetters) {
 }
 
 /// Feature: AmazonReview(num_samples = 3).
-/// Description: test whether the interface meets expectations when NumSamples is equal to 2.
-/// Expectation: the data is processed successfully.
+/// Description: Test whether the interface meets expectations when NumSamples is equal to 2.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestAmazonReviewNumSamples) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewNumSamples.";
 
@@ -240,8 +240,8 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewNumSamples) {
 }
 
 /// Feature: AmazonReview
-/// Description: test interface in a distributed state.
-/// Expectation: the data is processed successfully.
+/// Description: Test interface in a distributed state.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetDistribution) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetDistribution.";
 
@@ -289,8 +289,8 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetDistribution) {
 }
 
 /// Feature: AmazonReview
-/// Description: test the wrong input.
-/// Expectation: unable to read in data.
+/// Description: Test the wrong input.
+/// Expectation: Unable to read in data.
 TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetFail.";
 
@@ -340,8 +340,8 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetFail) {
 }
 
 /// Feature: AmazonReview
-/// Description: test AmazonReview Dataset interface in pipeline.
-/// Expectation: the data is processed successfully.
+/// Description: Test AmazonReview Dataset interface in pipeline.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetBasicWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetBasicWithPipeline.";
 
@@ -398,8 +398,8 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetBasicWithPipeline) {
 }
 
 /// Feature: AmazonReview(ShuffleMode=kFiles).
-/// Description: test AmazonReview Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test AmazonReview Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetShuffleFilesA) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-AmazonReviewDatasetShuffleFilesA.";
 
@@ -460,8 +460,8 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetShuffleFilesA) {
 }
 
 /// Feature: AmazonReview(ShuffleMode=kInfile).
-/// Description: test AmazonReview Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test AmazonReview Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetShuffleFilesB) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetShuffleFilesB.";
 
@@ -522,8 +522,8 @@ TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetShuffleFilesB) {
 }
 
 /// Feature: AmazonReview(ShuffleMode=kGlobal).
-/// Description: test AmazonReview Dataset interface with different ShuffleMode.
-/// Expectation: the data is processed successfully.
+/// Description: Test AmazonReview Dataset interface with different ShuffleMode.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestAmazonReviewDatasetShuffleFilesGlobal) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAmazonReviewDatasetShuffleFilesGlobal.";
 

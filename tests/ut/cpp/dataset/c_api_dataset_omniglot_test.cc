@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: OmniglotDataset
-/// Description: test Omniglot
-/// Expectation: get correct Omniglot dataset
+/// Description: Test OmniglotDataset using background dataset
+/// Expectation: Get correct Omniglot dataset
 TEST_F(MindDataTestPipeline, TestOmniglotBackgroundDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOmniglotBackgroundDataset.";
 
@@ -64,8 +64,8 @@ TEST_F(MindDataTestPipeline, TestOmniglotBackgroundDataset) {
 }
 
 /// Feature: OmniglotDataset
-/// Description: test Omniglot
-/// Expectation: get correct Omniglot dataset
+/// Description: Test OmniglotDataset using evaluation dataset
+/// Expectation: Get correct Omniglot dataset
 TEST_F(MindDataTestPipeline, TestOmniglotEvaluationDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOmniglotEvaluationDataset.";
 
@@ -101,8 +101,8 @@ TEST_F(MindDataTestPipeline, TestOmniglotEvaluationDataset) {
 }
 
 /// Feature: OmniglotDataset
-/// Description: test Omniglot
-/// Expectation: get correct Omniglot dataset
+/// Description: Test OmniglotDataset using background dataset with pipeline mode
+/// Expectation: Get correct Omniglot dataset
 TEST_F(MindDataTestPipeline, TestOmniglotBackgroundDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOmniglotBackgroundDatasetWithPipeline.";
 
@@ -159,8 +159,8 @@ TEST_F(MindDataTestPipeline, TestOmniglotBackgroundDatasetWithPipeline) {
 }
 
 /// Feature: OmniglotDataset
-/// Description: test Omniglot
-/// Expectation: get correct Omniglot dataset
+/// Description: Test OmniglotDataset GetDatasetSize with background dataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestOmniglotBackgroundGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetOmniglotBackgroundSize.";
 
@@ -173,8 +173,8 @@ TEST_F(MindDataTestPipeline, TestOmniglotBackgroundGetDatasetSize) {
 }
 
 /// Feature: OmniglotDataset
-/// Description: test Omniglot
-/// Expectation: get correct Omniglot dataset
+/// Description: Test OmniglotDataset GetDatasetSize with evaluation dataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestOmniglotEvaluationGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetOmniglotEvaluationDatasetSize.";
 
@@ -187,8 +187,8 @@ TEST_F(MindDataTestPipeline, TestOmniglotEvaluationGetDatasetSize) {
 }
 
 /// Feature: OmniglotDataset
-/// Description: test Omniglot
-/// Expectation: get correct Omniglot dataset
+/// Description: Test OmniglotDataset Getters method with background dataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestOmniglotBackgroundDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOmniglotBackgroundDatasetGetters.";
 
@@ -227,8 +227,8 @@ TEST_F(MindDataTestPipeline, TestOmniglotBackgroundDatasetGetters) {
 }
 
 /// Feature: OmniglotDataset
-/// Description: test Omniglot
-/// Expectation: get correct Omniglot dataset
+/// Description: Test OmniglotDataset Getters method with evaluation dataset
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestOmniglotEvaluationDatasetGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOmniglotTestDatasetGetters.";
 
@@ -263,9 +263,9 @@ TEST_F(MindDataTestPipeline, TestOmniglotEvaluationDatasetGetters) {
   EXPECT_EQ(ds->GetNumClasses(), 2);
 }
 
-/// Feature: TestOmniglotDatasetFail
-/// Description: test invalid num_images of Omniglot
-/// Expectation: throw exception correctly
+/// Feature: OmniglotDataset
+/// Description: Test OmniglotDataset with invalid num_images
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestOmniglotDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOmniglotDatasetFail.";
 
@@ -279,9 +279,9 @@ TEST_F(MindDataTestPipeline, TestOmniglotDatasetFail) {
   EXPECT_EQ(iter, nullptr);
 }
 
-/// Feature: TestOmniglotDatasetWithNullSampler
-/// Description: test null sampler of Omniglot
-/// Expectation: throw exception correctly
+/// Feature: OmniglotDataset
+/// Description: Test OmniglotDataset with null sampler
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestOmniglotDatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOmniglotDatasetWithNullSamplerFail.";
 

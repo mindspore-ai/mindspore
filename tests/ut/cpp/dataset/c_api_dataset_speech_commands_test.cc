@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: Test SpeechCommands dataset.
-/// Description: read data from a single file.
-/// Expectation: the data is processed successfully.
+/// Description: Read data from a single file.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsDataset) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDataset.";
   std::string folder_path = datasets_root_path_ + "/testSpeechCommandsData/";
@@ -65,8 +65,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsDataset) {
 }
 
 /// Feature: Test SpeechCommands dataset.
-/// Description: test SpeechCommands dataset in pipeline.
-/// Expectation: the data is processed successfully.
+/// Description: Test SpeechCommands dataset in pipeline.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDatasetWithPipeline.";
 
@@ -126,8 +126,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetWithPipeline) {
 }
 
 /// Feature: TestSpeechCommandsDatasetIteratorOneColumn.
-/// Description: test iterator of SpeechCommands dataset with only the "waveform" column.
-/// Expectation: get correct data.
+/// Description: Test iterator of SpeechCommands dataset with only the "waveform" column.
+/// Expectation: Get correct data.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDatasetIteratorOneColumn.";
   // Create a  SpeechCommands dataset
@@ -168,8 +168,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetIteratorOneColumn) {
 }
 
 /// Feature: TestSpeechCommandsDatasetIteratorWrongColumn.
-/// Description: test iterator of SpeechCommandsDataset with wrong column.
-/// Expectation: get none piece of data.
+/// Description: Test iterator of SpeechCommandsDataset with wrong column.
+/// Expectation: Error message is logged, and CreateIterator for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDatasetIteratorWrongColumn.";
   // Create a  SpeechCommands dataset
@@ -184,8 +184,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetIteratorWrongColumn) {
 }
 
 /// Feature: Test SpeechCommands dataset.
-/// Description: get the size of SpeechCommands dataset.
-/// Expectation: the data is processed successfully.
+/// Description: Get the size of SpeechCommands dataset.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsGetDatasetSize.";
 
@@ -198,8 +198,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsGetDatasetSize) {
 }
 
 /// Feature: Test SpeechCommands dataset.
-/// Description: getter functions.
-/// Expectation: the data is processed successfully.
+/// Description: Getter functions.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsMixGetter.";
   // Create a SpeechCommands Dataset.
@@ -234,8 +234,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsGetters) {
 }
 
 /// Feature: Test SpeechCommands dataset.
-/// Description: test usage "train".
-/// Expectation: the data is processed successfully.
+/// Description: Test usage "train".
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsUsageTrain) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDataset.";
   std::string folder_path = datasets_root_path_ + "/testSpeechCommandsData/";
@@ -273,8 +273,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsUsageTrain) {
 }
 
 /// Feature: Test SpeechCommands dataset.
-/// Description: test usage "test".
-/// Expectation: the data is processed successfully.
+/// Description: Test usage "test".
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsUsageTest) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDataset.";
   std::string folder_path = datasets_root_path_ + "/testSpeechCommandsData/";
@@ -312,8 +312,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsUsageTest) {
 }
 
 /// Feature: Test SpeechCommands dataset.
-/// Description: test usage "valid".
-/// Expectation: the data is processed successfully.
+/// Description: Test usage "valid".
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsUsageValid) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDataset.";
   std::string folder_path = datasets_root_path_ + "/testSpeechCommandsData/";
@@ -351,8 +351,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsUsageValid) {
 }
 
 /// Feature: Test SpeechCommands dataset.
-/// Description: error tests.
-/// Expectation: throw error messages when certain errors occur.
+/// Description: Test invalid folder path.
+/// Expectation: Throw error messages when certain errors occur.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDatasetFail.";
 
@@ -367,8 +367,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetFail) {
 }
 
 /// Feature: Test SpeechCommands dataset.
-/// Description: test error usages.
-/// Expectation: throw error messages when certain errors occur.
+/// Description: Test error usages.
+/// Expectation: Throw error messages when certain errors occur.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetWithInvalidUsageFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDatasetFail.";
 
@@ -384,8 +384,8 @@ TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetWithInvalidUsageFail) {
 }
 
 /// Feature: Test SpeechCommands dataset.
-/// Description: test null sample error.
-/// Expectation: throw error messages when certain errors occur.
+/// Description: Test null sample error.
+/// Expectation: Throw error messages when certain errors occur.
 TEST_F(MindDataTestPipeline, TestSpeechCommandsDatasetWithNullSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSpeechCommandsDatasetWithNullSamplerFail.";
 

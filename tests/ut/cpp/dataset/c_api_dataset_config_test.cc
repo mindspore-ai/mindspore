@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: Config
+/// Description: Test basic configuration setting
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestConfigSetting) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConfigSetting.";
   // Test basic configuration setting
@@ -70,6 +73,9 @@ TEST_F(MindDataTestPipeline, TestConfigSetting) {
   config::set_monitor_sampling_interval(original_monitor_sampling_interval);
 }
 
+/// Feature: Config
+/// Description: Test configuration setting with wrong parameter
+/// Expectation: Config attributes are equal to the expected attributes
 TEST_F(MindDataTestPipeline, TestConfigParamCheck) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConfigParamCheck.";
   // Test configuration setting with wrong parameter
@@ -102,6 +108,9 @@ TEST_F(MindDataTestPipeline, TestConfigParamCheck) {
   config::set_monitor_sampling_interval(original_monitor_sampling_interval);
 }
 
+/// Feature: Config
+/// Description: Test deterministic shuffle with setting the seed
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestShuffleWithSeed) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestShuffleWithSeed.";
   // Test deterministic shuffle with setting the seed
@@ -162,6 +171,9 @@ TEST_F(MindDataTestPipeline, TestShuffleWithSeed) {
   config::set_num_parallel_workers(original_num_parallel_workers);
 }
 
+/// Feature: Config
+/// Description: Test shuffle and repeat with setting the seed
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestCallShuffleTwice) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCallShuffleTwice.";
   // Test shuffle and repeat with setting the seed.

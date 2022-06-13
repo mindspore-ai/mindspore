@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 
 // Tests for vision C++ API BoundingBoxAugment TensorTransform Operation
 
+/// Feature: BoundingBoxAugment op
+/// Description: Test BoundingBoxAugment op defined with shared pointer
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess1Shr) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentSuccess1Shr.";
   // Create an VOC Dataset
@@ -36,8 +39,8 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess1Shr) {
 
   // Create objects for the tensor ops
   // Use shared pointers
-  std::shared_ptr<TensorTransform> random_rotation_op(new vision::RandomRotation({90.0}));
-  std::shared_ptr<TensorTransform> bound_box_augment_op(new vision::BoundingBoxAugment({random_rotation_op}, 1.0));
+  auto random_rotation_op = std::make_shared<vision::RandomRotation>(std::vector<float>{90.0});
+  auto bound_box_augment_op = std::make_shared<vision::BoundingBoxAugment>(random_rotation_op, 1.0);
 
   // Create a Map operation on ds
   ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -65,6 +68,9 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess1Shr) {
   iter->Stop();
 }
 
+/// Feature: BoundingBoxAugment op
+/// Description: Test BoundingBoxAugment op defined with new and auto
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess2Auto) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentSuccess2Auto.";
   // Create an VOC Dataset
@@ -109,6 +115,9 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess2Auto) {
   delete bound_box_augment_op;
 }
 
+/// Feature: BoundingBoxAugment op
+/// Description: Test BoundingBoxAugment op defined through object definition
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess3Obj) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentSuccess3Obj.";
   // Create an VOC Dataset
@@ -148,6 +157,9 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess3Obj) {
   iter->Stop();
 }
 
+/// Feature: BoundingBoxAugment op
+/// Description: Test BoundingBoxAugment op with invalid ratio < 0.0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentFail1 with invalid ratio parameter.";
 
@@ -158,10 +170,10 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_rotation_op(new vision::RandomRotation({90.0}));
+  auto random_rotation_op = std::make_shared<vision::RandomRotation>(std::vector<float>{90.0});
 
   // Create BoundingBoxAugment op with invalid ratio < 0.0
-  std::shared_ptr<TensorTransform> bound_box_augment_op(new vision::BoundingBoxAugment({random_rotation_op}, -1.0));
+  auto bound_box_augment_op = std::make_shared<vision::BoundingBoxAugment>(random_rotation_op, -1.0);
 
   // Create a Map operation on ds
   ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -173,6 +185,9 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail1) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BoundingBoxAugment op
+/// Description: Test BoundingBoxAugment op with invalid ratio > 1.0
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentFail2 with invalid ratio parameter.";
 
@@ -183,10 +198,10 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_rotation_op(new vision::RandomRotation({90.0}));
+  auto random_rotation_op = std::make_shared<vision::RandomRotation>(std::vector<float>{90.0});
 
   // Create BoundingBoxAugment op with invalid ratio > 1.0
-  std::shared_ptr<TensorTransform> bound_box_augment_op(new vision::BoundingBoxAugment({random_rotation_op}, 2.0));
+  auto bound_box_augment_op = std::make_shared<vision::BoundingBoxAugment>(random_rotation_op, 2.0);
 
   // Create a Map operation on ds
   ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -198,6 +213,9 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BoundingBoxAugment op
+/// Description: Test BoundingBoxAugment op with invalid nullptr transform op
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentFail3 with invalid transform.";
 
@@ -208,7 +226,7 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail3) {
   EXPECT_NE(ds, nullptr);
 
   // Create BoundingBoxAugment op with invalid nullptr transform
-  std::shared_ptr<TensorTransform> bound_box_augment_op(new vision::BoundingBoxAugment(nullptr, 0.5));
+  auto bound_box_augment_op = std::make_shared<vision::BoundingBoxAugment>(nullptr, 0.5);
 
   // Create a Map operation on ds
   ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -220,6 +238,9 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail3) {
   EXPECT_EQ(iter, nullptr);
 }
 
+/// Feature: BoundingBoxAugment op
+/// Description: Test BoundingBoxAugment op with invalid transform input
+/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentFail4 with invalid transform input.";
 
@@ -231,10 +252,10 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail4) {
 
   // Create objects for the tensor ops
   // RandomRotation has invalid input, first column value of degrees is greater than the second column value
-  std::shared_ptr<TensorTransform> random_rotation_op(new vision::RandomRotation({50.0, -50.0}));
+  auto random_rotation_op = std::make_shared<vision::RandomRotation>(std::vector<float>{50.0, -50.0});
 
   // Create BoundingBoxAugment op with invalid transform
-  std::shared_ptr<TensorTransform> bound_box_augment_op(new vision::BoundingBoxAugment({random_rotation_op}, 0.25));
+  auto bound_box_augment_op = std::make_shared<vision::BoundingBoxAugment>(random_rotation_op, 0.25);
 
   // Create a Map operation on ds
   ds = ds->Map({bound_box_augment_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 };
 
 /// Feature: Test WIDERFace dataset.
-/// Description: read data for default usage.
-/// Expectation: the data is processed successfully.
+/// Description: Read data for default usage.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestWIDERFace) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWIDERFace.";
   // Create a WIDERFace Dataset.
@@ -78,8 +78,8 @@ TEST_F(MindDataTestPipeline, TestWIDERFace) {
 }
 
 /// Feature: Test WIDERFace dataset.
-/// Description: test usage "test".
-/// Expectation: the data is processed successfully.
+/// Description: Test usage "test".
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestWIDERFaceTest) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWIDERFaceTest.";
   // Create a WIDERFace Dataset.
@@ -106,8 +106,8 @@ TEST_F(MindDataTestPipeline, TestWIDERFaceTest) {
 }
 
 /// Feature: Test WIDERFace dataset.
-/// Description: test pipeline.
-/// Expectation: the data is processed successfully.
+/// Description: Test pipeline.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestWIDERFaceDefaultWithPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWIDERFaceDefaultWithPipeline.";
   // Create two WIDERFace Dataset.
@@ -174,8 +174,8 @@ TEST_F(MindDataTestPipeline, TestWIDERFaceDefaultWithPipeline) {
 }
 
 /// Feature: Test WIDERFace dataset.
-/// Description: test WIDERFace getters.
-/// Expectation: the data is processed successfully.
+/// Description: Test WIDERFace getters.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestWIDERFaceGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWIDERFaceGetters.";
   // Create a WIDERFace Dataset.
@@ -191,8 +191,8 @@ TEST_F(MindDataTestPipeline, TestWIDERFaceGetters) {
 }
 
 /// Feature: Test WIDERFace dataset.
-/// Description: test WIDERFace usage error.
-/// Expectation: throw error messages when certain errors occur.
+/// Description: Test WIDERFace usage error.
+/// Expectation: Throw error messages when certain errors occur.
 TEST_F(MindDataTestPipeline, TestWIDERFaceWithUsageError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWIDERFaceWithNullSamplerFail.";
   // Create a WIDERFace Dataset.
@@ -208,8 +208,8 @@ TEST_F(MindDataTestPipeline, TestWIDERFaceWithUsageError) {
 }
 
 /// Feature: Test WIDERFace dataset.
-/// Description: test WIDERFace with SequentialSampler.
-/// Expectation: the data is processed successfully.
+/// Description: Test WIDERFace with SequentialSampler.
+/// Expectation: The data is processed successfully.
 TEST_F(MindDataTestPipeline, TestWIDERFaceSequentialSampler) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWIDERFaceSequentialSampler.";
 
@@ -242,8 +242,8 @@ TEST_F(MindDataTestPipeline, TestWIDERFaceSequentialSampler) {
 }
 
 /// Feature: Test WIDERFace dataset.
-/// Description: test WIDERFace with invalid nullptr sampler.
-/// Expectation: throw error messages when certain errors occur.
+/// Description: Test WIDERFace with invalid nullptr sampler.
+/// Expectation: Throw error messages when certain errors occur.
 TEST_F(MindDataTestPipeline, TestWIDERFaceWithNullSamplerError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWIDERFaceWithNullSamplerError.";
 
@@ -259,8 +259,8 @@ TEST_F(MindDataTestPipeline, TestWIDERFaceWithNullSamplerError) {
 }
 
 /// Feature: Test WIDERFace dataset.
-/// Description: test WIDERFace error.
-/// Expectation: throw error messages when certain errors occur.
+/// Description: Test WIDERFace error.
+/// Expectation: Throw error messages when certain errors occur.
 TEST_F(MindDataTestPipeline, TestWIDERFaceError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWIDERFaceError.";
 

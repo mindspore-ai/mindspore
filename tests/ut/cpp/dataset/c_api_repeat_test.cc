@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: Repeat op
+/// Description: Test Repeat op after SetNumWorkers is called
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRepeatSetNumWorkers) {
   MS_LOG(INFO) << "Doing MindDataTestRepeat-TestRepeatSetNumWorkers.";
 

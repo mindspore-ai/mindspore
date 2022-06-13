@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ class MindDataTestHorizontalFlip : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: HorizontalFlip op
+/// Description: Test HorizontalFlip op in pipeline mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestHorizontalFlip, TestHorizontalFlipPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestHorizontalFlip-TestHorizontalFlipPipeline.";
 
@@ -34,7 +37,7 @@ TEST_F(MindDataTestHorizontalFlip, TestHorizontalFlipPipeline) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> horizontal_flip(new vision::HorizontalFlip());
+  auto horizontal_flip = std::make_shared<vision::HorizontalFlip>();
 
   // Create a Map operation on ds
   ds = ds->Map({horizontal_flip});
@@ -68,6 +71,9 @@ TEST_F(MindDataTestHorizontalFlip, TestHorizontalFlipPipeline) {
   iter->Stop();
 }
 
+/// Feature: HorizontalFlip op
+/// Description: Test HorizontalFlip op in eager mode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestHorizontalFlip, TestHorizontalFlipEager) {
   MS_LOG(INFO) << "Doing MindDataTestHorizontalFlip-TestHorizontalFlipEager.";
 
