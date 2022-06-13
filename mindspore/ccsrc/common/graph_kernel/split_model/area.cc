@@ -74,7 +74,7 @@ std::vector<AreaWithRelation> Area::users_with_relation() const {
     Node *node = u.first;
     auto area = node->As<NodeHandle>()->area();
     // the input edge of area is unique
-    auto relation = area->input_relation(*(u.second.begin()));
+    const auto relation = area->input_relation(*(u.second.begin()));
     return std::make_pair(area, relation);
   });
   return result;
@@ -107,7 +107,7 @@ void Area::MakeUniqueAndSyncInputs() {
   // remove the repeated inputs, keep the area with greater EdgeRelation.
   std::sort(inputs_with_relation_.begin(), inputs_with_relation_.end(), AreaWithRelationCmp);
   (void)inputs_with_relation_.erase(std::unique(inputs_with_relation_.begin(), inputs_with_relation_.end(), SameArea),
-                                    inputs_with_relation_.end());
+                                    inputs_with_relation_.cend());
   // sync the inputs to NodeHandle to maintain users
   this->hd_->ClearInputs();
   (void)std::for_each(inputs_with_relation_.begin(), inputs_with_relation_.end(),
@@ -119,7 +119,7 @@ void Area::UpdateUsersRelation(const AreaPtr &input_area) {
   std::vector<AreaPtr> user_areas;
   for (auto &[user_hd, index] : user_node_with_index) {
     (void)user_areas.emplace_back(user_hd->As<NodeHandle>()->area());
-    auto idx = *(index.begin());
+    const auto idx = *(index.begin());
     user_areas.back()->inputs_with_relation_[idx].first = this->shared_from_this();
   }
   // the inputs should be updated outside the above for-loop,
@@ -146,7 +146,7 @@ void Area::FuseInput(const AreaPtr &input_area) {
   if (pattern() < input_area->pattern()) {
     ops_.swap(input_area->ops_);
   }
-  (void)ops_.insert(ops_.end(), input_area->ops_.begin(), input_area->ops_.end());
+  (void)ops_.insert(ops_.cend(), input_area->ops_.cbegin(), input_area->ops_.cend());
 
   // update area pattern
   hd_->compute_type_ = std::max(pattern(), input_area->pattern());
@@ -156,8 +156,8 @@ void Area::FuseInput(const AreaPtr &input_area) {
 
   // update inputs and relations
   (void)inputs_with_relation_.erase(iter);
-  (void)inputs_with_relation_.insert(inputs_with_relation_.end(), input_area->inputs_with_relation_.begin(),
-                                     input_area->inputs_with_relation_.end());
+  (void)inputs_with_relation_.insert(inputs_with_relation_.cend(), input_area->inputs_with_relation_.cbegin(),
+                                     input_area->inputs_with_relation_.cend());
   MakeUniqueAndSyncInputs();
   UpdateUsersRelation(input_area);
 

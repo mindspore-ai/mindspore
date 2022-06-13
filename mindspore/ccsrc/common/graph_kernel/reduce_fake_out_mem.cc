@@ -25,7 +25,7 @@
 namespace mindspore::graphkernel {
 constexpr auto kFakeOut = "fake_output";
 void ReduceFakeOutMem::ModifyAbstract(const AnfNodePtr &composite_node, const std::set<size_t> &fake_real_indices,
-                                      const AnfNodePtrList &output_list) {
+                                      const AnfNodePtrList &output_list) const {
   if (fake_real_indices.empty()) {
     return;
   }
@@ -37,7 +37,7 @@ void ReduceFakeOutMem::ModifyAbstract(const AnfNodePtr &composite_node, const st
 
   std::vector<AbstractBasePtr> out_specs;
   for (size_t i = 0; i < output_list.size(); ++i) {
-    if (fake_real_indices.count(i)) {
+    if (fake_real_indices.count(i) != 0) {
       std::vector<int64_t> shape_vec_shape = {1};
       AbstractBasePtr abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
       out_specs.push_back(abstract);

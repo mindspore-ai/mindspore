@@ -133,7 +133,7 @@ void SetNodeInfo(const CNodePtr &orig_node, const CNodePtr &new_node, const Node
 
 void ReorderOps::SetTypeInsensitiveNodeInputs(const CNodePtr &node, const std::vector<size_t> &indexes,
                                               const std::vector<AnfNodePtr> &new_input_at_indexes,
-                                              std::vector<AnfNodePtr> *new_inputs) {
+                                              std::vector<AnfNodePtr> *new_inputs) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(new_inputs);
   if (indexes.size() != new_input_at_indexes.size()) {
@@ -165,7 +165,7 @@ void ReorderOps::SetTypeInsensitiveNodeInputs(const CNodePtr &node, const std::v
 
 void ReorderOps::SetTypeInsensitiveNodeInputsInfo(const CNodePtr &node, const std::vector<size_t> &indexes,
                                                   const std::vector<AnfNodePtr> &input_at_indexes,
-                                                  NodeIOInfo *new_inputs_info, bool from_input) {
+                                                  NodeIOInfo *new_inputs_info, bool from_input) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(new_inputs_info);
   if (indexes.size() != input_at_indexes.size()) {

@@ -38,11 +38,11 @@ class ReorderOps : public opt::Pass {
 
  private:
   void SetTypeInsensitiveNodeInputs(const CNodePtr &node, const std::vector<size_t> &indexes,
-                                    const std::vector<AnfNodePtr> &new_input_in_indexes,
-                                    std::vector<AnfNodePtr> *new_inputs);
+                                    const std::vector<AnfNodePtr> &new_input_at_indexes,
+                                    std::vector<AnfNodePtr> *new_inputs) const;
   void SetTypeInsensitiveNodeInputsInfo(const CNodePtr &node, const std::vector<size_t> &indexes,
                                         const std::vector<AnfNodePtr> &input_at_indexes, NodeIOInfo *new_inputs_info,
-                                        bool from_input);
+                                        bool from_input) const;
   bool ReorderTypeInsensitiveCastDown(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
                                       const CNodePtr &node);
   bool ReorderCastUpTypeInsensitive(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,

@@ -83,7 +83,7 @@ void RaiseReductionPrecision::ReplaceNode(const AnfNodePtr &reduce_node, const A
   }
 }
 
-bool RaiseReductionPrecision::Process(const FuncGraphPtr &func_graph) {
+bool RaiseReductionPrecision::Process(const FuncGraphPtr &func_graph) const {
   auto mng = func_graph->manager();
   if (mng == nullptr) {
     mng = Manage(func_graph, true);

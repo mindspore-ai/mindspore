@@ -58,7 +58,7 @@ class SplitModel {
   // transform the litegraph to areas, and initialize inner tables.
   void InitGraph(const LiteGraphPtr &litegraph);
   // Push leading "1" to shapes to facilitate pattern match.
-  void AlignShape(const LiteGraphPtr &litegraph);
+  void AlignShape(const LiteGraphPtr &litegraph) const;
   // initialize fusion pattern list.
   virtual void InitFusePatterns() = 0;
   bool RunOnePattern(const FusePatternPtr &pattern);
@@ -75,7 +75,7 @@ class SplitModel {
   // create new area
   AreaPtr NewArea(const PrimOpPtr &op, bool is_output);
   // limit the area's size
-  void LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas, size_t max_size = 200);
+  void LimitAreaSize(const AreaPtr &dom, std::vector<AreaPtr> *areas, size_t max_size = 200) const;
 
   std::list<AreaPtr> areas_;  // use std::list to accelerate the "erase"
   std::shared_ptr<ReachTable> reach_table_{nullptr};

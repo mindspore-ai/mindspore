@@ -56,7 +56,7 @@ class Area : public std::enable_shared_from_this<Area> {
     NodeHandle(Area *area, const PrimOpPtr &p) : PrimOp("", p->compute_type()), area_(area) {}
     ~NodeHandle() = default;
     using PrimOp::compute_type_;
-    AreaPtr area() { return area_->shared_from_this(); }
+    AreaPtr area() const { return area_->shared_from_this(); }
 
    private:
     Area *const area_;

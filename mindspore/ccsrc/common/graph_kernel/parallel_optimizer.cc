@@ -32,7 +32,9 @@ namespace {
 std::pair<AnfNodePtr, AnfNodePtr> IsTargetUpdateState(const AnfNodePtr &node, const PrimitivePtr &opt_prim,
                                                       const FuncGraphManagerPtr &mng) {
   auto users = mng->node_users()[node];
-  if (users.size() != USER_NUM) return std::make_pair(nullptr, nullptr);
+  if (users.size() != USER_NUM) {
+    return std::make_pair(nullptr, nullptr);
+  }
   if (IsPrimitiveCNode(users.front().first, prim::kPrimUpdateState) && IsPrimitiveCNode(users.back().first, opt_prim)) {
     return std::make_pair(users.front().first, users.back().first);
   }
@@ -58,7 +60,7 @@ bool CanParallel(const mindspore::HashSet<AnfNodePtr> &opts_set, const FuncGraph
         (void)tmp.insert(i.first);
       } else {
         auto res = dfs(i.first);
-        (void)tmp.insert(res.begin(), res.end());
+        tmp.insert(res.cbegin(), res.cend());
       }
     }
     other_nodes_to_opts[cur_node] = tmp;
@@ -80,21 +82,21 @@ bool CanParallel(const mindspore::HashSet<AnfNodePtr> &opts_set, const FuncGraph
 }
 
 AnfNodePtr DoParallel(const std::vector<std::pair<AnfNodePtr, AnfNodePtr>> &updatestate_opts,
-                      const FuncGraphManagerPtr &mng, const AnfNodePtr &first_updatestate) {
+                      const AnfNodePtr &first_updatestate) {
   std::vector<AnfNodePtr> additional_inputs;
   for (size_t i = 0; i < updatestate_opts.size(); i++) {
     auto opt_cnode = updatestate_opts[i].second->cast<CNodePtr>();
     opt_cnode->set_input(opt_cnode->inputs().size() - 1, first_updatestate);
     if (i < updatestate_opts.size() - 1) {
       auto ups_cnode = updatestate_opts[i].first->cast<CNodePtr>();
-      additional_inputs.insert(additional_inputs.end(), ups_cnode->inputs().begin() + REAL_NODE_START_POS,
-                               ups_cnode->inputs().end());
+      (void)additional_inputs.insert(additional_inputs.cend(), ups_cnode->inputs().cbegin() + REAL_NODE_START_POS,
+                                     ups_cnode->inputs().cend());
     }
   }
   auto last_updatestate = updatestate_opts.back().first->cast<CNodePtr>();
   last_updatestate->set_input(UMONAD_POS, first_updatestate);
   std::vector<AnfNodePtr> final_inputs = last_updatestate->inputs();
-  (void)final_inputs.insert(final_inputs.end(), additional_inputs.begin(), additional_inputs.end());
+  (void)final_inputs.insert(final_inputs.cend(), additional_inputs.cbegin(), additional_inputs.cend());
   last_updatestate->set_inputs(final_inputs);
   return last_updatestate;
 }
@@ -106,7 +108,7 @@ int64_t MemoryCost(const CNodePtr &cnode) {
       auto shape = common::AnfAlgo::GetOutputInferShape(cnode->input(i), 0);
       int64_t input_memory = 1;
       if (!shape.empty()) {
-        std::for_each(shape.begin(), shape.end(), [&input_memory](size_t n) { input_memory *= SizeToLong(n); });
+        (void)std::for_each(shape.begin(), shape.end(), [&input_memory](size_t n) { input_memory *= SizeToLong(n); });
         auto type_size = SizeToLong(abstract::TypeIdSize(common::AnfAlgo::GetOutputInferDataType(cnode->input(i), 0)));
         if (type_size != 0) {
           input_memory *= type_size;
@@ -118,6 +120,27 @@ int64_t MemoryCost(const CNodePtr &cnode) {
     }
   }
   return total;
+}
+
+std::pair<std::vector<std::pair<AnfNodePtr, AnfNodePtr>>, AnfNodePtr> GetParallelCandidates(
+  const AnfNodePtr &node, const std::vector<std::pair<AnfNodePtr, AnfNodePtr>> &updatestate_opts,
+  size_t max_parallel_num) {
+  std::vector<std::pair<AnfNodePtr, AnfNodePtr>> parallel_candidates;
+  auto first_updatestate = node;
+  int64_t total_mem = 0;
+  size_t last_index = 0;
+  for (size_t i = 0; i < updatestate_opts.size(); i++) {
+    int64_t cur_mem = MemoryCost(updatestate_opts[i].second->cast<CNodePtr>());
+    if (total_mem > 0 && ((i - last_index) >= max_parallel_num || total_mem + cur_mem > BYTES_LIMITATION)) {
+      first_updatestate = DoParallel(parallel_candidates, first_updatestate);
+      parallel_candidates.clear();
+      total_mem = 0;
+      last_index = i;
+    }
+    total_mem += cur_mem;
+    parallel_candidates.push_back(updatestate_opts[i]);
+  }
+  return std::make_pair(parallel_candidates, first_updatestate);
 }
 }  // namespace
 
@@ -150,23 +173,10 @@ bool ParallelOptimizer::Run(const FuncGraphPtr &func_graph) {
           updatestate_opts.begin(), updatestate_opts.end(),
           [&opts_set](const std::pair<AnfNodePtr, AnfNodePtr> &p) { (void)opts_set.insert(p.second); });
         if (opts_set.size() > 1 && CanParallel(opts_set, mng)) {
-          std::vector<std::pair<AnfNodePtr, AnfNodePtr>> parallel_candidates;
-          auto first_updatestate = node;
-          int64_t total_mem = 0;
-          size_t last_index = 0;
-          for (size_t i = 0; i < updatestate_opts.size(); i++) {
-            int64_t cur_mem = MemoryCost(updatestate_opts[i].second->cast<CNodePtr>());
-            if (total_mem > 0 && ((i - last_index) >= max_parallel_num_ || total_mem + cur_mem > BYTES_LIMITATION)) {
-              first_updatestate = DoParallel(parallel_candidates, mng, first_updatestate);
-              parallel_candidates.clear();
-              total_mem = 0;
-              last_index = i;
-            }
-            total_mem += cur_mem;
-            parallel_candidates.push_back(updatestate_opts[i]);
-          }
+          auto candidates_with_node = GetParallelCandidates(node, updatestate_opts, max_parallel_num_);
+          auto parallel_candidates = candidates_with_node.first;
           if (!parallel_candidates.empty()) {
-            (void)DoParallel(parallel_candidates, mng, first_updatestate);
+            (void)DoParallel(parallel_candidates, candidates_with_node.second);
           }
           changed = true;
         }

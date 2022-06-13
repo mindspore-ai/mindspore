@@ -35,7 +35,7 @@ class ReduceFakeOutMem : public opt::Pass {
 
  private:
   void ModifyAbstract(const AnfNodePtr &composite_node, const std::set<size_t> &fake_real_indices,
-                      const AnfNodePtrList &output_list);
+                      const AnfNodePtrList &output_list) const;
 };
 using ReduceFakeOutMemPtr = std::shared_ptr<ReduceFakeOutMem>;
 }  // namespace mindspore::graphkernel

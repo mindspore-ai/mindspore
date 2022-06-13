@@ -28,10 +28,10 @@ class RaiseReductionPrecision : public opt::Pass {
 
  private:
   bool IsFp16ReduceSum(const AnfNodePtr &node) const;
-  bool Process(const FuncGraphPtr &func_graph);
+  bool Process(const FuncGraphPtr &func_graph) const;
   AnfNodePtr CreateCast(const AnfNodePtr &input, const TypePtr &dst_type, const std::string &format) const;
   AnfNodePtr CreateReduceSum(const AnfNodePtr &node, const AnfNodePtr &input) const;
-  void ReplaceNode(const AnfNodePtr &src_node, const AnfNodePtr &dst_node) const;
+  void ReplaceNode(const AnfNodePtr &reduce_node, const AnfNodePtr &cast_node) const;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_RAISE_REDUCTION_PRECISION_H_
