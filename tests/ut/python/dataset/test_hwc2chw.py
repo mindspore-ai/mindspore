@@ -17,6 +17,7 @@ Testing HWC2CHW op in DE
 """
 import numpy as np
 import pytest
+
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as data_trans
 import mindspore.dataset.vision as vision
@@ -36,10 +37,10 @@ def test_hwc2chw_callable():
     Expectation: Valid input succeeds. Invalid input fails.
     """
     logger.info("Test HWC2CHW callable")
-    img = np.zeros([50, 50, 3])
-    assert img.shape == (50, 50, 3)
 
     # test one tensor
+    img = np.zeros([50, 50, 3])
+    assert img.shape == (50, 50, 3)
     img1 = vision.HWC2CHW()(img)
     assert img1.shape == (3, 50, 50)
 
@@ -48,6 +49,12 @@ def test_hwc2chw_callable():
     assert img2.shape == (50, 50, 5)
     img3 = vision.HWC2CHW()(img2)
     assert img3.shape == (5, 50, 50)
+
+    # test 2 dim tensor
+    img4 = np.zeros([32, 28])
+    assert img4.shape == (32, 28)
+    img5 = vision.HWC2CHW()(img4)
+    assert img5.shape == (32, 28)
 
     # test input multiple tensors
     with pytest.raises(RuntimeError) as info:

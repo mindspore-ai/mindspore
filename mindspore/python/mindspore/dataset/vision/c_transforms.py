@@ -706,13 +706,14 @@ class HorizontalFlip(ImageTensorOperation):
 
 class HWC2CHW(ImageTensorOperation):
     """
-    Transpose the input image from shape <H, W, C> to shape <C, H, W>. The input image should be 3 channels image.
+    Transpose the input image from shape (H, W, C) to (C, H, W).
+    If the input image is of shape <H, W>, it will remain unchanged.
 
     Note:
         This operation supports running on Ascend or GPU platforms by Offload.
 
     Raises:
-        RuntimeError: If given tensor shape is not <H, W, C>.
+        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
         ``CPU`` ``Ascend`` ``GPU``

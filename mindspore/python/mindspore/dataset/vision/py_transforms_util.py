@@ -113,7 +113,8 @@ def decode(img):
 
 def hwc_to_chw(img):
     """
-    Transpose the input image; shape (H, W, C) to shape (C, H, W).
+    Transpose the input image from shape (H, W, C) to (C, H, W).
+    If the input image is of shape <H, W>, it will remain unchanged.
 
     Args:
         img (numpy.ndarray): Image to be converted.
@@ -123,8 +124,10 @@ def hwc_to_chw(img):
     """
     if not is_numpy(img):
         raise TypeError('img should be NumPy array. Got {}.'.format(type(img)))
-    if img.ndim != 3:
-        raise TypeError('img dimension should be 3. Got {}.'.format(img.ndim))
+    if img.ndim not in (2, 3):
+        raise TypeError("img dimension should be 2 or 3. Got {}.".format(img.ndim))
+    if img.ndim == 2:
+        return img
     return img.transpose(2, 0, 1).copy()
 
 
@@ -666,11 +669,10 @@ def random_color_adjust(img, brightness, contrast, saturation, hue):
     saturation_factor = _input_to_factor(saturation, 'saturation')
     hue_factor = _input_to_factor(hue, 'hue', center=0, bound=(-0.5, 0.5), non_negative=False)
 
-    transforms = []
-    transforms.append(lambda img: adjust_brightness(img, brightness_factor))
-    transforms.append(lambda img: adjust_contrast(img, contrast_factor))
-    transforms.append(lambda img: adjust_saturation(img, saturation_factor))
-    transforms.append(lambda img: adjust_hue(img, hue_factor))
+    transforms = [lambda img: adjust_brightness(img, brightness_factor),
+                  lambda img: adjust_contrast(img, contrast_factor),
+                  lambda img: adjust_saturation(img, saturation_factor),
+                  lambda img: adjust_hue(img, hue_factor)]
 
     # apply color adjustments in a random order
     random.shuffle(transforms)
@@ -1116,12 +1118,12 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
 
     Args:
         img (PIL.Image.Image): Image to be applied affine transformation.
-        angle (Union[int, float]): Rotation angle in degrees, clockwise.
-        translations (sequence): Translations in horizontal and vertical axis.
-        scale (float): Scale parameter, a single number.
-        shear (Union[float, sequence]): Shear amount parallel to X axis and Y axis.
-        resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
-        fill_value (Union[tuple int], optional): Optional fill_value to fill the area outside the transform
+        angle (Sequence): Rotation angle in degrees, clockwise.
+        translations (Sequence): Translations in horizontal and vertical axis.
+        scale (Sequence): Scale parameter.
+        shear (Sequence): Shear amount parallel to X axis and Y axis.
+        resample (Inter): Resampling filter.
+        fill_value (Union[tuple, int], optional): Optional fill_value to fill the area outside the transform
             in the output image. Used only in Pillow versions > 5.0.0.
             If None, no filling is performed.
 
@@ -1300,7 +1302,7 @@ def rgb_to_bgrs(np_rgb_imgs, is_hwc):
 
     shape_size = len(np_rgb_imgs.shape)
 
-    if not shape_size in (3, 4):
+    if shape_size not in (3, 4):
         raise TypeError("img shape should be (H, W, C)/(N, H, W, C)/(C ,H, W)/(N, C, H, W). "
                         "Got {}.".format(np_rgb_imgs.shape))
 
@@ -1370,7 +1372,7 @@ def rgb_to_hsvs(np_rgb_imgs, is_hwc):
 
     shape_size = len(np_rgb_imgs.shape)
 
-    if not shape_size in (3, 4):
+    if shape_size not in (3, 4):
         raise TypeError("img shape should be (H, W, C)/(N, H, W, C)/(C ,H, W)/(N, C, H, W). "
                         "Got {}.".format(np_rgb_imgs.shape))
 
@@ -1441,7 +1443,7 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
 
     shape_size = len(np_hsv_imgs.shape)
 
-    if not shape_size in (3, 4):
+    if shape_size not in (3, 4):
         raise TypeError("img shape should be (H, W, C)/(N, H, W, C)/(C, H, W)/(N, C, H, W). "
                         "Got {}.".format(np_hsv_imgs.shape))
 
@@ -1605,9 +1607,9 @@ def uniform_augment(img, transforms, num_ops):
 
     op_idx = np.random.choice(len(transforms), size=num_ops, replace=False)
     for idx in op_idx:
-        AugmentOp = transforms[idx]
+        augment_op = transforms[idx]
         pr = random.random()
         if random.random() < pr:
-            img = AugmentOp(img.copy())
+            img = augment_op(img.copy())
 
     return img

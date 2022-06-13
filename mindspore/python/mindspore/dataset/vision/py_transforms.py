@@ -491,11 +491,12 @@ class HsvToRgb(py_transforms.PyTensorOperation):
 
 class HWC2CHW(py_transforms.PyTensorOperation):
     """
-    Transpose the input numpy.ndarray image of shape (H, W, C) to (C, H, W).
+    Transpose the input numpy.ndarray image from shape (H, W, C) to (C, H, W).
+    If the input image is of shape <H, W>, it will remain unchanged.
 
     Raises:
         TypeError: If the input image is not of type :class:`numpy.ndarray`.
-        TypeError: If dimension of the input image is not 3.
+        TypeError: If shape of the input image is not <H, W> or <H, W, C>.
 
     Supported Platforms:
         ``CPU``
@@ -519,10 +520,10 @@ class HWC2CHW(py_transforms.PyTensorOperation):
         Call method.
 
         Args:
-            img (numpy.ndarray): numpy.ndarray of shape (H, W, C) to be transposed.
+            img (numpy.ndarray): numpy.ndarray to be transposed.
 
         Returns:
-            numpy.ndarray, transposed numpy.ndarray of shape (C, H, W).
+            numpy.ndarray, transposed numpy.ndarray.
         """
         return util.hwc_to_chw(img)
 
