@@ -598,22 +598,6 @@ mindspore.Tensor
         - **TypeError** - `lambd` 不是float。
         - **TypeError** - 原始Tensor的dtype既不是float16也不是float32。
 
-    .. py:method:: hardswish()
-
-        Hard Swish激活函数。
-
-        对输入的每个元素计算Hard Swish。
-
-        更多细节参考 :func:`mindspore.ops.hardswish`。
-
-        **返回：**
-
-        Tensor，具有与输入Tensor相同的数据类型和shape。
-
-        **异常：**
-
-        - **TypeError** - 输入Tensor的数据类型既不是float16也不是float32。
-
     .. py:method:: has_init
         :property:
 
