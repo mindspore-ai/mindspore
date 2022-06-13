@@ -67,7 +67,9 @@ void GetFirstEmbeddingCacheTableInfo(const KernelGraph &graph, AnfNodePtr *const
       continue;
     }
     auto size = embedding_cache_table_manager.QueryHashTableSize(param_name);
-    while (input_index.first->isa<CNode>() && (common::AnfAlgo::GetCNodeName(input_index.first) == kCastOpName)) {
+    while (input_index.first->isa<CNode>() &&
+           ((common::AnfAlgo::GetCNodeName(input_index.first) == kCastOpName) ||
+            (common::AnfAlgo::GetCNodeName(input_index.first) == kTensorMoveOpName))) {
       input_index = common::AnfAlgo::GetPrevNodeOutput(input_index.first, 0, true);
       MS_EXCEPTION_IF_NULL(input_index.first);
     }
@@ -114,7 +116,8 @@ void CheckSparseModeForEmbeddingCache(const CNodePtr &node) {
 
   pre_node = common::AnfAlgo::GetPrevNodeOutput(pre_node.first, 0, true);
   MS_EXCEPTION_IF_NULL(pre_node.first);
-  while (pre_node.first->isa<CNode>() && (common::AnfAlgo::GetCNodeName(pre_node.first) == kCastOpName)) {
+  while (pre_node.first->isa<CNode>() && ((common::AnfAlgo::GetCNodeName(pre_node.first) == kCastOpName) ||
+                                          (common::AnfAlgo::GetCNodeName(pre_node.first) == kTensorMoveOpName))) {
     pre_node = common::AnfAlgo::GetPrevNodeOutput(pre_node.first, 0, true);
     MS_EXCEPTION_IF_NULL(pre_node.first);
   }
@@ -147,7 +150,9 @@ void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
     if (embedding_cache_table_manager.IsEmbeddingCacheTable(param_name) && (kernel_name == kSparseGatherV2OpName)) {
       CheckSparseModeForEmbeddingCache(kernel);
     }
-    while (input_index.first->isa<CNode>() && (common::AnfAlgo::GetCNodeName(input_index.first) == kCastOpName)) {
+    while (input_index.first->isa<CNode>() &&
+           ((common::AnfAlgo::GetCNodeName(input_index.first) == kCastOpName) ||
+            (common::AnfAlgo::GetCNodeName(input_index.first) == kTensorMoveOpName))) {
       input_index = common::AnfAlgo::GetPrevNodeOutput(input_index.first, 0, true);
       MS_EXCEPTION_IF_NULL(input_index.first);
     }

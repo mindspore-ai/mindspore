@@ -553,6 +553,9 @@ class Model:
         cb_params.network = self._network
         if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
             epoch = 1
+        # Embedding cache server only run one step.
+        if (_is_role_pserver() or _is_role_sched()) and _cache_enable():
+            epoch = 1
         cb_params.last_save_ckpt_step = None
         cb_params.latest_ckpt_file = None
 
@@ -613,6 +616,8 @@ class Model:
         self._check_enable_recovery()
         # Used to check whether need perform recovery for process which is restarted.
         self._check_need_load_ckpt(cb_params, train_dataset.get_dataset_size(), sink_size)
+        # Check whether this process is embedding cache server.
+        is_embedding_cache_server = _is_role_pserver() and _cache_enable()
 
         while self.epoch_iter < (epoch - initial_epoch):
             cb_params.cur_epoch_num = self.epoch_iter + 1 + initial_epoch
@@ -651,6 +656,9 @@ class Model:
 
                 if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
                     os._exit(0)
+                # Embedding cache server only run one step.
+                if is_embedding_cache_server:
+                    break
 
             dataset_helper.continue_send()
 
@@ -681,7 +689,10 @@ class Model:
                 cb_params.net_outputs = train_net_outputs
 
             # In disaster recovery scenarios, need not to execute callbacks if this epoch executes failed.
-            need_exec_callback_epoch_end = not (self.enable_recovery and _get_recovery_context("need_reset"))
+            # Embedding cache server need not do epoch end callback, this process only run one step.
+            need_exec_callback_epoch_end = not ((self.enable_recovery and _get_recovery_context("need_reset"))
+                                                or is_embedding_cache_server)
+
             if need_exec_callback_epoch_end:
                 list_callback.on_train_epoch_end(run_context)
             if "metrics" in cb_params or "eval_results" in cb_params:

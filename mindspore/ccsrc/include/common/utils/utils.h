@@ -601,6 +601,7 @@ constexpr auto kFlagsIsCutGraph = "is_cut_graph";
 constexpr auto kFlagIsDynamicStructure = "is_dynamic_structure";
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";
 constexpr auto kFlagPyNativeRunInGraph = "pynative_run_in_graph";
+constexpr auto kFlagNeedRenormalize = "need_renormalize";
 
 // TODO(dsj): for ms_function running in graph_mode. should be delete later
 constexpr auto kAttrMSFunction = "ms_function_graph";

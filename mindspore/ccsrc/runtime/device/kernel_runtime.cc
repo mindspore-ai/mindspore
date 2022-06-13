@@ -618,7 +618,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph &graph) {
       DeviceAddressPtr device_address = GetInternalDeviceAddress(graph, item);
 #ifdef WITH_BACKEND
       const std::string &param_name = item->fullname_with_scope();
-      if (ps::ps_cache_instance.IsHashTable(param_name)) {
+      if (ps::ps_cache_instance.IsHashTable(param_name) && !ps::PSContext::instance()->enable_distributed_mindrt()) {
         MS_LOG(INFO) << "Parameter(" << param_name << ")"
                      << " enables the embeddingLookup cache in parameter server training mode.";
         // PS embeddingLookup cache check.

@@ -72,9 +72,18 @@ void MuxRecvActor::ParseFinalizeReqData(size_t data_len, const MessageBase *cons
   }
 
   const void *need_finalize_actor_data = msg_body.c_str() + data_len + finalize_header_size;
-  *need_finalize = *(reinterpret_cast<const bool *>(need_finalize_actor_data));
-  if (*need_finalize) {
+  MS_EXCEPTION_IF_NULL(need_finalize_actor_data);
+  bool finalize_in_msg = *(reinterpret_cast<const bool *>(need_finalize_actor_data));
+  MS_LOG(INFO) << "Received a message which contains finalize command: " << finalize_in_msg;
+  if (!finalize_in_msg) {
+    return;
+  }
+
+  recv_finalize_msg_cnt_++;
+  if (recv_finalize_msg_cnt_ == ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker)) {
+    *need_finalize = true;
     // Finalize loop of runtime.
+    MS_EXCEPTION_IF_NULL(op_context_);
     SET_OPCONTEXT_SUCCESS_RET((*op_context_));
   }
 }
@@ -88,6 +97,8 @@ void MuxRecvActor::UpdateStatus() {
 void MuxRecvActor::Finalize() {
   std::unique_lock<std::mutex> lock(context_mtx_);
   finalized_ = true;
+  is_ready_ = true;
+  is_context_valid_ = true;
 
   op_context_ = nullptr;
   context_cv_.notify_all();

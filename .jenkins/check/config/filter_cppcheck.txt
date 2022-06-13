@@ -30,6 +30,9 @@
 "mindspore/mindspore/ccsrc/frontend/optimizer/ad/kpynative.cc"                                        "containerOutOfBounds"
 "mindspore/mindspore/ccsrc/pipeline/jit/action.cc"                                                    "unreadVariable"
 "mindspore/mindspore/ccsrc/plugin/device/gpu/hal/hardware/gpu_device_context.c"                       "unreadVariable"
+"mindspore/mindspore/ccsrc/frontend/parallel/graph_util/graph_splitter.cc"                            "knownConditionTrueFalse"
+"mindspore/mindspore/ccsrc/backend/graph_compiler/backend.cc"                                         "knownConditionTrueFalse"
+"mindspore/mindspore/ccsrc/backend/graph_compiler/backend.cc"                                         "variableScope"
 
 # MindData
 "mindspore/mindspore/ccsrc/minddata/dataset/engine/dataset_iterator.cc"                               "useStlAlgorithm"

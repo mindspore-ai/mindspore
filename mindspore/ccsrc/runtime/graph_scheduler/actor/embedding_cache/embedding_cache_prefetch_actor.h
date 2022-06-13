@@ -176,7 +176,8 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Send content to remote, such as ids or embeddings.
   // The parameter 'cache_operation' is cache operation name such as LookupEmbeddingCache and UpdateEmbeddingCache.
   bool SendToRemote(const std::string &cache_operation, int32_t param_key, size_t server_rank_id, size_t embedding_dim,
-                    const void *keys, size_t keys_len, const void *values = nullptr, size_t values_len = 0);
+                    const void *keys, size_t keys_len, const void *values = nullptr, size_t values_len = 0,
+                    bool finalize_remote = false);
   // Wait response of remote and get return result.
   // The parameter 'cache_operation' is cache operation name such as LookupEmbeddingCache and UpdateEmbeddingCache.
   std::unique_ptr<std::vector<char>> ReceiveFromRemote(const std::string &cache_operation, int32_t param_key,
@@ -251,6 +252,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // The embedding cache update kernel node(operator name: 'ScatterUpdate').
   CNodePtr embedding_cache_update_node_;
 
+  // Cache embeding cache ops kernel graphs.
+  std::vector<KernelGraphPtr> embedding_cache_graphs_;
+
   // Full Embedding table row num, not less than the total number of feature ids.
   size_t vocab_size_{0};
 
@@ -291,6 +295,8 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // The flag which indicates whether this actor is initialized.
   bool initialized_{false};
+  // The flag which indicates whether this actor is finalized.
+  bool finalized_{false};
 
   // The flag which indicates whether finish sync embedding table.
   bool finish_sync_embedding_table_{false};
@@ -357,7 +363,7 @@ class Sender : public RpcOperator {
 
   // Send buffer to peer.
   bool Send(const std::vector<ShapeVector> &shapes, const std::vector<TypeId> data_types,
-            const AddressPtrList &data_list) const;
+            const AddressPtrList &data_list, bool finalize_remote = false) const;
 
   // Set the receiver paired with the sender to get the 'from url' from the receiver.
   void set_receiver(const ReceiverPtr &receiver) { receiver_ = receiver; }
@@ -373,7 +379,8 @@ class Sender : public RpcOperator {
   // The message.from (from url) must be set.
   std::unique_ptr<MessageBase> BuildRpcMessage(const std::vector<ShapeVector> &shapes,
                                                const std::vector<TypeId> data_types, const AddressPtrList &data_list,
-                                               const std::string &from_url, const std::string &to_url) const;
+                                               const std::string &from_url, const std::string &to_url,
+                                               bool finalize_remote) const;
 
   // The url of the peer receiver's tcp server.
   std::string server_url_;

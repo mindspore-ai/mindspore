@@ -15,10 +15,12 @@
  */
 
 #include "runtime/graph_scheduler/actor/embedding_cache/embedding_cache_prefetch_actor.h"
+#include <limits>
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "kernel/common_utils.h"
 #include "runtime/graph_scheduler/actor/rpc/rpc_actor.h"
 #include "proto/topology.pb.h"
+#include "distributed/constants.h"
 
 namespace mindspore {
 namespace runtime {
@@ -44,11 +46,37 @@ ParameterPtr NewParameter(const KernelGraphPtr &graph, TypePtr type, const Shape
   auto abstract = std::make_shared<abstract::AbstractTensor>(type, shape);
   param->set_abstract(abstract);
 
+  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  std::vector<std::string> formats = {kOpFormat_DEFAULT};
+  std::vector<TypeId> types = {type->type_id()};
+  kernel_build_info_builder->SetOutputsFormat(formats);
+  kernel_build_info_builder->SetOutputsDeviceType(types);
+  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
+
   auto mutable_inputs = graph->MutableInputs();
   MS_EXCEPTION_IF_NULL(mutable_inputs);
   mutable_inputs->push_back(param);
 
   return param;
+}
+
+ValueNodePtr NewValueNode(int64_t value) {
+  auto tensor = std::make_shared<tensor::Tensor>(static_cast<int64_t>(0), kInt32);
+  auto value_node = NewValueNode(tensor);
+  value_node->set_abstract(tensor->ToAbstract());
+
+  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  std::vector<std::string> formats = {kOpFormat_DEFAULT};
+  std::vector<TypeId> types = {kInt32->type_id()};
+  kernel_build_info_builder->SetOutputsFormat(formats);
+  kernel_build_info_builder->SetOutputsDeviceType(types);
+
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  value_node->set_kernel_info(kernel_info);
+  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), value_node.get());
+
+  return value_node;
 }
 
 bool InferOpShape(const CNodePtr &kernel) {
@@ -171,7 +199,11 @@ bool MemcpyDeviceToHostAsync(void *dst, const void *src, size_t size, const Devi
 }  // namespace
 
 void EmbeddingCachePrefetchActor::Initialize() {
+  if (initialized_) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(device_context_);
+  MS_EXCEPTION_IF_NULL(device_context_->device_res_manager_);
   if (!device_context_->device_res_manager_->CreateStream(&stream_id_)) {
     MS_LOG(EXCEPTION) << "Create stream failed.";
   }
@@ -196,30 +228,49 @@ void EmbeddingCachePrefetchActor::Initialize() {
   // Build and link rpc operators.
   BuildRpcOperators();
   LinkRpcOperators();
+
+  initialized_ = true;
 }
 
 void EmbeddingCachePrefetchActor::Finalize() {
+  if (!initialized_ || finalized_) {
+    return;
+  }
+  SyncEmbeddingTable();
+
+  running_ = false;
+  FinalizeRemote();
+
+  PsDataPrefetch::GetInstance().NotifyFinalize();
+  data_parser_.notify_all();
+
   embedding_cache_lookup_node_ = nullptr;
   embedding_cache_update_node_ = nullptr;
 
   rpc_operators_.clear();
+  finalized_ = true;
+  initialized_ = false;
 }
 
 void EmbeddingCachePrefetchActor::BuildEmbeddingCacheLookupKernel() {
   auto graph = std::make_shared<KernelGraph>();
+  MS_EXCEPTION_IF_NULL(graph);
+  graph->set_graph_id((std::numeric_limits<uint32_t>::max)());
+  embedding_cache_graphs_.push_back(graph);
 
   // 1. Create parameter nodes which are inputs of embedding cache look up kernel(operator name: 'Gather').
   ParameterPtr input_param = NewParameter(graph, kFloat32, kTwoDimensionalShape);
   ParameterPtr input_indices = NewParameter(graph, kInt32, kOneDimensionalShape);
+  ValueNodePtr axis_value_node = NewValueNode(0);
 
   // 2. Create a CNode for operator Gather.
   PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kGatherV2OpName);
-  emb_lookup_primitive->set_attr(kAttrAxis, MakeValue<int64_t>(0));
   emb_lookup_primitive->set_attr(kAttrInputIsDynamicShape, MakeValue(true));
   emb_lookup_primitive->set_attr(kAttrOutputIsDynamicShape, MakeValue(true));
   emb_lookup_primitive->set_attr(kAttrStream, MakeValue(stream_id_));
 
-  std::vector<AnfNodePtr> emb_lookup_input_nodes{NewValueNode(emb_lookup_primitive), input_param, input_indices};
+  std::vector<AnfNodePtr> emb_lookup_input_nodes{NewValueNode(emb_lookup_primitive), input_param, input_indices,
+                                                 axis_value_node};
   embedding_cache_lookup_node_ = graph->NewCNode(emb_lookup_input_nodes);
   MS_EXCEPTION_IF_NULL(embedding_cache_lookup_node_);
   auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, kTwoDimensionalShape);
@@ -227,11 +278,15 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheLookupKernel() {
 
   // 3. Kernel build process.
   MS_EXCEPTION_IF_NULL(device_context_);
+  MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
   device_context_->kernel_executor_->CreateKernel({embedding_cache_lookup_node_});
 }
 
 void EmbeddingCachePrefetchActor::BuildEmbeddingCacheUpdateKernel() {
   auto graph = std::make_shared<KernelGraph>();
+  MS_EXCEPTION_IF_NULL(graph);
+  graph->set_graph_id((std::numeric_limits<uint32_t>::max)());
+  embedding_cache_graphs_.push_back(graph);
 
   // 1. Create parameter nodes which are inputs of embedding cache update kernel(operator name: 'ScatterUpdate').
   ParameterPtr input_param = NewParameter(graph, kFloat32, kTwoDimensionalShape);
@@ -252,6 +307,7 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheUpdateKernel() {
 
   // 3. Kernel build process.
   MS_EXCEPTION_IF_NULL(device_context_);
+  MS_EXCEPTION_IF_NULL(device_context_->kernel_executor_);
   device_context_->kernel_executor_->CreateKernel({embedding_cache_update_node_});
 }
 
@@ -288,6 +344,7 @@ bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embeddi
   AddressPtrList kernel_outputs = {std::make_shared<Address>(outputs, indices_num * embedding_size * sizeof(float))};
 
   MS_ERROR_IF_NULL(device_context_);
+  MS_ERROR_IF_NULL(device_context_->kernel_executor_);
   auto ret =
     device_context_->kernel_executor_->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {}, kernel_outputs);
   if (!ret) {
@@ -338,6 +395,7 @@ bool EmbeddingCachePrefetchActor::UpdateDeviceCache(void *indices, void *update_
     std::make_shared<Address>(embedding_cache, cache_size * embedding_size * sizeof(float))};
 
   MS_ERROR_IF_NULL(device_context_);
+  MS_ERROR_IF_NULL(device_context_->kernel_executor_);
   auto ret =
     device_context_->kernel_executor_->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {}, kernel_outputs);
   if (!ret) {
@@ -809,6 +867,7 @@ bool EmbeddingCachePrefetchActor::PushCacheFromDeviceToLocalHost(const HashTable
     "Memcpy device to host asynchronously failed.");
 
   MS_ERROR_IF_NULL(device_context_);
+  MS_ERROR_IF_NULL(device_context_->device_res_manager_);
   RETURN_IF_FALSE_WITH_LOG(device_context_->device_res_manager_->SyncStream(stream_id_), "Synchronize stream failed.");
   RETURN_IF_FALSE_WITH_LOG(
     InsertLocalHostCache(embedding_size, IntToSize(swap_indices_size), host_cache_device_to_host_index,
@@ -882,6 +941,7 @@ bool EmbeddingCachePrefetchActor::PullCacheFromLocalHostToDevice(const HashTable
                       swap_indices_size, cache_vocab_size, embedding_size, hash_table_addr),
     "Update device embedding cache failed.");
   MS_ERROR_IF_NULL(device_context_);
+  MS_ERROR_IF_NULL(device_context_->device_res_manager_);
   RETURN_IF_FALSE_WITH_LOG(device_context_->device_res_manager_->SyncStream(stream_id_), "Synchronize stream failed.");
   return true;
 }
@@ -1162,9 +1222,11 @@ bool EmbeddingCachePrefetchActor::PartitionIdsAndEmbeddings(const int *ids, size
 
     std::vector<int> &slice_ids = slice_ids_list->at(i);
     std::vector<float> &slice_embeddings = slice_embeddings_list->at(i);
+    // Ids range offset for multi server.
+    int offset = SizeToInt(remote_embedding_slice_bounds_.at(i).first);
     for (size_t j = 0; j < ids_num; j++) {
       if (ids[j] >= begin && ids[j] <= end) {
-        slice_ids.push_back(ids[j]);
+        slice_ids.push_back(ids[j] - offset);
         slice_embeddings.insert(slice_embeddings.end(), embeddings + (j * embedding_dim),
                                 embeddings + (j * embedding_dim) + embedding_dim);
       }
@@ -1175,7 +1237,8 @@ bool EmbeddingCachePrefetchActor::PartitionIdsAndEmbeddings(const int *ids, size
 
 bool EmbeddingCachePrefetchActor::SendToRemote(const std::string &cache_operation, int32_t param_key,
                                                size_t server_rank_id, size_t embedding_dim, const void *keys,
-                                               size_t keys_len, const void *values, size_t values_len) {
+                                               size_t keys_len, const void *values, size_t values_len,
+                                               bool finalize_remote) {
   MS_ERROR_IF_NULL(keys);
   // Find sender corresponding to cache operation and parameter key.
   auto iter = rpc_operators_.find(cache_operation);
@@ -1215,7 +1278,7 @@ bool EmbeddingCachePrefetchActor::SendToRemote(const std::string &cache_operatio
                               std::make_shared<Address>(&service_id, sizeof(int32_t))};
 
   // Send data.
-  return sender->Send(shapes, data_types, data_list);
+  return sender->Send(shapes, data_types, data_list, finalize_remote);
 }
 
 std::unique_ptr<std::vector<char>> EmbeddingCachePrefetchActor::ReceiveFromRemote(const std::string &cache_operation,
@@ -1394,6 +1457,19 @@ bool EmbeddingCachePrefetchActor::SyncDeviceEmbeddingTable() {
   return true;
 }
 
+bool EmbeddingCachePrefetchActor::FinalizeRemote() {
+  for (size_t i = 0; i < server_num_; i++) {
+    size_t embedding_dim = 1;
+    int id = 0;
+    float value = 0.0;
+    RETURN_IF_FALSE_WITH_LOG(SendToRemote(distributed::kLookupEmbeddingCache, 0, i, embedding_dim, &id, sizeof(int),
+                                          &value, sizeof(float), true),
+                             "Send finalize request to remote failed.");
+  }
+
+  return true;
+}
+
 std::string EmbeddingCachePrefetchActor::channel_name() {
   std::lock_guard<std::mutex> locker(channel_mutex_);
   return channel_name_;
@@ -1490,9 +1566,9 @@ void EmbeddingCachePrefetchActor::LinkRpcOperators() {
 }
 
 bool Sender::Send(const std::vector<ShapeVector> &shapes, const std::vector<TypeId> data_types,
-                  const AddressPtrList &data_list) const {
+                  const AddressPtrList &data_list, bool finalize_remote) const {
   MS_ERROR_IF_NULL(receiver_);
-  auto message = BuildRpcMessage(shapes, data_types, data_list, receiver_->get_url(), server_url_);
+  auto message = BuildRpcMessage(shapes, data_types, data_list, receiver_->get_url(), server_url_, finalize_remote);
   MS_ERROR_IF_NULL(message);
   MS_ERROR_IF_NULL(client_);
   client_->SendAsync(std::move(message));
@@ -1533,7 +1609,7 @@ bool Sender::ConnectServer() {
 std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVector> &shapes,
                                                      const std::vector<TypeId> data_types,
                                                      const AddressPtrList &data_list, const std::string &from_url,
-                                                     const std::string &to_url) const {
+                                                     const std::string &to_url, bool finalize_remote) const {
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
   MS_ERROR_IF_NULL_W_RET_VAL(message, nullptr);
   message->from = AID("", from_url);
@@ -1571,6 +1647,13 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
     // 4. The real data buffer need to be sent.
     message->body.append(static_cast<char *>(data->addr), data->size);
   }
+
+  // 5. Finalize remote command.
+  if (finalize_remote) {
+    message->body.append(distributed::kFinalizeMuxRecvActor);
+    message->body.append(reinterpret_cast<char *>(&finalize_remote), sizeof(finalize_remote));
+  }
+
   return message;
 }
 

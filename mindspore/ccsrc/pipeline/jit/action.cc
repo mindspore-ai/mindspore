@@ -110,6 +110,12 @@ void DisableMindRT(const ResourcePtr &resource) {
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) == false) {
     return;
   }
+#ifdef WITH_BACKEND
+  if (ps::PSContext::instance()->cache_enable()) {
+    return;
+  }
+#endif
+
   auto func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto parallel_context = parallel::ParallelContext::GetInstance();
@@ -915,6 +921,13 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     return;
   }
 
+#ifdef WITH_BACKEND
+  if (ps::PSContext::instance()->cache_enable()) {
+    set_ctx(true, false, false);
+    return;
+  }
+#endif
+
   // GRAPH | normal network and if/for/switch scenario etc : MultiGraph path in MindRT.
   MS_LOG(INFO) << "Run graph mode with multigraph sink.";
   set_ctx(true, true, true);
@@ -1202,6 +1215,17 @@ bool DistributedSplitAction(const ResourcePtr &resource) {
     std::make_shared<parallel::GraphSplitter>(func_graph, node->rank_id(), node_role);
   MS_EXCEPTION_IF_NULL(splitter);
   splitter->Run();
+
+  // Renomalize: Infer shape and Set abstract for all nodes in graph.
+  if (func_graph->has_flag(kFlagNeedRenormalize)) {
+    abstract::AbstractBasePtrList args_abs;
+    auto parameters = func_graph->parameters();
+    (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_abs),
+                         [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
+    FuncGraphPtr new_fg = Renormalize(resource, func_graph, args_abs);
+    resource->set_func_graph(new_fg);
+    resource->set_args_abs(args_abs);
+  }
   return true;
 }
 #endif

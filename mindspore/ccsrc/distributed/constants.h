@@ -49,7 +49,7 @@ const std::vector<std::string> kEmbeddingCacheOps = {kLookupEmbeddingCache, kUpd
 constexpr char kFinalizeMuxRecvActor[] = "FINALIZE_MUX_RECV_ACTOR";
 
 // The distributed execution mode enum.
-enum class DistExecutionMode { kPSMode = 0, kInvalidMode };
+enum class DistExecutionMode { kPSMode = 0, kEmbeddingCacheMode, kInvalidMode };
 
 // The operator's label in distributed execution.
 constexpr char kOpLabelRankId[] = "rank_id";
