@@ -57,9 +57,10 @@ class EqualCount : public OpDesc {
     auto dtype = input_x->type;
     auto eql_val = gb.Equal(input_x, input_y);
     auto cast_val = gb.Cast(eql_val, kNumberTypeFloat32);
-    std::vector<int64_t> axis;
-    for (size_t i = 0; i < input_x->shape.size(); ++i) {
-      axis.push_back(i);
+    auto shape_size = input_x->shape.size();
+    std::vector<int64_t> axis(shape_size);
+    for (size_t i = 0; i < shape_size; ++i) {
+      axis[i] = i;
     }
     auto result = gb.ReduceSum(cast_val, axis, false);
     result = gb.Reshape(result, {1});

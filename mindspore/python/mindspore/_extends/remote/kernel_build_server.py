@@ -130,6 +130,7 @@ class AkgBuilder():
     def __init__(self, platform):
         self.platform = platform
         self.attrs = None
+        self.akg_processor = None
 
     def create(self, process_num, waitime):
         """ Create akg processor"""

@@ -55,8 +55,9 @@ def _dump_split_info(flags, graph_json, graph_desc, subgraphs, graph_mode):
     """Dump split info as text"""
     if not flags.get("dump_as_text", False):
         return
-    utils.create_dir(utils.GRAPH_KERNEL_DUMP_PATH)
-    filename = os.path.join(utils.GRAPH_KERNEL_DUMP_PATH, "graph_kernel_split_mode.txt")
+    graph_kernel_dump_path = "graph_kernel_dump"
+    utils.create_dir(graph_kernel_dump_path)
+    filename = os.path.join(graph_kernel_dump_path, "graph_kernel_split_mode.txt")
     with os.fdopen(os.open(filename, os.O_WRONLY | os.O_CREAT), "a+") as f:
         f.write("********** main graph: {} **********\n".format(graph_desc.name))
         f.write("input json:\n{}\n".format(graph_json))

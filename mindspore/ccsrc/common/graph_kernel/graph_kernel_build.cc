@@ -35,7 +35,9 @@ void GetTopoValidNodes(const FuncGraphPtr &func_graph, CNodePtrList *topo_valid_
   MS_EXCEPTION_IF_NULL(topo_valid_nodes);
   auto nodes = TopoSort(func_graph->get_return());
   for (auto &node : nodes) {
-    if (node == nullptr || !node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) continue;
+    if (node == nullptr || !node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
+      continue;
+    }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     topo_valid_nodes->push_back(cnode);
@@ -121,11 +123,11 @@ void SafeSplitSchemer::GroupReturnNode() {
   MS_EXCEPTION_IF_NULL(ret_node);
   auto output = func_graph_->output();
   MS_EXCEPTION_IF_NULL(output);
-  // set the make_tuple node to a new group.
   if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+    // set the make_tuple node to a new group.
     auto group_id = split_plan_.size();
-    (void)split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
     need_inline_.push_back(1);
+    (void)split_plan_.emplace_back(AnfNodePtrList{output, ret_node});
     node_group_[output] = group_id;
     node_group_[ret_node] = group_id;
   } else {
@@ -139,7 +141,6 @@ void GraphKernelBuild::Init() {
   // Init KernelMeta.
   if (bin_map_ == nullptr) {
     bin_map_ = kernel::KernelMeta::GetInstance();
-    MS_EXCEPTION_IF_NULL(bin_map_);
     if (!bin_map_->initialized()) {
       bin_map_->Initialize();
     }
@@ -175,7 +176,7 @@ bool GraphKernelBuild::Process(const FuncGraphPtr &func_graph, int iter) {
   // Update cache after compiling. Nodes that still not have compile cache means they compiled failed.
   auto remaining_nodes = CollectNotCachedNodes(need_compile_nodes);
   // Split nodes that compile failed.
-  changed = SplitNodes(func_graph, remaining_nodes);
+  changed = SplitNodes(remaining_nodes);
 
   return changed;
 }
@@ -201,7 +202,7 @@ kernel::JsonNodePair GraphKernelBuild::CollectNode(const AnfNodePtr &node) const
   return std::make_pair(akg_kernel_json_generator, node);
 }
 
-void GraphKernelBuild::CollectNodes(const FuncGraphPtr &func_graph, std::vector<kernel::JsonNodePair> *nodes) {
+void GraphKernelBuild::CollectNodes(const FuncGraphPtr &func_graph, std::vector<kernel::JsonNodePair> *nodes) const {
   if (func_graph == nullptr) {
     return;
   }
@@ -226,9 +227,13 @@ std::vector<kernel::JsonNodePair> GraphKernelBuild::CollectNotCachedNodes(
   MS_EXCEPTION_IF_NULL(kernel_builder_);
   std::vector<kernel::JsonNodePair> res;
   for (const auto &[json_generator, node] : nodes) {
-    if (node == nullptr) continue;
+    if (node == nullptr) {
+      continue;
+    }
     // Skip node that already set kernel mod(created from compile cache).
-    if (AnfAlgo::GetKernelMod(node) != nullptr) continue;
+    if (AnfAlgo::GetKernelMod(node) != nullptr) {
+      continue;
+    }
     const auto &kernel_name = json_generator.kernel_name();
     // Skip node that already has cache.
     if (kernel_pack_.find(kernel_name) != kernel_pack_.end()) {
@@ -279,7 +284,7 @@ void GraphKernelBuild::ParallelBuild(const std::vector<kernel::JsonNodePair> &no
   }
 }
 
-bool GraphKernelBuild::SplitNodes(const FuncGraphPtr &func_graph, const std::vector<kernel::JsonNodePair> &nodes) {
+bool GraphKernelBuild::SplitNodes(const std::vector<kernel::JsonNodePair> &nodes) {
   bool result = false;
   std::unordered_set<std::string> kernel_names;
   for (const auto &[json_generator, node] : nodes) {

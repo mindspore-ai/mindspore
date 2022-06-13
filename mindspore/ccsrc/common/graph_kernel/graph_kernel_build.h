@@ -75,13 +75,13 @@ class GraphKernelBuild : public opt::Pass {
   bool Process(const FuncGraphPtr &func_graph, int iter);
   kernel::JsonNodePair CollectNode(const AnfNodePtr &node) const;
   // Collect graph kernel nodes in main graph.
-  void CollectNodes(const FuncGraphPtr &func_graph, std::vector<kernel::JsonNodePair> *nodes);
+  void CollectNodes(const FuncGraphPtr &func_graph, std::vector<kernel::JsonNodePair> *nodes) const;
   // Collect graph kernel nodes that do not have compile cache, which means these nodes need to be compiled.
   std::vector<kernel::JsonNodePair> CollectNotCachedNodes(const std::vector<kernel::JsonNodePair> &nodes);
   // Parallel compiling.
   void ParallelBuild(const std::vector<kernel::JsonNodePair> &nodes);
   // Split nodes that compiled failed.
-  bool SplitNodes(const FuncGraphPtr &func_graph, const std::vector<kernel::JsonNodePair> &nodes);
+  bool SplitNodes(const std::vector<kernel::JsonNodePair> &nodes);
 
   SafeGraphKernelSplitter splitter_;  // used to split nodes that compile failed
   kernel::KernelMeta *bin_map_{nullptr};

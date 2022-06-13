@@ -15,8 +15,6 @@
 """GraphKernel utils"""
 import os
 
-GRAPH_KERNEL_DUMP_PATH = "graph_kernel_dump"
-
 
 def create_dir(pathname):
     """Try to create directory"""
