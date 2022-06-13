@@ -13,7 +13,7 @@ mindspore.ops.ger
     **参数：**
 
     - **x1** (Tensor) - 输入Tensor，数据类型为float16或float32。
-    - **x2** (Tensor) - 输入Tensor，数据类型为float16或float32， 输入数据类型需和`x1`保持一致。
+    - **x2** (Tensor) - 输入Tensor，数据类型为float16或float32， 输入数据类型需和 `x1` 保持一致。
 
     **返回：**
 

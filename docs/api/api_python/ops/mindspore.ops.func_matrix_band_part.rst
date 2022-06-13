@@ -7,7 +7,6 @@ mindspore.ops.matrix_band_part
 
 	`x` 、 `lower` 和 `upper` 三者的shapes必须相同或能够广播。
 
-
     **参数：**
 
     - **x** (Tensor) - `x` 的shape为 :math:`(*, m, n)` ，其中 :math:`*` 表示任意batch维度。`x` 的数据类型必须为float16、float32、float64、int32或int64。
