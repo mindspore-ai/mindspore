@@ -67,6 +67,7 @@ const double SQ2OPI = .79788456080286535588;
 const double EPS = 1.0e-5;
 const double BAR = 5.0;
 const double ZERO = 0.0;
+const double ONE = 1.0;
 const double FOUR = 4.0;
 const double FIVE = 5.0;
 const double FIVE_SQUARED = 25.0;
@@ -113,13 +114,13 @@ double BesselJ0CpuKernelMod::j0(double x) {
     x = -x;
   }
 
+  double z = x * x;
   if (x < EPS) {
-    return (x * x) / FOUR;
+    return (ONE - z / FOUR);
   }
 
   double p, w, q, xn;
   if (x <= BAR) {
-    double z = x * x;
     p = (z - R1) * (z - R2) * polevl(z, P3, DEG_3) / p1evl(z, Q8, DEG_8);
     return (p);
   }
