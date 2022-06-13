@@ -1664,7 +1664,7 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
       return TensorListDataType(tensor);
     }
     if (dtype == kNumberTypeFloat32 || dtype == kNumberTypeFloat16 || dtype == kNumberTypeInt8 ||
-        dtype == kNumberTypeInt32 || dtype == kNumberTypeBool) {
+        dtype == kNumberTypeInt32 || dtype == kNumberTypeBool || dtype == kNumberTypeUInt8) {
       return dtype;
     }
   }
