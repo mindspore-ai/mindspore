@@ -360,6 +360,34 @@ def invalidate_callable(method):
     return new_method
 
 
+def check_type_cast(method):
+    """Wrapper method to check the parameters of TypeCast."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [data_type], _ = parse_user_args(method, *args, **kwargs)
+
+        # Check if data_type is mindspore.dtype
+        if isinstance(data_type, (typing.Type,)):
+            return method(self, *args, **kwargs)
+
+        # Special case: Check if data_type is None (which is invalid)
+        if data_type is None:
+            # Use type_check to raise error with descriptive error message
+            type_check(data_type, (typing.Type, np.dtype,), "data_type")
+
+        try:
+            # Check if data_type can be converted to numpy type
+            _ = np.dtype(data_type)
+        except (TypeError, ValueError):
+            # Use type_check to raise error with descriptive error message
+            type_check(data_type, (typing.Type, np.dtype,), "data_type")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def deprecated_c_transforms(substitute_name=None, substitute_module=None):
     """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.transforms.c_transforms operator.
 

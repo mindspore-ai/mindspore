@@ -1834,6 +1834,13 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     int height = input_cv->shape()[0];
     int width = input_cv->shape()[1];
 
+    // OpenCv has a bug in extractChannel when the type is float16.
+    // To avoid the segfault, we cast to float32 first.
+    if (input_cv->type() == DataType(DataType::DE_FLOAT16)) {
+      RETURN_IF_NOT_OK(TypeCast(input_cv, output, DataType(DataType::DE_FLOAT32)));
+      input_cv = CVTensor::AsCVTensor(*output);
+    }
+
     std::shared_ptr<CVTensor> output_cv;
     // Reshape from HCW to CHW
     RETURN_IF_NOT_OK(

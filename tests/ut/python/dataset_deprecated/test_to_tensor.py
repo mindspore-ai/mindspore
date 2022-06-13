@@ -16,6 +16,7 @@
 Testing ToTensor op in DE
 """
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision.py_transforms as py_vision
@@ -90,7 +91,97 @@ def test_to_tensor_int32():
         np.testing.assert_almost_equal(img2, img1, 5)
 
 
+def test_to_tensor_eager():
+    """
+    Feature: ToTensor Op
+    Description: Test with various output_type in eager scenario with float16 image
+    Expectation: Test runs successfully and results are verified
+    """
+
+    def test_config(my_np_type):
+        image = np.random.randn(128, 128, 3).astype(np.float16)
+        op = py_vision.ToTensor(output_type=my_np_type)
+        out = op(image)
+
+        image = image / 255
+        image = image.astype(my_np_type)
+        image = np.transpose(image, (2, 0, 1))
+
+        np.testing.assert_almost_equal(out, image, 5)
+
+    test_config(np.float16)
+    test_config(np.float32)
+    test_config(np.float64)
+
+
+def test_to_tensor_float16():
+    """
+    Feature: ToTensor Op
+    Description: Test with float16 output_type
+    Expectation: Dataset pipeline runs successfully and results are verified
+    """
+    data1 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+
+    data2 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    # For ToTensor, use ms_type float16 output_type
+    data2 = data2.map(operations=[py_vision.ToTensor("float16")], num_parallel_workers=1)
+
+    for d1, d2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
+                      data2.create_tuple_iterator(num_epochs=1, output_numpy=True)):
+        img1, img2 = d1[0], d2[0]
+        img1 = img1 / 255
+        img1 = np.transpose(img1, (2, 0, 1))
+
+        np.testing.assert_almost_equal(img2, img1, 3)
+
+
+def test_to_tensor_errors():
+    """
+    Feature: ToTensor op
+    Description: Test ToTensor with invalid input
+    Expectation: Correct error is thrown as expected
+    """
+
+    # Test wrong parameter name
+    with pytest.raises(TypeError) as error_info:
+        py_vision.ToTensor(data_type=np.int16)
+    assert "got an unexpected keyword argument 'data_type'" in str(error_info.value)
+
+
+def skip_test_to_tensor_errors2():
+    """
+    Feature: ToTensor op
+    Description: Test ToTensor with invalid input
+    Expectation: Correct error is thrown as expected
+    """
+    # Note:All these scenarios do not raise a TypeError due to no validator for py_vision.ToTensor
+    with pytest.raises(TypeError) as error_info:
+        py_vision.ToTensor("JUNK")
+    assert "Argument output_type with value JUNK is not of type" in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        py_vision.ToTensor([np.float64])
+    assert "Argument output_type with value [<class 'numpy.float64'>] is not of type" in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        py_vision.ToTensor((np.float64,))
+    assert "Argument output_type with value (<class 'numpy.float64'>,) is not of type" in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        py_vision.ToTensor((np.float16, np.int8))
+    assert "Argument output_type with value (<class 'numpy.float16'>, <class 'numpy.int8'>) is not of type" \
+           in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        py_vision.ToTensor(None)
+    assert "Argument output_type with value None is not of type" in str(error_info.value)
+
+
 if __name__ == "__main__":
     test_to_tensor_float32()
     test_to_tensor_float64()
     test_to_tensor_int32()
+    test_to_tensor_eager()
+    test_to_tensor_float16()
+    test_to_tensor_errors()
+    skip_test_to_tensor_errors2()

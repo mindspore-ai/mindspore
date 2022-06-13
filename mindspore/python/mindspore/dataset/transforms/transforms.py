@@ -31,7 +31,7 @@ import mindspore.dataset.vision.c_transforms as c_vision
 from . import py_transforms_util as util
 from .py_transforms_util import Implementation, FuncWrapper
 from .validators import check_fill_value, check_slice_option, check_slice_op, check_one_hot_op, check_compose_call, \
-    check_mask_op_new, check_pad_end, check_concat_type, check_random_transform_ops, check_plugin
+    check_mask_op_new, check_pad_end, check_concat_type, check_random_transform_ops, check_plugin, check_type_cast
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..vision.py_transforms_util import is_pil
 
@@ -924,6 +924,7 @@ class TypeCast(TensorOperation):
         >>> dataset = dataset.map(operations=type_cast_op)
     """
 
+    @check_type_cast
     def __init__(self, data_type):
         super().__init__()
         if isinstance(data_type, typing.Type):
