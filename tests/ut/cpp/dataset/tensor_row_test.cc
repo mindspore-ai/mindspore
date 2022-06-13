@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ class MindDataTestTensorRowDE : public UT::Common {
   void SetUp() { GlobalInit(); }
 };
 
+/// Feature: TensorRow
+/// Description: Test ConvertToTensorRow using scalar bool value
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowBoolTest) {
   Status s;
 
@@ -43,6 +46,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowBoolTest) {
   ASSERT_EQ(*(bool_output.at(0)) == *(expected_bool.at(0)), true);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertToTensorRow using scalar int value
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowIntTest) {
   Status s;
   TensorRow int_output;
@@ -56,6 +62,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowIntTest) {
   ASSERT_EQ(*(int_output.at(0)) == *(expected_int.at(0)), true);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertToTensorRow using scalar float value
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowFloatTest) {
   Status s;
   TensorRow expected_bool;
@@ -70,6 +79,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowFloatTest) {
   ASSERT_EQ(*(float_output.at(0)) == *(expected_float.at(0)), true);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertToTensorRow using vector of bool
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowBoolVectorTest) {
   Status s;
   TensorRow bool_output;
@@ -83,6 +95,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowBoolVectorTest) {
   ASSERT_EQ(*(bool_output.at(0)) == *(expected_bool.at(0)), true);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertToTensorRow using vector of int
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowIntVectorTest) {
   Status s;
   TensorRow int_output;
@@ -96,6 +111,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowIntVectorTest) {
   ASSERT_EQ(*(int_output.at(0)) == *(expected_int.at(0)), true);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertToTensorRow using vector of float
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowFloatVectorTest) {
   Status s;
   TensorRow float_output;
@@ -109,6 +127,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowFloatVectorTest) {
   ASSERT_EQ(*(float_output.at(0)) == *(expected_float.at(0)), true);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertFromTensorRow using scalar bool value
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowBoolTest) {
   Status s;
   bool bool_value = true;
@@ -122,6 +143,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowBoolTest) {
   ASSERT_EQ(bool_value, result);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertFromTensorRow using scalar int value
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowIntTest) {
   Status s;
   int32_t int_value = 12;
@@ -135,6 +159,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowIntTest) {
   ASSERT_EQ(int_value, result);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertFromTensorRow using scalar float value
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowFloatTest) {
   Status s;
   float float_value = 12.57;
@@ -148,6 +175,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowFloatTest) {
   ASSERT_EQ(float_value, result);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertFromTensorRow using vector of bools
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowBoolVectorTest) {
   Status s;
   std::vector<bool> bool_value = {true, false};
@@ -161,6 +191,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowBoolVectorTest) {
   ASSERT_EQ(result, bool_value);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertFromTensorRow using vector of ints
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowIntVectorTest) {
   Status s;
   std::vector<uint64_t> int_value = {12, 16};
@@ -174,6 +207,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowIntVectorTest) {
   ASSERT_EQ(result, int_value);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertFromTensorRow using vector of floats
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowFloatVectorTest) {
   Status s;
   std::vector<double> float_value = {12.57, 0.264};
@@ -187,6 +223,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowFloatVectorTest) {
   ASSERT_EQ(result, float_value);
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertToTensorRow with invalid data for input
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowInvalidDataTest) {
   TensorRow output;
   std::string string_input = "Bye";
@@ -195,6 +234,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertToTensorRowInvalidDataTest) {
   ASSERT_FALSE(TensorRow::ConvertToTensorRow(string_vector_input, &output).IsOk());
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertToTensorRow with mismatched type input
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowTypeMismatchTest) {
   TensorRow input_tensor_row;
   std::shared_ptr<Tensor> input_tensor1;
@@ -206,6 +248,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowTypeMismatchTest) {
   ASSERT_FALSE(TensorRow::ConvertFromTensorRow(input_tensor_row, &output_vector).IsOk());
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertToTensorRow with invalid shape input
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowInvalidShapeTest) {
   TensorRow input_tensor_row;
   std::shared_ptr<Tensor> input_tensor1;
@@ -217,6 +262,9 @@ TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowInvalidShapeTest) {
   ASSERT_FALSE(TensorRow::ConvertFromTensorRow(input_tensor_row, &output_vector).IsOk());
 }
 
+/// Feature: TensorRow
+/// Description: Test ConvertToTensorRow with an empty input
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestTensorRowDE, ConvertFromTensorRowEmptyInputTest) {
   TensorRow input_tensor_row;
   double output;

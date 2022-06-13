@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ class MindDataTestCutMixBatchOp : public UT::CVOP::CVOpCommon {
   MindDataTestCutMixBatchOp() : CVOpCommon() {}
 };
 
+/// Feature: CutMixBatch op
+/// Description: Test CutMixBatch op with alpha=1.0 and prob=1.0
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCutMixBatchOp, TestSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestCutMixBatchOp success1 case";
   std::shared_ptr<Tensor> input_tensor_resized;
@@ -57,6 +60,9 @@ TEST_F(MindDataTestCutMixBatchOp, TestSuccess1) {
   EXPECT_EQ(in.at(1)->shape()[1], out.at(1)->shape()[1]);
 }
 
+/// Feature: CutMixBatch op
+/// Description: Test CutMixBatch op with alpha=1.0 and prob=0.5
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCutMixBatchOp, TestSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestCutMixBatchOp success2 case";
   std::shared_ptr<Tensor> input_tensor_resized;
@@ -88,6 +94,9 @@ TEST_F(MindDataTestCutMixBatchOp, TestSuccess2) {
   EXPECT_EQ(in.at(1)->shape()[1], out.at(1)->shape()[1]);
 }
 
+/// Feature: CutMixBatch op
+/// Description: Test CutMixBatch op where labels are not batched and are 1-dimensional
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestCutMixBatchOp, TestFail1) {
   // This is a fail case because our labels are not batched and are 1-dimensional
   MS_LOG(INFO) << "Doing MindDataTestCutMixBatchOp fail1 case";
@@ -101,6 +110,10 @@ TEST_F(MindDataTestCutMixBatchOp, TestFail1) {
   ASSERT_FALSE(op->Compute(in, &out).IsOk());
 }
 
+/// Feature: CutMixBatch op
+/// Description: Test CutMixBatch op where image_batch_format provided
+///     is not the same as the actual format of the images
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestCutMixBatchOp, TestFail2) {
   // This should fail because the image_batch_format provided is not the same as the actual format of the images
   MS_LOG(INFO) << "Doing MindDataTestCutMixBatchOp fail2 case";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ class MindDataTestRandomCropWithBBoxOp : public UT::CVOP::BBOXOP::BBoxOpCommon {
   TensorRow output_tensor_row_;
 };
 
+/// Feature: RandomCropWithBBox op
+/// Description: Test RandomCropWithBBoxOp with crop size (128, 128) and padding = (0, 0, 0, 0)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp1) {
   MS_LOG(INFO) << "Doing testRandomCropWithBBoxOp1.";
   TensorTable results;
@@ -43,8 +46,8 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp1) {
   // setting seed here
   uint32_t current_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(327362);
-  std::unique_ptr<RandomCropWithBBoxOp> op(
-    new RandomCropWithBBoxOp(crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant));
+  auto op = std::make_unique<RandomCropWithBBoxOp>(
+    crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant);
   for (auto tensor_row_ : images_and_annotations_) {
     Status s = op->Compute(tensor_row_, &output_tensor_row_);
     size_t actual = 0;
@@ -69,6 +72,9 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp1) {
   MS_LOG(INFO) << "testRandomCropWithBBoxOp1 end.";
 }
 
+/// Feature: RandomCropWithBBox op
+/// Description: Test RandomCropWithBBoxOp with crop size (1280, 1280) and padding = (513, 513, 513, 513)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp2) {
   MS_LOG(INFO) << "Doing testRandomCropWithBBoxOp2.";
   // Crop params
@@ -78,8 +84,8 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp2) {
   uint32_t current_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(327362);
 
-  std::unique_ptr<RandomCropWithBBoxOp> op(
-    new RandomCropWithBBoxOp(crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant));
+  auto op = std::make_unique<RandomCropWithBBoxOp>(
+    crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant);
 
   for (auto tensor_row_ : images_and_annotations_) {
     Status s = op->Compute(tensor_row_, &output_tensor_row_);
@@ -96,6 +102,9 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp2) {
   GlobalContext::config_manager()->set_seed(current_seed);
 }
 
+/// Feature: RandomCropWithBBox op
+/// Description: Test RandomCropWithBBoxOp with crop size (1280, 1280) and padding = (3841, 3841, 3841, 3841)
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp3) {
   MS_LOG(INFO) << "Doing testRandomCropWithBBoxOp3.";
   // Crop params
@@ -105,9 +114,9 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp3) {
   uint32_t current_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(327362);
 
-  std::unique_ptr<RandomCropWithBBoxOp> op(new RandomCropWithBBoxOp(crop_height, crop_width, crop_height * 3 + 1,
+  auto op = std::make_unique<RandomCropWithBBoxOp>(crop_height, crop_width, crop_height * 3 + 1,
                                                                     crop_height * 3 + 1, crop_width * 3 + 1,
-                                                                    crop_width * 3 + 1, false, BorderType::kConstant));
+                                                                    crop_width * 3 + 1, false, BorderType::kConstant);
 
   for (auto tensor_row_ : images_and_annotations_) {
     Status s = op->Compute(tensor_row_, &output_tensor_row_);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,9 @@ class MindDataTestDatatype : public UT::Common {
     MindDataTestDatatype() = default;
 };
 
-
+/// Feature: DataType
+/// Description: Test sizes of various data types in bytes
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestDatatype, TestSizes) {
   uint8_t x = DataType::kTypeInfo[DataType::DE_BOOL].sizeInBytes_;
   DataType d = DataType(DataType::DE_BOOL);
@@ -85,6 +87,9 @@ void FromDT(DataType d, uint8_t cv_type, std::string str) {
   ASSERT_EQ(d.ToString(), str);
 }
 
+/// Feature: DataType
+/// Description: Test various DataType constructors
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestDatatype, TestConstructors) {
   // Default constructor
   DataType d;
@@ -106,6 +111,9 @@ TEST_F(MindDataTestDatatype, TestConstructors) {
   ASSERT_EQ(d4, d5);
 }
 
+/// Feature: DataType
+/// Description: Test DataType with CVType and test DataType's string
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestDatatype, TestFromTypes) {
   FromDT(DataType(DataType::DE_BOOL), CV_8U, "bool");
   FromDT(DataType(DataType::DE_UINT8), CV_8U, "uint8");
@@ -121,6 +129,9 @@ TEST_F(MindDataTestDatatype, TestFromTypes) {
   FromDT(DataType(DataType::DE_UNKNOWN), CV_8U, "unknown");
 }
 
+/// Feature: DataType
+/// Description: Test whether a DataType is compatible or loosely compatible
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestDatatype, TestCompatible) {
   ASSERT_TRUE(DataType(DataType::DE_BOOL).IsCompatible<bool>());
   ASSERT_TRUE(DataType(DataType::DE_UINT8).IsCompatible<uint8_t>());
@@ -154,6 +165,9 @@ TEST_F(MindDataTestDatatype, TestCompatible) {
 
 }
 
+/// Feature: DataType
+/// Description: Test equality of DataType with CVType
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestDatatype, TestCVTypes) {
   ASSERT_EQ(DataType::DE_UINT8, DataType::FromCVType(CV_8U).value());
   ASSERT_EQ(DataType::DE_UINT8, DataType::FromCVType(CV_8UC1).value());

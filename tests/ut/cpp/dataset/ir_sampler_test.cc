@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ class MindDataTestIrSampler : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: MindData IR Sampler Support
+/// Description: Test CalculateNumSamples with various SamplerObj
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestIrSampler, TestCalculateNumSamples) {
   int64_t num_rows = 30;  // dummy variable for number of rows in the dataset
   std::shared_ptr<SamplerObj> sampl = std::make_shared<DistributedSamplerObj>(2, 1, false, 6, 1, -1, true);
@@ -123,6 +126,9 @@ TEST_F(MindDataTestIrSampler, TestCalculateNumSamples) {
   EXPECT_EQ(sampler_rt7->CalculateNumSamples(num_rows), -1);
 }
 
+/// Feature: MindData IR Sampler Support
+/// Description: Test samplers move parameter with indices (array of int64) and std::move(indices)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestIrSampler, TestSamplersMoveParameters) {
   std::vector<int64_t> indices = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23};
   std::shared_ptr<SamplerObj> sampl1 = std::make_shared<SubsetRandomSamplerObj>(indices, 0);

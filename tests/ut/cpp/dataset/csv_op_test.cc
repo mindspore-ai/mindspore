@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ class MindDataTestCSVOp : public UT::DatasetOpTesting {
 
 };
 
+/// Feature: CountAllFileRows in CsvOp
+/// Description: Test CountAllFileRows in CsvOp on CSV files
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCSVOp, TestTotalRows) {
   std::string csv_file1 = datasets_root_path_ + "/testCSV/1.csv";
   std::string csv_file2 = datasets_root_path_ + "/testCSV/size.csv";

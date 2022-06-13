@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ class MindDataTestTensorShape : public UT::Common {
   MindDataTestTensorShape() = default;
 };
 
+/// Feature: TensorShape
+/// Description: Test TensorShape functions where input comes from a vector
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorShape, TestBasics) {
   std::vector<dsize_t> vec = {4, 5, 6};
   TensorShape t(vec);
@@ -65,6 +68,9 @@ TEST_F(MindDataTestTensorShape, TestBasics) {
   ASSERT_EQ(t3.NumOfElements(), 0);
 }
 
+/// Feature: TensorShape
+/// Description: Test TensorShape::CreateScalar() basic functions
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorShape, TestScalars) {
   TensorShape t = TensorShape::CreateScalar();
   ASSERT_EQ(t.Rank(), 0);
@@ -75,6 +81,9 @@ TEST_F(MindDataTestTensorShape, TestScalars) {
   ASSERT_EQ(t.NumOfElements(), 1);
 }
 
+/// Feature: TensorShape
+/// Description: Test TensorShape dim functions (Append, Prepend, Insert)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorShape, TestDims) {
   TensorShape t = TensorShape::CreateScalar();
   t = t.AppendDim(1);
@@ -93,6 +102,9 @@ TEST_F(MindDataTestTensorShape, TestDims) {
   ASSERT_EQ(t3, TensorShape({1, 4, 2, 5, 3, 6}));
 }
 
+/// Feature: TensorShape
+/// Description: Test TensorShape::CreateUnknownRankShape and TensorShape::CreateUnknownShapeWithRank
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorShape, TestUnknown) {
   TensorShape t1({-1, 5, 6});
   ASSERT_EQ(t1.AsVector(), std::vector<dsize_t>({-1, 5, 6}));
@@ -107,7 +119,9 @@ TEST_F(MindDataTestTensorShape, TestUnknown) {
   ASSERT_EQ(t4, TensorShape({-1, -1, -1}));
 }
 
-// Test materializing a TensorShape by calling method on a given column descriptor
+/// Feature: TensorShape
+/// Description: Test materializing a TensorShape by calling method on a given column descriptor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorShape, TestColDescriptor) {
   int32_t rank = 0;  // not used
   int32_t num_elements = 0;
@@ -178,6 +192,9 @@ TEST_F(MindDataTestTensorShape, TestColDescriptor) {
   ASSERT_FALSE(rc.IsOk());
 }
 
+/// Feature: TensorShape
+/// Description: Test TensorShape with invalid parameters
+/// Expectation: Same output as TensorShape::CreateUnknownRankeShape()
 TEST_F(MindDataTestTensorShape, TestInvalid) {
   ASSERT_EQ(TensorShape({kDeMaxDim - 1, kDeMaxDim - 1, kDeMaxDim - 1}), TensorShape::CreateUnknownRankShape());
 }

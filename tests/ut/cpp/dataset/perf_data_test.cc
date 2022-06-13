@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestPerfData : public UT::Common {
   MindDataTestPerfData() {}
 };
 
+/// Feature: PerfData
+/// Description: Test PerfData int CyclicArray and std::vector<int64_t> with AddSample by comparing them together
+/// Expectation: Both CyclicArray and vector should be equal
 TEST_F(MindDataTestPerfData, Test1) {
   PerfData<std::vector<int64_t>> p1(2, 3);
   PerfData<CyclicArray<int>> p2(2, 3);
@@ -57,6 +60,9 @@ TEST_F(MindDataTestPerfData, Test1) {
   EXPECT_EQ(p2[2][1], 6);
 }
 
+/// Feature: PerfData
+/// Description: Test PerfData int CyclicArray by using AddSample to add rows to the CyclicArray
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPerfData, Test2) {
   auto pd = PerfData<CyclicArray<int>>(1000000, 3);
   auto row = {1, 2, 3};

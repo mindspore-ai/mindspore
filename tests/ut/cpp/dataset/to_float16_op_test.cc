@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ class MindDataTestToFloat16Op : public UT::CVOP::CVOpCommon {
   MindDataTestToFloat16Op() : CVOpCommon() {}
 };
 
+/// Feature: ToFloat16 op
+/// Description: Test ToFloat16Op after RandomRotationOp
+/// Expectation: Output's shape is equal to the expected output's shape
 TEST_F(MindDataTestToFloat16Op, TestOp) {
   MS_LOG(INFO) << "Doing TestRandomRotationOp::TestOp.";
   std::shared_ptr<Tensor> output_tensor;
@@ -38,15 +41,15 @@ TEST_F(MindDataTestToFloat16Op, TestOp) {
   // use compute center to use for rotation
   std::vector<float> center = {};
   bool expand = false;
-  std::unique_ptr<RandomRotationOp> op(
-    new RandomRotationOp(s_degree, e_degree, InterpolationMode::kLinear, expand, center));
+  auto op = std::make_unique<RandomRotationOp>(
+    s_degree, e_degree, InterpolationMode::kLinear, expand, center);
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());
   EXPECT_EQ(input_tensor_->shape()[0], output_tensor->shape()[0]);
   EXPECT_EQ(input_tensor_->shape()[1], output_tensor->shape()[1]);
 
-  std::unique_ptr<ToFloat16Op> to_float_op(new ToFloat16Op());
+  auto to_float_op = std::make_unique<ToFloat16Op>();
   std::shared_ptr<Tensor> output_tensor1;
   s = op->Compute(output_tensor, &output_tensor1);
   EXPECT_EQ(output_tensor->shape()[0], output_tensor1->shape()[0]);

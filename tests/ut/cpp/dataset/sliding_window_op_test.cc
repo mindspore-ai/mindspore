@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ class MindDataTestSlidingWindowOp : public UT::Common {
   MindDataTestSlidingWindowOp() {}
 };
 
+/// Feature: SlidingWindow op
+/// Description: Test SlidingWindowOp's Compute
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSlidingWindowOp, Compute) {
   MS_LOG(INFO) << "Doing MindDataTestSlidingWindowOp->Compute.";
   std::vector<std::string> strings = {"one", "two", "three", "four", "five", "six", "seven", "eight"};
@@ -35,7 +38,7 @@ TEST_F(MindDataTestSlidingWindowOp, Compute) {
   Tensor::CreateFromVector(strings, shape, &input);
   std::shared_ptr<Tensor> output;
 
-  std::unique_ptr<SlidingWindowOp> op(new SlidingWindowOp(3, 0));
+  auto op = std::make_unique<SlidingWindowOp>(3, 0);
   Status s = op->Compute(input, &output);
 
   std::vector<std::string> out = {"one",  "two",  "three", "two",  "three", "four",  "three", "four",  "five",
@@ -52,6 +55,9 @@ TEST_F(MindDataTestSlidingWindowOp, Compute) {
   MS_LOG(INFO) << "MindDataTestSlidingWindowOp end.";
 }
 
+/// Feature: SlidingWindow op
+/// Description: Test SlidingWindowOp's OutputShape
+/// Expectation: Output's shape is equal to the expected output's shape
 TEST_F(MindDataTestSlidingWindowOp, OutputShape) {
   MS_LOG(INFO) << "Doing MindDataTestSlidingWindowOp->OutputShape.";
   std::vector<std::string> strings = {"one", "two", "three", "four", "five", "six", "seven", "eight"};
@@ -61,7 +67,7 @@ TEST_F(MindDataTestSlidingWindowOp, OutputShape) {
   std::vector<TensorShape> input_shape = {input->shape()};
   std::vector<TensorShape> output_shape = {TensorShape({})};
 
-  std::unique_ptr<SlidingWindowOp> op(new SlidingWindowOp(3, 0));
+  auto op = std::make_unique<SlidingWindowOp>(3, 0);
   Status s = op->OutputShape(input_shape, output_shape);
 
   MS_LOG(DEBUG) << "input_shape" << input_shape[0];

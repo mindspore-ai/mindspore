@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,9 @@ class MindDataTestTensorOpFusionPass : public UT::DatasetOpTesting {
   MindDataTestTensorOpFusionPass() = default;
 };
 
+/// Feature: MindData Tensor Op Fusion Pass Support
+/// Description: Test Decode op and RandomResizedCrop op without IR optimization pass
+/// Expectation: Runs successfully
 TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeDisabled) {
   MS_LOG(INFO) << "Doing MindDataTestTensorOpFusionPass-RandomCropDecodeResizeDisabled";
 
@@ -39,8 +42,8 @@ TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeDisabled) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> decode(new vision::Decode());
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5}));
+  auto decode = std::make_shared<vision::Decode>();
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCrop>(std::vector<int32_t>{5});
   ds = ds->Map({decode, random_resized_crop}, {"image"});
 
   std::shared_ptr<DatasetNode> node = ds->IRNode();
@@ -63,6 +66,9 @@ TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeDisabled) {
   EXPECT_EQ((*func_it)->Name(), kRandomCropAndResizeOp);
 }
 
+/// Feature: MindData Tensor Op Fusion Pass Support
+/// Description: Test Decode op and RandomResizedCrop op with IR optimization pass
+/// Expectation: Runs successfully
 TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeEnabled) {
   MS_LOG(INFO) << "Doing MindDataTestTensorOpFusionPass-RandomCropDecodeResizeEnabled";
 
@@ -70,8 +76,8 @@ TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeEnabled) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> decode(new vision::Decode());
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5}));
+  auto decode = std::make_shared<vision::Decode>();
+  auto random_resized_crop = std::make_shared<vision::RandomResizedCrop>(std::vector<int32_t>{5});
   ds = ds->Map({decode, random_resized_crop}, {"image"});
 
   std::shared_ptr<DatasetNode> node = ds->IRNode();

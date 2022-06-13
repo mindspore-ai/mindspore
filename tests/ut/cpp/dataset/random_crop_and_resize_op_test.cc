@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,10 @@ class MindDataTestRandomCropAndResizeOp : public UT::CVOP::CVOpCommon {
  public:
   MindDataTestRandomCropAndResizeOp() : CVOpCommon() {}
 };
+
+/// Feature: RandomCropAndResize op
+/// Description: Test RandomCropAndResizeOp with aspect_lb=2, aspect_ub=2.5, scale_lb=0.2, and scale_ub=2.0
+/// Expectation: Runs successfully
 TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest1) {
   MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();
@@ -54,6 +58,10 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest1) {
 
   MS_LOG(INFO) << "RandomCropAndResizeOp simple test finished";
 }
+
+/// Feature: RandomCropAndResize op
+/// Description: Test RandomCropAndResizeOp with aspect_lb=1, aspect_ub=1.5, scale_lb=0.2, and scale_ub=2.0
+/// Expectation: Runs successfully
 TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest2) {
   MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();
@@ -80,6 +88,10 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest2) {
 
   MS_LOG(INFO) << "RandomCropAndResizeOp simple test finished";
 }
+
+/// Feature: RandomCropAndResize op
+/// Description: Test RandomCropAndResizeOp with aspect_lb=0.2, aspect_ub=3, scale_lb=0.2, and scale_ub=2.0
+/// Expectation: Runs successfully
 TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest3) {
   MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();

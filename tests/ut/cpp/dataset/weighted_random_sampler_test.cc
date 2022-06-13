@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,9 @@ class MindDataTestWeightedRandomSampler : public UT::Common {
   };
 };
 
+/// Feature: WeightedRandomSampler
+/// Description: Test WeightedRandomSampler with replacement=true
+/// Expectation: Runs successfully
 TEST_F(MindDataTestWeightedRandomSampler, TestOneshotReplacement) {
   // num samples to draw.
   uint64_t num_samples = 100;
@@ -72,6 +75,9 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotReplacement) {
   ASSERT_EQ(row.eoe(), true);
 }
 
+/// Feature: WeightedRandomSampler
+/// Description: Test WeightedRandomSampler with replacement=false
+/// Expectation: Runs successfully
 TEST_F(MindDataTestWeightedRandomSampler, TestOneshotNoReplacement) {
   // num samples to draw.
   uint64_t num_samples = 100;
@@ -107,6 +113,9 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotNoReplacement) {
   ASSERT_EQ(row.eoe(), true);
 }
 
+/// Feature: WeightedRandomSampler
+/// Description: Test WeightedRandomSampler with replacement=true and samples_per_tensor
+/// Expectation: Runs successfully
 TEST_F(MindDataTestWeightedRandomSampler, TestGetNextSampleReplacement) {
   // num samples to draw.
   uint64_t num_samples = 100;
@@ -139,6 +148,9 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextSampleReplacement) {
   ASSERT_EQ(num_samples, out.size());
 }
 
+/// Feature: WeightedRandomSampler
+/// Description: Test WeightedRandomSampler with replacement=false and samples_per_tensor
+/// Expectation: Runs successfully
 TEST_F(MindDataTestWeightedRandomSampler, TestGetNextSampleNoReplacement) {
   // num samples to draw.
   uint64_t num_samples = 100;
@@ -182,6 +194,9 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextSampleNoReplacement) {
   ASSERT_EQ(num_samples, out.size());
 }
 
+/// Feature: WeightedRandomSampler
+/// Description: Test WeightedRandomSampler with replacement=true followed by ResetSampler
+/// Expectation: Runs successfully
 TEST_F(MindDataTestWeightedRandomSampler, TestResetReplacement) {
   // num samples to draw.
   uint64_t num_samples = 1000000;
@@ -226,6 +241,9 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetReplacement) {
   ASSERT_EQ(row.eoe(), true);
 }
 
+/// Feature: WeightedRandomSampler
+/// Description: Test WeightedRandomSampler with replacement=false followed by ResetSampler
+/// Expectation: Runs successfully
 TEST_F(MindDataTestWeightedRandomSampler, TestResetNoReplacement) {
   // num samples to draw.
   uint64_t num_samples = 1000000;

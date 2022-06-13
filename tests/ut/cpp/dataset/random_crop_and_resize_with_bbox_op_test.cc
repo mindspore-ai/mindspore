@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,9 @@ class MindDataTestRandomCropAndResizeWithBBoxOp : public UT::CVOP::BBOXOP::BBoxO
   MindDataTestRandomCropAndResizeWithBBoxOp() : BBoxOpCommon() {}
 };
 
+/// Feature: RandomCropAndResizeWithBBox op
+/// Description: Test RandomCropAndResizeWithBBoxOp with aspect_lb=2, aspect_ub=2.5, scale_lb=0.2, and scale_ub=2.0
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomCropAndResizeWithBBoxOp, TestOp1) {
   MS_LOG(INFO) << "Doing testRandomCropAndResizeWithBBoxOp1.";
   // setting seed here
@@ -63,6 +66,9 @@ TEST_F(MindDataTestRandomCropAndResizeWithBBoxOp, TestOp1) {
   GlobalContext::config_manager()->set_seed(current_seed);
 }
 
+/// Feature: RandomCropAndResizeWithBBox op
+/// Description: Test RandomCropAndResizeWithBBoxOp with aspect_lb=1, aspect_ub=1.5, scale_lb=0.2, and scale_ub=2.0
+/// Expectation: Runs successfully
 TEST_F(MindDataTestRandomCropAndResizeWithBBoxOp, TestOp2) {
   MS_LOG(INFO) << "Doing testRandomCropAndResizeWithBBoxOp2.";
   // setting seed here to prevent random core dump
@@ -85,6 +91,9 @@ TEST_F(MindDataTestRandomCropAndResizeWithBBoxOp, TestOp2) {
   GlobalContext::config_manager()->set_seed(current_seed);
 }
 
+/// Feature: RandomCropAndResizeWithBBox op
+/// Description: Test RandomCropAndResizeWithBBoxOp with aspect_lb=0.2, aspect_ub=3, scale_lb=0.2, and scale_ub=2.0
+/// Expectation: Runs successfully
 TEST_F(MindDataTestRandomCropAndResizeWithBBoxOp, TestOp3) {
   MS_LOG(INFO) << "Doing testRandomCropAndResizeWithBBoxOp3.";
   TensorRow output_tensor_row_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,9 @@ using mindspore::MsLogLevel::INFO;
 
 class MindDataTestOptimizationPass : public UT::DatasetOpTesting {};
 
+/// Feature: IR Optimization
+/// Description: Test AutoWorkerPass on NumWorkers of IRNode ops
+/// Expectation: Set num_workers correctly
 TEST_F(MindDataTestOptimizationPass, MindDataTestAutoWorkerPass) {
   MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestAutoWorkerPass.";
 
@@ -70,6 +73,9 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestAutoWorkerPass) {
   MS_LOG(DEBUG) << map->IRNode()->Name() << ": num_worker=" << map->IRNode()->NumWorkers();
 }
 
+/// Feature: IR Optimization
+/// Description: Test TensorOpFusionPass by fusing multiple tensor operations
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPass) {
   MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestTensorFusionPass.";
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -89,13 +95,18 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPass) {
   ASSERT_EQ(fused_ops[0]->Name(), vision::kRandomCropDecodeResizeOperation);
 }
 
+/// Feature: IR Optimization
+/// Description: Test TensorOpFusionPass by prebuilding tensor ops through PreBuiltOperation
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPassPreBuiltTensorOperation) {
   MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestTensorFusionPassPreBuiltTensorOperation.";
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   // make prebuilt tensor operation
   auto decode = std::make_shared<transforms::PreBuiltOperation>(vision::DecodeOperation(true).Build());
   auto resize = std::make_shared<transforms::PreBuiltOperation>(
-    vision::RandomResizedCropOperation({100, 100}, {0.5, 1.0}, {0.1, 0.2}, InterpolationMode::kNearestNeighbour, 5).Build());
+    vision::RandomResizedCropOperation(
+      std::vector<int32_t>{100, 100}, std::vector<float>{0.5, 1.0}, std::vector<float>{0.1, 0.2}, 
+      InterpolationMode::kNearestNeighbour, 5).Build());
   std::vector<std::shared_ptr<TensorOperation>> op_list = {decode, resize};
   std::vector<std::string> op_name = {"image"};
   std::shared_ptr<DatasetNode> root = ImageFolder(folder_path, false)->IRNode();

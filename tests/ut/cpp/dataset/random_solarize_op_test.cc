@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,9 @@ class MindDataTestRandomSolarizeOp : public UT::CVOP::CVOpCommon {
   std::shared_ptr<Tensor> output_tensor_;
 };
 
+/// Feature: RandomSolarize op
+/// Description: Test RandomSolarizeOp with basic usage and check OneToOne
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomSolarizeOp, TestOp1) {
   MS_LOG(INFO) << "Doing testRandomSolarizeOp1.";
   // setting seed here
@@ -39,7 +42,7 @@ TEST_F(MindDataTestRandomSolarizeOp, TestOp1) {
   GlobalContext::config_manager()->set_seed(0);
 
   std::vector<uint8_t> threshold = {100, 100};
-  std::unique_ptr<RandomSolarizeOp> op(new RandomSolarizeOp(threshold));
+  auto op = std::make_unique<RandomSolarizeOp>(threshold);
 
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);

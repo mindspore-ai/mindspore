@@ -50,7 +50,10 @@ void compare_dataset(std::shared_ptr<DatasetNode> ds) {
   return;
 }
 
-// test mnist dataset, and special cases of tensor operations (no input or tensor operation input)
+/// Feature: Deserialize
+/// Description: Test Deserialize on MNISTDataset and special cases of tensor operations
+///     (no input or tensor operation input)
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeMnist) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Minist.";
   std::string data_dir = "./data/dataset/testMnistData";
@@ -83,7 +86,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeMnist) {
   compare_dataset(ds);
 }
 
-// test celeba dataset and part of the tensor operation
+/// Feature: Deserialize
+/// Description: Test Deserialize on CelebADataset and part of the tensor operation
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeCelebA) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-CelebA.";
   std::string data_dir = "./data/dataset/testCelebAData/";
@@ -145,7 +150,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCelebA) {
   compare_dataset(ds);
 }
 
-// test cifar10 dataset and random tensor operations
+/// Feature: Deserialize
+/// Description: Test Deserialize on Cifar10Dataset and random tensor operations
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeCifar10) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Cifar10.";
   std::string data_dir = "./data/dataset/testCifar10Data";
@@ -214,6 +221,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCifar10) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on Cifar100Dataset and part of the tensor operations
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeCifar100) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Cifar100.";
   std::string data_dir = "./data/dataset/testCifar100Data";
@@ -249,6 +259,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCifar100) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on CSVDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeCSV) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-CSV.";
   std::string data_file = "./data/dataset/testCSV/1.csv";
@@ -264,6 +277,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCSV) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on ImageFolderDataset and some random tensor operations
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeImageFolder) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-ImageFolder.";
   std::string dataset_dir = "./data/dataset/testPK/data";
@@ -295,6 +311,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeImageFolder) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on ManifestDataset with some tensor operations
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeManifest) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Manifest.";
   std::string data_file = "./data/dataset/testManifestData/cpp.json";
@@ -325,6 +344,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeManifest) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on VOCDataset with RandomColorAdjust op
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeVOC) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-VOC.";
   std::string dataset_dir = "./data/dataset/testVOC2012";
@@ -348,6 +370,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeVOC) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on CLUEDataset with Decode op
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeCLUE) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-CLUE.";
   std::string train_file = "./data/dataset/testCLUE/afqmc/train.json";
@@ -363,6 +388,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCLUE) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on CocoDataset with some random tensor operations
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeCoco) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Coco.";
   std::string folder_path = "./data/dataset/testCOCO/train";
@@ -395,6 +423,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCoco) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on TFRecordDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeTFRecord) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-TFRecord.";
   int num_samples = 12;
@@ -434,6 +465,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeTFRecord) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on TextFileDataset
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeTextfile) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Textfile.";
   std::vector<std::string> dataset_files = {"./data/dataset/testTextFileDataset/1.txt"};
@@ -446,6 +480,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeTextfile) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize with invalid json path or object
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestDeserialize, TestDeserializeInvalidJson) {
   std::shared_ptr<DatasetNode> ds;
   // check the invalid json path would return error
@@ -455,6 +492,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeInvalidJson) {
   EXPECT_EQ(ds, nullptr);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on TextFileDataset with Fill op
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeFill) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Fill.";
   std::vector<std::string> dataset_files = {"./data/dataset/testTextFileDataset/1.txt"};
@@ -470,6 +510,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeFill) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on Tensor
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeTensor) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Tensor.";
   std::shared_ptr<Tensor> test_tensor;
@@ -491,6 +534,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeTensor) {
 // Helper function to get the session id from SESSION_ID env variable
 Status GetSessionFromEnv(session_id_type *session_id);
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on created Dataset Cache
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, DISABLED_TestDeserializeCache) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Cache.";
   std::string data_dir = "./data/dataset/testCache";
@@ -504,6 +550,9 @@ TEST_F(MindDataTestDeserialize, DISABLED_TestDeserializeCache) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize on AlbumDataset with Concat and Flickr
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializeConcatAlbumFlickr) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-ConcatAlbumFlickr.";
   std::string dataset_dir = "./data/dataset/testAlbum";
@@ -528,6 +577,9 @@ TEST_F(MindDataTestDeserialize, TestDeserializeConcatAlbumFlickr) {
   compare_dataset(ds);
 }
 
+/// Feature: Deserialize
+/// Description: Test Deserialize when Python is initialized
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, TestDeserializePyFunc) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-PyFunc.";
   if (Py_IsInitialized() != 0) {

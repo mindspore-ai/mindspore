@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ class MindDataTestRandomSharpness : public UT::CVOP::CVOpCommon {
   MindDataTestRandomSharpness() : CVOpCommon() {}
 };
 
+/// Feature: RandomSharpness op
+/// Description: Test RandomSharpnessOp with a factor in range [0.2, 1.8] and check OneToOne
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomSharpness, TestOp) {
   MS_LOG(INFO) << "Doing test RandomSharpness.";
   // setting seed here
@@ -41,7 +44,7 @@ TEST_F(MindDataTestRandomSharpness, TestOp) {
   float end_degree = 1.8;
   std::shared_ptr<Tensor> output_tensor;
   // sharpening
-  std::unique_ptr<RandomSharpnessOp> op(new RandomSharpnessOp(start_degree, end_degree));
+  auto op = std::make_unique<RandomSharpnessOp>(start_degree, end_degree);
   EXPECT_TRUE(op->OneToOne());
   Status st = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(st.IsOk());

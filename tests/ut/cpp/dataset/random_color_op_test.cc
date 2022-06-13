@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,9 @@ int64_t Compare(std::shared_ptr<Tensor> t1, std::shared_ptr<Tensor> t2) {
 // these tests are tautological, write better tests when the requirements for the output are determined
 // e. g. how do we want to convert to gray and what does it mean to blend with a gray image (pre- post- gamma corrected,
 // what weights).
+/// Feature: RandomColor op
+/// Description: Test RandomColorOp with lower bound equal to upper bound equal to 1
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomColorOp, TestOp1) {
   std::shared_ptr<Tensor> output_tensor;
   auto op = RandomColorOp(1, 1);
@@ -80,6 +83,9 @@ TEST_F(MindDataTestRandomColorOp, TestOp1) {
   EXPECT_EQ(0, res);
 }
 
+/// Feature: RandomColor op
+/// Description: Test RandomColorOp with lower bound equal to upper bound equal to 0
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomColorOp, TestOp2) {
   std::shared_ptr<Tensor> output_tensor;
   auto op = RandomColorOp(0, 0);
@@ -89,6 +95,9 @@ TEST_F(MindDataTestRandomColorOp, TestOp2) {
   EXPECT_EQ(res, 0);
 }
 
+/// Feature: RandomColor op
+/// Description: Test RandomColorOp with lower bound=0.0 and upper bound=1.0
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomColorOp, TestOp3) {
   std::shared_ptr<Tensor> output_tensor;
   auto op = RandomColorOp(0.0, 1.0);

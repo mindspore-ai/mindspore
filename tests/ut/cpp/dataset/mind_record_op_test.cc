@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,9 @@ std::shared_ptr<MindRecordOp> CreateMindRecord(int32_t mind_record_workers, bool
   return std::move(op);
 }
 
+/// Feature: MindRecord op
+/// Description: Test MindRecordOp ShardShuffle in ExecutionTree
+/// Expectation: Runs successfully
 TEST_F(MindDataTestMindRecordOp, TestMindRecordShuffle) {
   // single MindRecord op and nothing else
   //
@@ -127,6 +130,9 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordShuffle) {
   }
 }
 
+/// Feature: MindRecord op
+/// Description: Test MindRecordOp ShardCategory in ExecutionTree
+/// Expectation: Runs successfully
 TEST_F(MindDataTestMindRecordOp, TestMindRecordCategory) {
   // single MindRecord op and nothing else
   //

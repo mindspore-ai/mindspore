@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,9 @@ using mindspore::MsLogLevel::INFO;
 
 class MindDataTestTFReaderOp : public UT::DatasetOpTesting {};
 
+/// Feature: TFReader op
+/// Description: Test TFReaderOp with large rows per buffer
+/// Expectation: Runs successfully and equal row count
 TEST_F(MindDataTestTFReaderOp, TestTFReaderLargeRowsPerBuffer) {
   // Start with an empty execution tree
   auto my_tree = std::make_shared<ExecutionTree>();
@@ -90,6 +93,9 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderLargeRowsPerBuffer) {
   ASSERT_EQ(row_count, 12);
 }
 
+/// Feature: TFReader op
+/// Description: Test TFReaderOp with small rows per buffer
+/// Expectation: Runs successfully and equal row count
 TEST_F(MindDataTestTFReaderOp, TestTFReaderSmallRowsPerBuffer) {
   // Start with an empty execution tree
   auto my_tree = std::make_shared<ExecutionTree>();
@@ -147,6 +153,9 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderSmallRowsPerBuffer) {
   ASSERT_EQ(row_count, 12);
 }
 
+/// Feature: TFReader op
+/// Description: Test TFReaderOp with large queue size
+/// Expectation: Runs successfully and equal row count
 TEST_F(MindDataTestTFReaderOp, TestTFReaderLargeQueueSize) {
   // Start with an empty execution tree
   auto my_tree = std::make_shared<ExecutionTree>();
@@ -204,6 +213,9 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderLargeQueueSize) {
   ASSERT_EQ(row_count, 12);
 }
 
+/// Feature: TFReader op
+/// Description: Test TFReaderOp with one thread
+/// Expectation: Runs successfully and equal row count
 TEST_F(MindDataTestTFReaderOp, TestTFReaderOneThread) {
   // Start with an empty execution tree
   auto my_tree = std::make_shared<ExecutionTree>();
@@ -261,6 +273,9 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderOneThread) {
   ASSERT_EQ(row_count, 12);
 }
 
+/// Feature: TFReader op
+/// Description: Test TFReaderOp that takes 1 buffer
+/// Expectation: Runs successfully and equal row count
 TEST_F(MindDataTestTFReaderOp, TestTFReaderTake1Buffer) {
   // Start with an empty execution tree
   auto my_tree = std::make_shared<ExecutionTree>();
@@ -324,6 +339,9 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderTake1Buffer) {
 }
 
 
+/// Feature: TFReader op
+/// Description: Test TFReaderOp::CountTotalRows basic cases
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTFReaderOp, TestTotalRowsBasic) {
   std::string tf_file = datasets_root_path_ + "/testTFTestAllTypes/test.data";
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,12 @@ class MindDataTestRgbaToRgbOp : public UT::CVOP::CVOpCommon {
   std::shared_ptr<Tensor> output_tensor_;
 };
 
+/// Feature: RgbaToRgb op
+/// Description: Test RgbaToRgbOp basic usage and check OneToOne
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRgbaToRgbOp, TestOp1) {
   MS_LOG(INFO) << "Doing testRGBA2RGB.";
-  std::unique_ptr<RgbaToRgbOp> op(new RgbaToRgbOp());
+  auto op = std::make_unique<RgbaToRgbOp>();
   EXPECT_TRUE(op->OneToOne());
   // prepare 4 channel image
   cv::Mat rgba_image;

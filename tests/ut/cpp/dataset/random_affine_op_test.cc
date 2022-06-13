@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,18 @@ class MindDataTestRandomAffineOp : public UT::CVOP::CVOpCommon {
   MindDataTestRandomAffineOp() : CVOpCommon() {}
 };
 
+/// Feature: RandomAffine op
+/// Description: Test RandomAffineOp basic usage and check OneToOne
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomAffineOp, TestOp1) {
   MS_LOG(INFO) << "Doing testRandomAffineOp.";
 
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<RandomAffineOp> op(new RandomAffineOp({30.0, 30.0}, {0.0, 0.0, 0.0, 0.0}, {2.0, 2.0},
-                                                        {10.0, 10.0, 20.0, 20.0}, InterpolationMode::kNearestNeighbour,
-                                                        {255, 0, 0}));
+  auto op = std::make_unique<RandomAffineOp>(std::vector<float>{30.0, 30.0}, std::vector<float>{0.0, 0.0, 0.0, 0.0}, 
+                                                        std::vector<float>{2.0, 2.0},
+                                                        std::vector<float>{10.0, 10.0, 20.0, 20.0}, 
+                                                        InterpolationMode::kNearestNeighbour,
+                                                        std::vector<uint8_t>{255, 0, 0});
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

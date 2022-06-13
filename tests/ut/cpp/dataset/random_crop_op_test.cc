@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,15 @@ class MindDataTestRandomCropOp : public UT::CVOP::CVOpCommon {
   TensorRow output_tensor_row;
 };
 
+/// Feature: RandomCrop op
+/// Description: Test RandomCropOp with crop size (128, 128) and padding = (0, 0, 0, 0)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomCropOp, TestOp1) {
   MS_LOG(INFO) << "Doing testRandomCrop.";
   // Crop params
   unsigned int crop_height = 128;
   unsigned int crop_width = 128;
-  std::unique_ptr<RandomCropOp> op(new RandomCropOp(crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant));
+  auto op = std::make_unique<RandomCropOp>(crop_height, crop_width, 0, 0, 0, 0, false, BorderType::kConstant);
   TensorRow input_tensor_row;
   input_tensor_row.push_back(input_tensor_);
   input_tensor_row.push_back(input_tensor_);
@@ -50,6 +53,9 @@ TEST_F(MindDataTestRandomCropOp, TestOp1) {
   }
 }
 
+/// Feature: RandomCrop op
+/// Description: Test RandomCropOp with crop size (1280, 1280) and padding = (513, 513, 513, 513)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomCropOp, TestOp2) {
   MS_LOG(INFO) << "Doing testRandomCrop.";
   // Crop params
@@ -58,8 +64,8 @@ TEST_F(MindDataTestRandomCropOp, TestOp2) {
   TensorRow input_tensor_row;
   input_tensor_row.push_back(input_tensor_);
   input_tensor_row.push_back(input_tensor_);
-  std::unique_ptr<RandomCropOp> op(
-    new RandomCropOp(crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant));
+  auto op = std::make_unique<RandomCropOp>(
+    crop_height, crop_width, 513, 513, 513, 513, false, BorderType::kConstant);
   Status s = op->Compute(input_tensor_row, &output_tensor_row);
   EXPECT_EQ(true, s.IsOk());
   MS_LOG(INFO) << "testRandomCrop end.";

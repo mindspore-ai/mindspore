@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,13 @@ class MindDataTestRandomHorizontalFlipWithBBoxOp : public UT::CVOP::BBOXOP::BBox
   MindDataTestRandomHorizontalFlipWithBBoxOp() : UT::CVOP::BBOXOP::BBoxOpCommon() {}
 };
 
+/// Feature: RandomHorizontalFlipWithBBox op
+/// Description: Test RandomHorizontalFlipWithBBoxOp with prob=1
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomHorizontalFlipWithBBoxOp, TestOp) {
   MS_LOG(INFO) << "Doing testRandomHorizontalFlipWithBBox.";
   TensorTable results;
-  std::unique_ptr<RandomHorizontalFlipWithBBoxOp> op(new RandomHorizontalFlipWithBBoxOp(1));
+  auto op = std::make_unique<RandomHorizontalFlipWithBBoxOp>(1);
   for (const auto &row: images_and_annotations_) {
     TensorRow output_row;
     Status s = op->Compute(row, &output_row);

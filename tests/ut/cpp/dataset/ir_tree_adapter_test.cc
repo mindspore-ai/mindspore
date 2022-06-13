@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ using mindspore::dataset::Tensor;
 
 class MindDataTestTreeAdapter : public UT::DatasetOpTesting {};
 
+// Feature: TreeAdapter
+// Description: Test TreeAdapter in simple case without IR optimization
+// Expectation: Runs successfully
 TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
   MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestSimpleTreeAdapter.";
 
@@ -69,6 +72,9 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
   EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
 }
 
+// Feature: TreeAdapter
+// Description: Test TreeAdapter with repeated row_sizes
+// Expectation: Runs successfully
 TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
   MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestTreeAdapterWithRepeat.";
 
@@ -101,6 +107,9 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
   EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
 }
 
+// Feature: TreeAdapter
+// Description: Test TreeAdapter on dataset that has been projected
+// Expectation: Runs successfully
 TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProjectMap.";
 

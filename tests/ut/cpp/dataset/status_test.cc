@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ Status f3() {
   RETURN_STATUS_UNEXPECTED("Testing macro3");
 }
 
+/// Feature: Status
+/// Description: Test Status default constructor
+/// Expectation: Runs successfully
 TEST_F(MindDataTestStatus, Test1) {
   // Test default constructor which should be OK
   Status rc;
@@ -49,11 +52,17 @@ TEST_F(MindDataTestStatus, Test1) {
   MS_LOG(DEBUG) << err2;
 }
 
+/// Feature: Status
+/// Description: Test RETURN_IF_NOT_OK with Status with StatusCode::kMDUnexpectedError
+/// Expectation: Runs successfully
 TEST_F(MindDataTestStatus, Test2) {
   Status rc = f1();
   MS_LOG(DEBUG) << rc;
 }
 
+/// Feature: Status
+/// Description: Test RETURN_STATUS_UNEXPECTED
+/// Expectation: Runs successfully
 TEST_F(MindDataTestStatus, Test3) {
   Status rc = f3();
   MS_LOG(DEBUG) << rc;

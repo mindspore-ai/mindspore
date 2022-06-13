@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,9 @@ class MindDataTestDistributedSampler : public UT::Common {
   };
 };
 
+/// Feature: DistributedSampler
+/// Description: Test DistributedSampler with num_shards=2 and shard_id=0
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDistributedSampler, TestTwoShardsOne) {
   // num samples to draw.
   uint64_t num_samples = 7;
@@ -67,6 +70,9 @@ TEST_F(MindDataTestDistributedSampler, TestTwoShardsOne) {
   ASSERT_EQ(row.eoe(), true);
 }
 
+/// Feature: DistributedSampler
+/// Description: Test DistributedSampler with num_shards=2 and shard_id=1
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDistributedSampler, TestTwoShardsTwo) {
   // num samples to draw.
   uint64_t num_samples = 7;
@@ -92,6 +98,9 @@ TEST_F(MindDataTestDistributedSampler, TestTwoShardsTwo) {
   ASSERT_EQ(row.eoe(), true);
 }
 
+/// Feature: DistributedSampler
+/// Description: Test DistributedSampler with num_shards=3 and shard_id=2
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDistributedSampler, TestThreeShards) {
   // num samples to draw.
   uint64_t num_samples = 2;

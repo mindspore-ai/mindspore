@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ class MindDataTestPadEndOp : public UT::Common {
   MindDataTestPadEndOp() {}
 };
 
+/// Feature: PadEnd op
+/// Description: Test PadEndOp basic usage with int Tensor and string Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPadEndOp, TestOp) {
   MS_LOG(INFO) << "Doing MindDataTestPadEndOp.";
 
@@ -69,7 +72,7 @@ TEST_F(MindDataTestPadEndOp, TestOp) {
     std::shared_ptr<Tensor> pad_value1;
     Tensor::CreateFromVector(pad_data1[i], pad_data_shape, &pad_value1);
 
-    std::unique_ptr<PadEndOp> op(new PadEndOp(pad_shape1[i], pad_value1));
+    auto op = std::make_unique<PadEndOp>(pad_shape1[i], pad_value1);
     Status s = op->Compute(input1, &output);
 
     EXPECT_TRUE(s.IsOk());
@@ -113,7 +116,7 @@ TEST_F(MindDataTestPadEndOp, TestOp) {
     std::shared_ptr<Tensor> output;
     std::vector<TensorShape> output_shape = {TensorShape({})};
 
-    std::unique_ptr<PadEndOp> op(new PadEndOp(pad_shape2[i], pad_value2[i]));
+    auto op = std::make_unique<PadEndOp>(pad_shape2[i], pad_value2[i]);
 
     Status s = op->Compute(input2, &output);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,9 @@ class MindDataTestResizeOp : public UT::CVOP::CVOpCommon {
   MindDataTestResizeOp() : CVOpCommon() {}
 };
 
+/// Feature: Resize op
+/// Description: Test ResizeOp with a factor of 0.5
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestResizeOp, TestOp) {
   MS_LOG(INFO) << "Doing testResize";
   // Resizing with a factor of 0.5
@@ -36,7 +39,7 @@ TEST_F(MindDataTestResizeOp, TestOp) {
   int output_h = (s[0] * output_w) / s[1];
   std::shared_ptr<Tensor> output_tensor;
   // Resizing
-  std::unique_ptr<ResizeOp> op(new ResizeOp(output_h, output_w));
+  auto op = std::make_unique<ResizeOp>(output_h, output_w);
   Status st = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(st.IsOk());
   CheckImageShapeAndData(output_tensor, kResizeBilinear);

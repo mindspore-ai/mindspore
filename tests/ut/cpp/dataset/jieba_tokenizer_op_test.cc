@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,16 @@ class MindDataTestJiebaTokenizerOp : public UT::DatasetOpTesting {
   }
 };
 
+/// Feature: JiebaTokenizer op
+/// Description: Test JiebaTokenizerOp basic Compute
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opFuntions) {
   MS_LOG(INFO) << "Doing MindDataTestJiebaTokenizerOp  TestJieba_opFuntions.";
   std::string dataset_path = datasets_root_path_ + "/jiebadict";
   std::string hmm_path = dataset_path + "/hmm_model.utf8";
   std::string mp_path = dataset_path + "/jieba.dict.utf8";
   TensorRow input, output;
-  std::unique_ptr<JiebaTokenizerOp> op(new JiebaTokenizerOp(hmm_path, mp_path));
+  auto op = std::make_unique<JiebaTokenizerOp>(hmm_path, mp_path);
 
   std::shared_ptr<Tensor> input_tensor;
   Tensor::CreateScalar<std::string>("今天天气太好了我们一起去外面玩吧", &input_tensor);
@@ -58,13 +61,16 @@ TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opFuntions) {
   CheckEqual(output[0], {6}, "玩吧");
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test JiebaTokenizerOp AddWord
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opAdd) {
   MS_LOG(INFO) << "Doing MindDataTestJiebaTokenizerOp  TestJieba_opAdd.";
   std::string dataset_path = datasets_root_path_ + "/jiebadict";
   std::string hmm_path = dataset_path + "/hmm_model.utf8";
   std::string mp_path = dataset_path + "/jieba.dict.utf8";
   TensorRow input, output;
-  std::unique_ptr<JiebaTokenizerOp> op(new JiebaTokenizerOp(hmm_path, mp_path));
+  auto op = std::make_unique<JiebaTokenizerOp>(hmm_path, mp_path);
 
   op->AddWord("男默女泪");
   std::shared_ptr<Tensor> input_tensor;
@@ -77,13 +83,16 @@ TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opAdd) {
   CheckEqual(output[0], {0}, "男默女泪");
 }
 
+/// Feature: JiebaTokenizer op
+/// Description: Test JiebaTokenizerOp with an empty string input tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestJiebaTokenizerOp, TestJieba_opEmpty) {
   MS_LOG(INFO) << "Doing MindDataTestJiebaTokenizerOp  TestJieba_opEmpty.";
   std::string dataset_path = datasets_root_path_ + "/jiebadict";
   std::string hmm_path = dataset_path + "/hmm_model.utf8";
   std::string mp_path = dataset_path + "/jieba.dict.utf8";
   TensorRow input, output;
-  std::unique_ptr<JiebaTokenizerOp> op(new JiebaTokenizerOp(hmm_path, mp_path));
+  auto op = std::make_unique<JiebaTokenizerOp>(hmm_path, mp_path);
 
   op->AddWord("男默女泪");
   std::shared_ptr<Tensor> input_tensor;

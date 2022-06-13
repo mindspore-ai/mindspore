@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,21 +33,27 @@ class MindDataTestSolarizeOp : public UT::CVOP::CVOpCommon {
   std::shared_ptr<Tensor> output_tensor_;
 };
 
+/// Feature: Solarize op
+/// Description: Test SolarizeOp OneToOne
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSolarizeOp, TestOp1) {
   MS_LOG(INFO) << "Doing testSolarizeOp1.";
 
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp());
+  auto op = std::make_unique<SolarizeOp>();
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);
 
   EXPECT_TRUE(s.IsOk());
 }
 
+/// Feature: Solarize op
+/// Description: Test SolarizeOp with default values
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSolarizeOp, TestOp2) {
   MS_LOG(INFO) << "Doing testSolarizeOp2 - test default values";
 
   //  unsigned int threshold = 128;
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp());
+  auto op = std::make_unique<SolarizeOp>();
 
   std::vector<uint8_t> test_vector = {3, 4, 59, 210, 255};
   std::vector<uint8_t> expected_output_vector = {252, 251, 196, 45, 0};
@@ -70,12 +76,15 @@ TEST_F(MindDataTestSolarizeOp, TestOp2) {
   ASSERT_TRUE(*test_output_tensor == *expected_output_tensor);
 }
 
+/// Feature: Solarize op
+/// Description: Test SolarizeOp by passing only threshold_min parameter
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSolarizeOp, TestOp3) {
   MS_LOG(INFO) << "Doing testSolarizeOp3 - Pass in only threshold_min parameter";
 
   //  unsigned int threshold = 128;
   std::vector<uint8_t> threshold ={1, 255};
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp(threshold));
+  auto op = std::make_unique<SolarizeOp>(threshold);
 
   std::vector<uint8_t> test_vector = {3, 4, 59, 210, 255};
   std::vector<uint8_t> expected_output_vector = {252, 251, 196, 45, 0};
@@ -96,11 +105,14 @@ TEST_F(MindDataTestSolarizeOp, TestOp3) {
   ASSERT_TRUE(*test_output_tensor == *expected_output_tensor);
 }
 
+/// Feature: Solarize op
+/// Description: Test SolarizeOp by passing both threshold parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSolarizeOp, TestOp4) {
   MS_LOG(INFO) << "Doing testSolarizeOp4 - Pass in both threshold parameters.";
 
   std::vector<uint8_t> threshold ={1, 230};
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp(threshold));
+  auto op = std::make_unique<SolarizeOp>(threshold);
 
   std::vector<uint8_t> test_vector = {3, 4, 59, 210, 255};
   std::vector<uint8_t> expected_output_vector = {252, 251, 196, 45, 255};
@@ -121,11 +133,14 @@ TEST_F(MindDataTestSolarizeOp, TestOp4) {
   ASSERT_TRUE(*test_output_tensor == *expected_output_tensor);
 }
 
+/// Feature: Solarize op
+/// Description: Test SolarizeOp on rank 2 input tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSolarizeOp, TestOp5) {
   MS_LOG(INFO) << "Doing testSolarizeOp5 - Rank 2 input tensor.";
 
   std::vector<uint8_t> threshold ={1, 230};
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp(threshold));
+  auto op = std::make_unique<SolarizeOp>(threshold);
 
   std::vector<uint8_t> test_vector = {3, 4, 59, 210, 255};
   std::vector<uint8_t> expected_output_vector = {252, 251, 196, 45, 255};
@@ -147,11 +162,14 @@ TEST_F(MindDataTestSolarizeOp, TestOp5) {
   ASSERT_TRUE(*test_output_tensor == *expected_output_tensor);
 }
 
+/// Feature: Solarize op
+/// Description: Test SolarizeOp with invalid thresholds
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestSolarizeOp, TestOp6) {
   MS_LOG(INFO) << "Doing testSolarizeOp6 - Bad Input.";
 
   std::vector<uint8_t> threshold ={10, 1};
-  std::unique_ptr<SolarizeOp> op(new SolarizeOp(threshold));
+  auto op = std::make_unique<SolarizeOp>(threshold);
 
   std::vector<uint8_t> test_vector = {3, 4, 59, 210, 255};
   std::shared_ptr<Tensor> test_input_tensor;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ class MindDataTestMixUpBatchOp : public UT::CVOP::CVOpCommon {
   std::shared_ptr<Tensor> output_tensor_;
 };
 
+/// Feature: MixUpBatch op
+/// Description: Test MixUpBatchOp basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestMixUpBatchOp, TestSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestMixUpBatchOp success case";
   std::shared_ptr<Tensor> batched_tensor;
@@ -55,6 +58,9 @@ TEST_F(MindDataTestMixUpBatchOp, TestSuccess) {
   EXPECT_EQ(in.at(1)->shape()[1], out.at(1)->shape()[1]);
 }
 
+/// Feature: MixUpBatch op
+/// Description: Test MixUpBatchOp with labels that are not batched and 1D
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestMixUpBatchOp, TestFail) {
   // This is a fail case because our labels are not batched and are 1-dimensional
   MS_LOG(INFO) << "Doing MindDataTestMixUpBatchOp fail case";

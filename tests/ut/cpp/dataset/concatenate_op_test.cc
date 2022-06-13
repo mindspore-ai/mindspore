@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ class MindDataTestConcatenateOp : public UT::Common {
   MindDataTestConcatenateOp() {}
 };
 
+/// Feature: Concatenate op
+/// Description: Test Concatenate op with single row input
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestConcatenateOp, TestOp) {
   MS_LOG(INFO) << "Doing MindDataTestConcatenate-TestOp-SingleRowinput.";
   std::vector<uint64_t> labels = {1, 1, 2};
@@ -38,7 +41,7 @@ TEST_F(MindDataTestConcatenateOp, TestOp) {
   Tensor::CreateFromVector(append_labels, &append);
 
   std::shared_ptr<Tensor> output;
-  std::unique_ptr<ConcatenateOp> op(new ConcatenateOp(0, nullptr, append));
+  auto op = std::make_unique<ConcatenateOp>(0, nullptr, append);
   TensorRow in;
   in.push_back(input);
   TensorRow out_row;
@@ -57,6 +60,9 @@ TEST_F(MindDataTestConcatenateOp, TestOp) {
   ASSERT_TRUE(*output == *expected);
 }
 
+/// Feature: Concatenate op
+/// Description: Test Concatenate op with multiple inputs
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestConcatenateOp, TestOp2) {
   MS_LOG(INFO) << "Doing MindDataTestConcatenate-TestOp2-MultiInput.";
   std::vector<uint64_t> labels = {1, 12, 2};
@@ -75,7 +81,7 @@ TEST_F(MindDataTestConcatenateOp, TestOp2) {
   tensor_list.push_back(row_2);
 
   std::shared_ptr<Tensor> output;
-  std::unique_ptr<ConcatenateOp> op(new ConcatenateOp(0, nullptr, append));
+  auto op = std::make_unique<ConcatenateOp>(0, nullptr, append);
 
   TensorRow out_row;
   Status s = op->Compute(tensor_list, &out_row);
@@ -93,6 +99,9 @@ TEST_F(MindDataTestConcatenateOp, TestOp2) {
   ASSERT_TRUE(*output == *expected);
 }
 
+/// Feature: Concatenate op
+/// Description: Test Concatenate op with string input
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestConcatenateOp, TestOp3) {
   MS_LOG(INFO) << "Doing MindDataTestConcatenate-TestOp3-Strings.";
   std::vector<std::string> labels = {"hello", "bye"};
@@ -107,7 +116,7 @@ TEST_F(MindDataTestConcatenateOp, TestOp3) {
   tensor_list.push_back(row_1);
 
   std::shared_ptr<Tensor> output;
-  std::unique_ptr<ConcatenateOp> op(new ConcatenateOp(0, nullptr, append));
+  auto op = std::make_unique<ConcatenateOp>(0, nullptr, append);
 
   TensorRow out_row;
   Status s = op->Compute(tensor_list, &out_row);

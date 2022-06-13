@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,9 @@ std::shared_ptr<TextFileOp> TextFile(std::vector<std::string> text_files_list, i
   return text_file_op;
 }
 
+/// Feature: SentencePieceVocab
+/// Description: Test SentencePieceVocab basic usage
+/// Expectation: Runs successfully
 TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceFromFileFuntions) {
   MS_LOG(INFO) << "Doing MindDataTestSentencePieceVocabOp  TestSentencePieceFromFileFuntions.";
 

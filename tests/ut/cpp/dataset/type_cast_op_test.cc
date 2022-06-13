@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ void testCast(std::vector<FROM> values, const DataType &from, const DataType &to
   std::shared_ptr<Tensor> t;
   Tensor::CreateFromVector(values, &t);
 
-  std::unique_ptr<TypeCastOp> op(new TypeCastOp(to));
+  auto op = std::make_unique<TypeCastOp>(to);
   EXPECT_TRUE(op->OneToOne());
   std::shared_ptr<Tensor> output;
   EXPECT_TRUE(op->Compute(t, &output));
@@ -60,6 +60,9 @@ void testCast(std::vector<FROM> values, const DataType &from, const DataType &to
   }
 }
 
+/// Feature: TypeCast op
+/// Description: Test TypeCastOp from UINT8
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTypeCast, CastFromUINT8) {
   std::vector<uint8_t> input{0, 10, 255};
   DataType input_format = DataType(DataType("uint8"));
@@ -77,6 +80,9 @@ TEST_F(MindDataTestTypeCast, CastFromUINT8) {
   testCast<uint8_t, bool>(input, input_format, DataType("bool"));
 }
 
+/// Feature: TypeCast op
+/// Description: Test TypeCastOp from UINT64
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTypeCast, CastFromINT64) {
   std::vector<int64_t> input{-9223372036854775806, 0, 9223372036854775807};
   DataType input_format = DataType("int64");
@@ -94,6 +100,9 @@ TEST_F(MindDataTestTypeCast, CastFromINT64) {
   testCast<int64_t, bool>(input, input_format, DataType("bool"));
 }
 
+/// Feature: TypeCast op
+/// Description: Test TypeCastOp from FLOAT64
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTypeCast, CastFromFLOAT64) {
   std::vector<double> input{(-1) * MAX_INT_PRECISION, 0, MAX_INT_PRECISION};
   DataType input_format = DataType("float64");
@@ -111,6 +120,9 @@ TEST_F(MindDataTestTypeCast, CastFromFLOAT64) {
   testCast<double, bool>(input, input_format, DataType("bool"));
 }
 
+/// Feature: TypeCast op
+/// Description: Test TypeCastOp from FLOAT16
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTypeCast, CastFromFLOAT16) {
   float16 min(0.0005);
   float16 zero(0);

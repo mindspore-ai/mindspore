@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,12 @@ class MindDataTestPadOp : public UT::CVOP::CVOpCommon {
   std::shared_ptr<Tensor> output_tensor_;
 };
 
+/// Feature: Pad op
+/// Description: Test PadOp basic usage and check OneToOne
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPadOp, TestOp) {
   MS_LOG(INFO) << "Doing testPad.";
-  std::unique_ptr<PadOp> op(new PadOp(10, 20, 30, 40, BorderType::kConstant));
+  auto op = std::make_unique<PadOp>(10, 20, 30, 40, BorderType::kConstant);
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);
   size_t actual = 0;

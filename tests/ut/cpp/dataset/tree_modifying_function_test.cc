@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ class MindDataTestTreeModifying : public UT::DatasetOpTesting {
   MindDataTestTreeModifying() = default;
 };
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test AppendChild using DatasetNode to a DatasetNode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTreeModifying, AppendChild) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-AppendChild";
   /*
@@ -69,6 +72,9 @@ TEST_F(MindDataTestTreeModifying, AppendChild) {
   EXPECT_TRUE( ds4_node->Children()[2] == node_to_insert);
 }
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test InsertChild at certain valid position using DatasetNode to a DatasetNode
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTreeModifying, InsertChildAt01) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-InsertChildAt01";
   /*
@@ -152,6 +158,9 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt01) {
   EXPECT_TRUE( ds4_node->Children()[2] == ds6_to_insert);
 }
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test InsertChild at invalid position using DatasetNode to a DatasetNode
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestTreeModifying, InsertChildAt04) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-InsertChildAt04";
 
@@ -203,6 +212,9 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt04) {
   EXPECT_TRUE( ds4_node->Children()[1] == ds2_node);
 }
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test InsertAbove using DatasetNode to a DatasetNode (in between non-leaf nodes)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTreeModifying, InsertAbove01) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-InsertAbove01";
   /*
@@ -266,6 +278,9 @@ TEST_F(MindDataTestTreeModifying, InsertAbove01) {
   EXPECT_TRUE( ds4_node->Children()[0] == ds5_to_insert);
 }
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test InsertAbove using DatasetNode to a DatasetNode (in between internal node and leaf node)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTreeModifying, InsertAbove02) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-InsertAbove02";
 
@@ -291,6 +306,10 @@ TEST_F(MindDataTestTreeModifying, InsertAbove02) {
   EXPECT_TRUE( ds4_node->Children()[1] == ds6_to_insert);
 }
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test InsertAbove using DatasetNode to a DatasetNode
+///     (in between a leaf node and internal node which sibling node is a leaf node)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTreeModifying, InsertAbove03) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-InsertAbove03";
 
@@ -316,6 +335,9 @@ TEST_F(MindDataTestTreeModifying, InsertAbove03) {
   EXPECT_TRUE( ds3_node->Children()[0] == ds7_to_insert);
 }
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test Drop on a DatasetNode that is a leaf node or a parent node with one child with no sibling
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTreeModifying, Drop01) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-Drop01";
   /*
@@ -399,6 +421,9 @@ TEST_F(MindDataTestTreeModifying, Drop01) {
   EXPECT_TRUE(ds8_node->Children().empty());
 }
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test Drop on a DatasetNode that has more than one child and no sibling
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestTreeModifying, Drop03) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-Drop03";
   /* Case 3: When the node has more than one child and no sibling, Drop() detaches the node from its tree and the node's
@@ -443,6 +468,9 @@ TEST_F(MindDataTestTreeModifying, Drop03) {
   EXPECT_NE(rc, Status::OK());
 }
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test Drop on a DatasetNode that has no child but has siblings
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTreeModifying, Drop04) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-Drop04";
   /* Case 4: When the node has no child but has siblings, Drop() detaches the node from its tree and its siblings will be
@@ -499,6 +527,9 @@ TEST_F(MindDataTestTreeModifying, Drop04) {
   EXPECT_TRUE(ds5_node->Children().empty());
 }
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test Drop on a DatasetNode that has only one child but has siblings
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTreeModifying, Drop05) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-Drop05";
   /*
@@ -553,6 +584,9 @@ TEST_F(MindDataTestTreeModifying, Drop05) {
   EXPECT_TRUE(ds4_node->Children().empty());
 }
 
+/// Feature: TreeAdapter modifying functions
+/// Description: Test Drop on a DatasetNode that has more than one child and more than one sibling
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestTreeModifying, Drop06) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-Drop06";
   /*

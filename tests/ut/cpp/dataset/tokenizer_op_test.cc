@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,12 @@ class MindDataTestTokenizerOp : public UT::Common {
   }
 };
 
+/// Feature: UnicodeCharTokenizer op
+/// Description: Test UnicodeCharTokenizerOp basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTokenizerOp, TestUnicodeCharTokenizerOp) {
   MS_LOG(INFO) << "Doing TestUnicodeCharTokenizerOp.";
-  std::unique_ptr<UnicodeCharTokenizerOp> op(new UnicodeCharTokenizerOp(true));
+  auto op = std::make_unique<UnicodeCharTokenizerOp>(true);
 std::shared_ptr<Tensor> input;
   Tensor::CreateScalar<std::string>("Hello World!", &input);  TensorRow output;
   Status s = op->Compute(TensorRow(0, {input}), &output);
@@ -118,9 +121,12 @@ output.clear();
   CheckEqual(output[0], {0}, "");
 }
 
+/// Feature: WhitespaceTokenizer op
+/// Description: Test WhitespaceTokenizerOp basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTokenizerOp, TestWhitespaceTokenizerOp) {
   MS_LOG(INFO) << "Doing TestWhitespaceTokenizerOp.";
-  std::unique_ptr<WhitespaceTokenizerOp> op(new WhitespaceTokenizerOp(true));
+  auto op = std::make_unique<WhitespaceTokenizerOp>(true);
 std::shared_ptr<Tensor> input;
   Tensor::CreateScalar<std::string>("Welcome to China.", &input);  TensorRow output;
   Status s = op->Compute(TensorRow(0, {input}), &output);
@@ -169,10 +175,13 @@ output.clear();
   CheckEqual(output[0], {0}, "");
 }
 
+/// Feature: UnicodeScriptTokenizer op
+/// Description: Test UnicodeScriptTokenizerOp basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTokenizerOp, TestUnicodeScriptTokenizer) {
   MS_LOG(INFO) << "Doing TestUnicodeScriptTokenizer.";
-  std::unique_ptr<UnicodeScriptTokenizerOp> keep_whitespace_op(new UnicodeScriptTokenizerOp(true, true));
-  std::unique_ptr<UnicodeScriptTokenizerOp> skip_whitespace_op(new UnicodeScriptTokenizerOp(false, true));
+  auto keep_whitespace_op = std::make_unique<UnicodeScriptTokenizerOp>(true, true);
+  auto skip_whitespace_op = std::make_unique<UnicodeScriptTokenizerOp>(false, true);
 
  std::shared_ptr<Tensor> input;
   Tensor::CreateScalar<std::string>("Welcome to China. \n 中国\t北京", &input);
@@ -283,9 +292,12 @@ output.clear();
   CheckEqual(output[0], {0}, "");
 }
 
+/// Feature: CaseFold op
+/// Description: Test CaseFoldOp basic usage
+/// Expectation: Runs successfully and output is equal to the expected output
 TEST_F(MindDataTestTokenizerOp, TestCaseFold) {
   MS_LOG(INFO) << "Doing TestCaseFold.";
-  std::unique_ptr<CaseFoldOp> case_fold_op(new CaseFoldOp());
+  auto case_fold_op = std::make_unique<CaseFoldOp>();
   std::shared_ptr<Tensor> input;
   Tensor::CreateScalar<std::string>("Welcome to China. \n 中国\t北京", &input);
 
@@ -298,12 +310,15 @@ TEST_F(MindDataTestTokenizerOp, TestCaseFold) {
   CheckEqual(output, {}, "welcome to china. \n 中国\t北京");
 }
 
+/// Feature: NormalizeUTF8 op
+/// Description: Test NormalizeUTF8Op with various NormalizeForm
+/// Expectation: Runs successfully
 TEST_F(MindDataTestTokenizerOp, TestNormalize) {
   MS_LOG(INFO) << "Doing TestNormalize.";
-  std::unique_ptr<NormalizeUTF8Op> nfc_normalize_op(new NormalizeUTF8Op(NormalizeForm::kNfc));
-  std::unique_ptr<NormalizeUTF8Op> nfkc_normalize_op(new NormalizeUTF8Op(NormalizeForm::kNfkc));
-  std::unique_ptr<NormalizeUTF8Op> nfd_normalize_op(new NormalizeUTF8Op(NormalizeForm::kNfd));
-  std::unique_ptr<NormalizeUTF8Op> nfkd_normalize_op(new NormalizeUTF8Op(NormalizeForm::kNfkd));
+  auto nfc_normalize_op = std::make_unique<NormalizeUTF8Op>(NormalizeForm::kNfc);
+  auto nfkc_normalize_op = std::make_unique<NormalizeUTF8Op>(NormalizeForm::kNfkc);
+  auto nfd_normalize_op = std::make_unique<NormalizeUTF8Op>(NormalizeForm::kNfd);
+  auto nfkd_normalize_op = std::make_unique<NormalizeUTF8Op>(NormalizeForm::kNfkd);
   std::shared_ptr<Tensor> input;
   Tensor::CreateScalar<std::string>("ṩ", &input);
   std::shared_ptr<Tensor> output;
@@ -324,9 +339,12 @@ TEST_F(MindDataTestTokenizerOp, TestNormalize) {
   MS_LOG(INFO) << "NFKD str:" << output->ToString();
 }
 
+/// Feature: RegexReplace op
+/// Description: Test RegexReplaceOp basic usage
+/// Expectation: Runs successfully and output is equal to the expected output
 TEST_F(MindDataTestTokenizerOp, TestRegexReplace) {
   MS_LOG(INFO) << "Doing TestRegexReplace.";
-  std::unique_ptr<RegexReplaceOp> regex_replace_op(new RegexReplaceOp("\\s+", "_", true));
+  auto regex_replace_op = std::make_unique<RegexReplaceOp>("\\s+", "_", true);
   std::shared_ptr<Tensor> input;
   Tensor::CreateScalar<std::string>("Welcome to China. \n 中国\t北京", &input);
   std::shared_ptr<Tensor> output;
@@ -338,9 +356,12 @@ TEST_F(MindDataTestTokenizerOp, TestRegexReplace) {
   CheckEqual(output, {}, "Welcome_to_China._中国_北京");
 }
 
+/// Feature: RegexTokenizer op
+/// Description: Test RegexTokenizerOp basic usage
+/// Expectation: Runs successfully
 TEST_F(MindDataTestTokenizerOp, TestRegexTokenizer) {
   MS_LOG(INFO) << "Doing TestRegexTokenizerOp.";
-  std::unique_ptr<RegexTokenizerOp> regex_tokenizer_op(new RegexTokenizerOp("\\p{Cc}|\\p{Cf}|\\s+", "", true));
+  auto regex_tokenizer_op = std::make_unique<RegexTokenizerOp>("\\p{Cc}|\\p{Cf}|\\s+", "", true);
 std::shared_ptr<Tensor> input;
   Tensor::CreateScalar<std::string>("Welcome to China. \n 中国\t北京", &input);
      TensorRow output;
@@ -348,11 +369,14 @@ std::shared_ptr<Tensor> input;
   EXPECT_TRUE(s.IsOk());
 }
 
+/// Feature: BasicTokenizer op
+/// Description: Test BasicTokenizerOp basic usage
+/// Expectation: Runs successfully
 TEST_F(MindDataTestTokenizerOp, TestBasicTokenizer) {
   MS_LOG(INFO) << "Doing TestBasicTokenizer.";
   // bool lower_case, bool keep_whitespace,
   // NormalizeForm  normalization_form, bool preserve_unused_token
-  std::unique_ptr<BasicTokenizerOp> basic_tokenizer(new BasicTokenizerOp(true, true, NormalizeForm::kNone, false,true));
+  auto basic_tokenizer = std::make_unique<BasicTokenizerOp>(true, true, NormalizeForm::kNone, false,true);
 std::shared_ptr<Tensor> input;
   Tensor::CreateScalar<std::string>("Welcome to China. 中国\t北京", &input);
   TensorRow output;

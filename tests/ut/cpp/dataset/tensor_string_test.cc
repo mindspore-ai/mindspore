@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@ class MindDataTestStringTensorDE : public UT::Common {
   void SetUp() override { GlobalInit(); }
 };
 
+/// Feature: Tensor
+/// Description: Test creating a Tensor from a scalar string and 1D string array
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestStringTensorDE, Basics) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateScalar<std::string>("Hi", &t);
@@ -65,6 +68,9 @@ TEST_F(MindDataTestStringTensorDE, Basics) {
   }
 }
 
+/// Feature: Tensor
+/// Description: Test memory of Tensor created from a 1D string array
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestStringTensorDE, Basics2) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateFromVector(std::vector<std::string>{"abc", "defg", "hi", "klmno", "123", "789"}, TensorShape({2, 3}),
@@ -90,6 +96,9 @@ TEST_F(MindDataTestStringTensorDE, Basics2) {
   }
 }
 
+/// Feature: Tensor
+/// Description: Test creating Tensor from array of strings that contain empty strings
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestStringTensorDE, Empty) {
   std::vector<std::string> strings{"abc", "defg", "", "", "123", ""};
   std::shared_ptr<Tensor> t;
@@ -117,6 +126,9 @@ TEST_F(MindDataTestStringTensorDE, Empty) {
   }
 }
 
+/// Feature: Tensor
+/// Description: Test creating Tensor from empty data
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestStringTensorDE, EmptyData) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateScalar<std::string>("", &t);
@@ -128,6 +140,9 @@ TEST_F(MindDataTestStringTensorDE, EmptyData) {
   ASSERT_TRUE(!t1->HasData());
 }
 
+/// Feature: Tensor
+/// Description: Test SetItemAt usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestStringTensorDE, SetItem) {
   std::vector<std::string> strings{"abc", "defg", "hi", "klmno", "123", "789"};
   std::shared_ptr<Tensor> t3;
@@ -154,6 +169,9 @@ TEST_F(MindDataTestStringTensorDE, SetItem) {
   }
 }
 
+/// Feature: Tensor
+/// Description: Test iterating over a Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestStringTensorDE, Iterator) {
   std::vector<std::string> strings{"abc", "defg", "hi", "klmno", "123", "789"};
   std::shared_ptr<Tensor> t;

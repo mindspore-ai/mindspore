@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,9 @@ class MindDataTestCacheOp : public UT::DatasetOpTesting {
   }
 };
 
+/// Feature: Cache
+/// Description: Test basic usage of Cache server
+/// Expectation: Runs successfully
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheServer) {
   Status rc;
   CacheClient::Builder builder;
@@ -144,6 +147,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheServer) {
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Cache
+/// Description: Test Cache with concurrency request
+/// Expectation: Runs successfully
 TEST_F(MindDataTestCacheOp, DISABLED_TestConcurrencyRequest) {
   // Clear the rc of the master thread if any
   (void)TaskManager::GetMasterThreadRc();
@@ -214,6 +220,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestConcurrencyRequest) {
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Cache
+/// Description: Test Cache with ImageFolderOp and MergeOp
+/// Expectation: Runs successfully
 TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   // Clear the rc of the master thread if any
   (void)TaskManager::GetMasterThreadRc();

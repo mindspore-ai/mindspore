@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ class MindDataTestCyclicArray : public UT::Common {
   MindDataTestCyclicArray() {}
 };
 
+/// Feature: CyclicArray
+/// Description: Test CyclicArray attributes and basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCyclicArray, Test1) {
   CyclicArray<int> arr(5);
   EXPECT_EQ(5, arr.capacity());
@@ -89,6 +92,9 @@ TEST_F(MindDataTestCyclicArray, Test1) {
   EXPECT_EQ(arr[arr.size() - 1], 26);
 }
 
+/// Feature: CyclicArray
+/// Description: Test iterating over CyclicArray
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCyclicArray, TestIterator) {
   CyclicArray<int> arr(5);
   for (auto i = 0; i < arr.capacity(); i++) {
