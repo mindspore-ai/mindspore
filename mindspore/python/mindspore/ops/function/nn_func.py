@@ -858,6 +858,48 @@ def softsign(x):
     return softsign_(x)
 
 
+def softmax(x, axis=-1):
+    r"""
+    Softmax operation.
+
+    Applies the Softmax operation to the input tensor on the specified axis.
+    Suppose a slice in the given axis :math:`x`, then for each element :math:`x_i`,
+    the Softmax function is shown as follows:
+
+    .. math::
+        \text{output}(x_i) = \frac{exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)},
+
+    where :math:`N` is the length of the tensor.
+
+    Args:
+        axis (Int): The axis to perform the Softmax operation. Default: -1.
+        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions, with float16 or float32 data type.
+
+    Returns:
+        Tensor, with the same type and shape as the logits.
+
+    Raises:
+        TypeError: If `axis` is nnot an int.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `axis` is a tuple whose length is less than 1.
+        ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits.shape), len(logits.shape))
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> output = ops.softmax(x)
+        >>> print(output)
+        [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
+    """
+
+    validator.check_value_type("axis", axis, int)
+    softmax_ = P.Softmax(axis=axis)
+    return softmax_(x)
+
+
 def soft_shrink(x, lambd=0.5):
     r"""
     Applies the SoftShrink function element-wise.
@@ -1920,6 +1962,7 @@ __all__ = [
     'hardswish',
     'softsign',
     'selu',
+    'softmax',
     'pdist',
     'pad',
     'cross_entropy',

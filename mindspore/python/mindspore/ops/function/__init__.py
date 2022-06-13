@@ -278,6 +278,7 @@ from .nn_func import (
     hardswish,
     softsign,
     selu,
+    softmax,
     pdist,
     pad,
     nll_loss,
