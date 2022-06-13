@@ -3631,6 +3631,69 @@ def max(input_x, axis=0, keep_dims=False):
     return argmax_with_value_op(input_x)
 
 
+def min(input_x, axis=0, keep_dims=False):
+    """
+    Calculates the minimum value with corresponding index, and returns indices and values.
+
+    Calculates the minimum value along with the given axis for the input tensor. It returns the minimum values and
+    indices.
+
+    Note:
+        In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
+
+    .. warning::
+        - If there are multiple minimum values, the index of the first minimum value is used.
+        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+
+    Also see: class: `mindspore.ops.ArgMinWithValue`.
+
+    Args:
+        input_x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+          :math:`(x_1, x_2, ..., x_N)` . And the data type only support mindspore.float16 or float32.
+        axis (int): The dimension to reduce. Default: 0.
+        keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
+                          the output will reduce dimension if false. Default: False.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+          :math:`(x_1, x_2, ..., x_N)` .
+
+    Outputs:
+        tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
+        tensor.
+
+        - index (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
+          output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
+          :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
+        - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `axis` is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+        >>> index, output = ops.max(input_x)
+        >>> print(index, output)
+        3 0.7
+        >>> index, output = ops.max(input_x, keep_dims=True)
+        >>> print(index, output)
+        [3] [0.7]
+
+        >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+        >>> output = ops.min(input_x)
+        >>> print(output)
+        0 0.0
+        >>> output = ops.min(input_x, keep_dims=True)
+        >>> print(output)
+        [0] [0.0]
+    """
+    argmin_with_value_op = P.ArgMinWithValue(axis, keep_dims)
+    return argmin_with_value_op(input_x)
+
 __all__ = [
     'unique',
     'unique_with_pad',
@@ -3708,5 +3771,6 @@ __all__ = [
     'split',
     "index_fill",
     'max',
+    'min',
 ]
 __all__.sort()

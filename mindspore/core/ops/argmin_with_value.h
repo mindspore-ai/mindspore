@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_ARGMAX_WITH_VALUE_H_
-#define MINDSPORE_CORE_OPS_ARGMAX_WITH_VALUE_H_
+#ifndef MINDSPORE_CORE_OPS_ARGMIN_WITH_VALUE_H_
+#define MINDSPORE_CORE_OPS_ARGMIN_WITH_VALUE_H_
 #include <vector>
 #include <memory>
 
@@ -24,17 +24,17 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
-class MIND_API ArgMaxWithValue : public BaseOperator {
+constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
+class MIND_API ArgMinWithValue : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ArgMaxWithValue);
-  ArgMaxWithValue() : BaseOperator(kNameArgMaxWithValue) { InitIOName({"input_x"}, {"index", "output_x"}); }
+  MIND_API_BASE_MEMBER(ArgMinWithValue);
+  ArgMinWithValue() : BaseOperator(kNameArgMinWithValue) { InitIOName({"input_x"}, {"index", "output_x"}); }
 
   int64_t axis() const;
   bool keep_dims() const;
 };
-abstract::AbstractBasePtr ArgMaxWithValueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+abstract::AbstractBasePtr ArgMinWithValueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_ARGMAX_WITH_VALUE_H_
+#endif  // MINDSPORE_CORE_OPS_ARGMIN_WITH_VALUE_H_

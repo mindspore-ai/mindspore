@@ -102,6 +102,7 @@ from .array_func import (
     split,
     index_fill,
     max,
+    min,
 )
 from .parameter_func import (
     assign,
