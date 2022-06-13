@@ -14,11 +14,32 @@
  * limitations under the License.
  */
 
+#include <unordered_map>
 #include "src/extendrt/delegate/tensorrt/op/elementwise_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/op/activation_tensorrt.h"
 
 namespace mindspore::lite {
+namespace {
+std::unordered_map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> BOOL_PRIM2NV_ELEM_OP = {
+  {schema::PrimitiveType_LogicalOr, nvinfer1::ElementWiseOperation::kOR},
+  {schema::PrimitiveType_LogicalAnd, nvinfer1::ElementWiseOperation::kAND}};
+
+std::unordered_map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> NOT_BOOL_PRIM2NV_ELEM_OP = {
+  {schema::PrimitiveType_Less, nvinfer1::ElementWiseOperation::kLESS},
+  {schema::PrimitiveType_Greater, nvinfer1::ElementWiseOperation::kGREATER},
+  {schema::PrimitiveType_AddFusion, nvinfer1::ElementWiseOperation::kSUM},
+  {schema::PrimitiveType_PowFusion, nvinfer1::ElementWiseOperation::kPOW},
+  {schema::PrimitiveType_DivFusion, nvinfer1::ElementWiseOperation::kDIV},
+  {schema::PrimitiveType_RealDiv, nvinfer1::ElementWiseOperation::kDIV},
+  {schema::PrimitiveType_FloorDiv, nvinfer1::ElementWiseOperation::kFLOOR_DIV},
+  {schema::PrimitiveType_SubFusion, nvinfer1::ElementWiseOperation::kSUB},
+  {schema::PrimitiveType_MulFusion, nvinfer1::ElementWiseOperation::kPROD},
+  {schema::PrimitiveType_Minimum, nvinfer1::ElementWiseOperation::kMIN},
+  {schema::PrimitiveType_Maximum, nvinfer1::ElementWiseOperation::kMAX},
+  {schema::PrimitiveType_BiasAdd, nvinfer1::ElementWiseOperation::kSUM}};
+}  // namespace
+
 int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
                                    const std::vector<mindspore::MSTensor> &in_tensors,
                                    const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -26,20 +47,42 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  std::map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> element_wise_ops = {
-    {schema::PrimitiveType_AddFusion, nvinfer1::ElementWiseOperation::kSUM},
-    {schema::PrimitiveType_PowFusion, nvinfer1::ElementWiseOperation::kPOW},
-    {schema::PrimitiveType_DivFusion, nvinfer1::ElementWiseOperation::kDIV},
-    {schema::PrimitiveType_RealDiv, nvinfer1::ElementWiseOperation::kDIV},
-    {schema::PrimitiveType_SubFusion, nvinfer1::ElementWiseOperation::kSUB},
-    {schema::PrimitiveType_MulFusion, nvinfer1::ElementWiseOperation::kPROD},
-    {schema::PrimitiveType_Minimum, nvinfer1::ElementWiseOperation::kMIN},
-    {schema::PrimitiveType_Maximum, nvinfer1::ElementWiseOperation::kMAX},
-    {schema::PrimitiveType_BiasAdd, nvinfer1::ElementWiseOperation::kSUM}};
-  auto iter_op = element_wise_ops.find(this->type_);
-  if (iter_op != element_wise_ops.end()) {
-    element_wise_op_ = iter_op->second;
-  } else {
+  if (in_tensors.size() != INPUT_SIZE2) {
+    MS_LOG(ERROR) << "invalid input tensort size: " << in_tensors.size();
+    return RET_ERROR;
+  }
+  if (out_tensors.size() != 1) {
+    MS_LOG(ERROR) << "invalid output tensort size: " << out_tensors.size();
+    return RET_ERROR;
+  }
+
+  // if constant tensor is scalar, it needs to know another input tensor's shape to broadcast
+  if ((in_tensors[0].Shape().size() > 0 && in_tensors[0].Shape()[0] == -1 && in_tensors[1].Shape().size() == 0) ||
+      (in_tensors[1].Shape().size() > 0 && in_tensors[1].Shape()[0] == -1 && in_tensors[0].Shape().size() == 0)) {
+    MS_LOG(ERROR) << "invalid all input tensor shape unknown for: " << op_name_;
+    return RET_ERROR;
+  }
+
+  bool is_bool_arith = BOOL_PRIM2NV_ELEM_OP.find(type_) != BOOL_PRIM2NV_ELEM_OP.end();
+  bool is_not_bool_arith = NOT_BOOL_PRIM2NV_ELEM_OP.find(type_) != NOT_BOOL_PRIM2NV_ELEM_OP.end();
+  if (is_bool_arith) {
+    if (!std::all_of(in_tensors.begin(), in_tensors.end(), [](const mindspore::MSTensor &tensor) {
+          return tensor.DataType() == DataType::kNumberTypeBool;
+        })) {
+      MS_LOG(ERROR) << "invalid input type for : " << op_name_;
+      return RET_ERROR;
+    }
+    element_wise_op_ = BOOL_PRIM2NV_ELEM_OP[type_];
+  }
+  if (is_not_bool_arith) {
+    if (std::any_of(in_tensors.begin(), in_tensors.end(),
+                    [](const mindspore::MSTensor &tensor) { return tensor.DataType() == DataType::kNumberTypeBool; })) {
+      MS_LOG(ERROR) << "invalid input type for : " << op_name_;
+      return RET_ERROR;
+    }
+    element_wise_op_ = NOT_BOOL_PRIM2NV_ELEM_OP[type_];
+  }
+  if (!is_bool_arith && !is_not_bool_arith) {
     // PrimitiveType_Eltwise
     auto eltwise_op = op_primitive_->value_as_Eltwise();
     if (eltwise_op == nullptr) {
@@ -59,22 +102,6 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
       MS_LOG(ERROR) << "unsupported type for ElementWise op" << op_name_;
       return RET_ERROR;
     }
-  }
-
-  if (in_tensors.size() != INPUT_SIZE2) {
-    MS_LOG(ERROR) << "invalid input tensort size: " << in_tensors.size();
-    return RET_ERROR;
-  }
-  if (out_tensors.size() != 1) {
-    MS_LOG(ERROR) << "invalid output tensort size: " << out_tensors.size();
-    return RET_ERROR;
-  }
-
-  // if constant tensor is scalar, it needs to know another input tensor's shape to broadcast
-  if ((in_tensors[0].Shape().size() > 0 && in_tensors[0].Shape()[0] == -1 && in_tensors[1].Shape().size() == 0) ||
-      (in_tensors[1].Shape().size() > 0 && in_tensors[1].Shape()[0] == -1 && in_tensors[0].Shape().size() == 0)) {
-    MS_LOG(ERROR) << "invalid all input tensor shape unknown for: " << op_name_;
-    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -295,4 +322,8 @@ REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Eltwise, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Minimum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Maximum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_BiasAdd, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Less, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Greater, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalOr, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalAnd, ElementWiseTensorRT)
 }  // namespace mindspore::lite

@@ -101,6 +101,7 @@ nvinfer1::IShuffleLayer *SetTranspose(nvinfer1::INetworkDefinition *network, con
 
 nvinfer1::DataType ConvertDataType(DataType type_id) {
   std::map<DataType, nvinfer1::DataType> data_type_map = {
+    {DataType::kNumberTypeBool, nvinfer1::DataType::kBOOL},
     {DataType::kNumberTypeInt8, nvinfer1::DataType::kINT8},
     {DataType::kNumberTypeInt32, nvinfer1::DataType::kINT32},
     {DataType::kNumberTypeFloat32, nvinfer1::DataType::kFLOAT},
