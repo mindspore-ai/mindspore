@@ -76,7 +76,7 @@ bool SparseSegmentMeanGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   }
 
   SparseSegmentMean(x_ptr, indices_ptr, segment_ids_ptr, segment_pos_ptr, y_ptr, outer_size_, inner_size_,
-                    indices_size_, segment_size_, cuda_stream);
+                    indices_size_, segment_size_, device_id_, cuda_stream);
   return true;
 }
 
