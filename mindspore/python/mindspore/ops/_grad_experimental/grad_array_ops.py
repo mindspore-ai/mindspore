@@ -30,6 +30,7 @@ from ..operations.array_ops import CheckNumerics
 from ..operations.array_ops import SegmentMax
 from ..operations.array_ops import SegmentMin
 from ..operations.array_ops import SegmentSum
+from ..operations.array_ops import Expand
 from .. import functional as F
 from .. import operations as P
 from .._utils.utils import is_shape_unknown
@@ -352,5 +353,33 @@ def get_bprop_segment_min(self):
 
     def bprop(input_x, segment_ids, output, dout):
         return _segment_min_or_max_grad(segment_sum, input_x, segment_ids, output, dout)
+
+    return bprop
+
+
+@bprop_getters.register(Expand)
+def get_bprop_expand(self):
+    """Generate bprop for Expand"""
+
+    reducesum = P.ReduceSum(keep_dims=True)
+    zeroslike = P.ZerosLike()
+
+    def bprop(x, shape, out, dout):
+        reduce_dims = []
+        dshape = zeroslike(dout)
+        dx_shape = dout.shape
+        if dx_shape is None:
+            return dout.sum(), dshape
+        x_shape = x.shape
+        leading_dims = len(dx_shape) - len(x_shape)
+        for i in range(leading_dims):
+            reduce_dims.append(i)
+        for j in range(leading_dims, len(dx_shape)):
+            if x_shape[j-leading_dims] == 1 and dx_shape[j] != 1:
+                reduce_dims.append(j)
+        if reduce_dims:
+            dout = reducesum(dout, reduce_dims)
+        dx = dout.reshape(x_shape) if leading_dims > 0 else dout
+        return dx, dshape
 
     return bprop

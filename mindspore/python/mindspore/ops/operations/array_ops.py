@@ -135,6 +135,52 @@ def _check_infer_attr_reduce(axis, keep_dims, prim_name):
             validator.check_value_type('axis[%d]' % index, value, [int], prim_name)
 
 
+class Expand(Primitive):
+    """
+    Returns a new view of the self tensor with singleton dimensions expanded to a larger size.
+
+    Note:
+        Passing -1 as the size for a dimension means not changing the size of that dimension.
+        Tensor can be also expanded to a larger number of dimensions, and the new ones will be appended at the front.
+        For the new dimensions, the size cannot be set to -1.
+
+    Inputs:
+         - **x** (Tensor) - The shape of tensor is (x_1, x_2, ..., x_R).
+         - **shape** (Tensor) - The new shape of x.
+
+    Outputs:
+         - **y** (Tensor) - Tensor after expansion.
+
+    Raises:
+        TypeError: If any input is not Tensor.
+        TypeError: If the type of `shape` is not one of the following dtype: int16, int32, int64.
+        ValueError: If `shape` is not a 1-D tensor.
+        ValueError: If the size of `shape` is less than the size of `x.shape`.
+        ValueError: If the expanded `shape` is not equal to the existing shape of `x` at a dimension that is not 1.
+        ValueError: If the expanded size < 0 and it is in a leading, non-existing dimension.
+        ValueError: If the number of elements of output is more than 1000000.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
+        >>> shape = Tensor(np.array([3,4]), mindspore.int32)
+        >>> expand = ops.Expand()
+        >>> y = expand(x, shape)
+        >>> print(y)
+        [[1. 1. 1. 1.]
+         [2. 2. 2. 2.]
+         [3. 3. 3. 3.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Expand."""
+        self.add_prim_attr("max_length", 1000000)
+        self.init_prim_io_names(inputs=['x', 'shape'], outputs=['y'])
+
+
 class ExpandDims(PrimitiveWithInfer):
     """
     Adds an additional dimension to `input_x` at the given axis.
