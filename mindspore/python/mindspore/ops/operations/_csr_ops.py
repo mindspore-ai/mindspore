@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """csr_ops"""
-from ..primitive import prim_attr_register, PrimitiveWithInfer
+from ..primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 
 
 class CSRReduceSum(PrimitiveWithInfer):
@@ -349,4 +349,55 @@ class CSRDiv(PrimitiveWithInfer):
     def __init__(self):
         """Initialize CSRDiv"""
         self.init_prim_io_names(inputs=['indptr', 'indices', 'values', 'dense_shape', 'dense_tensor'],
+                                outputs=['output'])
+
+
+class CSRMM(Primitive):
+    """
+    Sparse matrix-vector multiplication.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Inputs:
+        - **indptr** (Tensor) - A Tensor.
+        - **indices** (Tensor) - A Tensor.
+        - **values** (Tensor) - A Tensor.
+        - **shape** (tuple(int)) - A tuple.
+        - **dense_tensor** (Tensor) - A dense Tensor.
+
+    Outputs:
+        Tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import _csr_ops
+        >>> from mindspore import dtype as mstype
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.op = _csr_ops.CSRMM()
+        ...
+        ...     def construct(self, indptr, indices, values, dense_shape, dense):
+        ...         return self.op( indptr, indices, values, dense_shape, dense)
+        >>> indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> indices = Tensor([0, 1], dtype=mstype.int32)
+        >>> values = Tensor([2, 1], dtype=mstype.float32)
+        >>> dense_shape = (2, 4)
+        >>> dense = Tensor([[1], [1], [1], [1]], dtype=mstype.float32)
+        >>> out = Net()(indptr, indices, values, dense_shape, dense)
+        >>> print(out)
+        [[2.]
+         [1.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize CSRMM"""
+        self.init_prim_io_names(inputs=['indptr', 'indices', 'values', 'dense_shape', 'dense'],
                                 outputs=['output'])

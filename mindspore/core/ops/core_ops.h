@@ -219,6 +219,7 @@ constexpr auto kCOOTensorDenseMatmul = "COOTensorDenseMatmul";
 constexpr auto kSparseTensorDenseMatmul = "SparseTensorDenseMatmul";
 constexpr auto kCSRReduceSum = "CSRReduceSum";
 constexpr auto kCSRMV = "CSRMV";
+constexpr auto kCSRMM = "CSRMM";
 constexpr auto kCSRMul = "CSRMul";
 constexpr auto kCSRGather = "CSRGather";
 constexpr auto kCSR2COO = "CSR2COO";
@@ -754,6 +755,7 @@ GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseMatmul, std::make_shared<Primitive>
 GVAR_DEF(PrimitivePtr, kPrimCOOTensorDenseMatmul, std::make_shared<Primitive>(kCOOTensorDenseMatmul));
 GVAR_DEF(PrimitivePtr, kPrimCSRReduceSum, std::make_shared<Primitive>(kCSRReduceSum));
 GVAR_DEF(PrimitivePtr, kPrimCSRMV, std::make_shared<Primitive>(kCSRMV));
+GVAR_DEF(PrimitivePtr, kPrimCSRMM, std::make_shared<Primitive>(kCSRMM));
 GVAR_DEF(PrimitivePtr, kPrimCSRMul, std::make_shared<Primitive>(kCSRMul));
 GVAR_DEF(PrimitivePtr, kPrimCSRGather, std::make_shared<Primitive>(kCSRGather));
 GVAR_DEF(PrimitivePtr, kPrimCSR2COO, std::make_shared<Primitive>(kCSR2COO));

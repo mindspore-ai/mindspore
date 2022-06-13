@@ -28,6 +28,7 @@ from ...ops.composite.base import _append, _insert
 from ...ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations._inner_ops import Format
+from ...ops.operations import _csr_ops
 from ...ops.primitive import constexpr
 
 __all__ = ['MultitypeFuncGraph', 'env_get', 'hyper_add', 'zeros_like', 'ones_like']
@@ -42,6 +43,7 @@ _format = Format()
 _reduce_sum_default = P.ReduceSum()
 _reduce_sum_keepdims = P.ReduceSum(True)
 _mean_keepdims = P.ReduceMean(True)
+_csr_mm = _csr_ops.CSRMM()
 
 itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
                 mstype.float16: 2, mstype.int16: 2, mstype.uint16: 2,
@@ -2293,6 +2295,11 @@ def csr_abs(x):
 def csr_mv(x, dense_vector):
     """Implementation of `mv` for CSRTensor."""
     return F.csr_mv(x, dense_vector)
+
+
+def csr_mm(x, dense):
+    """Implementation of `mm` for CSRTensor."""
+    return _csr_mm(x.indptr, x.indices, x.values, x.shape, dense)
 
 
 def csr_to_tuple(x):
