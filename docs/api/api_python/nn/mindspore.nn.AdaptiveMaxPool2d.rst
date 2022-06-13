@@ -3,11 +3,11 @@ mindspore.nn.AdaptiveMaxPool2d
 
 .. py:class:: mindspore.nn.AdaptiveMaxPool2d(output_size, return_indices=False)
 
-    对输入的多维数据进行二维的自适应最大池化运算。
+    二维自适应最大池化运算。
 
-    通过output_size指定输出的高度 :math:`H_{out}` 和宽度 :math:`W_{out}` 
+    对输入Tensor，提供二维自适应最大池化操作，即对于输入任何尺寸，指定输出的尺寸都为H * W。但是输入和输出特征的数目不会变化。
 
-    一般，输入shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 的Tensor，输出 :math:`(N_{in}, C_{in}, H_{out}, W_{out})` 维上的区域最大值。运算如下：	
+    输入和输出数据格式可以是"NCHW"和"CHW"。N是批处理大小，C是通道数，H是特征高度，W是特征宽度。运算如下：
 
     .. math::
 
@@ -21,16 +21,18 @@ mindspore.nn.AdaptiveMaxPool2d
 
     **参数：**
 
-    - **output_size** (Union[int, tuple]) - 指定输出的高度 :math:`H_{out}` 和宽度 :math:`W_{out}` ， output_size可以是int类型 :math:`H_{out}` ，表示输出的高度和宽度均为 :math:`H_{out}` ；output_size也可以是 :math:`H_{out}` 和 :math:`W_{out}` 组成的tuple类型，其中 :math:`H_{out}` 和 :math:`W_{out}` 为int类型或者None，如果是None，表示与输入相同。
+    - **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，也可以是H * H的单个H，或None，如果是None，则意味着输出大小与输入相同。
     - **return_indices** (bool) - 如果为True，输出最大值的索引，默认值为False。
 
     **输入：**
 
-    - **input_x** (Tensor) - shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 或者 :math:`(C_{in}, H_{in}, W_{in})` 的tensor，数据类型支持float16, float32, float64。
+    - **input_x** (Tensor) - AdaptiveMaxPool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
 
     **输出：**
 
-    Tensor，shape为 :math:`(N_{in}, C_{in}, H_{in}, W_{in})` 或者 :math:`(C_{in}, H_{in}, W_{in})` 的tensor，类型与输入相同。
+    Tensor，数据类型与 `input_x` 相同。
+
+    输出的shape为 `input_x_shape[:len(input_x_shape) - len(out_shape)] + out_shape` 。
 
     **异常：**
 
