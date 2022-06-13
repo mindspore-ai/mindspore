@@ -13,13 +13,13 @@ mindspore.EarlyStopping
     - **min_delta** (float) - `monitor` 指标变化的最小阈值，超过此阈值才视为 `monitor` 的变化。默认值：0。
     - **patience** (int) - `moniter` 相对历史最优值变好超过 `min_delta` 视为当前epoch的模型效果有所改善，`patience` 为等待的无改善epoch的数量。默认值：0。
     - **verbose** (bool) - 是否打印相关信息。默认值：False。
-    - **mode** (str) - `{'auto', 'min', 'max'}`中的一种，'min'模式下将在指标不再减小时执行早停，'max'模式下将在指标不再增大时执行早停，'auto'模式将根据当前 `monitor` 指标的特点自动设置。默认值："auto"。
+    - **mode** (str) - `{'auto', 'min', 'max'}` 中的一种，'min'模式下将在指标不再减小时执行早停，'max'模式下将在指标不再增大时执行早停，'auto'模式将根据当前 `monitor` 指标的特点自动设置。默认值："auto"。
     - **baseline** (float) - 模型效果的基线，当前 `moniter` 相对历史最优值变好且好于 `baseline` 时，内部的等待epoch计数器被清零。默认值：0。
     - **restore_best_weights** (bool) - 是否自动保存最优模型的权重。默认值：False。
 
     **异常：**
 
-    - **ValueError** - 当 `mode` 不在`{'auto', 'min', 'max'}`中。
+    - **ValueError** - 当 `mode` 不在 `{'auto', 'min', 'max'}` 中。
     - **ValueError** - 当传入的 `monitor` 返回值不是标量。
 
     .. py:method:: on_train_begin(run_context)

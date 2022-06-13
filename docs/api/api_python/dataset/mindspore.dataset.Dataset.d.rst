@@ -1,7 +1,3 @@
-.. py:method:: close_pool()
-
-    关闭数据集对象中的多进程池。如果您熟悉多进程库，可以将此视为进程池对象的析构函数。
-
 .. py:method:: concat(datasets)
 
     对传入的多个数据集对象进行拼接操作，也可以使用"+"运算符来进行数据集进行拼接。
@@ -186,10 +182,6 @@
     **返回：**
 
     MapDataset，map操作后的数据集。
-
-.. py:method:: notify_watchdog()
-
-    关闭数据集对象中的watchdog线程。当前GeneratorDataset/map/batch开启多进程时会各自拉起一个watchdog线程来监控多进程的状态，对于get_dataset_size/output_shapes/output_types/get_col_names/num_classes这些接口，其内部默认调用了notify_watchdog。
 
 .. py:method:: num_classes()
 
