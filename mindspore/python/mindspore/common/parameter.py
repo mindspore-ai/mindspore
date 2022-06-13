@@ -15,6 +15,7 @@
 
 """Parameter for cell."""
 from copy import copy
+import sys
 import numbers
 import numpy as np
 from mindspore import log as logger
@@ -172,7 +173,8 @@ class Parameter(Tensor_):
 
     def __new__(cls, default_input, *args, **kwargs):
         init_data_flag = bool(isinstance(default_input, Tensor) and default_input.has_init)
-        input_class, *class_init_args = Parameter._get_parameter_new_args(default_input)
+        rc = sys.getrefcount(default_input)
+        input_class, *class_init_args = Parameter._get_parameter_new_args(default_input, rc)
         new_type = Parameter._get_base_class(input_class)
         obj = input_class.__new__(new_type)
         input_class.__init__(obj, *class_init_args)
@@ -233,6 +235,16 @@ class Parameter(Tensor_):
         new_obj._inited_param = self._inited_param
         return new_obj
 
+    def __str__(self):
+        return f'Parameter (name={self.name}, shape={self.shape}, dtype={self.dtype}, ' \
+               f'requires_grad={self.requires_grad})'
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __parameter__(self):
+        """For parse check."""
+
     @staticmethod
     def _get_base_class(input_class):
         input_class_name = Parameter.__name__
@@ -251,12 +263,16 @@ class Parameter(Tensor_):
         return False
 
     @staticmethod
-    def _get_parameter_new_args(data):
+    def _get_parameter_new_args(data, rc):
         """Set `set_data` of current `Parameter`."""
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
         if isinstance(data, Tensor):
             if not data.has_init:
+                if rc == 4:
+                    # when ref count is 4, means the input data is not referenced
+                    # in other place, so we can make a Tensor without copy data.
+                    return (Tensor, data)
                 # make a copy of Tensor to init the parameter.
                 return (Tensor, data.asnumpy())
 
@@ -271,16 +287,6 @@ class Parameter(Tensor_):
         if isinstance(data, float):
             return (Tensor, data, mstype.float32)
         return (Tensor, data)
-
-    def __str__(self):
-        return f'Parameter (name={self.name}, shape={self.shape}, dtype={self.dtype}, ' \
-               f'requires_grad={self.requires_grad})'
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __parameter__(self):
-        """For parse check."""
 
     def set_param_ps(self, init_in_server=False):
         """
@@ -521,7 +527,6 @@ class Parameter(Tensor_):
         if not isinstance(value, int):
             raise TypeError("The argument `key` must be int type.")
         self.param_info.key = value
-
 
     @property
     def requires_grad(self):
