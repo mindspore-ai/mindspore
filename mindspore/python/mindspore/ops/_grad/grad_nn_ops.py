@@ -1223,6 +1223,19 @@ def get_bprop_dropout(self):
     return bprop
 
 
+@bprop_getters.register(G.DropoutGrad)
+def get_bprop_dropout_grad(self):
+    """Grad definition for `DropoutGrad` operation."""
+    grad = G.DropoutGrad(self.keep_prob)
+
+    def bprop(x, mask, out, dout):
+        dy = dout
+        dx = grad(dy, mask)
+        return dx, zeros_like(mask)
+
+    return bprop
+
+
 @bprop_getters.register(P.Dropout2D)
 @bprop_getters.register(P.Dropout3D)
 def get_bprop_dropout3d(self):
