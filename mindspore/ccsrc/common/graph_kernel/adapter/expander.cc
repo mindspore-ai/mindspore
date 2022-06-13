@@ -32,6 +32,7 @@
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore::graphkernel {
 ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
@@ -88,13 +89,13 @@ bool CanExpandFallback(const AnfNodePtr &node) {
     {kAllTarget, OpLevel_0, prim::kPrimRelu},
     {kAllTarget, OpLevel_0, prim::kPrimSoftplus},
     {kAllTarget, OpLevel_0, prim::kPrimSoftplusGrad},
+    {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
+    {kAllTarget, OpLevel_0, prim::kLambApplyOptimizerAssign},
+    {kAllTarget, OpLevel_0, prim::kLambApplyWeightAssign},
+    {kAllTarget, OpLevel_0, prim::kPrimAdamWeightDecay},
+    {kAllTarget, OpLevel_0, prim::kPrimStandardNormal},
+    {kAllTarget, OpLevel_0, prim::kPrimAdam},
     // disabled
-    {kAllTarget, OpLevel_1, prim::kPrimAssignAdd},
-    {kAllTarget, OpLevel_1, prim::kLambApplyOptimizerAssign},
-    {kAllTarget, OpLevel_1, prim::kLambApplyWeightAssign},
-    {kAllTarget, OpLevel_1, prim::kPrimAdamWeightDecay},
-    {kAllTarget, OpLevel_1, prim::kPrimStandardNormal},
-    {kAllTarget, OpLevel_1, prim::kPrimAdam},
     {kAllTarget, OpLevel_1, prim::kPrimAddN},
     {kAllTarget, OpLevel_1, prim::kPrimErfc},
     {kAllTarget, OpLevel_1, prim::kPrimExpandDims},
@@ -140,11 +141,12 @@ bool CanExpandFallback(const AnfNodePtr &node) {
                      [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
 }
 
-FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &kernel_node)> &func) {
+AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &kernel_node)> &func) {
   if (!CanExpandFallback(node)) {
     return nullptr;
   }
-  auto expand_fg = GetCNodeFuncGraph(GetExpander(node)->Run(node));
+  auto res = GetExpander(node)->Run(node);
+  auto expand_fg = GetCNodeFuncGraph(res);
   if (expand_fg != nullptr) {
     auto todos = TopoSort(expand_fg->get_return());
     for (const auto &n : todos) {
@@ -155,12 +157,19 @@ FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(con
       auto suc = func(cnode);
       if (!suc) {
         MS_LOG(DEBUG) << "Expanding core ops [" << cnode->fullname_with_scope() << "] failed.";
-        expand_fg = nullptr;
+        res = nullptr;
         break;
       }
     }
   }
-  return expand_fg;
+#ifdef ENABLE_DUMP_IR
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("verbose_ir_files/expand_" + GetCNodeFuncName(node->cast<CNodePtr>()) + ".ir", expand_fg);
+  }
+#endif
+  return res;
 }
 
 void ConvertAttrToInput(const FuncGraphPtr &graph) {
@@ -174,11 +183,9 @@ void ConvertAttrToInput(const FuncGraphPtr &graph) {
       continue;
     }
     primitive = primitive->Clone();
-    std::map<std::string, std::set<size_t>> attr2input_map = {{prim::kPrimCast->name(), {1}},
-                                                              {prim::kPrimReshape->name(), {1}},
-                                                              {prim::kPrimReduceMax->name(), {1}},
-                                                              {prim::kPrimReduceSum->name(), {1}},
-                                                              {prim::kPrimTranspose->name(), {1}}};
+    std::map<std::string, std::set<size_t>> attr2input_map = {
+      {prim::kPrimCast->name(), {1}},      {prim::kPrimReshape->name(), {1}},   {prim::kPrimReduceMax->name(), {1}},
+      {prim::kPrimReduceMin->name(), {1}}, {prim::kPrimReduceSum->name(), {1}}, {prim::kPrimTranspose->name(), {1}}};
     if (attr2input_map.count(primitive->name()) != 0) {
       auto input_names = primitive->GetAttr(kAttrInputNames);
       auto cnode = dyn_cast<CNode>(node);

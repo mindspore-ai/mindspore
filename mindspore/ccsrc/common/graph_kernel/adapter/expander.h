@@ -76,8 +76,8 @@ COMMON_EXPORT void InlineExpandFuncGraph(const AnfNodePtr &expanding_node, const
 /**
  * Try Expand cnode with check func.
  */
-COMMON_EXPORT FuncGraphPtr TryExpandCNode(const AnfNodePtr &node,
-                                          const std::function<bool(const CNodePtr &kernel_node)> &func);
+COMMON_EXPORT AnfNodePtr TryExpandCNode(const AnfNodePtr &node,
+                                        const std::function<bool(const CNodePtr &kernel_node)> &func);
 
 /**
  * Check if node can be expanded fallback.

@@ -16,6 +16,7 @@
 
 #include "frontend/optimizer/expander.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <map>
@@ -24,11 +25,14 @@
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "common/graph_kernel/adapter/expander.h"
+#include "utils/ms_context.h"
+#include "include/common/utils/utils.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
-void ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
+bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
   auto todos = TopoSort(graph->get_return());
   for (const auto &node : todos) {
     if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
@@ -39,6 +43,20 @@ void ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
       continue;
     }
     parallel::OperatorAttrs attrs;
+    std::map<std::string, std::vector<std::string>> op2attrs = {{prim::kPrimBroadcastTo->name(), {kAttrShape}},
+                                                                {prim::kPrimReduceMax->name(), {kAttrKeepDims}},
+                                                                {prim::kPrimReduceMin->name(), {kAttrKeepDims}},
+                                                                {prim::kPrimReduceSum->name(), {kAttrKeepDims}}};
+    if (op2attrs.count(primitive->name()) != 0) {
+      for (auto &attr : op2attrs[primitive->name()]) {
+        if (primitive->HasAttr(attr)) {
+          attrs.push_back({attr, primitive->GetAttr(attr)});
+        } else {
+          MS_LOG(WARNING) << primitive->name() << " op do not have attr: " << attr;
+          return false;
+        }
+      }
+    }
     auto new_prim = parallel::CreateOpInstance(attrs, primitive->name(), "")->cast<PrimitivePtr>();
     (void)new_prim->SetAttrs(primitive->attrs());
     AnfNodePtrList inputs = {NewValueNode(new_prim)};
@@ -46,14 +64,45 @@ void ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
     inputs.insert(inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
     cnode->set_inputs(inputs);
   }
+  return true;
 }
 
-FuncGraphPtr TryExpandCNodeFE(const AnfNodePtr &node) {
 #ifdef ENABLE_AKG
-  if (!graphkernel::CanExpandFallback(node)) return nullptr;
+using graphkernel::ExpanderDecorator;
+using graphkernel::ExpanderPtr;
+class PrimToPrimPyDecorator : public ExpanderDecorator {
+ public:
+  explicit PrimToPrimPyDecorator(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~PrimToPrimPyDecorator() override = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<PrimToPrimPyDecorator>(decorated));
+  }
+  AnfNodePtr Run(const AnfNodePtr &node) override {
+    auto new_node = decorated_->Run(node);
+    if (new_node == nullptr) {
+      return nullptr;
+    }
+    auto new_cnode = dyn_cast<CNode>(new_node);
+    auto expand_fg = GetCNodeFuncGraph(new_cnode);
+    if (!ConvertPrimToPrimPy(expand_fg)) {
+      return nullptr;
+    }
+    new_cnode->set_input(0, NewValueNode(expand_fg));
+    return new_cnode;
+  }
+};
+#endif
+
+AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node) {
+#ifdef ENABLE_AKG
+  if (!graphkernel::CanExpandFallback(node)) {
+    return nullptr;
+  }
   using graphkernel::InputToAttrDeco;
   auto primitive = GetCNodePrimitive(node);
-  if (primitive == nullptr) return nullptr;
+  if (primitive == nullptr) {
+    return nullptr;
+  }
   auto expander = graphkernel::GetExpander(node);
   std::map<std::string, graphkernel::ExpanderCreatorFuncList> creators = {
     {prim::kPrimExpandDims->name(), {InputToAttrDeco::GetCreator({1})}},
@@ -68,10 +117,20 @@ FuncGraphPtr TryExpandCNodeFE(const AnfNodePtr &node) {
     expander = graphkernel::WrapExpander(expander, iter->second);
   }
   expander = graphkernel::AttrToInputDeco::Creator(expander);
-  auto fg = GetCNodeFuncGraph(expander->Run(node));
-  if (fg == nullptr) return nullptr;
-  ConvertPrimToPrimPy(fg);
-  return fg;
+  expander = PrimToPrimPyDecorator::Creator(expander);
+  auto new_node = expander->Run(node);
+  auto expand_fg = GetCNodeFuncGraph(new_node);
+  if (expand_fg == nullptr) {
+    return nullptr;
+  }
+#ifdef ENABLE_DUMP_IR
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+    DumpIR("expand_fe_" + GetCNodeFuncName(node->cast<CNodePtr>()) + ".ir", expand_fg);
+  }
+#endif
+  return new_node;
 #else
   return nullptr;
 #endif
