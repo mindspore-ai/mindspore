@@ -28,7 +28,7 @@ namespace mindspore {
 struct ConverterPara;
 class MS_API Converter {
  public:
-  Converter(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file,
+  Converter(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file = "",
             const std::string &weight_file = "");
   ~Converter() = default;
 
@@ -49,9 +49,6 @@ class MS_API Converter {
 
   void SetOutputDataType(DataType data_type);
   DataType GetOutputDataType();
-
-  void SetExportMindIR(bool export_mindir);
-  bool GetExportMindIR() const;
 
   void SetDecryptKey(const std::string &key);
   std::string GetDecryptKey() const;
@@ -75,6 +72,7 @@ class MS_API Converter {
   bool GetNoFusion();
 
   Status Convert();
+  uint8_t *ConvertToBuff();
 
  private:
   std::shared_ptr<ConverterPara> data_;

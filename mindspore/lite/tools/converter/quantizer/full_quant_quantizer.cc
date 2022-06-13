@@ -414,7 +414,7 @@ void FullQuantQuantizer::InitKirinConfig() {
   activation_symmetry_ = false;
   weight_symmetry_ = true;
   support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection};
-  flags_.fullQuantParam.bias_correction = false;
+  param_->fullQuantParam.bias_correction = false;
   per_channel_ops_ = {prim::kPrimConv2DFusion};
 }
 
@@ -427,7 +427,7 @@ void FullQuantQuantizer::InitNvGpuConfig() {
   support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimMatMul, prim::kPrimActivation,
                        prim::kPrimConv2dTransposeFusion};
   per_channel_ops_ = {};
-  flags_.fullQuantParam.bias_correction = false;
+  param_->fullQuantParam.bias_correction = false;
 }
 
 void FullQuantQuantizer::InitQMinMax() {
@@ -477,7 +477,7 @@ int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
 }
 
 int FullQuantQuantizer::PreProcess(const FuncGraphPtr &func_graph) {
-  switch (flags_.fullQuantParam.target_device) {
+  switch (param_->fullQuantParam.target_device) {
     case CPU:
       InitCpuConfig();
       break;
@@ -488,18 +488,18 @@ int FullQuantQuantizer::PreProcess(const FuncGraphPtr &func_graph) {
       InitNvGpuConfig();
       break;
     default:
-      MS_LOG(ERROR) << " Unsupported device " << flags_.fullQuantParam.target_device;
+      MS_LOG(ERROR) << " Unsupported device " << param_->fullQuantParam.target_device;
       return RET_ERROR;
       break;
   }
   InitQMinMax();
   calibrator_ = std::make_shared<Calibrator>(this->bit_num_, activation_q_max_, activation_q_min_,
-                                             this->flags_.fullQuantParam.activation_quant_method,
-                                             this->flags_.dataPreProcessParam, activation_symmetry_);
+                                             this->param_->fullQuantParam.activation_quant_method,
+                                             this->param_->dataPreProcessParam, activation_symmetry_);
   MSLITE_CHECK_PTR(calibrator_);
-  quant_strategy_ = std::make_unique<QuantStrategy>(flags_.commonQuantParam.min_quant_weight_size,
-                                                    flags_.commonQuantParam.min_quant_weight_channel,
-                                                    flags_.commonQuantParam.skip_quant_node);
+  quant_strategy_ = std::make_unique<QuantStrategy>(param_->commonQuantParam.min_quant_weight_size,
+                                                    param_->commonQuantParam.min_quant_weight_channel,
+                                                    param_->commonQuantParam.skip_quant_node);
   CHECK_NULL_RETURN(quant_strategy_);
   auto ret = MarkQuantNode(func_graph);
   if (ret != RET_OK) {
@@ -562,7 +562,7 @@ int FullQuantQuantizer::DoInference(CollectType collect_type) {
 int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_ASSERT(func_graph != nullptr);
   MS_LOG(INFO) << "start to parse config file";
-  if (flags_.dataPreProcessParam.calibrate_path.empty()) {
+  if (param_->dataPreProcessParam.calibrate_path.empty()) {
     MS_LOG(ERROR) << "calibrate path must pass. The format is input_name_1:input_1_dir,input_name_2:input_2_dir.";
     return RET_INPUT_PARAM_INVALID;
   }
@@ -574,9 +574,8 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
 
   // anf -- fb
-  flags_.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   MS_LOG(INFO) << "start create session";
-  auto sm = CreateSessionByFuncGraph(func_graph, flags_, this->flags_.commonQuantParam.thread_num);
+  auto sm = CreateSessionByFuncGraph(func_graph, param_, param_->commonQuantParam.thread_num);
   fp32_session_ = sm.session;
   fp32_model_ = sm.model;
   if (fp32_session_ == nullptr || fp32_model_ == nullptr) {
@@ -590,7 +589,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     return status;
   }
 
-  if (flags_.fullQuantParam.activation_quant_method == KL) {
+  if (param_->fullQuantParam.activation_quant_method == KL) {
     MS_LOG(INFO) << "start to update divergence's interval";
     status = UpdateDivergeInterval();
     if (status != RET_OK) {
@@ -627,11 +626,11 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       return RET_ERROR;
     }
   }
-  if (this->flags_.fullQuantParam.bias_correction) {
+  if (param_->fullQuantParam.bias_correction) {
     MS_LOG(INFO) << "do bias correction";
-    BiasCorrectionStrategy strategy(flags_, calibrator_, quant_strategy_, fp32_session_, fp32_model_, activation_q_min_,
+    BiasCorrectionStrategy strategy(param_, calibrator_, quant_strategy_, fp32_session_, fp32_model_, activation_q_min_,
                                     activation_q_max_);
-    switch (this->flags_.fullQuantParam.target_device) {
+    switch (param_->fullQuantParam.target_device) {
       case CPU:
         status = strategy.DoCPUBiasCorrection(func_graph);
         break;
@@ -639,7 +638,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
         status = strategy.DoNVGPUBiasCorrection(func_graph);
         break;
       default:
-        MS_LOG(ERROR) << "Unsupported target device " << this->flags_.fullQuantParam.target_device
+        MS_LOG(ERROR) << "Unsupported target device " << param_->fullQuantParam.target_device
                       << " for bias correction.";
         return RET_ERROR;
     }

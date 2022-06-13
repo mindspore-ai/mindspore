@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_PASS_REMOVE_UNUSED_TRANSPOSE_PASS_H_
 #include <string>
 #include "backend/common/optimizer/pass.h"
-#include "tools/converter/converter_flags.h"
+#include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore::opt {

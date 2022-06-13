@@ -91,7 +91,7 @@ Format Converter::GetInputFormat() const {
   if (data_ != nullptr) {
     return data_->input_format;
   } else {
-    return DEFAULT_FORMAT;
+    return NHWC;
   }
 }
 
@@ -120,20 +120,6 @@ DataType Converter::GetOutputDataType() {
     return data_->output_data_type;
   } else {
     return DataType::kTypeUnknown;
-  }
-}
-
-void Converter::SetExportMindIR(bool export_mindir) {
-  if (data_ != nullptr) {
-    data_->export_mindir = export_mindir;
-  }
-}
-
-bool Converter::GetExportMindIR() const {
-  if (data_ != nullptr) {
-    return data_->export_mindir;
-  } else {
-    return false;
   }
 }
 

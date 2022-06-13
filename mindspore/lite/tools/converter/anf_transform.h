@@ -23,7 +23,6 @@
 #include "backend/common/optimizer/optimizer.h"
 #include "schema/inner/model_generated.h"
 #include "tools/common/meta_graph_serializer.h"
-#include "tools/converter/converter_flags.h"
 #include "ir/anf.h"
 #include "tools/converter/quantizer/quantizer.h"
 #include "tools/converter/converter_context.h"
@@ -34,24 +33,24 @@ class AnfTransform {
  public:
   AnfTransform();
   virtual ~AnfTransform();
-  FuncGraphPtr Transform(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
+  FuncGraphPtr Transform(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
  private:
-  FuncGraphPtr TransformFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
+  FuncGraphPtr TransformFuncGraph(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
-  static int RunFusionPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
+  static int RunFusionPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
-  static int RunGraphPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
+  static int RunGraphPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
-  static int RunConvertPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
+  static int RunConvertPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
-  static int RunConstFoldPass(const FuncGraphPtr &olde_graph, const converter::Flags *config);
+  static int RunConstFoldPass(const FuncGraphPtr &olde_graph, const std::shared_ptr<ConverterPara> &param);
 
-  static int RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
+  static int RunParallelPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
-  static int DoQuantize(const FuncGraphPtr &old_graph, converter::Flags *config);
+  static int DoQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 
-  static bool StoreBuiltinPass(const converter::Flags *config);
+  static bool StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param);
 
   static STATUS MarkTrainInputOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 

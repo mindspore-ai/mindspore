@@ -43,8 +43,6 @@ void ConverterPyBind(const py::module &m) {
     .def("get_input_data_type", &Converter::GetInputDataType)
     .def("set_output_data_type", &Converter::SetOutputDataType)
     .def("get_output_data_type", &Converter::GetOutputDataType)
-    .def("set_export_mindir", &Converter::SetExportMindIR)
-    .def("get_export_mindir", &Converter::GetExportMindIR)
     .def("set_decrypt_key", &Converter::SetDecryptKey)
     .def("get_decrypt_key", &Converter::GetDecryptKey)
     .def("set_decrypt_mode", &Converter::SetDecryptMode)

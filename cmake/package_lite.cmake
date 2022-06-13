@@ -6,6 +6,11 @@ set(CODEGEN_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/codegen)
 set(CONVERTER_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/converter)
 set(OBFUSCATOR_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/obfuscator)
 set(CROPPER_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/cropper)
+if(WIN32)
+    set(BUILD_DIR ${TOP_DIR}/build)
+else()
+    set(BUILD_DIR ${TOP_DIR}/mindspore/lite/build)
+endif()
 set(TEST_CASE_DIR ${TOP_DIR}/mindspore/lite/test/build)
 
 set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/runtime)
@@ -309,6 +314,8 @@ if(PLATFORM_ARM64)
                     COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
             install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
+            install(FILES ${BUILD_DIR}/tools/converter/libmindspore_converter.so
+                    DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
                     DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so.0
@@ -522,8 +529,10 @@ elseif(WIN32)
     if(MSLITE_ENABLE_CONVERTER)
         install(FILES ${TOP_DIR}/mindspore/lite/include/converter.h DESTINATION ${CONVERTER_ROOT_DIR}/include
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/build/mindspore/tools/converter/converter_lite.exe
+        install(FILES ${TOP_DIR}/build/mindspore/tools/converter/converter_lite/converter_lite.exe
                 DESTINATION ${CONVERTER_ROOT_DIR}/converter COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/build/mindspore/tools/converter/libmindspore_converter.dll
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/build/mindspore/tools/converter/registry/libmslite_converter_plugin.dll
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -685,6 +694,8 @@ else()
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
         install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${BUILD_DIR}/tools/converter/libmindspore_converter.so
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/registry/libmslite_converter_plugin.so
                 DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0 DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libglog.so.0

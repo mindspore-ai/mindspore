@@ -253,8 +253,8 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
   return primitive_c->name();
 }
 
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
-                                      int *size) {
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
+                                      int thread_num, int *size) {
   SessionModel sm;
   auto meta_graph = Export(func_graph, true, true);
   if (meta_graph == nullptr) {
@@ -265,7 +265,7 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   // transform
   GraphDefTransform fb_transform;
   fb_transform.SetGraphDef(meta_graph);
-  auto status = fb_transform.Transform(flags);
+  auto status = fb_transform.Transform(param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "FBTransform model failed";
     delete meta_graph;
@@ -318,9 +318,10 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
   return sm;
 }
 
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num) {
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param,
+                                      int thread_num) {
   int size = 0;
-  return CreateSessionByFuncGraph(func_graph, flags, thread_num, &size);
+  return CreateSessionByFuncGraph(func_graph, param, thread_num, &size);
 }
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {

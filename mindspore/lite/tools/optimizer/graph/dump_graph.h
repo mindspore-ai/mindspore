@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_DUMP_GRAPH_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_DUMP_GRAPH_H_
 
+#include <memory>
 #include "backend/common/optimizer/pass.h"
 #include "tools/converter/export_model.h"
 #include "include/registry/pass_base.h"
@@ -25,11 +26,11 @@ namespace mindspore {
 namespace opt {
 class DumpGraph : public registry::PassBase, public Pass {
  public:
-  explicit DumpGraph(const converter::Flags *flags = nullptr) : Pass("DumpGraph"), flags_(flags) {}
+  explicit DumpGraph(const std::shared_ptr<ConverterPara> &param) : Pass("DumpGraph"), param_(param) {}
   ~DumpGraph() = default;
   bool Run(const FuncGraphPtr &graph) override {
     MS_CHECK_TRUE_MSG(graph != nullptr, false, "funcGraph is a nullptr.");
-    if (lite::ExportModel(graph, flags_) != lite::RET_OK) {
+    if (lite::ExportModel(graph, param_) != lite::RET_OK) {
       MS_LOG(ERROR) << "dump graph failed.";
       return false;
     }
@@ -45,7 +46,7 @@ class DumpGraph : public registry::PassBase, public Pass {
   }
 
  private:
-  const converter::Flags *flags_{nullptr};
+  const std::shared_ptr<ConverterPara> param_;
 };
 }  // namespace opt
 }  // namespace mindspore

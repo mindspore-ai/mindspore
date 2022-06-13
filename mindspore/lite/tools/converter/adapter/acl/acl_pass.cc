@@ -21,9 +21,9 @@
 
 namespace mindspore {
 namespace opt {
-AclPass::AclPass(const converter::Flags &config) : Pass("ACL") {
+AclPass::AclPass(const std::shared_ptr<ConverterPara> &param) : Pass("ACL") {
 #ifdef ENABLE_LITE_ACL
-  impl_ = std::make_shared<AclPassImpl>(config);
+  impl_ = std::make_shared<AclPassImpl>(param);
 #endif
 }
 
