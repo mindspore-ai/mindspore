@@ -2969,8 +2969,8 @@ class Resize(TensorOperation, PyTensorOperation):
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
         interpolation (Inter, optional): Image interpolation mode (default=Inter.BILINEAR).
-           It can be any of [Inter.BILINEAR, Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC,
-           Inter.ANTIALIAS].
+            It can be any of [Inter.BILINEAR, Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC,
+            Inter.ANTIALIAS].
 
             - Inter.BILINEAR, bilinear interpolation.
             - Inter.LINEAR, bilinear interpolation, here is the same as Inter.BILINEAR.
