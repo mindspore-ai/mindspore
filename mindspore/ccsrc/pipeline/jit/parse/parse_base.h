@@ -78,6 +78,7 @@ const char PYTHON_MOD_CONVERT_CELL_LIST_TO_SEQUENCE[] = "convert_cell_list_to_se
 const char PYTHON_MOD_GET_ITEM_FROM_SEQUENCE[] = "get_obj_from_sequence";
 const char PYTHON_MOD_CONVERT_TO_MS_TENSOR[] = "convert_to_ms_tensor";
 const char PYTHON_MOD_EVAL_PY_SCRIPT[] = "eval_script";
+const char PYTHON_MOD_GET_SCRIPT_IDS[] = "get_script_ids";
 const char PYTHON_MOD_PYTHON_ISINSTANCE[] = "python_isinstance";
 const char PYTHON_MOD_MS_ISINSTANCE[] = "ms_isinstance";
 

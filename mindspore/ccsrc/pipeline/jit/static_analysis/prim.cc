@@ -23,6 +23,7 @@
 #include <mutex>
 #include <string>
 #include <utility>
+#include <unordered_map>
 
 #include "ir/anf.h"
 #include "utils/hash_set.h"
@@ -1809,11 +1810,12 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     }
 
     // Make global and local parameters.
-    py::tuple params = MakeParameters(args_spec_list);
+    const std::string &script = script_obj->script();
+    py::tuple params = MakeParameters(args_spec_list, script);
 
     // Call python script string.
-    MS_LOG(DEBUG) << "Call script: " << script_obj->script() << ", params: " << py::str(params);
-    auto obj = parse::data_converter::CallPythonScript(py::str(script_obj->script()), params);
+    MS_LOG(DEBUG) << "Call script: " << script << ", params: " << py::str(params);
+    auto obj = parse::data_converter::CallPythonScript(py::str(script), params);
     if (py::isinstance<py::none>(obj)) {
       AbstractBasePtr res = std::make_shared<abstract::AbstractNone>();
       auto infer_result = std::make_shared<EvalResult>(res, nullptr);
@@ -1834,7 +1836,27 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     return infer_result;
   }
 
-  py::tuple MakeParameters(const AbstractBasePtrList &args_spec_list) const {
+  void CheckInterpretInput(const AbstractDictionaryPtr &abstract_dict, const std::string &script) const {
+    // Check whether this node should be interpretive executed.
+    const auto &elements = abstract_dict->elements();
+    if (elements.empty()) {
+      return;
+    }
+    for (const auto &element : elements) {
+      const auto &name = element.first;
+      const auto &local_abs = element.second;
+      const auto &local_abs_val = local_abs->BuildValue();
+      MS_EXCEPTION_IF_NULL(local_abs_val);
+      if (local_abs_val == kAnyValue) {
+        MS_EXCEPTION(ValueError) << "For script '" << script << "', variable '" << name << "' is not constant.";
+      }
+      if (local_abs->isa<abstract::AbstractTensor>()) {
+        MS_LOG(WARNING) << "For script '" << script << "', found variable '" << name << "' is a tensor.";
+      }
+    }
+  }
+
+  py::tuple MakeParameters(const AbstractBasePtrList &args_spec_list, const std::string &script) const {
     constexpr int params_size = 3;
     if (params_size != args_spec_list.size()) {
       MS_LOG(EXCEPTION) << "Unexpected params_size: " << params_size
@@ -1861,12 +1883,15 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     MS_EXCEPTION_IF_NULL(local_dict);
     auto filtered_local_dict = FilterParameters(local_dict);
     MS_LOG(DEBUG) << "arg_2, local_dict: " << local_dict->ToString()
-                  << ", filtered_local_dict:" << filtered_local_dict->ToString();
+                  << ", filtered_local_dict: " << filtered_local_dict->ToString();
     ValuePtr local_dict_value = filtered_local_dict->BuildValue();
     py::dict local_params_dict = ReCheckLocalDict(filtered_local_dict);
     MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << local_dict_value->ToString() << " -> "
                   << py::str(local_params_dict);
     params[1] = local_params_dict;
+
+    CheckInterpretInput(filtered_local_dict, script);
+
     return params;
   }
 

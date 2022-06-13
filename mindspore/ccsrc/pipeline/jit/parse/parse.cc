@@ -2621,22 +2621,20 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
     MS_LOG(EXCEPTION) << "Convert data failed";
   }
   auto global_dict_node = NewValueNode(globals_converted_value);
-  // Prepare local parameters.
-  // Filter the func_graph node where the current node is located.
-  auto current_fg = value_node->func_graph();
+  // Prepare local parameters. Select the needed local parameters for script.
   auto [keys, values] = block->local_py_params();
   std::vector<AnfNodePtr> filter_keys;
   std::vector<AnfNodePtr> filter_values;
-  for (auto iter = values.begin(); iter != values.end(); ++iter) {
-    auto value = iter->second;
-    auto fg = GetValueNode<FuncGraphPtr>(value);
-    if (fg == current_fg) {
-      continue;
+  const py::set &ids = data_converter::GetPythonScriptIds(py::str(script_text));
+  for (const auto &id : ids) {
+    const auto &id_str = py::str(id);
+    const auto &iter = values.find(id_str);
+    if (iter != values.end()) {
+      (void)filter_keys.emplace_back(keys[iter->first]);
+      (void)filter_values.emplace_back(iter->second);
     }
-    const std::string &name = iter->first;
-    (void)filter_keys.emplace_back(keys[name]);
-    (void)filter_values.emplace_back(value);
   }
+
   auto local_dict_node = ParseDictByKeysAndValues(block, filter_keys, filter_values);
   // Update the valued node if it need interpreting.
   constexpr int recursive_level = 2;
