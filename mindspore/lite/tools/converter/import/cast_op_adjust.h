@@ -17,14 +17,18 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_CAST_OP_ADJUST_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_CAST_OP_ADJUST_H_
 #include <string>
+#include "backend/common/optimizer/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
-namespace mindspore::lite {
-class CastOpAdjust {
+namespace mindspore {
+namespace opt {
+class CastOpAdjust : public Pass {
  public:
-  CastOpAdjust() {}
+  CastOpAdjust() : Pass("CastOpAdjust") {}
   ~CastOpAdjust() = default;
-  bool Run(const FuncGraphPtr &graph);
+  bool Run(const FuncGraphPtr &graph) override;
+  bool Run(const FuncGraphPtr &graph, bool strict_mode_flag);
 };
-}  // namespace mindspore::lite
+}  // namespace opt
+}  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_IMPORT_CAST_OP_ADJUST_H_
