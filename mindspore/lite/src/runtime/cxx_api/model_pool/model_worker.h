@@ -64,12 +64,10 @@ class ModelWorker {
 
   std::pair<std::vector<std::vector<int64_t>>, bool> GetModelResize(const std::vector<MSTensor> &model_inputs,
                                                                     const std::vector<MSTensor> &inputs);
-  Status ResizeInit();
 
   Status CopyOutputTensor(std::vector<MSTensor> model_outputs, std::vector<MSTensor> *user_outputs);
 
  private:
-  bool need_init_resize_ = true;
   std::shared_ptr<mindspore::Model> model_ = nullptr;
   std::mutex mtx_worker_;
   std::atomic_bool available_ = true;

@@ -996,6 +996,10 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
     all_outputs_.push_back(output);
   }
   if (!flags_->benchmark_data_file_.empty()) {
+    for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
+      auto &tensor = ms_inputs_for_api_[i];
+      tensor.SetShape(resize_dims_[i]);
+    }
     status = PrintInputData();
     MS_CHECK_FALSE_MSG(status != RET_OK, status, "PrintInputData error ");
     status = ReadCalibData();

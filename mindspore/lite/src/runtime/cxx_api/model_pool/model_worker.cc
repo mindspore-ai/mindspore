@@ -78,42 +78,6 @@ void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &pred
   }
 }
 
-Status ModelWorker::ResizeInit() {
-  auto inputs = model_->GetInputs();
-  std::vector<std::vector<int64_t>> new_input_shape;
-  for (size_t input_idx = 0; input_idx < inputs.size(); input_idx++) {
-    new_input_shape.push_back(inputs[input_idx].Shape());
-    for (size_t i = 1; i < new_input_shape.size(); i++) {
-      if (new_input_shape[input_idx][i] == -1) {
-        return kSuccess;
-      }
-    }
-    if (new_input_shape[input_idx][0] == -1) {
-      // only support resize for batch dim
-      new_input_shape[input_idx][0] = kNumInitBatch;
-    } else {
-      // If the batch dimension is not -1, no resize processing is performed
-      return kSuccess;
-    }
-  }
-  auto status = model_->Resize(inputs, new_input_shape);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "model resize failed in init. ret=" << status;
-    return kLiteError;
-  }
-  inputs = model_->GetInputs();
-  for (auto &input : inputs) {
-    input.MutableData();
-  }
-  std::vector<MSTensor> out;
-  status = model_->Predict(inputs, &out);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "init resize failed. ret=" << status;
-    return kLiteError;
-  }
-  return kSuccess;
-}
-
 Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config) {
   MS_CHECK_TRUE_MSG(model_buf != nullptr, kLiteError, "model_buf is nullptr in model worker.");
   MS_CHECK_TRUE_MSG(worker_config != nullptr, kLiteError, "worker_config is nullptr in model worker.");
@@ -142,13 +106,6 @@ Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_p
   if (origin_worker_outputs_.empty() || origin_worker_outputs_.empty()) {
     MS_LOG(ERROR) << "model worker get empty input/output.";
     return kLiteError;
-  }
-  if (need_init_resize_) {
-    status = ResizeInit();
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "init resize failed. ret=" << status;
-      return kLiteError;
-    }
   }
   return kSuccess;
 }
