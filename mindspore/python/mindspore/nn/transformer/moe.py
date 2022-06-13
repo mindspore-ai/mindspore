@@ -303,6 +303,7 @@ class Router(Cell):
                  parallel_config=None):
         super(Router, self).__init__()
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            dp = parallel_config.data_parallel
             self.d_model = d_model
             self.expert_dim = moe_config.expert_num
             self.capacity_factor = moe_config.capacity_factor
@@ -314,6 +315,7 @@ class Router(Cell):
             self.noise = Tensor(np.random.uniform(1 - self.noisy_epsilon, 1 + self.noisy_epsilon, (d_model,)))
 
             self.dense = Dense(in_channels=self.d_model, out_channels=self.expert_dim, has_bias=False)
+            self.dense.matmul.shard(((dp, 1), (1, 1)))
             self.mul = P.Mul()
             self.cast = P.Cast()
 
@@ -430,6 +432,8 @@ class TopkRouter(Cell):
             self.reduce_sum_keep2 = P.ReduceSum(keep_dims=True)
             self.expand = P.ExpandDims()
             self.expand2 = P.ExpandDims()
+            self.add_scala = P.Add()
+            self.init_loss = Tensor(0.0, mstype.float32)
         else:
             dp = parallel_config.data_parallel
             self.d_model = d_model
@@ -479,6 +483,8 @@ class TopkRouter(Cell):
             self.reduce_sum_keep2 = P.ReduceSum(keep_dims=True).shard(((dp, 1, 1, 1),))
             self.expand = P.ExpandDims().shard(((dp, 1),))
             self.expand2 = P.ExpandDims().shard(((dp, 1, 1),))
+            self.add_scala = P.Add().shard(((), ()))
+            self.init_loss = Tensor(0.0, mstype.float32)
 
     def _auxiliary_loss(self, expert_mask, router_prob):
         """
@@ -525,7 +531,7 @@ class TopkRouter(Cell):
 
         accum_expert_mask = 0
         accum_expert_gate = 0
-        loss = 0
+        loss = self.init_loss
         mask_count = 0
         accum_combine_tensor = 0
         # Probabilities for each token of what expert is should be sent to
@@ -542,7 +548,7 @@ class TopkRouter(Cell):
             router_prob_normal = self.div1(router_prob, self.add1(self.reduce_sum_keep(router_prob, -1), 1e-9))
 
             # the balance loss is computed at each routing step
-            loss += self._auxiliary_loss(expert_mask, router_prob_normal)
+            loss = self.add_scala(loss, self._auxiliary_loss(expert_mask, router_prob_normal))
 
             output = self._maskout_overflowed_tokens(expert_mask, expert_capacity, expert_gate,
                                                      mask_count, expert_chosen_index)
