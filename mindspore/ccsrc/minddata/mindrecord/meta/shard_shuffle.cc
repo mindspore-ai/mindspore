@@ -46,7 +46,9 @@ Status ShardShuffle::CategoryShuffle(ShardTaskList &tasks) {
   int64_t individual_size = tasks.sample_ids_.size() / tasks.categories;
   std::vector<std::vector<int64_t>> new_permutations(tasks.categories, std::vector<int64_t>(individual_size));
   for (int64_t i = 0; i < tasks.categories; i++) {
-    for (int64_t j = 0; j < individual_size; j++) new_permutations[i][j] = j;
+    for (int64_t j = 0; j < individual_size; j++) {
+      new_permutations[i][j] = j;
+    }
     std::shuffle(new_permutations[i].begin(), new_permutations[i].end(), std::default_random_engine(shuffle_seed_));
   }
   tasks.permutation_.clear();

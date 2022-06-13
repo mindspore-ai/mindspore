@@ -580,10 +580,10 @@ def check_num_channels(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [num_output_channels], _ = parse_user_args(method, *args, **kwargs)
-        if num_output_channels is not None:
-            if num_output_channels not in (1, 3):
-                raise ValueError("Number of channels of the output grayscale image"
-                                 "should be either 1 or 3. Got {0}.".format(num_output_channels))
+        type_check(num_output_channels, (int,), "num_output_channels")
+        if num_output_channels not in (1, 3):
+            raise ValueError("Number of channels of the output grayscale image"
+                             "should be either 1 or 3. Got {0}.".format(num_output_channels))
 
         return method(self, *args, **kwargs)
 

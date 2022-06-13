@@ -169,7 +169,9 @@ Status ShardSegment::ReadAtPageById(int64_t category_id, int64_t page_no, int64_
   uint64_t i_end = std::min(static_cast<int64_t>(total_rows_in_category), (page_no + 1) * n_rows_of_page);
   uint64_t idx = 0;
   for (const auto &rg : row_group_summary) {
-    if (idx >= i_end) break;
+    if (idx >= i_end) {
+      break;
+    }
 
     auto shard_id = std::get<0>(rg);
     auto group_id = std::get<1>(rg);
