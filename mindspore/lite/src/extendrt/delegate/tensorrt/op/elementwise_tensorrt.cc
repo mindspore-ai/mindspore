@@ -22,12 +22,17 @@
 namespace mindspore::lite {
 namespace {
 std::unordered_map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> BOOL_PRIM2NV_ELEM_OP = {
+#if TRT_VERSION_GE(7, 2)
   {schema::PrimitiveType_LogicalOr, nvinfer1::ElementWiseOperation::kOR},
-  {schema::PrimitiveType_LogicalAnd, nvinfer1::ElementWiseOperation::kAND}};
+  {schema::PrimitiveType_LogicalAnd, nvinfer1::ElementWiseOperation::kAND}
+#endif
+};
 
 std::unordered_map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> NOT_BOOL_PRIM2NV_ELEM_OP = {
+#if TRT_VERSION_GE(7, 2)
   {schema::PrimitiveType_Less, nvinfer1::ElementWiseOperation::kLESS},
   {schema::PrimitiveType_Greater, nvinfer1::ElementWiseOperation::kGREATER},
+#endif
   {schema::PrimitiveType_AddFusion, nvinfer1::ElementWiseOperation::kSUM},
   {schema::PrimitiveType_PowFusion, nvinfer1::ElementWiseOperation::kPOW},
   {schema::PrimitiveType_DivFusion, nvinfer1::ElementWiseOperation::kDIV},
@@ -64,7 +69,6 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
   }
 
   bool is_bool_arith = BOOL_PRIM2NV_ELEM_OP.find(type_) != BOOL_PRIM2NV_ELEM_OP.end();
-  bool is_not_bool_arith = NOT_BOOL_PRIM2NV_ELEM_OP.find(type_) != NOT_BOOL_PRIM2NV_ELEM_OP.end();
   if (is_bool_arith) {
     if (!std::all_of(in_tensors.begin(), in_tensors.end(), [](const mindspore::MSTensor &tensor) {
           return tensor.DataType() == DataType::kNumberTypeBool;
@@ -74,6 +78,7 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     }
     element_wise_op_ = BOOL_PRIM2NV_ELEM_OP[type_];
   }
+  bool is_not_bool_arith = NOT_BOOL_PRIM2NV_ELEM_OP.find(type_) != NOT_BOOL_PRIM2NV_ELEM_OP.end();
   if (is_not_bool_arith) {
     if (std::any_of(in_tensors.begin(), in_tensors.end(),
                     [](const mindspore::MSTensor &tensor) { return tensor.DataType() == DataType::kNumberTypeBool; })) {
@@ -322,8 +327,10 @@ REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Eltwise, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Minimum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Maximum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_BiasAdd, ElementWiseTensorRT)
+#if TRT_VERSION_GE(7, 2)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Less, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Greater, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalOr, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalAnd, ElementWiseTensorRT)
+#endif
 }  // namespace mindspore::lite
