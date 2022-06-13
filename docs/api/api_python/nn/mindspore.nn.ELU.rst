@@ -20,7 +20,7 @@ mindspore.nn.ELU
 
     **参数：**
 
-    - **alpha** (`float`) – ELU的alpha值，数据类型为浮点数。默认值：1.0。
+    - **alpha** (`float`) - ELU的alpha值，数据类型为浮点数。默认值：1.0。
 
     **输入：**
 
