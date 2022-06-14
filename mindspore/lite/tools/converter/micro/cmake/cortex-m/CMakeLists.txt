@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(Micro)
-
-string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wno-strict-aliasing")
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 set(MICRO_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
@@ -28,7 +26,7 @@ file(GLOB CMSIS_OPS
         ${CMSIS_DIR}/CMSIS/NN/Source/ReshapeFunctions/*.c
         ${CMSIS_DIR}/CMSIS/NN/Source/SoftmaxFunctions/*.c
         )
-list(REMOVE_ITEM CMSIS_OPS ${CMSIS_DIR}/CMSIS/NN/Source/NNSupportFunctions/arm_nn_mat_mult_nt_t_s8.c)
+
 add_library(cmsis_nn STATIC ${CMSIS_OPS})
 
 include_directories(${MICRO_DIR}/coder/)

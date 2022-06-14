@@ -193,7 +193,7 @@ function Run_cortex_m_codegen() {
 
       # 1. build benchmark
       mkdir -p ${output_file}/build || exit 1
-      cp ${cortex_path}/mindspore-lite-${version}-cortex-m7.tar.gz ${output_file}/build/ || exit 1
+      cp ${cortex_path}/mindspore-lite-${version}-none-cortex-m7.tar.gz ${output_file}/build/ || exit 1
       cd ${output_file} || exit 1
       in_data=`cat ${models_path}/input_output/input/${model_name}.ms.in.txt`
       out_data=`cat ${models_path}/input_output/output/${model_name}.ms.out.txt`
@@ -202,9 +202,10 @@ function Run_cortex_m_codegen() {
       bash build.sh || exit 1
       cd ${stm_demo_file} || exit 1
       [ -n "${stm_demo_file}" ] && rm -rf ${stm_demo_file}/build
-      sed -i "s/LITE_PACK =/LITE_PACK = mindspore-lite-${version}-cortex-m7/g" Makefile
+      sed -i "s/LITE_PACK =/LITE_PACK = mindspore-lite-${version}-none-cortex-m7/g" Makefile
       make >> "$4" || return 1
 
+      continue
       # 2. run benchmark
       bash ${STM32_CUBE_PROG_PATH}/bin/STM32_Programmer.sh -c port=SWD -w build/test_767_01.bin 0x08000000 -s 0x08000000 || exit 1
       sleep 3
@@ -411,7 +412,7 @@ done
 x86_path=${release_path}/centos_x86
 arm32_path=${release_path}/android_aarch32/npu
 arm64_path=${release_path}/android_aarch64/npu
-cortex_path=${release_path}/cortex-m
+cortex_path=${release_path}/none_cortex-m
 file_name=$(ls ${x86_path}/*-linux-x64.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
