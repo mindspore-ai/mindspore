@@ -25,9 +25,6 @@ csr_mm_op_info = AkgCpuRegOp("CSRMM") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.F32_Default, \
                   DataType.F32_Default, \
                   DataType.F32_Default) \
-    .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.F32_Default, \
-                  DataType.F32_Default, \
-                  DataType.F32_Default) \
     .get_op_info()
 
 
