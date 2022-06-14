@@ -238,7 +238,6 @@ from .nn_func import (
     nll_loss,
     cross_entropy,
     grid_sample,
-    resize_bilinear,
 )
 from .linalg_func import (
     svd,
@@ -250,6 +249,9 @@ from .sparse_func import (
 from .random_func import (
     standard_laplace,
 )
+from .image_func import (
+    resize_bilinear,
+)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -259,4 +261,5 @@ __all__.extend(nn_func.__all__)
 __all__.extend(linalg_func.__all__)
 __all__.extend(sparse_func.__all__)
 __all__.extend(random_func.__all__)
+__all__.extend(image_func.__all__)
 __all__.sort()

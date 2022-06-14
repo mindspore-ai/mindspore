@@ -22,7 +22,7 @@ from .grad_base import bprop_getters
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations import nn_ops as NN
+from ..operations import image_ops as IMG
 
 
 def _get_matrix_diag_assist(x_shape, x_dtype):
@@ -157,7 +157,7 @@ def get_bprop_ps_roi_pooling(self):
     return bprop
 
 
-@bprop_getters.register(NN.ResizeBilinearV2)
+@bprop_getters.register(IMG.ResizeBilinearV2)
 def get_bprop_resize_bilinear(self):
     """Grad definition for `ResizeBilinearV2` operation."""
     resize_grad = G.ResizeBilinearGrad(self.align_corners, self.half_pixel_centers)
