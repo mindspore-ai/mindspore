@@ -296,7 +296,9 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
     for (auto &base_actor : base_actors) {
       MS_EXCEPTION_IF_NULL(base_actor);
       EraseActor(base_actor->GetAID().Name());
-      actor_manager->Terminate(base_actor->GetAID());
+      if (base_actor->parent_fusion_actor_ == nullptr) {
+        actor_manager->Terminate(base_actor->GetAID());
+      }
     }
   }
 
@@ -431,11 +433,24 @@ void GraphScheduler::BuildAndScheduleGlobalActor() {
   (void)actor_manager->Spawn(base_actor, false);
 
   // Create and schedule recorder actor.
-  auto recorder_actor = std::make_shared<RecorderActor>();
-  MS_EXCEPTION_IF_NULL(recorder_actor);
-  recorder_aid_ = &(recorder_actor->GetAID());
-  auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
-  (void)actor_manager->Spawn(base_recorder_actor, true);
+  bool recorder_actor_need = false;
+#ifndef ENABLE_SECURITY
+  if (profiler::ProfilerManager::GetInstance()->GetProfilingEnableFlag()) {
+    recorder_actor_need = true;
+  }
+#endif
+#ifdef ENABLE_DUMP_IR
+  if (mindspore::RecorderManager::Instance().RdrEnable()) {
+    recorder_actor_need = true;
+  }
+#endif
+  if (recorder_actor_need) {
+    auto recorder_actor = std::make_shared<RecorderActor>();
+    MS_EXCEPTION_IF_NULL(recorder_actor);
+    recorder_aid_ = &(recorder_actor->GetAID());
+    auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
+    (void)actor_manager->Spawn(base_recorder_actor, true);
+  }
 
   // Create and schedule debug actor.
   // debugger_actor_need is true for CPU when e2e dump is enabled and for Ascend and GPU is true when debugger or dump
@@ -546,6 +561,22 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   SignalGuard sg(IntHandler);
+#endif
+
+  // Create recorder actor in the running to support the profiler in callback scene.
+#ifndef ENABLE_SECURITY
+  if (profiler::ProfilerManager::GetInstance()->GetProfilingEnableFlag() && (recorder_aid_ == nullptr)) {
+    auto recorder_actor = std::make_shared<RecorderActor>();
+    MS_EXCEPTION_IF_NULL(recorder_actor);
+    recorder_aid_ = &(recorder_actor->GetAID());
+    auto base_recorder_actor = static_cast<ActorReference>(recorder_actor);
+    auto actor_manager = ActorMgr::GetActorMgrRef();
+    MS_EXCEPTION_IF_NULL(actor_manager);
+    (void)actor_manager->Spawn(base_recorder_actor, true);
+    if (actor_set->loop_count_actor_ != nullptr) {
+      actor_set->loop_count_actor_->recorder_aid_ = recorder_aid_;
+    }
+  }
 #endif
 
   // Construct OpContext.
