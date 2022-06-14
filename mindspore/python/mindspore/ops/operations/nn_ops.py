@@ -9011,37 +9011,27 @@ class ApplyAdamWithAmsgrad(Primitive):
         ValueError: If the shape of `beta1_power`, `beta2_power`, `lr` is not 0.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> class ApplyAdamWithAmsgradNet(nn.Cell):
-        ...     def __init__(self, beta1, beta2, epsilon, use_locking=False):
+        ...     def __init__(self, beta1=0.9, beta2=0.999, epsilon=1e-8, use_locking=False):
         ...         super(ApplyAdamWithAmsgradNet, self).__init__()
         ...         self.apply_adam_with_amsgrad = P.ApplyAdamWithAmsgrad(beta1, beta2, epsilon, use_locking)
-        ...         self.var = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="var")
-        ...         self.m = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="m")
-        ...         self.v = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="v")
-        ...         self.vhat = Parameter(Tensor(np.array([[0.2, 0.3], [0.1, 0.4]]).astype(np.float32)), name="vhat")
+        ...         self.var = Parameter(Tensor(np.array([[0.2, 0.2], [0.2, 0.2]]).astype(np.float32)), name="var")
+        ...         self.m = Parameter(Tensor(np.array([[0.1, 0.2], [0.4, 0.3]]).astype(np.float32)), name="m")
+        ...         self.v = Parameter(Tensor(np.array([[0.2, 0.1], [0.3, 0.4]]).astype(np.float32)), name="v")
+        ...         self.vhat = Parameter(Tensor(np.array([[0.1, 0.2], [0.6, 0.2]]).astype(np.float32)), name="vhat")
         ...     def construct(self, beta1_power, beta2_power, lr, grad):
         ...         out = self.apply_adam_with_amsgrad(self.var, self.m, self.v, self.vhat,
         ...                                            beta1_power, beta2_power, lr, grad)
         ...         return out
-        >>> net = ApplyAdamWithAmsgradNet(0.1, 0.1, 0.001)
-        >>> beta1_power = Tensor(0.3, mstype.float32)
-        >>> beta2_power = Tensor(0.3, mstype.float32)
-        >>> lr = Tensor(0.3, mstype.float32)
-        >>> grad = Tensor(np.array([[0.3, 0.2], [0.4, 0.1]]).astype(np.float32))
-        >>> output = net(beta1_power, beta2_power, lr, grad)
-        >>> print(output)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[-3.19985598e-02,  1.62773281e-01],
-        [-2.37216085e-01,  3.26413274e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 2.90000021e-01,  2.09999993e-01],
-        [ 3.69999975e-01,  1.29999995e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.01000004e-01,  6.59999996e-02],
-        [ 1.54000014e-01,  4.90000024e-02]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 2.00000003e-01,  3.00000012e-01],
-        [ 1.54000014e-01,  4.00000006e-01]]))
+        >>> net = ApplyAdamWithAmsgradNet()
+        >>> grad = Tensor(np.array([[0.4, 0.2], [0.2, 0.3]]).astype(np.float32))
+        >>> output = net(Tensor(0.9, mstype.float32), Tensor(0.999, mstype.float32), Tensor(0.01, mstype.float32), grad)
+        >>> print(net.var.asnumpy())
+        [[0.19908068 0.1985858 ]
+        [0.19844866 0.19849943]]
     """
 
     __mindspore_signature__ = (
@@ -9056,12 +9046,16 @@ class ApplyAdamWithAmsgrad(Primitive):
     )
 
     @prim_attr_register
-    def __init__(self, beta1, beta2, epsilon, use_locking=False):
+    def __init__(self, beta1=0.9, beta2=0.999, epsilon=1e-8, use_locking=False):
         """Initialize ApplyAdamWithAmsgrad"""
         validator.check_value_type("beta1", beta1, [float], self.name)
+        validator.check_float_range(beta1, 0.0, 1.0, Rel.INC_NEITHER, "beta1", self.name)
         validator.check_value_type("beta2", beta2, [float], self.name)
+        validator.check_float_range(beta2, 0.0, 1.0, Rel.INC_NEITHER, "beta2", self.name)
         validator.check_value_type("epsilon", epsilon, [float], self.name)
+        validator.check_positive_float(epsilon, 'epsilon', self.name)
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.add_prim_attr("side_effect_mem", True)
 
 
 class GridSampler3D(Primitive):

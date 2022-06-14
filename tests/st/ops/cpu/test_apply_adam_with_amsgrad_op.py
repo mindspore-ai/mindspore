@@ -1,0 +1,181 @@
+# Copyright 2022 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+import math
+import pytest
+import numpy as np
+import mindspore.nn as nn
+from mindspore.ops import operations as P
+from mindspore import Tensor, context, Parameter
+from mindspore.ops.functional import vmap
+
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
+
+class ApplyAdamWithAmsgradTEST(nn.Cell):
+    def __init__(self, beta1=0.9, beta2=0.999, epsilon=1e-8, use_locking=False):
+        super(ApplyAdamWithAmsgradTEST, self).__init__()
+        self.apply_adam_with_amsgrad = P.ApplyAdamWithAmsgrad(beta1, beta2, epsilon, use_locking)
+        self.var_np = np.array([[0.2, 0.2], [0.4, 0.2]]).astype(np.float32)
+        self.m_np = np.array([[0.1, 0.2], [0.4, 0.3]]).astype(np.float32)
+        self.v_np = np.array([[0.2, 0.1], [0.3, 0.4]]).astype(np.float32)
+        self.vhat_np = np.array([[0.1, 0.2], [0.6, 0.2]]).astype(np.float32)
+        self.var = Parameter(Tensor(self.var_np), name="var")
+        self.m = Parameter(Tensor(self.m_np), name="m")
+        self.v = Parameter(Tensor(self.v_np), name="v")
+        self.vhat = Parameter(Tensor(self.vhat_np), name="vhat")
+
+    def construct(self, beta1_power, beta2_power, lr, grad):
+        return self.apply_adam_with_amsgrad(self.var, self.m, self.v, self.vhat, beta1_power, beta2_power, lr, grad)
+
+
+def numpy_apply_adam_with_amsgrad(var, m, v, vhat, grad, beta1=0.9, beta2=0.999, eps=1e-8, lr=0.01):
+    new_lr = lr * math.sqrt(1 - beta2) / (1 - beta1)
+    m = m * beta1 + grad * (1 - beta1)
+    v = v * beta2 + grad * grad * (1 - beta2)
+    vhat = np.maximum(vhat, v)
+    var = var - new_lr * m / (np.sqrt(vhat) + eps)
+    return var, m, v, vhat
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize("data_type", [np.float32, np.float16])
+def test_apply_adam_with_amsgrad_op(data_type):
+    """
+    Feature: ApplyAdamWithAmsgrad cpu kernel
+    Description: test the ApplyAdamWithAmsgrad.
+    Expectation: match to np benchmark.
+    """
+    amsgrad = ApplyAdamWithAmsgradTEST()
+    error = 1e-4
+    if data_type == np.float16:
+        error = 1e-3
+
+    grad_np = np.array([[0.4, 0.2], [0.2, 0.3]]).astype(np.float32)
+    grad = Tensor(grad_np)
+
+    output = amsgrad(Tensor(0.9), Tensor(0.999), Tensor(0.01), grad)
+    ms_var, ms_m, ms_v, ms_vhat = output[0].asnumpy(), output[1].asnumpy(), output[2].asnumpy(), output[3].asnumpy()
+    np_var, np_m, np_v, np_vhat = numpy_apply_adam_with_amsgrad(amsgrad.var_np, amsgrad.m_np,
+                                                                amsgrad.v_np, amsgrad.vhat_np, grad_np)
+
+    np.testing.assert_allclose(ms_var, np_var, rtol=error, atol=error)
+    np.testing.assert_allclose(ms_m, np_m, rtol=error, atol=error)
+    np.testing.assert_allclose(ms_v, np_v, rtol=error, atol=error)
+    np.testing.assert_allclose(ms_vhat, np_vhat, rtol=error, atol=error)
+
+
+class AmsgradNetVmap(nn.Cell):
+    def __init__(self, net):
+        super(AmsgradNetVmap, self).__init__()
+        self.net = net
+        self.var_np = np.array([[[0.6, 0.4], [0.1, 0.5]], [[1.6, 1.4], [1.1, 1.5]]]).astype(np.float32)
+        self.m_np = np.array([[[0.6, 0.5], [0.2, 0.6]], [[1.6, 1.5], [1.2, 1.6]]]).astype(np.float32)
+        self.v_np = np.array([[[0.6, 0.5], [0.2, 0.6]], [[1.6, 1.5], [1.2, 1.6]]]).astype(np.float32)
+        self.vhat_np = np.array([[[0.6, 0.4], [0.1, 0.5]], [[1.6, 1.4], [1.1, 1.5]]]).astype(np.float32)
+        self.var = Parameter(Tensor(self.var_np), name="var")
+        self.m = Parameter(Tensor(self.m_np), name="m")
+        self.v = Parameter(Tensor(self.v_np), name="v")
+        self.vhat = Parameter(Tensor(self.vhat_np), name="vhat")
+        self.vmap_amsgrad = vmap(self.net, in_axes=(
+            0, 0, 0, 0, None, None, None, 0), out_axes=0)
+
+    def construct(self, beta1_power, beta2_power, lr, grad):
+        return self.vmap_amsgrad(self.var, self.m, self.v, self.vhat, beta1_power, beta2_power, lr, grad)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_apply_adam_witm_amsgrad_op_vmap():
+    """
+    Feature: ApplyAdamWithAmsgrad cpu kernel
+    Description: test the ApplyAdamWithAmsgrad vmap.
+    Expectation: match to np benchmark.
+    """
+    def cal_amsgrad(var, m, v, vhat, beta1_power, beta2_power, lr, grad):
+        return P.ApplyAdamWithAmsgrad()(var, m, v, vhat, beta1_power, beta2_power, lr, grad)
+
+    error = 1e-4
+    grad_np = np.array([[[0.3, 0.7], [0.1, 0.8]], [[0.3, 0.7], [0.1, 0.8]]]).astype(np.float32)
+    grad = Tensor(grad_np)
+
+    vmap_amsgrad = AmsgradNetVmap(cal_amsgrad)
+    _ = vmap_amsgrad(Tensor(0.9), Tensor(0.999), Tensor(0.01), grad)
+    ms_var, ms_m = vmap_amsgrad.var.asnumpy(), vmap_amsgrad.m.asnumpy()
+    ms_v, ms_vhat = vmap_amsgrad.v.asnumpy(), vmap_amsgrad.vhat.asnumpy()
+    np_var, np_m, np_v, np_vhat = numpy_apply_adam_with_amsgrad(vmap_amsgrad.var_np, vmap_amsgrad.m_np,
+                                                                vmap_amsgrad.v_np, vmap_amsgrad.vhat_np, grad_np)
+
+    np.testing.assert_allclose(ms_var, np_var, rtol=error, atol=error)
+    np.testing.assert_allclose(ms_m, np_m, rtol=error, atol=error)
+    np.testing.assert_allclose(ms_v, np_v, rtol=error, atol=error)
+    np.testing.assert_allclose(ms_vhat, np_vhat, rtol=error, atol=error)
+
+
+class AmsgradNetVmap2(nn.Cell):
+    def __init__(self, net):
+        super(AmsgradNetVmap2, self).__init__()
+        self.net = net
+        self.var_np = np.array([[[[0.6, 0.4], [0.1, 0.5]], [[1.6, 0.4], [0.1, 1.5]]],
+                                [[[0.6, 1.4], [1.1, 0.5]], [[2.6, 0.4], [0.1, 3.5]]]]).astype(np.float32)
+        self.m_np = np.array([[[[0.6, 0.5], [0.2, 0.6]], [[1.6, 0.5], [0.2, 0.6]]],
+                              [[[0.6, 0.5], [0.2, 1.6]], [[0.6, 0.5], [1.2, 0.6]]]]).astype(np.float32)
+        self.v_np = np.array([[[[0.6, 0.5], [0.2, 0.6]], [[1.6, 0.5], [0.2, 0.6]]],
+                              [[[0.6, 0.5], [0.2, 1.6]], [[0.6, 1.5], [0.2, 0.6]]]]).astype(np.float32)
+        self.vhat_np = np.array([[[[0.6, 0.4], [0.1, 0.5]], [[0.6, 0.4], [0.1, 0.5]]],
+                                 [[[0.6, 0.4], [0.1, 0.5]], [[0.6, 0.4], [0.1, 0.5]]]]).astype(np.float32)
+        self.var = Parameter(Tensor(self.var_np), name="var")
+        self.m = Parameter(Tensor(self.m_np), name="m")
+        self.v = Parameter(Tensor(self.v_np), name="v")
+        self.vhat = Parameter(Tensor(self.vhat_np), name="vhat")
+
+        self.vmap_amsgrad = vmap(vmap(self.net, in_axes=(0, 0, 0, 0, None, None, None, 0), out_axes=0),
+                                 in_axes=(0, 0, 0, 0, None, None, None, 0), out_axes=0)
+
+    def construct(self, beta1_power, beta2_power, lr, grad):
+        return self.vmap_amsgrad(self.var, self.m, self.v, self.vhat, beta1_power, beta2_power, lr, grad)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_apply_adam_with_amsgrad_grad_op_vmap2():
+    """
+    Feature: ApplyAdamWithAmsgrad cpu kernel
+    Description: test the ApplyAdamWithAmsgrad vmap.
+    Expectation: match to np benchmark.
+    """
+    def cal_amsgrad(var, m, v, vhat, beta1_power, beta2_power, lr, grad):
+        return P.ApplyAdamWithAmsgrad()(var, m, v, vhat, beta1_power, beta2_power, lr, grad)
+
+    error = 1e-4
+    grad_np = np.array([[[[0.3, 0.7], [0.1, 0.8]], [[0.3, 0.7], [0.1, 0.8]]],
+                        [[[0.3, 0.7], [0.1, 0.8]], [[0.3, 0.7], [0.1, 0.8]]]]).astype(np.float32)
+    grad = Tensor(grad_np)
+
+
+    vmap_amsgrad = AmsgradNetVmap2(cal_amsgrad)
+    _ = vmap_amsgrad(Tensor(0.9), Tensor(0.999), Tensor(0.01), grad)
+    ms_var, ms_m = vmap_amsgrad.var.asnumpy(), vmap_amsgrad.m.asnumpy()
+    ms_v, ms_vhat = vmap_amsgrad.v.asnumpy(), vmap_amsgrad.vhat.asnumpy()
+    np_var, np_m, np_v, np_vhat = numpy_apply_adam_with_amsgrad(vmap_amsgrad.var_np, vmap_amsgrad.m_np,
+                                                                vmap_amsgrad.v_np, vmap_amsgrad.vhat_np, grad_np)
+
+    np.testing.assert_allclose(ms_var, np_var, rtol=error, atol=error)
+    np.testing.assert_allclose(ms_m, np_m, rtol=error, atol=error)
+    np.testing.assert_allclose(ms_v, np_v, rtol=error, atol=error)
+    np.testing.assert_allclose(ms_vhat, np_vhat, rtol=error, atol=error)

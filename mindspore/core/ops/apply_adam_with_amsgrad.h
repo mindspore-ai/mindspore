@@ -31,6 +31,22 @@ class MIND_API ApplyAdamWithAmsgrad : public BaseOperator {
   ApplyAdamWithAmsgrad() : BaseOperator(kNameApplyAdamWithAmsgrad) {
     InitIOName({"var", "m", "v", "vhat", "beta1_power", "beta2_power", "lr", "grad"}, {"var", "m", "v", "vhat"});
   }
+
+  void set_beta1(const float beta1);
+
+  void set_beta2(const float beta2);
+
+  void set_epsilon(const float epsilon);
+
+  void set_use_locking(const bool use_locking);
+
+  float get_beta1() const;
+
+  float get_beta2() const;
+
+  float get_epsilon() const;
+
+  bool get_use_locking() const;
 };
 
 abstract::AbstractBasePtr ApplyAdamWithAmsgradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
