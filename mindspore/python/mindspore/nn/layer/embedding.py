@@ -242,7 +242,7 @@ class EmbeddingLookup(Cell):
         else:
             self.gatherv2 = P.Gather()
         self.embeddinglookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
-        self.is_ps_server = _is_role_pserver() and _enable_distributed_mindrt()
+        self.is_ps_server = False
         enable_ps = _get_ps_context("enable_ps")
         if enable_ps:
             self._process_vocab_cache(slice_mode)
@@ -325,6 +325,7 @@ class EmbeddingLookup(Cell):
                 logger.warning("The configuration of 'vocab_cache_size' is valid only in parameter server training "
                                "mode, current mode is not parameter server trainning mode, so it will be ignored.")
                 return
+            self.is_ps_server = _is_role_pserver() and _enable_distributed_mindrt()
             parallel_mode = _get_parallel_mode()
             is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
             if is_auto_parallel:
