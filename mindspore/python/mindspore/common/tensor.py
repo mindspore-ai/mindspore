@@ -3740,7 +3740,7 @@ class Tensor(Tensor_):
 
     def gather_elements(self, dim, index):
         """
-        Gathers values along an axis specified by dim.
+        Gathers elements along an axis specified by dim.
 
         Args:
             dim (int): The axis along which to index. It must be int32 or int64.
