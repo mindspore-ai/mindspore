@@ -756,7 +756,7 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('bitwise_xor')(self, x)
 
-    def tensor_scatter_mul(self, indices, updates):
+    def scatter_mul(self, indices, updates):
         """
         Creates a new tensor by multiplying the values from the positions in self tensor indicated by
         `indices`, with values from `updates`. When divided values are provided for the same
@@ -802,7 +802,7 @@ class Tensor(Tensor_):
             >>> #      first_input_x = input_x[0][0] * updates[0] = [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
             >>> # 6, Perform the multiply operation for the second time:
             >>> #      second_input_x = input_x[0][0] * updates[1] = [[-0.22, 0.3, 3.6], [0.4, 0.5, -3.2]]
-            >>> output = input_x.tensor_scatter_mul(indices, updates)
+            >>> output = input_x.scatter_mul(indices, updates)
             >>> print(output)
             [[-0.22  0.3   3.6  ]
              [ 0.4   0.5   -3.2 ]]
@@ -810,7 +810,7 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('tensor_scatter_mul')(self, indices, updates)
 
-    def tensor_scatter_div(self, indices, updates):
+    def scatter_div(self, indices, updates):
         """
         Creates a new tensor by dividing the values from the positions in self tensor indicated by
         `indices`, with values from `updates`. When divided values are provided for the same
@@ -850,7 +850,7 @@ class Tensor(Tensor_):
             >>> input_x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]).astype('float32'))
             >>> indices = Tensor(np.array([[0, 0], [0, 0]]).astype('int32'))
             >>> updates = Tensor(np.array([1.0, 2.0]).astype('float32'))
-            >>> output = input_x.tensor_scatter_div(indices, updates)
+            >>> output = input_x.scatter_div(indices, updates)
             >>> print(output)
             [[-0.05, 0.3, 3.6  ]
              [ 0.4,  0.5, -3.2 ]]
@@ -2389,7 +2389,7 @@ class Tensor(Tensor_):
         return reduce_(self, reduce_min(keepdims), cmp_fn=minimum(), axis=axis, keepdims=keepdims,
                        initial=initial, where=where)
 
-    def tensor_scatter_add(self, indices, updates):
+    def scatter_add(self, indices, updates):
         """
         Creates a new tensor by adding the values from the positions in self tensor indicated by
         `indices`, with values from `updates`. When multiple values are given for the same
@@ -2427,7 +2427,7 @@ class Tensor(Tensor_):
             >>> x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype('float32'))
             >>> indices = Tensor(np.array([[0, 0], [0, 0]]).astype('int32'))
             >>> updates = Tensor(np.array([1.0, 2.2]).astype('float32'))
-            >>> output = x.tensor_scatter_add(indices, updates)
+            >>> output = x.scatter_add(indices, updates)
             >>> print(output)
             [[ 3.1  0.3  3.6]
             [ 0.4  0.5 -3.2]]
@@ -2435,7 +2435,7 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get("tensor_scatter_add")()(self, indices, updates)
 
-    def tensor_scatter_sub(self, indices, updates):
+    def scatter_sub(self, indices, updates):
         """
         Creates a new tensor by subtracting the values from the positions in self tensor indicated by
         `indices`, with values from `updates`. When multiple values are provided for the same
@@ -2473,7 +2473,7 @@ class Tensor(Tensor_):
             >>> x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype('float32'))
             >>> indices = Tensor(np.array([[0, 0], [0, 0]]).astype('int32'))
             >>> updates = Tensor(np.array([1.0, 2.2]).astype('float32'))
-            >>> output = x.tensor_scatter_sub(indices, updates)
+            >>> output = x.scatter_sub(indices, updates)
             >>> print(output)
             [[-3.3000002  0.3        3.6      ]
             [ 0.4        0.5       -3.2      ]]
@@ -2481,7 +2481,7 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('tensor_scatter_sub')()(self, indices, updates)
 
-    def tensor_scatter_min(self, indices, updates):
+    def scatter_min(self, indices, updates):
         """
         By comparing the value at the position indicated by `indices` in self tensor with the value in the `updates`,
         the value at the index will eventually be equal to the smallest one to create a new tensor.
@@ -2516,7 +2516,7 @@ class Tensor(Tensor_):
             >>> x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype('float32'))
             >>> indices = Tensor(np.array([[0, 0], [0, 0]]).astype('int32'))
             >>> updates = Tensor(np.array([1.0, 2.2]).astype('float32'))
-            >>> output = x.tensor_scatter_min(indices, updates)
+            >>> output = x.scatter_min(indices, updates)
             >>> print(output)
             [[ -0.1  0.3  3.6]
             [ 0.4  0.5 -3.2]]

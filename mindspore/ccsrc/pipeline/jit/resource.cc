@@ -112,7 +112,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__lt__", prim::kPrimScalarLt},                  // P.scalar_lt,
        {"__gt__", prim::kPrimScalarGt},                  // P.scalar_gt,
        {"__le__", prim::kPrimScalarLe},                  // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,mindspore/ccsrc/pipeline/jit/resource.cc
+       {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,
        {"__bool__", std::string("float_bool")},          // C.float_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},    // P.scalar_to_array,
      }},
@@ -234,11 +234,11 @@ BuiltInTypeMap &GetMethodMap() {
        {"padding", std::string("padding")},                                // padding()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()
        {"take", std::string("take")},                                      // P.GatherNd()
-       {"tensor_scatter_add", std::string("tensor_scatter_add")},          // P.TensorScatterAdd()
-       {"tensor_scatter_mul", std::string("tensor_scatter_mul")},          // tensor_scatter_mul()
-       {"tensor_scatter_sub", std::string("tensor_scatter_sub")},          // P.TensorScatterSub()
-       {"tensor_scatter_min", std::string("tensor_scatter_min")},          // P.TensorScatterMin()
-       {"tensor_scatter_div", std::string("tensor_scatter_div")},          // P.TensorScatterDiv()
+       {"scatter_add", std::string("tensor_scatter_add")},                 // P.TensorScatterAdd()
+       {"scatter_mul", std::string("tensor_scatter_mul")},                 // tensor_scatter_mul()
+       {"scatter_sub", std::string("tensor_scatter_sub")},                 // P.TensorScatterSub()
+       {"scatter_min", std::string("tensor_scatter_min")},                 // P.TensorScatterMin()
+       {"scatter_div", std::string("tensor_scatter_div")},                 // P.TensorScatterDiv()
        {"lp_norm", std::string("lp_norm")},                                // lp_norm()
        {"renorm", std::string("renorm")},                                  // renorm()
        {"trace", std::string("trace")},                                    // P.Eye()
