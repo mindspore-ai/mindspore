@@ -21,12 +21,12 @@ mindspore.ops.adaptive_avg_pool2d
         * (w_{end}- w_{start})}
         \end{align}
 
-    **输入：**
+    **参数：**
 
     - **input_x** (Tensor) - adaptive_avg_pool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
     - **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，也可以是H * H的单个H，或None，如果是None，则意味着输出大小与输入相同。
 
-    **输出：**
+    **返回：**
 
     Tensor，数据类型与 `input_x` 相同。
 

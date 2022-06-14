@@ -9,13 +9,13 @@ mindspore.ops.masked_fill
     .. note::
         Ascend平台暂不支持batch维输入。即，`value` 要求为0维的Tensor或者float。
 
-    **输入：**
+    **参数：**
 
     - **input_x** (Tensor) - 输入Tensor，其数据类型为float16、float32、int8、或int32。
     - **mask** (Tensor[bool]) - 输入的掩码，其数据类型为bool。
     - **value** (Union[float, Tensor]) - 用来填充的值，其数据类型与 `input_x` 相同。
 
-    **输出：**
+    **返回：**
 
     Tensor，输出与输入的数据类型和shape相同。
 
