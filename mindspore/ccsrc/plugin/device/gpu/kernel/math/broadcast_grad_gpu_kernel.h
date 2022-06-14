@@ -29,19 +29,18 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int kMaxShapeSize = 4;
-class BroadcastOpGradGpuKernelMod : public NativeGpuKernelMod {
+class BroadcastOpGradGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<BroadcastOpGradGpuKernelMod> {
  public:
-  BroadcastOpGradGpuKernelMod() { ResetResource(); }
+  BroadcastOpGradGpuKernelMod() = default;
   ~BroadcastOpGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
     if (is_null_input_) {
       return true;
     }
-    cuda_stream_ = cuda_stream;
-    return kernel_func_(this, inputs, outputs);
+    cuda_stream_ = reinterpret_cast<cudaStream_t>(cuda_stream);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -50,35 +49,30 @@ class BroadcastOpGradGpuKernelMod : public NativeGpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  std::vector<KernelAttr> GetOpSupport() override;
+  using KernelFunc = std::vector<std::pair<KernelAttr, BroadcastOpGradGpuKernelMod::KernelRunFunc>>;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  void ResetResource() noexcept;
-
-  void InitSizeLists();
-
   bool GetOpType();
 
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  using BroadCastFunc = std::function<bool(BroadcastOpGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                           const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
+                    const std::vector<AddressPtr> &outputs);
 
   BroadcastGradOpType op_type_{BROADCAST_GRAD_TYPE_INVALID};
+  size_t output_num_{1};
   bool need_broadcast_{false};
   bool is_null_input_{false};
   bool grad_x_{false};
   bool grad_y_{false};
-  size_t unit_size_{1};
-  size_t input0_num_{1};
-  size_t input1_num_{1};
-  size_t output_num_{1};
-  size_t x0_shape_[kMaxShapeSize] = {1, 1, 1, 1};
-  size_t x1_shape_[kMaxShapeSize] = {1, 1, 1, 1};
-  size_t dy_shape_[kMaxShapeSize] = {1, 1, 1, 1};
-  void *cuda_stream_{nullptr};
-  BroadCastFunc kernel_func_{};
-  static std::vector<std::pair<KernelAttr, BroadCastFunc>> func_list_;
+  std::vector<size_t> x1_shape_;
+  std::vector<size_t> x2_shape_;
+  std::vector<size_t> dy_shape_;
+  cudaStream_t cuda_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
