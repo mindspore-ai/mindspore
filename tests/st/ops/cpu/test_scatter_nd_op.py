@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
@@ -233,3 +234,58 @@ def test_scatternd_vmap():
     Expectation: success
     """
     vmap_1_batch()
+
+
+class FunctionalNet(nn.Cell):
+    def __init__(self, _shape):
+        super(FunctionalNet, self).__init__()
+        self.shape = _shape
+
+    def construct(self, indices, update):
+        return ops.scatter_nd(indices, update, self.shape)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatternd_functional():
+    """
+    Feature: ScatterNd
+    Description: statternd functional interface, graph mode
+    Expectation: success
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int32)
+    update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(np.float32)
+    shape = (2, 2)
+    expect = np.array([[0., 5.3],
+                       [0., 1.1]]).astype(np.float32)
+    scatternd = FunctionalNet(shape)
+    output = scatternd(Tensor(indices), Tensor(update)).asnumpy()
+    error = np.ones(shape=output.shape) * 1.0e-6
+    diff = output - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatternd_functional_pynative():
+    """
+    Feature: ScatterNd
+    Description: statternd functional interface, pynative mode
+    Expectation: success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    indices = Tensor(np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int32))
+    update = Tensor(np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(np.float32))
+    shape = (2, 2)
+    expect = np.array([[0., 5.3],
+                       [0., 1.1]]).astype(np.float32)
+
+    output = ops.scatter_nd(indices, update, shape).asnumpy()
+    error = np.ones(shape=output.shape) * 1.0e-6
+    diff = output - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)

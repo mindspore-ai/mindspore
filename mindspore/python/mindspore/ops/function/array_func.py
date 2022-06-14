@@ -986,6 +986,62 @@ def slice(input_x, begin, size):
     return tensor_slice(input_x, begin, size)
 
 
+def concat(input_x, axis=0):
+    r"""
+    Connect tensor in the specified axis.
+
+    Connect input tensors along with the given axis.
+
+    The input data is a tuple of tensors. These tensors have the same rank :math:`R`. Set the given axis as :math:`m`,
+    and :math:`0 \le m < R`. Set the number of input tensors as :math:`N`. For the :math:`i`-th tensor :math:`t_i`,
+    it has the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`. :math:`x_{mi}` is the :math:`m`-th dimension of the
+    :math:`t_i`. Then, the shape of the output tensor is
+
+    .. math::
+
+        (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
+
+    .. warning::
+        The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+
+    Args:
+        input_x (tuple, list): A tuple or a list of input tensors.
+            Suppose there are two tensors in this tuple or list, namely t1 and t2.
+            To perform `concat` in the axis 0 direction, except for the :math:`0`-th axis,
+            all other dimensions should be equal, that is,
+            :math:`t1.shape[1] = t2.shape[1], t1.shape[2] = t2.shape[2], ..., t1.shape[R-1] = t2.shape[R-1]`,
+        axis (int): The specified axis. Default: 0.
+
+    Returns:
+        Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
+            The data type is the same with `input_x`.
+
+    Raises:
+        TypeError: If `axis` is not an int.
+        ValueError: If `input_x` have different dimension of tensor.
+        ValueError: If `axis` not in [-dims, dims - 1].
+        RuntimeError: If tensor's shape in `input_x` except for `axis` are different.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> input_x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> output = ops.concat((input_x1, input_x2))
+        >>> print(output)
+        [[0. 1.]
+         [2. 1.]
+         [0. 1.]
+         [2. 1.]]
+        >>> output = ops.concat((input_x1, input_x2), 1)
+        >>> print(output)
+        [[0. 1. 0. 1.]
+         [2. 1. 2. 1.]]
+    """
+    return P.Concat(axis)(input_x)
+
+
 def expand_dims(input_x, axis):
     """
     Adds an additional dimension to `input_x` at the given axis.
@@ -3132,6 +3188,7 @@ __all__ = [
     'flatten',
     'tensor_slice',
     'slice',
+    'concat',
     'scalar_cast',
     'scalar_to_array',
     'scalar_to_tensor',
