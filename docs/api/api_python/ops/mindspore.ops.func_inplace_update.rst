@@ -1,7 +1,7 @@
 mindspore.ops.inplace_update
 ============================
 
-.. py:method:: inplace_update(x, v, indices)
+.. py:function:: mindspore.ops.inplace_update(x, v, indices)
 
     根据 `indices`，将 `x` 中的某些值更新为 `v`。
 

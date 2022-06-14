@@ -635,7 +635,7 @@ mindspore.Tensor
 
         初始化的Tensor。
 
-    .. py::method:: inplace_add(v, indices)
+    .. py:method:: inplace_add(v, indices)
 
         根据 `indices`，将 `v` 加到原Tensor中。
 
@@ -656,7 +656,7 @@ mindspore.Tensor
         - **TypeError** - `indices` 不是int或tuple。
         - **TypeError** - `indices` 是元组，但是其中的元素不是int。
 
-    .. py::method:: inplace_sub(v, indices)
+    .. py:method:: inplace_sub(v, indices)
 
         根据 `indices`，将 `v` 从原Tensor中减掉。
 
@@ -677,7 +677,7 @@ mindspore.Tensor
         - **TypeError** - `indices` 不是int或tuple。
         - **TypeError** - `indices` 是元组，但是其中的元素不是int。
 
-    .. py::method:: inplace_update(v, indices)
+    .. py:method:: inplace_update(v, indices)
 
         根据 `indices` 以 `v` 来更新Tensor中的值。
 

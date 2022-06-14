@@ -1,12 +1,12 @@
 mindspore.ops.inplace_add
 =========================
 
-.. py:method:: inplace_add(x, v, indices)
+.. py:function:: mindspore.ops.inplace_add(x, v, indices)
 
     根据 `indices`，将 `x` 中的对应位置加上 `v` 。
 
     .. note::
-        `indices`只能沿着最高轴进行索引。
+        `indices` 只能沿着最高轴进行索引。
 
     **参数：**
 

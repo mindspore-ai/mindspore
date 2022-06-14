@@ -1,7 +1,7 @@
 mindspore.ops.inplace_sub
 =========================
 
-.. py:method:: inplace_sub(x, v, indices)
+.. py:function:: mindspore.ops.inplace_sub(x, v, indices)
 
     根据 `indices`，将 `v` 从 `x` 中减掉。
 
