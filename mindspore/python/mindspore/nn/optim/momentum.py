@@ -16,6 +16,7 @@
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
+from mindspore.common.api import ms_function
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator
 from .optimizer import Optimizer
@@ -205,6 +206,7 @@ class Momentum(Optimizer):
         self.get_distributed_optimizer_list("momentum", use_nesterov=self.use_nesterov)
         self.use_dist_optimizer = self.use_distibuted_optimizer()
 
+    @ms_function
     def construct(self, gradients):
         params = self.params
         moments = self.moments

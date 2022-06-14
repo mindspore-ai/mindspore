@@ -16,6 +16,7 @@
 from mindspore import ops
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
+from mindspore.common.api import ms_function
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
@@ -188,6 +189,7 @@ class Rprop(Optimizer):
         self.select = P.Select()
         self.ones_like = P.OnesLike()
 
+    @ms_function
     def construct(self, gradients):
         gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)

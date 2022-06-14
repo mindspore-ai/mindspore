@@ -14,6 +14,7 @@
 # ============================================================================
 """FTRL"""
 from mindspore.ops import functional as F, composite as C, operations as P
+from mindspore.common.api import ms_function
 from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
@@ -275,6 +276,7 @@ class FTRL(Optimizer):
 
         self._init_distributed_opts(use_locking, learning_rate, l1, l2, lr_power)
 
+    @ms_function
     def construct(self, grads):
         params = self._parameters
         moments = self.moments
