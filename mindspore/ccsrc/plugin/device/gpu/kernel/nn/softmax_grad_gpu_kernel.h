@@ -154,6 +154,27 @@ class SoftmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(y_desc_), "destroy output_descriptor failed");
   }
 
+  void ResetResource() noexcept override {
+    cudnn_handle_ = nullptr;
+    y_desc_ = nullptr;
+    algo_ = CUDNN_SOFTMAX_ACCURATE;
+    mode_ = CUDNN_SOFTMAX_MODE_INSTANCE;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    is_null_input_ = false;
+    input_size_ = 0;
+    output_size_ = 0;
+    workspace_size_ = 0;
+    axis_ = 0;
+    shape_size_ = 0;
+    batch_size_ = 0;
+    channel_size_ = 0;
+    height_ = 0;
+    width_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();

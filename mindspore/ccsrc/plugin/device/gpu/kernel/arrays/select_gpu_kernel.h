@@ -65,6 +65,16 @@ class SelectGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
+  void ResetResource() noexcept override {
+    input_size_ = 0;
+    output_size_ = 0;
+    is_null_input_ = false;
+    kernel_name_ = "Select";
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_);
