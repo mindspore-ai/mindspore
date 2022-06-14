@@ -102,6 +102,7 @@ from .coalesce import _coalesce_aicpu
 from .list_diff import _list_diff_aicpu
 from .mirror_pad import _mirror_pad_aicpu
 from .select import _select_aicpu
+from .add_v2 import _add_v2_aicpu
 from .masked_select import _masked_select_aicpu
 from .masked_select_grad import _masked_select_grad_aicpu
 from .mirror_pad_grad import _mirror_pad_grad_aicpu

@@ -137,6 +137,7 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
 
   void Sub(const T *input1, const T *input2, T *out);
   void Add(const T *input1, const T *input2, T *out);
+  void AddV2(const T *input1, const T *input2, T *out);
   void Mul(const T *input1, const T *input2, T *out);
   void RealDiv(const T *input1, const T *input2, T *out);
   void RealDivComplex(const T *input1, const T *input2, T *out);
@@ -184,6 +185,7 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
     if constexpr (!((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>))) {
       dtype_desc = "real data";
       arithmeticMathFuncMap = {{prim::kPrimAdd->name(), &ArithmeticCpuTypeFunc<T>::Add},
+                               {prim::kPrimAddV2->name(), &ArithmeticCpuTypeFunc<T>::AddV2},
                                {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub},
                                {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul},
                                {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::Div},
@@ -204,7 +206,8 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
         {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::DivComplex},
         {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDivComplex},
         {prim::kPrimXdivy->name(), &ArithmeticCpuTypeFunc<T>::XdivyComplex},
-        {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul}};
+        {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul},
+        {prim::kPrimAddV2->name(), &ArithmeticCpuTypeFunc<T>::AddV2}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticMathFuncMap)
@@ -253,6 +256,20 @@ void ArithmeticCpuTypeFunc<T>::AssignSub(T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::Add(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
+    for (size_t i = start; i < end; i++) {
+      out[i] = input1[iter.GetInputPosA()] + input2[iter.GetInputPosB()];
+      iter.GenNextPos();
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+}
+
+template <typename T>
+void ArithmeticCpuTypeFunc<T>::AddV2(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -978,7 +995,34 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeArithFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     SpecializeArithFunc<double>}}}};
+     SpecializeArithFunc<double>}}},
+  {prim::kPrimAddV2->name(),
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     SpecializeArithFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeArithFunc<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     SpecializeArithFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeArithFunc<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeArithFunc<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeArithFunc<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeArithFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeArithFunc<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     SpecializeArithFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     SpecializeArithFunc<complex128>}}}};
 }  // namespace
 
 void ArithmeticCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -1041,5 +1085,7 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Xlogy,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimXlogy->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Atan2,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimAtan2->name()); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AddV2,
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimAddV2->name()); });
 }  // namespace kernel
 }  // namespace mindspore
