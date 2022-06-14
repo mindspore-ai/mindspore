@@ -73,11 +73,7 @@ class MemScheduler {
 
   bool HasDeviceMem(const void *key) const { return mem_result_.find(key) != mem_result_.end(); }
 
-  void UpdateHighPriorityMem(const void *key) {
-    if (need_record_event_) {
-      (void)high_priority_updated_step_[key].emplace_back(current_step_);
-    }
-  }
+  void UpdateHighPriorityMem(const void *key) { (void)updated_high_priority_mem_.insert(key); }
 
   void SetTotalStep(size_t step) {
     total_step_ = step;
@@ -123,42 +119,48 @@ class MemScheduler {
 
   size_t GetMemSize(const void *key);
 
-  void *GetOrMallocHostPtr(const void *key, size_t mem_size);
+  void GetOrMallocHostPtr(const void *key, size_t mem_size, void **host_ptr, bool *from_init);
 
   void GetHostPtr(const void *key, void **host_ptr, bool *from_init);
 
-  bool PreComputeInit(const std::shared_ptr<MemEvent> &event, void *stream);
+  bool PreComputeMock(const MemEventPtr &event);
 
-  bool PreComputeMalloc(const std::shared_ptr<MemEvent> &event, void *stream);
+  bool PreComputeInit(const MemEventPtr &event, void *stream);
 
-  bool PreComputeSwapIn(const std::shared_ptr<MemEvent> &event, void *stream);
+  bool PreComputeMalloc(const MemEventPtr &event, void *stream);
 
-  bool PreComputeGet(const std::shared_ptr<MemEvent> &event, void *stream);
+  bool PreComputeSwapIn(const MemEventPtr &event, void *stream);
 
-  void *MallocContinuousMem(const std::shared_ptr<MemEvent> &event, void *stream);
+  bool PreComputeGet(const MemEventPtr &event, void *stream);
 
-  std::map<const void *, MemPriority> mem_priority_;
-  std::map<const void *, MemEventPtrList> mem_events_;
-  std::set<const void *> manual_offload_keys_;
-  std::vector<std::set<const void *>> step_keys_;
-  std::map<const void *, void *> mem_result_;
-  std::map<const void *, void *> init_host_ptr_;
-  std::map<const void *, void *> swap_host_ptr_;
-  std::map<const void *, std::vector<size_t>> high_priority_updated_step_;
-  std::set<const void *> high_priority_mem_need_init_;
-  size_t total_step_{0};
-  size_t current_step_{0};
+  void *MallocContinuousMem(const MemEventPtr &event, void *stream);
+
+  // Scheduler status
   bool need_record_event_{true};
   bool optimized_{false};
-  double compute_start_time_{0};
-  std::vector<double> compute_time_;
-  bool record_compute_time_{false};
   bool updated_{false};
-  std::shared_ptr<MemHandler> mem_handler_{nullptr};
-  std::shared_ptr<MemOffloadStrategy> strategy_{nullptr};
+  bool record_compute_time_{false};
+  // Memory status
+  std::map<const void *, void *> mem_result_;
+  std::map<const void *, MemPriority> mem_priority_;
+  std::map<const void *, MemEventPtrList> mem_events_;
+  std::vector<std::set<const void *>> step_keys_;
+  std::set<const void *> high_priority_mem_need_init_;
+  std::set<const void *> updated_high_priority_mem_;
   std::shared_ptr<ContinuousMemInfoHelper> continuous_mem_info_helper_{std::make_shared<ContinuousMemInfoHelper>()};
   std::set<std::shared_ptr<ContinuousMemInfo>> cur_step_allocated_continuous_mem_;
   std::set<const void *> continuous_mem_key_;
+  size_t total_step_{0};
+  size_t current_step_{0};
+  std::set<const void *> manual_offload_keys_;
+  std::map<const void *, void *> init_host_ptr_;
+  std::map<const void *, void *> swap_host_ptr_;
+  // Compute time
+  std::vector<double> compute_time_;
+  double compute_start_time_{0};
+
+  std::shared_ptr<MemHandler> mem_handler_{nullptr};
+  std::shared_ptr<MemOffloadStrategy> strategy_{nullptr};
 };
 
 class MemSchedulerManager {

@@ -70,7 +70,7 @@ class ContinuousMemInfoHelper {
     first_malloc_index_.emplace(mem_info, index);
   }
 
-  bool NeedMallocContinuousMem(const ContinuousMemInfoPtr &mem_info, size_t index) {
+  bool NeedMallocContinuousMem(const ContinuousMemInfoPtr &mem_info, size_t index) const {
     const auto &iter = first_malloc_index_.find(mem_info);
     return iter != first_malloc_index_.end() && iter->second == index;
   }
@@ -93,13 +93,11 @@ class MemOffloadStrategy {
  public:
   MemOffloadStrategy(const std::map<const void *, MemPriority> &mem_priority,
                      const std::map<const void *, MemEventPtrList> &mem_events,
-                     const std::set<const void *> &manual_offload_keys,
-                     const std::map<const void *, std::vector<size_t>> &high_priority_updated_step, size_t total_step,
+                     const std::set<const void *> &manual_offload_keys, size_t total_step,
                      std::shared_ptr<ContinuousMemInfoHelper> continuous_mem_info_manager)
       : mem_priority_(mem_priority),
         mem_events_(mem_events),
         manual_offload_keys_(manual_offload_keys),
-        high_priority_updated_step_(high_priority_updated_step),
         total_step_(total_step),
         continuous_mem_info_helper_(std::move(continuous_mem_info_manager)) {}
 
@@ -132,8 +130,6 @@ class MemOffloadStrategy {
 
   void GenFreeEvent(const MemEventPtr &last_event);
 
-  std::set<size_t> GetSwapOutEventIndex(const void *key, const std::vector<std::shared_ptr<MemEvent>> &mem_events);
-
   void AddToSwapEventSetIfOutOfMem(const MemEventPtr &mem_event, size_t span, std::vector<size_t> *mem_used);
 
   void GenContinuousMemSwapEvent(const ContinuousMemInfoPtr &continuous_mem_info, std::vector<size_t> *mem_used,
@@ -161,7 +157,6 @@ class MemOffloadStrategy {
   const std::map<const void *, MemPriority> &mem_priority_;
   const std::map<const void *, MemEventPtrList> &mem_events_;
   const std::set<const void *> &manual_offload_keys_;
-  std::map<const void *, std::vector<size_t>> high_priority_updated_step_;
   const size_t total_step_;
   std::vector<MemEventPtrList> pre_compute_events_;
   std::vector<MemEventPtrList> post_compute_events_;

@@ -186,6 +186,20 @@ void *MemScheduler::MallocContinuousMem(const std::shared_ptr<MemEvent> &event, 
   return device_ptr;
 }
 
+bool MemScheduler::PreComputeMock(const MemEventPtr &event) {
+  const bool is_continuous_mem = continuous_mem_info_helper_->IsContinuousMem(event->key);
+  void *device_ptr = nullptr;
+  if (mem_result_.count(event->key) != 0) {
+    return true;
+  } else if (is_continuous_mem) {
+    device_ptr = MallocContinuousMem(event, nullptr);
+  } else {
+    device_ptr = MallocDevice(event->mem_size, nullptr);
+  }
+  mem_result_[event->key] = device_ptr;
+  return device_ptr != nullptr;
+}
+
 bool MemScheduler::PreComputeInit(const std::shared_ptr<MemEvent> &event, void *stream) {
   const bool is_continuous_mem = continuous_mem_info_helper_->IsContinuousMem(event->key);
   const auto &iter = mem_result_.find(event->key);
@@ -288,7 +302,9 @@ bool MemScheduler::PreCompute(void *stream) {
     MS_EXCEPTION_IF_NULL(event);
     MS_LOG(DEBUG) << "Pre compute " << current_step_ << ": " << event->key << " v " << event->type;
     bool ret = true;
-    if (event->type == kInit) {
+    if (!optimized_) {
+      ret = PreComputeMock(event);
+    } else if (event->type == kInit) {
       ret = PreComputeInit(event, stream);
     } else if (event->type == kMalloc) {
       ret = PreComputeMalloc(event, stream);
@@ -323,7 +339,7 @@ bool MemScheduler::PostCompute(void *stream) {
   for (auto &event : events) {
     MS_EXCEPTION_IF_NULL(event);
     MS_LOG(DEBUG) << "Post compute " << current_step_ << ": " << event->key << " v " << event->type;
-    if (event->type == kFree) {
+    if (!optimized_ || event->type == kFree) {
       auto ptr = mem_result_[event->key];
       if (ptr == nullptr) {
         return false;
@@ -352,9 +368,8 @@ void MemScheduler::OptMemUsage(float mem_used_factor) {
   MS_EXCEPTION_IF_NULL(mem_handler_);
 
   if (strategy_ == nullptr) {
-    strategy_ =
-      std::make_shared<MemOffloadStrategy>(mem_priority_, mem_events_, manual_offload_keys_,
-                                           high_priority_updated_step_, total_step_, continuous_mem_info_helper_);
+    strategy_ = std::make_shared<MemOffloadStrategy>(mem_priority_, mem_events_, manual_offload_keys_, total_step_,
+                                                     continuous_mem_info_helper_);
     if (manual_offload_keys_.empty()) {
       compute_time_.resize(total_step_);
     } else {
@@ -526,9 +541,14 @@ std::vector<void *> MemScheduler::MallocContinuousMem(size_t total_size, const s
 }
 
 void MemScheduler::SwapOutAndFreeDevice(const void *key, void *device_ptr, size_t mem_size, void *stream) {
-  auto host_ptr = GetOrMallocHostPtr(key, mem_size);
+  void *host_ptr = nullptr;
+  bool from_init = false;
+  GetOrMallocHostPtr(key, mem_size, &host_ptr, &from_init);
   MS_EXCEPTION_IF_NULL(host_ptr);
-  mem_handler_->SwapOut(device_ptr, host_ptr, mem_size, stream);
+  if (!from_init || updated_high_priority_mem_.find(key) != updated_high_priority_mem_.end()) {
+    mem_handler_->SwapOut(device_ptr, host_ptr, mem_size, stream);
+    updated_high_priority_mem_.erase(key);
+  }
   mem_handler_->FreeDevice(device_ptr);
   (void)mem_result_.erase(key);
 }
@@ -541,16 +561,15 @@ size_t MemScheduler::GetMemSize(const void *key) {
   return iter->second[0]->mem_size;
 }
 
-void *MemScheduler::GetOrMallocHostPtr(const void *key, size_t mem_size) {
-  void *host_ptr = nullptr;
-  bool from_init = false;
-  GetHostPtr(key, &host_ptr, &from_init);
-  if (host_ptr != nullptr) {
-    return host_ptr;
+void MemScheduler::GetOrMallocHostPtr(const void *key, size_t mem_size, void **host_ptr, bool *from_init) {
+  GetHostPtr(key, host_ptr, from_init);
+  if (*host_ptr != nullptr) {
+    return;
   }
-  host_ptr = mem_handler_->MallocHost(mem_size);
-  swap_host_ptr_[key] = host_ptr;
-  return host_ptr;
+  *host_ptr = mem_handler_->MallocHost(mem_size);
+  MS_EXCEPTION_IF_NULL(*host_ptr);
+  *from_init = false;
+  swap_host_ptr_[key] = *host_ptr;
 }
 
 void MemScheduler::GetHostPtr(const void *key, void **host_ptr, bool *from_init) {
@@ -564,7 +583,9 @@ void MemScheduler::GetHostPtr(const void *key, void **host_ptr, bool *from_init)
   if (iter != swap_host_ptr_.end()) {
     *host_ptr = iter->second;
     *from_init = false;
+    return;
   }
+  *host_ptr = nullptr;
 }
 
 void MemScheduler::Update() {

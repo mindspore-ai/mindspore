@@ -1106,6 +1106,7 @@ bool KernelRuntime::MemSchedulerPreCompute(const AnfNodePtr &kernel, const std::
   }
   AssignKernelAddress(mem_scheduler, kernel, kernel_launch_info);
   auto cnode = kernel->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   if (mock && common::AnfAlgo::HasNodeAttr(kAttrOffload, cnode) &&
       common::AnfAlgo::GetNodeAttr<bool>(cnode, kAttrOffload)) {
     for (size_t i = 0; i < kernel_mod->GetOutputSizeList().size(); ++i) {
