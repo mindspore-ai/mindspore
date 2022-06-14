@@ -65,6 +65,6 @@ class OpDescRegister {
 #define UNIQUE_NAME(prefix, cnt) JOIN(prefix, cnt)
 #define EXPANDER_OP_DESC_REGISTER(name, cls)                         \
   const OpDescRegister UNIQUE_NAME(g_expander_opdesc_, __COUNTER__)( \
-    name, []() -> std::shared_ptr<OpDesc> { return std::make_shared<cls>(); })
+    name, []() noexcept -> std::shared_ptr<OpDesc> { return std::make_shared<cls>(); })
 }  // namespace mindspore::graphkernel::expanders
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_EXPANDERS_EXPANDER_FACTORY_H_

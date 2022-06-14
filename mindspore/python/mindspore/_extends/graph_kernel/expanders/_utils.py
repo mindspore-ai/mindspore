@@ -18,14 +18,12 @@ from mindspore._extends.graph_kernel.model import model_builder as builder
 from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedException as GKException
 
 
-class Expander:
+class Expander(metaclass=ABCMeta):
     """
     Expander is the base class of expanders.
 
     The method `_expand` should be overridden to implement the operator detail.
     """
-    __metaclass__ = ABCMeta
-
     def __init__(self, expand_info):
         self.name = expand_info["name"]
         self.inputs = expand_info["input_desc"]

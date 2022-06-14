@@ -801,7 +801,7 @@ class GraphSplitByPattern:
             while stack:
                 op = stack.pop()
                 if len(op.inputs) > 1 or PrimLib.iter_type(op) > PrimLib.BROADCAST or len(ops) > max_weight:
-                    return None
+                    return []
                 ops.append(op)
                 for t in op.inputs:
                     if t.op in area.ops:
@@ -1153,7 +1153,7 @@ class GraphSplitGpu(GraphSplitByPattern):
         def _broadcast_onehot(dom, fwd=True):
             """Fuse rule for OneHot."""
             if dom.dom_op().prim != "OneHot":
-                return None
+                return []
 
             fused = []
             neighbours = dom.in_relations.items() if fwd else dom.out_relations.items()
@@ -1168,7 +1168,7 @@ class GraphSplitGpu(GraphSplitByPattern):
         def _elemwise_elemany(dom):
             """Fuse rule for elemany."""
             if dom.dom_op().prim != "ElemAny":
-                return None
+                return []
 
             fused = []
             for a, r in dom.in_relations.items():

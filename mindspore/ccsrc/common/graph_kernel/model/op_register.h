@@ -44,6 +44,7 @@ class OpRegistry {
   OpRegistry(const OpRegistry &) = delete;
   OpRegistry(const OpRegistry &&) = delete;
   OpRegistry &operator=(const OpRegistry &) = delete;
+  OpRegistry &operator=(const OpRegistry &&) = delete;
 
   mindspore::HashMap<std::string, CreatorFunc> creators;
 };

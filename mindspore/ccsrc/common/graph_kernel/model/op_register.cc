@@ -35,7 +35,7 @@ class OpRegister {
 #define OP_REGISTER(name, cls)                                                     \
   static_assert(std::is_base_of<PrimOp, cls>::value, " should be base of PrimOp"); \
   static const OpRegister UNIQUE_NAME(g_graphkernel_op, __COUNTER__)(              \
-    name, [](const std::string &op) -> PrimOpPtr { return std::make_shared<cls>(op); })
+    name, [](const std::string &op) noexcept -> PrimOpPtr { return std::make_shared<cls>(op); })
 }  // namespace
 
 /* All nodes supported by GraphKernel are listed below. */

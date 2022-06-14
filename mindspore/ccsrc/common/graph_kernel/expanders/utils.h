@@ -68,7 +68,9 @@ class CheckAllFormatsSame : public Validator {
  public:
   bool Check(const OpDesc &e) override {
     const auto &inputs_info = e.InputsInfo();
-    if (inputs_info.empty()) return true;
+    if (inputs_info.empty()) {
+      return true;
+    }
     const auto &fmt_0 = inputs_info[0].format;
     for (size_t i = 1; i < inputs_info.size(); i++) {
       if (inputs_info[i].format != fmt_0) {

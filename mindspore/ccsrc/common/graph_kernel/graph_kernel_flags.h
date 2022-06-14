@@ -50,6 +50,7 @@ class GraphKernelFlags {
   GraphKernelFlags(const GraphKernelFlags &flags) = delete;
   GraphKernelFlags(GraphKernelFlags &&flags) = delete;
   GraphKernelFlags &operator=(const GraphKernelFlags &flags) = delete;
+  GraphKernelFlags &operator=(GraphKernelFlags &&flags) = delete;
   ~GraphKernelFlags() = default;
 
   /**

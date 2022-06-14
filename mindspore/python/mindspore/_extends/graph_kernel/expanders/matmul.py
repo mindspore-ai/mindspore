@@ -53,6 +53,7 @@ class MatMul(Expander):
         self.transpose_b = self.attrs['transpose_b']
         self.left_format = self.attrs['left_format']
         self.right_format = self.attrs['right_format']
+
         def transpose(shape):
             trans_shape = list(shape)
             trans_shape[-2] = shape[-1]

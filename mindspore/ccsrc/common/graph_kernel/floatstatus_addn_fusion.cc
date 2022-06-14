@@ -80,7 +80,9 @@ void FloatStatusAddNFusion::ProcessFloatStatusAddN(const FuncGraphPtr &main_grap
 
   // Expand floatstatus to subgraph
   for (size_t i = 1; i < addn->inputs().size(); i++) {
-    if (input_not_convert.count(i) > 0) continue;
+    if (input_not_convert.count(i) > 0) {
+      continue;
+    }
     auto floatstatus = addn->input(i)->cast<CNodePtr>();
     auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(floatstatus, false)->Run(floatstatus));
     MS_EXCEPTION_IF_NULL(expand_fg);
@@ -98,7 +100,9 @@ void FloatStatusAddNFusion::ProcessFloatStatusAddN(const FuncGraphPtr &main_grap
 
   // Insert extra input(broadcast node output) to composite node, and make elemany inplace-assign to it.
   for (size_t i = 1; i < addn->inputs().size(); i++) {
-    if (input_not_convert.count(i) > 0) continue;
+    if (input_not_convert.count(i) > 0) {
+      continue;
+    }
     op_info = SubGraphSignleOutput(addn->input(i));
     ProcessOriginCNode(addn->input(i), {{op_info, broadcast_to_node}});
   }
@@ -118,7 +122,9 @@ bool FloatStatusAddNFusion::Run(const FuncGraphPtr &func_graph) {
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   auto changed = false;
-  if (!CanConvert()) return changed;
+  if (!CanConvert()) {
+    return changed;
+  }
   auto nodes = TopoSort(func_graph->get_return());
   for (auto node : nodes) {
     if (!IsPrimitiveCNode(node, prim::kPrimAddN)) {
@@ -129,7 +135,9 @@ bool FloatStatusAddNFusion::Run(const FuncGraphPtr &func_graph) {
     bool pattern_match =
       std::all_of(cnode->inputs().begin() + 1, cnode->inputs().end(),
                   [](const AnfNodePtr &anf_node) { return IsPrimitiveCNode(anf_node, prim::kPrimFloatStatus); });
-    if (!pattern_match) continue;
+    if (!pattern_match) {
+      continue;
+    }
     ProcessFloatStatusAddN(func_graph, cnode, mng);
     changed = true;
   }

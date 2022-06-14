@@ -92,7 +92,7 @@ class FlagRegister {
 
   template <typename T>
   void AddFlag(const std::string &flag_name, T *flag_var, T default_value = T()) const {
-    auto iter = flag_map_.find(flag_name);
+    const auto iter = flag_map_.find(flag_name);
     if (iter != flag_map_.end()) {
       T var;
       bool ret = ParseValue(iter->second, &var);
@@ -216,7 +216,7 @@ void GraphKernelFlags::CheckSupport() const {
 void GraphKernelFlags::Refresh() {
   auto flag_map = ParseFlags(flags_cache_);
   RegisterFlags(&flag_map);
-  for (auto &item : flag_map) {
+  for (const auto &item : flag_map) {
     MS_LOG(WARNING) << "Unknown flag: " << item.first;
   }
   if (!flag_map.empty()) {

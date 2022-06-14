@@ -13,6 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 """Cost model for parallel fusion"""
+from __future__ import division
 from .model import PrimLib
 
 

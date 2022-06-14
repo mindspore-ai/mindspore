@@ -36,9 +36,9 @@ class ExpandDims : public OpDesc {
                           << rank << "]";
       }
       if (x >= 0) {
-        (void)new_shape.insert(new_shape.begin() + x, 1LL);
+        (void)new_shape.insert(new_shape.cbegin() + x, 1LL);
       } else {
-        (void)new_shape.insert(new_shape.begin() + (x + rank + 1), 1LL);
+        (void)new_shape.insert(new_shape.cbegin() + (x + rank + 1), 1LL);
       }
     }
     return new_shape;
@@ -75,7 +75,7 @@ class Squeeze : public OpDesc {
       for (int64_t i = 0; i < ndim; i++) {
         if (std::find(axis.begin(), axis.end(), i) == axis.end() &&
             std::find(axis.begin(), axis.end(), i - ndim) == axis.end()) {
-          (void)new_shape.emplace_back(shape[i]);
+          (void)new_shape.emplace_back(shape[LongToSize(i)]);
         }
       }
     }

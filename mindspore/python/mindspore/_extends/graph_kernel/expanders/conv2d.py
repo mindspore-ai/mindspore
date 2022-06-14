@@ -18,16 +18,6 @@ from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedException as GKException
 from ._utils import Expander, ExpanderInfoValidator as VLD
 
-M_ALIGN = 32
-N_ALIGN = 32
-K_ALIGN = 16
-K_LIMIT = 800
-MNK_LIMIT = 3 * (10 ** 10)
-N0_CHANNEL_ALIGN = 32
-N1_CHANNEL_ALIGN = 32
-C_CHANNEL_ALIGN = 16
-OUT_NHW_ALIGN = 128
-
 
 @VLD.add_format(DF.DEFAULT, DF.DEFAULT)
 @VLD.add_format(DF.NHWC, DF.NHWC)
@@ -45,6 +35,15 @@ class Conv2D(Expander):
       C channel of inputs > 8.
       output N*H*W are multiplies of 128.
     """
+    M_ALIGN = 32
+    N_ALIGN = 32
+    K_ALIGN = 16
+    K_LIMIT = 800
+    MNK_LIMIT = 3 * (10 ** 10)
+    N0_CHANNEL_ALIGN = 32
+    N1_CHANNEL_ALIGN = 32
+    C_CHANNEL_ALIGN = 16
+    OUT_NHW_ALIGN = 128
 
     def __init__(self, expand_info):
         super().__init__(expand_info)

@@ -120,6 +120,23 @@ class CompositeGraph:
         self.desc = None
         self.tensors = {}  # name : Tensor
 
+    @staticmethod
+    def add_stitch_info(subgraph, desc):
+        """add stitch info to desc"""
+        if subgraph.stitch_info and subgraph.stitch_info.stitch_ops:
+            buffer_stitch = {'stitch_op': list(subgraph.stitch_info.stitch_ops)}
+            if subgraph.stitch_info.stitch_atomic_ops:
+                buffer_stitch['stitch_atomic_op'] = list(subgraph.stitch_info.stitch_atomic_ops)
+            desc['buffer_stitch'] = buffer_stitch
+        return desc
+
+    @staticmethod
+    def add_recompute_ops(subgraph, desc):
+        """add recompute ops to desc"""
+        if subgraph.recompute_ops:
+            desc['recompute_ops'] = [op.output.name for op in subgraph.recompute_ops]
+        return desc
+
     def refine(self):
         """Refine Graph"""
         AlignShape().visit_graph(self.graph)
@@ -150,7 +167,8 @@ class CompositeGraph:
                 self.tensors[name] = builder.tensor(
                     shape, dtype, data_format, name=name, para_type=Tensor.PARA_OUTPUT)
             for op in desc['op_desc']:
-                inputs = [self.tensors[d['tensor_name']] for x in op['input_desc'] for d in x if 'value' not in d]
+                inputs = [self.tensors.get(d['tensor_name'], None) for x in op['input_desc']
+                          for d in x if 'value' not in d]
                 out_desc = op['output_desc']
                 name, shape, dtype, data_format = out_desc[0]['tensor_name'], out_desc[
                     0]['shape'], out_desc[0]['data_type'], out_desc[0]['format']
@@ -167,21 +185,6 @@ class CompositeGraph:
                 builder.op(op['name'], output, inputs, attrs=_attr_of(op))
         self.graph = builder.get()[0]
         self.desc = desc
-
-    def add_stitch_info(self, subgraph, desc):
-        """add stitch info to desc"""
-        if subgraph.stitch_info and subgraph.stitch_info.stitch_ops:
-            buffer_stitch = {'stitch_op': list(subgraph.stitch_info.stitch_ops)}
-            if subgraph.stitch_info.stitch_atomic_ops:
-                buffer_stitch['stitch_atomic_op'] = list(subgraph.stitch_info.stitch_atomic_ops)
-            desc['buffer_stitch'] = buffer_stitch
-        return desc
-
-    def add_recompute_ops(self, subgraph, desc):
-        """add recompute ops to desc"""
-        if subgraph.recompute_ops:
-            desc['recompute_ops'] = [op.output.name for op in subgraph.recompute_ops]
-        return desc
 
     def _pre_dump(self, outputs):
         """restore name to before load"""
@@ -205,7 +208,7 @@ class CompositeGraph:
 
         def dump_output(t):
             if t.name in inplace_assign:
-                z = inplace_assign_z if inplace_assign_z is not None else self.tensors[t.name]
+                z = inplace_assign_z if inplace_assign_z is not None else self.tensors.get(t.name, None)
                 return {'data_type': z.dtype, 'shape': z.shape, 'tensor_name': inplace_assign.get(t.name)}
             return {'data_type': t.dtype, 'shape': t.shape, 'tensor_name': t.name}
 
