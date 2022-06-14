@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,8 +86,10 @@ private:
   void GoToSleep(int max_dur);
 };
 
-
-// Test0 : single producer, single consumer which means there is only one queue in the connector
+/// Feature: Connector
+/// Description: Test Connector with single producer and single consumer,
+///     which means there is only one queue in the connector
+/// Expectation: Runs successfully
 TEST_F(MindDataTestConnector, Test0) {
   MS_LOG(INFO) << "MindDataTestConnector Test0: single producer, single consumer.";
   Status rc = this->Run_test_0();
@@ -96,9 +98,10 @@ TEST_F(MindDataTestConnector, Test0) {
   ASSERT_TRUE(rc.IsOk());
 }
 
-// Test1: multiple producers, multiple consumers without random delay
-// A chain of three layer of thread groups connected by two Connectors between
-// two layer.
+/// Feature: Connector
+/// Description: Test Connector with multiple producers and multiple consumers without random delay,
+///     a chain of three layers of thread groups connected by two Connectors between two layers.
+/// Expectation: Runs successfully
 TEST_F(MindDataTestConnector, Test1) {
   MS_LOG(INFO) << "MindDataTestConnector Test1.";
   Status rc = this->Run_test_1();
@@ -107,9 +110,10 @@ TEST_F(MindDataTestConnector, Test1) {
   ASSERT_TRUE(rc.IsOk());
 }
 
-// Test1: multiple producers, multiple consumers with random delay after push/pop
-// A chain of three layer of thread groups connected by two Connectors between
-// two layer.
+/// Feature: Connector
+/// Description: Test Connector with multiple producers and multiple consumers with random delay after push/pop,
+///     a chain of three layers of thread groups connected by two Connectors between two layers.
+/// Expectation: Runs successfully
 TEST_F(MindDataTestConnector, Test2) {
   MS_LOG(INFO) << "MindDataTestConnector Test2.";
   this->SetSleepMilliSec(30);

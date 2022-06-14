@@ -1,5 +1,5 @@
 /**
- * Copyright 2021Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,12 @@ class MindDataTestDvppDecodeJpeg : public UT::CVOP::CVOpCommon {
   std::shared_ptr<Tensor> output_tensor_;
 };
 
+/// Feature: DvppDecodeJpeg op
+/// Description: Test DvppDecodeJpegOp basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestDvppDecodeJpeg, TestOp1) {
   MS_LOG(INFO) << "Doing testDvppDecodeJpeg.";
-  std::unique_ptr<DvppDecodeJpegOp> op(new DvppDecodeJpegOp());
+  auto op = std::make_unique<DvppDecodeJpegOp>();
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);
   EXPECT_EQ(s, Status::OK());

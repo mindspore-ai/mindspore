@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,12 @@ class MindDataTestCutOutOp : public UT::CVOP::CVOpCommon {
   std::shared_ptr<Tensor> output_tensor_;
 };
 
+/// Feature: CutOut op
+/// Description: Test CutOut op basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCutOutOp, TestOp) {
   MS_LOG(INFO) << "Doing testCutOut.";
-  std::unique_ptr<CutOutOp> op(new CutOutOp(50, 50, 5, false, 0, 0, 0));
+  auto op = std::make_unique<CutOutOp>(50, 50, 5, false, 0, 0, 0);
 
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);

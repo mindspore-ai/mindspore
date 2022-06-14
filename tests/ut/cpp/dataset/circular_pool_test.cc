@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,9 @@ Status TestMem(MindDataTestCircularPool *tp, int32_t num_iterations) {
   return Status::OK();
 }
 
+/// Feature: CircularPool
+/// Description: Test CircularPool basic usage
+/// Expectation: Runs successfully
 TEST_F(MindDataTestCircularPool, TestALLFunction) {
   const int32_t iteration = 100;
   Services::CreateInstance();

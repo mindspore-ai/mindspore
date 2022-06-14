@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,9 @@ class MindDataTestDataHelper : public UT::DatasetOpTesting  {
  protected: 
 };
 
+/// Feature: DataHelper
+/// Description: Test basic usage of UpdateArray in DataHelper by updating label
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestHelper) {
   std::string file_path = datasets_root_path_ + "/testAlbum/images/1.json";
   DataHelper dh; 
@@ -54,6 +57,9 @@ TEST_F(MindDataTestDataHelper, MindDataTestHelper) {
   }
 }
 
+/// Feature: DataHelper
+/// Description: Test basic usage of CreateAlbum in DataHelper by generating album
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestAlbumGen) {
   std::string file_path = datasets_root_path_ + "/testAlbum/original";
   std::string out_path = datasets_root_path_ + "/testAlbum/testout";
@@ -65,6 +71,9 @@ TEST_F(MindDataTestDataHelper, MindDataTestAlbumGen) {
   }
 }
 
+/// Feature: DataHelper
+/// Description: Test basic usage of UpdateArray in DataHelper by updating with an int array
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestTemplateUpdateArrayInt) {
   std::string file_path = datasets_root_path_ + "/testAlbum/testout/2.json";
   DataHelper dh;
@@ -76,6 +85,9 @@ TEST_F(MindDataTestDataHelper, MindDataTestTemplateUpdateArrayInt) {
   }
 }
 
+/// Feature: DataHelper
+/// Description: Test basic usage of UpdateArray in DataHelper by updating with a string array
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestTemplateUpdateArrayString) {
   std::string file_path = datasets_root_path_ + "/testAlbum/testout/3.json";
   DataHelper dh;
@@ -87,6 +99,9 @@ TEST_F(MindDataTestDataHelper, MindDataTestTemplateUpdateArrayString) {
   }
 }
 
+/// Feature: DataHelper
+/// Description: Test basic usage of UpdateArray in DataHelper by updating with a single int value
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestTemplateUpdateValueInt) {
   std::string file_path = datasets_root_path_ + "/testAlbum/testout/4.json";
   DataHelper dh;
@@ -98,6 +113,9 @@ TEST_F(MindDataTestDataHelper, MindDataTestTemplateUpdateValueInt) {
   }
 }
 
+/// Feature: DataHelper
+/// Description: Test basic usage of UpdateArray in DataHelper by updating with a single string value
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestTemplateUpdateString) {
   std::string file_path = datasets_root_path_ + "/testAlbum/testout/5.json";
   DataHelper dh;
@@ -109,6 +127,9 @@ TEST_F(MindDataTestDataHelper, MindDataTestTemplateUpdateString) {
   }
 }
 
+/// Feature: DataHelper
+/// Description: Test basic usage of DeleteKey in DataHelper
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestDeleteKey) {
   std::string file_path = datasets_root_path_ + "/testAlbum/testout/5.json";
   DataHelper dh;
@@ -119,6 +140,9 @@ TEST_F(MindDataTestDataHelper, MindDataTestDeleteKey) {
   }
 }
 
+/// Feature: DataHelper
+/// Description: Test basic usage of WriteBinFile in DataHelper
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestBinWrite) {
   std::string file_path = datasets_root_path_ + "/testAlbum/1.bin";
   DataHelper dh;
@@ -130,6 +154,9 @@ TEST_F(MindDataTestDataHelper, MindDataTestBinWrite) {
   }
 }
 
+/// Feature: DataHelper
+/// Description: Test WriteBinFile in DataHelper by passing a pointer
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestBinWritePointer) {
   std::string file_path = datasets_root_path_ + "/testAlbum/2.bin";
   DataHelper dh;
@@ -142,6 +169,9 @@ TEST_F(MindDataTestDataHelper, MindDataTestBinWritePointer) {
   }
 }
 
+/// Feature: CreateFromVector
+/// Description: Test basic usage of CreateFromVector using vector of floats
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestTensorWriteFloat) {
   // create tensor
   std::vector<float> y = {2.5, 3.0, 3.5, 4.0};
@@ -166,6 +196,9 @@ TEST_F(MindDataTestDataHelper, MindDataTestTensorWriteFloat) {
   std::free(data); 
 }
 
+/// Feature: CreateFromVector
+/// Description: Test basic usage of CreateFromVector using vector of uint8
+/// Expectation: Runs successfully
 TEST_F(MindDataTestDataHelper, MindDataTestTensorWriteUInt) {
   // create tensor
   std::vector<uint8_t> y = {1, 2, 3, 4};
@@ -196,5 +229,3 @@ TEST_F(MindDataTestDataHelper, MindDataTestTensorWriteUInt) {
   if (array[3] != 4) { EXPECT_TRUE(false); }
   std::free(data);
 }
-
-

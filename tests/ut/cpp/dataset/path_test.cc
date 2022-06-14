@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestPath : public UT::Common {
     MindDataTestPath() {}
 };
 
+/// Feature: Path
+/// Description: Test Path on a directory and on jpeg file extension
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPath, Test1) {
   Path f("/tmp");
   ASSERT_TRUE(f.Exists());
@@ -49,6 +52,10 @@ TEST_F(MindDataTestPath, Test1) {
   ASSERT_EQ(g.Extension(), ".jpeg");
 }
 
+/// Feature: Path
+/// Description: Test Path with various assignments using a Path, on empty string, std::move on Path
+///     and with concatenation
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPath, Test2) {
   Path p("/tmp");
   Path p2(p);

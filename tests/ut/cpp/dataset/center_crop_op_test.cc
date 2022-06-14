@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,15 @@ class MindDataTestCenterCropOp : public UT::CVOP::CVOpCommon {
   MindDataTestCenterCropOp() : CVOpCommon() {}
 };
 
+/// Feature: CenterCrop op
+/// Description: Test basic usage of CenterCrop op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCenterCropOp, TestOp1) {
   MS_LOG(INFO) << "Doing MindDataTestCenterCropOp::TestOp1.";
   std::shared_ptr<Tensor> output_tensor;
   int het = 256;
   int wid = 128;
-  std::unique_ptr<CenterCropOp> op(new CenterCropOp(het, wid));
+  auto op = std::make_unique<CenterCropOp>(het, wid);
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());
@@ -40,6 +43,9 @@ TEST_F(MindDataTestCenterCropOp, TestOp1) {
   std::shared_ptr<CVTensor> p = CVTensor::AsCVTensor(output_tensor);
 }
 
+/// Feature: CenterCrop op
+/// Description: Test CenterCrop op where cap valid crop size at 10 times the input size
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCenterCropOp, TestOp2) {
   MS_LOG(INFO) << "MindDataTestCenterCropOp::TestOp2. Cap valid crop size at 10 times the input size";
   std::shared_ptr<Tensor> output_tensor;
@@ -47,17 +53,20 @@ TEST_F(MindDataTestCenterCropOp, TestOp2) {
   int64_t wid = input_tensor_->shape()[0] * 10 + 1;
   int64_t het = input_tensor_->shape()[1] * 10 + 1;
 
-  std::unique_ptr<CenterCropOp> op(new CenterCropOp(het, wid));
+  auto op = std::make_unique<CenterCropOp>(het, wid);
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsError());
   ASSERT_TRUE(s.StatusCode() == StatusCode::kMDUnexpectedError);
 }
 
+/// Feature: CenterCrop op
+/// Description: Test CenterCrop op with single integer input for square crop
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCenterCropOp, TestOp3) {
   MS_LOG(INFO) << "Doing MindDataTestCenterCropOp::TestOp3. Test single integer input for square crop.";
   std::shared_ptr<Tensor> output_tensor;
   int side = 128;
-  std::unique_ptr<CenterCropOp> op(new CenterCropOp(side));
+  auto op = std::make_unique<CenterCropOp>(side);
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

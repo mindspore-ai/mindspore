@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ class MindDataTestSchema : public UT::DatasetOpTesting {
  protected:
 };
 
+/// Feature: Schema
+/// Description: Test DataSchema LoadSchemaFile using an old schema file
+/// Expectation: Correct number of columns
 TEST_F(MindDataTestSchema, TestOldSchema) {
   std::string schema_file = datasets_root_path_ + "/testDataset2/datasetSchema.json";
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
@@ -44,6 +47,9 @@ TEST_F(MindDataTestSchema, TestOldSchema) {
   }
 }
 
+/// Feature: Schema
+/// Description: Test DataSchema LoadSchemaFile using an Album Schema file
+/// Expectation: Correct number of columns
 TEST_F(MindDataTestSchema, TestAlbumSchema) {
   std::string schema_file = datasets_root_path_ + "/testAlbum/fullSchema.json";
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,13 @@ class MindDataTestInvert : public UT::CVOP::CVOpCommon {
   MindDataTestInvert() : CVOpCommon() {}
 };
 
+/// Feature: Invert op
+/// Description: Test Invert op basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestInvert, TestOp) {
   MS_LOG(INFO) << "Doing test Invert.";
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<InvertOp> op(new InvertOp());
+  auto op = std::make_unique<InvertOp>();
   EXPECT_TRUE(op->OneToOne());
   Status st = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(st.IsOk());

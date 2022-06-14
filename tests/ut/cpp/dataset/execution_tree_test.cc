@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ class MindDataTestExecutionTree : public UT::DatasetOpTesting {
  public:
 };
 
-// Construct some tree nodes and play with them
+/// Feature: Execution Tree
+/// Description: Test execution tree by using ShuffleOp as the nodes
+/// Expectation: Runs successfully
 TEST_F(MindDataTestExecutionTree, TestExecutionTree1) {
   MS_LOG(INFO) << "Doing MindDataTestExecutionTree1.";
 
@@ -76,7 +78,9 @@ TEST_F(MindDataTestExecutionTree, TestExecutionTree1) {
   MS_LOG(INFO) << "Done.";
 }
 
-// Construct some tree nodes and play with them
+/// Feature: Execution Tree
+/// Description: Test execution tree by using TFrecordDataset as the root, prepare, then launch the tree
+/// Expectation: Runs successfully
 TEST_F(MindDataTestExecutionTree, TestExecutionTree2) {
   MS_LOG(INFO) << "Doing MindDataTestExecutionTree2.";
   Status rc;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ class MindDataTestRandomCropDecodeResizeOp : public UT::CVOP::CVOpCommon {
   MindDataTestRandomCropDecodeResizeOp() : CVOpCommon() {}
 };
 
+/// Feature: RandomCropDecodeResize op
+/// Description: Test RandomCropDecodeResizeOp basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
   MS_LOG(INFO) << "starting RandomCropDecodeResizeOp test 1";
 
@@ -83,6 +86,9 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
   MS_LOG(INFO) << "RandomCropDecodeResizeOp test 1 finished";
 }
 
+/// Feature: RandomCropDecodeResize op
+/// Description: Test by applying individual ops: Decode op and Crop op, and JpegCropAndDecode op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
   MS_LOG(INFO) << "starting RandomCropDecodeResizeOp test 2";
   constexpr int h = 884;

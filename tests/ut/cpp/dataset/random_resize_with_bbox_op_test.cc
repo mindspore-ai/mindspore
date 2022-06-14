@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,17 @@ class MindDataTestRandomResizeWithBBoxOp : public UT::CVOP::BBOXOP::BBoxOpCommon
  protected:
   MindDataTestRandomResizeWithBBoxOp() : BBoxOpCommon() {}
 };
+
+/// Feature: RandomResizeWithBBox op
+/// Description: Test RandomResizeWithBBoxOp with single int value
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomResizeWithBBoxOp, TestOp) {
   MS_LOG(INFO) << "Doing testRandomResizeWithBBox.";
   //setting seed here
   u_int32_t curr_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(120);
   TensorTable results;
-  std::unique_ptr<RandomResizeWithBBoxOp> op(new RandomResizeWithBBoxOp(500));
+  auto op = std::make_unique<RandomResizeWithBBoxOp>(500);
   for (const auto &tensor_row_ : images_and_annotations_) {
     // selected a tensorRow
     TensorRow output_row;

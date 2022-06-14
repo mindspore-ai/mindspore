@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ class MindDataTestSubsetSampler : public UT::Common {
   };
 };
 
+/// Feature: SubsetSampler
+/// Description: Test using all input for SubsetSampler at once
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSubsetSampler, TestAllAtOnce) {
   std::vector<int64_t> in({3, 1, 4, 0, 1});
   std::unordered_set<int64_t> in_set(in.begin(), in.end());
@@ -64,6 +67,9 @@ TEST_F(MindDataTestSubsetSampler, TestAllAtOnce) {
   ASSERT_EQ(row.eoe(), true);
 }
 
+/// Feature: SubsetSampler
+/// Description: Test SubsetSampler GetNextSample method with samples_per_tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSubsetSampler, TestGetNextSample) {
   int64_t total_samples = 100000 - 5;
   int64_t samples_per_tensor = 10;
@@ -95,6 +101,9 @@ TEST_F(MindDataTestSubsetSampler, TestGetNextSample) {
   ASSERT_EQ(input.size(), out.size());
 }
 
+/// Feature: SubsetSampler
+/// Description: Test SubsetSampler ResetSampler method
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSubsetSampler, TestReset) {
   std::vector<int64_t> in({0, 1, 2, 3, 4});
   std::unordered_set<int64_t> in_set(in.begin(), in.end());

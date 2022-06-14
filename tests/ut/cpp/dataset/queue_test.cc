@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,9 @@ class RefCount {
   std::shared_ptr<int> v_;
 };
 
+/// Feature: Queue
+/// Description: Test Queue by passing shared pointer and destructor of Queue
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestQueue, Test1) {
   // Passing shared pointer along the queue
   Queue<std::shared_ptr<int>> que(3);
@@ -95,6 +98,9 @@ TEST_F(MindDataTestQueue, Test1) {
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Queue
+/// Description: Test Queue by passing Status object and destructor of Queue
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestQueue, Test2) {
   // Passing status object
   Queue<Status> que(3);
@@ -113,9 +119,12 @@ TEST_F(MindDataTestQueue, Test2) {
   ASSERT_TRUE(rc_recv2 == StatusCode::kMDOutOfMemory);
 }
 
+/// Feature: Queue
+/// Description: Test Queue by passing unique pointer and destructor of Queue
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestQueue, Test3) {
   Queue<std::unique_ptr<int>> que(3);
-  std::unique_ptr<int> a(new int(3));
+  auto a = std::make_unique<int>(3);
   Status rc = que.Add(std::move(a));
   ASSERT_TRUE(rc.IsOk());
   ASSERT_EQ(a.get(), nullptr);
@@ -134,7 +143,8 @@ void test4() {
   gRefCountDestructorCalled = 0;
   // Pass a structure along the queue.
   Queue<RefCount> que(3);
-  RefCount a(3);
+  int num {3};
+  RefCount a(num);
   Status rc = que.Add(a);
   ASSERT_TRUE(rc.IsOk());
   RefCount b;
@@ -147,8 +157,14 @@ void test4() {
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Queue
+/// Description: Test Queue by passing a structure and destructor of Queue
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestQueue, Test4) { test4(); }
 
+/// Feature: Queue
+/// Description: Test destructor of RefCount after running Test4
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestQueue, Test5) {
   test4();
   // Assume we have run Test4. The destructor of the RefCount should be called 4 times.
@@ -157,6 +173,9 @@ TEST_F(MindDataTestQueue, Test5) {
   ASSERT_EQ(gRefCountDestructorCalled, 6);
 }
 
+/// Feature: Queue
+/// Description: Test list of Queues by inserting a number into a specific queue and pop it
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestQueue, Test6) {
   // Create a list of queues
   QueueList<std::unique_ptr<int>> my_list_of_queues;
@@ -165,7 +184,7 @@ TEST_F(MindDataTestQueue, Test6) {
   const int queue_capacity = 3;
   my_list_of_queues.Init(num_queues, queue_capacity);
   // Now try to insert a number into a specific queue and pop it
-  std::unique_ptr<int> a(new int(99));
+  auto a = std::make_unique<int>(99);
   Status rc = my_list_of_queues[chosen_queue_index]->Add(std::move(a));
   ASSERT_TRUE(rc.IsOk());
   std::unique_ptr<int> pepped_value;
@@ -175,9 +194,9 @@ TEST_F(MindDataTestQueue, Test6) {
   ASSERT_EQ(*pepped_value, 99);
 }
 
-// Feature: Test basic check in the resize.
-// Description: Check false input for resize function.
-// Expectation: Return false when the input is unexpected, and true when the new capacity is the same as original.
+/// Feature: Test basic check in the resize.
+/// Description: Check false input for resize function.
+/// Expectation: Return false when the input is unexpected, and true when the new capacity is the same as original.
 TEST_F(MindDataTestQueue, TestResize1) {
   // Create a list of queues with capacity = 3
   Queue<TensorRow> queue(3);
@@ -210,9 +229,9 @@ TEST_F(MindDataTestQueue, TestResize1) {
   EXPECT_OK(queue.Resize(3));
 }
 
-// Feature: Check resize is finished without changing elements and influencing operations.
-// Description: Compare elements in queue before and after resize, and test add/pop/reset.
-// Expectation: Elements in queue after resize are the same as the original queue.
+/// Feature: Check resize is finished without changing elements and influencing operations.
+/// Description: Compare elements in queue before and after resize, and test add/pop/reset.
+/// Expectation: Elements in queue after resize are the same as the original queue.
 TEST_F(MindDataTestQueue, TestResize2) {
   // Create a list of queues with capacity = 3
   Queue<TensorRow> queue(3);

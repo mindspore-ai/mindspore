@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestRandomRotationOp : public UT::CVOP::CVOpCommon {
   MindDataTestRandomRotationOp() : CVOpCommon() {}
 };
 
+/// Feature: RandomRotation op
+/// Description: Test RandomRotationOp with basic usage using empty vector for center and check OneToOne
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomRotationOp, TestOp) {
   MS_LOG(INFO) << "Doing MindDataTestRandomRotationOp::TestOp.";
   std::shared_ptr<Tensor> output_tensor;
@@ -34,8 +37,8 @@ TEST_F(MindDataTestRandomRotationOp, TestOp) {
   // use compute center to use for rotation
   std::vector<float> center = {};
   bool expand = false;
-  std::unique_ptr<RandomRotationOp> op(
-    new RandomRotationOp(sDegree, eDegree, InterpolationMode::kLinear, expand, center));
+  auto op = std::make_unique<RandomRotationOp>(
+    sDegree, eDegree, InterpolationMode::kLinear, expand, center);
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

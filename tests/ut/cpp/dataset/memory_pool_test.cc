@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,16 @@ class MindDataTestMemoryPool : public UT::Common {
   }
 };
 
+/// Feature: MemoryPool
+/// Description: Test dump pool info
+/// Expectation: Runs successfully
 TEST_F(MindDataTestMemoryPool, DumpPoolInfo) {
   MS_LOG(DEBUG) << *(std::dynamic_pointer_cast<CircularPool>(mp_)) << std::endl;
 }
 
+/// Feature: MemoryPool
+/// Description: Test delete operator on heap
+/// Expectation: Runs successfully
 TEST_F(MindDataTestMemoryPool, TestOperator1) {
   Status rc;
   int *p = new (&rc, mp_) int;
@@ -45,6 +51,9 @@ TEST_F(MindDataTestMemoryPool, TestOperator1) {
   ::operator delete(p, mp_);
 }
 
+/// Feature: MemoryPool
+/// Description: Test assignment operator on heap
+/// Expectation: Runs successfully
 TEST_F(MindDataTestMemoryPool, TestOperator3) {
   Status rc;
   int *p = new (&rc, mp_) int[100];
@@ -57,6 +66,9 @@ TEST_F(MindDataTestMemoryPool, TestOperator3) {
   }
 }
 
+/// Feature: MemoryPool
+/// Description: Test Allocator usage
+/// Expectation: Runs successfully
 TEST_F(MindDataTestMemoryPool, TestAllocator) {
   class A {
    public:
@@ -73,6 +85,9 @@ TEST_F(MindDataTestMemoryPool, TestAllocator) {
   MS_LOG(DEBUG) << *(std::dynamic_pointer_cast<CircularPool>(mp_)) << std::endl;
 }
 
+/// Feature: MemoryPool
+/// Description: Test MemGuard usage
+/// Expectation: Runs successfully
 TEST_F(MindDataTestMemoryPool, TestMemGuard) {
   MemGuard<uint8_t> mem;
   // Try some large value.

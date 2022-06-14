@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,14 @@ class MindDataTestEqualizeOp : public UT::CVOP::CVOpCommon {
   MindDataTestEqualizeOp() : CVOpCommon() {}
 };
 
+/// Feature: Equalize op
+/// Description: Test Equalize op basic usage
+/// Expectation: The data is processed successfully
 TEST_F(MindDataTestEqualizeOp, TestOp1) {
   MS_LOG(INFO) << "Doing testEqualizeOp.";
 
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<EqualizeOp> op(new EqualizeOp());
+  auto op = std::make_unique<EqualizeOp>();
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

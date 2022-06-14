@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@ class MindDataTestTensorDE : public UT::Common {
   void SetUp() { GlobalInit(); }
 };
 
+/// Feature: Tensor
+/// Description: Test Tensor basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, Basics) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({2, 3}), DataType(DataType::DE_UINT64), &t);
@@ -74,6 +77,9 @@ TEST_F(MindDataTestTensorDE, Basics) {
   ASSERT_EQ(*t != *t2, false);
 }
 
+/// Feature: Tensor
+/// Description: Test Fill on Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, Fill) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_FLOAT32), &t);
@@ -84,6 +90,9 @@ TEST_F(MindDataTestTensorDE, Fill) {
   ASSERT_EQ(*t == *t2, true);
 }
 
+/// Feature: Tensor
+/// Description: Test Reshape on Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, Reshape) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_UINT8), &t);
@@ -104,6 +113,9 @@ TEST_F(MindDataTestTensorDE, Reshape) {
   ASSERT_TRUE(rc.IsError());
 }
 
+/// Feature: Tensor
+/// Description: Test copying a Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, CopyTensor) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({}), DataType(DataType::DE_INT16), &t);
@@ -128,6 +140,9 @@ TEST_F(MindDataTestTensorDE, CopyTensor) {
   ASSERT_TRUE(rc.IsError());
 }
 
+/// Feature: Tensor
+/// Description: Test InsertTensor on Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, InsertTensor) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({2, 3}), DataType(DataType::DE_FLOAT64), &t);
@@ -164,7 +179,9 @@ TEST_F(MindDataTestTensorDE, InsertTensor) {
   ASSERT_EQ(*t == *t6, true);
 }
 
-// Test the bug of Tensor::ToString will exec failed for Tensor which store bool values
+/// Feature: Tensor
+/// Description: Test the bug of Tensor::ToString will exec failed for Tensor which store bool values
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestTensorDE, BoolTensor) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({2}), DataType(DataType::DE_BOOL), &t);
@@ -174,6 +191,9 @@ TEST_F(MindDataTestTensorDE, BoolTensor) {
   ASSERT_TRUE(out.find("Template type and Tensor type are not compatible") == std::string::npos);
 }
 
+/// Feature: Tensor
+/// Description: Test GetItemAt on Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, GetItemAt) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_UINT8), &t);
@@ -216,6 +236,9 @@ TEST_F(MindDataTestTensorDE, GetItemAt) {
   ASSERT_FLOAT_EQ(o10, 1.1);
 }
 
+/// Feature: Tensor
+/// Description: Test assignment operator on Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, OperatorAssign) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({2, 2}), DataType(DataType::DE_UINT8), &t);
@@ -234,6 +257,9 @@ TEST_F(MindDataTestTensorDE, OperatorAssign) {
   ASSERT_EQ(o, 1);
 }
 
+/// Feature: Tensor
+/// Description: Test Strides on Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, Strides) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({4, 2, 2}), DataType(DataType::DE_UINT8), &t);
@@ -281,6 +307,9 @@ void checkCvMat(TensorShape shape, DataType type) {
   }
 }
 
+/// Feature: CVTensor
+/// Description: Test CVTensor basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, CVTensorBasics) {
   checkCvMat(TensorShape({4, 5}), DataType(DataType::DE_UINT8));
   checkCvMat(TensorShape({4, 5, 3}), DataType(DataType::DE_UINT8));
@@ -296,6 +325,9 @@ TEST_F(MindDataTestTensorDE, CVTensorBasics) {
   checkCvMat(TensorShape({}), DataType(DataType::DE_INT16));
 }
 
+/// Feature: CVTensor
+/// Description: Test CVTensor::CreateFromMat
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, CVTensorFromMat) {
   cv::Mat m(2, 2, CV_8U);
   m.at<uint8_t>(0, 0) = 10;
@@ -330,6 +362,9 @@ TEST_F(MindDataTestTensorDE, CVTensorFromMat) {
   ASSERT_TRUE(*t2 == *cvt2);
 }
 
+/// Feature: CVTensor
+/// Description: Test CVTensor::AsCVTensor using Tensor as input
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, CVTensorAs) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateEmpty(TensorShape({3, 2}), DataType(DataType::DE_FLOAT64), &t);
@@ -352,6 +387,9 @@ TEST_F(MindDataTestTensorDE, CVTensorAs) {
   ASSERT_TRUE(*t2 == *ctv);
 }
 
+/// Feature: CVTensor
+/// Description: Test CVTensor MatAtIndex
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, CVTensorMatSlice) {
   cv::Mat m(2, 3, CV_32S);
   m.at<int32_t>(0, 0) = 10;
@@ -383,6 +421,9 @@ TEST_F(MindDataTestTensorDE, CVTensorMatSlice) {
   ASSERT_TRUE(*cvt2 == *cvt3);
 }
 
+/// Feature: Tensor
+/// Description: Test iterating on Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, TensorIterator) {
   std::vector<uint32_t> values = {1, 2, 3, 4, 5, 6};
   std::vector<uint32_t> values2 = {2, 3, 4, 5, 6, 7};
@@ -420,6 +461,9 @@ TEST_F(MindDataTestTensorDE, TensorIterator) {
   ASSERT_TRUE(ctr == 6);
 }
 
+/// Feature: Tensor
+/// Description: Test Slice on Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, TensorSlice) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateFromVector(std::vector<dsize_t>{0, 1, 2, 3, 4}, &t);
@@ -432,6 +476,9 @@ TEST_F(MindDataTestTensorDE, TensorSlice) {
   ASSERT_EQ(*t2, *expected);
 }
 
+/// Feature: Tensor
+/// Description: Test partial InsertTensor on Tensor
+/// Expectation: Output is equal to the expected output and throw correct error if concatenated vector is too large
 TEST_F(MindDataTestTensorDE, TensorPartialInsert) {
   std::vector<uint32_t> values1 = {1, 2, 3, 0, 0, 0};
   std::vector<uint32_t> values2 = {4, 5, 6};
@@ -459,6 +506,9 @@ TEST_F(MindDataTestTensorDE, TensorPartialInsert) {
   EXPECT_FALSE(s.IsOk());
 }
 
+/// Feature: Tensor
+/// Description: Test creating an empty Tensor
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestTensorDE, TensorEmpty) {
   TensorPtr t;
   Status rc = Tensor::CreateEmpty(TensorShape({0}), DataType(DataType::DE_UINT64), &t);

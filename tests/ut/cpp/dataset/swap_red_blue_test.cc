@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,13 @@ class MindDataTestSwapRedBlueOp : public UT::CVOP::CVOpCommon {
   std::shared_ptr<Tensor> output_tensor_;
 };
 
+/// Feature: SwapRedBlue op
+/// Description: Test SwapRedBlueOp with default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestSwapRedBlueOp, TestOp1) {
   MS_LOG(INFO) << "Doing testSwapRedBlue.";
   // SwapRedBlue params
-  std::unique_ptr<SwapRedBlueOp> op(new SwapRedBlueOp());
+  auto op = std::make_unique<SwapRedBlueOp>();
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);
   size_t actual = 0;

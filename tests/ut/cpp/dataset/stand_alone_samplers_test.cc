@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,9 @@ class MindDataTestStandAloneSampler : public UT::DatasetOpTesting {
   };
 };
 
+/// Feature: MindData RT DistributedSampler Support
+/// Description: Test MindData RT DistributedlSampler HandshakeRandomAccessOp and GetNextSampler
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
   std::vector<std::shared_ptr<Tensor>> row;
   uint64_t res[6][7] = {{0, 3, 6, 9, 12, 15, 18},  {1, 4, 7, 10, 13, 16, 19}, {2, 5, 8, 11, 14, 17, 0},
@@ -74,6 +77,9 @@ TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
   }
 }
 
+/// Feature: MindData RT SequentialSampler Support
+/// Description: Test MindData RT SequentialSampler HandshakeRandomAccessOp, GetNextSample, and ResetSampler
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestStandAloneSampler, TestStandAoneSequentialSampler) {
   std::vector<std::shared_ptr<Tensor>> row;
   MockStorageOp mock(5);

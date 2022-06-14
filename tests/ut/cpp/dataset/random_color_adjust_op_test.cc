@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,14 @@ class MindDataTestRandomColorAdjustOp : public UT::CVOP::CVOpCommon {
   MindDataTestRandomColorAdjustOp() : CVOpCommon() {}
 };
 
+/// Feature: RandomColorAdjust op
+/// Description: Test RandomColorAdjustOp basic usage and check OneToOne
+/// Expectation: Output's shape is equal to the expected output's shape
 TEST_F(MindDataTestRandomColorAdjustOp, TestOp1) {
   MS_LOG(INFO) << "Doing testRandomColorAdjustOp.";
 
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<RandomColorAdjustOp> op(new RandomColorAdjustOp(0.7, 1.3, 0.8, 1.2, 0.8, 1.2, -0.2, 0.2));
+  auto op = std::make_unique<RandomColorAdjustOp>(0.7, 1.3, 0.8, 1.2, 0.8, 1.2, -0.2, 0.2);
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());
@@ -38,11 +41,14 @@ TEST_F(MindDataTestRandomColorAdjustOp, TestOp1) {
   EXPECT_EQ(input_tensor_->shape()[1], output_tensor->shape()[1]);
 }
 
+/// Feature: RandomColorAdjust op
+/// Description: Test RandomColorAdjustOp basic usage
+/// Expectation: Output's shape is equal to the expected output's shape
 TEST_F(MindDataTestRandomColorAdjustOp, TestOp2) {
   MS_LOG(INFO) << "Doing testRandomColorAdjustOp2.";
 
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<RandomColorAdjustOp> op(new RandomColorAdjustOp(0.7, 1.3, 0.8, 1.2, 0.8, 1.2, -0.2, 0.2));
+  auto op = std::make_unique<RandomColorAdjustOp>(0.7, 1.3, 0.8, 1.2, 0.8, 1.2, -0.2, 0.2);
 
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());
@@ -50,11 +56,14 @@ TEST_F(MindDataTestRandomColorAdjustOp, TestOp2) {
   EXPECT_EQ(input_tensor_->shape()[1], output_tensor->shape()[1]);
 }
 
+/// Feature: RandomColorAdjust op
+/// Description: Test RandomColorAdjustOp with min max brightness=0.8 and min max hue=0.0
+/// Expectation: Output's shape is equal to the expected output's shape
 TEST_F(MindDataTestRandomColorAdjustOp, TestOp3) {
   MS_LOG(INFO) << "Doing testRandomColorAdjustOp Brightness.";
 
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<RandomColorAdjustOp> op(new RandomColorAdjustOp(0.8, 0.8, 0, 0, 0, 0, 0, 0));
+  auto op = std::make_unique<RandomColorAdjustOp>(0.8, 0.8, 0, 0, 0, 0, 0, 0);
 
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());
@@ -62,11 +71,14 @@ TEST_F(MindDataTestRandomColorAdjustOp, TestOp3) {
   EXPECT_EQ(input_tensor_->shape()[1], output_tensor->shape()[1]);
 }
 
+/// Feature: RandomColorAdjust op
+/// Description: Test RandomColorAdjustOp with min max brightness=0.8 and min max hue=0.2
+/// Expectation: Output's shape is equal to the expected output's shape
 TEST_F(MindDataTestRandomColorAdjustOp, TestOp4) {
   MS_LOG(INFO) << "Doing testRandomColorAdjustOp Brightness.";
 
   std::shared_ptr<Tensor> output_tensor;
-  std::unique_ptr<RandomColorAdjustOp> op(new RandomColorAdjustOp(0.8, 0.8, 0, 0, 0, 0, 0.2, 0.2));
+  auto op = std::make_unique<RandomColorAdjustOp>(0.8, 0.8, 0, 0, 0, 0, 0.2, 0.2);
 
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

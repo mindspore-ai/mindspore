@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ class MindDataTestFillOp : public UT::Common {
   MindDataTestFillOp() {}
 };
 
+/// Feature: Fill op
+/// Description: Test Fill op basic usage (fill uint64 tensor with uint64 scalar)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestFillOp, TestOp) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-TestOp.";
   std::vector<uint64_t> labels = {1, 1, 2};
@@ -34,7 +37,7 @@ TEST_F(MindDataTestFillOp, TestOp) {
   Tensor::CreateScalar<uint64_t>(4, &fill_tensor);
 
   std::shared_ptr<Tensor> output;
-  std::unique_ptr<FillOp> op(new FillOp(fill_tensor));
+  auto op = std::make_unique<FillOp>(fill_tensor);
   Status s = op->Compute(input, &output);
 
   std::vector<uint64_t> out = {4, 4, 4};
@@ -51,6 +54,9 @@ TEST_F(MindDataTestFillOp, TestOp) {
   MS_LOG(INFO) << "MindDataTestFillOp-TestOp end.";
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op with casting (fill uint64 tensor with float scalar)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestFillOp, TestCasting) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-TestCasting.";
   std::vector<uint64_t> labels = {0, 1, 2};
@@ -61,7 +67,7 @@ TEST_F(MindDataTestFillOp, TestCasting) {
   Tensor::CreateScalar<float>(2.0, &fill_tensor);
 
   std::shared_ptr<Tensor> output;
-  std::unique_ptr<FillOp> op(new FillOp(fill_tensor));
+  auto op = std::make_unique<FillOp>(fill_tensor);
   Status s = op->Compute(input, &output);
 
   std::vector<uint64_t> out = {2, 2, 2};
@@ -79,6 +85,9 @@ TEST_F(MindDataTestFillOp, TestCasting) {
   MS_LOG(INFO) << "MindDataTestFillOp-TestCasting end.";
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op invalid input (fill uint64 tensor with uint64 tensor)
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestFillOp, ScalarFill) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-ScalarFill.";
   std::vector<uint64_t> labels = {0, 1, 2};
@@ -91,7 +100,7 @@ TEST_F(MindDataTestFillOp, ScalarFill) {
   Tensor::CreateFromVector(fill_labels, &fill_tensor);
 
   std::shared_ptr<Tensor> output;
-  std::unique_ptr<FillOp> op(new FillOp(fill_tensor));
+  auto op = std::make_unique<FillOp>(fill_tensor);
   Status s = op->Compute(input, &output);
 
   EXPECT_TRUE(s.IsError());
@@ -100,6 +109,9 @@ TEST_F(MindDataTestFillOp, ScalarFill) {
   MS_LOG(INFO) << "MindDataTestFillOp-ScalarFill end.";
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op (fill string tensor with string scalar)
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestFillOp, StringFill) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-StringFill.";
   std::vector<std::string> strings = {"xyzzy", "plugh", "abracadabra"};
@@ -111,7 +123,7 @@ TEST_F(MindDataTestFillOp, StringFill) {
 
   std::shared_ptr<Tensor> output;
 
-  std::unique_ptr<FillOp> op(new FillOp(fill_tensor));
+  auto op = std::make_unique<FillOp>(fill_tensor);
   Status s = op->Compute(input, &output);
 
   std::vector<std::string> expected_strings = {"hello", "hello", "hello"};
@@ -129,6 +141,9 @@ TEST_F(MindDataTestFillOp, StringFill) {
   MS_LOG(INFO) << "MindDataTestFillOp-StringFill end.";
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op mismatch type (fill string tensor with numeric scalar)
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestFillOp, NumericToString) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-NumericToString.";
   std::vector<std::string> strings = {"xyzzy", "plugh", "abracadabra"};
@@ -140,7 +155,7 @@ TEST_F(MindDataTestFillOp, NumericToString) {
 
   std::shared_ptr<Tensor> output;
 
-  std::unique_ptr<FillOp> op(new FillOp(fill_tensor));
+  auto op = std::make_unique<FillOp>(fill_tensor);
   Status s = op->Compute(input, &output);
 
   EXPECT_TRUE(s.IsError());
@@ -149,6 +164,9 @@ TEST_F(MindDataTestFillOp, NumericToString) {
   MS_LOG(INFO) << "MindDataTestFillOp-NumericToString end.";
 }
 
+/// Feature: Fill op
+/// Description: Test Fill op mismatch type (fill numeric tensor with string scalar)
+/// Expectation: Throw correct error and message
 TEST_F(MindDataTestFillOp, StringToNumeric) {
   MS_LOG(INFO) << "Doing MindDataTestFillOp-StringToNumeric.";
   std::vector<uint64_t> labels = {0, 1, 2};
@@ -160,7 +178,7 @@ TEST_F(MindDataTestFillOp, StringToNumeric) {
 
   std::shared_ptr<Tensor> output;
 
-  std::unique_ptr<FillOp> op(new FillOp(fill_tensor));
+  auto op = std::make_unique<FillOp>(fill_tensor);
   Status s = op->Compute(input, &output);
 
   EXPECT_TRUE(s.IsError());

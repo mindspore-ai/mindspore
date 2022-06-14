@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ class MindDataTestIntrpService : public UT::Common {
     TaskGroup vg_;
 };
 
+/// Feature: Interrupt
+/// Description: Test Interrupt on Queue that's being operated on
+/// Expectation: Runs successfully
 TEST_F(MindDataTestIntrpService, Test1) {
   Status rc;
   Queue<int> q(3);
@@ -47,6 +50,9 @@ TEST_F(MindDataTestIntrpService, Test1) {
   vg_.join_all(Task::WaitFlag::kNonBlocking);
 }
 
+/// Feature: Interrupt
+/// Description: Test Interrupt on Wait
+/// Expectation: Runs successfully
 TEST_F(MindDataTestIntrpService, Test2) {
   MS_LOG(INFO) << "Test Semaphore";
   Status rc;

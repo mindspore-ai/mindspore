@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ class MindDataTestRandomResize : public UT::CVOP::CVOpCommon {
   MindDataTestRandomResize() : CVOpCommon() {}
 };
 
+/// Feature: RandomResize op
+/// Description: Test RandomResizeOp with a factor of 0.5
+/// Expectation: Runs successfully
 TEST_F(MindDataTestRandomResize, TestOp) {
   MS_LOG(INFO) << "Doing test RandomResize.";
   // Resizing with a factor of 0.5
@@ -36,7 +39,7 @@ TEST_F(MindDataTestRandomResize, TestOp) {
   input_tensor_row.push_back(input_tensor_);
   TensorRow output_tensor_row;
   // Resizing
-  std::unique_ptr<RandomResizeOp> op(new RandomResizeOp(output_h, output_w));
+  auto op = std::make_unique<RandomResizeOp>(output_h, output_w);
   Status st = op->Compute(input_tensor_row, &output_tensor_row);
   EXPECT_TRUE(st.IsOk());
   MS_LOG(INFO) << "testResize end.";

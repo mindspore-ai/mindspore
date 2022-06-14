@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,15 @@ class MindDataTestResizeWithBBoxOp : public UT::CVOP::BBOXOP::BBoxOpCommon {
  protected:
   MindDataTestResizeWithBBoxOp() : BBoxOpCommon() {}
 };
+
+/// Feature: ResizeWithBBox op
+/// Description: Test ResizeWithBBoxOp basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestResizeWithBBoxOp, TestOp) {
   MS_LOG(INFO) << "Doing testResizeWithBBox.";
   // resize
   TensorTable results;
-  std::unique_ptr<ResizeWithBBoxOp> op(new ResizeWithBBoxOp(500));
+  auto op = std::make_unique<ResizeWithBBoxOp>(500);
   for (const auto &tensor_row_ : images_and_annotations_) {
     // selected a tensorRow
     TensorRow output_row;

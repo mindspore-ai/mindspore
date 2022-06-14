@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,9 @@ class MindDataTestGNNGraph : public UT::Common {
   }
 };
 
+/// Feature: GNNGraph
+/// Description: Test GetEdgesFromNodes from graph basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestGetEdgesFromNodes) {
   std::string path = "data/mindrecord/testGraphData/testdata";
   GraphDataImpl graph(path, 1);
@@ -110,6 +113,9 @@ TEST_F(MindDataTestGNNGraph, TestGetEdgesFromNodes) {
   EXPECT_TRUE(edges->ToString() == "Tensor (shape: <6>, Type: int32)\n[1,9,17,19,31,37]");
 }
 
+/// Feature: GNNGraph
+/// Description: Test GetAllNeighbors from graph basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestGetAllNeighbors) {
   std::string path = "data/mindrecord/testGraphData/testdata";
   GraphDataImpl graph(path, 1);
@@ -151,6 +157,9 @@ TEST_F(MindDataTestGNNGraph, TestGetAllNeighbors) {
   EXPECT_TRUE(features[2]->ToString() == "Tensor (shape: <10>, Type: int32)\n[1,2,3,1,4,3,5,3,5,4]");
 }
 
+/// Feature: GNNGraph
+/// Description: Test GetAllNeighbors from graph with COO and CSR output format
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestGetAllNeighborsSpecialFormat) {
   std::string path = "data/mindrecord/testGraphData/testdata";
   GraphDataImpl graph(path, 1);
@@ -192,6 +201,9 @@ TEST_F(MindDataTestGNNGraph, TestGetAllNeighborsSpecialFormat) {
     "[0,3,5,10,10,11,13,16,17,18,201,205,206,201,202,203,205,206,207,208,204,202,203,201,203,207,208,210,201,210]");
 }
 
+/// Feature: GNNGraph
+/// Description: Test GetSampledNeighbors from graph basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestGetSampledNeighbors) {
   std::string path = "data/mindrecord/testGraphData/testdata";
   GraphDataImpl graph(path, 1);
@@ -314,6 +326,9 @@ TEST_F(MindDataTestGNNGraph, TestGetSampledNeighbors) {
   EXPECT_TRUE(s.ToString().find("Invalid node id:301") != std::string::npos);
 }
 
+/// Feature: GNNGraph
+/// Description: Test GetNegSampledNeighbors from graph basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestGetNegSampledNeighbors) {
   std::string path = "data/mindrecord/testGraphData/testdata";
   GraphDataImpl graph(path, 1);
@@ -357,6 +372,9 @@ TEST_F(MindDataTestGNNGraph, TestGetNegSampledNeighbors) {
   EXPECT_TRUE(s.ToString().find("Invalid neighbor type") != std::string::npos);
 }
 
+/// Feature: GNNGraph
+/// Description: Test RandomWalk from graph basic usage
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestRandomWalk) {
   std::string path = "data/mindrecord/testGraphData/sns";
   GraphDataImpl graph(path, 1);
@@ -383,6 +401,9 @@ TEST_F(MindDataTestGNNGraph, TestRandomWalk) {
   EXPECT_TRUE(walk_path->shape().ToString() == "<33,60>");
 }
 
+/// Feature: GNNGraph
+/// Description: Test RandomWalk from graph with default parameters
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestRandomWalkDefaults) {
   std::string path = "data/mindrecord/testGraphData/sns";
   GraphDataImpl graph(path, 1);

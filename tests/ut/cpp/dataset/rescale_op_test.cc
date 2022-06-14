@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,15 @@ class MindDataTestRescaleOp : public UT::CVOP::CVOpCommon {
   MindDataTestRescaleOp() : CVOpCommon() {}
 };
 
+/// Feature: Rescale op
+/// Description: Test RescaleOp with rescale=1.0 / 255 and shift=1.0 and check OneToOne
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRescaleOp, TestOp) {
   // Rescale Factor
   float rescale = 1.0 / 255;
   float shift = 1.0;
 
-  std::unique_ptr<RescaleOp> op(new RescaleOp(rescale, shift));
+  auto op = std::make_unique<RescaleOp>(rescale, shift);
   std::shared_ptr<Tensor> output_tensor;
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(op->OneToOne());

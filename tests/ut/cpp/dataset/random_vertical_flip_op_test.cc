@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ class MindDataTestRandomVerticalFlipOp : public UT::CVOP::CVOpCommon {
   MindDataTestRandomVerticalFlipOp() : CVOpCommon() {}
 };
 
+/// Feature: RandomVerticalFlip op
+/// Description: Test RandomVerticalFlipOp with prob=0.5
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestRandomVerticalFlipOp, TestOp) {
   MS_LOG(INFO) << "Doing testVerticalFlip.";
   // flip
@@ -32,7 +35,7 @@ TEST_F(MindDataTestRandomVerticalFlipOp, TestOp) {
   input_tensor_row.push_back(input_tensor_);
   input_tensor_row.push_back(input_tensor_);
   TensorRow output_tensor_row;
-  std::unique_ptr<RandomVerticalFlipOp> op(new RandomVerticalFlipOp(0.5));
+  auto op = std::make_unique<RandomVerticalFlipOp>(0.5);
   Status s = op->Compute(input_tensor_row, &output_tensor_row);
   EXPECT_TRUE(s.IsOk());
   CheckImageShapeAndData(input_tensor_, kFlipVertical);

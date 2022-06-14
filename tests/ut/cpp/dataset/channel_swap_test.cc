@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ class MindDataTestChannelSwap : public UT::CVOP::CVOpCommon {
   MindDataTestChannelSwap() : CVOpCommon() {}
 };
 
+/// Feature: HwcToChw op
+/// Description: Test channel swap with HwcToChw op
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestChannelSwap, TestOp) {
   MS_LOG(INFO) << "Doing MindDataTestChannelSwap.";
   // Creating a Tensor
@@ -36,7 +39,7 @@ TEST_F(MindDataTestChannelSwap, TestOp) {
   std::shared_ptr<Tensor> output_tensor;
 
   // Decoding
-  std::unique_ptr<HwcToChwOp> op(new HwcToChwOp());
+  auto op = std::make_unique<HwcToChwOp>();
   Status status;
   status = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(op->OneToOne());

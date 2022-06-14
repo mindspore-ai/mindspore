@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,9 @@ class MindDataTestMaskOp : public UT::Common {
   void SetUp() { GlobalInit(); }
 };
 
+/// Feature: Mask op
+/// Description: Test MaskOp basic usages
+/// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestMaskOp, Basics) {
   std::shared_ptr<Tensor> t;
   Tensor::CreateFromVector(std::vector<uint32_t>({1, 2, 3, 4, 5, 6}), &t);
