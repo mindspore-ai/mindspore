@@ -1169,10 +1169,7 @@ def set_fl_context(**kwargs):
         fl_server_port (int): The server port. Default: 6668.
         start_fl_job_threshold (int): The threshold count of startFLJob. Default: 1.
         start_fl_job_time_window (int): The time window duration for startFLJob in millisecond. Default: 300000.
-        share_secrets_ratio (float): The ratio for computing the threshold count of share secrets. Default: 1.0.
         update_model_ratio (float): The ratio for computing the threshold count of updateModel. Default: 1.0.
-        cipher_time_window (int): The time window duration for each cipher round in millisecond. Default: 300000.
-        reconstruct_secrets_threshold (int): The threshold count of reconstruct threshold. Default: 2000.
         update_model_time_window (int): The time window duration for updateModel in millisecond. Default: 300000.
         fl_name (str): The federated learning job name. Default: ''.
         fl_iteration_num (int): Iteration number of federated learning,
@@ -1182,12 +1179,6 @@ def set_fl_context(**kwargs):
         client_learning_rate (float): Client training learning rate. Default: 0.001.
         worker_step_num_per_iteration (int): The worker's standalone training step number before communicating with
                                              server. Default: 65.
-        dp_eps (float): Epsilon budget of differential privacy mechanism. The smaller the dp_eps, the better the
-            privacy protection effect. Default: 50.0.
-        dp_delta (float): Delta budget of differential privacy mechanism, which is usually equals the reciprocal of
-            client number. The smaller the dp_delta, the better the privacy protection effect. Default: 0.01.
-        dp_norm_clip (float): A factor used for clipping model's weights for differential mechanism. Its value is
-            suggested to be 0.5~2. Default: 1.0.
         encrypt_type (str): Secure schema for federated learning, which can be 'NOT_ENCRYPT', 'DP_ENCRYPT',
             'PW_ENCRYPT', 'STABLE_PW_ENCRYPT' or 'SIGNDS'. If 'DP_ENCRYPT', differential privacy schema would be applied
             for clients and the privacy protection effect would be determined by dp_eps, dp_delta and dp_norm_clip
@@ -1195,6 +1186,15 @@ def set_fl_context(**kwargs):
             model from stealing in cross-device scenario. If 'STABLE_PW_ENCRYPT', pairwise secure aggregation would
             be applied to protect clients' model from stealing in cross-silo scenario. If 'SIGNDS', SignDS schema would
             be applied for clients. Default: 'NOT_ENCRYPT'.
+        share_secrets_ratio (float): The ratio for computing the threshold count of share secrets. Default: 1.0.
+        cipher_time_window (int): The time window duration for each cipher round in millisecond. Default: 300000.
+        reconstruct_secrets_threshold (int): The threshold count of reconstruct threshold. Default: 2000.
+        dp_eps (float): Epsilon budget of differential privacy mechanism. The smaller the dp_eps, the better the
+            privacy protection effect. Default: 50.0.
+        dp_delta (float): Delta budget of differential privacy mechanism, which is usually equals the reciprocal of
+            client number. The smaller the dp_delta, the better the privacy protection effect. Default: 0.01.
+        dp_norm_clip (float): A factor used for clipping model's weights for differential mechanism. Its value is
+            suggested to be 0.5~2. Default: 1.0.
         sign_k (float): SignDS: Top-k ratio, namely the number of top-k dimensions divided by the total number of
             dimensions. Default: 0.01.
         sign_eps (float): SignDS: Privacy budget. Default: 100.
