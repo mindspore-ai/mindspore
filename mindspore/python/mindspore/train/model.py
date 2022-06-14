@@ -70,10 +70,10 @@ def _save_final_ckpt(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         obj = None
-        if kwargs['callbacks'] and isinstance(kwargs['callbacks'], ModelCheckpoint):
+        if kwargs.get('callbacks') and isinstance(kwargs.get('callbacks'), ModelCheckpoint):
             obj = kwargs['callbacks']
-        if kwargs['callbacks'] and isinstance(kwargs['callbacks'], list):
-            for item in kwargs['callbacks']:
+        if kwargs.get('callbacks') and isinstance(kwargs.get('callbacks'), list):
+            for item in kwargs.get('callbacks'):
                 if isinstance(item, ModelCheckpoint):
                     obj = item
         if obj and obj._config and obj._config.exception_save:

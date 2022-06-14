@@ -121,7 +121,8 @@ def _generate_network_with_dataset(network, dataset_helper, queue_name):
 
 
 class _DatasetAux:
-    def __deepcopy__(self, memodict):
+    @staticmethod
+    def __deepcopy__(memodict):
         return None
 
 
