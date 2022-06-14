@@ -33,6 +33,9 @@ class MpiPycc {
   static int GetDeviceID();
   static int GetRankId(const std::string &group);
   static int GetRankSize(const std::string &group);
+  static int GetLocalRankSize(const std::string &group);
+  static int GetGroupRankFromWorld(const int rank_id, const std::string &group);
+  static int GetWorldRankFromGroup(const std::string &group, const int rank_id);
   static void CreateGroup(const std::string &group, const std::vector<unsigned int> &ranks);
 
  private:

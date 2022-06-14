@@ -348,7 +348,9 @@ def _get_local_size_helper(group, backend):
         Integer. The local rank size where the calling process is being within specified group.
     """
     size = None
-    if backend == Backend.HCCL:
+    if backend == Backend.HCCL_MPI:
+        size = mpi.get_local_rank_size(group)
+    elif backend == Backend.HCCL:
         if group == HCCL_WORLD_COMM_GROUP:
             size = hccl.get_local_rank_size()
         else:
@@ -382,7 +384,12 @@ def _get_world_rank_from_group_rank_helper(group, group_rank_id, backend):
     if not isinstance(group_rank_id, int):
         raise TypeError("For 'get_world_rank_from_group_rank', the argument 'group_rank_id' must be"
                         " type of int, but got 'group_rank_id' type : {}.".format(type(group_rank_id)))
-    if backend == Backend.HCCL:
+    if backend == Backend.HCCL_MPI:
+        if group == HCCL_WORLD_COMM_GROUP:
+            raise ValueError("For 'get_world_rank_from_group_rank', the argument 'group' "
+                             "should not be 'HCCL_WORLD_COMM_GROUP'.")
+        world_rank_id = mpi.get_world_rank_from_group_rank(group, group_rank_id)
+    elif backend == Backend.HCCL:
         if group == HCCL_WORLD_COMM_GROUP:
             raise ValueError("For 'get_world_rank_from_group_rank' on GPU, the argument 'group' "
                              "should be 'NCCL_WORLD_COMM_GROUP', but got 'HCCL_WORLD_COMM_GROUP'.")
@@ -415,7 +422,12 @@ def _get_group_rank_from_world_rank_helper(world_rank_id, group, backend):
     if not isinstance(world_rank_id, int):
         raise TypeError("For 'get_group_rank_from_world_rank', the argument 'world_rank_id' must be type of int, "
                         "but got 'world_rank_id' type : {}.".format(type(world_rank_id)))
-    if backend == Backend.HCCL:
+    if backend == Backend.HCCL_MPI:
+        if group == HCCL_WORLD_COMM_GROUP:
+            raise ValueError("For 'get_group_rank_from_world_rank', the argument 'group' "
+                             "should not be 'HCCL_WORLD_COMM_GROUP'.")
+        group_rank_id = mpi.get_group_rank_from_world_rank(world_rank_id, group)
+    elif backend == Backend.HCCL:
         if group == HCCL_WORLD_COMM_GROUP:
             raise ValueError("For 'get_group_rank_from_world_rank' on GPU, the argument 'group' "
                              "should be 'NCCL_WORLD_COMM_GROUP', but got 'HCCL_WORLD_COMM_GROUP'.")

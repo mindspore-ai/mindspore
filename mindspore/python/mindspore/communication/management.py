@@ -43,6 +43,7 @@ def _set_rank_from_mpi():
     if ompi_rank_size:
         os.environ["RANK_SIZE"] = ompi_rank_size
 
+
 _set_rank_from_mpi()
 
 
