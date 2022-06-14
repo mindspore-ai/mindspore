@@ -88,25 +88,37 @@ class ModelPool {
   Status DistinguishPhysicalAndLogicalByNuma(const std::vector<int> &physical_core_list,
                                              const std::vector<int> &logical_core_list);
 
-  std::vector<std::vector<int>> numa_physical_cores_;
-  std::vector<std::vector<int>> numa_logical_cores_;
+ private:
+  // different workers get tasks from different task queues.
+  // currently task queues are distinguished according to different numa node numbers.
+  // if you do not distinguish between numa nodes, the default task queue number is 0.
+  // task queue id <=> worker : sort workers by performance.
+  std::unordered_map<int, std::vector<std::shared_ptr<ModelWorker>>> all_model_workers_;
+
+  // save all worker thread
   std::vector<std::thread> worker_thread_vec_;
+  std::mutex predict_task_mutex_;
   std::vector<MSTensor> model_pool_inputs_;
   std::vector<MSTensor> model_pool_outputs_;
   size_t workers_num_ = 1;
-  std::mutex predict_task_mutex_;
-  bool is_user_data_ = false;
-  int numa_node_num_ = 1;
-  int used_numa_node_num_ = 0;
-  bool use_numa_bind_mode_ = false;
+
+  // create predict task
   std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
-  std::unordered_map<int, std::shared_ptr<Allocator>> numa_allocator_;
-  bool use_split_batch_ = false;
-  std::unordered_map<std::shared_ptr<ModelWorker>, int> all_model_worker_;
-  bool create_worker_success_ = true;
   PredictTask *tasks_ = nullptr;
   std::mutex task_id_mutex_;
   std::queue<size_t> free_tasks_id_;
+
+  // use numa
+  int numa_node_num_ = 1;
+  int used_numa_node_num_ = 0;
+  bool use_numa_bind_mode_ = false;
+  std::vector<std::vector<int>> numa_physical_cores_;
+  std::vector<std::vector<int>> numa_logical_cores_;
+  std::unordered_map<int, std::shared_ptr<Allocator>> numa_allocator_;
+
+  // split batch
+  bool use_split_batch_ = false;
+  bool is_user_data_ = false;  // use in split batch
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_

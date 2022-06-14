@@ -29,6 +29,9 @@ constexpr int kNumDeviceInfo = 2;
 constexpr int kNumIndex = 2;
 constexpr int kNumCoreDataLen = 3;
 constexpr int kNumMaxTaskQueueSize = 1000;
+constexpr int kNumPhysicalCoreThreshold = 32;
+constexpr int kDefaultWorkerNumPerPhysicalCpu = 4;
+constexpr int kDefaultThreadsNum = 8;
 int GetCoreNum() {
   int core_num = 1;
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -93,6 +96,22 @@ Status DistinguishPhysicalAndLogical(std::vector<int> *physical_list, std::vecto
     }
   }
   return kSuccess;
+}
+
+int GetDefaultThreadNum() {
+  std::vector<int> physical_core_lite;
+  std::vector<int> logical_core_list;
+  auto status = DistinguishPhysicalAndLogical(&physical_core_lite, &logical_core_list);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "DistinguishPhysicalAndLogical failed.";
+    return 0;
+  }
+  auto physical_core_size = physical_core_lite.size();
+  if (physical_core_lite.size() < kNumPhysicalCoreThreshold) {
+    return physical_core_size / kDefaultWorkerNumPerPhysicalCpu;
+  } else {
+    return kDefaultThreadsNum;
+  }
 }
 }  // namespace
 
@@ -248,6 +267,12 @@ Status ModelPool::SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Con
 std::shared_ptr<mindspore::Context> ModelPool::GetDefaultContext() {
   MS_LOG(DEBUG) << "use default config.";
   auto context = std::make_shared<Context>();
+  auto thread_num = GetDefaultThreadNum();
+  if (thread_num == 0) {
+    MS_LOG(ERROR) << "computer thread num failed.";
+    return nullptr;
+  }
+  context->SetThreadNum(thread_num);
   auto &device_list = context->MutableDeviceInfo();
   auto device_info = std::make_shared<CPUDeviceInfo>();
   if (device_info == nullptr) {
@@ -545,6 +570,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "model pool config size is wrong.";
     return kLiteError;
   }
+  bool create_worker_success = true;
   for (size_t i = 0; i < workers_num_; i++) {
     int numa_node_id = model_pool_config[i]->numa_id;
     auto ret = lite::PackWeightManager::GetInstance()->InitPackWeight(graph_buf, size, numa_node_id);
@@ -559,15 +585,21 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
     predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
     worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
-                                             model_pool_config[i], predict_task_queue_, &create_worker_success_));
-    all_model_worker_.insert(std::make_pair(model_worker, task_queue_id));
+                                             model_pool_config[i], predict_task_queue_, &create_worker_success));
+    if (all_model_workers_.find(task_queue_id) != all_model_workers_.end()) {
+      all_model_workers_[task_queue_id].push_back(model_worker);
+    } else {
+      all_model_workers_[task_queue_id] = {model_worker};
+    }
   }
-  for (auto &item : all_model_worker_) {
-    auto &worker = item.first;
-    worker->WaitCreateWorkerDone();
-    if (!create_worker_success_) {
-      MS_LOG(ERROR) << "init failed.";
-      return kLiteError;
+  for (auto &item : all_model_workers_) {
+    auto &workers = item.second;
+    for (auto &worker : workers) {
+      worker->WaitCreateWorkerDone();
+      if (!create_worker_success) {
+        MS_LOG(ERROR) << "worker init failed.";
+        return kLiteError;
+      }
     }
   }
   // init model pool input and output
@@ -591,12 +623,14 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
 }
 
 Status ModelPool::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
-  for (auto &item : all_model_worker_) {
-    auto &worker = item.first;
-    auto status = worker->UpdateConfig(section, config);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "model pool update config failed, status=" << status;
-      return status;
+  for (auto &item : all_model_workers_) {
+    auto &workers = item.second;
+    for (auto &worker : workers) {
+      auto status = worker->UpdateConfig(section, config);
+      if (status != kSuccess) {
+        MS_LOG(ERROR) << "model pool update config failed, status=" << status;
+        return status;
+      }
     }
   }
   return kSuccess;
@@ -780,12 +814,12 @@ std::shared_ptr<ModelWorker> ModelPool::GetMaxWaitWorkerNum(int *max_wait_worker
     }
   }
   if (*max_wait_worker_num > 0 && !use_split_batch_) {
-    for (auto &item : all_model_worker_) {
-      auto &worker = item.first;
-      auto numa_id = item.second;
+    auto &workers = all_model_workers_[*max_wait_worker_node_id];
+    auto task_queue_id = *max_wait_worker_node_id;
+    for (auto &worker : workers) {
       if (worker->IsAvailable()) {
-        *max_wait_worker_num = predict_task_queue_->GetWaitModelNum(numa_id);
-        *max_wait_worker_node_id = numa_id;
+        *max_wait_worker_num = predict_task_queue_->GetWaitModelNum(task_queue_id);
+        *max_wait_worker_node_id = task_queue_id;
         return worker;
       }
     }

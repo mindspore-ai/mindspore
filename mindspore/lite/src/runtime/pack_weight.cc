@@ -104,6 +104,10 @@ STATUS PackWeight::ReplaceOriginTensorData(const char *model_buf, std::vector<Te
   if (model_weight->tensors_data.find(tensor_index) == model_weight->tensors_data.end()) {
     auto allocator = model_weight->allocator;
     void *new_data = allocator->Malloc(tensor->Size());
+    if (new_data == nullptr) {
+      MS_LOG(ERROR) << "allocator malloc data failed.";
+      return RET_ERROR;
+    }
     memcpy(new_data, tensor->data(), tensor->Size());
     MS_CHECK_TRUE_MSG(tensor->own_data(), RET_ERROR, "tensor data is not own data.");
     tensor->FreeData();
