@@ -595,6 +595,64 @@ def get_lrn_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.ApplyAdagradDA)
+def get_apply_adagrad_da_vmap_rule(prim, axis_size):
+    """VmapRule for `ApplyAdagradDA` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+    prim_name = prim.name
+
+    def vmap_rule(var_bdim, gradient_accumulator_bdim, gradient_squared_accumulator_bdim, grad_bdim, lr_bdim, l1_bdim,
+                  l2_bdim, global_step_bdim):
+        var, var_dim = var_bdim
+        gradient_accumulator, gradient_accumulator_dim = gradient_accumulator_bdim
+        gradient_squared_accumulator, gradient_squared_accumulator_dim = gradient_squared_accumulator_bdim
+        grad, grad_dim = grad_bdim
+        lr, lr_dim = lr_bdim
+        l1, l1_dim = l1_bdim
+        l2, l2_dim = l2_bdim
+        global_step, global_step_dim = global_step_bdim
+
+        if var_dim is None:
+            if any(dim is not None for dim in
+                   [gradient_accumulator_bdim, gradient_squared_accumulator_bdim, grad_bdim, lr_bdim, l1_bdim, l2_bdim,
+                    global_step_bdim]):
+                raise ValueError("The source axis of 'var' is None, but the source "
+                                 "axis of 'gradient_accumulator/gradient_squared_accumulator/grad/lr/l1/l2/global_step'"
+                                 " is not None. The execution order of "
+                                 "operator '{}' cannot be guaranteed.".format(prim_name))
+            var, gradient_accumulator, gradient_squared_accumulator = prim(var, gradient_accumulator,
+                                                                           gradient_squared_accumulator, grad, lr, l1,
+                                                                           l2,
+                                                                           global_step)  # prim为低维ApplyAdagradDA算子；
+            return (var, None), (gradient_accumulator, None), (gradient_squared_accumulator, None)
+        if var_dim != 0 or var_dim != gradient_accumulator_dim or var_dim != gradient_squared_accumulator_dim:
+            raise ValueError(
+                f"For '{prim_name}', the source axis of 'var' must be equal to 'gradient_accumulator_dim' "
+                f"and 'gradient_squared_accumulator_dim' and not equal to 0, "
+                f"but got the source axis of 'var': {var_dim}, "
+                f"'gradient_accumulator_dim': {gradient_accumulator_dim}, "
+                f"'gradient_squared_accumulator_dim': {gradient_squared_accumulator_dim}")
+
+        _update_prim_attr(prim, 'batch_rank', batch_rank)  # 将prim的batch_rank属性更新；
+
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        lr = _bdim_at_front(lr, lr_dim, axis_size)
+        l1 = _bdim_at_front(l1, l1_dim, axis_size)
+        l2 = _bdim_at_front(l2, l2_dim, axis_size)
+        global_step = _bdim_at_front(global_step, global_step_dim, axis_size)
+
+        var, gradient_accumulator, gradient_squared_accumulator = prim(var, gradient_accumulator,
+                                                                       gradient_squared_accumulator, grad, lr, l1,
+                                                                       l2,
+                                                                       global_step)  # prim为高维ApplyAdagradDA算子；
+        return (var, 0), (gradient_accumulator, 0), (gradient_squared_accumulator, 0)
+
+    return vmap_rule
+
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)

@@ -18,6 +18,8 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <functional>
+#include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/apply_adagrad_da_cpu_kernel.h"
 
 namespace mindspore {
@@ -43,6 +45,7 @@ bool ApplyAdagradDACpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                                       const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   dtype_ = inputs[0]->GetDtype();
+  batch_rank_ = base_operator->get_batch_rank();
   return true;
 }
 
@@ -53,7 +56,31 @@ int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (ret != 0) {
     return ret;
   }
-  return 0;
+  std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
+  std::vector<int64_t> lr_shape = inputs[kLRIndex]->GetShapeVector();
+
+  if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape size of 'lr' must be equal to 'batch_rank', "
+                     "but got the shape of 'lr': "
+                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+    return KRET_RESIZE_FAILED;
+  }
+
+  if (!lr_shape.empty()) {
+    batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), 1, std::multiplies<int64_t>());
+  }
+
+  if (batch_size_ > 0) {
+    input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+    input_elements_ = input_elements_ / batch_size_;
+
+    return ret;
+  } else {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;
+    return KRET_RESIZE_FAILED;
+  }
 }
 
 bool ApplyAdagradDACpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
@@ -111,6 +138,35 @@ void ApplyAdagradDACpuKernelMod::CheckParam(const std::vector<AddressPtr> &input
 }
 
 template <typename T>
+T Sign(T num) {
+  if (num > static_cast<T>(0.0)) {
+    return static_cast<T>(1.0);
+  } else if (num == static_cast<T>(0.0)) {
+    return static_cast<T>(0.0);
+  } else {
+    return static_cast<T>(-1.0);
+  }
+}
+
+template <typename T>
+T abs(T num) {
+  if (num >= static_cast<T>(0.0)) {
+    return static_cast<T>(num);
+  } else {
+    return static_cast<T>(-num);
+  }
+}
+
+template <typename T>
+T max(T num1, T num2) {
+  if (num1 >= num2) {
+    return static_cast<T>(num1);
+  } else {
+    return static_cast<T>(num2);
+  }
+}
+
+template <typename T>
 void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                               const std::vector<AddressPtr> &outputs) {
   auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
@@ -122,31 +178,42 @@ void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   const auto *l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
   const int *global_step = reinterpret_cast<int *>(inputs[kStepIndex]->addr);
 
-  // multithreading
-  size_t length = inputs[kVarIndex]->size / sizeof(T);
-  auto task = [this, &var, &gradient_accumulator, &gradient_squared_accumulator, &grad, &lr, &l1, &l2, &global_step](
-                size_t start, size_t end) {
-    LaunchApplyAdagradDA(var, gradient_accumulator, gradient_squared_accumulator, grad, lr, l1, l2, global_step, start,
-                         end);
-  };
-  CPUKernelUtils::ParallelForAutoSearch(task, length, &parallel_search_info_);
+  for (int64_t b = 0; b < batch_size_; b++) {
+    // multithreading
+    auto task = [this, &var, &gradient_accumulator, &gradient_squared_accumulator, &grad, &lr, &l1, &l2, &global_step](
+                  size_t start, size_t end) {
+      LaunchApplyAdagradDA(var, gradient_accumulator, gradient_squared_accumulator, grad, lr, l1, l2, global_step,
+                           start, end);
+    };
+    CPUKernelUtils::ParallelForAutoSearch(task, input_elements_, &parallel_search_info_);
 
-  // Copy result to output tensor
-  auto output_var = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
-  auto output_gradient_accumulator = reinterpret_cast<T *>(outputs[kAccIndex]->addr);
-  auto output_gradient_squared_accumulator = reinterpret_cast<T *>(outputs[kSquarAccIndex]->addr);
-  auto ret = memcpy_s(output_var, outputs[kVarIndex]->size, var, inputs[kVarIndex]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-  }
-  ret = memcpy_s(output_gradient_accumulator, outputs[kAccIndex]->size, gradient_accumulator, inputs[kAccIndex]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-  }
-  ret = memcpy_s(output_gradient_squared_accumulator, outputs[kSquarAccIndex]->size, gradient_squared_accumulator,
-                 inputs[kSquarAccIndex]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
+    // Copy result to output tensor
+    auto output_var = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
+    auto output_gradient_accumulator = reinterpret_cast<T *>(outputs[kAccIndex]->addr);
+    auto output_gradient_squared_accumulator = reinterpret_cast<T *>(outputs[kSquarAccIndex]->addr);
+    auto ret = memcpy_s(output_var, outputs[kVarIndex]->size, var, inputs[kVarIndex]->size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
+    }
+    ret =
+      memcpy_s(output_gradient_accumulator, outputs[kAccIndex]->size, gradient_accumulator, inputs[kAccIndex]->size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
+    }
+    ret = memcpy_s(output_gradient_squared_accumulator, outputs[kSquarAccIndex]->size, gradient_squared_accumulator,
+                   inputs[kSquarAccIndex]->size);
+    if (ret != EOK) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
+    }
+
+    var = var + input_elements_;
+    gradient_accumulator = gradient_accumulator + input_elements_;
+    gradient_squared_accumulator = gradient_squared_accumulator + input_elements_;
+    grad = grad + input_elements_;
+    lr++;
+    l1++;
+    l2++;
+    global_step++;
   }
 }
 
@@ -160,15 +227,13 @@ void ApplyAdagradDACpuKernelMod::LaunchApplyAdagradDA(T *var, T *gradient_accumu
     auto minus_one = static_cast<T>(-1);
     auto zeros = static_cast<T>(0);
     auto tmp_val =
-      l1[0] > zeros ? static_cast<T>(Sign(static_cast<float>(gradient_accumulator[i]))) *
-                        static_cast<T>(max(
-                          static_cast<float16>(abs(static_cast<float16>(gradient_accumulator[i]) -
-                                                   static_cast<float16>(l1[0]) * static_cast<float16>(global_step[0]))),
-                          static_cast<float16>(zeros)))
-                    : gradient_accumulator[i];
+      l1[0] > zeros
+        ? Sign<T>(gradient_accumulator[i]) *
+            max<T>(abs<T>(gradient_accumulator[i] - static_cast<T>(l1[0]) * static_cast<T>(global_step[0])), zeros)
+        : gradient_accumulator[i];
     auto x_value = minus_one * lr[0] * tmp_val;
-    auto y_value = static_cast<float16>(l2[0]) * static_cast<float16>(global_step[0]) * static_cast<float16>(lr[0]) +
-                   static_cast<float16>(sqrt(gradient_squared_accumulator[i]));
+    auto y_value = static_cast<T>(l2[0]) * static_cast<T>(global_step[0]) * static_cast<T>(lr[0]) +
+                   sqrt(gradient_squared_accumulator[i]);
     // update var
     var[i] = static_cast<T>(x_value) / static_cast<T>(y_value);
   }
