@@ -84,7 +84,7 @@ void OutputActor::FreeOutputNodeMem() {
       return;
     }
     if (!IsOutputAddressPersisted(output_device_tensor, output_node)) {
-      FreeMemory(output_device_tensor, device_contexts_[i]);
+      FreeMemoryByDeviceContext(output_device_tensor, device_contexts_[i]);
     }
   }
 }

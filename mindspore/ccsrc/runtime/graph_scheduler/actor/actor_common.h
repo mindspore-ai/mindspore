@@ -24,6 +24,7 @@
 #include <thread>
 #include <algorithm>
 #include <map>
+#include <memory>
 #include "utils/hash_map.h"
 #include "mindrt/include/actor/op_actor.h"
 #include "runtime/device/device_address.h"
@@ -204,11 +205,17 @@ class ActorDispatcher {
     (actor->*method)(std::forward<Args1>(args)...);
   }
 
-  static void is_multi_thread_execution(bool is_multi_thread_execution) {
+  static void set_is_multi_thread_execution(bool is_multi_thread_execution) {
     is_multi_thread_execution_ = is_multi_thread_execution;
   }
 
-  static bool get_is_memory_allocation_sync() { return is_memory_allocation_sync_; }
+  static bool is_memory_allocation_sync() { return is_memory_allocation_sync_; }
+  static void set_is_memory_allocation_sync(bool is_memory_allocation_sync) {
+    is_memory_allocation_sync_ = is_memory_allocation_sync;
+  }
+
+  static bool is_memory_free_sync() { return is_memory_free_sync_; }
+  static void set_is_memory_free_sync(bool is_memory_free_sync) { is_memory_free_sync_ = is_memory_free_sync; }
 
   // The first five executions are for warm-up, the next five executions are statistics of multi thread execution time,
   // and the next next five executions are statistics of single thread execution time. The first 30 step which do search
@@ -233,6 +240,7 @@ class ActorDispatcher {
   // Decide whether alloc and free memory synchronously.
   // The memory manager actor will not send and recv message if true.
   static bool is_memory_allocation_sync_;
+  static bool is_memory_free_sync_;
 };
 
 void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num);
@@ -271,9 +279,10 @@ bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_
 void UpdateRefCount(DeviceTensor *const device_tensor, bool is_max_ref_count = false);
 // Update the reference count of device tensor by the output index of node.
 void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_count = false);
-void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
-                          const std::string &op_name);
-void FreeMemory(DeviceTensor *const device_tensor, const DeviceContext *device_context);
+
+void FreeMemoryByDeviceContext(DeviceTensor *const device_tensor, const DeviceContext *device_context);
+// The memory free for the pynative bprop graph which is managed by the value node.
+void FreeMemoryByValueNode(const std::vector<std::weak_ptr<ValueNode>> &held_by_nodes, DeviceTensor *device_tensor);
 
 KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const KernelGraphPtr &graph,
                                              const std::vector<AnfNodePtr> &host_parameters = {},

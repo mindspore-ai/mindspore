@@ -25,26 +25,7 @@ namespace mindspore {
 namespace runtime {
 bool ActorDispatcher::is_multi_thread_execution_ = true;
 bool ActorDispatcher::is_memory_allocation_sync_ = true;
-
-namespace {
-void FreeValueNodeMemory(const std::vector<std::weak_ptr<ValueNode>> &held_by_nodes, DeviceTensor *device_tensor) {
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  device_tensor->ClearHeldByNodes();
-  device_tensor->set_original_ref_count(SIZE_MAX);
-  device_tensor->ResetRefCount();
-
-  for (auto &node : held_by_nodes) {
-    auto value_node = node.lock();
-    MS_EXCEPTION_IF_NULL(value_node);
-    auto value = value_node->value();
-    MS_EXCEPTION_IF_NULL(value);
-    auto tensor = value->cast<tensor::TensorPtr>();
-    MS_EXCEPTION_IF_NULL(tensor);
-    tensor->set_device_address(nullptr);
-    runtime::DeviceTensorStore::GetInstance().Remove(value_node.get());
-  }
-}
-}  // namespace
+bool ActorDispatcher::is_memory_free_sync_ = true;
 
 void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num) {
   MS_EXCEPTION_IF_NULL(actor_thread_num);
@@ -227,7 +208,7 @@ void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_c
   UpdateRefCount(device_tensor.get(), is_max_ref_count);
 }
 
-void FreeMemory(DeviceTensor *const device_tensor, const DeviceContext *device_context) {
+void FreeMemoryByDeviceContext(DeviceTensor *const device_tensor, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_tensor);
   // The device context may be not accurate in the control flow scene, so need fetch by device name and device id.
   if ((device_context == nullptr) || (device_context->GetDeviceType() != device_tensor->GetDeviceType())) {
@@ -240,31 +221,21 @@ void FreeMemory(DeviceTensor *const device_tensor, const DeviceContext *device_c
   }
 }
 
-// Only one of the static and dynamic reference counts will take effect.
-void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
-                          const std::string &op_name) {
+void FreeMemoryByValueNode(const std::vector<std::weak_ptr<ValueNode>> &held_by_nodes, DeviceTensor *device_tensor) {
   MS_EXCEPTION_IF_NULL(device_tensor);
-  if (device_tensor->original_ref_count() != SIZE_MAX) {
-    // The static reference count is decremented to zero to free memory, and reset to the original count.
-    device_tensor->DecreaseRefCount();
-    if (device_tensor->ref_count() == 0) {
-      device_tensor->ResetRefCount();
-      if (device_tensor->GetPtr() != nullptr) {
-        auto held_by_nodes = device_tensor->held_by_nodes();
-        if (held_by_nodes.empty()) {
-          FreeMemory(device_tensor, device_context);
-        } else {
-          FreeValueNodeMemory(held_by_nodes, device_tensor);
-        }
-      }
-    }
-  } else if (device_tensor->dynamic_ref_count() != INT32_MAX) {
-    // The dynamic reference count is decremented to zero to free memory.
-    device_tensor->DecreaseDynamicRefCount(op_name);
-    if ((device_tensor->dynamic_ref_count() == 0) && (device_tensor->GetPtr() != nullptr)) {
-      MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr();
-      FreeMemory(device_tensor, device_context);
-    }
+  device_tensor->ClearHeldByNodes();
+  device_tensor->set_original_ref_count(SIZE_MAX);
+  device_tensor->ResetRefCount();
+
+  for (auto &node : held_by_nodes) {
+    auto value_node = node.lock();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    auto tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor);
+    tensor->set_device_address(nullptr);
+    runtime::DeviceTensorStore::GetInstance().Remove(value_node.get());
   }
 }
 

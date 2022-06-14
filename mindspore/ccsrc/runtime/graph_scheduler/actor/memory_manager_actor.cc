@@ -24,7 +24,7 @@ namespace mindspore {
 namespace runtime {
 namespace {
 void OnMemoryAllocFinish(const AID &from_aid, OpContext<DeviceTensor> *const op_context) {
-  if (!ActorDispatcher::get_is_memory_allocation_sync()) {
+  if (!ActorDispatcher::is_memory_allocation_sync()) {
     ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
   }
 }
@@ -181,6 +181,36 @@ void MemoryManagerActor::FreeBatchMemory(const std::vector<DeviceTensor *> *free
 void MemoryManagerActor::Wait(OpContext<DeviceTensor> *const op_context, const AID &from_aid) {
   // Call back to the from actor to process.
   ActorDispatcher::Send(from_aid, &MemoryAwareActor::OnMemoryAllocFinish, op_context);
+}
+
+// Only one of the static and dynamic reference counts will take effect.
+void MemoryManagerActor::FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext *device_context,
+                                              const std::string &op_name) {
+  MS_EXCEPTION_IF_NULL(device_tensor);
+
+  std::lock_guard<std::mutex> locker(mem_free_mutex_);
+  if (device_tensor->original_ref_count() != SIZE_MAX) {
+    // The static reference count is decremented to zero to free memory, and reset to the original count.
+    device_tensor->DecreaseRefCount();
+    if (device_tensor->ref_count() == 0) {
+      device_tensor->ResetRefCount();
+      if (device_tensor->GetPtr() != nullptr) {
+        auto held_by_nodes = device_tensor->held_by_nodes();
+        if (held_by_nodes.empty()) {
+          FreeMemoryByDeviceContext(device_tensor, device_context);
+        } else {
+          FreeMemoryByValueNode(held_by_nodes, device_tensor);
+        }
+      }
+    }
+  } else if (device_tensor->dynamic_ref_count() != INT32_MAX) {
+    // The dynamic reference count is decremented to zero to free memory.
+    device_tensor->DecreaseDynamicRefCount(op_name);
+    if ((device_tensor->dynamic_ref_count() == 0) && (device_tensor->GetPtr() != nullptr)) {
+      MS_LOG(DEBUG) << "Free memory by the dynamic reference count, device address" << device_tensor->GetPtr();
+      FreeMemoryByDeviceContext(device_tensor, device_context);
+    }
+  }
 }
 
 void MemoryManagerActor::SetOpContextMemoryAllocFail(const std::string &kernel_name,
