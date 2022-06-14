@@ -1566,7 +1566,7 @@ void ExportGraph(const std::string &file_name, const std::string &model_type, co
 
 FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode,
                         const py::object decrypt) {
-  FuncGraphPtr func_graph;
+  FuncGraphPtr func_graph = nullptr;
   if (dec_mode == "Customized") {
     py::bytes key_bytes(dec_key);
     py::bytes model_stream = decrypt(file_name, key_bytes);

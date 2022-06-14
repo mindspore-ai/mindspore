@@ -552,7 +552,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const
   }
 }
 
-void ExportDFGraph(const std::string &file_name, const std::string &phase, const py::function encrypt, char *key) {
+void ExportDFGraph(const std::string &file_name, const std::string &phase, const py::object encrypt, char *key) {
   MS_LOG(DEBUG) << "Export graph begin.";
   transform::DfGraphWrapperPtr wrap_ptr = transform::GetGraphByName(phase);
   if (wrap_ptr == nullptr) {
@@ -566,7 +566,7 @@ void ExportDFGraph(const std::string &file_name, const std::string &phase, const
     return;
   }
   if (key != nullptr) {
-    if (py::isinstance<py::none>(encrypt)) {
+    if (py::isinstance<py::none()>(encrypt)) {
       MS_LOG(ERROR) << "ERROR: encrypt is not a function";
       return;
     }
